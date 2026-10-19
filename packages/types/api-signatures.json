@@ -1420,7 +1420,7 @@
       "render\u0000FUNCTION\u0000render.get_window_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_height(): number;",
       "render\u0000FUNCTION\u0000render.get_window_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_width(): number;",
       "render\u0000FUNCTION\u0000render.predicate\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false}]": "function predicate(tags: (string | Hash)[]): Opaque<\"render_predicate\">;",
-      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
+      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.render_target_params): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.render_target_params): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void;",
@@ -1535,7 +1535,7 @@
       "socket\u0000FUNCTION\u0000master:setfd\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "setfd(handle: number): void;",
       "socket\u0000FUNCTION\u0000master:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "setstats(received?: number, sent?: number, age?: number): number;",
       "socket\u0000FUNCTION\u0000master:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "settimeout(value?: number, mode?: string): number;",
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:close\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "close(): number;",
       "socket\u0000FUNCTION\u0000server:dirty\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "dirty(): boolean;",
       "socket\u0000FUNCTION\u0000server:getfd\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "getfd(): number;",
@@ -1546,7 +1546,7 @@
       "socket\u0000FUNCTION\u0000server:setoption\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "setstats(received?: number, sent?: number, age?: number): number;",
       "socket\u0000FUNCTION\u0000server:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "settimeout(value?: number, mode?: string): number;",
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getaddrinfo(address: string): LuaMultiReturn<[socket.dns.address_info[] | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.gethostname\u0000[]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function gethostname(): string;",
       "socket\u0000FUNCTION\u0000socket.dns.getnameinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getnameinfo(address: string): LuaMultiReturn<[string[] | undefined, string | undefined]>;",
@@ -1555,13 +1555,13 @@
       "socket\u0000FUNCTION\u0000socket.gettime\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function gettime(): number;",
       "socket\u0000FUNCTION\u0000socket.newtry\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;",
       "socket\u0000FUNCTION\u0000socket.protect\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: socket.socket_selectable[], sendt: socket.socket_selectable[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: socket.socket_selectable[], sendt: socket.socket_selectable[], timeout?: number): LuaMultiReturn<[(socket_client | socket_master | socket_unconnected)[], (socket_client | socket_master | socket_unconnected)[], string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":false}]->[{\"types\":[\"unknown\"],\"isOptional\":false}]": "function skip(d: number, ...args: unknown[]): LuaMultiReturn<unknown[]>;",
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function sleep(time: number): void;",
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:close\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "close(): number;",
       "socket\u0000FUNCTION\u0000unconnected:getoption\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:getsockname\u0000[]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>;",
@@ -1574,12 +1574,7 @@
       "socket\u0000FUNCTION\u0000unconnected:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "settimeout(value?: number): number;",
       "socket\u0000TYPEDEF\u0000dns.address_info\u0000": "interface address_info { family: string; addr: string; }",
       "socket\u0000TYPEDEF\u0000dns.host_info\u0000": "interface host_info { name: string; alias: string[]; ip: string[]; }",
-      "socket\u0000TYPEDEF\u0000socket_client\u0000": "type socket_client = client;",
-      "socket\u0000TYPEDEF\u0000socket_connected\u0000": "type socket_connected = connected;",
-      "socket\u0000TYPEDEF\u0000socket_master\u0000": "type socket_master = master;",
-      "socket\u0000TYPEDEF\u0000socket_selectable\u0000": "type socket_selectable = master | client | server | connected | unconnected | { getfd: (self: unknown) => number; dirty: (self: unknown) => boolean };",
-      "socket\u0000TYPEDEF\u0000socket_server\u0000": "type socket_server = server;",
-      "socket\u0000TYPEDEF\u0000socket_unconnected\u0000": "type socket_unconnected = unconnected;",
+      "socket\u0000TYPEDEF\u0000socket_selectable\u0000": "type socket_selectable = socket_master | socket_client | socket_server | socket_connected | socket_unconnected | { getfd: (self: unknown) => number; dirty: (self: unknown) => boolean };",
       "sound\u0000FUNCTION\u0000sound.get_group_gain\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_group_gain(group: string | Hash): number;",
       "sound\u0000FUNCTION\u0000sound.get_group_name\u0000[{\"types\":[\"Hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_group_name(group: Hash): string;",
       "sound\u0000FUNCTION\u0000sound.get_groups\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_groups(): Hash[];",
@@ -3181,7 +3176,7 @@
       "render\u0000FUNCTION\u0000render.get_window_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_height(): number;",
       "render\u0000FUNCTION\u0000render.get_window_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_width(): number;",
       "render\u0000FUNCTION\u0000render.predicate\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false}]": "function predicate(tags: (string | Hash)[]): Opaque<\"render_predicate\">;",
-      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
+      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.render_target_params): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.render_target_params): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void;",
@@ -3296,7 +3291,7 @@
       "socket\u0000FUNCTION\u0000master:setfd\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "setfd(handle: number): void;",
       "socket\u0000FUNCTION\u0000master:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "setstats(received?: number, sent?: number, age?: number): number;",
       "socket\u0000FUNCTION\u0000master:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "settimeout(value?: number, mode?: string): number;",
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:close\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "close(): number;",
       "socket\u0000FUNCTION\u0000server:dirty\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "dirty(): boolean;",
       "socket\u0000FUNCTION\u0000server:getfd\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "getfd(): number;",
@@ -3307,7 +3302,7 @@
       "socket\u0000FUNCTION\u0000server:setoption\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "setstats(received?: number, sent?: number, age?: number): number;",
       "socket\u0000FUNCTION\u0000server:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "settimeout(value?: number, mode?: string): number;",
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getaddrinfo(address: string): LuaMultiReturn<[socket.dns.address_info[] | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.gethostname\u0000[]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function gethostname(): string;",
       "socket\u0000FUNCTION\u0000socket.dns.getnameinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getnameinfo(address: string): LuaMultiReturn<[string[] | undefined, string | undefined]>;",
@@ -3316,13 +3311,13 @@
       "socket\u0000FUNCTION\u0000socket.gettime\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function gettime(): number;",
       "socket\u0000FUNCTION\u0000socket.newtry\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;",
       "socket\u0000FUNCTION\u0000socket.protect\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: socket.socket_selectable[], sendt: socket.socket_selectable[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: socket.socket_selectable[], sendt: socket.socket_selectable[], timeout?: number): LuaMultiReturn<[(socket_client | socket_master | socket_unconnected)[], (socket_client | socket_master | socket_unconnected)[], string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":false}]->[{\"types\":[\"unknown\"],\"isOptional\":false}]": "function skip(d: number, ...args: unknown[]): LuaMultiReturn<unknown[]>;",
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function sleep(time: number): void;",
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:close\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "close(): number;",
       "socket\u0000FUNCTION\u0000unconnected:getoption\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:getsockname\u0000[]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "getsockname(): LuaMultiReturn<[string | undefined, string, string | undefined]>;",
@@ -3335,12 +3330,7 @@
       "socket\u0000FUNCTION\u0000unconnected:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "settimeout(value?: number): number;",
       "socket\u0000TYPEDEF\u0000dns.address_info\u0000": "interface address_info { family: string; addr: string; }",
       "socket\u0000TYPEDEF\u0000dns.host_info\u0000": "interface host_info { name: string; alias: string[]; ip: string[]; }",
-      "socket\u0000TYPEDEF\u0000socket_client\u0000": "type socket_client = client;",
-      "socket\u0000TYPEDEF\u0000socket_connected\u0000": "type socket_connected = connected;",
-      "socket\u0000TYPEDEF\u0000socket_master\u0000": "type socket_master = master;",
-      "socket\u0000TYPEDEF\u0000socket_selectable\u0000": "type socket_selectable = master | client | server | connected | unconnected | { getfd: (self: unknown) => number; dirty: (self: unknown) => boolean };",
-      "socket\u0000TYPEDEF\u0000socket_server\u0000": "type socket_server = server;",
-      "socket\u0000TYPEDEF\u0000socket_unconnected\u0000": "type socket_unconnected = unconnected;",
+      "socket\u0000TYPEDEF\u0000socket_selectable\u0000": "type socket_selectable = socket_master | socket_client | socket_server | socket_connected | socket_unconnected | { getfd: (self: unknown) => number; dirty: (self: unknown) => boolean };",
       "sound\u0000FUNCTION\u0000sound.get_group_gain\u0000[{\"types\":[\"Hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_group_gain(group: string | Hash): number;",
       "sound\u0000FUNCTION\u0000sound.get_group_name\u0000[{\"types\":[\"Hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_group_name(group: Hash): string;",
       "sound\u0000FUNCTION\u0000sound.get_groups\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_groups(): Hash[];",
@@ -4593,7 +4583,7 @@
       "render\u0000FUNCTION\u0000render.get_window_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_height(): number;",
       "render\u0000FUNCTION\u0000render.get_window_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_width(): number;",
       "render\u0000FUNCTION\u0000render.predicate\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false}]": "function predicate(tags: (string | Hash)[]): Opaque<\"render_predicate\">;",
-      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
+      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.render_target_params): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.render_target_params): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: number, equation_alpha: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: number, destination_factor: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void;",
@@ -4678,7 +4668,7 @@
       "socket\u0000FUNCTION\u0000master:setfd\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "setfd(handle: number): void;",
       "socket\u0000FUNCTION\u0000master:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "setstats(received: number, sent: number, age: number): number | undefined;",
       "socket\u0000FUNCTION\u0000master:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "settimeout(value: number, mode?: string): void;",
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:close\u0000[]->[]": "close(): void;",
       "socket\u0000FUNCTION\u0000server:dirty\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "dirty(): boolean;",
       "socket\u0000FUNCTION\u0000server:getfd\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "getfd(): number;",
@@ -4689,7 +4679,7 @@
       "socket\u0000FUNCTION\u0000server:setoption\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "setstats(received: number, sent: number, age: number): number | undefined;",
       "socket\u0000FUNCTION\u0000server:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "settimeout(value: number, mode?: string): void;",
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.gethostname\u0000[]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function gethostname(): string;",
       "socket\u0000FUNCTION\u0000socket.dns.getnameinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;",
@@ -4698,13 +4688,13 @@
       "socket\u0000FUNCTION\u0000socket.gettime\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function gettime(): number;",
       "socket\u0000FUNCTION\u0000socket.newtry\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;",
       "socket\u0000FUNCTION\u0000socket.protect\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: (socket_client | socket_master | socket_unconnected)[], sendt: (socket_client | socket_master | socket_unconnected)[], timeout?: number): LuaMultiReturn<[(socket_client | socket_master | socket_unconnected)[], (socket_client | socket_master | socket_unconnected)[], string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false}]": "function skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>;",
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function sleep(time: number): void;",
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:close\u0000[]->[]": "close(): void;",
       "socket\u0000FUNCTION\u0000unconnected:getoption\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:getsockname\u0000[]->[{\"types\":[\"string\"],\"isOptional\":false}]": "getsockname(): string;",
@@ -5945,7 +5935,7 @@
       "render\u0000FUNCTION\u0000render.get_window_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_height(): number;",
       "render\u0000FUNCTION\u0000render.get_window_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_width(): number;",
       "render\u0000FUNCTION\u0000render.predicate\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false}]": "function predicate(tags: (string | Hash)[]): Opaque<\"render_predicate\">;",
-      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
+      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.render_target_params): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.render_target_params): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: number, equation_alpha: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: number, destination_factor: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void;",
@@ -6030,7 +6020,7 @@
       "socket\u0000FUNCTION\u0000master:setfd\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "setfd(handle: number): void;",
       "socket\u0000FUNCTION\u0000master:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "setstats(received: number, sent: number, age: number): number | undefined;",
       "socket\u0000FUNCTION\u0000master:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "settimeout(value: number, mode?: string): void;",
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:close\u0000[]->[]": "close(): void;",
       "socket\u0000FUNCTION\u0000server:dirty\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "dirty(): boolean;",
       "socket\u0000FUNCTION\u0000server:getfd\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "getfd(): number;",
@@ -6041,7 +6031,7 @@
       "socket\u0000FUNCTION\u0000server:setoption\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "setstats(received: number, sent: number, age: number): number | undefined;",
       "socket\u0000FUNCTION\u0000server:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "settimeout(value: number, mode?: string): void;",
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.gethostname\u0000[]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function gethostname(): string;",
       "socket\u0000FUNCTION\u0000socket.dns.getnameinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;",
@@ -6050,13 +6040,13 @@
       "socket\u0000FUNCTION\u0000socket.gettime\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function gettime(): number;",
       "socket\u0000FUNCTION\u0000socket.newtry\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;",
       "socket\u0000FUNCTION\u0000socket.protect\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: (socket_client | socket_master | socket_unconnected)[], sendt: (socket_client | socket_master | socket_unconnected)[], timeout?: number): LuaMultiReturn<[(socket_client | socket_master | socket_unconnected)[], (socket_client | socket_master | socket_unconnected)[], string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false}]": "function skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>;",
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function sleep(time: number): void;",
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:close\u0000[]->[]": "close(): void;",
       "socket\u0000FUNCTION\u0000unconnected:getoption\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:getsockname\u0000[]->[{\"types\":[\"string\"],\"isOptional\":false}]": "getsockname(): string;",
@@ -6967,7 +6957,7 @@
       "render\u0000FUNCTION\u0000render.get_window_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_height(): number;",
       "render\u0000FUNCTION\u0000render.get_window_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_width(): number;",
       "render\u0000FUNCTION\u0000render.predicate\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"Opaque<\\\"render_predicate\\\">\"],\"isOptional\":false}]": "function predicate(tags: (string | Hash)[]): Opaque<\"render_predicate\">;",
-      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.RenderTargetParams): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.RenderTargetParams): Opaque<\"render_target\">",
+      "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "render.render_target(parameters: render.render_target_params): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: render.render_target_params): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: number, destination_factor: number): void;",
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"Hash\",\"Url\",\"number\",\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number | string | Hash, options?: { use_frustum?: boolean }): void;",
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;",
@@ -7050,7 +7040,7 @@
       "socket\u0000FUNCTION\u0000master:setfd\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "setfd(handle: number): void;",
       "socket\u0000FUNCTION\u0000master:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "setstats(received: number, sent: number, age: number): number | undefined;",
       "socket\u0000FUNCTION\u0000master:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "settimeout(value: number, mode?: string): void;",
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "accept(): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:close\u0000[]->[]": "close(): void;",
       "socket\u0000FUNCTION\u0000server:dirty\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "dirty(): boolean;",
       "socket\u0000FUNCTION\u0000server:getfd\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "getfd(): number;",
@@ -7061,7 +7051,7 @@
       "socket\u0000FUNCTION\u0000server:setoption\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "setoption(option: string, value?: unknown): LuaMultiReturn<[number | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000server:setstats\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "setstats(received: number, sent: number, age: number): number | undefined;",
       "socket\u0000FUNCTION\u0000server:settimeout\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "settimeout(value: number, mode?: string): void;",
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getaddrinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.dns.gethostname\u0000[]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function gethostname(): string;",
       "socket\u0000FUNCTION\u0000socket.dns.getnameinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function getnameinfo(address: string): LuaMultiReturn<[Record<string | number, unknown> | undefined, string | undefined]>;",
@@ -7070,13 +7060,13 @@
       "socket\u0000FUNCTION\u0000socket.gettime\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function gettime(): number;",
       "socket\u0000FUNCTION\u0000socket.newtry\u0000[{\"types\":[\"function\"],\"isOptional\":true}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;",
       "socket\u0000FUNCTION\u0000socket.protect\u0000[{\"types\":[\"function\"],\"isOptional\":false}]->[{\"types\":[\"function\"],\"isOptional\":false}]": "function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function select(recvt: (socket_client | socket_master | socket_unconnected)[], sendt: (socket_client | socket_master | socket_unconnected)[], timeout?: number): LuaMultiReturn<[(socket_client | socket_master | socket_unconnected)[], (socket_client | socket_master | socket_unconnected)[], string | undefined]>;",
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false}]": "function skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>;",
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function sleep(time: number): void;",
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[master | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function tcp6(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function udp6(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:close\u0000[]->[]": "close(): void;",
       "socket\u0000FUNCTION\u0000unconnected:getoption\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "getoption(option: string): LuaMultiReturn<[unknown, string | undefined]>;",
       "socket\u0000FUNCTION\u0000unconnected:getsockname\u0000[]->[{\"types\":[\"string\"],\"isOptional\":false}]": "getsockname(): string;",
@@ -11310,8 +11300,8 @@
         "param:1:mode": { "type": "string", "optional": true },
         "return:0:success": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000server:close\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
@@ -11358,13 +11348,13 @@
         "param:1:mode": { "type": "string", "optional": true },
         "return:0:success": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
         "param:0:address": { "type": "string", "optional": false },
         "param:1:port": { "type": "number", "optional": false },
         "param:2:locaddr": { "type": "string", "optional": true },
         "param:3:locport": { "type": "number", "optional": true },
         "param:4:family": { "type": "string", "optional": true },
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
@@ -11411,8 +11401,14 @@
         "param:0:recvt": { "type": "socket.socket_selectable[]", "optional": false },
         "param:1:sendt": { "type": "socket.socket_selectable[]", "optional": false },
         "param:2:timeout": { "type": "number", "optional": true },
-        "return:0:sockets_r": { "type": "(client | master | unconnected)[]", "optional": false },
-        "return:1:sockets_w": { "type": "(client | master | unconnected)[]", "optional": false },
+        "return:0:sockets_r": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
+        "return:1:sockets_w": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
         "return:2:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":false}]->[{\"types\":[\"unknown\"],\"isOptional\":false}]": {
@@ -11423,20 +11419,20 @@
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:time": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000unconnected:close\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
@@ -16076,8 +16072,8 @@
         "param:1:mode": { "type": "string", "optional": true },
         "return:0:success": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000server:close\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
@@ -16124,13 +16120,13 @@
         "param:1:mode": { "type": "string", "optional": true },
         "return:0:success": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
         "param:0:address": { "type": "string", "optional": false },
         "param:1:port": { "type": "number", "optional": false },
         "param:2:locaddr": { "type": "string", "optional": true },
         "param:3:locport": { "type": "number", "optional": true },
         "param:4:family": { "type": "string", "optional": true },
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
@@ -16177,8 +16173,14 @@
         "param:0:recvt": { "type": "socket.socket_selectable[]", "optional": false },
         "param:1:sendt": { "type": "socket.socket_selectable[]", "optional": false },
         "param:2:timeout": { "type": "number", "optional": true },
-        "return:0:sockets_r": { "type": "(client | master | unconnected)[]", "optional": false },
-        "return:1:sockets_w": { "type": "(client | master | unconnected)[]", "optional": false },
+        "return:0:sockets_r": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
+        "return:1:sockets_w": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
         "return:2:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":false}]->[{\"types\":[\"unknown\"],\"isOptional\":false}]": {
@@ -16189,20 +16191,20 @@
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:time": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000unconnected:close\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
@@ -19925,8 +19927,8 @@
         "param:0:value": { "type": "number", "optional": false },
         "param:1:mode": { "type": "string", "optional": true }
       },
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000server:dirty\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
@@ -19965,13 +19967,13 @@
         "param:0:value": { "type": "number", "optional": false },
         "param:1:mode": { "type": "string", "optional": true }
       },
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
         "param:0:address": { "type": "string", "optional": false },
         "param:1:port": { "type": "number", "optional": false },
         "param:2:locaddr": { "type": "string", "optional": true },
         "param:3:locport": { "type": "number", "optional": true },
         "param:4:family": { "type": "string", "optional": true },
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
@@ -20027,11 +20029,23 @@
         }
       },
       "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "param:0:recvt": { "type": "(client | master | unconnected)[]", "optional": false },
-        "param:1:sendt": { "type": "(client | master | unconnected)[]", "optional": false },
+        "param:0:recvt": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
+        "param:1:sendt": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
         "param:2:timeout": { "type": "number", "optional": true },
-        "return:0:sockets_r": { "type": "(client | master | unconnected)[]", "optional": false },
-        "return:1:sockets_w": { "type": "(client | master | unconnected)[]", "optional": false },
+        "return:0:sockets_r": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
+        "return:1:sockets_w": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
         "return:2:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false}]": {
@@ -20046,20 +20060,20 @@
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:time": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000unconnected:getoption\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
@@ -23783,8 +23797,8 @@
         "param:0:value": { "type": "number", "optional": false },
         "param:1:mode": { "type": "string", "optional": true }
       },
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000server:dirty\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
@@ -23823,13 +23837,13 @@
         "param:0:value": { "type": "number", "optional": false },
         "param:1:mode": { "type": "string", "optional": true }
       },
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
         "param:0:address": { "type": "string", "optional": false },
         "param:1:port": { "type": "number", "optional": false },
         "param:2:locaddr": { "type": "string", "optional": true },
         "param:3:locport": { "type": "number", "optional": true },
         "param:4:family": { "type": "string", "optional": true },
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
@@ -23885,11 +23899,23 @@
         }
       },
       "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "param:0:recvt": { "type": "(client | master | unconnected)[]", "optional": false },
-        "param:1:sendt": { "type": "(client | master | unconnected)[]", "optional": false },
+        "param:0:recvt": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
+        "param:1:sendt": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
         "param:2:timeout": { "type": "number", "optional": true },
-        "return:0:sockets_r": { "type": "(client | master | unconnected)[]", "optional": false },
-        "return:1:sockets_w": { "type": "(client | master | unconnected)[]", "optional": false },
+        "return:0:sockets_r": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
+        "return:1:sockets_w": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
         "return:2:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false}]": {
@@ -23904,20 +23930,20 @@
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:time": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000unconnected:getoption\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
@@ -26333,8 +26359,8 @@
         "param:0:value": { "type": "number", "optional": false },
         "param:1:mode": { "type": "string", "optional": true }
       },
-      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000server:accept\u0000[]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000server:dirty\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
@@ -26373,13 +26399,13 @@
         "param:0:value": { "type": "number", "optional": false },
         "param:1:mode": { "type": "string", "optional": true }
       },
-      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"client\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+      "socket\u0000FUNCTION\u0000socket.connect\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"socket_client\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
         "param:0:address": { "type": "string", "optional": false },
         "param:1:port": { "type": "number", "optional": false },
         "param:2:locaddr": { "type": "string", "optional": true },
         "param:3:locport": { "type": "number", "optional": true },
         "param:4:family": { "type": "string", "optional": true },
-        "return:0:tcp_client": { "type": "client | undefined", "optional": false },
+        "return:0:tcp_client": { "type": "socket_client | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.dns.getaddrinfo\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
@@ -26435,11 +26461,23 @@
         }
       },
       "socket\u0000FUNCTION\u0000socket.select\u0000[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "param:0:recvt": { "type": "(client | master | unconnected)[]", "optional": false },
-        "param:1:sendt": { "type": "(client | master | unconnected)[]", "optional": false },
+        "param:0:recvt": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
+        "param:1:sendt": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
         "param:2:timeout": { "type": "number", "optional": true },
-        "return:0:sockets_r": { "type": "(client | master | unconnected)[]", "optional": false },
-        "return:1:sockets_w": { "type": "(client | master | unconnected)[]", "optional": false },
+        "return:0:sockets_r": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
+        "return:1:sockets_w": {
+          "type": "(socket_client | socket_master | socket_unconnected)[]",
+          "optional": false
+        },
         "return:2:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000socket.skip\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true},{\"types\":[\"unknown\"],\"isOptional\":true}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false}]": {
@@ -26454,20 +26492,20 @@
       "socket\u0000FUNCTION\u0000socket.sleep\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:time": { "type": "number", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"master\",\"nil\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:tcp_master": { "type": "master | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.tcp6\u0000[]->[{\"types\":[\"nil\",\"socket_master\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:tcp_master": { "type": "socket_master | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
-      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
-        "return:0:udp_unconnected": { "type": "unconnected | undefined", "optional": false },
+      "socket\u0000FUNCTION\u0000socket.udp6\u0000[]->[{\"types\":[\"nil\",\"socket_unconnected\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {
+        "return:0:udp_unconnected": { "type": "socket_unconnected | undefined", "optional": false },
         "return:1:error": { "type": "string | undefined", "optional": false }
       },
       "socket\u0000FUNCTION\u0000unconnected:getoption\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"unknown\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": {

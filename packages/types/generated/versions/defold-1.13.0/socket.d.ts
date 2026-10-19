@@ -21,7 +21,7 @@ declare global {
    * LuaSocket is free software, released under the MIT license (same license as the Lua core).
    */
   namespace socket {
-    interface client {
+    interface socket_client {
       /**
        * Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
@@ -167,7 +167,7 @@ declare global {
        */
       shutdown(mode: string): number;
     }
-    interface connected {
+    interface socket_connected {
       /**
        * Closes a UDP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
@@ -268,7 +268,7 @@ declare global {
        */
       settimeout(value: number): void;
     }
-    interface master {
+    interface socket_master {
       /**
        * Binds a master object to address and port on the local host.
        *
@@ -351,12 +351,12 @@ declare global {
        */
       settimeout(value: number, mode?: string): void;
     }
-    interface server {
+    interface socket_server {
       /**
        * Waits for a remote connection on the server object and returns a client object representing that connection.
        * Calling `socket.select` with a server object in the `recvt` parameter before a call to accept does not guarantee accept will return immediately. Use the `settimeout` method or accept might block until another client shows up.
        */
-      accept(): LuaMultiReturn<[client | undefined, string | undefined]>;
+      accept(): LuaMultiReturn<[socket_client | undefined, string | undefined]>;
       /**
        * Closes the TCP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
@@ -453,7 +453,7 @@ declare global {
        */
       settimeout(value: number, mode?: string): void;
     }
-    interface unconnected {
+    interface socket_unconnected {
       /**
        * Closes a UDP object. The internal socket used by the object is closed and the local address to which the object was bound is made available to other applications. No further operations (except for further calls to the close method) are allowed on a closed socket.
        * It is important to close all used sockets once they are not needed, since, in many systems, each socket uses a file descriptor, which are limited system resources. Garbage-collected objects are automatically closed before destruction, though.
@@ -585,7 +585,7 @@ declare global {
      * @param locport - optional local port to bind to.
      * @param family - optional socket family to use, `"inet"` or `"inet6"`.
      */
-    function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[client | undefined, string | undefined]>;
+    function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;
     /**
      * Returns the time in seconds, relative to the system epoch (Unix epoch time since January 1, 1970 (UTC) or Windows file time since January 1, 1601 (UTC)).
      * You should use the values returned by this function for relative measurements only.
@@ -664,7 +664,7 @@ declare global {
      * @param sendt - array with sockets that are watched to see if it is OK to immediately write on them.
      * @param timeout - the maximum amount of time (in seconds) to wait for a change in status. Nil, negative or omitted timeout value allows the function to block indefinitely.
      */
-    function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;
+    function select(recvt: (socket_client | socket_master | socket_unconnected)[], sendt: (socket_client | socket_master | socket_unconnected)[], timeout?: number): LuaMultiReturn<[(socket_client | socket_master | socket_unconnected)[], (socket_client | socket_master | socket_unconnected)[], string | undefined]>;
     /**
      * This function drops a number of arguments and returns the remaining.
      * It is useful to avoid creation of dummy variables:
@@ -700,21 +700,21 @@ declare global {
     /**
      * Creates and returns an IPv4 TCP master object. A master object can be transformed into a server object with the method `listen` (after a call to `bind`) or into a client object with the method `connect`. The only other method supported by a master object is the `close` method.
      */
-    function tcp(): LuaMultiReturn<[master | undefined, string | undefined]>;
+    function tcp(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;
     /**
      * Creates and returns an IPv6 TCP master object. A master object can be transformed into a server object with the method `listen` (after a call to `bind`) or into a client object with the method connect. The only other method supported by a master object is the close method.
      * Note: The TCP object returned will have the option "ipv6-v6only" set to true.
      */
-    function tcp6(): LuaMultiReturn<[master | undefined, string | undefined]>;
+    function tcp6(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;
     /**
      * Creates and returns an unconnected IPv4 UDP object. Unconnected objects support the `sendto`, `receive`, `receivefrom`, `getoption`, `getsockname`, `setoption`, `settimeout`, `setpeername`, `setsockname`, and `close` methods. The `setpeername` method is used to connect the object.
      */
-    function udp(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;
+    function udp(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;
     /**
      * Creates and returns an unconnected IPv6 UDP object. Unconnected objects support the `sendto`, `receive`, `receivefrom`, `getoption`, `getsockname`, `setoption`, `settimeout`, `setpeername`, `setsockname`, and `close` methods. The `setpeername` method is used to connect the object.
      * Note: The UDP object returned will have the option "ipv6-v6only" set to true.
      */
-    function udp6(): LuaMultiReturn<[unconnected | undefined, string | undefined]>;
+    function udp6(): LuaMultiReturn<[socket_unconnected | undefined, string | undefined]>;
     namespace dns {
       /**
        * This function converts a host name to IPv4 or IPv6 address.

@@ -1,3 +1,4 @@
+import type { SocketHandleReceiver } from "../src/core-types";
 import type { ModuleManifestEntry } from "./regen";
 
 // A method the engine shares across several handle classes where a release's
@@ -20,8 +21,8 @@ export const SHARED_HANDLE_METHODS: readonly SharedHandleMethod[] = (
 ).map((method) => ({
   namespace: "socket",
   method,
-  source: "client",
-  handles: ["master", "server"],
+  source: "client" satisfies SocketHandleReceiver,
+  handles: ["master", "server"] satisfies SocketHandleReceiver[],
   evidence: TCP_ANY,
 }));
 

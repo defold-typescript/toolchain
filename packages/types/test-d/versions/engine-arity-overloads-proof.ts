@@ -7,7 +7,7 @@ export {};
 // below, and only a target that really skipped the function rejects it.
 //
 // `render.render_target` has no counterpart here: its authored wide arm repeats
-// the generated signature, its table typed through `render.RenderTargetParams` as
+// the generated signature, its table typed through `render.render_target_params` as
 // the withheld slot, so a surviving generated declaration adds no call shape and
 // no compile-time predicate can see it. The skip-parity case in
 // `test/versions.test.ts` covers that side instead.
