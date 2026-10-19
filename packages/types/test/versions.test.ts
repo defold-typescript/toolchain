@@ -698,7 +698,7 @@ describe("committed API surfaces — gui texture removal follows each target's e
 const CLEAR_BUFFER_KEY_PROOF = resolve(VERSIONS_DIR, "clear-buffer-key-proof.ts");
 const RENDER_TARGET_PARAMS_PROOF = resolve(VERSIONS_DIR, "render-target-params-proof.ts");
 
-describe("committed API surfaces — render.ClearBufferKey and render.RenderTargetParams are writable per target", () => {
+describe("committed API surfaces — render.ClearBufferKey and render.render_target_params are writable per target", () => {
   for (const index of committedSurfaceIndexes()) {
     test(`${index} exports the aliases its narrowed clear key and shared render_target overloads require`, () => {
       const root = mkdtempSync(resolve(PACKAGE_ROOT, "clear-key-wall-"));
@@ -724,7 +724,7 @@ describe("committed API surfaces — render.ClearBufferKey and render.RenderTarg
         if (exitCode !== 0) {
           throw new Error(
             `${index} proof failed — render.ClearBufferKey, which the breaking-change migration ` +
-              `path names, or render.RenderTargetParams, which the shared render_target ` +
+              `path names, or render.render_target_params, which the shared render_target ` +
               `overloads name, is absent or does not match this surface:\n${output}`,
           );
         }
@@ -738,7 +738,7 @@ describe("committed API surfaces — render.ClearBufferKey and render.RenderTarg
 
 // The compile wall above cannot see a missing `render_target` skip: the authored
 // wide arm repeats the generated signature, its table typed through
-// `render.RenderTargetParams` as the slot the generator withholds, so an
+// `render.render_target_params` as the slot the generator withholds, so an
 // un-skipped surface accepts exactly the same calls. Parity between the two production registries
 // is what catches a skip wired into one target and forgotten in another.
 describe("api-targets — every overload-covered skip is wired into every target", () => {

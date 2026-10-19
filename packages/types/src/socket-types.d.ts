@@ -9,7 +9,7 @@
 //
 //   const opt: socket.TCPOptions = 'keepalive';
 //   // TCP/UDP are convenience intersections for consumer annotations;
-//   // no socket.* function returns them (tcp() yields a `master` handle).
+//   // no socket.* function returns them (tcp() yields a `socket_master` handle).
 //
 // The literal unions are LuaSocket-domain, not engine-ref-doc, so they live
 // here rather than in the regen pipeline.
@@ -17,7 +17,7 @@
 declare global {
   namespace socket {
     /** A TCP handle in any of its three lifecycle roles. */
-    type TCP = client & master & server;
+    type TCP = socket_client & socket_master & socket_server;
     /** Option names accepted by a TCP handle's `setoption`. */
     type TCPOptions = "ipv6-v6only" | "keepalive" | "linger" | "reuseaddr" | "tcp-nodelay";
     /** Error string a TCP `receive` may return. */
@@ -29,7 +29,7 @@ declare global {
     /** Blocking mode passed to a TCP handle's `settimeout`. */
     type TCPTimeoutMode = "b" | "t";
     /** A UDP handle in either of its two lifecycle roles. */
-    type UDP = connected & unconnected;
+    type UDP = socket_connected & socket_unconnected;
     /** Option names accepted by a UDP handle's `setoption`. */
     type UDPOptions =
       | "broadcast"

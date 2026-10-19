@@ -1,17 +1,18 @@
 export {};
 
 // The authored `render.render_target` overloads are one file every surface
-// shares, so they name the parameter table through `render.RenderTargetParams`,
-// which each target generates from its own reference. A surface that ships
-// without the alias fails here rather than breaking the overload file for the
-// project that pinned it.
+// shares, so they name the parameter table through `render.render_target_params`:
+// the reference's own struct where it declares one, and an alias of the slot's
+// type, generated from that surface's reference, where it does not. A surface
+// that ships without the name fails here rather than breaking the overload file
+// for the project that pinned it.
 
-const _params: render.RenderTargetParams = {};
+const _params: render.render_target_params = {};
 void _params;
 
-// Both shared overloads take the alias, so a table typed as the alias passes
-// either arity on every surface, whatever shape that surface gives it.
-declare const params: render.RenderTargetParams;
+// Both shared overloads take the name, so a table typed with it passes either
+// arity on every surface, whatever shape that surface gives it.
+declare const params: render.render_target_params;
 render.render_target(params);
 render.render_target("rt", params);
 
@@ -23,3 +24,8 @@ render.render_target("rt", params);
 render.render_target(42);
 // @ts-expect-error a number is not a parameter table in the named arity either
 render.render_target("rt", 42);
+
+// The slot has one name on every surface.
+// @ts-expect-error render.RenderTargetParams is not a declared type
+const _oldName: render.RenderTargetParams = {};
+void _oldName;
