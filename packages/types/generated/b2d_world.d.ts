@@ -16,7 +16,7 @@ declare global {
      * @param filter - optional query filter
      * @returns travel fraction before collision
      */
-    function cast_mover(world: Opaque<"b2World">, capsule: b2d.mover_capsule, translation: Vector3, filter?: b2d.query_filter): number;
+    function cast_mover(world: Opaque<"b2World">, capsule: b2d.MoverCapsule, translation: Vector3, filter?: b2d.QueryFilter): number;
     /**
      * Cast a ray.
      *
@@ -26,7 +26,7 @@ declare global {
      * @param filter - optional query filter
      * @param max_results - optional maximum result count
      */
-    function cast_ray<Backend extends "v2" = "v2">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.fixture_cast_hit[], b2d.tree_stats]>;
+    function cast_ray<Backend extends "v2" = "v2">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.FixtureCastHit[], b2d.TreeStats]>;
     /**
      * The translation is the ray displacement from `origin`. Result order is not
      * guaranteed by Box2D.
@@ -37,7 +37,7 @@ declare global {
      * @param filter - optional query filter
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function cast_ray<Backend extends "v3">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.shape_cast_hit[], b2d.tree_stats]>;
+    function cast_ray<Backend extends "v3">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.ShapeCastHit[], b2d.TreeStats]>;
     /**
      * Cast a ray and return the closest hit.
      *
@@ -47,7 +47,7 @@ declare global {
      * @param filter - optional query filter
      * @returns closest hit, or `nil`
      */
-    function cast_ray_closest<Backend extends "v2" = "v2">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.query_filter): b2d.fixture_cast_hit | undefined;
+    function cast_ray_closest<Backend extends "v2" = "v2">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.QueryFilter): b2d.FixtureCastHit | undefined;
     /**
      * The translation is the ray displacement from `origin`.
      *
@@ -57,7 +57,7 @@ declare global {
      * @param filter - optional query filter
      * @returns closest hit, or `nil`
      */
-    function cast_ray_closest<Backend extends "v3">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.query_filter): b2d.shape_cast_hit | undefined;
+    function cast_ray_closest<Backend extends "v3">(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: b2d.QueryFilter): b2d.ShapeCastHit | undefined;
     /**
      * Uses Box2D v2 time-of-impact for fixture child shapes that support distance proxies.
      * Grid fixture children are skipped.
@@ -68,7 +68,7 @@ declare global {
      * @param filter - optional query filter
      * @param max_results - optional maximum result count
      */
-    function cast_shape<Backend extends "v2" = "v2">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.fixture_cast_hit[], b2d.tree_stats]>;
+    function cast_shape<Backend extends "v2" = "v2">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.FixtureCastHit[], b2d.TreeStats]>;
     /**
      * The translation is the shape displacement.
      *
@@ -78,7 +78,7 @@ declare global {
      * @param filter - optional query filter
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function cast_shape<Backend extends "v3">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.shape_cast_hit[], b2d.tree_stats]>;
+    function cast_shape<Backend extends "v3">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.ShapeCastHit[], b2d.TreeStats]>;
     /**
      * Collide a mover capsule against the world.
      *
@@ -88,7 +88,7 @@ declare global {
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      * @returns collision planes
      */
-    function collide_mover(world: Opaque<"b2World">, capsule: b2d.mover_capsule, filter?: b2d.query_filter, max_results?: number): b2d.mover_plane[];
+    function collide_mover(world: Opaque<"b2World">, capsule: b2d.MoverCapsule, filter?: b2d.QueryFilter, max_results?: number): b2d.MoverPlane[];
     /**
      * Enable or disable continuous collision.
      *
@@ -123,7 +123,7 @@ declare global {
      * @param world - world
      * @param definition - explosion definition
      */
-    function explode(world: Opaque<"b2World">, definition: b2d.explosion_definition): void;
+    function explode(world: Opaque<"b2World">, definition: b2d.ExplosionDefinition): void;
     /**
      * Get the number of awake bodies.
      *
@@ -137,7 +137,7 @@ declare global {
      * @param world - world
      * @returns world counters
      */
-    function get_counters(world: Opaque<"b2World">): b2d.world_counters;
+    function get_counters(world: Opaque<"b2World">): b2d.WorldCounters;
     /**
      * Get world gravity.
      *
@@ -165,7 +165,7 @@ declare global {
      * @param world - world
      * @returns world profiling data
      */
-    function get_profile(world: Opaque<"b2World">): b2d.world_profile;
+    function get_profile(world: Opaque<"b2World">): b2d.WorldProfile;
     /**
      * Get the restitution threshold.
      *
@@ -220,7 +220,7 @@ declare global {
      * - `fixtures` — overlapping fixtures. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * - `stats` — broad-phase query statistics
      */
-    function overlap_aabb<Backend extends "v2" = "v2">(world: Opaque<"b2World">, aabb: b2d.aabb, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.fixture_info[], b2d.tree_stats]>;
+    function overlap_aabb<Backend extends "v2" = "v2">(world: Opaque<"b2World">, aabb: b2d.Aabb, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.FixtureInfo[], b2d.TreeStats]>;
     /**
      * Find shapes overlapping an AABB.
      *
@@ -229,7 +229,7 @@ declare global {
      * @param filter - optional query filter
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function overlap_aabb<Backend extends "v3">(world: Opaque<"b2World">, aabb: b2d.aabb, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.shape_info[], b2d.tree_stats]>;
+    function overlap_aabb<Backend extends "v3">(world: Opaque<"b2World">, aabb: b2d.Aabb, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.ShapeInfo[], b2d.TreeStats]>;
     /**
      * Overlap a shape.
      *
@@ -241,7 +241,7 @@ declare global {
      * - `fixtures` — overlapping fixtures. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * - `stats` — broad-phase query statistics
      */
-    function overlap_shape<Backend extends "v2" = "v2">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.fixture_info[], b2d.tree_stats]>;
+    function overlap_shape<Backend extends "v2" = "v2">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.FixtureInfo[], b2d.TreeStats]>;
     /**
      * Find shapes overlapping a shape proxy.
      *
@@ -250,7 +250,7 @@ declare global {
      * @param filter - optional query filter
      * @param max_results - optional maximum result count. Omit or pass 0 for unlimited results.
      */
-    function overlap_shape<Backend extends "v3">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: b2d.query_filter, max_results?: number): LuaMultiReturn<[b2d.shape_info[], b2d.tree_stats]>;
+    function overlap_shape<Backend extends "v3">(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: b2d.QueryFilter, max_results?: number): LuaMultiReturn<[b2d.ShapeInfo[], b2d.TreeStats]>;
     /**
      * Rebuild the static broad-phase tree.
      *

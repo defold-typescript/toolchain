@@ -1,6 +1,6 @@
 import type { Hash, Url } from "./core-types";
 
-// Fields and docs follow the go ref-doc's `on_input.touch` STRUCT, whose keys are
+// Fields and docs follow the go ref-doc's `on_input.touch` STRUCT (`go.on_input.Touch`), whose keys are
 // the ones comp_script.cpp pushes; lifecycle-member-docs drift-guards the docs
 // against it, and a ref-doc re-pin is reconciled by hand.
 export interface InputTouch {
@@ -54,7 +54,7 @@ export interface InputTouch {
   screen_dy: number;
 }
 
-// Fields and docs follow the go ref-doc's `on_input.action` STRUCT, whose keys are
+// Fields and docs follow the go ref-doc's `on_input.action` STRUCT (`go.on_input.Action`), whose keys are
 // the ones comp_script.cpp pushes; lifecycle-member-docs drift-guards the docs
 // against it, and a ref-doc re-pin is reconciled by hand.
 export interface InputAction {

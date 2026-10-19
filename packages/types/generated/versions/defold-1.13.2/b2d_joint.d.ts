@@ -10,7 +10,7 @@ declare global {
     /**
      * Box2D distance-joint definition
      */
-    interface distance_definition {
+    interface DistanceDefinition {
       /**
        * Local anchor on the first body.
        */
@@ -76,7 +76,7 @@ declare global {
     /**
      * Box2D friction-joint definition
      */
-    interface friction_definition {
+    interface FrictionDefinition {
       /**
        * Local anchor on the first body.
        */
@@ -101,7 +101,7 @@ declare global {
     /**
      * Box2D gear-joint definition
      */
-    interface gear_definition {
+    interface GearDefinition {
       /**
        * Gear ratio.
        */
@@ -114,7 +114,7 @@ declare global {
     /**
      * Box2D motor-joint definition
      */
-    interface motor_definition {
+    interface MotorDefinition {
       /**
        * Linear target offset.
        */
@@ -143,7 +143,7 @@ declare global {
     /**
      * Box2D mouse-joint definition
      */
-    interface mouse_definition {
+    interface MouseDefinition {
       /**
        * Target position.
        */
@@ -176,7 +176,7 @@ declare global {
     /**
      * Box2D prismatic-joint definition
      */
-    interface prismatic_definition {
+    interface PrismaticDefinition {
       /**
        * Local anchor on the first body.
        */
@@ -245,7 +245,7 @@ declare global {
     /**
      * Box2D pulley-joint definition
      */
-    interface pulley_definition {
+    interface PulleyDefinition {
       /**
        * First ground anchor.
        */
@@ -282,7 +282,7 @@ declare global {
     /**
      * Box2D revolute-joint definition
      */
-    interface revolute_definition {
+    interface RevoluteDefinition {
       /**
        * Local anchor on the first body.
        */
@@ -347,7 +347,7 @@ declare global {
     /**
      * Box2D rope-joint definition
      */
-    interface rope_definition {
+    interface RopeDefinition {
       /**
        * Local anchor on the first body.
        */
@@ -368,7 +368,7 @@ declare global {
     /**
      * Box2D weld-joint definition
      */
-    interface weld_definition {
+    interface WeldDefinition {
       /**
        * Local anchor on the first body.
        */
@@ -421,7 +421,7 @@ declare global {
     /**
      * Box2D wheel-joint definition
      */
-    interface wheel_definition {
+    interface WheelDefinition {
       /**
        * Local anchor on the first body.
        */
@@ -561,7 +561,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.distance_definition): Opaque<"b2Joint">;
+    function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.DistanceDefinition): Opaque<"b2Joint">;
     /**
      * Create a filter joint.
      *
@@ -579,7 +579,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.friction_definition): Opaque<"b2Joint">;
+    function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.FrictionDefinition): Opaque<"b2Joint">;
     /**
      * Create a gear joint.
      *
@@ -588,7 +588,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition?: b2d.joint.gear_definition): Opaque<"b2Joint">;
+    function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition?: b2d.joint.GearDefinition): Opaque<"b2Joint">;
     /**
      * Create a motor joint.
      *
@@ -597,7 +597,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.motor_definition): Opaque<"b2Joint">;
+    function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.MotorDefinition): Opaque<"b2Joint">;
     /**
      * Create a mouse joint.
      *
@@ -606,7 +606,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.mouse_definition): Opaque<"b2Joint">;
+    function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.MouseDefinition): Opaque<"b2Joint">;
     /**
      * Create a prismatic joint.
      *
@@ -615,7 +615,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.prismatic_definition): Opaque<"b2Joint">;
+    function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.PrismaticDefinition): Opaque<"b2Joint">;
     /**
      * Create a pulley joint.
      *
@@ -624,7 +624,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.pulley_definition): Opaque<"b2Joint">;
+    function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.PulleyDefinition): Opaque<"b2Joint">;
     /**
      * Create a revolute joint.
      *
@@ -633,7 +633,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.revolute_definition): Opaque<"b2Joint">;
+    function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.RevoluteDefinition): Opaque<"b2Joint">;
     /**
      * Create a rope joint.
      *
@@ -642,7 +642,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.rope_definition): Opaque<"b2Joint">;
+    function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.RopeDefinition): Opaque<"b2Joint">;
     /**
      * Create a weld joint.
      *
@@ -651,7 +651,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.weld_definition): Opaque<"b2Joint">;
+    function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.WeldDefinition): Opaque<"b2Joint">;
     /**
      * Create a wheel joint.
      *
@@ -660,7 +660,7 @@ declare global {
      * @param definition - optional joint definition
      * @returns created joint
      */
-    function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.wheel_definition): Opaque<"b2Joint">;
+    function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.WheelDefinition): Opaque<"b2Joint">;
     /**
      * Destroy a joint created by `b2d.joint`.
      *

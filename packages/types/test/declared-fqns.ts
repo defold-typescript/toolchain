@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import { engineTypeName } from "../src/engine-type-name";
 
 // Every declaration a `.d.ts` body introduces, keyed by the fully-qualified name
 // a consumer would write. Parsing beats a regex here because the two shapes the
@@ -75,17 +76,27 @@ export interface FixtureDoc {
 //
 // A FUNCTION reaches it only as a callable, not as the namespace its option
 // struct nests under (`json.decode.options` opens `namespace decode`), and an
-// ENUM reaches it member by member, as the constants it names.
+// ENUM reaches it member by member, as the constants it names. A STRUCT reaches it
+// under its leaf through `engineTypeName` (`editor.ui.button.props` as
+// `editor.ui.button.Props`).
 export function unexpressedFixtureNames(doc: unknown, contents: string): string[] {
   const declared = collectDeclaredFqns(contents);
   const callables = collectDeclaredFqns(contents, false);
+  const declaredName = (name: string, type: string): string => {
+    if (type !== "STRUCT") return name;
+    const dot = name.lastIndexOf(".");
+    return `${name.slice(0, dot + 1)}${engineTypeName(name.slice(dot + 1))}`;
+  };
   return (doc as FixtureDoc).elements
     .flatMap((element) =>
       element.type === "ENUM" && element.members !== undefined && element.members.length > 0
         ? element.members.map((member) => ({ name: member.name, type: "CONSTANT" }))
         : [{ name: element.name, type: element.type }],
     )
-    .filter(({ name, type }) => !(type === "FUNCTION" ? callables : declared).has(name))
+    .filter(
+      ({ name, type }) =>
+        !(type === "FUNCTION" ? callables : declared).has(declaredName(name, type)),
+    )
     .map(({ name }) => name)
     .sort();
 }

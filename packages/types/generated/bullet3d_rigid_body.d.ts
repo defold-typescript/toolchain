@@ -129,7 +129,7 @@ declare global {
      * @param body - rigid body
      * @returns world-space bounds in Defold units
      */
-    function compute_aabb(body: Opaque<"btRigidBody">): bullet3d.world.aabb;
+    function compute_aabb(body: Opaque<"btRigidBody">): bullet3d.world.Aabb;
     /**
      * Get angular damping
      *

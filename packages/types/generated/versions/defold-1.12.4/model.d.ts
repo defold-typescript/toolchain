@@ -173,7 +173,7 @@ declare global {
      * ```
      */
     function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;
-    interface properties {
+    interface Properties {
       /**
        * The current animation set on the component. The type of the property is hash.
        */

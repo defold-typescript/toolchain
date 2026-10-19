@@ -15,7 +15,7 @@ declare global {
      * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns the fixture AABB
      */
-    function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.aabb;
+    function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.Aabb;
     /**
      * Get fixture density.
      *
@@ -32,7 +32,7 @@ declare global {
      * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns the filter data
      */
-    function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.filter;
+    function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): b2d.Filter;
     /**
      * Get fixture friction.
      *
@@ -94,7 +94,7 @@ declare global {
      * @param child_index - 1-based child shape index. **⚠️ 1-based; passed to Defold unchanged.**
      * @param filter - the filter data
      */
-    function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: b2d.filter): void;
+    function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: b2d.Filter): void;
     /**
      * Set fixture friction.
      *

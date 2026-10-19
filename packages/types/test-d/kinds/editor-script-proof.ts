@@ -102,7 +102,7 @@ editor.command({
 
 // The editor VM libraries, reachable only from this surface. Returns bind to
 // explicitly annotated consts so a regression to `unknown` reds here.
-const _response: http.request.response = http.request("http://localhost", {
+const _response: http.request.Response = http.request("http://localhost", {
   method: "GET",
 });
 const _serverUrl: string = http.server.url;

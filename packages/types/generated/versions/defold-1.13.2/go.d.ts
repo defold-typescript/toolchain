@@ -9,7 +9,7 @@ declare global {
     /**
      * Options for accessing indexed or internal component properties with go.get and go.set.
      */
-    export interface property_options {
+    export interface PropertyOptions {
       /**
        * Index into an array property, starting at one.
        */
@@ -845,7 +845,7 @@ declare global {
       /**
        * Data supplied to the global `on_input` lifecycle function.
        */
-      interface action {
+      interface Action {
         /**
          * Amount of input, usually 1 for buttons or between 0 and 1 for analogue input; absent for pointer movement and text input.
          */
@@ -921,7 +921,7 @@ declare global {
         /**
          * Parsed guid information, supplied with a gamepad-connected action.
          */
-        gamepad_guid_info?: go.on_input.gamepad_guid_info;
+        gamepad_guid_info?: go.on_input.GamepadGuidInfo;
         /**
          * Whether the input originated from an unknown or unmapped gamepad.
          */
@@ -945,7 +945,7 @@ declare global {
         /**
          * Touch inputs, one entry per finger.
          */
-        touch?: go.on_input.touch[];
+        touch?: go.on_input.Touch[];
         /**
          * Text entered by a text action, or the current sequence for marked-text composition such as Japanese Kana.
          */
@@ -954,7 +954,7 @@ declare global {
       /**
        * Parsed fields from a connected gamepad guid.
        */
-      interface gamepad_guid_info {
+      interface GamepadGuidInfo {
         /**
          * USB vendor id.
          */
@@ -979,7 +979,7 @@ declare global {
       /**
        * One touch entry in on_input.action.
        */
-      interface touch {
+      interface Touch {
         /**
          * Identifier for the touch during its lifetime.
          */
@@ -1030,7 +1030,7 @@ declare global {
         screen_dy: number;
       }
     }
-    export interface properties {
+    export interface Properties {
       /**
        * The rotation of the game object expressed in Euler angles.
        * Euler angles are specified in degrees in the interval (-360, 360).

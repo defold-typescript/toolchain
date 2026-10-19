@@ -192,7 +192,7 @@ declare global {
      * ```
      */
     function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;
-    interface properties {
+    interface Properties {
       /**
        * The material used when rendering the tile map. The type of the property is hash.
        */

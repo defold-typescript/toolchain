@@ -8,7 +8,7 @@ import type { Hash, Vector3 } from "./core-types";
 // evidence. A key the engine reads but never writes is `readonly`.
 declare global {
   namespace go {
-    interface properties {
+    interface Properties {
       /** The position's x component. `gameobject.cpp:GetProperty` reads one float. */
       "position.x": number;
       /** The position's y component. `gameobject.cpp:GetProperty` reads one float. */
@@ -45,7 +45,7 @@ declare global {
   }
 
   namespace label {
-    interface properties {
+    interface Properties {
       /** The scale's x component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
       "scale.x": number;
       /** The scale's y component. `comp_label.cpp` and `comp_private.cpp` read and write one float. */
@@ -100,7 +100,7 @@ declare global {
   }
 
   namespace sprite {
-    interface properties {
+    interface Properties {
       /** The scale's x component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
       "scale.x": number;
       /** The scale's y component. `comp_sprite.cpp` and `comp_private.cpp` read and write one float. */
@@ -146,7 +146,7 @@ declare global {
   }
 
   namespace model {
-    interface properties {
+    interface Properties {
       /**
        * The material resource the model renders with.
        * `comp_model.cpp:CompModelGetProperty` and `CompModelSetProperty` read
@@ -162,7 +162,7 @@ declare global {
   }
 
   namespace physics {
-    interface properties {
+    interface Properties {
       /**
        * Whether the body runs continuous collision detection as a fast-moving
        * bullet. Box2D only: `comp_collision_object_box2d.cpp` reads and writes
@@ -176,7 +176,7 @@ declare global {
     /**
      * Factory component properties. Upstream's factory reference declares none.
      */
-    interface properties {
+    interface Properties {
       /**
        * The path hash of the prototype the factory spawns. Read-only:
        * `comp_factory.cpp:CompFactoryGetProperty` reads it and the component
@@ -191,7 +191,7 @@ declare global {
      * Collection factory component properties. Upstream's collectionfactory
      * reference declares none.
      */
-    interface properties {
+    interface Properties {
       /**
        * The path hash of the collection prototype the factory spawns.
        * Read-only: `comp_collection_factory.cpp:CompCollectionFactoryGetProperty`
@@ -207,7 +207,7 @@ declare global {
    * `CompMeshSetProperty` handle.
    */
   namespace mesh {
-    interface properties {
+    interface Properties {
       /**
        * The buffer resource holding the mesh's vertex data.
        * `resource.get_buffer` and `resource.set_buffer` read it with

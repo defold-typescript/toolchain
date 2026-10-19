@@ -5,38 +5,38 @@ import { defineScript, type ScriptPropertiesOf } from "../src/lifecycle";
 // Caller-named component: the explicit `P` generic keys go.get/go.set to that
 // component's property catalogue, beyond the transform-only default. The caller
 // (not a string argument) names the component, so no false URL-correctness is
-// implied; `sprite.properties.animation: Hash` already exists in the generated
+// implied; `sprite.Properties.animation: Hash` already exists in the generated
 // typings, and the generic surfaces it without a cast. The empty call applies
 // the type argument; the inner call infers the key (TS has no partial
 // type-argument inference, so the key cannot be inferred in the same call that
 // fixes `P` — hence the curried form).
-const _anim: Hash = go.get<sprite.properties>()("#sprite", "animation");
-const _cursor: number = go.get<sprite.properties>()("#sprite", "cursor");
+const _anim: Hash = go.get<sprite.Properties>()("#sprite", "animation");
+const _cursor: number = go.get<sprite.Properties>()("#sprite", "cursor");
 void _anim;
 void _cursor;
 
-// @ts-expect-error key not in sprite.properties
-go.get<sprite.properties>()("#sprite", "nope");
+// @ts-expect-error key not in sprite.Properties
+go.get<sprite.Properties>()("#sprite", "nope");
 
-// Transform default (bare direct call, keyed to go.properties) stays intact.
+// Transform default (bare direct call, keyed to go.Properties) stays intact.
 const _pos: Vector3 = go.get("#go", "position");
 void _pos;
 go.set("#go", "position", vmath.vector3());
 
 // set keyed to the component: a valid write checks, with the value gated to P[K].
-go.set<sprite.properties>()("#sprite", "playback_rate", 2);
+go.set<sprite.Properties>()("#sprite", "playback_rate", 2);
 
-// @ts-expect-error key not in sprite.properties
-go.set<sprite.properties>()("#sprite", "nope", 1);
+// @ts-expect-error key not in sprite.Properties
+go.set<sprite.Properties>()("#sprite", "nope", 1);
 
 // @ts-expect-error cursor is number, not a Hash — value type is gated to P[K]
-go.set<sprite.properties>()("#sprite", "cursor", hash("x"));
+go.set<sprite.Properties>()("#sprite", "cursor", hash("x"));
 
 // `animation` is READ ONLY: the generated member is `readonly` and the engine
 // refuses the write, so set rejects the key while get still reads it.
 // @ts-expect-error animation is readonly — set accepts only writable keys
-go.set<sprite.properties>()("#sprite", "animation", hash("x"));
-const _animation: Hash = go.get<sprite.properties>()("#sprite", "animation");
+go.set<sprite.Properties>()("#sprite", "animation", hash("x"));
+const _animation: Hash = go.get<sprite.Properties>()("#sprite", "animation");
 void _animation;
 
 // An array material constant read without `index` returns every element, so

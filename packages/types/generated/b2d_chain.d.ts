@@ -35,7 +35,7 @@ declare global {
      * @param chain - chain
      * @returns chain geometry
      */
-    function get_geometry(chain: Opaque<"b2Chain">): b2d.chain_geometry;
+    function get_geometry(chain: Opaque<"b2Chain">): b2d.ChainGeometry;
     /**
      * Get chain material id.
      *
@@ -63,7 +63,7 @@ declare global {
      * @param chain - chain
      * @returns chain segment shapes
      */
-    function get_segments(chain: Opaque<"b2Chain">): b2d.shape_info[];
+    function get_segments(chain: Opaque<"b2Chain">): b2d.ShapeInfo[];
     /**
      * Get the world owning a chain.
      *

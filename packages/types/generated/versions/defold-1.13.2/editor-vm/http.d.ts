@@ -15,13 +15,13 @@ declare global {
      * @param opts - request options
      * @returns HTTP response
      */
-    function request(url: string, opts?: http.request.options): http.request.response;
+    function request(url: string, opts?: http.request.Options): http.request.Response;
     namespace request {
       type method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS" | string;
       /**
        * Options for http.request
        */
-      interface options {
+      interface Options {
         /**
          * request method, defaults to `"GET"`
          */
@@ -46,7 +46,7 @@ declare global {
       /**
        * Response returned by http.request
        */
-      interface response {
+      interface Response {
         /**
          * response code
          */
@@ -66,11 +66,11 @@ declare global {
       }
     }
     namespace server {
-      type handler = (request: http.server.request) => LuaMultiReturn<[http.response | number | undefined, LuaTable<string, string> | undefined, string | undefined]>;
+      type handler = (request: http.server.Request) => LuaMultiReturn<[http.response | number | undefined, LuaTable<string, string> | undefined, string | undefined]>;
       /**
        * HTTP server request
        */
-      interface request {
+      interface Request {
         /**
          * route path parameter extracted from a path pattern
          */

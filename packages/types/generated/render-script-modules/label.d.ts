@@ -9,7 +9,7 @@ declare global {
     /**
      * Rich-text layout object
      */
-    interface layout_object {
+    interface LayoutObject {
       /**
        * object type, currently `link` or `sprite`
        */
@@ -47,7 +47,7 @@ declare global {
        */
       attributes: LuaTable<string, string>;
     }
-    interface properties {
+    interface Properties {
       /**
        * The color of the label. The type of the property is vector4.
        */

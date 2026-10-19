@@ -57,31 +57,31 @@ describe("property probes", () => {
   });
 
   test("a probed member reads its value and writes the same value back", () => {
-    const calls = generation.calls.filter((call) => call.name === "sprite.properties.cursor");
+    const calls = generation.calls.filter((call) => call.name === "sprite.Properties.cursor");
     expect(calls.map((call) => [call.variant, call.kind, call.call])).toEqual([
-      ["get", "go", 'go.get<sprite.properties>()(SPRITE, "cursor")'],
+      ["get", "go", 'go.get<sprite.Properties>()(SPRITE, "cursor")'],
       [
         "set",
         "go",
-        'go.set<sprite.properties>()(SPRITE, "cursor", go.get<sprite.properties>()(SPRITE, "cursor"))',
+        'go.set<sprite.Properties>()(SPRITE, "cursor", go.get<sprite.Properties>()(SPRITE, "cursor"))',
       ],
     ]);
     expect(calls[0]?.returns).toEqual({ kinds: [["number"]], variadic: false });
     const keyed = generation.calls.find(
-      (call) => call.name === "gui.properties.textures" && call.variant === "set",
+      (call) => call.name === "gui.Properties.textures" && call.variant === "set",
     );
     expect(keyed?.call).toBe(
-      'go.set<gui.properties>()(GUI, "textures", go.get<gui.properties>()(GUI, "textures", { key: "probe" }), { key: "probe" })',
+      'go.set<gui.Properties>()(GUI, "textures", go.get<gui.Properties>()(GUI, "textures", { key: "probe" }), { key: "probe" })',
     );
   });
 
   test("a writable union member is also written once with each kind it declares", () => {
-    const calls = generation.calls.filter((call) => call.name === "go.properties.scale");
+    const calls = generation.calls.filter((call) => call.name === "go.Properties.scale");
     expect(calls.map((call) => [call.variant, call.call])).toEqual([
-      ["get", 'go.get<go.properties>()(GO, "scale")'],
-      ["set", 'go.set<go.properties>()(GO, "scale", go.get<go.properties>()(GO, "scale"))'],
-      ["set-number", 'go.set<go.properties>()(GO, "scale", 1)'],
-      ["set-vector3", 'go.set<go.properties>()(GO, "scale", vmath.vector3(1, 1, 1))'],
+      ["get", 'go.get<go.Properties>()(GO, "scale")'],
+      ["set", 'go.set<go.Properties>()(GO, "scale", go.get<go.Properties>()(GO, "scale"))'],
+      ["set-number", 'go.set<go.Properties>()(GO, "scale", 1)'],
+      ["set-vector3", 'go.set<go.Properties>()(GO, "scale", vmath.vector3(1, 1, 1))'],
     ]);
   });
 
@@ -95,12 +95,12 @@ describe("property probes", () => {
   test("a member the catalog declares readonly gets a write that must be refused", () => {
     expect(byKey.get("sprite.animation")?.readonly).toBe(true);
     const set = generation.calls.find(
-      (call) => call.name === "sprite.properties.animation" && call.variant === "set",
+      (call) => call.name === "sprite.Properties.animation" && call.variant === "set",
     );
     expect(set?.readonlySet).toBe(true);
     const go = generateProbes(undefined, "v2").files[PROBE_FILES.go] ?? "";
     expect(go).toContain(
-      '    probe("sprite.properties.animation", "set", () =>\n      // @ts-expect-error\n',
+      '    probe("sprite.Properties.animation", "set", () =>\n      // @ts-expect-error\n',
     );
   });
 
@@ -108,8 +108,8 @@ describe("property probes", () => {
     const v2 = generateProbes(undefined, "v2");
     const v3 = generateProbes(undefined, "v3");
     expect(v2.files[PROBE_FILES.go]).toContain(
-      'probe("sprite.properties.cursor", "get", () => go.get<sprite.properties>()(SPRITE, "cursor"));',
+      'probe("sprite.Properties.cursor", "get", () => go.get<sprite.Properties>()(SPRITE, "cursor"));',
     );
-    expect(v3.calls.some((call) => call.name.includes(".properties."))).toBe(false);
+    expect(v3.calls.some((call) => call.name.includes(".Properties."))).toBe(false);
   });
 });

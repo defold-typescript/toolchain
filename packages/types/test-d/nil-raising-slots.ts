@@ -29,8 +29,8 @@ gui.set_texture_data("tex", 1, 1, image.TYPE_RGBA, "buf", true);
 gui.set_texture_data("tex", 1, 1, image.TYPE_RGBA, "buf", maybeFlag);
 
 // gui.play_flipbook `play_properties` (:2120-2122)
-declare const playProperties: gui.play_properties;
-declare const maybePlayProperties: gui.play_properties | undefined;
+declare const playProperties: gui.PlayProperties;
+declare const maybePlayProperties: gui.PlayProperties | undefined;
 gui.play_flipbook(node, "anim");
 gui.play_flipbook(node, "anim", undefined, playProperties);
 // @ts-expect-error possibly-undefined play properties raise when they are nil
@@ -38,8 +38,8 @@ gui.play_flipbook(node, "anim", undefined, maybePlayProperties);
 gui.play_flipbook(node, "anim", undefined, { offset: 0.5 });
 
 // gui.stop_particlefx `options` (:4813-4814)
-declare const stopOptions: particlefx.stop_options;
-declare const maybeStopOptions: particlefx.stop_options | undefined;
+declare const stopOptions: particlefx.StopOptions;
+declare const maybeStopOptions: particlefx.StopOptions | undefined;
 gui.stop_particlefx(node);
 gui.stop_particlefx(node, stopOptions);
 // @ts-expect-error possibly-undefined options raise when they are nil
@@ -47,8 +47,8 @@ gui.stop_particlefx(node, maybeStopOptions);
 
 // render.draw argument 2 (render_script.cpp:1931-1934)
 declare const predicate: Opaque<"render_predicate">;
-declare const drawOptions: render.draw_options;
-declare const maybeDrawOptions: render.draw_options | undefined;
+declare const drawOptions: render.DrawOptions;
+declare const maybeDrawOptions: render.DrawOptions | undefined;
 render.draw(predicate);
 render.draw(predicate, drawOptions);
 // @ts-expect-error possibly-undefined options raise when they are nil
@@ -56,8 +56,8 @@ render.draw(predicate, maybeDrawOptions);
 
 // render.set_render_target argument 2 (:1440-1442); a nil target is the default.
 declare const target: Opaque<"render_target">;
-declare const targetOptions: render.set_render_target_options;
-declare const maybeTargetOptions: render.set_render_target_options | undefined;
+declare const targetOptions: render.SetRenderTargetOptions;
+declare const maybeTargetOptions: render.SetRenderTargetOptions | undefined;
 render.set_render_target(target);
 render.set_render_target(target, targetOptions);
 // @ts-expect-error possibly-undefined options raise when they are nil
@@ -66,8 +66,8 @@ render.set_render_target(undefined, targetOptions);
 
 // resource.get_text_metrics argument 3 (script_resource.cpp:3395-3398)
 declare const font: Hash;
-declare const metricsOptions: resource.text_metrics_options;
-declare const maybeMetricsOptions: resource.text_metrics_options | undefined;
+declare const metricsOptions: resource.TextMetricsOptions;
+declare const maybeMetricsOptions: resource.TextMetricsOptions | undefined;
 resource.get_text_metrics(font, "text");
 resource.get_text_metrics(font, "text", metricsOptions);
 // @ts-expect-error possibly-undefined options raise when they are nil

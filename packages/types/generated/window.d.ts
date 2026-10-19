@@ -9,7 +9,7 @@ declare global {
      * Width and height are present for window.WINDOW_EVENT_RESIZED and
      * absent for other window events.
      */
-    interface event_data {
+    interface EventData {
       /**
        * Window width after a resize.
        */
@@ -22,7 +22,7 @@ declare global {
     /**
      * Window safe-area data
      */
-    interface safe_area {
+    interface SafeArea {
       /**
        * Safe-area x-coordinate.
        */
@@ -121,7 +121,7 @@ declare global {
      *
      * @returns safe area data
      */
-    function get_safe_area(): window.safe_area;
+    function get_safe_area(): window.SafeArea;
     /**
      * This returns the current window size (width and height).
      */
@@ -159,7 +159,7 @@ declare global {
      * });
      * ```
      */
-    function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;
+    function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.EventData) => void) | undefined): void;
     /**
      * Set the locking state for current mouse cursor on a PC platform.
      * This function locks or unlocks the mouse cursor to the center point of the window. While the cursor is locked,

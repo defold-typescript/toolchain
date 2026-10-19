@@ -53,15 +53,15 @@ for (const [slot, info] of material.get_textures(materialPath)) {
 // @ts-expect-error a slot-keyed table has no length
 void material.get_textures(materialPath).length;
 // @ts-expect-error a slot-keyed table is not a sequence
-const _asArray: material.texture_info[] = material.get_textures(materialPath);
+const _asArray: material.TextureInfo[] = material.get_textures(materialPath);
 void _asArray;
 // `Compute_GetTextures` packs its textures, so it stays a sequence.
 void compute.get_textures(materialPath).length;
 
 // `PushSampler` pushes the raw texture type, which for a separate sampler or
 // texture binding is one of five values with no Lua constant.
-const _samplerType: material.sampler_info["type"] = 7;
+const _samplerType: material.SamplerInfo["type"] = 7;
 void _samplerType;
 // @ts-expect-error past the last texture type the engine defines
-const _beyond: material.sampler_info["type"] = 11;
+const _beyond: material.SamplerInfo["type"] = 11;
 void _beyond;

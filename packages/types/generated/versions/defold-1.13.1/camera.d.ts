@@ -252,7 +252,7 @@ declare global {
      * ```
      */
     function world_to_screen(world_pos: Vector3, camera?: Url | number | string | Hash): Vector3;
-    interface properties {
+    interface Properties {
       /**
        * The ratio between the frustum width and height. Used when calculating the
        * projection of a perspective camera.

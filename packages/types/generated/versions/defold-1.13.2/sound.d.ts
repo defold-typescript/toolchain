@@ -11,7 +11,7 @@ declare global {
      * Data passed to the completion callback of sound.play. The callback's
      * `message_id` indicates whether playback finished or was stopped manually.
      */
-    interface play_completion {
+    interface PlayCompletion {
       /**
        * The sequential play identifier for the playback.
        */
@@ -20,7 +20,7 @@ declare global {
     /**
      * Sound playback properties
      */
-    interface play_properties {
+    interface PlayProperties {
       /**
        * Delay in seconds before playback starts. The default is 0.
        */
@@ -49,7 +49,7 @@ declare global {
     /**
      * Sound stop properties
      */
-    interface stop_properties {
+    interface StopProperties {
       /**
        * Sequential playback identifier returned by sound.play.
        */
@@ -241,7 +241,7 @@ declare global {
      * });
      * ```
      */
-    function play(url: string | Hash | Url, play_properties?: sound.play_properties, complete_function?: (self: unknown, message_id: Hash, message: sound.play_completion, sender: Url) => void): number;
+    function play(url: string | Hash | Url, play_properties?: sound.PlayProperties, complete_function?: (self: unknown, message_id: Hash, message: sound.PlayCompletion, sender: Url) => void): number;
     /**
      * Set gain on all active playing voices of a sound.
      *
@@ -295,8 +295,8 @@ declare global {
      * sound.stop("#sound", { play_id: id });
      * ```
      */
-    function stop(url: string | Hash | Url, stop_properties?: sound.stop_properties): void;
-    interface properties {
+    function stop(url: string | Hash | Url, stop_properties?: sound.StopProperties): void;
+    interface Properties {
       /**
        * The gain on the sound-component. Note that gain is in linear scale,
        * between 0 and 1.

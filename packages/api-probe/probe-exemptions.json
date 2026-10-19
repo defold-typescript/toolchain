@@ -799,7 +799,7 @@
     "verdict": "accepted",
     "reason": "the binding reads complete_function only when lua_isfunction(L, 5) and ignores any other kind"
   },
-  "model.properties.animation:set": {
+  "model.Properties.animation:set": {
     "outcome": "bad-argument",
     "verdict": "accepted",
     "reason": "no animation plays on the probe model, and the engine resolves no animation from the id the read returns (its message names the resource '(null)')"
@@ -1064,7 +1064,7 @@
     "verdict": "accepted",
     "reason": "the witness buffer is not WAV or Ogg data, so the engine does not update the sound"
   },
-  "sprite.properties.texture0:set": {
+  "sprite.Properties.texture0:set": {
     "outcome": "bad-argument",
     "verdict": "accepted",
     "reason": "the engine resolves a written texture0 hash to a loaded texture resource, and the hash the read returns resolves to none (its message names the resource '(null)')"

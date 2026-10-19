@@ -734,7 +734,7 @@ declare global {
      * // How to get the data from a buffer
      * export default defineScript({
      *   init() {
-     *     const res_path = go.get<mesh.properties>()("#mesh", "vertices");
+     *     const res_path = go.get<mesh.Properties>()("#mesh", "vertices");
      *     const buf = resource.get_buffer(res_path);
      *     const stream_positions = buffer.get_stream(buf, "position");
      *
@@ -837,7 +837,7 @@ declare global {
      * ```ts
      * export default defineScript({
      *   init() {
-     *     const font = go.get<label.properties>()("#label", "font");
+     *     const font = go.get<label.Properties>()("#label", "font");
      *     const metrics = resource.get_text_metrics(font, "The quick brown fox\n jumps over the lazy dog");
      *     pprint(metrics);
      *   },
@@ -870,7 +870,7 @@ declare global {
      * ```ts
      * export default defineScript({
      *   init() {
-     *     const font = go.get<label.properties>()("#label", "font");
+     *     const font = go.get<label.Properties>()("#label", "font");
      *     const metrics = resource.get_text_metrics(font, "The quick brown fox\n jumps over the lazy dog");
      *     pprint(metrics);
      *   },
@@ -1060,7 +1060,7 @@ declare global {
      * // Assuming the folder "/res" is added to the project custom resources:
      * // load a texture resource and set it on a sprite
      * const buffer = resource.load("/res/new.texturec");
-     * resource.set(go.get<sprite.properties>()("#sprite", "texture0"), buffer);
+     * resource.set(go.get<sprite.Properties>()("#sprite", "texture0"), buffer);
      * ```
      */
     function set(path: string | Hash, buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }): void;
@@ -1219,7 +1219,7 @@ declare global {
      *
      * export default defineScript({
      *   init() {
-     *     const res_path = go.get<mesh.properties>()("#mesh", "vertices");
+     *     const res_path = go.get<mesh.Properties>()("#mesh", "vertices");
      *
      *     const positions = [
      *       1, -1, 0,
@@ -1353,7 +1353,7 @@ declare global {
      *     // the engine registers a texture format only when the driver supports it
      *     const format = graphics.TEXTURE_FORMAT_RGB;
      *     if (format !== undefined) {
-     *       const resource_path = go.get<model.properties>()("#model", "texture0");
+     *       const resource_path = go.get<model.Properties>()("#model", "texture0");
      *       const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };
      *       resource.set_texture(resource_path, args, buf);
      *     }
@@ -1386,7 +1386,7 @@ declare global {
      *     // the engine registers a texture format only when the driver supports it
      *     const format = graphics.TEXTURE_FORMAT_RGB;
      *     if (format !== undefined) {
-     *       const resource_path = go.get<model.properties>()("#model", "texture0");
+     *       const resource_path = go.get<model.Properties>()("#model", "texture0");
      *       const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format, num_mip_maps: 1 };
      *       resource.set_texture(resource_path, args, buf);
      *     }
@@ -1407,7 +1407,7 @@ declare global {
      *     // the engine registers a texture format only when the driver supports it
      *     const format = graphics.TEXTURE_FORMAT_RGB;
      *     if (format === undefined) return;
-     *     const resource_path = go.get<model.properties>()("#model", "texture0");
+     *     const resource_path = go.get<model.Properties>()("#model", "texture0");
      *     // the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
      *     const args = {
      *       width: 128,

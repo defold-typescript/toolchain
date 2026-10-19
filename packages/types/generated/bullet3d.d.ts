@@ -27,7 +27,7 @@ declare global {
     /**
      * Bullet version information
      */
-    interface version_info {
+    interface VersionInfo {
       /**
        * full Bullet version string
        */
@@ -94,7 +94,7 @@ declare global {
      *
      * @returns version information
      */
-    function get_version(): bullet3d.version_info;
+    function get_version(): bullet3d.VersionInfo;
     /**
      * This function raises an error unless the collection uses 3D physics.
      *

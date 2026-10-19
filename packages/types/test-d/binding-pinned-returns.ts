@@ -50,7 +50,7 @@ if (!changed && code !== undefined) {
 
 // script_image.cpp:Image_GetAstcHeader raises on invalid data and never returns nil.
 declare const astcData: string;
-const header: image.astc_header = image.get_astc_header(astcData);
+const header: image.AstcHeader = image.get_astc_header(astcData);
 void header;
 
 void _spawnedEarly;

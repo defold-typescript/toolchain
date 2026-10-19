@@ -9,7 +9,7 @@ declare global {
     /**
      * Axis-aligned bounding box
      */
-    interface aabb {
+    interface Aabb {
       /**
        * minimum local-space bounds
        */
@@ -22,7 +22,7 @@ declare global {
     /**
      * Model animation playback properties
      */
-    interface play_properties {
+    interface PlayProperties {
       /**
        * duration of a linear blend from the current animation
        */
@@ -36,7 +36,7 @@ declare global {
        */
       playback_rate?: number;
     }
-    interface properties {
+    interface Properties {
       /**
        * The current animation set on the component. The type of the property is hash.
        */

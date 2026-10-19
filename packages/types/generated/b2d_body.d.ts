@@ -77,7 +77,7 @@ declare global {
      * @param body - body
      * @returns body bounds
      */
-    function compute_aabb(body: Opaque<"b2Body">): b2d.aabb;
+    function compute_aabb(body: Opaque<"b2Body">): b2d.Aabb;
     /**
      * Chains are one-sided connected segments with optional ghost vertices at
      * the ends of open chains. Ghost vertices are creation-time chain data only and
@@ -96,7 +96,7 @@ declare global {
      * }
      * ```
      */
-    function create_chain(body: Opaque<"b2Body">, definition: b2d.chain_definition): LuaMultiReturn<[Opaque<"b2Chain">, b2d.shape_info[]]>;
+    function create_chain(body: Opaque<"b2Body">, definition: b2d.ChainDefinition): LuaMultiReturn<[Opaque<"b2Chain">, b2d.ShapeInfo[]]>;
     /**
      * Creates a fixture and attach it to this body. Use this function if you need
      * to set some fixture parameters, like friction. Otherwise you can create the
@@ -118,7 +118,7 @@ declare global {
      * }
      * ```
      */
-    function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): b2d.fixture_info;
+    function create_fixture(body: Opaque<"b2Body">, definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }): b2d.FixtureInfo;
     /**
      * Creates a shape and attaches it to this body.
      * If the density is non-zero, this function automatically updates the mass of the body.
@@ -201,14 +201,14 @@ declare global {
      * @param body - body
      * @returns array of contact tables
      */
-    function get_contact_data(body: Opaque<"b2Body">): b2d.contact_data[];
+    function get_contact_data(body: Opaque<"b2Body">): b2d.ContactData[];
     /**
      * Get the fixtures attached to this body.
      *
      * @param body - body
      * @returns the attached fixtures. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      */
-    function get_fixtures(body: Opaque<"b2Body">): b2d.fixture_info[];
+    function get_fixtures(body: Opaque<"b2Body">): b2d.FixtureInfo[];
     /**
      * Get the total force currently applied on this object
      *
@@ -309,7 +309,7 @@ declare global {
      * @param body - body
      * @returns the mass data
      */
-    function get_mass_data(body: Opaque<"b2Body">): b2d.mass_data;
+    function get_mass_data(body: Opaque<"b2Body">): b2d.MassData;
     /**
      * Get the body name.
      *
@@ -344,7 +344,7 @@ declare global {
      * @param body - body
      * @returns attached shapes
      */
-    function get_shapes(body: Opaque<"b2Body">): b2d.shape_info[];
+    function get_shapes(body: Opaque<"b2Body">): b2d.ShapeInfo[];
     /**
      * Get the sleep velocity threshold.
      *
@@ -358,7 +358,7 @@ declare global {
      * @param body - body
      * @returns the body transform
      */
-    function get_transform(body: Opaque<"b2Body">): b2d.transform;
+    function get_transform(body: Opaque<"b2Body">): b2d.Transform;
     /**
      * Get the type of this body.
      *
@@ -539,7 +539,7 @@ declare global {
      * @param body - body
      * @param data - the mass data
      */
-    function set_mass_data(body: Opaque<"b2Body">, data: b2d.mass_data): void;
+    function set_mass_data(body: Opaque<"b2Body">, data: b2d.MassData): void;
     /**
      * Set the body name.
      *

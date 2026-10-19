@@ -16,7 +16,7 @@ declare global {
      * const constants = compute.get_constants("/my_compute.computec");
      * ```
      */
-    function get_constants(path: Hash | string): material.constant_info[];
+    function get_constants(path: Hash | string): material.ConstantInfo[];
     /**
      * Returns a table of all the texture samplers in the compute program. This function will return all the texture samplers
      * that are available, even the ones that have not been specified in the compute resource.
@@ -28,7 +28,7 @@ declare global {
      * const samplers = compute.get_samplers("/my_compute.computec");
      * ```
      */
-    function get_samplers(path: Hash | string): material.sampler_info[];
+    function get_samplers(path: Hash | string): material.SamplerInfo[];
     /**
      * Returns a table of all the textures from the compute program.
      *
@@ -39,7 +39,7 @@ declare global {
      * const textures = compute.get_textures("/my_compute.computec");
      * ```
      */
-    function get_textures(path: Hash | string): material.texture_info[];
+    function get_textures(path: Hash | string): material.TextureInfo[];
     /**
      * Sets shader constants in a compute program, if the constants exist.
      *
@@ -66,7 +66,7 @@ declare global {
      * });
      * ```
      */
-    function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.constant_options> | Record<string, material.constant_options>): void;
+    function set_constants(path: Hash | string, constants: LuaMap<string | Hash, material.ConstantOptions> | Record<string, material.ConstantOptions>): void;
     /**
      * Sets texture samplers in a compute program, if the samplers exist. Use this function to change the settings of texture samplers.
      * To set actual textures that should be bound to the samplers, use the `compute.set_textures` function instead.
@@ -78,7 +78,7 @@ declare global {
      * compute.set_samplers("/my_compute.computec", { texture_sampler: { u_wrap: graphics.TEXTURE_WRAP_REPEAT, v_wrap: graphics.TEXTURE_WRAP_MIRRORED_REPEAT } });
      * ```
      */
-    function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.sampler_options> | Record<string, material.sampler_options>): void;
+    function set_samplers(path: Hash | string, samplers: LuaMap<string | Hash, material.SamplerOptions> | Record<string, material.SamplerOptions>): void;
     /**
      * Sets textures in a compute program, if the samplers exist.
      *
