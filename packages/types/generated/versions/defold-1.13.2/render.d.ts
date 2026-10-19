@@ -15,7 +15,7 @@ declare global {
        */
       use_frustum?: boolean;
     }
-    type constant_buffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
+    type ConstantBuffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
     /**
      * Debug-draw options
      */
@@ -59,9 +59,8 @@ declare global {
        */
       sort_order?: render.Sort;
     }
-    type render_predicate = Opaque<"render_predicate">;
-    type render_target = Opaque<"render_target">;
-    type render_target_params = { sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };
+    type RenderPredicate = Opaque<"render_predicate">;
+    type RenderTarget = Opaque<"render_target">;
     /**
      * Render-target attachment parameters
      */
@@ -103,6 +102,7 @@ declare global {
        */
       flags?: render.RenderTargetFlag | number;
     }
+    type RenderTargetParams = { sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };
     /**
      * Render-target activation options
      */
@@ -112,7 +112,7 @@ declare global {
        */
       transient?: graphics.BufferType[];
     }
-    type texture = Opaque<"texture">;
+    type Texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
     type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;
     type ContextEvent = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED;

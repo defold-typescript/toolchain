@@ -6,7 +6,7 @@ declare global {
    * Functions for interacting with native Box2D joints.
    */
   namespace b2d.joint {
-    type b2Joint = Opaque<"b2Joint">;
+    type B2Joint = Opaque<"b2Joint">;
     /**
      * Distance joint type.
      */

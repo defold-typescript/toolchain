@@ -7,8 +7,8 @@ declare global {
    * and returned from `b2d.fixture.get_shape`.
    */
   namespace b2d.shape {
-    type b2Shape = Opaque<"b2Shape">;
-    type definition = { type: b2d.shape.ShapeType; radius: number; center?: Vector3 } | { type: b2d.shape.ShapeType; radius: number; center1: Vector3; center2: Vector3 } | { type: b2d.shape.ShapeType; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: b2d.shape.ShapeType; hx: number; hy: number; center?: Vector3; angle?: number } | { type: b2d.shape.ShapeType; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
+    type B2Shape = Opaque<"b2Shape">;
+    type Definition = { type: b2d.shape.ShapeType; radius: number; center?: Vector3 } | { type: b2d.shape.ShapeType; radius: number; center1: Vector3; center2: Vector3 } | { type: b2d.shape.ShapeType; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: b2d.shape.ShapeType; hx: number; hy: number; center?: Vector3; angle?: number } | { type: b2d.shape.ShapeType; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
     type ShapeType = typeof b2d.shape.SHAPE_TYPE_BOX | typeof b2d.shape.SHAPE_TYPE_CAPSULE | typeof b2d.shape.SHAPE_TYPE_CHAIN | typeof b2d.shape.SHAPE_TYPE_CIRCLE | typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_GRID | typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_SEGMENT;
     /**
      * Box shape type alias. Uses the polygon enum value, but indicates the `hx`/`hy` box convenience format.
@@ -290,7 +290,7 @@ declare global {
      * @param shape_id - shape handle from a shape info table, or pass `body, shape_index`
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
-    function get_shape(shape_id: Opaque<"b2Shape">): b2d.shape.definition;
+    function get_shape(shape_id: Opaque<"b2Shape">): b2d.shape.Definition;
     /**
      * Get a shape's geometry.
      *
@@ -298,7 +298,7 @@ declare global {
      * @param shape_index - The shape's position on that body, in the order `b2d.body.get_shapes` lists them. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
-    function get_shape(body: Opaque<"b2Body">, shape_index: number): b2d.shape.definition;
+    function get_shape(body: Opaque<"b2Body">, shape_index: number): b2d.shape.Definition;
     /**
      * Get the world owning a shape.
      *

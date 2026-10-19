@@ -6,7 +6,7 @@ declare global {
    * Collision object physics API documentation
    */
   namespace physics {
-    type event = BuiltinMessages["contact_point_event"] & { type: Hash<"contact_point_event"> } | BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> } | BuiltinMessages["trigger_event"] & { type: Hash<"trigger_event"> } | BuiltinMessages["ray_cast_response"] & { type: Hash<"ray_cast_response"> } | BuiltinMessages["ray_cast_missed"] & { type: Hash<"ray_cast_missed"> };
+    type Event = BuiltinMessages["contact_point_event"] & { type: Hash<"contact_point_event"> } | BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> } | BuiltinMessages["trigger_event"] & { type: Hash<"trigger_event"> } | BuiltinMessages["ray_cast_response"] & { type: Hash<"ray_cast_response"> } | BuiltinMessages["ray_cast_missed"] & { type: Hash<"ray_cast_missed"> };
     /**
      * The available fields depend on the joint type.
      */
@@ -577,7 +577,7 @@ declare global {
      * });
      * ```
      */
-    function set_event_listener(callback?: (self: unknown, events: physics.event[]) => void): void;
+    function set_event_listener(callback?: (self: unknown, events: physics.Event[]) => void): void;
     /**
      * Set the gravity in runtime. The gravity change is not global, it will only affect
      * the collection that the function is called from.

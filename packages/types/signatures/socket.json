@@ -19,7 +19,7 @@
   },
   "socket.select": {
     "signatures": [
-      "socket.select(recvt: socket.socket_selectable[], sendt: socket.socket_selectable[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>"
+      "socket.select(recvt: socket.SocketSelectable[], sendt: socket.SocketSelectable[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>"
     ]
   },
   "socket.sleep": {

@@ -1,8 +1,8 @@
 /// <reference path="../index.d.ts" />
 import type { Opaque, Vector3 } from "../src/core-types";
 
-declare const shape: bullet3d.shape.btCollisionShape;
-declare const world: bullet3d.btDiscreteDynamicsWorld;
+declare const shape: bullet3d.shape.BtCollisionShape;
+declare const world: bullet3d.BtDiscreteDynamicsWorld;
 
 const size = vmath.vector3(1, 1, 1);
 const corner = vmath.vector3(0, 0, 0);
@@ -48,7 +48,7 @@ void kind;
 declare const a: Opaque<"btRigidBody">;
 declare const b: Opaque<"btRigidBody">;
 declare const mb: Opaque<"btRigidBody"> | undefined;
-declare const c: bullet3d.constraint.btTypedConstraint;
+declare const c: bullet3d.constraint.BtTypedConstraint;
 declare const o: Opaque<"btCollisionObject" | "btRigidBody">;
 
 const rotation = vmath.quat();

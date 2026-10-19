@@ -3,6 +3,7 @@ import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
 import { parseDefoldApiDoc } from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
 import { collectHandleMethodGroups, handleInterfaceName, SOCKET_HANDLE_TOKENS } from "./emit-dts";
+import { engineTypeName } from "./engine-type-name";
 
 // The socket receiver interfaces (client/master/server/connected/unconnected)
 // are generated end-to-end from the `<receiver>:<method>` colon methods in
@@ -97,13 +98,14 @@ describe("socket receiver-interface drift guard", () => {
   });
 
   test("every fixture-derived receiver maps to its handle interface in DEFOLD_TYPE_MAP", () => {
-    // A new receiver appearing upstream would emit `interface socket_<name>` but
-    // leave any function param typed `<name>` unresolved until the map gains a key.
+    // A new receiver appearing upstream would emit `interface Socket<Name>` but
+    // leave any function param typed `<name>` or `socket_<name>` unresolved until
+    // the map gains a key.
     for (const receiver of deriveReceiverMethods().keys()) {
       const name = handleInterfaceName("socket", receiver);
-      expect(name).toBe(`socket_${receiver}`);
+      expect(name).toBe(engineTypeName(`socket_${receiver}`));
       expect(DEFOLD_TYPE_MAP[receiver]).toBe(name);
-      expect(DEFOLD_TYPE_MAP[name]).toBe(name);
+      expect(DEFOLD_TYPE_MAP[`socket_${receiver}`]).toBe(name);
     }
   });
 
@@ -117,7 +119,7 @@ describe("socket receiver-interface drift guard", () => {
       ),
     );
     for (const token of SOCKET_HANDLE_TOKENS) {
-      expect(receivers.has(token)).toBe(true);
+      expect(receivers.has(DEFOLD_TYPE_MAP[token] ?? token)).toBe(true);
     }
   });
 });

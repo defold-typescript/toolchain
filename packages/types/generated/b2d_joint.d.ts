@@ -6,7 +6,7 @@ declare global {
    * Functions for interacting with native Box2D joints.
    */
   namespace b2d.joint {
-    type b2Joint = Opaque<"b2Joint">;
+    type B2Joint = Opaque<"b2Joint">;
     /**
      * Box2D distance-joint definition
      */
@@ -72,7 +72,7 @@ declare global {
        */
       collide_connected?: boolean;
     }
-    type filter_definition = {};
+    type FilterDefinition = {};
     /**
      * Box2D friction-joint definition
      */
@@ -570,7 +570,7 @@ declare global {
      * @param definition - optional definition table
      * @returns created joint
      */
-    function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.filter_definition): Opaque<"b2Joint">;
+    function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: b2d.joint.FilterDefinition): Opaque<"b2Joint">;
     /**
      * Create a friction joint.
      *

@@ -54,7 +54,7 @@ declare global {
      * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns the shape definition, suitable for reuse in b2d.body.create_fixture
      */
-    function get_shape(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.definition;
+    function get_shape(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.Definition;
     /**
      * Get the fixture type.
      *

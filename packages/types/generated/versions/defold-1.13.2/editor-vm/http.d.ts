@@ -6,8 +6,8 @@ declare global {
    * Editor scripting documentation
    */
   namespace http {
-    type response = Opaque<"http.response">;
-    type route = Opaque<"http.route">;
+    type Response = Opaque<"http.response">;
+    type Route = Opaque<"http.route">;
     /**
      * Perform an HTTP request
      *
@@ -17,7 +17,7 @@ declare global {
      */
     function request(url: string, opts?: http.request.Options): http.request.Response;
     namespace request {
-      type method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS" | string;
+      type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS" | string;
       /**
        * Options for http.request
        */
@@ -25,7 +25,7 @@ declare global {
         /**
          * request method, defaults to `"GET"`
          */
-        method?: http.request.method;
+        method?: http.request.Method;
         /**
          * request headers
          */
@@ -66,7 +66,7 @@ declare global {
       }
     }
     namespace server {
-      type handler = (request: http.server.Request) => LuaMultiReturn<[http.response | number | undefined, LuaTable<string, string> | undefined, string | undefined]>;
+      type Handler = (request: http.server.Request) => LuaMultiReturn<[http.Response | number | undefined, LuaTable<string, string> | undefined, string | undefined]>;
       /**
        * HTTP server request
        */
@@ -104,7 +104,7 @@ declare global {
        * @param headers - HTTP response headers, a table from lower-case header names to header values
        * @returns HTTP response value, userdata
        */
-      function external_file_response(path: string, status?: number, headers?: LuaMap<string, string> | Record<string, string>): http.response;
+      function external_file_response(path: string, status?: number, headers?: LuaMap<string, string> | Record<string, string>): http.Response;
       /**
        * Create HTTP response with a JSON value
        *
@@ -113,7 +113,7 @@ declare global {
        * @param headers - HTTP response headers, a table from lower-case header names to header values
        * @returns HTTP response value, userdata
        */
-      function json_response(value: unknown, status?: number, headers?: LuaMap<string, string> | Record<string, string>): http.response;
+      function json_response(value: unknown, status?: number, headers?: LuaMap<string, string> | Record<string, string>): http.Response;
       /**
        * Create HTTP response that will stream the content of a resource defined by the resource path
        *
@@ -122,7 +122,7 @@ declare global {
        * @param headers - HTTP response headers, a table from lower-case header names to header values
        * @returns HTTP response value, userdata
        */
-      function resource_response(resource_path: string, status?: number, headers?: LuaMap<string, string> | Record<string, string>): http.response;
+      function resource_response(resource_path: string, status?: number, headers?: LuaMap<string, string> | Record<string, string>): http.Response;
       /**
        * Create HTTP response
        *
@@ -131,7 +131,7 @@ declare global {
        * @param body - HTTP response body
        * @returns HTTP response value, userdata
        */
-      function response(status?: number, headers?: LuaMap<string, string> | Record<string, string>, body?: string): http.response;
+      function response(status?: number, headers?: LuaMap<string, string> | Record<string, string>, body?: string): http.Response;
     }
   }
 }

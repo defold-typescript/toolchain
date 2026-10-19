@@ -5,8 +5,8 @@ declare global {
    */
   namespace zip {
     namespace pack {
-      type entries = (string | zip.pack.entry)[];
-      type entry = { 1: string; 2?: string; method?: unknown; level?: number };
+      type Entries = (string | zip.pack.Entry)[];
+      type Entry = { 1: string; 2?: string; method?: unknown; level?: number };
       /**
        * Options for zip.pack
        */

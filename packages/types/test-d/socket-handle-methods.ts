@@ -3,20 +3,20 @@
 // The socket handles are method-bearing interfaces, not opaque brands, so their
 // documented methods are reachable through the committed declarations.
 
-declare const handleClient: socket.socket_client;
+declare const handleClient: socket.SocketClient;
 handleClient.send("hi");
 handleClient.close();
 const [handleData] = handleClient.receive();
 void handleData;
 
-declare const handleMaster: socket.socket_master;
+declare const handleMaster: socket.SocketMaster;
 handleMaster.listen(5);
 
 // The factory functions still resolve their first slot to the handle interface.
 const [connected0] = socket.connect("host", 80);
 const [master0] = socket.tcp();
-const connectedHandle: socket.socket_client | undefined = connected0;
-const masterHandle: socket.socket_master | undefined = socket.tcp()[0];
+const connectedHandle: socket.SocketClient | undefined = connected0;
+const masterHandle: socket.SocketMaster | undefined = socket.tcp()[0];
 void connectedHandle;
 void masterHandle;
 void master0;

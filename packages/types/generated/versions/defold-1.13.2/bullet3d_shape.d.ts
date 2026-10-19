@@ -10,8 +10,8 @@ declare global {
    * are not modified together. Lengths use Defold world units.
    */
   namespace bullet3d.shape {
-    type btCollisionShape = Opaque<"btCollisionShape">;
-    type definition = { type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };
+    type BtCollisionShape = Opaque<"btCollisionShape">;
+    type Definition = { type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };
     type ShapeType = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE;
     /**
      * Box shape type Value `1`. Shape data contains positive vector3 `dimensions` in Defold units.
@@ -39,21 +39,21 @@ declare global {
      * @param shape - shape handle
      * @returns owning collision object
      */
-    function get_collision_object(shape: bullet3d.shape.btCollisionShape): Opaque<"btCollisionObject" | "btRigidBody">;
+    function get_collision_object(shape: bullet3d.shape.BtCollisionShape): Opaque<"btCollisionObject" | "btRigidBody">;
     /**
      * Get the one-based child index.
      *
      * @param shape - shape handle
      * @returns one-based shape index. **⚠️ 1-based; passed to Defold unchanged.**
      */
-    function get_index(shape: bullet3d.shape.btCollisionShape): number;
+    function get_index(shape: bullet3d.shape.BtCollisionShape): number;
     /**
      * A non-compound collision object's only shape has no child transform, so this
      * function returns the identity transform for it.
      *
      * @param shape - shape handle
      */
-    function get_local_transform(shape: bullet3d.shape.btCollisionShape): LuaMultiReturn<[Vector3, Quaternion]>;
+    function get_local_transform(shape: bullet3d.shape.BtCollisionShape): LuaMultiReturn<[Vector3, Quaternion]>;
     /**
      * The returned table always contains `type`, one of `bullet3d.shape.SHAPE_TYPE_*`.
      * A sphere also contains numeric `diameter`; a box contains vector3
@@ -66,21 +66,21 @@ declare global {
      * @param shape - shape handle
      * @returns typed shape geometry in Defold units
      */
-    function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH };
+    function get_shape(shape: bullet3d.shape.BtCollisionShape): bullet3d.shape.Definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH };
     /**
      * Get the normalized Defold shape type.
      *
      * @param shape - shape handle
      * @returns collision shape type
      */
-    function get_type(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.ShapeType;
+    function get_type(shape: bullet3d.shape.BtCollisionShape): bullet3d.shape.ShapeType;
     /**
      * Test whether a shape handle and its owner still exist.
      *
      * @param shape - shape handle
      * @returns validity
      */
-    function is_valid(shape: bullet3d.shape.btCollisionShape): boolean;
+    function is_valid(shape: bullet3d.shape.BtCollisionShape): boolean;
     /**
      * A non-compound collision object's only shape has no child transform and is
      * rejected. The binding normalizes the supplied rotation.
@@ -89,7 +89,7 @@ declare global {
      * @param position - finite local position
      * @param rotation - finite non-zero local rotation
      */
-    function set_local_transform(shape: bullet3d.shape.btCollisionShape, position: Vector3, rotation: Quaternion): void;
+    function set_local_transform(shape: bullet3d.shape.BtCollisionShape, position: Vector3, rotation: Quaternion): void;
     /**
      * The table uses the same format as `get_shape`. Its `type` must match the
      * existing shape because changing native shape type is not supported. Primitive
@@ -116,7 +116,7 @@ declare global {
      * });
      * ```
      */
-    function set_shape(shape: bullet3d.shape.btCollisionShape, data: bullet3d.shape.definition): void;
+    function set_shape(shape: bullet3d.shape.BtCollisionShape, data: bullet3d.shape.Definition): void;
   }
 }
 

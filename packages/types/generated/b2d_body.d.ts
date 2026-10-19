@@ -6,8 +6,8 @@ declare global {
    * Functions for interacting with Box2D bodies.
    */
   namespace b2d.body {
-    type b2Body = Opaque<"b2Body">;
-    type b2World = Opaque<"b2World">;
+    type B2Body = Opaque<"b2Body">;
+    type B2World = Opaque<"b2World">;
     type B2 = typeof b2d.body.B2_DYNAMIC_BODY | typeof b2d.body.B2_KINEMATIC_BODY | typeof b2d.body.B2_STATIC_BODY;
     /**
      * Dynamic body

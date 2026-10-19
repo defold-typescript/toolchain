@@ -209,7 +209,7 @@ declare global {
      * @param shape_index - one-based shape index. **⚠️ 1-based; passed to Defold unchanged.**
      * @returns borrowed logical shape handle
      */
-    function get_shape(object: Opaque<"btCollisionObject" | "btRigidBody">, shape_index: number): bullet3d.shape.btCollisionShape;
+    function get_shape(object: Opaque<"btCollisionObject" | "btRigidBody">, shape_index: number): bullet3d.shape.BtCollisionShape;
     /**
      * Get the number of shapes attached to a collision object.
      *
@@ -238,7 +238,7 @@ declare global {
      * });
      * ```
      */
-    function get_shapes(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.shape.btCollisionShape[];
+    function get_shapes(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.shape.BtCollisionShape[];
     /**
      * Get the world transform
      *
