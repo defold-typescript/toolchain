@@ -7,7 +7,7 @@ declare global {
    * dynamically spawn game objects into the runtime.
    */
   namespace factory {
-    type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;
+    type Status = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED;
     /**
      * The factory resources are loaded.
      */
@@ -69,7 +69,7 @@ declare global {
      * @param url - the factory component to get status from
      * @returns status of the factory component
      */
-    function get_status(url: string | Hash | Url): factory.STATUS;
+    function get_status(url: string | Hash | Url): factory.Status;
     /**
      * Resources are referenced by the factory component until the existing (parent) collection is destroyed or factory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.

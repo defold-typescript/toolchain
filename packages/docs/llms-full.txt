@@ -864,15 +864,15 @@ go.animate(id, "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1);
 
 **Typed alternative.** Always pass the named constant (`go.PLAYBACK_ONCE_FORWARD`, `go.EASING_LINEAR`, …). The brand is type-only and erases at transpile time to a plain Lua global access, so there is no runtime cost. A branded constant is still assignable to any plain `number` parameter, so existing numeric signatures keep working.
 
-**Naming the enum.** Every documented constant union has an exported alias in the namespace it belongs to, so you can spell the type yourself instead of retyping the arms or falling back to `number`. Where the reference names the enum, the alias carries that name (`gui.EASING`, `buffer.VALUE_TYPE`, `factory.STATUS`), and it is the same name on every Defold version:
+**Naming the enum.** Every documented constant union has an exported alias in the namespace it belongs to, so you can spell the type yourself instead of retyping the arms or falling back to `number`. Where the reference names the enum, the alias carries that name in PascalCase (`gui.Easing` for the reference's `gui.EASING`, `buffer.ValueType`, `factory.Status`), and it is the same name on every Defold version:
 
 ```ts
-function fadeIn(node: Opaque<"node">, easing: gui.EASING, playback: gui.PLAYBACK) {
+function fadeIn(node: Opaque<"node">, easing: gui.Easing, playback: gui.Playback) {
   gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), easing, 0.5, 0, undefined, playback);
 }
 ```
 
-A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `window.get_dim_mode` returns `window.DIMMING`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.STATE` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members.
+A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `window.get_dim_mode` returns `window.Dimming`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.State` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members, with a `Defold name:` line naming the reference's own spelling where it differs.
 
 **How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts the constant is assignable to `number` (backward compatibility) and to its own brand, while a bare `0` assigned to the brand carries `@ts-expect-error`. If the brand is dropped or widened, the expected error disappears and the typecheck gate fails. `packages/types/test-d/constant-union-aliases.ts` does the same for the aliases: representative members are assignable to their alias, and a constant from a sibling group is not. Exhaustive member-set fidelity is held elsewhere: `packages/types/test/constant-union-alias-coverage.test.ts` catches a brand union left without a name, and `packages/types/test/constant-slot-expansion-drift.test.ts` checks each documented slot against the reference documentation.
 
@@ -1340,7 +1340,7 @@ render.render_target({
 });
 ```
 
-**Why.** The engine registers a texture format constant only when the graphics driver supports that format, so on a device without it the Lua global is `nil`. The typings declare every `graphics.TEXTURE_FORMAT_*` constant as possibly `undefined`, except `graphics.TEXTURE_FORMAT_DEPTH` and `graphics.TEXTURE_FORMAT_STENCIL`, which always exist. A buffer's or texture's `format` takes a `graphics.TEXTURE_FORMAT`, which excludes `undefined`, so an unguarded constant is rejected. Pins older than 1.13.2 declare every format unconditionally, and their `render.render_target` takes an open record.
+**Why.** The engine registers a texture format constant only when the graphics driver supports that format, so on a device without it the Lua global is `nil`. The typings declare every `graphics.TEXTURE_FORMAT_*` constant as possibly `undefined`, except `graphics.TEXTURE_FORMAT_DEPTH` and `graphics.TEXTURE_FORMAT_STENCIL`, which always exist. A buffer's or texture's `format` takes a `graphics.TextureFormat`, which excludes `undefined`, so an unguarded constant is rejected. Pins older than 1.13.2 declare every format unconditionally, and their `render.render_target` takes an open record.
 
 **Typed alternative.** Read the format constant into a local, check it, and pass the narrowed value:
 
@@ -10160,13 +10160,13 @@ Same change as `b2d.world.cast_ray`.
 
 ###### gui.new_texture
 
-The `type` parameter takes `string | image.TYPE`, so an `image.TYPE_*` constant
+The `type` parameter takes `string | image.Type`, so an `image.TYPE_*` constant
 passes without a cast. The second return value narrows from `number` to
-`gui.RESULT`. Compare the [1.13.1 `gui` page](/api/defold-1.13.1/gui).
+`gui.Result`. Compare the [1.13.1 `gui` page](/api/defold-1.13.1/gui).
 
 ###### gui.set_texture_data
 
-The `type` parameter takes `string | image.TYPE`, as for `gui.new_texture`.
+The `type` parameter takes `string | image.Type`, as for `gui.new_texture`.
 
 ###### image.load
 
@@ -12023,15 +12023,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - interface filter_options { category_bits?: number; mask_bits?: number; group_index?: number; } [since 1.13.2]
 - interface fixture_cast_hit { fixture: b2d.fixture_info; shape: b2d.fixture_info; point: Vector3; normal: Vector3; fraction: number; node_visits?: number; leaf_visits?: number; } [since 1.13.2]
 - interface fixture_definition { shape: b2d.shape.definition; friction?: number; restitution?: number; density?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter; } [since 1.13.2]
-- interface fixture_info { body?: Opaque<"b2Body">; index: number; child_index?: number; type: b2d.shape.SHAPE_TYPE; sensor: boolean; density: number; friction: number; restitution: number; child_count: number; } [since 1.13.2]
+- interface fixture_info { body?: Opaque<"b2Body">; index: number; child_index?: number; type: b2d.shape.ShapeType; sensor: boolean; density: number; friction: number; restitution: number; child_count: number; } [since 1.13.2]
 - interface mass_data { mass: number; center: Vector3; inertia: number; } [since 1.13.2]
 - interface mover_capsule { center1: Vector3; center2: Vector3; radius: number; } [since 1.13.2]
 - interface mover_plane { shape: b2d.shape_info; normal: Vector3; offset: number; hit: boolean; } [since 1.13.2]
 - interface query_filter { category_bits?: number; mask_bits?: number; group_index?: number; } [since 1.13.2]
 - interface shape_cast_hit { shape: b2d.shape_info; point: Vector3; normal: Vector3; fraction: number; node_visits?: number; leaf_visits?: number; } [since 1.13.2]
 - interface shape_cast_output { point: Vector3; normal: Vector3; fraction: number; iterations: number; } [since 1.13.2]
-- type shape_create_definition = { shape: b2d.shape.definition; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter } | { type: b2d.shape.SHAPE_TYPE; radius?: number; center?: Vector3; center1?: Vector3; center2?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; hx?: number; hy?: number; angle?: number; vertices?: Vector3[]; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter } [since 1.13.2]
-- interface shape_info { index: number; shape_id: Opaque<"b2Shape">; type: b2d.shape.SHAPE_TYPE; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean; } [since 1.13.2]
+- type shape_create_definition = { shape: b2d.shape.definition; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter } | { type: b2d.shape.ShapeType; radius?: number; center?: Vector3; center1?: Vector3; center2?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; hx?: number; hy?: number; angle?: number; vertices?: Vector3[]; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.filter } [since 1.13.2]
+- interface shape_info { index: number; shape_id: Opaque<"b2Shape">; type: b2d.shape.ShapeType; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean; } [since 1.13.2]
 - interface transform { position: Vector3; angle: number; } [since 1.13.2]
 - interface tree_stats { node_visits: number; leaf_visits: number; } [since 1.13.2]
 - interface version_info { version: string; major: number; middle: number; minor: number; } [since 1.13.2]
@@ -12149,7 +12149,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_friction(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
 - function get_restitution(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
 - function get_shape(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.definition; [since 1.13.0]
-- function get_type(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.SHAPE_TYPE; [since 1.13.0]
+- function get_type(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.ShapeType; [since 1.13.0]
 - function is_sensor(body: Opaque<"b2Body">, fixture_index: number): boolean; [since 1.13.0]
 - function refilter(body: Opaque<"b2Body">, fixture_index: number, touch_proxies: boolean): void; [since 1.13.0]
 - function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass?: boolean): void; [since 1.13.0]
@@ -12201,7 +12201,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_length(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_length_a(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_length_b(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_limit_state(joint: Opaque<"b2Joint">): b2d.joint.LIMIT_STATE; [since 1.13.0]
+- function get_limit_state(joint: Opaque<"b2Joint">): b2d.joint.LimitState; [since 1.13.0]
 - function get_linear_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_linear_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_linear_offset(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
@@ -12229,7 +12229,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_reference_angle(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_spring_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_spring_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_type(joint: Opaque<"b2Joint">): b2d.joint.JOINT_TYPE; [since 1.13.0]
+- function get_type(joint: Opaque<"b2Joint">): b2d.joint.JointType; [since 1.13.0]
 - function get_upper_limit(joint: Opaque<"b2Joint">): number; [since 1.13.0]
 - function get_world(joint: Opaque<"b2Joint">): Opaque<"b2World">; [since 1.13.0]
 - function is_active(joint: Opaque<"b2Joint">): boolean; [since 1.13.0]
@@ -12282,8 +12282,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - b2d.joint.LIMIT_STATE_EQUAL: number & { readonly __brand: "b2d.joint.LIMIT_STATE_EQUAL" } [since 1.13.0]
 - b2d.joint.LIMIT_STATE_INACTIVE: number & { readonly __brand: "b2d.joint.LIMIT_STATE_INACTIVE" } [since 1.13.0]
 - type b2Joint = Opaque<"b2Joint"> [since 1.13.0]
-- type JOINT_TYPE = typeof b2d.joint.JOINT_TYPE_DISTANCE | typeof b2d.joint.JOINT_TYPE_FILTER | typeof b2d.joint.JOINT_TYPE_FRICTION | typeof b2d.joint.JOINT_TYPE_GEAR | typeof b2d.joint.JOINT_TYPE_MOTOR | typeof b2d.joint.JOINT_TYPE_MOUSE | typeof b2d.joint.JOINT_TYPE_PRISMATIC | typeof b2d.joint.JOINT_TYPE_PULLEY | typeof b2d.joint.JOINT_TYPE_REVOLUTE | typeof b2d.joint.JOINT_TYPE_ROPE | typeof b2d.joint.JOINT_TYPE_UNKNOWN | typeof b2d.joint.JOINT_TYPE_WELD | typeof b2d.joint.JOINT_TYPE_WHEEL [since 1.13.2]
-- type LIMIT_STATE = typeof b2d.joint.LIMIT_STATE_AT_LOWER | typeof b2d.joint.LIMIT_STATE_AT_UPPER | typeof b2d.joint.LIMIT_STATE_EQUAL | typeof b2d.joint.LIMIT_STATE_INACTIVE [since 1.13.2]
+- type JointType = typeof b2d.joint.JOINT_TYPE_DISTANCE | typeof b2d.joint.JOINT_TYPE_FILTER | typeof b2d.joint.JOINT_TYPE_FRICTION | typeof b2d.joint.JOINT_TYPE_GEAR | typeof b2d.joint.JOINT_TYPE_MOTOR | typeof b2d.joint.JOINT_TYPE_MOUSE | typeof b2d.joint.JOINT_TYPE_PRISMATIC | typeof b2d.joint.JOINT_TYPE_PULLEY | typeof b2d.joint.JOINT_TYPE_REVOLUTE | typeof b2d.joint.JOINT_TYPE_ROPE | typeof b2d.joint.JOINT_TYPE_UNKNOWN | typeof b2d.joint.JOINT_TYPE_WELD | typeof b2d.joint.JOINT_TYPE_WHEEL [since 1.13.2]
+- type LimitState = typeof b2d.joint.LIMIT_STATE_AT_LOWER | typeof b2d.joint.LIMIT_STATE_AT_UPPER | typeof b2d.joint.LIMIT_STATE_EQUAL | typeof b2d.joint.LIMIT_STATE_INACTIVE [since 1.13.2]
 - interface distance_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; min_length?: number; max_length?: number; enable_spring?: boolean; hertz?: number; frequency?: number; damping_ratio?: number; damping?: number; enable_limit?: boolean; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean; } [since 1.13.2]
 - type filter_definition = {} [since 1.13.2]
 - interface friction_definition { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean; } [since 1.13.2]
@@ -12352,8 +12352,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - b2d.shape.SHAPE_TYPE_POLYGON: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_POLYGON" } [since 1.13.0]
 - b2d.shape.SHAPE_TYPE_SEGMENT: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_SEGMENT" } [since 1.13.0]
 - type b2Shape = Opaque<"b2Shape"> [since 1.13.0]
-- type SHAPE_TYPE = typeof b2d.shape.SHAPE_TYPE_BOX | typeof b2d.shape.SHAPE_TYPE_CAPSULE | typeof b2d.shape.SHAPE_TYPE_CHAIN | typeof b2d.shape.SHAPE_TYPE_CIRCLE | typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_GRID | typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_SEGMENT [since 1.13.2]
-- type definition = { type: b2d.shape.SHAPE_TYPE; radius: number; center?: Vector3 } | { type: b2d.shape.SHAPE_TYPE; radius: number; center1: Vector3; center2: Vector3 } | { type: b2d.shape.SHAPE_TYPE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: b2d.shape.SHAPE_TYPE; hx: number; hy: number; center?: Vector3; angle?: number } | { type: b2d.shape.SHAPE_TYPE; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 } [since 1.13.2]
+- type ShapeType = typeof b2d.shape.SHAPE_TYPE_BOX | typeof b2d.shape.SHAPE_TYPE_CAPSULE | typeof b2d.shape.SHAPE_TYPE_CHAIN | typeof b2d.shape.SHAPE_TYPE_CIRCLE | typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_GRID | typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_SEGMENT [since 1.13.2]
+- type definition = { type: b2d.shape.ShapeType; radius: number; center?: Vector3 } | { type: b2d.shape.ShapeType; radius: number; center1: Vector3; center2: Vector3 } | { type: b2d.shape.ShapeType; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: b2d.shape.ShapeType; hx: number; hy: number; center?: Vector3; angle?: number } | { type: b2d.shape.ShapeType; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 } [since 1.13.2]
 
 ### b2d.world
 
@@ -12403,11 +12403,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function copy_buffer(dst: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
 - function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
-- function create(element_count: number, declaration: [({ name: Hash | string; type: buffer.VALUE_TYPE; count: number }), ...({ name: Hash | string; type: buffer.VALUE_TYPE; count: number })[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
+- function create(element_count: number, declaration: [({ name: Hash | string; type: buffer.ValueType; count: number }), ...({ name: Hash | string; type: buffer.ValueType; count: number })[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
 - function get_bytes(buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, stream_name?: Hash | string): string;
-- function get_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;
+- function get_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;
 - function get_stream(buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
-- function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: [number, ...number[]], value_type: Exclude<buffer.VALUE_TYPE, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;
+- function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: [number, ...number[]], value_type: Exclude<buffer.ValueType, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;
 - buffer.VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" }
 - buffer.VALUE_TYPE_INT16: number & { readonly __brand: "buffer.VALUE_TYPE_INT16" }
 - buffer.VALUE_TYPE_INT32: number & { readonly __brand: "buffer.VALUE_TYPE_INT32" }
@@ -12419,7 +12419,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - buffer.VALUE_TYPE_UINT8: number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" }
 - type buffer_data = Opaque<"buffer"> & { length: LuaLengthMethod<number> } [since 1.13.2]
 - type buffer_stream = Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> } [since 1.13.2]
-- type VALUE_TYPE = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8
+- type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8
 
 ### bullet3d
 
@@ -12436,8 +12436,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### bullet3d.collision_object
 
 - function activate(object: Opaque<"btCollisionObject" | "btRigidBody">, force?: boolean): void; [since 1.13.2]
-- function force_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">, state: bullet3d.collision_object.ACTIVATION_STATE): void; [since 1.13.2]
-- function get_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.collision_object.ACTIVATION_STATE; [since 1.13.2]
+- function force_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">, state: bullet3d.collision_object.ActivationState): void; [since 1.13.2]
+- function get_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.collision_object.ActivationState; [since 1.13.2]
 - function get_ccd_motion_threshold(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
 - function get_ccd_swept_sphere_radius(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
 - function get_collision_filter_group(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
@@ -12446,7 +12446,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_contact_processing_threshold(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
 - function get_deactivation_time(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
 - function get_friction(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
-- function get_internal_type(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.collision_object.INTERNAL_TYPE; [since 1.13.2]
+- function get_internal_type(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.collision_object.InternalType; [since 1.13.2]
 - function get_position(object: Opaque<"btCollisionObject" | "btRigidBody">): Vector3; [since 1.13.2]
 - function get_restitution(object: Opaque<"btCollisionObject" | "btRigidBody">): number; [since 1.13.2]
 - function get_rotation(object: Opaque<"btCollisionObject" | "btRigidBody">): Quaternion; [since 1.13.2]
@@ -12464,7 +12464,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_static(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
 - function is_static_or_kinematic(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
 - function is_valid(object: Opaque<"btCollisionObject" | "btRigidBody">): boolean; [since 1.13.2]
-- function set_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">, state: bullet3d.collision_object.ACTIVATION_STATE): void; [since 1.13.2]
+- function set_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">, state: bullet3d.collision_object.ActivationState): void; [since 1.13.2]
 - function set_awake(object: Opaque<"btCollisionObject" | "btRigidBody">, awake: boolean): void; [since 1.13.2]
 - function set_ccd_motion_threshold(object: Opaque<"btCollisionObject" | "btRigidBody">, threshold: number): void; [since 1.13.2]
 - function set_ccd_swept_sphere_radius(object: Opaque<"btCollisionObject" | "btRigidBody">, radius: number): void; [since 1.13.2]
@@ -12493,9 +12493,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - bullet3d.collision_object.DISABLE_SIMULATION: number & { readonly __brand: "bullet3d.collision_object.DISABLE_SIMULATION" } [since 1.13.2]
 - bullet3d.collision_object.ISLAND_SLEEPING: number & { readonly __brand: "bullet3d.collision_object.ISLAND_SLEEPING" } [since 1.13.2]
 - bullet3d.collision_object.WANTS_DEACTIVATION: number & { readonly __brand: "bullet3d.collision_object.WANTS_DEACTIVATION" } [since 1.13.2]
-- type ACTIVATION_STATE = typeof bullet3d.collision_object.ACTIVE_TAG | typeof bullet3d.collision_object.ISLAND_SLEEPING | typeof bullet3d.collision_object.WANTS_DEACTIVATION | typeof bullet3d.collision_object.DISABLE_DEACTIVATION | typeof bullet3d.collision_object.DISABLE_SIMULATION [since 1.13.2]
-- type COLLISION_FLAG = typeof bullet3d.collision_object.CF_DYNAMIC_OBJECT | typeof bullet3d.collision_object.CF_STATIC_OBJECT | typeof bullet3d.collision_object.CF_KINEMATIC_OBJECT | typeof bullet3d.collision_object.CF_NO_CONTACT_RESPONSE | typeof bullet3d.collision_object.CF_CUSTOM_MATERIAL_CALLBACK | typeof bullet3d.collision_object.CF_CHARACTER_OBJECT | typeof bullet3d.collision_object.CF_DISABLE_VISUALIZE_OBJECT | typeof bullet3d.collision_object.CF_DISABLE_SPU_COLLISION_PROCESSING [since 1.13.2]
-- type INTERNAL_TYPE = typeof bullet3d.collision_object.CO_COLLISION_OBJECT | typeof bullet3d.collision_object.CO_RIGID_BODY | typeof bullet3d.collision_object.CO_GHOST_OBJECT | typeof bullet3d.collision_object.CO_SOFT_BODY | typeof bullet3d.collision_object.CO_HF_FLUID [since 1.13.2]
+- type ActivationState = typeof bullet3d.collision_object.ACTIVE_TAG | typeof bullet3d.collision_object.ISLAND_SLEEPING | typeof bullet3d.collision_object.WANTS_DEACTIVATION | typeof bullet3d.collision_object.DISABLE_DEACTIVATION | typeof bullet3d.collision_object.DISABLE_SIMULATION [since 1.13.2]
+- type CollisionFlag = typeof bullet3d.collision_object.CF_DYNAMIC_OBJECT | typeof bullet3d.collision_object.CF_STATIC_OBJECT | typeof bullet3d.collision_object.CF_KINEMATIC_OBJECT | typeof bullet3d.collision_object.CF_NO_CONTACT_RESPONSE | typeof bullet3d.collision_object.CF_CUSTOM_MATERIAL_CALLBACK | typeof bullet3d.collision_object.CF_CHARACTER_OBJECT | typeof bullet3d.collision_object.CF_DISABLE_VISUALIZE_OBJECT | typeof bullet3d.collision_object.CF_DISABLE_SPU_COLLISION_PROCESSING [since 1.13.2]
+- type InternalType = typeof bullet3d.collision_object.CO_COLLISION_OBJECT | typeof bullet3d.collision_object.CO_RIGID_BODY | typeof bullet3d.collision_object.CO_GHOST_OBJECT | typeof bullet3d.collision_object.CO_SOFT_BODY | typeof bullet3d.collision_object.CO_HF_FLUID [since 1.13.2]
 
 ### bullet3d.constraint
 
@@ -12537,7 +12537,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_slider_motor(constraint: bullet3d.constraint.btTypedConstraint, motor: "linear" | "angular"): LuaMultiReturn<[boolean, number, number]>; [since 1.13.2]
 - function get_slider_position(constraint: bullet3d.constraint.btTypedConstraint): number; [since 1.13.2]
 - function get_twist_angle(constraint: bullet3d.constraint.btTypedConstraint): number; [since 1.13.2]
-- function get_type(constraint: bullet3d.constraint.btTypedConstraint): bullet3d.constraint.CONSTRAINT_TYPE; [since 1.13.2]
+- function get_type(constraint: bullet3d.constraint.btTypedConstraint): bullet3d.constraint.ConstraintType; [since 1.13.2]
 - function get_type_name(constraint: bullet3d.constraint.btTypedConstraint): string; [since 1.13.2]
 - function get_use_linear_reference_frame_a(constraint: bullet3d.constraint.btTypedConstraint): boolean; [since 1.13.2]
 - function get_world(constraint: bullet3d.constraint.btTypedConstraint): bullet3d.btDiscreteDynamicsWorld; [since 1.13.2]
@@ -12572,7 +12572,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - bullet3d.constraint.CONSTRAINT_TYPE_SLIDER: number & { readonly __brand: "bullet3d.constraint.CONSTRAINT_TYPE_SLIDER" } [since 1.13.2]
 - bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL: number & { readonly __brand: "bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL" } [since 1.13.2]
 - type btTypedConstraint = Opaque<"btTypedConstraint"> [since 1.13.2]
-- type CONSTRAINT_TYPE = typeof bullet3d.constraint.CONSTRAINT_TYPE_CONE_TWIST | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF_SPRING | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE2 | typeof bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT | typeof bullet3d.constraint.CONSTRAINT_TYPE_SLIDER | typeof bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL [since 1.13.2]
+- type ConstraintType = typeof bullet3d.constraint.CONSTRAINT_TYPE_CONE_TWIST | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF_SPRING | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE2 | typeof bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT | typeof bullet3d.constraint.CONSTRAINT_TYPE_SLIDER | typeof bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL [since 1.13.2]
 - interface anchor_axes_params { anchor: Vector3; axis1: Vector3; axis2: Vector3; collide_connected?: boolean; } [since 1.13.2]
 - interface cone_twist_params { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; angular_only?: boolean; collide_connected?: boolean; } [since 1.13.2]
 - interface generic_6dof_params { frame_a_position: Vector3; frame_a_rotation: Quaternion; frame_b_position?: Vector3; frame_b_rotation?: Quaternion; collide_connected?: boolean; } [since 1.13.2]
@@ -12632,7 +12632,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_EXPLICIT: number & { readonly __brand: "bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_EXPLICIT" } [since 1.13.2]
 - bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_BODY: number & { readonly __brand: "bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_BODY" } [since 1.13.2]
 - bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_WORLD: number & { readonly __brand: "bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_WORLD" } [since 1.13.2]
-- type FLAG = typeof bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_EXPLICIT | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_WORLD | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_BODY [since 1.13.2]
+- type Flag = typeof bullet3d.rigid_body.BT_DISABLE_WORLD_GRAVITY | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_EXPLICIT | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_WORLD | typeof bullet3d.rigid_body.BT_ENABLE_GYROSCOPIC_FORCE_IMPLICIT_BODY [since 1.13.2]
 
 ### bullet3d.shape
 
@@ -12640,7 +12640,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_index(shape: bullet3d.shape.btCollisionShape): number; [since 1.13.2]
 - function get_local_transform(shape: bullet3d.shape.btCollisionShape): LuaMultiReturn<[Vector3, Quaternion]>; [since 1.13.2]
 - function get_shape(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH }; [since 1.13.2]
-- function get_type(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.SHAPE_TYPE; [since 1.13.2]
+- function get_type(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.ShapeType; [since 1.13.2]
 - function is_valid(shape: bullet3d.shape.btCollisionShape): boolean; [since 1.13.2]
 - function set_local_transform(shape: bullet3d.shape.btCollisionShape, position: Vector3, rotation: Quaternion): void; [since 1.13.2]
 - function set_shape(shape: bullet3d.shape.btCollisionShape, data: bullet3d.shape.definition): void; [since 1.13.2]
@@ -12650,7 +12650,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - bullet3d.shape.SHAPE_TYPE_MESH: number & { readonly __brand: "bullet3d.shape.SHAPE_TYPE_MESH" } [since 1.13.2]
 - bullet3d.shape.SHAPE_TYPE_SPHERE: number & { readonly __brand: "bullet3d.shape.SHAPE_TYPE_SPHERE" } [since 1.13.2]
 - type btCollisionShape = Opaque<"btCollisionShape"> [since 1.13.2]
-- type SHAPE_TYPE = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE [since 1.13.2]
+- type ShapeType = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE [since 1.13.2]
 - type definition = { type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } [since 1.13.2]
 
 ### bullet3d.world
@@ -12686,7 +12686,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_fov(camera?: Url | number | string | Hash): number;
 - function get_near_z(camera?: Url | number | string | Hash): number;
 - function get_orthographic_auto_zoom(camera?: Url | number | string | Hash): number; [since 1.13.0]
-- function get_orthographic_mode(camera?: Url | number | string | Hash): camera.ORTHO_MODE;
+- function get_orthographic_mode(camera?: Url | number | string | Hash): camera.OrthoMode;
 - function get_orthographic_zoom(camera?: Url | number | string | Hash): number;
 - function get_projection(camera?: Url | number | string | Hash): Matrix4;
 - function get_view(camera?: Url | number | string | Hash): Matrix4;
@@ -12697,7 +12697,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_far_z(camera: Url | number | string | Hash | undefined, far_z: number): void;
 - function set_fov(camera: Url | number | string | Hash | undefined, fov: number): void;
 - function set_near_z(camera: Url | number | string | Hash | undefined, near_z: number): void;
-- function set_orthographic_mode(camera: Url | number | string | Hash | undefined, mode: camera.ORTHO_MODE): void;
+- function set_orthographic_mode(camera: Url | number | string | Hash | undefined, mode: camera.OrthoMode): void;
 - function set_orthographic_zoom(camera: Url | number | string | Hash | undefined, orthographic_zoom: number): void;
 - function world_to_screen(world_pos: Vector3, camera?: Url | number | string | Hash): Vector3;
 - camera.ORTHO_MODE_AUTO_COVER: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_COVER" }
@@ -12711,29 +12711,29 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - orthographic_zoom: number [since 1.13.0]
 - readonly projection: Matrix4; [since 1.13.0]
 - readonly view: Matrix4; [since 1.13.0]
-- type ORTHO_MODE = typeof camera.ORTHO_MODE_AUTO_COVER | typeof camera.ORTHO_MODE_AUTO_FIT | typeof camera.ORTHO_MODE_FIXED [since 1.13.2]
+- type OrthoMode = typeof camera.ORTHO_MODE_AUTO_COVER | typeof camera.ORTHO_MODE_AUTO_FIT | typeof camera.ORTHO_MODE_FIXED [since 1.13.2]
 
 ### collectionfactory
 
 - function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaTable<Hash, Hash> & { get: LuaTableGetMethod<string, Hash> };
-- function get_status(url: string | Hash | Url): collectionfactory.STATUS;
+- function get_status(url: string | Hash | Url): collectionfactory.Status;
 - function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
 - function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
 - function unload(url: string | Hash | Url): void;
 - collectionfactory.STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" }
 - collectionfactory.STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" }
 - collectionfactory.STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" }
-- type STATUS = typeof collectionfactory.STATUS_LOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_UNLOADED
+- type Status = typeof collectionfactory.STATUS_LOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_UNLOADED
 
 ### collectionproxy
 
 - function get_resources(collectionproxy: Url | string | Hash): string[];
 - function load(url: string | Hash | Url, options: {} | undefined, callback: (self: unknown, message_id: Hash, message: collectionproxy.load_data, sender: Url) => void): void; [since 1.13.1]
-- function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT | undefined]>;
+- function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
 - collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
 - collectionproxy.RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" }
 - collectionproxy.RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" }
-- type RESULT = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED [since 1.13.2]
+- type Result = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED [since 1.13.2]
 - type TIME_STEP_MODE = 0 | 1 [since 1.13.2]
 - interface load_data { progress?: number; code?: number; } [since 1.13.2]
 
@@ -12752,7 +12752,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_extra_data(handle: number): string;
 - function get_modules(handle: number): crash.module_info[];
 - function get_signum(handle: number): number;
-- function get_sys_field(handle: number, index: crash.SYSFIELD): string | undefined;
+- function get_sys_field(handle: number, index: crash.SysField): string | undefined;
 - function get_user_field(handle: number, index: crash.USERFIELD): string;
 - function load_previous(): number | undefined;
 - function release(handle: number): void;
@@ -12772,21 +12772,21 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - crash.SYSFIELD_TERRITORY: number & { readonly __brand: "crash.SYSFIELD_TERRITORY" }
 - crash.USERFIELD_MAX: number & { readonly __brand: "crash.USERFIELD_MAX" }
 - crash.USERFIELD_SIZE: number & { readonly __brand: "crash.USERFIELD_SIZE" }
-- type SYSFIELD = typeof crash.SYSFIELD_ENGINE_VERSION | typeof crash.SYSFIELD_ENGINE_HASH | typeof crash.SYSFIELD_DEVICE_MODEL | typeof crash.SYSFIELD_MANUFACTURER | typeof crash.SYSFIELD_SYSTEM_NAME | typeof crash.SYSFIELD_SYSTEM_VERSION | typeof crash.SYSFIELD_LANGUAGE | typeof crash.SYSFIELD_DEVICE_LANGUAGE | typeof crash.SYSFIELD_TERRITORY | typeof crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT [since 1.13.2]
+- type SysField = typeof crash.SYSFIELD_ENGINE_VERSION | typeof crash.SYSFIELD_ENGINE_HASH | typeof crash.SYSFIELD_DEVICE_MODEL | typeof crash.SYSFIELD_MANUFACTURER | typeof crash.SYSFIELD_SYSTEM_NAME | typeof crash.SYSFIELD_SYSTEM_VERSION | typeof crash.SYSFIELD_LANGUAGE | typeof crash.SYSFIELD_DEVICE_LANGUAGE | typeof crash.SYSFIELD_TERRITORY | typeof crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT [since 1.13.2]
 - type USERFIELD = number [since 1.13.2]
 - interface module_info { name: string; address: string; } [since 1.13.2]
 
 ### factory
 
 - function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<string | Hash, unknown> | Record<string, unknown>, scale?: number | Vector3): Hash | undefined;
-- function get_status(url: string | Hash | Url): factory.STATUS;
+- function get_status(url: string | Hash | Url): factory.Status;
 - function load(url: string | Hash | Url, complete_function: (self: unknown, url: Url, result: boolean) => void): void;
 - function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
 - function unload(url: string | Hash | Url): void;
 - factory.STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" }
 - factory.STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" }
 - factory.STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" }
-- type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED
+- type Status = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED
 
 ### font
 
@@ -12806,8 +12806,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### go
 
-- function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number): void;
-- function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.PLAYBACK, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.EASING, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;
+- function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number): void;
+- function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: Url, property: Hash) => void): void;
 - function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
 - function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url> | boolean): void;
 - function _delete(id: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | LuaPairsIterable<AnyNotNil, SceneGameObjectAddress | Hash | Url>, recursive: boolean): void;
@@ -12902,8 +12902,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - position: Vector3
 - rotation: Quaternion
 - scale: number | Vector3
-- type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE
-- type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG
+- type Easing = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE
+- type Playback = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG
 - interface action { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.gamepad_guid_info; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.touch[]; text?: string; } [since 1.13.2]
 - interface gamepad_guid_info { vendor: number; product: number; bus: number; crc: number; version: number; } [since 1.13.2]
 - interface touch { id: number; pressed: boolean; released: boolean; tap_count: number; x: number; y: number; screen_x: number; screen_y: number; dx: number; dy: number; screen_dx: number; screen_dy: number; } [since 1.13.2]
@@ -13065,45 +13065,45 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - graphics.TEXTURE_WRAP_CLAMP_TO_EDGE: number & { readonly __brand: "graphics.TEXTURE_WRAP_CLAMP_TO_EDGE" }
 - graphics.TEXTURE_WRAP_MIRRORED_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_MIRRORED_REPEAT" }
 - graphics.TEXTURE_WRAP_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_REPEAT" }
-- type BLEND_EQUATION = typeof graphics.BLEND_EQUATION_ADD | typeof graphics.BLEND_EQUATION_MAX | typeof graphics.BLEND_EQUATION_MIN | typeof graphics.BLEND_EQUATION_REVERSE_SUBTRACT | typeof graphics.BLEND_EQUATION_SUBTRACT [since 1.13.2]
-- type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO
-- type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
-- type COMPARE_FUNC = typeof graphics.COMPARE_FUNC_ALWAYS | typeof graphics.COMPARE_FUNC_EQUAL | typeof graphics.COMPARE_FUNC_GEQUAL | typeof graphics.COMPARE_FUNC_GREATER | typeof graphics.COMPARE_FUNC_LEQUAL | typeof graphics.COMPARE_FUNC_LESS | typeof graphics.COMPARE_FUNC_NEVER | typeof graphics.COMPARE_FUNC_NOTEQUAL [since 1.13.2]
-- type COMPRESSION_TYPE = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY [since 1.13.2]
-- type CONTEXT_FEATURE = typeof graphics.CONTEXT_FEATURE_3D_TEXTURES | typeof graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX | typeof graphics.CONTEXT_FEATURE_COMPUTE_SHADER | typeof graphics.CONTEXT_FEATURE_INSTANCING | typeof graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING | typeof graphics.CONTEXT_FEATURE_STORAGE_BUFFER | typeof graphics.CONTEXT_FEATURE_TEXTURE_ARRAY | typeof graphics.CONTEXT_FEATURE_VSYNC [since 1.13.2]
-- type COORDINATE_SPACE = typeof graphics.COORDINATE_SPACE_DEFAULT | typeof graphics.COORDINATE_SPACE_LOCAL | typeof graphics.COORDINATE_SPACE_WORLD [since 1.13.2]
-- type CUBEMAP_FACE = typeof graphics.CUBEMAP_FACE_NEGATIVE_X | typeof graphics.CUBEMAP_FACE_NEGATIVE_Y | typeof graphics.CUBEMAP_FACE_NEGATIVE_Z | typeof graphics.CUBEMAP_FACE_POSITIVE_X | typeof graphics.CUBEMAP_FACE_POSITIVE_Y | typeof graphics.CUBEMAP_FACE_POSITIVE_Z [since 1.14.0]
-- type DATA_TYPE = typeof graphics.DATA_TYPE_BYTE | typeof graphics.DATA_TYPE_FLOAT | typeof graphics.DATA_TYPE_INT | typeof graphics.DATA_TYPE_SHORT | typeof graphics.DATA_TYPE_UNSIGNED_BYTE | typeof graphics.DATA_TYPE_UNSIGNED_INT | typeof graphics.DATA_TYPE_UNSIGNED_SHORT [since 1.13.2]
-- type FACE_TYPE = typeof graphics.FACE_TYPE_BACK | typeof graphics.FACE_TYPE_FRONT | typeof graphics.FACE_TYPE_FRONT_AND_BACK [since 1.13.2]
-- type SEMANTIC_TYPE = typeof graphics.SEMANTIC_TYPE_BONE_INDICES | typeof graphics.SEMANTIC_TYPE_BONE_WEIGHTS | typeof graphics.SEMANTIC_TYPE_COLOR | typeof graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS | typeof graphics.SEMANTIC_TYPE_NONE | typeof graphics.SEMANTIC_TYPE_NORMAL | typeof graphics.SEMANTIC_TYPE_NORMAL_MATRIX | typeof graphics.SEMANTIC_TYPE_PAGE_INDEX | typeof graphics.SEMANTIC_TYPE_POSITION | typeof graphics.SEMANTIC_TYPE_TANGENT | typeof graphics.SEMANTIC_TYPE_TEXCOORD | typeof graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D | typeof graphics.SEMANTIC_TYPE_WORLD_MATRIX [since 1.13.2]
-- type STATE = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST
-- type STENCIL_OP = typeof graphics.STENCIL_OP_DECR | typeof graphics.STENCIL_OP_DECR_WRAP | typeof graphics.STENCIL_OP_INCR | typeof graphics.STENCIL_OP_INCR_WRAP | typeof graphics.STENCIL_OP_INVERT | typeof graphics.STENCIL_OP_KEEP | typeof graphics.STENCIL_OP_REPLACE | typeof graphics.STENCIL_OP_ZERO [since 1.13.2]
-- type TEXTURE_FILTER = typeof graphics.TEXTURE_FILTER_DEFAULT | typeof graphics.TEXTURE_FILTER_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST [since 1.13.2]
-- type TEXTURE_FORMAT = NonNullable<typeof graphics.TEXTURE_FORMAT_BGRA8U> | typeof graphics.TEXTURE_FORMAT_DEPTH | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE> | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA> | NonNullable<typeof graphics.TEXTURE_FORMAT_R16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC3> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC7> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_BC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_ETC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_BC5> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_BC4> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_ETC2> | typeof graphics.TEXTURE_FORMAT_STENCIL [since 1.13.2]
-- type TEXTURE_TYPE = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_2D_ARRAY | NonNullable<typeof graphics.TEXTURE_TYPE_3D> | typeof graphics.TEXTURE_TYPE_CUBE_MAP | typeof graphics.TEXTURE_TYPE_IMAGE_2D | NonNullable<typeof graphics.TEXTURE_TYPE_IMAGE_3D> [since 1.13.2]
-- type TEXTURE_USAGE_FLAG = typeof graphics.TEXTURE_USAGE_FLAG_COLOR | typeof graphics.TEXTURE_USAGE_FLAG_INPUT | typeof graphics.TEXTURE_USAGE_FLAG_MEMORYLESS | typeof graphics.TEXTURE_USAGE_FLAG_SAMPLE | typeof graphics.TEXTURE_USAGE_FLAG_STORAGE [since 1.13.2]
-- type TEXTURE_WRAP = typeof graphics.TEXTURE_WRAP_CLAMP_TO_BORDER | typeof graphics.TEXTURE_WRAP_CLAMP_TO_EDGE | typeof graphics.TEXTURE_WRAP_MIRRORED_REPEAT | typeof graphics.TEXTURE_WRAP_REPEAT [since 1.13.2]
-- interface adapter_info { family: string; version_major: number; version_minor: number; limits: graphics.adapter_limits; extensions: string[]; features: graphics.CONTEXT_FEATURE[]; } [since 1.13.2]
+- type BlendEquation = typeof graphics.BLEND_EQUATION_ADD | typeof graphics.BLEND_EQUATION_MAX | typeof graphics.BLEND_EQUATION_MIN | typeof graphics.BLEND_EQUATION_REVERSE_SUBTRACT | typeof graphics.BLEND_EQUATION_SUBTRACT [since 1.13.2]
+- type BlendFactor = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO
+- type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
+- type CompareFunc = typeof graphics.COMPARE_FUNC_ALWAYS | typeof graphics.COMPARE_FUNC_EQUAL | typeof graphics.COMPARE_FUNC_GEQUAL | typeof graphics.COMPARE_FUNC_GREATER | typeof graphics.COMPARE_FUNC_LEQUAL | typeof graphics.COMPARE_FUNC_LESS | typeof graphics.COMPARE_FUNC_NEVER | typeof graphics.COMPARE_FUNC_NOTEQUAL [since 1.13.2]
+- type CompressionType = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY [since 1.13.2]
+- type ContextFeature = typeof graphics.CONTEXT_FEATURE_3D_TEXTURES | typeof graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX | typeof graphics.CONTEXT_FEATURE_COMPUTE_SHADER | typeof graphics.CONTEXT_FEATURE_INSTANCING | typeof graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING | typeof graphics.CONTEXT_FEATURE_STORAGE_BUFFER | typeof graphics.CONTEXT_FEATURE_TEXTURE_ARRAY | typeof graphics.CONTEXT_FEATURE_VSYNC [since 1.13.2]
+- type CoordinateSpace = typeof graphics.COORDINATE_SPACE_DEFAULT | typeof graphics.COORDINATE_SPACE_LOCAL | typeof graphics.COORDINATE_SPACE_WORLD [since 1.13.2]
+- type CubemapFace = typeof graphics.CUBEMAP_FACE_NEGATIVE_X | typeof graphics.CUBEMAP_FACE_NEGATIVE_Y | typeof graphics.CUBEMAP_FACE_NEGATIVE_Z | typeof graphics.CUBEMAP_FACE_POSITIVE_X | typeof graphics.CUBEMAP_FACE_POSITIVE_Y | typeof graphics.CUBEMAP_FACE_POSITIVE_Z [since 1.14.0]
+- type DataType = typeof graphics.DATA_TYPE_BYTE | typeof graphics.DATA_TYPE_FLOAT | typeof graphics.DATA_TYPE_INT | typeof graphics.DATA_TYPE_SHORT | typeof graphics.DATA_TYPE_UNSIGNED_BYTE | typeof graphics.DATA_TYPE_UNSIGNED_INT | typeof graphics.DATA_TYPE_UNSIGNED_SHORT [since 1.13.2]
+- type FaceType = typeof graphics.FACE_TYPE_BACK | typeof graphics.FACE_TYPE_FRONT | typeof graphics.FACE_TYPE_FRONT_AND_BACK [since 1.13.2]
+- type SemanticType = typeof graphics.SEMANTIC_TYPE_BONE_INDICES | typeof graphics.SEMANTIC_TYPE_BONE_WEIGHTS | typeof graphics.SEMANTIC_TYPE_COLOR | typeof graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS | typeof graphics.SEMANTIC_TYPE_NONE | typeof graphics.SEMANTIC_TYPE_NORMAL | typeof graphics.SEMANTIC_TYPE_NORMAL_MATRIX | typeof graphics.SEMANTIC_TYPE_PAGE_INDEX | typeof graphics.SEMANTIC_TYPE_POSITION | typeof graphics.SEMANTIC_TYPE_TANGENT | typeof graphics.SEMANTIC_TYPE_TEXCOORD | typeof graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D | typeof graphics.SEMANTIC_TYPE_WORLD_MATRIX [since 1.13.2]
+- type State = typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_BLEND | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_POLYGON_OFFSET_FILL | typeof graphics.STATE_SCISSOR_TEST | typeof graphics.STATE_STENCIL_TEST
+- type StencilOp = typeof graphics.STENCIL_OP_DECR | typeof graphics.STENCIL_OP_DECR_WRAP | typeof graphics.STENCIL_OP_INCR | typeof graphics.STENCIL_OP_INCR_WRAP | typeof graphics.STENCIL_OP_INVERT | typeof graphics.STENCIL_OP_KEEP | typeof graphics.STENCIL_OP_REPLACE | typeof graphics.STENCIL_OP_ZERO [since 1.13.2]
+- type TextureFilter = typeof graphics.TEXTURE_FILTER_DEFAULT | typeof graphics.TEXTURE_FILTER_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR | typeof graphics.TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST [since 1.13.2]
+- type TextureFormat = NonNullable<typeof graphics.TEXTURE_FORMAT_BGRA8U> | typeof graphics.TEXTURE_FORMAT_DEPTH | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE> | NonNullable<typeof graphics.TEXTURE_FORMAT_LUMINANCE_ALPHA> | NonNullable<typeof graphics.TEXTURE_FORMAT_R16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_R32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA16F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32F> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA32UI> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ASTC_4X4> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC3> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_BC7> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_16BPP> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_BC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_ETC1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_BC5> | NonNullable<typeof graphics.TEXTURE_FORMAT_RG_ETC2> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_BC4> | NonNullable<typeof graphics.TEXTURE_FORMAT_R_ETC2> | typeof graphics.TEXTURE_FORMAT_STENCIL [since 1.13.2]
+- type TextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_2D_ARRAY | NonNullable<typeof graphics.TEXTURE_TYPE_3D> | typeof graphics.TEXTURE_TYPE_CUBE_MAP | typeof graphics.TEXTURE_TYPE_IMAGE_2D | NonNullable<typeof graphics.TEXTURE_TYPE_IMAGE_3D> [since 1.13.2]
+- type TextureUsageFlag = typeof graphics.TEXTURE_USAGE_FLAG_COLOR | typeof graphics.TEXTURE_USAGE_FLAG_INPUT | typeof graphics.TEXTURE_USAGE_FLAG_MEMORYLESS | typeof graphics.TEXTURE_USAGE_FLAG_SAMPLE | typeof graphics.TEXTURE_USAGE_FLAG_STORAGE [since 1.13.2]
+- type TextureWrap = typeof graphics.TEXTURE_WRAP_CLAMP_TO_BORDER | typeof graphics.TEXTURE_WRAP_CLAMP_TO_EDGE | typeof graphics.TEXTURE_WRAP_MIRRORED_REPEAT | typeof graphics.TEXTURE_WRAP_REPEAT [since 1.13.2]
+- interface adapter_info { family: string; version_major: number; version_minor: number; limits: graphics.adapter_limits; extensions: string[]; features: graphics.ContextFeature[]; } [since 1.13.2]
 - interface adapter_limits { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number; max_storage_buffers_per_stage: number; } [since 1.13.2]
 
 ### gui
 
-- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.PROP | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.EASING | Vector, duration: number): void
-- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.PROP | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.EASING | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.PLAYBACK): void
-- function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.PROP): void;
+- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void
+- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Prop | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
+- function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.Prop): void;
 - function cancel_flipbook(node: Opaque<"node">): void;
 - function clone(node: Opaque<"node">): Opaque<"node">;
 - function clone_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
 - function delete_node(node: Opaque<"node">): void;
 - function delete_texture(texture: string | Hash): void;
-- gui.get<K extends keyof gui.node_properties | gui.PROP>(node: Opaque<"node">, property: K): gui.node_properties[NodePropertyName<K>]
+- gui.get<K extends keyof gui.node_properties | gui.Prop>(node: Opaque<"node">, property: K): gui.node_properties[NodePropertyName<K>]
 - gui.get(node: Opaque<"node">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
 - gui.get(node: Opaque<"node">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
-- function get_adjust_mode(node: Opaque<"node">): gui.ADJUST;
+- function get_adjust_mode(node: Opaque<"node">): gui.Adjust;
 - function get_alpha(node: Opaque<"node">): number;
-- function get_blend_mode(node: Opaque<"node">): gui.BLEND;
+- function get_blend_mode(node: Opaque<"node">): gui.Blend;
 - function get_clipping_inverted(node: Opaque<"node">): boolean;
-- function get_clipping_mode(node: Opaque<"node">): gui.CLIPPING_MODE;
+- function get_clipping_mode(node: Opaque<"node">): gui.ClippingMode;
 - function get_clipping_visible(node: Opaque<"node">): boolean;
 - function get_color(node: Opaque<"node">): Vector4;
 - function get_euler(node: Opaque<"node">): Vector3;
@@ -13126,29 +13126,29 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_line_break(node: Opaque<"node">): boolean;
 - function get_material(node: Opaque<"node">): Hash;
 - function get_node(id: string | Hash): Opaque<"node">;
-- function get_outer_bounds(node: Opaque<"node">): gui.PIEBOUNDS;
+- function get_outer_bounds(node: Opaque<"node">): gui.PieBounds;
 - function get_outline(node: Opaque<"node">): Vector4;
 - function get_parent(node: Opaque<"node">): Opaque<"node"> | undefined;
 - function get_particlefx(node: Opaque<"node">): Hash;
 - function get_perimeter_vertices(node: Opaque<"node">): number;
-- function get_pivot(node: Opaque<"node">): gui.PIVOT;
+- function get_pivot(node: Opaque<"node">): gui.Pivot;
 - function get_position(node: Opaque<"node">): Vector3;
 - function get_rotation(node: Opaque<"node">): Quaternion;
 - function get_scale(node: Opaque<"node">): Vector3;
 - function get_screen_position(node: Opaque<"node">): Vector3;
 - function get_shadow(node: Opaque<"node">): Vector4;
 - function get_size(node: Opaque<"node">): Vector3;
-- function get_size_mode(node: Opaque<"node">): gui.SIZE_MODE;
+- function get_size_mode(node: Opaque<"node">): gui.SizeMode;
 - function get_slice9(node: Opaque<"node">): Vector4;
 - function get_text(node: Opaque<"node">): string;
 - function get_texture(node: Opaque<"node">): Hash;
 - function get_tracking(node: Opaque<"node">): number;
 - function get_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
-- function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.TYPE, number | undefined]>;
+- function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.Type, number | undefined]>;
 - function get_visible(node: Opaque<"node">): boolean;
 - function get_width(): number;
-- function get_xanchor(node: Opaque<"node">): gui.ANCHOR;
-- function get_yanchor(node: Opaque<"node">): gui.ANCHOR;
+- function get_xanchor(node: Opaque<"node">): gui.Anchor;
+- function get_yanchor(node: Opaque<"node">): gui.Anchor;
 - function hide_keyboard(): void;
 - function is_enabled(node: Opaque<"node">, recursive?: boolean): boolean;
 - function move_above(node: Opaque<"node">, reference: Opaque<"node"> | undefined): void;
@@ -13159,27 +13159,27 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function new_text_node(pos: Vector3 | Vector4, text: string): Opaque<"node">;
 - function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string): LuaMultiReturn<[boolean, number | undefined]>; [through 1.13.1] [signature transition]
 - function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): LuaMultiReturn<[boolean, number | undefined]>;
-- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string): LuaMultiReturn<[boolean, gui.RESULT | undefined]>; [since 1.13.2] [signature transition]
-- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip: boolean): LuaMultiReturn<[boolean, gui.RESULT | undefined]>;
+- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.Type, buffer: string): LuaMultiReturn<[boolean, gui.Result | undefined]>; [since 1.13.2] [signature transition]
+- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | image.Type, buffer: string, flip: boolean): LuaMultiReturn<[boolean, gui.Result | undefined]>;
 - function pick_node(node: Opaque<"node">, x: number, y: number): boolean;
 - function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: Opaque<"node">) => void): void;
 - function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function: ((self: unknown, node: Opaque<"node">) => void) | undefined, play_properties: gui.play_properties): void;
-- function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: Opaque<"node"> | undefined, emitter: Hash, state: particlefx.EMITTER_STATE) => void): void;
+- function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: Opaque<"node"> | undefined, emitter: Hash, state: particlefx.EmitterState) => void): void;
 - function reset_keyboard(): void;
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3 | Vector4): Vector3;
-- gui.set<K extends keyof gui.node_properties | gui.PROP>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
+- gui.set<K extends keyof gui.node_properties | gui.Prop>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options: gui.PropertyOptions): void
 - gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash): void
 - gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash, options: gui.PropertyOptions): void
 - gui.set(url: Url, property: "textures", value: undefined, options: { key: string | Hash }): void [since 1.13.1]
-- function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.ADJUST): void;
+- function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.Adjust): void;
 - function set_alpha(node: Opaque<"node">, alpha: number): void;
-- function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BLEND): void;
+- function set_blend_mode(node: Opaque<"node">, blend_mode: gui.Blend): void;
 - function set_clipping_inverted(node: Opaque<"node">, inverted: boolean): void;
-- function set_clipping_mode(node: Opaque<"node">, clipping_mode: gui.CLIPPING_MODE): void;
+- function set_clipping_mode(node: Opaque<"node">, clipping_mode: gui.ClippingMode): void;
 - function set_clipping_visible(node: Opaque<"node">, visible: boolean): void;
 - function set_color(node: Opaque<"node">, color: Vector3 | Vector4): void;
 - function set_enabled(node: Opaque<"node">, enabled: boolean): void;
@@ -13196,33 +13196,33 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_leading(node: Opaque<"node">, leading: number): void;
 - function set_line_break(node: Opaque<"node">, line_break: boolean): void;
 - function set_material(node: Opaque<"node">, material: string | Hash): void;
-- function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PIEBOUNDS): void;
+- function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PieBounds): void;
 - function set_outline(node: Opaque<"node">, color: Vector3 | Vector4): void;
 - function set_parent(node: Opaque<"node">, parent: Opaque<"node"> | undefined, keep_scene_transform?: boolean): void;
 - function set_particlefx(node: Opaque<"node">, particlefx: Hash | string): void;
 - function set_perimeter_vertices(node: Opaque<"node">, vertices: number): void;
-- function set_pivot(node: Opaque<"node">, pivot: gui.PIVOT): void;
+- function set_pivot(node: Opaque<"node">, pivot: gui.Pivot): void;
 - function set_position(node: Opaque<"node">, position: Vector3 | Vector4): void;
 - function set_render_order(order: number): void;
 - function set_rotation(node: Opaque<"node">, rotation: Quaternion | Vector4 | Vector3): void;
-- function set_safe_area_mode(mode: gui.SAFE_AREA): void;
+- function set_safe_area_mode(mode: gui.SafeArea): void;
 - function set_scale(node: Opaque<"node">, scale: Vector3 | Vector4): void;
 - function set_screen_position(node: Opaque<"node">, screen_position: Vector3 | Vector4): void;
 - function set_shadow(node: Opaque<"node">, color: Vector3 | Vector4): void;
 - function set_size(node: Opaque<"node">, size: Vector3 | Vector4): void;
-- function set_size_mode(node: Opaque<"node">, size_mode: gui.SIZE_MODE): void;
+- function set_size_mode(node: Opaque<"node">, size_mode: gui.SizeMode): void;
 - function set_slice9(node: Opaque<"node">, values: Vector4): void;
 - function set_text(node: Opaque<"node">, text: string | number): void;
 - function set_texture(node: Opaque<"node">, texture: string | Hash): void;
 - function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string): boolean; [through 1.13.1] [signature transition]
 - function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): boolean;
-- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string): boolean; [since 1.13.2] [signature transition]
-- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.TYPE, buffer: string, flip: boolean): boolean;
+- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.Type, buffer: string): boolean; [since 1.13.2] [signature transition]
+- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.Type, buffer: string, flip: boolean): boolean;
 - function set_tracking(node: Opaque<"node">, tracking: number): void;
 - function set_visible(node: Opaque<"node">, visible: boolean): void;
-- function set_xanchor(node: Opaque<"node">, anchor: gui.ANCHOR): void;
-- function set_yanchor(node: Opaque<"node">, anchor: gui.ANCHOR): void;
-- function show_keyboard(type: gui.KEYBOARD_TYPE, autoclose: boolean): void;
+- function set_xanchor(node: Opaque<"node">, anchor: gui.Anchor): void;
+- function set_yanchor(node: Opaque<"node">, anchor: gui.Anchor): void;
+- function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;
 - function stop_particlefx(node: Opaque<"node">): void;
 - function stop_particlefx(node: Opaque<"node">, options: particlefx.stop_options): void;
 - gui.ADJUST_FIT: number & { readonly __brand: "gui.ADJUST_FIT" }
@@ -13334,20 +13334,20 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - materials: Hash
 - textures: Hash
 - type node = Opaque<"node"> [since 1.13.2]
-- type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_STRETCH | typeof gui.ADJUST_ZOOM
-- type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP
-- type BLEND = typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN
-- type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL
-- type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE
-- type KEYBOARD_TYPE = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD
-- type PIEBOUNDS = typeof gui.PIEBOUNDS_ELLIPSE | typeof gui.PIEBOUNDS_RECTANGLE
-- type PIVOT = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_E | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_NW | typeof gui.PIVOT_S | typeof gui.PIVOT_SE | typeof gui.PIVOT_SW | typeof gui.PIVOT_W
-- type PLAYBACK = typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_PINGPONG | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_PINGPONG
-- type PROP = typeof gui.PROP_COLOR | typeof gui.PROP_EULER | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_OUTLINE | typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_SCALE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_SLICE9 | typeof gui.PROP_TRACKING
-- type RESULT = typeof gui.RESULT_DATA_ERROR | typeof gui.RESULT_OUT_OF_RESOURCES | typeof gui.RESULT_TEXTURE_ALREADY_EXISTS [since 1.13.2]
-- type SAFE_AREA = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT
-- type SIZE_MODE = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL
-- type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT
+- type Adjust = typeof gui.ADJUST_FIT | typeof gui.ADJUST_STRETCH | typeof gui.ADJUST_ZOOM
+- type Anchor = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP
+- type Blend = typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN
+- type ClippingMode = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL
+- type Easing = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE
+- type KeyboardType = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD
+- type PieBounds = typeof gui.PIEBOUNDS_ELLIPSE | typeof gui.PIEBOUNDS_RECTANGLE
+- type Pivot = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_E | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_NW | typeof gui.PIVOT_S | typeof gui.PIVOT_SE | typeof gui.PIVOT_SW | typeof gui.PIVOT_W
+- type Playback = typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_PINGPONG | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_PINGPONG
+- type Prop = typeof gui.PROP_COLOR | typeof gui.PROP_EULER | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_OUTLINE | typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_SCALE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_SLICE9 | typeof gui.PROP_TRACKING
+- type Result = typeof gui.RESULT_DATA_ERROR | typeof gui.RESULT_OUT_OF_RESOURCES | typeof gui.RESULT_TEXTURE_ALREADY_EXISTS [since 1.13.2]
+- type SafeArea = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT
+- type SizeMode = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL
+- type Type = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT
 - interface layout_object { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; } [since 1.13.2]
 - interface play_properties { offset?: number; playback_rate?: number; } [since 1.13.2]
 - interface set_options { index?: number; key?: string | Hash; } [since 1.13.2]
@@ -13377,11 +13377,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - image.TYPE_LUMINANCE_ALPHA: string & { readonly __brand: "image.TYPE_LUMINANCE_ALPHA" }
 - image.TYPE_RGB: string & { readonly __brand: "image.TYPE_RGB" }
 - image.TYPE_RGBA: string & { readonly __brand: "image.TYPE_RGBA" }
-- type TYPE = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA [since 1.13.2]
+- type Type = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA [since 1.13.2]
 - interface astc_header { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number; } [since 1.13.2]
-- interface load_buffer_result { width: number; height: number; type: image.TYPE; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
+- interface load_buffer_result { width: number; height: number; type: image.Type; buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
 - interface load_options { premultiply_alpha?: boolean; flip_vertically?: boolean; } [since 1.13.2]
-- interface load_result { width: number; height: number; type: image.TYPE; buffer: string; } [since 1.13.2]
+- interface load_result { width: number; height: number; type: image.Type; buffer: string; } [since 1.13.2]
 
 ### json
 
@@ -13414,11 +13414,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### liveupdate
 
 - function add_mount(name: string, uri: string, priority: number, callback: (...args: unknown[]) => unknown): number; [through 1.12.4] [signature transition]
-- function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: liveupdate.LIVEUPDATE) => void): liveupdate.LIVEUPDATE; [since 1.13.0] [signature transition]
+- function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: liveupdate.LiveUpdate) => void): liveupdate.LiveUpdate; [since 1.13.0] [signature transition]
 - function get_mounts(): ({ name: Hash; uri: string; priority: number })[];
 - function is_built_with_excluded_files(): boolean; [since 1.13.0]
 - function remove_mount(name: string): number; [through 1.12.4] [signature transition]
-- function remove_mount(name: string | Hash): liveupdate.LIVEUPDATE; [since 1.13.0] [signature transition]
+- function remove_mount(name: string | Hash): liveupdate.LiveUpdate; [since 1.13.0] [signature transition]
 - liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH" }
 - liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH" }
 - liveupdate.LIVEUPDATE_FORMAT_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_FORMAT_ERROR" }
@@ -13432,7 +13432,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH" }
 - liveupdate.LIVEUPDATE_UNKNOWN: number & { readonly __brand: "liveupdate.LIVEUPDATE_UNKNOWN" }
 - liveupdate.LIVEUPDATE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_VERSION_MISMATCH" }
-- type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_NOT_INITIALIZED [since 1.13.2]
+- type LiveUpdate = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_NOT_INITIALIZED [since 1.13.2]
 
 ### material
 
@@ -13462,17 +13462,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - material.CONSTANT_TYPE_WORLDVIEW_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEW_INVERSE" } [since 1.13.2]
 - material.CONSTANT_TYPE_WORLDVIEWPROJ: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEWPROJ" } [since 1.13.2]
 - material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE" } [since 1.13.2]
-- type CONSTANT_TYPE = typeof material.CONSTANT_TYPE_USER | typeof material.CONSTANT_TYPE_USER_COLOR | typeof material.CONSTANT_TYPE_USER_MATRIX4 | typeof material.CONSTANT_TYPE_VIEWPROJ | typeof material.CONSTANT_TYPE_WORLD | typeof material.CONSTANT_TYPE_TEXTURE | typeof material.CONSTANT_TYPE_VIEW | typeof material.CONSTANT_TYPE_PROJECTION | typeof material.CONSTANT_TYPE_NORMAL | typeof material.CONSTANT_TYPE_WORLDVIEW | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ | typeof material.CONSTANT_TYPE_TIME | typeof material.CONSTANT_TYPE_WORLD_INVERSE | typeof material.CONSTANT_TYPE_VIEW_INVERSE | typeof material.CONSTANT_TYPE_PROJECTION_INVERSE | typeof material.CONSTANT_TYPE_VIEWPROJ_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEW_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE [since 1.13.2]
-- interface constant_info { name: Hash; type: material.CONSTANT_TYPE; value?: material.constant_info_value; } [since 1.13.2]
+- type ConstantType = typeof material.CONSTANT_TYPE_USER | typeof material.CONSTANT_TYPE_USER_COLOR | typeof material.CONSTANT_TYPE_USER_MATRIX4 | typeof material.CONSTANT_TYPE_VIEWPROJ | typeof material.CONSTANT_TYPE_WORLD | typeof material.CONSTANT_TYPE_TEXTURE | typeof material.CONSTANT_TYPE_VIEW | typeof material.CONSTANT_TYPE_PROJECTION | typeof material.CONSTANT_TYPE_NORMAL | typeof material.CONSTANT_TYPE_WORLDVIEW | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ | typeof material.CONSTANT_TYPE_TIME | typeof material.CONSTANT_TYPE_WORLD_INVERSE | typeof material.CONSTANT_TYPE_VIEW_INVERSE | typeof material.CONSTANT_TYPE_PROJECTION_INVERSE | typeof material.CONSTANT_TYPE_VIEWPROJ_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEW_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE [since 1.13.2]
+- interface constant_info { name: Hash; type: material.ConstantType; value?: material.constant_info_value; } [since 1.13.2]
 - type constant_info_value = Vector4 | Matrix4 | Vector4[] | Matrix4[] [since 1.13.2]
-- interface constant_options { type?: material.CONSTANT_TYPE; value?: material.constant_value; } [since 1.13.2]
+- interface constant_options { type?: material.ConstantType; value?: material.constant_value; } [since 1.13.2]
 - type constant_value = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[] [since 1.13.2]
-- interface named_vertex_attribute_options { name: string | Hash; value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DATA_TYPE; coordinate_space?: graphics.COORDINATE_SPACE; semantic_type?: graphics.SEMANTIC_TYPE; } [since 1.13.2]
-- interface sampler_info { name: Hash; type: graphics.TEXTURE_TYPE | 6 | 7 | 8 | 9 | 10; u_wrap: graphics.TEXTURE_WRAP; v_wrap: graphics.TEXTURE_WRAP; w_wrap: graphics.TEXTURE_WRAP; min_filter: graphics.TEXTURE_FILTER; mag_filter: graphics.TEXTURE_FILTER; max_anisotropy: number; } [since 1.13.2]
-- interface sampler_options { u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; max_anisotropy?: number; } [since 1.13.2]
-- interface texture_info { path?: Hash; handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; type: graphics.TEXTURE_TYPE; flags: graphics.TEXTURE_USAGE_FLAG | number; } [since 1.13.2]
-- interface vertex_attribute_info { name: Hash; value: material.vertex_attribute_value; normalize: boolean; data_type: graphics.DATA_TYPE; coordinate_space: graphics.COORDINATE_SPACE; semantic_type: graphics.SEMANTIC_TYPE; } [since 1.13.2]
-- interface vertex_attribute_options { value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DATA_TYPE; coordinate_space?: graphics.COORDINATE_SPACE; semantic_type?: graphics.SEMANTIC_TYPE; } [since 1.13.2]
+- interface named_vertex_attribute_options { name: string | Hash; value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DataType; coordinate_space?: graphics.CoordinateSpace; semantic_type?: graphics.SemanticType; } [since 1.13.2]
+- interface sampler_info { name: Hash; type: graphics.TextureType | 6 | 7 | 8 | 9 | 10; u_wrap: graphics.TextureWrap; v_wrap: graphics.TextureWrap; w_wrap: graphics.TextureWrap; min_filter: graphics.TextureFilter; mag_filter: graphics.TextureFilter; max_anisotropy: number; } [since 1.13.2]
+- interface sampler_options { u_wrap?: graphics.TextureWrap; v_wrap?: graphics.TextureWrap; w_wrap?: graphics.TextureWrap; min_filter?: graphics.TextureFilter; mag_filter?: graphics.TextureFilter; max_anisotropy?: number; } [since 1.13.2]
+- interface texture_info { path?: Hash; handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; type: graphics.TextureType; flags: graphics.TextureUsageFlag | number; } [since 1.13.2]
+- interface vertex_attribute_info { name: Hash; value: material.vertex_attribute_value; normalize: boolean; data_type: graphics.DataType; coordinate_space: graphics.CoordinateSpace; semantic_type: graphics.SemanticType; } [since 1.13.2]
+- interface vertex_attribute_options { value?: material.vertex_attribute_value; normalize?: boolean; data_type?: graphics.DataType; coordinate_space?: graphics.CoordinateSpace; semantic_type?: graphics.SemanticType; } [since 1.13.2]
 - type vertex_attribute_value = number | Vector3 | Vector4 | Matrix4 | number[] [since 1.13.2]
 
 ### model
@@ -13483,7 +13483,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;
 - function get_mesh_aabb(url: string | Hash | Url): LuaTable<Hash, model.aabb>;
 - function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;
-- function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.PLAYBACK, play_properties?: model.play_properties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
+- function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: model.play_properties, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
 - function set_blend_weights(url: string | Hash | Url, weights?: number[]): void; [since 1.13.0]
 - function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;
@@ -13508,7 +13508,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### particlefx
 
-- function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: Hash, emitter: Hash, state: particlefx.EMITTER_STATE) => void): void;
+- function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: Hash, emitter: Hash, state: particlefx.EmitterState) => void): void;
 - function reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash): void;
 - function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4 | Matrix4): void;
 - function stop(url: string | Hash | Url): void;
@@ -13520,12 +13520,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - animation: Hash
 - image: Hash
 - material: Hash
-- type EMITTER_STATE = typeof particlefx.EMITTER_STATE_POSTSPAWN | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_SPAWNING [since 1.13.2]
+- type EmitterState = typeof particlefx.EMITTER_STATE_POSTSPAWN | typeof particlefx.EMITTER_STATE_PRESPAWN | typeof particlefx.EMITTER_STATE_SLEEPING | typeof particlefx.EMITTER_STATE_SPAWNING [since 1.13.2]
 - interface stop_options { clear?: boolean; } [since 1.13.2]
 
 ### physics
 
-- function create_joint(joint_type: physics.JOINT_TYPE, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.joint_properties): void;
+- function create_joint(joint_type: physics.JointType, collisionobject_a: string | Hash | Url, joint_id: string | Hash, position_a: Vector3, collisionobject_b: string | Hash | Url, position_b: Vector3, properties?: physics.joint_properties): void;
 - function destroy_joint(collisionobject: string | Hash | Url, joint_id: string | Hash): void;
 - function get_gravity(): Vector3;
 - function get_group(url: string | Hash | Url): Hash;
@@ -13563,8 +13563,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - linear_damping: number
 - linear_velocity: Vector3
 - readonly mass: number;
-- type JOINT_TYPE = typeof physics.JOINT_TYPE_FIXED | typeof physics.JOINT_TYPE_HINGE | typeof physics.JOINT_TYPE_SLIDER | typeof physics.JOINT_TYPE_SPRING | typeof physics.JOINT_TYPE_WELD | typeof physics.JOINT_TYPE_WHEEL [since 1.13.2]
-- type SHAPE_TYPE = typeof physics.SHAPE_TYPE_BOX | typeof physics.SHAPE_TYPE_CAPSULE | typeof physics.SHAPE_TYPE_HULL | typeof physics.SHAPE_TYPE_MESH | typeof physics.SHAPE_TYPE_SPHERE [since 1.13.2]
+- type JointType = typeof physics.JOINT_TYPE_FIXED | typeof physics.JOINT_TYPE_HINGE | typeof physics.JOINT_TYPE_SLIDER | typeof physics.JOINT_TYPE_SPRING | typeof physics.JOINT_TYPE_WELD | typeof physics.JOINT_TYPE_WHEEL [since 1.13.2]
+- type ShapeType = typeof physics.SHAPE_TYPE_BOX | typeof physics.SHAPE_TYPE_CAPSULE | typeof physics.SHAPE_TYPE_HULL | typeof physics.SHAPE_TYPE_MESH | typeof physics.SHAPE_TYPE_SPHERE [since 1.13.2]
 - type event = BuiltinMessages["contact_point_event"] & { type: Hash<"contact_point_event"> } | BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> } | BuiltinMessages["trigger_event"] & { type: Hash<"trigger_event"> } | BuiltinMessages["ray_cast_response"] & { type: Hash<"ray_cast_response"> } | BuiltinMessages["ray_cast_missed"] & { type: Hash<"ray_cast_missed"> } [since 1.13.2]
 - interface joint_properties { collide_connected?: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean; } [since 1.13.2]
 - interface joint_properties_info { collide_connected: boolean; length?: number; frequency?: number; damping?: number; max_length?: number; local_axis_a?: Vector3; reference_angle?: number; lower_angle?: number; upper_angle?: number; lower_translation?: number; upper_translation?: number; max_motor_torque?: number; max_motor_force?: number; motor_speed?: number; enable_limit?: boolean; enable_motor?: boolean; joint_angle?: number; joint_speed?: number; joint_translation?: number; } [since 1.13.2]
@@ -13572,7 +13572,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - interface contact_point_info { position: Vector3; instance_position: Vector3; normal: Vector3; relative_velocity: Vector3; mass: number; id: Hash; group: Hash; } [since 1.13.2]
 - interface trigger_info { id: Hash; group: Hash; } [since 1.13.2]
 - interface raycast_options { all?: boolean; } [since 1.13.2]
-- interface shape_data { type: physics.SHAPE_TYPE; diameter?: number; dimensions?: Vector3; height?: number; } [since 1.13.2]
+- interface shape_data { type: physics.ShapeType; diameter?: number; dimensions?: Vector3; height?: number; } [since 1.13.2]
 
 ### profiler
 
@@ -13585,8 +13585,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function recorded_frame_count(): number;
 - function scope_begin(name: string): void;
 - function scope_end(): void;
-- function set_ui_mode(mode: profiler.MODE): void;
-- function set_ui_view_mode(mode: profiler.VIEW_MODE): void;
+- function set_ui_mode(mode: profiler.Mode): void;
+- function set_ui_view_mode(mode: profiler.ViewMode): void;
 - function set_ui_vsync_wait_visible(visible: boolean): void;
 - function view_recorded_frame(frame_index: { distance: number } | { frame: number }): void;
 - profiler.MODE_PAUSE: number & { readonly __brand: "profiler.MODE_PAUSE" }
@@ -13595,8 +13595,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - profiler.MODE_SHOW_PEAK_FRAME: number & { readonly __brand: "profiler.MODE_SHOW_PEAK_FRAME" }
 - profiler.VIEW_MODE_FULL: number & { readonly __brand: "profiler.VIEW_MODE_FULL" }
 - profiler.VIEW_MODE_MINIMIZED: number & { readonly __brand: "profiler.VIEW_MODE_MINIMIZED" }
-- type MODE = typeof profiler.MODE_PAUSE | typeof profiler.MODE_RECORD | typeof profiler.MODE_RUN | typeof profiler.MODE_SHOW_PEAK_FRAME
-- type VIEW_MODE = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED
+- type Mode = typeof profiler.MODE_PAUSE | typeof profiler.MODE_RECORD | typeof profiler.MODE_RUN | typeof profiler.MODE_SHOW_PEAK_FRAME
+- type ViewMode = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED
 
 ### render
 
@@ -13604,42 +13604,42 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function constant_buffer(): Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
 - function delete_render_target(render_target: Opaque<"render_target">): void;
 - function disable_material(): void;
-- function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
+- function disable_state(state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
 - function disable_texture(binding: string | Hash | number): void;
 - function dispatch_compute(x: number, y: number, z: number, options?: render.dispatch_options): void;
 - function draw(predicate: Opaque<"render_predicate">): void;
 - function draw(predicate: Opaque<"render_predicate">, options: render.draw_options): void;
 - function draw_debug3d(options?: render.debug_draw_options): void;
 - function enable_material(material_id: string | Hash): void;
-- function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
-- function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BUFFER_TYPE): void;
+- function enable_state(state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
+- function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BufferType): void;
 - function get_height(): number;
-- function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
-- function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
+- function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
+- function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
 - function get_width(): number;
 - function get_window_height(): number;
 - function get_window_width(): number;
 - function predicate(tags: (string | Hash)[]): Opaque<"render_predicate">;
 - render.render_target(parameters: render.render_target_params): Opaque<"render_target">
 - render.render_target(name: string, parameters: render.render_target_params): Opaque<"render_target">
-- function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void; [since 1.13.0]
-- function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;
-- function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void; [since 1.13.0]
+- function set_blend_equation_separate(equation_color: graphics.BlendEquation, equation_alpha: graphics.BlendEquation): void; [since 1.13.0]
+- function set_blend_func(source_factor: graphics.BlendFactor, destination_factor: graphics.BlendFactor): void;
+- function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void; [since 1.13.0]
 - function set_camera(camera?: Url | number | string | Hash, options?: render.camera_options): void;
 - function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;
 - function set_compute(compute?: string | Hash): void;
-- function set_cull_face(face_type: graphics.FACE_TYPE): void;
-- function set_depth_func(func: graphics.COMPARE_FUNC): void;
+- function set_cull_face(face_type: graphics.FaceType): void;
+- function set_depth_func(func: graphics.CompareFunc): void;
 - function set_depth_mask(depth: boolean): void;
-- function set_listener(callback?: (self: unknown, event_type: render.CONTEXT_EVENT) => void): void;
+- function set_listener(callback?: (self: unknown, event_type: render.ContextEvent) => void): void;
 - function set_polygon_offset(factor: number, units: number): void;
 - function set_projection(matrix: Matrix4): void;
 - function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT): void;
 - function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: render.set_render_target_options): void;
 - function set_render_target_size(render_target: Opaque<"render_target"> | string | Hash, width: number, height: number): void;
-- function set_stencil_func(func: graphics.COMPARE_FUNC, ref: number, mask: number): void;
+- function set_stencil_func(func: graphics.CompareFunc, ref: number, mask: number): void;
 - function set_stencil_mask(mask: number): void;
-- function set_stencil_op(sfail: graphics.STENCIL_OP, dpfail: graphics.STENCIL_OP, dppass: graphics.STENCIL_OP): void;
+- function set_stencil_op(sfail: graphics.StencilOp, dpfail: graphics.StencilOp, dppass: graphics.StencilOp): void;
 - function set_view(matrix: Matrix4): void;
 - function set_viewport(x: number, y: number, width: number, height: number): void;
 - render.CONTEXT_EVENT_CONTEXT_LOST: number & { readonly __brand: "render.CONTEXT_EVENT_CONTEXT_LOST" } [since 1.13.2]
@@ -13655,19 +13655,19 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - type render_predicate = Opaque<"render_predicate"> [since 1.13.2]
 - type render_target = Opaque<"render_target">
 - type texture = Opaque<"texture">
-- type CONTEXT_EVENT = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED [since 1.13.2]
 - type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
-- type FRUSTUM_PLANES = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES [since 1.13.2]
-- type RENDER_TARGET_FLAG = typeof render.TEXTURE_BIT [since 1.13.2]
+- type ContextEvent = typeof render.CONTEXT_EVENT_CONTEXT_LOST | typeof render.CONTEXT_EVENT_CONTEXT_RESTORED [since 1.13.2]
+- type FrustumPlanes = typeof render.FRUSTUM_PLANES_ALL | typeof render.FRUSTUM_PLANES_SIDES [since 1.13.2]
+- type RenderTargetFlag = typeof render.TEXTURE_BIT [since 1.13.2]
 - type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP
-- type SORT = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE [since 1.13.2]
+- type Sort = typeof render.SORT_BACK_TO_FRONT | typeof render.SORT_FRONT_TO_BACK | typeof render.SORT_NONE [since 1.13.2]
 - interface camera_options { use_frustum?: boolean; } [since 1.13.2]
-- interface debug_draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; } [since 1.13.2]
+- interface debug_draw_options { frustum?: Matrix4; frustum_planes?: render.FrustumPlanes; } [since 1.13.2]
 - interface dispatch_options { constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; } [since 1.13.2]
-- interface draw_options { frustum?: Matrix4; frustum_planes?: render.FRUSTUM_PLANES; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.SORT; } [since 1.13.2]
-- interface render_target_buffer_params { format: graphics.TEXTURE_FORMAT; width: number; height: number; min_filter?: graphics.TEXTURE_FILTER; mag_filter?: graphics.TEXTURE_FILTER; u_wrap?: graphics.TEXTURE_WRAP; v_wrap?: graphics.TEXTURE_WRAP; w_wrap?: graphics.TEXTURE_WRAP; flags?: render.RENDER_TARGET_FLAG | number; } [since 1.13.2]
+- interface draw_options { frustum?: Matrix4; frustum_planes?: render.FrustumPlanes; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> }; sort_order?: render.Sort; } [since 1.13.2]
+- interface render_target_buffer_params { format: graphics.TextureFormat; width: number; height: number; min_filter?: graphics.TextureFilter; mag_filter?: graphics.TextureFilter; u_wrap?: graphics.TextureWrap; v_wrap?: graphics.TextureWrap; w_wrap?: graphics.TextureWrap; flags?: render.RenderTargetFlag | number; } [since 1.13.2]
 - type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.render_target_buffer_params }
-- interface set_render_target_options { transient?: graphics.BUFFER_TYPE[]; face?: graphics.CUBEMAP_FACE; } [since 1.13.2]
+- interface set_render_target_options { transient?: graphics.BufferType[]; face?: graphics.CubemapFace; } [since 1.13.2]
 
 ### resource
 
@@ -13697,23 +13697,23 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function texture(path?: string): Hash;
 - function tile_source(path?: string): Hash;
 - type resource_data = Hash [since 1.13.2]
-- interface animation { id: string; width: number; height: number; frames?: number[]; frame_start?: number; frame_end?: number; playback?: go.PLAYBACK; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean; } [since 1.13.2]
-- interface animation_data { id: string; width: number; height: number; frames: number[]; playback: go.PLAYBACK; fps: number; flip_vertical: boolean; flip_horizontal: boolean; } [since 1.13.2]
+- interface animation { id: string; width: number; height: number; frames?: number[]; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean; } [since 1.13.2]
+- interface animation_data { id: string; width: number; height: number; frames: number[]; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean; } [since 1.13.2]
 - interface atlas { texture: string | Hash; animations: [Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...(Omit<resource.animation, "frame_start" | "frame_end"> & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [resource.geometry, ...resource.geometry[]]; } [since 1.13.2]
 - interface atlas_data { texture: string | Hash; animations: resource.animation_data[]; geometries: resource.geometry_data[]; } [since 1.13.2]
 - interface buffer_creation_params { buffer: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; transfer_ownership?: boolean; } [since 1.13.2]
 - interface buffer_update_options { transfer_ownership?: boolean; } [since 1.13.2]
 - interface geometry { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[]; } [since 1.13.2]
 - interface geometry_data { width: number; height: number; pivot_x: number; pivot_y: number; rotated: boolean; vertices: number[]; uvs: number[]; indices: number[]; } [since 1.13.2]
-- interface render_target_attachment_info { handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: graphics.TEXTURE_USAGE_FLAG | number; type: graphics.TEXTURE_TYPE; buffer_type: graphics.BUFFER_TYPE; texture?: Hash; } [since 1.13.2]
+- interface render_target_attachment_info { handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: graphics.TextureUsageFlag | number; type: graphics.TextureType; buffer_type: graphics.BufferType; texture?: Hash; } [since 1.13.2]
 - interface render_target_info { handle: Opaque<"render_target">; sample_count: number; attachments: resource.render_target_attachment_info[]; } [since 1.13.2]
 - interface sound_data_options { data: string | Opaque<"buffer">; filesize?: number; partial?: boolean; } [since 1.13.2]
 - interface text_metrics { width: number; height: number; max_ascent: number; max_descent: number; } [since 1.13.2]
 - interface text_metrics_options { width?: number; leading?: number; tracking?: number; line_break?: boolean; } [since 1.13.2]
-- interface texture_creation_params { type: graphics.TEXTURE_TYPE; width: number; height: number; depth?: number; page_count?: number; format: graphics.TEXTURE_FORMAT; flags?: graphics.TEXTURE_USAGE_FLAG | number; max_mipmaps?: number; compression_type?: graphics.COMPRESSION_TYPE; } [since 1.13.2]
+- interface texture_creation_params { type: graphics.TextureType; width: number; height: number; depth?: number; page_count?: number; format: graphics.TextureFormat; flags?: graphics.TextureUsageFlag | number; max_mipmaps?: number; compression_type?: graphics.CompressionType; } [since 1.13.2]
 - interface texture_creation_result { path: Hash; } [since 1.13.2]
-- interface texture_info { handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: graphics.TEXTURE_USAGE_FLAG | number; type: graphics.TEXTURE_TYPE; } [since 1.13.2]
-- interface texture_update_params { type: graphics.TEXTURE_TYPE; width: number; height: number; depth?: number; format: graphics.TEXTURE_FORMAT; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: graphics.COMPRESSION_TYPE; } [since 1.13.2]
+- interface texture_info { handle: Opaque<"texture">; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: graphics.TextureUsageFlag | number; type: graphics.TextureType; } [since 1.13.2]
+- interface texture_update_params { type: graphics.TextureType; width: number; height: number; depth?: number; format: graphics.TextureFormat; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: graphics.CompressionType; } [since 1.13.2]
 
 ### socket
 
@@ -13874,7 +13874,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_config_number(key: string, default_value: number): number;
 - sys.get_config_string(key: string): string | undefined
 - sys.get_config_string(key: string, default_value: string): string
-- function get_connectivity(): sys.NETWORK;
+- function get_connectivity(): sys.Network;
 - function get_engine_info(): sys.engine_info;
 - function get_host_path(filename: string): string;
 - function get_ifaddrs(): sys.interface_info[];
@@ -13903,12 +13903,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - sys.REQUEST_STATUS_ERROR_IO_ERROR: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_IO_ERROR" }
 - sys.REQUEST_STATUS_ERROR_NOT_FOUND: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_NOT_FOUND" }
 - sys.REQUEST_STATUS_FINISHED: number & { readonly __brand: "sys.REQUEST_STATUS_FINISHED" }
-- type NETWORK = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED
-- type REQUEST_STATUS = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED [since 1.13.2]
+- type Network = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED
+- type RequestStatus = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED [since 1.13.2]
 - interface application_info { installed: boolean; } [since 1.13.2]
 - interface engine_info { version: string; version_sha1: string; is_debug: boolean; } [since 1.13.2]
 - interface interface_info { name: string; address?: string; mac?: string; up: boolean; running: boolean; family?: "ipv4" | "ipv6"; } [since 1.13.2]
-- interface load_buffer_result { status: sys.REQUEST_STATUS; buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
+- interface load_buffer_result { status: sys.RequestStatus; buffer?: Opaque<"buffer"> & { length: LuaLengthMethod<number> }; } [since 1.13.2]
 - interface open_url_attributes { target?: string; } [since 1.13.2]
 - interface sys_info { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string; } [since 1.13.2]
 - interface sys_info_options { ignore_secure?: boolean; } [since 1.13.2]
@@ -13920,7 +13920,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean } | undefined;
 - function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaTable<number, LuaTable<number, number>> | undefined;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
-- function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.TRANSFORM | number): boolean;
+- function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: tilemap.Transform | number): boolean;
 - function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;
 - tilemap.H_FLIP: number & { readonly __brand: "tilemap.H_FLIP" }
 - tilemap.ROTATE_180: number & { readonly __brand: "tilemap.ROTATE_180" }
@@ -13929,7 +13929,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - tilemap.V_FLIP: number & { readonly __brand: "tilemap.V_FLIP" }
 - material: Hash
 - tile_source: Hash
-- type TRANSFORM = typeof tilemap.H_FLIP | typeof tilemap.ROTATE_180 | typeof tilemap.ROTATE_270 | typeof tilemap.ROTATE_90 | typeof tilemap.V_FLIP [since 1.13.2]
+- type Transform = typeof tilemap.H_FLIP | typeof tilemap.ROTATE_180 | typeof tilemap.ROTATE_270 | typeof tilemap.ROTATE_90 | typeof tilemap.V_FLIP [since 1.13.2]
 
 ### timer
 
@@ -14013,12 +14013,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### window
 
-- function get_dim_mode(): window.DIMMING;
+- function get_dim_mode(): window.Dimming;
 - function get_display_scale(): number;
 - function get_mouse_lock(): boolean;
 - function get_safe_area(): window.safe_area;
 - function get_size(): LuaMultiReturn<[number, number]>;
-- function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;
+- function set_dim_mode(mode: Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>): void;
 - function set_listener(callback: ((self: unknown, event: (typeof window)[Extract<keyof typeof window, `WINDOW_EVENT_${string}`>], data: window.event_data) => void) | undefined): void;
 - function set_mouse_lock(flag: boolean): void;
 - function set_position(x: number, y: number): void;
@@ -14033,8 +14033,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - window.WINDOW_EVENT_ICONFIED: typeof window.WINDOW_EVENT_ICONIFIED [through 1.13.2] [deprecated since 1.13.2]
 - window.WINDOW_EVENT_ICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONIFIED" } [since 1.13.2]
 - window.WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" }
-- type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN
-- type WINDOW_EVENT = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED [since 1.13.2]
+- type Dimming = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN
+- type WindowEvent = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED [since 1.13.2]
 - interface event_data { width?: number; height?: number; } [since 1.13.2]
 - interface safe_area { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number; } [since 1.13.2]
 

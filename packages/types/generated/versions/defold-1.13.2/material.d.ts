@@ -17,7 +17,7 @@ declare global {
       /**
        * Constant type.
        */
-      type: material.CONSTANT_TYPE;
+      type: material.ConstantType;
       /**
        * Constant value or values. Present for user constants.
        */
@@ -31,7 +31,7 @@ declare global {
       /**
        * Constant type.
        */
-      type?: material.CONSTANT_TYPE;
+      type?: material.ConstantType;
       /**
        * Constant value or values.
        */
@@ -57,15 +57,15 @@ declare global {
       /**
        * Attribute data type.
        */
-      data_type?: graphics.DATA_TYPE;
+      data_type?: graphics.DataType;
       /**
        * Attribute coordinate space.
        */
-      coordinate_space?: graphics.COORDINATE_SPACE;
+      coordinate_space?: graphics.CoordinateSpace;
       /**
        * Attribute semantic.
        */
-      semantic_type?: graphics.SEMANTIC_TYPE;
+      semantic_type?: graphics.SemanticType;
     }
     /**
      * Texture sampler information
@@ -78,27 +78,27 @@ declare global {
       /**
        * Sampler texture type.
        */
-      type: graphics.TEXTURE_TYPE | 6 | 7 | 8 | 9 | 10;
+      type: graphics.TextureType | 6 | 7 | 8 | 9 | 10;
       /**
        * Horizontal wrap mode.
        */
-      u_wrap: graphics.TEXTURE_WRAP;
+      u_wrap: graphics.TextureWrap;
       /**
        * Vertical wrap mode.
        */
-      v_wrap: graphics.TEXTURE_WRAP;
+      v_wrap: graphics.TextureWrap;
       /**
        * Depth wrap mode.
        */
-      w_wrap: graphics.TEXTURE_WRAP;
+      w_wrap: graphics.TextureWrap;
       /**
        * Minification filter.
        */
-      min_filter: graphics.TEXTURE_FILTER;
+      min_filter: graphics.TextureFilter;
       /**
        * Magnification filter.
        */
-      mag_filter: graphics.TEXTURE_FILTER;
+      mag_filter: graphics.TextureFilter;
       /**
        * Maximum anisotropy.
        */
@@ -111,23 +111,23 @@ declare global {
       /**
        * Horizontal wrap mode.
        */
-      u_wrap?: graphics.TEXTURE_WRAP;
+      u_wrap?: graphics.TextureWrap;
       /**
        * Vertical wrap mode.
        */
-      v_wrap?: graphics.TEXTURE_WRAP;
+      v_wrap?: graphics.TextureWrap;
       /**
        * Depth wrap mode.
        */
-      w_wrap?: graphics.TEXTURE_WRAP;
+      w_wrap?: graphics.TextureWrap;
       /**
        * Minification filter.
        */
-      min_filter?: graphics.TEXTURE_FILTER;
+      min_filter?: graphics.TextureFilter;
       /**
        * Magnification filter.
        */
-      mag_filter?: graphics.TEXTURE_FILTER;
+      mag_filter?: graphics.TextureFilter;
       /**
        * Maximum anisotropy.
        */
@@ -168,11 +168,11 @@ declare global {
       /**
        * Texture type.
        */
-      type: graphics.TEXTURE_TYPE;
+      type: graphics.TextureType;
       /**
        * Texture usage flags.
        */
-      flags: graphics.TEXTURE_USAGE_FLAG | number;
+      flags: graphics.TextureUsageFlag | number;
     }
     /**
      * Material vertex attribute information
@@ -193,15 +193,15 @@ declare global {
       /**
        * Attribute data type.
        */
-      data_type: graphics.DATA_TYPE;
+      data_type: graphics.DataType;
       /**
        * Attribute coordinate space.
        */
-      coordinate_space: graphics.COORDINATE_SPACE;
+      coordinate_space: graphics.CoordinateSpace;
       /**
        * Attribute semantic.
        */
-      semantic_type: graphics.SEMANTIC_TYPE;
+      semantic_type: graphics.SemanticType;
     }
     /**
      * Material vertex attribute update
@@ -218,18 +218,18 @@ declare global {
       /**
        * Attribute data type.
        */
-      data_type?: graphics.DATA_TYPE;
+      data_type?: graphics.DataType;
       /**
        * Attribute coordinate space.
        */
-      coordinate_space?: graphics.COORDINATE_SPACE;
+      coordinate_space?: graphics.CoordinateSpace;
       /**
        * Attribute semantic.
        */
-      semantic_type?: graphics.SEMANTIC_TYPE;
+      semantic_type?: graphics.SemanticType;
     }
     type vertex_attribute_value = number | Vector3 | Vector4 | Matrix4 | number[];
-    type CONSTANT_TYPE = typeof material.CONSTANT_TYPE_USER | typeof material.CONSTANT_TYPE_USER_COLOR | typeof material.CONSTANT_TYPE_USER_MATRIX4 | typeof material.CONSTANT_TYPE_VIEWPROJ | typeof material.CONSTANT_TYPE_WORLD | typeof material.CONSTANT_TYPE_TEXTURE | typeof material.CONSTANT_TYPE_VIEW | typeof material.CONSTANT_TYPE_PROJECTION | typeof material.CONSTANT_TYPE_NORMAL | typeof material.CONSTANT_TYPE_WORLDVIEW | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ | typeof material.CONSTANT_TYPE_TIME | typeof material.CONSTANT_TYPE_WORLD_INVERSE | typeof material.CONSTANT_TYPE_VIEW_INVERSE | typeof material.CONSTANT_TYPE_PROJECTION_INVERSE | typeof material.CONSTANT_TYPE_VIEWPROJ_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEW_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE;
+    type ConstantType = typeof material.CONSTANT_TYPE_USER | typeof material.CONSTANT_TYPE_USER_COLOR | typeof material.CONSTANT_TYPE_USER_MATRIX4 | typeof material.CONSTANT_TYPE_VIEWPROJ | typeof material.CONSTANT_TYPE_WORLD | typeof material.CONSTANT_TYPE_TEXTURE | typeof material.CONSTANT_TYPE_VIEW | typeof material.CONSTANT_TYPE_PROJECTION | typeof material.CONSTANT_TYPE_NORMAL | typeof material.CONSTANT_TYPE_WORLDVIEW | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ | typeof material.CONSTANT_TYPE_TIME | typeof material.CONSTANT_TYPE_WORLD_INVERSE | typeof material.CONSTANT_TYPE_VIEW_INVERSE | typeof material.CONSTANT_TYPE_PROJECTION_INVERSE | typeof material.CONSTANT_TYPE_VIEWPROJ_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEW_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE;
     /**
      * Normal matrix constant.
      */

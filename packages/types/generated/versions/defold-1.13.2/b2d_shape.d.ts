@@ -8,8 +8,8 @@ declare global {
    */
   namespace b2d.shape {
     type b2Shape = Opaque<"b2Shape">;
-    type definition = { type: b2d.shape.SHAPE_TYPE; radius: number; center?: Vector3 } | { type: b2d.shape.SHAPE_TYPE; radius: number; center1: Vector3; center2: Vector3 } | { type: b2d.shape.SHAPE_TYPE; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: b2d.shape.SHAPE_TYPE; hx: number; hy: number; center?: Vector3; angle?: number } | { type: b2d.shape.SHAPE_TYPE; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
-    type SHAPE_TYPE = typeof b2d.shape.SHAPE_TYPE_BOX | typeof b2d.shape.SHAPE_TYPE_CAPSULE | typeof b2d.shape.SHAPE_TYPE_CHAIN | typeof b2d.shape.SHAPE_TYPE_CIRCLE | typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_GRID | typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_SEGMENT;
+    type definition = { type: b2d.shape.ShapeType; radius: number; center?: Vector3 } | { type: b2d.shape.ShapeType; radius: number; center1: Vector3; center2: Vector3 } | { type: b2d.shape.ShapeType; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: b2d.shape.ShapeType; hx: number; hy: number; center?: Vector3; angle?: number } | { type: b2d.shape.ShapeType; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
+    type ShapeType = typeof b2d.shape.SHAPE_TYPE_BOX | typeof b2d.shape.SHAPE_TYPE_CAPSULE | typeof b2d.shape.SHAPE_TYPE_CHAIN | typeof b2d.shape.SHAPE_TYPE_CIRCLE | typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_GRID | typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_SEGMENT;
     /**
      * Box shape type alias. Uses the polygon enum value, but indicates the `hx`/`hy` box convenience format.
      */

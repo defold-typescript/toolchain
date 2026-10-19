@@ -483,8 +483,8 @@ declare global {
        */
       collide_connected?: boolean;
     }
-    type JOINT_TYPE = typeof b2d.joint.JOINT_TYPE_DISTANCE | typeof b2d.joint.JOINT_TYPE_FILTER | typeof b2d.joint.JOINT_TYPE_FRICTION | typeof b2d.joint.JOINT_TYPE_GEAR | typeof b2d.joint.JOINT_TYPE_MOTOR | typeof b2d.joint.JOINT_TYPE_MOUSE | typeof b2d.joint.JOINT_TYPE_PRISMATIC | typeof b2d.joint.JOINT_TYPE_PULLEY | typeof b2d.joint.JOINT_TYPE_REVOLUTE | typeof b2d.joint.JOINT_TYPE_ROPE | typeof b2d.joint.JOINT_TYPE_UNKNOWN | typeof b2d.joint.JOINT_TYPE_WELD | typeof b2d.joint.JOINT_TYPE_WHEEL;
-    type LIMIT_STATE = typeof b2d.joint.LIMIT_STATE_AT_LOWER | typeof b2d.joint.LIMIT_STATE_AT_UPPER | typeof b2d.joint.LIMIT_STATE_EQUAL | typeof b2d.joint.LIMIT_STATE_INACTIVE;
+    type JointType = typeof b2d.joint.JOINT_TYPE_DISTANCE | typeof b2d.joint.JOINT_TYPE_FILTER | typeof b2d.joint.JOINT_TYPE_FRICTION | typeof b2d.joint.JOINT_TYPE_GEAR | typeof b2d.joint.JOINT_TYPE_MOTOR | typeof b2d.joint.JOINT_TYPE_MOUSE | typeof b2d.joint.JOINT_TYPE_PRISMATIC | typeof b2d.joint.JOINT_TYPE_PULLEY | typeof b2d.joint.JOINT_TYPE_REVOLUTE | typeof b2d.joint.JOINT_TYPE_ROPE | typeof b2d.joint.JOINT_TYPE_UNKNOWN | typeof b2d.joint.JOINT_TYPE_WELD | typeof b2d.joint.JOINT_TYPE_WHEEL;
+    type LimitState = typeof b2d.joint.LIMIT_STATE_AT_LOWER | typeof b2d.joint.LIMIT_STATE_AT_UPPER | typeof b2d.joint.LIMIT_STATE_EQUAL | typeof b2d.joint.LIMIT_STATE_INACTIVE;
     /**
      * Distance joint type.
      */
@@ -855,7 +855,7 @@ declare global {
      * @param joint - rope joint
      * @returns one of the `LIMIT_STATE_*` constants
      */
-    function get_limit_state(joint: Opaque<"b2Joint">): b2d.joint.LIMIT_STATE;
+    function get_limit_state(joint: Opaque<"b2Joint">): b2d.joint.LimitState;
     /**
      * Get weld joint linear damping ratio.
      *
@@ -1055,7 +1055,7 @@ declare global {
      * @param joint - joint
      * @returns one of the `JOINT_TYPE_*` constants
      */
-    function get_type(joint: Opaque<"b2Joint">): b2d.joint.JOINT_TYPE;
+    function get_type(joint: Opaque<"b2Joint">): b2d.joint.JointType;
     /**
      * Get the upper joint limit.
      *

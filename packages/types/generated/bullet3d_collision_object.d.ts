@@ -14,9 +14,9 @@ declare global {
    * thresholds must also be non-negative.
    */
   namespace bullet3d.collision_object {
-    type ACTIVATION_STATE = typeof bullet3d.collision_object.ACTIVE_TAG | typeof bullet3d.collision_object.ISLAND_SLEEPING | typeof bullet3d.collision_object.WANTS_DEACTIVATION | typeof bullet3d.collision_object.DISABLE_DEACTIVATION | typeof bullet3d.collision_object.DISABLE_SIMULATION;
-    type COLLISION_FLAG = typeof bullet3d.collision_object.CF_DYNAMIC_OBJECT | typeof bullet3d.collision_object.CF_STATIC_OBJECT | typeof bullet3d.collision_object.CF_KINEMATIC_OBJECT | typeof bullet3d.collision_object.CF_NO_CONTACT_RESPONSE | typeof bullet3d.collision_object.CF_CUSTOM_MATERIAL_CALLBACK | typeof bullet3d.collision_object.CF_CHARACTER_OBJECT | typeof bullet3d.collision_object.CF_DISABLE_VISUALIZE_OBJECT | typeof bullet3d.collision_object.CF_DISABLE_SPU_COLLISION_PROCESSING;
-    type INTERNAL_TYPE = typeof bullet3d.collision_object.CO_COLLISION_OBJECT | typeof bullet3d.collision_object.CO_RIGID_BODY | typeof bullet3d.collision_object.CO_GHOST_OBJECT | typeof bullet3d.collision_object.CO_SOFT_BODY | typeof bullet3d.collision_object.CO_HF_FLUID;
+    type ActivationState = typeof bullet3d.collision_object.ACTIVE_TAG | typeof bullet3d.collision_object.ISLAND_SLEEPING | typeof bullet3d.collision_object.WANTS_DEACTIVATION | typeof bullet3d.collision_object.DISABLE_DEACTIVATION | typeof bullet3d.collision_object.DISABLE_SIMULATION;
+    type CollisionFlag = typeof bullet3d.collision_object.CF_DYNAMIC_OBJECT | typeof bullet3d.collision_object.CF_STATIC_OBJECT | typeof bullet3d.collision_object.CF_KINEMATIC_OBJECT | typeof bullet3d.collision_object.CF_NO_CONTACT_RESPONSE | typeof bullet3d.collision_object.CF_CUSTOM_MATERIAL_CALLBACK | typeof bullet3d.collision_object.CF_CHARACTER_OBJECT | typeof bullet3d.collision_object.CF_DISABLE_VISUALIZE_OBJECT | typeof bullet3d.collision_object.CF_DISABLE_SPU_COLLISION_PROCESSING;
+    type InternalType = typeof bullet3d.collision_object.CO_COLLISION_OBJECT | typeof bullet3d.collision_object.CO_RIGID_BODY | typeof bullet3d.collision_object.CO_GHOST_OBJECT | typeof bullet3d.collision_object.CO_SOFT_BODY | typeof bullet3d.collision_object.CO_HF_FLUID;
     /**
      * Active simulation state.
      */
@@ -102,14 +102,14 @@ declare global {
      * @param object - collision object
      * @param state - activation state
      */
-    function force_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">, state: bullet3d.collision_object.ACTIVATION_STATE): void;
+    function force_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">, state: bullet3d.collision_object.ActivationState): void;
     /**
      * Get the activation state
      *
      * @param object - collision object
      * @returns activation state
      */
-    function get_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.collision_object.ACTIVATION_STATE;
+    function get_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.collision_object.ActivationState;
     /**
      * Get the CCD motion threshold
      *
@@ -180,7 +180,7 @@ declare global {
      * @param object - collision object
      * @returns native collision object type
      */
-    function get_internal_type(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.collision_object.INTERNAL_TYPE;
+    function get_internal_type(object: Opaque<"btCollisionObject" | "btRigidBody">): bullet3d.collision_object.InternalType;
     /**
      * Get the world position
      *
@@ -326,7 +326,7 @@ declare global {
      * @param object - collision object
      * @param state - activation state
      */
-    function set_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">, state: bullet3d.collision_object.ACTIVATION_STATE): void;
+    function set_activation_state(object: Opaque<"btCollisionObject" | "btRigidBody">, state: bullet3d.collision_object.ActivationState): void;
     /**
      * Passing `true` calls Bullet's `activate()`. Passing `false` requests the
      * native `ISLAND_SLEEPING` state. As in Bullet, static or kinematic objects are

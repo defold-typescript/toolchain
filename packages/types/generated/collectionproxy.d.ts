@@ -22,7 +22,7 @@ declare global {
       code?: number;
     }
     type TIME_STEP_MODE = 0 | 1;
-    type RESULT = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED;
+    type Result = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED;
     /**
      * The collection proxy is already loaded, so its collection cannot be changed.
      */
@@ -102,7 +102,7 @@ declare global {
      * msg.post("/go#collectionproxy", "enable");
      * ```
      */
-    function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.RESULT | undefined]>;
+    function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, collectionproxy.Result | undefined]>;
   }
 }
 

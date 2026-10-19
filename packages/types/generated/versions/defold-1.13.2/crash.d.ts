@@ -18,7 +18,7 @@ declare global {
       address: string;
     }
     type USERFIELD = number;
-    type SYSFIELD = typeof crash.SYSFIELD_ENGINE_VERSION | typeof crash.SYSFIELD_ENGINE_HASH | typeof crash.SYSFIELD_DEVICE_MODEL | typeof crash.SYSFIELD_MANUFACTURER | typeof crash.SYSFIELD_SYSTEM_NAME | typeof crash.SYSFIELD_SYSTEM_VERSION | typeof crash.SYSFIELD_LANGUAGE | typeof crash.SYSFIELD_DEVICE_LANGUAGE | typeof crash.SYSFIELD_TERRITORY | typeof crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT;
+    type SysField = typeof crash.SYSFIELD_ENGINE_VERSION | typeof crash.SYSFIELD_ENGINE_HASH | typeof crash.SYSFIELD_DEVICE_MODEL | typeof crash.SYSFIELD_MANUFACTURER | typeof crash.SYSFIELD_SYSTEM_NAME | typeof crash.SYSFIELD_SYSTEM_VERSION | typeof crash.SYSFIELD_LANGUAGE | typeof crash.SYSFIELD_DEVICE_LANGUAGE | typeof crash.SYSFIELD_TERRITORY | typeof crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT;
     /**
      * android build fingerprint
      */
@@ -108,7 +108,7 @@ declare global {
      * @param index - system field enum. Must be less than crash.SYSFIELD_MAX
      * @returns value recorded in the crash dump, or `nil` if it didn't exist
      */
-    function get_sys_field(handle: number, index: crash.SYSFIELD): string | undefined;
+    function get_sys_field(handle: number, index: crash.SysField): string | undefined;
     /**
      * reads user field from a loaded crash dump
      *

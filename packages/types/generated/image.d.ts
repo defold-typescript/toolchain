@@ -50,7 +50,7 @@ declare global {
       /**
        * Image type.
        */
-      type: image.TYPE;
+      type: image.Type;
       /**
        * Script buffer containing the decompressed image data.
        */
@@ -84,13 +84,13 @@ declare global {
       /**
        * Image type.
        */
-      type: image.TYPE;
+      type: image.Type;
       /**
        * Raw image data.
        */
       buffer: string;
     }
-    type TYPE = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA;
+    type Type = typeof image.TYPE_RGB | typeof image.TYPE_RGBA | typeof image.TYPE_LUMINANCE | typeof image.TYPE_LUMINANCE_ALPHA;
     /**
      * Luminance image type.
      */

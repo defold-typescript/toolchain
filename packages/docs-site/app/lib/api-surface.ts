@@ -7,6 +7,7 @@ import {
   type AvailabilityLabelKind,
   availabilityLabel,
   DEFOLD_TYPE_MAP,
+  engineTypeName,
   examplesHtmlToMarkdown,
   firstSlotAlternativeOf,
   htmlToDocText,
@@ -592,6 +593,12 @@ export interface ApiSymbol {
    * imported brief is never presented as the fork's own.
    */
   docSource?: "upstream";
+  /**
+   * The reference's own qualified name for an engine type the declarations
+   * rename (`gui.EASING` for `gui.Easing`), so a reader can match the row to the
+   * Defold documentation. Absent when the declared name is the reference's.
+   */
+  defoldName?: string;
 }
 
 export interface ApiSymbolGroup {
@@ -1333,7 +1340,7 @@ function opensWith(text: string, head: string): boolean {
 /**
  * A type row spelled by the path a script names it with: a definition opening
  * `type <leaf>` or `interface <leaf>` names the whole qualified path
- * (`type TYPE` on `image` -> `type image.TYPE`, `interface action` filed as
+ * (`type Type` on `image` -> `type image.Type`, `interface action` filed as
  * `go`'s `on_input.action` -> `interface go.on_input.action`), and a shape
  * member row opening with its own `<Shape>.<member>` name gains the namespace
  * (`Logger.info(...)` -> `demo.Logger.info(...)`). Any other signature is
@@ -2200,12 +2207,30 @@ export function apiModuleSymbols(
   // Qualified here rather than at render time so a type row's heading and the
   // anchor `memberAnchors` slugs from its signature stay the same text.
   if (page.category === "engine") {
+    const defoldNames = defoldTypeNames(m);
     for (const symbol of symbols) {
       if (symbol.kind !== "type") continue;
+      const defoldName = defoldNames.get(symbol.name);
+      if (defoldName !== undefined) symbol.defoldName = defoldName;
       symbol.signature = qualifiedTypeSignature(page.namespace, symbol.name, symbol.signature);
     }
   }
   return symbols;
+}
+
+// The reference name each engine type the declarations rename was derived from,
+// keyed by its declared local path (`Easing` -> `gui.EASING`). The namespace
+// segments of a nested path stay as the reference spells them.
+function defoldTypeNames(module: ApiModule): Map<string, string> {
+  const names = new Map<string, string>();
+  const prefix = `${module.namespace}.`;
+  for (const { name } of [...(module.enums ?? []), ...(module.structs ?? []), ...module.typedefs]) {
+    const local = name.startsWith(prefix) ? name.slice(prefix.length) : name;
+    const dot = local.lastIndexOf(".");
+    const declared = `${local.slice(0, dot + 1)}${engineTypeName(local.slice(dot + 1))}`;
+    if (declared !== local) names.set(declared, `${prefix}${local}`);
+  }
+  return names;
 }
 
 /**

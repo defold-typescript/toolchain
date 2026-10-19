@@ -444,9 +444,9 @@
     "render.disable_state:param:state": {
       "pins": [["graphics.STATE"]],
       "adds": [
-        "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>"
+        "Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>"
       ],
-      "removes": ["graphics.STATE"]
+      "removes": ["graphics.State"]
     },
     "render.disable_texture:param:binding": {
       "pins": [["texture", "string", "hash"]],
@@ -461,9 +461,9 @@
     "render.enable_state:param:state": {
       "pins": [["graphics.STATE"]],
       "adds": [
-        "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>"
+        "Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>"
       ],
-      "removes": ["graphics.STATE"]
+      "removes": ["graphics.State"]
     },
     "render.enable_texture:param:handle_or_name": {
       "pins": [["texture", "string", "hash"]],
@@ -479,22 +479,22 @@
     },
     "render.set_blend_func_separate:param:destination_factor_alpha": {
       "pins": [["number"]],
-      "adds": ["graphics.BLEND_FACTOR"],
+      "adds": ["graphics.BlendFactor"],
       "removes": ["number"]
     },
     "render.set_blend_func_separate:param:destination_factor_color": {
       "pins": [["number"]],
-      "adds": ["graphics.BLEND_FACTOR"],
+      "adds": ["graphics.BlendFactor"],
       "removes": ["number"]
     },
     "render.set_blend_func_separate:param:source_factor_alpha": {
       "pins": [["number"]],
-      "adds": ["graphics.BLEND_FACTOR"],
+      "adds": ["graphics.BlendFactor"],
       "removes": ["number"]
     },
     "render.set_blend_func_separate:param:source_factor_color": {
       "pins": [["number"]],
-      "adds": ["graphics.BLEND_FACTOR"],
+      "adds": ["graphics.BlendFactor"],
       "removes": ["number"]
     },
     "render.set_camera:param:camera": {
@@ -537,8 +537,8 @@
     },
     "window.set_dim_mode:param:mode": {
       "pins": [["window.DIMMING"]],
-      "adds": ["Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>"],
-      "removes": ["window.DIMMING"]
+      "adds": ["Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>"],
+      "removes": ["window.Dimming"]
     }
   },
   "returnCorrections": {

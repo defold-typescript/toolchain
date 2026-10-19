@@ -205,7 +205,7 @@ declare global {
        */
       collide_connected?: boolean;
     }
-    type CONSTRAINT_TYPE = typeof bullet3d.constraint.CONSTRAINT_TYPE_CONE_TWIST | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF_SPRING | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE2 | typeof bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT | typeof bullet3d.constraint.CONSTRAINT_TYPE_SLIDER | typeof bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL;
+    type ConstraintType = typeof bullet3d.constraint.CONSTRAINT_TYPE_CONE_TWIST | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF | typeof bullet3d.constraint.CONSTRAINT_TYPE_GENERIC_6DOF_SPRING | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE | typeof bullet3d.constraint.CONSTRAINT_TYPE_HINGE2 | typeof bullet3d.constraint.CONSTRAINT_TYPE_POINT_TO_POINT | typeof bullet3d.constraint.CONSTRAINT_TYPE_SLIDER | typeof bullet3d.constraint.CONSTRAINT_TYPE_UNIVERSAL;
     /**
      * Cone-twist constraint type
      */
@@ -690,7 +690,7 @@ declare global {
      * @param constraint - constraint
      * @returns constraint type
      */
-    function get_type(constraint: bullet3d.constraint.btTypedConstraint): bullet3d.constraint.CONSTRAINT_TYPE;
+    function get_type(constraint: bullet3d.constraint.btTypedConstraint): bullet3d.constraint.ConstraintType;
     /**
      * Returns a stable lowercase diagnostic name such as `"hinge"` or
      * `"generic_6dof_spring"`.

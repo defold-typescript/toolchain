@@ -6,7 +6,7 @@ declare global {
    * Functions and constants to access resources.
    */
   namespace liveupdate {
-    type LIVEUPDATE = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_NOT_INITIALIZED;
+    type LiveUpdate = typeof liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH | typeof liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_FORMAT_ERROR | typeof liveupdate.LIVEUPDATE_INVAL | typeof liveupdate.LIVEUPDATE_INVALID_HEADER | typeof liveupdate.LIVEUPDATE_INVALID_RESOURCE | typeof liveupdate.LIVEUPDATE_IO_ERROR | typeof liveupdate.LIVEUPDATE_MEM_ERROR | typeof liveupdate.LIVEUPDATE_OK | typeof liveupdate.LIVEUPDATE_SCHEME_MISMATCH | typeof liveupdate.LIVEUPDATE_SIGNATURE_MISMATCH | typeof liveupdate.LIVEUPDATE_UNKNOWN | typeof liveupdate.LIVEUPDATE_VERSION_MISMATCH | typeof liveupdate.LIVEUPDATE_NOT_INITIALIZED;
     /**
      * Mismatch between between expected bundled resources and actual bundled resources. The manifest expects a resource to be in the bundle, but it was not found in the bundle. This is typically the case when a non-excluded resource was modified between publishing the bundle and publishing the manifest.
      */
@@ -83,7 +83,7 @@ declare global {
      * liveupdate.add_mount("season_pack_1", "zip:/path/to/easter_pack_1.zip", 30, (result) => {}); // season pack, overriding content in the other packs
      * ```
      */
-    function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: liveupdate.LIVEUPDATE) => void): liveupdate.LIVEUPDATE;
+    function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: Hash, uri: string, result: liveupdate.LiveUpdate) => void): liveupdate.LiveUpdate;
     /**
      * Get an array of the current mounts
      * This can be used to determine if a new mount is needed or not
@@ -140,7 +140,7 @@ declare global {
      * liveupdate.remove_mount("season_pack_1");
      * ```
      */
-    function remove_mount(name: string | Hash): liveupdate.LIVEUPDATE;
+    function remove_mount(name: string | Hash): liveupdate.LiveUpdate;
   }
 }
 

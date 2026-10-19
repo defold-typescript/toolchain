@@ -2953,11 +2953,11 @@ describe("authoritative TYPEDEF rows on Combined pages (committed artifacts)", (
   });
 
   test("authoritative type aliases keep rendering", () => {
-    const expected = (newest["gui\0TYPEDEF\0EASING\0"] ?? "").trim().replace(/;$/, "");
-    expect(expected.startsWith("type EASING =")).toBe(true);
-    const { symbols, markdown } = typeRow(pageFor("gui"), "EASING");
+    const expected = (newest["gui\0TYPEDEF\0Easing\0"] ?? "").trim().replace(/;$/, "");
+    expect(expected.startsWith("type Easing =")).toBe(true);
+    const { symbols, markdown } = typeRow(pageFor("gui"), "Easing");
     expect(symbols.map((s) => s.signature)).toEqual([
-      `type gui.EASING${expected.slice("type EASING".length)}`,
+      `type gui.Easing${expected.slice("type Easing".length)}`,
     ]);
     expect(markdown).toContain(`\`${expected}\``);
   });
@@ -3405,7 +3405,7 @@ describe("engine type rows name their qualified path", () => {
   };
 
   test("an engine definition row names its namespace", () => {
-    expect(typeRow("image", "TYPE")?.signature).toStartWith("type image.TYPE =");
+    expect(typeRow("image", "Type")?.signature).toStartWith("type image.Type =");
     expect(typeRow("image", "load_result")?.signature).toStartWith("interface image.load_result {");
   });
 

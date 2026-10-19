@@ -99,5 +99,5 @@ void _collectionLoaded;
 // 64-bit value types set_metadata raises on, so it reads back as the family.
 buffer.set_metadata(buf, hash("somefloats"), [1.5, 3.2, 7.9], buffer.VALUE_TYPE_FLOAT32);
 const [, valueType] = buffer.get_metadata(buf, hash("somefloats"));
-const _valueType: buffer.VALUE_TYPE | undefined = valueType;
+const _valueType: buffer.ValueType | undefined = valueType;
 void _valueType;

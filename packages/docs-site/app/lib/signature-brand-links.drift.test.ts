@@ -298,15 +298,15 @@ test("canonical gui, socket and image pages: one Types heading and no dangling i
     const levelsOf = (text: string) => headings.filter((h) => h.text === text).map((h) => h.level);
     expect(levelsOf("Types")).toEqual([2]);
     if (namespace === "gui") {
-      expect(levelsOf("ADJUST")).toEqual([]);
-      expect(levelsOf("EASING")).toEqual([]);
+      expect(levelsOf("Adjust")).toEqual([]);
+      expect(levelsOf("Easing")).toEqual([]);
     } else if (namespace === "socket") {
       expect(levelsOf("socket.dns")).toEqual([3]);
       expect(levelsOf("dns")).toEqual([]);
       expect(levelsOf("socket_client")).toEqual([]);
       expect(levelsOf("client methods")).toEqual([3]);
     } else {
-      expect(headings.some((h) => h.text.startsWith("type image.TYPE"))).toBe(true);
+      expect(headings.some((h) => h.text.startsWith("type image.Type"))).toBe(true);
     }
 
     const ids = new Set(headings.map((h) => h.id));
@@ -322,8 +322,8 @@ test("canonical gui, socket and image pages: one Types heading and no dangling i
 test("the symbol index routes a type to the heading the page renders", async () => {
   const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
   const { headings } = await renderCanonical(pages, "image");
-  const heading = headings.find((h) => h.text.startsWith("type image.TYPE"));
+  const heading = headings.find((h) => h.text.startsWith("type image.Type"));
   expect(heading).toBeDefined();
   if (!heading) return;
-  expect(buildSymbolIndex(pages)["image.TYPE"]?.route.endsWith(`#${heading.id}`)).toBe(true);
+  expect(buildSymbolIndex(pages)["image.Type"]?.route.endsWith(`#${heading.id}`)).toBe(true);
 });

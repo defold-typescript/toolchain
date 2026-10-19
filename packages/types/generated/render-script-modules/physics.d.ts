@@ -173,7 +173,7 @@ declare global {
       /**
        * shape type
        */
-      type: physics.SHAPE_TYPE;
+      type: physics.ShapeType;
       /**
        * sphere diameter or capsule pole diameter
        */
@@ -187,8 +187,8 @@ declare global {
        */
       height?: number;
     }
-    type JOINT_TYPE = typeof physics.JOINT_TYPE_FIXED | typeof physics.JOINT_TYPE_HINGE | typeof physics.JOINT_TYPE_SLIDER | typeof physics.JOINT_TYPE_SPRING | typeof physics.JOINT_TYPE_WELD | typeof physics.JOINT_TYPE_WHEEL;
-    type SHAPE_TYPE = typeof physics.SHAPE_TYPE_BOX | typeof physics.SHAPE_TYPE_CAPSULE | typeof physics.SHAPE_TYPE_HULL | typeof physics.SHAPE_TYPE_MESH | typeof physics.SHAPE_TYPE_SPHERE;
+    type JointType = typeof physics.JOINT_TYPE_FIXED | typeof physics.JOINT_TYPE_HINGE | typeof physics.JOINT_TYPE_SLIDER | typeof physics.JOINT_TYPE_SPRING | typeof physics.JOINT_TYPE_WELD | typeof physics.JOINT_TYPE_WHEEL;
+    type ShapeType = typeof physics.SHAPE_TYPE_BOX | typeof physics.SHAPE_TYPE_CAPSULE | typeof physics.SHAPE_TYPE_HULL | typeof physics.SHAPE_TYPE_MESH | typeof physics.SHAPE_TYPE_SPHERE;
     /**
      * Fixed joint; uses `max_length` from physics.joint_properties.
      */

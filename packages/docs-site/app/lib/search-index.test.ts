@@ -412,8 +412,8 @@ describe("combinedSearchRecords", () => {
   });
 
   test("routes a constant-union alias to its own type heading", () => {
-    expect(memberRecord("b2d.joint.JOINT_TYPE").text).toContain("type JOINT_TYPE =");
-    expect(pageText("b2d.joint")).not.toContain("JOINT_TYPE =");
+    expect(memberRecord("b2d.joint.JointType").text).toContain("type JointType =");
+    expect(pageText("b2d.joint")).not.toContain("JointType =");
   });
 
   test("sources text from the projection's authoritative signatures", () => {

@@ -56,8 +56,8 @@ declare global {
        */
       inset_bottom: number;
     }
-    type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN;
-    type WINDOW_EVENT = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED;
+    type Dimming = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN;
+    type WindowEvent = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED;
     /**
      * dimming mode off Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
      */
@@ -101,7 +101,7 @@ declare global {
      *
      * @returns The mode for screen dimming
      */
-    function get_dim_mode(): window.DIMMING;
+    function get_dim_mode(): window.Dimming;
     /**
      * This returns the content scale of the current display.
      *
@@ -133,7 +133,7 @@ declare global {
      *
      * @param mode - The mode for screen dimming
      */
-    function set_dim_mode(mode: Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>): void;
+    function set_dim_mode(mode: Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>): void;
     /**
      * Sets a window event listener. Only one window event listener can be set at a time.
      *

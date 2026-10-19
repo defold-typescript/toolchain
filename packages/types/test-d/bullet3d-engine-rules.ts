@@ -42,7 +42,7 @@ if ("dimensions" in data) {
   void dimensions;
   bullet3d.shape.set_shape(shape, data);
 }
-const kind: bullet3d.shape.SHAPE_TYPE = data.type;
+const kind: bullet3d.shape.ShapeType = data.type;
 void kind;
 
 declare const a: Opaque<"btRigidBody">;

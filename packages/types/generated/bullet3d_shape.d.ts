@@ -12,7 +12,7 @@ declare global {
   namespace bullet3d.shape {
     type btCollisionShape = Opaque<"btCollisionShape">;
     type definition = { type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion } | { type: typeof bullet3d.shape.SHAPE_TYPE_HULL; vertices: Vector3[]; position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion };
-    type SHAPE_TYPE = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE;
+    type ShapeType = typeof bullet3d.shape.SHAPE_TYPE_BOX | typeof bullet3d.shape.SHAPE_TYPE_CAPSULE | typeof bullet3d.shape.SHAPE_TYPE_HULL | typeof bullet3d.shape.SHAPE_TYPE_MESH | typeof bullet3d.shape.SHAPE_TYPE_SPHERE;
     /**
      * Box shape type Value `1`. Shape data contains positive vector3 `dimensions` in Defold units.
      */
@@ -73,7 +73,7 @@ declare global {
      * @param shape - shape handle
      * @returns collision shape type
      */
-    function get_type(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.SHAPE_TYPE;
+    function get_type(shape: bullet3d.shape.btCollisionShape): bullet3d.shape.ShapeType;
     /**
      * Test whether a shape handle and its owner still exist.
      *
