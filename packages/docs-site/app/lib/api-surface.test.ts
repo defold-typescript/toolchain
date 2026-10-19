@@ -2939,11 +2939,11 @@ describe("authoritative TYPEDEF rows on Combined pages (committed artifacts)", (
   test("socket handles render their committed interfaces", () => {
     const page = pageFor("socket");
     for (const name of [
-      "socket_client",
-      "socket_connected",
-      "socket_master",
-      "socket_server",
-      "socket_unconnected",
+      "SocketClient",
+      "SocketConnected",
+      "SocketMaster",
+      "SocketServer",
+      "SocketUnconnected",
     ]) {
       const expected = newest[`socket\0TYPEDEF\0${name}\0`]?.trim() ?? "";
       expect(expected.startsWith(`interface ${name} {`)).toBe(true);

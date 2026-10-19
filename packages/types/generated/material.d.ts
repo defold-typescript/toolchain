@@ -6,8 +6,6 @@ declare global {
    * Functions for interacting with materials.
    */
   namespace material {
-    type constant_info_value = Vector4 | Matrix4 | Vector4[] | Matrix4[];
-    type constant_value = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[];
     /**
      * Shader constant information
      */
@@ -23,8 +21,9 @@ declare global {
       /**
        * Constant value or values. Present for user constants.
        */
-      value?: material.constant_info_value;
+      value?: material.ConstantInfoValue;
     }
+    type ConstantInfoValue = Vector4 | Matrix4 | Vector4[] | Matrix4[];
     /**
      * Shader constant update
      */
@@ -36,8 +35,9 @@ declare global {
       /**
        * Constant value or values.
        */
-      value?: material.constant_value;
+      value?: material.ConstantValue;
     }
+    type ConstantValue = number | Vector3 | Vector4 | Matrix4 | (number | Vector3 | Vector4 | Matrix4)[];
     /**
      * Named material vertex attribute update
      */
@@ -49,7 +49,7 @@ declare global {
       /**
        * Attribute value.
        */
-      value?: material.vertex_attribute_value;
+      value?: material.VertexAttributeValue;
       /**
        * Whether integer data is normalized.
        */
@@ -174,7 +174,6 @@ declare global {
        */
       flags: graphics.TextureUsageFlag | number;
     }
-    type vertex_attribute_value = number | Vector3 | Vector4 | Matrix4 | number[];
     /**
      * Material vertex attribute information
      */
@@ -186,7 +185,7 @@ declare global {
       /**
        * Attribute value.
        */
-      value: material.vertex_attribute_value;
+      value: material.VertexAttributeValue;
       /**
        * Whether integer data is normalized.
        */
@@ -211,7 +210,7 @@ declare global {
       /**
        * Attribute value.
        */
-      value?: material.vertex_attribute_value;
+      value?: material.VertexAttributeValue;
       /**
        * Whether integer data is normalized.
        */
@@ -229,6 +228,7 @@ declare global {
        */
       semantic_type?: graphics.SemanticType;
     }
+    type VertexAttributeValue = number | Vector3 | Vector4 | Matrix4 | number[];
     type ConstantType = typeof material.CONSTANT_TYPE_USER | typeof material.CONSTANT_TYPE_USER_COLOR | typeof material.CONSTANT_TYPE_USER_MATRIX4 | typeof material.CONSTANT_TYPE_VIEWPROJ | typeof material.CONSTANT_TYPE_WORLD | typeof material.CONSTANT_TYPE_TEXTURE | typeof material.CONSTANT_TYPE_VIEW | typeof material.CONSTANT_TYPE_PROJECTION | typeof material.CONSTANT_TYPE_NORMAL | typeof material.CONSTANT_TYPE_WORLDVIEW | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ | typeof material.CONSTANT_TYPE_TIME | typeof material.CONSTANT_TYPE_WORLD_INVERSE | typeof material.CONSTANT_TYPE_VIEW_INVERSE | typeof material.CONSTANT_TYPE_PROJECTION_INVERSE | typeof material.CONSTANT_TYPE_VIEWPROJ_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEW_INVERSE | typeof material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE;
     /**
      * Normal matrix constant.

@@ -1211,9 +1211,9 @@ describe("emitDeclarations", () => {
       typedefs: [{ name: "render_target" }, { name: "constant_buffer" }],
     };
     const out = emitDeclarations(module);
-    expect(out).toContain('  type render_target = Opaque<"render_target">;');
-    expect(out).toContain(`  type constant_buffer = ${DEFOLD_TYPE_MAP.constant_buffer};`);
-    expect(out.indexOf("constant_buffer")).toBeLessThan(out.indexOf("render_target"));
+    expect(out).toContain('  type RenderTarget = Opaque<"render_target">;');
+    expect(out).toContain(`  type ConstantBuffer = ${DEFOLD_TYPE_MAP.constant_buffer};`);
+    expect(out.indexOf("type ConstantBuffer")).toBeLessThan(out.indexOf("type RenderTarget"));
   });
 
   test("a module with no TYPEDEF elements emits no type alias lines", () => {
@@ -3113,7 +3113,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "socket.select")],
     });
-    const socketHandles = "(socket_client | socket_master | socket_unconnected)[]";
+    const socketHandles = "(SocketClient | SocketMaster | SocketUnconnected)[]";
     expect(out).toContain(
       `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | undefined]>;`,
     );
@@ -3404,11 +3404,11 @@ describe("nil-return typing", () => {
 
 describe("socket handle method interfaces", () => {
   const SOCKET_HANDLE_INTERFACES = [
-    "socket_client",
-    "socket_connected",
-    "socket_master",
-    "socket_server",
-    "socket_unconnected",
+    "SocketClient",
+    "SocketConnected",
+    "SocketMaster",
+    "SocketServer",
+    "SocketUnconnected",
   ];
   const RECEIVERS = ["client", "connected", "master", "server", "unconnected"];
   const typeDeclarationNames = (out: string): string[] =>
@@ -3422,7 +3422,7 @@ describe("socket handle method interfaces", () => {
     ["1.13.1", socketDoc],
     ["1.13.2", socket1132Doc],
   ] as const) {
-    test(`the ${shape} reference shape declares one socket_<receiver> interface per handle`, () => {
+    test(`the ${shape} reference shape declares one Socket<Receiver> interface per handle`, () => {
       const out = emitDeclarations(parseDefoldApiDoc(doc));
       const names = typeDeclarationNames(out);
       for (const name of SOCKET_HANDLE_INTERFACES) {
@@ -3430,9 +3430,12 @@ describe("socket handle method interfaces", () => {
         expect(out).toContain(`interface ${name} {`);
         expect(out).not.toContain(`type ${name} =`);
       }
-      for (const receiver of RECEIVERS) expect(names).not.toContain(receiver);
-      expect(out).toMatch(/interface socket_client \{[\s\S]*?\n {4}send\(/);
-      expect(out).toMatch(/interface socket_master \{[\s\S]*?\n {4}listen\(/);
+      for (const receiver of RECEIVERS) {
+        expect(names).not.toContain(receiver);
+        expect(names).not.toContain(`socket_${receiver}`);
+      }
+      expect(out).toMatch(/interface SocketClient \{[\s\S]*?\n {4}send\(/);
+      expect(out).toMatch(/interface SocketMaster \{[\s\S]*?\n {4}listen\(/);
     });
   }
 
@@ -3440,11 +3443,11 @@ describe("socket handle method interfaces", () => {
     ["1.13.1", socketDoc],
     ["1.13.2", socket1132Doc],
   ] as const) {
-    test(`the ${shape} reference shape signs one TYPEDEF per socket_<receiver> interface`, () => {
+    test(`the ${shape} reference shape signs one TYPEDEF per Socket<Receiver> interface`, () => {
       const signatures = emitSymbolSignatures(parseDefoldApiDoc(doc));
       const typedefs = signatures.filter((entry) => entry.identity.kind === "TYPEDEF");
-      for (const name of SOCKET_HANDLE_INTERFACES) {
-        const receiver = name.slice("socket_".length);
+      for (const [index, name] of SOCKET_HANDLE_INTERFACES.entries()) {
+        const receiver = RECEIVERS[index] as string;
         const methods = signatures
           .filter(
             (entry) =>
@@ -3463,14 +3466,14 @@ describe("socket handle method interfaces", () => {
     });
   }
 
-  test("the 1.13.2 selectable union names the socket_<receiver> interfaces", () => {
+  test("the 1.13.2 selectable union names the Socket<Receiver> interfaces", () => {
     const out = emitDeclarations(parseDefoldApiDoc(socket1132Doc));
     const selectable = out
       .split("\n")
       .map((line) => line.trim())
-      .find((line) => line.startsWith("type socket_selectable ="));
+      .find((line) => line.startsWith("type SocketSelectable ="));
     expect(selectable).toStartWith(
-      "type socket_selectable = socket_master | socket_client | socket_server | socket_connected | socket_unconnected |",
+      "type SocketSelectable = SocketMaster | SocketClient | SocketServer | SocketConnected | SocketUnconnected |",
     );
   });
 
@@ -3479,20 +3482,20 @@ describe("socket handle method interfaces", () => {
     const out = emitDeclarations(module);
 
     // The handles are interfaces, not Opaque typedef aliases.
-    expect(out).toContain("interface socket_client {");
+    expect(out).toContain("interface SocketClient {");
     expect(out).not.toContain('type client = Opaque<"client">');
     expect(out).not.toContain('type master = Opaque<"master">');
     expect(out).not.toContain('type unconnected = Opaque<"unconnected">');
 
     // The interface carries its documented methods; the final colon segment is
     // the emitted member name (no `function` keyword inside an interface).
-    expect(out).toMatch(/interface socket_client \{[\s\S]*?\n {4}send\(/);
-    expect(out).toMatch(/interface socket_client \{[\s\S]*?\n {4}close\(\): void;/);
+    expect(out).toMatch(/interface SocketClient \{[\s\S]*?\n {4}send\(/);
+    expect(out).toMatch(/interface SocketClient \{[\s\S]*?\n {4}close\(\): void;/);
 
     // server and connected exist only via colon methods (no TYPEDEF element), yet
     // are still emitted as interfaces.
-    expect(out).toContain("interface socket_server {");
-    expect(out).toContain("interface socket_connected {");
+    expect(out).toContain("interface SocketServer {");
+    expect(out).toContain("interface SocketConnected {");
 
     // No leftover socket handle brands anywhere in the module.
     expect(out).not.toContain('Opaque<"client">');
@@ -3506,29 +3509,29 @@ describe("socket handle method interfaces", () => {
     const module = parseDefoldApiDoc(socketDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
+      "function connect(address: string, port: number, locaddr?: string, locport?: number, family?: string): LuaMultiReturn<[SocketClient | undefined, string | undefined]>;",
     );
     expect(out).toContain(
-      "function tcp(): LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "function tcp(): LuaMultiReturn<[SocketMaster | undefined, string | undefined]>;",
     );
-    const socketHandles = "(socket_client | socket_master | socket_unconnected)[]";
+    const socketHandles = "(SocketClient | SocketMaster | SocketUnconnected)[]";
     expect(out).toContain(
       `function select(recvt: ${socketHandles}, sendt: ${socketHandles}, timeout?: number): LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | undefined]>;`,
     );
   });
 
-  test("the 1.13.2 shape's factory returns and select results name the socket_<receiver> interfaces", () => {
+  test("the 1.13.2 shape's factory returns and select results name the Socket<Receiver> interfaces", () => {
     const lines = emitDeclarations(parseDefoldApiDoc(socket1132Doc))
       .split("\n")
       .map((line) => line.trim());
     const line = (prefix: string) => lines.find((candidate) => candidate.startsWith(prefix));
     expect(line("function connect(")).toContain(
-      "LuaMultiReturn<[socket_client | undefined, string | undefined]>;",
+      "LuaMultiReturn<[SocketClient | undefined, string | undefined]>;",
     );
     expect(line("function tcp(")).toContain(
-      "LuaMultiReturn<[socket_master | undefined, string | undefined]>;",
+      "LuaMultiReturn<[SocketMaster | undefined, string | undefined]>;",
     );
-    const socketHandles = "(socket_client | socket_master | socket_unconnected)[]";
+    const socketHandles = "(SocketClient | SocketMaster | SocketUnconnected)[]";
     expect(line("function select(")).toContain(
       `LuaMultiReturn<[${socketHandles}, ${socketHandles}, string | undefined]>;`,
     );
@@ -5684,13 +5687,23 @@ describe("shape names on every committed surface", () => {
 
   const isEditorVm = (path: string): boolean => path.split(/[\\/]/).includes("editor-vm");
 
-  function targetShapes(
-    entries: readonly { namespace: string; doc: unknown; outFile: string }[],
+  type TargetEntries = readonly { namespace: string; doc: unknown; outFile: string }[];
+
+  const targetShapes = (entries: TargetEntries): Shape[] =>
+    targetElements(entries, (module) => module.structs ?? []);
+
+  // Every reference `TYPEDEF` a target reads, placed the same way as a shape.
+  const targetTypedefs = (entries: TargetEntries): Shape[] =>
+    targetElements(entries, (module) => module.typedefs);
+
+  function targetElements(
+    entries: TargetEntries,
+    elementsOf: (module: ApiModule) => readonly { name: string }[],
   ): Shape[] {
     const shapes = new Map<string, Shape>();
     for (const entry of entries) {
       const editorVm = isEditorVm(entry.outFile);
-      for (const { name } of parseDefoldApiDoc(entry.doc).structs ?? []) {
+      for (const { name } of elementsOf(parseDefoldApiDoc(entry.doc))) {
         const local = name.startsWith(`${entry.namespace}.`)
           ? name.slice(entry.namespace.length + 1)
           : name;
@@ -5706,21 +5719,27 @@ describe("shape names on every committed surface", () => {
   const REFERENCE_PROPERTIES = "properties";
   const VERSIONS_DIR = join(GENERATED_DIR, "versions");
   const DEFAULT_ID = "default";
+  const defaultEntries = [
+    ...MODULE_MANIFEST,
+    ...EDITOR_MODULE_MANIFEST,
+    ...EDITOR_VM_MODULE_MANIFEST,
+  ];
   const targets = [
     {
       id: DEFAULT_ID,
       files: declarationFiles(GENERATED_DIR).filter((path) => !path.startsWith(VERSIONS_DIR)),
-      shapes: targetShapes([
-        ...MODULE_MANIFEST,
-        ...EDITOR_MODULE_MANIFEST,
-        ...EDITOR_VM_MODULE_MANIFEST,
-      ]),
+      shapes: targetShapes(defaultEntries),
+      typedefs: targetTypedefs(defaultEntries),
     },
-    ...readdirSync(VERSIONS_DIR).map((id) => ({
-      id,
-      files: declarationFiles(join(VERSIONS_DIR, id)),
-      shapes: targetShapes(VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === id)),
-    })),
+    ...readdirSync(VERSIONS_DIR).map((id) => {
+      const entries = VERSIONED_MODULE_MANIFEST.filter((entry) => entry.versionId === id);
+      return {
+        id,
+        files: declarationFiles(join(VERSIONS_DIR, id)),
+        shapes: targetShapes(entries),
+        typedefs: targetTypedefs(entries),
+      };
+    }),
   ].map((target) => ({
     ...target,
     surfaces: target.files.map((path) => ({ path, surface: readShapeSurface(path) })),
@@ -5834,6 +5853,146 @@ describe("shape names on every committed surface", () => {
         inline: true,
       });
     }
+  });
+
+  // The reference typedefs whose handle maps to a core global: the slots name the
+  // global, so the namespace declares neither spelling.
+  const CORE_GLOBAL_ALIASES = [
+    { home: "vmath", leaf: "vector" },
+    { home: "resource", leaf: "resource_data" },
+  ];
+  const SOCKET_HANDLES = ["client", "connected", "master", "server", "unconnected"];
+
+  test("the default target declares the PascalCase handle and alias names and none of the reference spellings", () => {
+    const at = (file: string, home: string, names: readonly string[]) =>
+      names.map((name) => `${home}.${name}: ${declaredAt(file, home).has(name)}`);
+    const socketHandles = SOCKET_HANDLES.map((receiver) => engineTypeName(`socket_${receiver}`));
+    expect([
+      ...at("gui.d.ts", "gui", ["Node"]),
+      ...at("render.d.ts", "render", ["RenderTarget", "RenderTargetParams"]),
+      ...at("b2d.d.ts", "b2d", ["B2Body"]),
+      ...at("bullet3d.d.ts", "bullet3d", ["BtRigidBody"]),
+      ...at("timer.d.ts", "timer", ["TimerHandle"]),
+      ...at("crash.d.ts", "crash", ["UserField"]),
+      ...at("collectionproxy.d.ts", "collectionproxy", ["TimeStepMode"]),
+      ...at("socket.d.ts", "socket", socketHandles),
+    ]).toEqual(
+      [
+        "gui.Node",
+        "render.RenderTarget",
+        "render.RenderTargetParams",
+        "b2d.B2Body",
+        "bullet3d.BtRigidBody",
+        "timer.TimerHandle",
+        "crash.UserField",
+        "collectionproxy.TimeStepMode",
+        "socket.SocketClient",
+        "socket.SocketConnected",
+        "socket.SocketMaster",
+        "socket.SocketServer",
+        "socket.SocketUnconnected",
+      ].map((name) => `${name}: true`),
+    );
+    const declaredOld = [
+      ...at("gui.d.ts", "gui", ["node"]),
+      ...at("render.d.ts", "render", ["render_target", "render_target_params"]),
+      ...at("b2d.d.ts", "b2d", ["b2Body"]),
+      ...at("bullet3d.d.ts", "bullet3d", ["btRigidBody"]),
+      ...at("timer.d.ts", "timer", ["timer_handle"]),
+      ...at("crash.d.ts", "crash", ["USERFIELD"]),
+      ...at("collectionproxy.d.ts", "collectionproxy", ["TIME_STEP_MODE"]),
+      ...at(
+        "socket.d.ts",
+        "socket",
+        SOCKET_HANDLES.flatMap((receiver) => [receiver, `socket_${receiver}`]),
+      ),
+    ];
+    expect(declaredOld.filter((line) => line.endsWith(": true"))).toEqual([]);
+  });
+
+  test("each socket handle interface carries its colon methods", () => {
+    const source = target(DEFAULT_ID).surfaces.find(({ path }) =>
+      path.endsWith(`${join("generated", "socket.d.ts")}`),
+    )?.surface.source;
+    if (source === undefined) throw new Error("no default socket.d.ts");
+    const methods = new Map<string, number>();
+    const visit = (node: ts.Node): void => {
+      if (ts.isInterfaceDeclaration(node)) {
+        methods.set(node.name.text, node.members.filter(ts.isMethodSignature).length);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    const empty = SOCKET_HANDLES.map((receiver) => engineTypeName(`socket_${receiver}`)).filter(
+      (name) => (methods.get(name) ?? 0) === 0,
+    );
+    expect(empty).toEqual([]);
+  });
+
+  test("defold-1.12.4 declares render.RenderTargetParams", () => {
+    expect(
+      declaredAt(join("versions", "defold-1.12.4", "render.d.ts"), "render").has(
+        "RenderTargetParams",
+      ),
+    ).toBe(true);
+  });
+
+  test("an alias of a core global is declared under neither name", () => {
+    const declared: string[] = [];
+    let checked = 0;
+    for (const { typedefs, surfaces } of targets) {
+      for (const { home, leaf } of CORE_GLOBAL_ALIASES) {
+        if (!typedefs.some((typedef) => typedef.home === home && typedef.leaf === leaf)) continue;
+        checked += 1;
+        for (const { path, surface } of surfaces) {
+          const types = surface.types.get(home);
+          for (const name of [leaf, engineTypeName(leaf)]) {
+            if (types?.has(name)) declared.push(`${path}: ${home}.${name}`);
+          }
+        }
+      }
+    }
+    expect(declared).toEqual([]);
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  test("every typedef a surface declares takes its PascalCase name, and its reference name only when equal", () => {
+    const reference: string[] = [];
+    const unchecked: string[] = [];
+    for (const { id, typedefs, surfaces } of targets) {
+      let declared = 0;
+      for (const { home, leaf, editorVm } of typedefs) {
+        const pascal = engineTypeName(leaf);
+        for (const { path, surface } of surfaces) {
+          if (isEditorVm(path) !== editorVm) continue;
+          const types = surface.types.get(home);
+          if (types === undefined) continue;
+          if (pascal !== leaf && types.has(leaf)) reference.push(`${path}: ${home}.${leaf}`);
+          if (types.has(pascal)) declared += 1;
+        }
+      }
+      if (typedefs.length > 0 && declared === 0) unchecked.push(id);
+    }
+    expect(reference).toEqual([]);
+    expect(unchecked).toEqual([]);
+  });
+
+  test("no slot on any committed surface names a typedef by its reference spelling", () => {
+    const stale: string[] = [];
+    for (const { typedefs, surfaces } of targets) {
+      for (const { path, surface } of surfaces) {
+        const renamed = typedefs.filter(
+          (typedef) =>
+            typedef.editorVm === isEditorVm(path) && engineTypeName(typedef.leaf) !== typedef.leaf,
+        );
+        const old = new Set(renamed.map(({ home, leaf }) => `${home}.${leaf}`));
+        const bare = new Set(renamed.map(({ leaf }) => leaf));
+        for (const name of surface.references) {
+          if (old.has(name) || bare.has(name)) stale.push(`${path}: ${name}`);
+        }
+      }
+    }
+    expect(stale).toEqual([]);
   });
 });
 
@@ -6549,47 +6708,47 @@ describe("overload slot aliases", () => {
       .map((line) => line.trim());
 
   const slotDeclarations = (lines: readonly string[]): string[] =>
-    lines.filter((line) => /^(?:export )?(?:type|interface) render_target_params\b/.test(line));
+    lines.filter((line) => /^(?:export )?(?:type|interface) RenderTargetParams\b/.test(line));
 
-  test("render.render_target_params is the reference's own declaration where the reference declares it", () => {
+  test("render.RenderTargetParams is the reference's own declaration where the reference declares it", () => {
     const lines = emittedLines(render114Doc);
     const [only, ...rest] = slotDeclarations(lines);
     expect(rest).toEqual([]);
-    expect(only).toStartWith("type render_target_params = {");
-    expect(lines.join("\n")).not.toContain("RenderTargetParams");
+    expect(only).toStartWith("type RenderTargetParams = {");
+    expect(lines.join("\n")).not.toContain("render_target_params =");
   });
 
-  test("render.render_target_params aliases the slot type where the reference leaves the slot a table", () => {
+  test("render.RenderTargetParams aliases the slot type where the reference leaves the slot a table", () => {
     const lines = emittedLines(render113Doc);
     expect(slotDeclarations(lines)).toEqual([
-      "type render_target_params = Record<string | number, unknown>;",
+      "type RenderTargetParams = Record<string | number, unknown>;",
     ]);
-    expect(lines.join("\n")).not.toContain("RenderTargetParams");
+    expect(lines.join("\n")).not.toContain("render_target_params =");
   });
 
   test("a namespace without the aliased slot declares no alias", () => {
-    expect(emitDeclarations(parseDefoldApiDoc(sprite114Doc))).not.toContain("render_target_params");
+    expect(emitDeclarations(parseDefoldApiDoc(sprite114Doc))).not.toContain("RenderTargetParams");
   });
 
   const slotSignatures = (doc: Parameters<typeof parseDefoldApiDoc>[0]): string[] =>
     emitSymbolSignatures(parseDefoldApiDoc(doc), { declaredTypes })
       .filter(
         (entry) =>
-          entry.identity.kind === "TYPEDEF" && entry.identity.name === "render_target_params",
+          entry.identity.kind === "TYPEDEF" && entry.identity.name === "RenderTargetParams",
       )
       .map((entry) => entry.tsSignature);
 
   test("the slot alias signs the line the declarations print", () => {
     expect(slotSignatures(render113Doc)).toEqual(slotDeclarations(emittedLines(render113Doc)));
     expect(slotSignatures(render113Doc)).toEqual([
-      "type render_target_params = Record<string | number, unknown>;",
+      "type RenderTargetParams = Record<string | number, unknown>;",
     ]);
   });
 
   test("the reference's own declaration is the slot's only signature where the reference declares it", () => {
     const [only, ...rest] = slotSignatures(render114Doc);
     expect(rest).toEqual([]);
-    expect(only).toStartWith("type render_target_params = {");
+    expect(only).toStartWith("type RenderTargetParams = {");
   });
 });
 
@@ -6751,8 +6910,8 @@ describe("defaultMapType LuaLS fallback", () => {
     expect(defaultMapType("buffer_data")).toBe(
       'Opaque<"buffer"> & { length: LuaLengthMethod<number> }',
     );
-    expect(defaultMapType("socket_client")).toBe("socket_client");
-    expect(defaultMapType("client")).toBe("socket_client");
+    expect(defaultMapType("socket_client")).toBe("SocketClient");
+    expect(defaultMapType("client")).toBe("SocketClient");
     expect(defaultMapType("message.physics.collision_event")).toBe(
       'BuiltinMessages["collision_event"]',
     );
@@ -7216,20 +7375,20 @@ describe("STRUCT and TYPEDEF declarations", () => {
       info: { namespace: "physics" },
       elements: [{ ...physicsEvent, name: "physics.other_event" }],
     });
-    expect(aliasLine(emitDeclarations(other), "other_event")).toBe(
-      'type other_event = BuiltinMessages["contact_point_event"] | BuiltinMessages["collision_event"] | BuiltinMessages["trigger_event"] | BuiltinMessages["ray_cast_response"] | BuiltinMessages["ray_cast_missed"];',
+    expect(aliasLine(emitDeclarations(other), "OtherEvent")).toBe(
+      'type OtherEvent = BuiltinMessages["contact_point_event"] | BuiltinMessages["collision_event"] | BuiltinMessages["trigger_event"] | BuiltinMessages["ray_cast_response"] | BuiltinMessages["ray_cast_missed"];',
     );
   });
 
   test("the physics listener event union gives each message arm its `type` hash", () => {
-    expect(aliasLine(emitDeclarations(physicsModule), "event")).toBe(
-      'type event = BuiltinMessages["contact_point_event"] & { type: Hash<"contact_point_event"> } | BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> } | BuiltinMessages["trigger_event"] & { type: Hash<"trigger_event"> } | BuiltinMessages["ray_cast_response"] & { type: Hash<"ray_cast_response"> } | BuiltinMessages["ray_cast_missed"] & { type: Hash<"ray_cast_missed"> };',
+    expect(aliasLine(emitDeclarations(physicsModule), "Event")).toBe(
+      'type Event = BuiltinMessages["contact_point_event"] & { type: Hash<"contact_point_event"> } | BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> } | BuiltinMessages["trigger_event"] & { type: Hash<"trigger_event"> } | BuiltinMessages["ray_cast_response"] & { type: Hash<"ray_cast_response"> } | BuiltinMessages["ray_cast_missed"] & { type: Hash<"ray_cast_missed"> };',
     );
   });
 
   test("on the 1.14.0 reference only the listener event union carries `type`", () => {
     const out = emitDeclarations(parseDefoldApiDoc(physics114Doc));
-    expect(aliasLine(out, "event")).toContain(
+    expect(aliasLine(out, "Event")).toContain(
       'BuiltinMessages["collision_event"] & { type: Hash<"collision_event"> }',
     );
     const raycast = out
@@ -7244,7 +7403,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
     const out = emitDeclarations(
       parseDefoldApiDoc({ info: { namespace: "collectionproxy" }, elements: [timeStepMode] }),
     );
-    expect(aliasLine(out, "TIME_STEP_MODE")).toBe("type TIME_STEP_MODE = 0 | 1;");
+    expect(aliasLine(out, "TimeStepMode")).toBe("type TimeStepMode = 0 | 1;");
   });
 
   test("a socket handle typedef beside its receiver's methods declares only the interface", () => {
@@ -7258,16 +7417,37 @@ describe("STRUCT and TYPEDEF declarations", () => {
     const socket = emitDeclarations(
       parseDefoldApiDoc({ info: { namespace: "socket" }, elements: [socketClient, send] }),
     );
-    expect(aliasLine(socket, "socket_client")).toBeUndefined();
-    expect(socket).toContain("interface socket_client {");
+    expect(aliasLine(socket, "SocketClient")).toBeUndefined();
+    expect(socket).toContain("interface SocketClient {");
     expect(socket).not.toContain("interface client {");
   });
 
   test("a handle typedef the type map resolves aliases that mapping", () => {
+    const timer = emitDeclarations(
+      parseDefoldApiDoc({
+        info: { namespace: "timer" },
+        elements: [
+          {
+            type: "TYPEDEF",
+            name: "timer_handle",
+            brief: "Timer handle",
+            parameters: [{ name: "value", doc: "", types: ["number"], is_optional: "False" }],
+            members: [],
+          },
+        ],
+      }),
+    );
+    expect(aliasLine(timer, "TimerHandle")).toBe("type TimerHandle = number;");
+  });
+
+  test("a handle typedef the type map resolves to a core global declares nothing", () => {
     const vmath = emitDeclarations(
       parseDefoldApiDoc({ info: { namespace: "vmath" }, elements: [vmathVector] }),
     );
-    expect(aliasLine(vmath, "vector")).toBe("type vector = Vector;");
+    expect([aliasLine(vmath, "vector"), aliasLine(vmath, "Vector")]).toEqual([
+      undefined,
+      undefined,
+    ]);
   });
 
   test("an unmapped userdata typedef keeps its opaque brand", () => {
@@ -7277,8 +7457,8 @@ describe("STRUCT and TYPEDEF declarations", () => {
         elements: [btTypedConstraint],
       }),
     );
-    expect(aliasLine(out, "btTypedConstraint")).toBe(
-      'type btTypedConstraint = Opaque<"btTypedConstraint">;',
+    expect(aliasLine(out, "BtTypedConstraint")).toBe(
+      'type BtTypedConstraint = Opaque<"btTypedConstraint">;',
     );
   });
 
@@ -7320,7 +7500,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
           elements: [renderTargetBufferParams, renderTargetParams(aliased)],
         }),
       ),
-      "render_target_params",
+      "RenderTargetParams",
     );
 
   test("the 1.14.0 render-target params typedef takes only the texture types the engine accepts", () => {
@@ -7329,7 +7509,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
         "{ type?:graphics.TEXTURE_TYPE, sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
       ),
     ).toBe(
-      "type render_target_params = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };",
+      "type RenderTargetParams = { type?: render.RenderTargetTextureType; sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };",
     );
   });
 
@@ -7339,7 +7519,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
         "{ sample_count?:integer, [graphics.BUFFER_TYPE]:render.render_target_buffer_params }",
       ),
     ).toBe(
-      "type render_target_params = { sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };",
+      "type RenderTargetParams = { sample_count?: number } & { [key: number]: render.RenderTargetBufferParams };",
     );
   });
 
@@ -7386,13 +7566,13 @@ describe("STRUCT and TYPEDEF declarations", () => {
           ],
         }),
       ),
-      "definition",
+      "Definition",
     );
   const shapeArmFields = "position?: Vector3; rotation?: Quaternion; target_rotation?: Quaternion";
 
   test("the Bullet3D shape definition gives each arm its own shape type", () => {
     expect(shapeDefinitionLine(shapeDefinitionTokens)).toBe(
-      `type definition = ${[
+      `type Definition = ${[
         `{ type: typeof bullet3d.shape.SHAPE_TYPE_SPHERE; diameter: number; ${shapeArmFields} }`,
         `{ type: typeof bullet3d.shape.SHAPE_TYPE_BOX; dimensions: Vector3; ${shapeArmFields} }`,
         `{ type: typeof bullet3d.shape.SHAPE_TYPE_CAPSULE; diameter: number; height: number; ${shapeArmFields} }`,
@@ -7407,7 +7587,7 @@ describe("STRUCT and TYPEDEF declarations", () => {
       "{ type:bullet3d.shape.SHAPE_TYPE, vertices:vector3[] }",
     ];
     expect(shapeDefinitionLine(changed)).toBe(
-      `type definition = ${[
+      `type Definition = ${[
         `{ type: bullet3d.shape.ShapeType; diameter: number; ${shapeArmFields} }`,
         `{ type: bullet3d.shape.ShapeType; dimensions: Vector3; ${shapeArmFields} }`,
         `{ type: bullet3d.shape.ShapeType; diameter: number; height: number; ${shapeArmFields} }`,

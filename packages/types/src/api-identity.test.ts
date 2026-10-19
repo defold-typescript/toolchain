@@ -103,6 +103,15 @@ describe("canonical identity types", () => {
     );
   });
 
+  test("a correction replacing with a renamed typedef keys the identity its reference name keys", () => {
+    expect(
+      canonicalIdentityTypes(["bullet3d.shape.Definition"], COMMITTED_IDENTITY_VOCABULARY),
+    ).toEqual(canonicalIdentityTypes(["bullet3d.shape.definition"], COMMITTED_IDENTITY_VOCABULARY));
+    expect(
+      canonicalIdentityTypes(["bullet3d.shape.definition"], COMMITTED_IDENTITY_VOCABULARY),
+    ).not.toEqual(["bullet3d.shape.Definition"]);
+  });
+
   test("nil survives canonicalization, from a union arm or a LuaLS `?`", () => {
     expect(canonicalIdentityTypes(["b2Body", "nil"], VOCABULARY)).toContain("nil");
     expect(canonicalIdentityTypes(["b2Body?"], VOCABULARY)).toEqual(

@@ -3763,6 +3763,36 @@ describe("a renamed engine type shows its Defold name", () => {
     );
   });
 
+  // The type row headings on a page that open with `opening`.
+  const rowHeadings = (lines: readonly string[], opening: string): string[] =>
+    lines.filter((line) => /^#{3,4} `/.test(line) && line.includes(`\`${opening}`));
+
+  test("a renamed handle renders one row, with its methods, under the reference's own name anchored by its element name", () => {
+    const socket = markdownFor("socket");
+    const client = rowHeadings(socket, "interface socket.SocketClient {");
+    expect(client.length).toBe(1);
+    expect(client[0]).toContain("send(data: string");
+    expect(rowHeadings(socket, "interface socket.socket_client")).toEqual([]);
+    expect(rowBody(socket, "interface socket.SocketClient {")[0]).toBe(
+      "[icon:lua] [`socket.socket_client`](https://defold.com/ref/socket-lua#socket_client)",
+    );
+    const gui = markdownFor("gui");
+    expect(rowHeadings(gui, "type gui.Node =").length).toBe(1);
+    expect(rowHeadings(gui, "type gui.node")).toEqual([]);
+    expect(rowBody(gui, "type gui.Node =")[0]).toBe(
+      "[icon:lua] [`gui.node`](https://defold.com/ref/gui-lua#node)",
+    );
+  });
+
+  test("an alias of a core global renders no row", () => {
+    expect([
+      ...rowHeadings(markdownFor("vmath"), "type vmath.vector ="),
+      ...rowHeadings(markdownFor("vmath"), "type vmath.Vector ="),
+      ...rowHeadings(markdownFor("resource"), "type resource.resource_data ="),
+      ...rowHeadings(markdownFor("resource"), "type resource.ResourceData ="),
+    ]).toEqual([]);
+  });
+
   test("a type the reference does not name, or names the same, carries no Defold name", () => {
     expect(rowBody(markdownFor("render"), "type render.ClearBufferKey =").join("\n")).not.toContain(
       "[icon:lua]",

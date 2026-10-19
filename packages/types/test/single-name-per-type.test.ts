@@ -309,6 +309,37 @@ function duplicateDefects(surface: string, target: string, sources: readonly Sou
   return defects;
 }
 
+const PASCAL_CASE = /^[A-Z][A-Za-z0-9]*$/;
+
+// A Defold namespace is a dotted namespace path; the global scope, a module
+// file's own scope and a quoted module name are not one.
+const isDefoldNamespace = (namespace: string): boolean =>
+  namespace !== "" && !namespace.startsWith("file:") && !namespace.startsWith('"');
+
+function nameShapeDefects(surface: string, sources: readonly Source[]): string[] {
+  const defects: string[] = [];
+  for (const [namespace, names] of collectDeclarations(sources)) {
+    if (!isDefoldNamespace(namespace)) continue;
+    const folded = new Map<string, string[]>();
+    for (const [name, declaration] of [...names].sort(([a], [b]) => a.localeCompare(b))) {
+      if (!PASCAL_CASE.test(name)) {
+        defects.push(
+          `${surface}: ${namespace}.${name} is not PascalCase (${declaration.nodes.map(declarationSite).join(", ")})`,
+        );
+      }
+      const key = name.toLowerCase();
+      folded.set(key, [...(folded.get(key) ?? []), name]);
+    }
+    for (const spellings of folded.values()) {
+      if (spellings.length < 2) continue;
+      defects.push(
+        `${surface}: ${namespace} declares ${spellings.join(" and ")}, equal ignoring case`,
+      );
+    }
+  }
+  return defects;
+}
+
 describe("single name per type", () => {
   const all = surfaces();
 
@@ -327,7 +358,37 @@ describe("single name per type", () => {
         [],
       );
     });
+
+    test(`${surface.name} names every type in a Defold namespace in PascalCase, once ignoring case`, () => {
+      expect(nameShapeDefects(surface.name, readSources(surface.files))).toEqual([]);
+    });
   }
+});
+
+describe("name-shape analyzer", () => {
+  const defectsOf = (...texts: string[]) =>
+    nameShapeDefects(
+      "memory",
+      texts.map((text, index) => ({ path: `source-${index}.d.ts`, text })),
+    );
+
+  test("a snake_case type in a namespace is a defect", () => {
+    expect(defectsOf("declare namespace gui {\n  type node = unknown;\n}")).toEqual([
+      "memory: gui.node is not PascalCase (type@source-0.d.ts:2)",
+    ]);
+  });
+
+  test("two names equal ignoring case in one namespace are a defect", () => {
+    expect(
+      defectsOf(
+        "declare namespace render {\n  type RenderTarget = unknown;\n  type Rendertarget = unknown;\n}",
+      ),
+    ).toEqual(["memory: render declares Rendertarget and RenderTarget, equal ignoring case"]);
+  });
+
+  test("global and module-scoped types are outside the gate", () => {
+    expect(defectsOf("type lua_thing = number;", "export type local_name = number;")).toEqual([]);
+  });
 });
 
 describe("same-name analyzer", () => {

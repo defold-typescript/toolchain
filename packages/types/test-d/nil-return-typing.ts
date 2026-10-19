@@ -31,11 +31,11 @@ if (parent !== undefined) {
 // on its own guard and neither is usable before it.
 const [conn, err] = socket.connect("localhost", 80);
 // @ts-expect-error the connection is undefined on failure, not usable before the guard
-const _connEarly: socket.socket_client = conn;
+const _connEarly: socket.SocketClient = conn;
 // @ts-expect-error the error string is undefined on success, not usable before the guard
 const _errEarly: string = err;
 if (conn !== undefined) {
-  const client: socket.socket_client = conn;
+  const client: socket.SocketClient = conn;
   void client;
 }
 if (err !== undefined) {

@@ -21,9 +21,9 @@ declare global {
    * checking a retained handle; every other operation rejects an invalid handle.
    */
   namespace bullet3d {
-    type btCollisionObject = Opaque<"btCollisionObject" | "btRigidBody">;
-    type btDiscreteDynamicsWorld = Opaque<"btDiscreteDynamicsWorld">;
-    type btRigidBody = Opaque<"btRigidBody">;
+    type BtCollisionObject = Opaque<"btCollisionObject" | "btRigidBody">;
+    type BtDiscreteDynamicsWorld = Opaque<"btDiscreteDynamicsWorld">;
+    type BtRigidBody = Opaque<"btRigidBody">;
     /**
      * Bullet version information
      */

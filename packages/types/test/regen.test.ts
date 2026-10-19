@@ -275,9 +275,9 @@ describe("overload slot alias of a withheld function", () => {
     const render = MODULE_MANIFEST.find((e) => e.namespace === "render");
     if (!render) throw new Error("render manifest entry missing");
     const { contents } = generateModuleDeclaration(render);
-    expect(contents).toContain("type render_target_params = {");
-    expect(contents).not.toContain("type render_target_params = render.render_target_params;");
-    expect(contents).not.toContain("RenderTargetParams");
+    expect(contents).toContain("type RenderTargetParams = {");
+    expect(contents).not.toContain("type RenderTargetParams = render.RenderTargetParams;");
+    expect(contents).not.toContain("type render_target_params");
     expect(contents).not.toContain("function render_target(");
   });
 
@@ -287,8 +287,8 @@ describe("overload slot alias of a withheld function", () => {
     );
     if (!render) throw new Error("defold-1.13.1 render manifest entry missing");
     const { contents } = generateModuleDeclaration(render);
-    expect(contents).toContain("type render_target_params = Record<string | number, unknown>;");
-    expect(contents).not.toContain("RenderTargetParams");
+    expect(contents).toContain("type RenderTargetParams = Record<string | number, unknown>;");
+    expect(contents).not.toContain("type render_target_params");
     expect(contents).not.toContain("function render_target(");
   });
 });
@@ -467,12 +467,12 @@ describe("manifest member skips", () => {
     ]);
     // An exact rule naming both a value and a type withholds the value only.
     expect(contents).not.toContain("function shared(");
-    expect(contents).toContain('type shared = "a" | "b";');
+    expect(contents).toContain('type Shared = "a" | "b";');
     expect(contents).not.toContain("interface gone");
-    expect(contents).not.toContain("type gone_alias");
+    expect(contents).not.toContain("type GoneAlias");
     expect(contents).not.toContain("namespace nested");
     expect(contents).toContain("interface Kept {");
-    expect(contents).toContain('type kept_alias = "a" | "b";');
+    expect(contents).toContain('type KeptAlias = "a" | "b";');
   });
 
   test("an owned ENUM keeps its string brand, nilable member and alias in both surfaces", () => {
@@ -870,10 +870,10 @@ describe("editor namespace emit", () => {
     };
     const { contents } = generateModuleDeclaration({ ...editorEntry(), doc });
     expect(contents).toContain("selection?: editor.command.query.Selection;");
-    expect(contents).toContain("locations: editor.command.location[];");
+    expect(contents).toContain("locations: editor.command.Location[];");
     expect(contents).toMatch(/active\?: \(opts: editor\.command\.Context\) => boolean;/);
     expect(contents).toContain('label: string | Opaque<"message">;');
-    expect(contents).toMatch(/type location = "Assets" \| "Bundle" \|/);
+    expect(contents).toMatch(/type Location = "Assets" \| "Bundle" \|/);
     const block = (name: string): string => {
       const opened = contents.slice(contents.indexOf(`interface ${name} {`));
       return opened.slice(0, opened.indexOf("\n", opened.indexOf("}")));
@@ -1330,10 +1330,10 @@ describe("editor VM module emit", () => {
     const entry = EDITOR_VM_MODULE_MANIFEST.find((e) => e.namespace === "http");
     if (!entry) throw new Error("http editor VM manifest entry missing");
     const { contents } = generateModuleDeclaration({ ...entry, doc: splitEditorHttpDoc() });
-    expect(contents.match(/type response = /g)).toHaveLength(1);
+    expect(contents.match(/type Response = /g)).toHaveLength(1);
     expect(contents).toContain("interface Request {");
     expect(contents).toMatch(
-      /type handler = \(request: http\.server\.Request\) => .*http\.response/,
+      /type Handler = \(request: http\.server\.Request\) => .*http\.Response/,
     );
   });
 
