@@ -7,7 +7,7 @@ declare global {
    * shapes, so it is represented by a separate `b2Chain` handle.
    */
   namespace b2d.chain {
-    type b2Chain = Opaque<"b2Chain">;
+    type B2Chain = Opaque<"b2Chain">;
     /**
      * Destroying a chain removes all segment shapes owned by the chain. Destroying
      * any segment shape through `b2d.body.destroy_shape` also destroys its parent chain.

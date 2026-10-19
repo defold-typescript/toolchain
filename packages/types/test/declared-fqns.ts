@@ -76,14 +76,14 @@ export interface FixtureDoc {
 //
 // A FUNCTION reaches it only as a callable, not as the namespace its option
 // struct nests under (`json.decode.options` opens `namespace decode`), and an
-// ENUM reaches it member by member, as the constants it names. A STRUCT reaches it
-// under its leaf through `engineTypeName` (`editor.ui.button.props` as
-// `editor.ui.button.Props`).
+// ENUM reaches it member by member, as the constants it names. A STRUCT or
+// TYPEDEF reaches it under its leaf through `engineTypeName`
+// (`editor.ui.button.props` as `editor.ui.button.Props`).
 export function unexpressedFixtureNames(doc: unknown, contents: string): string[] {
   const declared = collectDeclaredFqns(contents);
   const callables = collectDeclaredFqns(contents, false);
   const declaredName = (name: string, type: string): string => {
-    if (type !== "STRUCT") return name;
+    if (type !== "STRUCT" && type !== "TYPEDEF") return name;
     const dot = name.lastIndexOf(".");
     return `${name.slice(0, dot + 1)}${engineTypeName(name.slice(dot + 1))}`;
   };

@@ -330,7 +330,7 @@ describe("engine index passthrough", () => {
   test("each engine argument and return is emitted as the source expression", () => {
     expect(
       lua([
-        "declare const client: socket.socket_client;",
+        "declare const client: socket.SocketClient;",
         "declare const i: number;",
         "declare const maybe: number | undefined;",
         'type Idx = number & { readonly __brand: "Idx" };',
@@ -426,7 +426,7 @@ describe("engine index passthrough", () => {
       transpile(
         [
           'declare const body: Opaque<"b2Body">;',
-          "declare const client: socket.socket_client;",
+          "declare const client: socket.SocketClient;",
           "/** @noSelf */",
           'declare namespace unclassified { function get_density(body: Opaque<"b2Body">, fixture_index: number): number; }',
           "interface Peer { send(data: string, i?: number, j?: number): LuaMultiReturn<[number | undefined, string | undefined, number | undefined]>; }",

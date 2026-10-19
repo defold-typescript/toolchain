@@ -32,7 +32,6 @@ declare global {
    * : indexed by number 1 to the vector length. Example: `v[3]`
    */
   namespace vmath {
-    type vector = Vector;
     /**
      * Calculates the conjugate of a quaternion. The result is a
      * quaternion with the same magnitudes but with the sign of

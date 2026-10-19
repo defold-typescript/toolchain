@@ -5,6 +5,7 @@ export const ENGINE_TYPE_NAME_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["LIVEUPDATE", "LiveUpdate"],
   ["PIEBOUNDS", "PieBounds"],
   ["SYSFIELD", "SysField"],
+  ["USERFIELD", "UserField"],
   ["generic_6dof_params", "Generic6DofParams"],
   ["generic_6dof_spring_params", "Generic6DofSpringParams"],
 ]);

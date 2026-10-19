@@ -6,13 +6,13 @@ declare global {
    * Editor scripting documentation
    */
   namespace editor {
-    type command = Opaque<"command">;
-    type component = Opaque<"component">;
-    type image = Opaque<"editor.image">;
-    type message = Opaque<"message">;
-    type schema = Opaque<"editor.schema">;
-    type tiles = Opaque<"editor.tiles">;
-    type transaction_step = Opaque<"transaction_step">;
+    type Command = Opaque<"command">;
+    type Component = Opaque<"component">;
+    type Image = Opaque<"editor.image">;
+    type Message = Opaque<"message">;
+    type Schema = Opaque<"editor.schema">;
+    type Tiles = Opaque<"editor.tiles">;
+    type TransactionStep = Opaque<"transaction_step">;
     /**
      * A string, SHA1 of Defold editor
      */
@@ -137,7 +137,7 @@ declare global {
      * editor.create_resources([{ 1: "/npc.script", 2: "go.property('hp', 100)" }]);
      * ```
      */
-    function create_resources(resources: (string | editor.create_resources.resource)[]): void;
+    function create_resources(resources: (string | editor.create_resources.Resource)[]): void;
     /**
      * Delete a directory if it exists, and all existent child directories and files.
      * Throws an error if the directory can't be deleted.
@@ -243,7 +243,7 @@ declare global {
          */
         argument?: unknown;
       }
-      type location = "Assets" | "Bundle" | "Code" | "Debug" | "Edit" | "Help" | "Outline" | "Project" | "Scene" | "View";
+      type Location = "Assets" | "Bundle" | "Code" | "Debug" | "Edit" | "Help" | "Outline" | "Project" | "Scene" | "View";
       /**
        * Options used to create an editor command
        */
@@ -255,7 +255,7 @@ declare global {
         /**
          * non-empty list of locations where the command is displayed
          */
-        locations: editor.command.location[];
+        locations: editor.command.Location[];
         /**
          * query that controls command availability and provides context to its handler functions
          */
@@ -316,7 +316,7 @@ declare global {
       }
     }
     namespace create_resources {
-      type resource = { 1: string; 2?: string };
+      type Resource = { 1: string; 2?: string };
     }
     namespace execute {
       /**
@@ -393,28 +393,28 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function array(opts: editor.prefs.schema.array.Options): editor.schema;
+        export function array(opts: editor.prefs.schema.array.Options): editor.Schema;
         /**
          * boolean schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function boolean(opts?: editor.prefs.schema.boolean.Options): editor.schema;
+        export function boolean(opts?: editor.prefs.schema.boolean.Options): editor.Schema;
         /**
          * enum value schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        function _enum(opts: editor.prefs.schema.enum.Options): editor.schema;
+        function _enum(opts: editor.prefs.schema.enum.Options): editor.Schema;
         /**
          * integer schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function integer(opts?: editor.prefs.schema.integer.Options): editor.schema;
+        export function integer(opts?: editor.prefs.schema.integer.Options): editor.Schema;
         /**
          * keyword schema
          * A keyword is a short string that is interned within the editor runtime, useful e.g. for identifiers
@@ -422,35 +422,35 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function keyword(opts?: editor.prefs.schema.keyword.Options): editor.schema;
+        export function keyword(opts?: editor.prefs.schema.keyword.Options): editor.Schema;
         /**
          * floating-point number schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function number(opts?: editor.prefs.schema.number.Options): editor.schema;
+        export function number(opts?: editor.prefs.schema.number.Options): editor.Schema;
         /**
          * heterogeneous object schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function object(opts: editor.prefs.schema.object.Options): editor.schema;
+        export function object(opts: editor.prefs.schema.object.Options): editor.Schema;
         /**
          * homogeneous object schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function object_of(opts: editor.prefs.schema.object_of.Options): editor.schema;
+        export function object_of(opts: editor.prefs.schema.object_of.Options): editor.Schema;
         /**
          * one of schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function one_of(opts: editor.prefs.schema.one_of.Options): editor.schema;
+        export function one_of(opts: editor.prefs.schema.one_of.Options): editor.Schema;
         /**
          * password schema
          * A password is a string that is encrypted when stored in a preference file
@@ -458,7 +458,7 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function password(opts?: editor.prefs.schema.password.Options): editor.schema;
+        export function password(opts?: editor.prefs.schema.password.Options): editor.Schema;
         /**
          * set schema
          * Set is represented as a lua table with `true` values
@@ -466,14 +466,14 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function set(opts: editor.prefs.schema.set.Options): editor.schema;
+        export function set(opts: editor.prefs.schema.set.Options): editor.Schema;
         /**
          * string schema
          *
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function string(opts?: editor.prefs.schema.string.Options): editor.schema;
+        export function string(opts?: editor.prefs.schema.string.Options): editor.Schema;
         /**
          * tuple schema
          * A tuple is a fixed-length array where each item has its own defined type
@@ -481,7 +481,7 @@ declare global {
          * @param opts - schema options
          * @returns Prefs schema
          */
-        export function tuple(opts: editor.prefs.schema.tuple.Options): editor.schema;
+        export function tuple(opts: editor.prefs.schema.tuple.Options): editor.Schema;
         export { _enum as enum };
         export namespace array {
           /**
@@ -491,7 +491,7 @@ declare global {
             /**
              * array item schema
              */
-            item: editor.schema;
+            item: editor.Schema;
             /**
              * default value
              */
@@ -589,7 +589,7 @@ declare global {
             /**
              * a table from property key (string) to value schema
              */
-            properties: LuaTable<string, editor.schema>;
+            properties: LuaTable<string, editor.Schema>;
             /**
              * default value
              */
@@ -608,11 +608,11 @@ declare global {
             /**
              * table key schema
              */
-            key: editor.schema;
+            key: editor.Schema;
             /**
              * table value schema
              */
-            val: editor.schema;
+            val: editor.Schema;
             /**
              * default value
              */
@@ -631,7 +631,7 @@ declare global {
             /**
              * alternative schemas
              */
-            schemas: editor.schema[];
+            schemas: editor.Schema[];
             /**
              * default value
              */
@@ -665,7 +665,7 @@ declare global {
             /**
              * set item schema
              */
-            item: editor.schema;
+            item: editor.Schema;
             /**
              * default value
              */
@@ -699,7 +699,7 @@ declare global {
             /**
              * schemas for the items
              */
-            items: editor.schema[];
+            items: editor.Schema[];
             /**
              * default value
              */

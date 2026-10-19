@@ -60,10 +60,10 @@ render.set_view("not a matrix");
 // @ts-expect-error render.set_view returns void, not string
 const _badRv: string = render.set_view(vmath.matrix4());
 
-const _rt: render.render_target = render.render_target("rt", {});
+const _rt: render.RenderTarget = render.render_target("rt", {});
 
 // @ts-expect-error the render_target alias is a nominal handle, not a plain number
-const _badRt: render.render_target = 0;
+const _badRt: render.RenderTarget = 0;
 void _rt;
 void _badRt;
 

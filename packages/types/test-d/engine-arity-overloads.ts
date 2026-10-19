@@ -20,7 +20,7 @@ const _rtNameOnly: Opaque<"render_target"> = render.render_target("rt");
 void _rtNameOnly;
 
 // Both arities check the table against the reference's
-// `render.render_target_params`: each buffer key takes a
+// `render.RenderTargetParams`: each buffer key takes a
 // `render.RenderTargetBufferParams`.
 const COLOR0 = graphics.BUFFER_TYPE_COLOR0_BIT;
 const DEPTH = graphics.BUFFER_TYPE_DEPTH_BIT;

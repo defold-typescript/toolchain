@@ -286,7 +286,6 @@ declare global {
        */
       attachments: resource.RenderTargetAttachmentInfo[];
     }
-    type resource_data = Hash;
     /**
      * Sound-data creation options
      */

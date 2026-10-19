@@ -19,7 +19,7 @@ declare global {
        */
       code?: number;
     }
-    type TIME_STEP_MODE = 0 | 1;
+    type TimeStepMode = 0 | 1;
     type Result = typeof collectionproxy.RESULT_ALREADY_LOADED | typeof collectionproxy.RESULT_LOADING | typeof collectionproxy.RESULT_NOT_EXCLUDED;
     /**
      * The collection proxy is already loaded, so its collection cannot be changed.

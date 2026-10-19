@@ -25,7 +25,7 @@ declare global {
        */
       repeating: boolean;
     }
-    type timer_handle = number;
+    type TimerHandle = number;
     /**
      * Indicates an invalid timer handle
      */

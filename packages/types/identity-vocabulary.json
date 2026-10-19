@@ -559,7 +559,7 @@
     },
     "bullet3d.shape.get_shape": {
       "pins": [["bullet3d.shape.definition"]],
-      "replaces": ["bullet3d.shape.definition", "{ type: typeof bullet3d.shape.SHAPE_TYPE_MESH }"]
+      "replaces": ["bullet3d.shape.Definition", "{ type: typeof bullet3d.shape.SHAPE_TYPE_MESH }"]
     },
     "collectionfactory.create": {
       "pins": [["table"], ["table<hash, hash>"]],

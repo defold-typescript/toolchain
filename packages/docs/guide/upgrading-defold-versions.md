@@ -581,17 +581,17 @@ the [1.13.1 `sys` page](/api/defold-1.13.1/sys).
 
 The reference renames the LuaSocket object types to `socket_client`,
 `socket_master` and `socket_unconnected`. The handle interface is
-`socket.socket_client` on every target, so an annotation needs no change, and
+`socket.SocketClient` on every target, so an annotation needs no change, and
 its method changes are listed above.
 
 #### socket.master
 
-Same change as `socket.client`: the interface is `socket.socket_master` on
+Same change as `socket.client`: the interface is `socket.SocketMaster` on
 every target.
 
 #### socket.unconnected
 
-Same change as `socket.client`: the interface is `socket.socket_unconnected` on
+Same change as `socket.client`: the interface is `socket.SocketUnconnected` on
 every target.
 
 ### Deprecated Lua APIs

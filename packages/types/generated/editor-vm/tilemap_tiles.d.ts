@@ -10,7 +10,7 @@ declare global {
      * @param tiles - unbounded 2d grid of tiles
      * @returns unbounded 2d grid of tiles
      */
-    export function clear(tiles: editor.tiles): editor.tiles;
+    export function clear(tiles: editor.Tiles): editor.Tiles;
     /**
      * Get full information from a tile at a particular coordinate
      *
@@ -19,7 +19,7 @@ declare global {
      * @param y - y coordinate of a tile
      * @returns full tile information, or nil if no tile is set at the coordinate. **⚠️ `index` is 1-based; passed to Defold unchanged.**
      */
-    export function get_info(tiles: editor.tiles, x: number, y: number): tilemap.tiles.get_info.Result | undefined;
+    export function get_info(tiles: editor.Tiles, x: number, y: number): tilemap.tiles.get_info.Result | undefined;
     /**
      * Get a tile index at a particular coordinate
      *
@@ -28,7 +28,7 @@ declare global {
      * @param y - y coordinate of a tile
      * @returns 1-indexed tile index of a tilemap's tilesource. **⚠️ 1-based; passed to Defold unchanged.**
      */
-    export function get_tile(tiles: editor.tiles, x: number, y: number): number;
+    export function get_tile(tiles: editor.Tiles, x: number, y: number): number;
     /**
      * Create an iterator over all tiles in a tiles data structure
      * When iterating using for loop, each iteration returns x, y and tile index of a tile in a tile map
@@ -47,13 +47,13 @@ declare global {
      * end
      * ```
      */
-    export function iterator(tiles: editor.tiles): (...args: unknown[]) => unknown;
+    export function iterator(tiles: editor.Tiles): (...args: unknown[]) => unknown;
     /**
      * Create a new unbounded 2d grid data structure for storing tilemap layer tiles
      *
      * @returns unbounded 2d grid of tiles
      */
-    function _new(): editor.tiles;
+    function _new(): editor.Tiles;
     /**
      * Remove a tile at a particular coordinate
      *
@@ -62,7 +62,7 @@ declare global {
      * @param y - y coordinate of a tile
      * @returns unbounded 2d grid of tiles
      */
-    export function remove(tiles: editor.tiles, x: number, y: number): editor.tiles;
+    export function remove(tiles: editor.Tiles, x: number, y: number): editor.Tiles;
     /**
      * Set a tile at a particular coordinate
      *
@@ -72,7 +72,7 @@ declare global {
      * @param tile_or_info - Either 1-indexed tile index of a tilemap's tilesource or full tile information. **⚠️ 1-based; passed to Defold unchanged.** **⚠️ `index` is 1-based; passed to Defold unchanged.**
      * @returns unbounded 2d grid of tiles
      */
-    export function set(tiles: editor.tiles, x: number, y: number, tile_or_info: number | tilemap.tiles.set.Info): editor.tiles;
+    export function set(tiles: editor.Tiles, x: number, y: number, tile_or_info: number | tilemap.tiles.set.Info): editor.Tiles;
     export { _new as new };
     export namespace get_info {
       /**
