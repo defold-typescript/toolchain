@@ -2502,7 +2502,7 @@ describe("listingPageMarkdown", () => {
 
 describe("constant union alias entries", () => {
   const EASING_SIG =
-    "type Easing = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
+    "type EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
   const STATE_SIG = "type State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
 
   function aliasKey(namespace: string, name: string): string {
@@ -2536,7 +2536,7 @@ describe("constant union alias entries", () => {
       signatures: {},
       category: "engine",
       authoritativeSignatures: new Map([
-        [aliasKey("gui", "Easing"), `${EASING_SIG};`],
+        [aliasKey("gui", "EASING"), `${EASING_SIG};`],
         [
           symbolIdentityKey({
             namespace: "gui",
@@ -2550,7 +2550,7 @@ describe("constant union alias entries", () => {
               returnValues: [],
             }),
           }),
-          "gui.animate(easing: gui.Easing): void",
+          "gui.animate(easing: gui.EASING): void",
         ],
       ]),
     };
@@ -2580,7 +2580,7 @@ describe("constant union alias entries", () => {
 
   test("an alias typedef with no ref-doc entry still becomes a page type symbol", () => {
     const symbols = apiModuleSymbols(guiPage());
-    const easing = symbols.find((s) => s.kind === "type" && s.name === "Easing");
+    const easing = symbols.find((s) => s.kind === "type" && s.name === "EASING");
     expect(easing?.signature).toBe(EASING_SIG);
   });
 
@@ -2595,7 +2595,7 @@ describe("constant union alias entries", () => {
   test("a signature naming the alias links to that entry's own anchor", () => {
     const page = guiPage();
     const links = apiSignatureSymbolLinks([page, graphicsPage()], page);
-    const target = links.get("gui.Easing");
+    const target = links.get("gui.EASING");
     expect(target).toBe(`/api/gui#${slugify(EASING_SIG)}`);
     const md = apiPageMarkdown(page, (text) => text);
     expect(md).toContain(`### \`${EASING_SIG}\``);
@@ -2623,7 +2623,7 @@ describe("constant union alias entries", () => {
 // Alias-link fixtures shared by the canonical and versioned groups below. The
 // two groups differ only in the routes their pages carry, so the surface is
 // built once and re-routed rather than restated.
-const ALIAS_EASING_SIG = "type Easing = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
+const ALIAS_EASING_SIG = "type EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
 const ALIAS_STATE_SIG =
   "type State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
 const NAME_TYPE_GAP = " ";
@@ -2638,14 +2638,14 @@ const ALIAS_ANIMATE: ApiFunction = {
   description: "Animates a node.",
   parameters: [
     { name: "node", doc: "", types: ['Opaque<"node">'], isOptional: false },
-    { name: "easing", doc: "", types: ["gui.Easing", "Vector"], isOptional: false },
+    { name: "easing", doc: "", types: ["gui.EASING", "Vector"], isOptional: false },
     { name: "unknown", doc: "", types: ["gui.Nowhere"], isOptional: true },
     {
       name: "opts",
       doc: "",
       types: ["table"],
       isOptional: true,
-      fields: [{ name: "inner", doc: "", types: ["gui.Easing"], isOptional: true }],
+      fields: [{ name: "inner", doc: "", types: ["gui.EASING"], isOptional: true }],
     },
   ],
   returnValues: [{ name: "state", doc: "", types: ["graphics.State"], isOptional: false }],
@@ -2670,7 +2670,7 @@ function guiAliasPage(route: string): ApiPage {
     signatures: {},
     category: "engine",
     authoritativeSignatures: new Map([
-      [aliasTypedefKey("gui", "Easing"), `${ALIAS_EASING_SIG};`],
+      [aliasTypedefKey("gui", "EASING"), `${ALIAS_EASING_SIG};`],
       [
         symbolIdentityKey({
           namespace: "gui",
@@ -2678,7 +2678,7 @@ function guiAliasPage(route: string): ApiPage {
           name: "gui.animate",
           signature: normalizedFunctionSignature(ALIAS_ANIMATE),
         }),
-        'gui.animate(node: Opaque<"node">, easing: gui.Easing): graphics.State',
+        'gui.animate(node: Opaque<"node">, easing: gui.EASING): graphics.State',
       ],
     ]),
   };
@@ -2780,7 +2780,7 @@ describe("constant union alias links in parameter, return and field types", () =
     const pages = surface();
     const html = await renderAliasSurface(pages, pages[0] as ApiPage);
     const href = slotBullet(html, "easing").match(
-      /<a class="api-type-link" href="([^"]+)">gui\.Easing<\/a>/,
+      /<a class="api-type-link" href="([^"]+)">gui\.EASING<\/a>/,
     )?.[1];
     expect(href).toBeString();
     const [route, anchor] = (href as string).split("#");
@@ -2808,7 +2808,7 @@ describe("constant union alias links in parameter, return and field types", () =
       `<a class="api-type-link" href="/api/graphics#${slugify(ALIAS_STATE_SIG)}">graphics.State</a>`,
     );
     expect(slotBullet(html, "inner")).toContain(
-      `<a class="api-type-link" href="/api/gui#${slugify(ALIAS_EASING_SIG)}">gui.Easing</a>`,
+      `<a class="api-type-link" href="/api/gui#${slugify(ALIAS_EASING_SIG)}">gui.EASING</a>`,
     );
   });
 

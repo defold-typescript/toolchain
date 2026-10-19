@@ -864,15 +864,15 @@ go.animate(id, "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1);
 
 **Typed alternative.** Always pass the named constant (`go.PLAYBACK_ONCE_FORWARD`, `go.EASING_LINEAR`, …). The brand is type-only and erases at transpile time to a plain Lua global access, so there is no runtime cost. A branded constant is still assignable to any plain `number` parameter, so existing numeric signatures keep working.
 
-**Naming the enum.** Every documented constant union has an exported alias in the namespace it belongs to, so you can spell the type yourself instead of retyping the arms or falling back to `number`:
+**Naming the enum.** Every documented constant union has an exported alias in the namespace it belongs to, so you can spell the type yourself instead of retyping the arms or falling back to `number`. Where the reference names the enum, the alias carries that name (`gui.EASING`, `buffer.VALUE_TYPE`, `factory.STATUS`), and it is the same name on every Defold version:
 
 ```ts
-function fadeIn(node: Opaque<"node">, easing: gui.Easing, playback: gui.Playback) {
+function fadeIn(node: Opaque<"node">, easing: gui.EASING, playback: gui.PLAYBACK) {
   gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), easing, 0.5, 0, undefined, playback);
 }
 ```
 
-The alias is the exact set of constants the reference documents for that slot, which is why one enum can split into two names where the slots differ: `gui.set_xanchor` takes `gui.XAnchor` (`ANCHOR_NONE` / `LEFT` / `RIGHT`) while `gui.set_yanchor` takes `gui.YAnchor` (`ANCHOR_NONE` / `TOP` / `BOTTOM`), and `window.get_dim_mode` returns `window.DimModeState` — which includes `DIMMING_UNKNOWN` — where the setter takes the narrower `window.DimModeStateSettable`. Signatures and hovers carry the alias, and the API reference gives each one an entry listing its members.
+The alias is the exact set of constants the reference documents for that slot, which is why one enum can split into two names where the slots differ: `gui.set_xanchor` takes `gui.XAnchor` (`ANCHOR_NONE` / `LEFT` / `RIGHT`) while `gui.set_yanchor` takes `gui.YAnchor` (`ANCHOR_NONE` / `TOP` / `BOTTOM`), and `window.get_dim_mode` returns `window.DIMMING` — which includes `DIMMING_UNKNOWN` — where the setter takes the narrower `window.DimModeStateSettable`. Signatures and hovers carry the alias, and the API reference gives each one an entry listing its members.
 
 **How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts the constant is assignable to `number` (backward compatibility) and to its own brand, while a bare `0` assigned to the brand carries `@ts-expect-error`. If the brand is dropped or widened, the expected error disappears and the typecheck gate fails. `packages/types/test-d/constant-union-aliases.ts` does the same for the aliases: representative members are assignable to their alias, and a constant from a sibling group is not. Exhaustive member-set fidelity is held elsewhere: `packages/types/test/constant-union-alias-coverage.test.ts` catches a brand union left without a name, and `packages/types/test/constant-slot-expansion-drift.test.ts` checks each documented slot against the reference documentation.
 
@@ -12416,8 +12416,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - buffer.VALUE_TYPE_UINT8: number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" }
 - type buffer_data = Opaque<"buffer"> & { length: LuaLengthMethod<number> } [since 1.13.2]
 - type buffer_stream = Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> } [since 1.13.2]
-- type VALUE_TYPE = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8 [since 1.13.2]
-- type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8
+- type VALUE_TYPE = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8
 
 ### bullet3d
 
@@ -12721,8 +12720,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - collectionfactory.STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" }
 - collectionfactory.STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" }
 - collectionfactory.STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" }
-- type STATUS = typeof collectionfactory.STATUS_LOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_UNLOADED [since 1.13.2]
-- type Status = typeof collectionfactory.STATUS_UNLOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_LOADED
+- type STATUS = typeof collectionfactory.STATUS_LOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_UNLOADED
 
 ### collectionproxy
 
@@ -12785,8 +12783,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - factory.STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" }
 - factory.STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" }
 - factory.STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" }
-- type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED [since 1.13.2]
-- type Status = typeof factory.STATUS_UNLOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_LOADED
+- type STATUS = typeof factory.STATUS_LOADED | typeof factory.STATUS_LOADING | typeof factory.STATUS_UNLOADED
 
 ### font
 
@@ -12902,8 +12899,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - position: Vector3
 - rotation: Quaternion
 - scale: number | Vector3
-- type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE [since 1.13.2]
-- type Easing = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE
+- type EASING = typeof go.EASING_INBACK | typeof go.EASING_INBOUNCE | typeof go.EASING_INCIRC | typeof go.EASING_INCUBIC | typeof go.EASING_INELASTIC | typeof go.EASING_INEXPO | typeof go.EASING_INOUTBACK | typeof go.EASING_INOUTBOUNCE | typeof go.EASING_INOUTCIRC | typeof go.EASING_INOUTCUBIC | typeof go.EASING_INOUTELASTIC | typeof go.EASING_INOUTEXPO | typeof go.EASING_INOUTQUAD | typeof go.EASING_INOUTQUART | typeof go.EASING_INOUTQUINT | typeof go.EASING_INOUTSINE | typeof go.EASING_INQUAD | typeof go.EASING_INQUART | typeof go.EASING_INQUINT | typeof go.EASING_INSINE | typeof go.EASING_LINEAR | typeof go.EASING_OUTBACK | typeof go.EASING_OUTBOUNCE | typeof go.EASING_OUTCIRC | typeof go.EASING_OUTCUBIC | typeof go.EASING_OUTELASTIC | typeof go.EASING_OUTEXPO | typeof go.EASING_OUTINBACK | typeof go.EASING_OUTINBOUNCE | typeof go.EASING_OUTINCIRC | typeof go.EASING_OUTINCUBIC | typeof go.EASING_OUTINELASTIC | typeof go.EASING_OUTINEXPO | typeof go.EASING_OUTINQUAD | typeof go.EASING_OUTINQUART | typeof go.EASING_OUTINQUINT | typeof go.EASING_OUTINSINE | typeof go.EASING_OUTQUAD | typeof go.EASING_OUTQUART | typeof go.EASING_OUTQUINT | typeof go.EASING_OUTSINE
 - type PLAYBACK = typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_PINGPONG | typeof go.PLAYBACK_NONE | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_PINGPONG [since 1.13.2]
 - type Playback = typeof go.PLAYBACK_ONCE_FORWARD | typeof go.PLAYBACK_ONCE_BACKWARD | typeof go.PLAYBACK_ONCE_PINGPONG | typeof go.PLAYBACK_LOOP_FORWARD | typeof go.PLAYBACK_LOOP_BACKWARD | typeof go.PLAYBACK_LOOP_PINGPONG
 - interface action { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; acc_x?: number; acc_y?: number; acc_z?: number; gamepad?: number; userid?: number; gamepad_guid?: string; gamepad_guid_info?: go.on_input.gamepad_guid_info; gamepad_unknown?: boolean; gamepad_name?: string; gamepad_axis?: number[]; gamepad_hats?: number[]; gamepad_buttons?: number[]; touch?: go.on_input.touch[]; text?: string; } [since 1.13.2]
@@ -13068,10 +13064,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - graphics.TEXTURE_WRAP_MIRRORED_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_MIRRORED_REPEAT" }
 - graphics.TEXTURE_WRAP_REPEAT: number & { readonly __brand: "graphics.TEXTURE_WRAP_REPEAT" }
 - type BLEND_EQUATION = typeof graphics.BLEND_EQUATION_ADD | typeof graphics.BLEND_EQUATION_MAX | typeof graphics.BLEND_EQUATION_MIN | typeof graphics.BLEND_EQUATION_REVERSE_SUBTRACT | typeof graphics.BLEND_EQUATION_SUBTRACT [since 1.13.2]
-- type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO [since 1.13.2]
-- type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT [since 1.13.2]
-- type BlendFactor = typeof graphics.BLEND_FACTOR_ZERO | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA
-- type BufferType = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_COLOR1_BIT | typeof graphics.BUFFER_TYPE_COLOR2_BIT | typeof graphics.BUFFER_TYPE_COLOR3_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
+- type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO
+- type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT
 - type COMPARE_FUNC = typeof graphics.COMPARE_FUNC_ALWAYS | typeof graphics.COMPARE_FUNC_EQUAL | typeof graphics.COMPARE_FUNC_GEQUAL | typeof graphics.COMPARE_FUNC_GREATER | typeof graphics.COMPARE_FUNC_LEQUAL | typeof graphics.COMPARE_FUNC_LESS | typeof graphics.COMPARE_FUNC_NEVER | typeof graphics.COMPARE_FUNC_NOTEQUAL [since 1.13.2]
 - type COMPRESSION_TYPE = typeof graphics.COMPRESSION_TYPE_BASIS_ETC1S | typeof graphics.COMPRESSION_TYPE_BASIS_UASTC | typeof graphics.COMPRESSION_TYPE_DEFAULT | typeof graphics.COMPRESSION_TYPE_WEBP | typeof graphics.COMPRESSION_TYPE_WEBP_LOSSY [since 1.13.2]
 - type CONTEXT_FEATURE = typeof graphics.CONTEXT_FEATURE_3D_TEXTURES | typeof graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BC_ARRAY_TEXTURES | typeof graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX | typeof graphics.CONTEXT_FEATURE_COMPUTE_SHADER | typeof graphics.CONTEXT_FEATURE_INSTANCING | typeof graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING | typeof graphics.CONTEXT_FEATURE_STORAGE_BUFFER | typeof graphics.CONTEXT_FEATURE_TEXTURE_ARRAY | typeof graphics.CONTEXT_FEATURE_VSYNC [since 1.13.2]
@@ -13093,15 +13087,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### gui
 
-- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number): void
-- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.Playback): void
+- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.PROP | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.EASING | Vector, duration: number): void
+- gui.animate(node: Opaque<"node">, property: keyof gui.node_properties | gui.PROP | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.EASING | Vector, duration: number, delay: number, complete_function?: (self: unknown, node: Opaque<"node">) => void, playback?: gui.PLAYBACK): void
 - function cancel_animations(node: Opaque<"node">, property?: string | Hash | gui.PROP): void;
 - function cancel_flipbook(node: Opaque<"node">): void;
 - function clone(node: Opaque<"node">): Opaque<"node">;
 - function clone_tree(node: Opaque<"node"> | undefined): LuaTable<Hash, Opaque<"node">> & { get: LuaTableGetMethod<string, Opaque<"node">> };
 - function delete_node(node: Opaque<"node">): void;
 - function delete_texture(texture: string | Hash): void;
-- gui.get<K extends keyof gui.node_properties | gui.Property>(node: Opaque<"node">, property: K): gui.node_properties[NodePropertyName<K>]
+- gui.get<K extends keyof gui.node_properties | gui.PROP>(node: Opaque<"node">, property: K): gui.node_properties[NodePropertyName<K>]
 - gui.get(node: Opaque<"node">, property: Hash): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
 - gui.get(node: Opaque<"node">, property: Hash, options: gui.PropertyOptions): number | Vector4 | Quaternion | Matrix4 | number[] | Vector4[] | Matrix4[]
 - function get_adjust_mode(node: Opaque<"node">): gui.ADJUST;
@@ -13174,7 +13168,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3 | Vector4): Vector3;
-- gui.set<K extends keyof gui.node_properties | gui.Property>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
+- gui.set<K extends keyof gui.node_properties | gui.PROP>(node: Opaque<"node">, property: K, value: NodePropertyWrite<NodePropertyName<K>>): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash): void
 - gui.set(node: Opaque<"node">, property: Hash, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options: gui.PropertyOptions): void
 - gui.set(url: Url, property: "material" | "materials" | "fonts" | "textures" | Hash, value: Hash): void
@@ -13339,32 +13333,20 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - materials: Hash
 - textures: Hash
 - type node = Opaque<"node"> [since 1.13.2]
-- type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_STRETCH | typeof gui.ADJUST_ZOOM [since 1.13.2]
+- type ADJUST = typeof gui.ADJUST_FIT | typeof gui.ADJUST_STRETCH | typeof gui.ADJUST_ZOOM
 - type ANCHOR = typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_RIGHT | typeof gui.ANCHOR_TOP [since 1.13.2]
-- type AdjustMode = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH
-- type BLEND = typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN [since 1.13.2]
-- type BlendMode = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN
-- type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL [since 1.13.2]
-- type ClippingMode = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL
-- type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE [since 1.13.2]
-- type Easing = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE
-- type KEYBOARD_TYPE = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD [since 1.13.2]
-- type KeyboardType = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD
-- type NodeType = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM
-- type PIEBOUNDS = typeof gui.PIEBOUNDS_ELLIPSE | typeof gui.PIEBOUNDS_RECTANGLE [since 1.13.2]
-- type PIVOT = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_E | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_NW | typeof gui.PIVOT_S | typeof gui.PIVOT_SE | typeof gui.PIVOT_SW | typeof gui.PIVOT_W [since 1.13.2]
-- type PLAYBACK = typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_PINGPONG | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_PINGPONG [since 1.13.2]
-- type PROP = typeof gui.PROP_COLOR | typeof gui.PROP_EULER | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_OUTLINE | typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_SCALE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_SLICE9 | typeof gui.PROP_TRACKING [since 1.13.2]
-- type PieBounds = typeof gui.PIEBOUNDS_RECTANGLE | typeof gui.PIEBOUNDS_ELLIPSE
-- type Pivot = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_E | typeof gui.PIVOT_SE | typeof gui.PIVOT_S | typeof gui.PIVOT_SW | typeof gui.PIVOT_W | typeof gui.PIVOT_NW
-- type Playback = typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_PINGPONG | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_PINGPONG
-- type Property = typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_EULER | typeof gui.PROP_SCALE | typeof gui.PROP_COLOR | typeof gui.PROP_OUTLINE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_TRACKING | typeof gui.PROP_SLICE9
+- type BLEND = typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN
+- type CLIPPING_MODE = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL
+- type EASING = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE
+- type KEYBOARD_TYPE = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD
+- type PIEBOUNDS = typeof gui.PIEBOUNDS_ELLIPSE | typeof gui.PIEBOUNDS_RECTANGLE
+- type PIVOT = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_E | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_NW | typeof gui.PIVOT_S | typeof gui.PIVOT_SE | typeof gui.PIVOT_SW | typeof gui.PIVOT_W
+- type PLAYBACK = typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_PINGPONG | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_PINGPONG
+- type PROP = typeof gui.PROP_COLOR | typeof gui.PROP_EULER | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_OUTLINE | typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_SCALE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_SLICE9 | typeof gui.PROP_TRACKING
 - type RESULT = typeof gui.RESULT_DATA_ERROR | typeof gui.RESULT_OUT_OF_RESOURCES | typeof gui.RESULT_TEXTURE_ALREADY_EXISTS [since 1.13.2]
-- type SAFE_AREA = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT [since 1.13.2]
-- type SIZE_MODE = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL [since 1.13.2]
-- type SafeAreaMode = typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_SHORT | typeof gui.SAFE_AREA_BOTH
-- type SizeMode = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO
-- type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT [since 1.13.2]
+- type SAFE_AREA = typeof gui.SAFE_AREA_BOTH | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_SHORT
+- type SIZE_MODE = typeof gui.SIZE_MODE_AUTO | typeof gui.SIZE_MODE_MANUAL
+- type TYPE = typeof gui.TYPE_BOX | typeof gui.TYPE_CUSTOM | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_PIE | typeof gui.TYPE_TEXT
 - type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT
 - type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM
 - interface layout_object { type: string; id: Hash; text_offset: number; text_length: number; x: number; y: number; width: number; height: number; attributes: LuaTable<string, string>; } [since 1.13.2]
@@ -13614,10 +13596,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - profiler.MODE_SHOW_PEAK_FRAME: number & { readonly __brand: "profiler.MODE_SHOW_PEAK_FRAME" }
 - profiler.VIEW_MODE_FULL: number & { readonly __brand: "profiler.VIEW_MODE_FULL" }
 - profiler.VIEW_MODE_MINIMIZED: number & { readonly __brand: "profiler.VIEW_MODE_MINIMIZED" }
-- type MODE = typeof profiler.MODE_PAUSE | typeof profiler.MODE_RECORD | typeof profiler.MODE_RUN | typeof profiler.MODE_SHOW_PEAK_FRAME [since 1.13.2]
-- type Mode = typeof profiler.MODE_RUN | typeof profiler.MODE_PAUSE | typeof profiler.MODE_SHOW_PEAK_FRAME | typeof profiler.MODE_RECORD
-- type VIEW_MODE = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED [since 1.13.2]
-- type ViewMode = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED
+- type MODE = typeof profiler.MODE_PAUSE | typeof profiler.MODE_RECORD | typeof profiler.MODE_RUN | typeof profiler.MODE_SHOW_PEAK_FRAME
+- type VIEW_MODE = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED
 
 ### render
 
@@ -13645,7 +13625,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - render.render_target(name: string, parameters: render.RenderTargetParams): Opaque<"render_target">
 - function set_blend_equation_separate(equation_color: graphics.BLEND_EQUATION, equation_alpha: graphics.BLEND_EQUATION): void; [since 1.13.0]
 - function set_blend_func(source_factor: graphics.BLEND_FACTOR, destination_factor: graphics.BLEND_FACTOR): void;
-- function set_blend_func_separate(source_factor_color: graphics.BlendFactor, destination_factor_color: graphics.BlendFactor, source_factor_alpha: graphics.BlendFactor, destination_factor_alpha: graphics.BlendFactor): void; [since 1.13.0]
+- function set_blend_func_separate(source_factor_color: graphics.BLEND_FACTOR, destination_factor_color: graphics.BLEND_FACTOR, source_factor_alpha: graphics.BLEND_FACTOR, destination_factor_alpha: graphics.BLEND_FACTOR): void; [since 1.13.0]
 - function set_camera(camera?: Url | number | string | Hash, options?: render.camera_options): void;
 - function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;
 - function set_compute(compute?: string | Hash): void;
@@ -13924,8 +13904,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - sys.REQUEST_STATUS_ERROR_IO_ERROR: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_IO_ERROR" }
 - sys.REQUEST_STATUS_ERROR_NOT_FOUND: number & { readonly __brand: "sys.REQUEST_STATUS_ERROR_NOT_FOUND" }
 - sys.REQUEST_STATUS_FINISHED: number & { readonly __brand: "sys.REQUEST_STATUS_FINISHED" }
-- type NETWORK = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED [since 1.13.2]
-- type NetworkConnectivity = typeof sys.NETWORK_DISCONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_CONNECTED
+- type NETWORK = typeof sys.NETWORK_CONNECTED | typeof sys.NETWORK_CONNECTED_CELLULAR | typeof sys.NETWORK_DISCONNECTED
 - type REQUEST_STATUS = typeof sys.REQUEST_STATUS_ERROR_IO_ERROR | typeof sys.REQUEST_STATUS_ERROR_NOT_FOUND | typeof sys.REQUEST_STATUS_FINISHED [since 1.13.2]
 - interface application_info { installed: boolean; } [since 1.13.2]
 - interface engine_info { version: string; version_sha1: string; is_debug: boolean; } [since 1.13.2]
@@ -14055,8 +14034,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - window.WINDOW_EVENT_ICONFIED: typeof window.WINDOW_EVENT_ICONIFIED [through 1.13.2] [deprecated since 1.13.2]
 - window.WINDOW_EVENT_ICONIFIED: number & { readonly __brand: "window.WINDOW_EVENT_ICONIFIED" } [since 1.13.2]
 - window.WINDOW_EVENT_RESIZED: number & { readonly __brand: "window.WINDOW_EVENT_RESIZED" }
-- type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN [since 1.13.2]
-- type DimModeState = typeof window.DIMMING_UNKNOWN | typeof window.DIMMING_ON | typeof window.DIMMING_OFF
+- type DIMMING = typeof window.DIMMING_OFF | typeof window.DIMMING_ON | typeof window.DIMMING_UNKNOWN
 - type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF
 - type WINDOW_EVENT = typeof window.WINDOW_EVENT_DEICONIFIED | typeof window.WINDOW_EVENT_FOCUS_GAINED | typeof window.WINDOW_EVENT_FOCUS_LOST | typeof window.WINDOW_EVENT_ICONIFIED | typeof window.WINDOW_EVENT_RESIZED [since 1.13.2]
 - interface event_data { width?: number; height?: number; } [since 1.13.2]

@@ -941,7 +941,7 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       [
         `render.set_blend_func_separate:param:${slot}`,
         {
-          adds: "graphics.BlendFactor",
+          adds: "graphics.BLEND_FACTOR",
           removes: ["number"],
           upstream: ["number"],
           reason:
@@ -1849,7 +1849,7 @@ export interface ConstantUnionAlias {
 export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   {
     home: "buffer",
-    name: "ValueType",
+    name: "VALUE_TYPE",
     members: [
       "buffer.VALUE_TYPE_FLOAT32",
       "buffer.VALUE_TYPE_INT16",
@@ -1864,7 +1864,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "collectionfactory",
-    name: "Status",
+    name: "STATUS",
     members: [
       "collectionfactory.STATUS_UNLOADED",
       "collectionfactory.STATUS_LOADING",
@@ -1873,12 +1873,12 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "factory",
-    name: "Status",
+    name: "STATUS",
     members: ["factory.STATUS_UNLOADED", "factory.STATUS_LOADING", "factory.STATUS_LOADED"],
   },
   {
     home: "go",
-    name: "Easing",
+    name: "EASING",
     members: [
       "go.EASING_INBACK",
       "go.EASING_INBOUNCE",
@@ -1939,7 +1939,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   // target defines the constants; only the newer ones name the union.
   {
     home: "graphics",
-    name: "BlendFactor",
+    name: "BLEND_FACTOR",
     members: [
       "graphics.BLEND_FACTOR_ZERO",
       "graphics.BLEND_FACTOR_ONE",
@@ -1960,7 +1960,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "graphics",
-    name: "BufferType",
+    name: "BUFFER_TYPE",
     members: [
       "graphics.BUFFER_TYPE_COLOR0_BIT",
       "graphics.BUFFER_TYPE_COLOR1_BIT",
@@ -1984,12 +1984,12 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "AdjustMode",
+    name: "ADJUST",
     members: ["gui.ADJUST_FIT", "gui.ADJUST_ZOOM", "gui.ADJUST_STRETCH"],
   },
   {
     home: "gui",
-    name: "BlendMode",
+    name: "BLEND",
     members: [
       "gui.BLEND_ALPHA",
       "gui.BLEND_ADD",
@@ -2000,12 +2000,12 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "ClippingMode",
+    name: "CLIPPING_MODE",
     members: ["gui.CLIPPING_MODE_NONE", "gui.CLIPPING_MODE_STENCIL"],
   },
   {
     home: "gui",
-    name: "Easing",
+    name: "EASING",
     members: [
       "gui.EASING_INBACK",
       "gui.EASING_INBOUNCE",
@@ -2052,7 +2052,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "KeyboardType",
+    name: "KEYBOARD_TYPE",
     members: [
       "gui.KEYBOARD_TYPE_DEFAULT",
       "gui.KEYBOARD_TYPE_EMAIL",
@@ -2062,7 +2062,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "NodeType",
+    name: "TYPE",
     members: [
       "gui.TYPE_BOX",
       "gui.TYPE_TEXT",
@@ -2073,12 +2073,12 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "PieBounds",
+    name: "PIEBOUNDS",
     members: ["gui.PIEBOUNDS_RECTANGLE", "gui.PIEBOUNDS_ELLIPSE"],
   },
   {
     home: "gui",
-    name: "Pivot",
+    name: "PIVOT",
     members: [
       "gui.PIVOT_CENTER",
       "gui.PIVOT_N",
@@ -2093,7 +2093,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "Playback",
+    name: "PLAYBACK",
     members: [
       "gui.PLAYBACK_ONCE_FORWARD",
       "gui.PLAYBACK_ONCE_BACKWARD",
@@ -2105,7 +2105,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "Property",
+    name: "PROP",
     members: [
       "gui.PROP_POSITION",
       "gui.PROP_ROTATION",
@@ -2124,7 +2124,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "SafeAreaMode",
+    name: "SAFE_AREA",
     members: [
       "gui.SAFE_AREA_NONE",
       "gui.SAFE_AREA_LONG",
@@ -2134,7 +2134,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "gui",
-    name: "SizeMode",
+    name: "SIZE_MODE",
     members: ["gui.SIZE_MODE_MANUAL", "gui.SIZE_MODE_AUTO"],
   },
   {
@@ -2149,7 +2149,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "profiler",
-    name: "Mode",
+    name: "MODE",
     members: [
       "profiler.MODE_RUN",
       "profiler.MODE_PAUSE",
@@ -2159,7 +2159,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "profiler",
-    name: "ViewMode",
+    name: "VIEW_MODE",
     members: ["profiler.VIEW_MODE_FULL", "profiler.VIEW_MODE_MINIMIZED"],
   },
   {
@@ -2179,7 +2179,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "sys",
-    name: "NetworkConnectivity",
+    name: "NETWORK",
     members: [
       "sys.NETWORK_DISCONNECTED",
       "sys.NETWORK_CONNECTED_CELLULAR",
@@ -2188,7 +2188,7 @@ export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
   },
   {
     home: "window",
-    name: "DimModeState",
+    name: "DIMMING",
     members: ["window.DIMMING_UNKNOWN", "window.DIMMING_ON", "window.DIMMING_OFF"],
   },
   {
@@ -2213,11 +2213,26 @@ export function constantUnionAlias(fqns: readonly string[]): ConstantUnionAlias 
   return CONSTANT_UNION_ALIAS_BY_MEMBERS.get(constantUnionAliasKey(fqns));
 }
 
-// The alias declarations a module owns, in name order. A row is declared in its
-// home whether or not that module references it, so a cross-namespace row is
-// reachable from the module whose signatures spell it.
-export function constantUnionAliasDeclarations(namespace: string): string[] {
-  return CONSTANT_UNION_ALIASES.filter((row) => row.home === namespace)
+// The rows a module owns. A row is declared in its home whether or not that
+// module references it, so a cross-namespace row is reachable from the module
+// whose signatures spell it. A row whose name the module's own `ENUM` already
+// declares is left to that `ENUM`, which carries the reference's member order
+// and nilable arms.
+function ownedConstantUnionAliases(
+  namespace: string,
+  enumDeclared: ReadonlySet<string>,
+): ConstantUnionAlias[] {
+  return CONSTANT_UNION_ALIASES.filter(
+    (row) => row.home === namespace && !enumDeclared.has(row.name),
+  );
+}
+
+// The alias declarations a module owns, in name order.
+export function constantUnionAliasDeclarations(
+  namespace: string,
+  enumDeclared: ReadonlySet<string> = new Set(),
+): string[] {
+  return ownedConstantUnionAliases(namespace, enumDeclared)
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((row) => unionAliasDeclaration(row.name, row.members));
 }
@@ -2623,7 +2638,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       kind: "array-object",
       fields: [
         { name: "name", types: ["hash", "string"] },
-        { name: "type", types: ["constant"], tsType: "buffer.ValueType" },
+        { name: "type", types: ["constant"], tsType: "buffer.VALUE_TYPE" },
         { name: "count", types: ["number"] },
       ],
     },
@@ -3536,7 +3551,7 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["resource.set_atlas:param:table:animations[].playback", "go.Playback"],
   ["resource.create_atlas:param:table:animations[].playback", "go.Playback"],
   ["resource.get_atlas:return:data:animations[].playback", "go.Playback"],
-  ["render.set_render_target:param:options:transient", "graphics.BufferType[]"],
+  ["render.set_render_target:param:options:transient", "graphics.BUFFER_TYPE[]"],
   ["resource.create_sound_data:param:options:data", 'string | Opaque<"buffer">'],
   // The option bags 1.13.2 types as a STRUCT, whose members still carry the
   // narrower upstream types: `gui.set`'s (its slot is declared in
@@ -4843,7 +4858,10 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   lines.push(`declare namespace ${module.namespace} {`);
 
   for (const declaration of typeDeclarations) lines.push(...declaration.lines(INDENT, decl));
-  for (const aliasDecl of constantUnionAliasDeclarations(module.namespace)) {
+  for (const aliasDecl of constantUnionAliasDeclarations(
+    module.namespace,
+    new Set(enumAliases.all.map((alias) => alias.path)),
+  )) {
     lines.push(`${INDENT}${decl}${aliasDecl}`);
   }
   for (const aliasDecl of overloadSlotAliasDeclarations(
@@ -5317,7 +5335,11 @@ export function emitSymbolSignatures(
   // The module's constant-union aliases travel as typedefs too: a signature that
   // names one carries no member list of its own, so the docs read the members
   // from here rather than from the emitter's table.
-  for (const row of CONSTANT_UNION_ALIASES.filter((r) => r.home === module.namespace)) {
+  const enumAliases = collectEnumAliases(module, constants, nestedRoot);
+  for (const row of ownedConstantUnionAliases(
+    module.namespace,
+    new Set(enumAliases.all.map((alias) => alias.path)),
+  )) {
     out.push({
       identity: { namespace: module.namespace, kind: "TYPEDEF", name: row.name, signature: "" },
       tsSignature: unionAliasDeclaration(row.name, row.members),
@@ -5327,7 +5349,6 @@ export function emitSymbolSignatures(
 
   // An enum alias is keyed by its local path (`STATUS`, `ui.COLOR`), as the
   // constant-union aliases above are keyed by their local name.
-  const enumAliases = collectEnumAliases(module, constants, nestedRoot);
   for (const alias of enumAliases.all) {
     out.push({
       identity: { namespace: module.namespace, kind: "TYPEDEF", name: alias.path, signature: "" },
@@ -6743,7 +6764,7 @@ function withoutSubsumedOpaqueArms(mapped: readonly string[]): string[] {
 // Joins already-mapped arms, collapsing the branded ones to their alias when
 // they are exactly a `CONSTANT_UNION_ALIASES` member set. The alias takes the
 // position of the first branded arm, so a mixed union keeps its reading order
-// (`gui.Easing | Vector`). Arms that are not constants are untouched, and a set
+// (`gui.EASING | Vector`). Arms that are not constants are untouched, and a set
 // with no row keeps every arm inline.
 function joinUnionArms(mapped: readonly string[]): string {
   const arms = withoutSubsumedOpaqueArms(mapped);

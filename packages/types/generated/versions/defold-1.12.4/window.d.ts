@@ -5,7 +5,7 @@ declare global {
    * and screen dimming.
    */
   namespace window {
-    type DimModeState = typeof window.DIMMING_UNKNOWN | typeof window.DIMMING_ON | typeof window.DIMMING_OFF;
+    type DIMMING = typeof window.DIMMING_UNKNOWN | typeof window.DIMMING_ON | typeof window.DIMMING_OFF;
     type DimModeStateSettable = typeof window.DIMMING_ON | typeof window.DIMMING_OFF;
     /**
      * Dimming mode is used to control whether or not a mobile device should dim the screen after a period without user interaction.
@@ -56,7 +56,7 @@ declare global {
      * - `window.DIMMING_ON`
      * - `window.DIMMING_OFF`
      */
-    function get_dim_mode(): window.DimModeState;
+    function get_dim_mode(): window.DIMMING;
     /**
      * This returns the content scale of the current display.
      *
