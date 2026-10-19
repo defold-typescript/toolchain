@@ -1,6 +1,6 @@
 /// <reference path="../index.d.ts" />
 
-declare const rt: render.render_target;
+declare const rt: render.RenderTarget;
 
 // render's buffer-type params accept the real graphics constant — the brand
 // graphics.d.ts emits is the same FQN-keyed brand render's token resolves to.

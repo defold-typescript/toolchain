@@ -6,12 +6,12 @@ declare global {
    * Rendering API documentation
    */
   namespace render {
-    type constant_buffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
-    type render_target = Opaque<"render_target">;
-    type texture = Opaque<"texture">;
+    type ConstantBuffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | ConstantArray<Vector4> | ConstantArray<Matrix4> };
+    type RenderTarget = Opaque<"render_target">;
+    type Texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
     type RenderTargetTextureType = typeof graphics.TEXTURE_TYPE_2D | typeof graphics.TEXTURE_TYPE_CUBE_MAP;
-    type render_target_params = Record<string | number, unknown>;
+    type RenderTargetParams = Record<string | number, unknown>;
     /**
      * The rendering context was lost. Rendering is paused and all graphics resources become invalid. Passed to the `render.set_listener` callback.
      */

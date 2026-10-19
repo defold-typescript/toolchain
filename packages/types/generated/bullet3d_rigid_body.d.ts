@@ -283,7 +283,7 @@ declare global {
      * @param body - rigid body
      * @returns owning world
      */
-    function get_world(body: Opaque<"btRigidBody">): bullet3d.btDiscreteDynamicsWorld;
+    function get_world(body: Opaque<"btRigidBody">): bullet3d.BtDiscreteDynamicsWorld;
     /**
      * Test a rigid body flag
      *

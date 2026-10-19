@@ -19,8 +19,8 @@ declare global {
        */
       upper: Vector3;
     }
-    type b2Body = Opaque<"b2Body">;
-    type b2World = Opaque<"b2World">;
+    type B2Body = Opaque<"b2Body">;
+    type B2World = Opaque<"b2World">;
     /**
      * Box2D 3.x chain definition
      */
@@ -260,7 +260,7 @@ declare global {
       /**
        * Shape definition.
        */
-      shape: b2d.shape.definition;
+      shape: b2d.shape.Definition;
       /**
        * Fixture friction.
        */
@@ -399,7 +399,6 @@ declare global {
        */
       group_index?: number;
     }
-    type shape_create_definition = { shape: b2d.shape.definition; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter } | { type: b2d.shape.ShapeType; radius?: number; center?: Vector3; center1?: Vector3; center2?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; hx?: number; hy?: number; angle?: number; vertices?: Vector3[]; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter };
     /**
      * Box2D 3.x cast hit
      */
@@ -450,6 +449,7 @@ declare global {
        */
       iterations: number;
     }
+    type ShapeCreateDefinition = { shape: b2d.shape.Definition; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter } | { type: b2d.shape.ShapeType; radius?: number; center?: Vector3; center1?: Vector3; center2?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; hx?: number; hy?: number; angle?: number; vertices?: Vector3[]; density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; is_sensor?: boolean; filter?: b2d.Filter };
     /**
      * Box2D 3.x shape information
      */

@@ -6,8 +6,8 @@ declare global {
    * Functions for interacting with Box2D.
    */
   namespace b2d {
-    type b2Body = Opaque<"b2Body">;
-    type b2World = Opaque<"b2World">;
+    type B2Body = Opaque<"b2Body">;
+    type B2World = Opaque<"b2World">;
     /**
      * Get the Box2D body from a collision object
      *

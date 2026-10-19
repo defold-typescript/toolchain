@@ -17,7 +17,7 @@ declare global {
        */
       address: string;
     }
-    type USERFIELD = number;
+    type UserField = number;
     type SysField = typeof crash.SYSFIELD_ENGINE_VERSION | typeof crash.SYSFIELD_ENGINE_HASH | typeof crash.SYSFIELD_DEVICE_MODEL | typeof crash.SYSFIELD_MANUFACTURER | typeof crash.SYSFIELD_SYSTEM_NAME | typeof crash.SYSFIELD_SYSTEM_VERSION | typeof crash.SYSFIELD_LANGUAGE | typeof crash.SYSFIELD_DEVICE_LANGUAGE | typeof crash.SYSFIELD_TERRITORY | typeof crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT;
     /**
      * android build fingerprint
@@ -116,7 +116,7 @@ declare global {
      * @param index - user data slot index. **0️⃣ 0-based; passed to Defold unchanged.**
      * @returns user data value recorded in the crash dump
      */
-    function get_user_field(handle: number, index: crash.USERFIELD): string;
+    function get_user_field(handle: number, index: crash.UserField): string;
     /**
      * The crash dump will be removed from disk upon a successful
      * load, so loading is one-shot.
@@ -144,7 +144,7 @@ declare global {
      * @param index - slot index. 0-indexed. **0️⃣ 0-based; passed to Defold unchanged.**
      * @param value - string value to store
      */
-    function set_user_field(index: crash.USERFIELD, value: string): void;
+    function set_user_field(index: crash.UserField, value: string): void;
     /**
      * Performs the same steps as if a crash had just occured but
      * allows the program to continue.

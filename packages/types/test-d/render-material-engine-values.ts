@@ -27,7 +27,7 @@ const _sameFactor: graphics.BlendFactor = _factor;
 void _sameFactor;
 
 // A predicate is the userdata `render.predicate` returns, never a number.
-const pred: render.render_predicate = render.predicate(["opaque"]);
+const pred: render.RenderPredicate = render.predicate(["opaque"]);
 render.draw(pred);
 // @ts-expect-error a predicate is not a number
 const _asNumber: number = pred;

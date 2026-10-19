@@ -47,7 +47,7 @@ declare global {
        */
       attributes: LuaTable<string, string>;
     }
-    type node = Opaque<"node">;
+    type Node = Opaque<"node">;
     /**
      * GUI flipbook playback properties
      */

@@ -251,14 +251,15 @@ export interface Url {
 
 // The receiver of each socket handle's colon methods (`client:send`) and the one
 // name its method-bearing interface takes inside `namespace socket` on every
-// target: the 1.13.2 TYPEDEF name. Older references name the TYPEDEF after the
-// receiver, so both spellings resolve to the same interface.
+// target: the PascalCase name of the 1.13.2 TYPEDEF (`socket_client`). Older
+// references name the TYPEDEF after the receiver, so both spellings resolve to
+// the same interface.
 export const SOCKET_HANDLE_NAMES = {
-  client: "socket_client",
-  connected: "socket_connected",
-  master: "socket_master",
-  server: "socket_server",
-  unconnected: "socket_unconnected",
+  client: "SocketClient",
+  connected: "SocketConnected",
+  master: "SocketMaster",
+  server: "SocketServer",
+  unconnected: "SocketUnconnected",
 } as const;
 
 export type SocketHandleReceiver = keyof typeof SOCKET_HANDLE_NAMES;
@@ -316,7 +317,7 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   btRigidBody: 'Opaque<"btRigidBody">',
   b2BodyType:
     '(number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })',
-  // socket handle types resolve to the method-bearing `interface socket_<receiver>`
+  // socket handle types resolve to the method-bearing `interface Socket<Receiver>`
   // emitted inside `namespace socket`, not opaque brands — the documented
   // colon methods (`client:send`, …) make each handle structurally distinct.
   client: SOCKET_HANDLE_NAMES.client,

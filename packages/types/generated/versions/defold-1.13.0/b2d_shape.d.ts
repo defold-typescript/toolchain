@@ -7,7 +7,7 @@ declare global {
    * and returned from `b2d.fixture.get_shape`.
    */
   namespace b2d.shape {
-    type b2Shape = Opaque<"b2Shape">;
+    type B2Shape = Opaque<"b2Shape">;
     /**
      * Uses the polygon enum value, but indicates the `hx`/`hy` box convenience format.
      */

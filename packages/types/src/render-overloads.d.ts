@@ -12,7 +12,7 @@ declare global {
      * @param parameters - table of buffer parameters, see the description for available keys and values
      * @returns new render target
      */
-    function render_target(parameters: render.render_target_params): Opaque<"render_target">;
+    function render_target(parameters: render.RenderTargetParams): Opaque<"render_target">;
     /**
      * Creates a new named render target according to the supplied specification
      * table. The name is used by the profiler and by render target lookups.
@@ -23,7 +23,7 @@ declare global {
      */
     function render_target(
       name: string,
-      parameters: render.render_target_params,
+      parameters: render.RenderTargetParams,
     ): Opaque<"render_target">;
   }
 }

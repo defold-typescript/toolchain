@@ -556,7 +556,7 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
   [
     "bullet3d.shape.get_shape",
     {
-      ts: "bullet3d.shape.definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH }",
+      ts: "bullet3d.shape.Definition | { type: typeof bullet3d.shape.SHAPE_TYPE_MESH }",
       upstream: ["bullet3d.shape.definition"],
       reason:
         "script_bullet3d_shape.cpp:Shape_GetShape sets only `type` for a triangle mesh, which no shape definition arm matches",
@@ -2320,10 +2320,10 @@ function unionAliasDeclaration(
 // A slot of a function the authored-overload lane declares, published under
 // one name on every target so the version-independent overload file can name
 // the type each target's own reference gives that slot. The name is the
-// newest reference's own declaration for the slot; a target that declares it
-// emits no alias.
+// PascalCase name of the newest reference's own declaration for the slot; a
+// target that declares it emits no alias.
 export const OVERLOAD_SLOT_ALIASES: ReadonlyMap<string, string> = new Map([
-  ["render.render_target:param:parameters", "render_target_params"],
+  ["render.render_target:param:parameters", engineTypeName("render_target_params")],
 ]);
 
 const DOC_CONSTANT_TOKEN =
@@ -2541,12 +2541,14 @@ export type TableSlotCuration = (
 // entries carry its members, so it signs no TYPEDEF of its own.
 export const PROPERTIES_INTERFACE = engineTypeName("properties");
 
+// The ref-doc tokens of the handles `socket.select` takes and returns, in their
+// 1.13.2 TYPEDEF spelling, which the type map resolves to each handle's interface.
 export const SOCKET_HANDLE_TOKENS = (["client", "master", "unconnected"] as const).map(
-  (receiver) => SOCKET_HANDLE_NAMES[receiver],
+  (receiver) => `socket_${receiver}`,
 );
 
 // The interface a module's `<receiver>:<method>` colon methods are emitted on:
-// the socket handles take their `socket_<receiver>` name, any other receiver
+// the socket handles take their `Socket<Receiver>` name, any other receiver
 // keeps its own.
 export function handleInterfaceName(namespace: string, receiver: string): string {
   return namespace === "socket" && Object.hasOwn(SOCKET_HANDLE_NAMES, receiver)
@@ -2556,7 +2558,8 @@ export function handleInterfaceName(namespace: string, receiver: string): string
 
 // The typedef names a module's handle interfaces stand for, which emit as the
 // interface rather than an alias: each receiver (1.13.1 `client`) and each
-// interface name (1.13.2 `socket_client`).
+// interface name, which the 1.13.2 `socket_client` takes once renamed
+// (`SocketClient`).
 function handleTypedefNames(namespace: string, receivers: Iterable<string>): Set<string> {
   return new Set(
     [...receivers].flatMap((receiver) => [receiver, handleInterfaceName(namespace, receiver)]),
@@ -4511,15 +4514,17 @@ export const TYPEDEF_ALIAS_CORRECTIONS: ReadonlyMap<string, TypedefAliasCorrecti
 // function yields.
 //
 // An engine typedef that names its aliased type: a `userdata`/`number` handle the
-// type map resolves (`vector`, `socket_client`) aliases that mapping, an
+// type map resolves (`timer_handle`, `buffer_data`) aliases that mapping, an
 // unresolved one keeps the brand, and any other aliased type (a union, literals, a
-// record) aliases the type itself.
+// record) aliases the type itself. A handle the type map resolves to a core
+// global (`vector` -> `Vector`, `resource_data` -> `Hash`) declares nothing, since
+// its slots already name the global: `null`.
 function typedefAlias(
   typedef: ApiTypedef,
   local: string,
   rawMapType: (token: string) => string,
   mapType: DefoldTypeMapper,
-): string {
+): string | null {
   const brand = `Opaque<"${typedef.name}">`;
   const aliasOf = typedef.aliasOf ?? [];
   const correction = TYPEDEF_ALIAS_CORRECTIONS.get(typedef.name);
@@ -4538,9 +4543,22 @@ function typedefAlias(
   }
   const mapped = rawMapType(typedef.name);
   if (mapped.startsWith(brand)) return `type ${local} = ${mapped};`;
+  if (aliasOf.length > 0 && CORE_GLOBAL_TYPES.has(mapped)) return null;
   const resolved = aliasOf.length > 0 && mapped !== "unknown" && mapped !== local;
   return `type ${local} = ${resolved ? mapped : brand};`;
 }
+
+// The global types `core-types.ts` declares that the engine vocabulary maps a
+// handle to.
+const CORE_GLOBAL_TYPES: ReadonlySet<string> = new Set([
+  "Hash",
+  "Matrix4",
+  "Quaternion",
+  "Url",
+  "Vector",
+  "Vector3",
+  "Vector4",
+]);
 
 function isHandleAlias(aliasOf: readonly string[]): boolean {
   return aliasOf.length === 1 && (aliasOf[0] === "userdata" || aliasOf[0] === "number");
@@ -4558,8 +4576,9 @@ interface TypeDeclaration {
 
 // A typedef with no aliased type keeps the flat-name rule it always had; one that
 // names its aliased type, and every struct, sits at its name less the module
-// prefix, nested when that local is dotted. A struct's leaf goes through
-// `engineTypeName`. Typedefs come before structs, each in document order.
+// prefix, nested when that local is dotted. Every leaf goes through
+// `engineTypeName`, and `skip` matches a typedef by its reference local or its
+// renamed path. Typedefs come before structs, each in document order.
 function collectTypeDeclarations(
   module: ApiModule,
   skip: ReadonlySet<string>,
@@ -4576,12 +4595,15 @@ function collectTypeDeclarations(
   for (const t of module.typedefs) {
     const local =
       t.aliasOf === undefined ? (TS_IDENTIFIER.test(t.name) ? t.name : null) : localOf(t.name);
-    if (local === null || skip.has(local)) continue;
-    const name = local.slice(local.lastIndexOf(".") + 1);
+    if (local === null) continue;
+    const path = renamedLeaf(local);
+    if (skip.has(local) || skip.has(path)) continue;
+    const name = path.slice(path.lastIndexOf(".") + 1);
     const signature = typedefAlias(t, name, rawMapType, mapType);
+    if (signature === null) continue;
     out.push({
       name,
-      path: local,
+      path,
       lines: (indent, decl) => [`${indent}${decl}${signature}`],
       signature,
     });
@@ -4847,20 +4869,20 @@ export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[
 /**
  * The TS path of every `ENUM`, `STRUCT` and aliasing `TYPEDEF` the (routed)
  * modules declare, keyed by its Lua name: the name itself when it sits under its
- * module's namespace, else that name nested under the module, with an `ENUM` or
- * `STRUCT` leaf through `engineTypeName` (`on_input.action` in `go` is
- * `go.on_input.Action`).
+ * module's namespace, else that name nested under the module, with its leaf
+ * through `engineTypeName` (`on_input.action` in `go` is `go.on_input.Action`).
  */
 export function declaredTypePaths(modules: readonly ApiModule[]): Map<string, string> {
   const paths = new Map<string, string>();
   for (const module of modules) {
     const qualified = (name: string): string =>
       name.startsWith(`${module.namespace}.`) ? name : `${module.namespace}.${name}`;
-    for (const { name } of [...(module.enums ?? []), ...(module.structs ?? [])]) {
+    for (const { name } of [
+      ...(module.enums ?? []),
+      ...(module.structs ?? []),
+      ...module.typedefs.filter((t) => t.aliasOf !== undefined),
+    ]) {
       paths.set(name, renamedLeaf(qualified(name)));
-    }
-    for (const { name } of module.typedefs.filter((t) => t.aliasOf !== undefined)) {
-      paths.set(name, qualified(name));
     }
   }
   return paths;
