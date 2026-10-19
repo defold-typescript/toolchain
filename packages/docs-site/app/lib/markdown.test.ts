@@ -401,11 +401,11 @@ describe("renderMarkdown", () => {
     };
     const styleOf = (list: (readonly [string | undefined, string | undefined])[], text: string) =>
       list.find(([t]) => t === text)?.[1];
-    const alias = await spans("type image.TYPE = typeof image.TYPE_RGB");
+    const alias = await spans("type image.Type = typeof image.TYPE_RGB");
     const iface = await spans("interface image.load_result { width: number; }");
-    expect(styleOf(alias, "TYPE")).toBeDefined();
-    expect(styleOf(alias, "TYPE")).toBe(styleOf(alias, "image"));
-    expect(styleOf(alias, "TYPE")).toBe(styleOf(iface, "load_result"));
+    expect(styleOf(alias, "Type")).toBeDefined();
+    expect(styleOf(alias, "Type")).toBe(styleOf(alias, "image"));
+    expect(styleOf(alias, "Type")).toBe(styleOf(iface, "load_result"));
     expect(styleOf(alias, ".")).toBe(styleOf(iface, "."));
   });
 

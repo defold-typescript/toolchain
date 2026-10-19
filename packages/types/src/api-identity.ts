@@ -1,6 +1,7 @@
 import type { ApiFunction, ApiModule, ApiParameter } from "./api-doc";
 import { DEFOLD_TYPE_MAP } from "./core-types";
 import { pinMatches } from "./correction-pins";
+import { engineTypeName } from "./engine-type-name";
 import { splitTopLevel } from "./luals-type-expr";
 
 /**
@@ -120,6 +121,30 @@ const TS_TABLE = /^(Record|LuaMap|ReadonlyLuaMap|LuaTable)\b/;
 // A subset of a constant union a correction writes, which is still that union's value.
 const EXCLUDE = /^Exclude<([\w.]+),.*>$/;
 
+const REFERENCE_TYPE_PATHS = new WeakMap<IdentityVocabulary, ReadonlyMap<string, string>>();
+
+// The reference name a correction's TypeScript type path was derived from
+// (`gui.Anchor` -> `gui.ANCHOR`), so renaming a type re-keys no identity.
+function referenceTypePath(path: string, vocabulary: IdentityVocabulary): string {
+  let paths = REFERENCE_TYPE_PATHS.get(vocabulary);
+  if (paths === undefined) {
+    const built = new Map<string, string>();
+    for (const name of [
+      ...Object.keys(vocabulary.enums),
+      ...vocabulary.tables,
+      ...Object.keys(vocabulary.aliases),
+    ]) {
+      const dot = name.lastIndexOf(".");
+      if (dot < 0) continue;
+      const renamed = `${name.slice(0, dot + 1)}${engineTypeName(name.slice(dot + 1))}`;
+      if (renamed !== name) built.set(renamed, name);
+    }
+    paths = built;
+    REFERENCE_TYPE_PATHS.set(vocabulary, paths);
+  }
+  return paths.get(path) ?? path;
+}
+
 function canonicalLeaves(
   token: string,
   vocabulary: IdentityVocabulary,
@@ -140,6 +165,8 @@ function canonicalLeaves(
   }
   const excluded = EXCLUDE.exec(trimmed);
   if (excluded !== null) return canonicalLeaves(excluded[1] as string, vocabulary, expanding);
+  const reference = referenceTypePath(trimmed, vocabulary);
+  if (reference !== trimmed) return canonicalLeaves(reference, vocabulary, expanding);
   if (trimmed === "nil" || trimmed === "undefined") return ["nil"];
   // Every table shape — a bare or typed `table`, a list, an inline record, a
   // struct, a built-in message payload — is one Lua table at runtime; its

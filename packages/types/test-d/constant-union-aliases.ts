@@ -14,47 +14,47 @@
 // emitted `type ... = ...` declaration, never through the table it guards.
 
 // buffer
-const _bufferValueType: buffer.VALUE_TYPE = buffer.VALUE_TYPE_FLOAT32;
-const _bufferValueTypeLast: buffer.VALUE_TYPE = buffer.VALUE_TYPE_UINT8;
+const _bufferValueType: buffer.ValueType = buffer.VALUE_TYPE_FLOAT32;
+const _bufferValueTypeLast: buffer.ValueType = buffer.VALUE_TYPE_UINT8;
 void _bufferValueType;
 void _bufferValueTypeLast;
 
 // collectionfactory / factory — same member names, different namespaces.
-const _collectionStatus: collectionfactory.STATUS = collectionfactory.STATUS_LOADED;
-const _factoryStatus: factory.STATUS = factory.STATUS_UNLOADED;
+const _collectionStatus: collectionfactory.Status = collectionfactory.STATUS_LOADED;
+const _factoryStatus: factory.Status = factory.STATUS_UNLOADED;
 void _collectionStatus;
 void _factoryStatus;
 
 // @ts-expect-error a factory status is not a collectionfactory status
-const _crossedStatus: collectionfactory.STATUS = factory.STATUS_LOADED;
+const _crossedStatus: collectionfactory.Status = factory.STATUS_LOADED;
 void _crossedStatus;
 
 // go
-const _goEasing: go.EASING = go.EASING_OUTINQUINT;
-const _goPlayback: go.PLAYBACK = go.PLAYBACK_NONE;
+const _goEasing: go.Easing = go.EASING_OUTINQUINT;
+const _goPlayback: go.Playback = go.PLAYBACK_NONE;
 void _goEasing;
 void _goPlayback;
 
 // @ts-expect-error a playback constant is not an easing
-const _goEasingWrong: go.EASING = go.PLAYBACK_ONCE_FORWARD;
+const _goEasingWrong: go.Easing = go.PLAYBACK_ONCE_FORWARD;
 void _goEasingWrong;
 
 // graphics / render — the buffer-type split: six for the attachment set, three
 // for the keys render.clear accepts.
-const _bufferType: graphics.BUFFER_TYPE = graphics.BUFFER_TYPE_COLOR0_BIT;
+const _bufferType: graphics.BufferType = graphics.BUFFER_TYPE_COLOR0_BIT;
 const _clearKey: render.ClearBufferKey = graphics.BUFFER_TYPE_DEPTH_BIT;
-const _graphicsState: graphics.STATE = graphics.STATE_SCISSOR_TEST;
+const _graphicsState: graphics.State = graphics.STATE_SCISSOR_TEST;
 void _bufferType;
 void _clearKey;
 void _graphicsState;
 
-// The reference types COLOR1..3 `graphics.BUFFER_TYPE|nil`: the alias takes one
+// The reference types COLOR1..3 `graphics.BufferType|nil`: the alias takes one
 // only once it is narrowed past undefined.
 // @ts-expect-error COLOR3 may be undefined
-const _bufferTypeUnnarrowed: graphics.BUFFER_TYPE = graphics.BUFFER_TYPE_COLOR3_BIT;
+const _bufferTypeUnnarrowed: graphics.BufferType = graphics.BUFFER_TYPE_COLOR3_BIT;
 void _bufferTypeUnnarrowed;
 if (graphics.BUFFER_TYPE_COLOR3_BIT !== undefined) {
-  const _bufferTypeNarrowed: graphics.BUFFER_TYPE = graphics.BUFFER_TYPE_COLOR3_BIT;
+  const _bufferTypeNarrowed: graphics.BufferType = graphics.BUFFER_TYPE_COLOR3_BIT;
   void _bufferTypeNarrowed;
 }
 
@@ -63,23 +63,23 @@ const _clearKeyWrong: render.ClearBufferKey = graphics.BUFFER_TYPE_COLOR1_BIT;
 void _clearKeyWrong;
 
 // The narrower row is assignable to the wider one, not the other way round.
-const _widened: graphics.BUFFER_TYPE =
+const _widened: graphics.BufferType =
   graphics.BUFFER_TYPE_STENCIL_BIT satisfies render.ClearBufferKey;
 void _widened;
 
 // gui
-const _adjust: gui.ADJUST = gui.ADJUST_ZOOM;
-const _blend: gui.BLEND = gui.BLEND_SCREEN;
-const _clipping: gui.CLIPPING_MODE = gui.CLIPPING_MODE_STENCIL;
-const _guiEasing: gui.EASING = gui.EASING_INOUTQUAD;
-const _keyboard: gui.KEYBOARD_TYPE = gui.KEYBOARD_TYPE_NUMBER_PAD;
-const _pieBounds: gui.PIEBOUNDS = gui.PIEBOUNDS_ELLIPSE;
-const _pivot: gui.PIVOT = gui.PIVOT_SW;
-const _guiPlayback: gui.PLAYBACK = gui.PLAYBACK_ONCE_BACKWARD;
-const _property: gui.PROP = gui.PROP_SLICE9;
-const _safeArea: gui.SAFE_AREA = gui.SAFE_AREA_LONG;
-const _sizeMode: gui.SIZE_MODE = gui.SIZE_MODE_MANUAL;
-const _nodeType: gui.TYPE = gui.TYPE_PARTICLEFX;
+const _adjust: gui.Adjust = gui.ADJUST_ZOOM;
+const _blend: gui.Blend = gui.BLEND_SCREEN;
+const _clipping: gui.ClippingMode = gui.CLIPPING_MODE_STENCIL;
+const _guiEasing: gui.Easing = gui.EASING_INOUTQUAD;
+const _keyboard: gui.KeyboardType = gui.KEYBOARD_TYPE_NUMBER_PAD;
+const _pieBounds: gui.PieBounds = gui.PIEBOUNDS_ELLIPSE;
+const _pivot: gui.Pivot = gui.PIVOT_SW;
+const _guiPlayback: gui.Playback = gui.PLAYBACK_ONCE_BACKWARD;
+const _property: gui.Prop = gui.PROP_SLICE9;
+const _safeArea: gui.SafeArea = gui.SAFE_AREA_LONG;
+const _sizeMode: gui.SizeMode = gui.SIZE_MODE_MANUAL;
+const _nodeType: gui.Type = gui.TYPE_PARTICLEFX;
 void _adjust;
 void _blend;
 void _clipping;
@@ -94,41 +94,41 @@ void _sizeMode;
 void _nodeType;
 
 // @ts-expect-error gui easing and go easing are distinct brands
-const _guiEasingWrong: gui.EASING = go.EASING_INOUTQUAD;
+const _guiEasingWrong: gui.Easing = go.EASING_INOUTQUAD;
 void _guiEasingWrong;
 
 // @ts-expect-error a gui playback is not a gui easing
-const _guiEasingSibling: gui.EASING = gui.PLAYBACK_ONCE_FORWARD;
+const _guiEasingSibling: gui.Easing = gui.PLAYBACK_ONCE_FORWARD;
 void _guiEasingSibling;
 
 // One anchor name holds both axes; a slot that takes one axis excludes the other.
-const _anchorNone: gui.ANCHOR = gui.ANCHOR_NONE;
-const _anchorRight: gui.ANCHOR = gui.ANCHOR_RIGHT;
-const _anchorTop: gui.ANCHOR = gui.ANCHOR_TOP;
+const _anchorNone: gui.Anchor = gui.ANCHOR_NONE;
+const _anchorRight: gui.Anchor = gui.ANCHOR_RIGHT;
+const _anchorTop: gui.Anchor = gui.ANCHOR_TOP;
 void _anchorNone;
 void _anchorRight;
 void _anchorTop;
 
 // @ts-expect-error a pivot is not an anchor
-const _anchorWrong: gui.ANCHOR = gui.PIVOT_N;
+const _anchorWrong: gui.Anchor = gui.PIVOT_N;
 void _anchorWrong;
 
 // profiler
-const _profilerMode: profiler.MODE = profiler.MODE_SHOW_PEAK_FRAME;
-const _profilerViewMode: profiler.VIEW_MODE = profiler.VIEW_MODE_FULL;
+const _profilerMode: profiler.Mode = profiler.MODE_SHOW_PEAK_FRAME;
+const _profilerViewMode: profiler.ViewMode = profiler.VIEW_MODE_FULL;
 void _profilerMode;
 void _profilerViewMode;
 
 // @ts-expect-error a view mode is not a ui mode
-const _profilerModeWrong: profiler.MODE = profiler.VIEW_MODE_FULL;
+const _profilerModeWrong: profiler.Mode = profiler.VIEW_MODE_FULL;
 void _profilerModeWrong;
 
 // sys
-const _connectivity: sys.NETWORK = sys.NETWORK_CONNECTED_CELLULAR;
+const _connectivity: sys.Network = sys.NETWORK_CONNECTED_CELLULAR;
 void _connectivity;
 
 // window — the dim-mode split: only the getter can report DIMMING_UNKNOWN.
-const _dimState: window.DIMMING = window.DIMMING_UNKNOWN;
+const _dimState: window.Dimming = window.DIMMING_UNKNOWN;
 void _dimState;
 window.set_dim_mode(window.DIMMING_ON);
 
@@ -138,7 +138,7 @@ window.set_dim_mode(window.DIMMING_UNKNOWN);
 // The aliases are the types the signatures actually take, so a getter's result
 // feeds its setter and a wrapper can name its own parameter.
 declare const node: Opaque<"node">;
-function fadeIn(target: Opaque<"node">, easing: gui.EASING, playback: gui.PLAYBACK): void {
+function fadeIn(target: Opaque<"node">, easing: gui.Easing, playback: gui.Playback): void {
   gui.animate(
     target,
     gui.PROP_COLOR,
@@ -152,73 +152,104 @@ function fadeIn(target: Opaque<"node">, easing: gui.EASING, playback: gui.PLAYBA
 }
 fadeIn(node, gui.EASING_OUTQUAD, gui.PLAYBACK_ONCE_FORWARD);
 gui.set_pivot(node, gui.get_pivot(node));
-render.enable_state(graphics.STATE_BLEND satisfies graphics.STATE);
+render.enable_state(graphics.STATE_BLEND satisfies graphics.State);
 
-// Where the reference names the enum, that name is the only one: the curated
-// spelling it replaced is declared on no target.
-// @ts-expect-error the kept name is buffer.VALUE_TYPE
-declare const _removedBufferValueType: buffer.ValueType;
-// @ts-expect-error the kept name is collectionfactory.STATUS
-declare const _removedCollectionfactoryStatus: collectionfactory.Status;
-// @ts-expect-error the kept name is factory.STATUS
-declare const _removedFactoryStatus: factory.Status;
-// @ts-expect-error the kept name is go.EASING
-declare const _removedGoEasing: go.Easing;
-// @ts-expect-error the kept name is graphics.BLEND_FACTOR
-declare const _removedGraphicsBlendFactor: graphics.BlendFactor;
-// @ts-expect-error the kept name is graphics.BUFFER_TYPE
-declare const _removedGraphicsBufferType: graphics.BufferType;
-// @ts-expect-error the kept name is gui.ADJUST
-declare const _removedGuiAdjustMode: gui.AdjustMode;
-// @ts-expect-error the kept name is gui.BLEND
-declare const _removedGuiBlendMode: gui.BlendMode;
-// @ts-expect-error the kept name is gui.CLIPPING_MODE
-declare const _removedGuiClippingMode: gui.ClippingMode;
-// @ts-expect-error the kept name is gui.EASING
-declare const _removedGuiEasing: gui.Easing;
-// @ts-expect-error the kept name is gui.KEYBOARD_TYPE
-declare const _removedGuiKeyboardType: gui.KeyboardType;
-// @ts-expect-error the kept name is gui.TYPE
-declare const _removedGuiNodeType: gui.NodeType;
-// @ts-expect-error the kept name is gui.PIEBOUNDS
-declare const _removedGuiPieBounds: gui.PieBounds;
-// @ts-expect-error the kept name is gui.PIVOT
-declare const _removedGuiPivot: gui.Pivot;
-// @ts-expect-error the kept name is gui.PLAYBACK
-declare const _removedGuiPlayback: gui.Playback;
-// @ts-expect-error the kept name is gui.PROP
-declare const _removedGuiProperty: gui.Property;
-// @ts-expect-error the kept name is gui.SAFE_AREA
-declare const _removedGuiSafeAreaMode: gui.SafeAreaMode;
-// @ts-expect-error the kept name is gui.SIZE_MODE
-declare const _removedGuiSizeMode: gui.SizeMode;
-// @ts-expect-error the kept name is profiler.MODE
-declare const _removedProfilerMode: profiler.Mode;
-// @ts-expect-error the kept name is profiler.VIEW_MODE
-declare const _removedProfilerViewMode: profiler.ViewMode;
-// @ts-expect-error the kept name is sys.NETWORK
-declare const _removedSysNetworkConnectivity: sys.NetworkConnectivity;
-// @ts-expect-error the kept name is window.DIMMING
-declare const _removedWindowDimModeState: window.DimModeState;
-void _removedBufferValueType;
-void _removedCollectionfactoryStatus;
-void _removedFactoryStatus;
-void _removedGoEasing;
-void _removedGraphicsBlendFactor;
-void _removedGraphicsBufferType;
-void _removedGuiAdjustMode;
-void _removedGuiBlendMode;
-void _removedGuiClippingMode;
-void _removedGuiEasing;
-void _removedGuiKeyboardType;
-void _removedGuiNodeType;
-void _removedGuiPieBounds;
-void _removedGuiPivot;
-void _removedGuiPlayback;
-void _removedGuiProperty;
-void _removedGuiSafeAreaMode;
-void _removedGuiSizeMode;
-void _removedProfilerMode;
-void _removedProfilerViewMode;
-void _removedSysNetworkConnectivity;
-void _removedWindowDimModeState;
+// The reference spelling of a renamed union is not a type.
+// @ts-expect-error the type is buffer.ValueType
+declare const _referenceBufferValueType: buffer.VALUE_TYPE;
+// @ts-expect-error the type is collectionfactory.Status
+declare const _referenceCollectionfactoryStatus: collectionfactory.STATUS;
+// @ts-expect-error the type is factory.Status
+declare const _referenceFactoryStatus: factory.STATUS;
+// @ts-expect-error the type is go.Easing
+declare const _referenceGoEasing: go.EASING;
+// @ts-expect-error the type is go.Playback
+declare const _referenceGoPlayback: go.PLAYBACK;
+// @ts-expect-error the type is graphics.BlendFactor
+declare const _referenceGraphicsBlendFactor: graphics.BLEND_FACTOR;
+// @ts-expect-error the type is graphics.BufferType
+declare const _referenceGraphicsBufferType: graphics.BUFFER_TYPE;
+// @ts-expect-error the type is graphics.State
+declare const _referenceGraphicsState: graphics.STATE;
+// @ts-expect-error the type is gui.Adjust
+declare const _referenceGuiAdjust: gui.ADJUST;
+// @ts-expect-error the type is gui.Anchor
+declare const _referenceGuiAnchor: gui.ANCHOR;
+// @ts-expect-error the type is gui.Blend
+declare const _referenceGuiBlend: gui.BLEND;
+// @ts-expect-error the type is gui.ClippingMode
+declare const _referenceGuiClippingMode: gui.CLIPPING_MODE;
+// @ts-expect-error the type is gui.Easing
+declare const _referenceGuiEasing: gui.EASING;
+// @ts-expect-error the type is gui.KeyboardType
+declare const _referenceGuiKeyboardType: gui.KEYBOARD_TYPE;
+// @ts-expect-error the type is gui.PieBounds
+declare const _referenceGuiPiebounds: gui.PIEBOUNDS;
+// @ts-expect-error the type is gui.Pivot
+declare const _referenceGuiPivot: gui.PIVOT;
+// @ts-expect-error the type is gui.Playback
+declare const _referenceGuiPlayback: gui.PLAYBACK;
+// @ts-expect-error the type is gui.Prop
+declare const _referenceGuiProp: gui.PROP;
+// @ts-expect-error the type is gui.SafeArea
+declare const _referenceGuiSafeArea: gui.SAFE_AREA;
+// @ts-expect-error the type is gui.SizeMode
+declare const _referenceGuiSizeMode: gui.SIZE_MODE;
+// @ts-expect-error the type is gui.Type
+declare const _referenceGuiType: gui.TYPE;
+// @ts-expect-error the type is profiler.Mode
+declare const _referenceProfilerMode: profiler.MODE;
+// @ts-expect-error the type is profiler.ViewMode
+declare const _referenceProfilerViewMode: profiler.VIEW_MODE;
+// @ts-expect-error the type is sys.Network
+declare const _referenceSysNetwork: sys.NETWORK;
+// @ts-expect-error the type is window.Dimming
+declare const _referenceWindowDimming: window.DIMMING;
+
+// A curated name that differs from the reference's derived name stays retired.
+// @ts-expect-error the type is gui.Adjust
+declare const _retiredGuiAdjustMode: gui.AdjustMode;
+// @ts-expect-error the type is gui.Blend
+declare const _retiredGuiBlendMode: gui.BlendMode;
+// @ts-expect-error the type is gui.Type
+declare const _retiredGuiNodeType: gui.NodeType;
+// @ts-expect-error the type is gui.Prop
+declare const _retiredGuiProperty: gui.Property;
+// @ts-expect-error the type is gui.SafeArea
+declare const _retiredGuiSafeAreaMode: gui.SafeAreaMode;
+// @ts-expect-error the type is sys.Network
+declare const _retiredSysNetworkConnectivity: sys.NetworkConnectivity;
+// @ts-expect-error the type is window.Dimming
+declare const _retiredWindowDimModeState: window.DimModeState;
+void _referenceBufferValueType;
+void _referenceCollectionfactoryStatus;
+void _referenceFactoryStatus;
+void _referenceGoEasing;
+void _referenceGoPlayback;
+void _referenceGraphicsBlendFactor;
+void _referenceGraphicsBufferType;
+void _referenceGraphicsState;
+void _referenceGuiAdjust;
+void _referenceGuiAnchor;
+void _referenceGuiBlend;
+void _referenceGuiClippingMode;
+void _referenceGuiEasing;
+void _referenceGuiKeyboardType;
+void _referenceGuiPiebounds;
+void _referenceGuiPivot;
+void _referenceGuiPlayback;
+void _referenceGuiProp;
+void _referenceGuiSafeArea;
+void _referenceGuiSizeMode;
+void _referenceGuiType;
+void _referenceProfilerMode;
+void _referenceProfilerViewMode;
+void _referenceSysNetwork;
+void _referenceWindowDimming;
+void _retiredGuiAdjustMode;
+void _retiredGuiBlendMode;
+void _retiredGuiNodeType;
+void _retiredGuiProperty;
+void _retiredGuiSafeAreaMode;
+void _retiredSysNetworkConnectivity;
+void _retiredWindowDimModeState;

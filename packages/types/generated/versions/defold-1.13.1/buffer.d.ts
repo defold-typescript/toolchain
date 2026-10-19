@@ -6,7 +6,7 @@ declare global {
    * Functions for manipulating buffers and streams
    */
   namespace buffer {
-    type VALUE_TYPE = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;
+    type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;
     /**
      * Float, single precision, 4 bytes
      */
@@ -129,7 +129,7 @@ declare global {
      * });
      * ```
      */
-    function create(element_count: number, declaration: [{ name?: Hash | string; type: buffer.VALUE_TYPE; count?: number }, ...{ name?: Hash | string; type: buffer.VALUE_TYPE; count?: number }[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
+    function create(element_count: number, declaration: [{ name?: Hash | string; type: buffer.ValueType; count?: number }, ...{ name?: Hash | string; type: buffer.ValueType; count?: number }[]]): Opaque<"buffer"> & { length: LuaLengthMethod<number> };
     /**
      * Get a copy of all the bytes of the buffer, every stream included, as a Lua string.
      *
@@ -153,7 +153,7 @@ declare global {
      * if (values) print(`${values.length} values in 'somefloats'`);
      * ```
      */
-    function get_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.VALUE_TYPE | undefined]>;
+    function get_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;
     /**
      * Get a specified stream from a buffer.
      *
@@ -182,7 +182,7 @@ declare global {
      * buffer.set_metadata(buf, hash("somefloats"), [-2.5, 10.0, 32.2], buffer.VALUE_TYPE_FLOAT32);
      * ```
      */
-    function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: [number, ...number[]], value_type: Exclude<buffer.VALUE_TYPE, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;
+    function set_metadata(buf: Opaque<"buffer"> & { length: LuaLengthMethod<number> }, metadata_name: Hash | string, values: [number, ...number[]], value_type: Exclude<buffer.ValueType, typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_UINT64>): void;
   }
 }
 

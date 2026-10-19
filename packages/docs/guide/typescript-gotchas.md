@@ -69,15 +69,15 @@ go.animate(id, "position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1);
 
 **Typed alternative.** Always pass the named constant (`go.PLAYBACK_ONCE_FORWARD`, `go.EASING_LINEAR`, …). The brand is type-only and erases at transpile time to a plain Lua global access, so there is no runtime cost. A branded constant is still assignable to any plain `number` parameter, so existing numeric signatures keep working.
 
-**Naming the enum.** Every documented constant union has an exported alias in the namespace it belongs to, so you can spell the type yourself instead of retyping the arms or falling back to `number`. Where the reference names the enum, the alias carries that name (`gui.EASING`, `buffer.VALUE_TYPE`, `factory.STATUS`), and it is the same name on every Defold version:
+**Naming the enum.** Every documented constant union has an exported alias in the namespace it belongs to, so you can spell the type yourself instead of retyping the arms or falling back to `number`. Where the reference names the enum, the alias carries that name in PascalCase (`gui.Easing` for the reference's `gui.EASING`, `buffer.ValueType`, `factory.Status`), and it is the same name on every Defold version:
 
 ```ts
-function fadeIn(node: Opaque<"node">, easing: gui.EASING, playback: gui.PLAYBACK) {
+function fadeIn(node: Opaque<"node">, easing: gui.Easing, playback: gui.Playback) {
   gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), easing, 0.5, 0, undefined, playback);
 }
 ```
 
-A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `window.get_dim_mode` returns `window.DIMMING`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.STATE` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members.
+A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `window.get_dim_mode` returns `window.Dimming`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.State` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members, with a `Defold name:` line naming the reference's own spelling where it differs.
 
 **How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts the constant is assignable to `number` (backward compatibility) and to its own brand, while a bare `0` assigned to the brand carries `@ts-expect-error`. If the brand is dropped or widened, the expected error disappears and the typecheck gate fails. `packages/types/test-d/constant-union-aliases.ts` does the same for the aliases: representative members are assignable to their alias, and a constant from a sibling group is not. Exhaustive member-set fidelity is held elsewhere: `packages/types/test/constant-union-alias-coverage.test.ts` catches a brand union left without a name, and `packages/types/test/constant-slot-expansion-drift.test.ts` checks each documented slot against the reference documentation.
 
@@ -545,7 +545,7 @@ render.render_target({
 });
 ```
 
-**Why.** The engine registers a texture format constant only when the graphics driver supports that format, so on a device without it the Lua global is `nil`. The typings declare every `graphics.TEXTURE_FORMAT_*` constant as possibly `undefined`, except `graphics.TEXTURE_FORMAT_DEPTH` and `graphics.TEXTURE_FORMAT_STENCIL`, which always exist. A buffer's or texture's `format` takes a `graphics.TEXTURE_FORMAT`, which excludes `undefined`, so an unguarded constant is rejected. Pins older than 1.13.2 declare every format unconditionally, and their `render.render_target` takes an open record.
+**Why.** The engine registers a texture format constant only when the graphics driver supports that format, so on a device without it the Lua global is `nil`. The typings declare every `graphics.TEXTURE_FORMAT_*` constant as possibly `undefined`, except `graphics.TEXTURE_FORMAT_DEPTH` and `graphics.TEXTURE_FORMAT_STENCIL`, which always exist. A buffer's or texture's `format` takes a `graphics.TextureFormat`, which excludes `undefined`, so an unguarded constant is rejected. Pins older than 1.13.2 declare every format unconditionally, and their `render.render_target` takes an open record.
 
 **Typed alternative.** Read the format constant into a local, check it, and pass the narrowed value:
 

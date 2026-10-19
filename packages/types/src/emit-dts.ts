@@ -26,6 +26,7 @@ import {
   summaryFor,
 } from "./doc-comment";
 import { applyMessageOverlays, parseMessagesDoc } from "./emit-messages";
+import { engineTypeName } from "./engine-type-name";
 import type { TranslationStore } from "./example-store";
 import { lookupExampleSegments, translateProseFences } from "./example-store";
 import {
@@ -922,8 +923,8 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       [
         `render.${name}:param:state`,
         {
-          adds: "Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
-          removes: ["graphics.STATE"],
+          adds: "Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>",
+          removes: ["graphics.State"],
           upstream: ["graphics.STATE"],
           reason: `render_script.cpp:RenderScript_${name === "enable_state" ? "Enable" : "Disable"}State raises "Invalid state" on any state but the six it lists, so graphics.STATE_SCISSOR_TEST and graphics.STATE_ALPHA_TEST_SUPPORTED are rejected`,
         },
@@ -941,7 +942,7 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
       [
         `render.set_blend_func_separate:param:${slot}`,
         {
-          adds: "graphics.BLEND_FACTOR",
+          adds: "graphics.BlendFactor",
           removes: ["number"],
           upstream: ["number"],
           reason:
@@ -998,8 +999,8 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
   [
     "window.set_dim_mode:param:mode",
     {
-      removes: ["window.DIMMING"],
-      adds: "Exclude<window.DIMMING, typeof window.DIMMING_UNKNOWN>",
+      removes: ["window.Dimming"],
+      adds: "Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>",
       upstream: ["window.DIMMING"],
       reason:
         'script_window.cpp:SetDimMode raises "The dim mode specified is not supported." for anything but DIMMING_ON and DIMMING_OFF',
@@ -2267,7 +2268,7 @@ export function constantUnionAlias(fqns: readonly string[]): ConstantUnionAlias 
 // qualified name, or a subset row's parent minus the parent's other members,
 // listed in the parent's order.
 export function constantUnionSpelling(row: ConstantUnionAlias): string {
-  if ("name" in row) return `${row.home}.${row.name}`;
+  if ("name" in row) return `${row.home}.${engineTypeName(row.name)}`;
   const parent = CONSTANT_UNION_ALIASES.find(
     (candidate): candidate is ConstantUnionNamedRow =>
       "name" in candidate && candidate.home === row.home && candidate.name === row.parent,
@@ -2277,7 +2278,7 @@ export function constantUnionSpelling(row: ConstantUnionAlias): string {
   }
   const kept = new Set(row.members);
   const excluded = parent.members.filter((member) => !kept.has(member));
-  return `Exclude<${row.home}.${row.parent}, ${excluded.map((m) => `typeof ${m}`).join(" | ")}>`;
+  return `Exclude<${row.home}.${engineTypeName(row.parent)}, ${excluded.map((m) => `typeof ${m}`).join(" | ")}>`;
 }
 
 // The named rows a module owns; a subset row declares nothing. A row is
@@ -2301,6 +2302,7 @@ export function constantUnionAliasDeclarations(
   enumDeclared: ReadonlySet<string> = new Set(),
 ): string[] {
   return ownedConstantUnionAliases(namespace, enumDeclared)
+    .map((row) => ({ name: engineTypeName(row.name), members: row.members }))
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((row) => unionAliasDeclaration(row.name, row.members));
 }
@@ -2732,7 +2734,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       kind: "array-object",
       fields: [
         { name: "name", types: ["hash", "string"] },
-        { name: "type", types: ["constant"], tsType: "buffer.VALUE_TYPE" },
+        { name: "type", types: ["constant"], tsType: "buffer.ValueType" },
         { name: "count", types: ["number"] },
       ],
     },
@@ -3637,7 +3639,7 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 // script_resource.cpp:CreateSoundData reads it with CheckBufferOrString.
 const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
 const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
-const ATLAS_PLAYBACK_TS = "Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>";
+const ATLAS_PLAYBACK_TS = "Exclude<go.Playback, typeof go.PLAYBACK_NONE>";
 export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["compute.set_constants:param:constants:value", CONSTANT_VALUE_TS],
   ["material.set_constants:param:constants:value", CONSTANT_VALUE_TS],
@@ -3646,7 +3648,7 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["resource.set_atlas:param:table:animations[].playback", ATLAS_PLAYBACK_TS],
   ["resource.create_atlas:param:table:animations[].playback", ATLAS_PLAYBACK_TS],
   ["resource.get_atlas:return:data:animations[].playback", ATLAS_PLAYBACK_TS],
-  ["render.set_render_target:param:options:transient", "graphics.BUFFER_TYPE[]"],
+  ["render.set_render_target:param:options:transient", "graphics.BufferType[]"],
   ["resource.create_sound_data:param:options:data", 'string | Opaque<"buffer">'],
   // The option bags 1.13.2 types as a STRUCT, whose members still carry the
   // narrower upstream types: `gui.set`'s (its slot is declared in
@@ -3663,13 +3665,13 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
       "resource.render_target_attachment_info",
       "material.texture_info",
     ] as const
-  ).map((struct) => [`${struct}:member:flags`, "graphics.TEXTURE_USAGE_FLAG | number"] as const),
-  ["render.render_target_buffer_params:member:flags", "render.RENDER_TARGET_FLAG | number"],
+  ).map((struct) => [`${struct}:member:flags`, "graphics.TextureUsageFlag | number"] as const),
+  ["render.render_target_buffer_params:member:flags", "render.RenderTargetFlag | number"],
   // gamesys_script.cpp:PushSampler, behind both get_samplers, pushes the raw
   // texture type; NormalizeBindableTextureType never runs there. A separate
   // sampler reports TEXTURE_TYPE_SAMPLER (6) and a separate texture binding one
   // of the four TEXTURE_TYPE_TEXTURE_* (7-10), none of which has a Lua constant.
-  ["material.sampler_info:member:type", "graphics.TEXTURE_TYPE | 6 | 7 | 8 | 9 | 10"],
+  ["material.sampler_info:member:type", "graphics.TextureType | 6 | 7 | 8 | 9 | 10"],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise
@@ -4849,19 +4851,23 @@ export function routeTypeDeclarations(modules: readonly ApiModule[]): ApiModule[
 export function declaredTypePaths(modules: readonly ApiModule[]): Map<string, string> {
   const paths = new Map<string, string>();
   for (const module of modules) {
+    const qualified = (name: string): string =>
+      name.startsWith(`${module.namespace}.`) ? name : `${module.namespace}.${name}`;
+    for (const { name } of module.enums ?? []) paths.set(name, renamedLeaf(qualified(name)));
     const names = [
-      ...(module.enums ?? []).map((e) => e.name),
       ...(module.structs ?? []).map((struct) => struct.name),
       ...module.typedefs.filter((t) => t.aliasOf !== undefined).map((t) => t.name),
     ];
-    for (const name of names) {
-      paths.set(
-        name,
-        name.startsWith(`${module.namespace}.`) ? name : `${module.namespace}.${name}`,
-      );
-    }
+    for (const name of names) paths.set(name, qualified(name));
   }
   return paths;
+}
+
+// A dotted type path with its last segment through `engineTypeName`: the
+// namespace segments mirror the engine's functions and stay as they are.
+function renamedLeaf(path: string): string {
+  const dot = path.lastIndexOf(".");
+  return `${path.slice(0, dot + 1)}${engineTypeName(path.slice(dot + 1))}`;
 }
 
 export function emitDeclarations(documented: ApiModule, options?: EmitOptions): string {
@@ -5518,18 +5524,24 @@ export function emitSymbolSignatures(
     module.namespace,
     new Set(enumAliases.all.map((alias) => alias.path)),
   )) {
+    const name = engineTypeName(row.name);
     out.push({
-      identity: { namespace: module.namespace, kind: "TYPEDEF", name: row.name, signature: "" },
-      tsSignature: unionAliasDeclaration(row.name, row.members),
+      identity: { namespace: module.namespace, kind: "TYPEDEF", name, signature: "" },
+      tsSignature: unionAliasDeclaration(name, row.members),
       slotTypes: NO_SLOTS,
     });
   }
 
-  // An enum alias is keyed by its local path (`STATUS`, `ui.COLOR`), as the
-  // constant-union aliases above are keyed by their local name.
+  // An enum alias is keyed by its declared local path (`Status`, `ui.Color`),
+  // as the constant-union aliases above are keyed by their declared name.
   for (const alias of enumAliases.all) {
     out.push({
-      identity: { namespace: module.namespace, kind: "TYPEDEF", name: alias.path, signature: "" },
+      identity: {
+        namespace: module.namespace,
+        kind: "TYPEDEF",
+        name: renamedLeaf(alias.path),
+        signature: "",
+      },
       tsSignature: unionAliasDeclaration(alias.name, alias.members, alias.nilable),
       slotTypes: NO_SLOTS,
     });
@@ -5571,8 +5583,9 @@ interface NestedGroup {
   children: Map<string, NestedGroup>;
 }
 
-// One `ENUM`'s union alias: `name` is the declared identifier, `path` the local
-// path under the module namespace (`ui.COLOR`), `members` the member FQNs.
+// One `ENUM`'s union alias: `name` is the declared identifier (`Color`), `path`
+// the reference's local path under the module namespace (`ui.COLOR`), `members`
+// the member FQNs.
 interface EnumAlias {
   name: string;
   path: string;
@@ -5701,12 +5714,14 @@ function collectEnumAliases(
   const nilable = new Set(module.constants.filter((c) => c.nilable).map((c) => c.name));
   const topLevel: EnumAlias[] = [];
   const all: EnumAlias[] = [];
-  const enums = [...(module.enums ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const enums = [...(module.enums ?? [])].sort((a, b) =>
+    renamedLeaf(a.name).localeCompare(renamedLeaf(b.name)),
+  );
   for (const e of enums) {
     if (e.members.length === 0 || !e.members.every((m) => declared.has(m))) continue;
     const path = stripPrefix(e.name, prefix);
     if (TS_IDENTIFIER.test(path)) {
-      const alias = { name: path, path, members: e.members, nilable };
+      const alias = { name: engineTypeName(path), path, members: e.members, nilable };
       topLevel.push(alias);
       all.push(alias);
       continue;
@@ -5722,7 +5737,7 @@ function collectEnumAliases(
       level = group.children;
     }
     if (group === undefined) continue;
-    const alias = { name, path, members: e.members, nilable };
+    const alias = { name: engineTypeName(name), path, members: e.members, nilable };
     group.enumAliases.push(alias);
     all.push(alias);
   }
@@ -6942,7 +6957,7 @@ function withoutSubsumedOpaqueArms(mapped: readonly string[]): string[] {
 // Joins already-mapped arms, collapsing the branded ones to their row's spelling
 // when they are exactly a `CONSTANT_UNION_ALIASES` member set. The spelling takes the
 // position of the first branded arm, so a mixed union keeps its reading order
-// (`gui.EASING | Vector`). Arms that are not constants are untouched, and a set
+// (`gui.Easing | Vector`). Arms that are not constants are untouched, and a set
 // with no row keeps every arm inline.
 function joinUnionArms(mapped: readonly string[]): string {
   const arms = withoutSubsumedOpaqueArms(mapped);

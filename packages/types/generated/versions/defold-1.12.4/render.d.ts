@@ -186,7 +186,7 @@ declare global {
      * });
      * ```
      */
-    function disable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
+    function disable_state(state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
     /**
      * Disables a texture that has previourly been enabled.
      *
@@ -409,7 +409,7 @@ declare global {
      * });
      * ```
      */
-    function enable_state(state: Exclude<graphics.STATE, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
+    function enable_state(state: Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>): void;
     /**
      * Sets the specified texture handle for a render target attachment or a regular texture
      * that should be used for rendering. The texture can be bound to either a texture unit
@@ -513,7 +513,7 @@ declare global {
      * });
      * ```
      */
-    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BUFFER_TYPE): void;
+    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BufferType): void;
     /**
      * Returns the logical window height that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -566,7 +566,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
+    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
     /**
      * Returns the specified buffer width from a render target.
      *
@@ -607,7 +607,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BUFFER_TYPE): number;
+    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
     /**
      * Returns the logical window width that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -1103,7 +1103,7 @@ declare global {
      * });
      * ```
      */
-    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: { transient?: graphics.BUFFER_TYPE[] }): void;
+    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT | undefined, options: { transient?: graphics.BufferType[] }): void;
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.

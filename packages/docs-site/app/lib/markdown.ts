@@ -283,7 +283,7 @@ function replaceFirstHeading(markdown: string, heading: string): string {
 }
 
 // The TypeScript grammar names a `type` alias by one identifier, so a qualified
-// alias head (`type image.TYPE`) colors only its first segment. Each later segment
+// alias head (`type image.Type`) colors only its first segment. Each later segment
 // takes that segment's color, the way an `interface` head colors each of its own
 // segments and leaves the dots plain.
 function colorQualifiedAliasHead(tokens: ThemedToken[], text: string): ThemedToken[] {

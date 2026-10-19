@@ -155,7 +155,7 @@ declare global {
      * });
      * ```
      */
-    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Exclude<go.PLAYBACK, typeof go.PLAYBACK_NONE>, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
+    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: Hash, message: BuiltinMessages["model_animation_done"]) => void): void;
     /**
      * Enable or disable visibility of a mesh
      *

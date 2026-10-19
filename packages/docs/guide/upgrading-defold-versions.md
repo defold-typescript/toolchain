@@ -442,13 +442,13 @@ Same change as `b2d.world.cast_ray`.
 
 #### gui.new_texture
 
-The `type` parameter takes `string | image.TYPE`, so an `image.TYPE_*` constant
+The `type` parameter takes `string | image.Type`, so an `image.TYPE_*` constant
 passes without a cast. The second return value narrows from `number` to
-`gui.RESULT`. Compare the [1.13.1 `gui` page](/api/defold-1.13.1/gui).
+`gui.Result`. Compare the [1.13.1 `gui` page](/api/defold-1.13.1/gui).
 
 #### gui.set_texture_data
 
-The `type` parameter takes `string | image.TYPE`, as for `gui.new_texture`.
+The `type` parameter takes `string | image.Type`, as for `gui.new_texture`.
 
 #### image.load
 

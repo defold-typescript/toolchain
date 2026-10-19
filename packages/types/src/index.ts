@@ -67,6 +67,7 @@ export {
   TS_IDENTIFIER,
   TS_RESERVED_NAMES,
 } from "./emit-dts";
+export { ENGINE_TYPE_NAME_OVERRIDES, engineTypeName } from "./engine-type-name";
 export {
   hashExampleSource,
   lookupExampleSegments,
