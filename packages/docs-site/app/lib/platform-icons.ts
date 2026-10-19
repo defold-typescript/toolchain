@@ -8,6 +8,7 @@ export type Glyph = { set: "phosphor"; name: string } | { set: "devicon"; file: 
  * `.script_api` text carries `[icon:ios]`, and engine ref-doc HTML carries
  * `<span class="icon-ios"></span>`. Both normalise to the bracket marker, which
  * the markdown renderer turns into a badge and plain-text surfaces strip.
+ * `[icon:lua]` is the API pages' own marker, set before a Defold reference name.
  * `glyph` names a single-colour Devicon brand mark where Devicon has one for the
  * platform, else a Phosphor duotone glyph. `tone: "warning"` marks a caution
  * rather than a platform, drawn in the warning callout's colour.
@@ -22,6 +23,7 @@ export const PLATFORM_ICONS: Record<string, PlatformIcon> = {
   html5: { label: "HTML5", glyph: { set: "devicon", file: "html5/html5-plain" } },
   windows: { label: "Windows", glyph: { set: "devicon", file: "windows11/windows11-original" } },
   linux: { label: "Linux", glyph: { set: "devicon", file: "linux/linux-plain" } },
+  lua: { label: "Lua", glyph: { set: "devicon", file: "lua/lua-plain" } },
   macos: { label: "macOS", glyph: { set: "phosphor", name: "desktop" } },
   osx: { label: "macOS", glyph: { set: "phosphor", name: "desktop" } },
   googleplay: { label: "Google Play", glyph: { set: "phosphor", name: "google-play-logo" } },
