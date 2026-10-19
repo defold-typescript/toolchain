@@ -3,7 +3,12 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { loadApiTargets, loadTargetModules } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { CONSTANT_UNION_ALIASES, constantUnionAlias } from "../src/emit-dts";
+import {
+  CONSTANT_UNION_ALIASES,
+  type ConstantUnionAlias,
+  constantUnionAlias,
+  constantUnionSpelling,
+} from "../src/emit-dts";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const GENERATED_DIR = join(PACKAGE_ROOT, "generated");
@@ -73,6 +78,9 @@ function suggestedRow(members: readonly string[]): string {
     .join(", ")}] }`;
 }
 
+const label = (row: ConstantUnionAlias): string =>
+  "name" in row ? `${row.home}.${row.name}` : constantUnionSpelling(row);
+
 const occurrences: Occurrence[] = [
   ...generatedSurfaces(GENERATED_DIR).flatMap(({ path, contents }) => scan(contents, path)),
   ...scan(readFileSync(SIGNATURES_PATH, "utf8"), relative(PACKAGE_ROOT, SIGNATURES_PATH)),
@@ -120,10 +128,20 @@ describe("constant union alias coverage", () => {
         );
       }
     }
+    // A subset row declares nothing and collapses every slot it matches, so its
+    // spelling at some slot is the only trace it leaves.
+    const shipped = [
+      ...generatedSurfaces(GENERATED_DIR).map(({ contents }) => contents),
+      readFileSync(SIGNATURES_PATH, "utf8"),
+    ];
     const unreachable = CONSTANT_UNION_ALIASES.filter((row) => {
+      if (!("name" in row)) {
+        const spelling = constantUnionSpelling(row);
+        return !shipped.some((contents) => contents.includes(spelling));
+      }
       const key = [...row.members].sort().join(",");
       return !emitted.has(key) && !declared.has(key);
-    }).map((row) => `${row.home}.${row.name} matches no emitted union`);
+    }).map((row) => `${label(row)} matches no emitted union`);
     expect(unreachable).toEqual([]);
   });
 });
@@ -165,9 +183,10 @@ describe("constant union names agree with the reference ENUM names", () => {
     for (const { id, byHome } of targetEnums) {
       for (const row of CONSTANT_UNION_ALIASES) {
         for (const [local, members] of byHome.get(row.home) ?? []) {
-          if (memberKey(members) !== memberKey(row.members) || local === row.name) continue;
+          if (memberKey(members) !== memberKey(row.members)) continue;
+          if ("name" in row && local === row.name) continue;
           misnamed.push(
-            `${id}: ${row.home}.${row.name} has the members of ENUM ${row.home}.${local} — name the row ${local}`,
+            `${id}: ${label(row)} has the members of ENUM ${row.home}.${local} — name the row ${local}`,
           );
         }
       }
@@ -179,6 +198,7 @@ describe("constant union names agree with the reference ENUM names", () => {
     const diverged: string[] = [];
     for (const { id, byHome } of targetEnums) {
       for (const row of CONSTANT_UNION_ALIASES) {
+        if (!("name" in row)) continue;
         const members = byHome.get(row.home)?.get(row.name);
         if (members === undefined || memberKey(members) === memberKey(row.members)) continue;
         diverged.push(

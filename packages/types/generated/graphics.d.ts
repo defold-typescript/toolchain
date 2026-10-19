@@ -114,7 +114,6 @@ declare global {
        */
       max_storage_buffers_per_stage: number;
     }
-    type State = typeof graphics.STATE_DEPTH_TEST | typeof graphics.STATE_STENCIL_TEST | typeof graphics.STATE_BLEND | typeof graphics.STATE_ALPHA_TEST | typeof graphics.STATE_CULL_FACE | typeof graphics.STATE_POLYGON_OFFSET_FILL;
     type BLEND_EQUATION = typeof graphics.BLEND_EQUATION_ADD | typeof graphics.BLEND_EQUATION_MAX | typeof graphics.BLEND_EQUATION_MIN | typeof graphics.BLEND_EQUATION_REVERSE_SUBTRACT | typeof graphics.BLEND_EQUATION_SUBTRACT;
     type BLEND_FACTOR = typeof graphics.BLEND_FACTOR_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_DST_ALPHA | typeof graphics.BLEND_FACTOR_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_DST_COLOR | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA | typeof graphics.BLEND_FACTOR_ONE_MINUS_SRC_COLOR | typeof graphics.BLEND_FACTOR_SRC_ALPHA | typeof graphics.BLEND_FACTOR_SRC_ALPHA_SATURATE | typeof graphics.BLEND_FACTOR_SRC_COLOR | typeof graphics.BLEND_FACTOR_ZERO;
     type BUFFER_TYPE = typeof graphics.BUFFER_TYPE_COLOR0_BIT | NonNullable<typeof graphics.BUFFER_TYPE_COLOR1_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR2_BIT> | NonNullable<typeof graphics.BUFFER_TYPE_COLOR3_BIT> | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
