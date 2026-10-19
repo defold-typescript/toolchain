@@ -4,6 +4,7 @@ import {
   apiModuleSymbols,
   functionAnchorText,
   groupOverloadForms,
+  qualify,
 } from "./api-surface";
 import { type CombinedSurface, combinedApiPages } from "./combined-surface";
 import { slugify } from "./headings";
@@ -18,15 +19,6 @@ export interface SymbolEntry {
    * heading. The bare-namespace entry has no anchor.
    */
   route: string;
-}
-
-// Functions/constants come namespace-qualified (`go.get_position`), properties
-// come bare (`position`); only prefix when the name is not already qualified.
-// The synthetic `globals` page documents prefixless ambient symbols (`hash`),
-// so its members are keyed bare.
-export function qualify(namespace: string, name: string): string {
-  if (namespace === "globals") return name;
-  return name.startsWith(`${namespace}.`) ? name : `${namespace}.${name}`;
 }
 
 /**

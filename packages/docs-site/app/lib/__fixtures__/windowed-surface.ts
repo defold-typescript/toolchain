@@ -47,10 +47,11 @@ export const HISTORICAL_ONLY_SYMBOL = "gone.thing";
 
 // `typedefShape` gives `demo` a member-bearing typedef named for the module-function
 // section heading, plus `demo.configure(opts: Functions)` whose recorded declaration
-// names it too. The shape's own `## Functions` heading therefore collides by slug
-// with the section's, which is the only way to observe that a signature deep-link
-// resolves against the id the render minted rather than the bare label. Off by
-// default, so every existing caller sees an unchanged registry.
+// names it too. The shape's heading reads `demo.Functions`, so a link slugged from the
+// bare label lands on the section's `## Functions` heading instead, which is the only
+// way to observe that a signature deep-link resolves against the id the render minted
+// rather than the bare label. Off by default, so every existing caller sees an
+// unchanged registry.
 export const TYPEDEF_SHAPE_NAME = "Functions";
 export const TYPEDEF_SHAPE_CONSUMER = "demo.configure";
 
@@ -66,9 +67,10 @@ export const TYPEDEF_SHAPE_CONSUMER = "demo.configure";
 const ALIAS_LOCAL_NAME = "Easing";
 export const CONSTANT_UNION_ALIAS = `demo.${ALIAS_LOCAL_NAME}`;
 const ALIAS_MEMBERS = ["demo.EASING_LINEAR", "demo.EASING_OUTSINE"];
-export const CONSTANT_UNION_ALIAS_SIGNATURE = `type ${ALIAS_LOCAL_NAME} = ${ALIAS_MEMBERS.map(
-  (member) => `typeof ${member}`,
-).join(" | ")}`;
+const ALIAS_UNION = ALIAS_MEMBERS.map((member) => `typeof ${member}`).join(" | ");
+export const CONSTANT_UNION_ALIAS_SIGNATURE = `type ${ALIAS_LOCAL_NAME} = ${ALIAS_UNION}`;
+// The row the engine page renders for that alias, which names its qualified path.
+export const CONSTANT_UNION_ALIAS_ROW = `type ${CONSTANT_UNION_ALIAS} = ${ALIAS_UNION}`;
 export const CONSTANT_UNION_ALIAS_CONSUMER = "demo.tween";
 
 // The brand source for the canonical half of the route's link map:

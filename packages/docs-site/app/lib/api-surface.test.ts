@@ -1627,10 +1627,10 @@ describe("apiModuleSymbols", () => {
       [
         "type",
         "LoggerInstance.info",
-        "LoggerInstance.info(message: string)",
+        "demo.LoggerInstance.info(message: string)",
         "Writes an info message.",
       ],
-      ["type", "LoggerInstance.level", "LoggerInstance.level: number", "Current log level."],
+      ["type", "LoggerInstance.level", "demo.LoggerInstance.level: number", "Current log level."],
     ]);
     expect(symbols[0]?.parameters).toEqual([
       { name: "message", doc: "message text", types: ["string"], isOptional: false },
@@ -2591,8 +2591,8 @@ describe("apiModuleSymbols", () => {
       }),
     );
     expect(symbols.map((s) => s.signature)).toEqual([
-      "ShowOptions.clear?: boolean",
-      "ShowOptions.sequential: boolean",
+      "demo.ShowOptions.clear?: boolean",
+      "demo.ShowOptions.sequential: boolean",
     ]);
   });
 
@@ -2896,6 +2896,13 @@ describe("authoritative TYPEDEF rows on Combined pages (committed artifacts)", (
     };
   }
 
+  // The ledger declares a type by its leaf inside the namespace; the page row
+  // names its qualified path and keeps the rest of the definition.
+  function qualifiedRow(namespace: string, name: string, definition: string): string {
+    const [, keyword, rest] = /^(type|interface) [\w$]+(.*)$/s.exec(definition) ?? [];
+    return keyword === undefined ? definition : `${keyword} ${namespace}.${name}${rest}`;
+  }
+
   test("every signed TYPEDEF renders its authoritative definition", () => {
     const offenders: string[] = [];
     let checked = 0;
@@ -2914,7 +2921,7 @@ describe("authoritative TYPEDEF rows on Combined pages (committed artifacts)", (
         checked++;
         const { symbols, markdown } = typeRow(page, name);
         if (symbols.length !== 1) offenders.push(`${ns.namespace} ${name} ${symbols.length} rows`);
-        else if (symbols[0]?.signature !== expected) {
+        else if (symbols[0]?.signature !== qualifiedRow(ns.namespace, name, expected)) {
           offenders.push(`${ns.namespace} ${name} signature ${symbols[0]?.signature}`);
         }
         if (!markdown.includes(`\`${expected}\``)) {
@@ -2938,7 +2945,9 @@ describe("authoritative TYPEDEF rows on Combined pages (committed artifacts)", (
       const expected = newest[`socket\0TYPEDEF\0${name}\0`]?.trim() ?? "";
       expect(expected.startsWith(`interface ${name} {`)).toBe(true);
       const { symbols, markdown } = typeRow(page, name);
-      expect(symbols.map((s) => s.signature)).toEqual([expected]);
+      expect(symbols.map((s) => s.signature)).toEqual([
+        `interface socket.${name}${expected.slice(`interface ${name}`.length)}`,
+      ]);
       expect(markdown).toContain(`\`${expected}\``);
     }
   });
@@ -2947,7 +2956,9 @@ describe("authoritative TYPEDEF rows on Combined pages (committed artifacts)", (
     const expected = (newest["gui\0TYPEDEF\0EASING\0"] ?? "").trim().replace(/;$/, "");
     expect(expected.startsWith("type EASING =")).toBe(true);
     const { symbols, markdown } = typeRow(pageFor("gui"), "EASING");
-    expect(symbols.map((s) => s.signature)).toEqual([expected]);
+    expect(symbols.map((s) => s.signature)).toEqual([
+      `type gui.EASING${expected.slice("type EASING".length)}`,
+    ]);
     expect(markdown).toContain(`\`${expected}\``);
   });
 });
@@ -3380,6 +3391,78 @@ describe("native helper shape definitions", () => {
     );
     expect(cast?.signature).toContain("[ false ]");
     expect(cast?.signature).toContain("[ true,");
+  });
+});
+
+describe("engine type rows name their qualified path", () => {
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const typeRow = (namespace: string, name: string) => {
+    const page = pages.find((p) => p.namespace === namespace);
+    if (!page) throw new Error(`no ${namespace} page`);
+    return apiModuleSymbols(page, page.translations, page.signatures).find(
+      (s) => s.kind === "type" && s.name === name,
+    );
+  };
+
+  test("an engine definition row names its namespace", () => {
+    expect(typeRow("image", "TYPE")?.signature).toStartWith("type image.TYPE =");
+    expect(typeRow("image", "load_result")?.signature).toStartWith("interface image.load_result {");
+  });
+
+  test("a nested engine row names its whole path, not just its leaf", () => {
+    expect(typeRow("go", "on_input.action")?.signature).toStartWith(
+      "interface go.on_input.action {",
+    );
+    expect(typeRow("socket", "dns.address_info")?.signature).toStartWith(
+      "interface socket.dns.address_info {",
+    );
+  });
+
+  test("a library row keeps its bare name", () => {
+    expect(typeRow("daabbcc", "QueryResult")?.signature).toStartWith("type QueryResult =");
+  });
+
+  test("an engine shape's member rows name their namespace", () => {
+    const page: ApiPage = {
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "Demo",
+      module: {
+        namespace: "demo",
+        brief: "Demo",
+        description: "Engine type demo.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [
+          {
+            name: "Logger",
+            functions: [
+              {
+                name: "info",
+                brief: "",
+                description: "Writes an info message.",
+                parameters: [
+                  { name: "message", doc: "message text", types: ["string"], isOptional: false },
+                ],
+                returnValues: [],
+              },
+            ],
+            properties: [
+              { name: "level", brief: "", description: "Current log level.", types: ["number"] },
+            ],
+          },
+        ],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+    };
+    const signatures = apiModuleSymbols(page)
+      .filter((s) => s.kind === "type")
+      .map((s) => s.signature);
+    expect(signatures).toEqual(["demo.Logger.info(message: string)", "demo.Logger.level: number"]);
   });
 });
 
