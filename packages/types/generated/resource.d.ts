@@ -38,7 +38,7 @@ declare global {
       /**
        * Playback mode. The default is `go.PLAYBACK_ONCE_FORWARD`.
        */
-      playback?: go.PLAYBACK;
+      playback?: go.Playback;
       /**
        * Animation frame rate. The default is 30.
        */
@@ -75,7 +75,7 @@ declare global {
       /**
        * Playback mode.
        */
-      playback: go.PLAYBACK;
+      playback: go.Playback;
       /**
        * Animation frame rate.
        */
@@ -255,15 +255,15 @@ declare global {
       /**
        * Texture usage flags.
        */
-      flags: graphics.TEXTURE_USAGE_FLAG | number;
+      flags: graphics.TextureUsageFlag | number;
       /**
        * Texture type.
        */
-      type: graphics.TEXTURE_TYPE;
+      type: graphics.TextureType;
       /**
        * Render-target buffer type.
        */
-      buffer_type: graphics.BUFFER_TYPE;
+      buffer_type: graphics.BufferType;
       /**
        * Backing texture resource, when present.
        */
@@ -353,7 +353,7 @@ declare global {
       /**
        * Texture type.
        */
-      type: graphics.TEXTURE_TYPE;
+      type: graphics.TextureType;
       /**
        * Texture width in pixels; must be greater than zero.
        */
@@ -373,11 +373,11 @@ declare global {
       /**
        * Texture format. Device-specific unsupported constants evaluate to `nil`.
        */
-      format: graphics.TEXTURE_FORMAT;
+      format: graphics.TextureFormat;
       /**
        * Creation-usage hints. The default is graphics.TEXTURE_USAGE_FLAG_SAMPLE.
        */
-      flags?: graphics.TEXTURE_USAGE_FLAG | number;
+      flags?: graphics.TextureUsageFlag | number;
       /**
        * Maximum mipmap count. The default is zero.
        */
@@ -385,7 +385,7 @@ declare global {
       /**
        * Compression used by the supplied buffer. The default is graphics.COMPRESSION_TYPE_DEFAULT.
        */
-      compression_type?: graphics.COMPRESSION_TYPE;
+      compression_type?: graphics.CompressionType;
     }
     /**
      * Asynchronous texture creation result
@@ -427,11 +427,11 @@ declare global {
       /**
        * Texture usage flags.
        */
-      flags: graphics.TEXTURE_USAGE_FLAG | number;
+      flags: graphics.TextureUsageFlag | number;
       /**
        * Texture type.
        */
-      type: graphics.TEXTURE_TYPE;
+      type: graphics.TextureType;
     }
     /**
      * Texture update parameters
@@ -440,7 +440,7 @@ declare global {
       /**
        * Texture type.
        */
-      type: graphics.TEXTURE_TYPE;
+      type: graphics.TextureType;
       /**
        * Update width in pixels.
        */
@@ -456,7 +456,7 @@ declare global {
       /**
        * Texture format. Device-specific unsupported constants evaluate to `nil`.
        */
-      format: graphics.TEXTURE_FORMAT;
+      format: graphics.TextureFormat;
       /**
        * X offset in pixels.
        */
@@ -480,7 +480,7 @@ declare global {
       /**
        * Compression used by the supplied buffer. The default is graphics.COMPRESSION_TYPE_DEFAULT.
        */
-      compression_type?: graphics.COMPRESSION_TYPE;
+      compression_type?: graphics.CompressionType;
     }
     /**
      * Constructor-like function with two purposes:

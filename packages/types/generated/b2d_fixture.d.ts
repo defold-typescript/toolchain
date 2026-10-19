@@ -61,7 +61,7 @@ declare global {
      * @param body - body
      * @param fixture_index - 1-based fixture index from b2d.body.get_fixtures. **⚠️ 1-based; passed to Defold unchanged.**
      */
-    function get_type(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.SHAPE_TYPE;
+    function get_type(body: Opaque<"b2Body">, fixture_index: number): b2d.shape.ShapeType;
     /**
      * Check if a fixture is a sensor.
      *

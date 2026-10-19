@@ -17,7 +17,7 @@ type PropName<P> = P extends { readonly __brand: `gui.PROP_${infer S}` } ? Lower
 // gui.cpp g_Properties: these four have no `.x`..`.w` sub-keys.
 type ScalarName = "inner_radius" | "fill_angle" | "leading" | "tracking";
 
-type VectorName = Exclude<PropName<gui.PROP>, ScalarName>;
+type VectorName = Exclude<PropName<gui.Prop>, ScalarName>;
 
 type NodePropertyName<K> = K extends keyof gui.node_properties
   ? K
@@ -87,7 +87,7 @@ declare global {
      * const node_position = gui.get(node, "position");
      * ```
      */
-    function get<K extends keyof gui.node_properties | gui.PROP>(
+    function get<K extends keyof gui.node_properties | gui.Prop>(
       node: Opaque<"node">,
       property: K,
     ): gui.node_properties[NodePropertyName<K>];
@@ -173,7 +173,7 @@ declare global {
      * gui.set_rotation(node, vmath.vector3(0, 0, 45));
      * ```
      */
-    function set<K extends keyof gui.node_properties | gui.PROP>(
+    function set<K extends keyof gui.node_properties | gui.Prop>(
       node: Opaque<"node">,
       property: K,
       value: NodePropertyWrite<NodePropertyName<K>>,
@@ -393,9 +393,9 @@ declare global {
      */
     function animate(
       node: Opaque<"node">,
-      property: keyof gui.node_properties | gui.PROP | Hash,
+      property: keyof gui.node_properties | gui.Prop | Hash,
       to: number | Vector3 | Vector4 | Quaternion,
-      easing: gui.EASING | Vector,
+      easing: gui.Easing | Vector,
       duration: number,
     ): void;
     /**
@@ -477,13 +477,13 @@ declare global {
      */
     function animate(
       node: Opaque<"node">,
-      property: keyof gui.node_properties | gui.PROP | Hash,
+      property: keyof gui.node_properties | gui.Prop | Hash,
       to: number | Vector3 | Vector4 | Quaternion,
-      easing: gui.EASING | Vector,
+      easing: gui.Easing | Vector,
       duration: number,
       delay: number,
       complete_function?: (self: unknown, node: Opaque<"node">) => void,
-      playback?: gui.PLAYBACK,
+      playback?: gui.Playback,
     ): void;
   }
 }

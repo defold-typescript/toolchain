@@ -45,7 +45,7 @@ const _signum: number = crash.get_signum(0);
 // image.load returns the concrete record or `undefined` — a documented `nil`
 // return typed `T | undefined`, not a collapsed `unknown`. The fields are
 // readable only after an explicit `!== undefined` guard.
-const _img: { width: number; height: number; type: image.TYPE; buffer: string } | undefined =
+const _img: { width: number; height: number; type: image.Type; buffer: string } | undefined =
   image.load("data", {});
 const _mounts: { name: Hash; uri: string; priority: number }[] = liveupdate.get_mounts();
 const _mem: number = profiler.get_memory_usage();

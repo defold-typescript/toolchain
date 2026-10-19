@@ -361,7 +361,7 @@ declare global {
       }
     }
     namespace prefs {
-      type SCOPE = typeof editor.prefs.SCOPE.GLOBAL | typeof editor.prefs.SCOPE.PROJECT;
+      type Scope = typeof editor.prefs.SCOPE.GLOBAL | typeof editor.prefs.SCOPE.PROJECT;
       /**
        * Get preference value
        * The schema for the preference value should be defined beforehand.
@@ -499,7 +499,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace boolean {
@@ -514,7 +514,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         namespace _enum {
@@ -533,7 +533,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace integer {
@@ -548,7 +548,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace keyword {
@@ -563,7 +563,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace number {
@@ -578,7 +578,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace object {
@@ -597,7 +597,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace object_of {
@@ -620,7 +620,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace one_of {
@@ -639,7 +639,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace password {
@@ -654,7 +654,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace set {
@@ -673,7 +673,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace string {
@@ -688,7 +688,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
         export namespace tuple {
@@ -707,7 +707,7 @@ declare global {
             /**
              * preference scope; global values are shared by every project on this computer, while project values are stored separately per project
              */
-            scope?: editor.prefs.SCOPE;
+            scope?: editor.prefs.Scope;
           }
         }
       }
@@ -816,21 +816,21 @@ declare global {
         /**
          * issue severity
          */
-        severity: editor.ui.ISSUE_SEVERITY;
+        severity: editor.ui.IssueSeverity;
         /**
          * issue message shown in a tooltip, either a string or a localization message
          */
         message: string | Opaque<"message">;
       }
-      type ALIGNMENT = typeof editor.ui.ALIGNMENT.TOP_LEFT | typeof editor.ui.ALIGNMENT.TOP | typeof editor.ui.ALIGNMENT.TOP_RIGHT | typeof editor.ui.ALIGNMENT.LEFT | typeof editor.ui.ALIGNMENT.CENTER | typeof editor.ui.ALIGNMENT.RIGHT | typeof editor.ui.ALIGNMENT.BOTTOM_LEFT | typeof editor.ui.ALIGNMENT.BOTTOM | typeof editor.ui.ALIGNMENT.BOTTOM_RIGHT;
-      type COLOR = typeof editor.ui.COLOR.TEXT | typeof editor.ui.COLOR.HINT | typeof editor.ui.COLOR.OVERRIDE | typeof editor.ui.COLOR.WARNING | typeof editor.ui.COLOR.ERROR;
-      type HEADING_STYLE = typeof editor.ui.HEADING_STYLE.H1 | typeof editor.ui.HEADING_STYLE.H2 | typeof editor.ui.HEADING_STYLE.H3 | typeof editor.ui.HEADING_STYLE.H4 | typeof editor.ui.HEADING_STYLE.H5 | typeof editor.ui.HEADING_STYLE.H6 | typeof editor.ui.HEADING_STYLE.DIALOG | typeof editor.ui.HEADING_STYLE.FORM;
-      type ICON = typeof editor.ui.ICON.OPEN_RESOURCE | typeof editor.ui.ICON.PLUS | typeof editor.ui.ICON.MINUS | typeof editor.ui.ICON.CLEAR;
-      type ISSUE_SEVERITY = typeof editor.ui.ISSUE_SEVERITY.WARNING | typeof editor.ui.ISSUE_SEVERITY.ERROR;
-      type ORIENTATION = typeof editor.ui.ORIENTATION.VERTICAL | typeof editor.ui.ORIENTATION.HORIZONTAL;
-      type PADDING = typeof editor.ui.PADDING.NONE | typeof editor.ui.PADDING.SMALL | typeof editor.ui.PADDING.MEDIUM | typeof editor.ui.PADDING.LARGE;
-      type SPACING = typeof editor.ui.SPACING.NONE | typeof editor.ui.SPACING.SMALL | typeof editor.ui.SPACING.MEDIUM | typeof editor.ui.SPACING.LARGE;
-      type TEXT_ALIGNMENT = typeof editor.ui.TEXT_ALIGNMENT.LEFT | typeof editor.ui.TEXT_ALIGNMENT.CENTER | typeof editor.ui.TEXT_ALIGNMENT.RIGHT | typeof editor.ui.TEXT_ALIGNMENT.JUSTIFY;
+      type Alignment = typeof editor.ui.ALIGNMENT.TOP_LEFT | typeof editor.ui.ALIGNMENT.TOP | typeof editor.ui.ALIGNMENT.TOP_RIGHT | typeof editor.ui.ALIGNMENT.LEFT | typeof editor.ui.ALIGNMENT.CENTER | typeof editor.ui.ALIGNMENT.RIGHT | typeof editor.ui.ALIGNMENT.BOTTOM_LEFT | typeof editor.ui.ALIGNMENT.BOTTOM | typeof editor.ui.ALIGNMENT.BOTTOM_RIGHT;
+      type Color = typeof editor.ui.COLOR.TEXT | typeof editor.ui.COLOR.HINT | typeof editor.ui.COLOR.OVERRIDE | typeof editor.ui.COLOR.WARNING | typeof editor.ui.COLOR.ERROR;
+      type HeadingStyle = typeof editor.ui.HEADING_STYLE.H1 | typeof editor.ui.HEADING_STYLE.H2 | typeof editor.ui.HEADING_STYLE.H3 | typeof editor.ui.HEADING_STYLE.H4 | typeof editor.ui.HEADING_STYLE.H5 | typeof editor.ui.HEADING_STYLE.H6 | typeof editor.ui.HEADING_STYLE.DIALOG | typeof editor.ui.HEADING_STYLE.FORM;
+      type Icon = typeof editor.ui.ICON.OPEN_RESOURCE | typeof editor.ui.ICON.PLUS | typeof editor.ui.ICON.MINUS | typeof editor.ui.ICON.CLEAR;
+      type IssueSeverity = typeof editor.ui.ISSUE_SEVERITY.WARNING | typeof editor.ui.ISSUE_SEVERITY.ERROR;
+      type Orientation = typeof editor.ui.ORIENTATION.VERTICAL | typeof editor.ui.ORIENTATION.HORIZONTAL;
+      type Padding = typeof editor.ui.PADDING.NONE | typeof editor.ui.PADDING.SMALL | typeof editor.ui.PADDING.MEDIUM | typeof editor.ui.PADDING.LARGE;
+      type Spacing = typeof editor.ui.SPACING.NONE | typeof editor.ui.SPACING.SMALL | typeof editor.ui.SPACING.MEDIUM | typeof editor.ui.SPACING.LARGE;
+      type TextAlignment = typeof editor.ui.TEXT_ALIGNMENT.LEFT | typeof editor.ui.TEXT_ALIGNMENT.CENTER | typeof editor.ui.TEXT_ALIGNMENT.RIGHT | typeof editor.ui.TEXT_ALIGNMENT.JUSTIFY;
       /**
        * Button with a label and/or an icon
        *
@@ -1138,11 +1138,11 @@ declare global {
           /**
            * text alignment within paragraph bounds
            */
-          text_alignment?: editor.ui.TEXT_ALIGNMENT;
+          text_alignment?: editor.ui.TextAlignment;
           /**
            * predefined icon name
            */
-          icon?: editor.ui.ICON;
+          icon?: editor.ui.Icon;
           /**
            * determines if the input component can be interacted with
            */
@@ -1150,7 +1150,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1189,7 +1189,7 @@ declare global {
           /**
            * text alignment within paragraph bounds
            */
-          text_alignment?: editor.ui.TEXT_ALIGNMENT;
+          text_alignment?: editor.ui.TextAlignment;
           /**
            * issue related to the input, or false if there is no issue
            */
@@ -1205,7 +1205,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1344,7 +1344,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1388,15 +1388,15 @@ declare global {
           /**
            * empty space from the edges of the container to its children, either a predefined padding value or a non-negative number of pixels
            */
-          padding?: editor.ui.PADDING | number;
+          padding?: editor.ui.Padding | number;
           /**
            * empty space between child components, either a predefined spacing value or a non-negative number of pixels; defaults to `editor.ui.SPACING.MEDIUM`
            */
-          spacing?: editor.ui.SPACING | number;
+          spacing?: editor.ui.Spacing | number;
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1423,11 +1423,11 @@ declare global {
           /**
            * text alignment within paragraph bounds
            */
-          text_alignment?: editor.ui.TEXT_ALIGNMENT;
+          text_alignment?: editor.ui.TextAlignment;
           /**
            * semantic color, defaults to `editor.ui.COLOR.TEXT`
            */
-          color?: editor.ui.COLOR;
+          color?: editor.ui.Color;
           /**
            * determines if the lines of text are word-wrapped when they don't fit in the assigned bounds, defaults to true
            */
@@ -1435,11 +1435,11 @@ declare global {
           /**
            * heading style, defaults to `editor.ui.HEADING_STYLE.H3`
            */
-          style?: editor.ui.HEADING_STYLE;
+          style?: editor.ui.HeadingStyle;
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1500,15 +1500,15 @@ declare global {
           /**
            * empty space from the edges of the container to its children, either a predefined padding value or a non-negative number of pixels
            */
-          padding?: editor.ui.PADDING | number;
+          padding?: editor.ui.Padding | number;
           /**
            * empty space between child components, either a predefined spacing value or a non-negative number of pixels; defaults to `editor.ui.SPACING.MEDIUM`
            */
-          spacing?: editor.ui.SPACING | number;
+          spacing?: editor.ui.Spacing | number;
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1531,11 +1531,11 @@ declare global {
           /**
            * predefined icon name
            */
-          icon: editor.ui.ICON;
+          icon: editor.ui.Icon;
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1588,7 +1588,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1631,7 +1631,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1668,11 +1668,11 @@ declare global {
           /**
            * text alignment within paragraph bounds
            */
-          text_alignment?: editor.ui.TEXT_ALIGNMENT;
+          text_alignment?: editor.ui.TextAlignment;
           /**
            * semantic color, defaults to `editor.ui.COLOR.TEXT`
            */
-          color?: editor.ui.COLOR;
+          color?: editor.ui.Color;
           /**
            * tooltip message shown on hover; either a string or a localization message
            */
@@ -1680,7 +1680,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1723,7 +1723,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1778,11 +1778,11 @@ declare global {
           /**
            * text alignment within paragraph bounds
            */
-          text_alignment?: editor.ui.TEXT_ALIGNMENT;
+          text_alignment?: editor.ui.TextAlignment;
           /**
            * semantic color, defaults to `editor.ui.COLOR.TEXT`
            */
-          color?: editor.ui.COLOR;
+          color?: editor.ui.Color;
           /**
            * determines if the lines of text are word-wrapped when they don't fit in the assigned bounds, defaults to true
            */
@@ -1790,7 +1790,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1841,7 +1841,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1915,7 +1915,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -1938,11 +1938,11 @@ declare global {
           /**
            * separator line orientation, `editor.ui.ORIENTATION.VERTICAL` or `editor.ui.ORIENTATION.HORIZONTAL`
            */
-          orientation?: editor.ui.ORIENTATION;
+          orientation?: editor.ui.Orientation;
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -2056,7 +2056,7 @@ declare global {
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */
@@ -2147,15 +2147,15 @@ declare global {
           /**
            * empty space from the edges of the container to its children, either a predefined padding value or a non-negative number of pixels
            */
-          padding?: editor.ui.PADDING | number;
+          padding?: editor.ui.Padding | number;
           /**
            * empty space between child components, either a predefined spacing value or a non-negative number of pixels; defaults to `editor.ui.SPACING.MEDIUM`
            */
-          spacing?: editor.ui.SPACING | number;
+          spacing?: editor.ui.Spacing | number;
           /**
            * alignment of the component content within its assigned bounds, defaults to `editor.ui.ALIGNMENT.TOP_LEFT`
            */
-          alignment?: editor.ui.ALIGNMENT;
+          alignment?: editor.ui.Alignment;
           /**
            * determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container
            */

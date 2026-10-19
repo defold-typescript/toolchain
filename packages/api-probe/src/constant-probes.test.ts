@@ -63,14 +63,14 @@ describe("constant probes", () => {
   });
 
   test("every numeric constant alias gets one distinctness call over its members", () => {
-    const easing = generation.calls.find((call) => call.name === "gui.EASING");
+    const easing = generation.calls.find((call) => call.name === "gui.Easing");
     expect(easing?.variant).toBe("distinct");
     expect(easing?.kind).toBe("gui");
     expect(easing?.call).toStartWith('distinct([["gui.EASING_INBACK", gui.EASING_INBACK], [');
     expect(easing?.call).toContain('["gui.EASING_LINEAR", gui.EASING_LINEAR]');
     const aliases = generation.calls.filter((call) => call.variant === "distinct");
-    expect(aliases.map((call) => call.name)).toContain("go.PLAYBACK");
-    expect(aliases.map((call) => call.name)).toContain("buffer.VALUE_TYPE");
+    expect(aliases.map((call) => call.name)).toContain("go.Playback");
+    expect(aliases.map((call) => call.name)).toContain("buffer.ValueType");
   });
 });
 
@@ -144,7 +144,7 @@ describe("constant pass wiring", () => {
       'probe("gui.PIVOT_N", "constant", () => defined(gui.PIVOT_N));',
     );
     expect(v2.files[PROBE_FILES.gui]).toContain(
-      'probe("gui.EASING", "distinct", () => distinct([["gui.EASING_INBACK", gui.EASING_INBACK], ',
+      'probe("gui.Easing", "distinct", () => distinct([["gui.EASING_INBACK", gui.EASING_INBACK], ',
     );
     expect(v2.files[PROBE_FILES.render]).toContain(
       'probe("render.RENDER_TARGET_DEFAULT", "constant", () => render.RENDER_TARGET_DEFAULT);',

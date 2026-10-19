@@ -42,9 +42,9 @@ if (tiles !== undefined) {
 // script_collectionproxy.cpp:CollectionProxy_SetCollection pushes `true, nil` on success.
 const [changed, code] = collectionproxy.set_collection("#proxy", "/level.collectionc");
 // @ts-expect-error the failure reason is nil when the change succeeds
-const _codeEarly: collectionproxy.RESULT = code;
+const _codeEarly: collectionproxy.Result = code;
 if (!changed && code !== undefined) {
-  const reason: collectionproxy.RESULT = code;
+  const reason: collectionproxy.Result = code;
   void reason;
 }
 

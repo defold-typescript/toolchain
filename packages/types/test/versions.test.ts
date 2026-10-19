@@ -787,7 +787,7 @@ describe("committed API surfaces — subset constant unions spell Exclude of a p
         const { exitCode, output } = typecheck(tsconfigPath);
         if (exitCode !== 0) {
           throw new Error(
-            `${index} proof failed — go.PLAYBACK, gui.ANCHOR, graphics.STATE or window.DIMMING ` +
+            `${index} proof failed — go.Playback, gui.Anchor, graphics.State or window.Dimming ` +
               `is absent, a subset slot widened or narrowed, or a removed subset name is ` +
               `still declared on this surface:\n${output}`,
           );

@@ -5,7 +5,7 @@ declare global {
    * used to dynamically spawn collections into the runtime.
    */
   namespace collectionfactory {
-    type STATUS = typeof collectionfactory.STATUS_LOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_UNLOADED;
+    type Status = typeof collectionfactory.STATUS_LOADED | typeof collectionfactory.STATUS_LOADING | typeof collectionfactory.STATUS_UNLOADED;
     /**
      * The collection factory resources are loaded.
      */

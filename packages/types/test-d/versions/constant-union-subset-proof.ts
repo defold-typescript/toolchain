@@ -5,10 +5,10 @@ export {};
 // be declared on every surface a consumer can select, and each slot must still
 // accept exactly what it accepted under the removed name.
 
-const _playbackNone: go.PLAYBACK = go.PLAYBACK_NONE;
-const _anchorTop: gui.ANCHOR = gui.ANCHOR_TOP;
-const _stateScissor: graphics.STATE = graphics.STATE_SCISSOR_TEST;
-const _dimUnknown: window.DIMMING = window.DIMMING_UNKNOWN;
+const _playbackNone: go.Playback = go.PLAYBACK_NONE;
+const _anchorTop: gui.Anchor = gui.ANCHOR_TOP;
+const _stateScissor: graphics.State = graphics.STATE_SCISSOR_TEST;
+const _dimUnknown: window.Dimming = window.DIMMING_UNKNOWN;
 void _playbackNone;
 void _anchorTop;
 void _stateScissor;
@@ -26,18 +26,24 @@ render.disable_state(graphics.STATE_ALPHA_TEST_SUPPORTED);
 // @ts-expect-error script_window.cpp rejects DIMMING_UNKNOWN as a mode to set
 window.set_dim_mode(window.DIMMING_UNKNOWN);
 
-// @ts-expect-error the kept name is go.PLAYBACK
-declare const _removedGoPlayback: go.Playback;
-// @ts-expect-error the kept name is gui.ANCHOR
+// @ts-expect-error the parent is go.Playback
+declare const _referenceGoPlayback: go.PLAYBACK;
+// @ts-expect-error the parent is gui.Anchor
+declare const _referenceGuiAnchor: gui.ANCHOR;
+// @ts-expect-error the parent is graphics.State
+declare const _referenceGraphicsState: graphics.STATE;
+// @ts-expect-error the parent is window.Dimming
+declare const _referenceWindowDimming: window.DIMMING;
+// @ts-expect-error the parent is gui.Anchor
 declare const _removedGuiXAnchor: gui.XAnchor;
-// @ts-expect-error the kept name is gui.ANCHOR
+// @ts-expect-error the parent is gui.Anchor
 declare const _removedGuiYAnchor: gui.YAnchor;
-// @ts-expect-error the kept name is graphics.STATE
-declare const _removedGraphicsState: graphics.State;
-// @ts-expect-error the kept name is window.DIMMING
+// @ts-expect-error the parent is window.Dimming
 declare const _removedWindowDimModeStateSettable: window.DimModeStateSettable;
-void _removedGoPlayback;
+void _referenceGoPlayback;
+void _referenceGuiAnchor;
+void _referenceGraphicsState;
+void _referenceWindowDimming;
 void _removedGuiXAnchor;
 void _removedGuiYAnchor;
-void _removedGraphicsState;
 void _removedWindowDimModeStateSettable;

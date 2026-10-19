@@ -1851,7 +1851,7 @@ describe("Combined page authoritative render + markers", () => {
     const page = combinedPage("liveupdate");
     const md = apiPageMarkdown(page, noLink, { combinedMarkers: true });
     const [current] = groupFor(page, "liveupdate.add_mount");
-    expect(current?.signature).toContain("result: liveupdate.LIVEUPDATE");
+    expect(current?.signature).toContain("result: liveupdate.LiveUpdate");
     const history = historyLines(blockOf(md, current?.signature ?? "")).filter((l) =>
       l.startsWith("Signature changed in Defold "),
     );
@@ -2552,13 +2552,13 @@ describe("listingPageMarkdown", () => {
 
 describe("constant union alias entries", () => {
   const EASING_SIG =
-    "type EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
-  const STATE_SIG = "type STATE = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+    "type Easing = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
+  const STATE_SIG = "type State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
   // The ledger declares each alias inside its namespace; an engine page names its path.
   const EASING_ROW =
-    "type gui.EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
+    "type gui.Easing = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
   const STATE_ROW =
-    "type graphics.STATE = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+    "type graphics.State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
 
   function aliasKey(namespace: string, name: string): string {
     return symbolIdentityKey({ namespace, kind: "TYPEDEF", name, signature: "" });
@@ -2591,7 +2591,7 @@ describe("constant union alias entries", () => {
       signatures: {},
       category: "engine",
       authoritativeSignatures: new Map([
-        [aliasKey("gui", "EASING"), `${EASING_SIG};`],
+        [aliasKey("gui", "Easing"), `${EASING_SIG};`],
         [
           symbolIdentityKey({
             namespace: "gui",
@@ -2605,7 +2605,7 @@ describe("constant union alias entries", () => {
               returnValues: [],
             }),
           }),
-          "gui.animate(easing: gui.EASING): void",
+          "gui.animate(easing: gui.Easing): void",
         ],
       ]),
     };
@@ -2629,13 +2629,13 @@ describe("constant union alias entries", () => {
       translations: {},
       signatures: {},
       category: "engine",
-      authoritativeSignatures: new Map([[aliasKey("graphics", "STATE"), `${STATE_SIG};`]]),
+      authoritativeSignatures: new Map([[aliasKey("graphics", "State"), `${STATE_SIG};`]]),
     };
   }
 
   test("an alias typedef with no ref-doc entry still becomes a page type symbol", () => {
     const symbols = apiModuleSymbols(guiPage());
-    const easing = symbols.find((s) => s.kind === "type" && s.name === "EASING");
+    const easing = symbols.find((s) => s.kind === "type" && s.name === "Easing");
     expect(easing?.signature).toBe(EASING_ROW);
   });
 
@@ -2650,7 +2650,7 @@ describe("constant union alias entries", () => {
   test("a signature naming the alias links to that entry's own anchor", () => {
     const page = guiPage();
     const links = apiSignatureSymbolLinks([page, graphicsPage()], page);
-    const target = links.get("gui.EASING");
+    const target = links.get("gui.Easing");
     expect(target).toBe(`/api/gui#${slugify(EASING_ROW)}`);
     const md = apiPageMarkdown(page, (text) => text);
     expect(md).toContain(`### \`${EASING_ROW}\``);
@@ -2659,7 +2659,7 @@ describe("constant union alias entries", () => {
   test("a cross-namespace alias links to its home page, not the referencing one", () => {
     const page = guiPage();
     const links = apiSignatureSymbolLinks([page, graphicsPage()], page);
-    expect(links.get("graphics.STATE")).toBe(`/api/graphics#${slugify(STATE_ROW)}`);
+    expect(links.get("graphics.State")).toBe(`/api/graphics#${slugify(STATE_ROW)}`);
   });
 
   test("a type sharing its qualified name with a function links to the type's own anchor", () => {
@@ -2697,12 +2697,12 @@ describe("constant union alias entries", () => {
 // Alias-link fixtures shared by the canonical and versioned groups below. The
 // two groups differ only in the routes their pages carry, so the surface is
 // built once and re-routed rather than restated.
-const ALIAS_EASING_SIG = "type EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
+const ALIAS_EASING_SIG = "type Easing = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
 const ALIAS_STATE_SIG =
-  "type STATE = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
-const ALIAS_EASING_ROW = "type gui.EASING = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
+  "type State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+const ALIAS_EASING_ROW = "type gui.Easing = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
 const ALIAS_STATE_ROW =
-  "type graphics.STATE = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+  "type graphics.State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
 const NAME_TYPE_GAP = " ";
 
 function aliasTypedefKey(namespace: string, name: string): string {
@@ -2715,17 +2715,17 @@ const ALIAS_ANIMATE: ApiFunction = {
   description: "Animates a node.",
   parameters: [
     { name: "node", doc: "", types: ['Opaque<"node">'], isOptional: false },
-    { name: "easing", doc: "", types: ["gui.EASING", "Vector"], isOptional: false },
+    { name: "easing", doc: "", types: ["gui.Easing", "Vector"], isOptional: false },
     { name: "unknown", doc: "", types: ["gui.Nowhere"], isOptional: true },
     {
       name: "opts",
       doc: "",
       types: ["table"],
       isOptional: true,
-      fields: [{ name: "inner", doc: "", types: ["gui.EASING"], isOptional: true }],
+      fields: [{ name: "inner", doc: "", types: ["gui.Easing"], isOptional: true }],
     },
   ],
-  returnValues: [{ name: "state", doc: "", types: ["graphics.STATE"], isOptional: false }],
+  returnValues: [{ name: "state", doc: "", types: ["graphics.State"], isOptional: false }],
 };
 
 function guiAliasPage(route: string): ApiPage {
@@ -2747,7 +2747,7 @@ function guiAliasPage(route: string): ApiPage {
     signatures: {},
     category: "engine",
     authoritativeSignatures: new Map([
-      [aliasTypedefKey("gui", "EASING"), `${ALIAS_EASING_SIG};`],
+      [aliasTypedefKey("gui", "Easing"), `${ALIAS_EASING_SIG};`],
       [
         symbolIdentityKey({
           namespace: "gui",
@@ -2755,7 +2755,7 @@ function guiAliasPage(route: string): ApiPage {
           name: "gui.animate",
           signature: normalizedFunctionSignature(ALIAS_ANIMATE),
         }),
-        'gui.animate(node: Opaque<"node">, easing: gui.EASING): graphics.STATE',
+        'gui.animate(node: Opaque<"node">, easing: gui.Easing): graphics.State',
       ],
     ]),
   };
@@ -2780,7 +2780,7 @@ function graphicsAliasPage(route: string): ApiPage {
     signatures: {},
     category: "engine",
     authoritativeSignatures: new Map([
-      [aliasTypedefKey("graphics", "STATE"), `${ALIAS_STATE_SIG};`],
+      [aliasTypedefKey("graphics", "State"), `${ALIAS_STATE_SIG};`],
     ]),
   };
 }
@@ -2857,7 +2857,7 @@ describe("constant union alias links in parameter, return and field types", () =
     const pages = surface();
     const html = await renderAliasSurface(pages, pages[0] as ApiPage);
     const href = slotBullet(html, "easing").match(
-      /<a class="api-type-link" href="([^"]+)">gui\.EASING<\/a>/,
+      /<a class="api-type-link" href="([^"]+)">gui\.Easing<\/a>/,
     )?.[1];
     expect(href).toBeString();
     const [route, anchor] = (href as string).split("#");
@@ -2882,10 +2882,10 @@ describe("constant union alias links in parameter, return and field types", () =
     const pages = surface();
     const html = await renderAliasSurface(pages, pages[0] as ApiPage);
     expect(slotBullet(html, "state")).toContain(
-      `<a class="api-type-link" href="/api/graphics#${slugify(ALIAS_STATE_ROW)}">graphics.STATE</a>`,
+      `<a class="api-type-link" href="/api/graphics#${slugify(ALIAS_STATE_ROW)}">graphics.State</a>`,
     );
     expect(slotBullet(html, "inner")).toContain(
-      `<a class="api-type-link" href="/api/gui#${slugify(ALIAS_EASING_ROW)}">gui.EASING</a>`,
+      `<a class="api-type-link" href="/api/gui#${slugify(ALIAS_EASING_ROW)}">gui.Easing</a>`,
     );
   });
 
@@ -3716,5 +3716,40 @@ describe("slot name emphasis", () => {
     expect(md).toContain(RETURNS_LABEL);
     expect(md).not.toContain("**Parameters**");
     expect(md).not.toContain("**Returns**");
+  });
+});
+
+describe("a renamed engine type shows its Defold name", () => {
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const linkify = apiLinkify(pages);
+  const markdownFor = (namespace: string): string[] => {
+    const page = pages.find((candidate) => candidate.namespace === namespace);
+    if (page === undefined) throw new Error(`no canonical ${namespace} page`);
+    return apiPageMarkdown(page, linkify).split("\n");
+  };
+  // The body of the type row whose heading opens with `opening`, up to the
+  // next heading.
+  const rowBody = (lines: readonly string[], opening: string): string[] => {
+    const start = lines.findIndex((line) => line.startsWith(`### \`${opening}`));
+    if (start < 0) throw new Error(`no type row opening ${opening}`);
+    const end = lines.findIndex((line, index) => index > start && line.startsWith("#"));
+    return lines
+      .slice(start + 1, end < 0 ? undefined : end)
+      .filter((line) => line !== "" && line !== '<div class="api-symbol-body">');
+  };
+
+  test("a renamed union's row opens its body with the reference's own name", () => {
+    const gui = markdownFor("gui");
+    expect(rowBody(gui, "type gui.Easing =")[0]).toBe("Defold name: gui.EASING");
+    expect(rowBody(gui, "type gui.PieBounds =")[0]).toBe("Defold name: gui.PIEBOUNDS");
+  });
+
+  test("a type the reference does not name, or names the same, carries no Defold name", () => {
+    expect(rowBody(markdownFor("render"), "type render.ClearBufferKey =").join("\n")).not.toContain(
+      "Defold name:",
+    );
+    expect(rowBody(markdownFor("sys"), "interface sys.sys_info").join("\n")).not.toContain(
+      "Defold name:",
+    );
   });
 });

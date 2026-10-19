@@ -26,6 +26,8 @@ import type { VersionWindow } from "./version-window";
 type ApiConstant = ApiModule["constants"][number];
 type ApiProperty = ApiModule["properties"][number];
 type ApiTypedef = ApiModule["typedefs"][number];
+type ApiEnum = NonNullable<ApiModule["enums"]>[number];
+type ApiStruct = NonNullable<ApiModule["structs"]>[number];
 
 /**
  * The authoritative signatures artifact (`packages/types/api-signatures.json`):
@@ -705,6 +707,10 @@ interface NamespaceAccumulator {
   constants: Map<string, ApiConstant>;
   properties: Map<string, ApiProperty>;
   typedefs: Map<string, ApiTypedef>;
+  // The reference's own `ENUM` and `STRUCT` names, which a page shows beside the
+  // types the declarations rename. Newest version first, by name.
+  enums: Map<string, ApiEnum>;
+  structs: Map<string, ApiStruct>;
 }
 
 /**
@@ -738,6 +744,8 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
         constants: new Map(),
         properties: new Map(),
         typedefs: new Map(),
+        enums: new Map(),
+        structs: new Map(),
       };
       namespaces.set(module.namespace, accum);
     }
@@ -791,6 +799,12 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
           surface.version,
         );
         if (!accum.typedefs.has(key)) accum.typedefs.set(key, typedef);
+      }
+      for (const enumeration of module.enums ?? []) {
+        if (!accum.enums.has(enumeration.name)) accum.enums.set(enumeration.name, enumeration);
+      }
+      for (const struct of module.structs ?? []) {
+        if (!accum.structs.has(struct.name)) accum.structs.set(struct.name, struct);
       }
     }
   }
@@ -977,6 +991,8 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
         constants,
         properties,
         typedefs,
+        enums: [...accum.enums.values()].sort(byName),
+        structs: [...accum.structs.values()].sort(byName),
       },
       availability: { versions, records, transitions: transitionNames },
       entries: [...identities, ...aliasIdentities].map(entryFor),

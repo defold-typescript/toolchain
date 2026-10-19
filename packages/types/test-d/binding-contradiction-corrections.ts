@@ -84,7 +84,7 @@ gui.clone_tree();
 gui.get_tree();
 
 // AddMountAsync and RemoveMountSync return NOT_INITIALIZED while live update is disabled.
-const notInitialized: liveupdate.LIVEUPDATE = liveupdate.LIVEUPDATE_NOT_INITIALIZED;
+const notInitialized: liveupdate.LiveUpdate = liveupdate.LIVEUPDATE_NOT_INITIALIZED;
 void notInitialized;
 const unmounted = liveupdate.remove_mount("pack") === liveupdate.LIVEUPDATE_NOT_INITIALIZED;
 void unmounted;

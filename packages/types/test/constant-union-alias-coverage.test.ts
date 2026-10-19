@@ -54,9 +54,10 @@ function generatedSurfaces(dir: string): { path: string; contents: string }[] {
 }
 
 // The row a human would review for an unnamed set: the members' shared
-// namespace as the home, and their longest common `_`-delimited prefix
-// PascalCased as the name. It is a starting point for the review, never a name
-// the emitter may adopt on its own.
+// namespace as the home, and their longest common `_`-delimited prefix as the
+// name, in the reference's spelling that `engineTypeName` derives the declared
+// name from. It is a starting point for the review, never a name the emitter may
+// adopt on its own.
 function suggestedRow(members: readonly string[]): string {
   const namespaces = [...new Set(members.map((fqn) => fqn.slice(0, fqn.lastIndexOf("."))))];
   const home = namespaces.length === 1 ? (namespaces[0] as string) : "<pick one>";
@@ -69,10 +70,7 @@ function suggestedRow(members: readonly string[]): string {
     while (i < shared && i < parts.length && parts[i] === first[i]) i += 1;
     shared = i;
   }
-  const name = first
-    .slice(0, shared)
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join("");
+  const name = first.slice(0, shared).join("_");
   return `{ home: "${home}", name: "${name || "<pick one>"}", members: [${members
     .map((fqn) => `"${fqn}"`)
     .join(", ")}] }`;

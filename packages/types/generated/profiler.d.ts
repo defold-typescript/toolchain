@@ -5,8 +5,8 @@ declare global {
    * More detailed [profiling](https://www.defold.com/manuals/profiling/) and [debugging](http://www.defold.com/manuals/debugging/) information available in the manuals.
    */
   namespace profiler {
-    type MODE = typeof profiler.MODE_PAUSE | typeof profiler.MODE_RECORD | typeof profiler.MODE_RUN | typeof profiler.MODE_SHOW_PEAK_FRAME;
-    type VIEW_MODE = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED;
+    type Mode = typeof profiler.MODE_PAUSE | typeof profiler.MODE_RECORD | typeof profiler.MODE_RUN | typeof profiler.MODE_SHOW_PEAK_FRAME;
+    type ViewMode = typeof profiler.VIEW_MODE_FULL | typeof profiler.VIEW_MODE_MINIMIZED;
     /**
      * pause on the currently displayed frame
      */
@@ -171,7 +171,7 @@ declare global {
      * }
      * ```
      */
-    function set_ui_mode(mode: profiler.MODE): void;
+    function set_ui_mode(mode: profiler.Mode): void;
     /**
      * Set the on-screen profile view mode - minimized or expanded
      *
@@ -182,7 +182,7 @@ declare global {
      * profiler.set_ui_view_mode(profiler.VIEW_MODE_MINIMIZED);
      * ```
      */
-    function set_ui_view_mode(mode: profiler.VIEW_MODE): void;
+    function set_ui_view_mode(mode: profiler.ViewMode): void;
     /**
      * Shows or hides the time the engine waits for vsync in the on-screen profiler
      * Each frame the engine waits for vsync and depending on your vsync settings and how much time

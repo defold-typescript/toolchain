@@ -6,7 +6,7 @@ declare global {
    * Functions and messages used to manipulate tile map components.
    */
   namespace tilemap {
-    type TRANSFORM = typeof tilemap.H_FLIP | typeof tilemap.ROTATE_180 | typeof tilemap.ROTATE_270 | typeof tilemap.ROTATE_90 | typeof tilemap.V_FLIP;
+    type Transform = typeof tilemap.H_FLIP | typeof tilemap.ROTATE_180 | typeof tilemap.ROTATE_270 | typeof tilemap.ROTATE_90 | typeof tilemap.V_FLIP;
     /**
      * flip tile horizontally
      */
