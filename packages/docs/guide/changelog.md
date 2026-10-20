@@ -16,7 +16,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Every engine type name is PascalCase](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version: rename `gui.EASING` to `gui.Easing`, `sys.sys_info` to `sys.SysInfo`, `gui.node` to `gui.Node` and `socket.client` to `socket.SocketClient`, write `Vector` for `vmath.vector`, and write `gui.XAnchor` and two other narrower unions as `Exclude` of their enum.
 > - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
-> - **[A debug-wired entry script can export values](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
+> - **[`setup-debug` supports entry-script exports](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
 > - **API pages list the complete engine type inventory under one `Types` heading**, by its full path and with its Defold name linked where that differs, with fields and handle methods nested beneath it, as on [socket](/api/socket).
 
 ### Breaking
