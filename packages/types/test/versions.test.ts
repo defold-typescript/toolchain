@@ -766,9 +766,9 @@ describe("api-targets — every overload-covered skip is wired into every target
 
 const CONSTANT_UNION_SUBSET_PROOF = resolve(VERSIONS_DIR, "constant-union-subset-proof.ts");
 
-describe("committed API surfaces — subset constant unions spell Exclude of a parent every target declares", () => {
+describe("committed API surfaces — anchor and playback slots keep their engine contracts", () => {
   for (const index of committedSurfaceIndexes()) {
-    test(`${index} declares each parent union and keeps every subset slot's accepted set`, () => {
+    test(`${index} keeps anchor subsets and full playback slots`, () => {
       const root = mkdtempSync(resolve(PACKAGE_ROOT, "subset-union-wall-"));
       try {
         const tsconfigPath = resolve(root, "tsconfig.json");
@@ -787,9 +787,9 @@ describe("committed API surfaces — subset constant unions spell Exclude of a p
         const { exitCode, output } = typecheck(tsconfigPath);
         if (exitCode !== 0) {
           throw new Error(
-            `${index} proof failed — go.Playback, gui.Anchor, graphics.State or window.Dimming ` +
-              `is absent, a subset slot widened or narrowed, or a removed subset name is ` +
-              `still declared on this surface:\n${output}`,
+            `${index} proof failed — an anchor setter widened, a playback slot rejects ` +
+              `go.PLAYBACK_NONE, a parent union is absent, or a removed subset name is still ` +
+              `declared on this surface:\n${output}`,
           );
         }
         expect(exitCode).toBe(0);

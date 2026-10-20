@@ -32,6 +32,7 @@ import collectionproxy114Doc from "../fixtures/defold-1.14.0/collectionproxy_doc
 };
 import factory114Doc from "../fixtures/defold-1.14.0/factory_doc.json" with { type: "json" };
 import graphics114Doc from "../fixtures/defold-1.14.0/graphics_doc.json" with { type: "json" };
+import gui114Doc from "../fixtures/defold-1.14.0/gui_doc.json" with { type: "json" };
 import http114Doc from "../fixtures/defold-1.14.0/http_doc.json" with { type: "json" };
 import image114Doc from "../fixtures/defold-1.14.0/image_doc.json" with { type: "json" };
 import liveupdate114Doc from "../fixtures/defold-1.14.0/liveupdate_doc.json" with { type: "json" };
@@ -61,9 +62,11 @@ import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
 import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import windowDoc from "../fixtures/window_doc.json" with { type: "json" };
+import { targetBindingOptions } from "../scripts/binding-pin";
 import {
   EDITOR_MODULE_MANIFEST,
   EDITOR_VM_MODULE_MANIFEST,
+  generateModuleDeclaration,
   loadApiTargets,
   loadSrcAugmentations,
   MODULE_MANIFEST,
@@ -84,7 +87,6 @@ import {
   ARBITRARY_TABLE_SLOTS,
   applyFieldAdditions,
   applyFieldOptionalityCorrections,
-  applyFieldTypeOverrides,
   applyListFieldCorrections,
   applyNestedFieldCurations,
   applyRequiredFieldCorrections,
@@ -1465,9 +1467,11 @@ describe("emitDeclarations", () => {
 
   test("a flattened multi-table option bag emits nested inline objects without duplicate top-level keys", () => {
     const module = parseDefoldApiDoc(resourceDoc);
-    const out = emitDeclarations(module);
+    const out = emitDeclarations(module, {
+      bindingEvidence: new Set(["resource.create_atlas:param:table:animations[].playback"]),
+    });
     expect(out).toContain(
-      "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: Exclude<go.Playback, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: Exclude<go.Playback, typeof go.PLAYBACK_NONE>; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "function create_atlas(path: string, table: { texture: string | Hash; animations: [{ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }), ...({ id: string; width: number; height: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean } & ({ frames: [number, ...number[]] } | { frame_start: number; frame_end: number }))[]]; geometries: [{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }, ...{ id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
     );
     const createAtlasLine = out.split("\n").find((line) => line.includes("function create_atlas"));
     // Each non-empty list spells its element twice: the head and the rest.
@@ -2393,10 +2397,12 @@ describe("supplementary cross-reference table-field recovery", () => {
   });
 
   test("emits get_atlas's return as the inline object adopted from set_atlas, with the curated geometries array", () => {
-    const out = emitDeclarations(resourceModule);
+    const out = emitDeclarations(resourceModule, {
+      bindingEvidence: new Set(["resource.get_atlas:return:data:animations[].playback"]),
+    });
     const line = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(line).toContain(
-      "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
+      "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
     );
   });
 });
@@ -5329,7 +5335,9 @@ describe("subset constant unions", () => {
     expect([...guiAliases.keys()]).toEqual(expect.arrayContaining(["Easing", "PieBounds"]));
     expect(guiAliases.has("EASING")).toBe(false);
     expect(guiAliases.has("PIEBOUNDS")).toBe(false);
-    expect(parameterType(sourceAt("gui.d.ts"), "gui", "set_xanchor", "anchor")).toBe("gui.Anchor");
+    expect(parameterType(sourceAt("gui.d.ts"), "gui", "set_xanchor", "anchor")).toBe(
+      "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+    );
   });
 
   test("an older target declares the parent in the reference's order and excludes from it", () => {
@@ -5339,9 +5347,7 @@ describe("subset constant unions", () => {
     expect(defaultPlayback?.split(" | ")).toHaveLength(7);
     expect(oldAliases.get("Playback")).toBe(defaultPlayback as string);
     expect(oldAliases.has("PLAYBACK")).toBe(false);
-    expect(parameterType(goOld, "go", "animate", "playback")).toBe(
-      "Exclude<go.Playback, typeof go.PLAYBACK_NONE>",
-    );
+    expect(parameterType(goOld, "go", "animate", "playback")).toBe("go.Playback");
 
     const guiOld = sourceAt("versions", "defold-1.13.1", "gui.d.ts");
     expect(typeAliases(guiOld, "gui").get("Anchor")).toBe(
@@ -5449,8 +5455,10 @@ describe("subset constant unions", () => {
   test("an Exclude a correction or field override writes is a subset row's spelling", () => {
     const spellings = new Set(CONSTANT_UNION_ALIASES.filter(isSubset).map(constantUnionSpelling));
     const written = [
-      ...[...PARAM_TYPE_CORRECTIONS].map(([key, correction]) => [key, correction.adds] as const),
-      ...TABLE_FIELD_TYPE_OVERRIDES,
+      ...[...PARAM_TYPE_CORRECTIONS].map(
+        ([key, correction]) => [key, correction.ts ?? correction.adds] as const,
+      ),
+      ...[...TABLE_FIELD_TYPE_OVERRIDES].map(([key, override]) => [key, override.ts] as const),
     ].flatMap(([key, text]) =>
       text === undefined
         ? []
@@ -6518,45 +6526,72 @@ describe("engine slot rules", () => {
   });
 });
 
-describe("a nested table field's type override", () => {
-  test("an override keyed to a field inside a table-array slot types that field only", () => {
-    const parsed: TableField[] = [
-      { name: "playback", types: ["constant"] },
-      {
-        name: "animations",
-        types: ["table"],
-        isList: true,
-        fields: [
-          { name: "playback", types: ["constant"] },
-          { name: "fps", types: ["number"] },
-        ],
-      },
-    ];
-    const out = applyFieldTypeOverrides("resource.set_atlas", "param", "table", parsed);
-    expect(out[0]).toEqual({ name: "playback", types: ["constant"] });
-    expect(out[1]?.fields).toEqual([
-      {
-        name: "playback",
-        types: ["constant"],
-        tsType: "Exclude<go.Playback, typeof go.PLAYBACK_NONE>",
-      },
-      { name: "fps", types: ["number"] },
-    ]);
-    expect(parsed[1]?.fields?.[0]).toEqual({ name: "playback", types: ["constant"] });
+describe("binding-pinned anchor and playback slot corrections", () => {
+  const emittedLine = (out: string, needle: string): string =>
+    out.split("\n").find((line) => line.includes(needle)) ?? "";
+  const ANCHOR_KEYS = new Set(["gui.set_xanchor:param:anchor", "gui.set_yanchor:param:anchor"]);
+  const PLAYBACK_KEYS = new Set([
+    "go.animate:param:playback",
+    "resource.create_atlas:param:table:animations[].playback",
+    "resource.set_atlas:param:table:animations[].playback",
+    "resource.get_atlas:return:data:animations[].playback",
+  ]);
+
+  test("anchor setters follow the reference without evidence and use axis subsets with evidence", () => {
+    const unpinned = emitDeclarations(parseDefoldApiDoc(gui114Doc));
+    expect(emittedLine(unpinned, "function set_xanchor(")).toContain("anchor: gui.Anchor)");
+    expect(emittedLine(unpinned, "function set_yanchor(")).toContain("anchor: gui.Anchor)");
+
+    const pinned = emitDeclarations(parseDefoldApiDoc(gui114Doc), {
+      bindingEvidence: ANCHOR_KEYS,
+    });
+    expect(emittedLine(pinned, "function set_xanchor(")).toContain(
+      "anchor: Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>)",
+    );
+    expect(emittedLine(pinned, "function set_yanchor(")).toContain(
+      "anchor: Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>)",
+    );
   });
 
-  test("the atlas animations playback field emits as go.Playback without NONE on every atlas element", () => {
-    const out = emitDeclarations(parseDefoldApiDoc(resourceDoc));
-    const lineWith = (text: string, needle: string): string =>
-      text.split("\n").find((line) => line.includes(needle)) ?? "";
-    for (const name of ["set_atlas", "create_atlas"]) {
-      expect(lineWith(out, `function ${name}(`)).toContain(
-        "playback?: Exclude<go.Playback, typeof go.PLAYBACK_NONE>;",
-      );
-    }
-    expect(lineWith(out, "function get_atlas(")).toContain(
-      "playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>;",
+  test("go.animate follows its reference without evidence and uses full Playback with evidence", () => {
+    const unpinned = emitDeclarations(parseDefoldApiDoc(goDoc));
+    expect(emittedLine(unpinned, "function animate(")).toContain(
+      "playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>",
     );
+    const pinned = emitDeclarations(parseDefoldApiDoc(goDoc), {
+      bindingEvidence: PLAYBACK_KEYS,
+    });
+    expect(emittedLine(pinned, "function animate(")).toContain("playback: go.Playback");
+  });
+
+  test("prose-table atlas playback follows its reference without evidence and uses full Playback with evidence", () => {
+    const unpinned = emitDeclarations(parseDefoldApiDoc(resourceDoc));
+    expect(emittedLine(unpinned, "function set_atlas(")).not.toContain("playback?: go.Playback;");
+    expect(emittedLine(unpinned, "function create_atlas(")).not.toContain(
+      "playback?: go.Playback;",
+    );
+    expect(emittedLine(unpinned, "function get_atlas(")).not.toContain("playback: go.Playback;");
+
+    const pinned = emitDeclarations(parseDefoldApiDoc(resourceDoc), {
+      bindingEvidence: PLAYBACK_KEYS,
+    });
+    expect(emittedLine(pinned, "function set_atlas(")).toContain("playback?: go.Playback;");
+    expect(emittedLine(pinned, "function create_atlas(")).toContain("playback?: go.Playback;");
+    expect(emittedLine(pinned, "function get_atlas(")).toContain("playback: go.Playback;");
+  });
+
+  test("struct-member atlas playback stays reference-derived through the evidence-aware path", () => {
+    const target = loadApiTargets().find((candidate) => candidate.default === true);
+    const entry = MODULE_MANIFEST.find((candidate) => candidate.namespace === "resource");
+    if (!target || !entry) throw new Error("missing default resource target");
+    const options = targetBindingOptions(target);
+    const pinnedEvidence = options.bindingEvidence;
+    if (!pinnedEvidence) throw new Error("default target has no binding evidence");
+    for (const bindingEvidence of [new Set<string>(), pinnedEvidence]) {
+      const out = generateModuleDeclaration(entry, { ...options, bindingEvidence }).contents;
+      expect(out).toContain("playback?: go.Playback;");
+      expect(out).toContain("playback: go.Playback;");
+    }
   });
 });
 

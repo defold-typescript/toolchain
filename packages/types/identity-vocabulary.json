@@ -412,6 +412,20 @@
       "pins": [["url"]],
       "adds": ["string", "Hash"]
     },
+    "go.animate:param:playback": {
+      "pins": [
+        [
+          "go.PLAYBACK_ONCE_FORWARD",
+          "go.PLAYBACK_ONCE_BACKWARD",
+          "go.PLAYBACK_ONCE_PINGPONG",
+          "go.PLAYBACK_LOOP_FORWARD",
+          "go.PLAYBACK_LOOP_BACKWARD",
+          "go.PLAYBACK_LOOP_PINGPONG"
+        ],
+        ["go.PLAYBACK"]
+      ],
+      "replaces": ["go.Playback"]
+    },
     "go.delete:param:id": {
       "pins": [
         ["string", "hash", "url", "table"],
@@ -429,6 +443,14 @@
     "gui.screen_to_local:param:screen_position": { "pins": [["vector3"]], "adds": ["Vector4"] },
     "gui.set_rotation:param:rotation": { "pins": [["quaternion", "vector4"]], "adds": ["Vector3"] },
     "gui.set_screen_position:param:screen_position": { "pins": [["vector3"]], "adds": ["Vector4"] },
+    "gui.set_xanchor:param:anchor": {
+      "pins": [["constant"], ["gui.ANCHOR"]],
+      "replaces": ["Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>"]
+    },
+    "gui.set_yanchor:param:anchor": {
+      "pins": [["constant"], ["gui.ANCHOR"]],
+      "replaces": ["Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>"]
+    },
     "model.get_mesh_enabled:param:mesh_id": {
       "pins": [["string", "hash", "url"]],
       "removes": ["Url"]
