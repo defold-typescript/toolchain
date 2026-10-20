@@ -248,6 +248,7 @@ function stubWatcher(): FSWatcher {
   }) as unknown as FSWatcher;
 }
 
+// Reported changes invoke the listener production registered; the default node:fs.watch adapter is a static-review boundary.
 function controllableWatchPath(
   open: WatchPath = (target) => {
     if (!existsSync(target)) throw new Error(`cannot watch missing path: ${target}`);
@@ -400,8 +401,8 @@ describe("serveHsmView", () => {
     });
     const events = await openEvents(server.url);
 
-    // Once a session has loaded, Bun's watcher on a file reports no event when its whole
-    // folder is removed, so saving the entry file is what brings the loss to the server.
+    // Remove the real folder, then report the still-watched entry-file change so production
+    // installs and rebuilds the fallback watches.
     rmSync(path.join(dir, "shared"), { recursive: true });
     watched.change(write("main.ts", LAMP));
     expect((await events.next("reload")).data).toMatchObject({ ok: false });
