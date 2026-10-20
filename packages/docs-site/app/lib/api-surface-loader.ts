@@ -18,6 +18,7 @@ import {
   type CombinedSurface,
   type SignaturesArtifact,
 } from "./combined-surface";
+import { repoTreeUrl } from "./forge";
 import { parseFrontmatter } from "./frontmatter";
 import { parseGlobalTypes } from "./global-types";
 import { type LibraryListing, type LibraryOrigin, libraryLineage } from "./nav";
@@ -429,6 +430,9 @@ interface LualsProvenance {
   // entries leave it undefined, so the import module path falls back to the
   // namespace, keeping their `from "…"` output unchanged.
   moduleId?: string;
+  // Authored libraries only: set when upstream publishes no releases, so the adopt
+  // step names the pinned tag or commit archive instead of a releases page.
+  refKind?: "release" | "tag" | "commit";
 }
 
 function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
@@ -476,6 +480,7 @@ function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProve
       ref: string;
       license?: string;
       moduleId?: string;
+      refKind?: LualsProvenance["refKind"];
     }[];
   };
   return new Map(
@@ -486,6 +491,7 @@ function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProve
         ref: t.ref,
         license: t.license ?? "",
         ...(t.moduleId !== undefined ? { moduleId: t.moduleId } : {}),
+        ...(t.refKind !== undefined ? { refKind: t.refKind } : {}),
       },
     ]),
   );
@@ -553,7 +559,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
         author: "",
         authorUrl: native.repo,
         commit: native.ref,
-        sourceUrl: `${native.repo}/tree/${native.ref}`,
+        sourceUrl: repoTreeUrl(native.repo, native.ref),
         importString: "",
         license: native.license,
         authoredHere: true,
@@ -585,11 +591,12 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
         author: "",
         authorUrl: authoredEntry.repo,
         commit: authoredEntry.ref,
-        sourceUrl: `${authoredEntry.repo}/tree/${authoredEntry.ref}`,
+        sourceUrl: repoTreeUrl(authoredEntry.repo, authoredEntry.ref),
         importString: libraryImportString(namespace, authoredEntry.moduleId ?? namespace),
         license: authoredEntry.license,
         authoredHere: true,
         usage: "import",
+        ...(authoredEntry.refKind ? { pinKind: authoredEntry.refKind } : {}),
       };
     }
     const dir = moduleDir.get(namespace);

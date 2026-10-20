@@ -47,6 +47,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **`upgrade` tells distinct prereleases apart** — digit-led ones such as `1.3.0-1alpha` and `1.3.0-1beta`, and very long numeric ones such as `1.3.0-9007199254740992` and `1.3.0-9007199254740993` — so a CLI on the older one hands off to the newer one instead of re-scaffolding from its own templates and calling the project already latest.
 - **`model.Properties` declares all sixteen texture units the engine handles**, `"texture0"` through `"texture15"`, on every [pre-baked Defold version](./pinning-defold-target.md#opting-into-a-pinned-surface), so `go.get<model.Properties>()("#model", "texture8")` compiles; a surface generated from a reference doc alone keeps `"texture0"` through `"texture7"`.
 - **API reference pages list the complete engine type inventory, with every interface and type alias the declarations define shown in full.** This covers the five socket handles and their methods (`socket.SocketClient`, `socket.SocketConnected`, `socket.SocketMaster`, `socket.SocketServer`, `socket.SocketUnconnected`), option and result tables such as `b2d.Aabb`, `bullet3d.VersionInfo` and `sys.SysInfo`, and aliases such as `gui.Node`.
+- **[shutter](/api/shutter) and [checkpoint](/api/checkpoint) point at their new home on Codeberg**, where their author moved them after deleting the GitHub repos. Their reference pages and declaration source links lead there, and the adopt step gives the Codeberg archive URL to replace a dead `github.com/Klaleus` dependency in `game.project`.
 
 ## v0.52.0
 

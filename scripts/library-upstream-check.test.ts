@@ -11,6 +11,7 @@ import {
   collectPinnedTargets,
   describeReport,
   evaluateLibraryDrift,
+  forgeFor,
   groupPinnedTargets,
   issueTitleFor,
   type LibraryCheckIo,
@@ -211,6 +212,51 @@ describe("evaluateLibraryDrift — unreadable upstream", () => {
     const report = await evaluateLibraryDrift(group(), io());
     expect(report.reason).toBe("unknown");
     expect(report.actionable).toBe(false);
+  });
+});
+
+describe("forge dispatch", () => {
+  const codeberg = "https://codeberg.org/acme/widget";
+
+  test("every read receives the pin's repo URL, since a slug has lost the host", async () => {
+    const seen: string[] = [];
+    const tagSeam = io({
+      listTags: async (repo) => {
+        seen.push(repo);
+        return [{ name: "1.0.0", sha: "a" }];
+      },
+      readCommit: async (repo, sha) => {
+        seen.push(repo);
+        return { sha, date: "2026-01-01T00:00:00Z" };
+      },
+    });
+    const shaSeam = io({
+      readRepo: async (repo) => {
+        seen.push(repo);
+        return { defaultBranch: "master" };
+      },
+      compareRefs: async (repo) => {
+        seen.push(repo);
+        return { aheadBy: 0, files: [] };
+      },
+    });
+    await evaluateLibraryDrift(group({ repo: codeberg }), tagSeam);
+    await evaluateLibraryDrift(
+      group({ repo: codeberg, pinKind: "sha", ref: "fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1" }),
+      shaSeam,
+    );
+    expect(seen).toEqual([codeberg, codeberg, codeberg, codeberg]);
+  });
+
+  test("a GitHub or Codeberg URL resolves to its own forge", () => {
+    expect(forgeFor("https://github.com/britzl/defold-input")).toBe("github");
+    expect(forgeFor(codeberg)).toBe("codeberg");
+  });
+
+  test("a host with no known API throws, so the pin reports unknown instead of being skipped", () => {
+    expect(() => forgeFor("https://gitlab.com/acme/widget")).toThrow(
+      "no forge API is known for gitlab.com",
+    );
   });
 });
 
@@ -467,6 +513,10 @@ describe("collectPinnedTargets over the committed registries", () => {
 
   test("the drained ts-defold lane contributes nothing", () => {
     expect(groups.every((g) => g.dependents.length > 0)).toBe(true);
+  });
+
+  test("every pin lives on a forge the check can read", () => {
+    for (const g of groups) expect(() => forgeFor(g.repo)).not.toThrow();
   });
 
   test("every SHA-pinned group resolves its consumed paths to upstream-relative ones", () => {

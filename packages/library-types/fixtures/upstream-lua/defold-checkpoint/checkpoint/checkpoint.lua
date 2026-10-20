@@ -19,7 +19,7 @@
 
 --------------------------------------------------------------------------------
 
--- GitHub: https://github.com/klaleus/defold-checkpoint
+-- Codeberg: https://codeberg.org/Klaleus/defold-checkpoint
 
 --------------------------------------------------------------------------------
 

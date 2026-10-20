@@ -1915,8 +1915,8 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
     const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === "shutter");
     expect(entry).toBeDefined();
     expect(entry?.moduleId).toBe("shutter.shutter");
-    expect(entry?.repo).toBe("https://github.com/Klaleus/defold-shutter");
-    expect(entry?.ref).toBe("2ed27b50cda551650b01b80c1ccb5dd3f4e161fc");
+    expect(entry?.repo).toBe("https://codeberg.org/Klaleus/defold-shutter");
+    expect(entry?.ref).toBe("fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1");
     expect(entry?.license).toBe("Zlib");
     expect(entry?.authored).toBe(AUTHORED);
     expect(entry?.generated).toBe("generated/shutter.d.ts");
@@ -2037,8 +2037,8 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
     const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === "checkpoint");
     expect(entry).toBeDefined();
     expect(entry?.moduleId).toBe("checkpoint.checkpoint");
-    expect(entry?.repo).toBe("https://github.com/Klaleus/defold-checkpoint");
-    expect(entry?.ref).toBe("e4268ffba8f4f968f3c27a1a066ac9660bef3a73");
+    expect(entry?.repo).toBe("https://codeberg.org/Klaleus/defold-checkpoint");
+    expect(entry?.ref).toBe("a5cf87e1dce8d8980f641301e33843747986ff81");
     expect(entry?.license).toBe("Zlib");
     expect(entry?.authored).toBe(AUTHORED);
     expect(entry?.generated).toBe("generated/checkpoint.d.ts");

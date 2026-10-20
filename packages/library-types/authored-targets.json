@@ -408,8 +408,9 @@
       "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/nakama.lua"]
     },
     {
-      "repo": "https://github.com/Klaleus/defold-shutter",
-      "ref": "2ed27b50cda551650b01b80c1ccb5dd3f4e161fc",
+      "repo": "https://codeberg.org/Klaleus/defold-shutter",
+      "ref": "fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1",
+      "refKind": "commit",
       "license": "Zlib",
       "authored": "fixtures/authored/shutter.shutter.d.ts",
       "moduleId": "shutter.shutter",
@@ -419,8 +420,9 @@
       "upstreamLua": ["fixtures/upstream-lua/defold-shutter/shutter/shutter.lua"]
     },
     {
-      "repo": "https://github.com/Klaleus/defold-checkpoint",
-      "ref": "e4268ffba8f4f968f3c27a1a066ac9660bef3a73",
+      "repo": "https://codeberg.org/Klaleus/defold-checkpoint",
+      "ref": "a5cf87e1dce8d8980f641301e33843747986ff81",
+      "refKind": "commit",
       "license": "Zlib",
       "authored": "fixtures/authored/checkpoint.checkpoint.d.ts",
       "moduleId": "checkpoint.checkpoint",

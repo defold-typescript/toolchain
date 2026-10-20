@@ -1,7 +1,7 @@
 /** @noSelfInFile **/
 
 /**
- * @see {@link https://github.com/Klaleus/defold-checkpoint|Github Source}
+ * @see {@link https://codeberg.org/Klaleus/defold-checkpoint|Codeberg Source}
  * @noResolution
  * @example `import * as checkpoint from 'checkpoint.checkpoint'`
  */
