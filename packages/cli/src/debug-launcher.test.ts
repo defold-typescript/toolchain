@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { type BuildConfig, computeOutputRel } from "@defold-typescript/transpiler";
@@ -8,9 +16,11 @@ import {
   DEBUG_LAUNCHER_REL,
   DEBUG_LAUNCHER_SOURCE,
   debugLaunchConfig,
+  debugLauncherChecksum,
   debugScriptFilePatterns,
   debugScriptRoots,
   engineDownloadUrl,
+  isGeneratedDebugLauncher,
   nativeExtensionRuntimeWarnings,
   targetPlatform,
   vscodeLaunchContent,
@@ -292,6 +302,58 @@ describe("debugLaunchConfig / scaffolded artifacts", () => {
     expect(DEBUG_LAUNCHER_SOURCE).toMatch(/OpenAL32\.dll/);
     expect(DEBUG_LAUNCHER_SOURCE).toMatch(/by hand|manually|place/i);
     expect(DEBUG_LAUNCHER_SOURCE).toContain("defold/defold#11860");
+  });
+});
+
+describe("generated launcher ownership", () => {
+  const fixtureDir = path.join(import.meta.dir, "__snapshots__", "debug-launchers");
+  const legacyFixtures = [
+    "v0.5.3-v0.5.5.txt",
+    "v0.6.0-v0.7.0.txt",
+    "v0.8.0-v0.8.1.txt",
+    "v0.8.2-v0.51.0.txt",
+    "v0.52.0.txt",
+  ];
+
+  test("the generated marker validates the body below it", () => {
+    const [marker = "", ...bodyLines] = DEBUG_LAUNCHER_SOURCE.split("\n");
+    const match = marker.match(
+      /^\/\/ defold-typescript:generated-debug-launcher sha256=([a-f0-9]{64})$/,
+    );
+    expect(match).not.toBeNull();
+    const body = bodyLines.join("\n");
+    expect(match?.[1]).toBe(debugLauncherChecksum(body));
+    expect(isGeneratedDebugLauncher(DEBUG_LAUNCHER_SOURCE)).toBe(true);
+    expect(isGeneratedDebugLauncher(body)).toBe(true);
+    expect(DEBUG_LAUNCHER_SOURCE.match(/generated-debug-launcher/g)).toHaveLength(1);
+  });
+
+  test("ownership is line-ending neutral and rejects a changed body", () => {
+    expect(isGeneratedDebugLauncher(DEBUG_LAUNCHER_SOURCE.replaceAll("\n", "\r\n"))).toBe(true);
+    expect(isGeneratedDebugLauncher(DEBUG_LAUNCHER_SOURCE.replaceAll("\n", "\r"))).toBe(true);
+    expect(isGeneratedDebugLauncher(DEBUG_LAUNCHER_SOURCE.replace("Bun.spawn", "Bun.spawm"))).toBe(
+      false,
+    );
+  });
+
+  test("recognizes every distinct launcher released before the marker", () => {
+    for (const fixture of legacyFixtures) {
+      const source = readFileSync(path.join(fixtureDir, fixture), "utf8");
+      expect({ fixture, generated: isGeneratedDebugLauncher(source) }).toEqual({
+        fixture,
+        generated: true,
+      });
+      expect({
+        fixture,
+        generated: isGeneratedDebugLauncher(source.replaceAll("\n", "\r\n")),
+      }).toEqual({ fixture, generated: true });
+    }
+  });
+
+  test("rejects stale markers and arbitrary markerless TypeScript", () => {
+    const stale = DEBUG_LAUNCHER_SOURCE.replace(/sha256=[a-f0-9]{64}/, `sha256=${"0".repeat(64)}`);
+    expect(isGeneratedDebugLauncher(stale)).toBe(false);
+    expect(isGeneratedDebugLauncher('console.log("custom launcher");\n')).toBe(false);
   });
 });
 

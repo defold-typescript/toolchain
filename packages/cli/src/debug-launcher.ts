@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import * as path from "node:path";
 import {
   type BuildConfig,
@@ -239,7 +240,7 @@ export function vscodeLaunchContent(config: BuildConfig) {
 // unit-tested logic stay in lockstep. It is a Bun script: `process.platform` for
 // the OS, `fetch` for the engine download, `Bun.spawn` with inherited stdio for
 // the run (the pipe Local Lua Debugger attaches over). No shell, no Git Bash.
-function renderDebugLauncher(): string {
+function renderDebugLauncherBody(): string {
   const targets = JSON.stringify(PLATFORM_TARGETS, null, 2);
   const nonResourceRoots = JSON.stringify(NON_RESOURCE_ROOTS);
   const nonResourceSegments = JSON.stringify(NON_RESOURCE_SEGMENTS);
@@ -467,4 +468,49 @@ process.exit(await proc.exited);
 `;
 }
 
-export const DEBUG_LAUNCHER_SOURCE = renderDebugLauncher();
+const DEBUG_LAUNCHER_BODY = renderDebugLauncherBody();
+const DEBUG_LAUNCHER_MARKER_PREFIX = "// defold-typescript:generated-debug-launcher sha256=";
+const DEBUG_LAUNCHER_MARKER =
+  /^\/\/ defold-typescript:generated-debug-launcher sha256=([a-f0-9]{64})$/;
+
+function normalizeLauncherLineEndings(source: string): string {
+  return source.replace(/\r\n?/g, "\n");
+}
+
+export function debugLauncherChecksum(source: string): string {
+  return createHash("sha256").update(normalizeLauncherLineEndings(source)).digest("hex");
+}
+
+const LEGACY_DEBUG_LAUNCHER_CHECKSUMS = new Set([
+  // v0.5.3-v0.5.5
+  "2330e188d95a00b388c8c28c2a7fb91aa5690993aee815147e5efaac5e987bb6",
+  // v0.6.0-v0.7.0
+  "91046d3a5475838eaecff66e6032d6d563340fec6ef7b8e85a46299a5312d685",
+  // v0.8.0-v0.8.1
+  "8416c1ee6618d4e4c63b7b7d602d1572fd0854bebc9ebfe18115bdf890a1b6fa",
+  // v0.8.2-v0.51.0
+  "5ea035dfa8c16006484899e2bc01a76f422b5e03d6188a07ace9060026917cff",
+  // v0.52.0
+  "44317a6ab251de478a178ca2ce82a23c3d268aead8c9399dbafe0f983ac5ae21",
+]);
+
+export function isGeneratedDebugLauncher(source: string): boolean {
+  const normalized = normalizeLauncherLineEndings(source);
+  const firstLineEnd = normalized.indexOf("\n");
+  const firstLine = firstLineEnd === -1 ? normalized : normalized.slice(0, firstLineEnd);
+  const marker = DEBUG_LAUNCHER_MARKER.exec(firstLine);
+  if (marker !== null) {
+    const body = firstLineEnd === -1 ? "" : normalized.slice(firstLineEnd + 1);
+    return marker[1] === debugLauncherChecksum(body);
+  }
+
+  const checksum = debugLauncherChecksum(normalized);
+  return (
+    checksum === debugLauncherChecksum(DEBUG_LAUNCHER_BODY) ||
+    LEGACY_DEBUG_LAUNCHER_CHECKSUMS.has(checksum)
+  );
+}
+
+export const DEBUG_LAUNCHER_SOURCE =
+  `${DEBUG_LAUNCHER_MARKER_PREFIX}${debugLauncherChecksum(DEBUG_LAUNCHER_BODY)}\n` +
+  DEBUG_LAUNCHER_BODY;
