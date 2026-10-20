@@ -11,7 +11,12 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { runBuild } from "./build";
-import { DEBUG_LAUNCHER_REL, debugLaunchConfig } from "./debug-launcher";
+import {
+  DEBUG_LAUNCHER_REL,
+  DEBUG_LAUNCHER_SOURCE,
+  debugLaunchConfig,
+  isGeneratedDebugLauncher,
+} from "./debug-launcher";
 import {
   AMBIENT_DECLARATION,
   AMBIENT_DTS_REL,
@@ -742,6 +747,9 @@ describe("runSetupDebug", () => {
       writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
       await runSetupDebug({ cwd });
       const launcherPath = path.join(cwd, DEBUG_LAUNCHER_REL);
+      const generatedLauncher = readFileSync(launcherPath, "utf8");
+      expect(generatedLauncher).toBe(DEBUG_LAUNCHER_SOURCE);
+      expect(isGeneratedDebugLauncher(generatedLauncher)).toBe(true);
       writeFileSync(launcherPath, "// edited by the user\n");
       const launchPath = path.join(cwd, ".vscode", "launch.json");
       const launchBytes = annotateAsJsonc(launchPath);

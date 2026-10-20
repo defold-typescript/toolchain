@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import * as os from "node:os";
 import * as path from "node:path";
 import { GENERATED_BANNER } from "./build-output";
+import { DEBUG_LAUNCHER_REL } from "./debug-launcher";
 import { runInit } from "./init";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import {
@@ -399,6 +400,22 @@ describe("runUpgrade", () => {
     expect(outcome.warnings.some((w) => w.includes("game"))).toBe(true);
   });
 
+  test("an already-latest upgrade reports a customized launcher it preserved", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const custom = 'console.log("custom launcher");\n';
+    writeFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), custom);
+    const { io } = upgradeIo({ latest: "1.3.0" });
+
+    const outcome = await runUpgrade({ cwd, running: "1.3.0", capture: true, io });
+
+    expect(readFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), "utf8")).toBe(custom);
+    expect(outcome.written).not.toContain(DEBUG_LAUNCHER_REL);
+    expect(outcome.warnings).toHaveLength(1);
+    expect(outcome.warnings[0]).toContain(DEBUG_LAUNCHER_REL);
+    expect(outcome.warnings[0]).toContain("normalized-content checksum");
+  });
+
   test("the in-process path reports no warning when only generated Lua is present", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     writeFileSync(
@@ -415,7 +432,9 @@ describe("runUpgrade", () => {
     expect(outcome.warnings).toEqual([]);
   });
 
-  test("a captured hand-off surfaces the child's warnings beside its written files", async () => {
+  test("a captured hand-off surfaces a preserved-launcher warning beside its written files", async () => {
+    const warning =
+      ".vscode/defold-debug.ts was not updated because its normalized-content checksum does not match a known generated launcher; the file may contain user edits and was preserved; deleting it and running defold-typescript setup-debug installs the current generated launcher.";
     const { io } = upgradeIo({
       latest: "1.3.0",
       stdouts: [
@@ -423,7 +442,7 @@ describe("runUpgrade", () => {
           command: "init",
           ok: true,
           written: ["package.json"],
-          warnings: ["skipped the game folder claim: game/helper.lua is hand-authored Lua"],
+          warnings: [warning],
         })}\n`,
       ],
     });
@@ -431,9 +450,8 @@ describe("runUpgrade", () => {
     const outcome = await runUpgrade({ cwd, running: "1.2.0", capture: true, io });
 
     expect(outcome.written).toEqual(["package.json"]);
-    expect(outcome.warnings).toEqual([
-      "skipped the game folder claim: game/helper.lua is hand-authored Lua",
-    ]);
+    expect(outcome.written).not.toContain(DEBUG_LAUNCHER_REL);
+    expect(outcome.warnings).toEqual([warning]);
   });
 
   test("a child envelope without warnings, and an unparsable one, yield none and still succeed", async () => {

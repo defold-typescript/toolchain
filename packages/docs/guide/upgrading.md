@@ -42,7 +42,10 @@ mise run defold-typescript:upgrade
 The re-scaffold refreshes the **managed** files: it re-pins the managed
 `@defold-typescript/types` and `@defold-typescript/cli` devDependencies to the new
 CLI's version, refreshes the managed `mise.toml` task block and the managed
-`AGENTS.md` block, and reconciles `tsconfig.json`.
+`AGENTS.md` block, and reconciles `tsconfig.json`. It also refreshes an existing
+`.vscode/defold-debug.ts` when its normalized checksum proves it is generated,
+including an unmodified legacy launcher with Windows CRLF line endings. An absent
+launcher stays absent.
 
 It **never** clobbers files you authored. An entry script you have written —
 `src/main.ts` — is left exactly as it is; the scaffold reports it as `skipped`
@@ -51,7 +54,9 @@ own `[tools]` and `[tasks.*]` entries in `mise.toml`, and your other
 `tsconfig.json` settings all survive the upgrade untouched. Inside a managed
 `mise.toml` task the refresh rewrites only the two keys the scaffold authors —
 `description` and `run` — so a key you added there, such as an `alias` or a
-`depends`, survives too.
+`depends`, survives too. A customized debug launcher is preserved and named in a
+warning; delete it and run `defold-typescript setup-debug` only when you intend to
+replace it with the current generated launcher.
 
 ## What it does to your `defold-target` pin
 

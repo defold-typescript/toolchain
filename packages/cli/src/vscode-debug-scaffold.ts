@@ -1,10 +1,11 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import type { BuildConfig } from "@defold-typescript/transpiler";
 import {
   DEBUG_LAUNCHER_REL,
   DEBUG_LAUNCHER_SOURCE,
   debugLaunchConfig,
+  isGeneratedDebugLauncher,
   vscodeLaunchContent,
 } from "./debug-launcher";
 import type { FileAction } from "./setup-debug";
@@ -97,6 +98,33 @@ export function writeVscodeDebugLauncher(cwd: string): FileAction {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(filePath, DEBUG_LAUNCHER_SOURCE);
   return "injected";
+}
+
+export const DEBUG_LAUNCHER_PRESERVED_WARNING =
+  `${DEBUG_LAUNCHER_REL} was not updated because its normalized-content checksum does not match a known generated launcher; ` +
+  "the file may contain user edits and was preserved; deleting it and running defold-typescript setup-debug installs the current generated launcher.";
+
+export interface DebugLauncherRefreshResult {
+  readonly action: "refreshed" | "unchanged" | null;
+  readonly warning?: string;
+}
+
+export function refreshVscodeDebugLauncher(cwd: string): DebugLauncherRefreshResult {
+  const filePath = path.join(cwd, DEBUG_LAUNCHER_REL);
+  if (!existsSync(filePath)) {
+    return { action: null };
+  }
+
+  const existing = readFileSync(filePath, "utf8");
+  if (existing === DEBUG_LAUNCHER_SOURCE) {
+    return { action: "unchanged" };
+  }
+  if (!isGeneratedDebugLauncher(existing)) {
+    return { action: "unchanged", warning: DEBUG_LAUNCHER_PRESERVED_WARNING };
+  }
+
+  writeFileSync(filePath, DEBUG_LAUNCHER_SOURCE);
+  return { action: "refreshed" };
 }
 
 // The debugger id is not in `init`'s canonical recommendation set, so it is a
