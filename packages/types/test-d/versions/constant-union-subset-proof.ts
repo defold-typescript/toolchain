@@ -26,6 +26,8 @@ gui.set_xanchor(_node, gui.ANCHOR_RIGHT);
 gui.set_yanchor(_node, gui.ANCHOR_NONE);
 gui.set_yanchor(_node, gui.ANCHOR_TOP);
 gui.set_yanchor(_node, gui.ANCHOR_BOTTOM);
+gui.set_xanchor(_node, gui.get_xanchor(_node));
+gui.set_yanchor(_node, gui.get_yanchor(_node));
 
 // @ts-expect-error an x anchor rejects vertical constants
 gui.set_xanchor(_node, gui.ANCHOR_TOP);

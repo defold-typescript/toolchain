@@ -872,7 +872,7 @@ function fadeIn(node: Opaque<"node">, easing: gui.Easing, playback: gui.Playback
 }
 ```
 
-A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `gui.set_xanchor` takes `gui.Anchor` minus `gui.ANCHOR_TOP` and `gui.ANCHOR_BOTTOM`, while `gui.set_yanchor` excludes `gui.ANCHOR_LEFT` and `gui.ANCHOR_RIGHT`. `window.get_dim_mode` returns `window.Dimming`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.State` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members, with a Lua badge linking the reference's own spelling to its defold.com entry where it differs.
+A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `gui.get_xanchor` returns and `gui.set_xanchor` takes `gui.Anchor` minus `gui.ANCHOR_TOP` and `gui.ANCHOR_BOTTOM`, while `gui.get_yanchor` and `gui.set_yanchor` exclude `gui.ANCHOR_LEFT` and `gui.ANCHOR_RIGHT`, so an anchor read from a node passes straight back to its setter. `window.get_dim_mode` returns `window.Dimming`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.State` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members, with a Lua badge linking the reference's own spelling to its defold.com entry where it differs.
 
 `go.Playback` includes `go.PLAYBACK_NONE`. The full union is accepted by `go.animate` and by the animation `playback` fields read or written through `resource.create_atlas`, `resource.set_atlas`, and `resource.get_atlas`.
 
@@ -13171,8 +13171,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.Type, number | undefined]>;
 - function get_visible(node: Opaque<"node">): boolean;
 - function get_width(): number;
-- function get_xanchor(node: Opaque<"node">): gui.Anchor;
-- function get_yanchor(node: Opaque<"node">): gui.Anchor;
+- function get_xanchor(node: Opaque<"node">): Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;
+- function get_yanchor(node: Opaque<"node">): Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;
 - function hide_keyboard(): void;
 - function is_enabled(node: Opaque<"node">, recursive?: boolean): boolean;
 - function move_above(node: Opaque<"node">, reference: Opaque<"node"> | undefined): void;

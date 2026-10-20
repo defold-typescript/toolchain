@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Enum slots match the engine](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** across every Defold version: anchor setters use axis subsets, while animation and atlas playback accept all of `go.Playback`.
+> - **[Engine type names are PascalCase](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version, so rename them in your code, and enum slots follow the engine: anchor getters and setters share axis subsets, and animation and atlas playback accept all of `go.Playback`.
 > - **[`upgrade` compares every version correctly](./upgrade.md#what-it-does)**, including prereleases.
 > - **[Model texture properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** include all sixteen slots.
 > - **[Debug launchers stay current through upgrades](./debugging.md#re-running-it)** when unmodified, preserve and name customizations, support entry-script exports, and warn when F5 would run a stale engine build.
@@ -30,7 +30,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **[socket](/api/socket)** — `socket.client` and `socket.socket_client` -> `socket.SocketClient`, and the same for `socket.SocketConnected`, `socket.SocketMaster`, `socket.SocketServer` and `socket.SocketUnconnected`.
   - **[go](/api/go)** — `go.Playback` includes `go.PLAYBACK_NONE` on every target.
   - **[graphics](/api/graphics)** — `graphics.State` includes `graphics.STATE_ALPHA_TEST_SUPPORTED` and `graphics.STATE_SCISSOR_TEST`, which `render.enable_state` and `render.disable_state` reject, so those take `Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>`; on Defold 1.13.2 and later, `graphics.BufferType` takes `graphics.BUFFER_TYPE_COLOR1_BIT` through `graphics.BUFFER_TYPE_COLOR3_BIT` only once narrowed past `undefined`.
-  - **[gui](/api/gui)** — `gui.AdjustMode` -> `gui.Adjust`, `gui.BlendMode` -> `gui.Blend`, `gui.NodeType` -> `gui.Type`, `gui.Property` -> `gui.Prop`, and `gui.SafeAreaMode` -> `gui.SafeArea`; `gui.set_xanchor` takes `Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>` and `gui.set_yanchor` takes `Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>` on every target.
+  - **[gui](/api/gui)** — `gui.AdjustMode` -> `gui.Adjust`, `gui.BlendMode` -> `gui.Blend`, `gui.NodeType` -> `gui.Type`, `gui.Property` -> `gui.Prop`, and `gui.SafeAreaMode` -> `gui.SafeArea`; `gui.get_xanchor` and `gui.set_xanchor` use `Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>`, and `gui.get_yanchor` and `gui.set_yanchor` use `Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>`, on every target.
   - **[sys](/api/sys)** — `sys.NetworkConnectivity` -> `sys.Network`.
   - **[window](/api/window)** — `window.DimModeState` -> `window.Dimming`, `window.DimModeStateSettable` -> `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`.
 

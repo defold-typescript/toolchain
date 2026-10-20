@@ -605,6 +605,14 @@
         "LuaTable<Hash, Opaque<\"node\">> & { get: LuaTableGetMethod<string, Opaque<\"node\">> }"
       ]
     },
+    "gui.get_xanchor": {
+      "pins": [["constant"], ["gui.ANCHOR"]],
+      "replaces": ["Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>"]
+    },
+    "gui.get_yanchor": {
+      "pins": [["constant"], ["gui.ANCHOR"]],
+      "replaces": ["Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>"]
+    },
     "gui.new_texture": {
       "pins": [["number"]],
       "replaces": ["number", "undefined"],
