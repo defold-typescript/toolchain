@@ -71,6 +71,8 @@ The entry script may [export runtime values](./script-state.md#exporting-a-value
 
 [`upgrade`](./upgrade.md) and `init . --force` also refresh the launch configuration when `include` or `outDir` moves — see [`init`](./init.md) for what else that flag re-syncs. Either one rewrites `scriptFiles` and `scriptRoots` in place on a configuration that is already there, creates none where there is none, and leaves every other key alone. Plain `init` refuses an already-scaffolded project rather than refreshing it.
 
+Those two forced routes also refresh an existing `.vscode/defold-debug.ts` when its checksum proves it is generated. This includes launchers from older releases and files whose line endings became CRLF on Windows. An absent launcher stays absent. A customized launcher is preserved, and a warning names the skipped path and checksum mismatch; delete it and run `setup-debug` to install the current generated launcher.
+
 On all three routes, a run with nothing to change does not rewrite `launch.json` at all, so your JSONC comments and hand formatting survive untouched. A run that does have a change to make reserializes the file, and comments in it are lost.
 
 ### When it refuses
@@ -105,7 +107,7 @@ To debug-build and launch in one step, outside the editor debugger, `bunx @defol
 
 It prefers the native-extension build engine at `build/<platform>/dmengine` when that exists; on macOS that folder is bob's `<arch>-osx`, such as `build/arm64-osx/dmengine`. Otherwise it downloads a stock engine from `d.defold.com` next to the launcher, at `.vscode/dmengine`. The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps the binary out of version control. A project with an `ext.manifest` outside its ignored folders and no build engine stops with an error instead of launching the stock engine, which cannot run the extension.
 
-`setup-debug` never overwrites an existing `.vscode/defold-debug.ts`. To get the current launcher in a project that already has one, delete that file and run `setup-debug` again.
+`setup-debug` never overwrites an existing `.vscode/defold-debug.ts`. Each launcher it creates carries a checksum of its generated body, which lets `upgrade` refresh an unmodified copy without treating an edited one as tool-owned. To reset a customized launcher, delete the file and run `setup-debug` again.
 
 ### Native-extension runtime libraries
 

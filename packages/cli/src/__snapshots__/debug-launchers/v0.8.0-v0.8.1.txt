@@ -1,0 +1,104 @@
+import { chmodSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
+import * as path from "node:path";
+
+interface EngineTarget {
+  enginePlatform: string;
+  buildFolder: string;
+  executable: string;
+  openalLibraries: string[];
+}
+
+const PLATFORM_TARGETS: Record<string, EngineTarget> = {
+  "darwin-arm64": {
+    "enginePlatform": "arm64-macos",
+    "buildFolder": "arm64-macos",
+    "executable": "dmengine",
+    "openalLibraries": []
+  },
+  "darwin-x64": {
+    "enginePlatform": "x86_64-macos",
+    "buildFolder": "x86_64-macos",
+    "executable": "dmengine",
+    "openalLibraries": []
+  },
+  "linux-x64": {
+    "enginePlatform": "x86_64-linux",
+    "buildFolder": "x86_64-linux",
+    "executable": "dmengine",
+    "openalLibraries": []
+  },
+  "win32-x64": {
+    "enginePlatform": "x86_64-win32",
+    "buildFolder": "x86_64-win32",
+    "executable": "dmengine.exe",
+    "openalLibraries": [
+      "OpenAL32.dll",
+      "wrap_oal.dll"
+    ]
+  }
+};
+
+const ENGINE_INFO_URL = "https://d.defold.com/stable/info.json";
+const ENGINE_ARCHIVE_BASE = "https://d.defold.com/archive/stable";
+
+const target = PLATFORM_TARGETS[`${process.platform}-${process.arch}`];
+if (!target) {
+  console.error(`Unsupported platform: ${process.platform}-${process.arch}`);
+  process.exit(1);
+}
+
+const here = path.dirname(new URL(import.meta.url).pathname);
+const stockEnginePath = path.join(here, target.executable);
+
+if (!existsSync(stockEnginePath)) {
+  const info = (await (await fetch(ENGINE_INFO_URL)).json()) as { sha1: string };
+  const url = `${ENGINE_ARCHIVE_BASE}/${info.sha1}/engine/${target.enginePlatform}/${target.executable}`;
+  console.log(`Fetching ${url}`);
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error(`Engine download failed: ${res.status} ${res.statusText}`);
+    process.exit(1);
+  }
+  await Bun.write(stockEnginePath, res);
+}
+
+const buildFolder = path.join("build", target.buildFolder);
+const buildEnginePath = path.join(buildFolder, target.executable);
+let enginePath = existsSync(buildEnginePath) ? buildEnginePath : stockEnginePath;
+
+// Windows native-extension build engines link the OpenAL runtime DLLs, but no
+// Defold-hosted archive currently ships them and the upstream copy fix
+// (defold/defold#11860) is closed unmerged. Warn once on the real gap and
+// continue the launch; placing the DLLs by hand is the only fix today.
+if (process.platform === "win32" && enginePath === buildEnginePath) {
+  const missing = target.openalLibraries.filter(
+    (lib) => !existsSync(path.join(buildFolder, lib)),
+  );
+  if (missing.length) {
+    console.warn(
+      `Place ${missing.join(" and ")} by hand next to the build engine (${buildFolder}); ` +
+        "the Defold build server does not yet ship them. Tracking: defold/defold#11860 " +
+        "(https://github.com/defold/defold/issues/11860).",
+    );
+  }
+}
+
+// macOS: a build engine launched in place attaches to the editor process; copy
+// it aside first so it runs standalone.
+if (process.platform === "darwin" && enginePath === buildEnginePath) {
+  const tempEngine = path.join(buildFolder, "temp", target.executable);
+  mkdirSync(path.dirname(tempEngine), { recursive: true });
+  copyFileSync(buildEnginePath, tempEngine);
+  enginePath = tempEngine;
+}
+
+if (process.platform !== "win32") {
+  chmodSync(enginePath, 0o755);
+}
+
+const projectc = path.join("build", "default", "game.projectc");
+console.log(`Launching ${enginePath} ${projectc}`);
+const proc = Bun.spawn([enginePath, projectc], {
+  stdio: ["inherit", "inherit", "inherit"],
+});
+process.exit(await proc.exited);

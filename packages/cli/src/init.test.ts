@@ -15,7 +15,12 @@ import { DEFAULT_INCLUDE } from "@defold-typescript/transpiler";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
-import { debugLaunchConfig } from "./debug-launcher";
+import {
+  DEBUG_LAUNCHER_REL,
+  DEBUG_LAUNCHER_SOURCE,
+  debugLaunchConfig,
+  debugLauncherChecksum,
+} from "./debug-launcher";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import {
   authoredLuaUnder,
@@ -1595,6 +1600,75 @@ describe("runInit (.vscode debugger launch scaffold)", () => {
     expect(existsSync(path.join(cwd, ".vscode", "launch.json"))).toBe(false);
     expect(existsSync(path.join(cwd, ".vscode", "defold-debug.ts"))).toBe(false);
   });
+
+  test("--force refreshes a released markerless launcher with CRLF", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const released = readFileSync(
+      path.join(import.meta.dir, "__snapshots__", "debug-launchers", "v0.52.0.txt"),
+      "utf8",
+    ).replaceAll("\n", "\r\n");
+    touch(DEBUG_LAUNCHER_REL, released);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), "utf8")).toBe(DEBUG_LAUNCHER_SOURCE);
+    expect(result.written).toContain(DEBUG_LAUNCHER_REL);
+    expect(result.warnings).toEqual([]);
+  });
+
+  test("--force refreshes a valid older marked launcher", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const [, ...bodyLines] = DEBUG_LAUNCHER_SOURCE.split("\n");
+    const olderBody = bodyLines.join("\n").replace("Bun.spawn", "Bun.spawnSync");
+    const olderMarked =
+      `// defold-typescript:generated-debug-launcher sha256=${debugLauncherChecksum(olderBody)}\n` +
+      olderBody;
+    touch(DEBUG_LAUNCHER_REL, olderMarked);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), "utf8")).toBe(DEBUG_LAUNCHER_SOURCE);
+    expect(result.written).toContain(DEBUG_LAUNCHER_REL);
+    expect(result.warnings).toEqual([]);
+  });
+
+  test("--force leaves the current marked launcher byte-identical", () => {
+    touch("game.project", "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    touch(DEBUG_LAUNCHER_REL, DEBUG_LAUNCHER_SOURCE);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), "utf8")).toBe(DEBUG_LAUNCHER_SOURCE);
+    expect(result.written).not.toContain(DEBUG_LAUNCHER_REL);
+    expect(result.warnings).toEqual([]);
+  });
+
+  for (const [name, source] of [
+    ["an edited markerless launcher", 'console.log("custom launcher");\n'],
+    [
+      "a marked launcher with an edited body",
+      DEBUG_LAUNCHER_SOURCE.replace("Bun.spawn", "Bun.spawm"),
+    ],
+  ] as const) {
+    test(`--force preserves ${name} and explains the skip`, () => {
+      touch("game.project", "[project]\n");
+      mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+      touch(DEBUG_LAUNCHER_REL, source);
+
+      const result = runInit({ cwd, force: true });
+
+      expect(readFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), "utf8")).toBe(source);
+      expect(result.written).not.toContain(DEBUG_LAUNCHER_REL);
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings[0]).toContain(DEBUG_LAUNCHER_REL);
+      expect(result.warnings[0]).toContain("normalized-content checksum");
+      expect(result.warnings[0]).toContain("was preserved");
+      expect(result.warnings[0]).toContain("defold-typescript setup-debug");
+    });
+  }
 
   test("adds no configuration to a launch.json holding only the user's own", () => {
     touch("game.project", "[project]\n");

@@ -571,6 +571,7 @@ is new enough to re-scaffold, and hands off to the newer one when it is not.
   "command": "upgrade",
   "ok": true,
   "written": ["package.json", "tsconfig.json", "..."],
+  "warnings": [],
   "from": "0.4.1",
   "to": "0.5.0",
   "handedOff": true
@@ -594,6 +595,12 @@ re-scaffolded in place). If `ok` is `false`, stop and surface `error`.
 When `handedOff` is `true`, `written` is the list the **newer CLI reports** for
 the re-scaffold it performed, read back from the delegated run; when it is
 `false`, the list is the running CLI's own.
+
+Inspect `warnings` even when `ok` is `true`. An unknown normalized checksum for
+`.vscode/defold-debug.ts` means the upgrade succeeded but preserved that file's
+existing bytes because it may be customized; the path is absent from `written`.
+Delete it and run `defold-typescript setup-debug` only when replacing it is the
+intended action.
 
 **The offline failure mode:** upgrading is the one command that needs the network.
 When the npm registry is unreachable the run fails — `ok` is `false` with a
