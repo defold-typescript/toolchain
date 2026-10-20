@@ -37,6 +37,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **API pages file every type under one `Types` heading, named by its full path on engine pages, and every handle method under `Functions`.** An alias or interface is one row there, such as `image.Type`, which opens with a Lua badge linking the reference's own `image.TYPE` to its defold.com entry, while a type with fields, such as `go.on_input` on [go](/api/go), and a handle's methods, such as the `client` methods on [socket](/api/socket), each get a heading nested inside.
+- **[druid](/api/druid) types follow `Insality/druid` `1.4.1`**: `druid.druid_button.set_cursor` sets one button's hover cursor, and `druid.druid_instance.reset_hovers` clears every hover in an instance when another GUI covers it; both return their own object, so calls chain.
 
 ### Fixed
 
