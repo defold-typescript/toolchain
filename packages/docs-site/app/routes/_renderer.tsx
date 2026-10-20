@@ -572,6 +572,14 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
         path={path}
         uppercaseGroupHeaders={category.id !== "libraries"}
       />
+      {category.shortcuts ? (
+        <section data-testid="sidebar-shortcuts" class="mt-6">
+          <p class="mb-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">
+            Shortcuts
+          </p>
+          <SidebarItems links={category.shortcuts} path={path} />
+        </section>
+      ) : null}
     </nav>
   );
 }

@@ -24,6 +24,9 @@ export interface NavCategory {
   label: string;
   route?: string;
   links: NavLink[];
+  // Sidebar-only links to pages another category owns. Kept apart from `links`
+  // so the pager and the active-tab match never see them.
+  shortcuts?: NavLink[];
 }
 
 interface CategorySpec {
@@ -33,6 +36,8 @@ interface CategorySpec {
   route?: string;
   /** Flat page membership; omitted for `guides`, which nests via GUIDE_GROUPS. */
   slugs?: string[];
+  /** Pages listed under the sidebar's Shortcuts header without joining the category. */
+  shortcutSlugs?: string[];
 }
 
 export interface Namespace {
@@ -125,6 +130,7 @@ const CATEGORY_MAP: CategorySpec[] = [
     route: "/get-started",
     // Same shared list that seeds the /get-started landing (Overview first).
     slugs: [...GET_STARTED_SLUGS],
+    shortcutSlugs: ["changelog"],
   },
   {
     id: "guides",
@@ -204,7 +210,17 @@ export function buildNav(
       claimed.add(slug);
       links.push(linkFor(page));
     }
-    return { id: spec.id, label: spec.label, links, ...(spec.route ? { route: spec.route } : {}) };
+    const shortcuts = (spec.shortcutSlugs ?? []).flatMap((slug) => {
+      const page = bySlug.get(slug);
+      return page ? [linkFor(page)] : [];
+    });
+    return {
+      id: spec.id,
+      label: spec.label,
+      links,
+      ...(spec.route ? { route: spec.route } : {}),
+      ...(shortcuts.length > 0 ? { shortcuts } : {}),
+    };
   });
 
   const fallback = categories.find((category) => category.id === FALLBACK_CATEGORY_ID);
