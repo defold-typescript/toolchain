@@ -40,7 +40,10 @@ is found.
 The re-scaffold refreshes the **managed** files: it re-pins the managed
 `@defold-typescript/types` and `@defold-typescript/cli` devDependencies to the new
 CLI's version, refreshes the managed `mise.toml` task block and the managed
-`AGENTS.md` block, and reconciles `tsconfig.json`.
+`AGENTS.md` block, and reconciles `tsconfig.json`. If `.vscode/defold-debug.ts`
+already exists and its normalized checksum matches a generated launcher — including
+an unmodified legacy launcher whose line endings became CRLF — it is refreshed too.
+An absent launcher stays absent.
 
 It **never** clobbers files you authored. An entry script you have written —
 `src/main.ts` — is left exactly as it is; the scaffold reports it as `skipped`
@@ -100,7 +103,10 @@ latest, and `handedOff` says whether a newer CLI did the re-scaffold.
 `written` lists the managed files the re-scaffold touched. When `handedOff` is
 `true` it is the list the **newer CLI reports** for the re-scaffold it performed,
 read back from the delegated run; when `handedOff` is `false` it is the running
-CLI's own list.
+CLI's own list. If a launcher checksum is unknown, the upgrade still succeeds:
+`warnings` names `.vscode/defold-debug.ts` and says it was preserved, and that path
+is absent from `written`. Delete the file and run `defold-typescript setup-debug`
+to replace a customized launcher explicitly.
 
 Upgrading is the one command that needs the network. If the registry is
 unreachable, the run fails — `ok` is `false` with a non-zero exit — rather than

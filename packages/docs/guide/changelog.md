@@ -13,11 +13,11 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Every engine type name is PascalCase](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version: rename `gui.EASING` to `gui.Easing`, `sys.sys_info` to `sys.SysInfo`, `gui.node` to `gui.Node` and `socket.client` to `socket.SocketClient`, write `Vector` for `vmath.vector`, and write `gui.XAnchor` and two other narrower unions as `Exclude` of their enum.
-> - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
-> - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
-> - **[`setup-debug` supports entry-script exports](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
-> - **API pages list the complete engine type inventory under one `Types` heading**, by its full path and with its Defold name linked where that differs, with fields and handle methods nested beneath it, as on [socket](/api/socket).
+> - **[Engine type names use PascalCase](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** across every Defold version, with narrower engine subsets expressed as `Exclude` types.
+> - **[`upgrade` compares every version correctly](./upgrade.md#what-it-does)**, including prereleases.
+> - **[Model texture properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** include all sixteen slots.
+> - **[Debug launchers stay current through upgrades](./debugging.md#re-running-it)** when unmodified, preserve and name customizations, support entry-script exports, and warn when F5 would run a stale engine build.
+> - **API pages show the complete engine type inventory under one `Types` heading**, with full paths, Defold-name links, fields and handle methods, as on [socket](/api/socket).
 
 ### Breaking
 
@@ -41,7 +41,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **An entry script wired by `setup-debug` builds when it exports runtime values.** The unedited managed block no longer fails the [companion's](./script-state.md#exporting-a-value-from-a-script-itself) order rule at its `if`, and its gated `lldebugger.start()` runs before the companion loads; an edited block is still rejected, with an error that says to run `defold-typescript setup-debug` to restore it.
-- **F5 no longer runs a missing or stale engine build without a word.** The debug launcher stops when `build/default/game.projectc` is missing, and warns before launching when a generated script or `game.project` is newer than its compiled copy, while `build` and `watch` leave an unchanged output's file time alone; an existing project gets this launcher by [deleting `.vscode/defold-debug.ts` and rerunning `setup-debug`](./debugging.md#which-engine-the-launcher-runs).
+- **The [F5 debug launcher](./debugging.md#re-running-it) carries a normalized body checksum and stays current through `upgrade` or `init . --force`.** An unmodified current or legacy launcher is refreshed even after CRLF conversion, a customized launcher is preserved and named in a warning with an explicit reset path, and F5 stops for a missing engine build or warns before running a stale one.
 - **`upgrade` reports the version the project had before the run** — its installed `@defold-typescript/cli`, else its `package.json` pin — in the summary line and the `--json` `from` field, so `bunx @defold-typescript/cli@latest upgrade` no longer claims "already latest" after moving the project to a newer release. When neither names a version, the line reads `none -> <to>` and `from` is left out.
 - **`upgrade` tells distinct prereleases apart** — digit-led ones such as `1.3.0-1alpha` and `1.3.0-1beta`, and very long numeric ones such as `1.3.0-9007199254740992` and `1.3.0-9007199254740993` — so a CLI on the older one hands off to the newer one instead of re-scaffolding from its own templates and calling the project already latest.
 - **`model.Properties` declares all sixteen texture units the engine handles**, `"texture0"` through `"texture15"`, on every [pre-baked Defold version](./pinning-defold-target.md#opting-into-a-pinned-surface), so `go.get<model.Properties>()("#model", "texture8")` compiles; a surface generated from a reference doc alone keeps `"texture0"` through `"texture7"`.

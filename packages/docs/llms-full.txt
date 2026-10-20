@@ -5000,11 +5000,13 @@ starter itself, `["src/main.ts"]`, seeds one normally.
   synthesize.
 - `--force` — re-scaffold in place: repin the managed `@defold-typescript/types`
   and `@defold-typescript/cli` dependencies to the CLI's own version, migrate a
-  deprecated Biome `recommended` key, and re-sync the managed `AGENTS.md` block on a
-  project that already has one, leaving your other settings in place. To upgrade a
-  project, reach for [`upgrade`](./upgrading.md) rather than driving this flag by
-  hand — it resolves the latest CLI first, so an older binary cannot re-scaffold the
-  project backwards.
+  deprecated Biome `recommended` key, re-sync the managed `AGENTS.md` block, and
+  refresh an existing `.vscode/defold-debug.ts` only when its normalized checksum
+  proves it is generated. An absent launcher stays absent; a customized one stays
+  byte-identical and produces a warning naming the path and checksum mismatch. To
+  upgrade a project, reach for [`upgrade`](./upgrading.md) rather than driving this
+  flag by hand — it resolves the latest CLI first, so an older binary cannot
+  re-scaffold the project backwards.
 - `--suppress-install-reminder` — silence the `Next: run <pm> install` line when
   you install through your own tooling.
 - `--json` — emit the result envelope. See
@@ -5169,7 +5171,10 @@ is found.
 The re-scaffold refreshes the **managed** files: it re-pins the managed
 `@defold-typescript/types` and `@defold-typescript/cli` devDependencies to the new
 CLI's version, refreshes the managed `mise.toml` task block and the managed
-`AGENTS.md` block, and reconciles `tsconfig.json`.
+`AGENTS.md` block, and reconciles `tsconfig.json`. If `.vscode/defold-debug.ts`
+already exists and its normalized checksum matches a generated launcher — including
+an unmodified legacy launcher whose line endings became CRLF — it is refreshed too.
+An absent launcher stays absent.
 
 It **never** clobbers files you authored. An entry script you have written —
 `src/main.ts` — is left exactly as it is; the scaffold reports it as `skipped`
@@ -5229,7 +5234,10 @@ latest, and `handedOff` says whether a newer CLI did the re-scaffold.
 `written` lists the managed files the re-scaffold touched. When `handedOff` is
 `true` it is the list the **newer CLI reports** for the re-scaffold it performed,
 read back from the delegated run; when `handedOff` is `false` it is the running
-CLI's own list.
+CLI's own list. If a launcher checksum is unknown, the upgrade still succeeds:
+`warnings` names `.vscode/defold-debug.ts` and says it was preserved, and that path
+is absent from `written`. Delete the file and run `defold-typescript setup-debug`
+to replace a customized launcher explicitly.
 
 Upgrading is the one command that needs the network. If the registry is
 unreachable, the run fails — `ok` is `false` with a non-zero exit — rather than
@@ -7351,6 +7359,8 @@ The entry script may [export runtime values](./script-state.md#exporting-a-value
 
 [`upgrade`](./upgrade.md) and `init . --force` also refresh the launch configuration when `include` or `outDir` moves — see [`init`](./init.md) for what else that flag re-syncs. Either one rewrites `scriptFiles` and `scriptRoots` in place on a configuration that is already there, creates none where there is none, and leaves every other key alone. Plain `init` refuses an already-scaffolded project rather than refreshing it.
 
+Those two forced routes also refresh an existing `.vscode/defold-debug.ts` when its checksum proves it is generated. This includes launchers from older releases and files whose line endings became CRLF on Windows. An absent launcher stays absent. A customized launcher is preserved, and a warning names the skipped path and checksum mismatch; delete it and run `setup-debug` to install the current generated launcher.
+
 On all three routes, a run with nothing to change does not rewrite `launch.json` at all, so your JSONC comments and hand formatting survive untouched. A run that does have a change to make reserializes the file, and comments in it are lost.
 
 ##### When it refuses
@@ -7385,7 +7395,7 @@ To debug-build and launch in one step, outside the editor debugger, `bunx @defol
 
 It prefers the native-extension build engine at `build/<platform>/dmengine` when that exists; on macOS that folder is bob's `<arch>-osx`, such as `build/arm64-osx/dmengine`. Otherwise it downloads a stock engine from `d.defold.com` next to the launcher, at `.vscode/dmengine`. The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps the binary out of version control. A project with an `ext.manifest` outside its ignored folders and no build engine stops with an error instead of launching the stock engine, which cannot run the extension.
 
-`setup-debug` never overwrites an existing `.vscode/defold-debug.ts`. To get the current launcher in a project that already has one, delete that file and run `setup-debug` again.
+`setup-debug` never overwrites an existing `.vscode/defold-debug.ts`. Each launcher it creates carries a checksum of its generated body, which lets `upgrade` refresh an unmodified copy without treating an edited one as tool-owned. To reset a customized launcher, delete the file and run `setup-debug` again.
 
 ##### Native-extension runtime libraries
 
@@ -8016,6 +8026,7 @@ is new enough to re-scaffold, and hands off to the newer one when it is not.
   "command": "upgrade",
   "ok": true,
   "written": ["package.json", "tsconfig.json", "..."],
+  "warnings": [],
   "from": "0.4.1",
   "to": "0.5.0",
   "handedOff": true
@@ -8039,6 +8050,12 @@ re-scaffolded in place). If `ok` is `false`, stop and surface `error`.
 When `handedOff` is `true`, `written` is the list the **newer CLI reports** for
 the re-scaffold it performed, read back from the delegated run; when it is
 `false`, the list is the running CLI's own.
+
+Inspect `warnings` even when `ok` is `true`. An unknown normalized checksum for
+`.vscode/defold-debug.ts` means the upgrade succeeded but preserved that file's
+existing bytes because it may be customized; the path is absent from `written`.
+Delete it and run `defold-typescript setup-debug` only when replacing it is the
+intended action.
 
 **The offline failure mode:** upgrading is the one command that needs the network.
 When the npm registry is unreachable the run fails — `ok` is `false` with a
@@ -9687,7 +9704,10 @@ mise run defold-typescript:upgrade
 The re-scaffold refreshes the **managed** files: it re-pins the managed
 `@defold-typescript/types` and `@defold-typescript/cli` devDependencies to the new
 CLI's version, refreshes the managed `mise.toml` task block and the managed
-`AGENTS.md` block, and reconciles `tsconfig.json`.
+`AGENTS.md` block, and reconciles `tsconfig.json`. It also refreshes an existing
+`.vscode/defold-debug.ts` when its normalized checksum proves it is generated,
+including an unmodified legacy launcher with Windows CRLF line endings. An absent
+launcher stays absent.
 
 It **never** clobbers files you authored. An entry script you have written —
 `src/main.ts` — is left exactly as it is; the scaffold reports it as `skipped`
@@ -9696,7 +9716,9 @@ own `[tools]` and `[tasks.*]` entries in `mise.toml`, and your other
 `tsconfig.json` settings all survive the upgrade untouched. Inside a managed
 `mise.toml` task the refresh rewrites only the two keys the scaffold authors —
 `description` and `run` — so a key you added there, such as an `alias` or a
-`depends`, survives too.
+`depends`, survives too. A customized debug launcher is preserved and named in a
+warning; delete it and run `defold-typescript setup-debug` only when you intend to
+replace it with the current generated launcher.
 
 #### What it does to your `defold-target` pin
 

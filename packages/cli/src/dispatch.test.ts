@@ -5995,6 +5995,29 @@ describe("dispatch upgrade", () => {
     expect((parsed.warnings ?? []).some((w) => w.includes("game"))).toBe(true);
   });
 
+  test("a preserved debug launcher reaches stderr and the upgrade JSON warnings", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const launcherPath = path.join(cwd, ".vscode", "defold-debug.ts");
+    writeFileSync(launcherPath, 'console.log("custom launcher");\n');
+
+    const plain = captureStreams();
+    const plainRun = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+    expect(await dispatch(["upgrade", cwd], plain.io, plainRun.internals)).toBe(0);
+    expect(plain.err()).toContain("defold-typescript upgrade: .vscode/defold-debug.ts");
+    expect(plain.err()).toContain("normalized-content checksum");
+
+    const jsonRun = captureStreams();
+    const jsonInternals = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+    expect(await dispatch(["upgrade", cwd, "--json"], jsonRun.io, jsonInternals.internals)).toBe(0);
+    const parsed = JSON.parse(jsonRun.out().trim()) as { warnings: string[]; written: string[] };
+    expect(parsed.warnings.some((warning) => warning.includes("normalized-content checksum"))).toBe(
+      true,
+    );
+    expect(parsed.written).not.toContain(".vscode/defold-debug.ts");
+    expect(readFileSync(launcherPath, "utf8")).toBe('console.log("custom launcher");\n');
+  });
+
   test("a scaffold decision survives the install that fails after it", async () => {
     const seedSkippedClaim = (): void => {
       writeFileSync(path.join(cwd, "game.project"), "[project]\n");

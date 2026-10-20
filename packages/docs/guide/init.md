@@ -111,11 +111,13 @@ starter itself, `["src/main.ts"]`, seeds one normally.
   synthesize.
 - `--force` — re-scaffold in place: repin the managed `@defold-typescript/types`
   and `@defold-typescript/cli` dependencies to the CLI's own version, migrate a
-  deprecated Biome `recommended` key, and re-sync the managed `AGENTS.md` block on a
-  project that already has one, leaving your other settings in place. To upgrade a
-  project, reach for [`upgrade`](./upgrading.md) rather than driving this flag by
-  hand — it resolves the latest CLI first, so an older binary cannot re-scaffold the
-  project backwards.
+  deprecated Biome `recommended` key, re-sync the managed `AGENTS.md` block, and
+  refresh an existing `.vscode/defold-debug.ts` only when its normalized checksum
+  proves it is generated. An absent launcher stays absent; a customized one stays
+  byte-identical and produces a warning naming the path and checksum mismatch. To
+  upgrade a project, reach for [`upgrade`](./upgrading.md) rather than driving this
+  flag by hand — it resolves the latest CLI first, so an older binary cannot
+  re-scaffold the project backwards.
 - `--suppress-install-reminder` — silence the `Next: run <pm> install` line when
   you install through your own tooling.
 - `--json` — emit the result envelope. See
