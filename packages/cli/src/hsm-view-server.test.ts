@@ -255,26 +255,30 @@ function controllableWatchPath(
   },
 ) {
   const listeners = new Map<string, (event: string, name: string | null) => void>();
-  const watchers = new Map<string, FSWatcher>();
+  const currentWatchers = new Map<string, FSWatcher>();
+  const openWatchers = new Map<FSWatcher, string>();
   const watchPath: WatchPath = (target, listener) => {
     const watcher = open(target, listener);
     listeners.set(target, listener);
-    watchers.set(target, watcher);
+    currentWatchers.set(target, watcher);
+    openWatchers.set(watcher, target);
     watcher.on("close", () => {
+      openWatchers.delete(watcher);
       if (listeners.get(target) === listener) listeners.delete(target);
-      if (watchers.get(target) === watcher) watchers.delete(target);
+      if (currentWatchers.get(target) === watcher) currentWatchers.delete(target);
     });
     return watcher;
   };
   return {
     watchPath,
+    openTargets: () => [...openWatchers.values()].sort(),
     change(target: string, event = "change", name: string | null = path.basename(target)) {
       const listener = listeners.get(target);
       if (listener === undefined) throw new Error(`no watcher open for ${target}`);
       listener(event, name);
     },
     error(target: string, error: Error) {
-      const watcher = watchers.get(target);
+      const watcher = currentWatchers.get(target);
       if (watcher === undefined) throw new Error(`no watcher open for ${target}`);
       watcher.emit("error", error);
     },
@@ -303,7 +307,7 @@ describe("serveHsmView", () => {
     return (main?.lines ?? []).map((line) => line.map((run) => run.text).join("")).join("\n");
   }
 
-  test("listens on 127.0.0.1 and pushes a reload after the machine file changes", async () => {
+  test("listens on 127.0.0.1 and pushes a reload after an injected watcher reports a machine file change", async () => {
     const watched = controllableWatchPath();
     server = await serveHsmView({
       session: lampSession(),
@@ -322,7 +326,7 @@ describe("serveHsmView", () => {
     await events.cancel();
   });
 
-  test("reports a failed reload and keeps the last good source", async () => {
+  test("keeps the last good source when an injected watcher reports an invalid edit", async () => {
     const watched = controllableWatchPath();
     server = await serveHsmView({
       session: lampSession(),
@@ -339,7 +343,7 @@ describe("serveHsmView", () => {
     await events.cancel();
   });
 
-  test("starts watching a file the edit newly imports", async () => {
+  test("watches a file newly imported by an injected watcher-reported edit", async () => {
     const watched = controllableWatchPath();
     server = await serveHsmView({
       session: lampSession(),
@@ -361,7 +365,7 @@ describe("serveHsmView", () => {
     await events.cancel();
   });
 
-  test("recovers when a deleted import comes back", async () => {
+  test("recovers when injected watchers report a deleted import was recreated", async () => {
     const watched = controllableWatchPath();
     server = await serveHsmView({
       session: lampSession(),
@@ -386,7 +390,7 @@ describe("serveHsmView", () => {
     await events.cancel();
   });
 
-  test("recovers when the deleted file's folder comes back", async () => {
+  test("recovers when injected watchers report a deleted file's folder was recreated", async () => {
     const watched = controllableWatchPath();
     server = await serveHsmView({
       session: lampSession(),
@@ -414,7 +418,7 @@ describe("serveHsmView", () => {
     await events.cancel();
   });
 
-  test("reloads when the missing file's folder appears before its watcher opens", async () => {
+  test("reloads when a missing file's folder appears before an injected watcher opens", async () => {
     let armed = false;
     // Only the fallback watchers open folders, so the first folder watched once armed is the
     // nearest folder chosen for the missing import; creating `shared/` before it opens means
@@ -455,7 +459,7 @@ describe("serveHsmView", () => {
     await events.cancel();
   });
 
-  test("reloads instead of crashing when a watcher reports an error", async () => {
+  test("reloads instead of crashing when an injected watcher reports an error", async () => {
     const watched = controllableWatchPath();
     const main = path.join(dir, "main.ts");
     server = await serveHsmView({
@@ -472,6 +476,31 @@ describe("serveHsmView", () => {
     });
     watched.error(main, error);
     expect((await events.next("reload")).data).toMatchObject({ ok: true });
+    await events.cancel();
+  });
+
+  test("closes every installed watcher on rebuild and server close", async () => {
+    const watched = controllableWatchPath();
+    const main = path.join(dir, "main.ts");
+    const names = path.join(dir, "shared/names.ts");
+    const shared = path.dirname(names);
+    server = await serveHsmView({
+      session: lampSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
+    const events = await openEvents(server.url);
+    expect(watched.openTargets()).toEqual([main, names].sort());
+
+    rmSync(names);
+    watched.change(names, "rename");
+    expect((await events.next("reload")).data).toMatchObject({ ok: false });
+    expect(watched.openTargets()).toEqual([main, shared].sort());
+
+    await server.close();
+    server = undefined;
+    expect(watched.openTargets()).toEqual([]);
     await events.cancel();
   });
 
