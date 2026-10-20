@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Engine type names use PascalCase](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** across every Defold version, with narrower engine subsets expressed as `Exclude` types.
+> - **[Enum slots match the engine](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** across every Defold version: anchor setters use axis subsets, while animation and atlas playback accept all of `go.Playback`.
 > - **[`upgrade` compares every version correctly](./upgrade.md#what-it-does)**, including prereleases.
 > - **[Model texture properties](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** include all sixteen slots.
 > - **[Debug launchers stay current through upgrades](./debugging.md#re-running-it)** when unmodified, preserve and name customizations, support entry-script exports, and warn when F5 would run a stale engine build.
@@ -28,9 +28,9 @@ What changed in each published `defold-typescript` toolchain release.
   - **Names the rule cannot split** — `gui.PIEBOUNDS` -> `gui.PieBounds`, `crash.SYSFIELD` -> `crash.SysField`, `crash.USERFIELD` -> `crash.UserField`, `liveupdate.LIVEUPDATE` -> `liveupdate.LiveUpdate`, `bullet3d.constraint.generic_6dof_params` -> `bullet3d.constraint.Generic6DofParams`.
   - **Core globals** — `vmath.vector` and `resource.resource_data` are gone; write `Vector` and `Hash`.
   - **[socket](/api/socket)** — `socket.client` and `socket.socket_client` -> `socket.SocketClient`, and the same for `socket.SocketConnected`, `socket.SocketMaster`, `socket.SocketServer` and `socket.SocketUnconnected`.
-  - **[go](/api/go)** — `go.Playback` includes `go.PLAYBACK_NONE`; on Defold 1.13.1 and earlier, the `go.animate` and atlas `playback` slots, which leave it out, take `Exclude<go.Playback, typeof go.PLAYBACK_NONE>`.
+  - **[go](/api/go)** — `go.Playback` includes `go.PLAYBACK_NONE` on every target.
   - **[graphics](/api/graphics)** — `graphics.State` includes `graphics.STATE_ALPHA_TEST_SUPPORTED` and `graphics.STATE_SCISSOR_TEST`, which `render.enable_state` and `render.disable_state` reject, so those take `Exclude<graphics.State, typeof graphics.STATE_ALPHA_TEST_SUPPORTED | typeof graphics.STATE_SCISSOR_TEST>`; on Defold 1.13.2 and later, `graphics.BufferType` takes `graphics.BUFFER_TYPE_COLOR1_BIT` through `graphics.BUFFER_TYPE_COLOR3_BIT` only once narrowed past `undefined`.
-  - **[gui](/api/gui)** — `gui.AdjustMode` -> `gui.Adjust`, `gui.BlendMode` -> `gui.Blend`, `gui.NodeType` -> `gui.Type`, `gui.Property` -> `gui.Prop`, `gui.SafeAreaMode` -> `gui.SafeArea`, `gui.XAnchor` -> `Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>`, `gui.YAnchor` -> `Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>`.
+  - **[gui](/api/gui)** — `gui.AdjustMode` -> `gui.Adjust`, `gui.BlendMode` -> `gui.Blend`, `gui.NodeType` -> `gui.Type`, `gui.Property` -> `gui.Prop`, and `gui.SafeAreaMode` -> `gui.SafeArea`; `gui.set_xanchor` takes `Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>` and `gui.set_yanchor` takes `Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>` on every target.
   - **[sys](/api/sys)** — `sys.NetworkConnectivity` -> `sys.Network`.
   - **[window](/api/window)** — `window.DimModeState` -> `window.Dimming`, `window.DimModeStateSettable` -> `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`.
 
@@ -40,6 +40,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
+- **`go.animate`, `resource.create_atlas`, `resource.set_atlas`, and `resource.get_atlas` use the full `go.Playback` union on every target**, including `go.PLAYBACK_NONE`.
 - **An entry script wired by `setup-debug` builds when it exports runtime values.** The unedited managed block no longer fails the [companion's](./script-state.md#exporting-a-value-from-a-script-itself) order rule at its `if`, and its gated `lldebugger.start()` runs before the companion loads; an edited block is still rejected, with an error that says to run `defold-typescript setup-debug` to restore it.
 - **The [F5 debug launcher](./debugging.md#re-running-it) carries a normalized body checksum and stays current through `upgrade` or `init . --force`.** An unmodified current or legacy launcher is refreshed even after CRLF conversion, a customized launcher is preserved and named in a warning with an explicit reset path, and F5 stops for a missing engine build or warns before running a stale one.
 - **`upgrade` reports the version the project had before the run** — its installed `@defold-typescript/cli`, else its `package.json` pin — in the summary line and the `--json` `from` field, so `bunx @defold-typescript/cli@latest upgrade` no longer claims "already latest" after moving the project to a newer release. When neither names a version, the line reads `none -> <to>` and `from` is left out.

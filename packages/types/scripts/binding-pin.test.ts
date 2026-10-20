@@ -150,13 +150,15 @@ describe("bindingEvidenceFor", () => {
   ];
 
   test("a return correction's pin is evidence where the target's binding shows it", () => {
-    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [], [])]).toEqual([
-      "bullet3d.shape.get_shape",
-    ]);
+    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [meshCase], [], [], [], [])]).toEqual(
+      ["bullet3d.shape.get_shape"],
+    );
   });
 
   test("a release that does not ship the pinned file shows no evidence", () => {
-    expect([...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [], [])]).toEqual([]);
+    expect([...bindingEvidenceFor(apiTarget("defold-1.13.1"), [meshCase], [], [], [], [])]).toEqual(
+      [],
+    );
   });
 
   test("an engine-pinned key range is evidence on every vendored target", () => {
@@ -169,6 +171,27 @@ describe("bindingEvidenceFor", () => {
     expect(bindingEvidenceFor(apiTarget("defold-1.9.8")).has("model.textureN")).toBe(false);
   });
 
+  test("every vendored target carries anchor and playback correction evidence", () => {
+    const keys = [
+      "gui.set_xanchor:param:anchor",
+      "gui.set_yanchor:param:anchor",
+      "go.animate:param:playback",
+      "resource.create_atlas:param:table:animations[].playback",
+      "resource.set_atlas:param:table:animations[].playback",
+      "resource.get_atlas:return:data:animations[].playback",
+    ];
+    for (const target of vendoredTargets()) {
+      const evidence = bindingEvidenceFor(target);
+      expect({ target: target.id, keys: keys.filter((key) => evidence.has(key)) }).toEqual({
+        target: target.id,
+        keys,
+      });
+    }
+    const refDoc = loadApiTargets().find((candidate) => (candidate.source ?? null) !== null);
+    if (!refDoc) throw new Error("api-targets.json: no ref-doc target");
+    expect(keys.filter((key) => bindingEvidenceFor(refDoc).has(key))).toEqual([]);
+  });
+
   test("a key range whose pin does not hold is no evidence", () => {
     const falsified: readonly [string, PropertyKeyRange] = [
       "model.textureN",
@@ -177,7 +200,9 @@ describe("bindingEvidenceFor", () => {
         engine: { last: 15, pins: [{ ...RENDER_H_PIN, contains: RENDER_H_PIN_AT_8 }] },
       },
     ];
-    expect([...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [falsified])]).toEqual([]);
+    expect([
+      ...bindingEvidenceFor(apiTarget("defold-1.14.0"), [], [], [falsified], [], []),
+    ]).toEqual([]);
   });
 });
 

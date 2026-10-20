@@ -259,7 +259,7 @@ declare global {
      * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
      * ```
      */
-    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number): void;
+    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number): void;
     /**
      * This is only supported for numerical properties. If the node property is already being
      * animated, that animation will be canceled and replaced by the new one.
@@ -317,7 +317,7 @@ declare global {
      * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
      * ```
      */
-    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: Exclude<go.Playback, typeof go.PLAYBACK_NONE>, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
+    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
     /**
      * By calling this function, all or specified stored property animations of the game object or component will be canceled.
      * See the properties guide for which properties can be animated and the animation guide for how to animate them.
