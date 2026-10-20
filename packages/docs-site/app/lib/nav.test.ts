@@ -458,6 +458,19 @@ describe("buildNav", () => {
     expect(overview?.label).toBe("Overview");
   });
 
+  test("gives Get started a Changelog shortcut that stays out of its page links", () => {
+    const nav = fullNav();
+    const getStarted = nav.find((c) => c.id === "get-started");
+    expect(getStarted?.shortcuts?.map((l) => [l.label, l.route])).toEqual([
+      ["Changelog", "/changelog"],
+    ]);
+    expect(getStarted?.links.some((l) => l.route === "/changelog")).toBe(false);
+    expect(activeCategoryId("/changelog", nav)).toBe("guides");
+    for (const category of nav) {
+      if (category.id !== "get-started") expect(category.shortcuts).toBeUndefined();
+    }
+  });
+
   test("appends an unmapped page to the fallback (guides) category rather than dropping it", () => {
     const synthetic: GuidePage = {
       file: "brand-new-topic.md",
