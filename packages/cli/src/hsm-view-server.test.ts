@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { EventEmitter } from "node:events";
 import {
   existsSync,
   type FSWatcher,
@@ -6,7 +7,6 @@ import {
   mkdtempSync,
   rmSync,
   statSync,
-  watch,
   writeFileSync,
 } from "node:fs";
 import * as os from "node:os";
@@ -235,6 +235,52 @@ function readEvents(body: ReadableStream<Uint8Array>) {
   return { next, cancel: () => reader.cancel() };
 }
 
+function stubWatcher(): FSWatcher {
+  const emitter = new EventEmitter();
+  return Object.assign(emitter, {
+    close: () => emitter.emit("close"),
+    ref() {
+      return this;
+    },
+    unref() {
+      return this;
+    },
+  }) as unknown as FSWatcher;
+}
+
+function controllableWatchPath(
+  open: WatchPath = (target) => {
+    if (!existsSync(target)) throw new Error(`cannot watch missing path: ${target}`);
+    return stubWatcher();
+  },
+) {
+  const listeners = new Map<string, (event: string, name: string | null) => void>();
+  const watchers = new Map<string, FSWatcher>();
+  const watchPath: WatchPath = (target, listener) => {
+    const watcher = open(target, listener);
+    listeners.set(target, listener);
+    watchers.set(target, watcher);
+    watcher.on("close", () => {
+      if (listeners.get(target) === listener) listeners.delete(target);
+      if (watchers.get(target) === watcher) watchers.delete(target);
+    });
+    return watcher;
+  };
+  return {
+    watchPath,
+    change(target: string, event = "change", name: string | null = path.basename(target)) {
+      const listener = listeners.get(target);
+      if (listener === undefined) throw new Error(`no watcher open for ${target}`);
+      listener(event, name);
+    },
+    error(target: string, error: Error) {
+      const watcher = watchers.get(target);
+      if (watcher === undefined) throw new Error(`no watcher open for ${target}`);
+      watcher.emit("error", error);
+    },
+  };
+}
+
 describe("serveHsmView", () => {
   let server: Awaited<ReturnType<typeof serveHsmView>> | undefined;
 
@@ -258,12 +304,18 @@ describe("serveHsmView", () => {
   }
 
   test("listens on 127.0.0.1 and pushes a reload after the machine file changes", async () => {
-    server = await serveHsmView({ session: lampSession(), client, port: 0 });
+    const watched = controllableWatchPath();
+    server = await serveHsmView({
+      session: lampSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
     expect(new URL(server.url).hostname).toBe("127.0.0.1");
     const events = await openEvents(server.url);
 
     const edited = LAMP.replace('"/on" } },\n    on', '"/on" } },\n    // edited\n    on');
-    write("main.ts", edited);
+    watched.change(write("main.ts", edited));
     const reload = await events.next("reload");
     expect(reload.data).toMatchObject({ ok: true, snapshot: { picked: "lamp" } });
     expect(await mainText(server.url)).toBe(edited);
@@ -271,10 +323,16 @@ describe("serveHsmView", () => {
   });
 
   test("reports a failed reload and keeps the last good source", async () => {
-    server = await serveHsmView({ session: lampSession(), client, port: 0 });
+    const watched = controllableWatchPath();
+    server = await serveHsmView({
+      session: lampSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
     const events = await openEvents(server.url);
 
-    write("main.ts", `${LAMP}export const broken = ;\n`);
+    watched.change(write("main.ts", `${LAMP}export const broken = ;\n`));
     const reload = await events.next("reload");
     expect(reload.data).toMatchObject({ ok: false, error: expect.stringContaining("main.ts") });
     expect(await mainText(server.url)).toBe(LAMP);
@@ -282,46 +340,70 @@ describe("serveHsmView", () => {
   });
 
   test("starts watching a file the edit newly imports", async () => {
-    server = await serveHsmView({ session: lampSession(), client, port: 0 });
+    const watched = controllableWatchPath();
+    server = await serveHsmView({
+      session: lampSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
     const events = await openEvents(server.url);
 
     write("extra.ts", "export const EXTRA = 1;\n");
-    write("main.ts", `import { EXTRA } from "./extra";\n${LAMP}export const extra = EXTRA;\n`);
+    watched.change(
+      write("main.ts", `import { EXTRA } from "./extra";\n${LAMP}export const extra = EXTRA;\n`),
+    );
     expect((await events.next("reload")).data).toMatchObject({ ok: true });
 
-    write("extra.ts", "export const EXTRA = ;\n");
+    watched.change(write("extra.ts", "export const EXTRA = ;\n"));
     const reload = await events.next("reload");
     expect(reload.data).toMatchObject({ ok: false, error: expect.stringContaining("extra.ts") });
     await events.cancel();
   });
 
   test("recovers when a deleted import comes back", async () => {
-    server = await serveHsmView({ session: lampSession(), client, port: 0 });
+    const watched = controllableWatchPath();
+    server = await serveHsmView({
+      session: lampSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
     const events = await openEvents(server.url);
 
-    rmSync(path.join(dir, "shared/names.ts"));
+    const names = path.join(dir, "shared/names.ts");
+    rmSync(names);
+    watched.change(names, "rename");
     expect((await events.next("reload")).data).toMatchObject({ ok: false });
 
     write("shared/names.ts", NAMES);
+    watched.change(path.dirname(names), "rename", path.basename(names));
     expect((await events.next("reload")).data).toMatchObject({ ok: true });
 
-    write("shared/names.ts", "export const OFF = ;\n");
+    watched.change(write("shared/names.ts", "export const OFF = ;\n"));
     const reload = await events.next("reload");
     expect(reload.data).toMatchObject({ ok: false, error: expect.stringContaining("names.ts") });
     await events.cancel();
   });
 
   test("recovers when the deleted file's folder comes back", async () => {
-    server = await serveHsmView({ session: lampSession(), client, port: 0 });
+    const watched = controllableWatchPath();
+    server = await serveHsmView({
+      session: lampSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
     const events = await openEvents(server.url);
 
     // Once a session has loaded, Bun's watcher on a file reports no event when its whole
     // folder is removed, so saving the entry file is what brings the loss to the server.
     rmSync(path.join(dir, "shared"), { recursive: true });
-    write("main.ts", LAMP);
+    watched.change(write("main.ts", LAMP));
     expect((await events.next("reload")).data).toMatchObject({ ok: false });
 
     write("shared/names.ts", NAMES);
+    watched.change(dir, "rename", "shared");
     const deadline = Date.now() + 2000;
     let recovered = false;
     while (!recovered) {
@@ -337,26 +419,32 @@ describe("serveHsmView", () => {
     // Only the fallback watchers open folders, so the first folder watched once armed is the
     // nearest folder chosen for the missing import; creating `shared/` before it opens means
     // that watcher never sees it.
-    const watchPath: WatchPath = (target, listener) => {
-      if (armed && existsSync(target) && statSync(target).isDirectory()) {
+    const watched = controllableWatchPath((target) => {
+      if (!existsSync(target)) throw new Error(`cannot watch missing path: ${target}`);
+      if (armed && statSync(target).isDirectory()) {
         armed = false;
         mkdirSync(path.join(dir, "shared"));
-        // A folder watcher on macOS still reports a change made a few milliseconds before it
-        // opened; waiting past that window makes the missed event as real as on Linux.
-        Bun.sleepSync(250);
+        // The folder appears before its fallback watcher opens, so no watcher can report its
+        // creation; the post-open route check must schedule the next reload itself.
       }
-      return watch(target, listener);
-    };
-    server = await serveHsmView({ session: lampSession(), client, port: 0, watchPath });
+      return stubWatcher();
+    });
+    server = await serveHsmView({
+      session: lampSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
     const events = await openEvents(server.url);
 
     rmSync(path.join(dir, "shared"), { recursive: true });
     armed = true;
-    write("main.ts", LAMP);
+    watched.change(write("main.ts", LAMP));
     expect((await events.next("reload")).data).toMatchObject({ ok: false });
     expect((await events.next("reload")).data).toMatchObject({ ok: false });
 
     write("shared/names.ts", NAMES);
+    watched.change(path.join(dir, "shared"), "rename", "names.ts");
     const deadline = Date.now() + 2000;
     let recovered = false;
     while (!recovered) {
@@ -368,20 +456,21 @@ describe("serveHsmView", () => {
   });
 
   test("reloads instead of crashing when a watcher reports an error", async () => {
-    const opened: FSWatcher[] = [];
-    const watchPath: WatchPath = (target, listener) => {
-      const watcher = watch(target, listener);
-      opened.push(watcher);
-      return watcher;
-    };
-    server = await serveHsmView({ session: lampSession(), client, port: 0, watchPath });
+    const watched = controllableWatchPath();
+    const main = path.join(dir, "main.ts");
+    server = await serveHsmView({
+      session: lampSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
     const events = await openEvents(server.url);
 
     // Windows sends `EPERM` to each watcher inside a folder that is removed.
     const error = Object.assign(new Error("EPERM: operation not permitted, watch"), {
       code: "EPERM",
     });
-    opened[0]?.emit("error", error);
+    watched.error(main, error);
     expect((await events.next("reload")).data).toMatchObject({ ok: true });
     await events.cancel();
   });
