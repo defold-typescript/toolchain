@@ -59,7 +59,11 @@ export async function unregisterDom(): Promise<void> {
 // before the importing module's body, so React DOM is loaded only once a document exists.
 // Radix picks its layout effect the same way and takes a no-op without a document, which leaves
 // a portal unmounted, so a test file imports this module ahead of the component it renders.
+// This body runs once per process, though, and an earlier file's `unregisterDom` has already
+// removed the document by the time a later file's component first loads Radix, so Radix is
+// loaded here too: a file whose component needs no Radix would otherwise leave it to load late.
 registerDom();
+await import("radix-ui");
 export const { act, cleanup, fireEvent, render, waitFor, within } = await import(
   "@testing-library/react"
 );
