@@ -44,9 +44,7 @@ gui.set_blend_mode(node, gui.get_blend_mode(node));
 gui.set_adjust_mode(node, gui.get_adjust_mode(node));
 gui.set_size_mode(node, gui.get_size_mode(node));
 gui.set_clipping_mode(node, gui.get_clipping_mode(node));
-// @ts-expect-error the getter exposes the parent union while the setter takes the x-axis subset
 gui.set_xanchor(node, gui.get_xanchor(node));
-// @ts-expect-error the getter exposes the parent union while the setter takes the y-axis subset
 gui.set_yanchor(node, gui.get_yanchor(node));
 gui.set_outer_bounds(node, gui.get_outer_bounds(node));
 const [_nodeType] = gui.get_type(node);

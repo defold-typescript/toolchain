@@ -6553,6 +6553,26 @@ describe("binding-pinned anchor and playback slot corrections", () => {
     );
   });
 
+  test("anchor getters follow the reference without evidence and return axis subsets with evidence", () => {
+    const X_SUBSET = "): Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;";
+    const Y_SUBSET = "): Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;";
+    const unpinned = emitDeclarations(parseDefoldApiDoc(gui114Doc));
+    expect(emittedLine(unpinned, "function get_xanchor(")).toEndWith("): gui.Anchor;");
+    expect(emittedLine(unpinned, "function get_yanchor(")).toEndWith("): gui.Anchor;");
+
+    const pinned = emitDeclarations(parseDefoldApiDoc(gui114Doc), {
+      bindingEvidence: new Set(["gui.get_xanchor", "gui.get_yanchor"]),
+    });
+    expect(emittedLine(pinned, "function get_xanchor(")).toEndWith(X_SUBSET);
+    expect(emittedLine(pinned, "function get_yanchor(")).toEndWith(Y_SUBSET);
+
+    const xOnly = emitDeclarations(parseDefoldApiDoc(gui114Doc), {
+      bindingEvidence: new Set(["gui.get_xanchor"]),
+    });
+    expect(emittedLine(xOnly, "function get_xanchor(")).toEndWith(X_SUBSET);
+    expect(emittedLine(xOnly, "function get_yanchor(")).toEndWith("): gui.Anchor;");
+  });
+
   test("go.animate follows its reference without evidence and uses full Playback with evidence", () => {
     const unpinned = emitDeclarations(parseDefoldApiDoc(goDoc));
     expect(emittedLine(unpinned, "function animate(")).toContain(
