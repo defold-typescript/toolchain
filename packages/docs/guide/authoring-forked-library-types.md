@@ -83,7 +83,7 @@ library is the sole maintainer of its namespace, so it carries its own
 
 | Field | Required | What it is |
 | ----- | -------- | ---------- |
-| `repo` | yes | The GitHub repository URL, e.g. `https://github.com/britzl/defcon`. |
+| `repo` | yes | The GitHub or Codeberg repository URL, e.g. `https://github.com/britzl/defcon`. `upstream:library-check` reads no other host. |
 | `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
 | `authored` | yes | Package-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `defcon.console`). This is the `declare module` name inside the vendored `.d.ts`. |
@@ -91,6 +91,7 @@ library is the sole maintainer of its namespace, so it carries its own
 | `generated` | yes | The committed `.d.ts` output path (`generated/<namespace>.d.ts`). |
 | `apiDoc` | yes | The docs-site model output path (`api-doc/<namespace>.json`). |
 | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
+| `refKind` | no | `"commit"` or `"tag"` when upstream publishes no releases, so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
 | `fidelity` | no | Defaults to `fidelity/<namespace>.json`. A fork records no fidelity artifact (see below); the field mirrors the sibling lanes for a future hand-authored target that wants one. |
 | `upstreamLua` | one of two | Package-relative paths of the vendored upstream `.lua` this target's surface is measured against. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
 | `parityVerdict` | one of two | Why this target vendors no upstream `.lua`: `{ "reason": ..., "note": ... }`. Mutually exclusive with `upstreamLua`. |

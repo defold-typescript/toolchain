@@ -702,6 +702,25 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).toMatchSnapshot();
   });
 
+  // Codeberg has no `/tree/` route, and these repos have releases switched off, so
+  // the bullet names the forge, the pin uses Codeberg's browse route, and step 1
+  // names the commit archive rather than a releases page that would 404.
+  test("the shutter page names its Codeberg repo and adopts from the pinned commit archive", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const shutter = pages.find((p) => p.namespace === "shutter");
+    expect(shutter).toBeDefined();
+    if (!shutter) return;
+    const md = apiPageMarkdown(shutter, apiLinkify(pages));
+    expect(md).toContain(
+      "- Codeberg: [Klaleus/defold-shutter](https://codeberg.org/Klaleus/defold-shutter) — pinned to [`fc0e632`](https://codeberg.org/Klaleus/defold-shutter/src/commit/fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1)",
+    );
+    expect(md).toContain(
+      "  1. This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, `https://codeberg.org/Klaleus/defold-shutter/archive/fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1.zip` —",
+    );
+    expect(md).not.toContain("/releases");
+    expect(md).not.toContain("- GitHub:");
+  });
+
   // Projected through the real committed corpus, so a clause that survives extraction
   // but is lost in the render still reds. The boom pair is also the collapse proof: its
   // declaration spans five source lines and must render as one, and the second form is

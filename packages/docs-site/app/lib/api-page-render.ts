@@ -45,6 +45,7 @@ import {
   API_TYPE_CODE_OPEN,
 } from "./api-type-links";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
+import { forgeOf } from "./forge";
 import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
@@ -480,10 +481,11 @@ export function dependencyStep(
   ref: string,
 ): string {
   const repo = repoUrl ? repoUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "") : "";
-  const isGithub = /^https?:\/\/github\.com\//i.test(repoUrl);
+  const forge = forgeOf(repoUrl);
   const base = repoUrl.replace(/\/$/, "");
   const dependencies = "to `game.project` under `[project]` `dependencies`";
-  const step1 = !isGithub
+  // GitHub and Codeberg serve the same releases, tags and archive routes.
+  const step1 = !forge
     ? `Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`
     : pinKind === "tag"
       ? `This repo publishes no releases. Pick a tag from [${repo} tags](${base}/tags) and add its **Source code (zip)** URL — for the pinned tag, \`${base}/archive/refs/tags/${ref}.zip\` — ${dependencies}`
@@ -536,7 +538,8 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   const repo = meta.authorUrl
     ? meta.authorUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "")
     : "";
-  // A single provenance bullet — the GitHub repo with the commit pin folded in
+  // A single provenance bullet — the upstream repo, labelled by its forge (GitHub
+  // or Codeberg), with the commit pin folded in
   // as `— pinned to <short-sha>` (or the standalone `Commit pin` when the dir
   // carries no NOTICE credit). Author and License are deliberately omitted: the
   // reader gets them from the linked repo. The adopt steps nest as a numbered
@@ -556,7 +559,7 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   // Step 3's import stays a fenced block at the ordered-item content column
   // (5 spaces) so it renders a copyable <pre>.
   const head = meta.authorUrl
-    ? `- GitHub: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`
+    ? `- ${forgeOf(meta.authorUrl) ?? "Source"}: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`
     : `- Commit pin: ${pin}`;
   // A native extension registers its namespace as a Lua global, so step 3 names
   // that global instead of an import a user could not write.

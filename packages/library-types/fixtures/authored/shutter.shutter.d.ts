@@ -1,7 +1,7 @@
 /** @noSelfInFile **/
 
 /**
- * @see {@link https://github.com/Klaleus/defold-shutter|Github Source}
+ * @see {@link https://codeberg.org/Klaleus/defold-shutter|Codeberg Source}
  * @noResolution
  * @example `import * as shutter from 'shutter.shutter'`
  */

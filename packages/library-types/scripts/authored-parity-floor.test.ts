@@ -358,7 +358,7 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
   "fixtures/upstream-lua/defmath/defmath/defmath.lua":
     "212a09cd57b1bac464d4a3cae52121780bf00cc900145e0f8d4114b78ccaa3e6",
   "fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua":
-    "2d204c5da4edd7e41d781a5c4f01471aad8c955036c957bf027238f00b266e02",
+    "2b17a4f9d1fc55597d611880def782872029cdd095d94d5f07a9c1faa65008ba",
   "fixtures/upstream-lua/defold-input/in/accelerometer.lua":
     "fbdf49f06a31bc860d24434d38fc5124f913cb43e88ad039640e0b32e2b545c0",
   "fixtures/upstream-lua/defold-input/in/button.lua":
@@ -392,7 +392,7 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
   "fixtures/upstream-lua/defold-richtext/richtext/tags.lua":
     "d7ae9b160623e4f250204cad8ca05cc8ccbdada7ed32cb529e48a8570337a4dc",
   "fixtures/upstream-lua/defold-shutter/shutter/shutter.lua":
-    "56b389d5c5f382c7c7783be7e584a35ff29e545dc9d68b92b88e5a1087de1f82",
+    "2554c3e742ce43d710c60cf09445e871c8ac3c748531ca72b53dcb1a30588fcd",
   "fixtures/upstream-lua/defold-sprite-repeat/node_repeat/node_repeat.lua":
     "212aefd67d63099336d9e41296d31efaddb9f41c98e978bb3b93892e5cd29204",
   "fixtures/upstream-lua/defold-sprite-repeat/sprite_repeat/sprite_repeat.lua":

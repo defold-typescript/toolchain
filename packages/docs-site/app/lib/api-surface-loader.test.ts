@@ -326,13 +326,14 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
   // A library that was never in ts-defold's tree, so nothing about it is derived from
   // a vendored classification dir — the maintained-here reading has to come from the
   // authored-targets entry alone. Upstream publishes no tags, hence a commit pin.
-  test("attributes shutter to Klaleus/defold-shutter as an authored-here forked library", () => {
+  test("attributes shutter to Klaleus/defold-shutter on Codeberg as an authored-here forked library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("shutter");
     expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("2ed27b50cda551650b01b80c1ccb5dd3f4e161fc");
-    expect(meta.authorUrl).toBe("https://github.com/Klaleus/defold-shutter");
+    expect(meta.commit).toBe("fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1");
+    expect(meta.pinKind).toBe("commit");
+    expect(meta.authorUrl).toBe("https://codeberg.org/Klaleus/defold-shutter");
     expect(meta.sourceUrl).toBe(
-      "https://github.com/Klaleus/defold-shutter/tree/2ed27b50cda551650b01b80c1ccb5dd3f4e161fc",
+      "https://codeberg.org/Klaleus/defold-shutter/src/commit/fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1",
     );
     expect(meta.license).toBe("Zlib");
     expect(meta.importString).toBe('import * as shutter from "shutter.shutter"');
@@ -342,13 +343,14 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
   // The same never-in-ts-defold shape as shutter, and the same author, so the
   // maintained-here reading again comes from the authored-targets entry alone rather
   // than from a vendored classification dir. Upstream publishes no tags or releases.
-  test("attributes checkpoint to Klaleus/defold-checkpoint as an authored-here forked library", () => {
+  test("attributes checkpoint to Klaleus/defold-checkpoint on Codeberg as an authored-here forked library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("checkpoint");
     expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("e4268ffba8f4f968f3c27a1a066ac9660bef3a73");
-    expect(meta.authorUrl).toBe("https://github.com/Klaleus/defold-checkpoint");
+    expect(meta.commit).toBe("a5cf87e1dce8d8980f641301e33843747986ff81");
+    expect(meta.pinKind).toBe("commit");
+    expect(meta.authorUrl).toBe("https://codeberg.org/Klaleus/defold-checkpoint");
     expect(meta.sourceUrl).toBe(
-      "https://github.com/Klaleus/defold-checkpoint/tree/e4268ffba8f4f968f3c27a1a066ac9660bef3a73",
+      "https://codeberg.org/Klaleus/defold-checkpoint/src/commit/a5cf87e1dce8d8980f641301e33843747986ff81",
     );
     expect(meta.license).toBe("Zlib");
     expect(meta.importString).toBe('import * as checkpoint from "checkpoint.checkpoint"');

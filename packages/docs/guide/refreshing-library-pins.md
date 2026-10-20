@@ -57,6 +57,12 @@ A repo the check could not read at all is reported as `unknown` and exits the
 command non-zero. That is deliberate: a renamed or deleted upstream must not look
 like "current".
 
+The check reads GitHub and Codeberg; a repo on any other host reports `unknown`.
+When an upstream moves, search the author's old repos for a pointer to the new
+home before withdrawing the library. Re-pointing means a new `repo` and a new
+`ref` together, because a moved repo often has rewritten history and the old
+commit no longer exists there.
+
 ## Refresh the lane
 
 Four lanes fetch and regenerate. Run their commands from

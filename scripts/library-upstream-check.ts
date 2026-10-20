@@ -66,14 +66,18 @@ export interface LibraryUpstreamRun {
   readonly reports: readonly LibraryUpstreamReport[];
 }
 
+/**
+ * Each read receives the pin's full repo URL rather than its slug: the host
+ * decides which forge API answers, and a slug has already lost it.
+ */
 export interface LibraryCheckIo {
   readonly stdout: (text: string) => void;
   readonly stderr: (text: string) => void;
-  readonly listTags: (slug: string) => Promise<Array<{ name: string; sha: string }>>;
-  readonly readCommit: (slug: string, sha: string) => Promise<{ sha: string; date: string }>;
-  readonly readRepo: (slug: string) => Promise<{ defaultBranch: string }>;
+  readonly listTags: (repo: string) => Promise<Array<{ name: string; sha: string }>>;
+  readonly readCommit: (repo: string, sha: string) => Promise<{ sha: string; date: string }>;
+  readonly readRepo: (repo: string) => Promise<{ defaultBranch: string }>;
   readonly compareRefs: (
-    slug: string,
+    repo: string,
     base: string,
     head: string,
   ) => Promise<{ aheadBy: number; files: string[] }>;
@@ -273,11 +277,11 @@ async function datedTags(
   group: PinnedGroup,
   io: LibraryCheckIo,
 ): Promise<Array<{ name: string; date: number }>> {
-  const tags = await io.listTags(group.slug);
+  const tags = await io.listTags(group.repo);
   const dates = new Map<string, string>();
   for (const tag of tags) {
     if (dates.has(tag.sha)) continue;
-    dates.set(tag.sha, (await io.readCommit(group.slug, tag.sha)).date);
+    dates.set(tag.sha, (await io.readCommit(group.repo, tag.sha)).date);
   }
   return tags.map((tag) => ({
     name: tag.name,
@@ -324,8 +328,8 @@ async function evaluateShaPin(
   io: LibraryCheckIo,
   base: Omit<LibraryUpstreamReport, "actionable" | "reason">,
 ): Promise<LibraryUpstreamReport> {
-  const { defaultBranch } = await io.readRepo(group.slug);
-  const { aheadBy, files } = await io.compareRefs(group.slug, group.ref, defaultBranch);
+  const { defaultBranch } = await io.readRepo(group.repo);
+  const { aheadBy, files } = await io.compareRefs(group.repo, group.ref, defaultBranch);
   if (aheadBy === 0) return { ...base, actionable: false, reason: "current" };
   const behind = {
     ...base,
@@ -424,43 +428,45 @@ export async function runLibraryCheckCli(
   return 1;
 }
 
-const GITHUB_API = "https://api.github.com";
+type ForgeReads = Pick<LibraryCheckIo, "listTags" | "readCommit" | "readRepo" | "compareRefs">;
 
-async function githubJson(path: string): Promise<unknown> {
-  const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
-  const response = await fetch(`${GITHUB_API}${path}`, {
-    headers: {
-      accept: "application/vnd.github+json",
-      ...(token === undefined ? {} : { authorization: `Bearer ${token}` }),
-    },
-  });
-  if (!response.ok) throw new Error(`GET ${path} responded ${response.status}`);
+async function getJson(url: string, headers: Record<string, string>): Promise<unknown> {
+  const response = await fetch(url, { headers });
+  if (!response.ok) throw new Error(`GET ${url} responded ${response.status}`);
   return response.json();
 }
 
-const githubIo: LibraryCheckIo = {
-  stdout: (text) => process.stdout.write(text),
-  stderr: (text) => process.stderr.write(text),
-  listTags: async (slug) => {
-    const tags = (await githubJson(`/repos/${slug}/tags?per_page=100`)) as Array<{
+const GITHUB_API = "https://api.github.com";
+
+function githubJson(path: string): Promise<unknown> {
+  const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+  return getJson(`${GITHUB_API}${path}`, {
+    accept: "application/vnd.github+json",
+    ...(token === undefined ? {} : { authorization: `Bearer ${token}` }),
+  });
+}
+
+const githubReads: ForgeReads = {
+  listTags: async (repo) => {
+    const tags = (await githubJson(`/repos/${repoSlug(repo)}/tags?per_page=100`)) as Array<{
       name: string;
       commit: { sha: string };
     }>;
     return tags.map((tag) => ({ name: tag.name, sha: tag.commit.sha }));
   },
-  readCommit: async (slug, sha) => {
-    const commit = (await githubJson(`/repos/${slug}/commits/${sha}`)) as {
+  readCommit: async (repo, sha) => {
+    const commit = (await githubJson(`/repos/${repoSlug(repo)}/commits/${sha}`)) as {
       sha: string;
       commit: { committer: { date: string } };
     };
     return { sha: commit.sha, date: commit.commit.committer.date };
   },
-  readRepo: async (slug) => {
-    const repo = (await githubJson(`/repos/${slug}`)) as { default_branch: string };
-    return { defaultBranch: repo.default_branch };
+  readRepo: async (repo) => {
+    const meta = (await githubJson(`/repos/${repoSlug(repo)}`)) as { default_branch: string };
+    return { defaultBranch: meta.default_branch };
   },
-  compareRefs: async (slug, base, head) => {
-    const compare = (await githubJson(`/repos/${slug}/compare/${base}...${head}`)) as {
+  compareRefs: async (repo, base, head) => {
+    const compare = (await githubJson(`/repos/${repoSlug(repo)}/compare/${base}...${head}`)) as {
       ahead_by: number;
       files?: Array<{ filename: string }>;
     };
@@ -471,6 +477,78 @@ const githubIo: LibraryCheckIo = {
   },
 };
 
+// Codeberg runs Forgejo. Its routes differ from GitHub's in the commit path, the
+// page-size parameter and the compare count, and it never receives the GitHub
+// token.
+const CODEBERG_API = "https://codeberg.org/api/v1";
+
+function codebergJson(path: string): Promise<unknown> {
+  return getJson(`${CODEBERG_API}${path}`, { accept: "application/json" });
+}
+
+const codebergReads: ForgeReads = {
+  listTags: async (repo) => {
+    const tags = (await codebergJson(`/repos/${repoSlug(repo)}/tags?limit=50`)) as Array<{
+      name: string;
+      commit: { sha: string };
+    }>;
+    return tags.map((tag) => ({ name: tag.name, sha: tag.commit.sha }));
+  },
+  readCommit: async (repo, sha) => {
+    const commit = (await codebergJson(
+      `/repos/${repoSlug(repo)}/git/commits/${sha}?stat=false&files=false&verification=false`,
+    )) as { sha: string; commit: { committer: { date: string } } };
+    return { sha: commit.sha, date: commit.commit.committer.date };
+  },
+  readRepo: async (repo) => {
+    const meta = (await codebergJson(`/repos/${repoSlug(repo)}`)) as { default_branch: string };
+    return { defaultBranch: meta.default_branch };
+  },
+  compareRefs: async (repo, base, head) => {
+    const compare = (await codebergJson(`/repos/${repoSlug(repo)}/compare/${base}...${head}`)) as {
+      total_commits: number;
+      files?: Array<{ filename: string }>;
+    };
+    return {
+      aheadBy: compare.total_commits,
+      files: (compare.files ?? []).map((file) => file.filename),
+    };
+  },
+};
+
+export type ForgeId = "github" | "codeberg";
+
+const FORGE_HOSTS: Readonly<Record<string, ForgeId>> = {
+  "github.com": "github",
+  "codeberg.org": "codeberg",
+};
+
+const FORGE_READS: Readonly<Record<ForgeId, ForgeReads>> = {
+  github: githubReads,
+  codeberg: codebergReads,
+};
+
+/**
+ * The forge whose API answers for a repo URL. A host with no known API throws,
+ * so a pin moved somewhere new reports `unknown` instead of being skipped.
+ */
+export function forgeFor(repo: string): ForgeId {
+  const host = new URL(repo).hostname.toLowerCase();
+  const forge = FORGE_HOSTS[host];
+  if (forge === undefined) throw new Error(`no forge API is known for ${host}`);
+  return forge;
+}
+
+const forgeIo: LibraryCheckIo = {
+  stdout: (text) => process.stdout.write(text),
+  stderr: (text) => process.stderr.write(text),
+  listTags: async (repo) => FORGE_READS[forgeFor(repo)].listTags(repo),
+  readCommit: async (repo, sha) => FORGE_READS[forgeFor(repo)].readCommit(repo, sha),
+  readRepo: async (repo) => FORGE_READS[forgeFor(repo)].readRepo(repo),
+  compareRefs: async (repo, base, head) =>
+    FORGE_READS[forgeFor(repo)].compareRefs(repo, base, head),
+};
+
 if (import.meta.main) {
-  process.exit(await runLibraryCheckCli(process.argv.slice(2), githubIo));
+  process.exit(await runLibraryCheckCli(process.argv.slice(2), forgeIo));
 }
