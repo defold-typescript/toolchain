@@ -1107,8 +1107,8 @@
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.Type, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
-      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): gui.Anchor;",
-      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): gui.Anchor;",
+      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;",
+      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;",
       "gui\u0000FUNCTION\u0000gui.hide_keyboard\u0000[]->[]": "function hide_keyboard(): void;",
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_enabled(node: Opaque<\"node\">, recursive?: boolean): boolean;",
       "gui\u0000FUNCTION\u0000gui.move_above\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"node\\\">\",\"nil\"],\"isOptional\":false}]->[]": "function move_above(node: Opaque<\"node\">, reference: Opaque<\"node\"> | undefined): void;",
@@ -2861,8 +2861,8 @@
       "gui\u0000FUNCTION\u0000gui.get_type\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\"],\"isOptional\":false}]": "function get_type(node: Opaque<\"node\">): LuaMultiReturn<[gui.Type, number | undefined]>;",
       "gui\u0000FUNCTION\u0000gui.get_visible\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_visible(node: Opaque<\"node\">): boolean;",
       "gui\u0000FUNCTION\u0000gui.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
-      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): gui.Anchor;",
-      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): gui.Anchor;",
+      "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_xanchor(node: Opaque<\"node\">): Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;",
+      "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_yanchor(node: Opaque<\"node\">): Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;",
       "gui\u0000FUNCTION\u0000gui.hide_keyboard\u0000[]->[]": "function hide_keyboard(): void;",
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function is_enabled(node: Opaque<\"node\">, recursive?: boolean): boolean;",
       "gui\u0000FUNCTION\u0000gui.move_above\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"Opaque<\\\"node\\\">\",\"nil\"],\"isOptional\":false}]->[]": "function move_above(node: Opaque<\"node\">, reference: Opaque<\"node\"> | undefined): void;",
@@ -10247,11 +10247,17 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.Anchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.Anchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
@@ -15031,11 +15037,17 @@
       },
       "gui\u0000FUNCTION\u0000gui.get_xanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.Anchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.get_yanchor\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },
-        "return:0:anchor": { "type": "gui.Anchor", "optional": false }
+        "return:0:anchor": {
+          "type": "Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+          "optional": false
+        }
       },
       "gui\u0000FUNCTION\u0000gui.is_enabled\u0000[{\"types\":[\"Opaque<\\\"node\\\">\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
         "param:0:node": { "type": "Opaque<\"node\">", "optional": false },

@@ -787,7 +787,8 @@ describe("committed API surfaces — anchor and playback slots keep their engine
         const { exitCode, output } = typecheck(tsconfigPath);
         if (exitCode !== 0) {
           throw new Error(
-            `${index} proof failed — an anchor setter widened, a playback slot rejects ` +
+            `${index} proof failed — an anchor setter widened, an anchor getter returns more ` +
+              `than its setter takes, a playback slot rejects ` +
               `go.PLAYBACK_NONE, a parent union is absent, or a removed subset name is still ` +
               `declared on this surface:\n${output}`,
           );
