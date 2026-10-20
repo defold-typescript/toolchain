@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Every engine type name is PascalCase](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)** on every Defold version: rename `gui.EASING` to `gui.Easing`, `sys.sys_info` to `sys.SysInfo`, `gui.node` to `gui.Node` and `socket.client` to `socket.SocketClient`, write `Vector` for `vmath.vector`, and write `gui.XAnchor` and two other narrower unions as `Exclude` of their enum.
-> - **[`upgrade` reports and compares versions correctly](./upgrade.md#what-it-does)**, including prereleases.
+> - **[`upgrade` reads versions right](./upgrade.md#what-it-does)**, prereleases too.
 > - **[Model texture keys](./typescript-gotchas.md#component-properties-are-catalogued-per-namespace)** reach `texture15`.
 > - **[`setup-debug` supports entry-script exports](./debugging.md#picking-the-entry-script)**, and F5 flags a stale engine build.
 > - **API pages list the complete engine type inventory under one `Types` heading**, by its full path and with its Defold name linked where that differs, with fields and handle methods nested beneath it, as on [socket](/api/socket).
@@ -37,7 +37,6 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **API pages file every type under one `Types` heading, named by its full path on engine pages, and every handle method under `Functions`.** An alias or interface is one row there, such as `image.Type`, which opens with a Lua badge linking the reference's own `image.TYPE` to its defold.com entry, while a type with fields, such as `go.on_input` on [go](/api/go), and a handle's methods, such as the `client` methods on [socket](/api/socket), each get a heading nested inside.
-- **`hsm-view`'s watcher tests state their deterministic boundary:** they invoke the listeners production registers to verify reload and recovery, while the default `node:fs.watch` adapter remains a focused static review.
 
 ### Fixed
 
