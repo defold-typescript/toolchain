@@ -217,8 +217,8 @@ function bareAliasTarget(declaration: Declaration, namespace: string): string | 
 }
 
 // The declared `<namespace>.<name>` of every TYPEDEF, STRUCT and ENUM a target's
-// own reference documents, read with the production ref-doc parser: a STRUCT or
-// ENUM leaf goes through `engineTypeName`, as the declarations spell it.
+// own reference documents, read with the production ref-doc parser. Every leaf
+// goes through `engineTypeName`, as the declarations spell it.
 const referenceNamesCache = new Map<string, Set<string>>();
 function referenceNames(target: string): Set<string> {
   const cached = referenceNamesCache.get(target);
@@ -235,8 +235,11 @@ function referenceNames(target: string): Set<string> {
       const dot = name.lastIndexOf(".");
       return `${name.slice(0, dot + 1)}${engineTypeName(name.slice(dot + 1))}`;
     };
-    for (const element of module.typedefs) names.add(qualify(element.name));
-    for (const element of [...(module.structs ?? []), ...(module.enums ?? [])]) {
+    for (const element of [
+      ...module.typedefs,
+      ...(module.structs ?? []),
+      ...(module.enums ?? []),
+    ]) {
       names.add(renamed(qualify(element.name)));
     }
   }
@@ -452,5 +455,33 @@ describe("same-name analyzer", () => {
     expect(
       defectsOf("export type Shared = number;\ndeclare global {\n  type Shared = string;\n}"),
     ).toEqual([]);
+  });
+
+  test("equal bodies are distinct when the reference documents both typedefs", () => {
+    expect(
+      defectsOf(
+        "declare namespace render {\n  type ConstantBuffer = { value: number };\n  type RenderTarget = { value: number };\n}",
+      ),
+    ).toEqual([]);
+  });
+
+  test("equal bodies remain a defect when the reference documents neither alias", () => {
+    expect(
+      defectsOf(
+        "declare namespace render {\n  type UnknownOne = { value: number };\n  type UnknownTwo = { value: number };\n}",
+      ),
+    ).toEqual([
+      "memory: render: UnknownOne and UnknownTwo declare the same body: { value: number }",
+    ]);
+  });
+
+  test("a bare alias between undocumented declarations remains a defect", () => {
+    expect(
+      defectsOf(
+        "declare namespace render {\n  type UnknownOne = unknown;\n  type UnknownTwo = UnknownOne;\n}",
+      ),
+    ).toEqual([
+      "memory: render: UnknownTwo and UnknownOne name one type: `type UnknownTwo = UnknownOne` is a bare alias",
+    ]);
   });
 });
