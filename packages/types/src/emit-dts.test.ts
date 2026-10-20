@@ -102,6 +102,7 @@ import {
   emitDeclarations,
   emitSymbolSignatures,
   HOMOGENEOUS_ARRAY_SLOTS,
+  handleInterfaceName,
   inlineTableType,
   isKnownDefoldTypeToken,
   MAPPING_TABLE_SLOTS,
@@ -5690,26 +5691,62 @@ describe("shape names on every committed surface", () => {
   type TargetEntries = readonly { namespace: string; doc: unknown; outFile: string }[];
 
   const targetShapes = (entries: TargetEntries): Shape[] =>
-    targetElements(entries, (module) => module.structs ?? []);
+    targetElements(
+      entries,
+      entries.map((entry) => parseDefoldApiDoc(entry.doc)),
+      (module) => module.structs ?? [],
+    );
 
-  // Every reference `TYPEDEF` a target reads, placed the same way as a shape.
-  const targetTypedefs = (entries: TargetEntries): Shape[] =>
-    targetElements(entries, (module) => module.typedefs);
+  // Every routed reference `TYPEDEF` a target reads, placed the same way as a
+  // shape and named for the handle interface that replaces a handle alias.
+  const targetTypedefs = (entries: TargetEntries): Shape[] => {
+    const parsed = entries.map((entry) => parseDefoldApiDoc(entry.doc));
+    const modules = [...parsed];
+    const isEditorEntry = (entry: TargetEntries[number]) =>
+      entry.outFile === "editor.d.ts" || isEditorVm(entry.outFile);
+    for (const editor of [false, true]) {
+      const indexes = entries
+        .map((entry, index) => ({ entry, index }))
+        .filter(({ entry }) => isEditorEntry(entry) === editor)
+        .map(({ index }) => index);
+      const routed = routeTypeDeclarations(indexes.map((index) => parsed[index] as ApiModule));
+      for (const [position, index] of indexes.entries()) {
+        modules[index] = routed[position] as ApiModule;
+      }
+    }
+    return targetElements(
+      entries,
+      modules,
+      (module) => module.typedefs,
+      (module, leaf) => {
+        for (const receiver of collectHandleMethodGroups(module).keys()) {
+          const interfaceName = handleInterfaceName(module.namespace, receiver);
+          if (leaf === receiver || engineTypeName(leaf) === interfaceName) return interfaceName;
+        }
+        return leaf;
+      },
+    );
+  };
 
   function targetElements(
     entries: TargetEntries,
+    modules: readonly ApiModule[],
     elementsOf: (module: ApiModule) => readonly { name: string }[],
+    emittedLeaf: (module: ApiModule, leaf: string) => string = (_module, leaf) => leaf,
   ): Shape[] {
     const shapes = new Map<string, Shape>();
-    for (const entry of entries) {
+    for (const [index, entry] of entries.entries()) {
+      const module = modules[index];
+      if (module === undefined) throw new Error(`${entry.namespace}: no parsed module`);
       const editorVm = isEditorVm(entry.outFile);
-      for (const { name } of elementsOf(parseDefoldApiDoc(entry.doc))) {
+      for (const { name } of elementsOf(module)) {
         const local = name.startsWith(`${entry.namespace}.`)
           ? name.slice(entry.namespace.length + 1)
           : name;
         const full = `${entry.namespace}.${local}`;
         const home = full.slice(0, full.lastIndexOf("."));
-        shapes.set(`${editorVm}:${full}`, { home, leaf: full.slice(home.length + 1), editorVm });
+        const leaf = emittedLeaf(module, full.slice(home.length + 1));
+        shapes.set(`${editorVm}:${full}`, { home, leaf, editorVm });
       }
     }
     return [...shapes.values()];
@@ -5956,25 +5993,28 @@ describe("shape names on every committed surface", () => {
     expect(checked).toBeGreaterThan(0);
   });
 
-  test("every typedef a surface declares takes its PascalCase name, and its reference name only when equal", () => {
+  test("every fixture-derived typedef is declared under its PascalCase name, and its reference name only when equal", () => {
     const reference: string[] = [];
-    const unchecked: string[] = [];
+    const missing: string[] = [];
+    const coreGlobals = new Set(CORE_GLOBAL_ALIASES.map(({ home, leaf }) => `${home}.${leaf}`));
     for (const { id, typedefs, surfaces } of targets) {
-      let declared = 0;
       for (const { home, leaf, editorVm } of typedefs) {
         const pascal = engineTypeName(leaf);
+        let declared = false;
         for (const { path, surface } of surfaces) {
           if (isEditorVm(path) !== editorVm) continue;
           const types = surface.types.get(home);
           if (types === undefined) continue;
           if (pascal !== leaf && types.has(leaf)) reference.push(`${path}: ${home}.${leaf}`);
-          if (types.has(pascal)) declared += 1;
+          if (types.has(pascal)) declared = true;
+        }
+        if (!declared && !coreGlobals.has(`${home}.${leaf}`)) {
+          missing.push(`${id}: ${home}.${pascal} (${editorVm ? "editor-vm" : "runtime"})`);
         }
       }
-      if (typedefs.length > 0 && declared === 0) unchecked.push(id);
     }
     expect(reference).toEqual([]);
-    expect(unchecked).toEqual([]);
+    expect(missing).toEqual([]);
   });
 
   test("no slot on any committed surface names a typedef by its reference spelling", () => {
