@@ -24,30 +24,13 @@
     {
       "lane": "luals",
       "moduleId": "druid.druid",
-      "fromRef": "1.3.1",
-      "toRef": "1.4.0",
-      "addedMembers": [
-        "druid.button.style.ON_HOVER_CURSOR",
-        "druid.button.style.ON_MOUSE_HOVER_CURSOR",
-        "druid.drag.style.ON_HOVER_CURSOR",
-        "druid.drag.style.ON_MOUSE_HOVER_CURSOR",
-        "druid.input.on_input_interrupt",
-        "druid.input.style.ON_HOVER_CURSOR",
-        "druid.input.style.ON_MOUSE_HOVER_CURSOR",
-        "druid.rich_text.metrics.visible_width",
-        "druid.scroll._update_drag_cursors",
-        "druid.scroll.style.ON_HOVER_CURSOR",
-        "druid.scroll.style.ON_MOUSE_HOVER_CURSOR",
-        "druid.slider._input_hover",
-        "druid.slider.hover",
-        "druid.slider.style.DEFAULT_STEPS",
-        "druid.slider.style.ON_HOVER_CURSOR",
-        "druid.slider.style.ON_MOUSE_HOVER_CURSOR"
-      ],
-      "removedMembers": ["druid.rich_input.on_input"],
-      "changedMembers": ["druid.slider.style"],
+      "fromRef": "1.4.0",
+      "toRef": "1.4.1",
+      "addedMembers": ["druid.button.set_cursor", "druid.instance.reset_hovers"],
+      "removedMembers": [],
+      "changedMembers": [],
       "staged": false,
-      "notes": "A minor (1.3.1 -> 1.4.0), net additive: 839 members -> 854, one withdrawn. The release is about hover cursors: the button, drag, scroll, input and slider styles each gain optional ON_HOVER_CURSOR and ON_MOUSE_HOVER_CURSOR fields, the slider gains a public hover component plus a private _input_hover and a DEFAULT_STEPS style field, and scroll gains _update_drag_cursors. rich_text metrics gain visible_width. The two private input handlers trade places: druid.input gains on_input_interrupt and druid.rich_input drops on_input, both marked private, so neither reached the emitted declarations and the removal breaks no consumer. One declaration changed type, and it breaks a call site: druid.slider.style went from LuaTable to the all-optional druid_slider_style, so a value typed LuaTable no longer assigns to it, the same break druid.button.style took at 1.3.1. Three more changed only their doc text (druid.drag.set_drag_cursors, druid.component.reset_input_priority, druid.rich_text.metrics.width), so they are not listed as changed. Fidelity coverage stays 1 (0 unknown), so fidelity-floor.json is unchanged, and every annotationOverrides key still resolved against the new fixtures (applyAnnotationOverrides throws on an absent key, so the emit pass proves it); the module function set is unchanged, so DRUID_PUBLICS is too. staged=false: the fixtures are snapshots rather than a replayable history, so intermediate fetches would add work without an isolation point. 1.4.0 is the newest tag, so upstream:library-check reports it current. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. A member present at BOTH refs but listed under addedMembers would pass, because the 1.3.1 fixture bytes do not survive this commit. changedMembers and these notes are unchecked prose - the committed guard reads addedMembers and removedMembers only."
+      "notes": "A patch (1.4.0 -> 1.4.1), purely additive: 854 members -> 856, none withdrawn and no same-name declaration moved, so changedMembers is empty. Two Lua files changed. druid/base/button.lua gains button:set_cursor(cursor), which writes the cursor (string|number|nil) into both style.ON_HOVER_CURSOR and style.ON_MOUSE_HOVER_CURSOR and returns the button, so the per-button cursor no longer needs a style table. druid/system/druid_instance.lua gains instance:reset_hovers(), which clears hover and mouse hover on every hover component of the instance and returns the instance; it is for a GUI that another GUI covered, whose nodes never receive the mouse leave. The same file hoists its require of druid.base.hover to the top, which changes no annotation. Fidelity coverage stays 1 (0 unknown, 675 -> 677 members, 953 -> 956 type tokens), so fidelity-floor.json is unchanged, and every annotationOverrides key still resolved against the new fixtures (applyAnnotationOverrides throws on an absent key, so the emit pass proves it); the module function set is unchanged, so DRUID_PUBLICS is too. --fetch has no per-target filter and re-downloaded every LuaLS target; one fixture outside fixtures/luals/druid/ came back different, lang/lang.lua, a body-only change because Insality/defold-lang tag 5 points at a later commit than the fixture was vendored from, and it is left as committed because it belongs to the lang pin. staged=false: a single patch. 1.4.1 is the newest tag, so upstream:library-check reports it current. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. A member present at BOTH refs but listed under addedMembers would pass, because the 1.4.0 fixture bytes do not survive this commit. changedMembers and these notes are unchecked prose - the committed guard reads addedMembers and removedMembers only."
     },
     {
       "lane": "luals",

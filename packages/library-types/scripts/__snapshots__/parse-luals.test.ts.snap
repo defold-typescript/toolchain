@@ -682,6 +682,34 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
           ],
         },
         {
+          "brief": "Set the cursor on button hover and mouse hover. Assign it before the pointer enters the button",
+          "generics": [],
+          "name": "set_cursor",
+          "params": [
+            {
+              "doc": "Defos cursor, nil to keep the cursor unchanged on this button",
+              "isNilable": true,
+              "isOptional": false,
+              "isVararg": false,
+              "name": "cursor",
+              "types": [
+                "string|number|nil",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "The current button instance",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.button",
+              ],
+            },
+          ],
+        },
+        {
           "brief": "",
           "generics": [],
           "name": "on_late_init",
@@ -12633,6 +12661,28 @@ set the filter from the outside: the gui script or the parent widget."
               ],
             },
           ],
+          "returns": [
+            {
+              "doc": "The Druid instance",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.instance",
+              ],
+            },
+          ],
+        },
+        {
+          "brief": 
+"Reset the hover state of all hover components of the Druid instance.
+The hovers trigger the hover events with false and drop their cursors.
+Call it when another GUI covers this one and takes the input: the covered nodes never get the mouse leave.
+The next pointer move over a node hovers it again."
+,
+          "generics": [],
+          "name": "reset_hovers",
+          "params": [],
           "returns": [
             {
               "doc": "The Druid instance",

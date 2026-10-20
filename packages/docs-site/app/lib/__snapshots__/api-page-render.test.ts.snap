@@ -39,7 +39,7 @@ exports[`apiPageMarkdown library provenance block the druid page renders its com
 Entry point for Druid UI Framework.
 Create a new Druid instance and adjust the Druid settings here.
 
-- GitHub: [Insality/druid](https://github.com/Insality/druid) — pinned to [\`1.4.0\`](https://github.com/Insality/druid/tree/1.4.0)
+- GitHub: [Insality/druid](https://github.com/Insality/druid) — pinned to [\`1.4.1\`](https://github.com/Insality/druid/tree/1.4.1)
   1. Pick a release from [Insality/druid releases](https://github.com/Insality/druid/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) to \`game.project\` under \`[project]\` \`dependencies\`, then **Fetch Libraries** in the Defold editor.
   2. Run \`bunx @defold-typescript/cli resolve\` to materialize its types.
   3. Import it under a namespace alias of your choice:
@@ -482,6 +482,22 @@ The constructor for the button component
 <div class="api-symbol-body">
 
 Remove default button style animations
+
+<p class="api-slot-label">Returns</p>
+
+- <code class="api-type">druid_button</code> — The current button instance
+
+</div>
+
+#### \`druid_button.set_cursor(cursor?: string | number | undefined): druid_button\`
+
+<div class="api-symbol-body">
+
+Set the cursor on button hover and mouse hover. Assign it before the pointer enters the button
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`cursor\`</strong>?: <code class="api-type">string | number | undefined</code> — Defos cursor, nil to keep the cursor unchanged on this button
 
 <p class="api-slot-label">Returns</p>
 
@@ -6243,6 +6259,21 @@ set the filter from the outside: the gui script or the parent widget.
 <p class="api-slot-label">Parameters</p>
 
 - <strong class="api-name">\`blacklist_components\`</strong>?: <code class="api-type">LuaTable | druid_component[] | undefined</code> — The array of component to blacklist, nil to clear it
+
+<p class="api-slot-label">Returns</p>
+
+- <code class="api-type">druid_instance</code> — The Druid instance
+
+</div>
+
+#### \`druid_instance.reset_hovers(): druid_instance\`
+
+<div class="api-symbol-body">
+
+Reset the hover state of all hover components of the Druid instance.
+The hovers trigger the hover events with false and drop their cursors.
+Call it when another GUI covers this one and takes the input: the covered nodes never get the mouse leave.
+The next pointer move over a node hovers it again.
 
 <p class="api-slot-label">Returns</p>
 

@@ -666,6 +666,32 @@
         },
         {
           "type": "FUNCTION",
+          "name": "set_cursor",
+          "brief": "Set the cursor on button hover and mouse hover. Assign it before the pointer enters the button",
+          "description": "Set the cursor on button hover and mouse hover. Assign it before the pointer enters the button",
+          "parameters": [
+            {
+              "name": "cursor",
+              "doc": "Defos cursor, nil to keep the cursor unchanged on this button",
+              "types": [
+                "string | number | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The current button instance",
+              "types": [
+                "druid_button"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
           "name": "set_enabled",
           "brief": "Set button enabled state.\nThe style.on_set_enabled will be triggered.\nDisabled button is not clickable.",
           "description": "Set button enabled state.\nThe style.on_set_enabled will be triggered.\nDisabled button is not clickable.",
@@ -9835,6 +9861,22 @@
               "is_vararg": "False"
             }
           ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The Druid instance",
+              "types": [
+                "druid_instance"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reset_hovers",
+          "brief": "Reset the hover state of all hover components of the Druid instance.\nThe hovers trigger the hover events with false and drop their cursors.\nCall it when another GUI covers this one and takes the input: the covered nodes never get the mouse leave.\nThe next pointer move over a node hovers it again.",
+          "description": "Reset the hover state of all hover components of the Druid instance.\nThe hovers trigger the hover events with false and drop their cursors.\nCall it when another GUI covers this one and takes the input: the covered nodes never get the mouse leave.\nThe next pointer move over a node hovers it again.",
+          "parameters": [],
           "returnvalues": [
             {
               "name": "",

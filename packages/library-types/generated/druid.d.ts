@@ -120,6 +120,10 @@ declare module 'druid.druid' {
 		 */
 		set_animations_disabled(): druid_button;
 		/**
+		 * Set the cursor on button hover and mouse hover. Assign it before the pointer enters the button
+		 */
+		set_cursor(cursor?: string | number | undefined): druid_button;
+		/**
 		 * Set button enabled state.
 		 * The style.on_set_enabled will be triggered.
 		 * Disabled button is not clickable.
@@ -1765,6 +1769,13 @@ declare module 'druid.druid' {
 		 * set the filter from the outside: the gui script or the parent widget.
 		 */
 		set_blacklist(blacklist_components?: LuaTable | druid_component[] | undefined): druid_instance;
+		/**
+		 * Reset the hover state of all hover components of the Druid instance.
+		 * The hovers trigger the hover events with false and drop their cursors.
+		 * Call it when another GUI covers this one and takes the input: the covered nodes never get the mouse leave.
+		 * The next pointer move over a node hovers it again.
+		 */
+		reset_hovers(): druid_instance;
 		/**
 		 * Create new Druid widget instance
 		 */
