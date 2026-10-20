@@ -1,12 +1,16 @@
 import {
   type BindingPin,
   type EngineSourcePin,
+  PARAM_TYPE_CORRECTIONS,
+  type ParamTypeCorrection,
   PROPERTY_KEY_RANGES,
   type PropertyKeyRange,
   RETURN_TYPE_CORRECTIONS,
   type ReturnTypeCorrection,
   STRUCT_MEMBER_ADDITIONS,
   type StructMemberAddition,
+  TABLE_FIELD_TYPE_OVERRIDES,
+  type TableFieldTypeOverride,
 } from "../src/emit-dts";
 import {
   type BindingFunction,
@@ -69,18 +73,38 @@ export function enginePinHolds(targetId: string, pin: EngineSourcePin): boolean 
 // engine source; empty for a target with none (a ref-doc target). A struct
 // member addition whose function the target does not define has no evidence
 // there: a release older than the function has neither the struct nor the push.
-// Likewise a return correction whose file the target does not vendor: a release
-// older than the module declares no function for it to correct. A key range
-// with an `engine` field is evidence where every one of its pins holds.
+// Likewise a correction whose file the target does not vendor: a release older
+// than the module declares no slot for it to correct. A key range with an
+// `engine` field is evidence where every one of its pins holds.
 export function bindingEvidenceFor(
   target: ApiTarget,
   entries: Iterable<readonly [string, ReturnTypeCorrection]> = RETURN_TYPE_CORRECTIONS,
   additions: Iterable<readonly [string, StructMemberAddition]> = STRUCT_MEMBER_ADDITIONS,
   ranges: Iterable<readonly [string, PropertyKeyRange]> = PROPERTY_KEY_RANGES,
+  parameters: Iterable<readonly [string, ParamTypeCorrection]> = PARAM_TYPE_CORRECTIONS,
+  fields: Iterable<readonly [string, TableFieldTypeOverride]> = TABLE_FIELD_TYPE_OVERRIDES,
 ): ReadonlySet<string> {
   const evidence = new Set<string>();
   if ((target.source ?? null) !== null) return evidence;
   for (const [key, { binding }] of entries) {
+    if (
+      binding !== undefined &&
+      bindingVendorsFile(target.id, binding.file) &&
+      bindingPinHolds(target.id, binding)
+    ) {
+      evidence.add(key);
+    }
+  }
+  for (const [key, { binding }] of parameters) {
+    if (
+      binding !== undefined &&
+      bindingVendorsFile(target.id, binding.file) &&
+      bindingPinHolds(target.id, binding)
+    ) {
+      evidence.add(key);
+    }
+  }
+  for (const [key, { binding }] of fields) {
     if (
       binding !== undefined &&
       bindingVendorsFile(target.id, binding.file) &&
@@ -143,12 +167,14 @@ export function targetBindingOptions(
   corrections?: Iterable<readonly [string, ReturnTypeCorrection]>,
   additions?: Iterable<readonly [string, StructMemberAddition]>,
   ranges?: Iterable<readonly [string, PropertyKeyRange]>,
+  parameters?: Iterable<readonly [string, ParamTypeCorrection]>,
+  fields?: Iterable<readonly [string, TableFieldTypeOverride]>,
 ): TargetBindingOptions {
   const registeredConstants = registeredConstantFqns(target);
   const vendored = (target.source ?? null) === null;
   return {
     ...(registeredConstants ? { registeredConstants } : {}),
-    bindingEvidence: bindingEvidenceFor(target, corrections, additions, ranges),
+    bindingEvidence: bindingEvidenceFor(target, corrections, additions, ranges, parameters, fields),
     ...(vendored ? { nilRaisingSlots: targetNilRaisingSlots(target.id) } : {}),
   };
 }

@@ -872,7 +872,9 @@ function fadeIn(node: Opaque<"node">, easing: gui.Easing, playback: gui.Playback
 }
 ```
 
-A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `window.get_dim_mode` returns `window.Dimming`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.State` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members, with a Lua badge linking the reference's own spelling to its defold.com entry where it differs.
+A slot that takes only part of a named enum spells that part as `Exclude` of the enum instead of a second name, so one namespace never carries two names for overlapping sets. `gui.set_xanchor` takes `gui.Anchor` minus `gui.ANCHOR_TOP` and `gui.ANCHOR_BOTTOM`, while `gui.set_yanchor` excludes `gui.ANCHOR_LEFT` and `gui.ANCHOR_RIGHT`. `window.get_dim_mode` returns `window.Dimming`, which includes `DIMMING_UNKNOWN`, while `window.set_dim_mode` takes `Exclude<window.Dimming, typeof window.DIMMING_UNKNOWN>`; `render.enable_state` takes `graphics.State` minus `STATE_ALPHA_TEST_SUPPORTED` and `STATE_SCISSOR_TEST`, which the engine rejects. Write the same `Exclude` in a wrapper that forwards to such a slot. Signatures and hovers carry the spelling, and the API reference gives each named enum an entry listing its members, with a Lua badge linking the reference's own spelling to its defold.com entry where it differs.
+
+`go.Playback` includes `go.PLAYBACK_NONE`. The full union is accepted by `go.animate` and by the animation `playback` fields read or written through `resource.create_atlas`, `resource.set_atlas`, and `resource.get_atlas`.
 
 **How we pin this in the type tests.** `packages/types/test-d/guide-snippets.ts` asserts the constant is assignable to `number` (backward compatibility) and to its own brand, while a bare `0` assigned to the brand carries `@ts-expect-error`. If the brand is dropped or widened, the expected error disappears and the typecheck gate fails. `packages/types/test-d/constant-union-aliases.ts` does the same for the aliases: representative members are assignable to their alias, and a constant from a sibling group is not. Exhaustive member-set fidelity is held elsewhere: `packages/types/test/constant-union-alias-coverage.test.ts` catches a brand union left without a name, and `packages/types/test/constant-slot-expansion-drift.test.ts` checks each documented slot against the reference documentation.
 
@@ -13242,8 +13244,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_texture_data(texture: string | Hash, width: number, height: number, type: string | image.Type, buffer: string, flip: boolean): boolean;
 - function set_tracking(node: Opaque<"node">, tracking: number): void;
 - function set_visible(node: Opaque<"node">, visible: boolean): void;
-- function set_xanchor(node: Opaque<"node">, anchor: gui.Anchor): void;
-- function set_yanchor(node: Opaque<"node">, anchor: gui.Anchor): void;
+- function set_xanchor(node: Opaque<"node">, anchor: Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>): void;
+- function set_yanchor(node: Opaque<"node">, anchor: Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>): void;
 - function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;
 - function stop_particlefx(node: Opaque<"node">): void;
 - function stop_particlefx(node: Opaque<"node">, options: particlefx.StopOptions): void;

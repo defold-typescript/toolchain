@@ -667,22 +667,28 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
 // target by resource name, a texture unit, a Lua sequence where `table` is
 // declared, a hash the binding refuses as a string. Admission rule: only a slot
 // that evidence contradicts; a slot that is merely imprecise is not a candidate.
-// The correction edits the mapped union rather than replacing it: `adds` appends
-// what the slot also takes and `removes` drops members the binding raises on, so
-// the URL address alias, array curation and constant mapping stay live, and
-// optionality stays with `isDocOptional`. Each entry records the upstream tokens
-// it contradicts, plus any later spelling of the same defect in
-// `retypedUpstream`, and applies only to a slot still declaring one of them;
-// `param-correction-provenance.test.ts` pins them against every retained
-// vendored ref-doc. Once no retained target still declares any of them the
-// entry is deleted, never re-pinned.
-export interface ParamTypeCorrection {
-  readonly adds?: string;
-  readonly removes?: readonly string[];
+// A correction either replaces the mapped type exactly with `ts`, or edits the
+// mapped union: `adds` appends what the slot also takes and `removes` drops
+// members the binding raises on. Union edits keep the URL address alias, array
+// curation and constant mapping live; optionality stays with `isDocOptional`.
+// Each entry records the upstream tokens it contradicts, plus any later spelling
+// of the same defect in `retypedUpstream`, and applies only to a slot still
+// declaring one of them. An entry with a `binding` also requires its exact
+// `EmitOptions.bindingEvidence` key. `param-correction-provenance.test.ts` pins
+// the ref-doc tokens against every retained target; once no target declares a
+// pin, the entry is deleted rather than re-pinned.
+interface ParamTypeCorrectionBase {
   readonly upstream: readonly string[];
   readonly retypedUpstream?: readonly (readonly string[])[];
   readonly reason: string;
+  readonly binding?: BindingPin;
 }
+
+export type ParamTypeCorrection = ParamTypeCorrectionBase &
+  (
+    | { readonly ts: string; readonly adds?: undefined; readonly removes?: undefined }
+    | { readonly ts?: undefined; readonly adds?: string; readonly removes?: readonly string[] }
+  );
 
 const CAMERA_ADDRESS_REASON =
   "render_script_camera.cpp:CheckRenderCamera resolves anything but a number handle through ResolveURL, which takes a string or a hash";
@@ -717,6 +723,58 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
   string,
   ParamTypeCorrection
 >([
+  [
+    "gui.set_xanchor:param:anchor",
+    {
+      ts: "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+      upstream: ["constant"],
+      retypedUpstream: [["gui.ANCHOR"]],
+      reason:
+        "gui_script.cpp:LuaSetXAnchor rejects every value except XANCHOR_NONE, XANCHOR_LEFT, and XANCHOR_RIGHT",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaSetXAnchor",
+        contains: "anchor != XANCHOR_NONE && anchor != XANCHOR_LEFT && anchor != XANCHOR_RIGHT",
+      },
+    },
+  ],
+  [
+    "gui.set_yanchor:param:anchor",
+    {
+      ts: "Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+      upstream: ["constant"],
+      retypedUpstream: [["gui.ANCHOR"]],
+      reason:
+        "gui_script.cpp:LuaSetYAnchor rejects every value except YANCHOR_NONE, YANCHOR_TOP, and YANCHOR_BOTTOM",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaSetYAnchor",
+        contains: "anchor != YANCHOR_NONE && anchor != YANCHOR_TOP && anchor != YANCHOR_BOTTOM",
+      },
+    },
+  ],
+  [
+    "go.animate:param:playback",
+    {
+      ts: "go.Playback",
+      upstream: [
+        "go.PLAYBACK_ONCE_FORWARD",
+        "go.PLAYBACK_ONCE_BACKWARD",
+        "go.PLAYBACK_ONCE_PINGPONG",
+        "go.PLAYBACK_LOOP_FORWARD",
+        "go.PLAYBACK_LOOP_BACKWARD",
+        "go.PLAYBACK_LOOP_PINGPONG",
+      ],
+      retypedUpstream: [["go.PLAYBACK"]],
+      reason:
+        "gameobject_script.cpp:Script_Animate accepts every playback value below PLAYBACK_COUNT, including PLAYBACK_NONE",
+      binding: {
+        file: "gameobject/src/gameobject/gameobject_script.cpp",
+        cFunction: "Script_Animate",
+        contains: "if (playback >= PLAYBACK_COUNT)",
+      },
+    },
+  ],
   ...CAMERA_SLOT_FUNCTIONS.map(
     (name) =>
       [
@@ -3627,9 +3685,11 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 // `<element>:<kind>:<slot>:<field>`, mirroring NESTED_FIELD_CURATIONS; a field
 // one level down is `<field>.<member>`, or `<field>[].<member>` inside a list.
 //
-// The atlas animation `playback` field is documented as `constant` with the
-// prose "the default value is go.PLAYBACK_ONCE_FORWARD", which names the enum
-// the bare token cannot.
+// Unpinned records below rest on ref-doc tokens or prose. The atlas animation
+// `playback` field is documented as `constant` with the prose "the default value
+// is go.PLAYBACK_ONCE_FORWARD", which names the enum the bare token cannot; its
+// records also carry engine binding pins and apply only when the matching
+// `EmitOptions.bindingEvidence` key holds for the target.
 //
 // `gui.set`'s `options.key` is documented as `hash`, while upstream's own
 // example sets a named font with `{ key = "my_font_name" }`.
@@ -3642,22 +3702,47 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 // script_resource.cpp:CreateSoundData reads it with CheckBufferOrString.
 const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
 const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
-const ATLAS_PLAYBACK_TS = "Exclude<go.Playback, typeof go.PLAYBACK_NONE>";
-export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
-  ["compute.set_constants:param:constants:value", CONSTANT_VALUE_TS],
-  ["material.set_constants:param:constants:value", CONSTANT_VALUE_TS],
-  ["material.set_vertex_attributes:param:attributes:value", ATTRIBUTE_VALUE_TS],
-  ["material.get_vertex_attributes:return:table:value", ATTRIBUTE_VALUE_TS],
-  ["resource.set_atlas:param:table:animations[].playback", ATLAS_PLAYBACK_TS],
-  ["resource.create_atlas:param:table:animations[].playback", ATLAS_PLAYBACK_TS],
-  ["resource.get_atlas:return:data:animations[].playback", ATLAS_PLAYBACK_TS],
-  ["render.set_render_target:param:options:transient", "graphics.BufferType[]"],
-  ["resource.create_sound_data:param:options:data", 'string | Opaque<"buffer">'],
+const ATLAS_BINDING_FILE = "gamesys/src/gamesys/scripts/script_resource.cpp";
+const ATLAS_INPUT_PLAYBACK_BINDING: BindingPin = {
+  file: ATLAS_BINDING_FILE,
+  cFunction: "MakeTextureSetFromLua",
+  contains: "GameObjectPlaybackToDDFPlayback((dmGameObject::Playback) lua_tointeger(L,-1))",
+};
+const ATLAS_OUTPUT_PLAYBACK_BINDING: BindingPin = {
+  file: ATLAS_BINDING_FILE,
+  cFunction: "GetAtlas",
+  contains: "(lua_Integer) DDFPlaybackToGameObjectPlayback(anim.m_Playback)",
+};
+
+export interface TableFieldTypeOverride {
+  readonly ts: string;
+  readonly binding?: BindingPin;
+}
+
+export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, TableFieldTypeOverride> = new Map([
+  ["compute.set_constants:param:constants:value", { ts: CONSTANT_VALUE_TS }],
+  ["material.set_constants:param:constants:value", { ts: CONSTANT_VALUE_TS }],
+  ["material.set_vertex_attributes:param:attributes:value", { ts: ATTRIBUTE_VALUE_TS }],
+  ["material.get_vertex_attributes:return:table:value", { ts: ATTRIBUTE_VALUE_TS }],
+  [
+    "resource.set_atlas:param:table:animations[].playback",
+    { ts: "go.Playback", binding: ATLAS_INPUT_PLAYBACK_BINDING },
+  ],
+  [
+    "resource.create_atlas:param:table:animations[].playback",
+    { ts: "go.Playback", binding: ATLAS_INPUT_PLAYBACK_BINDING },
+  ],
+  [
+    "resource.get_atlas:return:data:animations[].playback",
+    { ts: "go.Playback", binding: ATLAS_OUTPUT_PLAYBACK_BINDING },
+  ],
+  ["render.set_render_target:param:options:transient", { ts: "graphics.BufferType[]" }],
+  ["resource.create_sound_data:param:options:data", { ts: 'string | Opaque<"buffer">' }],
   // The option bags 1.13.2 types as a STRUCT, whose members still carry the
   // narrower upstream types: `gui.set`'s (its slot is declared in
   // gui-overloads.d.ts) and `resource.create_sound_data`'s.
-  ["gui.set_options:member:key", "string | Hash"],
-  ["resource.sound_data_options:member:data", 'string | Opaque<"buffer">'],
+  ["gui.set_options:member:key", { ts: "string | Hash" }],
+  ["resource.sound_data_options:member:data", { ts: 'string | Opaque<"buffer">' }],
   // Bitmasks typed as their flag enum: the create_texture example passes
   // TEXTURE_USAGE_FLAG_STORAGE + TEXTURE_USAGE_FLAG_SAMPLE, a sum no single member
   // names, and a reported value combines them the same way.
@@ -3668,13 +3753,15 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
       "resource.render_target_attachment_info",
       "material.texture_info",
     ] as const
-  ).map((struct) => [`${struct}:member:flags`, "graphics.TextureUsageFlag | number"] as const),
-  ["render.render_target_buffer_params:member:flags", "render.RenderTargetFlag | number"],
+  ).map(
+    (struct) => [`${struct}:member:flags`, { ts: "graphics.TextureUsageFlag | number" }] as const,
+  ),
+  ["render.render_target_buffer_params:member:flags", { ts: "render.RenderTargetFlag | number" }],
   // gamesys_script.cpp:PushSampler, behind both get_samplers, pushes the raw
   // texture type; NormalizeBindableTextureType never runs there. A separate
   // sampler reports TEXTURE_TYPE_SAMPLER (6) and a separate texture binding one
   // of the four TEXTURE_TYPE_TEXTURE_* (7-10), none of which has a Lua constant.
-  ["material.sampler_info:member:type", "graphics.TextureType | 6 | 7 | 8 | 9 | 10"],
+  ["material.sampler_info:member:type", { ts: "graphics.TextureType | 6 | 7 | 8 | 9 | 10" }],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise
@@ -4105,12 +4192,16 @@ export function applyFieldTypeOverrides(
   slotKind: "param" | "return" | undefined,
   slotName: string | undefined,
   fields: readonly TableField[],
+  bindingEvidence: ReadonlySet<string>,
 ): TableField[] {
   if (slotKind === undefined || slotName === undefined) return [...fields];
   const prefix = `${tableSlotKey(elementName, slotKind, slotName)}:`;
   const typed = (field: TableField, path: string): TableField => {
-    const override = TABLE_FIELD_TYPE_OVERRIDES.get(`${prefix}${path}`);
-    return override === undefined ? field : { ...field, tsType: override };
+    const key = `${prefix}${path}`;
+    const override = TABLE_FIELD_TYPE_OVERRIDES.get(key);
+    return override === undefined || (override.binding !== undefined && !bindingEvidence.has(key))
+      ? field
+      : { ...field, tsType: override.ts };
   };
   return fields.map((field) => {
     const own = typed(field, field.name);
@@ -4693,7 +4784,9 @@ function structDeclaration(
   const members = [...struct.members, ...added].map((member) => {
     const key = memberCorrectionKey(struct.name, member.name);
     const list = LIST_FIELD_CORRECTIONS.get(key);
-    const retyped = TABLE_FIELD_TYPE_OVERRIDES.get(key);
+    const listedRetype = TABLE_FIELD_TYPE_OVERRIDES.get(key);
+    const retyped =
+      listedRetype?.binding === undefined || bindingEvidence.has(key) ? listedRetype : undefined;
     const optional =
       (member.isOptional || OPTIONAL_MEMBER_CORRECTIONS.has(key)) &&
       !REQUIRED_FIELD_CORRECTIONS.has(key);
@@ -4701,7 +4794,7 @@ function structDeclaration(
       list !== undefined
         ? correctedListMemberType(struct, member, list, structs, mapType)
         : retyped !== undefined
-          ? retyped
+          ? retyped.ts
           : member.type === ""
             ? "unknown"
             : mapType(member.type);
@@ -6043,6 +6136,7 @@ function memberSignature(
       constantTokens,
       elementName,
       urlParameters,
+      bindingEvidence,
       required.has(i),
       prepared.retype?.get(i),
     ),
@@ -6058,6 +6152,7 @@ function memberSignature(
           constantTokens,
           elementName,
           urlParameters,
+          bindingEvidence,
         );
   const params = [...positional.map((p) => p.text), ...(rest ? [rest.text] : [])].join(", ");
   const ret = emitReturn(
@@ -6323,6 +6418,7 @@ function parameterType(
   constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
+  bindingEvidence: ReadonlySet<string>,
 ): string {
   const concrete = p.types.filter((t) => t !== "nil");
   // The caller supplies a parameter, so a string-keyed table in it also takes an
@@ -6344,10 +6440,19 @@ function parameterType(
           elementName,
           "param",
           p.name,
+          bindingEvidence,
         )
       : "unknown";
-  const correction = PARAM_TYPE_CORRECTIONS.get(tableSlotKey(elementName, "param", p.name));
-  if (correction === undefined || !pinMatches(p.types, correctionPins(correction))) return mapped;
+  const key = tableSlotKey(elementName, "param", p.name);
+  const correction = PARAM_TYPE_CORRECTIONS.get(key);
+  if (
+    correction === undefined ||
+    !pinMatches(p.types, correctionPins(correction)) ||
+    (correction.binding !== undefined && !bindingEvidence.has(key))
+  ) {
+    return mapped;
+  }
+  if (correction.ts !== undefined) return correction.ts;
   const kept =
     correction.removes === undefined ? mapped : withoutUnionMembers(mapped, correction.removes);
   if (correction.adds === undefined) return kept;
@@ -6429,13 +6534,22 @@ function emitRestParameter(
   constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
+  bindingEvidence: ReadonlySet<string>,
 ): { text: string; slots: EmittedSlot[] } {
   const vararg = params[varargIndex];
   if (vararg === undefined) return { text: "", slots: [] };
   const folded = params.slice(varargIndex).map((p, offset) => ({
     position: varargIndex + offset,
     name: p.name,
-    ts: parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters),
+    ts: parameterType(
+      p,
+      mapType,
+      resolver,
+      constantTokens,
+      elementName,
+      urlParameters,
+      bindingEvidence,
+    ),
   }));
   const members = [...new Set(folded.map((slot) => slot.ts))];
   const first = members[0] ?? "unknown";
@@ -6463,12 +6577,21 @@ function emitParameter(
   constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
+  bindingEvidence: ReadonlySet<string>,
   required = false,
   retype: (type: string) => string = (type) => type,
 ): { text: string; type: string; optional: boolean } {
   const name = safeParamName(p.name, index);
   const ts = retype(
-    parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters),
+    parameterType(
+      p,
+      mapType,
+      resolver,
+      constantTokens,
+      elementName,
+      urlParameters,
+      bindingEvidence,
+    ),
   );
   // An interior doc-optional param (a required param follows, so the trailing-`?`
   // projection cannot mark it) keeps its optionality as `| undefined` — TSTL
@@ -6540,6 +6663,7 @@ function emitReturn(
                 elementName,
                 "return",
                 rv.name,
+                bindingEvidence,
               )
             : "unknown"),
       };
@@ -6578,6 +6702,7 @@ function emitReturn(
           elementName,
           "return",
           first.name,
+          bindingEvidence,
         )
       : "unknown";
   // A LuaLS vararg return (`...`) is every value the call returns, however many.
@@ -6706,8 +6831,9 @@ function mapSlotUnion(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   elementName: string,
-  slotKind?: "param" | "return",
-  slotName?: string,
+  slotKind: "param" | "return" | undefined,
+  slotName: string | undefined,
+  bindingEvidence: ReadonlySet<string>,
 ): string {
   const mapped: string[] = [];
   const seen = new Set<string>();
@@ -6800,6 +6926,7 @@ function mapSlotUnion(
             slotKind,
             slotName,
             parseTableFields(doc, resolver, slotName) ?? [],
+            bindingEvidence,
           ),
         );
         const object = inlineTableType(parsed, mapType, optionalFields);
@@ -6809,7 +6936,13 @@ function mapSlotUnion(
         if (parsed !== null) {
           const added = applyFieldAdditions(elementName, slotKind, slotName, parsed);
           const nested = applyNestedFieldCurations(elementName, slotKind, slotName, added);
-          const typed = applyFieldTypeOverrides(elementName, slotKind, slotName, nested);
+          const typed = applyFieldTypeOverrides(
+            elementName,
+            slotKind,
+            slotName,
+            nested,
+            bindingEvidence,
+          );
           const required = applyRequiredFieldCorrections(
             elementName,
             slotKind,

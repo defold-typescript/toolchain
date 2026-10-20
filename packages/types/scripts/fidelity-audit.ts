@@ -768,7 +768,13 @@ function auditEntry(
         if (tableSlotCuration?.kind === "keyed-object") {
           const rawParsed = doc !== undefined ? parseTableFields(doc, resolver) : null;
           if (rawParsed !== null && slot !== undefined) {
-            const parsed = applyFieldTypeOverrides(slot.element, slot.kind, slot.name, rawParsed);
+            const parsed = applyFieldTypeOverrides(
+              slot.element,
+              slot.kind,
+              slot.name,
+              rawParsed,
+              new Set(),
+            );
             for (const field of parsed) {
               if (field.fields !== undefined) {
                 for (const nested of field.fields) {
@@ -796,6 +802,7 @@ function auditEntry(
                 slot.kind,
                 slot.name,
                 applyNestedFieldCurations(slot.element, slot.kind, slot.name, parsed),
+                new Set(),
               )
             : parsed;
         if (fields !== null) {

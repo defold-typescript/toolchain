@@ -19,6 +19,42 @@ render.disable_state(graphics.STATE_POLYGON_OFFSET_FILL);
 window.set_dim_mode(window.DIMMING_ON);
 window.set_dim_mode(window.DIMMING_OFF);
 
+declare const _node: Opaque<"node">;
+gui.set_xanchor(_node, gui.ANCHOR_NONE);
+gui.set_xanchor(_node, gui.ANCHOR_LEFT);
+gui.set_xanchor(_node, gui.ANCHOR_RIGHT);
+gui.set_yanchor(_node, gui.ANCHOR_NONE);
+gui.set_yanchor(_node, gui.ANCHOR_TOP);
+gui.set_yanchor(_node, gui.ANCHOR_BOTTOM);
+
+// @ts-expect-error an x anchor rejects vertical constants
+gui.set_xanchor(_node, gui.ANCHOR_TOP);
+// @ts-expect-error an x anchor rejects vertical constants
+gui.set_xanchor(_node, gui.ANCHOR_BOTTOM);
+// @ts-expect-error a y anchor rejects horizontal constants
+gui.set_yanchor(_node, gui.ANCHOR_LEFT);
+// @ts-expect-error a y anchor rejects horizontal constants
+gui.set_yanchor(_node, gui.ANCHOR_RIGHT);
+
+go.animate(".", "position.x", go.PLAYBACK_NONE, 0, go.EASING_LINEAR, 1);
+go.animate(".", "position.x", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 1);
+resource.create_atlas("/atlas.atlasc", {
+  texture: "/texture.texturec",
+  animations: [{ id: "idle", width: 1, height: 1, frames: [1], playback: go.PLAYBACK_NONE }],
+  geometries: [{ vertices: [], uvs: [], indices: [] }],
+});
+resource.set_atlas("/atlas.atlasc", {
+  texture: "/texture.texturec",
+  animations: [
+    { id: "idle", width: 1, height: 1, frames: [1], playback: go.PLAYBACK_ONCE_FORWARD },
+  ],
+  geometries: [{ vertices: [], uvs: [], indices: [] }],
+});
+const [_firstAnimation] = resource.get_atlas("/atlas.atlasc").animations;
+if (_firstAnimation === undefined) throw new Error("atlas has no animations");
+const _atlasPlayback: go.Playback = _firstAnimation.playback;
+void _atlasPlayback;
+
 // @ts-expect-error render_script.cpp raises "Invalid state" for the scissor test
 render.enable_state(graphics.STATE_SCISSOR_TEST);
 // @ts-expect-error render_script.cpp raises "Invalid state" for the support query

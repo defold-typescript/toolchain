@@ -78,8 +78,12 @@ export function identityCorrections(): IdentityCorrections {
         key,
         {
           pins: correctionPins(correction),
-          ...(correction.adds === undefined ? {} : { adds: union(correction.adds) }),
-          ...(correction.removes === undefined ? {} : { removes: [...correction.removes] }),
+          ...(correction.ts !== undefined
+            ? { replaces: union(correction.ts) }
+            : {
+                ...(correction.adds === undefined ? {} : { adds: union(correction.adds) }),
+                ...(correction.removes === undefined ? {} : { removes: [...correction.removes] }),
+              }),
         },
       ]),
     ),

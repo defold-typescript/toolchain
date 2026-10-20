@@ -1912,7 +1912,7 @@ declare global {
      * - `gui.ANCHOR_LEFT`
      * - `gui.ANCHOR_RIGHT`
      */
-    function set_xanchor(node: Opaque<"node">, anchor: gui.Anchor): void;
+    function set_xanchor(node: Opaque<"node">, anchor: Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>): void;
     /**
      * The y-anchor specifies how the node is moved when the game is run in a different resolution.
      *
@@ -1923,7 +1923,7 @@ declare global {
      * - `gui.ANCHOR_TOP`
      * - `gui.ANCHOR_BOTTOM`
      */
-    function set_yanchor(node: Opaque<"node">, anchor: gui.Anchor): void;
+    function set_yanchor(node: Opaque<"node">, anchor: Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>): void;
     /**
      * Shows the on-display touch keyboard.
      * The specified type of keyboard is displayed if it is available on
