@@ -175,6 +175,8 @@ describe("bindingEvidenceFor", () => {
     const keys = [
       "gui.set_xanchor:param:anchor",
       "gui.set_yanchor:param:anchor",
+      "gui.get_xanchor",
+      "gui.get_yanchor",
       "go.animate:param:playback",
       "resource.create_atlas:param:table:animations[].playback",
       "resource.set_atlas:param:table:animations[].playback",

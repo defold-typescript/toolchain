@@ -660,6 +660,36 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
         },
       ] as const,
   ),
+  [
+    "gui.get_xanchor",
+    {
+      ts: "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>",
+      upstream: ["constant"],
+      retypedUpstream: [["gui.ANCHOR"]],
+      reason:
+        "gui_script.cpp:LuaGetXAnchor pushes GetNodeXAnchor, an x anchor: XANCHOR_NONE, XANCHOR_LEFT, or XANCHOR_RIGHT",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaGetXAnchor",
+        contains: "lua_pushnumber(L, GetNodeXAnchor(scene, hnode));",
+      },
+    },
+  ],
+  [
+    "gui.get_yanchor",
+    {
+      ts: "Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>",
+      upstream: ["constant"],
+      retypedUpstream: [["gui.ANCHOR"]],
+      reason:
+        "gui_script.cpp:LuaGetYAnchor pushes GetNodeYAnchor, a y anchor: YANCHOR_NONE, YANCHOR_TOP, or YANCHOR_BOTTOM",
+      binding: {
+        file: "gui/src/gui_script.cpp",
+        cFunction: "LuaGetYAnchor",
+        contains: "lua_pushnumber(L, GetNodeYAnchor(scene, hnode));",
+      },
+    },
+  ],
 ]);
 
 // A parameter whose declared `types` disagree with what the same element's

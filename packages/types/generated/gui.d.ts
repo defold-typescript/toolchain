@@ -1057,7 +1057,7 @@ declare global {
      * - `gui.ANCHOR_LEFT`
      * - `gui.ANCHOR_RIGHT`
      */
-    function get_xanchor(node: Opaque<"node">): gui.Anchor;
+    function get_xanchor(node: Opaque<"node">): Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>;
     /**
      * The y-anchor specifies how the node is moved when the game is run in a different resolution.
      *
@@ -1068,7 +1068,7 @@ declare global {
      * - `gui.ANCHOR_TOP`
      * - `gui.ANCHOR_BOTTOM`
      */
-    function get_yanchor(node: Opaque<"node">): gui.Anchor;
+    function get_yanchor(node: Opaque<"node">): Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>;
     /**
      * Hides the on-display touch keyboard on the device.
      */
