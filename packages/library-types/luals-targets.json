@@ -2,7 +2,7 @@
   "targets": [
     {
       "repo": "https://github.com/Insality/druid",
-      "ref": "1.4.0",
+      "ref": "1.4.1",
       "license": "MIT",
       "sourceGlobs": ["druid/**/*.lua"],
       "moduleId": "druid.druid",
