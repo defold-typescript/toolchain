@@ -1687,7 +1687,7 @@ describe("per-target binding evidence", () => {
   ];
 
   test("a vendored target's evidence holds exactly the binding-pinned keys whose pin holds", () => {
-    const options = targetBindingOptions(target("defold-1.14.0"), entries, additions, []);
+    const options = targetBindingOptions(target("defold-1.14.0"), entries, additions, [], [], []);
     expect([...(options.bindingEvidence ?? [])]).toEqual([
       "factory.create",
       "graphics.adapter_limits:member:max_storage_buffers_per_stage",
@@ -1695,10 +1695,44 @@ describe("per-target binding evidence", () => {
     expect(options.registeredConstants?.size ?? 0).toBeGreaterThan(0);
   });
 
+  test("parameter and field corrections are included only while their pins hold", () => {
+    const holding = { ...NIL_PUSH, contains: "lua_pushnil(L);" };
+    const falsified = { ...NIL_PUSH, lacks: "lua_pushnil(L);" };
+    const parameterCorrections = [
+      [
+        "factory.create:param:mode",
+        { ts: "go.Playback", upstream: ["constant"], reason: "fixture", binding: holding },
+      ],
+      [
+        "factory.never:param:mode",
+        { ts: "go.Playback", upstream: ["constant"], reason: "fixture", binding: falsified },
+      ],
+    ] as const;
+    const fieldCorrections = [
+      ["factory.create:param:options:mode", { ts: "go.Playback", binding: holding }],
+      ["factory.never:param:options:mode", { ts: "go.Playback", binding: falsified }],
+    ] as const;
+
+    const evidence = targetBindingOptions(
+      target("defold-1.14.0"),
+      [],
+      [],
+      [],
+      parameterCorrections,
+      fieldCorrections,
+    ).bindingEvidence;
+    expect([...(evidence ?? [])]).toEqual([
+      "factory.create:param:mode",
+      "factory.create:param:options:mode",
+    ]);
+  });
+
   test("a struct member addition has no evidence where the target lacks its function", () => {
     // 1.13.1 binds the function without the push; 1.12.4 predates the function.
     const evidenceOn = (id: string) => [
-      ...(targetBindingOptions(target(id), [], additions, []).bindingEvidence ?? ["missing"]),
+      ...(targetBindingOptions(target(id), [], additions, [], [], []).bindingEvidence ?? [
+        "missing",
+      ]),
     ];
     expect(evidenceOn("defold-1.13.1")).toEqual([]);
     expect(evidenceOn("defold-1.12.4")).toEqual([]);

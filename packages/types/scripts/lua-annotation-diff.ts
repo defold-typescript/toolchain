@@ -629,6 +629,10 @@ export function correctionAgreement(
       if (pins.some((pin) => pin.kinds !== "any" && sameKinds(withoutNil(pin.kinds), kinds))) {
         return "repeats";
       }
+      if (entry.ts !== undefined) {
+        const corrected = tsTypeKinds(entry.ts);
+        return corrected && sameKinds(withoutNil(corrected), kinds) ? "agrees" : "differs";
+      }
       const adds = entry.adds === undefined ? [] : tsTypeKinds(entry.adds);
       const removes = (entry.removes ?? []).map(tsTypeKinds);
       if (!adds || removes.some((removed) => removed === undefined)) return "differs";
