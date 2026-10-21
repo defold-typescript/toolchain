@@ -36,6 +36,14 @@ import {
   openAnnotationVerdictSlots,
   parseAnnotationVerdicts,
 } from "../packages/types/scripts/lua-annotation-verdicts.ts";
+import {
+  candidateSlots,
+  parseAssetPortalManifest,
+  portalCoverage,
+  readCoverageRegistries,
+  readPortalAliases,
+  readPortalVerdicts,
+} from "./asset-portal-check.ts";
 
 /** The coverage every floor is working toward; anything under it is backlog. */
 export const FLOOR_TARGET = 1;
@@ -55,9 +63,15 @@ export interface RatchetSource {
    * one-sided *numeric* floor is what `openSlots` understands — it reports a
    * number below target and skips arrays outright — so a manifest whose entries
    * are not numbers supplies its own collector rather than fragmenting discovery
-   * across a second command.
+   * across a second command. `manifestDir` is the absolute directory the
+   * manifest was read from, for a collector that joins it against the sibling
+   * files kept there.
    */
-  collect?: (manifestFile: string, parsed: Record<string, unknown>) => string[];
+  collect?: (
+    manifestFile: string,
+    parsed: Record<string, unknown>,
+    manifestDir: string,
+  ) => string[];
 }
 
 export const RATCHET_SOURCES: readonly RatchetSource[] = [
@@ -93,6 +107,22 @@ export const RATCHET_SOURCES: readonly RatchetSource[] = [
     file: ANNOTATION_VERDICTS_FILE_NAME,
     parse: parseAnnotationVerdicts,
     collect: openAnnotationVerdictSlots,
+  },
+  {
+    id: "asset-portal-candidates",
+    dir: MANIFEST_DIR,
+    file: "asset-portal.json",
+    parse: (raw, path) => ({ ...parseAssetPortalManifest(raw, path) }),
+    collect: (file, parsed, dir) =>
+      candidateSlots(
+        file,
+        portalCoverage(
+          parseAssetPortalManifest(parsed, file),
+          readCoverageRegistries(dir),
+          readPortalAliases(dir),
+          readPortalVerdicts(dir),
+        ),
+      ),
   },
 ];
 
@@ -138,9 +168,11 @@ function resolveSource(id: string): RatchetSource {
 export function collectOpenSlots(root: string, id?: string): string[] {
   const sources = id === undefined ? RATCHET_SOURCES : [resolveSource(id)];
   return sources.flatMap((source) => {
-    const path = join(root, source.dir, source.file);
+    const dir = join(root, source.dir);
+    const path = join(dir, source.file);
     const collect = source.collect ?? openSlots;
-    return collect(source.file, source.parse(JSON.parse(readFileSync(path, "utf8")), source.file));
+    const parsed = source.parse(JSON.parse(readFileSync(path, "utf8")), source.file);
+    return collect(source.file, parsed, dir);
   });
 }
 
