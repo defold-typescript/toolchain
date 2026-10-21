@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AUTHORED_FLOOR_MANIFEST_FILE } from "../packages/library-types/scripts/authored-parity.ts";
 import { FLOOR_MANIFEST_FILE } from "../packages/library-types/scripts/fidelity-floor.ts";
+import type {
+  AssetPortalManifest,
+  PortalEntry,
+} from "../packages/library-types/scripts/sync-asset-portal.ts";
 import {
   VERDICTS_DIR,
   VERDICTS_FILE_NAME,
@@ -18,6 +22,7 @@ import {
   ANNOTATION_VERDICTS_DIR,
   ANNOTATION_VERDICTS_FILE_NAME,
 } from "../packages/types/scripts/lua-annotation-verdicts.ts";
+import { readCoverageRegistries } from "./asset-portal-check.ts";
 import { collectOpenSlots, openSlots, RATCHET_SOURCES } from "./ratchet-backlog.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..");
@@ -35,10 +40,61 @@ const LINE_SHAPES: Record<string, RegExp> = {
     /^[A-Za-z0-9._-]+\.json: [^\s:]+:[^\s:]+:[a-z-]+(:\S+)? open \(extracted [^()]*, declared [^()]*\)$/,
   "lua-annotation-open":
     /^[A-Za-z0-9._-]+\.json: (runtime|editor):[^\s:]+:[a-z-]+(:\S+)? open \(annotated [^()]*, declared [^()]*\)$/,
+  "asset-portal-candidates":
+    /^[A-Za-z0-9._-]+\.json: (script-api|native-untyped|pure-lua-annotated|pure-lua):[^\s:]+:https?:\/\/\S+$/,
 };
 
 // Spelled out rather than imported so relocating either manifest reds this suite.
 const MANIFEST_DIR = join("packages", "library-types");
+
+// The lane registries the portal probe joins its manifest against, copied from
+// the committed package so a temp root resolves the same pins the repo does.
+const COVERAGE_REGISTRY_FILES = [
+  "authored-targets.json",
+  "luals-targets.json",
+  "markdown-targets.json",
+  "openapi-targets.json",
+  "script-api-targets.json",
+  "native-targets.json",
+  "defold-extensions.json",
+];
+
+const PORTAL_SYNCED_AT = "2026-10-21T00:00:00.000Z";
+
+function portalEntry(id: string, repo: string): PortalEntry {
+  return {
+    id,
+    name: id,
+    description: "",
+    tags: [],
+    portalLibrary: true,
+    repo,
+    archived: false,
+    fork: false,
+    pushedAt: "2026-10-20T00:00:00Z",
+    stars: 1,
+    ref: "1.0.0",
+    refKind: "release",
+    includeDirs: ["lib"],
+    scriptApi: 0,
+    extManifest: 0,
+    lua: 1,
+    luaSampled: 1,
+    luaAnnotated: 0,
+    kind: "pure-lua",
+  };
+}
+
+function portalManifest(entries: PortalEntry[]): AssetPortalManifest {
+  return {
+    source: {
+      repo: "https://github.com/defold/asset-portal",
+      commit: "a".repeat(40),
+      syncedAt: PORTAL_SYNCED_AT,
+    },
+    entries,
+  };
+}
 
 function tempRoot(
   fidelity: unknown,
@@ -46,10 +102,25 @@ function tempRoot(
   pins: unknown = {},
   bindingVerdicts: unknown = {},
   annotationVerdicts: unknown = {},
+  portal: unknown = portalManifest([]),
+  aliases: Record<string, string> = {},
+  verdicts: Record<string, string> = {},
 ): string {
   const root = mkdtempSync(join(tmpdir(), "ratchet-backlog-"));
   const dir = join(root, MANIFEST_DIR);
   mkdirSync(dir, { recursive: true });
+  for (const file of COVERAGE_REGISTRY_FILES) {
+    copyFileSync(join(REPO_ROOT, MANIFEST_DIR, file), join(dir, file));
+  }
+  writeFileSync(join(dir, "asset-portal.json"), `${JSON.stringify(portal, null, 2)}\n`);
+  writeFileSync(
+    join(dir, "asset-portal-aliases.json"),
+    `${JSON.stringify({ aliases }, null, 2)}\n`,
+  );
+  writeFileSync(
+    join(dir, "asset-portal-verdicts.json"),
+    `${JSON.stringify({ verdicts }, null, 2)}\n`,
+  );
   writeFileSync(join(dir, FLOOR_MANIFEST_FILE), `${JSON.stringify(fidelity, null, 2)}\n`);
   writeFileSync(join(dir, AUTHORED_FLOOR_MANIFEST_FILE), `${JSON.stringify(authored, null, 2)}\n`);
   const pinsDir = join(root, PINS_DIR);
@@ -278,6 +349,69 @@ describe("lua-annotation-open — open annotation mismatches as backlog", () => 
     const root = tempRoot(...atTarget, { "runtime:gui.animate:arity": { verdict: "manual" } });
     try {
       expect(() => collectOpenSlots(root, "lua-annotation-open")).toThrow(/verdict/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("asset-portal-candidates — untracked portal entries as backlog", () => {
+  const atTarget = [
+    { "fidelity/a.json": 1 },
+    { "fidelity/authored/b.json": { callable: 1, field: 1 } },
+    {},
+    {},
+    {},
+  ] as const;
+  const widget = portalEntry("widget", "https://github.com/acme/widget");
+
+  test("an entry no lane pins prints one line naming its kind, id and repo", () => {
+    const root = tempRoot(...atTarget, portalManifest([widget]));
+    try {
+      expect(collectOpenSlots(root, "asset-portal-candidates")).toEqual([
+        "asset-portal.json: pure-lua:widget:https://github.com/acme/widget",
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("the same entry with a verdict prints nothing", () => {
+    const root = tempRoot(
+      ...atTarget,
+      portalManifest([widget]),
+      {},
+      {
+        widget: "editor script only",
+      },
+    );
+    try {
+      expect(collectOpenSlots(root, "asset-portal-candidates")).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("an entry whose repo the copied registries pin prints nothing", () => {
+    const pinned = readCoverageRegistries(join(REPO_ROOT, MANIFEST_DIR)).pinned[0];
+    if (!pinned) throw new Error("the committed registries pin no repo");
+    const root = tempRoot(...atTarget, portalManifest([portalEntry("pinned", pinned.repo)]));
+    try {
+      expect(collectOpenSlots(root, "asset-portal-candidates")).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test.each([
+    ["no entries array", { source: { syncedAt: PORTAL_SYNCED_AT } }],
+    ["no source.syncedAt", { source: {}, entries: [] }],
+  ])("a manifest with %s throws naming the file rather than reading as drained", (_label, portal) => {
+    const root = tempRoot(...atTarget, portal);
+    try {
+      expect(() => collectOpenSlots(root, "asset-portal-candidates")).toThrow(
+        "asset-portal.json: expected an asset-portal manifest",
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -1,0 +1,11 @@
+{
+  "verdicts": {
+    "asset-store": "editor script only",
+    "editor-script-check-dependencies-versions": "editor script only",
+    "lowrezjamtemplate": "project template, not a dependency",
+    "physics-tools": "editor script with plugin binaries, no runtime module",
+    "scml-parser": "import tool, no runtime module",
+    "sonilo": "editor script whose runtime piece is a script component, no module to require",
+    "tilemaps-store": "import tool, no runtime module"
+  }
+}

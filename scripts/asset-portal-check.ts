@@ -60,18 +60,25 @@ export interface CoverageRegistries {
 /** Portal entry id -> the tracked repo URL its library moved to. */
 export type PortalAliases = Readonly<Record<string, string>>;
 
+/** Portal entry id -> why the project does not type it. */
+export type PortalVerdicts = Readonly<Record<string, string>>;
+
 export interface PortalCoverage {
   readonly id: string;
   readonly kind: PortalKind;
   readonly repo: string | null;
   readonly stars: number | null;
   readonly lanes: readonly CoverageLane[];
+  /** The recorded reason this untracked entry is not typed, when a verdict exists. */
+  readonly declined: string | null;
   readonly candidate: boolean;
 }
 
 export interface CoverageReport {
   readonly total: number;
   readonly tracked: Readonly<Partial<Record<CoverageLane, readonly PortalCoverage[]>>>;
+  /** Untracked entries with a verdict, by id. A verdict outranks the maintenance rule. */
+  readonly declined: readonly PortalCoverage[];
   /** Ranked by stars descending, then id. */
   readonly candidates: Readonly<Partial<Record<PortalKind, readonly PortalCoverage[]>>>;
   /** Untracked entries with a Lua API that fail the maintenance rule. */
@@ -105,9 +112,31 @@ export function readAssetPortalManifest(packageRoot: string = PACKAGE_ROOT): Ass
   return JSON.parse(readFileSync(join(packageRoot, "asset-portal.json"), "utf8"));
 }
 
+/**
+ * The shape the ratchet probe needs before it joins: a manifest it cannot read
+ * is unknown backlog, never a drained one.
+ */
+export function parseAssetPortalManifest(raw: unknown, path: string): AssetPortalManifest {
+  const manifest = raw as Partial<AssetPortalManifest> | null;
+  if (
+    manifest === null ||
+    typeof manifest !== "object" ||
+    !Array.isArray(manifest.entries) ||
+    typeof manifest.source?.syncedAt !== "string"
+  ) {
+    throw new Error(`${path}: expected an asset-portal manifest`);
+  }
+  return manifest as AssetPortalManifest;
+}
+
 export function readPortalAliases(packageRoot: string = PACKAGE_ROOT): PortalAliases {
   const file = join(packageRoot, "asset-portal-aliases.json");
   return (JSON.parse(readFileSync(file, "utf8")) as { aliases: PortalAliases }).aliases;
+}
+
+export function readPortalVerdicts(packageRoot: string = PACKAGE_ROOT): PortalVerdicts {
+  const file = join(packageRoot, "asset-portal-verdicts.json");
+  return (JSON.parse(readFileSync(file, "utf8")) as { verdicts: PortalVerdicts }).verdicts;
 }
 
 export function readCoverageRegistries(packageRoot: string = PACKAGE_ROOT): CoverageRegistries {
@@ -156,14 +185,17 @@ function isMaintainedLuaApi(entry: PortalEntry, syncedAt: number): boolean {
 /**
  * Per entry, the lanes whose registries pin its repo (or its alias's), and
  * whether it is a candidate: untracked, shipping a Lua API, not archived, not a
- * fork, and pushed within 730 days of the sync. An alias for an entry the
- * manifest no longer lists, or for a repo no registry pins, throws: either would
- * silently hide a real gap.
+ * fork, pushed within 730 days of the sync, and without a verdict. An alias for
+ * an entry the manifest no longer lists, or for a repo no registry pins, throws:
+ * either would silently hide a real gap. A verdict for an unlisted entry, or for
+ * one a lane pins (directly or through its alias), throws for the same reason:
+ * it is stale, and keeping it would hide the next entry it is mistaken for.
  */
 export function portalCoverage(
   manifest: AssetPortalManifest,
   registries: CoverageRegistries,
   aliases: PortalAliases,
+  verdicts: PortalVerdicts,
 ): PortalCoverage[] {
   const pinned = lanesByRepo(registries);
   const aliasMap = new Map(Object.entries(aliases));
@@ -176,18 +208,35 @@ export function portalCoverage(
       throw new Error(`asset-portal-aliases.json: ${id} points at ${target}, which no lane pins`);
     }
   }
-  const syncedAt = Date.parse(manifest.source.syncedAt);
-  return manifest.entries.map((entry) => {
+  const lanesOf = (entry: PortalEntry): { repo: string | null; lanes: CoverageLane[] } => {
     const repo = aliasMap.get(entry.id) ?? entry.repo;
     const repoLanes = repo === null ? undefined : pinned.get(repoKey(repo));
-    const lanes = LANE_ORDER.filter((lane) => repoLanes?.has(lane));
+    return { repo, lanes: LANE_ORDER.filter((lane) => repoLanes?.has(lane)) };
+  };
+  const verdictMap = new Map(Object.entries(verdicts));
+  const entriesById = new Map(manifest.entries.map((entry) => [entry.id, entry]));
+  for (const id of verdictMap.keys()) {
+    const entry = entriesById.get(id);
+    if (entry === undefined) {
+      throw new Error(`asset-portal-verdicts.json: ${id} is not an asset-portal.json entry`);
+    }
+    const [lane] = lanesOf(entry).lanes;
+    if (lane !== undefined) {
+      throw new Error(`asset-portal-verdicts.json: ${id} is pinned by ${lane}`);
+    }
+  }
+  const syncedAt = Date.parse(manifest.source.syncedAt);
+  return manifest.entries.map((entry) => {
+    const { repo, lanes } = lanesOf(entry);
+    const declined = verdictMap.get(entry.id) ?? null;
     return {
       id: entry.id,
       kind: entry.kind,
       repo,
       stars: entry.stars,
       lanes,
-      candidate: lanes.length === 0 && isMaintainedLuaApi(entry, syncedAt),
+      declined,
+      candidate: lanes.length === 0 && declined === null && isMaintainedLuaApi(entry, syncedAt),
     };
   });
 }
@@ -212,12 +261,15 @@ function addTo<K extends string>(
  */
 export function coverageReport(coverage: readonly PortalCoverage[]): CoverageReport {
   const tracked: Partial<Record<CoverageLane, PortalCoverage[]>> = {};
+  const declined: PortalCoverage[] = [];
   const candidates: Partial<Record<PortalKind, PortalCoverage[]>> = {};
   const inactive: PortalCoverage[] = [];
   const nothingToType: Partial<Record<PortalKind, PortalCoverage[]>> = {};
   for (const entry of coverage) {
     if (entry.lanes.length > 0) {
       for (const lane of entry.lanes) addTo(tracked, lane, entry);
+    } else if (entry.declined !== null) {
+      declined.push(entry);
     } else if (entry.candidate) {
       addTo(candidates, entry.kind, entry);
     } else if (LUA_API_KINDS.has(entry.kind)) {
@@ -226,8 +278,23 @@ export function coverageReport(coverage: readonly PortalCoverage[]): CoverageRep
       addTo(nothingToType, entry.kind, entry);
     }
   }
+  declined.sort((a, b) => a.id.localeCompare(b.id));
   for (const list of Object.values(candidates)) list.sort(byStars);
-  return { total: coverage.length, tracked, candidates, inactive, nothingToType };
+  return { total: coverage.length, tracked, declined, candidates, inactive, nothingToType };
+}
+
+/**
+ * The candidate list in the one-line-per-slot shape the ratchet probe prints,
+ * in the report's order: kind, then stars descending, then id.
+ */
+export function candidateSlots(
+  manifestFile: string,
+  coverage: readonly PortalCoverage[],
+): string[] {
+  const { candidates } = coverageReport(coverage);
+  return KIND_ORDER.flatMap((kind) =>
+    (candidates[kind] ?? []).map((entry) => `${manifestFile}: ${kind}:${entry.id}:${entry.repo}`),
+  );
 }
 
 function countOf(groups: CoverageReport["candidates"]): number {
@@ -258,6 +325,12 @@ export function describeCoverageReport(report: CoverageReport): string {
         `    ${String(entry.stars ?? 0).padStart(5)}  ${entry.id.padEnd(idWidth)}  ${entry.repo}`,
       );
     }
+  }
+
+  lines.push("", `Declined: ${report.declined.length} untracked entries the project does not type`);
+  const declinedWidth = Math.max(0, ...report.declined.map((entry) => entry.id.length));
+  for (const entry of report.declined) {
+    lines.push(`  ${entry.id.padEnd(declinedWidth)}  ${entry.declined}`);
   }
 
   lines.push(
@@ -376,7 +449,12 @@ export async function runAssetPortalCheckCli(
   const manifest = readAssetPortalManifest(packageRoot);
   if (argv.includes("--report")) {
     const report = coverageReport(
-      portalCoverage(manifest, readCoverageRegistries(packageRoot), readPortalAliases(packageRoot)),
+      portalCoverage(
+        manifest,
+        readCoverageRegistries(packageRoot),
+        readPortalAliases(packageRoot),
+        readPortalVerdicts(packageRoot),
+      ),
     );
     const { commit, syncedAt } = manifest.source;
     io.stdout(
