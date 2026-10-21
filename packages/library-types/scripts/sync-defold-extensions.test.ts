@@ -284,6 +284,7 @@ describe("syncDefoldExtensions", () => {
       name: "iap.PROVIDER_ID",
       brief: "",
       description: "",
+      types: ["number"],
     });
     const riveCmd = JSON.parse(
       readFileSync(join(out, "defold-extensions", "api-doc", "rive.cmd.json"), "utf8"),
@@ -374,6 +375,7 @@ describe("reconvertDefoldExtensions", () => {
       name: "rive.cmd.PROVIDER_ID",
       brief: "",
       description: "",
+      types: ["number"],
     });
   });
 

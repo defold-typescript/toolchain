@@ -470,13 +470,19 @@
       "type": "CONSTANT",
       "name": "playables.CONTENT_TYPE_VIDEO",
       "brief": "Opens a YouTube video.",
-      "description": "Opens a YouTube video."
+      "description": "Opens a YouTube video.",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "playables.CONTENT_TYPE_PLAYABLE",
       "brief": "Opens another YouTube Playable.",
-      "description": "Opens another YouTube Playable."
+      "description": "Opens another YouTube Playable.",
+      "types": [
+        "number"
+      ]
     }
   ]
 }
