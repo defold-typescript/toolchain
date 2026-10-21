@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Hono } from "hono";
 import { createLibrariesRoute } from "../routes/libraries";
-import { apiPages, defoldListings } from "./api-content";
+import { apiPages, untypedListings } from "./api-content";
 import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
@@ -26,6 +26,12 @@ function cardAnchors(html: string, hrefPattern: string): string[] {
   );
 }
 
+const textOf = (html: string): string =>
+  html
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 async function renderLibraries(): Promise<{ status: number; html: string }> {
   const app = new Hono();
   app.get(
@@ -44,11 +50,16 @@ describe("/libraries route composition", () => {
     (page) => page.category === "library",
   );
 
-  test("renders every untyped Defold library as one icon-marked card linking its own page", async () => {
+  test("renders every untyped library as one icon-marked card linking its own page", async () => {
     const { status, html } = await renderLibraries();
     expect(status).toBe(200);
-    const listings = defoldListings(REAL_LIBRARY_TYPES_DIR);
-    expect(listings.map((listing) => listing.url).sort()).toEqual(
+    const listings = untypedListings(REAL_LIBRARY_TYPES_DIR);
+    expect(
+      listings
+        .filter((listing) => listing.official)
+        .map((listing) => listing.url)
+        .sort(),
+    ).toEqual(
       manifest
         .filter((entry) => entry.docs.length === 0)
         .map((entry) => entry.repo)
@@ -64,6 +75,30 @@ describe("/libraries route composition", () => {
       expect(inner).toContain(listing.repo);
       expect(inner).toContain(NO_TYPED_API_ICON);
       expect(html).not.toContain(`href="${listing.url}"`);
+    }
+  });
+
+  test("files each Asset Portal listing's card under its GitHub owner, after defold (official)", async () => {
+    const { html } = await renderLibraries();
+    const sections = [...html.matchAll(/<section>\s*<h2>(.*?)<\/h2>(.*?)<\/section>/gs)].map(
+      (match) => ({ heading: textOf(match[1] ?? ""), body: match[2] ?? "" }),
+    );
+    expect(sections[0]?.heading).toBe("defold (official)");
+    const portalListings = untypedListings(REAL_LIBRARY_TYPES_DIR).filter(
+      (listing) => listing.portal,
+    );
+    expect(portalListings.length).toBeGreaterThan(0);
+    for (const listing of portalListings) {
+      const holders = sections
+        .map((section, index) => ({ ...section, index }))
+        .filter(
+          (section) => cardAnchors(section.body, `[^"]*${escapeRegExp(listing.route)}`).length > 0,
+        );
+      expect({
+        route: listing.route,
+        owners: holders.map((section) => section.heading),
+        afterDefold: holders.every((section) => section.index > 0),
+      }).toEqual({ route: listing.route, owners: [listing.owner], afterDefold: true });
     }
   });
 

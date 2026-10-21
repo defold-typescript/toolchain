@@ -505,7 +505,8 @@ function pinLabel(ref: string): string {
 // with the setup steps nested under it, then the optional `Engine APIs` section.
 // Only a `standard` adoption opens the steps with the shared dependency step; a
 // `fork` listing's authored steps already start from the fork, and an
-// `unavailable` one has nothing to install, so theirs number from 1.
+// `unavailable` one has nothing to install, so theirs number from 1. An Asset
+// Portal listing closes the bullets with a link to its portal entry.
 export function listingPageMarkdown(listing: LibraryListing): string {
   const repo = `${listing.owner}/${listing.repo}`;
   const standard = listing.adoption === "standard";
@@ -518,6 +519,7 @@ export function listingPageMarkdown(listing: LibraryListing): string {
     `- GitHub: [${repo}](${listing.url}) — pinned to [\`${pinLabel(listing.ref)}\`](${listing.url}/tree/${listing.ref})`,
     ...(standard ? [dependencyStep(listing.url, listing.pinKind, listing.ref)] : []),
     ...listing.steps.map((step, index) => `  ${index + firstNumber}. ${step}`),
+    ...(listing.portal ? [`- Asset Portal: [${listing.repo}](${listing.portal.url})`] : []),
   ];
   if (listing.engineApis) lines.push("", "## Engine APIs", "", listing.engineApis);
   return lines.join("\n");

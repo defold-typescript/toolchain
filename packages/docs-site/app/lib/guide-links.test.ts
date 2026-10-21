@@ -8,7 +8,7 @@ import {
   apiVersionAxis,
   canonicalApiPages,
   canonicalNamespaces,
-  defoldListings,
+  untypedListings,
   windowedApiPages,
 } from "./api-content";
 import { versionedApiParams } from "./api-page-render";
@@ -380,7 +380,7 @@ describe("docs/guide link and anchor resolution", () => {
     expect(STATIC_ROUTES.has("/search")).toBe(true);
     expect(STATIC_ROUTES.has("/")).toBe(true);
     expect(STATIC_ROUTES.has("/resolve")).toBe(true);
-    for (const listing of defoldListings(REAL_LIBRARY_TYPES_DIR)) {
+    for (const listing of untypedListings(REAL_LIBRARY_TYPES_DIR)) {
       expect(STATIC_ROUTES.has(listing.route)).toBe(true);
     }
     expect(STATIC_ROUTES.has("/libraries/defold/not-a-repo")).toBe(false);

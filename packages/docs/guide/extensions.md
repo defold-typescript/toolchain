@@ -114,5 +114,12 @@ install step. A repo upstream asks you to fork, such as
 forking it and depending on your fork. `resolve` still reports each one as
 `asset-only, skipped`.
 
+Libraries on the [Defold Asset Portal](https://defold.com/assets/) that ship no
+Lua API, such as shaders, materials, sounds and editor scripts, are listed the
+same way under their GitHub owner, such as
+[defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page
+leads with the portal's description of the library, gives the dependency step
+for its pin, and links its Asset Portal entry.
+
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).
