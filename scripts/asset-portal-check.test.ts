@@ -7,6 +7,7 @@ import type {
 } from "../packages/library-types/scripts/sync-asset-portal.ts";
 import {
   type AssetPortalCheckIo,
+  type CoverageLane,
   type CoverageRegistries,
   coverageReport,
   describeCoverageReport,
@@ -88,12 +89,24 @@ function coverageOf(
 }
 
 describe("portalCoverage — lane join", () => {
-  test("a repo a LuaLS target pins is tracked under luals and is no candidate", () => {
+  const PINNED_ONLY_BY = {
+    authored: (repo) => registries({ pinned: [{ lane: "authored", repo }] }),
+    luals: (repo) => registries({ pinned: [{ lane: "luals", repo }] }),
+    markdown: (repo) => registries({ pinned: [{ lane: "markdown", repo }] }),
+    openapi: (repo) => registries({ pinned: [{ lane: "openapi", repo }] }),
+    scriptApi: (repo) => registries({ pinned: [{ lane: "scriptApi", repo }] }),
+    native: (repo) => registries({ native: [{ repo }] }),
+    defold: (repo) => registries({ defold: [{ repo }] }),
+  } satisfies Record<CoverageLane, (repo: string) => CoverageRegistries>;
+
+  test.each(
+    Object.keys(PINNED_ONLY_BY) as CoverageLane[],
+  )("a repo only the %s lane pins is tracked under it and is no candidate", (lane) => {
     const [widget] = coverageOf(
       [entry({ id: "widget" })],
-      registries({ pinned: [{ lane: "luals", repo: "https://github.com/acme/widget" }] }),
+      PINNED_ONLY_BY[lane]("https://github.com/acme/widget"),
     );
-    expect(widget?.lanes).toEqual(["luals"]);
+    expect(widget?.lanes).toEqual([lane]);
     expect(widget?.candidate).toBe(false);
   });
 
@@ -109,17 +122,6 @@ describe("portalCoverage — lane join", () => {
       }),
     );
     expect(ortho?.lanes).toEqual(["authored", "markdown"]);
-  });
-
-  test("the native registry and the defold library listing are lanes too", () => {
-    const coverage = coverageOf(
-      [entry({ id: "daabbcc" }), entry({ id: "pbr" })],
-      registries({
-        native: [{ repo: "https://github.com/acme/daabbcc" }],
-        defold: [{ repo: "https://github.com/acme/pbr" }],
-      }),
-    );
-    expect(coverage.map((c) => c.lanes)).toEqual([["native"], ["defold"]]);
   });
 
   test("matching folds case and ignores a trailing .git or /", () => {
@@ -312,9 +314,7 @@ describe("portalDrift", () => {
     expect(report.removed).toEqual([]);
     expect(report.headCommit).toBe(HEAD_SHA);
     expect(report.issueTitle).toBe(PORTAL_DRIFT_ISSUE_TITLE);
-    expect(PORTAL_DRIFT_ISSUE_TITLE).toBe(
-      "Asset portal lists entries asset-portal.json has not classified",
-    );
+    expect(PORTAL_DRIFT_ISSUE_TITLE).toBe("Asset portal entries differ from asset-portal.json");
     expect(report.issueBody).toContain("https://github.com/acme/fresh");
     expect(report.issueBody).toContain("bun run --cwd packages/library-types asset-portal:sync");
     expect(head.entryCalls).toEqual(["fresh.json"]);
@@ -326,6 +326,8 @@ describe("portalDrift", () => {
     expect(report.added).toEqual([]);
     expect(report.removed).toEqual(["dropped"]);
     expect(report.issueTitle).toBe(PORTAL_DRIFT_ISSUE_TITLE);
+    expect(report.issueBody).toContain("`dropped`");
+    expect(report.issueBody).toContain("bun run --cwd packages/library-types asset-portal:sync");
   });
 
   test("changed content under the same ids is not actionable and reads no entry", async () => {
