@@ -51,6 +51,16 @@ export interface PortalRepo {
 }
 
 /**
+ * The portal's own listing at one commit: entry file names under `assets/`
+ * and their contents. A seam for offline tests.
+ */
+export interface PortalHead {
+  head(): Promise<string>;
+  entryFiles(sha: string): Promise<string[]>;
+  entry(sha: string, file: string): Promise<PortalAsset>;
+}
+
+/**
  * The portal and GitHub surface the sync reads; a seam for offline tests.
  * Repo-scoped calls take `owner/repo`, so any owner the portal names is
  * reachable.
@@ -158,6 +168,12 @@ export function portalEntryKind(evidence: {
   return "no-lua-api";
 }
 
+// The portal keys an entry by its file name; an `id` field, where present,
+// is not always the same.
+export function portalEntryId(file: string): string {
+  return file.replace(/\.json$/, "");
+}
+
 function githubOwnerRepo(projectUrl: string): string | null {
   let url: URL;
   try {
@@ -197,10 +213,8 @@ async function classifyEntry(
   file: string,
   json: PortalAsset,
 ): Promise<PortalEntry> {
-  // The portal keys an entry by its file name; an `id` field, where present,
-  // is not always the same.
   const portal = {
-    id: file.replace(/\.json$/, ""),
+    id: portalEntryId(file),
     name: json.name,
     description: json.description,
     tags: json.tags,
@@ -296,6 +310,28 @@ async function tree(fullName: string, ref: string): Promise<string[]> {
   return result.tree.filter((node) => node.type === "blob").map((node) => node.path);
 }
 
+const ENTRY_DIR = "assets/";
+
+/**
+ * Two API calls list the head; entry contents come from raw.githubusercontent,
+ * which the API rate limit does not count, so this works without a token.
+ */
+export function livePortalHead(): PortalHead {
+  return {
+    async head() {
+      return (await apiJson<{ sha: string }>(`repos/${PORTAL_REPO}/commits/HEAD`)).sha;
+    },
+    async entryFiles(sha) {
+      return (await tree(PORTAL_REPO, sha))
+        .filter((path) => /^assets\/[^/]+\.json$/.test(path))
+        .map((path) => path.slice(ENTRY_DIR.length));
+    },
+    async entry(sha, file) {
+      return JSON.parse(await fetchText(rawUrl(PORTAL_REPO, sha, `${ENTRY_DIR}${file}`)));
+    },
+  };
+}
+
 /**
  * About five GitHub API calls per entry exhaust the unauthenticated 60/hour
  * limit within the first dozen entries, so the live source refuses to start
@@ -305,18 +341,13 @@ export function livePortalSource(): PortalSource {
   if (!gitHubToken()) {
     throw new Error("asset-portal: set GITHUB_TOKEN or GH_TOKEN before syncing the Asset Portal.");
   }
+  const portal = livePortalHead();
   return {
-    async head() {
-      return (await apiJson<{ sha: string }>(`repos/${PORTAL_REPO}/commits/HEAD`)).sha;
-    },
+    head: () => portal.head(),
     async entries(sha) {
-      const files = (await tree(PORTAL_REPO, sha)).filter((path) =>
-        /^assets\/[^/]+\.json$/.test(path),
-      );
       const entries: { file: string; json: PortalAsset }[] = [];
-      for (const path of files) {
-        const text = await fetchText(rawUrl(PORTAL_REPO, sha, path));
-        entries.push({ file: path.slice("assets/".length), json: JSON.parse(text) as PortalAsset });
+      for (const file of await portal.entryFiles(sha)) {
+        entries.push({ file, json: await portal.entry(sha, file) });
       }
       return entries;
     },
