@@ -21,6 +21,7 @@
       "!**/api-doc",
       "!**/fidelity",
       "!**/library-classification.json",
+      "!**/asset-portal.json",
       "!**/test/fixtures",
       "!**/fixtures/ts-defold",
       "!**/fixtures/authored",
