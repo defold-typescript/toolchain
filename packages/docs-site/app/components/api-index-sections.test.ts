@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
-import { defoldListings, libraryOrigins } from "../lib/api-content";
+import { libraryOrigins, untypedListings } from "../lib/api-content";
 import type { ApiPage, ApiPageCategory } from "../lib/api-surface";
 import { loadApiSurface } from "../lib/api-surface-loader";
 import type { NamespaceBadgeCounts } from "../lib/combined-surface";
@@ -143,7 +143,7 @@ describe("groupLibraryIndexByOwner", () => {
 describe("groupLibraryIndexByOwner with listing-only Defold libraries", () => {
   const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
   const origins = libraryOrigins(REAL_LIBRARY_TYPES_DIR);
-  const listings = defoldListings(REAL_LIBRARY_TYPES_DIR);
+  const listings = untypedListings(REAL_LIBRARY_TYPES_DIR).filter((listing) => listing.official);
   const manifest = JSON.parse(
     readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
   ) as { libraries: { repo: string; description: string; docs: unknown[] }[] };

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { Hono } from "hono";
 import { createLibraryListingRoute } from "../routes/libraries/[owner]/[repo]";
-import { canonicalNamespaces, defoldListings } from "./api-content";
+import { canonicalNamespaces, untypedListings } from "./api-content";
 import { dependencyStep } from "./api-page-render";
 import { renderMarkdown } from "./markdown";
 import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "./no-typed-api-icon";
@@ -32,11 +32,12 @@ const textOf = (html: string): string =>
     .trim();
 
 describe("/libraries/:owner/:repo listing pages", () => {
-  const listings = defoldListings(REAL_LIBRARY_TYPES_DIR);
+  const listings = untypedListings(REAL_LIBRARY_TYPES_DIR);
   const canonical = new Set(canonicalNamespaces(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR));
 
-  test("the committed manifest carries untyped listings to render", () => {
-    expect(listings.length).toBeGreaterThan(0);
+  test("the committed manifests carry Defold and Asset Portal listings to render", () => {
+    expect(listings.some((listing) => listing.official)).toBe(true);
+    expect(listings.some((listing) => listing.portal)).toBe(true);
   });
 
   test("the static build emits exactly one page per manifest listing", async () => {
@@ -57,17 +58,15 @@ describe("/libraries/:owner/:repo listing pages", () => {
       const leadSentence = textOf(await renderMarkdown(listing.ships)).match(
         /^.*?[.!?](?=\s|$)/,
       )?.[0];
-      const firstStep = textOf(await renderMarkdown(listing.steps[0] ?? ""));
+      const firstStep =
+        listing.steps[0] === undefined ? undefined : textOf(await renderMarkdown(listing.steps[0]));
       const leadAt = text.indexOf(leadSentence ?? "\0");
       const kindAt = text.indexOf(LIBRARY_API_KIND_SENTENCE[listing.api].replace(/`/g, ""));
       const githubAt = text.indexOf("GitHub:");
-      const firstStepAt = text.indexOf(firstStep, githubAt);
       expect(leadAt).toBeGreaterThanOrEqual(0);
-      expect([leadAt < kindAt, kindAt < githubAt, githubAt < firstStepAt]).toEqual([
-        true,
-        true,
-        true,
-      ]);
+      const order = [leadAt < kindAt, kindAt < githubAt];
+      if (firstStep !== undefined) order.push(githubAt < text.indexOf(firstStep, githubAt));
+      expect(order).toEqual(order.map(() => true));
 
       const githubItem = html.match(/<li>GitHub:(.*?)<\/li>\s*<\/ul>/s)?.[1] ?? "";
       const nested = githubItem.match(/<ol>(.*)<\/ol>/s)?.[1] ?? "";
@@ -88,6 +87,19 @@ describe("/libraries/:owner/:repo listing pages", () => {
 
       expect(html).toContain(`href="${listing.url}"`);
       expect(html).toContain(`href="${listing.url}/tree/${listing.ref}"`);
+
+      const portalItems = [...html.matchAll(/<li>Asset Portal:(.*?)<\/li>/gs)].map(
+        (m) => m[1] ?? "",
+      );
+      if (listing.portal) {
+        expect(listing.portal.url).toBe(`https://defold.com/assets/${listing.portal.id}/`);
+        expect(portalItems).toHaveLength(1);
+        expect(portalItems[0]).toContain(`href="${listing.portal.url}"`);
+        expect(text.indexOf("Asset Portal:")).toBeGreaterThan(text.indexOf(dependency));
+      } else {
+        expect(portalItems).toEqual([]);
+        expect(text).not.toContain("Asset Portal");
+      }
 
       const apiHrefs = [...html.matchAll(/href="\/api\/([^"#?]+)[^"]*"/g)].map((m) => m[1] ?? "");
       for (const namespace of apiHrefs) {

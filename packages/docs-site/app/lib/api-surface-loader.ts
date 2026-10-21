@@ -417,6 +417,64 @@ export function defoldListingsFromManifest(libraryTypesDir: string): LibraryList
     .filter((listing) => listing.owner !== "" && listing.repo !== "");
 }
 
+interface AssetPortalEntry {
+  id: string;
+  description: string;
+  repo?: string;
+  ref?: string;
+  refKind?: "release" | "tag" | "commit";
+  kind: string;
+}
+
+// Community libraries from the Defold Asset Portal, synced by
+// `library-types/scripts/sync-asset-portal.ts`. Only a `no-lua-api` entry gets a
+// listing: its `include_dirs` hold shaders, materials, sounds or editor scripts,
+// so there is nothing to type and the portal description is the whole page lead.
+// A repo that already has a Defold listing or a typed library page keeps that one,
+// matched case-folded since GitHub owner and repo names are case-insensitive. A
+// listed entry with a blank description throws rather than ship an empty page. An
+// absent manifest degrades to no portal listings.
+export function portalListingsFromManifest(libraryTypesDir: string): LibraryListing[] {
+  const path = join(libraryTypesDir, "asset-portal.json");
+  if (!existsSync(path)) return [];
+  const { entries } = JSON.parse(readFileSync(path, "utf8")) as { entries: AssetPortalEntry[] };
+  const repoKey = (owner: string, repo: string): string => `${owner}/${repo}`.toLowerCase();
+  const listed = new Set([
+    ...[...libraryOriginByNamespace(libraryTypesDir).values()].map(({ owner, repo }) =>
+      repoKey(owner, repo),
+    ),
+    ...loadDefoldExtensions(libraryTypesDir).map((entry) =>
+      repoKey(githubOwner(entry.repo), githubRepo(entry.repo)),
+    ),
+  ]);
+  return entries.flatMap((entry): LibraryListing[] => {
+    if (entry.kind !== "no-lua-api" || !entry.repo || !entry.ref || !entry.refKind) return [];
+    const owner = githubOwner(entry.repo);
+    const repo = githubRepo(entry.repo);
+    if (owner === "" || repo === "" || listed.has(repoKey(owner, repo))) return [];
+    const description = entry.description.trim();
+    if (description === "") {
+      throw new Error(`asset-portal.json: entry "${entry.id}" has no description to lead its page`);
+    }
+    return [
+      {
+        owner,
+        repo,
+        url: entry.repo,
+        ref: entry.ref,
+        pinKind: entry.refKind,
+        description,
+        route: `/libraries/${owner}/${repo}`,
+        api: "none",
+        adoption: "standard",
+        ships: description,
+        steps: [],
+        portal: { id: entry.id, url: `https://defold.com/assets/${entry.id}/` },
+      },
+    ];
+  });
+}
+
 // A LuaLS-sourced library's own pin, read from `luals-targets.json`. Unlike the
 // ts-defold libraries — vendored en masse from one `ts-defold/library` commit —
 // each druid-style library lives in its own repo at its own tag, so it carries

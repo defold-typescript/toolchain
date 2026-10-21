@@ -5,24 +5,24 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { LibraryPath } from "../../../components/api-index";
-import { defoldListings } from "../../../lib/api-content";
+import { untypedListings } from "../../../lib/api-content";
 import { listingPageMarkdown } from "../../../lib/api-page-render";
 import { pageHeadings } from "../../../lib/headings";
 import { renderMarkdown } from "../../../lib/markdown";
 import { NO_TYPED_API_ICON } from "../../../lib/no-typed-api-icon";
 import type { ApiSurfaceDirs } from "../../api/[namespace]";
 
-// The page for a Defold library that ships no `.script_api`: its authored
-// summary of what it ships and how a project uses it, in place of an API reference.
+// The page for a library that ships no `.script_api`: what it ships and how a
+// project uses it, in place of an API reference.
 export function createLibraryListingRoute(dirs: ApiSurfaceDirs = {}) {
   return createRoute(
     ssgParams(() =>
-      defoldListings(dirs.libraryTypesDir).map(({ owner, repo }) => ({ owner, repo })),
+      untypedListings(dirs.libraryTypesDir).map(({ owner, repo }) => ({ owner, repo })),
     ),
     async (c) => {
       const owner = c.req.param("owner");
       const repo = c.req.param("repo");
-      const listing = defoldListings(dirs.libraryTypesDir).find(
+      const listing = untypedListings(dirs.libraryTypesDir).find(
         (candidate) => candidate.owner === owner && candidate.repo === repo,
       );
       if (!listing) return c.notFound();

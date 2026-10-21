@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.54.0
+
+> Summary:
+>
+> - **[Asset Portal libraries with no Lua API](/libraries)** get pages.
+
+### Improved
+
+- **[Libraries](/libraries) lists the Defold Asset Portal libraries that ship no Lua API**, such as shaders, materials, sounds and editor scripts, each under its GitHub owner with an icon-marked card, sidebar entry and page, such as [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page leads with the portal's description, gives the dependency step for its pin, and links the library's Asset Portal entry.
+
 ## v0.53.0
 
 > Summary:
