@@ -205,9 +205,10 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   // crash.get_modules is "module table".
   "crash.get_backtrace",
   "crash.get_modules",
-  // platform-specific options: the doc is a dead backtick-prose cross-ref to a
-  // sibling whose function is absent from the fixture (webview.open is not
-  // documented), so no machine-readable shape exists.
+  // platform-specific options: the doc is a backtick-prose cross-ref to
+  // webview.open, whose options are documented as structured `.script_api`
+  // fields rather than a prose field list, so the cross-reference resolver (which
+  // reads a sibling's prose only) finds no machine-readable shape here.
   "webview.open_raw",
   // OS-resolver returns: the shape is set by the host resolver, not Defold's
   // API contract; each fixture doc reads "a table with all information
@@ -1907,10 +1908,6 @@ export const CONSTANT_SLOT_RESOLUTIONS: ReadonlyMap<string, ConstantSlotResoluti
   ],
   ["gui.new_texture:param:type", { residual: "the doc lists texture type strings only" }],
   ["gui.set_texture_data:param:type", { residual: "the doc lists texture type strings only" }],
-  [
-    "iap.get_provider_id:return:provider_id",
-    { residual: "the doc names iap.PROVIDER_ID_*, which no ref-doc defines as a constant" },
-  ],
 ]);
 
 export interface ConstantUnionNamedRow {
@@ -2588,9 +2585,9 @@ export const HOMOGENEOUS_ARRAY_SLOTS: ReadonlyMap<string, string | readonly stri
   ["iap.list", "string"],
   // push.register's `notifications` is a prose-only array of push.NOTIFICATION_*
   // bitmask constants (the ref example sums NOTIFICATION_BADGE/SOUND/ALERT). The
-  // vendored push_doc.json fixture declares no NOTIFICATION_* constant elements, so
-  // no brand exists to reference; `number` is the faithful element token for these
-  // numeric constants, mirroring the vmath.vector/buffer.* number entries.
+  // slot's prose names no constant the expansion could read, and a summed bitmask
+  // is a plain number rather than any one brand, so `number` is the faithful
+  // element token, mirroring the vmath.vector/buffer.* number entries.
   ["push.register", "number"],
   // camera.get_cameras returns "a table with all camera URLs" (the ref example
   // iterates it with `pairs`) — a homogeneous list of `url`, emitted `Url[]`.
@@ -6471,6 +6468,7 @@ function parameterType(
           "param",
           p.name,
           bindingEvidence,
+          p.fields,
         )
       : "unknown";
   const key = tableSlotKey(elementName, "param", p.name);
@@ -6694,6 +6692,7 @@ function emitReturn(
                 "return",
                 rv.name,
                 bindingEvidence,
+                rv.fields,
               )
             : "unknown"),
       };
@@ -6733,6 +6732,7 @@ function emitReturn(
           "return",
           first.name,
           bindingEvidence,
+          first.fields,
         )
       : "unknown";
   // A LuaLS vararg return (`...`) is every value the call returns, however many.
@@ -6846,6 +6846,73 @@ function wrappedInParens(text: string): boolean {
   return false;
 }
 
+// A ref-doc slot's structured `fields` (a `.script_api` callback's `parameters:`
+// or a table's `fields:`) as the field list `inlineTableType` renders. A field
+// flagged `is_optional` keeps that flag so a return-side or callback-argument
+// table marks only it `?`; a nested table's own fields nest the same way.
+function refDocTableFields(fields: readonly ApiParameter[]): TableField[] {
+  return fields.map((field) => {
+    const out: TableField = { name: field.name, types: field.types };
+    if (field.fields !== undefined) out.fields = refDocTableFields(field.fields);
+    if (field.isOptional) out.optional = true;
+    return out;
+  });
+}
+
+// The TS type of one documented callback argument. The engine supplies these
+// values, so a table argument's fields are required unless flagged optional; a
+// `self` argument is the calling script instance, typed `unknown` like the
+// engine callback corrections type it.
+// A `constant` argument expands to the brands its own doc names, through the
+// slot's constant resolver; one whose doc names none keeps the generic brand.
+function callbackArgumentType(
+  field: ApiParameter,
+  mapType: DefoldTypeMapper,
+  constantsNamed: (doc: string) => readonly string[],
+): string {
+  if (field.name === "self") return "unknown";
+  if (field.fields !== undefined && field.fields.length > 0) {
+    if (field.types.includes("function")) {
+      return callbackTypeFromFields(field.fields, mapType, constantsNamed);
+    }
+    if (field.types.includes("table")) {
+      return inlineTableType(refDocTableFields(field.fields), mapType, false);
+    }
+  }
+  if (field.types.includes("constant")) {
+    const fqns = constantsNamed(field.doc);
+    if (fqns.length > 0) {
+      const others = field.types.filter((token) => token !== "constant");
+      return unionFromTokens([...fqns, ...others], mapType);
+    }
+  }
+  return field.types.length > 0 ? unionFromTokens(field.types, mapType) : "unknown";
+}
+
+// Renders a `function` slot's documented arguments as `(name: T, ...) => void`.
+// Optionality follows `emitParameter`: a trailing optional run takes `?`, an
+// interior optional argument takes `| undefined` because TS forbids a required
+// parameter after an optional one.
+function callbackTypeFromFields(
+  fields: readonly ApiParameter[],
+  mapType: DefoldTypeMapper,
+  constantsNamed: (doc: string) => readonly string[],
+): string {
+  let trailingOptionalFrom = fields.length;
+  while (trailingOptionalFrom > 0 && fields[trailingOptionalFrom - 1]?.isOptional === true) {
+    trailingOptionalFrom--;
+  }
+  const args = fields.map((field, index) => {
+    const name = safeParamName(field.name, index);
+    const ts = callbackArgumentType(field, mapType, constantsNamed);
+    if (index >= trailingOptionalFrom) return `${name}?: ${ts}`;
+    if (!field.isOptional) return `${name}: ${ts}`;
+    const operand = isFunctionTypeText(ts) ? `(${ts})` : ts;
+    return `${name}: ${operand} | undefined`;
+  });
+  return `(${args.join(", ")}) => void`;
+}
+
 // Like `unionFromTokens`, but a `table` token whose slot doc carries a parseable
 // `<dl>` field list emits an inline object type instead of the opaque `Record`
 // fallback. Other tokens in the union map unchanged. `optionalFields` marks the
@@ -6853,6 +6920,10 @@ function wrappedInParens(text: string): boolean {
 // optionality and an input option-bag's fields are individually omittable (the
 // old `Record` accepted partial/empty objects), so a parameter's fields are
 // optional while a return's fields (engine-populated, all present) stay required.
+// A slot carrying structured ref-doc `fields` (a `.script_api` conversion) types
+// a `table` token from them ahead of the prose parser and the curations, the
+// precedence `slotFieldNames` applies, and a `function` token from them as a
+// typed callback signature.
 function mapSlotUnion(
   types: readonly string[],
   doc: string,
@@ -6864,6 +6935,7 @@ function mapSlotUnion(
   slotKind: "param" | "return" | undefined,
   slotName: string | undefined,
   bindingEvidence: ReadonlySet<string>,
+  fields?: readonly ApiParameter[],
 ): string {
   const mapped: string[] = [];
   const seen = new Set<string>();
@@ -6872,6 +6944,7 @@ function mapSlotUnion(
     seen.add(ts);
     mapped.push(ts);
   };
+  const structured = fields !== undefined && fields.length > 0 ? fields : undefined;
   for (const token of types) {
     if (token === "constant" && slotKind !== undefined && slotName !== undefined) {
       const expanded = constantTokens(elementName, slotKind, slotName, doc);
@@ -6885,7 +6958,15 @@ function mapSlotUnion(
       slotKind !== undefined && slotName !== undefined
         ? TABLE_SLOT_CURATIONS.get(tableSlotKey(elementName, slotKind, slotName))
         : undefined;
-    if (token === "table" || slotCuration?.retypedUpstream?.includes(token) === true) {
+    if (token === "table" && structured !== undefined) {
+      ts = inlineTableType(refDocTableFields(structured), mapType, optionalFields);
+    } else if (token === "function" && structured !== undefined) {
+      ts = callbackTypeFromFields(structured, mapType, (fieldDoc) =>
+        slotKind !== undefined && slotName !== undefined
+          ? constantTokens(elementName, slotKind, slotName, fieldDoc)
+          : [],
+      );
+    } else if (token === "table" || slotCuration?.retypedUpstream?.includes(token) === true) {
       const curation = slotCuration;
       const mapping =
         curation?.kind === "mapping" ? curation : MAPPING_TABLE_SLOTS.get(elementName);

@@ -983,7 +983,7 @@
           "name": "data_type",
           "doc": "Data type identifier from rive::DataType.",
           "types": [
-            "enum"
+            "constant"
           ]
         }
       ],
@@ -1012,7 +1012,7 @@
           "name": "data_type",
           "doc": "Data type identifier previously subscribed.",
           "types": [
-            "enum"
+            "constant"
           ]
         }
       ],

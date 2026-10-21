@@ -234,17 +234,11 @@ export const UPSTREAM_MAPPED_NAMESPACES: ReadonlySet<string> = new Set(
   [...SYNC_MANIFEST, ...LUA_STDLIB_MANIFEST, ...EDITOR_MANIFEST].map((e) => e.namespace),
 );
 
-// Convert a raw `.script_api` YAML doc to the core ref-doc JSON string written
-// to fixtures/<ns>_doc.json. The result is byte-compared by the same drift
-// semantics core fixtures use.
+// Convert a raw `.script_api` YAML doc to the core ref-doc JSON string the
+// Libraries pages, the `script-api` lane and `resolve` all read. The result is
+// byte-compared by the same drift semantics core fixtures use.
 export function scriptApiToFixtureJson(text: string): string {
   return JSON.stringify(parseScriptApi(text));
-}
-
-// The docs-only variant: the same ref-doc JSON with constants kept, for pages
-// that render a module's full surface rather than feed the emitter.
-export function scriptApiToDocsJson(text: string): string {
-  return JSON.stringify(parseScriptApi(text, { complete: true }));
 }
 
 // The types-api-coverage `What` checklist in vision.md lists every namespace as

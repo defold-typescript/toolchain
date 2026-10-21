@@ -163,10 +163,12 @@ describe("emitExtensionDeclaration", () => {
     expect(result.contents).toContain("namespace other {");
   });
 
-  test("emits a valid empty-bodied namespace for a constants-only doc", async () => {
+  test("emits the constants of a constants-only doc and no function", async () => {
     const result = await emitExtensionDeclaration(CONSTANTS_ONLY);
     expect(result.namespace).toBe("consts");
     expect(result.contents).toContain("namespace consts {");
+    expect(result.contents).toMatch(/const ALPHA: /);
+    expect(result.contents).toMatch(/const BETA: /);
     expect(result.contents).not.toContain("function");
     expect(result.dropped).toEqual([]);
   });
@@ -176,5 +178,58 @@ describe("emitExtensionDeclaration", () => {
     expect(await emitExtensionDeclarationFromDoc(doc)).toEqual(
       await emitExtensionDeclaration(PRIMARY),
     );
+  });
+});
+
+const COMPLETE = `
+- name: ads
+  type: table
+  desc: An extension with a constant, an optional parameter and a callback.
+  members:
+  - name: MSG_LOADED
+    type: number
+    desc: the loaded message
+  - name: load
+    type: function
+    desc: Load an ad.
+    parameters:
+      - name: self
+        type: object
+        desc: the script self
+      - name: callback
+        type: function
+        desc: called when the ad resolves
+        parameters:
+          - name: self
+            type: object
+            desc: the calling script
+          - name: message_id
+            type: number
+            desc: the message id
+          - name: message
+            type: table
+            desc: the message payload
+            fields:
+              - name: code
+                type: number
+                desc: the error code
+              - name: error
+                type: string
+                desc: the error text
+                optional: true
+      - name: tag
+        type: string
+        desc: an optional tag
+        optional: true
+`;
+
+describe("emitExtensionDeclaration complete surface", () => {
+  test("emits the constant, the optional parameter and the typed callback, dropping nothing", async () => {
+    const result = await emitExtensionDeclaration(COMPLETE);
+    expect(result.contents).toMatch(/const MSG_LOADED: /);
+    expect(result.contents).toContain(
+      "function load(callback: (self: unknown, message_id: number, message: { code: number; error?: string }) => void, tag?: string): void;",
+    );
+    expect(result.dropped).toEqual([]);
   });
 });
