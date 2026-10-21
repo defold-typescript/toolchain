@@ -69,7 +69,9 @@ export type LibraryAdoption = "standard" | "fork" | "unavailable";
 // page it gets a `/libraries/<owner>/<repo>` page built from an authored summary.
 // The summary's sections arrive split: `ships` leads the page, `steps` follow the
 // rendered add-the-dependency step (or stand alone when `adoption` is not
-// `standard`), and `engineApis` closes it when authored.
+// `standard`), and `engineApis` closes it when authored. A Defold Asset Portal
+// library carries no summary: its portal description is the lead, it has no
+// steps beyond the dependency, and `portal` links its portal entry.
 export interface LibraryListing extends LibraryOrigin {
   url: string;
   ref: string;
@@ -81,6 +83,7 @@ export interface LibraryListing extends LibraryOrigin {
   ships: string;
   steps: string[];
   engineApis?: string;
+  portal?: { id: string; url: string };
 }
 
 /** One upstream repo: its `modules` render as namespace leaves under a route-less repo header. */

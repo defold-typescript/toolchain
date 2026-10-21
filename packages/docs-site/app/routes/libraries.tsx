@@ -4,7 +4,7 @@
 // hono/jsx; this pragma pins the JSX dialect for this file.
 import { createRoute } from "honox/factory";
 import { LibraryIndex } from "../components/api-index";
-import { apiPages, defoldListings, libraryOrigins } from "../lib/api-content";
+import { apiPages, libraryOrigins, untypedListings } from "../lib/api-content";
 import type { ApiSurfaceDirs } from "./api/[namespace]";
 
 export function createLibrariesRoute(dirs: ApiSurfaceDirs = {}) {
@@ -13,7 +13,7 @@ export function createLibrariesRoute(dirs: ApiSurfaceDirs = {}) {
       <LibraryIndex
         pages={apiPages(dirs.typesDir, dirs.libraryTypesDir)}
         origins={libraryOrigins(dirs.libraryTypesDir)}
-        listings={defoldListings(dirs.libraryTypesDir)}
+        listings={untypedListings(dirs.libraryTypesDir)}
       />,
       {
         title: "Libraries",

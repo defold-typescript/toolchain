@@ -9,6 +9,7 @@ import {
   loadCombinedSurface,
   loadSignaturesArtifact,
   loadVersionIndependentPages,
+  portalListingsFromManifest,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import {
@@ -284,9 +285,14 @@ export function libraryOrigins(
   return libraryOriginByNamespace(libraryTypesDir);
 }
 
-// Defold libraries with no typed API, listed on the Libraries index as repo cards.
-export function defoldListings(libraryTypesDir: string = LIBRARY_TYPES_DIR): LibraryListing[] {
-  return defoldListingsFromManifest(libraryTypesDir);
+// Libraries with no typed API, listed on the Libraries index as repo cards: Defold's
+// own, then the Asset Portal's. The index, the listing routes, the static build and
+// the sidebar all read this one list, so a listing cannot reach one and miss another.
+export function untypedListings(libraryTypesDir: string = LIBRARY_TYPES_DIR): LibraryListing[] {
+  return [
+    ...defoldListingsFromManifest(libraryTypesDir),
+    ...portalListingsFromManifest(libraryTypesDir),
+  ];
 }
 
 // The Libraries tab's owner groups: typed library pages grouped by their GitHub
@@ -301,6 +307,6 @@ export function libraryNavGroups(
       .filter((page) => page.category === "library")
       .map((page) => ({ namespace: page.namespace, route: page.route })),
     libraryOrigins(libraryTypesDir),
-    defoldListings(libraryTypesDir),
+    untypedListings(libraryTypesDir),
   );
 }
