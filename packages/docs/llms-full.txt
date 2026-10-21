@@ -11629,6 +11629,38 @@ home before withdrawing the library. Re-pointing means a new `repo` and a new
 `ref` together, because a moved repo often has rewritten history and the old
 commit no longer exists there.
 
+#### Survey the Asset Portal
+
+The registries only see libraries someone already added.
+`packages/library-types/asset-portal.json` records every
+[Defold Asset Portal](https://defold.com/assets/) entry, pinned to a
+`defold/asset-portal` commit, with the GitHub repo each entry names classified
+by what a dependency on it installs:
+
+```sh
+GITHUB_TOKEN="$(gh auth token)" bun run --cwd packages/library-types asset-portal:sync
+```
+
+The sync refuses to start without `GITHUB_TOKEN` or `GH_TOKEN`, because it makes
+about five API calls per entry. It follows renames, so `repo` is the canonical
+URL (the portal's `britzl/extension-imgui` is recorded as
+`defold/extension-imgui`). Each repo is read at its latest release, else its
+newest tag, else its default-branch head.
+
+Files count only inside the repo's `game.project` `[library] include_dirs`,
+since nothing else reaches a project that adds the dependency. Each entry's
+`kind` is the first row that matches:
+
+| `kind` | The repo at its pin |
+| ------ | ------------------- |
+| `no-source` | is not readable on GitHub; `reason` is `no-github-url` or `not-found` |
+| `not-a-dependency` | declares no `include_dirs`: a tool, sample or editor integration |
+| `script-api` | ships a `.script_api`, which [`resolve`](./resolve.md) already types |
+| `native-untyped` | ships an `ext.manifest` without a `.script_api` |
+| `pure-lua-annotated` | ships Lua, and one of up to four sampled files carries `---@` annotations |
+| `pure-lua` | ships Lua with no annotated sample |
+| `no-lua-api` | ships no Lua: shaders, materials, sounds or editor scripts only |
+
 #### Refresh the lane
 
 Four lanes fetch and regenerate. Run their commands from
