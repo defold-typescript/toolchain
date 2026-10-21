@@ -11670,14 +11670,17 @@ since nothing else reaches a project that adds the dependency. Each entry's
 
 `bun run asset-portal:report` joins the manifest against every lane registry
 and the `defold` org listing in `defold-extensions.json`, offline, and prints
-three answers:
+four answers:
 
 - **Tracked**: entries whose repo a registry already pins, counted per lane. A
   tracked entry files here whatever its `kind`.
 - **Candidates**: untracked entries of kind `script-api`, `native-untyped`,
-  `pure-lua-annotated` or `pure-lua` that are not archived, not a fork, and were
-  pushed within 730 days of the sync. They are grouped by kind and ranked by
-  stars, which only order the list and say nothing about quality.
+  `pure-lua-annotated` or `pure-lua` that are not archived, not a fork, were
+  pushed within 730 days of the sync, and carry no verdict. They are grouped by
+  kind and ranked by stars, which only order the list and say nothing about
+  quality.
+- **Declined**: untracked entries with a recorded verdict, each with its
+  reason.
 - **Nothing to type**: untracked `no-lua-api`, `not-a-dependency` and
   `no-source` entries.
 
@@ -11690,6 +11693,17 @@ pins `codeberg.org/Klaleus/defold-checkpoint`. Map such an entry to the tracked
 repo in `packages/library-types/asset-portal-aliases.json`. The report refuses
 to run when an alias names an entry the manifest no longer lists, or a repo no
 registry pins.
+
+An entry whose pinned tree holds no runtime module a project would `require`,
+such as an editor script, an import tool or a project template, stays a
+candidate until someone looks. Record the decision in
+`packages/library-types/asset-portal-verdicts.json`: a map from entry id to one
+short reason naming what the tree holds instead. A verdict takes the entry off
+the candidate list for good, whatever its maintenance state. The report refuses
+to run when a verdict names an entry the manifest no longer lists, or an entry a
+registry pins directly or through an alias, since either verdict is stale.
+`bun scripts/ratchet-backlog.ts asset-portal-candidates` prints the candidates
+still open, one per line, for the planning intake.
 
 The weekly **Library upstream pin check** workflow also compares the portal
 head's entry ids with the manifest. When ids were added or removed, it opens one

@@ -9,15 +9,19 @@ import {
   type AssetPortalCheckIo,
   type CoverageLane,
   type CoverageRegistries,
+  candidateSlots,
   coverageReport,
   describeCoverageReport,
   PORTAL_DRIFT_ISSUE_TITLE,
   type PortalDriftReport,
+  type PortalVerdicts,
+  parseAssetPortalManifest,
   portalCoverage,
   portalDrift,
   readAssetPortalManifest,
   readCoverageRegistries,
   readPortalAliases,
+  readPortalVerdicts,
   runAssetPortalCheckCli,
 } from "./asset-portal-check.ts";
 
@@ -84,8 +88,9 @@ function coverageOf(
   entries: PortalEntry[],
   regs: CoverageRegistries = registries(),
   aliases: Record<string, string> = {},
+  verdicts: PortalVerdicts = {},
 ) {
-  return portalCoverage(manifest(entries), regs, aliases);
+  return portalCoverage(manifest(entries), regs, aliases, verdicts);
 }
 
 describe("portalCoverage — lane join", () => {
@@ -177,7 +182,78 @@ describe("portalCoverage — aliases", () => {
 
   test("the committed alias file validates against the committed manifest and registries", () => {
     expect(() =>
-      portalCoverage(readAssetPortalManifest(), readCoverageRegistries(), readPortalAliases()),
+      portalCoverage(
+        readAssetPortalManifest(),
+        readCoverageRegistries(),
+        readPortalAliases(),
+        readPortalVerdicts(),
+      ),
+    ).not.toThrow();
+  });
+});
+
+describe("portalCoverage — verdicts", () => {
+  test("a verdict takes an untracked, maintained entry off the candidate list with its reason", () => {
+    const [declined, open] = coverageOf(
+      [entry({ id: "editor-tool" }), entry({ id: "widget" })],
+      registries(),
+      {},
+      { "editor-tool": "editor script only" },
+    );
+    expect(declined?.declined).toBe("editor script only");
+    expect(declined?.candidate).toBe(false);
+    expect(open?.declined).toBeNull();
+    expect(open?.candidate).toBe(true);
+  });
+
+  test("a verdict for an id the manifest does not list throws naming the id", () => {
+    expect(() =>
+      coverageOf([entry({ id: "widget" })], registries(), {}, { gone: "editor script only" }),
+    ).toThrow("asset-portal-verdicts.json: gone is not an asset-portal.json entry");
+  });
+
+  test("a verdict for an entry a lane pins directly throws naming the id and the lane", () => {
+    expect(() =>
+      coverageOf(
+        [entry({ id: "widget" })],
+        registries({ pinned: [{ lane: "luals", repo: "https://github.com/acme/widget" }] }),
+        {},
+        { widget: "editor script only" },
+      ),
+    ).toThrow("asset-portal-verdicts.json: widget is pinned by luals");
+  });
+
+  test("a verdict for an entry a lane pins through an alias throws naming the first lane", () => {
+    const codeberg = "https://codeberg.org/Klaleus/defold-checkpoint";
+    const checkpoint = entry({
+      id: "library-defold-checkpoint",
+      repo: "https://github.com/Klaleus/library-defold-checkpoint",
+      reason: "not-found",
+      ...NO_SOURCE,
+    });
+    expect(() =>
+      coverageOf(
+        [checkpoint],
+        registries({
+          pinned: [
+            { lane: "markdown", repo: codeberg },
+            { lane: "authored", repo: codeberg },
+          ],
+        }),
+        { "library-defold-checkpoint": codeberg },
+        { "library-defold-checkpoint": "project template" },
+      ),
+    ).toThrow("asset-portal-verdicts.json: library-defold-checkpoint is pinned by authored");
+  });
+
+  test("the committed verdicts file validates against the committed manifest, registries and aliases", () => {
+    expect(() =>
+      portalCoverage(
+        readAssetPortalManifest(),
+        readCoverageRegistries(),
+        readPortalAliases(),
+        readPortalVerdicts(),
+      ),
     ).not.toThrow();
   });
 });
@@ -257,6 +333,44 @@ describe("coverageReport", () => {
     expect(report.nothingToType["no-lua-api"]?.map((c) => c.id)).toEqual(["shaders"]);
   });
 
+  test("a declined entry files under declined by id, never under candidates, inactive or nothing-to-type", () => {
+    const report = coverageReport(
+      coverageOf(
+        [
+          entry({ id: "template", pushedAt: daysBeforeSync(900) }),
+          entry({ id: "editor-tool" }),
+          entry({ id: "widget" }),
+        ],
+        registries(),
+        {},
+        { template: "project template", "editor-tool": "editor script only" },
+      ),
+    );
+    expect(report.declined.map((c) => c.id)).toEqual(["editor-tool", "template"]);
+    expect(report.candidates["pure-lua"]?.map((c) => c.id)).toEqual(["widget"]);
+    expect(report.inactive).toEqual([]);
+    expect(report.nothingToType).toEqual({});
+  });
+
+  test("the printed report lists declined entries after the candidates and excludes them from the count", () => {
+    const text = describeCoverageReport(
+      coverageReport(
+        coverageOf(
+          [entry({ id: "a-tool" }), entry({ id: "x" }), entry({ id: "widget" })],
+          registries(),
+          {},
+          { "a-tool": "editor script only", x: "project template" },
+        ),
+      ),
+    );
+    expect(text).toContain(
+      "\nDeclined: 2 untracked entries the project does not type\n  a-tool  editor script only\n  x       project template\n",
+    );
+    expect(text).toMatch(/^Candidates: 1 /m);
+    expect(text.indexOf("Declined:")).toBeGreaterThan(text.indexOf("Candidates:"));
+    expect(text.indexOf("Declined:")).toBeLessThan(text.indexOf("Not maintained:"));
+  });
+
   test("the printed report counts each lane and lists each candidate with its stars and repo", () => {
     const text = describeCoverageReport(
       coverageReport(
@@ -268,6 +382,64 @@ describe("coverageReport", () => {
     );
     expect(text).toMatch(/^\s+luals\s+1$/m);
     expect(text).toMatch(/^\s+42\s+rising\s+https:\/\/github\.com\/acme\/rising$/m);
+  });
+});
+
+describe("candidateSlots — the ratchet probe's line grammar", () => {
+  test("one line per candidate, by kind order, stars descending, then id, prefixed with the manifest", () => {
+    const lines = candidateSlots(
+      "asset-portal.json",
+      coverageOf(
+        [
+          entry({ id: "lua-b", stars: 5 }),
+          entry({ id: "lua-a", stars: 5 }),
+          entry({ id: "lua-top", stars: 9 }),
+          entry({ id: "ext", kind: "native-untyped", stars: 1 }),
+          entry({ id: "docs", kind: "script-api", stars: 0 }),
+          entry({ id: "tracked" }),
+          entry({ id: "declined" }),
+          entry({ id: "stale", pushedAt: daysBeforeSync(900) }),
+          entry({ id: "shaders", kind: "no-lua-api" }),
+        ],
+        registries({ pinned: [{ lane: "luals", repo: "https://github.com/acme/tracked" }] }),
+        {},
+        { declined: "editor script only" },
+      ),
+    );
+    expect(lines).toEqual([
+      "asset-portal.json: script-api:docs:https://github.com/acme/docs",
+      "asset-portal.json: native-untyped:ext:https://github.com/acme/ext",
+      "asset-portal.json: pure-lua:lua-top:https://github.com/acme/lua-top",
+      "asset-portal.json: pure-lua:lua-a:https://github.com/acme/lua-a",
+      "asset-portal.json: pure-lua:lua-b:https://github.com/acme/lua-b",
+    ]);
+  });
+
+  test("no candidate left yields no lines", () => {
+    expect(
+      candidateSlots(
+        "asset-portal.json",
+        coverageOf([entry({ id: "shaders", kind: "no-lua-api" })]),
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("parseAssetPortalManifest", () => {
+  test("a manifest with an entries array and a syncedAt passes through", () => {
+    const parsed = manifest([entry({ id: "widget" })]);
+    expect(parseAssetPortalManifest(parsed, "asset-portal.json")).toBe(parsed);
+  });
+
+  test.each([
+    ["no entries array", { source: { syncedAt: SYNCED_AT } }],
+    ["entries that are not an array", { source: { syncedAt: SYNCED_AT }, entries: {} }],
+    ["no source.syncedAt", { source: {}, entries: [] }],
+    ["a non-object", null],
+  ])("a manifest with %s throws naming the file rather than reading as drained", (_label, raw) => {
+    expect(() => parseAssetPortalManifest(raw, "asset-portal.json")).toThrow(
+      "asset-portal.json: expected an asset-portal manifest",
+    );
   });
 });
 
