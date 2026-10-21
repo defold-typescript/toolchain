@@ -5,6 +5,10 @@
 # upstream repos across the authored, LuaLS, markdown, OpenAPI and script_api
 # lanes — had no equivalent, so a stale pin was only ever noticed by hand.
 #
+# The same job compares the Defold Asset Portal head's entry ids with the pinned
+# `asset-portal.json`, so a library newly published there is noticed without
+# anyone browsing the portal.
+#
 # Two GitHub scheduling facts this depends on: a `schedule:` trigger only ever
 # runs on the default branch (so edits must land on main to take effect), and it
 # is auto-disabled after 60 days without repository activity — `workflow_dispatch`
@@ -74,3 +78,38 @@ jobs:
             printf '%s' "$report" | jq -r '.issueBody' > issue-body.md
             gh issue create --title "$title" --body-file issue-body.md
           done < actionable.jsonl
+
+      # `!cancelled()` so one unreadable library pin above does not withhold the
+      # portal check. Exit 1 here means the portal head could not be read; added
+      # or removed entries exit 0 and are read out of the JSON below.
+      - name: Compare the Asset Portal's entries with asset-portal.json
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bun scripts/asset-portal-check.ts --json > portal.json
+
+      - name: Open one issue for unclassified portal entries
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ ! -s portal.json ]; then
+            echo "no portal report to consume"
+            exit 0
+          fi
+          jq -r '"\(.added | length) added, \(.removed | length) removed"' portal.json
+          if [ "$(jq -r '.actionable' portal.json)" != "true" ]; then
+            exit 0
+          fi
+          title=$(jq -r '.issueTitle' portal.json)
+          # The title is a constant, so while one issue is open later runs find
+          # it and stay quiet until the manifest is re-synced and it is closed.
+          existing=$(gh issue list --state open --limit 100 --json number,title \
+            --jq "[.[] | select(.title == \"$title\") | .number] | first // empty")
+          if [ -n "$existing" ]; then
+            echo "already tracked as #$existing: $title"
+            exit 0
+          fi
+          jq -r '.issueBody' portal.json > portal-issue-body.md
+          gh issue create --title "$title" --body-file portal-issue-body.md
