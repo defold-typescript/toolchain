@@ -319,6 +319,13 @@ export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new 
     "script_html5_js.cpp:Html5_SetInteractionListener checks luaL_checkany(L, 1); " +
       "REQUIRED_SLOT_CORRECTIONS keeps the documented nil, which clears the listener.",
   ],
+  [
+    "iac.set_listener:param:type",
+    "extension-iac 1.5.0's iac.script_api lists the listener's `payload` and `type` arguments " +
+      "as set_listener's own parameters; its example passes the one listener function, which " +
+      "the doc never declares, so the shorter call evidences an upstream doc defect, not an " +
+      "omissible slot.",
+  ],
 ]);
 
 // OPTIONAL_SLOT_CORRECTIONS entries whose evidence the axes above cannot
@@ -972,7 +979,46 @@ function auditEntry(
       typeof element.name === "string" ? MAPPING_TABLE_SLOTS.get(element.name) : undefined;
     const homogeneousElement =
       typeof element.name === "string" ? HOMOGENEOUS_ARRAY_SLOTS.get(element.name) : undefined;
+    // A slot carrying structured ref-doc `fields` (a `.script_api` callback's
+    // `parameters:` or a table's `fields:`) is recovered by emit-dts from those
+    // fields ahead of the prose parser and the curations: a `table` emits an inline
+    // object and a `function` a typed callback signature. Mirror that here: the
+    // `table`/`function` token is not a loss, and each field's own tokens feed back
+    // so an unmapped one still surfaces. A field typed `table` with no fields of
+    // its own is a table its author documented as opaque — unlike a prose `<dl>`,
+    // a `.script_api` can nest fields and chose not to — so its `Record` is
+    // faithful and not counted.
+    const considerStructured = (types: readonly string[], fields: Record<string, unknown>[]) => {
+      const rest = types.filter((token) => token !== "table" && token !== "function");
+      if (rest.length > 0) considerTypes(rest, undefined, arbitraryTable);
+      for (const field of fields) {
+        if (field.name === "self") continue;
+        const fieldTypes = stringArray(field.types);
+        const nested = paramList(field.fields);
+        if (
+          nested.length > 0 &&
+          (fieldTypes.includes("table") || fieldTypes.includes("function"))
+        ) {
+          considerStructured(fieldTypes, nested);
+          continue;
+        }
+        const own = fieldTypes.filter((token) => token !== "table");
+        if (own.length > 0) considerTypes(own, undefined, arbitraryTable);
+      }
+    };
+    const structuredFields = (slot: Record<string, unknown>): Record<string, unknown>[] => {
+      const types = stringArray(slot.types);
+      const fields = paramList(slot.fields);
+      return fields.length > 0 && (types.includes("table") || types.includes("function"))
+        ? fields
+        : [];
+    };
     params.forEach((param) => {
+      const structured = structuredFields(param);
+      if (structured.length > 0) {
+        considerStructured(stringArray(param.types), structured);
+        return;
+      }
       const tableSlotCuration =
         typeof element.name === "string" && typeof param.name === "string"
           ? TABLE_SLOT_CURATIONS.get(tableSlotKey(element.name, "param", param.name))
@@ -994,6 +1040,11 @@ function auditEntry(
       // through unmarkedOptionalSlots above.
     });
     for (const ret of returns) {
+      const structured = structuredFields(ret);
+      if (structured.length > 0) {
+        considerStructured(stringArray(ret.types), structured);
+        continue;
+      }
       const tableSlotCuration =
         typeof element.name === "string" && typeof ret.name === "string"
           ? TABLE_SLOT_CURATIONS.get(tableSlotKey(element.name, "return", ret.name))

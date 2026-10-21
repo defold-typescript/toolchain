@@ -189,7 +189,10 @@
         {
           "name": "value",
           "doc": "The parameter value, or nil when the Poki result is null or undefined.",
-          "types": []
+          "types": [
+            "string",
+            "nil"
+          ]
         }
       ]
     },
@@ -208,13 +211,19 @@
         {
           "name": "what",
           "doc": "Optional event subject. Defaults to an empty string when omitted.",
-          "types": [],
+          "types": [
+            "string",
+            "nil"
+          ],
           "is_optional": "True"
         },
         {
           "name": "action",
           "doc": "Optional event action. Defaults to an empty string when omitted.",
-          "types": [],
+          "types": [
+            "string",
+            "nil"
+          ],
           "is_optional": "True"
         }
       ],
@@ -279,12 +288,18 @@
             {
               "name": "user",
               "doc": "A table with username and avatar_url, or nil if no user is logged in.",
-              "types": []
+              "types": [
+                "table",
+                "nil"
+              ]
             },
             {
               "name": "error",
               "doc": "The rejection message, or nil if the request completed normally.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }
@@ -313,12 +328,18 @@
             {
               "name": "token",
               "doc": "The short-lived Poki auth token, or nil if no user is logged in.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             },
             {
               "name": "error",
               "doc": "The rejection message, or nil if the request completed normally.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }
@@ -354,7 +375,10 @@
             {
               "name": "error",
               "doc": "The rejection message on failure, or nil on success.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }

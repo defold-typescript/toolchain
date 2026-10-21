@@ -29,7 +29,10 @@
         {
           "name": "sdk_version",
           "doc": "The value of SDK_VERSION, or nil if the SDK or its version is unavailable.",
-          "types": []
+          "types": [
+            "string",
+            "nil"
+          ]
         }
       ]
     },
@@ -62,12 +65,18 @@
             {
               "name": "data",
               "doc": "The serialized game data on success, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             },
             {
               "name": "error",
               "doc": "The SDK error message on failure, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }
@@ -110,7 +119,10 @@
             {
               "name": "error",
               "doc": "The UTF-8 decoding or SDK error message on failure, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }
@@ -140,7 +152,10 @@
         {
           "name": "callback",
           "doc": "The event callback, or nil to unregister the current callback.",
-          "types": [],
+          "types": [
+            "function",
+            "nil"
+          ],
           "fields": [
             {
               "name": "self",
@@ -169,7 +184,10 @@
         {
           "name": "callback",
           "doc": "The event callback, or nil to unregister the current callback.",
-          "types": [],
+          "types": [
+            "function",
+            "nil"
+          ],
           "fields": [
             {
               "name": "self",
@@ -191,7 +209,10 @@
         {
           "name": "callback",
           "doc": "The event callback, or nil to unregister the current callback.",
-          "types": [],
+          "types": [
+            "function",
+            "nil"
+          ],
           "fields": [
             {
               "name": "self",
@@ -227,12 +248,18 @@
             {
               "name": "language",
               "doc": "The BCP-47 language tag on success, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             },
             {
               "name": "error",
               "doc": "The SDK error message on failure, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }
@@ -275,7 +302,10 @@
             {
               "name": "error",
               "doc": "The SDK error message on failure, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }
@@ -326,7 +356,10 @@
             {
               "name": "error",
               "doc": "The SDK error message on failure, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }
@@ -362,7 +395,10 @@
             {
               "name": "error",
               "doc": "The SDK error message on failure, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }
@@ -398,12 +434,18 @@
             {
               "name": "reward_earned",
               "doc": "True if a reward was earned, false if no reward was earned, or nil if the request failed.",
-              "types": []
+              "types": [
+                "boolean",
+                "nil"
+              ]
             },
             {
               "name": "error",
               "doc": "The SDK error message on failure, otherwise nil.",
-              "types": []
+              "types": [
+                "string",
+                "nil"
+              ]
             }
           ]
         }

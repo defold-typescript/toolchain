@@ -103,6 +103,48 @@ describe("buildFidelityReport — per-category counting", () => {
     expect(entry.optionalAsRequired).toBe(0);
   });
 
+  test("a slot with structured ref-doc fields is recovered, and its field tokens still surface", () => {
+    const doc = {
+      info: { namespace: "test" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "test.open",
+          parameters: [
+            {
+              name: "options",
+              types: ["table"],
+              fields: [
+                { name: "hidden", types: ["boolean"] },
+                { name: "headers", types: ["table"] },
+              ],
+            },
+            {
+              name: "callback",
+              types: ["function"],
+              fields: [
+                { name: "self", types: ["object"] },
+                { name: "code", types: ["number"] },
+                {
+                  name: "payload",
+                  types: ["table"],
+                  fields: [{ name: "kind", types: ["puzzling"] }],
+                },
+              ],
+            },
+          ],
+          returnvalues: [],
+        },
+      ],
+    };
+    const entry = requireEntry(buildFidelityReport(manifestOf(doc)), "test");
+    // Both slots emit from their fields (an inline object, a typed callback), so
+    // neither counts as a lost `Record`; the author-opaque `headers` table is not
+    // a loss either, while the nested field's unmapped token still surfaces.
+    expect(entry.recordTables).toBe(0);
+    expect(entry.unknownTokens).toEqual(["puzzling"]);
+  });
+
   test("skipFunctions entries are counted as droppedMembers, not as a fidelity regression elsewhere", () => {
     const doc = {
       info: { namespace: "test" },
