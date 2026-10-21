@@ -31,6 +31,7 @@
     "release-readiness": "bun scripts/defold-release-readiness.ts --check",
     "upstream:release-check": "bun scripts/defold-upstream-check.ts",
     "upstream:library-check": "bun scripts/library-upstream-check.ts",
+    "asset-portal:report": "bun scripts/asset-portal-check.ts --report",
     "changelog:commits": "bun scripts/changelog-commits.ts"
   },
   "devDependencies": {
