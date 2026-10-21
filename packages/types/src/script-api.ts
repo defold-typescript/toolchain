@@ -22,6 +22,8 @@ export interface RefDocConstantElement {
   name: string;
   brief: string;
   description: string;
+  /** The scalar's declared `type:` tokens; an engine `CONSTANT` carries none. */
+  types: string[];
 }
 
 export type RefDocElement = RefDocFunctionElement | RefDocConstantElement;
@@ -152,7 +154,9 @@ function isScalar(member: Record<string, unknown>): boolean {
  * Convert a parsed Defold extension `.script_api` document into the core
  * ref-doc JSON object shape that `parseDefoldApiDoc` consumes. `type: function`
  * members become FUNCTION elements; scalar members at the top level and one
- * table deep become CONSTANT elements; each function's `examples:` becomes
+ * table deep become CONSTANT elements carrying their `type:` tokens, so a
+ * `type: string` scalar reaches the emitter as a string constant; each
+ * function's `examples:` becomes
  * `codehilite` examples HTML that keeps each fence's language; and each slot's
  * nested `parameters:`/`fields:` and `optional: true` become ref-doc `fields`
  * and `is_optional`. The Libraries pages, the `script-api` lane, the extension
@@ -204,6 +208,7 @@ export function scriptApiToRefDoc(parsed: unknown): RefDoc {
     name,
     brief: stringOr(member.desc, ""),
     description: stringOr(member.desc, ""),
+    types: splitTypeTokens(member.type),
   });
   for (const member of members) {
     if (!isRecord(member)) continue;

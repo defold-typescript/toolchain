@@ -59,7 +59,7 @@ const CONSTANTS_ONLY = `
     type: number
     desc: the alpha constant
   - name: BETA
-    type: number
+    type: string
     desc: the beta constant
 `;
 
@@ -167,8 +167,10 @@ describe("emitExtensionDeclaration", () => {
     const result = await emitExtensionDeclaration(CONSTANTS_ONLY);
     expect(result.namespace).toBe("consts");
     expect(result.contents).toContain("namespace consts {");
-    expect(result.contents).toMatch(/const ALPHA: /);
-    expect(result.contents).toMatch(/const BETA: /);
+    expect(result.contents).toContain(
+      'const ALPHA: number & { readonly __brand: "consts.ALPHA" };',
+    );
+    expect(result.contents).toContain('const BETA: string & { readonly __brand: "consts.BETA" };');
     expect(result.contents).not.toContain("function");
     expect(result.dropped).toEqual([]);
   });

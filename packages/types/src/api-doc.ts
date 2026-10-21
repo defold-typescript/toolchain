@@ -89,8 +89,9 @@ export interface ApiConstant {
   description: string;
   /**
    * Present when the constant is a member of an `ENUM` whose value type is
-   * `string` (`parameters[0].types`); absence means a number, as every
-   * pre-`ENUM` constant is.
+   * `string` (`parameters[0].types`), or a `.script_api` scalar declared
+   * `type: string` (the converted `CONSTANT` element's `types`); absence means
+   * a number, as every pre-`ENUM` engine constant is.
    */
   valueType?: "string";
   /** Present when an `ENUM` member is typed `<ENUM>|nil`: some platforms leave it unset. */
@@ -408,10 +409,12 @@ function parseProperty(element: Record<string, unknown>): ApiProperty {
 }
 
 function parseConstant(element: Record<string, unknown>): ApiConstant {
+  const types = parseStringArray(element.types);
   return {
     name: stringOr(element.name, ""),
     brief: stringOr(element.brief, ""),
     description: stringOr(element.description, ""),
+    ...(types.length === 1 && types[0] === "string" ? { valueType: "string" as const } : {}),
     ...globalKey(element),
   };
 }
