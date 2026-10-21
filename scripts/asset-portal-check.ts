@@ -79,8 +79,7 @@ export interface CoverageReport {
   readonly nothingToType: Readonly<Partial<Record<PortalKind, readonly PortalCoverage[]>>>;
 }
 
-export const PORTAL_DRIFT_ISSUE_TITLE =
-  "Asset portal lists entries asset-portal.json has not classified";
+export const PORTAL_DRIFT_ISSUE_TITLE = "Asset portal entries differ from asset-portal.json";
 
 export interface PortalDriftReport {
   readonly command: "asset-portal:check";
@@ -297,11 +296,11 @@ function driftIssueBody(report: PortalDriftReport): string {
       ? []
       : ["", `Removed (${report.removed.length}):`, ...report.removed.map((id) => `- \`${id}\``)];
   return [
-    `The Asset Portal head \`${shortSha(report.headCommit ?? "")}\` no longer lists the entries \`packages/library-types/asset-portal.json\` classified at \`${shortSha(report.pinnedCommit)}\`.`,
+    `The entries the Asset Portal head \`${shortSha(report.headCommit ?? "")}\` lists differ from those \`packages/library-types/asset-portal.json\` classified at \`${shortSha(report.pinnedCommit)}\`.`,
     ...added,
     ...removed,
     "",
-    "Re-sync the manifest, then check where the new entries land:",
+    "Re-sync the manifest, then rerun the coverage report:",
     "",
     "```sh",
     'GITHUB_TOKEN="$(gh auth token)" bun run --cwd packages/library-types asset-portal:sync',
