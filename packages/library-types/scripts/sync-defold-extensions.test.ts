@@ -7,6 +7,7 @@ import {
   type DefoldGitHub,
   type GitHubRepo,
   isDefoldLibrary,
+  libraryIncludeDirs,
   loadReservedNamespaces,
   type ReservedNamespaces,
   reconvertDefoldExtensions,
@@ -100,6 +101,22 @@ describe("isDefoldLibrary", () => {
     expect(await isDefoldLibrary(repo("asset-pbr"), otherSection)).toBe(false);
     expect(await isDefoldLibrary(repo("asset-pbr"), empty)).toBe(false);
     expect(await isDefoldLibrary(repo("defold"), missing)).toBe(false);
+  });
+});
+
+describe("libraryIncludeDirs", () => {
+  test("splits on commas and whitespace and strips leading and trailing slashes", () => {
+    expect(
+      libraryIncludeDirs("[library]\ninclude_dirs = monarch, /monarch/transitions/\n"),
+    ).toEqual(["monarch", "monarch/transitions"]);
+  });
+
+  test("reads only the [library] section", () => {
+    expect(libraryIncludeDirs("[project]\ninclude_dirs = pbr\n\n[library]\n")).toEqual([]);
+  });
+
+  test("an empty value exports nothing", () => {
+    expect(libraryIncludeDirs("[library]\ninclude_dirs =\n")).toEqual([]);
   });
 });
 

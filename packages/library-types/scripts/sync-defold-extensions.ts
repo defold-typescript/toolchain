@@ -91,7 +91,13 @@ const NON_LIBRARY_PREFIXES = [
   "demo-",
 ];
 
-function declaresLibraryIncludeDirs(gameProject: string): boolean {
+/**
+ * The directories a `game.project` shares with projects that depend on it: the
+ * `[library] include_dirs` value split on commas and whitespace, with leading
+ * and trailing slashes stripped. Both the Defold-org survey and the Asset Portal
+ * sync read "exports a library" through this one definition.
+ */
+export function libraryIncludeDirs(gameProject: string): string[] {
   let section = "";
   for (const raw of gameProject.split(/\r?\n/)) {
     const line = raw.trim();
@@ -102,9 +108,18 @@ function declaresLibraryIncludeDirs(gameProject: string): boolean {
     }
     if (section !== "library") continue;
     const match = /^include_dirs\s*=\s*(.*)$/.exec(line);
-    if (match && (match[1] ?? "").trim() !== "") return true;
+    if (!match) continue;
+    const dirs = (match[1] ?? "")
+      .split(/[\s,]+/)
+      .map((dir) => dir.replace(/^\/+|\/+$/g, ""))
+      .filter((dir) => dir !== "");
+    if (dirs.length > 0) return dirs;
   }
-  return false;
+  return [];
+}
+
+function declaresLibraryIncludeDirs(gameProject: string): boolean {
+  return libraryIncludeDirs(gameProject).length > 0;
 }
 
 /**
@@ -377,24 +392,27 @@ export async function reconvertDefoldExtensions(
   return written;
 }
 
-function gitHubToken(): string | undefined {
+export function gitHubToken(): string | undefined {
   return process.env.GITHUB_TOKEN || process.env.GH_TOKEN || undefined;
 }
 
-async function request(url: string, accept = "application/vnd.github+json"): Promise<Response> {
+export async function request(
+  url: string,
+  accept = "application/vnd.github+json",
+): Promise<Response> {
   const token = gitHubToken();
   const headers: Record<string, string> = { Accept: accept };
   if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(url, { headers });
 }
 
-async function apiJson<T>(path: string): Promise<T> {
+export async function apiJson<T>(path: string): Promise<T> {
   const res = await request(`https://api.github.com/${path}`);
   if (!res.ok) throw new Error(`GitHub API ${path} -> ${res.status} ${res.statusText}`);
   return (await res.json()) as T;
 }
 
-async function apiJsonOrNull<T>(path: string): Promise<T | null> {
+export async function apiJsonOrNull<T>(path: string): Promise<T | null> {
   const res = await request(`https://api.github.com/${path}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub API ${path} -> ${res.status} ${res.statusText}`);
