@@ -199,7 +199,7 @@ export function assignPageKeys(
 }
 
 interface SyncApiDocsModule {
-  scriptApiToDocsJson: (text: string) => string;
+  scriptApiToFixtureJson: (text: string) => string;
 }
 
 // Loaded by resolved path from the sibling types package, mirroring
@@ -252,17 +252,17 @@ interface ApiDocJson {
   info: { namespace: string };
 }
 
-// Lower every top-level table in one fetched `.script_api` to docs JSON,
+// Lower every top-level table in one fetched `.script_api` to ref-doc JSON,
 // skipping chunks that declare no table and naming the URL on any other error.
 function convertChunks(
   text: string,
   url: string,
-  toDocsJson: SyncApiDocsModule["scriptApiToDocsJson"],
+  toFixtureJson: SyncApiDocsModule["scriptApiToFixtureJson"],
 ): ApiDocJson[] {
   const docs: ApiDocJson[] = [];
   for (const chunk of splitTopLevelEntries(text)) {
     try {
-      docs.push(JSON.parse(toDocsJson(chunk)));
+      docs.push(JSON.parse(toFixtureJson(chunk)));
     } catch (error) {
       if (/no top-level `type: table`/.test((error as Error).message)) continue;
       throw new Error(`defold-extensions: ${url}: ${(error as Error).message}`);
@@ -288,7 +288,7 @@ export async function syncDefoldExtensions(
   github: DefoldGitHub,
   reserved: ReservedNamespaces,
 ): Promise<DefoldExtensionsManifest> {
-  const { scriptApiToDocsJson } = await loadSyncApiDocs(join(import.meta.dir, ".."));
+  const { scriptApiToFixtureJson } = await loadSyncApiDocs(join(import.meta.dir, ".."));
 
   const surveyed: (Omit<DefoldExtensionEntry, "docs"> & {
     docs: { path: string; namespace: string }[];
@@ -315,7 +315,7 @@ export async function syncDefoldExtensions(
     for (const path of paths.sort()) {
       const url = rawUrl(repo.name, pin.ref, path);
       const text = await github.fetchText(url);
-      for (const doc of convertChunks(text, url, scriptApiToDocsJson)) {
+      for (const doc of convertChunks(text, url, scriptApiToFixtureJson)) {
         docs.push({ path, namespace: doc.info.namespace });
         docJson.set(docKey(repoUrl, path, doc.info.namespace), doc);
       }
@@ -363,7 +363,7 @@ export async function reconvertDefoldExtensions(
   packageRoot: string,
   fetchText: (url: string) => Promise<string>,
 ): Promise<number> {
-  const { scriptApiToDocsJson } = await loadSyncApiDocs(join(import.meta.dir, ".."));
+  const { scriptApiToFixtureJson } = await loadSyncApiDocs(join(import.meta.dir, ".."));
   const { libraries } = JSON.parse(
     readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
   ) as DefoldExtensionsManifest;
@@ -376,7 +376,7 @@ export async function reconvertDefoldExtensions(
       let chunks = converted.get(doc.path);
       if (!chunks) {
         const url = rawUrl(name, entry.ref, doc.path);
-        chunks = convertChunks(await fetchText(url), url, scriptApiToDocsJson);
+        chunks = convertChunks(await fetchText(url), url, scriptApiToFixtureJson);
         converted.set(doc.path, chunks);
       }
       const json = chunks.find((chunk) => chunk.info.namespace === doc.namespace);

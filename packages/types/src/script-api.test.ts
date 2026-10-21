@@ -144,10 +144,13 @@ describe("scriptApiToRefDoc", () => {
     expect(functionElements(refDoc())[0]?.parameters.some((p) => p.name === "self")).toBe(false);
   });
 
-  it("drops scalar (constant) members", () => {
-    const elements = refDoc().elements;
-    expect(elements.every((e) => e.type === "FUNCTION")).toBe(true);
-    expect(elements.some((e) => e.name === "demo.VERSION")).toBe(false);
+  it("carries a scalar member as a CONSTANT element", () => {
+    expect(refDoc().elements.find((e) => e.name === "demo.VERSION")).toEqual({
+      type: "CONSTANT",
+      name: "demo.VERSION",
+      brief: "a module constant",
+      description: "a module constant",
+    });
   });
 
   it("round-trips through parseDefoldApiDoc and emitDeclarations", () => {
@@ -163,7 +166,7 @@ describe("scriptApiToRefDoc", () => {
   });
 
   it("adds no phantom elements to a flat input — recursion is a no-op for the built-in shape", () => {
-    expect(refDoc().elements.map((e) => e.name)).toEqual(["demo.greet"]);
+    expect(refDoc().elements.map((e) => e.name)).toEqual(["demo.greet", "demo.VERSION"]);
   });
 });
 
@@ -187,11 +190,11 @@ describe("scriptApiToRefDoc nested namespaces", () => {
     expect(bridgeDoc().info.description).toBe("The bridge namespace.");
   });
 
-  it("drops nested constants and does not recurse a second level", () => {
+  it("carries nested and top-level constants but does not recurse a second level", () => {
     const names = bridgeDoc().elements.map((e) => e.name);
-    expect(names.some((n) => n === "bridge.platform.LEVEL")).toBe(false);
+    expect(names).toContain("bridge.platform.LEVEL");
+    expect(names).toContain("bridge.TOP_CONST");
     expect(names.some((n) => n.includes("buried"))).toBe(false);
-    expect(names.some((n) => n === "bridge.TOP_CONST")).toBe(false);
   });
 
   it("emits both a direct function and a nested function for a mixed table", () => {
@@ -231,9 +234,9 @@ const CONSTANTS = `
     desc: a string constant
 `;
 
-describe("scriptApiToRefDoc complete mode", () => {
+describe("scriptApiToRefDoc constants", () => {
   it("emits top-level and one-level-nested scalars as CONSTANT elements in member order", () => {
-    const constants = scriptApiToRefDoc(parse(CONSTANTS), { complete: true }).elements.filter(
+    const constants = scriptApiToRefDoc(parse(CONSTANTS)).elements.filter(
       (e) => e.type === "CONSTANT",
     );
     expect(constants).toEqual([
@@ -253,18 +256,8 @@ describe("scriptApiToRefDoc complete mode", () => {
     ]);
   });
 
-  it("keeps the default output free of constants and identical to complete mode's functions", () => {
-    const plain = scriptApiToRefDoc(parse(CONSTANTS));
-    const complete = scriptApiToRefDoc(parse(CONSTANTS), { complete: true });
-    expect(plain.elements.some((e) => e.type === "CONSTANT")).toBe(false);
-    expect(plain).toEqual({
-      ...complete,
-      elements: complete.elements.filter((e) => e.type !== "CONSTANT"),
-    });
-  });
-
   it("lists the constants in parseDefoldApiDoc's module.constants", () => {
-    const module = parseDefoldApiDoc(parseScriptApi(CONSTANTS, { complete: true }));
+    const module = parseDefoldApiDoc(parseScriptApi(CONSTANTS));
     expect(module.constants.map((c) => c.name)).toEqual([
       "demo.MSG_A",
       "demo.sub.KIND_B",
@@ -319,8 +312,8 @@ function exampleOf(doc: RefDoc, name: string): string | undefined {
 }
 
 describe("scriptApiToRefDoc examples", () => {
-  it("round-trips prose and fenced blocks through examplesHtmlToMarkdown in complete mode", () => {
-    const html = exampleOf(scriptApiToRefDoc(parse(EXAMPLES), { complete: true }), "ex.run");
+  it("round-trips prose and fenced blocks through examplesHtmlToMarkdown", () => {
+    const html = exampleOf(scriptApiToRefDoc(parse(EXAMPLES)), "ex.run");
     expect(html).toBeDefined();
     expect(examplesHtmlToMarkdown(html ?? "")).toBe(
       [
@@ -332,16 +325,14 @@ describe("scriptApiToRefDoc examples", () => {
   });
 
   it("keeps a fence's own language", () => {
-    const html = exampleOf(scriptApiToRefDoc(parse(EXAMPLES), { complete: true }), "ex.configure");
+    const html = exampleOf(scriptApiToRefDoc(parse(EXAMPLES)), "ex.configure");
     expect(examplesHtmlToMarkdown(html ?? "")).toBe('```json\n{ "enabled": true }\n```');
   });
 
-  it("omits the examples key when a function has none, and in default mode", () => {
-    const complete = functionElements(scriptApiToRefDoc(parse(EXAMPLES), { complete: true }));
-    expect(complete.find((e) => e.name === "ex.bare")).not.toHaveProperty("examples");
-    for (const element of functionElements(scriptApiToRefDoc(parse(EXAMPLES)))) {
-      expect(element).not.toHaveProperty("examples");
-    }
+  it("omits the examples key when a function has none", () => {
+    const elements = functionElements(scriptApiToRefDoc(parse(EXAMPLES)));
+    expect(elements.find((e) => e.name === "ex.bare")).not.toHaveProperty("examples");
+    expect(elements.find((e) => e.name === "ex.run")).toHaveProperty("examples");
   });
 });
 
@@ -515,15 +506,15 @@ const NESTED = `
         optional: true
 `;
 
-function setCallback(options: { complete?: boolean } = {}): RefDocFunctionElement | undefined {
-  return functionElements(scriptApiToRefDoc(parse(NESTED), options)).find(
+function setCallback(): RefDocFunctionElement | undefined {
+  return functionElements(scriptApiToRefDoc(parse(NESTED))).find(
     (e) => e.name === "ads.set_callback",
   );
 }
 
 describe("scriptApiToRefDoc nested slots", () => {
   it("maps a callback's parameters to fields in order, keeping its self", () => {
-    const callback = setCallback({ complete: true })?.parameters.find((p) => p.name === "callback");
+    const callback = setCallback()?.parameters.find((p) => p.name === "callback");
     expect(callback?.fields?.map((f) => f.name)).toEqual(["self", "message_id", "message"]);
     expect(callback?.fields?.[1]).toEqual({
       name: "message_id",
@@ -533,7 +524,7 @@ describe("scriptApiToRefDoc nested slots", () => {
   });
 
   it("nests a table's fields two levels deep and maps returns the same way", () => {
-    const element = setCallback({ complete: true });
+    const element = setCallback();
     const message = element?.parameters
       .find((p) => p.name === "callback")
       ?.fields?.find((f) => f.name === "message");
@@ -541,10 +532,16 @@ describe("scriptApiToRefDoc nested slots", () => {
     expect(element?.returnvalues[0]?.fields?.map((f) => f.name)).toEqual(["ok", "note"]);
   });
 
-  it("marks optional top-level and nested slots, and parseDefoldApiDoc reads both", () => {
-    const element = setCallback({ complete: true });
+  it("marks an optional slot and leaves the key off a required one", () => {
+    const element = setCallback();
     expect(element?.parameters.find((p) => p.name === "tag")?.is_optional).toBe("True");
-    const fn = parseDefoldApiDoc(parseScriptApi(NESTED, { complete: true })).functions[0];
+    expect(element?.parameters.find((p) => p.name === "callback")).not.toHaveProperty(
+      "is_optional",
+    );
+  });
+
+  it("marks optional top-level and nested slots, and parseDefoldApiDoc reads both", () => {
+    const fn = parseDefoldApiDoc(parseScriptApi(NESTED)).functions[0];
     const [callback, tag] = fn?.parameters ?? [];
     expect(tag).toMatchObject({ name: "tag", isOptional: true });
     expect(callback?.isOptional).toBe(false);
@@ -560,16 +557,8 @@ describe("scriptApiToRefDoc nested slots", () => {
     ]);
   });
 
-  it("still drops a top-level self in complete mode, and default mode emits no nesting", () => {
-    expect(setCallback({ complete: true })?.parameters.map((p) => p.name)).toEqual([
-      "callback",
-      "tag",
-    ]);
-    const plain = setCallback();
-    for (const slot of [...(plain?.parameters ?? []), ...(plain?.returnvalues ?? [])]) {
-      expect(slot).not.toHaveProperty("fields");
-      expect(slot).not.toHaveProperty("is_optional");
-    }
+  it("still drops a top-level self while keeping a callback's own", () => {
+    expect(setCallback()?.parameters.map((p) => p.name)).toEqual(["callback", "tag"]);
   });
 });
 
@@ -640,6 +629,13 @@ const DIALECTS = `
       - name: timeout
         type: number
         desc: the timeout
+  - name: set_mode
+    type: function
+    desc: an enum-typed slot
+    parameters:
+    - name: mode
+      type: enum
+      desc: one of the dia.MODE_* constants
   - name: purchase
     type: function
     desc: a required placeholder suffix
@@ -668,10 +664,8 @@ const DIALECTS = `
       desc: a real nested function
 `;
 
-function dialect(name: string, options: { complete?: boolean } = {}) {
-  return functionElements(scriptApiToRefDoc(parse(DIALECTS), options)).find(
-    (e) => e.name === `dia.${name}`,
-  );
+function dialect(name: string) {
+  return functionElements(scriptApiToRefDoc(parse(DIALECTS))).find((e) => e.name === `dia.${name}`);
 }
 
 describe("scriptApiToRefDoc upstream dialects", () => {
@@ -705,10 +699,9 @@ describe("scriptApiToRefDoc upstream dialects", () => {
     expect(emitted).toContain("function count_single(): number;");
   });
 
-  it("carries a table slot's members: as fields in complete mode only", () => {
-    const options = dialect("configure", { complete: true })?.parameters[0];
+  it("carries a table slot's members: as fields", () => {
+    const options = dialect("configure")?.parameters[0];
     expect(options?.fields).toEqual([{ name: "timeout", doc: "the timeout", types: ["number"] }]);
-    expect(dialect("configure")?.parameters[0]).not.toHaveProperty("fields");
   });
 
   it("skips placeholder function names at both levels and keeps valid siblings", () => {
@@ -719,7 +712,11 @@ describe("scriptApiToRefDoc upstream dialects", () => {
   });
 
   it("strips a (REQUIRED) suffix without marking the slot optional", () => {
-    const slot = dialect("purchase", { complete: true })?.parameters[0];
+    const slot = dialect("purchase")?.parameters[0];
     expect(slot).toEqual({ name: "project_id", doc: "the project", types: ["number"] });
+  });
+
+  it("reads an enum type as the core constant token", () => {
+    expect(dialect("set_mode")?.parameters[0]?.types).toEqual(["constant"]);
   });
 });

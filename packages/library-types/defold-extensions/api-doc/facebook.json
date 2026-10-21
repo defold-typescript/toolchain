@@ -195,7 +195,10 @@
         {
           "name": "event",
           "doc": "An event can either be one of the predefined constants below or a text string which can be used to define a custom event that is registered with Facebook Analytics.\n- `facebook.EVENT_ACHIEVED_LEVEL` - `facebook.EVENT_ADDED_PAYMENT_INFO` - `facebook.EVENT_ADDED_TO_CART` - `facebook.EVENT_ADDED_TO_WISHLIST` - `facebook.EVENT_COMPLETED_REGISTRATION` - `facebook.EVENT_COMPLETED_TUTORIAL` - `facebook.EVENT_INITIATED_CHECKOUT` - `facebook.EVENT_PURCHASED` - `facebook.EVENT_RATED` - `facebook.EVENT_SEARCHED` - `facebook.EVENT_SPENT_CREDITS` - `facebook.EVENT_TIME_BETWEEN_SESSIONS` - `facebook.EVENT_UNLOCKED_ACHIEVEMENT` - `facebook.EVENT_VIEWED_CONTENT`",
-          "types": []
+          "types": [
+            "number",
+            "string"
+          ]
         },
         {
           "name": "value",

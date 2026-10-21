@@ -8,6 +8,10 @@ declare global {
    */
   namespace myext {
     /**
+     * a module constant
+     */
+    const MAX: number & { readonly __brand: "myext.MAX" };
+    /**
      * Does a thing.
      *
      * @param count - how many times

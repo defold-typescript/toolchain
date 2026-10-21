@@ -42,7 +42,7 @@
               "name": "type",
               "doc": "The type of callback\n- `webview.CALLBACK_RESULT_URL_OK`\n- `webview.CALLBACK_RESULT_URL_ERROR`\n- `webview.CALLBACK_RESULT_URL_LOADING`\n- `webview.CALLBACK_RESULT_EVAL_OK`\n- `webview.CALLBACK_RESULT_EVAL_ERROR`",
               "types": [
-                "enum"
+                "constant"
               ]
             },
             {
