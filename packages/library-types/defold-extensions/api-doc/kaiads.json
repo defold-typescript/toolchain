@@ -65,37 +65,55 @@
       "type": "CONSTANT",
       "name": "kaiads.PRELOAD_ERROR",
       "brief": "Event sent when an error occurred while trying to preload an ad",
-      "description": "Event sent when an error occurred while trying to preload an ad"
+      "description": "Event sent when an error occurred while trying to preload an ad",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "kaiads.PRELOAD_OK",
       "brief": "Event sent when an ad was successfully preloaded",
-      "description": "Event sent when an ad was successfully preloaded"
+      "description": "Event sent when an ad was successfully preloaded",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "kaiads.SHOW_ERROR",
       "brief": "Event sent when an error occurred while trying to show an ad",
-      "description": "Event sent when an error occurred while trying to show an ad"
+      "description": "Event sent when an error occurred while trying to show an ad",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "kaiads.AD_DISPLAY",
       "brief": "Event sent when an ad is displayed",
-      "description": "Event sent when an ad is displayed"
+      "description": "Event sent when an ad is displayed",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "kaiads.AD_CLICK",
       "brief": "Event sent when an ad is clicked",
-      "description": "Event sent when an ad is clicked"
+      "description": "Event sent when an ad is clicked",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "kaiads.AD_CLOSE",
       "brief": "Event sent when an ad is closed",
-      "description": "Event sent when an ad is closed"
+      "description": "Event sent when an ad is closed",
+      "types": [
+        "number"
+      ]
     }
   ]
 }

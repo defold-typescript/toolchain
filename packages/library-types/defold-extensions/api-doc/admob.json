@@ -372,265 +372,397 @@
       "type": "CONSTANT",
       "name": "admob.MSG_INITIALIZATION",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MSG_INTERSTITIAL",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MSG_REWARDED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MSG_BANNER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MSG_IDFA",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MSG_REWARDED_INTERSTITIAL",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MSG_APPOPEN",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_CLOSED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_FAILED_TO_SHOW",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_OPENING",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_FAILED_TO_LOAD",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_LOADED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_NOT_LOADED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_EARNED_REWARD",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_COMPLETE",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_CLICKED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_DESTROYED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_JSON_ERROR",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_IMPRESSION_RECORDED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_STATUS_AUTHORIZED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_STATUS_DENIED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_STATUS_NOT_DETERMINED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_STATUS_RESTRICTED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.EVENT_NOT_SUPPORTED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.SIZE_ADAPTIVE_BANNER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.SIZE_LARGE_ADAPTIVE_BANNER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.SIZE_BANNER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.SIZE_FLUID",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.SIZE_FULL_BANNER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.SIZE_LARGE_BANNER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.SIZE_LEADEARBOARD",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.SIZE_MEDIUM_RECTANGLE",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.POS_NONE",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.POS_TOP_LEFT",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.POS_TOP_CENTER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.POS_TOP_RIGHT",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.POS_BOTTOM_LEFT",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.POS_BOTTOM_CENTER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.POS_BOTTOM_RIGHT",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.POS_CENTER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MAX_AD_CONTENT_RATING_G",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MAX_AD_CONTENT_RATING_PG",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MAX_AD_CONTENT_RATING_T",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "admob.MAX_AD_CONTENT_RATING_MA",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     }
   ]
 }

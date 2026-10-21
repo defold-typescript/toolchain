@@ -1014,181 +1014,271 @@
       "type": "CONSTANT",
       "name": "levelplay.MSG_INIT",
       "brief": "Initialization events.",
-      "description": "Initialization events."
+      "description": "Initialization events.",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.MSG_INTERSTITIAL",
       "brief": "Interstitial-object events.",
-      "description": "Interstitial-object events."
+      "description": "Interstitial-object events.",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.MSG_REWARDED",
       "brief": "Rewarded-object events.",
-      "description": "Rewarded-object events."
+      "description": "Rewarded-object events.",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.MSG_BANNER",
       "brief": "Banner-object events.",
-      "description": "Banner-object events."
+      "description": "Banner-object events.",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.MSG_TRACKING",
       "brief": "App Tracking Transparency status events.",
-      "description": "App Tracking Transparency status events."
+      "description": "App Tracking Transparency status events.",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_INIT_SUCCEEDED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_INIT_FAILED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_LOADED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_LOAD_FAILED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_INFO_CHANGED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_DISPLAYED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_DISPLAY_FAILED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_CLICKED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_CLOSED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_REWARDED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_EXPANDED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_COLLAPSED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_AD_LEFT_APPLICATION",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.EVENT_JSON_ERROR",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.TRACKING_STATUS_NOT_DETERMINED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.TRACKING_STATUS_RESTRICTED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.TRACKING_STATUS_DENIED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.TRACKING_STATUS_AUTHORIZED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.BANNER_SIZE_BANNER",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.BANNER_SIZE_LARGE",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.BANNER_SIZE_MEDIUM_RECTANGLE",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.BANNER_SIZE_LEADERBOARD",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.BANNER_SIZE_ADAPTIVE",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.BANNER_POSITION_TOP",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "levelplay.BANNER_POSITION_BOTTOM",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     }
   ]
 }

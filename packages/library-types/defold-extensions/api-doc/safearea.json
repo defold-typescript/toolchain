@@ -54,19 +54,28 @@
       "type": "CONSTANT",
       "name": "safearea.STATUS_OK",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "safearea.STATUS_NOT_AVAILABLE",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "safearea.STATUS_NOT_READY_YET",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     }
   ]
 }

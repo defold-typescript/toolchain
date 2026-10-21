@@ -170,19 +170,28 @@
       "type": "CONSTANT",
       "name": "videoplayer.VIDEO_EVENT_READY",
       "brief": "Video is prepared; data contains width/height.",
-      "description": "Video is prepared; data contains width/height."
+      "description": "Video is prepared; data contains width/height.",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "videoplayer.VIDEO_EVENT_FINISHED",
       "brief": "Playback finished.",
-      "description": "Playback finished."
+      "description": "Playback finished.",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "videoplayer.VIDEO_EVENT_FAILED",
       "brief": "Prepare/playback failed.",
-      "description": "Prepare/playback failed."
+      "description": "Prepare/playback failed.",
+      "types": [
+        "number"
+      ]
     }
   ]
 }
