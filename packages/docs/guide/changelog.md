@@ -13,10 +13,17 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry constants and optional parameters, and type a callback from its documented arguments, narrowing it from `(...args: unknown[]) => unknown`.
 > - **[Asset Portal libraries with no Lua API](/libraries)** get pages.
+
+### Breaking
+
+- **A `.script_api` callback parameter is typed from its documented arguments** in the `.defold-types/extensions/<namespace>.d.ts` that [resolve](./resolve.md#the-generated-surface) writes: `iap.set_listener` takes `(self: unknown, transaction: { ident: string; state: string; ... }, error: Record<string | number, unknown>) => void` where it took `(...args: unknown[]) => unknown`, so a listener declared with other argument types or a non-`void` return no longer type-checks. A callback whose doc lists no arguments keeps `(...args: unknown[]) => unknown`.
 
 ### Improved
 
+- **`resolve` extension declarations carry the whole documented surface**: the namespace's constants, including those one sub-table deep (`iap.PROVIDER_ID_GOOGLE`, `push.NOTIFICATION_BADGE`), a function returning a documented constant typed as that constant union, a parameter flagged `optional: true` emitted optional, and a table parameter typed from its documented fields. A `.script_api` slot typed `enum` is read as a constant-valued slot, so `webview.create`'s callback `type` argument is the union of the `webview.CALLBACK_RESULT_*` constants.
+- **The [facebook](/libraries/defold/extension-facebook), [playables](/libraries/defold/extension-playables) and [poki_sdk](/libraries/defold/extension-poki-sdk) Libraries pages** show the parameter types their `.script_api` spells as YAML lists (`[string, nil]`), which previously rendered as untyped.
 - **[Libraries](/libraries) lists the Defold Asset Portal libraries that ship no Lua API**, such as shaders, materials, sounds and editor scripts, each under its GitHub owner with an icon-marked card, sidebar entry and page, such as [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page leads with the portal's description, gives the dependency step for its pin, and links the library's Asset Portal entry.
 
 ## v0.53.0

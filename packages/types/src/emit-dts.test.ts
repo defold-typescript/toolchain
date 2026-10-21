@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import * as ts from "typescript";
+import iapDoc from "../../library-types/defold-extensions/api-doc/iap.json" with { type: "json" };
+import pushDoc from "../../library-types/defold-extensions/api-doc/push.json" with { type: "json" };
 import b2dDoc from "../fixtures/b2d_doc.json" with { type: "json" };
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
@@ -46,12 +48,10 @@ import window114Doc from "../fixtures/defold-1.14.0/window_doc.json" with { type
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
-import iapDoc from "../fixtures/iap_doc.json" with { type: "json" };
 import liveupdateDoc from "../fixtures/liveupdate_doc.json" with { type: "json" };
 import modelDoc from "../fixtures/model_doc.json" with { type: "json" };
 import physicsDoc from "../fixtures/physics_doc.json" with { type: "json" };
 import profilerDoc from "../fixtures/profiler_doc.json" with { type: "json" };
-import pushDoc from "../fixtures/push_doc.json" with { type: "json" };
 import renderDoc from "../fixtures/render_doc.json" with { type: "json" };
 import resourceDoc from "../fixtures/resource_doc.json" with { type: "json" };
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
@@ -4890,9 +4890,39 @@ describe("documented constant slot expansion", () => {
     expect(signatureLine(guiOut, "function new_texture(")).toContain(
       'type: string | Opaque<"constant">, buffer: string',
     );
+    const undeclared = emitDeclarations(
+      parseDefoldApiDoc({
+        info: { namespace: "vendor", brief: "", description: "" },
+        elements: [
+          {
+            type: "FUNCTION",
+            name: "vendor.get_provider_id",
+            description: "Get the current provider",
+            parameters: [],
+            returnvalues: [
+              {
+                name: "provider_id",
+                doc: "one of the following values\n- `vendor.PROVIDER_ID_GOOGLE`\n- `vendor.PROVIDER_ID_APPLE`",
+                types: ["constant"],
+              },
+            ],
+          },
+        ],
+      } as Parameters<typeof parseDefoldApiDoc>[0]),
+    );
+    expect(signatureLine(undeclared, "function get_provider_id(")).toBe(
+      'function get_provider_id(): Opaque<"constant">;',
+    );
     const iap = emitDeclarations(parseDefoldApiDoc(iapDoc));
     expect(signatureLine(iap, "function get_provider_id(")).toBe(
-      'function get_provider_id(): Opaque<"constant">;',
+      `function get_provider_id(): ${[
+        "iap.PROVIDER_ID_GOOGLE",
+        "iap.PROVIDER_ID_AMAZON",
+        "iap.PROVIDER_ID_APPLE",
+        "iap.PROVIDER_ID_FACEBOOK",
+      ]
+        .map(brand)
+        .join(" | ")};`,
     );
   });
 
@@ -8470,5 +8500,143 @@ describe("Opaque members another member admits", () => {
     expect(out).toContain(
       'function take(narrow_first: Opaque<"btCollisionObject" | "btRigidBody">, unrelated: Opaque<"node"> | Opaque<"texture">): void;',
     );
+  });
+});
+
+describe("slots typed from ref-doc fields", () => {
+  const DATA_FIELD = {
+    name: "data",
+    doc: "the payload",
+    types: ["table"],
+    fields: [{ name: "id", doc: "the id", types: ["string"] }],
+  };
+
+  function emitSlot(parameter: Record<string, unknown>): string {
+    const doc = {
+      info: { namespace: "ext", brief: "", description: "" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "ext.set_listener",
+          description: "Set the listener.",
+          parameters: [parameter],
+          returnvalues: [],
+        },
+      ],
+    };
+    return emitDeclarations(parseDefoldApiDoc(doc as Parameters<typeof parseDefoldApiDoc>[0]));
+  }
+
+  test("a function parameter with fields is typed from its documented arguments", () => {
+    const out = emitSlot({
+      name: "listener",
+      doc: "called back",
+      types: ["function"],
+      fields: [
+        { name: "self", doc: "the script", types: ["object"] },
+        { name: "code", doc: "the code", types: ["number"] },
+        DATA_FIELD,
+      ],
+    });
+    expect(out).toContain(
+      "function set_listener(listener: (self: unknown, code: number, data: { id: string }) => void): void;",
+    );
+  });
+
+  test("a function parameter without fields keeps the whole-token mapping", () => {
+    const out = emitSlot({ name: "listener", doc: "called back", types: ["function"] });
+    expect(out).toContain(
+      "function set_listener(listener: (...args: unknown[]) => unknown): void;",
+    );
+  });
+
+  test("an optional trailing callback argument is emitted with ?", () => {
+    const out = emitSlot({
+      name: "listener",
+      doc: "called back",
+      types: ["function"],
+      fields: [
+        { name: "self", doc: "the script", types: ["object"] },
+        { name: "code", doc: "the code", types: ["number"] },
+        { ...DATA_FIELD, is_optional: "True" },
+      ],
+    });
+    expect(out).toContain("(self: unknown, code: number, data?: { id: string }) => void");
+  });
+
+  test("an optional interior callback argument is emitted as | undefined", () => {
+    const out = emitSlot({
+      name: "listener",
+      doc: "called back",
+      types: ["function"],
+      fields: [
+        { name: "self", doc: "the script", types: ["object"] },
+        { name: "code", doc: "the code", types: ["number"], is_optional: "True" },
+        DATA_FIELD,
+      ],
+    });
+    expect(out).toContain(
+      "(self: unknown, code: number | undefined, data: { id: string }) => void",
+    );
+  });
+
+  test("a table parameter with ref-doc fields ignores the prose field list", () => {
+    const out = emitSlot({
+      name: "options",
+      doc: 'the options:\n<dl>\n<dt><code>legacy</code></dt>\n<dd><span class="type">number</span> a prose-only field</dd>\n</dl>',
+      types: ["table"],
+      fields: [
+        { name: "timeout", doc: "the timeout", types: ["number"] },
+        { name: "label", doc: "the label", types: ["string"] },
+      ],
+    });
+    expect(out).toContain(
+      "function set_listener(options: { timeout?: number; label?: string }): void;",
+    );
+    expect(out).not.toContain("legacy?:");
+  });
+
+  test("an is_optional parameter with no doc hint is emitted optional", () => {
+    const out = emitSlot({ name: "tag", doc: "a tag", types: ["string"], is_optional: "True" });
+    expect(out).toContain("function set_listener(tag?: string): void;");
+  });
+
+  test("a constant callback argument expands to the brands its own doc names", () => {
+    const listener = {
+      name: "listener",
+      doc: "called back",
+      types: ["function"],
+      fields: [
+        { name: "self", doc: "the script", types: ["object"] },
+        {
+          name: "origin",
+          doc: "one of\n- `ext.ORIGIN_LOCAL`\n- `ext.ORIGIN_REMOTE`",
+          types: ["constant"],
+        },
+      ],
+    };
+    const constants = [
+      { type: "CONSTANT", name: "ext.ORIGIN_LOCAL", brief: "", description: "" },
+      { type: "CONSTANT", name: "ext.ORIGIN_REMOTE", brief: "", description: "" },
+    ];
+    const doc = {
+      info: { namespace: "ext", brief: "", description: "" },
+      elements: [
+        ...constants,
+        {
+          type: "FUNCTION",
+          name: "ext.set_listener",
+          description: "Set the listener.",
+          parameters: [listener],
+          returnvalues: [],
+        },
+      ],
+    };
+    const out = emitDeclarations(parseDefoldApiDoc(doc as Parameters<typeof parseDefoldApiDoc>[0]));
+    expect(out).toContain(
+      'origin: number & { readonly __brand: "ext.ORIGIN_LOCAL" } | number & { readonly __brand: "ext.ORIGIN_REMOTE" }) => void',
+    );
+    const undeclared = emitSlot(listener);
+    expect(undeclared).toContain('origin: Opaque<"constant">) => void');
   });
 });

@@ -26,14 +26,6 @@ export interface RefDocConstantElement {
 
 export type RefDocElement = RefDocFunctionElement | RefDocConstantElement;
 
-export interface ScriptApiOptions {
-  // Also carry scalar members as CONSTANT elements and function `examples:` as
-  // ref-doc examples HTML, and nested callback arguments, table fields and
-  // optional flags on each slot. Off for the typing lanes, whose emitter and
-  // frozen goldens only ever see flat functions without examples.
-  complete?: boolean;
-}
-
 export interface RefDoc {
   info: { namespace: string; brief: string; description: string };
   elements: RefDocElement[];
@@ -47,6 +39,11 @@ function stringOr(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
 }
 
+// A `.script_api` spells a slot that takes one of a set of named constants as
+// `enum`; the core ref-doc token for the same meaning is `constant`, which the
+// emitter expands to the constants the slot's doc names.
+const TYPE_TOKEN_ALIASES: ReadonlyMap<string, string> = new Map([["enum", "constant"]]);
+
 // A `.script_api` `type:` may spell a union inline (`string | nil`), where the
 // core ref-doc format carries one token per alternative. Splitting here keeps the
 // downstream emitter and fidelity resolver working in single tokens. A `type:`
@@ -57,7 +54,8 @@ function splitTypeTokens(type: unknown): string[] {
   return type
     .split("|")
     .map((token) => token.trim())
-    .filter((token) => token.length > 0);
+    .filter((token) => token.length > 0)
+    .map((token) => TYPE_TOKEN_ALIASES.get(token) ?? token);
 }
 
 // Upstream writes a slot list either as a YAML list or, for a lone slot, as a
@@ -79,13 +77,12 @@ function isFunctionName(name: string): boolean {
   return name !== "None" && FUNCTION_NAME.test(name);
 }
 
-function mapSlot(item: Record<string, unknown>, complete: boolean): RefDocParameter {
+function mapSlot(item: Record<string, unknown>): RefDocParameter {
   const slot: RefDocParameter = {
     name: stringOr(item.name, "").replace(REQUIRED_SUFFIX, ""),
     doc: stringOr(item.desc, ""),
     types: splitTypeTokens(item.type),
   };
-  if (!complete) return slot;
   // A callback lists its arguments under `parameters:` and a table its keys under
   // `fields:` or `members:`; the ref-doc format carries all as `fields`. A
   // callback's own `self` is kept, since the engine really passes it to the callback.
@@ -94,18 +91,18 @@ function mapSlot(item: Record<string, unknown>, complete: boolean): RefDocParame
     ...slotList(item.fields),
     ...slotList(item.members),
   ];
-  if (nested.length > 0) slot.fields = nested.map((child) => mapSlot(child, complete));
+  if (nested.length > 0) slot.fields = nested.map(mapSlot);
   if (item.optional === true) slot.is_optional = "True";
   return slot;
 }
 
-function mapParameters(raw: unknown, complete: boolean): RefDocParameter[] {
+function mapParameters(raw: unknown): RefDocParameter[] {
   const out: RefDocParameter[] = [];
   for (const item of slotList(raw)) {
     // The script_api lists the implicit `self` the engine passes; the emitter
     // stamps @noSelfInFile, so generated signatures must not declare it.
     if (stringOr(item.name, "") === "self") continue;
-    out.push(mapSlot(item, complete));
+    out.push(mapSlot(item));
   }
   return out;
 }
@@ -153,22 +150,21 @@ function isScalar(member: Record<string, unknown>): boolean {
 
 /**
  * Convert a parsed Defold extension `.script_api` document into the core
- * ref-doc JSON object shape that `parseDefoldApiDoc` consumes. By default only
- * `type: function` members are carried; scalar members (constants) are
- * dropped, matching the core ref-doc pipeline where non-function elements
- * never reach the emitter. With `complete`, scalar members at the top level and
- * one table deep are also carried as CONSTANT elements, and each function's
- * `examples:` becomes `codehilite` examples HTML that keeps each fence's
- * language, and each slot's nested `parameters:`/`fields:` and `optional: true`
- * become ref-doc `fields` and `is_optional`, for the docs pages.
+ * ref-doc JSON object shape that `parseDefoldApiDoc` consumes. `type: function`
+ * members become FUNCTION elements; scalar members at the top level and one
+ * table deep become CONSTANT elements; each function's `examples:` becomes
+ * `codehilite` examples HTML that keeps each fence's language; and each slot's
+ * nested `parameters:`/`fields:` and `optional: true` become ref-doc `fields`
+ * and `is_optional`. The Libraries pages, the `script-api` lane, the extension
+ * goldens and `resolve` all read this one conversion.
  *
- * Upstream dialects are normalized in both modes: a function's slots are read
- * from the first present of `parameters:`, `params:` or `members:` and its
- * returns from `returns:` or `return:`, any slot list may be a single mapping,
- * a table slot's `members:` nest like `fields:`, a `(REQUIRED)` name suffix is
- * dropped, and a function named `None` or not a Lua identifier is skipped.
+ * Upstream dialects are normalized: a function's slots are read from the first
+ * present of `parameters:`, `params:` or `members:` and its returns from
+ * `returns:` or `return:`, any slot list may be a single mapping, a table slot's
+ * `members:` nest like `fields:`, a `(REQUIRED)` name suffix is dropped, and a
+ * function named `None` or not a Lua identifier is skipped.
  */
-export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {}): RefDoc {
+export function scriptApiToRefDoc(parsed: unknown): RefDoc {
   if (!Array.isArray(parsed)) {
     throw new Error("scriptApiToRefDoc: expected a top-level YAML list");
   }
@@ -193,13 +189,10 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
       type: "FUNCTION",
       name,
       description: stringOr(member.desc, ""),
-      parameters: mapParameters(
-        member.parameters ?? member.params ?? member.members,
-        options.complete === true,
-      ),
-      returnvalues: mapParameters(member.returns ?? member.return, options.complete === true),
+      parameters: mapParameters(member.parameters ?? member.params ?? member.members),
+      returnvalues: mapParameters(member.returns ?? member.return),
     };
-    const examples = options.complete ? examplesHtml(member.examples) : "";
+    const examples = examplesHtml(member.examples);
     if (examples !== "") element.examples = examples;
     return element;
   };
@@ -219,7 +212,7 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
       elements.push(fnElement(`${namespace}.${stringOr(member.name, "")}`, member));
       continue;
     }
-    if (options.complete && isScalar(member)) {
+    if (isScalar(member)) {
       elements.push(constantElement(`${namespace}.${stringOr(member.name, "")}`, member));
       continue;
     }
@@ -236,7 +229,7 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
         if (subMember.type === "function") {
           if (isFunctionName(stringOr(subMember.name, "")))
             elements.push(fnElement(name, subMember));
-        } else if (options.complete && isScalar(subMember)) {
+        } else if (isScalar(subMember)) {
           elements.push(constantElement(name, subMember));
         }
       }
@@ -249,6 +242,6 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
   return doc;
 }
 
-export function parseScriptApi(yamlText: string, options: ScriptApiOptions = {}): RefDoc {
-  return scriptApiToRefDoc(parse(yamlText), options);
+export function parseScriptApi(yamlText: string): RefDoc {
+  return scriptApiToRefDoc(parse(yamlText));
 }

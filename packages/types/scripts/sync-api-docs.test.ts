@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseDefoldApiDoc } from "../src/api-doc";
+import { parseScriptApi } from "../src/script-api";
 import { MODULE_MANIFEST } from "./regen";
 import {
   buildCoverageReport,
@@ -279,6 +280,40 @@ describe("scriptApiToFixtureJson", () => {
     const module = parseDefoldApiDoc(JSON.parse(scriptApiToFixtureJson(text)));
     expect(module.namespace).toBe("demo");
     expect(module.functions.map((f) => f.name)).toEqual(["demo.greet"]);
+  });
+
+  test("scriptApiToFixtureJson is the complete conversion: constants, optional and nested slots", () => {
+    const text = [
+      "- name: demo",
+      "  type: table",
+      "  desc: A demo namespace.",
+      "  members:",
+      "  - name: MODE_A",
+      "    type: number",
+      "    desc: a constant",
+      "  - name: greet",
+      "    type: function",
+      "    desc: Greet.",
+      "    parameters:",
+      "      - name: callback",
+      "        type: function",
+      "        desc: called back",
+      "        parameters:",
+      "          - name: self",
+      "            type: object",
+      "          - name: code",
+      "            type: number",
+      "      - name: tag",
+      "        type: string",
+      "        desc: a tag",
+      "        optional: true",
+    ].join("\n");
+    expect(scriptApiToFixtureJson(text)).toBe(JSON.stringify(parseScriptApi(text)));
+    const module = parseDefoldApiDoc(JSON.parse(scriptApiToFixtureJson(text)));
+    expect(module.constants.map((c) => c.name)).toEqual(["demo.MODE_A"]);
+    const [callback, tag] = module.functions[0]?.parameters ?? [];
+    expect(callback?.fields?.map((f) => f.name)).toEqual(["self", "code"]);
+    expect(tag?.isOptional).toBe(true);
   });
 });
 
