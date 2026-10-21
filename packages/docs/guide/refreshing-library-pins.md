@@ -120,8 +120,8 @@ registry pins.
 
 The weekly **Library upstream pin check** workflow also compares the portal
 head's entry ids with the manifest. When ids were added or removed, it opens one
-issue, titled *Asset portal lists entries asset-portal.json has not classified*,
-that lists them and names the re-sync command. The title never changes, so later
+issue, titled *Asset portal entries differ from asset-portal.json*, that lists
+them and names the re-sync command. The title never changes, so later
 runs stay quiet while that issue is open. A changed entry under an unchanged id
 is not reported, because the portal rewrites release metadata every six hours.
 
