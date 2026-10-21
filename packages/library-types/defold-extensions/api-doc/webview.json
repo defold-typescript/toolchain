@@ -325,31 +325,46 @@
       "type": "CONSTANT",
       "name": "webview.CALLBACK_RESULT_URL_OK",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "webview.CALLBACK_RESULT_URL_ERROR",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "webview.CALLBACK_RESULT_URL_LOADING",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "webview.CALLBACK_RESULT_EVAL_OK",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "webview.CALLBACK_RESULT_EVAL_ERROR",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     }
   ]
 }

@@ -150,6 +150,7 @@ describe("scriptApiToRefDoc", () => {
       name: "demo.VERSION",
       brief: "a module constant",
       description: "a module constant",
+      types: ["number"],
     });
   });
 
@@ -245,13 +246,21 @@ describe("scriptApiToRefDoc constants", () => {
         name: "demo.MSG_A",
         brief: "the first message",
         description: "the first message",
+        types: ["number"],
       },
-      { type: "CONSTANT", name: "demo.sub.KIND_B", brief: "", description: "" },
+      {
+        type: "CONSTANT",
+        name: "demo.sub.KIND_B",
+        brief: "",
+        description: "",
+        types: ["string"],
+      },
       {
         type: "CONSTANT",
         name: "demo.LABEL",
         brief: "a string constant",
         description: "a string constant",
+        types: ["string"],
       },
     ]);
   });
@@ -263,7 +272,30 @@ describe("scriptApiToRefDoc constants", () => {
       "demo.sub.KIND_B",
       "demo.LABEL",
     ]);
+    expect(module.constants.map((c) => c.valueType)).toEqual([undefined, "string", "string"]);
+    expect("valueType" in (module.constants[0] as object)).toBe(false);
     expect(module.functions.map((f) => f.name)).toEqual(["demo.greet", "demo.sub.run"]);
+  });
+
+  it("carries no type tokens and no valueType for a scalar declared without a type", () => {
+    const untyped = `
+- name: bare
+  type: table
+  members:
+  - name: FLAG
+    desc: declared with no type
+`;
+    const [element] = scriptApiToRefDoc(parse(untyped)).elements;
+    expect(element).toEqual({
+      type: "CONSTANT",
+      name: "bare.FLAG",
+      brief: "declared with no type",
+      description: "declared with no type",
+      types: [],
+    });
+    const [constant] = parseDefoldApiDoc(parseScriptApi(untyped)).constants;
+    expect(constant?.name).toBe("bare.FLAG");
+    expect("valueType" in (constant as object)).toBe(false);
   });
 });
 

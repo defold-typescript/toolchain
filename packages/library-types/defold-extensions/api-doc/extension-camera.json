@@ -79,55 +79,82 @@
       "type": "CONSTANT",
       "name": "camera.CAMERA_TYPE_FRONT",
       "brief": "Constant for the front camera.",
-      "description": "Constant for the front camera."
+      "description": "Constant for the front camera.",
+      "types": [
+        "string"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "camera.CAMERA_TYPE_BACK",
       "brief": "Constant for the back camera.",
-      "description": "Constant for the back camera."
+      "description": "Constant for the back camera.",
+      "types": [
+        "string"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "camera.CAPTURE_QUALITY_HIGH",
       "brief": "High quality capture session.",
-      "description": "High quality capture session."
+      "description": "High quality capture session.",
+      "types": [
+        "string"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "camera.CAPTURE_QUALITY_MEDIUM",
       "brief": "Medium quality capture session.",
-      "description": "Medium quality capture session."
+      "description": "Medium quality capture session.",
+      "types": [
+        "string"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "camera.CAPTURE_QUALITY_LOW",
       "brief": "Low quality capture session.",
-      "description": "Low quality capture session."
+      "description": "Low quality capture session.",
+      "types": [
+        "string"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "camera.CAMERA_STARTED",
       "brief": "The capture session has started.",
-      "description": "The capture session has started."
+      "description": "The capture session has started.",
+      "types": [
+        "string"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "camera.CAMERA_STOPPED",
       "brief": "The capture session has stopped.",
-      "description": "The capture session has stopped."
+      "description": "The capture session has stopped.",
+      "types": [
+        "string"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "camera.CAMERA_NOT_PERMITTED",
       "brief": "The user did not give permission to start the capture session.",
-      "description": "The user did not give permission to start the capture session."
+      "description": "The user did not give permission to start the capture session.",
+      "types": [
+        "string"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "camera.CAMERA_ERROR",
       "brief": "Something went wrong when starting the capture session.",
-      "description": "Something went wrong when starting the capture session."
+      "description": "Something went wrong when starting the capture session.",
+      "types": [
+        "string"
+      ]
     }
   ]
 }

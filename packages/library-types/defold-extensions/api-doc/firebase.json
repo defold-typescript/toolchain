@@ -104,25 +104,37 @@
       "type": "CONSTANT",
       "name": "firebase.MSG_ERROR",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "firebase.MSG_INITIALIZED",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "firebase.MSG_INSTALLATION_AUTH_TOKEN",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "CONSTANT",
       "name": "firebase.MSG_INSTALLATION_ID",
       "brief": "",
-      "description": ""
+      "description": "",
+      "types": [
+        "number"
+      ]
     }
   ]
 }
