@@ -3,6 +3,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
+import { untypedListings } from "./api-content";
 import { apiModuleSymbols } from "./api-surface";
 import {
   defoldListingsFromManifest,
@@ -15,6 +16,7 @@ import {
   loadCombinedSurface,
   loadLibraryProvenance,
   loadVersionIndependentPages,
+  portalListingsFromManifest,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import { combinedNamespaceToApiPage } from "./combined-surface";
@@ -871,6 +873,173 @@ describe("Defold extensions under Libraries", () => {
         libraryTypesWithDefoldPages(["twice", "twice"]),
       ),
     ).toThrow(/twice/);
+  });
+});
+
+describe("Asset Portal libraries that ship no Lua API under Libraries", () => {
+  interface PortalEntryFixture {
+    id: string;
+    repo: string;
+    kind: string;
+    description?: string;
+    ref?: string;
+    refKind?: string;
+  }
+
+  function libraryTypesWithPortal(
+    entries: PortalEntryFixture[],
+    options: { base?: string; defoldRepos?: string[] } = {},
+  ): string {
+    const dir = mkdtempSync(join(tmpdir(), "asset-portal-listings-"));
+    if (options.base) cpSync(options.base, dir, { recursive: true });
+    writeFileSync(
+      join(dir, "asset-portal.json"),
+      JSON.stringify({
+        source: {
+          repo: "https://github.com/defold/asset-portal",
+          commit: "0".repeat(40),
+          syncedAt: "2026-10-21T00:00:00.000Z",
+        },
+        entries: entries.map((entry) => ({
+          name: entry.id,
+          description: "A library.",
+          tags: [],
+          portalLibrary: true,
+          archived: false,
+          fork: false,
+          pushedAt: "2026-01-01T00:00:00Z",
+          stars: 0,
+          ref: "1.0.0",
+          refKind: "release",
+          includeDirs: ["assets"],
+          scriptApi: 0,
+          extManifest: 0,
+          lua: 0,
+          luaSampled: 0,
+          luaAnnotated: 0,
+          ...entry,
+        })),
+      }),
+    );
+    if (options.defoldRepos) {
+      writeFileSync(
+        join(dir, "defold-extensions.json"),
+        JSON.stringify({
+          libraries: options.defoldRepos.map((repo) => ({
+            repo,
+            ref: "1.0.0",
+            refKind: "release",
+            license: "MIT",
+            description: "",
+            docs: [],
+          })),
+        }),
+      );
+    }
+    return dir;
+  }
+
+  const control: PortalEntryFixture = {
+    id: "control",
+    repo: "https://github.com/someone-else/control",
+    kind: "no-lua-api",
+  };
+
+  test("a no-lua-api entry becomes a listing built from the manifest alone", () => {
+    const dir = libraryTypesWithPortal([
+      {
+        id: "sharpsprite",
+        repo: "https://github.com/indiesoftby/defold-sharp-sprite",
+        kind: "no-lua-api",
+        description: "Rotated Grid Super-Sampling (RGSS) for the Defold engine.",
+        ref: "1.0.0",
+        refKind: "tag",
+      },
+    ]);
+    const listings = portalListingsFromManifest(dir);
+    expect(listings).toEqual([
+      {
+        owner: "indiesoftby",
+        repo: "defold-sharp-sprite",
+        url: "https://github.com/indiesoftby/defold-sharp-sprite",
+        ref: "1.0.0",
+        pinKind: "tag",
+        description: "Rotated Grid Super-Sampling (RGSS) for the Defold engine.",
+        route: "/libraries/indiesoftby/defold-sharp-sprite",
+        api: "none",
+        adoption: "standard",
+        ships: "Rotated Grid Super-Sampling (RGSS) for the Defold engine.",
+        steps: [],
+        portal: { id: "sharpsprite", url: "https://defold.com/assets/sharpsprite/" },
+      },
+    ]);
+    expect("official" in (listings[0] ?? {})).toBe(false);
+  });
+
+  test("an entry of any other kind yields no listing", () => {
+    const kinds = [
+      "not-a-dependency",
+      "no-source",
+      "pure-lua",
+      "pure-lua-annotated",
+      "script-api",
+      "native-untyped",
+    ];
+    const dir = libraryTypesWithPortal(
+      kinds.map((kind) => ({ id: kind, repo: `https://github.com/someone/${kind}`, kind })),
+    );
+    expect(portalListingsFromManifest(dir)).toEqual([]);
+  });
+
+  test("a repo that already has a Defold listing, compared case-folded, yields no portal listing", () => {
+    const dir = libraryTypesWithPortal(
+      [
+        { id: "defold-pbr", repo: "https://github.com/Defold/Asset-PBR", kind: "no-lua-api" },
+        control,
+      ],
+      { defoldRepos: ["https://github.com/defold/asset-pbr"] },
+    );
+    expect(portalListingsFromManifest(dir).map((listing) => listing.route)).toEqual([
+      "/libraries/someone-else/control",
+    ]);
+  });
+
+  test("a repo that already has a typed library origin, compared case-folded, yields no portal listing", () => {
+    const dir = libraryTypesWithPortal(
+      [{ id: "demolib", repo: "https://github.com/SomeOne/DemoLib", kind: "no-lua-api" }, control],
+      { base: LIBRARY_FIXTURE_DIR },
+    );
+    expect(portalListingsFromManifest(dir).map((listing) => listing.route)).toEqual([
+      "/libraries/someone-else/control",
+    ]);
+  });
+
+  test("a qualifying entry with an empty or whitespace description throws naming the manifest and the id", () => {
+    for (const description of ["", "  \n "]) {
+      const dir = libraryTypesWithPortal([
+        control,
+        {
+          id: "blank-lead",
+          repo: "https://github.com/someone/blank",
+          kind: "no-lua-api",
+          description,
+        },
+      ]);
+      expect(() => portalListingsFromManifest(dir)).toThrow(/asset-portal\.json.*blank-lead/);
+    }
+  });
+
+  test("an absent manifest yields no portal listings", () => {
+    expect(portalListingsFromManifest(mkdtempSync(join(tmpdir(), "no-asset-portal-")))).toEqual([]);
+  });
+
+  test("over the committed manifests, untyped listing routes are unique and keep every Defold listing", () => {
+    const routes = untypedListings(REAL_LIBRARY_TYPES_DIR).map((listing) => listing.route);
+    expect(routes.length).toBe(new Set(routes).size);
+    for (const listing of defoldListingsFromManifest(REAL_LIBRARY_TYPES_DIR)) {
+      expect(routes).toContain(listing.route);
+    }
+    expect(routes).toContain("/libraries/indiesoftby/defold-sharp-sprite");
   });
 });
 

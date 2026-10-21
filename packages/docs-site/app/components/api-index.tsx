@@ -403,7 +403,7 @@ export function LibraryIndex({
       title="Libraries"
       lead={
         <p>
-          Library API blocks, and Defold libraries that have no typed API.
+          Library API blocks, and libraries that have no typed API.
           <br />
           The TypeScript definitions behind each API block are maintained in this repo — generated
           from the upstream sources that ship machine-readable types, and hand-forked where upstream

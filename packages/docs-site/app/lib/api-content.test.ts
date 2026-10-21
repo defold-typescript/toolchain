@@ -16,8 +16,8 @@ import {
   canonicalApiPages,
   canonicalNamespaces,
   combinedApiPages,
-  defoldListings,
   libraryNavGroups,
+  untypedListings,
   versionIndependentPages,
   versionIndexPages,
   windowedApiPages,
@@ -339,7 +339,7 @@ describe("withVersionIndependentPages", () => {
 // reaching the sidebar, or a typed one the composition drops, reds here.
 describe("libraryNavGroups — the sidebar Libraries tab over the committed manifest", () => {
   const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const listings = defoldListings(REAL_LIBRARY_TYPES_DIR);
+  const listings = untypedListings(REAL_LIBRARY_TYPES_DIR);
   const libraries =
     buildNav([], {
       globals: [],
