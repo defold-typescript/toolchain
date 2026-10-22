@@ -155,6 +155,16 @@ function repoPath(repoUrl: string): string {
 }
 
 /**
+ * One `/api/<page>` route segment that is also one portable file name: ASCII
+ * letters, digits, `_`, `.` and `-`, starting and ending with a letter, digit or
+ * `_`. An allowlist, so `/`, `\`, `..`, `%`, `?`, `#`, whitespace, control
+ * characters, non-ASCII and a trailing `.` (which Windows drops) all fail.
+ */
+export function isSafePageKey(page: string): boolean {
+  return /^[A-Za-z0-9_](?:[A-Za-z0-9_.-]*[A-Za-z0-9_])?$/.test(page);
+}
+
+/**
  * A declared namespace cannot be the page key on its own: four repos declare
  * `firebase`, `extension-camera` declares the live engine `camera`, and
  * `extension-proto` declares the vendored `proto` library. Each doc keeps its
@@ -165,7 +175,8 @@ function repoPath(repoUrl: string): string {
  * stem matches keeps it and the rest take their stem (`firebase-analytics`). The
  * stem drops a leading `extension-` or `defold-`. Keys that still collide, or
  * that would start with `defold-`, throw, naming the docs and the `label` of
- * the manifest being keyed.
+ * the manifest being keyed. A key that fails `isSafePageKey` throws too, before
+ * any caller deletes or writes a file under it.
  */
 export function assignPageKeys(
   entries: { repo: string; docs: { path: string; namespace: string }[] }[],
@@ -194,6 +205,11 @@ export function assignPageKeys(
       if (shadowsPage) page = stem === doc.namespace ? name : `${stem}.${doc.namespace}`;
       else if (shared && stem !== doc.namespace) page = stem;
 
+      if (!isSafePageKey(page)) {
+        throw new Error(
+          `${label}: page key ${JSON.stringify(page)} from ${repoPath(entry.repo)}/${doc.path} is not one safe /api/<page> route and file-name segment.`,
+        );
+      }
       const owner = `${repoPath(entry.repo)}/${doc.path} (${doc.namespace})`;
       if (page.startsWith("defold-")) {
         throw new Error(

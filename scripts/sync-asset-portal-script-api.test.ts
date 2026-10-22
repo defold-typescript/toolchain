@@ -6,15 +6,20 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type {
   AssetPortalManifest,
   PortalEntry,
   PortalRepo,
 } from "../packages/library-types/scripts/sync-asset-portal.ts";
+import {
+  type DefoldExtensionsManifest,
+  isSafePageKey,
+} from "../packages/library-types/scripts/sync-defold-extensions.ts";
 import {
   type AssetPortalScriptApiManifest,
   type ScriptApiSource,
@@ -45,8 +50,10 @@ const ASTAR_SCRIPT_API = `- name: astar
           type: number
 `;
 
+// A JSON string is a YAML double-quoted scalar, so a namespace holding `/`, `\`,
+// a newline or a control character reaches the converter unchanged.
 function scriptApiDeclaring(namespace: string): string {
-  return `- name: ${namespace}\n  type: table\n  desc: The ${namespace} table.\n  members:\n  - name: run\n    type: function\n`;
+  return `- name: ${JSON.stringify(namespace)}\n  type: table\n  desc: A declared table.\n  members:\n  - name: run\n    type: function\n`;
 }
 
 function scriptApiEntry(overrides: Partial<PortalEntry> & { id: string }): PortalEntry {
@@ -195,6 +202,15 @@ function pagesOf(manifest: AssetPortalScriptApiManifest): Record<string, string>
       library.docs.map((doc) => [`${library.repo}#${doc.namespace}`, doc.page]),
     ),
   );
+}
+
+/** Every file under `dir`, keyed by its path relative to `dir`. */
+function snapshot(dir: string): Record<string, Buffer> {
+  const files: Record<string, Buffer> = {};
+  for (const path of readdirSync(dir, { recursive: true, encoding: "utf8" })) {
+    if (statSync(join(dir, path)).isFile()) files[path] = readFileSync(join(dir, path));
+  }
+  return files;
 }
 
 describe("syncAssetPortalScriptApi — selection and pin", () => {
@@ -350,5 +366,77 @@ describe("syncAssetPortalScriptApi — page keys", () => {
     await expect(syncAssetPortalScriptApi(packageRoot(entries), source)).rejects.toThrow(
       /^asset-portal-script-api: page key "rng" is claimed by both acme\/rng\/rng\/api\.script_api \(rng\) and bob\/rng\/rng\/api\.script_api \(rng\)/,
     );
+  });
+
+  test("a key that traverses out of api-doc throws before any file under the package changes", async () => {
+    const { entries, source } = declaring([{ repo: "escape", namespace: "../../asset-portal" }]);
+    const root = packageRoot(entries);
+    writeFileSync(
+      join(root, "asset-portal-script-api.json"),
+      `${JSON.stringify({ libraries: [] }, null, 2)}\n`,
+    );
+    const apiDoc = join(root, "asset-portal-script-api", "api-doc");
+    mkdirSync(apiDoc, { recursive: true });
+    writeFileSync(join(apiDoc, "kept.json"), "{}");
+    const before = snapshot(dirname(root));
+    await expect(syncAssetPortalScriptApi(root, source)).rejects.toThrow(
+      'asset-portal-script-api: page key "../../asset-portal" from acme/escape/escape/api.script_api ',
+    );
+    expect(snapshot(dirname(root))).toEqual(before);
+  });
+
+  test.each([
+    "a/b",
+    "a\\b",
+    "..",
+    ".",
+    ".hidden",
+    "trailing.",
+    "-lead",
+    "has space",
+    "line\nbreak",
+    "bad\u0001key",
+    "q?x",
+    "pct%2f",
+  ])("key %p is no safe route and file-name segment and throws naming it", async (namespace) => {
+    const { entries, source } = declaring([{ repo: "unsafe", namespace }]);
+    await expect(syncAssetPortalScriptApi(packageRoot(entries), source)).rejects.toThrow(
+      `asset-portal-script-api: page key ${JSON.stringify(namespace)} from acme/unsafe/unsafe/api.script_api `,
+    );
+  });
+
+  test("dotted, underscored and hyphenated keys pass and each writes its api-doc", async () => {
+    const { entries, source } = declaring([
+      { repo: "rive", namespace: "rive.cmd" },
+      { repo: "defold-page-visibility", namespace: "page_visibility" },
+      { repo: "firebase", namespace: "firebase" },
+      { repo: "firebase-analytics", namespace: "firebase" },
+    ]);
+    const root = packageRoot(entries);
+    const manifest = await syncAssetPortalScriptApi(root, source);
+    expect(pagesOf(manifest)).toEqual({
+      "https://github.com/acme/rive#rive.cmd": "rive.cmd",
+      "https://github.com/acme/defold-page-visibility#page_visibility": "page_visibility",
+      "https://github.com/acme/firebase#firebase": "firebase",
+      "https://github.com/acme/firebase-analytics#firebase": "firebase-analytics",
+    });
+    expect(readdirSync(join(root, "asset-portal-script-api", "api-doc")).sort()).toEqual([
+      "firebase-analytics.json",
+      "firebase.json",
+      "page_visibility.json",
+      "rive.cmd.json",
+    ]);
+  });
+
+  test("every committed Defold extension and portal page key is safe", () => {
+    const pages = ["defold-extensions.json", "asset-portal-script-api.json"].flatMap((file) =>
+      (
+        JSON.parse(readFileSync(join(REAL_PACKAGE_ROOT, file), "utf8")) as
+          | DefoldExtensionsManifest
+          | AssetPortalScriptApiManifest
+      ).libraries.flatMap((library) => library.docs.map((doc) => doc.page)),
+    );
+    expect(pages.length).toBeGreaterThan(0);
+    expect(pages.filter((page) => !isSafePageKey(page))).toEqual([]);
   });
 });
