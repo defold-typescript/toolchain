@@ -76,6 +76,32 @@ describe("lowerNativeApiDoc", () => {
       "LuaMultiReturn<[ false ] | [ true, number, number, number, number, number, number, number ]>",
     ]);
   });
+
+  test("lowers pixels with its buffer, color and polyline option shapes", () => {
+    const doc = lowered("pixels");
+    expect(doc.elements.filter((e) => e.type === "FUNCTION")).toHaveLength(18);
+    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(0);
+    const byName = new Map(doc.elements.map((e) => [e.name, e]));
+    const bufferInfo = byName.get("BufferInfo");
+    expect(bufferInfo?.type).toBe("TYPEDEF");
+    expect(bufferInfo?.properties?.map((p) => [p.name, p.is_optional])).toEqual([
+      ["buffer", undefined],
+      ["width", undefined],
+      ["height", undefined],
+      ["channels", undefined],
+      ["premultiply_alpha", "True"],
+    ]);
+    expect(byName.get("Color")?.types).toEqual([
+      "[ number, number, number ]",
+      "[ number, number, number, number ]",
+    ]);
+    expect(byName.get("PolylineOptions")?.types).toEqual(["PolylineWidth", "PolylinePointWidths"]);
+    expect(byName.get("PolylineWidth")?.extends).toEqual(["PolylineStyle"]);
+    expect(byName.get("PolylinePointWidths")?.extends).toEqual(["PolylineStyle"]);
+    expect(byName.get("color")?.returnvalues?.[0]?.types).toEqual([
+      "LuaMultiReturn<[ undefined? ] | [ number, number, number ] | [ number, number, number, number ]>",
+    ]);
+  });
 });
 
 describe("committed native api-docs", () => {

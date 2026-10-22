@@ -43,6 +43,17 @@
       "manifestDir": "tile-raycast",
       "declaration": "generated/native/tile_raycast.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-tile-raycast/tile-raycast/src/tileraycast.cpp"
+    },
+    {
+      "repo": "https://github.com/king8fisher/defold-pixels",
+      "ref": "70f77844bed7b8fd8d1da715e2b53a0dc57daf04",
+      "refKind": "commit",
+      "license": "MIT",
+      "namespace": "pixels",
+      "manifestDir": "defold-pixels",
+      "declaration": "generated/native/pixels.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-pixels/defold-pixels/src/pixels.cpp",
+      "upstreamAnnotation": "fixtures/upstream-native/defold-pixels/defold-pixels/idea_autocomplite.lua"
     }
   ]
 }

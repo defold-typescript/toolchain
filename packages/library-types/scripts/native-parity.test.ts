@@ -47,6 +47,7 @@ describe("buildNativeParity over the shipped declarations", () => {
     tile_raycast: [5, 4],
     share: [3, 0],
     uuid4: [1, 0],
+    pixels: [18, 0],
   };
 
   test("every native target is measured", () => {
@@ -147,6 +148,13 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
     expect(report.arityMismatches).toEqual([]);
     expect(report.arityExceptions).toEqual([]);
     expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: [] });
+  });
+
+  test("pixels agrees with its annotation, which omits copy_pixels", () => {
+    const report = buildNativeParity(PACKAGE_ROOT, target("pixels"));
+    expect(report.arityMeasured).toBe(true);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: ["copy_pixels"] });
   });
 
   test("daabbcc charges nothing beyond its one recorded exception", () => {

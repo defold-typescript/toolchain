@@ -720,7 +720,7 @@ describe("loadApiSurface library descriptions", () => {
   });
 
   test("each curated native extension is a library page with its members and description", () => {
-    for (const namespace of ["daabbcc", "share", "uuid4", "tile_raycast"]) {
+    for (const namespace of ["daabbcc", "share", "uuid4", "tile_raycast", "pixels"]) {
       const page = libraryPages.find((p) => p.route === `/api/${namespace}`);
       expect(page?.namespace).toBe(namespace);
       expect(page?.module.description).toBe(descByDir[namespace]);
@@ -3398,6 +3398,16 @@ describe("native helper shape definitions", () => {
     expect(apiSignatureSymbolLinks(pages, page("share")).get("FileOptions")).toMatchObject({
       route: "/api/share",
     });
+  });
+
+  test("defines pixels' buffer info, color and polyline option shapes", () => {
+    expect(group("pixels", "BufferInfo")?.symbols.map((s) => s.name)).toContain(
+      "BufferInfo.channels",
+    );
+    expect(row("pixels", "Color")?.signature).toContain("[ number, number, number, number ]");
+    const options = row("pixels", "PolylineOptions");
+    expect(options?.signature).toContain("PolylineWidth");
+    expect(options?.signature).toContain("PolylinePointWidths");
   });
 
   test("leaves a signature whose union is a return type unchanged", () => {
