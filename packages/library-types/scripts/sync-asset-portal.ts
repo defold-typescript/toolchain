@@ -48,6 +48,7 @@ export interface PortalRepo {
   pushed_at: string;
   stargazers_count: number;
   default_branch: string;
+  license: { spdx_id: string | null } | null;
 }
 
 /**
@@ -120,6 +121,17 @@ function isUnder(path: string, dirs: readonly string[]): boolean {
 }
 
 /**
+ * The `.script_api` files under `dirs`, sorted: what the classifier counts and
+ * what the portal pages convert, so the two cannot disagree.
+ */
+export function includedScriptApiPaths(
+  paths: readonly string[],
+  dirs: readonly string[],
+): string[] {
+  return paths.filter((path) => isUnder(path, dirs) && path.endsWith(".script_api")).sort();
+}
+
+/**
  * Count the `.script_api`, `ext.manifest` and `.lua` files under `dirs`, and
  * pick the Lua sample: the first four sorted paths outside any example, test,
  * demo or sample directory.
@@ -131,7 +143,7 @@ export function includedEvidence(
   const included = paths.filter((path) => isUnder(path, dirs));
   const lua = included.filter((path) => path.endsWith(".lua"));
   return {
-    scriptApi: included.filter((path) => path.endsWith(".script_api")).length,
+    scriptApi: includedScriptApiPaths(paths, dirs).length,
     extManifest: included.filter((path) => path.split("/").at(-1) === "ext.manifest").length,
     lua: lua.length,
     luaSample: lua
@@ -187,7 +199,7 @@ function githubOwnerRepo(projectUrl: string): string | null {
   return `${owner}/${repo.replace(/\.git$/, "")}`;
 }
 
-function rawUrl(fullName: string, ref: string, path: string): string {
+export function rawUrl(fullName: string, ref: string, path: string): string {
   const encoded = path.split("/").map(encodeURIComponent).join("/");
   return `https://raw.githubusercontent.com/${fullName}/${ref}/${encoded}`;
 }

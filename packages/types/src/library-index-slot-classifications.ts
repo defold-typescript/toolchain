@@ -32,6 +32,13 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
   LibraryIndexSlotClassification
 > = new Map<string, LibraryIndexSlotClassification>([
   [
+    "astar/astar.setup:param:use_zero[optional]",
+    {
+      class: "not-a-position",
+      evidence: "a boolean that picks whether astar counts tables and tile positions from 0 or 1",
+    },
+  ],
+  [
     "boom/z:param:index",
     { class: "not-a-position", evidence: "a draw order: a bigger z draws on top" },
   ],
@@ -51,6 +58,21 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
     {
       class: "native-1",
       evidence: "internal/ecs.lua:tiny_manageSystems sets systems[j].index = j",
+    },
+  ],
+  [
+    "dragonbones/dragonbones.load_data:param:aramture_index",
+    {
+      class: "native-0",
+      evidence:
+        "script_dragonbones.cpp:_tryBuildArmature reads armatureNames[armatureIndex] for 0 .. size() - 1",
+    },
+  ],
+  [
+    "dragonbones/dragonbones.set_slot_display_index:param:index",
+    {
+      class: "native-0",
+      evidence: "Slot.cpp:_updateDisplay shows _displayList[_displayIndex]; -1 shows nothing",
     },
   ],
   [
@@ -200,6 +222,18 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
         "extension_imgui.cpp:imgui_StoreFont returns Size() - 1, and imgui_GetFont accepts 0 .. Size() - 1",
     },
   ]),
+  [
+    "mic/mic.start:param:options:device_index",
+    { class: "native-0", evidence: "Zero-based index of the capture device to use" },
+  ],
+  [
+    "mic/mic.get_devices:return:devices",
+    {
+      class: "not-a-position",
+      evidence:
+        "a Lua array from 1; mic.cpp:get_devices sets each entry's index to its 0-based device_index",
+    },
+  ],
   ...[
     "node_repeat/NodeRepeatAnimation:field:current_frame",
     "sprite_repeat/SpriteRepeatAnimation:field:current_frame",
@@ -216,6 +250,13 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
     {
       class: "native-1",
       evidence: "panthera.lua:update_animation walks keys from animation_keys_index to #keys",
+    },
+  ],
+  [
+    "random/rnd.card:return:Card",
+    {
+      class: "native-1",
+      evidence: "pcgrandom.cpp:card pushes pcg32_boundedrand_r(target, 52) + 1",
     },
   ],
   ...[
@@ -276,6 +317,14 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
     ],
   ),
   [
+    "spriteloop/spriteloop.set_frame:param:frame_index",
+    {
+      class: "native-0",
+      evidence:
+        "spla_defold_lua.cpp:component_set_frame passes it to the player unchanged; comp_spriteloop.cpp reads current_frame_index() as frames[0 .. size() - 1]",
+    },
+  ],
+  [
     "steam/steam.friends_get_friend_by_index:param:iFriend",
     { class: "native-0", evidence: "Is a index of range [0, GetFriendCount())" },
   ],
@@ -329,4 +378,25 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
       { class: "native-1", evidence: "tileraycast.cpp subtracts 1 from the checked coordinate" },
     ]),
   ),
+  [
+    "voronoi/voronoi.get_site:param:index",
+    { class: "native-1", evidence: "1-based original input point index" },
+  ],
+  // An array of site or edge tables, keyed by the base of the indexes its entries
+  // hold, as `image.pixels:return:iterator` is by the coordinates it yields; the
+  // doc declares none of those fields.
+  [
+    "voronoi/voronoi.get_sites:return:sites",
+    {
+      class: "native-1",
+      evidence: "index is the 1-based original input index (voronoi.cpp pushes site->index + 1)",
+    },
+  ],
+  [
+    "voronoi/voronoi.get_edges:return:edges",
+    {
+      class: "native-1",
+      evidence: "sites contains two 1-based input indices, with 0 denoting the clipping boundary",
+    },
+  ],
 ]);

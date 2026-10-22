@@ -1,0 +1,84 @@
+{
+  "info": {
+    "namespace": "webp",
+    "brief": "A WebP image library.",
+    "description": "A WebP image library."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "webp.decode",
+      "description": "Decodes WebP image to buffer.",
+      "parameters": [
+        {
+          "name": "image",
+          "doc": "File data or file path of a WebP image.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Table of WebPDecoderOptions.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webp.encode",
+      "description": "Encodes buffer to WebP image.",
+      "parameters": [
+        {
+          "name": "image",
+          "doc": "File data or file path of a WebP image.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "Width of buffer image.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Height of buffer image.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Table of WebPConfig options.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "webp.get_info",
+      "description": "Returns information about WebP image.",
+      "parameters": [
+        {
+          "name": "image",
+          "doc": "File data or file path of a WebP image.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

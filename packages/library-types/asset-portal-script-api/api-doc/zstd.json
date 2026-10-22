@@ -1,0 +1,78 @@
+{
+  "info": {
+    "namespace": "zstd",
+    "brief": "The Zstandard Compression Library for Defold",
+    "description": "The Zstandard Compression Library for Defold"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "zstd.version",
+      "description": "Returns the version of the Zstandard library",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "version",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zstd.compress",
+      "description": "Compresses a string.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The data to compress",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "level",
+          "doc": "Optional compression level (default is 3, maximum is 22)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "compressed_data",
+          "doc": "The compressed data",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zstd.decompress",
+      "description": "Decompresses a string.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The data to decompress",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "decompressed_data",
+          "doc": "The decompressed data",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    }
+  ]
+}

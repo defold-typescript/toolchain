@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type AssetPortalManifest,
@@ -19,7 +19,7 @@ import { type LaneId, type PinnedTarget, readPinnedTargets } from "./library-ups
 // release metadata every six hours, so a content comparison would file an issue
 // every week.
 
-export type CoverageLane = LaneId | "native" | "defold";
+export type CoverageLane = LaneId | "native" | "defold" | "portal";
 
 const LANE_ORDER: readonly CoverageLane[] = [
   "authored",
@@ -29,6 +29,7 @@ const LANE_ORDER: readonly CoverageLane[] = [
   "scriptApi",
   "native",
   "defold",
+  "portal",
 ];
 
 const KIND_ORDER: readonly PortalKind[] = [
@@ -55,6 +56,8 @@ export interface CoverageRegistries {
   readonly pinned: readonly Pick<PinnedTarget, "lane" | "repo">[];
   readonly native: readonly { readonly repo: string }[];
   readonly defold: readonly { readonly repo: string }[];
+  /** The portal `script-api` libraries `asset-portal-script-api.json` gives a page. */
+  readonly portal: readonly { readonly repo: string }[];
 }
 
 /** Portal entry id -> the tracked repo URL its library moved to. */
@@ -143,10 +146,15 @@ export function readCoverageRegistries(packageRoot: string = PACKAGE_ROOT): Cove
   const defold = JSON.parse(
     readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
   ) as DefoldExtensionsManifest;
+  const portalPath = join(packageRoot, "asset-portal-script-api.json");
+  const portal = existsSync(portalPath)
+    ? (JSON.parse(readFileSync(portalPath, "utf8")) as { libraries: { repo: string }[] }).libraries
+    : [];
   return {
     pinned: readPinnedTargets(packageRoot),
     native: readNativeTargets(packageRoot),
     defold: defold.libraries,
+    portal,
   };
 }
 
@@ -169,6 +177,7 @@ function lanesByRepo(registries: CoverageRegistries): Map<string, Set<CoverageLa
   for (const target of registries.pinned) pin(target.lane, target.repo);
   for (const target of registries.native) pin("native", target.repo);
   for (const library of registries.defold) pin("defold", library.repo);
+  for (const library of registries.portal) pin("portal", library.repo);
   return lanes;
 }
 

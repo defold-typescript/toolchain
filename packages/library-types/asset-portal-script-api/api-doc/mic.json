@@ -1,0 +1,220 @@
+{
+  "info": {
+    "namespace": "mic",
+    "brief": "Functions for microphone recording via miniaudio",
+    "description": "Functions for microphone recording via miniaudio"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "mic.start",
+      "description": "Begin audio capture.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Optional table of capture settings.",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "device_index",
+              "doc": "Zero-based index of the capture device to use, as returned by mic.get_devices(). Defaults to the system default device.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "sample_rate",
+              "doc": "Sample rate in Hz. Usually 16000, 22050, 44100, or 48000. Defaults to 16000.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "channels",
+              "doc": "Number of audio channels. Must be 1 (mono) or 2 (stereo). Defaults to 1.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "max_seconds",
+              "doc": "Maximum number of seconds to buffer. Once reached, incoming audio is discarded. 0 or omitted means unlimited.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "noise_gate_threshold",
+              "doc": "Amplitude threshold in range [0.0, 1.0]. Frames whose peak amplitude falls below are silenced. Defaults to 0.",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.stop",
+      "description": "Stop audio capture and return the recorded audio as a WAV byte string.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Optional table of capture settings.",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "normalize_peak",
+              "doc": "Peak value to normalize recorded audio to. Must be in (0.0, 1.0].",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "wav",
+          "doc": "Raw WAV-encoded audio bytes, or nil if nothing was recorded.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.is_recording",
+      "description": "Check whether the microphone is currently capturing audio.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "recording",
+          "doc": "True if currently recording, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.is_connected",
+      "description": "Check whether at least one capture device is available on the system.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "connected",
+          "doc": "True if one or more capture devices are available, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.get_devices",
+      "description": "Enumerate all available capture devices.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "devices",
+          "doc": "List of device info tables, with keys 'index' and 'name'.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.get_current_device",
+      "description": "Returns the name of the current capture device.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "device",
+          "doc": "Name of the current capture device.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.get_peak",
+      "description": "Get the peak amplitude of the current block.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "peak",
+          "doc": "Normalised peak amplitude in the range [0.0, 1.0], or 0.0 if not recording.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.get_rms",
+      "description": "Get the RMS (root mean square) volume of the current block.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "rms",
+          "doc": "Normalised RMS value in the range [0.0, 1.0], or 0.0 if not recording.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.get_duration",
+      "description": "Get the duration of audio buffered so far in the current recording.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "duration",
+          "doc": "Duration in seconds, or 0.0 if not recording.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.request_permission",
+      "description": "Request permission to use the microphone. (macOS and iOS only)",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mic.get_permission_status",
+      "description": "Get the current status of the permission to use the microphone. (macOS and iOS only)",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "status",
+          "doc": "The current status of the permission for recording.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    }
+  ]
+}

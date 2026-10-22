@@ -1,0 +1,306 @@
+{
+  "info": {
+    "namespace": "iapc",
+    "brief": "Functions and constants for doing Cafebazaar in-app purchases.",
+    "description": "Functions and constants for doing Cafebazaar in-app purchases."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "iapc.buy",
+      "description": "Sets the listener function for In-app purchase events.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "product to buy",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "optional parameters as properties. The following parameters can be set",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "request_id",
+              "doc": "",
+              "types": [
+                "string"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function iapc_listener(self, transaction, error)\n    if error == nil then\n      -- purchase is successful.\n      print(transaction.date)\n      -- required if auto finish transactions is disabled in project settings\n      if (transaction.state == iapc.TRANS_STATE_PURCHASED) then\n        -- do server-side verification of purchase here..\n        iapc.finish(transaction)\n      end\n    else\n      print(error.error, error.reason)\n    end\n  end\n\n  function init(self)\n      iapc.set_listener(iapc_listener)\n      iapc.buy(\"my_iap_id\")\n  end</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapc.finish",
+      "description": "Explicitly finish a product transaction. Calling iapc.finish is required on a successful transaction if `auto_finish_transactions` is disabled in project settings. Calling this function with `auto_finish_transactions` set will be ignored and a warning is printed. The `transaction.state` field must equal `iapc.TRANS_STATE_PURCHASED`.",
+      "parameters": [
+        {
+          "name": "transaction",
+          "doc": "transaction table parameter as supplied in listener callback",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapc.list",
+      "description": "Get a list of all avaliable iapc products.",
+      "parameters": [
+        {
+          "name": "ids",
+          "doc": "table (array) of identifiers to get products from",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "result callback taking the following parameters",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "products",
+              "doc": "a table describing the available iapc products.",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "ident",
+                  "doc": "The product identifier.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "title",
+                  "doc": "The product title.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "description",
+                  "doc": "The product description.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "price",
+                  "doc": "The price of the product.",
+                  "types": [
+                    "number"
+                  ]
+                },
+                {
+                  "name": "price_string",
+                  "doc": "The price of the product, as a formatted string (amount and currency symbol).",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "currency_code",
+                  "doc": "The currency code, this reflects the merchant's locale, instead of the user's.",
+                  "types": [
+                    "string"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "a table containing error information. `nil` if there is no error. - `error` (the error message)",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function iapc_callback(self, products, error)\n    if error == nil then\n      for k,p in pairs(products) do\n        -- present the product\n        print(p.title)\n        print(p.description)\n      end\n    else\n      print(error.error)\n    end\n  end\n\n  function init(self)\n      iapc.list({\"my_iap_id\"}, iapc_callback)\n  end</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapc.restore",
+      "description": "Restore previously purchased products.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "value is `true` if current store supports handling restored transactions, otherwise `false`.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iapc.set_listener",
+      "description": "Set the callback function to receive purchase transaction events.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "listener callback function. Pass an empty function if you no longer wish to receive callbacks.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "transaction",
+              "doc": "a table describing the transaction.",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "ident",
+                  "doc": "The product identifier.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "state",
+                  "doc": "The transaction state. One of the following\n- `iapc.TRANS_STATE_FAILED`\n- `iapc.TRANS_STATE_PURCHASED`\n- `iapc.TRANS_STATE_PURCHASING`\n- `iapc.TRANS_STATE_RESTORED`\n- `iapc.TRANS_STATE_UNVERIFIED`",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "date",
+                  "doc": "The date and time for the transaction.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "trans_ident",
+                  "doc": "The transaction identifier. This field is only set when `state` is `TRANS_STATE_RESTORED`, `TRANS_STATE_UNVERIFIED` or `TRANS_STATE_PURCHASED`.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "receipt",
+                  "doc": "The transaction receipt. This field is only set when `state` is `TRANS_STATE_PURCHASED` or `TRANS_STATE_UNVERIFIED`.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "signature",
+                  "doc": "A string containing the signature of the purchase data that was signed with the private key of the developer.",
+                  "types": [
+                    "string"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "a table containing error information. `nil` if there is no error. `error` - the error message. `reason` - the reason for the error, value can be one of the following constants\n- `iapc.REASON_UNSPECIFIED`\n- `iapc.REASON_USER_CANCELED`",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapc.REASON_UNSPECIFIED",
+      "brief": "unspecified error reason",
+      "description": "unspecified error reason",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapc.REASON_USER_CANCELED",
+      "brief": "user canceled reason",
+      "description": "user canceled reason",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapc.TRANS_STATE_FAILED",
+      "brief": "transaction failed state",
+      "description": "transaction failed state",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapc.TRANS_STATE_PURCHASED",
+      "brief": "transaction purchased state",
+      "description": "transaction purchased state",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapc.TRANS_STATE_PURCHASING",
+      "brief": "transaction purchasing state This is an intermediate mode followed by TRANS_STATE_PURCHASED. Store provider support dependent.",
+      "description": "transaction purchasing state This is an intermediate mode followed by TRANS_STATE_PURCHASED. Store provider support dependent.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapc.TRANS_STATE_RESTORED",
+      "brief": "transaction restored state This is only available on store providers supporting restoring purchases.",
+      "description": "transaction restored state This is only available on store providers supporting restoring purchases.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iapc.TRANS_STATE_UNVERIFIED",
+      "brief": "transaction unverified state, requires verification of purchase",
+      "description": "transaction unverified state, requires verification of purchase",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

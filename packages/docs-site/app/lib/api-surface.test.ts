@@ -151,6 +151,13 @@ function nativeExtensionPages(): string[] {
   return targets.map((target) => target.namespace);
 }
 
+function portalScriptApiPages(): string[] {
+  const { libraries } = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "asset-portal-script-api.json"), "utf8"),
+  ) as { libraries: { docs: { page: string }[] }[] };
+  return libraries.flatMap((library) => library.docs.map((doc) => doc.page));
+}
+
 describe("loadApiSurface", () => {
   test("returns one ApiPage per module of the default target (engine then lua-stdlib), globals first then alphabetical", () => {
     const pages = loadApiSurface(FIXTURE_DIR);
@@ -268,10 +275,15 @@ describe("loadApiSurface library pages", () => {
   const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
   const libraryPages = pages.filter((p) => p.category === "library");
 
-  test("adds one default-surface `library` page per vendored library fixture, Defold doc and native extension", () => {
+  test("adds one default-surface `library` page per vendored library fixture, Defold doc, native extension and Asset Portal doc", () => {
     expect(modules.length).toBeGreaterThan(0);
     expect(libraryPages.map((p) => p.namespace).sort()).toEqual(
-      [...modules, ...defoldExtensionPages(), ...nativeExtensionPages()].sort(),
+      [
+        ...modules,
+        ...defoldExtensionPages(),
+        ...nativeExtensionPages(),
+        ...portalScriptApiPages(),
+      ].sort(),
     );
     for (const page of libraryPages) {
       expect(page.route).toBe(`/api/${libraryRouteSlug(page.namespace)}`);
