@@ -46,23 +46,38 @@ function dependencySlug(url: string): string {
   return normalizeSourceId(url).replace(/[^a-z0-9._-]/g, "-") || "dep";
 }
 
-// A namespace one declaration owns keeps `<ns>.d.ts`. A shared one writes a
-// `<ns>.<slug>.d.ts` per declaration, named after its dependency rather than
-// its position so a reordered `[dependencies]` renames nothing.
-function namespaceFileStems(namespace: string, sources: readonly NamespaceSource[]): string[] {
-  if (sources.length === 1) {
-    return [namespace];
-  }
-  const taken = new Set<string>();
-  return sources.map(({ url }) => {
-    const slug = dependencySlug(url);
-    let candidate = slug;
-    for (let count = 2; taken.has(candidate); count++) {
-      candidate = `${slug}-${count}`;
+// A namespace one declaration owns keeps `<ns>.d.ts`, and those names are
+// reserved first. A shared one writes a `<ns>.<slug>.d.ts` per declaration,
+// named after its dependency rather than its position so a reordered
+// `[dependencies]` renames nothing; a name any file already holds (`foo.bar`
+// is both namespace `foo.bar` and dependency `bar`'s share of `foo`) gets a
+// number instead.
+function allocateFileStems(
+  namespaces: readonly string[],
+  byNamespace: ReadonlyMap<string, readonly NamespaceSource[]>,
+): Map<string, string> {
+  const files = new Map<string, string>();
+  for (const namespace of namespaces) {
+    const sources = byNamespace.get(namespace) ?? [];
+    if (sources.length === 1) {
+      files.set(namespace, sources[0]?.contents ?? "");
     }
-    taken.add(candidate);
-    return `${namespace}.${candidate}`;
-  });
+  }
+  for (const namespace of namespaces) {
+    const sources = byNamespace.get(namespace) ?? [];
+    if (sources.length === 1) {
+      continue;
+    }
+    for (const { url, contents } of sources) {
+      const base = `${namespace}.${dependencySlug(url)}`;
+      let stem = base;
+      for (let count = 2; files.has(stem); count++) {
+        stem = `${base}-${count}`;
+      }
+      files.set(stem, contents);
+    }
+  }
+  return files;
 }
 
 export function materializeExtensionDeclarations(
@@ -97,14 +112,10 @@ export function materializeExtensionDeclarations(
     return { materializedDir: null, namespaces: [], sharedNamespaces: [] };
   }
 
-  const files = new Map<string, string>();
+  const files = allocateFileStems(namespaces, byNamespace);
   const sharedNamespaces: SharedExtensionNamespace[] = [];
   for (const namespace of namespaces) {
     const sources = byNamespace.get(namespace) ?? [];
-    const stems = namespaceFileStems(namespace, sources);
-    sources.forEach(({ contents }, index) => {
-      files.set(stems[index] ?? namespace, contents);
-    });
     if (sources.length > 1) {
       sharedNamespaces.push({ namespace, urls: [...new Set(sources.map(({ url }) => url))] });
     }

@@ -6660,7 +6660,9 @@ When several dependencies declare one namespace — the Firebase extensions all
 declare `firebase` — each declaration is written to its own
 `<namespace>.<dependency>.d.ts`, named after the dependency's repository, and
 TypeScript merges them into one namespace. `resolve` reports it as
-`merged firebase from <url>, <url>`. An extension that declares an engine
+`merged firebase from <url>, <url>`. A file name another file already uses gets
+a numbered suffix, such as `foo.bar-2.d.ts` when a `foo.bar` namespace already
+owns `foo.bar.d.ts`. An extension that declares an engine
 namespace, such as Spine's `gui`, adds its members to that namespace and leaves
 the engine's type aliases, such as `gui.Playback`, to the engine surface.
 
