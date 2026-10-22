@@ -1,0 +1,289 @@
+{
+  "info": {
+    "namespace": "splitmix64",
+    "brief": "Functions for interacting with the SplitMix64 native extension",
+    "description": "Functions for interacting with the SplitMix64 native extension"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.random",
+      "description": "When called without arguments, returns a uniform pseudo-random real number in the range [0,1). When called with an integer number m, splitmix64.random returns a uniform pseudo-random integer in the range [1, m]. When called with two integer numbers m and n, splitmix64.random returns a uniform pseudo-random integer in the range [m, n].",
+      "parameters": [
+        {
+          "name": "m",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "n",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.randomseed",
+      "description": "Sets x as the \"seed\" for the pseudo-random generator: equal seeds produce equal sequences of numbers. Accepts a number or a string (decimal representation of uint64) for full 64-bit precision.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "Seed value as number or string (e.g. \\\"18446744073709551615\\\" for full uint64 range).",
+          "types": [
+            "number",
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.state",
+      "description": "Returns the current internal state x as a string. Use this to save/restore state or pass to randomseed for full 64-bit precision (Lua double cannot represent all uint64 values).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "Current state as decimal string.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.randomchoice",
+      "description": "Returns a random value from array t. If the array is empty an error is raised.",
+      "parameters": [
+        {
+          "name": "t",
+          "doc": "Array of values to choose from.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Random element from the array.",
+          "types": [
+            "any"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.weightedchoice",
+      "description": "Takes table t where keys are choices and values are weights. Returns a random key. Keys are sorted deterministically (numbers first, then strings lexicographically) before selection, so the result is reproducible for the same seed. Weights must be >= 0. If all weights are 0 or a weight is negative, an error is raised.",
+      "parameters": [
+        {
+          "name": "t",
+          "doc": "Table of key-weight pairs.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "key",
+          "doc": "Random key chosen by weight.",
+          "types": [
+            "any"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.toss",
+      "description": "Toss a coin. Returns 0 or 1.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Returns 0 or 1.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.new_instance",
+      "description": "Creates a new RNG instance with independent state. Optional seed (number or string) for reproducibility.",
+      "parameters": [
+        {
+          "name": "seed",
+          "doc": "Optional seed for the new instance.",
+          "types": [
+            "number",
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "rng",
+          "doc": "RNG instance with methods random, randomseed, state, randomchoice, weightedchoice, toss, dice, shuffle. Same API as the module but with isolated state.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.dice",
+      "description": "Roll one or more dice of the given type. Returns a table of individual rolls and the total sum.",
+      "parameters": [
+        {
+          "name": "roll",
+          "doc": "Number of dice to roll (must be > 0).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "type",
+          "doc": "Dice type (splitmix64.D4, splitmix64.D6, splitmix64.D8, splitmix64.D10, splitmix64.D12, splitmix64.D20, or splitmix64.D100).",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "rolls",
+          "doc": "Table of individual roll results.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "total",
+          "doc": "Sum of all rolls.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "splitmix64.shuffle",
+      "description": "Shuffles an array using the Fisher-Yates algorithm. Returns a shuffled copy of the array, or if inplace is true, shuffles the original array in-place and returns it.",
+      "parameters": [
+        {
+          "name": "t",
+          "doc": "Array to shuffle.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "inplace",
+          "doc": "If true, shuffle the array in-place instead of creating a copy. Defaults to false.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "The shuffled array (a new table, or the same table if inplace is true).",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "splitmix64.D4",
+      "brief": "Dice type constant for 4-sided die.",
+      "description": "Dice type constant for 4-sided die.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "splitmix64.D6",
+      "brief": "Dice type constant for 6-sided die.",
+      "description": "Dice type constant for 6-sided die.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "splitmix64.D8",
+      "brief": "Dice type constant for 8-sided die.",
+      "description": "Dice type constant for 8-sided die.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "splitmix64.D10",
+      "brief": "Dice type constant for 10-sided die (0-9).",
+      "description": "Dice type constant for 10-sided die (0-9).",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "splitmix64.D12",
+      "brief": "Dice type constant for 12-sided die.",
+      "description": "Dice type constant for 12-sided die.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "splitmix64.D20",
+      "brief": "Dice type constant for 20-sided die.",
+      "description": "Dice type constant for 20-sided die.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "splitmix64.D100",
+      "brief": "Dice type constant for percentile die (0, 10, 20, ..., 90).",
+      "description": "Dice type constant for percentile die (0, 10, 20, ..., 90).",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

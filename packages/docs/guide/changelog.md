@@ -15,7 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters, and callbacks typed from their documented arguments, so a mismatched listener fails to type-check.
 > - **[`resolve` runs under Node and Bun](./resolve.md)** on every OS from the published packages for a project with a native extension, with no `unzip`.
-> - **[Asset Portal libraries with no Lua API](/libraries)** get pages.
+> - **[Asset Portal libraries](/libraries)** get pages, typed from their `.script_api` when they ship one.
 > - **[No extension declaration is lost](./resolve.md#the-generated-surface)** when extensions share a namespace, such as the Firebase ones, or declare two that differ only in letter case.
 
 ### Breaking
@@ -26,7 +26,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **`resolve` extension declarations carry the whole documented surface**: the namespace's constants, including those one sub-table deep (`iap.PROVIDER_ID_GOOGLE`, `push.NOTIFICATION_BADGE`), each branded as the `string` or `number` its doc declares (`firebase.analytics.EVENT_ADIMPRESSION` is a `string` brand), a function returning a documented constant typed as that constant union, a parameter flagged `optional: true` emitted optional, and a table parameter typed from its documented fields. A `.script_api` slot typed `enum` is read as a constant-valued slot, so `webview.create`'s callback `type` argument is the union of the `webview.CALLBACK_RESULT_*` constants.
 - **The [facebook](/api/facebook), [playables](/api/playables) and [poki_sdk](/api/poki_sdk) Libraries pages** show the parameter types their `.script_api` spells as YAML lists (`[string, nil]`), which previously rendered as untyped.
-- **[Libraries](/libraries) lists the Defold Asset Portal libraries that ship no Lua API**, such as shaders, materials, sounds and editor scripts, each under its GitHub owner with an icon-marked card, sidebar entry and page, such as [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page leads with the portal's description, gives the dependency step for its pin, and links the library's Asset Portal entry.
+- **[Libraries](/libraries) lists the Defold Asset Portal's libraries under their GitHub owners**: one that ships a `.script_api` gets a reference page per doc, such as [defos](/api/defos), and one that ships no Lua API, such as shaders, materials and editor scripts, gets an icon-marked page, such as [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page gives the dependency step for its pin and links the library's Asset Portal entry.
 
 ### Fixed
 

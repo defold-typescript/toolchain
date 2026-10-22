@@ -11,11 +11,14 @@ import { emitExtensionDeclarationFromDoc } from "./extension-emit";
 const LIBRARY_TYPES_DIR = join(import.meta.dir, "../../library-types");
 const MAP_FILE = "packages/types/src/library-index-slot-classifications.ts";
 
-type Lane = "script-api" | "extension" | "luals" | "authored" | "native";
+type Lane = "script-api" | "extension" | "luals" | "authored" | "native" | "portal";
 
 // Lanes whose declarations do not yet carry library index notes. Each entry
 // leaves once its own emitter notes the classified positions it declares.
-const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>();
+// `portal`: `resolve` matches a `.script_api` to its page through
+// `defold-extensions.json` only, so an Asset Portal extension's declaration
+// names no page.
+const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>(["portal"]);
 
 function readTargets<T>(file: string): T[] {
   return (JSON.parse(readFileSync(join(LIBRARY_TYPES_DIR, file), "utf8")) as { targets: T[] })
@@ -29,6 +32,12 @@ interface ExtensionManifest {
 const extensionPages = (
   JSON.parse(
     readFileSync(join(LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+  ) as ExtensionManifest
+).libraries.flatMap((library) => library.docs.map((doc) => doc.page));
+
+const portalPages = (
+  JSON.parse(
+    readFileSync(join(LIBRARY_TYPES_DIR, "asset-portal-script-api.json"), "utf8"),
   ) as ExtensionManifest
 ).libraries.flatMap((library) => library.docs.map((doc) => doc.page));
 
@@ -55,6 +64,7 @@ function pageLanes(): Map<string, Lane> {
   };
   for (const target of scriptApiTargets) claim(basename(target.apiDoc, ".json"), "script-api");
   for (const page of extensionPages) claim(page, "extension");
+  for (const page of portalPages) claim(page, "portal");
   for (const { namespace } of readTargets<{ namespace: string }>("luals-targets.json")) {
     claim(namespace, "luals");
   }
@@ -201,8 +211,9 @@ async function emitLaneDeclaration(page: string, lane: Lane): Promise<string> {
     if (target === undefined) throw new Error(`no native target for page ${page}`);
     return readFileSync(join(LIBRARY_TYPES_DIR, target.declaration), "utf8");
   }
+  const docDir = lane === "portal" ? "asset-portal-script-api" : "defold-extensions";
   const doc = JSON.parse(
-    readFileSync(join(LIBRARY_TYPES_DIR, "defold-extensions", "api-doc", `${page}.json`), "utf8"),
+    readFileSync(join(LIBRARY_TYPES_DIR, docDir, "api-doc", `${page}.json`), "utf8"),
   ) as { info: { namespace: string } };
   return (await emitExtensionDeclarationFromDoc(doc, [page])).contents;
 }

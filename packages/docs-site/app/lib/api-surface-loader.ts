@@ -141,6 +141,45 @@ function defoldExtensionDocs(
   return docs;
 }
 
+interface PortalScriptApiLibrary extends DefoldExtensionEntry {
+  id: string;
+}
+
+// The Asset Portal's `script-api` libraries, synced by
+// `scripts/sync-asset-portal-script-api.ts`. Each `.script_api` doc is a Libraries
+// page keyed by its manifest `page`, exactly as a Defold extension doc is, but
+// owned by its GitHub owner rather than marked official. An absent manifest
+// degrades to no portal pages.
+function portalScriptApiDocs(
+  libraryTypesDir: string,
+): Map<string, { entry: PortalScriptApiLibrary; doc: PortalScriptApiLibrary["docs"][number] }> {
+  const docs = new Map<
+    string,
+    { entry: PortalScriptApiLibrary; doc: PortalScriptApiLibrary["docs"][number] }
+  >();
+  const path = join(libraryTypesDir, "asset-portal-script-api.json");
+  if (!existsSync(path)) return docs;
+  const { libraries } = JSON.parse(readFileSync(path, "utf8")) as {
+    libraries: PortalScriptApiLibrary[];
+  };
+  for (const entry of libraries) {
+    for (const doc of entry.docs) {
+      const previous = docs.get(doc.page);
+      if (previous) {
+        throw new Error(
+          `asset-portal-script-api.json: page "${doc.page}" is claimed by both ${previous.entry.repo} and ${entry.repo}`,
+        );
+      }
+      docs.set(doc.page, { entry, doc });
+    }
+  }
+  return docs;
+}
+
+function portalEntryUrl(id: string): string {
+  return `https://defold.com/assets/${id}/`;
+}
+
 interface NativeTarget {
   repo: string;
   ref: string;
@@ -293,6 +332,11 @@ export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, L
     const owner = githubOwner(target.repo);
     const repo = githubRepo(target.repo);
     if (owner && repo) origins.set(namespace, { owner, repo });
+  }
+  for (const [page, { entry }] of portalScriptApiDocs(libraryTypesDir)) {
+    const owner = githubOwner(entry.repo);
+    const repo = githubRepo(entry.repo);
+    if (owner && repo) origins.set(page, { owner, repo });
   }
   return origins;
 }
@@ -469,7 +513,7 @@ export function portalListingsFromManifest(libraryTypesDir: string): LibraryList
         adoption: "standard",
         ships: description,
         steps: [],
-        portal: { id: entry.id, url: `https://defold.com/assets/${entry.id}/` },
+        portal: { id: entry.id, url: portalEntryUrl(entry.id) },
       },
     ];
   });
@@ -606,8 +650,31 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
   ]);
 
   const defoldDocs = defoldExtensionDocs(libraryTypesDir);
+  const portalDocs = portalScriptApiDocs(libraryTypesDir);
   const engineNamespaces = engineNamespacesBesideLibraryTypes(libraryTypesDir);
   const nativeTargets = loadNativeTargets(libraryTypesDir);
+
+  // A `.script_api` page, Defold's or the portal's, is an ambient global pinned
+  // to the release, tag or commit its manifest recorded.
+  const scriptApiMeta = (
+    entry: DefoldExtensionEntry,
+    doc: DefoldExtensionEntry["docs"][number],
+  ): LibraryMeta => {
+    const extendsEngine = doc.namespace !== doc.page && engineNamespaces.has(doc.namespace);
+    return {
+      author: "",
+      authorUrl: entry.repo,
+      commit: entry.ref,
+      sourceUrl: `${entry.repo}/blob/${entry.ref}/${doc.path}`,
+      importString: "",
+      license: entry.license,
+      authoredHere: true,
+      usage: "ambient",
+      globalNamespace: doc.namespace,
+      pinKind: entry.refKind,
+      ...(extendsEngine ? { extendsNamespace: doc.namespace } : {}),
+    };
+  };
 
   const { repo, commit, license } = classification.source;
   return (namespace: string): LibraryMeta => {
@@ -626,21 +693,13 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
       };
     }
     const defold = defoldDocs.get(namespace);
-    if (defold) {
-      const { entry, doc } = defold;
-      const extendsEngine = doc.namespace !== doc.page && engineNamespaces.has(doc.namespace);
+    if (defold) return scriptApiMeta(defold.entry, defold.doc);
+    const portal = portalDocs.get(namespace);
+    if (portal) {
+      const { id } = portal.entry;
       return {
-        author: "",
-        authorUrl: entry.repo,
-        commit: entry.ref,
-        sourceUrl: `${entry.repo}/blob/${entry.ref}/${doc.path}`,
-        importString: "",
-        license: entry.license,
-        authoredHere: true,
-        usage: "ambient",
-        globalNamespace: doc.namespace,
-        pinKind: entry.refKind,
-        ...(extendsEngine ? { extendsNamespace: doc.namespace } : {}),
+        ...scriptApiMeta(portal.entry, portal.doc),
+        portal: { id, url: portalEntryUrl(id) },
       };
     }
     const authoredEntry = moduleDir.has(namespace) ? undefined : maintainedHere.get(namespace);
@@ -750,6 +809,21 @@ export function loadLibraryPageSources(libraryTypesDir: string): { page: ApiPage
     namespaces.push(namespace);
   }
 
+  // A portal page key is unique within its manifest and, as the sync assigns it,
+  // shadows no engine namespace, `/api/defold-<version>` route or other lane's
+  // page; a hand edit that breaks any of these would replace a page at its route.
+  const portalDocs = portalScriptApiDocs(libraryTypesDir);
+  const portalApiDocDir = join(libraryTypesDir, "asset-portal-script-api", "api-doc");
+  const engineNamespaces = engineNamespacesBesideLibraryTypes(libraryTypesDir);
+  for (const [page, { entry }] of portalDocs) {
+    if (namespaces.includes(page) || engineNamespaces.has(page) || page.startsWith("defold-")) {
+      throw new Error(
+        `asset-portal-script-api.json: page "${page}" from ${entry.repo} collides with an engine, version or library route`,
+      );
+    }
+    namespaces.push(page);
+  }
+
   // Modules-per-repo count drives whether the display label keeps its `· <leaf>`
   // distinguisher; a single-module repo drops it. It is the same count the
   // Libraries tree collapses a one-module repo on, resolved from the same
@@ -764,16 +838,20 @@ export function loadLibraryPageSources(libraryTypesDir: string): { page: ApiPage
   const pages: { page: ApiPage; doc: unknown }[] = [];
   for (const namespace of namespaces) {
     const defold = defoldDocs.get(namespace);
+    const portal = portalDocs.get(namespace);
     const docDir = defold
       ? defoldApiDocDir
-      : nativeTargets.has(namespace)
-        ? nativeApiDocDir
-        : apiDocDir;
+      : portal
+        ? portalApiDocDir
+        : nativeTargets.has(namespace)
+          ? nativeApiDocDir
+          : apiDocDir;
     const doc: unknown = JSON.parse(readFileSync(join(docDir, `${namespace}.json`), "utf8"));
     const module = parseDefoldApiDoc(doc);
     const dir = moduleDir.get(namespace);
-    if (!module.description && defold?.entry.description) {
-      module.description = defold.entry.description;
+    const scriptApiEntry = defold?.entry ?? portal?.entry;
+    if (!module.description && scriptApiEntry?.description) {
+      module.description = scriptApiEntry.description;
     } else if (!module.description) {
       // ts-defold libraries key the description on their upstream dir; a LuaLS
       // library has no classification dir, so it keys on its namespace directly

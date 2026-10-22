@@ -1043,6 +1043,170 @@ describe("Asset Portal libraries that ship no Lua API under Libraries", () => {
   });
 });
 
+describe("Asset Portal script_api libraries under Libraries", () => {
+  interface PortalDocFixture {
+    page: string;
+    namespace?: string;
+    description?: string;
+  }
+
+  // A library-types dir beside a `types` dir whose one engine target declares
+  // `gui`, holding one portal library per doc (`someone/defold-lib-<index>`).
+  function libraryTypesWithPortalPages(
+    docs: PortalDocFixture[],
+    options: { defoldPages?: string[]; nativeNamespaces?: string[] } = {},
+  ): string {
+    const base = mkdtempSync(join(tmpdir(), "asset-portal-pages-"));
+    const dir = join(base, "library-types");
+    cpSync(LIBRARY_FIXTURE_DIR, dir, { recursive: true });
+    mkdirSync(join(base, "types"), { recursive: true });
+    writeFileSync(
+      join(base, "types", "api-targets.json"),
+      JSON.stringify({
+        targets: [{ id: "1.0.0", fixturesDir: "", modules: [{ namespace: "gui", fixture: "" }] }],
+      }),
+    );
+    const emptyDoc = (namespace: string, description = "") =>
+      JSON.stringify({ info: { namespace, brief: "", description }, elements: [] });
+    const portalApiDoc = join(dir, "asset-portal-script-api", "api-doc");
+    mkdirSync(portalApiDoc, { recursive: true });
+    for (const doc of docs) {
+      writeFileSync(
+        join(portalApiDoc, `${doc.page}.json`),
+        emptyDoc(doc.namespace ?? doc.page, doc.description),
+      );
+    }
+    writeFileSync(
+      join(dir, "asset-portal-script-api.json"),
+      JSON.stringify({
+        libraries: docs.map((doc, index) => ({
+          id: `portal-${index}`,
+          repo: `https://github.com/someone/defold-lib-${index}`,
+          ref: "v1.0.0",
+          refKind: "tag",
+          license: "MIT",
+          description: `Portal description ${index}.`,
+          docs: [
+            {
+              path: `lib/api/${doc.page}.script_api`,
+              namespace: doc.namespace ?? doc.page,
+              page: doc.page,
+            },
+          ],
+        })),
+      }),
+    );
+    if (options.defoldPages) {
+      mkdirSync(join(dir, "defold-extensions", "api-doc"), { recursive: true });
+      for (const page of options.defoldPages) {
+        writeFileSync(join(dir, "defold-extensions", "api-doc", `${page}.json`), emptyDoc(page));
+      }
+      writeFileSync(
+        join(dir, "defold-extensions.json"),
+        JSON.stringify({
+          libraries: options.defoldPages.map((page) => ({
+            repo: `https://github.com/defold/extension-${page}`,
+            ref: "1.0.0",
+            refKind: "release",
+            license: "MIT",
+            description: "",
+            docs: [{ path: `api/${page}.script_api`, namespace: page, page }],
+          })),
+        }),
+      );
+    }
+    if (options.nativeNamespaces) {
+      mkdirSync(join(dir, "api-doc", "native"), { recursive: true });
+      for (const namespace of options.nativeNamespaces) {
+        writeFileSync(join(dir, "api-doc", "native", `${namespace}.json`), emptyDoc(namespace));
+      }
+      writeFileSync(
+        join(dir, "native-targets.json"),
+        JSON.stringify({
+          targets: options.nativeNamespaces.map((namespace) => ({
+            repo: `https://github.com/someone/native-${namespace}`,
+            ref: "1.0.0",
+            license: "MIT",
+            namespace,
+          })),
+        }),
+      );
+    }
+    return dir;
+  }
+
+  const pageAt = (dir: string, route: string) =>
+    loadVersionIndependentPages(ENGINE_FIXTURE_DIR, dir).find((page) => page.route === route);
+
+  test("each portal doc is a library page under its GitHub owner, called through its global", () => {
+    const dir = libraryTypesWithPortalPages([{ page: "astar" }]);
+    const page = pageAt(dir, "/api/astar");
+    expect(page?.category).toBe("library");
+    expect(libraryOriginByNamespace(dir).get("astar")).toEqual({
+      owner: "someone",
+      repo: "defold-lib-0",
+    });
+    expect(page?.libraryMeta).toEqual({
+      author: "",
+      authorUrl: "https://github.com/someone/defold-lib-0",
+      commit: "v1.0.0",
+      sourceUrl: "https://github.com/someone/defold-lib-0/blob/v1.0.0/lib/api/astar.script_api",
+      importString: "",
+      license: "MIT",
+      authoredHere: true,
+      usage: "ambient",
+      globalNamespace: "astar",
+      pinKind: "tag",
+      portal: { id: "portal-0", url: "https://defold.com/assets/portal-0/" },
+    });
+  });
+
+  test("a portal doc declaring an engine namespace says it extends that namespace", () => {
+    const dir = libraryTypesWithPortalPages([{ page: "lib.gui", namespace: "gui" }]);
+    const meta = pageAt(dir, "/api/lib.gui")?.libraryMeta;
+    expect(meta?.globalNamespace).toBe("gui");
+    expect(meta?.extendsNamespace).toBe("gui");
+  });
+
+  test("a doc with no description leads with the portal description; one with its own keeps it", () => {
+    const dir = libraryTypesWithPortalPages([
+      { page: "blank" },
+      { page: "described", description: "Its own description." },
+    ]);
+    expect(pageAt(dir, "/api/blank")?.module.description).toBe("Portal description 0.");
+    expect(pageAt(dir, "/api/described")?.module.description).toBe("Its own description.");
+  });
+
+  test("a portal page key on an engine, version, vendored, Defold, native or other portal page throws naming the manifest and the key", () => {
+    const load = (dir: string) => () => loadVersionIndependentPages(ENGINE_FIXTURE_DIR, dir);
+    expect(
+      load(
+        libraryTypesWithPortalPages([{ page: "fresh" }], {
+          defoldPages: ["pad"],
+          nativeNamespaces: ["share"],
+        }),
+      ),
+    ).not.toThrow();
+    const collisions: [
+      string,
+      PortalDocFixture[],
+      Parameters<typeof libraryTypesWithPortalPages>[1],
+    ][] = [
+      ["gui", [{ page: "gui" }], {}],
+      ["defold-rng", [{ page: "defold-rng" }], {}],
+      ["demo.one", [{ page: "demo.one" }], {}],
+      ["pad", [{ page: "pad" }], { defoldPages: ["pad"] }],
+      ["share", [{ page: "share" }], { nativeNamespaces: ["share"] }],
+      ["twice", [{ page: "twice" }, { page: "twice" }], {}],
+    ];
+    for (const [key, docs, options] of collisions) {
+      expect(load(libraryTypesWithPortalPages(docs, options))).toThrow(
+        new RegExp(`asset-portal-script-api\\.json: page "${key.replace(".", "\\.")}"`),
+      );
+    }
+  });
+});
+
 describe("engine pages withhold the overloads the declarations withhold", () => {
   const typed = (fn: { parameters: { name: string; types: string[] }[] }, param: string) =>
     fn.parameters.find((p) => p.name === param)?.types;
