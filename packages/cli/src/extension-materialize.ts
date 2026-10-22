@@ -1,7 +1,8 @@
 // The materialization slice of the `[dependencies]`-driven extension typing
 // pipeline: it takes the `resolveExtensionDeclarations` output (one
 // `ExtensionDeclarations` bundle per declared dependency) and writes each emitted
-// namespace into the gitignored sibling surface `.defold-types/extensions/` —
+// declaration into the gitignored sibling surface `.defold-types/extensions/` —
+// one file per namespace, or one per declaration when several share a namespace —
 // verbatim apart from the core-type retarget, because the emitter spells that
 // import relative to `packages/types/generated/` rather than to the materialized
 // surface, where it would dangle. It then
@@ -15,6 +16,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import * as path from "node:path";
 import type { ExtensionDeclarations } from "./extension-declarations";
 import { formatJsonLikeBiome } from "./format-json";
+import { normalizeSourceId } from "./library-match";
 import { ensureGitignoreLine, MATERIALIZED_ROOT, retargetCoreTypes } from "./materialize";
 
 const EXTENSIONS_DIR = "extensions";
@@ -24,9 +26,43 @@ export interface MaterializeExtensionDeclarationsOptions {
   readonly bundles: readonly ExtensionDeclarations[];
 }
 
+export interface SharedExtensionNamespace {
+  readonly namespace: string;
+  readonly urls: string[];
+}
+
 export interface MaterializeExtensionDeclarationsResult {
   readonly materializedDir: string | null;
   readonly namespaces: string[];
+  readonly sharedNamespaces: SharedExtensionNamespace[];
+}
+
+interface NamespaceSource {
+  readonly url: string;
+  readonly contents: string;
+}
+
+function dependencySlug(url: string): string {
+  return normalizeSourceId(url).replace(/[^a-z0-9._-]/g, "-") || "dep";
+}
+
+// A namespace one declaration owns keeps `<ns>.d.ts`. A shared one writes a
+// `<ns>.<slug>.d.ts` per declaration, named after its dependency rather than
+// its position so a reordered `[dependencies]` renames nothing.
+function namespaceFileStems(namespace: string, sources: readonly NamespaceSource[]): string[] {
+  if (sources.length === 1) {
+    return [namespace];
+  }
+  const taken = new Set<string>();
+  return sources.map(({ url }) => {
+    const slug = dependencySlug(url);
+    let candidate = slug;
+    for (let count = 2; taken.has(candidate); count++) {
+      candidate = `${slug}-${count}`;
+    }
+    taken.add(candidate);
+    return `${namespace}.${candidate}`;
+  });
 }
 
 export function materializeExtensionDeclarations(
@@ -34,14 +70,18 @@ export function materializeExtensionDeclarations(
 ): MaterializeExtensionDeclarationsResult {
   const { cwd, bundles } = opts;
 
-  // Flatten every bundle's declarations and dedup by namespace, last wins. The
-  // retarget rides in here so the barrel, prune and dedup paths stay untouched;
-  // `surfaceHasCoreTypes: false` is the published-subpath arm, correct because
-  // the extensions dir mints no `core-types.d.ts` of its own.
-  const byNamespace = new Map<string, string>();
+  // Group every bundle's declarations by namespace, in bundle order, and keep
+  // them all: each is its own `declare global` module file, so TypeScript merges
+  // a namespace across files, while concatenating them would repeat each file's
+  // core-type import. The retarget rides in here so the barrel and prune paths
+  // stay untouched; `surfaceHasCoreTypes: false` is the published-subpath arm,
+  // correct because the extensions dir mints no `core-types.d.ts` of its own.
+  const byNamespace = new Map<string, NamespaceSource[]>();
   for (const bundle of bundles) {
     for (const { namespace, contents } of bundle.declarations) {
-      byNamespace.set(namespace, retargetCoreTypes(contents, 0, false));
+      const sources = byNamespace.get(namespace) ?? [];
+      sources.push({ url: bundle.url, contents: retargetCoreTypes(contents, 0, false) });
+      byNamespace.set(namespace, sources);
     }
   }
 
@@ -54,23 +94,37 @@ export function materializeExtensionDeclarations(
   // `materializeVendoredLibraries`, whose empty case already does this.
   if (namespaces.length === 0) {
     rmSync(absDir, { recursive: true, force: true });
-    return { materializedDir: null, namespaces: [] };
+    return { materializedDir: null, namespaces: [], sharedNamespaces: [] };
   }
+
+  const files = new Map<string, string>();
+  const sharedNamespaces: SharedExtensionNamespace[] = [];
+  for (const namespace of namespaces) {
+    const sources = byNamespace.get(namespace) ?? [];
+    const stems = namespaceFileStems(namespace, sources);
+    sources.forEach(({ contents }, index) => {
+      files.set(stems[index] ?? namespace, contents);
+    });
+    if (sources.length > 1) {
+      sharedNamespaces.push({ namespace, urls: [...new Set(sources.map(({ url }) => url))] });
+    }
+  }
+  const stems = [...files.keys()].sort();
 
   mkdirSync(absDir, { recursive: true });
 
-  const wanted = new Set(namespaces.map((ns) => `${ns}.d.ts`));
+  const wanted = new Set(stems.map((stem) => `${stem}.d.ts`));
   for (const existing of readdirSync(absDir)) {
     if (existing.endsWith(".d.ts") && existing !== "index.d.ts" && !wanted.has(existing)) {
       rmSync(path.join(absDir, existing));
     }
   }
 
-  for (const namespace of namespaces) {
-    writeFileSync(path.join(absDir, `${namespace}.d.ts`), byNamespace.get(namespace) ?? "");
+  for (const stem of stems) {
+    writeFileSync(path.join(absDir, `${stem}.d.ts`), files.get(stem) ?? "");
   }
 
-  const imports = namespaces.map((ns) => `import "./${ns}";`).join("\n");
+  const imports = stems.map((stem) => `import "./${stem}";`).join("\n");
   writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
 
   writeFileSync(
@@ -81,7 +135,7 @@ export function materializeExtensionDeclarations(
     })}\n`,
   );
 
-  return { materializedDir: relDir, namespaces };
+  return { materializedDir: relDir, namespaces, sharedNamespaces };
 }
 
 export function ensureExtensionTypesReference(cwd: string, materializedDir: string | null): void {

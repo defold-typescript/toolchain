@@ -13,9 +13,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters, and callbacks typed from their documented arguments, so a listener with other argument types fails to type-check.
+> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters, and callbacks typed from their documented arguments, so a mismatched listener fails to type-check.
 > - **[`resolve` runs under Node and Bun](./resolve.md)** on every OS from the published packages for a project with a native extension, with no `unzip`.
 > - **[Asset Portal libraries with no Lua API](/libraries)** get pages.
+> - **[Extensions sharing a namespace](./resolve.md#the-generated-surface)**, such as the Firebase ones, keep every member.
 
 ### Breaking
 
@@ -30,6 +31,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **`resolve` works from the published packages for a project depending on a native extension**, under Node and Bun on macOS, Linux and Windows ([resolve](./resolve.md)), where Node failed to load the types package's TypeScript scripts (a bare `C:\` path on Windows, type stripping under `node_modules` elsewhere) and Bun found none of the `fixtures/defold-*` documents in the published `@defold-typescript/types`. Reading an extension archive needs no `unzip` binary and reads an archive carrying any comment that does not itself embed a zip directory.
+- **`resolve` keeps every dependency's declarations of a namespace they share**, writing each to its own `.defold-types/extensions/<namespace>.<dependency>.d.ts` so TypeScript merges them ([resolve](./resolve.md#the-generated-surface)), where it kept only the last dependency's, so a project using several Firebase extensions lost the other extensions' `firebase` members. It prints `merged <namespace> from <urls>`, and `--json` adds a `sharedNamespaces` array.
 
 ## v0.53.0
 

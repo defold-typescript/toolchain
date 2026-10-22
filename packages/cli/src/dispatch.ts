@@ -1272,6 +1272,9 @@ function dispatchCommand(
                         materializedSurface: result.materializedSurface,
                         extensions: result.extensions,
                         libraries: result.libraries,
+                        ...(result.sharedNamespaces.length > 0
+                          ? { sharedNamespaces: result.sharedNamespaces }
+                          : {}),
                       }
                     : { command: "resolve", error: result.error ?? "resolve failed" },
                 ),
@@ -1551,6 +1554,9 @@ function dispatchCommand(
                     materializedSurface: result.materializedSurface,
                     extensions: result.extensions,
                     libraries: result.libraries,
+                    ...(result.sharedNamespaces.length > 0
+                      ? { sharedNamespaces: result.sharedNamespaces }
+                      : {}),
                   }
                 : { command: "resolve", error: result.error ?? "resolve failed" },
             ),
@@ -1597,6 +1603,11 @@ function dispatchCommand(
                   `  ${ext.namespaces.join(", ")} <- ${ext.url} (${ext.scriptApiCount} .script_api, ${ext.provenance})\n`,
                 );
               }
+            }
+            for (const shared of result.sharedNamespaces) {
+              io.stdout.write(
+                `defold-typescript resolve: merged ${shared.namespace} from ${shared.urls.join(", ")}\n`,
+              );
             }
             if (result.materializedSurface !== null) {
               io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
