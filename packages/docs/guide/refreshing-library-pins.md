@@ -128,7 +128,8 @@ It converts each `.script_api` under the entry's `include_dirs` at the pin
 Those entries then count as tracked on the `portal` lane. A doc that fails to
 convert, a page key that would take another page's `/api/` route, or a page key
 that is not one safe route and file name (ASCII letters, digits, `_`, `.` and
-`-`, starting and ending with a letter, digit or `_`) stops the sync before it
+`-`, starting and ending with a letter, digit or `_`, and not a Windows device
+name such as `CON` or `NUL` before its first `.`) stops the sync before it
 changes any file, instead of dropping the page.
 
 A library that moved forge keeps a stale portal entry: the portal's
