@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as ts from "typescript";
@@ -313,6 +313,74 @@ describe("materializeExtensionDeclarations", () => {
       expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
         'import "./firebase";\n\nexport {};\n',
       );
+    });
+
+    function declares(namespace: string, name: string): string {
+      return `declare global { namespace ${namespace} { function ${name}(): void; } }\nexport {};\n`;
+    }
+
+    function declarationFiles(): string[] {
+      return readdirSync(extensionsDir())
+        .filter((file) => file.endsWith(".d.ts"))
+        .sort();
+    }
+
+    test("a shared file never takes an unshared namespace's name", () => {
+      const barUrl = "https://github.com/acme/bar/archive/1.zip";
+      const bazUrl = "https://github.com/acme/baz/archive/1.zip";
+      const quxUrl = "https://github.com/acme/qux/archive/1.zip";
+      const fromBar = declares("foo", "fromBar");
+      const fromBaz = declares("foo", "fromBaz");
+      const nested = declares("foo.bar", "nested");
+
+      const result = materializeExtensionDeclarations({
+        cwd,
+        bundles: [
+          bundleAt(barUrl, [decl("foo", fromBar)]),
+          bundleAt(bazUrl, [decl("foo", fromBaz)]),
+          bundleAt(quxUrl, [decl("foo.bar", nested)]),
+        ],
+      });
+
+      const dir = extensionsDir();
+      expect(result.namespaces).toEqual(["foo", "foo.bar"]);
+      expect(result.sharedNamespaces).toEqual([{ namespace: "foo", urls: [barUrl, bazUrl] }]);
+      expect(readFileSync(path.join(dir, "foo.bar.d.ts"), "utf8")).toBe(nested);
+      expect(readFileSync(path.join(dir, "foo.bar-2.d.ts"), "utf8")).toBe(fromBar);
+      expect(readFileSync(path.join(dir, "foo.baz.d.ts"), "utf8")).toBe(fromBaz);
+      expect(declarationFiles()).toEqual([
+        "foo.bar-2.d.ts",
+        "foo.bar.d.ts",
+        "foo.baz.d.ts",
+        "index.d.ts",
+      ]);
+      expect(barrelDiagnostics("foo.fromBar();\nfoo.fromBaz();\nfoo.bar.nested();\n")).toEqual([]);
+    });
+
+    test("a shared file never takes another shared namespace's name", () => {
+      const fromBarBaz = declares("foo", "fromBarBaz");
+      const fromOne = declares("foo", "fromOne");
+      const fromBaz = declares("foo.bar", "fromBaz");
+      const fromTwo = declares("foo.bar", "fromTwo");
+
+      materializeExtensionDeclarations({
+        cwd,
+        bundles: [
+          bundleAt("https://github.com/acme/bar.baz/archive/1.zip", [decl("foo", fromBarBaz)]),
+          bundleAt("https://github.com/acme/one/archive/1.zip", [decl("foo", fromOne)]),
+          bundleAt("https://github.com/acme/baz/archive/1.zip", [decl("foo.bar", fromBaz)]),
+          bundleAt("https://github.com/acme/two/archive/1.zip", [decl("foo.bar", fromTwo)]),
+        ],
+      });
+
+      const dir = extensionsDir();
+      expect(readFileSync(path.join(dir, "foo.bar.baz.d.ts"), "utf8")).toBe(fromBarBaz);
+      expect(readFileSync(path.join(dir, "foo.bar.baz-2.d.ts"), "utf8")).toBe(fromBaz);
+      expect(
+        barrelDiagnostics(
+          "foo.fromBarBaz();\nfoo.fromOne();\nfoo.bar.fromBaz();\nfoo.bar.fromTwo();\n",
+        ),
+      ).toEqual([]);
     });
   });
 });
