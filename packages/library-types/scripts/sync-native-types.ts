@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
+import type { RefKind } from "./sync-defold-extensions";
 
 /**
  * The curated native-extension lane. A native extension ships C++ and no
@@ -21,6 +22,8 @@ export interface NativeArityExceptionEntry {
 export interface NativeTarget {
   repo: string;
   ref: string;
+  /** What `ref` names upstream. Absent means `release`. */
+  refKind?: RefKind;
   license: string;
   namespace: string;
   manifestDir: string;

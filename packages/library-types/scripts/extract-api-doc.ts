@@ -480,7 +480,9 @@ function unionMemberTexts(node: ts.TypeNode, sf: ts.SourceFile): string[] {
  * block-local shape shadows a same-named file-scope one and publishes under the
  * block's prefix; a declaration's own body resolves from where it was declared,
  * never back into a sibling block the reference came from. An `extends` parent is
- * not a type reference, so it is followed by name.
+ * not a type reference, so it is followed by name. A block-local interface's member
+ * types are walked too, so a shape named only by another shape's field publishes;
+ * a file-scope interface's are not, for the reason file-scope unions are skipped.
  */
 function reachedGlobalShapes(nodes: readonly ScopedTypeNode[], fileScope: Scope): ReachedShape[] {
   const reached: ReachedShape[] = [];
@@ -504,7 +506,10 @@ function reachedGlobalShapes(nodes: readonly ScopedTypeNode[], fileScope: Scope)
       });
       const outward = scopes.slice(i);
       if (alias) walk(alias.type, outward);
-      if (iface) for (const parent of heritageNames(iface)) resolve(parent, outward);
+      if (iface) {
+        for (const parent of heritageNames(iface)) resolve(parent, outward);
+        if (scope.prefix !== "") for (const member of iface.members) walk(member, outward);
+      }
       return;
     }
   };

@@ -292,7 +292,13 @@ describe("loadLibraryProvenance — curated native extensions", () => {
   ) as { targets: { repo: string; ref: string; license: string; namespace: string }[] };
 
   test("attributes each native namespace to its upstream repo at the pin, as a global", () => {
-    expect(targets.map((t) => t.namespace)).toEqual(["daabbcc", "share", "uuid4", "tile_raycast"]);
+    expect(targets.map((t) => t.namespace)).toEqual([
+      "daabbcc",
+      "share",
+      "uuid4",
+      "tile_raycast",
+      "pixels",
+    ]);
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     for (const target of targets) {
       const meta = metaFor(target.namespace);
@@ -304,6 +310,14 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       expect(meta.importString).toBe("");
       expect(meta.usage).toBe("ambient");
       expect(meta.globalNamespace).toBe(target.namespace);
+    }
+  });
+
+  test("carries a commit pin as the page's pin kind, and no pin kind for a release", () => {
+    const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    expect(metaFor("pixels").pinKind).toBe("commit");
+    for (const namespace of ["daabbcc", "share", "uuid4", "tile_raycast"]) {
+      expect(metaFor(namespace).pinKind).toBeUndefined();
     }
   });
 

@@ -1,0 +1,24 @@
+{
+  "namespace": "pixels",
+  "moduleName": "pixels",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 18,
+  "declaredFunctions": 18,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 0,
+  "declaredConstants": 0,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1,
+  "arityMeasured": true,
+  "arityMismatches": [],
+  "arityExceptions": [],
+  "annotationDrift": {
+    "unregistered": [],
+    "undeclared": [
+      "copy_pixels"
+    ]
+  }
+}
