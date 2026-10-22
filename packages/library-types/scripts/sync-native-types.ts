@@ -30,6 +30,15 @@ export interface NativeTarget {
   declaration: string;
   /** The vendored C++ file that registers the module, under `fixtures/upstream-native/`. */
   upstreamSource: string;
+  /** Vendored C++ files, under `fixtures/upstream-native/`, whose nameless
+   * `luaL_register` calls fill the metatables of the userdata the module returns.
+   * Absent where every metatable is filled in `upstreamSource`. */
+  upstreamMethodSources?: string[];
+  /** Each metatable the C++ fills, mapped to the declared interfaces whose method
+   * signatures it provides. Parity measures each metatable against the union of its
+   * interfaces, so every registered metatable and every declared type with methods
+   * must appear here. */
+  methodTables?: Record<string, string[]>;
   /** The vendored LuaLS annotation upstream ships, under `fixtures/upstream-native/`.
    * The registration table carries names only, so parameter lists come from here.
    * Absent where upstream ships no annotation, or ships one in a form this reader does

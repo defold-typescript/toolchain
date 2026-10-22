@@ -525,13 +525,15 @@ describe("the vendored native C++ the registration surface is read from", () => 
     ).toEqual([]);
   });
 
-  test("the pin covers every native target's upstreamSource", () => {
+  test("the pin covers every native target's upstreamSource and upstreamMethodSources", () => {
     const targets = readNativeTargets(PACKAGE_ROOT);
     expect(targets.length).toBeGreaterThan(0);
     expect(
-      targets
-        .filter((target) => !(target.upstreamSource in UPSTREAM_NATIVE_HASHES))
-        .map((target) => `${target.namespace}: ${target.upstreamSource}`),
+      targets.flatMap((target) =>
+        [target.upstreamSource, ...(target.upstreamMethodSources ?? [])]
+          .filter((path) => !(path in UPSTREAM_NATIVE_HASHES))
+          .map((path) => `${target.namespace}: ${path}`),
+      ),
     ).toEqual([]);
   });
 });
