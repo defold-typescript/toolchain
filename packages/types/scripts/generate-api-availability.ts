@@ -30,7 +30,7 @@ import { splitTopLevel } from "../src/luals-type-expr";
 import { type ApiTarget, loadApiTargets, loadTargetModules } from "./regen";
 import { compareVersions, versionOf } from "./target-version";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const MIGRATIONS_PATH = resolve(PACKAGE_ROOT, "api-migrations.json");
 const AVAILABILITY_PATH = resolve(PACKAGE_ROOT, "api-availability.json");
 

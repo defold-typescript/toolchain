@@ -37,7 +37,7 @@ import {
   targetKindManifest,
 } from "./regen";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 // A materialized surface exists only as bytes, but its module specifiers still
 // resolve like a real one: its relative `../<module>` imports reach the sibling

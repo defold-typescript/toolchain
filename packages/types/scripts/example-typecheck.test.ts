@@ -57,7 +57,7 @@ const FIXED = ["render.clear", "zlib.inflate", "factory.create"] as const;
  * the scaffold move together; every package sets a `rootDir` that forbids
  * importing a sibling package's source, which is why this crosses as data.
  */
-const SCAFFOLD_TSCONFIG_PATH = resolve(import.meta.dir, "../../cli/src/scaffold-tsconfig.json");
+const SCAFFOLD_TSCONFIG_PATH = resolve(import.meta.dirname, "../../cli/src/scaffold-tsconfig.json");
 
 function effectiveImplicitAny(options: {
   noImplicitAny?: boolean | undefined;
@@ -87,7 +87,7 @@ function diagnosticsFor(
   return compileSurface(surface, [unit]).units.get(unit.identity) ?? [];
 }
 
-const DEFAULT_SCRIPT_ENTRY = resolve(import.meta.dir, "../generated/kinds/script.d.ts");
+const DEFAULT_SCRIPT_ENTRY = resolve(import.meta.dirname, "../generated/kinds/script.d.ts");
 const foundCurrent = surfaces.find((surface) => resolve(surface.entry) === DEFAULT_SCRIPT_ENTRY);
 if (!foundCurrent) throw new Error("the pinned target's script-kind surface is missing");
 const currentScriptSurface = foundCurrent;
@@ -783,7 +783,7 @@ describe("surface entry resolution", () => {
 
   test("a surface that cannot resolve its entry is reported", () => {
     const unresolvableSurface = (id: string, entryContents: string): ExampleSurface => {
-      const entry = resolve(import.meta.dir, "..", ".example-gate", id, "index.d.ts");
+      const entry = resolve(import.meta.dirname, "..", ".example-gate", id, "index.d.ts");
       return {
         id,
         targetId: id,

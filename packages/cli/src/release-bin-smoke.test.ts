@@ -1,11 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
+import { extensionArchiveKey } from "./extension-archive";
 
 const PKG_DIR = path.resolve(import.meta.dir, "..");
 const REPO_ROOT = path.resolve(PKG_DIR, "..", "..");
+const TYPES_DIR = path.join(REPO_ROOT, "packages", "types");
 const BIN = path.join(PKG_DIR, "dist", "bin.js");
 
 // Cold-spawning real `node dist/bin.js` is slow and variable on the Windows
@@ -229,4 +231,115 @@ describe("release smoke harness is discoverable", () => {
     const pkg = JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
     expect(pkg.scripts?.smoke).toBe("bun scripts/release-smoke.ts");
   });
+});
+
+const PIXELS_URL = "https://example.invalid/defold-pixels.zip";
+const PIXELS_SCRIPT_API = [
+  "- name: pixels",
+  "  type: table",
+  "  desc: Pixel drawing.",
+  "  members:",
+  "  - name: polyline",
+  "    type: function",
+  "    desc: Draws a polyline.",
+  "    parameters:",
+  "      - name: points",
+  "        type: table",
+  "        desc: the points",
+  "",
+].join("\n");
+
+function buildTypesRuntime(): void {
+  const proc = Bun.spawnSync(["bun", "run", "build:cli-runtime"], {
+    cwd: TYPES_DIR,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (proc.exitCode !== 0) {
+    throw new Error(`bun run build:cli-runtime failed in ${TYPES_DIR}:\n${proc.stderr.toString()}`);
+  }
+}
+
+// Loaded by path: the types package's test writer sits outside this package's
+// tsconfig.
+interface ZipFixture {
+  writeZipArchive(entries: readonly { name: string; text: string; stored?: boolean }[]): Uint8Array;
+}
+
+// A project declaring one native extension, with that extension's archive
+// already in the cache so the run touches no network.
+async function seedNativeExtensionProject(): Promise<{
+  root: string;
+  project: string;
+  cache: string;
+}> {
+  const { writeZipArchive } = (await import(
+    path.join(TYPES_DIR, "test", "zip-fixture.ts")
+  )) as ZipFixture;
+  const root = tmp("resolve");
+  const project = path.join(root, "project");
+  mkdirSync(project);
+  writeFileSync(
+    path.join(project, "game.project"),
+    `[project]\ntitle = smoke\ndependencies#0 = ${PIXELS_URL}\n`,
+  );
+  const cache = path.join(root, "cache");
+  const archiveDir = path.join(cache, "extensions", extensionArchiveKey(PIXELS_URL));
+  mkdirSync(archiveDir, { recursive: true });
+  writeFileSync(
+    path.join(archiveDir, "archive.zip"),
+    writeZipArchive([
+      { name: "defold-pixels-master/", text: "" },
+      { name: "defold-pixels-master/ext.manifest", text: "name: pixels\n" },
+      { name: "defold-pixels-master/api/pixels.script_api", text: PIXELS_SCRIPT_API },
+    ]),
+  );
+  return { root, project, cache };
+}
+
+// The published `resolve` loads the types package's generator through
+// `@defold-typescript/types/cli-runtime`, resolved by each runtime's own
+// loader: Node to the built bundle, Bun to the source. Nothing is injected,
+// so a path-based import, a wrong export condition, an unbuilt bundle or a
+// Bun-only call anywhere in the resolve graph fails here, on every OS.
+describe("built bin resolves a native extension from the cache", () => {
+  buildTypesRuntime();
+  build(PKG_DIR);
+
+  for (const runtime of ["node", "bun"] as const) {
+    test(
+      `${runtime} dist/bin.js resolve writes .defold-types/extensions/pixels.d.ts`,
+      async () => {
+        const { root, project, cache } = await seedNativeExtensionProject();
+        try {
+          const proc = Bun.spawnSync([runtime, BIN, "resolve", project, "--json"], {
+            cwd: project,
+            env: { ...process.env, DEFOLD_TYPESCRIPT_CACHE: cache },
+            stdout: "pipe",
+            stderr: "pipe",
+          });
+          const stdout = proc.stdout.toString();
+          if (proc.exitCode !== 0) {
+            throw new Error(`resolve exited ${proc.exitCode}:\n${stdout}${proc.stderr.toString()}`);
+          }
+          const declaration = path.join(project, ".defold-types", "extensions", "pixels.d.ts");
+          expect(existsSync(declaration)).toBe(true);
+          expect(readFileSync(declaration, "utf8")).toContain("polyline");
+          const report = JSON.parse(stdout) as {
+            extensions: { url: string; provenance: string; namespaces: string[] }[];
+          };
+          expect(report.extensions).toEqual([
+            expect.objectContaining({
+              url: PIXELS_URL,
+              provenance: "cache",
+              namespaces: ["pixels"],
+            }),
+          ]);
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      },
+      SPAWN_TEST_TIMEOUT_MS,
+    );
+  }
 });

@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { PROPERTY_KEY_RANGES, type PropertyKeyRange } from "../src/emit-dts";
 import { type ApiTarget, loadApiTargets } from "./regen";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 export const ENGINE_BINDINGS_DIR = "engine-bindings";
 // The non-binding engine files a correction pins, kept apart from the bindings
 // so the binding extractor never reads them.

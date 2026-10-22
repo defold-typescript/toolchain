@@ -24,7 +24,7 @@ import {
   VERSIONED_MODULE_MANIFEST,
 } from "./regen";
 
-const FIXTURES = join(import.meta.dir, "..", "fixtures", "defold-1.13.1");
+const FIXTURES = join(import.meta.dirname, "..", "fixtures", "defold-1.13.1");
 
 function scanFixture(file: string, namespace: string): Map<string, IndexSlotHit["evidence"]> {
   const doc = JSON.parse(readFileSync(join(FIXTURES, file), "utf8"));
@@ -75,7 +75,10 @@ describe("scanIndexSlots over the defold-1.13.1 ref-doc", () => {
 describe("scanIndexSlots over the lifecycle hooks", () => {
   test("reads the hooks the parser files apart from module functions", () => {
     const doc = JSON.parse(
-      readFileSync(join(import.meta.dir, "..", "fixtures", "defold-1.14.0", "go_doc.json"), "utf8"),
+      readFileSync(
+        join(import.meta.dirname, "..", "fixtures", "defold-1.14.0", "go_doc.json"),
+        "utf8",
+      ),
     );
     const keys = scanIndexSlots(doc, "go").map((hit) => hit.key);
     expect(keys).toContain("on_input:param:action:gamepad");
@@ -139,7 +142,7 @@ describe("scanFunctionBaseStatements over the defold-1.13.1 ref-doc", () => {
   });
 });
 
-const LIBRARY_API_DOC = join(import.meta.dir, "..", "..", "library-types", "api-doc");
+const LIBRARY_API_DOC = join(import.meta.dirname, "..", "..", "library-types", "api-doc");
 
 function libraryDoc(file: string): unknown {
   return JSON.parse(readFileSync(join(LIBRARY_API_DOC, file), "utf8"));
@@ -253,7 +256,7 @@ const returnNames = (fn: string): readonly string[] => RETURN_NAMES.get(fn) ?? [
 
 // Every declaration file the emitter wrote, across the default target, the
 // retained versions and the editor lane.
-const GENERATED = join(import.meta.dir, "..", "generated");
+const GENERATED = join(import.meta.dirname, "..", "generated");
 const DECLARATION_FILES = readdirSync(GENERATED, { recursive: true, encoding: "utf8" })
   .filter((rel) => rel.endsWith(".d.ts"))
   .map((rel) => ({ rel, dts: readFileSync(join(GENERATED, rel), "utf8") }));

@@ -25,6 +25,10 @@ import { PACKAGES } from "./release-pack-proof";
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const RUNTIMES = ["node", "bun"] as const;
 export const STARTER_ARTIFACT_REL = "src/main.ts.script";
+// The archive ships `ext.manifest` and `api/pixels.script_api`, so `resolve`
+// classifies it as a native extension and writes `pixels.d.ts` from the doc.
+const NATIVE_EXTENSION_URL =
+  "https://github.com/king8fisher/defold-pixels/archive/refs/heads/master.zip";
 
 interface StepResult {
   readonly name: string;
@@ -45,13 +49,11 @@ function spawn(cmd: string[], cwd: string): { code: number; output: string } {
   return { code: proc.exitCode, output: `${proc.stdout.toString()}${proc.stderr.toString()}` };
 }
 
+// The types package ships `src`/`generated` and, out of its `dist/`, only the
+// `cli-runtime.js` bundle the installed bin loads under node, so `dist/` has
+// to be in place when the tarballs are packed.
 function buildWorkspace(): boolean {
   const { code, output } = spawn(["bun", "run", "build"], REPO_ROOT);
-  // The types package ships `src`/`generated` (not `dist`), but its `build`
-  // emits a `dist/` that includes compiled `*.test.js` — which root `bun test`
-  // would then discover and run with broken relative paths. Drop it so a
-  // `bun run smoke` does not leave the test suite red.
-  rmSync(path.join(REPO_ROOT, "packages", "types", "dist"), { recursive: true, force: true });
   return record("workspace build", code === 0, code === 0 ? "" : output.slice(-400));
 }
 
@@ -181,6 +183,28 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
       `${runtime} build emits starter script`,
       build.code === 0 && existsSync(path.join(app, STARTER_ARTIFACT_REL)),
       build.code === 0 ? "" : build.output.slice(-300),
+    );
+
+    // A native extension's archive is read and typed by the types package's
+    // generator, which the installed bin reaches only through
+    // `@defold-typescript/types/cli-runtime`: under node that is the packed
+    // bundle, under bun the packed source, and both read the packed fixtures.
+    const gameProject = path.join(app, "game.project");
+    writeFileSync(
+      gameProject,
+      readFileSync(gameProject, "utf8").replace(
+        /^\[project\]\n/m,
+        `[project]\ndependencies#0 = ${NATIVE_EXTENSION_URL}\n`,
+      ),
+    );
+    const resolve = spawn([runtime, bin, "resolve", app], app);
+    const extensionTypes = path.join(app, ".defold-types", "extensions", "pixels.d.ts");
+    record(
+      `${runtime} resolve types a native extension`,
+      resolve.code === 0 &&
+        existsSync(extensionTypes) &&
+        readFileSync(extensionTypes, "utf8").includes("polyline"),
+      resolve.code === 0 ? "" : resolve.output.slice(-300),
     );
 
     const tsc = spawn(

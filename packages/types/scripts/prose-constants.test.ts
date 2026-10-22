@@ -12,7 +12,7 @@ import {
 } from "./regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "./sync-api-docs";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const SEMANTIC_PREFIX = "graphics.SEMANTIC_TYPE_";
 const MORPH = "graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS";
 

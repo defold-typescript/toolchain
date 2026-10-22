@@ -1225,7 +1225,9 @@ describe("fidelity audit sanity floors", () => {
   });
 
   test("baseline file resolves next to the audit script", () => {
-    expect(resolve(import.meta.dir, "fidelity-baseline.json")).toContain("fidelity-baseline.json");
+    expect(resolve(import.meta.dirname, "fidelity-baseline.json")).toContain(
+      "fidelity-baseline.json",
+    );
   });
 });
 

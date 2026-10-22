@@ -14,7 +14,7 @@ import {
 import { loadSignatureFile } from "./signature-store-fs";
 import { versionOf } from "./target-version";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
 
 export interface SignaturesArtifact {

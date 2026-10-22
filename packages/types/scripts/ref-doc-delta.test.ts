@@ -10,7 +10,7 @@ import {
 import type { ApiTarget } from "./regen";
 import type { ZipAccessor } from "./sync-api-docs";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const VERSION = "1.9.8";
 const TARGET: ApiTarget = {
   id: "defold-1.9.8",

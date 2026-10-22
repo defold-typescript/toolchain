@@ -661,8 +661,8 @@ export function materializeApiSurface(
   // The pinned consumer reaches this file through `root/index.d.ts` and never
   // loads the package entrypoint that normally carries the Lua stdlib, so the
   // directives lead the surface index instead. The CLI reaches the types
-  // scripts only through a runtime `import()` of a resolved path, so there is
-  // no static import to share `LUA_STDLIB_REFERENCES` through; the two
+  // scripts only through a runtime `import()` of the `cli-runtime` entry, so
+  // there is no static import to share `LUA_STDLIB_REFERENCES` through; the two
   // consumer proofs, one per writer, are what keep the paths in step.
   const stdlibReferences =
     '/// <reference types="lua-types/5.1" />\n/// <reference types="lua-types/special/jit-only" />\n';
@@ -885,8 +885,11 @@ export interface MaterializeRefDocSurfaceOptions {
 
 // Generate a pinned non-current surface on the fly into the project's
 // `.defold-types/<id>/`. The target may use committed fixtures or resolved
-// reference docs. The generator ships in the types package and is imported by
-// resolved path so the current build path avoids fixture-reading side effects.
+// reference docs. The generator ships in the types package behind its
+// `cli-runtime` export, imported by that specifier because Node's loader reads
+// a path as a URL and never strips types under `node_modules`; the import stays
+// dynamic so the current build path avoids its fixture-reading side effects.
+// `root` is still resolved for the hand-authored files copied beside the output.
 // The generator makes the faux package self-contained on its own — brand imports
 // resolve from the surface root and the `src/*` augmentations ride along — so
 // this writer adds only the per-kind subpaths and the package metadata.
@@ -911,7 +914,7 @@ export async function materializeRefDocSurface(
   try {
     clearSurfaceStamp(absDir);
     const mod = (await import(
-      path.join(root, "scripts", "materialize-version.ts")
+      "@defold-typescript/types/cli-runtime"
     )) as MaterializeVersionedSurfaceModule;
     await mod.materializeVersionedSurface(target, {
       destDir: absDir,
