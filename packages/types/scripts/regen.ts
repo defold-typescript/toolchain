@@ -176,6 +176,9 @@ export interface ModuleManifestEntry {
   // The classification map this entry's index notes read; absent means the
   // engine map. A library or extension declaration names its page keys.
   readonly indexBaseSource?: IndexBaseSource;
+  // `false` for an extension declaration, which leaves the constant-union
+  // aliases of the namespace it shares to the engine module; absent means `true`.
+  readonly ownsConstantUnionAliases?: boolean;
 }
 
 export interface ResolveTargetOptions {
@@ -780,6 +783,9 @@ export function generateModuleDeclaration(
     ...(typeLeaves ? { typeLeaves } : {}),
     ...(declaredTypes ? { declaredTypes } : {}),
     ...(entry.indexBaseSource ? { indexBaseSource: entry.indexBaseSource } : {}),
+    ...(entry.ownsConstantUnionAliases !== undefined
+      ? { ownsConstantUnionAliases: entry.ownsConstantUnionAliases }
+      : {}),
   });
   const importsFrom = entry.importsFrom ?? "../src/core-types";
   const contents = entry.moduleId
@@ -816,6 +822,9 @@ export function generateModuleSignatures(
     ...(nilRaisingSlots ? { nilRaisingSlots } : {}),
     ...(typeLeaves ? { typeLeaves } : {}),
     ...(declaredTypes ? { declaredTypes } : {}),
+    ...(entry.ownsConstantUnionAliases !== undefined
+      ? { ownsConstantUnionAliases: entry.ownsConstantUnionAliases }
+      : {}),
   });
 }
 
