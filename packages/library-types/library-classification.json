@@ -11,7 +11,8 @@
       "modules": [
         "applovin"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "DAABBCC",
@@ -20,7 +21,8 @@
         "aabb",
         "daabbcc"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "LuaScriptInstance",
@@ -28,7 +30,8 @@
       "modules": [
         "lua_script_instance"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "def-setv",
@@ -36,7 +39,8 @@
       "modules": [
         "setv"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "def-windward-jps",
@@ -44,7 +48,8 @@
       "modules": [
         "def_windward_jps"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "def_taptic_engine",
@@ -52,7 +57,8 @@
       "modules": [
         "taptic_engine"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-apkx",
@@ -60,7 +66,8 @@
       "modules": [
         "apkx"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-astar",
@@ -68,7 +75,8 @@
       "modules": [
         "astar"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-clipboard",
@@ -76,7 +84,8 @@
       "modules": [
         "clipboard"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-coolmathgames-sdk",
@@ -84,7 +93,8 @@
       "modules": [
         "coolmath_games"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-extension-unity-ads",
@@ -92,7 +102,8 @@
       "modules": [
         "unityads"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-imagepicker",
@@ -100,7 +111,8 @@
       "modules": [
         "imagepicker"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "defold-lfs",
@@ -108,7 +120,8 @@
       "modules": [
         "lfs"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-lldebugger",
@@ -123,7 +136,8 @@
       "modules": [
         "mraid"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-playdeck",
@@ -131,7 +145,8 @@
       "modules": [
         "playdeck"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "defold-prng",
@@ -139,7 +154,8 @@
       "modules": [
         "prng"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "defold-random",
@@ -147,7 +163,8 @@
       "modules": [
         "rnd"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-scene3d",
@@ -155,7 +172,8 @@
       "modules": [
         "scene3d"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-screenshot",
@@ -163,7 +181,8 @@
       "modules": [
         "screenshot"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-sharing",
@@ -171,7 +190,8 @@
       "modules": [
         "share"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-simplex-noise",
@@ -179,7 +199,8 @@
       "modules": [
         "simplex"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-skippy",
@@ -187,7 +208,8 @@
       "modules": [
         "skippy"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "defold-splitmix64",
@@ -195,7 +217,8 @@
       "modules": [
         "splitmix64"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-textinput",
@@ -203,7 +226,8 @@
       "modules": [
         "textinput"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "defold-tile-raycast",
@@ -211,7 +235,8 @@
       "modules": [
         "tile_raycast"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-uuid4",
@@ -219,7 +244,8 @@
       "modules": [
         "uuid4"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-webgl-memory",
@@ -227,7 +253,8 @@
       "modules": [
         "webgl_memory"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-xmath",
@@ -242,7 +269,8 @@
       "modules": [
         "yametrica"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-yoga",
@@ -250,7 +278,8 @@
       "modules": [
         "yoga"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defold-zstd",
@@ -258,7 +287,8 @@
       "modules": [
         "zstd"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "defos",
@@ -266,7 +296,8 @@
       "modules": [
         "defos"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "drawpixels",
@@ -274,7 +305,8 @@
       "modules": [
         "drawpixels"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "extension-adinfo",
@@ -282,7 +314,8 @@
       "modules": [
         "adinfo"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-admob",
@@ -290,7 +323,8 @@
       "modules": [
         "admob"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-cas",
@@ -298,7 +332,8 @@
       "modules": [
         "cas"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "extension-crypt",
@@ -306,7 +341,8 @@
       "modules": [
         "crypt"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-facebook",
@@ -314,7 +350,8 @@
       "modules": [
         "facebook"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-firebase-analytics",
@@ -322,7 +359,8 @@
       "modules": [
         "firebase"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-googleplayinstant",
@@ -330,7 +368,8 @@
       "modules": [
         "instantapp"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "extension-gpgs",
@@ -338,7 +377,8 @@
       "modules": [
         "gpgs"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-iac",
@@ -346,7 +386,8 @@
       "modules": [
         "iac"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-iap",
@@ -354,7 +395,8 @@
       "modules": [
         "iap"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-imgui",
@@ -362,7 +404,8 @@
       "modules": [
         "imgui"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-ironsource",
@@ -370,7 +413,8 @@
       "modules": [
         "ironsource"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "extension-kaiads",
@@ -378,7 +422,8 @@
       "modules": [
         "kaiads"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-nativetext",
@@ -386,7 +431,8 @@
       "modules": [
         "nativetext"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "extension-netimgui",
@@ -394,7 +440,8 @@
       "modules": [
         "netimgui"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "upstream"
     },
     {
       "dir": "extension-pcgrandom",
@@ -402,7 +449,8 @@
       "modules": [
         "pcgrandom"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "extension-permissions",
@@ -410,7 +458,8 @@
       "modules": [
         "permissions"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-poki-sdk",
@@ -418,7 +467,8 @@
       "modules": [
         "poki_sdk"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-push",
@@ -426,7 +476,8 @@
       "modules": [
         "push"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-review",
@@ -434,7 +485,8 @@
       "modules": [
         "review"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-rive",
@@ -442,7 +494,8 @@
       "modules": [
         "rive"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-safearea",
@@ -450,7 +503,8 @@
       "modules": [
         "safearea"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-sfmtrandom",
@@ -458,7 +512,8 @@
       "modules": [
         "sfmtrandom"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "extension-siwa",
@@ -466,7 +521,8 @@
       "modules": [
         "siwa"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-spine",
@@ -475,7 +531,8 @@
         "gui",
         "spine"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-steam",
@@ -483,7 +540,8 @@
       "modules": [
         "steam"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-vibrate",
@@ -491,7 +549,8 @@
       "modules": [
         "vibrate"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "none",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "extension-videoplayer",
@@ -499,7 +558,8 @@
       "modules": [
         "videoplayer"
       ],
-      "scriptApi": "none"
+      "scriptApi": "none",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-videoplayer-mpeg",
@@ -507,7 +567,8 @@
       "modules": [
         "mpeg"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-videoplayer-native",
@@ -515,7 +576,8 @@
       "modules": [
         "videoplayer"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-webrtc",
@@ -523,7 +585,8 @@
       "modules": [
         "webrtc"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "extension-websocket",
@@ -531,7 +594,8 @@
       "modules": [
         "websocket"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-webview",
@@ -539,7 +603,8 @@
       "modules": [
         "webview"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "extension-zendesk",
@@ -547,13 +612,15 @@
       "modules": [
         "zendesk"
       ],
-      "scriptApi": "ships"
+      "scriptApi": "ships",
+      "scriptApiSource": "defold-extensions"
     },
     {
       "dir": "gd-defold",
       "classification": "native",
       "modules": [],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "asset-portal"
     },
     {
       "dir": "jstodef",
@@ -561,7 +628,8 @@
       "modules": [
         "jstodef"
       ],
-      "scriptApi": "unknown"
+      "scriptApi": "ships",
+      "scriptApiSource": "upstream"
     }
   ]
 }
