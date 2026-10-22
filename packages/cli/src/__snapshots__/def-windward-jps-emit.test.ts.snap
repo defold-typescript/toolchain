@@ -1,0 +1,16 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`the shipped def_windward_jps declaration emits grid methods as colon calls a consumer transpiles with the grid passed as self 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.route()
+    local grid = def_windward_jps.create_grid(64, 64, {{10, 12}, {11, 12}})
+    if not grid:is_walkable({8, 8}) then
+        return nil
+    end
+    local path = grid:find_path({8, 8}, {40, 40}, "octile")
+    return path
+end
+return ____exports
+"
+`;
