@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import type { AssetPortalManifest, PortalEntry } from "./sync-asset-portal";
 import { readAuthoredTargets } from "./sync-authored-types";
 import type { DefoldExtensionDoc, DefoldExtensionEntry } from "./sync-defold-extensions";
 import {
@@ -16,10 +17,12 @@ import {
   type LibraryTarget,
   type LibraryTargets,
   type ListTree,
+  type LookupUpstream,
   libraryModulesFromTree,
   maintainedHereModules,
   mergeLibraryDescriptions,
   nativeScriptApiEligibility,
+  portalScriptApiEligibility,
   rawUrl,
   readMaintainedHereRegistry,
   repoSlug,
@@ -452,6 +455,161 @@ describe("nativeScriptApiEligibility", () => {
     }
     expect(entries.find((e) => e.dir === "extension-iap")?.scriptApi).toBe("ships");
   });
+
+  test("a matched row records defold-extensions as its source, an unmatched row no source", () => {
+    const [matched, unmatched] = nativeScriptApiEligibility(
+      [native("extension-iap"), native("drawpixels")],
+      [extension("extension-iap", [doc("iap")])],
+    );
+    expect(matched?.scriptApiSource).toBe("defold-extensions");
+    expect(unmatched && "scriptApiSource" in unmatched).toBe(false);
+  });
+});
+
+function portalEntry(id: string, repo: string | null, scriptApi: number): PortalEntry {
+  return {
+    id,
+    name: id,
+    description: "",
+    tags: [],
+    portalLibrary: true,
+    repo,
+    archived: false,
+    fork: false,
+    pushedAt: "2026-01-01T00:00:00Z",
+    stars: 0,
+    ref: "1.0.0",
+    refKind: "release",
+    includeDirs: ["ext"],
+    scriptApi,
+    extManifest: 1,
+    lua: 0,
+    luaSampled: 0,
+    luaAnnotated: 0,
+    kind: scriptApi > 0 ? "script-api" : "native-untyped",
+  };
+}
+
+function portalManifest(entries: PortalEntry[]): AssetPortalManifest {
+  return {
+    source: {
+      repo: "https://github.com/defold/asset-portal",
+      commit: "0000000",
+      syncedAt: "2026-01-01T00:00:00Z",
+    },
+    entries,
+  };
+}
+
+describe("portalScriptApiEligibility", () => {
+  const unknown = (dir: string): ClassificationEntry => ({
+    dir,
+    classification: "native",
+    modules: [dir.toLowerCase()],
+    scriptApi: "unknown",
+  });
+  const verdictOf = (entries: ClassificationEntry[], dir: string) => {
+    const entry = entries.find((e) => e.dir === dir);
+    return { scriptApi: entry?.scriptApi, scriptApiSource: entry?.scriptApiSource };
+  };
+
+  test("joins an unknown dir to its portal repo by case-folded name", () => {
+    const repo = "https://github.com/adamwestman/Extension-Vibrate.git/";
+    const none = portalScriptApiEligibility(
+      [unknown("extension-vibrate")],
+      portalManifest([portalEntry("extension-vibrate", repo, 0)]),
+      {},
+    );
+    expect(verdictOf(none, "extension-vibrate")).toEqual({
+      scriptApi: "none",
+      scriptApiSource: "asset-portal",
+    });
+    const ships = portalScriptApiEligibility(
+      [unknown("extension-vibrate")],
+      portalManifest([portalEntry("extension-vibrate", repo, 2)]),
+      {},
+    );
+    expect(verdictOf(ships, "extension-vibrate")).toEqual({
+      scriptApi: "ships",
+      scriptApiSource: "asset-portal",
+    });
+  });
+
+  test("ships when any entry naming the repo counts a .script_api", () => {
+    const entries = portalScriptApiEligibility(
+      [unknown("defold-astar")],
+      portalManifest([
+        portalEntry("astar", "https://github.com/selimanac/defold-astar", 2),
+        portalEntry("astar-legacy", "https://github.com/selimanac/defold-astar", 0),
+      ]),
+      {},
+    );
+    expect(verdictOf(entries, "defold-astar").scriptApi).toBe("ships");
+  });
+
+  test("an alias replaces the entry's own repo in the join", () => {
+    const entries = portalScriptApiEligibility(
+      [unknown("defold-moved"), unknown("defold-original")],
+      portalManifest([portalEntry("moved", "https://github.com/someone/defold-original", 1)]),
+      { moved: "https://github.com/elsewhere/defold-moved" },
+    );
+    expect(verdictOf(entries, "defold-moved")).toEqual({
+      scriptApi: "ships",
+      scriptApiSource: "asset-portal",
+    });
+    expect(verdictOf(entries, "defold-original")).toEqual({
+      scriptApi: "unknown",
+      scriptApiSource: undefined,
+    });
+  });
+
+  test("a prefix of a portal repo name, or an entry with no repo, joins nothing", () => {
+    const entries = portalScriptApiEligibility(
+      [unknown("defold-uuid4")],
+      portalManifest([
+        portalEntry("uuid4-ext", "https://github.com/someone/defold-uuid4-ext", 1),
+        // Its id names the dir, so a join on the id rather than the repo would bind it.
+        portalEntry("defold-uuid4", null, 1),
+      ]),
+      {},
+    );
+    expect(verdictOf(entries, "defold-uuid4")).toEqual({
+      scriptApi: "unknown",
+      scriptApiSource: undefined,
+    });
+  });
+
+  test("a defold-extensions verdict and every non-native row are left as they are", () => {
+    const rows: ClassificationEntry[] = [
+      {
+        dir: "extension-iap",
+        classification: "native",
+        modules: ["iap"],
+        scriptApi: "ships",
+        scriptApiSource: "defold-extensions",
+      },
+      {
+        dir: "extension-videoplayer",
+        classification: "native",
+        modules: ["videoplayer"],
+        scriptApi: "none",
+        scriptApiSource: "defold-extensions",
+      },
+      { dir: "monarch", classification: "pure-lua", modules: ["monarch.monarch"] },
+      { dir: "defold-richtext", classification: "already-vendored", modules: ["richtext"] },
+    ];
+    const entries = portalScriptApiEligibility(
+      rows,
+      portalManifest([
+        portalEntry("iap", "https://github.com/defold/extension-iap", 0),
+        portalEntry("videoplayer", "https://github.com/defold/extension-videoplayer", 3),
+        portalEntry("monarch", "https://github.com/britzl/monarch", 1),
+        portalEntry("richtext", "https://github.com/britzl/defold-richtext", 1),
+      ]),
+      {},
+    );
+    expect(entries).toEqual(rows);
+  });
 });
 
 interface ClassificationManifest {
@@ -493,6 +651,24 @@ describe("library-classification.json coverage", () => {
         expect(VERDICTS.has(e.scriptApi ?? "")).toBe(true);
       } else {
         expect("scriptApi" in e).toBe(false);
+      }
+    }
+  });
+
+  test("every native verdict names its source, and only an unknown one carries a reason", () => {
+    const SOURCES = new Set(["defold-extensions", "asset-portal", "upstream"]);
+    const REASONS = new Set(["no-github-url", "not-found"]);
+    for (const e of manifest.dirs) {
+      if (e.classification !== "native") {
+        expect("scriptApiSource" in e || "scriptApiReason" in e).toBe(false);
+        continue;
+      }
+      expect(SOURCES.has(e.scriptApiSource ?? "")).toBe(true);
+      if (e.scriptApi === "unknown") {
+        expect(e.scriptApiSource).toBe("upstream");
+        expect(REASONS.has(e.scriptApiReason ?? "")).toBe(true);
+      } else {
+        expect("scriptApiReason" in e).toBe(false);
       }
     }
   });
@@ -655,11 +831,21 @@ describe("writeClassification", () => {
     openApiNamespaces?: string[];
     markdownNamespaces?: string[];
     extensions?: DefoldExtensionEntry[];
+    portal?: AssetPortalManifest;
+    portalAliases?: Record<string, string>;
   }): string {
     const root = mkdtempSync(join(tmpdir(), "library-types-classify-"));
     writeFileSync(
       join(root, "defold-extensions.json"),
       JSON.stringify({ libraries: opts.extensions ?? [] }),
+    );
+    writeFileSync(
+      join(root, "asset-portal.json"),
+      JSON.stringify(opts.portal ?? portalManifest([])),
+    );
+    writeFileSync(
+      join(root, "asset-portal-aliases.json"),
+      JSON.stringify({ aliases: opts.portalAliases ?? {} }),
     );
     const lane = (namespaces: string[] | undefined, extra: Record<string, string>) =>
       JSON.stringify({
@@ -736,7 +922,13 @@ describe("writeClassification", () => {
   }
 
   test("writes a manifest matching classifyLibraryDirs on an injected tree (offline)", async () => {
+    // `extension-vibrate` is a native dir the extensions fixture leaves
+    // unmatched, so only the portal pass gives it a verdict.
+    const portal = portalManifest([
+      portalEntry("extension-vibrate", "https://github.com/adamwestman/extension-vibrate", 0),
+    ]);
     const root = writeClassifyRoot({
+      portal,
       vendoredPaths: ["packages/monarch/monarch.monarch.d.ts"],
       authoredModuleIds: ["yagames.yagames"],
       lualsNamespaces: ["tweener", "saver.saver", "saver.storage"],
@@ -771,11 +963,15 @@ describe("writeClassification", () => {
       "packages/defold-bridge/bridge.bridge.d.ts",
       "packages/nakama-defold/nakama.nakama.d.ts",
       "packages/defold-orthographic/orthographic.camera.d.ts",
+      "packages/extension-vibrate/vibrate.d.ts",
       "packages/tsconfig.json",
       "README.md",
     ];
+    const lookupUpstream: LookupUpstream = async (dir) => {
+      throw new Error(`both joins cover every native dir, yet ${dir} was looked up`);
+    };
 
-    await writeClassification(root, { listTree });
+    await writeClassification(root, { listTree, lookupUpstream });
 
     const written = JSON.parse(
       readFileSync(join(root, "library-classification.json"), "utf8"),
@@ -817,17 +1013,115 @@ describe("writeClassification", () => {
         coveredByGoalDirs: new Set(["defold-lldebugger", "defold-xmath"]),
       },
     );
-    const expected = nativeScriptApiEligibility(classified, [
-      {
-        repo: "https://github.com/defold/DAABBCC",
-        ref: "1.0.0",
-        refKind: "release",
-        license: "MIT",
-        description: "",
-        docs: [{ path: "daabbcc/api/daabbcc.script_api", namespace: "daabbcc", page: "d.md" }],
-      },
-    ]);
+    const expected = portalScriptApiEligibility(
+      nativeScriptApiEligibility(classified, [
+        {
+          repo: "https://github.com/defold/DAABBCC",
+          ref: "1.0.0",
+          refKind: "release",
+          license: "MIT",
+          description: "",
+          docs: [{ path: "daabbcc/api/daabbcc.script_api", namespace: "daabbcc", page: "d.md" }],
+        },
+      ]),
+      portal,
+      {},
+    );
+    expect(byDir.get("extension-vibrate")?.scriptApiSource).toBe("asset-portal");
     expect(written.dirs).toEqual(expected);
+  });
+
+  test("looks up only the native dirs both joins leave unknown, once each", async () => {
+    const root = writeClassifyRoot({
+      vendoredPaths: [],
+      authoredModuleIds: [],
+      extensions: [
+        {
+          repo: "https://github.com/defold/extension-iap",
+          ref: "1.0.0",
+          refKind: "release",
+          license: "MIT",
+          description: "",
+          docs: [{ path: "iap/api/iap.script_api", namespace: "iap", page: "iap.md" }],
+        },
+      ],
+      portal: portalManifest([
+        portalEntry("extension-vibrate", "https://github.com/adamwestman/extension-vibrate", 0),
+      ]),
+    });
+    const listTree: ListTree = async () => [
+      "packages/extension-iap/iap.d.ts",
+      "packages/extension-vibrate/vibrate.d.ts",
+      "packages/defold-richtext/richtext.richtext.d.ts",
+      "packages/def-setv/setv.d.ts",
+      "packages/defold-prng/prng.d.ts",
+      "packages/defold-skippy/skippy.d.ts",
+      "packages/jstodef/jstodef.d.ts",
+    ];
+    const results: Record<string, Awaited<ReturnType<LookupUpstream>>> = {
+      "def-setv": { scriptApi: "ships" },
+      "defold-prng": { scriptApi: "none" },
+      "defold-skippy": { reason: "no-github-url" },
+      jstodef: { reason: "not-found" },
+    };
+    const calls: string[] = [];
+    const lookupUpstream: LookupUpstream = async (dir, lookupSource) => {
+      expect(lookupSource).toEqual(source);
+      calls.push(dir);
+      const result = results[dir];
+      if (result === undefined) throw new Error(`unexpected lookup: ${dir}`);
+      return result;
+    };
+
+    await writeClassification(root, { listTree, lookupUpstream });
+
+    expect(calls.sort()).toEqual(["def-setv", "defold-prng", "defold-skippy", "jstodef"]);
+    const written = JSON.parse(
+      readFileSync(join(root, "library-classification.json"), "utf8"),
+    ) as ClassificationManifest;
+    const verdicts = Object.fromEntries(
+      written.dirs
+        .filter((e) => e.classification === "native")
+        .map(({ dir, scriptApi, scriptApiSource, scriptApiReason }) => [
+          dir,
+          { scriptApi, scriptApiSource, scriptApiReason },
+        ]),
+    );
+    expect(verdicts).toEqual({
+      "def-setv": { scriptApi: "ships", scriptApiSource: "upstream", scriptApiReason: undefined },
+      "defold-prng": { scriptApi: "none", scriptApiSource: "upstream", scriptApiReason: undefined },
+      "defold-skippy": {
+        scriptApi: "unknown",
+        scriptApiSource: "upstream",
+        scriptApiReason: "no-github-url",
+      },
+      "extension-iap": {
+        scriptApi: "ships",
+        scriptApiSource: "defold-extensions",
+        scriptApiReason: undefined,
+      },
+      "extension-vibrate": {
+        scriptApi: "none",
+        scriptApiSource: "asset-portal",
+        scriptApiReason: undefined,
+      },
+      jstodef: { scriptApi: "unknown", scriptApiSource: "upstream", scriptApiReason: "not-found" },
+    });
+  });
+
+  test("a failed lookup fails the pass and leaves the existing manifest untouched", async () => {
+    const root = writeClassifyRoot({ vendoredPaths: [], authoredModuleIds: [] });
+    const existing = '{\n  "existing": true\n}\n';
+    writeFileSync(join(root, "library-classification.json"), existing);
+    const listTree: ListTree = async () => ["packages/def-setv/setv.d.ts"];
+    const lookupUpstream: LookupUpstream = async () => {
+      throw new Error("rate limited");
+    };
+
+    await expect(writeClassification(root, { listTree, lookupUpstream })).rejects.toThrow(
+      "rate limited",
+    );
+    expect(readFileSync(join(root, "library-classification.json"), "utf8")).toBe(existing);
   });
 
   test("a surviving dir keeps its live modules and drops its maintained-here ones", async () => {

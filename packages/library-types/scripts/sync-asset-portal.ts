@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   apiJson,
@@ -103,6 +103,20 @@ export interface PortalEntry {
 export interface AssetPortalManifest {
   source: { repo: string; commit: string; syncedAt: string };
   entries: PortalEntry[];
+}
+
+/** Portal entry id -> the tracked repo URL its library moved to. */
+export type PortalAliases = Readonly<Record<string, string>>;
+
+const PACKAGE_ROOT = join(import.meta.dir, "..");
+
+export function readAssetPortalManifest(packageRoot: string = PACKAGE_ROOT): AssetPortalManifest {
+  return JSON.parse(readFileSync(join(packageRoot, "asset-portal.json"), "utf8"));
+}
+
+export function readPortalAliases(packageRoot: string = PACKAGE_ROOT): PortalAliases {
+  const file = join(packageRoot, "asset-portal-aliases.json");
+  return (JSON.parse(readFileSync(file, "utf8")) as { aliases: PortalAliases }).aliases;
 }
 
 export interface IncludedEvidence {
