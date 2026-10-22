@@ -30,6 +30,7 @@ interface RegenModule {
     outFile: string;
     importsFrom?: string;
     indexBaseSource?: { pages: readonly string[] };
+    ownsConstantUnionAliases?: boolean;
   }) => { contents: string; dropped: string[] };
 }
 
@@ -49,7 +50,9 @@ async function loadEmitter(): Promise<ScriptApiToFixtureJson & RegenModule> {
 // `extension-goldens/<ns>.d.ts` byte-for-byte (regen writes the same
 // `generateModuleDeclaration` output with no formatting pass). `pages` are the
 // curated library pages documenting this doc, whose classified indexes the
-// declaration notes; an uncurated extension has none and gains no note.
+// declaration notes; an uncurated extension has none and gains no note. The
+// declaration owns no constant-union alias: an extension declaring an engine
+// namespace (`gui`) would otherwise re-declare the engine module's aliases.
 export async function emitExtensionDeclarationFromDoc(
   doc: { info: { namespace: string } },
   pages: readonly string[] = [],
@@ -62,6 +65,7 @@ export async function emitExtensionDeclarationFromDoc(
     outFile: `${namespace}.d.ts`,
     importsFrom: EXTENSION_CORE_TYPES_IMPORT,
     indexBaseSource: { pages },
+    ownsConstantUnionAliases: false,
   });
   return { namespace, contents, dropped };
 }
