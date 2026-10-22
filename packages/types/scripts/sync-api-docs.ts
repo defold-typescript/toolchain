@@ -288,36 +288,32 @@ interface ZipDirectoryEntry {
   readonly localHeaderOffset: number;
 }
 
-// Walks the central directory, which is the archive's own index: every entry
-// an archiver listed, directory entries included, in archive order. Found from
-// the end record, which sits in the last 22 bytes unless a comment follows it.
-// A comment may itself contain the signature bytes, so a candidate counts only
-// when its own comment length reaches exactly to the end of the archive.
-function readZipDirectory(bytes: Buffer, path: string): Map<string, ZipDirectoryEntry> {
-  const earliest = Math.max(0, bytes.length - ZIP_END_RECORD_SIZE - ZIP_MAX_COMMENT_SIZE);
-  let endRecord = -1;
-  for (let at = bytes.length - ZIP_END_RECORD_SIZE; at >= earliest; at--) {
-    if (
-      bytes.readUInt32LE(at) === ZIP_END_RECORD_SIGNATURE &&
-      at + ZIP_END_RECORD_SIZE + bytes.readUInt16LE(at + 20) === bytes.length
-    ) {
-      endRecord = at;
-      break;
-    }
-  }
-  if (endRecord < 0) {
-    throw new Error(`${path}: no end-of-central-directory record, not a zip archive`);
-  }
+// The directory an end record names must run exactly up to that record.
+function readCentralDirectory(
+  bytes: Buffer,
+  endRecord: number,
+  path: string,
+): Map<string, ZipDirectoryEntry> | Error {
   const count = bytes.readUInt16LE(endRecord + 10);
+  const directorySize = bytes.readUInt32LE(endRecord + 12);
   const directoryOffset = bytes.readUInt32LE(endRecord + 16);
   if (count === 0xffff || directoryOffset === ZIP64_MARKER) {
-    throw new Error(`${path}: zip64 archives are not supported`);
+    return new Error(`${path}: zip64 archives are not supported`);
+  }
+  const disagrees = new Error(
+    `${path}: central directory disagrees with its end-of-central-directory record`,
+  );
+  if (directoryOffset + directorySize !== endRecord) {
+    return disagrees;
   }
   const entries = new Map<string, ZipDirectoryEntry>();
   let cursor = directoryOffset;
   for (let index = 0; index < count; index++) {
+    if (cursor + 46 > endRecord) {
+      return disagrees;
+    }
     if (bytes.readUInt32LE(cursor) !== ZIP_CENTRAL_HEADER_SIGNATURE) {
-      throw new Error(`${path}: central directory entry ${index} has no header signature`);
+      return new Error(`${path}: central directory entry ${index} has no header signature`);
     }
     const method = bytes.readUInt16LE(cursor + 10);
     const compressedSize = bytes.readUInt32LE(cursor + 20);
@@ -331,13 +327,48 @@ function readZipDirectory(bytes: Buffer, path: string): Map<string, ZipDirectory
       uncompressedSize === ZIP64_MARKER ||
       localHeaderOffset === ZIP64_MARKER
     ) {
-      throw new Error(`${path}: zip64 archives are not supported`);
+      return new Error(`${path}: zip64 archives are not supported`);
+    }
+    const next = cursor + 46 + nameLength + extraLength + commentLength;
+    if (next > endRecord) {
+      return disagrees;
     }
     const name = bytes.toString("utf8", cursor + 46, cursor + 46 + nameLength);
     entries.set(name, { method, compressedSize, localHeaderOffset });
-    cursor += 46 + nameLength + extraLength + commentLength;
+    cursor = next;
+  }
+  if (cursor !== endRecord) {
+    return disagrees;
   }
   return entries;
+}
+
+// Walks the central directory, which is the archive's own index: every entry
+// an archiver listed, directory entries included, in archive order. Found from
+// the end record, which sits in the last 22 bytes unless a comment follows it.
+// A comment may itself contain an end record, so a candidate counts only when
+// its own comment length reaches exactly to the end of the archive and it
+// describes a central directory ending at it. When no candidate does, the
+// nearest one's own defect is reported.
+function readZipDirectory(bytes: Buffer, path: string): Map<string, ZipDirectoryEntry> {
+  const earliest = Math.max(0, bytes.length - ZIP_END_RECORD_SIZE - ZIP_MAX_COMMENT_SIZE);
+  let nearestDefect: Error | undefined;
+  for (let at = bytes.length - ZIP_END_RECORD_SIZE; at >= earliest; at--) {
+    if (
+      bytes.readUInt32LE(at) === ZIP_END_RECORD_SIGNATURE &&
+      at + ZIP_END_RECORD_SIZE + bytes.readUInt16LE(at + 20) === bytes.length
+    ) {
+      const directory = readCentralDirectory(bytes, at, path);
+      if (!(directory instanceof Error)) {
+        return directory;
+      }
+      nearestDefect ??= directory;
+    }
+  }
+  if (nearestDefect !== undefined) {
+    throw nearestDefect;
+  }
+  throw new Error(`${path}: no end-of-central-directory record, not a zip archive`);
 }
 
 // Parses the archive itself rather than shelling out to `unzip`, which a stock

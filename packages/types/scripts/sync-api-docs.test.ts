@@ -914,14 +914,18 @@ describe("readZip over a written archive", () => {
     "",
   ].join("\n");
 
+  function writtenBytes(bytes: Uint8Array): string {
+    const dir = mkdtempSync(join(tmpdir(), "readzip-written-"));
+    const zipPath = join(dir, "archive.zip");
+    writeFileSync(zipPath, bytes);
+    return zipPath;
+  }
+
   function writtenArchive(
     entries: Parameters<typeof writeZipArchive>[0],
     options?: Parameters<typeof writeZipArchive>[1],
   ): string {
-    const dir = mkdtempSync(join(tmpdir(), "readzip-written-"));
-    const zipPath = join(dir, "archive.zip");
-    writeFileSync(zipPath, writeZipArchive(entries, options));
-    return zipPath;
+    return writtenBytes(writeZipArchive(entries, options));
   }
 
   const PIXELS_ENTRIES = [
@@ -973,6 +977,38 @@ describe("readZip over a written archive", () => {
     expect(zip.read("defold-pixels-master/api/pixels.script_api")).toBe(SCRIPT_API);
   });
 
+  // The signature sits exactly 22 bytes from the end with a zero length field,
+  // so it passes the length check; its count and directory offset are zero.
+  test("reads an archive whose comment ends in an end-record shape", () => {
+    const zip = readZip(
+      writtenArchive(PIXELS_ENTRIES, {
+        comment: `${END_RECORD_SIGNATURE_BYTES}${"\u0000".repeat(18)}`,
+      }),
+    );
+    expect(zip.entries()).toEqual(PIXELS_NAMES);
+    expect(zip.read("defold-pixels-master/api/pixels.script_api")).toBe(SCRIPT_API);
+  });
+
+  // The comment holds a central header and, 22 bytes from the end, a record of
+  // two entries pointing at it; the header's name runs past the end of the file.
+  test("reads an archive whose comment holds a directory running past the end", () => {
+    const fakeLength = 46 + 22;
+    const bytes = writeZipArchive(PIXELS_ENTRIES, { comment: "x".repeat(fakeLength) });
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const header = bytes.length - fakeLength;
+    const record = bytes.length - 22;
+    bytes.fill(0, header);
+    view.setUint32(header, 0x02014b50, true);
+    view.setUint16(header + 28, 0xffff, true);
+    view.setUint32(record, 0x06054b50, true);
+    view.setUint16(record + 10, 2, true);
+    view.setUint32(record + 12, 46, true);
+    view.setUint32(record + 16, header, true);
+    const zip = readZip(writtenBytes(bytes));
+    expect(zip.entries()).toEqual(PIXELS_NAMES);
+    expect(zip.read("defold-pixels-master/api/pixels.script_api")).toBe(SCRIPT_API);
+  });
+
   test("reads an archive carrying a commit-id comment, as `git archive` writes", () => {
     const zip = readZip(
       writtenArchive(PIXELS_ENTRIES, { comment: "a7786103a6c9aaf33a39704ff3089522d22c5a0a" }),
@@ -990,5 +1026,17 @@ describe("readZip over a written archive", () => {
     );
     expect(() => readZip(zipPath)).toThrow(zipPath);
     expect(() => readZip(zipPath)).toThrow("not a zip archive");
+  });
+
+  test("an archive whose only end record declares zip64 fails with that reason", () => {
+    const bytes = writeZipArchive(PIXELS_ENTRIES);
+    new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).setUint16(
+      bytes.length - 12,
+      0xffff,
+      true,
+    );
+    const zipPath = writtenBytes(bytes);
+    expect(() => readZip(zipPath)).toThrow(zipPath);
+    expect(() => readZip(zipPath)).toThrow("zip64 archives are not supported");
   });
 });
