@@ -181,6 +181,11 @@ describe("loadVendoredNativeRegistry", () => {
       .sort((a, b) => a.namespace.localeCompare(b.namespace));
     expect(projected).toEqual([
       { sourceId: "defold-daabbcc", namespace: "daabbcc", manifestDir: "daabbcc" },
+      {
+        sourceId: "def-windward-jps",
+        namespace: "def_windward_jps",
+        manifestDir: "def_windward_jps",
+      },
       { sourceId: "defold-pixels", namespace: "pixels", manifestDir: "defold-pixels" },
       { sourceId: "defold-sharing", namespace: "share", manifestDir: "share" },
       { sourceId: "defold-tile-raycast", namespace: "tile_raycast", manifestDir: "tile-raycast" },

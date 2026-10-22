@@ -1400,6 +1400,62 @@ describe("runResolve defold-pixels through the shipped native registry", () => {
   });
 });
 
+describe("runResolve def-windward-jps through the shipped native registry", () => {
+  const JPS_URL = "https://github.com/s-kania/def-windward-jps/archive/refs/tags/v1.1.0.zip";
+  const SHIPPED = readFileSync(
+    join(
+      import.meta.dir,
+      "..",
+      "..",
+      "library-types",
+      "generated",
+      "native",
+      "def_windward_jps.d.ts",
+    ),
+    "utf8",
+  );
+  const WRITTEN = join(".defold-types", "extensions", "def_windward_jps.d.ts");
+
+  async function resolveJps(manifest: string): Promise<{
+    cwd: string;
+    result: Awaited<ReturnType<typeof runResolve>>;
+  }> {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${JPS_URL}\n`);
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip({
+        [extensionArchiveKey(JPS_URL)]: { entries: [manifest], contents: {} },
+      }),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: loadVendoredNativeRegistry(),
+    });
+    return { cwd, result };
+  }
+
+  test("an archive confirmed by def_windward_jps/ext.manifest gets the shipped curated declaration", async () => {
+    const { cwd, result } = await resolveJps(
+      "def-windward-jps-1.1.0/def_windward_jps/ext.manifest",
+    );
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, WRITTEN), "utf8")).toBe(SHIPPED);
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(result.extensions[0]?.namespaces).toEqual(["def_windward_jps"]);
+  });
+
+  test("a repo-name match with its ext.manifest elsewhere writes no declaration", async () => {
+    const { cwd, result } = await resolveJps("def-windward-jps-1.1.0/other/ext.manifest");
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, WRITTEN))).toBe(false);
+    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
+  });
+});
+
 describe("runResolve druid LuaLS library", () => {
   const DRUID = "declare module 'druid.druid' { export const version: string; }\n";
 
