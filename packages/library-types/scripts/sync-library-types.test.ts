@@ -714,6 +714,43 @@ describe("nativeSweepRemainder", () => {
   });
 });
 
+describe("readNativeSweepVerdicts", () => {
+  const writeVerdicts = (value: unknown): string => {
+    const root = mkdtempSync(join(tmpdir(), "library-types-verdicts-"));
+    writeFileSync(join(root, "native-sweep-verdicts.json"), JSON.stringify(value));
+    return root;
+  };
+
+  test("a well-formed file returns its dir -> reason record unchanged", () => {
+    const verdicts = { "defold-playdeck": "unmaintained", "defold-textinput": " no API " };
+    expect(readNativeSweepVerdicts(writeVerdicts({ verdicts }))).toEqual(verdicts);
+  });
+
+  test("a reason that is not a non-empty string throws", () => {
+    for (const reason of ["", "   ", null, 42, {}]) {
+      const root = writeVerdicts({
+        verdicts: { "defold-textinput": "no API", "defold-playdeck": reason },
+      });
+      expect(() => readNativeSweepVerdicts(root)).toThrow(
+        "native-sweep-verdicts.json: defold-playdeck needs a non-empty string reason",
+      );
+    }
+  });
+
+  test("a root or verdicts that is not an object throws", () => {
+    for (const root of [null, [], {}, { verdicts: null }, { verdicts: [] }, { verdicts: "x" }]) {
+      expect(() => readNativeSweepVerdicts(writeVerdicts(root))).toThrow(
+        "native-sweep-verdicts.json: verdicts must be an object of dir -> reason",
+      );
+    }
+  });
+
+  test("a missing file throws instead of reading as no verdicts", () => {
+    const root = mkdtempSync(join(tmpdir(), "library-types-verdicts-missing-"));
+    expect(() => readNativeSweepVerdicts(root)).toThrow("ENOENT");
+  });
+});
+
 interface ClassificationManifest {
   source: LibrarySource;
   dirs: ClassificationEntry[];
