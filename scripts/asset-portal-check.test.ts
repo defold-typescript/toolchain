@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { copyFileSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type {
   AssetPortalManifest,
   PortalAsset,
@@ -81,7 +84,7 @@ function manifest(entries: PortalEntry[]): AssetPortalManifest {
 }
 
 function registries(overrides: Partial<CoverageRegistries> = {}): CoverageRegistries {
-  return { pinned: [], native: [], defold: [], ...overrides };
+  return { pinned: [], native: [], defold: [], portal: [], ...overrides };
 }
 
 function coverageOf(
@@ -102,6 +105,7 @@ describe("portalCoverage — lane join", () => {
     scriptApi: (repo) => registries({ pinned: [{ lane: "scriptApi", repo }] }),
     native: (repo) => registries({ native: [{ repo }] }),
     defold: (repo) => registries({ defold: [{ repo }] }),
+    portal: (repo) => registries({ portal: [{ repo }] }),
   } satisfies Record<CoverageLane, (repo: string) => CoverageRegistries>;
 
   test.each(
@@ -146,6 +150,35 @@ describe("portalCoverage — lane join", () => {
       registries({ pinned: [{ lane: "authored", repo: "https://codeberg.org/acme/widget" }] }),
     );
     expect(widget?.lanes).toEqual([]);
+  });
+});
+
+describe("readCoverageRegistries — the portal lane", () => {
+  const REAL_PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
+
+  function packageRootCopy(): string {
+    const root = mkdtempSync(join(tmpdir(), "coverage-registries-"));
+    for (const file of readdirSync(REAL_PACKAGE_ROOT)) {
+      if (file.endsWith(".json") && file !== "asset-portal-script-api.json") {
+        copyFileSync(join(REAL_PACKAGE_ROOT, file), join(root, file));
+      }
+    }
+    return root;
+  }
+
+  test("a package root without asset-portal-script-api.json pins nothing on the portal lane", () => {
+    expect(readCoverageRegistries(packageRootCopy()).portal).toEqual([]);
+  });
+
+  test("each library asset-portal-script-api.json lists is pinned on the portal lane", () => {
+    const root = packageRootCopy();
+    writeFileSync(
+      join(root, "asset-portal-script-api.json"),
+      JSON.stringify({ libraries: [{ id: "defos", repo: "https://github.com/subsoap/defos" }] }),
+    );
+    expect(readCoverageRegistries(root).portal.map((library) => library.repo)).toEqual([
+      "https://github.com/subsoap/defos",
+    ]);
   });
 });
 
@@ -382,6 +415,21 @@ describe("coverageReport", () => {
     );
     expect(text).toMatch(/^\s+luals\s+1$/m);
     expect(text).toMatch(/^\s+42\s+rising\s+https:\/\/github\.com\/acme\/rising$/m);
+  });
+
+  test("the printed report counts portal-paged entries under Tracked, not as script-api candidates", () => {
+    const text = describeCoverageReport(
+      coverageReport(
+        coverageOf(
+          [entry({ id: "defos", kind: "script-api" }), entry({ id: "rising", kind: "script-api" })],
+          registries({ portal: [{ repo: "https://github.com/acme/defos" }] }),
+        ),
+      ),
+    );
+    expect(text).toMatch(/^Tracked: 1 entries/m);
+    expect(text).toMatch(/^\s+portal\s+1$/m);
+    expect(text).toContain("  script-api (1)\n");
+    expect(text).not.toMatch(/^\s+\d+\s+defos\s/m);
   });
 });
 

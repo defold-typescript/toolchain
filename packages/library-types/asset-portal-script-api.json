@@ -1,0 +1,484 @@
+{
+  "libraries": [
+    {
+      "id": "apathfinding",
+      "repo": "https://github.com/selimanac/defold-astar",
+      "ref": "v1.2.3",
+      "refKind": "release",
+      "license": "",
+      "description": "Pathfinder and A* solver native extension for Defold Engine build on MicroPather.",
+      "docs": [
+        {
+          "path": "astar/api/astar.script_api",
+          "namespace": "astar",
+          "page": "astar"
+        }
+      ]
+    },
+    {
+      "id": "applovin-max",
+      "repo": "https://github.com/AppLovin/AppLovin-MAX-Defold",
+      "ref": "release_1_1_0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "AppLovin MAX Defold Plugin for Android and iOS.",
+      "docs": [
+        {
+          "path": "extension-applovin/api/applovin.script_api",
+          "namespace": "applovin",
+          "page": "applovin"
+        }
+      ]
+    },
+    {
+      "id": "cafebazaar",
+      "repo": "https://github.com/dev-masih/cafebazaar-iap",
+      "ref": "v1.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold native extension which provides access to In-app purchase functionality on Cafebazaar Android app store.",
+      "docs": [
+        {
+          "path": "cafebazaar-iap/api/iapc.script_api",
+          "namespace": "iapc",
+          "page": "iapc"
+        }
+      ]
+    },
+    {
+      "id": "cas-ai",
+      "repo": "https://github.com/Lerg/extension-cas",
+      "ref": "e312ca31e3cf0becfcc357ea63c37831b5ab4261",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Ad mediation. Supports many ad networks.",
+      "docs": [
+        {
+          "path": "cas/api/cas.script_api",
+          "namespace": "cas",
+          "page": "cas"
+        }
+      ]
+    },
+    {
+      "id": "clipboard",
+      "repo": "https://github.com/britzl/defold-clipboard",
+      "ref": "1.24.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Clipboard access to enable copy / paste operations.",
+      "docs": [
+        {
+          "path": "clipboard/api/clipboard.script_api",
+          "namespace": "clipboard",
+          "page": "clipboard"
+        }
+      ]
+    },
+    {
+      "id": "def_usercentrics",
+      "repo": "https://github.com/HGPoint/def_usercentrics",
+      "ref": "1.0.2",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold Usercentrics CMP is a native extension for integrating the Usercentrics Consent Management Platform on Android and iOS. It lets Lua code configure a ruleset, initialize the SDK, show the consent banner, and receive callbacks with readiness and consent data.",
+      "docs": [
+        {
+          "path": "def_usercentrics/api/def_usercentrics.script_api",
+          "namespace": "def_usercentrics",
+          "page": "def_usercentrics"
+        }
+      ]
+    },
+    {
+      "id": "defdragon",
+      "repo": "https://github.com/wraplord/extension-dragonbones",
+      "ref": "0.7.3",
+      "refKind": "release",
+      "license": "",
+      "description": "Defold native extension for DragonBones 2D skeletal animation with DragonBones Pro 5.5 runtime support.",
+      "docs": [
+        {
+          "path": "dragonbones/api/dragonbones.script_api",
+          "namespace": "dragonbones",
+          "page": "dragonbones"
+        }
+      ]
+    },
+    {
+      "id": "defold-mic",
+      "repo": "https://github.com/HalfstarDev/defold-mic",
+      "ref": "0.1.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold-Mic is a miniaudio-based native extension for recording microphone input in Defold. It can capture WAV data, list input devices, monitor peak and RMS volume, track recording duration, and request microphone permissions on Apple platforms.",
+      "docs": [
+        {
+          "path": "mic/api/mic.script_api",
+          "namespace": "mic",
+          "page": "mic"
+        }
+      ]
+    },
+    {
+      "id": "defold-rng",
+      "repo": "https://github.com/alchimystic/defold-rng",
+      "ref": "v1.2.0",
+      "refKind": "release",
+      "license": "Apache-2.0",
+      "description": "Defold RNG is a native random number generator extension with instance-based generators for deterministic procedural generation. It supports multiple algorithms, including PCG32 and TinyMT32.",
+      "docs": [
+        {
+          "path": "rng/api/rng.script_api",
+          "namespace": "rnd",
+          "page": "rng"
+        }
+      ]
+    },
+    {
+      "id": "defos",
+      "repo": "https://github.com/subsoap/defos",
+      "ref": "v2.8.7",
+      "refKind": "release",
+      "license": "CC0-1.0",
+      "description": "Extra native OS functions.",
+      "docs": [
+        {
+          "path": "defos/api/defos.script_api",
+          "namespace": "defos",
+          "page": "defos"
+        }
+      ]
+    },
+    {
+      "id": "defvideoads",
+      "repo": "https://github.com/AGulev/defold-extension-unity-ads",
+      "ref": "4.21.0",
+      "refKind": "release",
+      "license": "Apache-2.0",
+      "description": "Show UnityAds.",
+      "docs": [
+        {
+          "path": "defunityads/api/DefUnityAds.script_api",
+          "namespace": "unityads",
+          "page": "unityads"
+        }
+      ]
+    },
+    {
+      "id": "defwin",
+      "repo": "https://github.com/HalfstarDev/DefWin",
+      "ref": "v1.0.0",
+      "refKind": "release",
+      "license": "NOASSERTION",
+      "description": "A native extension for advanced Windows window controls, including custom shapes and transparency, dark mode, resize constraints, close handling, taskbar flashing and progress, and window dragging.",
+      "docs": [
+        {
+          "path": "defwin/api/defwin.script_api",
+          "namespace": "defwin",
+          "page": "defwin"
+        }
+      ]
+    },
+    {
+      "id": "drawpixels",
+      "repo": "https://github.com/AGulev/drawpixels",
+      "ref": "2.0.5",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Drawing pixels and simple geometry into texture buffer.",
+      "docs": [
+        {
+          "path": "drawpixels/api/drawpixels.script_api",
+          "namespace": "drawpixels",
+          "page": "drawpixels"
+        }
+      ]
+    },
+    {
+      "id": "luafilesystemlfs",
+      "repo": "https://github.com/britzl/defold-lfs",
+      "ref": "1.3.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "LuaFileSystem offers a portable way to access the underlying directory structure and file attributes.",
+      "docs": [
+        {
+          "path": "lfs/api/lfs.script_api",
+          "namespace": "lfs",
+          "page": "lfs"
+        }
+      ]
+    },
+    {
+      "id": "myket",
+      "repo": "https://github.com/itzmiadm/Myket-IAP-Defold",
+      "ref": "1.2.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "An Android native extension that adds Myket in-app purchases to the Defold game engine. The Lua API intentionally follows Defold's IAP extension and is exposed as iapm.",
+      "docs": [
+        {
+          "path": "myket-iap/api/iapm.script_api",
+          "namespace": "iapm",
+          "page": "iapm"
+        }
+      ]
+    },
+    {
+      "id": "page-visibility",
+      "repo": "https://github.com/indiesoftby/defold-page-visibility",
+      "ref": "1.0.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "HTML5 extension that provides Page Visibility API integration for Defold games, allowing developers to detect when the page is visible or hidden and pause/resume game systems accordingly. This creates a better user experience compared to window focus/blur events, especially for games embedded in iframes.",
+      "docs": [
+        {
+          "path": "page_visibility/api/page_visibility.script_api",
+          "namespace": "page_visibility",
+          "page": "page_visibility"
+        }
+      ]
+    },
+    {
+      "id": "pcgrandom",
+      "repo": "https://github.com/selimanac/defold-random",
+      "ref": "v1.3.0",
+      "refKind": "release",
+      "license": "",
+      "description": "PCG Random Number Generator Native Extension for Defold. This extension allows you to generate random numbers using minimal C implementation of PCG (Permuted Congruential Generator) - a family of fast, space-efficient, and statistically high-quality pseudo-random number generators.",
+      "docs": [
+        {
+          "path": "pcgrandom/api/pcgrandom.script_api",
+          "namespace": "rnd",
+          "page": "random"
+        }
+      ]
+    },
+    {
+      "id": "reszip",
+      "repo": "https://github.com/indiesoftby/defold-liveupdate-reszip",
+      "ref": "1.7.0",
+      "refKind": "release",
+      "license": "CC0-1.0",
+      "description": "Use Defold's Live Update to improve the loading speed of the HTML5 games.",
+      "docs": [
+        {
+          "path": "liveupdate_reszip/api/liveupdate_reszip_ext.script_api",
+          "namespace": "liveupdate_reszip_ext",
+          "page": "liveupdate_reszip_ext"
+        }
+      ]
+    },
+    {
+      "id": "scene3d",
+      "repo": "https://github.com/indiesoftby/defold-scene3d",
+      "ref": "1.2.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "It's a collection of assets to help you developing 3D games with the Defold game engine. Use included prefabs to quickly prototype structures, levels, and to test game mechanics. Try out ideas quickly!",
+      "docs": [
+        {
+          "path": "scene3d/api/scene3d.script_api",
+          "namespace": "scene3d",
+          "page": "scene3d"
+        }
+      ]
+    },
+    {
+      "id": "screenshot",
+      "repo": "https://github.com/britzl/defold-screenshot",
+      "ref": "1.13.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Take full or partial screenshots as PNG, buffer or raw pixels.",
+      "docs": [
+        {
+          "path": "screenshot/api/screenshot.script_api",
+          "namespace": "screenshot",
+          "page": "screenshot"
+        }
+      ]
+    },
+    {
+      "id": "simplex-noise",
+      "repo": "https://github.com/indiesoftby/defold-simplex-noise",
+      "ref": "1.0.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Functions to generate Simplex noise, a fast successor to Perlin noise, suitable for textures, animation, terrain generation, and more.",
+      "docs": [
+        {
+          "path": "simplex_noise/api/simplex_noise.script_api",
+          "namespace": "simplex",
+          "page": "simplex"
+        }
+      ]
+    },
+    {
+      "id": "splitmix64",
+      "repo": "https://github.com/indiesoftby/defold-splitmix64",
+      "ref": "2.2.0",
+      "refKind": "release",
+      "license": "CC0-1.0",
+      "description": "Get the same random numbers from the same seeds on all platforms supported by Defold.",
+      "docs": [
+        {
+          "path": "splitmix64/api/splitmix64.script_api",
+          "namespace": "splitmix64",
+          "page": "splitmix64"
+        }
+      ]
+    },
+    {
+      "id": "sprite-loop",
+      "repo": "https://github.com/Balkan-Ram-Games/spriteloop-defold",
+      "ref": "v0.15.0-alpha",
+      "refKind": "tag",
+      "license": "",
+      "description": "SpriteLoop is a lightweight 2D cut-out animation tool for rigging characters, props, UI elements, and effects from separate PNG parts. Build parent-child rigs, animate transforms and opacity, reuse animations across skins and part variants, and export compact .spla runtime packages. The Defold extension adds SpriteLoop as a custom game object component with editor integration. Add a SpriteLoop component, assign an exported .spla package, choose its default skin, and control playback from Lua. The runtime also supports animation events, skin and part-variant switching, tinting, seeking, and querying animated part transforms for attachments and gameplay logic.",
+      "docs": [
+        {
+          "path": "spriteloop/api/spriteloop.script_api",
+          "namespace": "spriteloop",
+          "page": "spriteloop"
+        }
+      ]
+    },
+    {
+      "id": "ump",
+      "repo": "https://github.com/tocaRepo/defold-androidextension-ump",
+      "ref": "v4.0.2",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "This Defold extension allows you to integrate Google's User Messaging Platform (UMP) into your Defold game to manage user consent for ads on Android. It helps you request consent information, show the consent form, and check the user's consent status",
+      "docs": [
+        {
+          "path": "ump/api/ump.script_api",
+          "namespace": "ump",
+          "page": "ump"
+        }
+      ]
+    },
+    {
+      "id": "voronoi",
+      "repo": "https://github.com/JCash/defold-voronoi",
+      "ref": "v0.10.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "2D voronoi functionality.",
+      "docs": [
+        {
+          "path": "voronoi/voronoi.script_api",
+          "namespace": "voronoi",
+          "page": "voronoi"
+        }
+      ]
+    },
+    {
+      "id": "wavedash",
+      "repo": "https://github.com/wvdsh/sdk-defold",
+      "ref": "1.3.0",
+      "refKind": "release",
+      "license": "Apache-2.0",
+      "description": "Wavedash SDK native extension for Defold game engine",
+      "docs": [
+        {
+          "path": "wavedash/api/wavedash.script_api",
+          "namespace": "wavedash",
+          "page": "wavedash"
+        }
+      ]
+    },
+    {
+      "id": "webgl-memory",
+      "repo": "https://github.com/indiesoftby/defold-webgl-memory",
+      "ref": "1.0.0",
+      "refKind": "release",
+      "license": "CC0-1.0",
+      "description": "A quick and easy way to find out the memory usage of your Defold game on HTML5 platform.",
+      "docs": [
+        {
+          "path": "webgl_memory/api/webgl_memory.script_api",
+          "namespace": "webgl_memory",
+          "page": "webgl_memory"
+        }
+      ]
+    },
+    {
+      "id": "webp",
+      "repo": "https://github.com/HalfstarDev/defold-webp",
+      "ref": "1.0.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Decode and encode external WebP image files.",
+      "docs": [
+        {
+          "path": "webp/api/webp.script_api",
+          "namespace": "webp",
+          "page": "webp"
+        }
+      ]
+    },
+    {
+      "id": "webrtc",
+      "repo": "https://github.com/VitusVeit/extension-webrtc",
+      "ref": "f41d30a334b4502f2ab803086664e94e20041467",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "A quick and easy library that adds support for WebRTC",
+      "docs": [
+        {
+          "path": "webrtc/api/api.script_api",
+          "namespace": "webrtc",
+          "page": "webrtc"
+        }
+      ]
+    },
+    {
+      "id": "xmath",
+      "repo": "https://github.com/thejustinwalsh/defold-xmath",
+      "ref": "v1.0.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Allocation-free math helpers for Defold vectors, quaternions, matrices, and common game math operations. A re-imagining of vmath functions that avoid allocations by taking the output as the first argument instead of returning a new Vector3, Vector4, or Quat requiring an allocation.",
+      "docs": [
+        {
+          "path": "xmath/api/xMath.script_api",
+          "namespace": "xmath",
+          "page": "xmath"
+        }
+      ]
+    },
+    {
+      "id": "xoshiro256",
+      "repo": "https://github.com/glorius-silver/defold-xoshiro256",
+      "ref": "4116a0d88e3c63e3cd639a8ece2578b319ca0a96",
+      "refKind": "commit",
+      "license": "NOASSERTION",
+      "description": "A fast, high-quality PRNG for Defold based on the xoshiro256++ algorithm, seeded via splitmix64. xoshiro256++ has a 256-bit state, passes known statistical tests, and avoids systematic bias in floating-point output.",
+      "docs": [
+        {
+          "path": "xoshiro256/api/xoshiro256.script_api",
+          "namespace": "xoshiro256",
+          "page": "xoshiro256"
+        }
+      ]
+    },
+    {
+      "id": "zstd",
+      "repo": "https://github.com/indiesoftby/defold-zstd",
+      "ref": "1.5.7-3",
+      "refKind": "release",
+      "license": "NOASSERTION",
+      "description": "Use Zstandard fast compression library to compress and decompress strings in your Lua code.",
+      "docs": [
+        {
+          "path": "zstd/api/zstd.script_api",
+          "namespace": "zstd",
+          "page": "zstd"
+        }
+      ]
+    }
+  ]
+}

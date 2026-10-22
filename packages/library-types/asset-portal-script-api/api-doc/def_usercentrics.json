@@ -1,0 +1,31 @@
+{
+  "info": {
+    "namespace": "def_usercentrics",
+    "brief": "Log in release builds for android and ios",
+    "description": "Log in release builds for android and ios"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "def_usercentrics.log",
+      "description": "",
+      "parameters": [
+        {
+          "name": "log_level",
+          "doc": "",
+          "types": [
+            "int"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

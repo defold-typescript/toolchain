@@ -1,0 +1,1047 @@
+{
+  "info": {
+    "namespace": "applovin",
+    "brief": "Functions and constants for interacting with AppLovin SDK.",
+    "description": "Functions and constants for interacting with AppLovin SDK."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "applovin.initialize",
+      "description": "Initialize the AppLovin SDK with the provided SDK key.",
+      "parameters": [
+        {
+          "name": "sdk_key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_callback",
+      "description": "Sets a callback function for receiving events from the SDK. Call `applovin.set_callback(nil)` to remove callback",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Callback function that is executed on any event in the SDK.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "name",
+              "doc": "One of the following types of events. \"OnSdkInitializedEvent\", \"OnCmpCompletedEvent\", \"OnInterstitialAdLoadedEvent\", \"OnInterstitialAdLoadFailedEvent\", \"OnInterstitialAdDisplayedEvent\", \"OnInterstitialAdDisplayFailedEvent\", \"OnInterstitialAdHiddenEvent\", \"OnInterstitialAdClickedEvent\", \"OnInterstitialAdRevenuePaidEvent\", \"OnRewardedAdLoadedEvent\",  \"OnRewardedAdLoadFailedEvent\", \"OnRewardedAdDisplayedEvent\", \"OnRewardedAdDisplayFailedEvent\", \"OnRewardedAdHiddenEvent\", \"OnRewardedAdClickedEvent\", \"OnRewardedAdReceivedRewardEvent\", \"OnRewardedAdRevenuePaidEvent\", \"OnBannerAdLoadedEvent\", \"OnBannerAdLoadFailedEvent\", \"OnBannerAdClickedEvent\", \"OnBannerAdExpandedEvent\", \"OnBannerAdCollapsedEvent\", \"OnBannerAdRevenuePaidEvent\", \"OnMRecAdLoadedEvent\", \"OnMRecAdLoadFailedEvent\", \"OnMRecAdClickedEvent\", \"OnMRecAdExpandedEvent\", \"OnMRecAdCollapsedEvent\", \"OnMRecAdRevenuePaidEvent\",",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "params",
+              "doc": "A table holding the data of the event. \"OnSdkInitializedEvent\" { \"countryCode\" - string, country code for this user \"consentFlowUserGeography\" - number, user's geography used to determine the type of consent flow shown to the user. Possible values are `applovin.CONSENT_FLOW_USER_GEOGRAPHY_UNKNOWN`, `applovin.CONSENT_FLOW_USER_GEOGRAPHY_GDPR`, `applovin.CONSENT_FLOW_USER_GEOGRAPHY_OTHER`\n\"isTestModeEnabled\" - boolean, whether or not test mode is enabled for this session \"appTrackingStatus\" - number, ios only, whether or not the user authorizes access to app-related data that can be used for tracking the user or the device. Possible values are `applovin.APP_TRACKING_TRANSPARENCY_STATUS_UNAVAILABLE`, `applovin.APP_TRACKING_TRANSPARENCY_STATUS_NOT_DETERMINED`, `applovin.APP_TRACKING_TRANSPARENCY_STATUS_RESTRICTED`, `applovin.APP_TRACKING_TRANSPARENCY_STATUS_DENIED`, `applovin.APP_TRACKING_TRANSPARENCY_STATUS_AUTHORIZED` },\n\"OnCmpCompletedEvent\" - empty table on successful completion OR { \"code\" - number, error code \"message\" - string, error message \"cmpCode\" - number, error code returned by the CMP \"cmpMessage\" - string, error message returned by the CMP }\nAd loaded, displayed, hidden, clicked, expanded, collapsed, revenue paid event { \"adUnitIdentifier\" - string, ad unit id for which this ad was loaded. Guaranteed not to be null \"networkName\" - string, the ad network for which this ad was loaded from. Guaranteed not to be null \"creativeIdentifier\" - string, the creative id tied to the ad, if any. You can report creative issues to the corresponding ad network using this id \"placement\" - string, the ad placement which was set for this ad. May be null \"revenue\" - number, the ad’s revenue amount. In the case where no revenue amount exists, or it is not available yet, will return a value of 0 }\n\"OnRewardedAdReceivedRewardEvent\" will receive the following parameters in addition to above parameters { \"label\" - string, currency label \"amount\" - number, reward amount }\nAd load failed, displayed failed event { \"adUnitIdentifier\" - string, ad unit id for this ad \"code\" - number, error code for the error \"message\" - string, error message for the error }",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.is_initialized",
+      "description": "Checks if the AppLovin SDK has been initialized.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "is_initialized",
+          "doc": "Returns true if the SDK is initialized, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.show_mediation_debugger",
+      "description": "Displays the Mediation Debugger.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_has_user_consent",
+      "description": "Sets whether the user has provided consent for interest-based advertising.",
+      "parameters": [
+        {
+          "name": "has_user_consent",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.has_user_consent",
+      "description": "Checks if the user has provided consent for interest-based advertising.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "has_user_consent",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_is_age_restricted_user",
+      "description": "Sets whether the user is considered to be in an age-restricted category.",
+      "parameters": [
+        {
+          "name": "is_age_restricted_user",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.is_age_restricted_user",
+      "description": "Checks if the user is considered to be in an age-restricted category.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "is_age_restricted_user",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_do_not_sell",
+      "description": "Sets whether the user has chosen to opt out of the sale of their personal information.",
+      "parameters": [
+        {
+          "name": "do_not_sell",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.is_do_not_sell",
+      "description": "Checks if the user has chosen to opt out of the sale of their personal information.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "do_not_sell",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_terms_and_privacy_policy_flow_enabled",
+      "description": "Enables or disables the MAX Terms and Privacy Policy Flow.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_privacy_policy_url",
+      "description": "Sets the privacy policy URL for MAX Terms and Privacy Policy Flow.",
+      "parameters": [
+        {
+          "name": "url_string",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_terms_of_service_url",
+      "description": "Sets terms of service URL for MAX Terms and Privacy Policy Flow.",
+      "parameters": [
+        {
+          "name": "url_string",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_consent_flow_debug_user_geography",
+      "description": "Sets the user geography for debugging purposes in the consent flow.",
+      "parameters": [
+        {
+          "name": "user_geography_string",
+          "doc": "gdpr other",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.show_cmp_for_existing_user",
+      "description": "Shows the integrated consent management platform (CMP) flow for existing users.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.has_supported_cmp",
+      "description": "Checks if a supported consent management platform is integrated.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "has_supported_cmp",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.is_tablet",
+      "description": "Checks if the current device is a tablet.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "is_tablet",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_user_id",
+      "description": "Set internal user ID before initializing the SDK.",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_muted",
+      "description": "Sets whether ads from certain mediated SDK networks should be muted.",
+      "parameters": [
+        {
+          "name": "muted",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.is_muted",
+      "description": "Checks if ads are set to be muted.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "isMuted",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_verbose_logging_enabled",
+      "description": "Enables or disables verbose logging.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.is_verbose_logging_enabled",
+      "description": "Checks if verbose logging is enabled.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "is_verbose_logging_enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_creative_debugger_enabled",
+      "description": "Enables or disables the creative debugger.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_test_device_advertising_ids",
+      "description": "Enables devices to receive test ads.",
+      "parameters": [
+        {
+          "name": "advertising_ids",
+          "doc": "Array of device IDs. IDFA for iOS / GAID for Android",
+          "types": [
+            "array"
+          ]
+        },
+        {
+          "name": "count",
+          "doc": "Number of IDs in the array.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.track_event",
+      "description": "Tracks a custom event.",
+      "parameters": [
+        {
+          "name": "event",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "parameters",
+          "doc": "JSON string of parameters.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.load_interstitial",
+      "description": "Loads an interstitial ad for the given ad unit ID.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.is_interstitial_ready",
+      "description": "Checks if an interstitial ad is ready to be shown.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "is_ready",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.show_interstitial",
+      "description": "Shows an interstitial ad for the given ad unit ID.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.show_interstitial",
+      "description": "Shows an interstitial ad for the given ad unit ID and the placement name.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_interstitial_extra_parameter",
+      "description": "Sets extra parameters for an interstitial ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.load_rewarded_ad",
+      "description": "Loads a rewarded ad for the given ad unit ID.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.is_rewarded_ad_ready",
+      "description": "Checks if a rewarded ad is ready to be shown.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "is_ready",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.show_rewarded_ad",
+      "description": "Shows a rewarded ad for the given ad unit ID.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.show_rewarded_ad",
+      "description": "Shows a rewarded ad for the given ad unit ID and the placement name.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_rewarded_ad_extra_parameter",
+      "description": "Sets extra parameters for a rewarded ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.create_banner",
+      "description": "Create and load a banner ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "banner_position",
+          "doc": "Possible options are \"top_left\", \"top_center\", \"top_right\", \"centered\", \"bottom_left\", \"bottom_center\", \"bottom_right\"",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_banner_background_color",
+      "description": "Sets the background color of a banner ad with the Ad Unit ID.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "hex_color_code",
+          "doc": "Supported formats are \"#RRGGBB\" and \"#AARRGGBB\".",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_banner_placement",
+      "description": "Sets the placement name for a banner ad unit.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_banner_extra_parameter",
+      "description": "Sets extra parameters for a banner ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.update_banner_position",
+      "description": "Updates the position of a banner ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "banner_position",
+          "doc": "Possible options are \"top_left\", \"top_center\", \"top_right\", \"centered\", \"bottom_left\", \"bottom_center\", \"bottom_right\"",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.start_banner_auto_refresh",
+      "description": "Starts auto refresh for a banner ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.stop_banner_auto_refresh",
+      "description": "Stops auto refresh for a banner ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.show_banner",
+      "description": "Displays a banner ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.hide_banner",
+      "description": "Hides a banner ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.destroy_banner",
+      "description": "Destroys a banner ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.create_mrec",
+      "description": "Creates an MRec ad with the specified ad unit ID and position.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "mrec_position",
+          "doc": "Possible options are \"top_left\", \"top_center\", \"top_right\", \"centered\", \"bottom_left\", \"bottom_center\", \"bottom_right\"",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_mrec_placement",
+      "description": "Sets the placement name for a MRec ad unit.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "placement",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.set_mrec_extra_parameter",
+      "description": "Sets extra parameters for an MRec ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.update_mrec_position",
+      "description": "Updates the position of an MRec ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "mrec_position",
+          "doc": "Possible options are \"top_left\", \"top_center\", \"top_right\", \"centered\", \"bottom_left\", \"bottom_center\", \"bottom_right\"",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.start_mrec_auto_refresh",
+      "description": "Starts auto refresh for an MRec ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.stop_mrec_auto_refresh",
+      "description": "Stops auto refresh for an MRec ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.show_mrec",
+      "description": "Displays an MRec ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.hide_mrec",
+      "description": "Hides an MRec ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "applovin.destroy_mrec",
+      "description": "Destroys an MRec ad.",
+      "parameters": [
+        {
+          "name": "ad_unit_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "applovin.CONSENT_FLOW_USER_GEOGRAPHY_UNKNOWN",
+      "brief": "User's geography is unknown.",
+      "description": "User's geography is unknown.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "applovin.CONSENT_FLOW_USER_GEOGRAPHY_GDPR",
+      "brief": "The user is in GDPR region.",
+      "description": "The user is in GDPR region.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "applovin.CONSENT_FLOW_USER_GEOGRAPHY_OTHER",
+      "brief": "The user is in a non-GDPR region.",
+      "description": "The user is in a non-GDPR region.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "applovin.APP_TRACKING_TRANSPARENCY_STATUS_UNAVAILABLE",
+      "brief": "Device is on iOS before iOS14, AppTrackingTransparency.framework is not available.",
+      "description": "Device is on iOS before iOS14, AppTrackingTransparency.framework is not available.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "applovin.APP_TRACKING_TRANSPARENCY_STATUS_NOT_DETERMINED",
+      "brief": "The user has not yet received an authorization request to authorize access to app-related data that can be used for tracking the user or the device.",
+      "description": "The user has not yet received an authorization request to authorize access to app-related data that can be used for tracking the user or the device.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "applovin.APP_TRACKING_TRANSPARENCY_STATUS_RESTRICTED",
+      "brief": "Authorization to access app-related data that can be used for tracking the user or the device is restricted.",
+      "description": "Authorization to access app-related data that can be used for tracking the user or the device is restricted.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "applovin.APP_TRACKING_TRANSPARENCY_STATUS_DENIED",
+      "brief": "The user denies authorization to access app-related data that can be used for tracking the user or the device.",
+      "description": "The user denies authorization to access app-related data that can be used for tracking the user or the device.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "applovin.APP_TRACKING_TRANSPARENCY_STATUS_AUTHORIZED",
+      "brief": "The user authorizes access to app-related data that can be used for tracking the user or the device.",
+      "description": "The user authorizes access to app-related data that can be used for tracking the user or the device.",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

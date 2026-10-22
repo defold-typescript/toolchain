@@ -99,7 +99,8 @@ since nothing else reaches a project that adds the dependency. Each entry's
 and the `defold` org listing in `defold-extensions.json`, offline, and prints
 four answers:
 
-- **Tracked**: entries whose repo a registry already pins, counted per lane. A
+- **Tracked**: entries whose repo a registry already pins, counted per lane. The
+  `portal` lane counts the `script-api` entries that have reference pages. A
   tracked entry files here whatever its `kind`.
 - **Candidates**: untracked entries of kind `script-api`, `native-untyped`,
   `pure-lua-annotated` or `pure-lua` that are not archived, not a fork, were
@@ -113,6 +114,20 @@ four answers:
 
 A line between them counts the untracked entries with a Lua API that fail the
 maintenance rule.
+
+After a manifest sync, give every `script-api` candidate its reference pages:
+
+```sh
+GITHUB_TOKEN="$(gh auth token)" bun run asset-portal:script-api
+```
+
+It converts each `.script_api` under the entry's `include_dirs` at the pin
+`asset-portal.json` recorded, writes the page list to
+`packages/library-types/asset-portal-script-api.json` and one doc per page under
+`asset-portal-script-api/api-doc/`, and rebuilds that directory on every run.
+Those entries then count as tracked on the `portal` lane. A doc that fails to
+convert, or a page key that would take another page's `/api/` route, stops the
+sync instead of dropping the page.
 
 A library that moved forge keeps a stale portal entry: the portal's
 `Klaleus/library-defold-checkpoint` is gone from GitHub, and the authored lane

@@ -143,8 +143,15 @@ function repoName(repoUrl: string): string {
   return repoUrl.replace(/\/$/, "").split("/").at(-1) ?? repoUrl;
 }
 
+// A `defold-` prefix goes too: `/api/defold-<version>` is the version route
+// family, so no page key may start with it.
 function repoStem(name: string): string {
-  return name.replace(/^extension-/, "");
+  return name.replace(/^(extension|defold)-/, "");
+}
+
+// `owner/repo`, so two owners' same-named repos stay apart in an error.
+function repoPath(repoUrl: string): string {
+  return repoUrl.replace(/^https?:\/\/[^/]+\//, "").replace(/\/$/, "");
 }
 
 /**
@@ -155,12 +162,15 @@ function repoStem(name: string): string {
  * replace or a vendored library page, or another repo declares it too. A shadowing doc becomes
  * `<stem>.<namespace>` (`spine.gui`), or the full repo name when the stem is the
  * namespace itself (`extension-camera`); within a shared namespace the repo whose
- * stem matches keeps it and the rest take their stem (`firebase-analytics`).
- * Keys that still collide throw, naming both docs.
+ * stem matches keeps it and the rest take their stem (`firebase-analytics`). The
+ * stem drops a leading `extension-` or `defold-`. Keys that still collide, or
+ * that would start with `defold-`, throw, naming the docs and the `label` of
+ * the manifest being keyed.
  */
 export function assignPageKeys(
   entries: { repo: string; docs: { path: string; namespace: string }[] }[],
   reserved: ReservedNamespaces,
+  label = "defold-extensions",
 ): { repo: string; docs: DefoldExtensionDoc[] }[] {
   const declaringRepos = new Map<string, Set<string>>();
   for (const entry of entries) {
@@ -184,11 +194,16 @@ export function assignPageKeys(
       if (shadowsPage) page = stem === doc.namespace ? name : `${stem}.${doc.namespace}`;
       else if (shared && stem !== doc.namespace) page = stem;
 
-      const owner = `${name}/${doc.path} (${doc.namespace})`;
+      const owner = `${repoPath(entry.repo)}/${doc.path} (${doc.namespace})`;
+      if (page.startsWith("defold-")) {
+        throw new Error(
+          `${label}: page key "${page}" from ${owner} would sit among the /api/defold-<version> routes.`,
+        );
+      }
       const previous = claimed.get(page);
       if (previous) {
         throw new Error(
-          `defold-extensions: page key "${page}" is claimed by both ${previous} and ${owner}.`,
+          `${label}: page key "${page}" is claimed by both ${previous} and ${owner}.`,
         );
       }
       claimed.set(page, owner);
@@ -198,7 +213,7 @@ export function assignPageKeys(
   });
 }
 
-interface SyncApiDocsModule {
+export interface SyncApiDocsModule {
   scriptApiToFixtureJson: (text: string) => string;
 }
 
@@ -248,16 +263,18 @@ function rawUrl(name: string, ref: string, path: string): string {
   return `https://raw.githubusercontent.com/${ORG}/${name}/${ref}/${path}`;
 }
 
-interface ApiDocJson {
+export interface ApiDocJson {
   info: { namespace: string };
 }
 
 // Lower every top-level table in one fetched `.script_api` to ref-doc JSON,
-// skipping chunks that declare no table and naming the URL on any other error.
-function convertChunks(
+// skipping chunks that declare no table and naming the `label` and URL on any
+// other error.
+export function convertChunks(
   text: string,
   url: string,
   toFixtureJson: SyncApiDocsModule["scriptApiToFixtureJson"],
+  label = "defold-extensions",
 ): ApiDocJson[] {
   const docs: ApiDocJson[] = [];
   for (const chunk of splitTopLevelEntries(text)) {
@@ -265,7 +282,7 @@ function convertChunks(
       docs.push(JSON.parse(toFixtureJson(chunk)));
     } catch (error) {
       if (/no top-level `type: table`/.test((error as Error).message)) continue;
-      throw new Error(`defold-extensions: ${url}: ${(error as Error).message}`);
+      throw new Error(`${label}: ${url}: ${(error as Error).message}`);
     }
   }
   return docs;

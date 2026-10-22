@@ -2458,6 +2458,48 @@ describe("Defold extension pages", () => {
       "  3. Call it through the global `gui` — no import. It adds members to the engine `gui` namespace.",
     );
   });
+
+  test("a Defold extension page links no Asset Portal entry", () => {
+    expect(render("/api/iap")).not.toContain("Asset Portal");
+  });
+});
+
+describe("Asset Portal script_api pages", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const manifest = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "asset-portal-script-api.json"), "utf8"),
+  ) as {
+    libraries: {
+      id: string;
+      repo: string;
+      ref: string;
+      refKind: "release" | "tag" | "commit";
+      docs: { namespace: string; page: string }[];
+    }[];
+  };
+
+  for (const refKind of ["release", "tag", "commit"] as const) {
+    test(`the first ${refKind}-pinned portal page gives that pin's dependency step, its global and its portal entry`, () => {
+      const library = manifest.libraries.find((entry) => entry.refKind === refKind);
+      const doc = library?.docs[0];
+      if (!library || !doc) {
+        throw new Error(
+          `asset-portal-script-api.json has no ${refKind}-pinned library; pick another subject`,
+        );
+      }
+      const page = pages.find((p) => p.route === `/api/${doc.page}`);
+      if (!page) throw new Error(`no page at /api/${doc.page}`);
+      const md = apiPageMarkdown(page, (t) => t);
+      const repoName = library.repo.split("/").at(-1);
+      const portal = `- Asset Portal: [${repoName}](https://defold.com/assets/${library.id}/)`;
+      const global = `  3. Call it through the global \`${doc.namespace}\` — no import.`;
+      expect(md).toContain(dependencyStep(library.repo, refKind, library.ref));
+      expect(md).toContain(global);
+      expect(md).not.toContain("import * as");
+      expect(md).toContain(portal);
+      expect(md.indexOf(portal)).toBeGreaterThan(md.indexOf(global));
+    });
+  }
 });
 
 describe("listingPageMarkdown", () => {

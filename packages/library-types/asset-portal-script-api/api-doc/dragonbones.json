@@ -1,0 +1,626 @@
+{
+  "info": {
+    "namespace": "dragonbones",
+    "brief": "Functions and constants for playing dragonbones animatios",
+    "description": "Functions and constants for playing dragonbones animatios"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.create",
+      "description": "initialize dragonbones with viewport width and height. Get instance object to be pass to all functions. called destroy to free this object.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "instance",
+          "doc": "Id of the game object",
+          "types": [
+            "userdata"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.load_data",
+      "description": "Called after initialization. Pass in the skeleton and texture jsons as buffers.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragonbones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "skeleton_json",
+          "doc": "A resource buffer of skeleton json.",
+          "types": [
+            "handle"
+          ]
+        },
+        {
+          "name": "tex_json",
+          "doc": "A resource buffer of atlas json.",
+          "types": [
+            "handle"
+          ]
+        },
+        {
+          "name": "aramture_index",
+          "doc": "Optional. The armature index to built. Default is 0.",
+          "types": [
+            "integer"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.update",
+      "description": "advance dragobones world by the given time delta.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "dt",
+          "doc": "1/fps, typically 1/60.0",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.destroy",
+      "description": "destroy this world. Make sure to free the buffers first",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.get_no_slots",
+      "description": "Get the available slots in this world. You can use this to create specific no of meshes.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.get_buffers",
+      "description": "Get a table of slots. Sub table contain luaHBuffer buffer_trilist(a_position|a_texCoord|a_normal), matrix4 mtx_mvp ,  string slot_name, integer trilisit_count. buffer is vertices. mtx_mvp is the complete matrix. Use this data to create meshes.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "slots_table",
+          "doc": "2d table",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.get_anination_names",
+      "description": "Get a list of animations defined.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "list",
+          "doc": "a lua table of available animations to be use in fade_in_animation",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.fade_in_animation",
+      "description": "Play the specify animation",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "animation_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "config",
+          "doc": "field layer, blending layer default 0 field loop, -1 means use default value, 0 means loop infinitely, [1~N] means repeat N times. field fade_in_time, fadeIn time to enable blending and layering. field time_scale, default 1.0 [(-N~0) Reverse play, 0 Stop play, (0~1) Slow play, 1 Normal play, (1~N) Fast play]",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.contains_point",
+      "description": "Return the slot name for the given x,y otherwise return nil",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "slot_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.set_bone_position",
+      "description": "set bone position. Addictive.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "bone_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.set_bone_rotation",
+      "description": "set bone rotation offset. Addictive.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "bone_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "angle",
+          "doc": "angle in radians",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.set_bone_scale",
+      "description": "set bone scale offset. Addictive.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "bone_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "scale_x",
+          "doc": "scale",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "scale_y",
+          "doc": "scale",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.reset_bone",
+      "description": "reset bone transforms",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "bone_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.stop_animation",
+      "description": "stop the given animation",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "animation_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.get_batch_buffer",
+      "description": "Instead of a lot of buffers, get one big merged buffer",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "batch_buffer",
+          "doc": "Defold buffer object",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "batch_buffer_count",
+          "doc": "size of batch_buffer",
+          "types": [
+            "integer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.set_slot_visibility",
+      "description": "Hide/Show a slot",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "slot_name",
+          "doc": "name of the slot",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "visible",
+          "doc": "false or true",
+          "types": [
+            "bool"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.set_slot_display_index",
+      "description": "Switch slot image",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "slot_name",
+          "doc": "name of the slot",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "-1 .. N",
+          "types": [
+            "integer"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.set_slot_scale",
+      "description": "Scale a slot",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "slot_name",
+          "doc": "name of the slot",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "scale_x",
+          "doc": "x scale",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "scale_y",
+          "doc": "y scale",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.add_event_callback",
+      "description": "add callback for events",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "callback(self, tbl) tbl has following fields type is in event_names, frame , name , custom in floats, ints and strings sub tables.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.enable_event_callback",
+      "description": "stop receiving events",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "enable",
+          "doc": "",
+          "types": [
+            "bool"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.set_flip_x",
+      "description": "flip aramture on x axis",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "flip",
+          "doc": "flip left or right",
+          "types": [
+            "bool"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.set_flip_y",
+      "description": "flip aramture on y axis",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "flip",
+          "doc": "flip up or down",
+          "types": [
+            "bool"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.get_frame_rate",
+      "description": "get current armature frame rate e.g 24",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "frame_rate",
+          "doc": "frame rate e.g 24",
+          "types": [
+            "integer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dragonbones.replace_skin",
+      "description": "replace current armature' skin from a newly build armature. Alpha need testing.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "dragobones instance.",
+          "types": [
+            "userdata"
+          ]
+        },
+        {
+          "name": "armature_name",
+          "doc": "The armature to get default skin out of, armature should be in skeleton data.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
