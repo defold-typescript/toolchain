@@ -139,6 +139,19 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
   return root;
 }
 
+/** `packageRoot` plus an empty committed manifest and one prior api-doc, `kept.json`. */
+function seededPackageRoot(entries: PortalEntry[]): string {
+  const root = packageRoot(entries);
+  writeFileSync(
+    join(root, "asset-portal-script-api.json"),
+    `${JSON.stringify({ libraries: [] }, null, 2)}\n`,
+  );
+  const apiDoc = join(root, "asset-portal-script-api", "api-doc");
+  mkdirSync(apiDoc, { recursive: true });
+  writeFileSync(join(apiDoc, "kept.json"), "{}");
+  return root;
+}
+
 function repoMeta(fullName: string): PortalRepo {
   return {
     full_name: fullName,
@@ -370,19 +383,72 @@ describe("syncAssetPortalScriptApi — page keys", () => {
 
   test("a key that traverses out of api-doc throws before any file under the package changes", async () => {
     const { entries, source } = declaring([{ repo: "escape", namespace: "../../asset-portal" }]);
-    const root = packageRoot(entries);
-    writeFileSync(
-      join(root, "asset-portal-script-api.json"),
-      `${JSON.stringify({ libraries: [] }, null, 2)}\n`,
-    );
-    const apiDoc = join(root, "asset-portal-script-api", "api-doc");
-    mkdirSync(apiDoc, { recursive: true });
-    writeFileSync(join(apiDoc, "kept.json"), "{}");
+    const root = seededPackageRoot(entries);
     const before = snapshot(dirname(root));
     await expect(syncAssetPortalScriptApi(root, source)).rejects.toThrow(
       'asset-portal-script-api: page key "../../asset-portal" from acme/escape/escape/api.script_api ',
     );
     expect(snapshot(dirname(root))).toEqual(before);
+  });
+
+  test.each([
+    "CON",
+    "con",
+    "Nul",
+    "PRN",
+    "AUX",
+    "COM0",
+    "COM1",
+    "com9",
+    "LPT1",
+    "lpt9",
+    "CON.api",
+    "nul.tar.gz",
+    "Aux.cmd",
+  ])("key %p is a Windows device name and throws before any file under the package changes", async (namespace) => {
+    const { entries, source } = declaring([{ repo: "device", namespace }]);
+    const root = seededPackageRoot(entries);
+    const before = snapshot(dirname(root));
+    await expect(syncAssetPortalScriptApi(root, source)).rejects.toThrow(
+      `asset-portal-script-api: page key ${JSON.stringify(namespace)} from acme/device/device/api.script_api `,
+    );
+    expect(snapshot(dirname(root))).toEqual(before);
+  });
+
+  test("a derived key whose stem is a Windows device name throws naming the derived key", async () => {
+    const { entries, source } = declaring([{ repo: "defold-nul", namespace: "gui" }]);
+    await expect(syncAssetPortalScriptApi(packageRoot(entries), source)).rejects.toThrow(
+      'asset-portal-script-api: page key "nul.gui" from acme/defold-nul/defold-nul/api.script_api ',
+    );
+  });
+
+  test("keys that only contain or extend a Windows device name pass and each writes its api-doc", async () => {
+    const { entries, source } = declaring([
+      { repo: "console", namespace: "console" },
+      { repo: "con-x", namespace: "con-x" },
+      { repo: "com10", namespace: "com10" },
+      { repo: "lpt", namespace: "lpt" },
+      { repo: "nullable", namespace: "nullable" },
+      { repo: "rive", namespace: "rive.con" },
+    ]);
+    const root = packageRoot(entries);
+    const manifest = await syncAssetPortalScriptApi(root, source);
+    expect(pagesOf(manifest)).toEqual({
+      "https://github.com/acme/console#console": "console",
+      "https://github.com/acme/con-x#con-x": "con-x",
+      "https://github.com/acme/com10#com10": "com10",
+      "https://github.com/acme/lpt#lpt": "lpt",
+      "https://github.com/acme/nullable#nullable": "nullable",
+      "https://github.com/acme/rive#rive.con": "rive.con",
+    });
+    expect(readdirSync(join(root, "asset-portal-script-api", "api-doc")).sort()).toEqual([
+      "com10.json",
+      "con-x.json",
+      "console.json",
+      "lpt.json",
+      "nullable.json",
+      "rive.con.json",
+    ]);
   });
 
   test.each([
