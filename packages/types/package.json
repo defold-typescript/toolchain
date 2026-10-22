@@ -57,6 +57,11 @@
     "./hsm/defold": {
       "types": "./hsm/defold.d.ts"
     },
+    "./cli-runtime": {
+      "types": "./scripts/cli-runtime.ts",
+      "bun": "./scripts/cli-runtime.ts",
+      "default": "./dist/cli-runtime.js"
+    },
     "./api-availability.json": "./api-availability.json",
     "./api-signatures.json": "./api-signatures.json",
     "./url-parameters.json": "./url-parameters.json",
@@ -74,11 +79,12 @@
     "api-signatures.json",
     "url-parameters.json",
     "index.d.ts",
+    "dist/cli-runtime.js",
     "fixtures/messages_doc.json",
-    "fixtures/defold-*",
-    "!fixtures/defold-*/engine-bindings",
-    "!fixtures/defold-*/engine-evidence",
-    "!fixtures/defold-*/annotations",
+    "fixtures/defold-*/**",
+    "!fixtures/defold-*/engine-bindings/**",
+    "!fixtures/defold-*/engine-evidence/**",
+    "!fixtures/defold-*/annotations/**",
     "examples/translations.json",
     "!src/**/*.test.ts",
     "!scripts/**/*.test.ts",
@@ -111,7 +117,8 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && bun run build:cli-runtime",
+    "build:cli-runtime": "bun build scripts/cli-runtime.ts --target=node --format=esm --packages=external --outdir=dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "regen": "bun scripts/regen.ts",
     "generate-api-availability": "bun scripts/generate-api-availability.ts",

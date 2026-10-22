@@ -30,6 +30,7 @@ import {
 import { isBuiltin } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 export const PACKAGES = [
@@ -407,9 +408,9 @@ export interface ProofVerdict {
 // never touches the network or a cached download. The generator's own
 // `resolveTargetModules` finds the doc by the namespace it declares, so the
 // whole ref-doc path runs exactly as it does for a registered version.
-const PROOF_NAMESPACE = "label";
-const PROOF_ZIP_ENTRY = "doc/label_doc.json";
-const PROOF_DOC = JSON.stringify({
+export const PROOF_NAMESPACE = "label";
+export const PROOF_ZIP_ENTRY = "doc/label_doc.json";
+export const PROOF_DOC = JSON.stringify({
   info: { namespace: PROOF_NAMESPACE, brief: "proof", description: "proof" },
   elements: [
     {
@@ -421,6 +422,20 @@ const PROOF_DOC = JSON.stringify({
     },
   ],
 });
+export const PROOF_TARGET = {
+  id: "defold-pack-proof",
+  fixturesDir: "fixtures/defold-pack-proof",
+  generatedDir: "generated/versions/defold-pack-proof",
+  coreTypesImport: "./core-types",
+  source: { kind: "ref-doc", version: "1.9.8" },
+  modules: [
+    {
+      namespace: PROOF_NAMESPACE,
+      fixture: `${PROOF_NAMESPACE}_doc.json`,
+      outFile: `${PROOF_NAMESPACE}.d.ts`,
+    },
+  ],
+};
 
 interface MaterializeVersionModule {
   buildVersionedSurfaceFiles(
@@ -430,47 +445,32 @@ interface MaterializeVersionModule {
 }
 
 // The load-bearing packed-install proof: import the shipped generator out of an
-// extracted tarball — by resolved path, the way the CLI loads it — and generate
-// a ref-doc surface from it. A published install has no `fixtures/` sibling to
+// extracted tarball — through `dist/cli-runtime.js`, the artifact Node loads
+// when the CLI imports `@defold-typescript/types/cli-runtime` — and generate a
+// ref-doc surface from it. A published install has no `fixtures/` sibling to
 // fall back on, so this fails on exactly the packaging gap that made "generated
-// on demand" false for every consumer, and passes only when the generator's
-// inputs actually ship.
+// on demand" false for every consumer, and passes only when the bundle and the
+// generator's inputs actually ship.
 export async function refDocMaterialize(installDir: string): Promise<ProofVerdict> {
   const cacheDir = mkdtempSync(path.join(os.tmpdir(), "pack-proof-refdoc-cache-"));
   try {
     const mod = (await import(
-      path.join(installDir, "scripts", "materialize-version.ts")
+      pathToFileURL(path.join(installDir, "dist", "cli-runtime.js")).href
     )) as MaterializeVersionModule;
-    const files = await mod.buildVersionedSurfaceFiles(
-      {
-        id: "defold-pack-proof",
-        fixturesDir: "fixtures/defold-pack-proof",
-        generatedDir: "generated/versions/defold-pack-proof",
-        coreTypesImport: "./core-types",
-        source: { kind: "ref-doc", version: "1.9.8" },
-        modules: [
-          {
-            namespace: PROOF_NAMESPACE,
-            fixture: `${PROOF_NAMESPACE}_doc.json`,
-            outFile: `${PROOF_NAMESPACE}.d.ts`,
+    const files = await mod.buildVersionedSurfaceFiles(PROOF_TARGET, {
+      resolveOpts: {
+        cacheDir,
+        download: async () => new Uint8Array([0]),
+        readZip: () => ({
+          has: (name: string) => name === PROOF_ZIP_ENTRY,
+          entries: () => [PROOF_ZIP_ENTRY],
+          read: (name: string) => {
+            if (name !== PROOF_ZIP_ENTRY) throw new Error(`unexpected zip entry: ${name}`);
+            return PROOF_DOC;
           },
-        ],
+        }),
       },
-      {
-        resolveOpts: {
-          cacheDir,
-          download: async () => new Uint8Array([0]),
-          readZip: () => ({
-            has: (name: string) => name === PROOF_ZIP_ENTRY,
-            entries: () => [PROOF_ZIP_ENTRY],
-            read: (name: string) => {
-              if (name !== PROOF_ZIP_ENTRY) throw new Error(`unexpected zip entry: ${name}`);
-              return PROOF_DOC;
-            },
-          }),
-        },
-      },
-    );
+    });
     const surface = files.find((file) => file.path === `${PROOF_NAMESPACE}.d.ts`);
     if (!surface) {
       return { ok: false, detail: `generated surface has no ${PROOF_NAMESPACE}.d.ts` };

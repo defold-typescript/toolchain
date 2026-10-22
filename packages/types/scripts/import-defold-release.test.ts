@@ -11,7 +11,7 @@ import {
 } from "./import-defold-release";
 import { EDITOR_MANIFEST, EDITOR_VM_MANIFEST, type ZipAccessor } from "./sync-api-docs";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 function fakeZip(entries: Record<string, unknown>): ZipAccessor {
   const encoded = Object.fromEntries(

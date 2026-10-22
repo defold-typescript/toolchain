@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { parseScriptApi } from "../src/script-api";
+import { writeZipArchive } from "../test/zip-fixture";
 import { MODULE_MANIFEST } from "./regen";
 import {
   buildCoverageReport,
@@ -30,7 +31,7 @@ import {
   type ZipAccessor,
 } from "./sync-api-docs";
 
-const VISION = resolve(import.meta.dir, "..", "..", "..", "docs", "prd", "vision.md");
+const VISION = resolve(import.meta.dirname, "..", "..", "..", "docs", "prd", "vision.md");
 
 function fakeZip(entries: Record<string, string>): ZipAccessor {
   return {
@@ -706,7 +707,7 @@ describe("sys multi-source merge", () => {
 
   test("the vendored sys fixture carries the merged gamesys + engine functions", () => {
     const path = resolve(
-      import.meta.dir,
+      import.meta.dirname,
       "..",
       "fixtures",
       `defold-${DEFOLD_VERSION}`,
@@ -896,4 +897,58 @@ describe("readZip entries", () => {
       }
     },
   );
+});
+
+// A machine with no `unzip` (a stock Windows runner) still has to read an
+// extension archive, so the reader parses the bytes itself. The writer is
+// test-side and shares nothing with it; every assertion compares against the
+// text that was written.
+describe("readZip over a written archive", () => {
+  const MANIFEST = "name: pixels\n";
+  const SCRIPT_API = [
+    "- name: pixels",
+    "  type: table",
+    "  members:",
+    "  - name: polyline",
+    "    type: function",
+    "",
+  ].join("\n");
+
+  function writtenArchive(entries: Parameters<typeof writeZipArchive>[0]): string {
+    const dir = mkdtempSync(join(tmpdir(), "readzip-written-"));
+    const zipPath = join(dir, "archive.zip");
+    writeFileSync(zipPath, writeZipArchive(entries));
+    return zipPath;
+  }
+
+  test("lists entries in archive order, directory included, and inflates a deflated entry", () => {
+    const zip = readZip(
+      writtenArchive([
+        { name: "defold-pixels-master/", text: "" },
+        { name: "defold-pixels-master/ext.manifest", text: MANIFEST },
+        { name: "defold-pixels-master/api/pixels.script_api", text: SCRIPT_API },
+      ]),
+    );
+    expect(zip.entries()).toEqual([
+      "defold-pixels-master/",
+      "defold-pixels-master/ext.manifest",
+      "defold-pixels-master/api/pixels.script_api",
+    ]);
+    expect(zip.has("defold-pixels-master/ext.manifest")).toBe(true);
+    expect(zip.read("defold-pixels-master/api/pixels.script_api")).toBe(SCRIPT_API);
+    expect(zip.read("defold-pixels-master/ext.manifest")).toBe(MANIFEST);
+  });
+
+  test("reads a stored entry back", () => {
+    const zip = readZip(writtenArchive([{ name: "ext.manifest", text: MANIFEST, stored: true }]));
+    expect(zip.read("ext.manifest")).toBe(MANIFEST);
+  });
+
+  test("read of a name not in the archive names the entry and the archive", () => {
+    const zipPath = writtenArchive([{ name: "ext.manifest", text: MANIFEST }]);
+    const zip = readZip(zipPath);
+    expect(zip.has("api/pixels.script_api")).toBe(false);
+    expect(() => zip.read("api/pixels.script_api")).toThrow("api/pixels.script_api");
+    expect(() => zip.read("api/pixels.script_api")).toThrow(zipPath);
+  });
 });

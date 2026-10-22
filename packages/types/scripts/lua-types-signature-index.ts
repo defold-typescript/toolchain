@@ -18,7 +18,7 @@ export interface SignatureIndexEntry {
 // FQN (`string.byte`, `file:read`, `socket.dns.toip`, bare `pcall`) -> entry.
 export type SignatureIndex = Map<string, SignatureIndexEntry>;
 
-export const LUA_TYPES_DIR = resolve(import.meta.dir, "..", "node_modules", "lua-types");
+export const LUA_TYPES_DIR = resolve(import.meta.dirname, "..", "node_modules", "lua-types");
 
 export function luaTypesFile(...segments: string[]): string {
   return resolve(LUA_TYPES_DIR, ...segments);

@@ -11,7 +11,7 @@ import { resolve } from "node:path";
 /** Repo-root-relative, so the backlog probe can name it the way the floors do. */
 export const PINS_DIR = "packages/types/examples";
 export const PINS_FILE = "typecheck-pins.json";
-export const PINS_PATH = resolve(import.meta.dir, "..", "examples", PINS_FILE);
+export const PINS_PATH = resolve(import.meta.dirname, "..", "examples", PINS_FILE);
 
 /** A diagnostic with file and position stripped, so a pin survives a reflow. */
 export interface ExampleDiagnostic {

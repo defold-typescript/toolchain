@@ -19,7 +19,7 @@ import { loadApiTargets, loadTargetModules } from "./regen";
 import { loadSignatureFile } from "./signature-store-fs";
 import { compareVersions } from "./target-version";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
 // The options `generate-api-signatures --write` builds the committed artifact with.
 const COMMITTED_OPTIONS = {

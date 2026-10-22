@@ -5,8 +5,8 @@ import type { ProseLuaKeepStore, TranslationStore } from "../src/example-store";
 // Build-time only: lives under `scripts/` (never reachable from the shipped
 // `src/index.ts` graph) so its `node:fs` import cannot leak into a consumer's
 // typecheck. `src/example-store.ts` stays pure for exactly that reason.
-const TRANSLATIONS_PATH = resolve(import.meta.dir, "..", "examples", "translations.json");
-const PROSE_LUA_KEPT_PATH = resolve(import.meta.dir, "..", "examples", "prose-lua-kept.json");
+const TRANSLATIONS_PATH = resolve(import.meta.dirname, "..", "examples", "translations.json");
+const PROSE_LUA_KEPT_PATH = resolve(import.meta.dirname, "..", "examples", "prose-lua-kept.json");
 
 export function loadTranslations(path: string = TRANSLATIONS_PATH): TranslationStore {
   let raw: string;

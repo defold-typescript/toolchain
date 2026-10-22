@@ -12,7 +12,7 @@ import {
 import { loadApiTargets } from "./regen";
 import { versionOf } from "./target-version";
 
-const AVAILABILITY_PATH = resolve(import.meta.dir, "..", "api-availability.json");
+const AVAILABILITY_PATH = resolve(import.meta.dirname, "..", "api-availability.json");
 
 // The committed version axis, newest-first, from the same production selector the
 // artifact builder uses — so a version rotation needs no edit here.

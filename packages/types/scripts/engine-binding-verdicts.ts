@@ -4,7 +4,7 @@ import { join } from "node:path";
 // Repo-root-relative, the shape the ratchet backlog registers its sources by.
 export const VERDICTS_DIR = join("packages", "types", "scripts");
 export const VERDICTS_FILE_NAME = "engine-binding-verdicts.json";
-export const VERDICTS_FILE = join(import.meta.dir, VERDICTS_FILE_NAME);
+export const VERDICTS_FILE = join(import.meta.dirname, VERDICTS_FILE_NAME);
 
 export interface Verdict {
   readonly verdict: "accepted" | "manual" | "open";

@@ -4,7 +4,7 @@ import type { LuaKind } from "./engine-binding-extract";
 import { gateCompilerOptions } from "./example-typecheck";
 import type { ApiTarget } from "./regen";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const CORE_TYPES_FILE = resolve(PACKAGE_ROOT, "src", "core-types.ts");
 
 export type DeclaredKinds = LuaKind[] | "any";
