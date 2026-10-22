@@ -54,6 +54,15 @@
       "declaration": "generated/native/pixels.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-pixels/defold-pixels/src/pixels.cpp",
       "upstreamAnnotation": "fixtures/upstream-native/defold-pixels/defold-pixels/idea_autocomplite.lua"
+    },
+    {
+      "repo": "https://github.com/s-kania/def-windward-jps",
+      "ref": "v1.1.0",
+      "license": "MIT",
+      "namespace": "def_windward_jps",
+      "manifestDir": "def_windward_jps",
+      "declaration": "generated/native/def_windward_jps.d.ts",
+      "upstreamSource": "fixtures/upstream-native/def-windward-jps/def_windward_jps/src/def_windward_jps.cpp"
     }
   ]
 }

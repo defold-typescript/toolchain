@@ -4,6 +4,7 @@
   "checkpoint": "Checkpoint is a library for reading from and writing to files in a Defold game engine project.",
   "daabbcc": "Dynamic Tree (aka AABB Tree) native extension for Defold Engine",
   "decore": "Defold ECS Data Manager",
+  "def_windward_jps": "Find paths on 2D grids with Jump Point Search.",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
   "defold-orthographic": "Orthographic camera functionality for the Defold game engine",

@@ -18,6 +18,7 @@ interface Element {
   types?: string[];
   extends?: string[];
   properties?: { name: string; is_optional?: string }[];
+  functions?: { name: string }[];
 }
 
 function target(namespace: string): NativeTarget {
@@ -101,6 +102,22 @@ describe("lowerNativeApiDoc", () => {
     expect(byName.get("color")?.returnvalues?.[0]?.types).toEqual([
       "LuaMultiReturn<[ undefined? ] | [ number, number, number ] | [ number, number, number, number ]>",
     ]);
+  });
+
+  test("lowers def_windward_jps with its grid methods and the point and heuristic shapes", () => {
+    const doc = lowered("def_windward_jps");
+    expect(doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name)).toEqual([
+      "create_grid",
+    ]);
+    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(0);
+    const byName = new Map(doc.elements.map((e) => [e.name, e]));
+    const grid = byName.get("Grid");
+    expect(grid?.type).toBe("TYPEDEF");
+    expect(grid?.functions?.map((f) => f.name)).toEqual(["find_path", "is_walkable"]);
+    expect(grid?.properties).toBeUndefined();
+    expect(byName.get("Point")?.type).toBe("TYPEDEF");
+    expect(byName.get("Heuristic")?.type).toBe("TYPEDEF");
+    expect(byName.get("Heuristic")?.types).toEqual(['"octile"', '"manhattan"', '"euclidean"']);
   });
 });
 

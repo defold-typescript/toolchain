@@ -1,6 +1,7 @@
 {
   "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
   "daabbcc": "Dynamic Tree (aka AABB Tree) native extension for Defold Engine",
+  "def_windward_jps": "Find paths on 2D grids with Jump Point Search.",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
   "gooey": "Defold GUI system",

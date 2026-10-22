@@ -298,6 +298,7 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       "uuid4",
       "tile_raycast",
       "pixels",
+      "def_windward_jps",
     ]);
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     for (const target of targets) {
@@ -316,7 +317,7 @@ describe("loadLibraryProvenance — curated native extensions", () => {
   test("carries a commit pin as the page's pin kind, and no pin kind for a release", () => {
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     expect(metaFor("pixels").pinKind).toBe("commit");
-    for (const namespace of ["daabbcc", "share", "uuid4", "tile_raycast"]) {
+    for (const namespace of ["daabbcc", "share", "uuid4", "tile_raycast", "def_windward_jps"]) {
       expect(metaFor(namespace).pinKind).toBeUndefined();
     }
   });
