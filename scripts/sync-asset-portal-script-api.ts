@@ -83,7 +83,8 @@ function docKey(id: string, path: string, namespace: string): string {
  * `asset-portal-script-api/api-doc/<page>.json` under `packageRoot`. Candidacy
  * is computed with the portal lane emptied, so a re-sync does not read its own
  * pages as tracked and drop them. A gone repo, a doc the converter rejects, a
- * candidate left with no doc, or a page key that still collides throws.
+ * candidate left with no doc, or a page key that still collides or is no safe
+ * file name throws, the last two before any file is deleted or written.
  */
 export async function syncAssetPortalScriptApi(
   packageRoot: string,
