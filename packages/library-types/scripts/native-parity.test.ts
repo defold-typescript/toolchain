@@ -53,6 +53,7 @@ describe("buildNativeParity over the shipped declarations", () => {
     uuid4: [1, 0, 0],
     pixels: [18, 0, 0],
     def_windward_jps: [1, 0, 2],
+    box2d: [18, 27, 275],
   };
 
   test("every native target is measured", () => {
@@ -135,6 +136,22 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
     expect(report.missingFunctions).toEqual([]);
     expect(report.phantomFunctions).toEqual([]);
     expect(report.callableCoverage).toBe(1);
+  });
+
+  test("a method dropped from one userdata type is missing though siblings declare it", () => {
+    const entry = target("box2d");
+    const shipped = shippedDeclaration(entry);
+    const body = shipped.indexOf("interface Body {");
+    const end = shipped.indexOf("\n    }\n", body);
+    const drifted =
+      shipped.slice(0, body) +
+      shipped.slice(body, end).replace(/^ *GetUserData\(\).*\n/m, "") +
+      shipped.slice(end);
+    expect(drifted).not.toBe(shipped);
+    expect(drifted.slice(drifted.indexOf("interface Fixture {"))).toContain("GetUserData(");
+    const report = buildNativeParity(tempRoot(entry, drifted), entry);
+    expect(report.missingMethods).toEqual(["Box2d::BodyClass.GetUserData"]);
+    expect(report.phantomMethods).toEqual([]);
   });
 
   test("a declaration under a namespace other than the registered module name", () => {
@@ -310,6 +327,14 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
     expect(report.arityMeasured).toBe(true);
     expect(report.arityMismatches).toEqual([]);
     expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: ["copy_pixels"] });
+  });
+
+  test("box2d agrees with its annotation on all eighteen module functions", () => {
+    const report = buildNativeParity(PACKAGE_ROOT, target("box2d"));
+    expect(report.arityMeasured).toBe(true);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.arityExceptions).toEqual([]);
+    expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: [] });
   });
 
   test("daabbcc charges nothing beyond its one recorded exception", () => {

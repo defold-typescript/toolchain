@@ -141,6 +141,7 @@ the named directory, so a repo-name collision alone writes nothing.
 | [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](/api/tile_raycast) | `tile-raycast/ext.manifest` |
 | [king8fisher/defold-pixels](https://github.com/king8fisher/defold-pixels) | `70f7784` | [`pixels`](/api/pixels) | `defold-pixels/ext.manifest` |
 | [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | `v1.1.0` | [`def_windward_jps`](/api/def_windward_jps) | `def_windward_jps/ext.manifest` |
+| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | `1.0.3` | [`box2d`](/api/box2d) | `box2d/native/ext.manifest` |
 
 The namespace lands in `.defold-types/extensions/` like a `.script_api`
 namespace and needs no import:

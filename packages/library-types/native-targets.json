@@ -64,6 +64,52 @@
       "declaration": "generated/native/def_windward_jps.d.ts",
       "upstreamSource": "fixtures/upstream-native/def-windward-jps/def_windward_jps/src/def_windward_jps.cpp",
       "methodTables": { "def_windward_jps.Grid": ["Grid"] }
+    },
+    {
+      "repo": "https://github.com/d954mas/defold-box2d",
+      "ref": "1.0.3",
+      "license": "MIT",
+      "namespace": "box2d",
+      "manifestDir": "box2d/native",
+      "declaration": "generated/native/box2d.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-box2d/box2d/native/src/extension.cpp",
+      "upstreamMethodSources": [
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/world.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/body.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/fixture.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/joint.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/draw.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/contact.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/shape/circle_shape.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/shape/polygon_shape.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/shape/edge_shape.cpp",
+        "fixtures/upstream-native/defold-box2d/box2d/native/src/shape/chain_shape.cpp"
+      ],
+      "upstreamAnnotation": "fixtures/upstream-native/defold-box2d/box2d_header.lua",
+      "methodTables": {
+        "Box2d::WorldClass": ["World"],
+        "Box2d::BodyClass": ["Body"],
+        "Box2d::FixtureClass": ["Fixture"],
+        "Box2d::ContactClass": ["Contact"],
+        "Box2d::DrawClass": ["DebugDraw"],
+        "Box2d::JointClass": [
+          "Joint",
+          "RevoluteJoint",
+          "PrismaticJoint",
+          "DistanceJoint",
+          "PulleyJoint",
+          "MouseJoint",
+          "GearJoint",
+          "WheelJoint",
+          "WeldJoint",
+          "FrictionJoint",
+          "MotorJoint"
+        ],
+        "Box2d::CircleShapeClass": ["Shape", "CircleShape"],
+        "Box2d::PolygonShapeClass": ["Shape", "PolygonShape"],
+        "Box2d::EdgeShapeClass": ["Shape", "EdgeShape"],
+        "Box2d::ChainShapeClass": ["Shape", "ChainShape"]
+      }
     }
   ]
 }

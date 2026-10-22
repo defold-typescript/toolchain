@@ -474,6 +474,30 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "f22dd03e273bceb5f761929cc629af76af27e8894041181b57f89ef06a322d1c",
   "fixtures/upstream-native/def-windward-jps/def_windward_jps/src/def_windward_jps.cpp":
     "93f03d106ffad0e23edce467d271565015cb02e5ce86c8b340791dbbe22bddb0",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/body.cpp":
+    "d02c25ba9220a1dc43cc11437194be3f6044ac6a14d9ad79b6c6b157f4fbfc91",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/contact.cpp":
+    "24d7ef5d106c7a49c44b43519dfe2f021a48920d9cb2b3b76f501b5f58e51c57",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/draw.cpp":
+    "ad2590be791558b1eb721f02659bb4660d231cb1e895b08bbb5a9d9f2f654511",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/extension.cpp":
+    "9431af521630b0d836a539db84cda3bda5b5e9e6b07ef22c83937bd688b8a59e",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/fixture.cpp":
+    "043f9a61e0ed4544d9389a6839892072967174e2eb4f67bd4143d5107ce7330c",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/joint.cpp":
+    "5c5a5d3860cb17dc4e79f7903cd7a9166b4d13ccdd73b46162c007db2902e05a",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/shape/chain_shape.cpp":
+    "232a1540095ed77101695b3e8575a65062ba5b87601c4c388a31dc0f593db84a",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/shape/circle_shape.cpp":
+    "54244338954a4b66a4cf47206b11c6a02002a92ff4c1a8fcf6f418c80e862546",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/shape/edge_shape.cpp":
+    "6e269b90dae1a7ab2be8fe112d45184f21dabdf123216813d302fdab963b964e",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/shape/polygon_shape.cpp":
+    "458b09af91625a13bfdf29b75cdfb21a9ca0bcabb58c905fcf17e3df7012dfc5",
+  "fixtures/upstream-native/defold-box2d/box2d/native/src/world.cpp":
+    "55da1575a8da35ceb98415db1b9b85f3f67fb5fa0398e70ed71466df1ec2cae1",
+  "fixtures/upstream-native/defold-box2d/box2d_header.lua":
+    "ebc181a896bcb7baaad94968f71d958491da72abb61bde8c68cea7be6b815a4c",
   "fixtures/upstream-native/defold-pixels/defold-pixels/idea_autocomplite.lua":
     "6e74062091e85dcef47475d0f18f55cb83c1b6fda9d911fdcd6eb47974fc0e7c",
   "fixtures/upstream-native/defold-pixels/defold-pixels/src/pixels.cpp":
