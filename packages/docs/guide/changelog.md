@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters, and callbacks typed from their documented arguments.
-> - **[Curated native namespaces](./resolve.md#curated-native-extensions)** type [pixels](/api/pixels) and [def_windward_jps](/api/def_windward_jps): delete any copied `types/pixels.d.ts` and rename its helper types.
+> - **[Curated native namespaces](./resolve.md#curated-native-extensions)** type [pixels](/api/pixels), [def_windward_jps](/api/def_windward_jps) and [box2d](/api/box2d): delete any copied `types/pixels.d.ts` and rename its helper types.
 > - **[`resolve` runs under Node and Bun](./resolve.md)** on every OS for a project with a native extension, with no `unzip`.
 > - **[Asset Portal libraries](/libraries)** get pages, typed from their `.script_api` when they ship one.
 > - **[No extension declaration is lost](./resolve.md#the-generated-surface)** when extensions share a namespace or differ only in letter case.
@@ -29,7 +29,9 @@ What changed in each published `defold-typescript` toolchain release.
 - **`resolve` extension declarations carry the whole documented surface**: the namespace's constants, including those one sub-table deep (`iap.PROVIDER_ID_GOOGLE`, `push.NOTIFICATION_BADGE`), each branded as the `string` or `number` its doc declares (`firebase.analytics.EVENT_ADIMPRESSION` is a `string` brand), a function returning a documented constant typed as that constant union, a parameter flagged `optional: true` emitted optional, and a table parameter typed from its documented fields. A `.script_api` slot typed `enum` is read as a constant-valued slot, so `webview.create`'s callback `type` argument is the union of the `webview.CALLBACK_RESULT_*` constants.
 - **The [facebook](/api/facebook), [playables](/api/playables) and [poki_sdk](/api/poki_sdk) Libraries pages** show the parameter types their `.script_api` spells as YAML lists (`[string, nil]`), which previously rendered as untyped.
 - **[Libraries](/libraries) lists the Defold Asset Portal's libraries under their GitHub owners**: one that ships a `.script_api` gets a reference page per doc, such as [defos](/api/defos), and one that ships no Lua API, such as shaders, materials and editor scripts, gets an icon-marked page, such as [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page gives the dependency step for its pin and links the library's Asset Portal entry.
-- **[def_windward_jps](/api/def_windward_jps) (`s-kania/def-windward-jps`, tag `v1.1.0`) is typed by a curated namespace** ([Curated native extensions](./resolve.md#curated-native-extensions)), so a project depending on it gets types where `resolve` wrote none: `def_windward_jps.create_grid` returns a grid whose `def_windward_jps.Grid.find_path` and `def_windward_jps.Grid.is_walkable` take 1-based `def_windward_jps.Point` cells.
+- **Two more native extensions are typed by curated namespaces** ([Curated native extensions](./resolve.md#curated-native-extensions)), so a project depending on either gets types where `resolve` wrote none:
+  - **[def_windward_jps](/api/def_windward_jps)** (`s-kania/def-windward-jps`, tag `v1.1.0`) — `def_windward_jps.create_grid` returns a grid whose `def_windward_jps.Grid.find_path` and `def_windward_jps.Grid.is_walkable` take 1-based `def_windward_jps.Point` cells.
+  - **[box2d](/api/box2d)** (`d954mas/defold-box2d`, tag `1.0.3`) — `box2d.NewWorld` returns a world whose bodies, fixtures, shapes and joints carry their methods, and `box2d.World.CreateJoint` returns the joint type its definition names.
 
 ### Fixed
 

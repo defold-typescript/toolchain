@@ -180,6 +180,7 @@ describe("loadVendoredNativeRegistry", () => {
       .map(({ sourceId, namespace, manifestDir }) => ({ sourceId, namespace, manifestDir }))
       .sort((a, b) => a.namespace.localeCompare(b.namespace));
     expect(projected).toEqual([
+      { sourceId: "defold-box2d", namespace: "box2d", manifestDir: "box2d/native" },
       { sourceId: "defold-daabbcc", namespace: "daabbcc", manifestDir: "daabbcc" },
       {
         sourceId: "def-windward-jps",

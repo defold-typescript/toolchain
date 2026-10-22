@@ -1456,6 +1456,52 @@ describe("runResolve def-windward-jps through the shipped native registry", () =
   });
 });
 
+describe("runResolve defold-box2d through the shipped native registry", () => {
+  const BOX2D_URL = "https://github.com/d954mas/defold-box2d/archive/refs/tags/1.0.3.zip";
+  const SHIPPED = readFileSync(
+    join(import.meta.dir, "..", "..", "library-types", "generated", "native", "box2d.d.ts"),
+    "utf8",
+  );
+  const WRITTEN = join(".defold-types", "extensions", "box2d.d.ts");
+
+  async function resolveBox2d(manifest: string): Promise<{
+    cwd: string;
+    result: Awaited<ReturnType<typeof runResolve>>;
+  }> {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${BOX2D_URL}\n`);
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip({
+        [extensionArchiveKey(BOX2D_URL)]: { entries: [manifest], contents: {} },
+      }),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: loadVendoredNativeRegistry(),
+    });
+    return { cwd, result };
+  }
+
+  test("an archive confirmed by the nested box2d/native/ext.manifest gets the shipped curated declaration", async () => {
+    const { cwd, result } = await resolveBox2d("defold-box2d-1.0.3/box2d/native/ext.manifest");
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, WRITTEN), "utf8")).toBe(SHIPPED);
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(result.extensions[0]?.namespaces).toEqual(["box2d"]);
+  });
+
+  test("a repo-name match with its ext.manifest one level up writes no declaration", async () => {
+    const { cwd, result } = await resolveBox2d("defold-box2d-1.0.3/box2d/ext.manifest");
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, WRITTEN))).toBe(false);
+    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
+  });
+});
+
 describe("runResolve druid LuaLS library", () => {
   const DRUID = "declare module 'druid.druid' { export const version: string; }\n";
 
