@@ -121,6 +121,7 @@ function repoMeta(fullName: string, overrides: Partial<PortalRepo> = {}): Portal
     pushed_at: "2026-09-01T00:00:00Z",
     stargazers_count: 10,
     default_branch: "master",
+    license: null,
     ...overrides,
   };
 }

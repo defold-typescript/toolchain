@@ -593,6 +593,8 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
           "     Symbols marked ambient globals are declared globally and need no import — call them directly.",
         ]
       : []),
+    // Labelled by repo name, as an Asset Portal listing page labels its entry.
+    ...(meta.portal ? [`- Asset Portal: [${repo.split("/").at(-1)}](${meta.portal.url})`] : []),
   ];
 }
 

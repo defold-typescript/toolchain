@@ -1,0 +1,844 @@
+{
+  "info": {
+    "namespace": "defos",
+    "brief": "Extra native OS functions for games written using the Defold game engine.",
+    "description": "Extra native OS functions for games written using the Defold game engine."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "defos.disable_maximize_button",
+      "description": "Disables the maximize button in the window title bar. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.disable_minimize_button",
+      "description": "Disables the minimize button in the window title bar. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.disable_window_resize",
+      "description": "Disables window resizing. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_window_title",
+      "description": "Sets the window title. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "title",
+          "doc": "The new window title",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_maximized",
+      "description": "Sets the window maximized state. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "maximized",
+          "doc": "Whether to maximize the window",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.toggle_maximized",
+      "description": "Toggles the window maximized state. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_maximized",
+      "description": "Checks if the window is maximized. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "maximized",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_fullscreen",
+      "description": "Sets the window fullscreen state. On HTML5, this only works from defos.on_click() or defos.on_interaction(). Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "fullscreen",
+          "doc": "Whether to set fullscreen mode",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.toggle_fullscreen",
+      "description": "Toggles the window fullscreen state. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_fullscreen",
+      "description": "Checks if the window is in fullscreen mode. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "fullscreen",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_borderless",
+      "description": "Sets the window borderless state. Platforms - Windows.",
+      "parameters": [
+        {
+          "name": "borderless",
+          "doc": "Whether to set borderless mode",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.toggle_borderless",
+      "description": "Toggles the window borderless state. Platforms - Windows.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_borderless",
+      "description": "Checks if the window is borderless. Platforms - Windows.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "borderless",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_always_on_top",
+      "description": "Sets whether the window should always stay on top. Platforms - Linux, Windows, OSX.",
+      "parameters": [
+        {
+          "name": "always_on_top",
+          "doc": "Whether to keep window on top",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.toggle_always_on_top",
+      "description": "Toggles whether the window should always stay on top. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_always_on_top",
+      "description": "Checks if the window is set to always stay on top. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "always_on_top",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.minimize",
+      "description": "Minimizes the window. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.activate",
+      "description": "Activates (focuses) the window. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_window_size",
+      "description": "Gets the window's size and position in screen coordinates. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "X position",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Y position",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "Window width",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Window height",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_window_size",
+      "description": "Sets the window's size and position in screen coordinates. Passing nil for x and y will center the window. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "X position",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "y",
+          "doc": "Y position",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "width",
+          "doc": "Window width",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Window height",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_view_size",
+      "description": "Gets the game view size and position in screen coordinates. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "X position",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Y position",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "View width",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "View height",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_view_size",
+      "description": "Sets the game view size and position in screen coordinates. Passing nil for x and y will center the window. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "X position",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "y",
+          "doc": "Y position",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "width",
+          "doc": "View width",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "View height",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_displays",
+      "description": "Returns information about all displays. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "displays",
+          "doc": "Table of display information, indexed by number or display id",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_current_display_id",
+      "description": "Gets the ID of the game's current display. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "display_id",
+          "doc": "The current display ID",
+          "types": [
+            "userdata"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_display_modes",
+      "description": "Gets all supported resolution modes for a display. Platforms - Linux, Windows, OSX.",
+      "parameters": [
+        {
+          "name": "display_id",
+          "doc": "The display ID to get modes for",
+          "types": [
+            "userdata"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "modes",
+          "doc": "Table of supported resolution modes",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_cursor_visible",
+      "description": "Sets the mouse cursor visibility. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "visible",
+          "doc": "Whether to show the cursor",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_cursor_visible",
+      "description": "Checks if the mouse cursor is visible. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "visible",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_mouse_in_view",
+      "description": "Checks if the mouse is within the game view area. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "in_view",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.on_mouse_enter",
+      "description": "Sets a callback for when the mouse enters the game view area. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Function to be called when mouse enters",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.on_mouse_leave",
+      "description": "Sets a callback for when the mouse leaves the game view area. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Function to be called when mouse leaves",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_cursor_pos",
+      "description": "Gets the cursor position in screen coordinates. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "X position",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Y position",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_cursor_pos_view",
+      "description": "Gets the cursor position in game view coordinates. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "X position",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Y position",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_cursor_pos",
+      "description": "Sets the cursor position in screen coordinates. Platforms - Linux, Windows, OSX.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "X position",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Y position",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_cursor_pos_view",
+      "description": "Sets the cursor position in game view coordinates. Platforms - Linux, Windows, OSX.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "X position",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Y position",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_cursor_clipped",
+      "description": "Clips cursor to current game view area. Platforms - Windows, OSX.",
+      "parameters": [
+        {
+          "name": "clipped",
+          "doc": "Whether to clip the cursor",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_cursor_clipped",
+      "description": "Checks if the cursor is clipped to the game view area. Platforms - Linux, Windows, OSX.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "clipped",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_cursor_locked",
+      "description": "Locks cursor movement. On HTML5 this only works from defos.on_click() or defos.on_interaction(). Platforms - Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "locked",
+          "doc": "Whether to lock the cursor",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_cursor_locked",
+      "description": "Checks if the cursor is locked. Platforms - Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "locked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.on_cursor_lock_disabled",
+      "description": "Sets a callback for when cursor lock is disabled (e.g. when user presses ESC on HTML5). Platforms - Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Function to be called when cursor lock is disabled",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.load_cursor",
+      "description": "Loads a custom hardware cursor. See README for supported formats per platform. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "cursor_data",
+          "doc": "Cursor data in platform-specific format",
+          "types": [
+            "string",
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "cursor",
+          "doc": "The loaded cursor",
+          "types": [
+            "userdata"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_cursor",
+      "description": "Sets the current cursor. See README for supported values. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "cursor",
+          "doc": "The cursor to set",
+          "types": [
+            "userdata",
+            "string",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.reset_cursor",
+      "description": "Resets the cursor to default. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_console_visible",
+      "description": "Shows/hides the console window. Platforms - Windows.",
+      "parameters": [
+        {
+          "name": "visible",
+          "doc": "Whether to show the console",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.is_console_visible",
+      "description": "Checks if the console window is visible. Platforms - Windows.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "visible",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.on_interaction",
+      "description": "Sets a callback for user interaction with the canvas. Platforms - HTML5.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Function to be called on interaction",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.on_click",
+      "description": "Sets a callback for user click on the canvas. Platforms - HTML5.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Function to be called on click",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_bundle_root",
+      "description": "Gets the absolute path to the game's containing directory. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "path",
+          "doc": "The bundle root path",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.set_window_icon",
+      "description": "Changes the game window's icon at runtime. Platforms - Windows, OSX, HTML5.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "Path to the icon file",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defos.get_arguments",
+      "description": "Returns command line arguments used to run the app. Platforms - Linux, Windows, OSX, HTML5.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "arguments",
+          "doc": "Table of command line arguments",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "defos.CURSOR_ARROW",
+      "brief": "Default arrow cursor",
+      "description": "Default arrow cursor",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "defos.CURSOR_HAND",
+      "brief": "Hand cursor",
+      "description": "Hand cursor",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "defos.CURSOR_CROSSHAIR",
+      "brief": "Crosshair cursor",
+      "description": "Crosshair cursor",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "defos.CURSOR_IBEAM",
+      "brief": "I-beam cursor",
+      "description": "I-beam cursor",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "defos.PATH_SEP",
+      "brief": "The system path separator (\"\\\\\" on Windows, \"/\" everywhere else)",
+      "description": "The system path separator (\"\\\\\" on Windows, \"/\" everywhere else)",
+      "types": [
+        "string"
+      ]
+    }
+  ]
+}

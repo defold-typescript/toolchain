@@ -1,0 +1,365 @@
+{
+  "info": {
+    "namespace": "cas",
+    "brief": "CAS Extension",
+    "description": "CAS Extension"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "cas.init",
+      "description": "Initializes the extension. This function has to be called first before trying to show any ads.",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "Contains parameters for the call.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cas.validate_integration",
+      "description": "Prints to console SDK integration information.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cas.load",
+      "description": "Loads a specified ad type. No need to call this function, the ads is loaded automatically.",
+      "parameters": [
+        {
+          "name": "ad_type",
+          "doc": "cas.BANNER, cas.INTERSTITIAL or cas.REWARDED.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cas.is_loaded",
+      "description": "Returns true if the specified ad type has been loaded.",
+      "parameters": [
+        {
+          "name": "ad_type",
+          "doc": "cas.BANNER, cas.INTERSTITIAL or cas.REWARDED.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "is_loaded",
+          "doc": "Is loaded.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cas.show",
+      "description": "Displays a loaded ad.",
+      "parameters": [
+        {
+          "name": "ad_type",
+          "doc": "cas.BANNER, cas.INTERSTITIAL or cas.REWARDED.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cas.hide_banner",
+      "description": "Removes a loaded banner from the screen.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cas.set",
+      "description": "Changes settings.",
+      "parameters": [
+        {
+          "name": "param",
+          "doc": "Parameter id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "Value id.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.BANNER",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.INTERSTITIAL",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.REWARDED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.INIT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.LOADED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.FAILED_TO_LOAD",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.SHOWN",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.FAILED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.CLICKED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.COMPLETE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.CLOSED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.TAGGED_AUDIENCE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.AUDIENCE_CHILDREN",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.AUDIENCE_NOT_CHILDREN",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.AUDIENCE_UNDEFINED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.USER_CONSENT",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.CONSENT_ACCEPTED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.CONSENT_DENIED",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.CCPA",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.CCPA_OPT_IN_SALE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.CCPA_OPT_OUT_SALE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.MUTED_AD_SOUNDS",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.TARGETING_AGE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.TARGETING_GENDER",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.TARGETING_KEYWORDS",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.GENDER_UNKNOWN",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.GENDER_MALE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "cas.GENDER_FEMALE",
+      "brief": "",
+      "description": "",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

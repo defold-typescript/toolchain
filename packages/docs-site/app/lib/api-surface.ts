@@ -445,6 +445,8 @@ export interface LibraryMeta {
    * generation source, not the user's dependency.
    */
   pinKind?: "release" | "tag" | "commit";
+  /** The Asset Portal entry a portal `.script_api` page links; absent on every other page. */
+  portal?: { id: string; url: string };
 }
 
 export interface ApiPage {

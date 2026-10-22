@@ -1,0 +1,645 @@
+{
+  "info": {
+    "namespace": "scene3d",
+    "brief": "C++ helper functions",
+    "description": "C++ helper functions"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.frustum_set",
+      "description": "",
+      "parameters": [
+        {
+          "name": "proj_view_m4",
+          "doc": "",
+          "types": [
+            "matrix4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.frustum_is_box_visible",
+      "description": "",
+      "parameters": [
+        {
+          "name": "min_v3",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "max_v3",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.frustum_mesh_acquire",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.frustum_mesh_release",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.frustum_mesh_vis_changed",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        },
+        {
+          "name": "max_dimension",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "use_world_pos",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "custom_position",
+          "doc": "",
+          "types": [
+            "vector3"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "hash"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.frustum_mesh_vis_changed_box",
+      "description": "",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        },
+        {
+          "name": "min_v3",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "max_v3",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "hash"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.is_vector3",
+      "description": "",
+      "parameters": [
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.is_vector4",
+      "description": "",
+      "parameters": [
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.is_quat",
+      "description": "",
+      "parameters": [
+        {
+          "name": "q",
+          "doc": "",
+          "types": [
+            "quat"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.get_position_to",
+      "description": "Gets the position of a game object instance.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.get_world_position_to",
+      "description": "Gets the game object instance world position.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.get_rotation_to",
+      "description": "Gets the rotation of the game object instance.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "q",
+          "doc": "",
+          "types": [
+            "quat"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.get_world_rotation_to",
+      "description": "Gets the world rotation of the game object instance.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "q",
+          "doc": "",
+          "types": [
+            "quat"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.get_scale_to",
+      "description": "Gets the scale of a game object instance.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.get_world_scale_to",
+      "description": "Gets the game object instance world scale.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "v",
+          "doc": "",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.prerender_register",
+      "description": "Register the callback. It is called after all `update` functions have been called.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "priority",
+          "doc": "",
+          "types": [
+            "integer"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.prerender_unregister",
+      "description": "Unregister the callback.",
+      "parameters": [
+        {
+          "name": "callback_id",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.simplex_seed",
+      "description": "",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "integer"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.simplex_noise2",
+      "description": "Return simplex noise value for specified 2D coordinate. Output range is [0, 1].",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "octaves",
+          "doc": "Specifies the number of passes, defaults to 1 (simple noise).",
+          "types": [
+            "integer"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistence",
+          "doc": "Specifies the amplitude of each successive octave relative to the one below it. Defaults to 0.5 (each higher octave's amplitude is halved). Note the amplitude of the first pass is always 1.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lacunarity",
+          "doc": "Specifies the frequency of each successive octave relative to the one below it, similar to persistence. Defaults to 2.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.simplex_noise3",
+      "description": "Return simplex noise value for specified 3D coordinate. Output range is [0, 1].",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "z",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "octaves",
+          "doc": "Specifies the number of passes, defaults to 1 (simple noise).",
+          "types": [
+            "integer"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistence",
+          "doc": "Specifies the amplitude of each successive octave relative to the one below it. Defaults to 0.5 (each higher octave's amplitude is halved). Note the amplitude of the first pass is always 1.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lacunarity",
+          "doc": "Specifies the frequency of each successive octave relative to the one below it, similar to persistence. Defaults to 2.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "scene3d.simplex_noise4",
+      "description": "Return simplex noise value for specified 4D coordinate. Output range is [0, 1].",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "z",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "w",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "octaves",
+          "doc": "Specifies the number of passes, defaults to 1 (simple noise).",
+          "types": [
+            "integer"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persistence",
+          "doc": "Specifies the amplitude of each successive octave relative to the one below it. Defaults to 0.5 (each higher octave's amplitude is halved). Note the amplitude of the first pass is always 1.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lacunarity",
+          "doc": "Specifies the frequency of each successive octave relative to the one below it, similar to persistence. Defaults to 2.0.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

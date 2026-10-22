@@ -1,0 +1,1943 @@
+{
+  "info": {
+    "namespace": "wavedash",
+    "brief": "Wavedash Defold API",
+    "description": "Wavedash Defold API"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.init",
+      "description": "Initialize Wavedash.\n",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.ready_for_events",
+      "description": "Signal that the game is ready to receive events.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.update_load_progress_zero_to_one",
+      "description": "Update the load progress.\n",
+      "parameters": [
+        {
+          "name": "progress",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.load_complete",
+      "description": "Signal that loading is complete.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.toggle_overlay",
+      "description": "Toggle the overlay.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.is_fullscreen",
+      "description": "Check if fullscreen is enabled.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.request_fullscreen_async",
+      "description": "Request fullscreen mode. This is an asynchronous function. The result will be delivered as an event with id 'requestFullscreen' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "fullscreen",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns true if the host reports the fullscreen request\nsucceeded, false otherwise. (Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.toggle_fullscreen_async",
+      "description": "Toggle fullscreen mode. This is an asynchronous function. The result will be delivered as an event with id 'toggleFullscreen' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns true if the fullscreen toggle succeeded, false\notherwise. (Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_user",
+      "description": "Get the current user.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_username",
+      "description": "Get a username.\n",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_user_id",
+      "description": "Get the current user id.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_user_jwt_async",
+      "description": "Request a user JWT. This is an asynchronous function. The result will be delivered as an event with id 'getUserJwt' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns The user's JWT signed by the Wavedash backend.\n(Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_launch_params",
+      "description": "Get launch parameters.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.list_friends_async",
+      "description": "List friends. This is an asynchronous function. The result will be delivered as an event with id 'listFriends' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the current user's friends. (Note: Only if called\nfrom within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_user_avatar_url",
+      "description": "Get a user avatar URL.\n",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_leaderboard_async",
+      "description": "Get a leaderboard. This is an asynchronous function. The result will be delivered as an event with id 'getLeaderboard' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the leaderboard. (Note: Only if called from within\na coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_or_create_leaderboard_async",
+      "description": "Get or create a leaderboard. This is an asynchronous function. The result will be delivered as an event with id 'getOrCreateLeaderboard' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "sort_order",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "display_type",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the leaderboard. (Note: Only if called from within\na coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_leaderboard_entry_count",
+      "description": "Get leaderboard entry count.\n",
+      "parameters": [
+        {
+          "name": "leaderboard_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_my_leaderboard_entries_async",
+      "description": "Get the current user's leaderboard entries. This is an asynchronous function. The result will be delivered as an event with id 'getMyLeaderboardEntries' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "leaderboard_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the current user's leaderboard entries. (Note: Only\nif called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.list_leaderboard_entries_around_user_async",
+      "description": "List leaderboard entries around a user. This is an asynchronous function. The result will be delivered as an event with id 'listLeaderboardEntriesAroundUser' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "leaderboard_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "count_ahead",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "count_behind",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "friends_only",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns leaderboard entries around the current user. (Note:\nOnly if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.list_leaderboard_entries_async",
+      "description": "List leaderboard entries. This is an asynchronous function. The result will be delivered as an event with id 'listLeaderboardEntries' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "leaderboard_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "offset",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "limit",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "friends_only",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns leaderboard entries. (Note: Only if called from\nwithin a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.upload_leaderboard_score_async",
+      "description": "Upload a leaderboard score. Pass ugc_id to attach a UGC item, such as a replay, to the entry. Pass metadata to attach small key/value data to the entry: string keys with string, number or boolean values.\nThis is an asynchronous function. The result will be delivered as an event with id 'uploadLeaderboardScore' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "leaderboard_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "score",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "keep_best",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "ugc_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the upserted leaderboard entry. (Note: Only if\ncalled from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.create_ugc_item_async",
+      "description": "Create a UGC item. This is an asynchronous function. The result will be delivered as an event with id 'createUGCItem' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "ugc_type",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "title",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "visibility",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "file_path",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the created UGC item id as a string. (Note: Only\nif called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.update_ugc_item_async",
+      "description": "Update a UGC item. This is an asynchronous function. The result will be delivered as an event with id 'updateUGCItem' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "ugc_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "title",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "visibility",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "file_path",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the updated UGC item id as a string. (Note: Only\nif called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.download_ugc_item_async",
+      "description": "Download a UGC item. This is an asynchronous function. The result will be delivered as an event with id 'downloadUGCItem' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "ugc_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "file_path",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the downloaded UGC item id as a string. (Note:\nOnly if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.delete_ugc_item_async",
+      "description": "Delete a UGC item. This is an asynchronous function. The result will be delivered as an event with id 'deleteUGCItem' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "ugc_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the deleted UGC item id as a string. (Note:\nOnly if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.list_ugc_items_async",
+      "description": "List UGC items. This is an asynchronous function. The result will be delivered as an event with id 'listUGCItems' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "filters",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns a page of UGC items ({ page, isDone, continueCursor }).\n(Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.delete_remote_file_async",
+      "description": "Delete a remote file. This is an asynchronous function. The result will be delivered as an event with id 'deleteRemoteFile' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "file_path",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns The path of the remote file that was deleted.\n(Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.download_remote_file_async",
+      "description": "Download a remote file. This is an asynchronous function. The result will be delivered as an event with id 'downloadRemoteFile' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "file_path",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns The path of the local file that the remote file was\ndownloaded to. (Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.upload_remote_file_async",
+      "description": "Upload a remote file. This is an asynchronous function. The result will be delivered as an event with id 'uploadRemoteFile' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "file_path",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns The path of the remote file that the local file was\nuploaded to. (Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.list_remote_directory_async",
+      "description": "List a remote directory. This is an asynchronous function. The result will be delivered as an event with id 'listRemoteDirectory' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns A list of metadata for each file in the remote\ndirectory. (Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.download_remote_directory_async",
+      "description": "Download a remote directory. This is an asynchronous function. The result will be delivered as an event with id 'downloadRemoteDirectory' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns The path of the local directory that the remote\ndirectory was downloaded to. (Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.write_local_file_async",
+      "description": "Write a local file. This is an asynchronous function. The result will be delivered as an event with id 'writeLocalFile' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "file_path",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns true if the file was written successfully. (Note:\nOnly if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.read_local_file_async",
+      "description": "Read a local file. This is an asynchronous function. The result will be delivered as an event with id 'readLocalFile' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "file_path",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns The data read from the local file (byte array).\n(Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_achievement",
+      "description": "Get an achievement.\n",
+      "parameters": [
+        {
+          "name": "identifier",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_stat",
+      "description": "Get a stat.\n",
+      "parameters": [
+        {
+          "name": "identifier",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.set_achievement",
+      "description": "Set an achievement.\n",
+      "parameters": [
+        {
+          "name": "identifier",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "store_now",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.set_stat",
+      "description": "Set a stat.\n",
+      "parameters": [
+        {
+          "name": "identifier",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "store_now",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.request_stats_async",
+      "description": "Request stats. This is an asynchronous function. The result will be delivered as an event with id 'requestStats' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns true if the stats were requested successfully.\n(Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.store_stats",
+      "description": "Store stats.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_p2p_max_payload_size",
+      "description": "Get the maximum P2P payload size.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_p2p_max_incoming_messages",
+      "description": "Get the maximum number of incoming P2P messages.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_p2p_outgoing_message_buffer",
+      "description": "Get the P2P outgoing message buffer.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.send_p2p_message",
+      "description": "Send a P2P message.\n",
+      "parameters": [
+        {
+          "name": "to_user_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "app_channel",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reliable",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "payload",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.broadcast_p2p_message",
+      "description": "Broadcast a P2P message.\n",
+      "parameters": [
+        {
+          "name": "app_channel",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reliable",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "payload",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.read_p2p_message_from_channel",
+      "description": "Read a P2P message from a channel.\n",
+      "parameters": [
+        {
+          "name": "app_channel",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.drain_p2p_channel_to_buffer",
+      "description": "Drain a P2P channel to a buffer.\n",
+      "parameters": [
+        {
+          "name": "app_channel",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.create_lobby_async",
+      "description": "Create a lobby. This is an asynchronous function. The result will be delivered as an event with id 'createLobby' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "visibility",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_players",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the created lobby id as a string. Full lobby\ncontext is provided via the LobbyJoined event. (Note: Only if called from\nwithin a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.join_lobby_async",
+      "description": "Join a lobby. This is an asynchronous function. The result will be delivered as an event with id 'joinLobby' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns success/failure. Full lobby context is provided via\nthe LobbyJoined event. (Note: Only if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.list_available_lobbies_async",
+      "description": "List available lobbies. This is an asynchronous function. The result will be delivered as an event with id 'listAvailableLobbies' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "friends_only",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the available lobbies. (Note: Only if called from\nwithin a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_lobby_users",
+      "description": "Get lobby users.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_num_lobby_users",
+      "description": "Get the number of lobby users.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_lobby_host_id",
+      "description": "Get the lobby host id.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_lobby_data",
+      "description": "Get lobby data.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.set_lobby_data",
+      "description": "Set lobby data. Passing nil deletes the key.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.delete_lobby_data",
+      "description": "Delete lobby data.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.leave_lobby_async",
+      "description": "Leave a lobby. This is an asynchronous function. The result will be delivered as an event with id 'leaveLobby' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the lobby id as a string. (Note: Only if called\nfrom within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.send_lobby_message",
+      "description": "Send a lobby message.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.invite_user_to_lobby_async",
+      "description": "Invite a user to a lobby. This is an asynchronous function. The result will be delivered as an event with id 'inviteUserToLobby' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns success/failure. (Note: Only if called from within\na coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_lobby_invite_link_async",
+      "description": "Get a lobby invite link. This is an asynchronous function. The result will be delivered as an event with id 'getLobbyInviteLink' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "copy_to_clipboard",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the lobby invite link. (Note: Only if called from\nwithin a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.update_user_presence_async",
+      "description": "Update user presence. This is an asynchronous function. The result will be delivered as an event with id 'updateUserPresence' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "data_json",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns true if the presence was updated successfully. (Note: Only\nif called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.ensure_gameplay_jwt_async",
+      "description": "Ensure a gameplay JWT is available. This is an asynchronous function. The result will be delivered as an event with id 'ensureGameplayJwt' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the cached gameplay JWT. (Note: Only if called from\nwithin a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.is_entitled_async",
+      "description": "Returns whether the player owns the given paid content. This is a UX hint, not a security check — Wavedash re-verifies ownership when serving the paid files. This is an asynchronous function. The result will be delivered as an event with id 'isEntitled' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "content_identifier",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns whether the player owns the content in data. (Note:\nOnly if called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_entitlements_async",
+      "description": "Returns every paid content identifier the player owns for this game. This is a UX hint, not a security check — Wavedash re-verifies ownership when serving the paid files. This is an asynchronous function. The result will be delivered as an event with id 'getEntitlements' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the owned content identifiers in data. (Note: Only\nif called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.trigger_paywall_async",
+      "description": "Open the Wavedash paywall for the given paid content. Resolves immediately with data true if the player already owns it; otherwise resolves with whether the purchase completed. Handle the purchase itself in the PurchaseCompleted event, which also covers purchases made outside the game. This is an asynchronous function. The result will be delivered as an event with id 'triggerPaywall' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "content_identifier",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns whether the purchase completed in data. (Note: Only\nif called from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.get_unfulfilled_purchases_async",
+      "description": "Consumable purchases the game hasn't fulfilled, oldest first, each shaped like the PurchaseCompleted payload. These already arrive as PurchaseCompleted events at launch, but each purchase fires once per session: use this to retry one whose fulfill_purchase_async call failed. This is an asynchronous function. The result will be delivered as an event with id 'getUnfulfilledPurchases' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns the unfulfilled purchases in data. (Note: Only if\ncalled from within a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "wavedash.fulfill_purchase_async",
+      "description": "Mark a consumable purchase fulfilled once the grant is saved, so it stops being redelivered. A game's backend can do the same with POST /api/purchases/{purchaseId}/fulfill and the purchase's receiptJwt; both are idempotent, so calling either or both is safe. Resolves with a status in data: FULFILLED, ALREADY_FULFILLED (also success), or NOT_FOUND (unknown or refunded: don't grant it). This is an asynchronous function. The result will be delivered as an event with id 'fulfillPurchase' or as a return value if the function is called from a coroutine.\n",
+      "parameters": [
+        {
+          "name": "purchase_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "response",
+          "doc": "Returns { status } in data. (Note: Only if called from\nwithin a coroutine)\n",
+          "types": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_LOBBY_MESSAGE",
+      "brief": "EVENT_LOBBY_MESSAGE\n",
+      "description": "EVENT_LOBBY_MESSAGE\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_LOBBY_JOINED",
+      "brief": "EVENT_LOBBY_JOINED\n",
+      "description": "EVENT_LOBBY_JOINED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_LOBBY_KICKED",
+      "brief": "EVENT_LOBBY_KICKED\n",
+      "description": "EVENT_LOBBY_KICKED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_LOBBY_USERS_UPDATED",
+      "brief": "EVENT_LOBBY_USERS_UPDATED\n",
+      "description": "EVENT_LOBBY_USERS_UPDATED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_LOBBY_DATA_UPDATED",
+      "brief": "EVENT_LOBBY_DATA_UPDATED\n",
+      "description": "EVENT_LOBBY_DATA_UPDATED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_LOBBY_INVITE",
+      "brief": "EVENT_LOBBY_INVITE\n",
+      "description": "EVENT_LOBBY_INVITE\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_P2P_CONNECTION_ESTABLISHED",
+      "brief": "EVENT_P2P_CONNECTION_ESTABLISHED\n",
+      "description": "EVENT_P2P_CONNECTION_ESTABLISHED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_P2P_CONNECTION_FAILED",
+      "brief": "EVENT_P2P_CONNECTION_FAILED\n",
+      "description": "EVENT_P2P_CONNECTION_FAILED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_P2P_PEER_DISCONNECTED",
+      "brief": "EVENT_P2P_PEER_DISCONNECTED\n",
+      "description": "EVENT_P2P_PEER_DISCONNECTED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_P2P_PEER_RECONNECTING",
+      "brief": "EVENT_P2P_PEER_RECONNECTING\n",
+      "description": "EVENT_P2P_PEER_RECONNECTING\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_P2P_PEER_RECONNECTED",
+      "brief": "EVENT_P2P_PEER_RECONNECTED\n",
+      "description": "EVENT_P2P_PEER_RECONNECTED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_P2P_PACKET_DROPPED",
+      "brief": "EVENT_P2P_PACKET_DROPPED\n",
+      "description": "EVENT_P2P_PACKET_DROPPED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_STATS_STORED",
+      "brief": "EVENT_STATS_STORED\n",
+      "description": "EVENT_STATS_STORED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_BACKEND_CONNECTED",
+      "brief": "EVENT_BACKEND_CONNECTED\n",
+      "description": "EVENT_BACKEND_CONNECTED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_BACKEND_DISCONNECTED",
+      "brief": "EVENT_BACKEND_DISCONNECTED\n",
+      "description": "EVENT_BACKEND_DISCONNECTED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_BACKEND_RECONNECTING",
+      "brief": "EVENT_BACKEND_RECONNECTING\n",
+      "description": "EVENT_BACKEND_RECONNECTING\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_FULLSCREEN_CHANGED",
+      "brief": "EVENT_FULLSCREEN_CHANGED\n",
+      "description": "EVENT_FULLSCREEN_CHANGED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_ENTITLEMENTS_GRANTED",
+      "brief": "Deprecated: handle EVENT_PURCHASE_COMPLETED instead, which also covers consumables.\n",
+      "description": "Deprecated: handle EVENT_PURCHASE_COMPLETED instead, which also covers consumables.\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.EVENT_PURCHASE_COMPLETED",
+      "brief": "Fired once per purchase made while the game is running (in-game paywall, game page, gift, another tab), plus, at launch, once per consumable still unfulfilled. Payload: { purchaseId, contentIdentifier, type, fulfilled, purchasedAt, receiptJwt }. Durables arrive with fulfilled true, already granted. For a consumable, grant it, then call fulfill_purchase_async(purchaseId); until then it's redelivered every launch, so dedupe on purchaseId if you persist grants.\n",
+      "description": "Fired once per purchase made while the game is running (in-game paywall, game page, gift, another tab), plus, at launch, once per consumable still unfulfilled. Payload: { purchaseId, contentIdentifier, type, fulfilled, purchasedAt, receiptJwt }. Durables arrive with fulfilled true, already granted. For a consumable, grant it, then call fulfill_purchase_async(purchaseId); until then it's redelivered every launch, so dedupe on purchaseId if you persist grants.\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.PURCHASE_TYPE_DURABLE",
+      "brief": "type field on the EVENT_PURCHASE_COMPLETED payload for content purchased once that never expires.\n",
+      "description": "type field on the EVENT_PURCHASE_COMPLETED payload for content purchased once that never expires.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.PURCHASE_TYPE_CONSUMABLE",
+      "brief": "type field on the EVENT_PURCHASE_COMPLETED payload for content that can be purchased repeatedly and is fulfilled by the game.\n",
+      "description": "type field on the EVENT_PURCHASE_COMPLETED payload for content that can be purchased repeatedly and is fulfilled by the game.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.FULFILL_PURCHASE_STATUS_FULFILLED",
+      "brief": "fulfill_purchase_async status: marked fulfilled by this call.\n",
+      "description": "fulfill_purchase_async status: marked fulfilled by this call.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.FULFILL_PURCHASE_STATUS_ALREADY_FULFILLED",
+      "brief": "fulfill_purchase_async status: also success. The game or its backend fulfilled it earlier, or it's a durable.\n",
+      "description": "fulfill_purchase_async status: also success. The game or its backend fulfilled it earlier, or it's a durable.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.FULFILL_PURCHASE_STATUS_NOT_FOUND",
+      "brief": "fulfill_purchase_async status: unknown purchase, or it was refunded. Don't grant it.\n",
+      "description": "fulfill_purchase_async status: unknown purchase, or it was refunded. Don't grant it.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LOBBY_VISIBILITY_PUBLIC",
+      "brief": "LOBBY_VISIBILITY_PUBLIC\n",
+      "description": "LOBBY_VISIBILITY_PUBLIC\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LOBBY_VISIBILITY_FRIENDS_ONLY",
+      "brief": "LOBBY_VISIBILITY_FRIENDS_ONLY\n",
+      "description": "LOBBY_VISIBILITY_FRIENDS_ONLY\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LOBBY_VISIBILITY_PRIVATE",
+      "brief": "LOBBY_VISIBILITY_PRIVATE\n",
+      "description": "LOBBY_VISIBILITY_PRIVATE\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LEADERBOARD_SORT_ORDER_ASC",
+      "brief": "LEADERBOARD_SORT_ORDER_ASC\n",
+      "description": "LEADERBOARD_SORT_ORDER_ASC\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LEADERBOARD_SORT_ORDER_DESC",
+      "brief": "LEADERBOARD_SORT_ORDER_DESC\n",
+      "description": "LEADERBOARD_SORT_ORDER_DESC\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LEADERBOARD_DISPLAY_TYPENUMERIC",
+      "brief": "LEADERBOARD_DISPLAY_TYPENUMERIC\n",
+      "description": "LEADERBOARD_DISPLAY_TYPENUMERIC\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LEADERBOARD_DISPLAY_TYPETIME_SECONDS",
+      "brief": "LEADERBOARD_DISPLAY_TYPETIME_SECONDS\n",
+      "description": "LEADERBOARD_DISPLAY_TYPETIME_SECONDS\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LEADERBOARD_DISPLAY_TYPETIME_MILLISECONDS",
+      "brief": "LEADERBOARD_DISPLAY_TYPETIME_MILLISECONDS\n",
+      "description": "LEADERBOARD_DISPLAY_TYPETIME_MILLISECONDS\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LEADERBOARD_DISPLAY_TYPETIME_GAME_TICKS",
+      "brief": "LEADERBOARD_DISPLAY_TYPETIME_GAME_TICKS\n",
+      "description": "LEADERBOARD_DISPLAY_TYPETIME_GAME_TICKS\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.UGC_TYPE_SCREENSHOT",
+      "brief": "UGC_TYPE_SCREENSHOT\n",
+      "description": "UGC_TYPE_SCREENSHOT\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.UGC_TYPE_VIDEO",
+      "brief": "UGC_TYPE_VIDEO\n",
+      "description": "UGC_TYPE_VIDEO\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.UGC_TYPE_COMMUNITY",
+      "brief": "UGC_TYPE_COMMUNITY\n",
+      "description": "UGC_TYPE_COMMUNITY\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.UGC_TYPE_GAME_MANAGED",
+      "brief": "UGC_TYPE_GAME_MANAGED\n",
+      "description": "UGC_TYPE_GAME_MANAGED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.UGC_TYPE_OTHER",
+      "brief": "UGC_TYPE_OTHER\n",
+      "description": "UGC_TYPE_OTHER\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.UGC_VISIBILITY_PUBLIC",
+      "brief": "UGC_VISIBILITY_PUBLIC\n",
+      "description": "UGC_VISIBILITY_PUBLIC\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.UGC_VISIBILITY_FRIENDS_ONLY",
+      "brief": "UGC_VISIBILITY_FRIENDS_ONLY\n",
+      "description": "UGC_VISIBILITY_FRIENDS_ONLY\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.UGC_VISIBILITY_PRIVATE",
+      "brief": "UGC_VISIBILITY_PRIVATE\n",
+      "description": "UGC_VISIBILITY_PRIVATE\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.AVATAR_SIZE_SMALL",
+      "brief": "AVATAR_SIZE_SMALL\n",
+      "description": "AVATAR_SIZE_SMALL\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.AVATAR_SIZE_MEDIUM",
+      "brief": "AVATAR_SIZE_MEDIUM\n",
+      "description": "AVATAR_SIZE_MEDIUM\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.AVATAR_SIZE_LARGE",
+      "brief": "AVATAR_SIZE_LARGE\n",
+      "description": "AVATAR_SIZE_LARGE\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LOBBY_KICKED_REASON_KICKED",
+      "brief": "LOBBY_KICKED_REASON_KICKED\n",
+      "description": "LOBBY_KICKED_REASON_KICKED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LOBBY_KICKED_REASON_ERROR",
+      "brief": "LOBBY_KICKED_REASON_ERROR\n",
+      "description": "LOBBY_KICKED_REASON_ERROR\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LOBBY_USER_CHANGE_TYPE_JOINED",
+      "brief": "LOBBY_USER_CHANGE_TYPE_JOINED\n",
+      "description": "LOBBY_USER_CHANGE_TYPE_JOINED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LOBBY_USER_CHANGE_TYPE_LEFT",
+      "brief": "LOBBY_USER_CHANGE_TYPE_LEFT\n",
+      "description": "LOBBY_USER_CHANGE_TYPE_LEFT\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.P2P_PACKET_DROP_REASON_QUEUE_FULL",
+      "brief": "P2P_PACKET_DROP_REASON_QUEUE_FULL\n",
+      "description": "P2P_PACKET_DROP_REASON_QUEUE_FULL\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.P2P_PACKET_DROP_REASON_PAYLOAD_TOO_LARGE",
+      "brief": "P2P_PACKET_DROP_REASON_PAYLOAD_TOO_LARGE\n",
+      "description": "P2P_PACKET_DROP_REASON_PAYLOAD_TOO_LARGE\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.P2P_PACKET_DROP_REASON_INVALID_PAYLOAD_SIZE",
+      "brief": "P2P_PACKET_DROP_REASON_INVALID_PAYLOAD_SIZE\n",
+      "description": "P2P_PACKET_DROP_REASON_INVALID_PAYLOAD_SIZE\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.P2P_PACKET_DROP_REASON_INVALID_CHANNEL",
+      "brief": "P2P_PACKET_DROP_REASON_INVALID_CHANNEL\n",
+      "description": "P2P_PACKET_DROP_REASON_INVALID_CHANNEL\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.P2P_PACKET_DROP_REASON_MALFORMED",
+      "brief": "P2P_PACKET_DROP_REASON_MALFORMED\n",
+      "description": "P2P_PACKET_DROP_REASON_MALFORMED\n",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.P2P_PACKET_DROP_REASON_PEER_NOT_READY",
+      "brief": "P2P_PACKET_DROP_REASON_PEER_NOT_READY\n",
+      "description": "P2P_PACKET_DROP_REASON_PEER_NOT_READY\n",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

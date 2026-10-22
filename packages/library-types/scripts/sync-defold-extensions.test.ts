@@ -163,6 +163,23 @@ describe("assignPageKeys", () => {
     expect(reserved.engineNamespaces.has("iap")).toBe(false);
   });
 
+  test("a defold- repo keys by its stem without the prefix, which the version routes own", () => {
+    const keyed = assignPageKeys(
+      [entry("defold-rng", ["rnd"]), entry("defold-random", ["rnd"]), entry("defold-ui", ["gui"])],
+      reserved,
+    );
+    expect(keyed.flatMap((e) => e.docs.map((d) => d.page))).toEqual(["rng", "random", "ui.gui"]);
+  });
+
+  test("a key that would still start with defold- throws naming the doc and the label", () => {
+    expect(() => assignPageKeys([entry("defold-gui", ["gui"])], reserved, "portal")).toThrow(
+      /^portal: page key "defold-gui" from defold\/defold-gui\/api\/gui\.script_api \(gui\)/,
+    );
+    expect(() => assignPageKeys([entry("extension-x", ["defold-x"])], reserved)).toThrow(
+      /^defold-extensions: page key "defold-x"/,
+    );
+  });
+
   test("two docs resolving to one key throw naming both", () => {
     expect(() =>
       assignPageKeys([entry("extension-foo", ["foo"]), entry("extension-bar", ["foo"])], reserved),
