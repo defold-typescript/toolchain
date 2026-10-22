@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { parseNativeRegistration } from "./parse-native-registration";
+import { parseNativeMethodTables, parseNativeRegistration } from "./parse-native-registration";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -18,7 +18,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     expect(surface.functions).toContain("query_aabb_sort");
     expect(surface.functions).toContain("rebuild_all");
     expect(surface.functions).not.toContain("init");
-    expect(surface.methods).toEqual([]);
+    expect(surface.methods).toEqual({});
     expect(surface.constants).toEqual([
       "UPDATE_FULLREBUILD",
       "UPDATE_INCREMENTAL",
@@ -30,7 +30,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     const surface = vendored("defold-tile-raycast/tile-raycast/src/tileraycast.cpp");
     expect(surface.moduleName).toBe("tile_raycast");
     expect(surface.functions).toEqual(["cast", "get_at", "reset", "set_at", "setup"]);
-    expect(surface.methods).toEqual([]);
+    expect(surface.methods).toEqual({});
     expect(surface.constants).toEqual(["BOTTOM", "LEFT", "RIGHT", "TOP"]);
   });
 
@@ -38,7 +38,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     const surface = vendored("defold-sharing/share/src/share.cpp");
     expect(surface.moduleName).toBe("share");
     expect(surface.functions).toEqual(["file", "image", "text"]);
-    expect(surface.methods).toEqual([]);
+    expect(surface.methods).toEqual({});
     expect(surface.constants).toEqual([]);
   });
 
@@ -46,7 +46,15 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     const surface = vendored("defold-uuid4/uuid4/src/extension.cpp");
     expect(surface.moduleName).toBe("uuid4");
     expect(surface.functions).toEqual(["generate"]);
-    expect(surface.methods).toEqual([]);
+    expect(surface.methods).toEqual({});
+    expect(surface.constants).toEqual([]);
+  });
+
+  test("def_windward_jps: the Grid methods keyed by the metatable its const char* names", () => {
+    const surface = vendored("def-windward-jps/def_windward_jps/src/def_windward_jps.cpp");
+    expect(surface.moduleName).toBe("def_windward_jps");
+    expect(surface.functions).toEqual(["create_grid"]);
+    expect(surface.methods).toEqual({ "def_windward_jps.Grid": ["find_path", "is_walkable"] });
     expect(surface.constants).toEqual([]);
   });
 });
@@ -68,7 +76,7 @@ describe("parseNativeRegistration over the other spellings native extensions use
     expect(parseNativeRegistration(source, "inline.cpp")).toEqual({
       moduleName: "mod",
       functions: ["alpha", "beta"],
-      methods: [],
+      methods: {},
       constants: [],
     });
   });
@@ -229,7 +237,7 @@ describe("parseNativeRegistration over a userdata method table", () => {
     expect(parseNativeRegistration(methodTableSource("0"), "inline.cpp")).toEqual({
       moduleName: "jps",
       functions: ["create_grid"],
-      methods: ["find_path", "is_walkable"],
+      methods: { "jps.Grid": ["find_path", "is_walkable"] },
       constants: ["MAX_SIZE"],
     });
   });
@@ -244,6 +252,236 @@ describe("parseNativeRegistration over a userdata method table", () => {
     const surface = parseNativeRegistration(methodTableSource("0"), "inline.cpp");
     expect(surface.constants).not.toContain("__index");
     expect(surface.constants).toEqual(["MAX_SIZE"]);
+  });
+});
+
+describe("a nameless luaL_register call is keyed by the metatable it fills", () => {
+  const MODULE = [
+    "static const luaL_reg Module_methods[] = {",
+    '  {"create", Create},',
+    "  {0, 0}",
+    "};",
+  ];
+
+  test("a #define'd metatable name inside an if block, metamethods and repeats dropped", () => {
+    const source = [
+      '#define META_NAME "Box2d::BodyClass"',
+      ...MODULE,
+      "void BodyInitMetaTable(lua_State *L) {",
+      "  if (luaL_newmetatable(L, META_NAME)) {",
+      "    static const luaL_Reg functions[] =",
+      "    {",
+      '      {"GetType", GetType},',
+      '      {"ApplyForce", ApplyForce},',
+      '      {"GetType", GetType},',
+      '      {"__gc", Destroy},',
+      '      {"__tostring", ToString},',
+      "      {0, 0}",
+      "    };",
+      "    luaL_register (L, NULL,functions);",
+      "  }",
+      '  luaL_register(L, "mod", Module_methods);',
+      "}",
+    ].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp").methods).toEqual({
+      "Box2d::BodyClass": ["ApplyForce", "GetType"],
+    });
+  });
+
+  test("a metatable named by a static const char* resolves to its string", () => {
+    const source = [
+      'static const char* GRID_MT = "jps.Grid";',
+      ...MODULE,
+      "static const luaL_reg Grid_methods[] = {",
+      '  {"find_path", FindPath},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      "  luaL_newmetatable(L, GRID_MT);",
+      "  luaL_register(L, 0, Grid_methods);",
+      "  lua_pop(L, 1);",
+      '  luaL_register(L, "mod", Module_methods);',
+      "}",
+    ].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp").methods).toEqual({
+      "jps.Grid": ["find_path"],
+    });
+  });
+
+  test("each nameless call reads the nearest luaL_newmetatable before it", () => {
+    const source = [
+      ...MODULE,
+      "static const luaL_reg a_methods[] = {",
+      '  {"Get", GetA},',
+      "  {0, 0}",
+      "};",
+      "static const luaL_reg b_methods[] = {",
+      '  {"Set", SetB},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_newmetatable(L, "B");',
+      "  luaL_register(L, 0, b_methods);",
+      "  lua_pop(L, 1);",
+      '  luaL_newmetatable(L, "A");',
+      "  luaL_register(L, 0, a_methods);",
+      "  lua_pop(L, 1);",
+      '  luaL_register(L, "mod", Module_methods);',
+      "}",
+    ].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp").methods).toEqual({
+      A: ["Get"],
+      B: ["Set"],
+    });
+  });
+
+  test("a nameless call with no luaL_newmetatable before it in its function throws naming the file and table", () => {
+    const source = [
+      ...MODULE,
+      "static const luaL_reg Grid_methods[] = {",
+      '  {"find_path", FindPath},',
+      "  {0, 0}",
+      "};",
+      "static void MakeMeta(lua_State* L) {",
+      '  luaL_newmetatable(L, "elsewhere");',
+      "}",
+      "static void LuaInit(lua_State* L) {",
+      "  luaL_register(L, 0, Grid_methods);",
+      '  luaL_register(L, "mod", Module_methods);',
+      "}",
+    ].join("\n");
+    expect(() => parseNativeRegistration(source, "ext/orphan.cpp")).toThrow(
+      /ext\/orphan\.cpp.*Grid_methods/s,
+    );
+  });
+
+  test("a metatable-name identifier with no string behind it throws naming the file", () => {
+    const source = [
+      ...MODULE,
+      "static const luaL_reg Grid_methods[] = {",
+      '  {"find_path", FindPath},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      "  luaL_newmetatable(L, UNKNOWN_MT);",
+      "  luaL_register(L, 0, Grid_methods);",
+      '  luaL_register(L, "mod", Module_methods);',
+      "}",
+    ].join("\n");
+    expect(() => parseNativeRegistration(source, "ext/unknown.cpp")).toThrow(
+      /ext\/unknown\.cpp.*UNKNOWN_MT/s,
+    );
+  });
+});
+
+describe("parseNativeMethodTables over a file that only fills metatables", () => {
+  function methodOnlySource(extra = ""): string {
+    return [
+      '#define META_NAME "Box2d::WorldClass"',
+      "void WorldInitMetaTable(lua_State *L) {",
+      "  luaL_Reg functions[] = {",
+      '    {"Step", Step},',
+      '    {"CreateBody", CreateBody},',
+      '    {"__gc", Destroy},',
+      "    { 0, 0 }",
+      "  };",
+      "  luaL_newmetatable(L, META_NAME);",
+      "  luaL_register (L, NULL,functions);",
+      "  lua_pushvalue(L, -1);",
+      '  lua_setfield(L, -1, "__index");',
+      "  lua_pop(L, 1);",
+      extra,
+      "}",
+    ].join("\n");
+  }
+
+  test("returns each metatable's methods", () => {
+    expect(parseNativeMethodTables(methodOnlySource(), "world.cpp")).toEqual({
+      "Box2d::WorldClass": ["CreateBody", "Step"],
+    });
+  });
+
+  test("a file that makes a named call throws, pointing it at upstreamSource", () => {
+    const source = [
+      "static const luaL_reg Module_methods[] = {",
+      '  {"create", Create},',
+      "  {0, 0}",
+      "};",
+      methodOnlySource('  luaL_register(L, "mod", Module_methods);'),
+    ].join("\n");
+    expect(() => parseNativeMethodTables(source, "ext/module.cpp")).toThrow(
+      /ext\/module\.cpp.*upstreamSource/s,
+    );
+  });
+
+  test("a file with no luaL_register call throws naming the file", () => {
+    expect(() => parseNativeMethodTables('static const char* x = "y";', "ext/none.cpp")).toThrow(
+      /ext\/none\.cpp/,
+    );
+  });
+});
+
+describe("constants set in a nested table read as dotted names", () => {
+  function moduleWith(body: string[]): string {
+    return [
+      "static const luaL_reg methods[] = {",
+      '  {"f", F},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_register(L, "mod", methods);',
+      ...body.map((line) => `  ${line}`),
+      "  lua_pop(L, 1);",
+      "}",
+    ].join("\n");
+  }
+
+  test("a table's keys read under its name, and the name itself is not a constant", () => {
+    const source = moduleWith([
+      "lua_newtable(L);",
+      "lua_pushnumber(L, 0);",
+      'lua_setfield(L, -2, "e_circle");',
+      "lua_pushnumber(L, 1);",
+      'lua_setfield(L, -2, "e_edge");',
+      'lua_setfield(L, -2, "b2Shape");',
+    ]);
+    expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual([
+      "b2Shape.e_circle",
+      "b2Shape.e_edge",
+    ]);
+  });
+
+  test("two levels of tables read as a.b.c, beside a flat constant", () => {
+    const source = moduleWith([
+      "lua_pushnumber(L, 7);",
+      'lua_setfield(L, -2, "FLAT");',
+      "lua_createtable(L, 0, 1);",
+      "lua_newtable(L);",
+      "lua_pushinteger(L, 3);",
+      'lua_setfield(L, -2, "c");',
+      'lua_setfield(L, -2, "b");',
+      'lua_setfield(L, -2, "a");',
+    ]);
+    expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual(["FLAT", "a.b.c"]);
+  });
+
+  test("a SETCONSTANT inside an open table reads under that table", () => {
+    const source = moduleWith([
+      "SETCONSTANT(TOP);",
+      "lua_newtable(L);",
+      "SETCONSTANT(X);",
+      'lua_setfield(L, -2, "T");',
+    ]);
+    expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual(["T.X", "TOP"]);
+  });
+
+  test("a table still open at the end of the registering function throws naming the file", () => {
+    const source = moduleWith([
+      "lua_newtable(L);",
+      "lua_pushnumber(L, 0);",
+      'lua_setfield(L, -2, "k");',
+    ]);
+    expect(() => parseNativeRegistration(source, "ext/open.cpp")).toThrow(/ext\/open\.cpp/);
   });
 });
 
