@@ -26,7 +26,11 @@ afterEach(() => {
 function tempRoot(entry: NativeTarget, declaration: string): string {
   const root = mkdtempSync(join(tmpdir(), "native-parity-"));
   roots.push(root);
-  for (const relative of [entry.upstreamSource, entry.upstreamAnnotation]) {
+  for (const relative of [
+    entry.upstreamSource,
+    entry.upstreamAnnotation,
+    ...(entry.upstreamMethodSources ?? []),
+  ]) {
     if (relative === undefined) continue;
     mkdirSync(dirname(join(root, relative)), { recursive: true });
     cpSync(join(PACKAGE_ROOT, relative), join(root, relative));
@@ -112,7 +116,7 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
     const drifted = shipped.replace("is_walkable(point: Point): boolean;", "");
     expect(drifted).not.toBe(shipped);
     const report = buildNativeParity(tempRoot(entry, drifted), entry);
-    expect(report.missingMethods).toEqual(["is_walkable"]);
+    expect(report.missingMethods).toEqual(["def_windward_jps.Grid.is_walkable"]);
     expect(report.phantomMethods).toEqual([]);
     expect(report.callableCoverage).toBe(Math.round((2 / 3) * 10_000) / 10_000);
   });
@@ -126,7 +130,7 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
     );
     expect(drifted).not.toBe(shipped);
     const report = buildNativeParity(tempRoot(entry, drifted), entry);
-    expect(report.phantomMethods).toEqual(["clear"]);
+    expect(report.phantomMethods).toEqual(["def_windward_jps.Grid.clear"]);
     expect(report.missingMethods).toEqual([]);
     expect(report.missingFunctions).toEqual([]);
     expect(report.phantomFunctions).toEqual([]);
@@ -147,6 +151,125 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
     expect(report.moduleName).toBe("uuid4");
     expect(report.moduleNameMatches).toBe(false);
     expect(report.callableCoverage).toBe(1);
+  });
+});
+
+describe("buildNativeParity over methods registered in several files", () => {
+  const SOURCES: Record<string, string> = {
+    "ext.cpp": [
+      "static const luaL_reg Module_methods[] = {",
+      '  {"f", F},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_register(L, "m", Module_methods);',
+      "  lua_newtable(L);",
+      "  lua_pushnumber(L, 1);",
+      '  lua_setfield(L, -2, "k");',
+      '  lua_setfield(L, -2, "T");',
+      "  lua_pop(L, 1);",
+      "}",
+    ].join("\n"),
+    "a.cpp": metatableSource("A", ["Get", "Set"]),
+    "b.cpp": metatableSource("B", ["Get"]),
+  };
+
+  function metatableSource(metatable: string, methods: string[]): string {
+    return [
+      `void ${metatable}InitMetaTable(lua_State* L) {`,
+      "  luaL_Reg functions[] = {",
+      ...methods.map((name) => `    {"${name}", ${name}},`),
+      '    {"__gc", Destroy},',
+      "    {0, 0}",
+      "  };",
+      `  luaL_newmetatable(L, "${metatable}");`,
+      "  luaL_register(L, NULL, functions);",
+      "  lua_pop(L, 1);",
+      "}",
+    ].join("\n");
+  }
+
+  const DECLARATION = [
+    "declare global {",
+    "  namespace m {",
+    "    function f(): A | B;",
+    "    namespace T {",
+    "      const k: 1;",
+    "    }",
+    "    interface A {",
+    "      Get(): void;",
+    "      Set(): void;",
+    "    }",
+    "    interface B {",
+    "      Set(): void;",
+    "    }",
+    "  }",
+    "}",
+    "export {};",
+  ].join("\n");
+
+  const SYNTHETIC: NativeTarget = {
+    repo: "https://example.invalid/m",
+    ref: "v1",
+    license: "MIT",
+    namespace: "m",
+    manifestDir: "m",
+    declaration: "m.d.ts",
+    upstreamSource: "ext.cpp",
+    upstreamMethodSources: ["a.cpp", "b.cpp"],
+    methodTables: { A: ["A"], B: ["B"] },
+  };
+
+  function syntheticRoot(declaration = DECLARATION): string {
+    const root = mkdtempSync(join(tmpdir(), "native-parity-"));
+    roots.push(root);
+    for (const [relative, source] of Object.entries(SOURCES)) {
+      writeFileSync(join(root, relative), source);
+    }
+    writeFileSync(join(root, SYNTHETIC.declaration), declaration);
+    return root;
+  }
+
+  test("each metatable is measured against its own interfaces, so a name a sibling declares does not hide a gap", () => {
+    const report = buildNativeParity(syntheticRoot(), SYNTHETIC);
+    expect(report.missingMethods).toEqual(["B.Get"]);
+    expect(report.phantomMethods).toEqual(["B.Set"]);
+    expect(report.upstreamMethods).toBe(3);
+    expect(report.declaredMethods).toBe(3);
+    expect(report.callableCoverage).toBe(0.75);
+    expect(report.missingFunctions).toEqual([]);
+    expect(report.missingConstants).toEqual([]);
+    expect(report.phantomConstants).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("a registered metatable with no methodTables entry throws", () => {
+    const entry = { ...SYNTHETIC, methodTables: { A: ["A"] } };
+    expect(() => buildNativeParity(syntheticRoot(), entry)).toThrow(/"B".*no methodTables entry/s);
+  });
+
+  test("an entry for a metatable nothing registers throws", () => {
+    const entry = { ...SYNTHETIC, methodTables: { ...SYNTHETIC.methodTables, C: ["A"] } };
+    expect(() => buildNativeParity(syntheticRoot(), entry)).toThrow(/"C".*nothing registers/s);
+  });
+
+  test("an entry naming an interface the declaration lacks throws", () => {
+    const entry = { ...SYNTHETIC, methodTables: { A: ["A"], B: ["Z"] } };
+    expect(() => buildNativeParity(syntheticRoot(), entry)).toThrow(/"Z"/);
+  });
+
+  test("a declared type with methods that no entry names throws", () => {
+    const declaration = DECLARATION.replace(
+      "    function f(): A | B;",
+      "    function f(): A | B | Extra;\n    interface Extra {\n      Run(): void;\n    }",
+    );
+    expect(declaration).not.toBe(DECLARATION);
+    expect(() => buildNativeParity(syntheticRoot(declaration), SYNTHETIC)).toThrow(/"Extra"/);
+  });
+
+  test("a metatable registered by two method sources throws", () => {
+    const entry = { ...SYNTHETIC, upstreamMethodSources: ["a.cpp", "b.cpp", "b.cpp"] };
+    expect(() => buildNativeParity(syntheticRoot(), entry)).toThrow(/"B".*more than once/s);
   });
 });
 

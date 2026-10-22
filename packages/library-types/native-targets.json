@@ -62,7 +62,8 @@
       "namespace": "def_windward_jps",
       "manifestDir": "def_windward_jps",
       "declaration": "generated/native/def_windward_jps.d.ts",
-      "upstreamSource": "fixtures/upstream-native/def-windward-jps/def_windward_jps/src/def_windward_jps.cpp"
+      "upstreamSource": "fixtures/upstream-native/def-windward-jps/def_windward_jps/src/def_windward_jps.cpp",
+      "methodTables": { "def_windward_jps.Grid": ["Grid"] }
     }
   ]
 }

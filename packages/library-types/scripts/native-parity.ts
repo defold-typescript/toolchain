@@ -6,8 +6,10 @@
  * renders — with `FUNCTION` elements as callables, the method signatures of its
  * `TYPEDEF` elements as userdata methods, and `VARIABLE` elements as constants.
  * The upstream side is `parseNativeRegistration` over the target's
- * `upstreamSource`. Methods count on the callable axis. The two axes are reported
- * separately and never averaged, under
+ * `upstreamSource`, plus `parseNativeMethodTables` over each of its
+ * `upstreamMethodSources`. Methods are measured per metatable, against the
+ * interfaces the target's `methodTables` maps it to, and count on the callable
+ * axis. The two axes are reported separately and never averaged, under
  * the authored lane's either-side rule (`classifyFieldAxis`), and ratcheted by the
  * same `authored-parity-floor.json`.
  *
@@ -21,7 +23,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { type AuthoredArityMismatch, classifyArity, classifyFieldAxis } from "./authored-parity";
 import { parseLuaSurface } from "./parse-lua-surface";
-import { parseNativeRegistration } from "./parse-native-registration";
+import { parseNativeMethodTables, parseNativeRegistration } from "./parse-native-registration";
 import { lowerNativeApiDoc, type NativeTarget, readNativeTargets } from "./sync-native-types";
 
 export const NATIVE_PARITY_DIR = "fidelity/native";
@@ -48,9 +50,13 @@ export interface NativeParityReport {
   declaredFunctions: number;
   missingFunctions: string[];
   phantomFunctions: string[];
+  /** (metatable, method) pairs the C++ registers. */
   upstreamMethods: number;
+  /** (metatable, method) pairs the declaration provides through `methodTables`. */
   declaredMethods: number;
+  /** `<metatable>.<method>`, registered but not declared on that metatable's interfaces. */
   missingMethods: string[];
+  /** `<metatable>.<method>`, declared on that metatable's interfaces but not registered. */
   phantomMethods: string[];
   /** Functions and userdata methods together, so a dropped method lowers it as a
    * dropped function does. */
@@ -169,6 +175,115 @@ function measureArity(
   };
 }
 
+interface MethodAxis {
+  upstreamMethods: number;
+  declaredMethods: number;
+  missingMethods: string[];
+  phantomMethods: string[];
+}
+
+/**
+ * The userdata methods, measured per metatable. The C++ fills one metatable per
+ * nameless `luaL_register` call and never says which declared type it belongs to, so
+ * `methodTables` says so, and each metatable is compared with the union of its
+ * interfaces' method signatures. Matching by bare name across every interface would
+ * read a method dropped from one type as declared whenever a sibling type declares the
+ * same name.
+ *
+ * Every method on either side must be measured: a registered metatable with no entry, an
+ * entry for a metatable nothing registers, an entry naming an interface the declaration
+ * lacks, a declared type with methods no entry names, and a metatable registered twice
+ * all throw.
+ */
+function measureMethods(
+  packageRoot: string,
+  target: NativeTarget,
+  ownTables: Record<string, string[]>,
+  typedefs: ReadonlyMap<string, ReadonlySet<string>>,
+): MethodAxis {
+  const at = `native-targets.json: "${target.namespace}"`;
+  const sources: [file: string, tables: Record<string, string[]>][] = [
+    [target.upstreamSource, ownTables],
+    ...(target.upstreamMethodSources ?? []).map(
+      (file) =>
+        [file, parseNativeMethodTables(readFileSync(join(packageRoot, file), "utf8"), file)] as [
+          string,
+          Record<string, string[]>,
+        ],
+    ),
+  ];
+  const registered = new Map<string, { file: string; methods: string[] }>();
+  for (const [file, tables] of sources) {
+    for (const [metatable, methods] of Object.entries(tables)) {
+      const earlier = registered.get(metatable);
+      if (earlier !== undefined) {
+        throw new Error(
+          `${at} fills metatable "${metatable}" more than once, in ${earlier.file} and ${file} — list each method source once`,
+        );
+      }
+      registered.set(metatable, { file, methods });
+    }
+  }
+
+  const methodTables = target.methodTables ?? {};
+  for (const [metatable, { file }] of registered) {
+    if (!(metatable in methodTables)) {
+      throw new Error(
+        `${at} fills metatable "${metatable}" in ${file}, but has no methodTables entry for it — map it to the interfaces it provides`,
+      );
+    }
+  }
+  const mapped = new Set<string>();
+  for (const [metatable, interfaces] of Object.entries(methodTables)) {
+    if (!registered.has(metatable)) {
+      throw new Error(
+        `${at} has a methodTables entry "${metatable}" for a metatable nothing registers — delete the entry`,
+      );
+    }
+    for (const name of interfaces) {
+      if (!typedefs.has(name)) {
+        throw new Error(
+          `${at} maps metatable "${metatable}" to "${name}", but the declaration's API doc has no type "${name}" — declare it where a member's signature reaches it`,
+        );
+      }
+      mapped.add(name);
+    }
+  }
+  const unmapped = [...typedefs]
+    .filter(([name, methods]) => methods.size > 0 && !mapped.has(name))
+    .map(([name]) => `"${name}"`);
+  if (unmapped.length > 0) {
+    throw new Error(
+      `${at} declares methods on ${unmapped.join(", ")}, which no methodTables entry names, so they would go unmeasured`,
+    );
+  }
+
+  let upstreamMethods = 0;
+  let declaredMethods = 0;
+  const missingMethods: string[] = [];
+  const phantomMethods: string[] = [];
+  for (const [metatable, { methods }] of registered) {
+    const upstream = new Set(methods);
+    const declared = new Set(
+      (methodTables[metatable] ?? []).flatMap((name) => [...(typedefs.get(name) ?? [])]),
+    );
+    upstreamMethods += upstream.size;
+    declaredMethods += declared.size;
+    for (const name of upstream) {
+      if (!declared.has(name)) missingMethods.push(`${metatable}.${name}`);
+    }
+    for (const name of declared) {
+      if (!upstream.has(name)) phantomMethods.push(`${metatable}.${name}`);
+    }
+  }
+  return {
+    upstreamMethods,
+    declaredMethods,
+    missingMethods: missingMethods.sort(),
+    phantomMethods: phantomMethods.sort(),
+  };
+}
+
 export function buildNativeParity(packageRoot: string, target: NativeTarget): NativeParityReport {
   const { elements } = JSON.parse(lowerNativeApiDoc(packageRoot, target)) as {
     elements: {
@@ -181,13 +296,15 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
   const declaredCallable = new Set(
     elements.filter((element) => element.type === "FUNCTION").map((element) => element.name),
   );
-  // A userdata method is matched by bare name: the C++ fills one metatable per
-  // `luaL_register(L, 0, ...)` and never says which Lua type it belongs to.
-  const declaredMethods = new Set(
-    elements
-      .filter((element) => element.type === "TYPEDEF")
-      .flatMap((element) => (element.functions ?? []).map((method) => method.name)),
-  );
+  // A userdata method is matched per metatable, against the interfaces `methodTables`
+  // maps it to; `measureMethods` says why a bare-name match across every type would not do.
+  const typedefs = new Map<string, Set<string>>();
+  for (const element of elements) {
+    if (element.type !== "TYPEDEF") continue;
+    const methods = typedefs.get(element.name) ?? new Set<string>();
+    for (const method of element.functions ?? []) methods.add(method.name);
+    typedefs.set(element.name, methods);
+  }
   const declaredVariables = new Set(
     elements.filter((element) => element.type === "VARIABLE").map((element) => element.name),
   );
@@ -212,9 +329,7 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
 
   const missingFunctions = [...upstreamCallable].filter((name) => !declaredCallable.has(name));
   const phantomFunctions = [...declaredCallable].filter((name) => !upstreamCallable.has(name));
-  const upstreamMethods = new Set(registration.methods);
-  const missingMethods = [...upstreamMethods].filter((name) => !declaredMethods.has(name));
-  const phantomMethods = [...declaredMethods].filter((name) => !upstreamMethods.has(name));
+  const methods = measureMethods(packageRoot, target, registration.methods, typedefs);
   const fields = classifyFieldAxis({
     upstreamCallable,
     upstreamNonCallable: new Set(registration.constants),
@@ -230,13 +345,10 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
     declaredFunctions: declaredCallable.size,
     missingFunctions: missingFunctions.sort(),
     phantomFunctions: phantomFunctions.sort(),
-    upstreamMethods: upstreamMethods.size,
-    declaredMethods: declaredMethods.size,
-    missingMethods: missingMethods.sort(),
-    phantomMethods: phantomMethods.sort(),
+    ...methods,
     callableCoverage: coverage(
-      upstreamCallable.size + upstreamMethods.size,
-      missingFunctions.length + missingMethods.length,
+      upstreamCallable.size + methods.upstreamMethods,
+      missingFunctions.length + methods.missingMethods.length,
     ),
     upstreamConstants: fields.upstreamFields.size,
     declaredConstants: fields.declaredFields.size,
