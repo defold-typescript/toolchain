@@ -74,6 +74,11 @@ export interface EmitOptions {
   // map; a library or extension declaration passes its page keys (`[]` for one
   // no page documents), so it never names Defold as the receiver.
   indexBaseSource?: IndexBaseSource;
+  // Whether the module declares the `CONSTANT_UNION_ALIASES` rows homed in its
+  // namespace. Defaults to `true`; an extension declaring an engine namespace
+  // passes `false`, so it never re-declares an alias the engine module already
+  // declares, while its signatures still spell `gui.Playback`.
+  ownsConstantUnionAliases?: boolean;
   // The TS path of each `ENUM`, `STRUCT` and `TYPEDEF` another module declares
   // (`declaredTypePaths`), so a token naming one resolves instead of widening to
   // `unknown`. The module's own declarations resolve without it. Read only by the
@@ -2370,7 +2375,9 @@ export function constantUnionSpelling(row: ConstantUnionAlias): string {
 // declared in its home whether or not that module references it, so a
 // cross-namespace row is reachable from the module whose signatures spell it.
 // A row whose name the module's own `ENUM` already declares is left to that
-// `ENUM`, which carries the reference's member order and nilable arms.
+// `ENUM`, which carries the reference's member order and nilable arms. An
+// extension module is never a row's home, even when it declares the engine
+// namespace (`gui`), so its emit skips this (`ownsConstantUnionAliases`).
 function ownedConstantUnionAliases(
   namespace: string,
   enumDeclared: ReadonlySet<string>,
@@ -5113,11 +5120,13 @@ export function emitDeclarations(documented: ApiModule, options?: EmitOptions): 
   lines.push(`declare namespace ${module.namespace} {`);
 
   for (const declaration of typeDeclarations) lines.push(...declaration.lines(INDENT, decl));
-  for (const aliasDecl of constantUnionAliasDeclarations(
-    module.namespace,
-    new Set(enumAliases.all.map((alias) => alias.path)),
-  )) {
-    lines.push(`${INDENT}${decl}${aliasDecl}`);
+  if (options?.ownsConstantUnionAliases !== false) {
+    for (const aliasDecl of constantUnionAliasDeclarations(
+      module.namespace,
+      new Set(enumAliases.all.map((alias) => alias.path)),
+    )) {
+      lines.push(`${INDENT}${decl}${aliasDecl}`);
+    }
   }
   for (const { declaration } of overloadSlotAliasDeclarations(
     [...module.functions, ...(options?.withheldFunctions ?? [])],
@@ -5665,10 +5674,14 @@ export function emitSymbolSignatures(
   // names one carries no member list of its own, so the docs read the members
   // from here rather than from the emitter's table.
   const enumAliases = collectEnumAliases(module, constants, nestedRoot);
-  for (const row of ownedConstantUnionAliases(
-    module.namespace,
-    new Set(enumAliases.all.map((alias) => alias.path)),
-  )) {
+  const ownedAliases =
+    options?.ownsConstantUnionAliases === false
+      ? []
+      : ownedConstantUnionAliases(
+          module.namespace,
+          new Set(enumAliases.all.map((alias) => alias.path)),
+        );
+  for (const row of ownedAliases) {
     const name = engineTypeName(row.name);
     out.push({
       identity: { namespace: module.namespace, kind: "TYPEDEF", name, signature: "" },
