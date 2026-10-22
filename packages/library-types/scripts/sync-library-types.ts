@@ -431,10 +431,25 @@ export function portalScriptApiEligibility(
 /** Native dir -> why the native sweep leaves it untyped. */
 export type NativeSweepVerdicts = Readonly<Record<string, string>>;
 
-/** No absent-file fallback: a missing file would otherwise read as no verdicts. */
+/**
+ * No absent-file fallback: a missing file would otherwise read as no verdicts.
+ * A malformed reason would otherwise count its dir as covered.
+ */
 export function readNativeSweepVerdicts(packageRoot: string): NativeSweepVerdicts {
   const file = join(packageRoot, "native-sweep-verdicts.json");
-  return (JSON.parse(readFileSync(file, "utf8")) as { verdicts: NativeSweepVerdicts }).verdicts;
+  const isObject = (value: unknown): value is Record<string, unknown> =>
+    value !== null && typeof value === "object" && !Array.isArray(value);
+  const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
+  const verdicts = isObject(raw) ? raw.verdicts : undefined;
+  if (!isObject(verdicts)) {
+    throw new Error("native-sweep-verdicts.json: verdicts must be an object of dir -> reason");
+  }
+  for (const [dir, reason] of Object.entries(verdicts)) {
+    if (typeof reason !== "string" || reason.trim() === "") {
+      throw new Error(`native-sweep-verdicts.json: ${dir} needs a non-empty string reason`);
+    }
+  }
+  return verdicts as NativeSweepVerdicts;
 }
 
 /**
