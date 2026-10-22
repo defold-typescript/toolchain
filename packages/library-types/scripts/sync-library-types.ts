@@ -13,6 +13,7 @@ import { readAuthoredTargets } from "./sync-authored-types";
 import type { DefoldExtensionEntry } from "./sync-defold-extensions";
 import { readLualsTargets } from "./sync-luals-types";
 import { readMarkdownTargets } from "./sync-markdown-types";
+import type { NativeTarget } from "./sync-native-types";
 import { readOpenApiTargets } from "./sync-openapi-types";
 import { readScriptApiTargets } from "./sync-script-api-types";
 
@@ -425,6 +426,65 @@ export function portalScriptApiEligibility(
     if (ships === undefined) return entry;
     return { ...entry, scriptApi: ships ? "ships" : "none", scriptApiSource: "asset-portal" };
   });
+}
+
+/** Native dir -> why the native sweep leaves it untyped. */
+export type NativeSweepVerdicts = Readonly<Record<string, string>>;
+
+/** No absent-file fallback: a missing file would otherwise read as no verdicts. */
+export function readNativeSweepVerdicts(packageRoot: string): NativeSweepVerdicts {
+  const file = join(packageRoot, "native-sweep-verdicts.json");
+  return (JSON.parse(readFileSync(file, "utf8")) as { verdicts: NativeSweepVerdicts }).verdicts;
+}
+
+/**
+ * The native dirs the sweep has not accounted for, sorted. A dir is accounted
+ * for when its upstream ships a `.script_api`, a native target registers one of
+ * its modules (exact name only, so a `share` target never claims `share_ext`),
+ * `asset-portal.json` decided its verdict, an upstream lookup recorded why it
+ * could not reach a repo, or a verdict says why it stays untyped. A verdict for
+ * a dir absent from `entries`, a non-native dir, or one another route covers
+ * throws: it is stale, and keeping it would hide the next dir it is mistaken for.
+ */
+export function nativeSweepRemainder(
+  entries: readonly ClassificationEntry[],
+  nativeTargets: readonly Pick<NativeTarget, "namespace">[],
+  verdicts: NativeSweepVerdicts,
+): string[] {
+  const typedModules = new Set(nativeTargets.map((target) => target.namespace));
+  const coveredBy = (entry: ClassificationEntry): string | undefined => {
+    if (entry.scriptApi === "ships") return "its shipped .script_api";
+    if (entry.modules.some((m) => typedModules.has(m))) return "a native target";
+    if (entry.scriptApiSource === "asset-portal") return "asset-portal.json";
+    if (entry.scriptApiReason !== undefined) return `its upstream reason ${entry.scriptApiReason}`;
+    return undefined;
+  };
+  const byDir = new Map(entries.map((entry) => [entry.dir, entry]));
+  const verdictDirs = new Set(Object.keys(verdicts));
+  for (const dir of verdictDirs) {
+    const entry = byDir.get(dir);
+    if (entry === undefined) {
+      throw new Error(
+        `native-sweep-verdicts.json: ${dir} is not a library-classification.json dir`,
+      );
+    }
+    if (entry.classification !== "native") {
+      throw new Error(`native-sweep-verdicts.json: ${dir} is ${entry.classification}, not native`);
+    }
+    const route = coveredBy(entry);
+    if (route !== undefined) {
+      throw new Error(`native-sweep-verdicts.json: ${dir} is already covered by ${route}`);
+    }
+  }
+  return entries
+    .filter(
+      (entry) =>
+        entry.classification === "native" &&
+        coveredBy(entry) === undefined &&
+        !verdictDirs.has(entry.dir),
+    )
+    .map((entry) => entry.dir)
+    .sort();
 }
 
 /**

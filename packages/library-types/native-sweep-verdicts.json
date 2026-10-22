@@ -1,0 +1,8 @@
+{
+  "verdicts": {
+    "defold-imagepicker": "unmaintained: baochungit/defold-imagepicker last pushed 2024-07-25",
+    "defold-playdeck": "unmaintained: d954mas/defold-playdeck last pushed 2024-08-19",
+    "defold-textinput": "unmaintained: baochungit/defold-textinput last pushed 2024-07-30",
+    "extension-videoplayer": "example extension: its README says not to depend on it and points to extension-videoplayer-native, which ships a .script_api"
+  }
+}
