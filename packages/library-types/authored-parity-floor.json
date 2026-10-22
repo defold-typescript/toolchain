@@ -167,6 +167,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/native/def_windward_jps.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/native/pixels.json": {
     "callable": 1,
     "field": 1

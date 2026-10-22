@@ -1,0 +1,138 @@
+{
+  "info": {
+    "namespace": "def_windward_jps",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "create_grid",
+      "brief": "Creates a grid to find paths on.",
+      "description": "Creates a grid to find paths on.",
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "Number of cells horizontally.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Number of cells vertically.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "walls",
+          "doc": "Blocked cells, such as `[[10, 12], [11, 12]]`. **⚠️ 1-based; passed to `def_windward_jps` unchanged.**",
+          "types": [
+            "Point[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The new grid.",
+          "types": [
+            "Grid"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Point",
+      "types": [
+        "[ x: number, y: number ]"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Grid",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "find_path",
+          "brief": "Finds a path between two cells. A start or goal that is outside the",
+          "description": "Finds a path between two cells. A start or goal that is outside the\ngrid or blocked, or a goal that cannot be reached, fails with an error\nmessage instead of a path, so check `path` before reading it.",
+          "parameters": [
+            {
+              "name": "start",
+              "doc": "Cell to start from. **⚠️ 1-based; passed to `def_windward_jps` unchanged.**",
+              "types": [
+                "Point"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "goal",
+              "doc": "Cell to reach. **⚠️ 1-based; passed to `def_windward_jps` unchanged.**",
+              "types": [
+                "Point"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "heuristic",
+              "doc": "Distance estimate to search with. Default is `\"octile\"`.",
+              "types": [
+                "Heuristic"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "`path`, the cells from start to goal, and `nil`; or `nil` and\n`message`, why the search failed.\n\n**⚠️ `path` is 1-based; passed to `def_windward_jps` unchanged.**",
+              "types": [
+                "LuaMultiReturn<[ Point[], undefined ] | [ undefined, string ]>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_walkable",
+          "brief": "Whether a cell is inside the grid and not blocked. Use it to check a",
+          "description": "Whether a cell is inside the grid and not blocked. Use it to check a\ncell before searching from or to it.",
+          "parameters": [
+            {
+              "name": "point",
+              "doc": "Cell to check. **⚠️ 1-based; passed to `def_windward_jps` unchanged.**",
+              "types": [
+                "Point"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "`true` if the cell can be walked through.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Heuristic",
+      "types": [
+        "\"octile\"",
+        "\"manhattan\"",
+        "\"euclidean\""
+      ]
+    }
+  ]
+}

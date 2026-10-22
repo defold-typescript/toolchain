@@ -60,6 +60,33 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
       evidence: "internal/ecs.lua:tiny_manageSystems sets systems[j].index = j",
     },
   ],
+  ...[
+    "def_windward_jps/create_grid:param:walls",
+    "def_windward_jps/find_path:param:start",
+    "def_windward_jps/find_path:param:goal",
+    "def_windward_jps/is_walkable:param:point",
+  ].map((key): [string, LibraryIndexSlotClassification] => [
+    key,
+    {
+      class: "native-1",
+      evidence: "def_windward_jps.cpp:ReadLocation subtracts 1 from both components of each point",
+    },
+  ]),
+  [
+    "def_windward_jps/find_path:return:",
+    {
+      class: "not-a-position",
+      evidence:
+        "a pair: `path` and `nil`, or `nil` and `message`; `path` is keyed on its own and `message` addresses nothing",
+    },
+  ],
+  [
+    "def_windward_jps/find_path:return::path",
+    {
+      class: "native-1",
+      evidence: "def_windward_jps.cpp:PushLocation adds 1 to both components of each point",
+    },
+  ],
   [
     "dragonbones/dragonbones.load_data:param:aramture_index",
     {
