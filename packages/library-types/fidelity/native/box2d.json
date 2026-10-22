@@ -1,0 +1,26 @@
+{
+  "namespace": "box2d",
+  "moduleName": "box2d",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 18,
+  "declaredFunctions": 18,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "upstreamMethods": 275,
+  "declaredMethods": 275,
+  "missingMethods": [],
+  "phantomMethods": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 27,
+  "declaredConstants": 27,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1,
+  "arityMeasured": true,
+  "arityMismatches": [],
+  "arityExceptions": [],
+  "annotationDrift": {
+    "unregistered": [],
+    "undeclared": []
+  }
+}

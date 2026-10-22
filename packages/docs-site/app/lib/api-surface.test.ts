@@ -727,6 +727,7 @@ describe("loadApiSurface library descriptions", () => {
       "tile_raycast",
       "pixels",
       "def_windward_jps",
+      "box2d",
     ]) {
       const page = libraryPages.find((p) => p.route === `/api/${namespace}`);
       expect(page?.namespace).toBe(namespace);
@@ -3421,6 +3422,15 @@ describe("native helper shape definitions", () => {
     const names = group("def_windward_jps", "Grid")?.symbols.map((s) => s.name) ?? [];
     expect(names).toContain("Grid.find_path");
     expect(names).toContain("Grid.is_walkable");
+  });
+
+  test("renders box2d's body methods and its nested constant tables", () => {
+    expect(group("box2d", "Body")?.symbols.map((s) => s.name) ?? []).toContain(
+      "Body.CreateFixture",
+    );
+    expect(
+      apiModuleSymbols(page("box2d"), page("box2d").translations).map((s) => s.name),
+    ).toContain("b2BodyType.b2_dynamicBody");
   });
 
   test("leaves a signature whose union is a return type unchanged", () => {
