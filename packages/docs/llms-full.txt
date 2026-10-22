@@ -6708,9 +6708,11 @@ is missing and a warning would be noise.
 
 #### Curated native extensions
 
-A native extension that ships no `.script_api` gives `resolve` nothing to emit:
-its Lua API is registered in C++. For the ones listed below, this toolchain ships
-a hand-written ambient namespace instead. `resolve` uses it when the dependency's
+A native extension registers its Lua API in C++. One that ships no
+`.script_api` gives `resolve` nothing to emit, and one whose `.script_api` is too
+loose to type correct code emits a namespace that accepts calls failing at
+runtime. For the ones listed below, this toolchain ships a hand-written ambient
+namespace instead. `resolve` uses it when the dependency's
 repo name matches **and** the archive ships the extension's `ext.manifest` in
 the named directory, so a repo-name collision alone writes nothing.
 
@@ -6720,6 +6722,7 @@ the named directory, so a repo-name collision alone writes nothing.
 | [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | [`share`](/api/share) | `share/ext.manifest` |
 | [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | [`uuid4`](/api/uuid4) | `uuid4/ext.manifest` |
 | [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](/api/tile_raycast) | `tile-raycast/ext.manifest` |
+| [king8fisher/defold-pixels](https://github.com/king8fisher/defold-pixels) | `70f7784` | [`pixels`](/api/pixels) | `defold-pixels/ext.manifest` |
 
 The namespace lands in `.defold-types/extensions/` like a `.script_api`
 namespace and needs no import:
@@ -6733,6 +6736,12 @@ The curated file wins over any `.script_api` the same archive ships, and the
 `--json` report marks the dependency `typeSurface: "vendored-native"`. A project
 that still depends on the old `selimanac/DAABBCC` URL is not matched; point
 the dependency at `selimanac/defold-daabbcc`.
+
+A project that copied defold-pixels' own `types/pixels.d.ts` deletes it: both
+files declare `pixels`, so TypeScript merges them into overloads that accept what
+the curated namespace rejects. Rename its `PixelsBufferInfo`, `PixelsColor` and
+`PixelsPolylineOptions` to `pixels.BufferInfo`, `pixels.Color` and
+`pixels.PolylineOptions`.
 
 Each namespace types what the extension's C++ actually registers, which can
 differ from its README. `tile_raycast` registers its tile reader as `set_at` and
