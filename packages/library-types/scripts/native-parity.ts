@@ -3,9 +3,11 @@
  * declaration names against what its vendored C++ registers.
  *
  * The declared side is `lowerNativeApiDoc`'s model — the same one the `/api` page
- * renders — with `FUNCTION` elements as callables and `VARIABLE` elements as
- * constants. The upstream side is `parseNativeRegistration` over the target's
- * `upstreamSource`. The two axes are reported separately and never averaged, under
+ * renders — with `FUNCTION` elements as callables, the method signatures of its
+ * `TYPEDEF` elements as userdata methods, and `VARIABLE` elements as constants.
+ * The upstream side is `parseNativeRegistration` over the target's
+ * `upstreamSource`. Methods count on the callable axis. The two axes are reported
+ * separately and never averaged, under
  * the authored lane's either-side rule (`classifyFieldAxis`), and ratcheted by the
  * same `authored-parity-floor.json`.
  *
@@ -46,6 +48,12 @@ export interface NativeParityReport {
   declaredFunctions: number;
   missingFunctions: string[];
   phantomFunctions: string[];
+  upstreamMethods: number;
+  declaredMethods: number;
+  missingMethods: string[];
+  phantomMethods: string[];
+  /** Functions and userdata methods together, so a dropped method lowers it as a
+   * dropped function does. */
   callableCoverage: number;
   upstreamConstants: number;
   declaredConstants: number;
@@ -163,10 +171,22 @@ function measureArity(
 
 export function buildNativeParity(packageRoot: string, target: NativeTarget): NativeParityReport {
   const { elements } = JSON.parse(lowerNativeApiDoc(packageRoot, target)) as {
-    elements: { type: string; name: string; parameters?: unknown[] }[];
+    elements: {
+      type: string;
+      name: string;
+      parameters?: unknown[];
+      functions?: { name: string }[];
+    }[];
   };
   const declaredCallable = new Set(
     elements.filter((element) => element.type === "FUNCTION").map((element) => element.name),
+  );
+  // A userdata method is matched by bare name: the C++ fills one metatable per
+  // `luaL_register(L, 0, ...)` and never says which Lua type it belongs to.
+  const declaredMethods = new Set(
+    elements
+      .filter((element) => element.type === "TYPEDEF")
+      .flatMap((element) => (element.functions ?? []).map((method) => method.name)),
   );
   const declaredVariables = new Set(
     elements.filter((element) => element.type === "VARIABLE").map((element) => element.name),
@@ -192,6 +212,9 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
 
   const missingFunctions = [...upstreamCallable].filter((name) => !declaredCallable.has(name));
   const phantomFunctions = [...declaredCallable].filter((name) => !upstreamCallable.has(name));
+  const upstreamMethods = new Set(registration.methods);
+  const missingMethods = [...upstreamMethods].filter((name) => !declaredMethods.has(name));
+  const phantomMethods = [...declaredMethods].filter((name) => !upstreamMethods.has(name));
   const fields = classifyFieldAxis({
     upstreamCallable,
     upstreamNonCallable: new Set(registration.constants),
@@ -207,7 +230,14 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
     declaredFunctions: declaredCallable.size,
     missingFunctions: missingFunctions.sort(),
     phantomFunctions: phantomFunctions.sort(),
-    callableCoverage: coverage(upstreamCallable.size, missingFunctions.length),
+    upstreamMethods: upstreamMethods.size,
+    declaredMethods: declaredMethods.size,
+    missingMethods: missingMethods.sort(),
+    phantomMethods: phantomMethods.sort(),
+    callableCoverage: coverage(
+      upstreamCallable.size + upstreamMethods.size,
+      missingFunctions.length + missingMethods.length,
+    ),
     upstreamConstants: fields.upstreamFields.size,
     declaredConstants: fields.declaredFields.size,
     missingConstants: fields.missingFields,
@@ -233,7 +263,7 @@ if (import.meta.main) {
       ? `${report.arityMismatches?.length ?? 0} arity, ${report.arityExceptions?.length ?? 0} excepted, ${(report.annotationDrift?.unregistered.length ?? 0) + (report.annotationDrift?.undeclared.length ?? 0)} drift`
       : "arity unmeasured";
     console.log(
-      `${target.namespace}: module ${report.moduleName}${report.moduleNameMatches ? "" : " (MISMATCH)"} | functions ${report.upstreamFunctions} upstream, ${report.missingFunctions.length} missing, ${report.phantomFunctions.length} phantom, coverage ${report.callableCoverage} | constants ${report.upstreamConstants} upstream, ${report.missingConstants.length} missing, ${report.phantomConstants.length} phantom, coverage ${report.fieldCoverage} | ${arity}`,
+      `${target.namespace}: module ${report.moduleName}${report.moduleNameMatches ? "" : " (MISMATCH)"} | functions ${report.upstreamFunctions} upstream, ${report.missingFunctions.length} missing, ${report.phantomFunctions.length} phantom | methods ${report.upstreamMethods} upstream, ${report.missingMethods.length} missing, ${report.phantomMethods.length} phantom | callable coverage ${report.callableCoverage} | constants ${report.upstreamConstants} upstream, ${report.missingConstants.length} missing, ${report.phantomConstants.length} phantom, coverage ${report.fieldCoverage} | ${arity}`,
     );
   }
 }

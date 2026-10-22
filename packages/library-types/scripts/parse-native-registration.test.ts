@@ -18,6 +18,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     expect(surface.functions).toContain("query_aabb_sort");
     expect(surface.functions).toContain("rebuild_all");
     expect(surface.functions).not.toContain("init");
+    expect(surface.methods).toEqual([]);
     expect(surface.constants).toEqual([
       "UPDATE_FULLREBUILD",
       "UPDATE_INCREMENTAL",
@@ -29,6 +30,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     const surface = vendored("defold-tile-raycast/tile-raycast/src/tileraycast.cpp");
     expect(surface.moduleName).toBe("tile_raycast");
     expect(surface.functions).toEqual(["cast", "get_at", "reset", "set_at", "setup"]);
+    expect(surface.methods).toEqual([]);
     expect(surface.constants).toEqual(["BOTTOM", "LEFT", "RIGHT", "TOP"]);
   });
 
@@ -36,6 +38,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     const surface = vendored("defold-sharing/share/src/share.cpp");
     expect(surface.moduleName).toBe("share");
     expect(surface.functions).toEqual(["file", "image", "text"]);
+    expect(surface.methods).toEqual([]);
     expect(surface.constants).toEqual([]);
   });
 
@@ -43,6 +46,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     const surface = vendored("defold-uuid4/uuid4/src/extension.cpp");
     expect(surface.moduleName).toBe("uuid4");
     expect(surface.functions).toEqual(["generate"]);
+    expect(surface.methods).toEqual([]);
     expect(surface.constants).toEqual([]);
   });
 });
@@ -64,6 +68,7 @@ describe("parseNativeRegistration over the other spellings native extensions use
     expect(parseNativeRegistration(source, "inline.cpp")).toEqual({
       moduleName: "mod",
       functions: ["alpha", "beta"],
+      methods: [],
       constants: [],
     });
   });
@@ -103,7 +108,7 @@ describe("parseNativeRegistration over the other spellings native extensions use
     expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual(["MAX"]);
   });
 
-  test("constants are scoped to the whole registering function, not its nearest block or namespace", () => {
+  test("constants are scoped from the call to the end of the registering function, not its nearest block or namespace", () => {
     const source = [
       "namespace dmExt {",
       "static int Query(lua_State* L) {",
@@ -123,7 +128,7 @@ describe("parseNativeRegistration over the other spellings native extensions use
       "}",
       "}",
     ].join("\n");
-    expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual(["AFTER", "BEFORE"]);
+    expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual(["AFTER"]);
   });
 
   test("a lua_setfield building a result table in another function is not a constant", () => {
@@ -193,7 +198,83 @@ describe("parseNativeRegistration over the other spellings native extensions use
   });
 });
 
+describe("parseNativeRegistration over a userdata method table", () => {
+  function methodTableSource(nameArgument: string): string {
+    return [
+      '#define MODULE_NAME "jps"',
+      "static const luaL_reg Module_methods[] = {",
+      '  {"create_grid", CreateGrid},',
+      "  {0, 0}",
+      "};",
+      "static const luaL_reg Grid_methods[] = {",
+      '  {"is_walkable", IsWalkable},',
+      '  {"find_path", FindPath},',
+      '  {"__gc", GridGC},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_newmetatable(L, "jps.Grid");',
+      "  lua_pushvalue(L, -1);",
+      '  lua_setfield(L, -2, "__index");',
+      `  luaL_register(L, ${nameArgument}, Grid_methods);`,
+      "  lua_pop(L, 1);",
+      "  luaL_register(L, MODULE_NAME, Module_methods);",
+      "  SETCONSTANT(MAX_SIZE);",
+      "  lua_pop(L, 1);",
+      "}",
+    ].join("\n");
+  }
+
+  test("a nameless call is read as methods, with metamethods dropped, beside the named module", () => {
+    expect(parseNativeRegistration(methodTableSource("0"), "inline.cpp")).toEqual({
+      moduleName: "jps",
+      functions: ["create_grid"],
+      methods: ["find_path", "is_walkable"],
+      constants: ["MAX_SIZE"],
+    });
+  });
+
+  test("NULL as the name argument reads the same as 0", () => {
+    expect(parseNativeRegistration(methodTableSource("NULL"), "inline.cpp")).toEqual(
+      parseNativeRegistration(methodTableSource("0"), "inline.cpp"),
+    );
+  });
+
+  test("a metatable field set before the named call is not a constant", () => {
+    const surface = parseNativeRegistration(methodTableSource("0"), "inline.cpp");
+    expect(surface.constants).not.toContain("__index");
+    expect(surface.constants).toEqual(["MAX_SIZE"]);
+  });
+});
+
 describe("parseNativeRegistration refuses what it cannot read", () => {
+  test("two named luaL_register calls throw naming the file", () => {
+    const source = [
+      "static const luaL_reg methods[] = {",
+      '  {"f", F},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_register(L, "one", methods);',
+      '  luaL_register(L, "two", methods);',
+      "}",
+    ].join("\n");
+    expect(() => parseNativeRegistration(source, "ext/two.cpp")).toThrow(/ext\/two\.cpp/);
+  });
+
+  test("a file whose only luaL_register call is nameless throws naming the file", () => {
+    const source = [
+      "static const luaL_reg Grid_methods[] = {",
+      '  {"find_path", FindPath},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      "  luaL_register(L, 0, Grid_methods);",
+      "}",
+    ].join("\n");
+    expect(() => parseNativeRegistration(source, "ext/nameless.cpp")).toThrow(/ext\/nameless\.cpp/);
+  });
+
   test("a source with no luaL_register call throws naming the file", () => {
     expect(() => parseNativeRegistration('static const char* x = "y";', "ext/none.cpp")).toThrow(
       /ext\/none\.cpp/,

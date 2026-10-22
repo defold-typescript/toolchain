@@ -10,9 +10,16 @@
  * commented-out entry is never read as registered, and a commented-out `#define`
  * never resolves a module-name identifier.
  *
- * Constants are read only inside the function that makes the `luaL_register`
- * call: the same `lua_setfield(L, -2, "id")` shape builds result tables in the
- * query functions, and counting those would invent phantom constants.
+ * A userdata type registers its methods the same way, with no module name:
+ * `luaL_register(L, 0, <table>)` (or `NULL`) fills the metatable on top of the
+ * stack. Such a call is read as `methods`, metamethods (`__gc`, `__index`, ...)
+ * dropped, and the file must still make exactly one named call.
+ *
+ * Constants are read from the named call to the end of the function that makes
+ * it: the module table does not exist before the call, so a `lua_setfield` there
+ * sets a metatable field such as `__index`, and the same
+ * `lua_setfield(L, -2, "id")` shape builds result tables in the query functions,
+ * where counting it would invent phantom constants.
  *
  * Like `parse-lua-surface.ts`, this prefers a loud failure to a short surface: a
  * file with no `luaL_register` call, a table it cannot find, or a name it cannot
@@ -23,7 +30,15 @@
 export interface NativeRegistration {
   moduleName: string;
   functions: string[];
+  /** Userdata methods, from every nameless `luaL_register` call. */
+  methods: string[];
   constants: string[];
+}
+
+interface RegisterCall {
+  index: number;
+  nameArgument: string;
+  tableName: string;
 }
 
 export function parseNativeRegistration(source: string, file: string): NativeRegistration {
@@ -32,30 +47,47 @@ export function parseNativeRegistration(source: string, file: string): NativeReg
   const code = blankPreprocessorLines(live);
   const structure = maskStringContents(code);
 
-  const calls = [
+  const calls: RegisterCall[] = [
     ...structure.matchAll(/\bluaL_register\s*\(\s*\w+\s*,\s*("[^"]*"|\w+)\s*,\s*(\w+)\s*\)/g),
-  ];
+  ].map((call) => {
+    const index = call.index ?? 0;
+    const name = call[1] as string;
+    const nameStart = index + call[0].indexOf(name);
+    return {
+      index,
+      nameArgument: code.slice(nameStart, nameStart + name.length),
+      tableName: call[2] as string,
+    };
+  });
   if (calls.length === 0) {
     throw new Error(
       `native registration: ${file} has no luaL_register call, so its registered surface cannot be read.`,
     );
   }
-  if (calls.length > 1) {
+  const isMethodTable = (call: RegisterCall) =>
+    call.nameArgument === "0" || call.nameArgument === "NULL";
+  const named = calls.filter((call) => !isMethodTable(call));
+  if (named.length === 0) {
     throw new Error(
-      `native registration: ${file} makes ${calls.length} luaL_register calls; this reader measures one module per file.`,
+      `native registration: ${file} makes only nameless luaL_register calls, which fill userdata metatables; with no named call its module cannot be read.`,
     );
   }
-  const call = calls[0] as RegExpExecArray;
-  const callIndex = call.index ?? 0;
-  const name = call[1] as string;
-  const nameStart = callIndex + call[0].indexOf(name);
-  const nameArgument = code.slice(nameStart, nameStart + name.length);
-  const tableName = call[2] as string;
+  if (named.length > 1) {
+    throw new Error(
+      `native registration: ${file} makes ${named.length} named luaL_register calls; this reader measures one module per file.`,
+    );
+  }
+  const call = named[0] as RegisterCall;
+  const methods = calls
+    .filter(isMethodTable)
+    .flatMap((table) => readRegisteredFunctions(code, structure, table.tableName, file))
+    .filter((name) => !name.startsWith("__"));
 
   return {
-    moduleName: resolveModuleName(nameArgument, defines, file),
-    functions: readRegisteredFunctions(code, structure, tableName, file),
-    constants: readConstants(code, structure, callIndex, file),
+    moduleName: resolveModuleName(call.nameArgument, defines, file),
+    functions: readRegisteredFunctions(code, structure, call.tableName, file),
+    methods: [...new Set(methods)].sort(),
+    constants: readConstants(code, structure, call.index, file),
   };
 }
 
@@ -99,7 +131,7 @@ function readConstants(code: string, structure: string, callIndex: number, file:
       `native registration: ${file} calls luaL_register outside any function body, so its constants cannot be scoped.`,
     );
   }
-  const body = code.slice(open + 1, matchingBrace(structure, open, file));
+  const body = code.slice(callIndex, matchingBrace(structure, open, file));
   const names = [
     ...[...body.matchAll(/\bSETCONSTANT\s*\(\s*(\w+)\s*\)/g)].map((match) => match[1] as string),
     ...[...body.matchAll(/\blua_setfield\s*\(\s*\w+\s*,\s*-2\s*,\s*"(\w+)"\s*\)/g)].map(

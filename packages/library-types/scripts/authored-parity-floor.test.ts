@@ -472,6 +472,8 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "1e34ced89230e1841155859ff1d3ce3359ddf0c221604ceca8361b47dd4d0d07",
   "fixtures/upstream-native/DAABBCC/daabbcc/src/extension.cpp":
     "f22dd03e273bceb5f761929cc629af76af27e8894041181b57f89ef06a322d1c",
+  "fixtures/upstream-native/def-windward-jps/def_windward_jps/src/def_windward_jps.cpp":
+    "93f03d106ffad0e23edce467d271565015cb02e5ce86c8b340791dbbe22bddb0",
   "fixtures/upstream-native/defold-pixels/defold-pixels/idea_autocomplite.lua":
     "6e74062091e85dcef47475d0f18f55cb83c1b6fda9d911fdcd6eb47974fc0e7c",
   "fixtures/upstream-native/defold-pixels/defold-pixels/src/pixels.cpp":

@@ -720,7 +720,14 @@ describe("loadApiSurface library descriptions", () => {
   });
 
   test("each curated native extension is a library page with its members and description", () => {
-    for (const namespace of ["daabbcc", "share", "uuid4", "tile_raycast", "pixels"]) {
+    for (const namespace of [
+      "daabbcc",
+      "share",
+      "uuid4",
+      "tile_raycast",
+      "pixels",
+      "def_windward_jps",
+    ]) {
       const page = libraryPages.find((p) => p.route === `/api/${namespace}`);
       expect(page?.namespace).toBe(namespace);
       expect(page?.module.description).toBe(descByDir[namespace]);
@@ -3408,6 +3415,12 @@ describe("native helper shape definitions", () => {
     const options = row("pixels", "PolylineOptions");
     expect(options?.signature).toContain("PolylineWidth");
     expect(options?.signature).toContain("PolylinePointWidths");
+  });
+
+  test("renders def_windward_jps' grid with its userdata methods", () => {
+    const names = group("def_windward_jps", "Grid")?.symbols.map((s) => s.name) ?? [];
+    expect(names).toContain("Grid.find_path");
+    expect(names).toContain("Grid.is_walkable");
   });
 
   test("leaves a signature whose union is a return type unchanged", () => {

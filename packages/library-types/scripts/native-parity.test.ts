@@ -42,12 +42,13 @@ function shippedDeclaration(entry: NativeTarget): string {
 }
 
 describe("buildNativeParity over the shipped declarations", () => {
-  const UPSTREAM_COUNTS: Record<string, [functions: number, constants: number]> = {
-    daabbcc: [18, 3],
-    tile_raycast: [5, 4],
-    share: [3, 0],
-    uuid4: [1, 0],
-    pixels: [18, 0],
+  const UPSTREAM_COUNTS: Record<string, [functions: number, constants: number, methods: number]> = {
+    daabbcc: [18, 3, 0],
+    tile_raycast: [5, 4, 0],
+    share: [3, 0, 0],
+    uuid4: [1, 0, 0],
+    pixels: [18, 0, 0],
+    def_windward_jps: [1, 0, 2],
   };
 
   test("every native target is measured", () => {
@@ -56,7 +57,7 @@ describe("buildNativeParity over the shipped declarations", () => {
     );
   });
 
-  for (const [namespace, [functions, constants]] of Object.entries(UPSTREAM_COUNTS)) {
+  for (const [namespace, [functions, constants, methods]] of Object.entries(UPSTREAM_COUNTS)) {
     test(`${namespace}: names exactly what its C++ registers, on both axes`, () => {
       const report = buildNativeParity(PACKAGE_ROOT, target(namespace));
       expect(report.namespace).toBe(namespace);
@@ -66,6 +67,10 @@ describe("buildNativeParity over the shipped declarations", () => {
       expect(report.declaredFunctions).toBe(functions);
       expect(report.missingFunctions).toEqual([]);
       expect(report.phantomFunctions).toEqual([]);
+      expect(report.upstreamMethods).toBe(methods);
+      expect(report.declaredMethods).toBe(methods);
+      expect(report.missingMethods).toEqual([]);
+      expect(report.phantomMethods).toEqual([]);
       expect(report.callableCoverage).toBe(1);
       expect(report.upstreamConstants).toBe(constants);
       expect(report.declaredConstants).toBe(constants);
@@ -101,6 +106,33 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
+  test("a dropped userdata method is missing and lowers callable coverage", () => {
+    const entry = target("def_windward_jps");
+    const shipped = shippedDeclaration(entry);
+    const drifted = shipped.replace("is_walkable(point: Point): boolean;", "");
+    expect(drifted).not.toBe(shipped);
+    const report = buildNativeParity(tempRoot(entry, drifted), entry);
+    expect(report.missingMethods).toEqual(["is_walkable"]);
+    expect(report.phantomMethods).toEqual([]);
+    expect(report.callableCoverage).toBe(Math.round((2 / 3) * 10_000) / 10_000);
+  });
+
+  test("an invented userdata method is phantom and leaves the function lists alone", () => {
+    const entry = target("def_windward_jps");
+    const shipped = shippedDeclaration(entry);
+    const drifted = shipped.replace(
+      "is_walkable(point: Point): boolean;",
+      "is_walkable(point: Point): boolean;\n      clear(): void;",
+    );
+    expect(drifted).not.toBe(shipped);
+    const report = buildNativeParity(tempRoot(entry, drifted), entry);
+    expect(report.phantomMethods).toEqual(["clear"]);
+    expect(report.missingMethods).toEqual([]);
+    expect(report.missingFunctions).toEqual([]);
+    expect(report.phantomFunctions).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
   test("a declaration under a namespace other than the registered module name", () => {
     const shipped = target("uuid4");
     const entry: NativeTarget = {
@@ -133,7 +165,7 @@ describe("the committed native parity reports", () => {
 
 describe("the arity axis, read from the shipped LuaLS annotation", () => {
   test("a target naming no annotation reports the axis unmeasured, with no lists", () => {
-    for (const namespace of ["uuid4", "tile_raycast"]) {
+    for (const namespace of ["uuid4", "tile_raycast", "def_windward_jps"]) {
       const report = buildNativeParity(PACKAGE_ROOT, target(namespace));
       expect(report.arityMeasured).toBe(false);
       expect(report.arityMismatches).toBeUndefined();
