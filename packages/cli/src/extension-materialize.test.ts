@@ -41,6 +41,39 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
 
 const extensionsDir = (): string => path.join(cwd, ".defold-types", "extensions");
 
+function bundleAt(url: string, declarations: EmittedExtension[]): ExtensionDeclarations {
+  return { ...bundle(declarations), url };
+}
+
+function barrelDiagnostics(usage: string): string[] {
+  writeFileSync(path.join(cwd, "usage.ts"), usage);
+  const options: ts.CompilerOptions = {
+    noLib: true,
+    strict: true,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    types: [],
+  };
+  const program = ts.createProgram(
+    [path.join(extensionsDir(), "index.d.ts"), path.join(cwd, "usage.ts")],
+    options,
+    ts.createCompilerHost(options),
+  );
+  return [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()].map((d) =>
+    ts.flattenDiagnosticMessageText(d.messageText, "\n"),
+  );
+}
+
+function declares(namespace: string, name: string): string {
+  return `declare global { namespace ${namespace} { function ${name}(): void; } }\nexport {};\n`;
+}
+
+function declarationFiles(): string[] {
+  return readdirSync(extensionsDir())
+    .filter((file) => file.endsWith(".d.ts"))
+    .sort();
+}
+
 describe("materializeExtensionDeclarations", () => {
   // The emitter spells the brand import relative to `packages/types/generated/`,
   // where the committed built-ins live. From `.defold-types/extensions/` that
@@ -225,29 +258,6 @@ describe("materializeExtensionDeclarations", () => {
     const analytics =
       "declare global {\n  namespace firebase {\n    namespace analytics {\n      function log(name: string): void;\n    }\n  }\n}\nexport {};\n";
 
-    function bundleAt(url: string, declarations: EmittedExtension[]): ExtensionDeclarations {
-      return { ...bundle(declarations), url };
-    }
-
-    function barrelDiagnostics(usage: string): string[] {
-      writeFileSync(path.join(cwd, "usage.ts"), usage);
-      const options: ts.CompilerOptions = {
-        noLib: true,
-        strict: true,
-        module: ts.ModuleKind.ESNext,
-        moduleResolution: ts.ModuleResolutionKind.Bundler,
-        types: [],
-      };
-      const program = ts.createProgram(
-        [path.join(extensionsDir(), "index.d.ts"), path.join(cwd, "usage.ts")],
-        options,
-        ts.createCompilerHost(options),
-      );
-      return [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()].map((d) =>
-        ts.flattenDiagnosticMessageText(d.messageText, "\n"),
-      );
-    }
-
     test("each dependency writes its own file and the barrel merges them", () => {
       const result = materializeExtensionDeclarations({
         cwd,
@@ -315,16 +325,6 @@ describe("materializeExtensionDeclarations", () => {
       );
     });
 
-    function declares(namespace: string, name: string): string {
-      return `declare global { namespace ${namespace} { function ${name}(): void; } }\nexport {};\n`;
-    }
-
-    function declarationFiles(): string[] {
-      return readdirSync(extensionsDir())
-        .filter((file) => file.endsWith(".d.ts"))
-        .sort();
-    }
-
     test("a shared file never takes an unshared namespace's name", () => {
       const barUrl = "https://github.com/acme/bar/archive/1.zip";
       const bazUrl = "https://github.com/acme/baz/archive/1.zip";
@@ -380,6 +380,92 @@ describe("materializeExtensionDeclarations", () => {
         barrelDiagnostics(
           "foo.fromBarBaz();\nfoo.fromOne();\nfoo.bar.fromBaz();\nfoo.bar.fromTwo();\n",
         ),
+      ).toEqual([]);
+    });
+  });
+
+  describe("file names that differ only in letter case", () => {
+    const acme = (repo: string): string => `https://github.com/acme/${repo}/archive/1.zip`;
+
+    test("an unshared namespace keeps its file beside a case twin", () => {
+      const upper = declares("Foo", "upper");
+      const lower = declares("foo", "lower");
+
+      const result = materializeExtensionDeclarations({
+        cwd,
+        bundles: [
+          bundleAt(acme("one"), [decl("Foo", upper)]),
+          bundleAt(acme("two"), [decl("foo", lower)]),
+        ],
+      });
+
+      const dir = extensionsDir();
+      expect(result.namespaces).toEqual(["Foo", "foo"]);
+      expect(result.sharedNamespaces).toEqual([]);
+      expect(declarationFiles()).toEqual(["Foo.d.ts", "foo-2.d.ts", "index.d.ts"]);
+      expect(readFileSync(path.join(dir, "Foo.d.ts"), "utf8")).toBe(upper);
+      expect(readFileSync(path.join(dir, "foo-2.d.ts"), "utf8")).toBe(lower);
+      expect(barrelDiagnostics("Foo.upper();\nfoo.lower();\n")).toEqual([]);
+    });
+
+    test("a shared file never takes an unshared namespace's name in another case", () => {
+      const fromBar = declares("foo", "fromBar");
+      const fromBaz = declares("foo", "fromBaz");
+      const nested = declares("Foo.bar", "nested");
+
+      const result = materializeExtensionDeclarations({
+        cwd,
+        bundles: [
+          bundleAt(acme("bar"), [decl("foo", fromBar)]),
+          bundleAt(acme("baz"), [decl("foo", fromBaz)]),
+          bundleAt(acme("qux"), [decl("Foo.bar", nested)]),
+        ],
+      });
+
+      const dir = extensionsDir();
+      expect(result.namespaces).toEqual(["Foo.bar", "foo"]);
+      expect(result.sharedNamespaces).toEqual([
+        { namespace: "foo", urls: [acme("bar"), acme("baz")] },
+      ]);
+      expect(declarationFiles()).toEqual([
+        "Foo.bar.d.ts",
+        "foo.bar-2.d.ts",
+        "foo.baz.d.ts",
+        "index.d.ts",
+      ]);
+      expect(readFileSync(path.join(dir, "Foo.bar.d.ts"), "utf8")).toBe(nested);
+      expect(readFileSync(path.join(dir, "foo.bar-2.d.ts"), "utf8")).toBe(fromBar);
+      expect(readFileSync(path.join(dir, "foo.baz.d.ts"), "utf8")).toBe(fromBaz);
+      expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
+        'import "./Foo.bar";\nimport "./foo.bar-2";\nimport "./foo.baz";\n\nexport {};\n',
+      );
+      expect(barrelDiagnostics("foo.fromBar();\nfoo.fromBaz();\nFoo.bar.nested();\n")).toEqual([]);
+    });
+
+    test("a shared file never takes another shared namespace's name in another case", () => {
+      const upperBar = declares("Foo", "upperBar");
+      const lowerBar = declares("foo", "lowerBar");
+      const upperOne = declares("Foo", "upperOne");
+      const lowerTwo = declares("foo", "lowerTwo");
+
+      materializeExtensionDeclarations({
+        cwd,
+        bundles: [
+          bundleAt(acme("bar"), [decl("Foo", upperBar), decl("foo", lowerBar)]),
+          bundleAt(acme("one"), [decl("Foo", upperOne)]),
+          bundleAt(acme("two"), [decl("foo", lowerTwo)]),
+        ],
+      });
+
+      expect(declarationFiles()).toEqual([
+        "Foo.bar.d.ts",
+        "Foo.one.d.ts",
+        "foo.bar-2.d.ts",
+        "foo.two.d.ts",
+        "index.d.ts",
+      ]);
+      expect(
+        barrelDiagnostics("Foo.upperBar();\nFoo.upperOne();\nfoo.lowerBar();\nfoo.lowerTwo();\n"),
       ).toEqual([]);
     });
   });

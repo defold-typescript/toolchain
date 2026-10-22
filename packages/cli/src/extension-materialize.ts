@@ -51,16 +51,27 @@ function dependencySlug(url: string): string {
 // named after its dependency rather than its position so a reordered
 // `[dependencies]` renames nothing; a name any file already holds (`foo.bar`
 // is both namespace `foo.bar` and dependency `bar`'s share of `foo`) gets a
-// number instead.
+// number instead. Names are compared without letter case, because macOS and
+// Windows disks treat `Foo.d.ts` and `foo.d.ts` as one file; the written name
+// keeps the namespace's spelling.
 function allocateFileStems(
   namespaces: readonly string[],
   byNamespace: ReadonlyMap<string, readonly NamespaceSource[]>,
 ): Map<string, string> {
   const files = new Map<string, string>();
+  const taken = new Set<string>();
+  const claim = (base: string, contents: string): void => {
+    let stem = base;
+    for (let count = 2; taken.has(stem.toLowerCase()); count++) {
+      stem = `${base}-${count}`;
+    }
+    taken.add(stem.toLowerCase());
+    files.set(stem, contents);
+  };
   for (const namespace of namespaces) {
     const sources = byNamespace.get(namespace) ?? [];
     if (sources.length === 1) {
-      files.set(namespace, sources[0]?.contents ?? "");
+      claim(namespace, sources[0]?.contents ?? "");
     }
   }
   for (const namespace of namespaces) {
@@ -69,12 +80,7 @@ function allocateFileStems(
       continue;
     }
     for (const { url, contents } of sources) {
-      const base = `${namespace}.${dependencySlug(url)}`;
-      let stem = base;
-      for (let count = 2; files.has(stem); count++) {
-        stem = `${base}-${count}`;
-      }
-      files.set(stem, contents);
+      claim(`${namespace}.${dependencySlug(url)}`, contents);
     }
   }
   return files;
