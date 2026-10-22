@@ -154,14 +154,20 @@ function repoPath(repoUrl: string): string {
   return repoUrl.replace(/^https?:\/\/[^/]+\//, "").replace(/\/$/, "");
 }
 
+const WINDOWS_DEVICE_STEM = /^(?:CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])(?:\.|$)/i;
+
 /**
  * One `/api/<page>` route segment that is also one portable file name: ASCII
  * letters, digits, `_`, `.` and `-`, starting and ending with a letter, digit or
  * `_`. An allowlist, so `/`, `\`, `..`, `%`, `?`, `#`, whitespace, control
  * characters, non-ASCII and a trailing `.` (which Windows drops) all fail.
+ * Windows opens a device for any name whose part before the first `.` is one,
+ * in any letter case, so `CON` and `nul.gui` fail too.
  */
 export function isSafePageKey(page: string): boolean {
-  return /^[A-Za-z0-9_](?:[A-Za-z0-9_.-]*[A-Za-z0-9_])?$/.test(page);
+  return (
+    /^[A-Za-z0-9_](?:[A-Za-z0-9_.-]*[A-Za-z0-9_])?$/.test(page) && !WINDOWS_DEVICE_STEM.test(page)
+  );
 }
 
 /**
