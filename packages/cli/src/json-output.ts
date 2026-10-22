@@ -82,6 +82,10 @@ export interface RenderResultInput {
   readonly java?: string | null;
   readonly extensions?: readonly ResolvedExtensionReportJson[];
   readonly libraries?: readonly ResolvedLibraryReportJson[];
+  readonly sharedNamespaces?: readonly {
+    readonly namespace: string;
+    readonly urls: readonly string[];
+  }[];
   readonly warnings?: readonly string[];
   // The structured half of the unreachable-address findings `warnings` states in
   // prose. Absent — never an empty array — when the check was suppressed, which
@@ -204,8 +208,12 @@ export function renderResult(input: RenderResultInput): string {
     "extensions" in input ? { ...withOperations, extensions: input.extensions } : withOperations;
   const withLibraries =
     "libraries" in input ? { ...withExtensions, libraries: input.libraries } : withExtensions;
+  const withShared =
+    "sharedNamespaces" in input
+      ? { ...withLibraries, sharedNamespaces: input.sharedNamespaces }
+      : withLibraries;
   const withWarnings =
-    "warnings" in input ? { ...withLibraries, warnings: input.warnings } : withLibraries;
+    "warnings" in input ? { ...withShared, warnings: input.warnings } : withShared;
   const withUnreachable =
     "unreachableAddresses" in input
       ? { ...withWarnings, unreachableAddresses: input.unreachableAddresses }

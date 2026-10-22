@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import * as ts from "typescript";
 import type { ExtensionDeclarations } from "./extension-declarations";
 import type { EmittedExtension } from "./extension-emit";
 import {
@@ -108,6 +109,7 @@ describe("materializeExtensionDeclarations", () => {
     expect(result).toEqual({
       materializedDir: ".defold-types/extensions",
       namespaces: ["alpha", "zeta"],
+      sharedNamespaces: [],
     });
 
     const dir = extensionsDir();
@@ -152,6 +154,7 @@ describe("materializeExtensionDeclarations", () => {
     expect(result).toEqual({
       materializedDir: ".defold-types/extensions",
       namespaces: ["real"],
+      sharedNamespaces: [],
     });
     const dir = extensionsDir();
     expect(existsSync(path.join(dir, "real.d.ts"))).toBe(true);
@@ -164,12 +167,14 @@ describe("materializeExtensionDeclarations", () => {
     expect(materializeExtensionDeclarations({ cwd, bundles: [] })).toEqual({
       materializedDir: null,
       namespaces: [],
+      sharedNamespaces: [],
     });
     expect(existsSync(extensionsDir())).toBe(false);
 
     expect(materializeExtensionDeclarations({ cwd, bundles: [bundle([]), bundle([])] })).toEqual({
       materializedDir: null,
       namespaces: [],
+      sharedNamespaces: [],
     });
     expect(existsSync(extensionsDir())).toBe(false);
   });
@@ -208,22 +213,107 @@ describe("materializeExtensionDeclarations", () => {
 
     const result = materializeExtensionDeclarations({ cwd, bundles: [bundle([])] });
 
-    expect(result).toEqual({ materializedDir: null, namespaces: [] });
+    expect(result).toEqual({ materializedDir: null, namespaces: [], sharedNamespaces: [] });
     expect(existsSync(extensionsDir())).toBe(false);
   });
 
-  test("a later bundle's namespace wins on duplicate", () => {
-    const bundles = [
-      bundle([decl("dup", "declare namespace dup { const first = 1; }\n")]),
-      bundle([decl("dup", "declare namespace dup { const second = 2; }\n")]),
-    ];
+  describe("a namespace several declarations share", () => {
+    const coreUrl = "https://github.com/defold/extension-firebase/archive/1.zip";
+    const analyticsUrl = "https://github.com/defold/extension-firebase-analytics/archive/2.zip";
+    const core =
+      "declare global {\n  namespace firebase {\n    function initialize(): void;\n  }\n}\nexport {};\n";
+    const analytics =
+      "declare global {\n  namespace firebase {\n    namespace analytics {\n      function log(name: string): void;\n    }\n  }\n}\nexport {};\n";
 
-    const result = materializeExtensionDeclarations({ cwd, bundles });
+    function bundleAt(url: string, declarations: EmittedExtension[]): ExtensionDeclarations {
+      return { ...bundle(declarations), url };
+    }
 
-    expect(result.namespaces).toEqual(["dup"]);
-    expect(readFileSync(path.join(extensionsDir(), "dup.d.ts"), "utf8")).toBe(
-      "declare namespace dup { const second = 2; }\n",
-    );
+    function barrelDiagnostics(usage: string): string[] {
+      writeFileSync(path.join(cwd, "usage.ts"), usage);
+      const options: ts.CompilerOptions = {
+        noLib: true,
+        strict: true,
+        module: ts.ModuleKind.ESNext,
+        moduleResolution: ts.ModuleResolutionKind.Bundler,
+        types: [],
+      };
+      const program = ts.createProgram(
+        [path.join(extensionsDir(), "index.d.ts"), path.join(cwd, "usage.ts")],
+        options,
+        ts.createCompilerHost(options),
+      );
+      return [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()].map((d) =>
+        ts.flattenDiagnosticMessageText(d.messageText, "\n"),
+      );
+    }
+
+    test("each dependency writes its own file and the barrel merges them", () => {
+      const result = materializeExtensionDeclarations({
+        cwd,
+        bundles: [
+          bundleAt(coreUrl, [decl("firebase", core)]),
+          bundleAt(analyticsUrl, [decl("firebase", analytics)]),
+        ],
+      });
+
+      const dir = extensionsDir();
+      expect(result).toEqual({
+        materializedDir: ".defold-types/extensions",
+        namespaces: ["firebase"],
+        sharedNamespaces: [{ namespace: "firebase", urls: [coreUrl, analyticsUrl] }],
+      });
+      expect(readFileSync(path.join(dir, "firebase.extension-firebase.d.ts"), "utf8")).toBe(core);
+      expect(
+        readFileSync(path.join(dir, "firebase.extension-firebase-analytics.d.ts"), "utf8"),
+      ).toBe(analytics);
+      expect(existsSync(path.join(dir, "firebase.d.ts"))).toBe(false);
+      expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
+        'import "./firebase.extension-firebase";\nimport "./firebase.extension-firebase-analytics";\n\nexport {};\n',
+      );
+      expect(barrelDiagnostics('firebase.initialize();\nfirebase.analytics.log("x");\n')).toEqual(
+        [],
+      );
+    });
+
+    test("one dependency declaring a namespace twice numbers its second file", () => {
+      const result = materializeExtensionDeclarations({
+        cwd,
+        bundles: [bundleAt(coreUrl, [decl("firebase", core), decl("firebase", analytics)])],
+      });
+
+      const dir = extensionsDir();
+      expect(result.sharedNamespaces).toEqual([{ namespace: "firebase", urls: [coreUrl] }]);
+      expect(readFileSync(path.join(dir, "firebase.extension-firebase.d.ts"), "utf8")).toBe(core);
+      expect(readFileSync(path.join(dir, "firebase.extension-firebase-2.d.ts"), "utf8")).toBe(
+        analytics,
+      );
+      expect(existsSync(path.join(dir, "firebase.d.ts"))).toBe(false);
+    });
+
+    test("a namespace that loses its second dependency goes back to one file", () => {
+      materializeExtensionDeclarations({
+        cwd,
+        bundles: [
+          bundleAt(coreUrl, [decl("firebase", core)]),
+          bundleAt(analyticsUrl, [decl("firebase", analytics)]),
+        ],
+      });
+
+      const result = materializeExtensionDeclarations({
+        cwd,
+        bundles: [bundleAt(coreUrl, [decl("firebase", core)])],
+      });
+
+      const dir = extensionsDir();
+      expect(result.sharedNamespaces).toEqual([]);
+      expect(readFileSync(path.join(dir, "firebase.d.ts"), "utf8")).toBe(core);
+      expect(existsSync(path.join(dir, "firebase.extension-firebase.d.ts"))).toBe(false);
+      expect(existsSync(path.join(dir, "firebase.extension-firebase-analytics.d.ts"))).toBe(false);
+      expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
+        'import "./firebase";\n\nexport {};\n',
+      );
+    });
   });
 });
 
