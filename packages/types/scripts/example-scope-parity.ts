@@ -201,7 +201,7 @@ export type ScopeKeepStore = Record<
   { sourceHash: string; calls: string[]; reason: string }[]
 >;
 
-const SCOPE_KEPT_PATH = resolve(import.meta.dir, "..", "examples", "scope-kept.json");
+const SCOPE_KEPT_PATH = resolve(import.meta.dirname, "..", "examples", "scope-kept.json");
 
 export function loadScopeKeeps(path: string = SCOPE_KEPT_PATH): ScopeKeepStore {
   return JSON.parse(readFileSync(path, "utf8")) as ScopeKeepStore;

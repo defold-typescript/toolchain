@@ -6,7 +6,7 @@ import { join } from "node:path";
 // shape the ratchet backlog registers its sources by.
 export const ANNOTATION_VERDICTS_DIR = join("packages", "types", "scripts");
 export const ANNOTATION_VERDICTS_FILE_NAME = "lua-annotation-verdicts.json";
-export const ANNOTATION_VERDICTS_FILE = join(import.meta.dir, ANNOTATION_VERDICTS_FILE_NAME);
+export const ANNOTATION_VERDICTS_FILE = join(import.meta.dirname, ANNOTATION_VERDICTS_FILE_NAME);
 
 export interface AnnotationVerdict {
   readonly verdict: "open" | "accepted" | "corrected";

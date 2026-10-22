@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { inflateRawSync } from "node:zlib";
 import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
 import { DEFOLD_TYPE_MAP } from "../src/core-types";
 import { parseScriptApi } from "../src/script-api";
@@ -272,21 +273,97 @@ export interface ZipAccessor {
   entries(): string[];
 }
 
-export function readZip(path: string): ZipAccessor {
-  const list = Bun.spawnSync(["unzip", "-Z1", path]);
-  if (list.exitCode !== 0) {
-    throw new Error(`unzip -Z1 failed for ${path}: ${list.stderr.toString()}`);
+const ZIP_LOCAL_HEADER_SIGNATURE = 0x04034b50;
+const ZIP_CENTRAL_HEADER_SIGNATURE = 0x02014b50;
+const ZIP_END_RECORD_SIGNATURE = 0x06054b50;
+const ZIP_END_RECORD_SIZE = 22;
+const ZIP_MAX_COMMENT_SIZE = 0xffff;
+const ZIP_METHOD_STORED = 0;
+const ZIP_METHOD_DEFLATE = 8;
+const ZIP64_MARKER = 0xffffffff;
+
+interface ZipDirectoryEntry {
+  readonly method: number;
+  readonly compressedSize: number;
+  readonly localHeaderOffset: number;
+}
+
+// Walks the central directory, which is the archive's own index: every entry
+// an archiver listed, directory entries included, in archive order. Found from
+// the end record, which sits in the last 22 bytes unless a comment follows it.
+function readZipDirectory(bytes: Buffer, path: string): Map<string, ZipDirectoryEntry> {
+  const earliest = Math.max(0, bytes.length - ZIP_END_RECORD_SIZE - ZIP_MAX_COMMENT_SIZE);
+  let endRecord = -1;
+  for (let at = bytes.length - ZIP_END_RECORD_SIZE; at >= earliest; at--) {
+    if (bytes.readUInt32LE(at) === ZIP_END_RECORD_SIGNATURE) {
+      endRecord = at;
+      break;
+    }
   }
-  const entries = new Set(list.stdout.toString().split("\n").filter(Boolean));
+  if (endRecord < 0) {
+    throw new Error(`${path}: no end-of-central-directory record, not a zip archive`);
+  }
+  const count = bytes.readUInt16LE(endRecord + 10);
+  const directoryOffset = bytes.readUInt32LE(endRecord + 16);
+  if (count === 0xffff || directoryOffset === ZIP64_MARKER) {
+    throw new Error(`${path}: zip64 archives are not supported`);
+  }
+  const entries = new Map<string, ZipDirectoryEntry>();
+  let cursor = directoryOffset;
+  for (let index = 0; index < count; index++) {
+    if (bytes.readUInt32LE(cursor) !== ZIP_CENTRAL_HEADER_SIGNATURE) {
+      throw new Error(`${path}: central directory entry ${index} has no header signature`);
+    }
+    const method = bytes.readUInt16LE(cursor + 10);
+    const compressedSize = bytes.readUInt32LE(cursor + 20);
+    const uncompressedSize = bytes.readUInt32LE(cursor + 24);
+    const nameLength = bytes.readUInt16LE(cursor + 28);
+    const extraLength = bytes.readUInt16LE(cursor + 30);
+    const commentLength = bytes.readUInt16LE(cursor + 32);
+    const localHeaderOffset = bytes.readUInt32LE(cursor + 42);
+    if (
+      compressedSize === ZIP64_MARKER ||
+      uncompressedSize === ZIP64_MARKER ||
+      localHeaderOffset === ZIP64_MARKER
+    ) {
+      throw new Error(`${path}: zip64 archives are not supported`);
+    }
+    const name = bytes.toString("utf8", cursor + 46, cursor + 46 + nameLength);
+    entries.set(name, { method, compressedSize, localHeaderOffset });
+    cursor += 46 + nameLength + extraLength + commentLength;
+  }
+  return entries;
+}
+
+// Parses the archive itself rather than shelling out to `unzip`, which a stock
+// Windows machine does not have: the CLI opens extension archives through this
+// under Node and Bun on every OS.
+export function readZip(path: string): ZipAccessor {
+  const bytes = readFileSync(path);
+  const entries = readZipDirectory(bytes, path);
   return {
     has: (name) => entries.has(name),
-    entries: () => [...entries],
+    entries: () => [...entries.keys()],
     read: (name) => {
-      const out = Bun.spawnSync(["unzip", "-p", path, name]);
-      if (out.exitCode !== 0) {
-        throw new Error(`unzip -p failed for ${name} in ${path}: ${out.stderr.toString()}`);
+      const entry = entries.get(name);
+      if (entry === undefined) {
+        throw new Error(`no entry ${name} in ${path}`);
       }
-      return out.stdout.toString();
+      const { localHeaderOffset, compressedSize, method } = entry;
+      if (bytes.readUInt32LE(localHeaderOffset) !== ZIP_LOCAL_HEADER_SIGNATURE) {
+        throw new Error(`${path}: local header of ${name} has no signature`);
+      }
+      const nameLength = bytes.readUInt16LE(localHeaderOffset + 26);
+      const extraLength = bytes.readUInt16LE(localHeaderOffset + 28);
+      const start = localHeaderOffset + 30 + nameLength + extraLength;
+      const data = bytes.subarray(start, start + compressedSize);
+      if (method === ZIP_METHOD_STORED) {
+        return data.toString("utf8");
+      }
+      if (method === ZIP_METHOD_DEFLATE) {
+        return inflateRawSync(data).toString("utf8");
+      }
+      throw new Error(`${path}: entry ${name} uses unsupported compression method ${method}`);
     },
   };
 }
@@ -428,7 +505,7 @@ export interface SyncOptions {
   format?: (raw: string) => string;
 }
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 function canonicalJson(raw: string): string {
   return JSON.stringify(JSON.parse(raw));

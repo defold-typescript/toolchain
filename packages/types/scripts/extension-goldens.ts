@@ -10,7 +10,7 @@ import type { ModuleManifestEntry } from "./regen";
 // break every installed `resolve`.
 export const EXTENSION_GOLDENS_DIR = "extension-goldens";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const EXTENSION_GOLDEN_NAMESPACES = ["iac", "iap", "push", "webview"] as const;
 
 // Each golden's doc is the conversion of the extension's `.script_api` at its

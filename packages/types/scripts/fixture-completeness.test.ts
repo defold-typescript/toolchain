@@ -5,7 +5,7 @@ import { parseDefoldApiDoc } from "../src/api-doc";
 import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import { EDITOR_VM_MANIFEST, SYNC_MANIFEST } from "./sync-api-docs";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 // Namespaces whose upstream doc genuinely exposes no function/constant/property/
 // variable/typedef surface (message-driven components typed via builtin-messages).

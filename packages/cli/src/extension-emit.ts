@@ -8,9 +8,6 @@
 // `.defold-types/`, and the CLI `resolve` verb are later slices; this stays
 // text-pure and IO-free.
 
-import { join } from "node:path";
-import { resolveTypesPackageRoot } from "./api-registry";
-
 // Shared with the committed extension goldens, which import branded engine
 // handles from the types package's core-types via this relative path. Only
 // emitted when the declaration actually references one.
@@ -36,16 +33,14 @@ interface RegenModule {
   }) => { contents: string; dropped: string[] };
 }
 
-// Loaded by resolved path (mirrors `extension-archive.ts`) so the CLI never
-// statically pulls in `regen.ts`'s fixture-reading module side effects.
+// Imported by specifier (mirrors `extension-archive.ts`): Node's loader reads a
+// path as a URL and never strips types under `node_modules`, so the emitter is
+// reached through the types package's `cli-runtime` export, which each runtime
+// resolves to the entry its condition names. The import stays dynamic so
+// `regen.ts`'s fixture-reading module graph loads only when a verb needs it.
 async function loadEmitter(): Promise<ScriptApiToFixtureJson & RegenModule> {
-  const root = resolveTypesPackageRoot();
-  if (root === null) {
-    throw new Error("cannot locate @defold-typescript/types to emit an extension declaration");
-  }
-  const sync = (await import(join(root, "scripts", "sync-api-docs.ts"))) as ScriptApiToFixtureJson;
-  const regen = (await import(join(root, "scripts", "regen.ts"))) as RegenModule;
-  return { ...sync, ...regen };
+  return (await import("@defold-typescript/types/cli-runtime")) as ScriptApiToFixtureJson &
+    RegenModule;
 }
 
 // Doc-level core shared by the YAML entrypoint and the extension golden parity

@@ -87,8 +87,8 @@ export interface ApiTarget {
   readonly luaStdlib?: readonly { readonly namespace: string; readonly fixture: string }[];
 }
 
-const REGISTRY_PATH = resolve(import.meta.dir, "..", "api-targets.json");
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const REGISTRY_PATH = resolve(import.meta.dirname, "..", "api-targets.json");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 export function loadApiTargets(
   registryPath: string = REGISTRY_PATH,
@@ -1325,7 +1325,7 @@ export async function regenerate(
   // Imported here rather than at module scope: the vendored engine bindings are
   // not published, and `resolve` loads this module from an installed package.
   const { targetBindingOptions } = await import("./binding-pin");
-  const generated = resolve(import.meta.dir, "..", "generated");
+  const generated = resolve(import.meta.dirname, "..", "generated");
   io.mkdir(resolve(generated, "editor-vm"));
   const defaultBinding = targetBindingOptions(DEFAULT_TARGET);
   for (const entry of MODULE_MANIFEST) {

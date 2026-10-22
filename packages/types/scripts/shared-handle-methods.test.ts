@@ -48,7 +48,7 @@ describe("restoreSharedHandleMethods", () => {
 // Every entry must be omitted by some committed release and documented on its
 // source handle by that same release, or the entry restores nothing anywhere.
 test("each shared method is restored somewhere and documented on its source there", () => {
-  const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+  const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
   const targets = (
     JSON.parse(readFileSync(resolve(PACKAGE_ROOT, "api-targets.json"), "utf8")) as {
       targets: {

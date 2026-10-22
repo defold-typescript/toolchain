@@ -23,7 +23,7 @@ import {
 } from "./sync-engine-bindings";
 
 const TREE_FIXTURE = resolve(
-  import.meta.dir,
+  import.meta.dirname,
   "..",
   "test",
   "fixtures",
