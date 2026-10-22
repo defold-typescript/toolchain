@@ -501,6 +501,79 @@ describe("runResolve", () => {
   });
 });
 
+describe("runResolve shared namespace", () => {
+  const FIREBASE_CORE = `
+- name: firebase
+  type: table
+  desc: Firebase core.
+  members:
+  - name: initialize
+    type: function
+    desc: starts firebase
+`;
+  const FIREBASE_ANALYTICS = `
+- name: firebase
+  type: table
+  desc: Firebase analytics.
+  members:
+  - name: analytics
+    type: table
+    desc: analytics events
+    members:
+    - name: log
+      type: function
+      desc: logs an event
+      parameters:
+        - name: name
+          type: string
+          desc: the event name
+`;
+
+  test("two dependencies declaring one namespace each write a file and report the merge", async () => {
+    const cwd = tmp();
+    const coreUrl = "https://example.com/firebase-core.zip";
+    const analyticsUrl = "https://example.com/firebase-analytics.zip";
+    writeProject(
+      cwd,
+      `[project]\ntitle = Test\ndependencies#0 = ${coreUrl}\ndependencies#1 = ${analyticsUrl}\n`,
+    );
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(coreUrl)]: {
+        entries: ["ext/api/firebase.script_api"],
+        contents: { "ext/api/firebase.script_api": FIREBASE_CORE },
+      },
+      [extensionArchiveKey(analyticsUrl)]: {
+        entries: ["ext/api/analytics.script_api"],
+        contents: { "ext/api/analytics.script_api": FIREBASE_ANALYTICS },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+    });
+
+    expect(result.ok).toBe(true);
+    const dir = join(cwd, ".defold-types", "extensions");
+    expect(readdirSync(dir).sort()).toEqual([
+      "firebase.firebase-analytics.d.ts",
+      "firebase.firebase-core.d.ts",
+      "index.d.ts",
+      "package.json",
+    ]);
+    expect(readFileSync(join(dir, "firebase.firebase-core.d.ts"), "utf8")).toContain("initialize");
+    expect(readFileSync(join(dir, "firebase.firebase-analytics.d.ts"), "utf8")).toContain(
+      "namespace analytics",
+    );
+    expect(result.extensions.map((ext) => ext.namespaces)).toEqual([["firebase"], ["firebase"]]);
+    expect(result.sharedNamespaces).toEqual([
+      { namespace: "firebase", urls: [coreUrl, analyticsUrl] },
+    ]);
+  });
+});
+
 describe("runResolve library matching", () => {
   const MYLIB = "declare module 'mylib.core' { export const version: string; }\n";
 
