@@ -291,11 +291,16 @@ interface ZipDirectoryEntry {
 // Walks the central directory, which is the archive's own index: every entry
 // an archiver listed, directory entries included, in archive order. Found from
 // the end record, which sits in the last 22 bytes unless a comment follows it.
+// A comment may itself contain the signature bytes, so a candidate counts only
+// when its own comment length reaches exactly to the end of the archive.
 function readZipDirectory(bytes: Buffer, path: string): Map<string, ZipDirectoryEntry> {
   const earliest = Math.max(0, bytes.length - ZIP_END_RECORD_SIZE - ZIP_MAX_COMMENT_SIZE);
   let endRecord = -1;
   for (let at = bytes.length - ZIP_END_RECORD_SIZE; at >= earliest; at--) {
-    if (bytes.readUInt32LE(at) === ZIP_END_RECORD_SIGNATURE) {
+    if (
+      bytes.readUInt32LE(at) === ZIP_END_RECORD_SIGNATURE &&
+      at + ZIP_END_RECORD_SIZE + bytes.readUInt16LE(at + 20) === bytes.length
+    ) {
       endRecord = at;
       break;
     }

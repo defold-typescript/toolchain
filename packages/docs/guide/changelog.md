@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry constants branded as the `string` or `number` their doc declares, optional parameters, and callbacks typed from their documented arguments.
+> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters, and callbacks typed from their documented arguments, so a listener with other argument types fails to type-check.
 > - **[`resolve` runs under Node and Bun](./resolve.md)** from the published packages for a project with a native extension, on every OS, with no `unzip`.
 > - **[Asset Portal libraries with no Lua API](/libraries)** get pages.
 
@@ -29,7 +29,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **`resolve` works from the published packages for a project depending on a native extension**, under Node and Bun on macOS, Linux and Windows ([resolve](./resolve.md)); under Node it failed to load the types package's TypeScript scripts (a bare `C:\` path on Windows, type stripping under `node_modules` elsewhere), and under Bun it found none of the `fixtures/defold-*` documents in the published `@defold-typescript/types`. Reading an extension archive no longer needs an `unzip` binary.
+- **`resolve` works from the published packages for a project depending on a native extension**, under Node and Bun on macOS, Linux and Windows ([resolve](./resolve.md)); under Node it failed to load the types package's TypeScript scripts (a bare `C:\` path on Windows, type stripping under `node_modules` elsewhere), and under Bun it found none of the `fixtures/defold-*` documents in the published `@defold-typescript/types`. Reading an extension archive needs no `unzip` binary and handles an archive carrying a comment of any content.
 
 ## v0.53.0
 

@@ -10,6 +10,12 @@ export interface ZipFixtureEntry {
   readonly stored?: boolean;
 }
 
+// The archive comment follows the end record, and the record's last field
+// carries its byte length, the way `git archive` stores the commit id there.
+export interface ZipFixtureOptions {
+  readonly comment?: string;
+}
+
 const LOCAL_HEADER_SIGNATURE = 0x04034b50;
 const CENTRAL_HEADER_SIGNATURE = 0x02014b50;
 const END_RECORD_SIGNATURE = 0x06054b50;
@@ -28,8 +34,12 @@ function concat(chunks: readonly Uint8Array[]): Uint8Array {
   return out;
 }
 
-export function writeZipArchive(entries: readonly ZipFixtureEntry[]): Uint8Array {
+export function writeZipArchive(
+  entries: readonly ZipFixtureEntry[],
+  options: ZipFixtureOptions = {},
+): Uint8Array {
   const encoder = new TextEncoder();
+  const comment = encoder.encode(options.comment ?? "");
   const locals: Uint8Array[] = [];
   const centrals: Uint8Array[] = [];
   let offset = 0;
@@ -89,7 +99,7 @@ export function writeZipArchive(entries: readonly ZipFixtureEntry[]): Uint8Array
   end.setUint16(10, entries.length, true);
   end.setUint32(12, centralDirectory.length, true);
   end.setUint32(16, offset, true);
-  end.setUint16(20, 0, true);
+  end.setUint16(20, comment.length, true);
 
-  return concat([...locals, centralDirectory, new Uint8Array(end.buffer)]);
+  return concat([...locals, centralDirectory, new Uint8Array(end.buffer), comment]);
 }

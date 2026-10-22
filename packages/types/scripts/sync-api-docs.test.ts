@@ -914,12 +914,23 @@ describe("readZip over a written archive", () => {
     "",
   ].join("\n");
 
-  function writtenArchive(entries: Parameters<typeof writeZipArchive>[0]): string {
+  function writtenArchive(
+    entries: Parameters<typeof writeZipArchive>[0],
+    options?: Parameters<typeof writeZipArchive>[1],
+  ): string {
     const dir = mkdtempSync(join(tmpdir(), "readzip-written-"));
     const zipPath = join(dir, "archive.zip");
-    writeFileSync(zipPath, writeZipArchive(entries));
+    writeFileSync(zipPath, writeZipArchive(entries, options));
     return zipPath;
   }
+
+  const PIXELS_ENTRIES = [
+    { name: "defold-pixels-master/", text: "" },
+    { name: "defold-pixels-master/ext.manifest", text: MANIFEST },
+    { name: "defold-pixels-master/api/pixels.script_api", text: SCRIPT_API },
+  ];
+  const PIXELS_NAMES = PIXELS_ENTRIES.map((entry) => entry.name);
+  const END_RECORD_SIGNATURE_BYTES = "PK\u0005\u0006";
 
   test("lists entries in archive order, directory included, and inflates a deflated entry", () => {
     const zip = readZip(
@@ -950,5 +961,34 @@ describe("readZip over a written archive", () => {
     expect(zip.has("api/pixels.script_api")).toBe(false);
     expect(() => zip.read("api/pixels.script_api")).toThrow("api/pixels.script_api");
     expect(() => zip.read("api/pixels.script_api")).toThrow(zipPath);
+  });
+
+  // The signature sits 24 bytes from the end, so a backward scan meets it
+  // before the real record, and its length field (`xx`) does not reach the end.
+  test("reads an archive whose comment contains the end-record signature", () => {
+    const zip = readZip(
+      writtenArchive(PIXELS_ENTRIES, { comment: `${END_RECORD_SIGNATURE_BYTES}${"x".repeat(20)}` }),
+    );
+    expect(zip.entries()).toEqual(PIXELS_NAMES);
+    expect(zip.read("defold-pixels-master/api/pixels.script_api")).toBe(SCRIPT_API);
+  });
+
+  test("reads an archive carrying a commit-id comment, as `git archive` writes", () => {
+    const zip = readZip(
+      writtenArchive(PIXELS_ENTRIES, { comment: "a7786103a6c9aaf33a39704ff3089522d22c5a0a" }),
+    );
+    expect(zip.entries()).toEqual(PIXELS_NAMES);
+    expect(zip.read("defold-pixels-master/api/pixels.script_api")).toBe(SCRIPT_API);
+  });
+
+  test("a file whose only signature has no valid comment length is not a zip archive", () => {
+    const dir = mkdtempSync(join(tmpdir(), "readzip-written-"));
+    const zipPath = join(dir, "notes.zip");
+    writeFileSync(
+      zipPath,
+      `release notes for the pixels extension\n${END_RECORD_SIGNATURE_BYTES}${"x".repeat(20)}`,
+    );
+    expect(() => readZip(zipPath)).toThrow(zipPath);
+    expect(() => readZip(zipPath)).toThrow("not a zip archive");
   });
 });
