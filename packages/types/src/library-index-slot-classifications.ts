@@ -43,6 +43,58 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
     { class: "not-a-position", evidence: "a draw order: a bigger z draws on top" },
   ],
   [
+    "box2d/ComputeAABB:param:childIndex",
+    {
+      class: "native-0",
+      evidence:
+        "shape/chain_shape.cpp:96 passes it to b2ChainShape::ComputeAABB unchanged; the circle, polygon and edge shapes pass 0",
+    },
+  ],
+  [
+    "box2d/Dump:param:bodyIndex",
+    {
+      class: "native-0",
+      evidence:
+        "fixture.cpp:238 passes it to b2Fixture::Dump unchanged, which logs it as the fixture's slot in the 0-based bodies array b2World::Dump writes",
+    },
+  ],
+  [
+    "box2d/GetAABB:param:childIndex",
+    {
+      class: "native-0",
+      evidence: "fixture.cpp:229 passes it to b2Fixture::GetAABB unchanged",
+    },
+  ],
+  [
+    "box2d/GetChildEdge:param:index",
+    {
+      class: "native-0",
+      evidence: "shape/chain_shape.cpp:149 passes it to b2ChainShape::GetChildEdge unchanged",
+    },
+  ],
+  [
+    "box2d/GetChildIndexA:return:",
+    {
+      class: "native-0",
+      evidence: "contact.cpp:103 pushes b2Contact::GetChildIndexA unchanged",
+    },
+  ],
+  [
+    "box2d/GetChildIndexB:return:",
+    {
+      class: "native-0",
+      evidence: "contact.cpp:117 pushes b2Contact::GetChildIndexB unchanged",
+    },
+  ],
+  [
+    "box2d/RayCast:param:childIndex",
+    {
+      class: "native-0",
+      evidence:
+        "fixture.cpp:149 and shape/chain_shape.cpp:81 pass it to Box2D's RayCast unchanged; the circle, polygon and edge shapes pass 0",
+    },
+  ],
+  [
     "bridge/bridge.daily_rewards.get_current_day:param:on_success:day",
     {
       class: "native-0",

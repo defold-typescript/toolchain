@@ -1,5 +1,6 @@
 {
   "boom": "Boom is a game framework built on top of Defold",
+  "box2d": "Box2D physics: worlds, bodies, fixtures, shapes and joints.",
   "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
   "checkpoint": "Checkpoint is a library for reading from and writing to files in a Defold game engine project.",
   "daabbcc": "Dynamic Tree (aka AABB Tree) native extension for Defold Engine",
