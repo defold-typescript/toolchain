@@ -2,6 +2,13 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import ts from "typescript";
 import { extractApiDoc } from "./extract-api-doc";
+import {
+  type AssetPortalManifest,
+  type PortalAliases,
+  type PortalEntry,
+  readAssetPortalManifest,
+  readPortalAliases,
+} from "./sync-asset-portal";
 import { readAuthoredTargets } from "./sync-authored-types";
 import type { DefoldExtensionEntry } from "./sync-defold-extensions";
 import { readLualsTargets } from "./sync-luals-types";
@@ -270,18 +277,26 @@ export async function checkDrift(
 export type DirClassification = "pure-lua" | "native" | "already-vendored" | "covered-by-goal";
 
 /**
- * Whether a native dir's upstream ships a `.script_api`: `ships` and `none` are
- * recorded evidence from `defold-extensions.json`, `unknown` means the two
- * corpora do not join on this dir's name. Only `none` and `unknown` need a
- * curated declaration — a `ships` dir is already emitted by `resolve`.
+ * Whether a native dir's upstream ships a `.script_api`. The verdict comes from
+ * `defold-extensions.json` first, then `asset-portal.json`, then the repo the
+ * dir's `library.json` credits; `unknown` remains only when that repo cannot be
+ * reached, and the row records why. Only `none` and `unknown` need a curated
+ * declaration — a `ships` dir is already emitted by `resolve`.
  */
 export type ScriptApiEligibility = "ships" | "none" | "unknown";
+
+export type ScriptApiSource = "defold-extensions" | "asset-portal" | "upstream";
+
+/** Why an upstream lookup reached no repo, in the words `asset-portal.json` uses. */
+export type ScriptApiReason = NonNullable<PortalEntry["reason"]>;
 
 export interface ClassificationEntry {
   dir: string;
   classification: DirClassification;
   modules: string[];
   scriptApi?: ScriptApiEligibility;
+  scriptApiSource?: ScriptApiSource;
+  scriptApiReason?: ScriptApiReason;
 }
 
 // A ts-defold/library `<name>-<version>.d.ts` alias file (e.g. `monarch-5.1.0`,
@@ -352,8 +367,9 @@ export function classifyLibraryDirs(
  * equality only. A prefix or substring join would bind `extension-videoplayer`
  * to `extension-videoplayer-native` and a false `ships` silently drops an
  * eligible extension from the sweep, so an unmatched dir stays `unknown` rather
- * than reach. Non-native rows keep no eligibility field — the curated lane is a
- * native-only concern.
+ * than reach, and only a matched row records `defold-extensions` as its source.
+ * Non-native rows keep no eligibility field — the curated lane is a native-only
+ * concern.
  */
 export function nativeScriptApiEligibility(
   entries: readonly ClassificationEntry[],
@@ -366,12 +382,48 @@ export function nativeScriptApiEligibility(
     const key = repo.toLowerCase();
     shipsByRepo.set(key, (shipsByRepo.get(key) ?? false) || library.docs.length > 0);
   }
-  return entries.map((entry) => {
+  return entries.map((entry): ClassificationEntry => {
     if (entry.classification !== "native") return entry;
     const ships = shipsByRepo.get(entry.dir.toLowerCase());
-    const scriptApi: ScriptApiEligibility =
-      ships === undefined ? "unknown" : ships ? "ships" : "none";
-    return { ...entry, scriptApi };
+    if (ships === undefined) return { ...entry, scriptApi: "unknown" };
+    return { ...entry, scriptApi: ships ? "ships" : "none", scriptApiSource: "defold-extensions" };
+  });
+}
+
+/** The repo-name segment of any host's repo URL, case-folded, without a trailing `/` or `.git`. */
+function repoNameKey(repo: string): string {
+  const path = repo
+    .toLowerCase()
+    .replace(/\/+$/, "")
+    .replace(/\.git$/, "");
+  return path.slice(path.lastIndexOf("/") + 1);
+}
+
+/**
+ * Fill each native row `nativeScriptApiEligibility` left `unknown` from the
+ * `asset-portal.json` entries naming its upstream repo, under the same exact,
+ * case-folded repo-name join, with an alias standing in for its entry's own
+ * repo: `ships` when any such entry counts a `.script_api`, else `none`. A
+ * verdict already recorded is kept, so `defold-extensions.json` wins a
+ * disagreement.
+ */
+export function portalScriptApiEligibility(
+  entries: readonly ClassificationEntry[],
+  manifest: AssetPortalManifest,
+  aliases: PortalAliases,
+): ClassificationEntry[] {
+  const shipsByRepo = new Map<string, boolean>();
+  for (const portal of manifest.entries) {
+    const repo = aliases[portal.id] ?? portal.repo;
+    if (repo === null) continue;
+    const key = repoNameKey(repo);
+    shipsByRepo.set(key, (shipsByRepo.get(key) ?? false) || portal.scriptApi > 0);
+  }
+  return entries.map((entry): ClassificationEntry => {
+    if (entry.classification !== "native" || entry.scriptApi !== "unknown") return entry;
+    const ships = shipsByRepo.get(entry.dir.toLowerCase());
+    if (ships === undefined) return entry;
+    return { ...entry, scriptApi: ships ? "ships" : "none", scriptApiSource: "asset-portal" };
   });
 }
 
@@ -479,6 +531,62 @@ export type ListTree = (source: LibrarySource) => Promise<string[]>;
 
 const defaultListTree: ListTree = (source) => githubTreePaths(repoSlug(source.repo), source.commit);
 
+/** Whether a ts-defold/library dir's upstream repo ships a `.script_api`, or why it cannot tell. Network seam. */
+export type LookupUpstream = (
+  dir: string,
+  source: LibrarySource,
+) => Promise<{ scriptApi: "ships" | "none" } | { reason: ScriptApiReason }>;
+
+/**
+ * The upstream is the repo `packages/<dir>/library.json` credits in its `url` at
+ * the pinned commit, read at its default branch. Only a missing `library.json`,
+ * a URL off GitHub, or a repo GitHub no longer serves becomes a reason; any
+ * other failed request throws, so a transient error is never recorded as one.
+ */
+const defaultLookupUpstream: LookupUpstream = async (dir, source) => {
+  const libraryUrl = `https://raw.githubusercontent.com/${repoSlug(source.repo)}/${source.commit}/packages/${dir}/library.json`;
+  const library = await fetch(libraryUrl);
+  if (library.status === 404) return { reason: "no-github-url" };
+  if (!library.ok) {
+    throw new Error(`library.json fetch failed: ${libraryUrl} -> ${library.status}`);
+  }
+  const { url } = (await library.json()) as { url?: unknown };
+  const match = typeof url === "string" ? GITHUB_REPO_URL.exec(url) : null;
+  if (!match) return { reason: "no-github-url" };
+  const slug = `${match[1]}/${match[2]}`;
+  const repoUrl = `https://api.github.com/repos/${slug}`;
+  const repo = await fetch(repoUrl, { headers: githubHeaders() });
+  if (repo.status === 404) return { reason: "not-found" };
+  if (!repo.ok) throw new Error(`repo fetch failed: ${repoUrl} -> ${repo.status}`);
+  const paths = await githubTreePaths(slug, "HEAD");
+  return { scriptApi: paths.some((p) => p.endsWith(".script_api")) ? "ships" : "none" };
+};
+
+/**
+ * Look up each native row both joins left `unknown`, one at a time, recording
+ * the result as an `upstream` verdict or reason.
+ */
+async function upstreamScriptApiEligibility(
+  entries: readonly ClassificationEntry[],
+  source: LibrarySource,
+  lookupUpstream: LookupUpstream,
+): Promise<ClassificationEntry[]> {
+  const resolved: ClassificationEntry[] = [];
+  for (const entry of entries) {
+    if (entry.classification !== "native" || entry.scriptApi !== "unknown") {
+      resolved.push(entry);
+      continue;
+    }
+    const result = await lookupUpstream(entry.dir, source);
+    resolved.push(
+      "reason" in result
+        ? { ...entry, scriptApiSource: "upstream", scriptApiReason: result.reason }
+        : { ...entry, scriptApi: result.scriptApi, scriptApiSource: "upstream" },
+    );
+  }
+  return resolved;
+}
+
 /**
  * Read every maintained-here registry off the package root and union them.
  * Each reader `readFileSync`s unconditionally and throws on a missing required
@@ -501,18 +609,20 @@ export function readMaintainedHereRegistry(packageRoot: string): MaintainedHereR
  * Enumerate every ts-defold/library dir at the pin, drop the dirs severed onto
  * a maintained-here lane, classify each survivor by its module-name shape, record
  * each native survivor's `.script_api` eligibility from the local
- * `defold-extensions.json`, and write `library-classification.json`. Filtering
- * happens here, not in `classifyLibraryDirs`, so that pass stays a pure
- * map-and-sort. The extensions read is local, so the pass stays offline. The `listTree`
- * seam keeps the pass offline-testable; only the CLI wires the real call, and it
- * stays out of CI (mirrors `--check`). The manifest pins the same `source` as
- * `library-targets.json`.
+ * `defold-extensions.json`, then `asset-portal.json`, then an upstream lookup for
+ * the rest, and write `library-classification.json`. Filtering happens here, not
+ * in `classifyLibraryDirs`, so that pass stays a pure map-and-sort. The
+ * `listTree` and `lookupUpstream` seams keep the pass offline-testable; only the
+ * CLI wires the real calls, and it stays out of CI (mirrors `--check`). Nothing
+ * is written until every lookup has returned. The manifest pins the same
+ * `source` as `library-targets.json`.
  */
 export async function writeClassification(
   packageRoot: string,
-  seams: { listTree?: ListTree } = {},
+  seams: { listTree?: ListTree; lookupUpstream?: LookupUpstream } = {},
 ): Promise<void> {
   const listTree = seams.listTree ?? defaultListTree;
+  const lookupUpstream = seams.lookupUpstream ?? defaultLookupUpstream;
   const { source, targets } = readTargets(packageRoot);
   const vendoredDirs = new Set(
     targets.map((t) => t.path.split("/")[1]).filter((d): d is string => d !== undefined),
@@ -536,10 +646,15 @@ export async function writeClassification(
   const { libraries } = JSON.parse(
     readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
   ) as { libraries: DefoldExtensionEntry[] };
-  const entries = nativeScriptApiEligibility(
-    classifyLibraryDirs(dirs, { vendoredDirs, coveredByGoalDirs }),
-    libraries,
+  const joined = portalScriptApiEligibility(
+    nativeScriptApiEligibility(
+      classifyLibraryDirs(dirs, { vendoredDirs, coveredByGoalDirs }),
+      libraries,
+    ),
+    readAssetPortalManifest(packageRoot),
+    readPortalAliases(packageRoot),
   );
+  const entries = await upstreamScriptApiEligibility(joined, source, lookupUpstream);
   writeFileSync(
     join(packageRoot, "library-classification.json"),
     `${JSON.stringify({ source, dirs: entries }, null, 2)}\n`,

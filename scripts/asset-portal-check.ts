@@ -3,10 +3,13 @@ import { join } from "node:path";
 import {
   type AssetPortalManifest,
   livePortalHead,
+  type PortalAliases,
   type PortalEntry,
   type PortalHead,
   type PortalKind,
   portalEntryId,
+  readAssetPortalManifest,
+  readPortalAliases,
 } from "../packages/library-types/scripts/sync-asset-portal.ts";
 import type { DefoldExtensionsManifest } from "../packages/library-types/scripts/sync-defold-extensions.ts";
 import { readNativeTargets } from "../packages/library-types/scripts/sync-native-types.ts";
@@ -60,8 +63,7 @@ export interface CoverageRegistries {
   readonly portal: readonly { readonly repo: string }[];
 }
 
-/** Portal entry id -> the tracked repo URL its library moved to. */
-export type PortalAliases = Readonly<Record<string, string>>;
+export { type PortalAliases, readAssetPortalManifest, readPortalAliases };
 
 /** Portal entry id -> why the project does not type it. */
 export type PortalVerdicts = Readonly<Record<string, string>>;
@@ -111,10 +113,6 @@ export interface AssetPortalCheckIo {
 
 const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
 
-export function readAssetPortalManifest(packageRoot: string = PACKAGE_ROOT): AssetPortalManifest {
-  return JSON.parse(readFileSync(join(packageRoot, "asset-portal.json"), "utf8"));
-}
-
 /**
  * The shape the ratchet probe needs before it joins: a manifest it cannot read
  * is unknown backlog, never a drained one.
@@ -130,11 +128,6 @@ export function parseAssetPortalManifest(raw: unknown, path: string): AssetPorta
     throw new Error(`${path}: expected an asset-portal manifest`);
   }
   return manifest as AssetPortalManifest;
-}
-
-export function readPortalAliases(packageRoot: string = PACKAGE_ROOT): PortalAliases {
-  const file = join(packageRoot, "asset-portal-aliases.json");
-  return (JSON.parse(readFileSync(file, "utf8")) as { aliases: PortalAliases }).aliases;
 }
 
 export function readPortalVerdicts(packageRoot: string = PACKAGE_ROOT): PortalVerdicts {
