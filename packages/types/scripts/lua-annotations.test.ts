@@ -21,7 +21,7 @@ function fn(key: string) {
   return found;
 }
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 function copyDefaultTarget(): string {
   if (!DEFAULT_TARGET) throw new Error("api-targets.json has no default target");

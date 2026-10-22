@@ -1123,7 +1123,7 @@ function biomeFormatJson(raw: string): string {
 if (import.meta.main) {
   const report = buildFidelityReport();
   if (process.argv.includes("--write")) {
-    const path = resolve(import.meta.dir, "fidelity-baseline.json");
+    const path = resolve(import.meta.dirname, "fidelity-baseline.json");
     Bun.write(path, biomeFormatJson(JSON.stringify(report)));
     console.log(`wrote ${path}`);
   } else {

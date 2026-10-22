@@ -17,7 +17,7 @@ import {
 
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const DECLARED_NAME_KINDS = new Set(["CONSTANT", "ENUM", "STRUCT", "TYPEDEF", "CLASS"]);
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 // Editor-scripting namespaces are mapped, but not by `api-targets.json`: they
 // emit through `EDITOR_MODULE_MANIFEST` rather than the runtime module set the

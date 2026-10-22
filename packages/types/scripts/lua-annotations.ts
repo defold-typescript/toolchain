@@ -90,7 +90,7 @@ export interface AnnotationFile {
 // handled ones fails the parse, so a new upstream tag is never silently dropped.
 const IGNORED_TAGS = new Set(["meta", "diagnostic", "operator"]);
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 function surfaceOf(file: string): AnnotationSurface {
   if (file.endsWith(".editor_script")) return "editor";

@@ -8,7 +8,7 @@ import {
 import type { ApiTarget } from "./regen";
 import { vendoredTargets } from "./sync-engine-bindings";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 export const GO_INSTANCE_FUNCTIONS_FILE = "go-instance-functions.json";
 

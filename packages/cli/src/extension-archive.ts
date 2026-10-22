@@ -2,14 +2,13 @@
 // foundational slice (extension-deps.ts) built the pure resolver core; this turns
 // each declared `dependencies#N` URL into a `ResolvedExtensionArchive` carrying
 // real `.script_api` paths plus cache/download provenance. It mirrors the
-// `versioned-api-surface` doc-source seam (cache->download, `unzip`-backed
+// `versioned-api-surface` doc-source seam (cache->download, the types package's
 // `ZipAccessor`) keyed by the arbitrary extension URL instead of a Defold version.
 
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { resolveTypesPackageRoot } from "./api-registry";
 import {
   classifyExtension,
   type ExtensionDependency,
@@ -69,18 +68,15 @@ const fetchExtensionArchive: DownloadExtensionArchive = async (url) => {
   return new Uint8Array(await res.arrayBuffer());
 };
 
-// Default accessor: the `unzip`-backed `readZip` ships in the `@defold-typescript/types`
-// tarball (`scripts/`). Loaded by resolved path so the CLI never statically pulls
-// in its fixture-reading module side effects (mirrors `materializeRefDocSurface`).
+// Default accessor: `readZip` ships in `@defold-typescript/types` behind its
+// `cli-runtime` export, imported by that specifier because Node's loader reads
+// a path as a URL and never strips types under `node_modules`; each runtime
+// resolves the entry its export condition names. The import stays dynamic so
+// the generator's module graph loads only when a verb needs it (mirrors
+// `materializeRefDocSurface`).
 export const defaultReadZip: ReadExtensionZip = async (zipPath) => {
-  const root = resolveTypesPackageRoot();
-  if (root === null) {
-    throw new Error("cannot locate @defold-typescript/types to open the extension archive");
-  }
-  const mod = (await import(join(root, "scripts", "sync-api-docs.ts"))) as {
-    readZip: (path: string) => ExtensionZip;
-  };
-  return mod.readZip(zipPath);
+  const { readZip } = await import("@defold-typescript/types/cli-runtime");
+  return readZip(zipPath);
 };
 
 export async function resolveExtensionArchive(

@@ -13,7 +13,8 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry constants branded as the `string` or `number` their doc declares, emit optional parameters optional, and type a callback from its documented arguments, narrowing it from `(...args: unknown[]) => unknown`.
+> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry constants branded as the `string` or `number` their doc declares, optional parameters, and callbacks typed from their documented arguments.
+> - **[`resolve` runs under Node and Bun](./resolve.md)** from the published packages for a project with a native extension, on every OS, with no `unzip`.
 > - **[Asset Portal libraries with no Lua API](/libraries)** get pages.
 
 ### Breaking
@@ -25,6 +26,10 @@ What changed in each published `defold-typescript` toolchain release.
 - **`resolve` extension declarations carry the whole documented surface**: the namespace's constants, including those one sub-table deep (`iap.PROVIDER_ID_GOOGLE`, `push.NOTIFICATION_BADGE`), each branded as the `string` or `number` its doc declares (`firebase.analytics.EVENT_ADIMPRESSION` is a `string` brand), a function returning a documented constant typed as that constant union, a parameter flagged `optional: true` emitted optional, and a table parameter typed from its documented fields. A `.script_api` slot typed `enum` is read as a constant-valued slot, so `webview.create`'s callback `type` argument is the union of the `webview.CALLBACK_RESULT_*` constants.
 - **The [facebook](/api/facebook), [playables](/api/playables) and [poki_sdk](/api/poki_sdk) Libraries pages** show the parameter types their `.script_api` spells as YAML lists (`[string, nil]`), which previously rendered as untyped.
 - **[Libraries](/libraries) lists the Defold Asset Portal libraries that ship no Lua API**, such as shaders, materials, sounds and editor scripts, each under its GitHub owner with an icon-marked card, sidebar entry and page, such as [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page leads with the portal's description, gives the dependency step for its pin, and links the library's Asset Portal entry.
+
+### Fixed
+
+- **`resolve` works from the published packages for a project depending on a native extension**, under Node and Bun on macOS, Linux and Windows ([resolve](./resolve.md)); under Node it failed to load the types package's TypeScript scripts (a bare `C:\` path on Windows, type stripping under `node_modules` elsewhere), and under Bun it found none of the `fixtures/defold-*` documents in the published `@defold-typescript/types`. Reading an extension archive no longer needs an `unzip` binary.
 
 ## v0.53.0
 

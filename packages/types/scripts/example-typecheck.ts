@@ -21,7 +21,7 @@ import { type LooseTypeFinding, looseTypeFindings } from "./example-loose-types"
 import { type ExampleDiagnostic, PINS_PATH, type PinFile } from "./example-pins";
 import { boundOwnership, type ExampleSurface, exampleIdentity } from "./example-surfaces";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const TSCONFIG_PATH = resolve(PACKAGE_ROOT, "tsconfig.json");
 
 export { type ExampleDiagnostic, PINS_PATH, type PinFile, readPins } from "./example-pins";

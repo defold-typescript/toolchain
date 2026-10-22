@@ -34,7 +34,7 @@ import { SYNC_MANIFEST, type ZipAccessor } from "./sync-api-docs";
 const LUA_STDLIB_LEAD =
   '/// <reference types="lua-types/5.1" />\n/// <reference types="lua-types/special/jit-only" />\n';
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 
 function labelRefDocZip(opts: { dropSetText?: boolean } = {}): {
   fakeZip: ZipAccessor;
