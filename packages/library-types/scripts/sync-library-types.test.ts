@@ -22,14 +22,17 @@ import {
   maintainedHereModules,
   mergeLibraryDescriptions,
   nativeScriptApiEligibility,
+  nativeSweepRemainder,
   portalScriptApiEligibility,
   rawUrl,
   readMaintainedHereRegistry,
+  readNativeSweepVerdicts,
   repoSlug,
   severedDirsFromModules,
   writeClassification,
   writeDescriptions,
 } from "./sync-library-types";
+import { readNativeTargets } from "./sync-native-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const REGISTRY = JSON.parse(
@@ -609,6 +612,105 @@ describe("portalScriptApiEligibility", () => {
       {},
     );
     expect(entries).toEqual(rows);
+  });
+});
+
+describe("nativeSweepRemainder", () => {
+  const none = (dir: string, modules: string[] = [dir]): ClassificationEntry => ({
+    dir,
+    classification: "native",
+    modules,
+    scriptApi: "none",
+    scriptApiSource: "upstream",
+  });
+  const unreachable = (dir: string): ClassificationEntry => ({
+    dir,
+    classification: "native",
+    modules: [dir],
+    scriptApi: "unknown",
+    scriptApiSource: "upstream",
+    scriptApiReason: "not-found",
+  });
+
+  test("returns every native dir no route covers, sorted", () => {
+    const unjoined: ClassificationEntry = {
+      dir: "middle",
+      classification: "native",
+      modules: ["middle"],
+      scriptApi: "unknown",
+    };
+    expect(nativeSweepRemainder([none("zeta"), unjoined, none("alpha")], [], {})).toEqual([
+      "alpha",
+      "middle",
+      "zeta",
+    ]);
+  });
+
+  test("a dir whose upstream ships a .script_api is covered", () => {
+    expect(nativeSweepRemainder([{ ...none("ext"), scriptApi: "ships" }], [], {})).toEqual([]);
+  });
+
+  test("a dir with a module a native target registers is covered, by exact name only", () => {
+    const rows = [
+      none("DAABBCC", ["aabb", "daabbcc"]),
+      none("defold-share-ext", ["share_ext"]),
+      none("defold-uuid", ["uuid"]),
+    ];
+    const targets = [{ namespace: "daabbcc" }, { namespace: "share" }, { namespace: "uuid4" }];
+    expect(nativeSweepRemainder(rows, targets, {})).toEqual(["defold-share-ext", "defold-uuid"]);
+  });
+
+  test("a dir the asset portal decided is covered", () => {
+    const row: ClassificationEntry = { ...none("defold-uuid4"), scriptApiSource: "asset-portal" };
+    expect(nativeSweepRemainder([row], [], {})).toEqual([]);
+  });
+
+  test("a dir whose upstream could not be reached is covered by its recorded reason", () => {
+    expect(nativeSweepRemainder([unreachable("gone")], [], {})).toEqual([]);
+  });
+
+  test("a dir with a verdict is covered", () => {
+    const rows = [none("defold-playdeck"), none("defold-textinput")];
+    expect(nativeSweepRemainder(rows, [], { "defold-playdeck": "unmaintained" })).toEqual([
+      "defold-textinput",
+    ]);
+  });
+
+  test("a non-native row is never returned", () => {
+    const rows: ClassificationEntry[] = [
+      { dir: "monarch", classification: "pure-lua", modules: ["monarch.monarch"] },
+      { dir: "defold-richtext", classification: "already-vendored", modules: ["richtext"] },
+      { dir: "defold-xmath", classification: "covered-by-goal", modules: ["xmath"] },
+    ];
+    expect(nativeSweepRemainder(rows, [], {})).toEqual([]);
+  });
+
+  test("a verdict for an absent, non-native or already-covered dir throws", () => {
+    const rows: ClassificationEntry[] = [
+      { dir: "monarch", classification: "pure-lua", modules: ["monarch.monarch"] },
+      { ...none("ext"), scriptApi: "ships" },
+      none("typed"),
+      { ...none("portal"), scriptApiSource: "asset-portal" },
+      unreachable("gone"),
+    ];
+    for (const dir of ["missing", "monarch", "ext", "typed", "portal", "gone"]) {
+      expect(() =>
+        nativeSweepRemainder(rows, [{ namespace: "typed" }], { [dir]: "stale" }),
+      ).toThrow(`native-sweep-verdicts.json: ${dir} `);
+    }
+  });
+
+  test("the committed manifests leave no native dir unaccounted for", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    ) as ClassificationManifest;
+    expect(
+      nativeSweepRemainder(
+        manifest.dirs,
+        readNativeTargets(PACKAGE_ROOT),
+        readNativeSweepVerdicts(PACKAGE_ROOT),
+      ),
+    ).toEqual([]);
   });
 });
 
