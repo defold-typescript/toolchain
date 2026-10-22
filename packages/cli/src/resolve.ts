@@ -21,6 +21,7 @@ import { readExtensionDependencies } from "./extension-deps";
 import {
   ensureExtensionTypesReference,
   materializeExtensionDeclarations,
+  type SharedExtensionNamespace,
 } from "./extension-materialize";
 import { mergeResolvedVersionPins, readExtensionVersionPins } from "./extension-version";
 import { formatJsonLikeBiome } from "./format-json";
@@ -90,6 +91,9 @@ export interface RunResolveResult {
   readonly materializedSurface: string | null;
   readonly extensions: ResolvedExtensionReport[];
   readonly libraries: ResolvedLibraryReport[];
+  // Namespaces several declarations share, each written to its own file so
+  // TypeScript merges them; empty when every namespace has one source.
+  readonly sharedNamespaces: SharedExtensionNamespace[];
   readonly warnings: readonly string[];
 }
 
@@ -166,6 +170,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       materializedSurface: null,
       extensions: [],
       libraries: [],
+      sharedNamespaces: [],
       warnings: [],
     };
   }
@@ -178,6 +183,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       materializedSurface: null,
       extensions: [],
       libraries: [],
+      sharedNamespaces: [],
       warnings: [],
     };
   }
@@ -199,7 +205,14 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     });
     ensureExtensionTypesReference(cwd, extensionsDir);
     materializeLibrarySceneSources({ cwd, bundles: [] });
-    return { ok: true, materializedSurface: null, extensions: [], libraries: [], warnings: [] };
+    return {
+      ok: true,
+      materializedSurface: null,
+      extensions: [],
+      libraries: [],
+      sharedNamespaces: [],
+      warnings: [],
+    };
   }
 
   const resolvedBundles = await resolveExtensionDeclarations(deps, {
@@ -259,7 +272,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // Only the *type* surface is filtered: a superseded bundle stays a declared
   // dependency below, so its scene sources still unpack and its version and pin
   // status still report.
-  const { materializedDir } = materializeExtensionDeclarations({
+  const { materializedDir, sharedNamespaces } = materializeExtensionDeclarations({
     cwd,
     bundles: bundles.filter((bundle) => !confirmedLibraryUrls.has(bundle.url)),
   });
@@ -367,5 +380,12 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     return report;
   });
 
-  return { ok: true, materializedSurface: materializedDir, extensions, libraries, warnings };
+  return {
+    ok: true,
+    materializedSurface: materializedDir,
+    extensions,
+    libraries,
+    sharedNamespaces,
+    warnings,
+  };
 }

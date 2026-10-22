@@ -73,6 +73,12 @@ For each native extension, `resolve`:
    it coexists with the pinned engine surface (and the `"libraries"` surface,
    below) under one `typeRoots`.
 
+When several dependencies declare one namespace — the Firebase extensions all
+declare `firebase` — each declaration is written to its own
+`<namespace>.<dependency>.d.ts`, named after the dependency's repository, and
+TypeScript merges them into one namespace. `resolve` reports it as
+`merged firebase from <url>, <url>`.
+
 `.defold-types/` is generated output and is gitignored. Re-run `resolve` whenever
 you change `[dependencies]`; each surface reconciles to exactly what is declared
 now, so removing a dependency prunes its generated types and drops the tsconfig
@@ -192,7 +198,9 @@ normally.
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
   `resolvedVersion`, `pinnedVersion`, `pinStatus`, `sceneSources`; and a `libraries` array with
-  each match's `source`, `modules`, `provenance`, and `verified`).
+  each match's `source`, `modules`, `provenance`, and `verified`; plus a
+  `sharedNamespaces` array, present only when a namespace was merged, giving each
+  merged `namespace` and the `urls` that declare it).
 
 ## Pinning extension versions
 

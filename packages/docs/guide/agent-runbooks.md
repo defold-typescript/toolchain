@@ -167,7 +167,8 @@ read `typeSurface` rather than inferring from an empty `namespaces` or from
 `assetOnly` (a superseded dependency is `assetOnly: false` and still contributes
 no namespace). Every declared dependency keeps an entry, so a pin-drift check
 still sees it. Summing `extensions[].namespaces` and `libraries[].modules`
-therefore yields each module exactly once:
+therefore yields each module exactly once, except a namespace several
+dependencies share, which each of them lists (see `sharedNamespaces` below):
 
 ```jsonc
 {
@@ -215,6 +216,12 @@ therefore yields each module exactly once:
 A `pinnedVersion` field is only present when the project's `package.json` records
 a pin for that `url`. See [Resolve](./resolve.md#pinning-extension-versions) for
 what `pinStatus` drives.
+
+When several dependencies declare one namespace, each of their `extensions[]`
+entries lists it, and a `sharedNamespaces` array names it once with the `urls`
+that declare it, in `[dependencies]` order:
+`"sharedNamespaces": [{ "namespace": "firebase", "urls": ["…/extension-firebase/archive/main.zip", "…/extension-firebase-analytics/archive/main.zip"] }]`.
+The key is absent when no namespace is shared.
 
 ## Offline knowledge pack
 

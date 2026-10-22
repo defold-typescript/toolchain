@@ -4712,6 +4712,70 @@ describe("dispatch resolve", () => {
         pinStatus: "unpinned",
       },
     ] as unknown as typeof parsed.extensions);
+    expect(parsed).not.toHaveProperty("sharedNamespaces");
+  });
+
+  describe("a namespace two dependencies share", () => {
+    const coreUrl = "https://example.com/firebase-core.zip";
+    const analyticsUrl = "https://example.com/firebase-analytics.zip";
+    const docs: Record<string, string> = {
+      [extensionArchiveKey(coreUrl)]:
+        "- name: firebase\n  type: table\n  desc: Firebase core.\n  members:\n  - name: initialize\n    type: function\n    desc: starts firebase\n",
+      [extensionArchiveKey(analyticsUrl)]:
+        "- name: firebase\n  type: table\n  desc: Firebase analytics.\n  members:\n  - name: analytics\n    type: table\n    desc: analytics events\n",
+    };
+
+    function sharedInternals(): {
+      resolveInternals: {
+        download: () => Promise<Uint8Array>;
+        readZip: (zipPath: string) => ExtensionZip;
+        cacheDir: string;
+      };
+    } {
+      return {
+        resolveInternals: {
+          cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
+          download: async () => new TextEncoder().encode("z"),
+          readZip: (zipPath: string) => {
+            const doc = docs[path.basename(path.dirname(zipPath))];
+            if (doc === undefined) {
+              throw new Error(`no fake archive for ${zipPath}`);
+            }
+            return { entries: () => ["ext/api/firebase.script_api"], read: () => doc };
+          },
+        },
+      };
+    }
+
+    beforeEach(() => {
+      writeProject(`[project]\ndependencies#0 = ${coreUrl}\ndependencies#1 = ${analyticsUrl}\n`);
+    });
+
+    test("prints which dependencies were merged after the per-dependency lines", async () => {
+      const { io, out } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd], io, sharedInternals());
+
+      expect(code).toBe(0);
+      expect(out()).toBe(
+        `  firebase <- ${coreUrl} (1 .script_api, download)\n` +
+          `  firebase <- ${analyticsUrl} (1 .script_api, download)\n` +
+          `defold-typescript resolve: merged firebase from ${coreUrl}, ${analyticsUrl}\n` +
+          "defold-typescript resolve: wrote .defold-types/extensions\n",
+      );
+    });
+
+    test("--json carries sharedNamespaces", async () => {
+      const { io, out } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--json"], io, sharedInternals());
+
+      expect(code).toBe(0);
+      const parsed = JSON.parse(out()) as { sharedNamespaces?: unknown };
+      expect(parsed.sharedNamespaces).toEqual([
+        { namespace: "firebase", urls: [coreUrl, analyticsUrl] },
+      ]);
+    });
   });
 
   test("--json reports the resolved head version/channel/sha for a channel target", async () => {
