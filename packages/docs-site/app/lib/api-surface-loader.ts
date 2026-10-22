@@ -183,6 +183,8 @@ function portalEntryUrl(id: string): string {
 interface NativeTarget {
   repo: string;
   ref: string;
+  /** Absent means `release`. */
+  refKind?: "release" | "tag" | "commit";
   license: string;
   namespace: string;
 }
@@ -690,6 +692,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
         authoredHere: true,
         usage: "ambient",
         globalNamespace: native.namespace,
+        ...(native.refKind ? { pinKind: native.refKind } : {}),
       };
     }
     const defold = defoldDocs.get(namespace);

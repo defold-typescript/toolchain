@@ -13,14 +13,16 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters, and callbacks typed from their documented arguments, so a mismatched listener fails to type-check.
-> - **[`resolve` runs under Node and Bun](./resolve.md)** on every OS from the published packages for a project with a native extension, with no `unzip`.
+> - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters, and callbacks typed from their documented arguments.
+> - **[`pixels` is a curated native namespace](./resolve.md#curated-native-extensions)**: delete any copied `types/pixels.d.ts` and rename its helper types.
+> - **[`resolve` runs under Node and Bun](./resolve.md)** on every OS for a project with a native extension, with no `unzip`.
 > - **[Asset Portal libraries](/libraries)** get pages, typed from their `.script_api` when they ship one.
-> - **[No extension declaration is lost](./resolve.md#the-generated-surface)** when extensions share a namespace, such as the Firebase ones, or declare two that differ only in letter case.
+> - **[No extension declaration is lost](./resolve.md#the-generated-surface)** when extensions share a namespace or differ only in letter case.
 
 ### Breaking
 
 - **A `.script_api` callback parameter is typed from its documented arguments** in the `.defold-types/extensions/<namespace>.d.ts` that [resolve](./resolve.md#the-generated-surface) writes: `iap.set_listener` takes `(self: unknown, transaction: { ident: string; state: string; ... }, error: Record<string | number, unknown>) => void` where it took `(...args: unknown[]) => unknown`, so a listener declared with other argument types or a non-`void` return no longer type-checks. A callback whose doc lists no arguments keeps `(...args: unknown[]) => unknown`.
+- **[pixels](/api/pixels) (`king8fisher/defold-pixels`, commit `70f7784`) is typed by a curated namespace** in place of its `.script_api` ([Curated native extensions](./resolve.md#curated-native-extensions)): every buffer argument takes a `pixels.BufferInfo` and `pixels.polyline`'s options a `pixels.PolylineOptions` where both took any table, `pixels.color` returns the pixel's channels where it returned `void`, and `pixels.line`'s `alpha`, `antialiasing` (a `boolean`, not a table) and `width` are optional. A project that copied upstream's `types/pixels.d.ts` deletes it and renames its helper types, as the guide describes.
 
 ### Improved
 
