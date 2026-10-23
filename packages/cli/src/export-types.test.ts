@@ -197,7 +197,7 @@ describe("runExportTypes refusals", () => {
   const BAD_ONE = "declare namespace bad {\n  const h: hash;\n}\n";
   const BAD_TWO = "declare namespace bad {\n  const h: hash;\n  const g: hash;\n}\n";
   const CHECK_FAILURE =
-    "curated types for defold-bad do not compile against @defold-typescript/types: ";
+    "curated types for defold-bad were not exported: types/ would not compile against @defold-typescript/types: ";
 
   function badCorpus(contents: string): string {
     return writeCorpus({
@@ -307,7 +307,100 @@ describe("runExportTypes refusals", () => {
   });
 });
 
-describe("runExportTypes writing into an existing types folder", () => {
+describe("runExportTypes over an existing types folder", () => {
+  const BROKEN = "declare namespace broken {\n  const h: hash;\n}\n";
+
+  // Each file under `dir` with its contents, so a refusal that writes anything
+  // or changes a byte shows up as a difference.
+  function snapshot(dir: string): Record<string, string> {
+    return Object.fromEntries(
+      filesUnder(dir).map((file) => [file, readFileSync(join(dir, file), "utf8")]),
+    );
+  }
+
+  function folderWith(files: Record<string, string>): string {
+    const cwd = tmp();
+    for (const [file, contents] of Object.entries(files)) {
+      mkdirSync(join(cwd, file, ".."), { recursive: true });
+      writeFileSync(join(cwd, file), contents);
+    }
+    return cwd;
+  }
+
+  test("a global file exported beside an existing module-form file is refused", () => {
+    const cwd = folderWith({
+      "types/existing.d.ts": 'declare module "existing" {\n  export const x: number;\n}\n',
+    });
+    const before = snapshot(cwd);
+    const libraryTypesRoot = writeCorpus({
+      native: [
+        {
+          repo: "https://github.com/owner/defold-glob",
+          namespace: "glob",
+          declaration: "generated/native/glob.d.ts",
+          contents: "declare namespace glob {\n  const a: number;\n}\n",
+        },
+      ],
+    });
+
+    const message = thrownMessage(() =>
+      runExportTypes({ library: "defold-glob", cwd, libraryTypesRoot }),
+    );
+    expect(message).toContain("types/glob.d.ts");
+    expect(message).not.toContain("types/existing.d.ts");
+    expect(snapshot(cwd)).toEqual(before);
+  });
+
+  test("an existing global file that does not compile refuses the export", () => {
+    const target = firstNativeTarget();
+    const cwd = folderWith({
+      "types/broken.d.ts": BROKEN,
+      [`types/${basename(target.declarationPath)}`]: "stale\n",
+    });
+    const before = snapshot(cwd);
+
+    const message = thrownMessage(() => runExportTypes({ library: target.sourceId, cwd }));
+    expect(message).toStartWith(
+      `curated types for ${target.sourceId} were not exported: types/ would not compile against @defold-typescript/types: types/broken.d.ts(2,`,
+    );
+    expect(snapshot(cwd)).toEqual(before);
+  });
+
+  test("an existing file the selection drops is not checked", () => {
+    const cwd = folderWith({ "types/broken.d.ts": BROKEN });
+    const libraryTypesRoot = writeCorpus({
+      luals: [
+        {
+          repo: "https://github.com/owner/modlib",
+          moduleId: "modlib",
+          namespace: "modlib",
+          contents: 'declare module "modlib" {\n  export const x: number;\n}\n',
+        },
+      ],
+    });
+
+    const result = runExportTypes({ library: "modlib", cwd, libraryTypesRoot });
+
+    expect(result).toEqual({ sourceId: "modlib", written: ["types/modlib.d.ts"] });
+    expect(readFileSync(join(cwd, "types", "broken.d.ts"), "utf8")).toBe(BROKEN);
+  });
+
+  test("files outside the shipped surface are ignored", () => {
+    const target = firstNativeTarget();
+    const outside = {
+      "types/nested/broken.d.ts": BROKEN,
+      "types/nested/mod.d.ts": 'declare module "mod" {\n  export const x: number;\n}\n',
+      "types/helper.ts": 'declare module "helper" {\n  export const x: number;\n}\n',
+    };
+    const cwd = folderWith(outside);
+
+    runExportTypes({ library: target.sourceId, cwd });
+
+    for (const [file, contents] of Object.entries(outside)) {
+      expect(readFileSync(join(cwd, file), "utf8")).toBe(contents);
+    }
+  });
+
   test("a same-named file is overwritten and every other file is left alone", () => {
     const target = firstNativeTarget();
     const name = basename(target.declarationPath);
@@ -316,7 +409,7 @@ describe("runExportTypes writing into an existing types folder", () => {
     writeFileSync(join(cwd, "types", name), "stale\n");
     writeFileSync(join(cwd, "types", "other.d.ts"), "declare const other: number;\n");
 
-    runExportTypes({ library: target.sourceId, cwd });
+    const { written } = runExportTypes({ library: target.sourceId, cwd });
 
     expect(readFileSync(join(cwd, "types", name), "utf8")).toBe(
       readFileSync(target.declarationPath, "utf8"),
@@ -324,5 +417,19 @@ describe("runExportTypes writing into an existing types folder", () => {
     expect(readFileSync(join(cwd, "types", "other.d.ts"), "utf8")).toBe(
       "declare const other: number;\n",
     );
+
+    const wrapper = `${target.sourceId}-main/`;
+    const located = locateShippedDeclarations(filesUnder(cwd).map((file) => `${wrapper}${file}`));
+    const files = located.map((entry) => ({
+      entry,
+      contents: readFileSync(join(cwd, entry.slice(wrapper.length)), "utf8"),
+    }));
+    const selected = selectShippedDeclarations(files);
+    const kept = selected.map(({ entry }) => entry);
+    for (const entry of written) {
+      expect(kept).toContain(`${wrapper}${entry}`);
+    }
+    const messages = [...checkShippedDeclarations(selected, typesRoot()).values()].flat();
+    expect(messages).toEqual([]);
   });
 });

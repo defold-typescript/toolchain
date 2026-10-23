@@ -31,14 +31,20 @@ export interface ShippedDeclarationFile {
   readonly contents: string;
 }
 
-// Archive entry paths, sorted. Only the `types/` folder's own files count: a
-// nested folder or a `.d.ts` elsewhere in the archive is not a shipped surface.
-// A name holding `\` is skipped too, since Windows reads it as a folder.
+// Only the `types/` folder's own files count: a nested folder or a `.d.ts`
+// elsewhere in the archive is not a shipped surface. A name holding `\` is
+// skipped too, since Windows reads it as a folder. `relativePath` is relative to
+// the library root, with any archive wrapper already stripped.
+export function isShippedDeclarationPath(relativePath: string): boolean {
+  return SHIPPED_PATH.test(relativePath);
+}
+
+// Archive entry paths, sorted.
 export function locateShippedDeclarations(entries: readonly string[]): string[] {
   const wrapper = archiveWrapperOf(entries);
   return entries
     .filter((entry) =>
-      SHIPPED_PATH.test(wrapper === undefined ? entry : entry.slice(wrapper.length + 1)),
+      isShippedDeclarationPath(wrapper === undefined ? entry : entry.slice(wrapper.length + 1)),
     )
     .sort();
 }
