@@ -157,6 +157,7 @@ surface that dependency actually contributed:
 
 | `typeSurface`        | Meaning                                                                    | `namespaces` |
 | -------------------- | -------------------------------------------------------------------------- | ------------ |
+| `"shipped"`          | the [declarations it ships](./resolve.md#types-a-library-ships) in `types/` replaced every other surface | its installed file stems |
 | `"extension"`        | it emitted `.script_api` declarations                                      | its namespaces |
 | `"vendored-native"`  | a [curated native declaration](./resolve.md#curated-native-extensions) replaced anything the archive ships | its curated namespace |
 | `"vendored-library"` | a confirmed corpus match supersedes it; its types are in `libraries[]`     | `[]`         |
@@ -650,7 +651,7 @@ and `package.json` to exactly the declared set.
       "url": "<archive url>",
       "provenance": "<cache | download>",
       "namespaces": ["<namespace>"],
-      "typeSurface": "<none | extension | vendored-library | vendored-native>",
+      "typeSurface": "<none | extension | vendored-library | vendored-native | shipped>",
       "scriptApiCount": 1,
       "assetOnly": false,
       "sceneSources": 0,

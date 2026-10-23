@@ -4958,6 +4958,44 @@ describe("dispatch resolve", () => {
     expect(out()).not.toContain("asset-only, skipped");
   });
 
+  test("the human path prints the declarations a dependency ships as shipped types", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://github.com/king8fisher/defold-pixels/archive/refs/heads/main.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const key = extensionArchiveKey(url);
+    const contents: Record<string, string> = {
+      "defold-pixels-main/types/pixels.d.ts":
+        'declare module "pixels" {\n  export function fill(): void;\n}\n',
+      "defold-pixels-main/types/pixels.global.d.ts":
+        'declare const pixels: typeof import("pixels");\n',
+    };
+
+    const code = await dispatch(["resolve", cwd], io, {
+      resolveInternals: {
+        cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
+        libraryRegistry: [],
+        libraryGeneratedDir: null,
+        download: async () => new TextEncoder().encode("z"),
+        readZip: (zipPath: string) => {
+          if (path.basename(path.dirname(zipPath)) !== key) {
+            throw new Error(`no fake archive for ${zipPath}`);
+          }
+          return {
+            entries: () => [
+              "defold-pixels-main/defold-pixels/ext.manifest",
+              ...Object.keys(contents),
+            ],
+            read: (entry: string) => contents[entry] ?? "",
+          };
+        },
+      },
+    });
+
+    expect(code).toBe(0);
+    expect(out()).toContain(`  pixels, pixels.global <- ${url} (shipped types)\n`);
+    expect(out()).not.toContain("asset-only, skipped");
+  });
+
   test("--json reports an unverified match with verified:false and no modules", async () => {
     const { io, out } = captureStreams();
     const url = "https://github.com/other-owner/mylib/archive/main.zip";
