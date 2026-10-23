@@ -32,6 +32,7 @@ import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./edi
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
 import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
+import { loadVendoredNativeRegistry } from "./library-registry";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import {
   labelRefDocResolveOpts,
@@ -466,7 +467,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -479,7 +480,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -4619,7 +4620,7 @@ describe("dispatch bob", () => {
 
     expect(code).toBe(1);
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -5990,7 +5991,7 @@ describe("dispatch init --template", () => {
 
 describe("dispatch upgrade", () => {
   const USAGE =
-    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view> [path]\n" +
+    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types> [path]\n" +
     "Run `defold-typescript --help` for per-command usage and flags.\n";
 
   function upgradeHarness(opts?: {
@@ -9061,5 +9062,126 @@ export const lamp = defineMachine("lamp")({
       url: "http://127.0.0.1:4321",
     });
     expect(server.closed()).toBe(1);
+  });
+});
+
+describe("export-types", () => {
+  function firstNativeTarget() {
+    const target = loadVendoredNativeRegistry()[0];
+    if (target === undefined) {
+      throw new Error("the committed corpus has no native target");
+    }
+    return target;
+  }
+
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "dispatch-export-types-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  async function inDir<T>(run: () => T): Promise<Awaited<T>> {
+    const previous = process.cwd();
+    process.chdir(dir);
+    try {
+      return await run();
+    } finally {
+      process.chdir(previous);
+    }
+  }
+
+  test("writes the library's curated types into the path and names each file", async () => {
+    const { sourceId, declarationPath } = firstNativeTarget();
+    const name = path.basename(declarationPath);
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["export-types", sourceId, dir], io);
+
+    expect(code).toBe(0);
+    expect(err()).toBe("");
+    expect(out()).toBe(`defold-typescript export-types: wrote types/${name}\n`);
+    expect(readdirSync(dir)).toEqual(["types"]);
+    expect(readFileSync(path.join(dir, "types", name), "utf8")).toBe(
+      readFileSync(declarationPath, "utf8"),
+    );
+  });
+
+  test("with no path it writes into the working directory", async () => {
+    const { sourceId, declarationPath } = firstNativeTarget();
+    const name = path.basename(declarationPath);
+    const { io } = captureStreams();
+
+    const code = await inDir(() => dispatch(["export-types", sourceId], io));
+
+    expect(code).toBe(0);
+    expect(readdirSync(path.join(dir, "types"))).toEqual([name]);
+  });
+
+  test("--json reports the source id and the written files", async () => {
+    const { sourceId, declarationPath } = firstNativeTarget();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(
+      ["export-types", `https://github.com/owner/${sourceId}/archive/main.zip`, dir, "--json"],
+      io,
+    );
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out())).toEqual({
+      command: "export-types",
+      ok: true,
+      written: [`types/${path.basename(declarationPath)}`],
+      library: sourceId,
+    });
+  });
+
+  test("a missing library exits 1 and writes nothing", async () => {
+    const { io, out, err } = captureStreams();
+
+    const code = await inDir(() => dispatch(["export-types"], io));
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain("defold-typescript export-types: error: pass a library");
+    expect(readdirSync(dir)).toEqual([]);
+  });
+
+  test("a missing library under --json reports the error", async () => {
+    const { io, out } = captureStreams();
+
+    const code = await inDir(() => dispatch(["export-types", "--json"], io));
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out()) as { command: string; ok: boolean; error: string };
+    expect(parsed).toMatchObject({ command: "export-types", ok: false });
+    expect(parsed.error).toContain("pass a library");
+  });
+
+  test("an export error exits 1 with its message and writes nothing", async () => {
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["export-types", "not-a-library", dir], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain('no curated types for "not-a-library"');
+    expect(readdirSync(dir)).toEqual([]);
+  });
+
+  test("an export error under --json reports the message", async () => {
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["export-types", "not-a-library", dir, "--json"], io);
+
+    expect(code).toBe(1);
+    expect(JSON.parse(out())).toEqual({
+      command: "export-types",
+      ok: false,
+      error: 'no curated types for "not-a-library"',
+    });
   });
 });

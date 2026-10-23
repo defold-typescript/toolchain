@@ -215,6 +215,13 @@ const COMMANDS: readonly HelpCommand[] = [
     usage: "bunx @defold-typescript/cli hsm-view <file> [name]",
     flags: [],
   },
+  {
+    name: "export-types",
+    summary:
+      "Write a library's curated declarations into a types/ folder its maintainer can ship, once they pass the check resolve runs on shipped types.",
+    usage: "bunx @defold-typescript/cli export-types <library> [path]",
+    flags: [],
+  },
 ];
 
 const GLOBAL_FLAGS: readonly HelpFlag[] = [
