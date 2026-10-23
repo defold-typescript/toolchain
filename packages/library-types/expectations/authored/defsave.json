@@ -1,0 +1,10 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/subsoap/defsave",
+    "authoredHere": true,
+    "commit": "v1.2.6",
+    "sourceUrl": "https://github.com/subsoap/defsave/tree/v1.2.6",
+    "license": "CC0-1.0",
+    "importString": "import * as defsave from \"defsave.defsave\""
+  }
+}
