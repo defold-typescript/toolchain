@@ -282,3 +282,41 @@ bun test
 
 Then re-run `bun run upstream:library-check` — the repo you bumped should now
 report as current, and the issue the workflow opened can be closed.
+
+## Retiring a curated target
+
+A curated target is only needed while its upstream ships no types `resolve` can
+use. Once an upstream release ships a `types/` folder that `resolve` accepts,
+every project on that release gets those files in place of the curated copy,
+and the curated copy only costs a pin, a parity floor and a re-pin per release.
+
+`bun run upstream:shipped-types-check` reads the newest release of every repo
+behind a curated target, across the authored, LuaLS, script_api and native
+lanes, and runs its `types/` folder through the same selection and compile
+check `resolve` applies:
+
+```sh
+bun run upstream:shipped-types-check          # prose report
+bun run upstream:shipped-types-check --json   # one object, for tooling
+```
+
+The newest release is the newest tag by commit date, or the default branch head
+for a repo with no tags. Each repo reports `accepted`, `rejected` with the
+check's first error, or `none`. A repo it could not read reports `unknown` and
+exits the command non-zero.
+
+The **Library upstream pin check** workflow runs the same sweep weekly and opens
+one issue per accepted repo, titled
+`retire curated types for <slug>: <ref> ships types`. The issue lists the
+shipped files and every curated entry the repo backs.
+
+The issue retires nothing. Retirement is a reviewed change, as `pixels` was
+(`git show a32a1972`), that removes each listed entry's registry entry,
+committed declaration, `/api` page, vendored upstream source and parity floor,
+along with the tests that named it. Before making it, weigh the projects left
+behind: a project still on a release before the one that ships types has no
+`types/` folder to fall back on once the curated copy is gone.
+
+An upstream maintainer gets the curated files to commit with `export-types`, as
+[Shipping types with a library](./shipping-library-types.md#starting-from-the-curated-types)
+describes.
