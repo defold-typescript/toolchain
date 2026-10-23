@@ -4,6 +4,7 @@ import {
   INDEX_BASE_MARKERS,
   indexBaseNotes,
   libraryIndexBaseNotes,
+  parseLibraryIndexSlotClassifications,
   withIndexBaseNotes,
 } from "./index-slot-classifications";
 
@@ -73,11 +74,65 @@ describe("withIndexBaseNotes", () => {
   });
 });
 
+describe("parseLibraryIndexSlotClassifications", () => {
+  test("reads each key's class and evidence in input order", () => {
+    const map = parseLibraryIndexSlotClassifications({
+      "p/f:param:i": { class: "native-1", evidence: "x" },
+      "p/a:return:": { class: "not-a-position", evidence: "y" },
+    });
+    expect(map.get("p/f:param:i")).toEqual({ class: "native-1", evidence: "x" });
+    expect([...map.keys()]).toEqual(["p/f:param:i", "p/a:return:"]);
+  });
+
+  test.each([
+    ["a value that is not an object", "x"],
+    ["an array value", []],
+    ["a class outside the three", { class: "native-2", evidence: "x" }],
+    ["a missing class", { evidence: "x" }],
+    ["a blank evidence", { class: "native-0", evidence: "  " }],
+    ["an evidence that is not a string", { class: "native-0", evidence: 1 }],
+  ])("throws naming the key for %s", (_, value) => {
+    expect(() => parseLibraryIndexSlotClassifications({ "p/f:param:i": value })).toThrow(
+      "p/f:param:i",
+    );
+  });
+
+  test.each([
+    ["an array", []],
+    ["null", null],
+    ["a string", "x"],
+  ])("throws for a root that is %s", (_, root) => {
+    expect(() => parseLibraryIndexSlotClassifications(root)).toThrow();
+  });
+});
+
 describe("appendNotes", () => {
-  const [tileX = "", tileY = ""] = libraryIndexBaseNotes("tile_raycast", "cast", "return", "");
+  const tileRaycast = parseLibraryIndexSlotClassifications({
+    "tile_raycast/cast:return::tile_x": { class: "native-1", evidence: "x" },
+    "tile_raycast/cast:return::tile_y": { class: "native-1", evidence: "y" },
+    "tile_raycast/set_at:param:tile_x": { class: "native-1", evidence: "x" },
+  });
+  const [tileX = "", tileY = ""] = libraryIndexBaseNotes(
+    tileRaycast,
+    "tile_raycast",
+    "cast",
+    "return",
+    "",
+  );
+
+  test("the fixture map notes both returned tile coordinates", () => {
+    expect(tileX).toBe("**⚠️ `tile_x` is 1-based; passed to `tile_raycast` unchanged.**");
+    expect(tileY).toBe("**⚠️ `tile_y` is 1-based; passed to `tile_raycast` unchanged.**");
+  });
 
   test("a doc that already carries the note is returned unchanged", () => {
-    const [note = ""] = libraryIndexBaseNotes("tile_raycast", "set_at", "param", "tile_x");
+    const [note = ""] = libraryIndexBaseNotes(
+      tileRaycast,
+      "tile_raycast",
+      "set_at",
+      "param",
+      "tile_x",
+    );
     const doc = `Tile X coordinate. ${note}`;
     expect(appendNotes(doc, [note])).toBe(doc);
   });

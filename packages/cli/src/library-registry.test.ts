@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { matchVendoredLibrary } from "./library-match";
 import {
+  loadLibraryIndexSlotClassifications,
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
   resolveLibraryTypesPackageRoot,
@@ -196,6 +197,24 @@ describe("loadVendoredNativeRegistry", () => {
     ]);
     for (const entry of registry) {
       expect(existsSync(entry.declarationPath)).toBe(true);
+    }
+  });
+});
+
+describe("loadLibraryIndexSlotClassifications", () => {
+  test("reads the shipped classifications from the package root", () => {
+    expect(loadLibraryIndexSlotClassifications().get("gooey/set_focus:param:index")?.class).toBe(
+      "native-1",
+    );
+  });
+
+  test("returns an empty map for a null root or a root without the file", () => {
+    expect(loadLibraryIndexSlotClassifications(null).size).toBe(0);
+    const root = mkdtempSync(join(tmpdir(), "index-slot-classifications-"));
+    try {
+      expect(loadLibraryIndexSlotClassifications(root).size).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
     }
   });
 });

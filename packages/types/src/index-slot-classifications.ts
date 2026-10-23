@@ -1,5 +1,4 @@
 import { htmlToDocText } from "./doc-comment";
-import { LIBRARY_INDEX_SLOT_CLASSIFICATIONS } from "./library-index-slot-classifications";
 
 // The class records the base Defold itself counts from. TypeScript passes every
 // engine position to Defold, and takes it back, unchanged in that base:
@@ -543,36 +542,101 @@ export function withIndexBaseNotes(
   return appendNotes(doc, indexBaseNotes(elementName, kind, slotName));
 }
 
+// The class records the base the library itself counts from, which TypeScript
+// passes through unchanged, exactly as `INDEX_SLOT_CLASSIFICATIONS` records
+// Defold's.
+export type LibraryIndexSlotClassifications = ReadonlyMap<
+  string,
+  Pick<IndexSlotClassification, "class" | "evidence">
+>;
+
+const INDEX_SLOT_CLASSES: ReadonlySet<string> = new Set<IndexSlotClass>([
+  "native-1",
+  "native-0",
+  "not-a-position",
+]);
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// Keyed `<page>/<element>:<param|return|field>:<slot>[:<field>]`, `<page>` being
+// the library page key (`gooey`, `spine.gui`, `rive.cmd`), so a library slot
+// never shares a key with an engine one (`spine.gui` documents `gui.*`). A class
+// field is keyed `<page>/<Typedef>:field:<member>`, a callback argument as a
+// field of its callback slot, and each positional value of an unnamed
+// multi-value return as a field of that return (`cast:return::tile_x`). A
+// typedef method is keyed by its bare name, so one key covers every class of the
+// page that declares that method.
+// `docs-site/app/lib/library-index-slot-gate.test.ts` reds on a scanned slot
+// missing from `library-types/index-slot-classifications.json` and on an entry
+// no library page declares.
+export function parseLibraryIndexSlotClassifications(
+  json: unknown,
+): LibraryIndexSlotClassifications {
+  if (!isPlainObject(json)) {
+    throw new Error("library index-slot classifications must be a JSON object");
+  }
+  const map = new Map<string, Pick<IndexSlotClassification, "class" | "evidence">>();
+  for (const [key, value] of Object.entries(json)) {
+    if (!isPlainObject(value)) {
+      throw new Error(`library index-slot classification ${key} must be an object`);
+    }
+    const { class: slotClass, evidence } = value;
+    if (typeof slotClass !== "string" || !INDEX_SLOT_CLASSES.has(slotClass)) {
+      throw new Error(
+        `library index-slot classification ${key} has class ${JSON.stringify(slotClass)}, not one of ${[...INDEX_SLOT_CLASSES].join(", ")}`,
+      );
+    }
+    if (typeof evidence !== "string" || evidence.trim() === "") {
+      throw new Error(`library index-slot classification ${key} needs a non-blank evidence string`);
+    }
+    map.set(key, { class: slotClass as IndexSlotClass, evidence });
+  }
+  return map;
+}
+
 // The same notes for a slot or class field of a library page, read from the
 // library map under that page's key and naming the library as the receiver.
 export function libraryIndexBaseNotes(
+  classifications: LibraryIndexSlotClassifications,
   page: string,
   elementName: string,
   kind: "param" | "return" | "field",
   slotName: string,
 ): string[] {
   return slotBaseNotes(
-    LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+    classifications,
     `\`${page}\``,
     `${page}/${elementName}:${kind}:${slotName}`,
   );
 }
 
 export function withLibraryIndexBaseNotes(
+  classifications: LibraryIndexSlotClassifications,
   page: string,
   elementName: string,
   kind: "param" | "return" | "field",
   slotName: string,
   doc: string,
 ): string {
-  return appendNotes(doc, libraryIndexBaseNotes(page, elementName, kind, slotName));
+  return appendNotes(
+    doc,
+    libraryIndexBaseNotes(classifications, page, elementName, kind, slotName),
+  );
 }
 
 // Where a declaration's index notes come from: the engine map, naming Defold, or
-// the library map under each listed page, naming that library. A library or
-// extension declaration never reads the engine map, so an element it shares a
-// name with (`spine.gui` declares `gui.*`) never claims Defold as its receiver.
-export type IndexBaseSource = "engine" | { readonly pages: readonly string[] };
+// the caller's library map under each listed page, naming that library. A
+// library or extension declaration never reads the engine map, so an element it
+// shares a name with (`spine.gui` declares `gui.*`) never claims Defold as its
+// receiver.
+export type IndexBaseSource =
+  | "engine"
+  | {
+      readonly pages: readonly string[];
+      readonly classifications: LibraryIndexSlotClassifications;
+    };
 
 export type IndexBaseNoteResolver = (
   elementName: string,
@@ -582,7 +646,9 @@ export type IndexBaseNoteResolver = (
 
 export function indexBaseNoteResolver(source: IndexBaseSource): IndexBaseNoteResolver {
   if (source === "engine") return indexBaseNotes;
-  const { pages } = source;
+  const { pages, classifications } = source;
   return (elementName, kind, slotName) =>
-    pages.flatMap((page) => libraryIndexBaseNotes(page, elementName, kind, slotName));
+    pages.flatMap((page) =>
+      libraryIndexBaseNotes(classifications, page, elementName, kind, slotName),
+    );
 }
