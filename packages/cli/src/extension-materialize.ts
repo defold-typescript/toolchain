@@ -5,7 +5,9 @@
 // one file per namespace, or one per declaration when several share a namespace —
 // verbatim apart from the core-type retarget, because the emitter spells that
 // import relative to `packages/types/generated/` rather than to the materialized
-// surface, where it would dangle. It then
+// surface, where it would dangle. A dependency's own shipped `types/*.d.ts`
+// install untouched under `shipped/<folder>/` with their archive names, so they
+// keep reaching each other by relative path. It then
 // additively points `tsconfig` at it. The extensions package is a sibling of the
 // engine `<surfaceId>/` surface so an engine re-materialization (which prunes
 // non-wanted `.d.ts` in its own dir) never clobbers it, and the two coexist under
@@ -20,6 +22,8 @@ import { normalizeSourceId } from "./library-match";
 import { ensureGitignoreLine, MATERIALIZED_ROOT, retargetCoreTypes } from "./materialize";
 
 const EXTENSIONS_DIR = "extensions";
+
+const SHIPPED_DIR = "shipped";
 
 export interface MaterializeExtensionDeclarationsOptions {
   readonly cwd: string;
@@ -86,6 +90,27 @@ function allocateFileStems(
   return files;
 }
 
+// Bundles that ship their own declarations, in URL order, each claiming a
+// folder named after its dependency, numbered on a clash compared without
+// letter case, as `allocateFileStems` does: two owners' `lib` repos share a slug.
+function allocateShippedFolders(
+  bundles: readonly ExtensionDeclarations[],
+): { folder: string; bundle: ExtensionDeclarations }[] {
+  const taken = new Set<string>();
+  return bundles
+    .filter((bundle) => bundle.shipped.length > 0)
+    .sort((a, b) => (a.url < b.url ? -1 : a.url > b.url ? 1 : 0))
+    .map((bundle) => {
+      const base = dependencySlug(bundle.url);
+      let folder = base;
+      for (let count = 2; taken.has(folder.toLowerCase()); count++) {
+        folder = `${base}-${count}`;
+      }
+      taken.add(folder.toLowerCase());
+      return { folder, bundle };
+    });
+}
+
 export function materializeExtensionDeclarations(
   opts: MaterializeExtensionDeclarationsOptions,
 ): MaterializeExtensionDeclarationsResult {
@@ -110,10 +135,13 @@ export function materializeExtensionDeclarations(
   const relDir = path.posix.join(MATERIALIZED_ROOT, EXTENSIONS_DIR);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, EXTENSIONS_DIR);
 
-  // reconcile-to-zero: no namespace remains, so remove a previously-materialized
-  // surface rather than leaving it to load beside what superseded it. Mirrors
-  // `materializeVendoredLibraries`, whose empty case already does this.
-  if (namespaces.length === 0) {
+  const shippedFolders = allocateShippedFolders(bundles);
+
+  // reconcile-to-zero: no namespace or shipped set remains, so remove a
+  // previously-materialized surface rather than leaving it to load beside what
+  // superseded it. Mirrors `materializeVendoredLibraries`, whose empty case
+  // already does this.
+  if (namespaces.length === 0 && shippedFolders.length === 0) {
     rmSync(absDir, { recursive: true, force: true });
     return { materializedDir: null, namespaces: [], sharedNamespaces: [] };
   }
@@ -141,7 +169,21 @@ export function materializeExtensionDeclarations(
     writeFileSync(path.join(absDir, `${stem}.d.ts`), files.get(stem) ?? "");
   }
 
-  const imports = stems.map((stem) => `import "./${stem}";`).join("\n");
+  const shippedImports: string[] = [];
+  rmSync(path.join(absDir, SHIPPED_DIR), { recursive: true, force: true });
+  for (const { folder, bundle } of shippedFolders) {
+    const folderDir = path.join(absDir, SHIPPED_DIR, folder);
+    mkdirSync(folderDir, { recursive: true });
+    for (const { entry, contents } of bundle.shipped) {
+      const basename = path.posix.basename(entry);
+      writeFileSync(path.join(folderDir, basename), contents);
+      shippedImports.push(`./${SHIPPED_DIR}/${folder}/${path.posix.basename(basename, ".d.ts")}`);
+    }
+  }
+
+  const imports = [...stems.map((stem) => `./${stem}`), ...shippedImports]
+    .map((specifier) => `import "${specifier}";`)
+    .join("\n");
   writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
 
   writeFileSync(

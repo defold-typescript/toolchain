@@ -24,7 +24,7 @@ const CHECK_OPTIONS: ts.CompilerOptions = {
 };
 
 export interface ShippedDeclarationFile {
-  readonly id: string;
+  readonly entry: string;
   readonly contents: string;
 }
 
@@ -39,20 +39,23 @@ export function locateShippedDeclarations(entries: readonly string[]): string[] 
     .sort();
 }
 
-// One program for every file: the engine surface loads once, and files that
-// read each other (a global `typeof import("<module>")`) check together. Each
-// id maps to its error messages, empty when the file is clean.
+// One call checks one dependency's files together, served under their own
+// names in one virtual folder, so a relative reference between them (`export *
+// from "./foo"`, `typeof import("./index")`) resolves as it will once
+// installed. Each entry maps to its error messages, empty when the file is
+// clean.
 export function checkShippedDeclarations(
   files: readonly ShippedDeclarationFile[],
   typesRoot: string,
 ): Map<string, string[]> {
-  const messages = new Map<string, string[]>(files.map(({ id }) => [id, []]));
+  const messages = new Map<string, string[]>(files.map(({ entry }) => [entry, []]));
   if (files.length === 0) {
     return messages;
   }
   const virtualDir = path.join(typesRoot, VIRTUAL_DIR);
+  // Entries come from one archive's `types/` folder, so basenames are unique.
   const byPath = new Map(
-    files.map((file, index) => [path.resolve(virtualDir, `${index}.d.ts`), file]),
+    files.map((file) => [path.resolve(virtualDir, path.posix.basename(file.entry)), file]),
   );
   const shippedAt = (fileName: string): ShippedDeclarationFile | undefined =>
     byPath.get(path.resolve(fileName));
@@ -61,6 +64,7 @@ export function checkShippedDeclarations(
   const getSourceFile = host.getSourceFile.bind(host);
   const fileExists = host.fileExists.bind(host);
   const readFile = host.readFile.bind(host);
+  const directoryExists = host.directoryExists?.bind(host) ?? ts.sys.directoryExists;
   host.getSourceFile = (fileName, languageVersion, onError, shouldCreate) => {
     const shipped = shippedAt(fileName);
     return shipped === undefined
@@ -69,6 +73,10 @@ export function checkShippedDeclarations(
   };
   host.fileExists = (fileName) => shippedAt(fileName) !== undefined || fileExists(fileName);
   host.readFile = (fileName) => shippedAt(fileName)?.contents ?? readFile(fileName);
+  // TypeScript skips every file lookup under a directory reported missing, and
+  // the virtual folder exists nowhere on disk.
+  host.directoryExists = (directoryName) =>
+    path.resolve(directoryName) === virtualDir || directoryExists(directoryName);
 
   const program = ts.createProgram({
     rootNames: [path.join(typesRoot, "index.d.ts"), ...byPath.keys()],
@@ -90,7 +98,7 @@ export function checkShippedDeclarations(
       }
       const { line, character } = sourceFile.getLineAndCharacterOfPosition(diagnostic.start ?? 0);
       const text = ts.flattenDiagnosticMessageText(diagnostic.messageText, " ");
-      messages.get(shipped.id)?.push(`${shipped.id}(${line + 1},${character + 1}): ${text}`);
+      messages.get(shipped.entry)?.push(`${shipped.entry}(${line + 1},${character + 1}): ${text}`);
     }
   }
   return messages;
