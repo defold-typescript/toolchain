@@ -1,0 +1,33 @@
+{
+  "namespace": "daabbcc3d",
+  "moduleName": "daabbcc3d",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 18,
+  "declaredFunctions": 18,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "upstreamMethods": 0,
+  "declaredMethods": 0,
+  "missingMethods": [],
+  "phantomMethods": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 3,
+  "declaredConstants": 3,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1,
+  "arityMeasured": true,
+  "arityMismatches": [],
+  "arityExceptions": [
+    {
+      "name": "rebuild_all",
+      "upstream": 1,
+      "declared": 2,
+      "reason": "src/extension.cpp:779 reads the flag as `lua_toboolean(L, 2)`, so the runtime takes it as the second argument; the one-parameter stub at annotation.lua:149 would put it first, and the declaration follows the C++."
+    }
+  ],
+  "annotationDrift": {
+    "unregistered": [],
+    "undeclared": []
+  }
+}

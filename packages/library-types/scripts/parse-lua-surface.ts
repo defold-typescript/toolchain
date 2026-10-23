@@ -17,7 +17,7 @@
  *   different function bodies — out of the surface, and it is why the reader never
  *   needs to know where a block ends.
  * - **Loud failure over silent undercount.** A missing `return <name>` or a
- *   parameter list that does not close on its own line throws, as does a
+ *   parameter list that never closes throws, as does a
  *   `return setmetatable(M, …)` whose metatable carries `__index` or is named by a
  *   variable whose keys this reader cannot see — either could add members no column-0
  *   scan will find. The whole point of the instrument is that a dropped member is
@@ -97,22 +97,25 @@ function resolveModuleLocal(lines: string[]): string {
   );
 }
 
-/** The parameter names between the parentheses opened at `open` on `line`, with a
- * `...` tail reported separately. Throws when the list does not close on the same
- * line rather than dropping the member. */
+/** The parameter names between the parenthesis opened at `open` on line `index` and
+ * the first `)` after it, on that line or a following one, with a `...` tail reported
+ * separately. Throws when no `)` follows before the end of the source rather than
+ * dropping the member. */
 function readParams(
-  line: string,
+  lines: string[],
+  index: number,
   open: number,
-  lineNumber: number,
 ): { params: string[]; varargs: boolean } {
-  const close = line.indexOf(")", open);
+  const line = lines[index] as string;
+  const rest = [line.slice(open + 1), ...lines.slice(index + 1)].join("\n");
+  const close = rest.indexOf(")");
   if (close === -1) {
     throw new Error(
-      `lua surface: line ${lineNumber} opens a parameter list that does not close on the same line — ${line.trim()}`,
+      `lua surface: line ${index + 1} opens a parameter list that never closes — ${line.trim()}`,
     );
   }
-  const raw = line
-    .slice(open + 1, close)
+  const raw = rest
+    .slice(0, close)
     .split(",")
     .map((part) => part.trim())
     .filter((part) => part !== "");
@@ -178,7 +181,7 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
   for (const [index, line] of lines.entries()) {
     const defined = definition.exec(line);
     if (defined) {
-      const { params, varargs } = readParams(line, defined[0].length - 1, index + 1);
+      const { params, varargs } = readParams(lines, index, defined[0].length - 1);
       record({ name: defined[1] as string, params, varargs, ...readDoc(lines, index) });
       continue;
     }
@@ -191,7 +194,7 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
       continue;
     }
     const open = line.indexOf("(", line.length - rhs.length);
-    const { params, varargs } = readParams(line, open, index + 1);
+    const { params, varargs } = readParams(lines, index, open);
     record({ name, params, varargs, ...readDoc(lines, index) });
   }
 

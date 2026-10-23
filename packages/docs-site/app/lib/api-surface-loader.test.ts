@@ -299,6 +299,8 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       "tile_raycast",
       "def_windward_jps",
       "box2d",
+      "daabbcc3d",
+      "wave",
     ]);
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     for (const target of targets) {
@@ -349,9 +351,11 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       "tile_raycast",
       "def_windward_jps",
       "box2d",
+      "daabbcc3d",
     ]) {
       expect(metaFor(namespace).pinKind).toBeUndefined();
     }
+    expect(metaFor("wave").pinKind).toBe("commit");
   });
 
   test("groups each native namespace under its upstream owner and repo", () => {

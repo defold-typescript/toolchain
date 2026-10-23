@@ -53,6 +53,8 @@ describe("buildNativeParity over the shipped declarations", () => {
     uuid4: [1, 0, 0],
     def_windward_jps: [1, 0, 2],
     box2d: [18, 27, 275],
+    daabbcc3d: [18, 3, 0],
+    wave: [12, 0, 0],
   };
 
   test("every native target is measured", () => {
@@ -342,6 +344,39 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
         reason: (target("daabbcc").annotationArityExceptions ?? [])[0]?.reason as string,
       },
     ]);
+  });
+
+  test("daabbcc3d charges nothing beyond its one recorded exception", () => {
+    const report = buildNativeParity(PACKAGE_ROOT, target("daabbcc3d"));
+    expect(report.arityMeasured).toBe(true);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: [] });
+    expect(report.arityExceptions).toEqual([
+      {
+        name: "rebuild_all",
+        upstream: 1,
+        declared: 2,
+        reason: (target("daabbcc3d").annotationArityExceptions ?? [])[0]?.reason as string,
+      },
+    ]);
+  });
+
+  test("wave excuses its two height samplers and reports the stubs nothing registers", () => {
+    const entry = target("wave");
+    const report = buildNativeParity(PACKAGE_ROOT, entry);
+    const reason = (name: string): string =>
+      (entry.annotationArityExceptions ?? []).find((exception) => exception.name === name)
+        ?.reason as string;
+    expect(report.arityMeasured).toBe(true);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.arityExceptions).toEqual([
+      { name: "get_wave1_height", upstream: 2, declared: 3, reason: reason("get_wave1_height") },
+      { name: "get_wave2_height", upstream: 2, declared: 3, reason: reason("get_wave2_height") },
+    ]);
+    expect(report.annotationDrift).toEqual({
+      unregistered: ["get_wave1_time_height", "get_wave2_time_height"],
+      undeclared: [],
+    });
   });
 
   test("a declaration that drops a parameter is charged at the widest shape it offers", () => {

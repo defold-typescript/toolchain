@@ -99,6 +99,43 @@
         "Box2d::EdgeShapeClass": ["Shape", "EdgeShape"],
         "Box2d::ChainShapeClass": ["Shape", "ChainShape"]
       }
+    },
+    {
+      "repo": "https://github.com/selimanac/defold-daabbcc3d",
+      "ref": "v1.0.6",
+      "license": "MIT",
+      "namespace": "daabbcc3d",
+      "manifestDir": "daabbcc3d",
+      "declaration": "generated/native/daabbcc3d.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-daabbcc3d/daabbcc3d/src/extension.cpp",
+      "upstreamAnnotation": "fixtures/upstream-native/defold-daabbcc3d/daabbcc3d/annotation.lua",
+      "annotationArityExceptions": [
+        {
+          "name": "rebuild_all",
+          "reason": "src/extension.cpp:779 reads the flag as `lua_toboolean(L, 2)`, so the runtime takes it as the second argument; the one-parameter stub at annotation.lua:149 would put it first, and the declaration follows the C++."
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/selimanac/defold-wave",
+      "ref": "76ff0c9780730a7e7cc4f3e0a8752d8c1f426def",
+      "refKind": "commit",
+      "license": "MIT",
+      "namespace": "wave",
+      "manifestDir": "wave",
+      "declaration": "generated/native/wave.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-wave/wave/src/wave.cpp",
+      "upstreamAnnotation": "fixtures/upstream-native/defold-wave/wave/annotations.lua",
+      "annotationArityExceptions": [
+        {
+          "name": "get_wave1_height",
+          "reason": "src/wave.cpp:177 reads a third `time` argument with `luaL_checknumber(L, 3)`, so the runtime raises without it; the two-parameter stub at annotations.lua:78 omits it, and the declaration follows the C++."
+        },
+        {
+          "name": "get_wave2_height",
+          "reason": "src/wave.cpp:191 reads a third `time` argument with `luaL_checknumber(L, 3)`, so the runtime raises without it; the two-parameter stub at annotations.lua:84 omits it, and the declaration follows the C++."
+        }
+      ]
     }
   ]
 }
