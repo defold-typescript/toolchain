@@ -11,12 +11,13 @@ import {
 } from "./regen-all.ts";
 
 describe("REGEN_UNITS", () => {
-  test("exposes exactly the five artifact units by stable id", () => {
+  test("exposes exactly the six artifact units by stable id", () => {
     expect(REGEN_UNITS.map((u) => u.id)).toEqual([
       "instance-wall",
       "declarations",
       "availability",
       "signatures",
+      "guide-tables",
       "llms",
     ]);
   });
@@ -39,6 +40,14 @@ describe("REGEN_UNITS", () => {
     expect(order.indexOf("declarations")).toBeLessThan(order.indexOf("signatures"));
   });
 
+  test("guide-tables writes the resolve guide's native table before llms inlines it", () => {
+    const order = REGEN_UNITS.map((u) => u.id);
+    const guideTables = REGEN_UNITS.find((u) => u.id === "guide-tables");
+    expect(guideTables?.command).toEqual(["bun", "scripts/sync-guide-tables.ts", "--write"]);
+    expect(order.indexOf("guide-tables")).toBeGreaterThanOrEqual(0);
+    expect(order.indexOf("guide-tables")).toBeLessThan(order.indexOf("llms"));
+  });
+
   test("llms is the last unit", () => {
     expect(REGEN_UNITS.at(-1)?.id).toBe("llms");
   });
@@ -59,7 +68,7 @@ describe("REGEN_UNITS", () => {
 });
 
 describe("plan", () => {
-  test("lists the five unit commands without executing them", () => {
+  test("lists the six unit commands without executing them", () => {
     const p = plan();
     expect(p.map((u) => u.id)).toEqual(REGEN_UNITS.map((u) => u.id));
     for (let i = 0; i < REGEN_UNITS.length; i++) {
@@ -75,13 +84,21 @@ describe("runRegenSequence", () => {
       ran.push(unit.id);
       return true;
     });
-    expect(ran).toEqual(["instance-wall", "declarations", "availability", "signatures", "llms"]);
+    expect(ran).toEqual([
+      "instance-wall",
+      "declarations",
+      "availability",
+      "signatures",
+      "guide-tables",
+      "llms",
+    ]);
     expect(summary.ok).toBe(true);
     expect(summary.ran).toEqual([
       "instance-wall",
       "declarations",
       "availability",
       "signatures",
+      "guide-tables",
       "llms",
     ]);
     expect(summary.failed).toBeUndefined();
@@ -133,7 +150,7 @@ describe("runRegenCli", () => {
     expect(lines(out())).toHaveLength(1);
     expect(JSON.parse(out().trim())).toEqual({
       ok: true,
-      ran: ["instance-wall", "declarations", "availability", "signatures", "llms"],
+      ran: ["instance-wall", "declarations", "availability", "signatures", "guide-tables", "llms"],
     });
     expect(err()).toContain("$ ");
     expect(err()).toContain("child output for");
@@ -168,7 +185,7 @@ describe("runRegenCli", () => {
     const code = runRegenCli([], passAll, io);
     expect(code).toBe(0);
     expect(out()).toContain("$ ");
-    expect(out()).toContain("regen:all — regenerated 5 artifact set(s)");
+    expect(out()).toContain("regen:all — regenerated 6 artifact set(s)");
   });
 
   test("normal failure: FAILED line on stderr, no summary on stdout, code 1", () => {

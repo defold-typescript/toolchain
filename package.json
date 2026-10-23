@@ -19,6 +19,7 @@
     "regen:all": "bun scripts/regen-all.ts",
     "bump:defold": "bun scripts/bump-defold.ts",
     "readme:sync": "bun scripts/sync-readme.ts --write",
+    "guide:sync": "bun scripts/sync-guide-tables.ts --write",
     "readme:check": "bun scripts/sync-readme.ts --check",
     "smoke": "bun scripts/release-smoke.ts",
     "registry-smoke": "bun scripts/registry-smoke.ts",
