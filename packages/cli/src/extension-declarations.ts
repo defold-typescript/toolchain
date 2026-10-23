@@ -18,6 +18,7 @@ import {
 import type { ExtensionDependency } from "./extension-deps";
 import { type EmittedExtension, emitExtensionDeclaration } from "./extension-emit";
 import { curatedIndexPages, loadCuratedExtensionManifest } from "./extension-index-pages";
+import { locateShippedDeclarations } from "./shipped-declarations";
 
 export interface ExtensionDeclarations {
   readonly url: string;
@@ -44,6 +45,9 @@ export interface ExtensionDeclarations {
   // inside the dependency's own directory. Distinct from `sceneReasons`: the
   // archive shares something, just not this.
   readonly sceneRefused: string[];
+  // The `types/*.d.ts` files the archive ships for itself, read on both arms. A
+  // non-empty list is a candidate surface; `resolve` decides whether it wins.
+  readonly shipped: { entry: string; contents: string }[];
 }
 
 // The archive's own `game.project`, read through the wrapper strip so a library
@@ -124,6 +128,10 @@ export async function resolveExtensionDeclarations(
     const luaModules = archiveLuaModules(zip.entries());
     const manifestDirs = archiveManifestDirs(zip.entries());
     const { sceneSources, sceneReasons, sceneRefused } = archiveSceneSources(zip);
+    const shipped = locateShippedDeclarations(zip.entries()).map((entry) => ({
+      entry,
+      contents: zip.read(entry),
+    }));
     if (archive.assetOnly) {
       bundles.push({
         url: archive.url,
@@ -136,6 +144,7 @@ export async function resolveExtensionDeclarations(
         sceneSources,
         sceneReasons,
         sceneRefused,
+        shipped,
       });
       continue;
     }
@@ -155,6 +164,7 @@ export async function resolveExtensionDeclarations(
       sceneSources,
       sceneReasons,
       sceneRefused,
+      shipped,
     });
   }
   return bundles;
