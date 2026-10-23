@@ -9,6 +9,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
+import * as ts from "typescript";
 import { readCliVersion } from "./cli-version";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
 import { buildLualsRegistryEntries } from "./library-match";
@@ -1402,6 +1403,23 @@ declare module "pixels" {
       .sort();
   }
 
+  function writtenShipped(cwd: string): string[] {
+    const root = join(cwd, ".defold-types", "extensions", "shipped");
+    if (!existsSync(root)) {
+      return [];
+    }
+    return readdirSync(root)
+      .flatMap((folder) =>
+        readdirSync(join(root, folder)).map((file) => `shipped/${folder}/${file}`),
+      )
+      .sort();
+  }
+
+  const PIXELS_SHIPPED = [
+    "shipped/defold-pixels/pixels.d.ts",
+    "shipped/defold-pixels/pixels.global.d.ts",
+  ];
+
   function shippedWarnings(warnings: readonly string[]): string[] {
     return warnings.filter((line) => line.startsWith("shipped types from"));
   }
@@ -1413,12 +1431,14 @@ declare module "pixels" {
 
     expect(result.ok).toBe(true);
     const extensionsDir = join(cwd, ".defold-types", "extensions");
-    expect(readFileSync(join(extensionsDir, "pixels.d.ts"), "utf8")).toBe(GOOD_MODULE);
-    expect(readFileSync(join(extensionsDir, "pixels.global.d.ts"), "utf8")).toBe(GOOD_GLOBAL);
-    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts", "pixels.global.d.ts"]);
+    const shippedDir = join(extensionsDir, "shipped", "defold-pixels");
+    expect(readFileSync(join(shippedDir, "pixels.d.ts"), "utf8")).toBe(GOOD_MODULE);
+    expect(readFileSync(join(shippedDir, "pixels.global.d.ts"), "utf8")).toBe(GOOD_GLOBAL);
+    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts"]);
+    expect(writtenShipped(cwd)).toEqual(PIXELS_SHIPPED);
     const index = readFileSync(join(extensionsDir, "index.d.ts"), "utf8");
-    expect(index).toContain('import "./pixels";');
-    expect(index).toContain('import "./pixels.global";');
+    expect(index).toContain('import "./shipped/defold-pixels/pixels";');
+    expect(index).toContain('import "./shipped/defold-pixels/pixels.global";');
     expect(result.extensions[0]?.typeSurface).toBe("shipped");
     expect(result.extensions[0]?.namespaces).toEqual(["pixels", "pixels.global"]);
     expect(result.extensions[0]?.scriptApiCount).toBe(1);
@@ -1444,10 +1464,14 @@ declare module "pixels" {
     );
 
     expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8")).toBe(
-      GOOD_MODULE,
-    );
-    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts", "pixels.global.d.ts"]);
+    expect(
+      readFileSync(
+        join(cwd, ".defold-types", "extensions", "shipped", "defold-pixels", "pixels.d.ts"),
+        "utf8",
+      ),
+    ).toBe(GOOD_MODULE);
+    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts"]);
+    expect(writtenShipped(cwd)).toEqual(PIXELS_SHIPPED);
     expect(result.extensions[0]?.typeSurface).toBe("shipped");
   });
 
@@ -1479,9 +1503,12 @@ declare module "pixels" {
     });
 
     expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "extensions", "mylib.core.d.ts"), "utf8")).toBe(
-      shipped,
-    );
+    expect(
+      readFileSync(
+        join(cwd, ".defold-types", "extensions", "shipped", "mylib", "mylib.core.d.ts"),
+        "utf8",
+      ),
+    ).toBe(shipped);
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.libraries).toEqual([]);
     expect(result.extensions[0]?.assetOnly).toBe(true);
@@ -1496,6 +1523,7 @@ declare module "pixels" {
     const written = readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8");
     expect(written).toContain("only the doc declares this");
     expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts"]);
+    expect(writtenShipped(cwd)).toEqual([]);
     expect(result.extensions[0]?.typeSurface).toBe("extension");
     expect(result.extensions[0]?.namespaces).toEqual(["pixels"]);
     const warnings = shippedWarnings(result.warnings);
@@ -1514,6 +1542,7 @@ declare module "pixels" {
 
     expect(result.ok).toBe(true);
     expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts"]);
+    expect(writtenShipped(cwd)).toEqual([]);
     expect(readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8")).toContain(
       "only the doc declares this",
     );
@@ -1526,14 +1555,150 @@ declare module "pixels" {
     });
 
     expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8")).toBe(
-      BAD_MODULE,
-    );
+    expect(
+      readFileSync(
+        join(cwd, ".defold-types", "extensions", "shipped", "defold-pixels", "pixels.d.ts"),
+        "utf8",
+      ),
+    ).toBe(BAD_MODULE);
     expect(result.extensions[0]?.typeSurface).toBe("shipped");
     const warnings = shippedWarnings(result.warnings);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain(PIXELS_URL);
     expect(warnings[0]).toContain("not checked");
+  });
+
+  const RELIB_URL = "https://github.com/acme/relib/archive/refs/heads/main.zip";
+  const RELIB_FILES: Record<string, string> = {
+    "relib-main/types/index.d.ts": 'export * from "./foo";\n',
+    "relib-main/types/foo.d.ts": "export declare function bar(): number;\n",
+    "relib-main/types/relib.global.d.ts": 'declare const relib: typeof import("./index");\n',
+  };
+  const ALIB_URL = "https://github.com/acme/alib/archive/refs/heads/main.zip";
+  const ALIB_ENTRY = "alib-main/types/alib.d.ts";
+  const BLIB_URL = "https://github.com/acme/blib/archive/refs/heads/main.zip";
+  const BLIB_ENTRY = "blib-main/types/blib.d.ts";
+  const CLIB_URL = "https://github.com/acme/clib/archive/refs/heads/main.zip";
+  const CLIB_ENTRY = "clib-main/types/clib.d.ts";
+
+  function typesOnlyArchive(files: Record<string, string>): FakeArchive {
+    return { entries: Object.keys(files), contents: files };
+  }
+
+  const TYPES_ONLY_ARCHIVES: Record<string, FakeArchive> = {
+    [extensionArchiveKey(RELIB_URL)]: typesOnlyArchive(RELIB_FILES),
+    [extensionArchiveKey(ALIB_URL)]: typesOnlyArchive({
+      [ALIB_ENTRY]:
+        'declare module "alib" {\n  export function a(): number;\n}\ndeclare const dup: number;\n',
+    }),
+    [extensionArchiveKey(BLIB_URL)]: typesOnlyArchive({
+      [BLIB_ENTRY]: 'declare const b: typeof import("alib");\n',
+    }),
+    [extensionArchiveKey(CLIB_URL)]: typesOnlyArchive({
+      [CLIB_ENTRY]: "declare const dup: string;\n",
+    }),
+  };
+
+  async function resolveUrls(
+    cwd: string,
+    urls: readonly string[],
+  ): Promise<Awaited<ReturnType<typeof runResolve>>> {
+    writeProject(
+      cwd,
+      `[project]\n${urls.map((url, index) => `dependencies#${index} = ${url}`).join("\n")}\n`,
+    );
+    return runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(TYPES_ONLY_ARCHIVES),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: [],
+    });
+  }
+
+  function usageDiagnostics(cwd: string, usage: string): string[] {
+    const usagePath = join(cwd, "usage.ts");
+    writeFileSync(usagePath, usage);
+    const options: ts.CompilerOptions = {
+      strict: true,
+      noEmit: true,
+      skipLibCheck: true,
+      types: [],
+      target: ts.ScriptTarget.ESNext,
+      lib: ["lib.esnext.d.ts"],
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+    };
+    const program = ts.createProgram(
+      [usagePath, join(cwd, ".defold-types", "extensions", "index.d.ts")],
+      options,
+      ts.createCompilerHost(options),
+    );
+    const sourceFile = program.getSourceFile(usagePath);
+    return [
+      ...program.getSyntacticDiagnostics(sourceFile),
+      ...program.getSemanticDiagnostics(sourceFile),
+    ].map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"));
+  }
+
+  test("shipped files keep their names, so a consumer reaches what a shipped index re-exports", async () => {
+    const cwd = tmp();
+    const result = await resolveUrls(cwd, [RELIB_URL]);
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.typeSurface).toBe("shipped");
+    expect(result.extensions[0]?.namespaces).toEqual(["foo", "index", "relib.global"]);
+    expect(shippedWarnings(result.warnings)).toEqual([]);
+    expect(writtenShipped(cwd)).toEqual([
+      "shipped/relib/foo.d.ts",
+      "shipped/relib/index.d.ts",
+      "shipped/relib/relib.global.d.ts",
+    ]);
+    for (const [entry, contents] of Object.entries(RELIB_FILES)) {
+      expect(
+        readFileSync(
+          join(cwd, ".defold-types", "extensions", "shipped", "relib", basename(entry)),
+          "utf8",
+        ),
+      ).toBe(contents);
+    }
+    expect(
+      usageDiagnostics(
+        cwd,
+        "const n: number = relib.bar();\n// @ts-expect-error\nconst s: string = relib.bar();\nexport { n, s };\n",
+      ),
+    ).toEqual([]);
+  });
+
+  test("each dependency's shipped files are checked on their own", async () => {
+    const cwd = tmp();
+    const result = await resolveUrls(cwd, [ALIB_URL, BLIB_URL, CLIB_URL]);
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "shipped", "blib"))).toBe(false);
+    const surface = (url: string) => result.extensions.find((e) => e.url === url)?.typeSurface;
+    expect(surface(ALIB_URL)).toBe("shipped");
+    expect(surface(CLIB_URL)).toBe("shipped");
+    expect(surface(BLIB_URL)).toBe("none");
+    const warnings = shippedWarnings(result.warnings);
+    expect(warnings.filter((w) => w.includes(ALIB_URL))).toEqual([]);
+    expect(warnings.filter((w) => w.includes(CLIB_URL))).toEqual([]);
+    const blibWarnings = warnings.filter((w) => w.includes(BLIB_URL));
+    expect(blibWarnings).toHaveLength(1);
+    expect(blibWarnings[0]).toContain("'alib'");
+  });
+
+  test("a dependency's shipped folder leaves with it", async () => {
+    const cwd = tmp();
+    await resolveUrls(cwd, [RELIB_URL, ALIB_URL]);
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "shipped", "relib"))).toBe(true);
+
+    const result = await resolveUrls(cwd, [ALIB_URL]);
+
+    expect(result.ok).toBe(true);
+    expect(writtenShipped(cwd)).toEqual(["shipped/alib/alib.d.ts"]);
   });
 });
 

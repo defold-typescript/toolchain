@@ -251,6 +251,33 @@ describe("materializeExtensionDeclarations", () => {
     expect(existsSync(extensionsDir())).toBe(false);
   });
 
+  test("two dependencies with one repo name keep both shipped sets", () => {
+    const first = "export declare const first: number;\n";
+    const second = "export declare const second: string;\n";
+    const shippedBundle = (url: string, contents: string): ExtensionDeclarations => ({
+      ...bundleAt(url, []),
+      shipped: [{ entry: "lib-main/types/index.d.ts", contents }],
+    });
+
+    materializeExtensionDeclarations({
+      cwd,
+      bundles: [
+        shippedBundle("https://github.com/a/lib/archive/main.zip", first),
+        shippedBundle("https://github.com/b/lib/archive/main.zip", second),
+      ],
+    });
+
+    expect(readFileSync(path.join(extensionsDir(), "shipped", "lib", "index.d.ts"), "utf8")).toBe(
+      first,
+    );
+    expect(readFileSync(path.join(extensionsDir(), "shipped", "lib-2", "index.d.ts"), "utf8")).toBe(
+      second,
+    );
+    const barrel = readFileSync(path.join(extensionsDir(), "index.d.ts"), "utf8");
+    expect(barrel).toContain('import "./shipped/lib/index";');
+    expect(barrel).toContain('import "./shipped/lib-2/index";');
+  });
+
   describe("a namespace several declarations share", () => {
     const coreUrl = "https://github.com/defold/extension-firebase/archive/1.zip";
     const analyticsUrl = "https://github.com/defold/extension-firebase-analytics/archive/2.zip";

@@ -33,8 +33,11 @@ my-library/
   every project that depends on the library, and the declarations have no use
   at runtime.
 - Every file installs, under its own name, into the project's
-  `.defold-types/extensions/` folder, and `resolve` reports each file name
-  without `.d.ts`.
+  `.defold-types/extensions/shipped/<repo>/` folder, and `resolve` reports each
+  file name without `.d.ts`.
+- The files keep their names, so they may reference each other by relative
+  path (`export * from "./foo"`, `typeof import("./index")`), and an
+  `index.d.ts` is fine.
 
 ## Which type names to use
 
@@ -96,8 +99,8 @@ are:
 defold-typescript resolve: warning: shipped types from <url> do not compile against @defold-typescript/types; using what the archive declares otherwise: my-library-main/types/my_library.d.ts(3,27): 'hash' refers to a value, but is being used as a type here. Did you mean 'typeof hash'?
 ```
 
-The check covers the engine surface only. It does not compile your files
-against other dependencies' declarations.
+The check covers the engine surface only. Each dependency's files are checked
+on their own, so a file cannot rely on another dependency's types.
 
 ## Checking your files
 
