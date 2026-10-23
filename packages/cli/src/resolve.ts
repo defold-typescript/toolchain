@@ -163,65 +163,38 @@ function applyNativeTargets(
 }
 
 // A dependency's own `types/*.d.ts` replace whatever else it would contribute,
-// one declaration per file keyed by its stem, once they compile against the
-// engine surface. A rejected bundle is returned untouched, so it contributes
-// exactly what it would with no `types/` folder. Every candidate file checks in
-// one program, since building the engine surface dominates the cost.
+// once they compile against the engine surface: an accepted bundle keeps its
+// `shipped` files and drops its other declarations. A rejected bundle drops its
+// `shipped` files instead, so it contributes exactly what it would with no
+// `types/` folder. Each dependency checks in its own program, so its verdict
+// depends on its own files and the engine surface alone.
 function applyShippedDeclarations(
   bundles: readonly ExtensionDeclarations[],
   typesRoot: string | null,
 ): { bundles: ExtensionDeclarations[]; shippedUrls: Set<string>; warnings: string[] } {
   const shippedUrls = new Set<string>();
   const warnings: string[] = [];
-  const candidates = bundles.filter((bundle) => bundle.shipped.length > 0);
-  if (candidates.length === 0) {
-    return { bundles: [...bundles], shippedUrls, warnings };
-  }
-  const checked =
-    typesRoot === null
-      ? null
-      : checkShippedDeclarations(
-          candidates.flatMap((bundle) =>
-            bundle.shipped.map(({ entry, contents }) => ({
-              id: `${bundle.url}\0${entry}`,
-              contents,
-            })),
-          ),
-          typesRoot,
-        );
   const applied = bundles.map((bundle) => {
     if (bundle.shipped.length === 0) {
       return bundle;
     }
-    if (checked === null) {
+    if (typesRoot === null) {
       warnings.push(
         `shipped types from ${bundle.url} installed but not checked: @defold-typescript/types could not be found`,
       );
     } else {
-      // The id only keeps files apart across dependencies; the warning already
-      // names the URL, so each message keeps just its archive entry.
-      const messages = bundle.shipped.flatMap(({ entry }) =>
-        (checked.get(`${bundle.url}\0${entry}`) ?? []).map((message) =>
-          message.slice(bundle.url.length + 1),
-        ),
-      );
+      const checked = checkShippedDeclarations(bundle.shipped, typesRoot);
+      const messages = bundle.shipped.flatMap(({ entry }) => checked.get(entry) ?? []);
       if (messages.length > 0) {
         const more = messages.length > 1 ? ` (+${messages.length - 1} more)` : "";
         warnings.push(
           `shipped types from ${bundle.url} do not compile against @defold-typescript/types; using what the archive declares otherwise: ${messages[0]}${more}`,
         );
-        return bundle;
+        return { ...bundle, shipped: [] };
       }
     }
     shippedUrls.add(bundle.url);
-    return {
-      ...bundle,
-      declarations: bundle.shipped.map(({ entry, contents }) => ({
-        namespace: posix.basename(entry, ".d.ts"),
-        contents,
-        dropped: [],
-      })),
-    };
+    return { ...bundle, declarations: [] };
   });
   return { bundles: applied, shippedUrls, warnings };
 }
@@ -435,7 +408,9 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     // `libraries[]`. `scriptApiCount` stays the real archive count.
     const namespaces = supersededByLibrary
       ? []
-      : bundle.declarations.map((d) => d.namespace).sort();
+      : shippedUrls.has(bundle.url)
+        ? bundle.shipped.map(({ entry }) => posix.basename(entry, ".d.ts")).sort()
+        : bundle.declarations.map((d) => d.namespace).sort();
     const report: {
       url: string;
       provenance: ExtensionArchiveProvenance;
