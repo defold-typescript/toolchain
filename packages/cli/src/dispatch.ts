@@ -392,7 +392,7 @@ function dispatchCommand(
   // exact math they had when the delimiter was still an ordinary positional.
   const rest = dashIndex === -1 ? headRest : [...headRest, "--", ...tail];
   // bob-cwd-is-second-positional: bob's leading positional is its subcommand, so
-  // its project dir is `rest[1]`; `run` takes
+  // its project dir is `rest[1]`, as is `export-types`'s after its library; `run` takes
   // its project dir from the first positional *before* `--` (engine args follow
   // `--`, so `rest[0]` may be `--` itself); every other command takes it from
   // `rest[0]`. Resolving it uniformly here keeps the pin, its namespace
@@ -400,7 +400,12 @@ function dispatchCommand(
   // built.
   const runDashIndex = rest.indexOf("--");
   const runProjectArg = (runDashIndex === -1 ? rest : rest.slice(0, runDashIndex))[0];
-  const cwdArg = command === "bob" ? rest[1] : command === "run" ? runProjectArg : rest[0];
+  const cwdArg =
+    command === "bob" || command === "export-types"
+      ? rest[1]
+      : command === "run"
+        ? runProjectArg
+        : rest[0];
   const cwd = cwdArg ? path.resolve(cwdArg) : process.cwd();
 
   // Hard cutover: the two-flag surface collapsed into `--defold-target`. Reject
@@ -556,6 +561,40 @@ function dispatchCommand(
           ? { stopped: internals.hsmView.stopped }
           : {}),
       });
+    })();
+  }
+
+  if (command === "export-types") {
+    // Runs in a library's own repository, not a Defold project: no target resolution.
+    return (async () => {
+      const fail = (message: string): number => {
+        if (json) {
+          io.stdout.write(renderResult({ command: "export-types", error: message }));
+        } else {
+          writeError(`defold-typescript export-types: ${message}`);
+        }
+        return 1;
+      };
+      const library = rest[0];
+      if (library === undefined) {
+        return fail(
+          "pass a library; usage: bunx @defold-typescript/cli export-types <library> [path]",
+        );
+      }
+      const { runExportTypes } = await import("./export-types");
+      try {
+        const { sourceId, written } = runExportTypes({ library, cwd });
+        if (json) {
+          io.stdout.write(renderResult({ command: "export-types", library: sourceId, written }));
+        } else {
+          for (const file of written) {
+            io.stdout.write(`defold-typescript export-types: wrote ${file}\n`);
+          }
+        }
+        return 0;
+      } catch (err) {
+        return fail(err instanceof Error ? err.message : String(err));
+      }
     })();
   }
 
