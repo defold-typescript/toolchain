@@ -28,7 +28,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
+| **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/shipped/<repo>/`, checked apart from every other dependency, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
 | **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated ambient namespace in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
@@ -94,9 +94,11 @@ entry — nothing stale is left behind.
 
 A library can ship its own TypeScript declarations as `.d.ts` files in a
 `types/` folder at its repository root. `resolve` installs every `.d.ts` directly
-in that folder (subfolders are not read) into `.defold-types/extensions/`
-unchanged, and the dependency contributes nothing else. For each dependency the
-first surface that applies wins:
+in that folder (subfolders are not read) into
+`.defold-types/extensions/shipped/<repo>/` unchanged and under its own name, so
+the files may reference each other by relative path, and the dependency
+contributes nothing else. For each dependency the first surface that applies
+wins:
 
 1. the types it ships,
 2. a [vendored library](#vendored-library-types) match,
@@ -111,9 +113,11 @@ The `--json` report marks the dependency `typeSurface: "shipped"`, and its
 `namespaces` lists the installed file stems.
 
 Before installing, `resolve` compiles the shipped files against the
-`@defold-typescript/types` package the CLI runs with. A file that names something
-that package does not declare, such as ts-defold's `hash` or `vmath.vector3` in
-place of `Hash` and `Vector3`, fails the check. The dependency then contributes
+`@defold-typescript/types` package the CLI runs with. Each dependency is checked
+on its own, so its files cannot rely on another dependency's types. A file that
+names something that package does not declare, such as ts-defold's `hash` or
+`vmath.vector3` in place of `Hash` and `Vector3`, fails the check. The
+dependency then contributes
 exactly what it would with no `types/` folder, and `resolve` prints the first
 error:
 
