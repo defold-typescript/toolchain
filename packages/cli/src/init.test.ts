@@ -2310,6 +2310,7 @@ describe("runInit (merges an existing tsconfig)", () => {
   function readTsconfig(): {
     compilerOptions: {
       strict?: boolean;
+      noEmit?: boolean;
       typeRoots?: string[];
       types?: string[];
       plugins?: Array<{ name: string }>;
@@ -2348,6 +2349,21 @@ describe("runInit (merges an existing tsconfig)", () => {
     seedExistingTsconfig(RESOLVE_SHAPED);
     runInit({ cwd, force: true });
     expect(readTsconfig().compilerOptions.strict).toBe(false);
+  });
+
+  test("adds noEmit to an existing tsconfig that sets none", () => {
+    seedExistingTsconfig(RESOLVE_SHAPED);
+    runInit({ cwd, force: true });
+    expect(readTsconfig().compilerOptions.noEmit).toBe(true);
+  });
+
+  test("preserves a user noEmit override", () => {
+    seedExistingTsconfig({
+      ...RESOLVE_SHAPED,
+      compilerOptions: { ...RESOLVE_SHAPED.compilerOptions, noEmit: false },
+    });
+    runInit({ cwd, force: true });
+    expect(readTsconfig().compilerOptions.noEmit).toBe(false);
   });
 
   test("preserves an existing include and appends the scene-address declaration", () => {

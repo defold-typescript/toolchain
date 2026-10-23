@@ -266,6 +266,24 @@ describe("runUpgrade", () => {
     }
   });
 
+  test("the in-process path adds noEmit to an existing tsconfig and keeps its overrides", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions: { strict: false }, include: ["game/**/*.ts"] }, null, 2)}\n`,
+    );
+    const { io } = upgradeIo({ latest: "1.3.0" });
+
+    const outcome = await runUpgrade({ cwd, running: "1.3.0", capture: true, io });
+
+    expect(outcome.handedOff).toBe(false);
+    const upgraded = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { noEmit?: boolean; strict?: boolean };
+    };
+    expect(upgraded.compilerOptions.noEmit).toBe(true);
+    expect(upgraded.compilerOptions.strict).toBe(false);
+  });
+
   test("capture reaches the install on the already-latest in-process path", async () => {
     const { io, spawned } = upgradeIo({ latest: "1.3.0" });
 

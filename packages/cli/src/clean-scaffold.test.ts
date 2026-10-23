@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { runInit } from "./init";
@@ -35,6 +35,24 @@ describe("scaffolded project is clean out of the box", () => {
         throw new Error(`tsc reported errors on the scaffold:\n${output}`);
       }
       expect(code).toBe(0);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a bare tsc type-checks the scaffold without writing JavaScript beside the sources", () => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-clean-bare-tsc-"));
+    try {
+      runInit({ cwd });
+      linkTypes(cwd);
+
+      const { code, output } = run("tsc", ["-p", "tsconfig.json"], cwd);
+      if (code !== 0) {
+        throw new Error(`a bare tsc reported errors on the scaffold:\n${output}`);
+      }
+      expect(code).toBe(0);
+      expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(true);
+      expect(existsSync(path.join(cwd, "src", "main.js"))).toBe(false);
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

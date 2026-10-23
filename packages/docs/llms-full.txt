@@ -4961,7 +4961,10 @@ managed blocks without disturbing your own entries. For `tsconfig.json` that mea
 an existing `compilerOptions.typeRoots`, `types`, and `include` survive — including
 the `.defold-types` root and pinned engine surface that
 [`resolve`](./resolve.md) writes — while the `@defold-typescript/tstl-plugin`
-language-service plugin is unioned in exactly once. For `mise.toml` it means the
+language-service plugin is unioned in exactly once. The scaffold also sets
+`noEmit: true` when your project sets none, so a bare `tsc` type-checks without
+writing a `.js` file beside each source, while `build` still emits Lua; a `noEmit`
+you set yourself is kept. For `mise.toml` it means the
 refresh rewrites only `description` and `run` inside each managed
 `defold-typescript:*` task, so keys you add to one — an `alias`, a `depends`, an
 `env`, a comment of your own — are carried across every re-run. A managed task
@@ -5174,7 +5177,8 @@ is found.
 The re-scaffold refreshes the **managed** files: it re-pins the managed
 `@defold-typescript/types` and `@defold-typescript/cli` devDependencies to the new
 CLI's version, refreshes the managed `mise.toml` task block and the managed
-`AGENTS.md` block, and reconciles `tsconfig.json`. If `.vscode/defold-debug.ts`
+`AGENTS.md` block, and reconciles `tsconfig.json`, adding `noEmit: true` when the
+project sets none. If `.vscode/defold-debug.ts`
 already exists and its normalized checksum matches a generated launcher — including
 an unmodified legacy launcher whose line endings became CRLF — it is refreshed too.
 An absent launcher stays absent.
@@ -10688,8 +10692,8 @@ my-library/
     └── my_library.global.d.ts
 ```
 
-- Only files directly in `types/` are read. A `.d.ts` in a subfolder, or
-  anywhere else in the repository, is ignored.
+- Only files directly in `types/` are read. A `.d.ts` in a subfolder, one
+  whose name holds a `\`, or one anywhere else in the repository, is ignored.
 - Keep `types/` outside `include_dirs`. Defold copies the shared folders into
   every project that depends on the library, and the declarations have no use
   at runtime.
@@ -12262,7 +12266,8 @@ already has a `game.project`).
    TS config unless you pass `--force`. Your existing `src/*.ts` and
    `game.project` are left alone.
 2. **Reconcile `tsconfig.json`.** The defold-typescript scaffold sets `target: ES2022`,
-   `module: ESNext`, `moduleResolution: Bundler`, `types: ["@defold-typescript/types"]`,
+   `module: ESNext`, `moduleResolution: Bundler`, `noEmit: true`,
+   `types: ["@defold-typescript/types"]`,
    and `plugins: [{ name: "@defold-typescript/tstl-plugin" }]`. Point the
    `types` array at `@defold-typescript/types` (replacing `@ts-defold/types`)
    and add the `tstl-plugin` entry to keep live editor diagnostics.
