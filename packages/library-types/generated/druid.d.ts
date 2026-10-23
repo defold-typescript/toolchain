@@ -1,6 +1,6 @@
 /** @noResolution */
 declare module 'druid.druid' {
-	import { event } from 'event.event';
+	import type { event } from 'event.event';
 	type druid_text_adjust_type = "downscale" | "trim" | "no_adjust" | "downscale_limited" | "scroll" | "scale_then_scroll" | "trim_left" | "scale_then_trim" | "scale_then_trim_left";
 	type color = Vector4 | Vector3 | string;
 	type druid_container_mode = "stretch" | "fit" | "stretch_x" | "stretch_y";
