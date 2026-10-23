@@ -273,15 +273,15 @@ function tagSeries(name: string): string {
 }
 
 /** Resolve each tag to its commit date; the listing's own order is not recency. */
-async function datedTags(
-  group: PinnedGroup,
-  io: LibraryCheckIo,
+export async function datedTags(
+  repo: string,
+  io: Pick<LibraryCheckIo, "listTags" | "readCommit">,
 ): Promise<Array<{ name: string; date: number }>> {
-  const tags = await io.listTags(group.repo);
+  const tags = await io.listTags(repo);
   const dates = new Map<string, string>();
   for (const tag of tags) {
     if (dates.has(tag.sha)) continue;
-    dates.set(tag.sha, (await io.readCommit(group.repo, tag.sha)).date);
+    dates.set(tag.sha, (await io.readCommit(repo, tag.sha)).date);
   }
   return tags.map((tag) => ({
     name: tag.name,
@@ -294,7 +294,7 @@ async function evaluateTagPin(
   io: LibraryCheckIo,
   base: Omit<LibraryUpstreamReport, "actionable" | "reason">,
 ): Promise<LibraryUpstreamReport> {
-  const tags = await datedTags(group, io);
+  const tags = await datedTags(group.repo, io);
   const pinned = tags.find((tag) => tag.name === group.ref);
   if (pinned === undefined || Number.isNaN(pinned.date)) {
     return {
@@ -428,7 +428,17 @@ export async function runLibraryCheckCli(
   return 1;
 }
 
-type ForgeReads = Pick<LibraryCheckIo, "listTags" | "readCommit" | "readRepo" | "compareRefs">;
+/** One file directly inside a repo's `types/` folder; `name` is relative to it. */
+export interface TypesFolderFile {
+  readonly name: string;
+  readonly contents: string;
+}
+
+export interface ForgeReads
+  extends Pick<LibraryCheckIo, "listTags" | "readCommit" | "readRepo" | "compareRefs"> {
+  /** `null` when the repo has no `types/` folder at `ref`. */
+  readonly listTypesFolder: (repo: string, ref: string) => Promise<TypesFolderFile[] | null>;
+}
 
 async function getJson(url: string, headers: Record<string, string>): Promise<unknown> {
   const response = await fetch(url, { headers });
@@ -436,14 +446,49 @@ async function getJson(url: string, headers: Record<string, string>): Promise<un
   return response.json();
 }
 
+async function getText(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`GET ${url} responded ${response.status}`);
+  return response.text();
+}
+
+interface ContentsEntry {
+  readonly name: string;
+  readonly type: string;
+  readonly download_url: string | null;
+}
+
+// GitHub and Forgejo answer a contents read alike: 404 for a missing path, an
+// array for a folder, a single object for a file.
+async function readTypesFolder(
+  url: string,
+  headers: Record<string, string>,
+): Promise<TypesFolderFile[] | null> {
+  const response = await fetch(url, { headers });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`GET ${url} responded ${response.status}`);
+  const listing = (await response.json()) as ContentsEntry[] | ContentsEntry;
+  if (!Array.isArray(listing)) return null;
+  const files: TypesFolderFile[] = [];
+  for (const entry of listing) {
+    if (entry.type !== "file" || entry.download_url === null) continue;
+    files.push({ name: entry.name, contents: await getText(entry.download_url) });
+  }
+  return files;
+}
+
 const GITHUB_API = "https://api.github.com";
 
-function githubJson(path: string): Promise<unknown> {
+function githubHeaders(): Record<string, string> {
   const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
-  return getJson(`${GITHUB_API}${path}`, {
+  return {
     accept: "application/vnd.github+json",
     ...(token === undefined ? {} : { authorization: `Bearer ${token}` }),
-  });
+  };
+}
+
+function githubJson(path: string): Promise<unknown> {
+  return getJson(`${GITHUB_API}${path}`, githubHeaders());
 }
 
 const githubReads: ForgeReads = {
@@ -475,6 +520,11 @@ const githubReads: ForgeReads = {
       files: (compare.files ?? []).map((file) => file.filename),
     };
   },
+  listTypesFolder: (repo, ref) =>
+    readTypesFolder(
+      `${GITHUB_API}/repos/${repoSlug(repo)}/contents/types?ref=${encodeURIComponent(ref)}`,
+      githubHeaders(),
+    ),
 };
 
 // Codeberg runs Forgejo. Its routes differ from GitHub's in the commit path, the
@@ -482,8 +532,10 @@ const githubReads: ForgeReads = {
 // token.
 const CODEBERG_API = "https://codeberg.org/api/v1";
 
+const CODEBERG_HEADERS = { accept: "application/json" };
+
 function codebergJson(path: string): Promise<unknown> {
-  return getJson(`${CODEBERG_API}${path}`, { accept: "application/json" });
+  return getJson(`${CODEBERG_API}${path}`, CODEBERG_HEADERS);
 }
 
 const codebergReads: ForgeReads = {
@@ -514,6 +566,11 @@ const codebergReads: ForgeReads = {
       files: (compare.files ?? []).map((file) => file.filename),
     };
   },
+  listTypesFolder: (repo, ref) =>
+    readTypesFolder(
+      `${CODEBERG_API}/repos/${repoSlug(repo)}/contents/types?ref=${encodeURIComponent(ref)}`,
+      CODEBERG_HEADERS,
+    ),
 };
 
 export type ForgeId = "github" | "codeberg";
@@ -539,14 +596,17 @@ export function forgeFor(repo: string): ForgeId {
   return forge;
 }
 
+export function forgeReadsFor(repo: string): ForgeReads {
+  return FORGE_READS[forgeFor(repo)];
+}
+
 const forgeIo: LibraryCheckIo = {
   stdout: (text) => process.stdout.write(text),
   stderr: (text) => process.stderr.write(text),
-  listTags: async (repo) => FORGE_READS[forgeFor(repo)].listTags(repo),
-  readCommit: async (repo, sha) => FORGE_READS[forgeFor(repo)].readCommit(repo, sha),
-  readRepo: async (repo) => FORGE_READS[forgeFor(repo)].readRepo(repo),
-  compareRefs: async (repo, base, head) =>
-    FORGE_READS[forgeFor(repo)].compareRefs(repo, base, head),
+  listTags: async (repo) => forgeReadsFor(repo).listTags(repo),
+  readCommit: async (repo, sha) => forgeReadsFor(repo).readCommit(repo, sha),
+  readRepo: async (repo) => forgeReadsFor(repo).readRepo(repo),
+  compareRefs: async (repo, base, head) => forgeReadsFor(repo).compareRefs(repo, base, head),
 };
 
 if (import.meta.main) {
