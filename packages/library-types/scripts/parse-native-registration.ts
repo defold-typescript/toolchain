@@ -11,13 +11,20 @@
  * never resolves a module-name identifier.
  *
  * A userdata type registers its methods the same way, with no module name:
- * `luaL_register(L, 0, <table>)` (or `NULL`) fills the metatable on top of the
- * stack. Such a call is read as `methods`, keyed by the metatable the nearest
- * `luaL_newmetatable(L, <name>)` before it in the same function names, with
- * metamethods (`__gc`, `__index`, ...) dropped. A file that registers the module
- * must make exactly one named call. A file that only fills metatables is read by
+ * `luaL_register(L, 0, <table>)` (or `NULL`) fills the table on top of the
+ * stack. Such a call is read as `methods`, with metamethods (`__gc`, `__index`,
+ * ...) dropped, and keyed by the nearest table opened before it in the same
+ * function: a `luaL_newmetatable(L, <name>)` keys it by that metatable name, and a
+ * `lua_newtable` or `lua_createtable` — an object built as a plain table of
+ * methods — keys it `<function>()` after the C function that builds it, which no
+ * metatable name can collide with. A file that registers the module must make
+ * exactly one named call. A file that only fills metatables is read by
  * `parseNativeMethodTables`, so an extension whose userdata types live in files
  * of their own is measured whole.
+ *
+ * A call's `luaL_reg <table>[]` definition is looked up inside the function that
+ * makes the call first, then at file scope, so two functions that each declare a
+ * local table of the same name are read apart.
  *
  * Constants are read from the named call to the end of the function that makes
  * it: the module table does not exist before the call, so a `lua_setfield` there
@@ -39,7 +46,8 @@ export interface NativeRegistration {
   moduleName: string;
   functions: string[];
   /** Userdata methods, keyed by the metatable each nameless `luaL_register` call
-   * fills. Keys and each method list are sorted. */
+   * fills, or `<function>()` for a plain table. Keys and each method list are
+   * sorted. */
   methods: Record<string, string[]>;
   constants: string[];
 }
@@ -74,7 +82,7 @@ export function parseNativeRegistration(source: string, file: string): NativeReg
 
   return {
     moduleName: resolveName(call.nameArgument, scanned.strings, "module", file),
-    functions: readRegisteredFunctions(scanned.code, scanned.structure, call.tableName, file),
+    functions: readRegisteredFunctions(scanned.code, scanned.structure, call, file),
     methods: readMethodTables(scanned, file),
     constants: readConstants(scanned.structure, call.index, file),
   };
@@ -126,14 +134,9 @@ function readMethodTables(scanned: ScannedSource, file: string): Record<string, 
   const { code, structure, strings } = scanned;
   const byMetatable = new Map<string, Set<string>>();
   for (const call of scanned.calls.filter(isMethodTable)) {
-    const metatable = resolveName(
-      nearestMetatableArgument(code, structure, call, file),
-      strings,
-      "metatable",
-      file,
-    );
+    const metatable = methodTableKey(code, structure, strings, call, file);
     const names = byMetatable.get(metatable) ?? new Set<string>();
-    for (const name of readRegisteredFunctions(code, structure, call.tableName, file)) {
+    for (const name of readRegisteredFunctions(code, structure, call, file)) {
       if (!name.startsWith("__")) names.add(name);
     }
     byMetatable.set(metatable, names);
@@ -145,29 +148,49 @@ function readMethodTables(scanned: ScannedSource, file: string): Record<string, 
   );
 }
 
-function nearestMetatableArgument(
+const TABLE_OPENERS =
+  /\b(?:luaL_newmetatable\s*\(\s*\w+\s*,\s*("[^"]*"|\w+)\s*\)|(?:lua_newtable|lua_createtable)\s*\()/g;
+
+function methodTableKey(
   code: string,
   structure: string,
+  strings: Map<string, string>,
   call: RegisterCall,
   file: string,
 ): string {
   const open = enclosingOpenBrace(structure, call.index);
   const before =
-    open === -1
-      ? undefined
-      : [
-          ...structure
-            .slice(open, call.index)
-            .matchAll(/\bluaL_newmetatable\s*\(\s*\w+\s*,\s*("[^"]*"|\w+)\s*\)/g),
-        ].at(-1);
+    open === -1 ? undefined : [...structure.slice(open, call.index).matchAll(TABLE_OPENERS)].at(-1);
   if (before === undefined) {
     throw new Error(
-      `native registration: ${file} fills the table \`${call.tableName}\` with a nameless luaL_register call, but no luaL_newmetatable before it in the same function names the metatable it fills.`,
+      `native registration: ${file} fills the table \`${call.tableName}\` with a nameless luaL_register call, but no luaL_newmetatable, lua_newtable or lua_createtable before it in the same function opens the table it fills.`,
     );
   }
-  const name = before[1] as string;
+  const name = before[1];
+  if (name === undefined) {
+    return `${enclosingFunctionName(structure, open, file)}()`;
+  }
   const nameStart = open + (before.index ?? 0) + before[0].indexOf(name);
-  return code.slice(nameStart, nameStart + name.length);
+  return resolveName(code.slice(nameStart, nameStart + name.length), strings, "metatable", file);
+}
+
+/** The name of the function whose body brace is `open`, read from its signature:
+ * the identifier before the parameter list that the `)` ahead of the brace closes. */
+function enclosingFunctionName(structure: string, open: number, file: string): string {
+  const close = structure.lastIndexOf(")", open);
+  let depth = 0;
+  let paren = close;
+  for (; paren >= 0; paren--) {
+    if (structure[paren] === ")") depth++;
+    else if (structure[paren] === "(" && --depth === 0) break;
+  }
+  const name = /(\w+(?:::\w+)*)\s*$/.exec(structure.slice(Math.max(0, paren - 256), paren));
+  if (paren < 0 || name === null) {
+    throw new Error(
+      `native registration: ${file} fills a plain table in a function at offset ${open} whose name cannot be read from its signature.`,
+    );
+  }
+  return name[1] as string;
 }
 
 function resolveName(
@@ -191,15 +214,26 @@ function resolveName(
 function readRegisteredFunctions(
   code: string,
   structure: string,
-  tableName: string,
+  call: RegisterCall,
   file: string,
 ): string[] {
-  const declaration = new RegExp(`\\bluaL_[Rr]eg\\s+${tableName}\\s*\\[\\s*\\]\\s*=\\s*\\{`).exec(
-    structure,
-  );
-  if (declaration === null) {
+  const { tableName } = call;
+  const declarations = [
+    ...structure.matchAll(
+      new RegExp(`\\bluaL_[Rr]eg\\s+${tableName}\\s*\\[\\s*\\]\\s*=\\s*\\{`, "g"),
+    ),
+  ].map((match) => {
+    const index = match.index ?? 0;
+    return { match, index, scope: enclosingOpenBrace(structure, index) };
+  });
+  const callScope = enclosingOpenBrace(structure, call.index);
+  const declaration =
+    declarations
+      .filter(({ index, scope }) => scope !== -1 && scope === callScope && index < call.index)
+      .at(-1)?.match ?? declarations.find(({ scope }) => scope === -1)?.match;
+  if (declaration === undefined) {
     throw new Error(
-      `native registration: ${file} registers the table \`${tableName}\`, but no \`luaL_reg ${tableName}[] = { ... }\` definition was found.`,
+      `native registration: ${file} registers the table \`${tableName}\`, but no \`luaL_reg ${tableName}[] = { ... }\` definition was found in the function that registers it or at file scope.`,
     );
   }
   const open = declaration.index + declaration[0].length - 1;

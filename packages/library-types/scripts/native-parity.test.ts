@@ -55,6 +55,7 @@ describe("buildNativeParity over the shipped declarations", () => {
     box2d: [18, 27, 275],
     daabbcc3d: [18, 3, 0],
     wave: [12, 0, 0],
+    detour: [1, 0, 10],
   };
 
   test("every native target is measured", () => {
@@ -121,6 +122,17 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
     expect(report.missingMethods).toEqual(["def_windward_jps.Grid.is_walkable"]);
     expect(report.phantomMethods).toEqual([]);
     expect(report.callableCoverage).toBe(Math.round((2 / 3) * 10_000) / 10_000);
+  });
+
+  test("a method dropped from a plain table is missing under the function that builds it", () => {
+    const entry = target("detour");
+    const shipped = shippedDeclaration(entry);
+    const drifted = shipped.replace(/\n\s*delete\(\): void;/, "");
+    expect(drifted).not.toBe(shipped);
+    const report = buildNativeParity(tempRoot(entry, drifted), entry);
+    expect(report.missingMethods).toEqual(["Init().delete"]);
+    expect(report.phantomMethods).toEqual([]);
+    expect(report.callableCoverage).toBe(Math.round((10 / 11) * 10_000) / 10_000);
   });
 
   test("an invented userdata method is phantom and leaves the function lists alone", () => {

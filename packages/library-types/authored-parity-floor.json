@@ -179,6 +179,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/native/detour.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/native/share.json": {
     "callable": 1,
     "field": 1

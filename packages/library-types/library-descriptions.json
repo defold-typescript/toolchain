@@ -14,6 +14,7 @@
   "defold-zzfx": "ZzFX extension for Defold",
   "defsave": "Save and load config and user data persistently between a Defold project's sessions",
   "deftest": "Unit testing in Defold",
+  "detour": "Recast/Detour navigation meshes: path queries and crowd agents.",
   "dicebag": "Dicebag is a Defold extension containing probability functions designed specifically for games.",
   "gooey": "Defold GUI system",
   "immutable": "Runtime immutable Lua table implementation",
