@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
@@ -327,6 +334,57 @@ describe("runExportTypes over an existing types folder", () => {
     return cwd;
   }
 
+  // Whether the folder the tests write to treats names differing only in case
+  // as one file, observed rather than assumed from the platform: macOS and
+  // Windows runners fold case by default, ubuntu does not.
+  const TMP_FOLDS_CASE = (() => {
+    const dir = tmp();
+    writeFileSync(join(dir, "CASE"), "");
+    return existsSync(join(dir, "case"));
+  })();
+
+  // Reads `cwd` back the way `resolve` reads a release archive of it: every
+  // `written` file survives the selection, and the folder compiles.
+  function expectReadsBackAsShipped(cwd: string, sourceId: string, written: readonly string[]) {
+    const wrapper = `${sourceId}-main/`;
+    const located = locateShippedDeclarations(filesUnder(cwd).map((file) => `${wrapper}${file}`));
+    const files = located.map((entry) => ({
+      entry,
+      contents: readFileSync(join(cwd, entry.slice(wrapper.length)), "utf8"),
+    }));
+    const selected = selectShippedDeclarations(files);
+    const kept = selected.map(({ entry }) => entry);
+    for (const entry of written) {
+      expect(kept).toContain(`${wrapper}${entry}`);
+    }
+    const messages = [...checkShippedDeclarations(selected, typesRoot()).values()].flat();
+    expect(messages).toEqual([]);
+  }
+
+  const GLOB_CURATED = "declare namespace glob {\n  const a: number;\n}\n";
+  const OTHER = "declare const other: number;\n";
+
+  // A curated global `glob.d.ts` against a folder holding a module-form
+  // `GLOB.d.ts` and a global `other.d.ts`.
+  function caseAliasFixture(): { cwd: string; libraryTypesRoot: string } {
+    return {
+      cwd: folderWith({
+        "types/GLOB.d.ts": 'declare module "glob" {\n  export const x: number;\n}\n',
+        "types/other.d.ts": OTHER,
+      }),
+      libraryTypesRoot: writeCorpus({
+        native: [
+          {
+            repo: "https://github.com/owner/defold-glob",
+            namespace: "glob",
+            declaration: "generated/native/glob.d.ts",
+            contents: GLOB_CURATED,
+          },
+        ],
+      }),
+    };
+  }
+
   test("a global file exported beside an existing module-form file is refused", () => {
     const cwd = folderWith({
       "types/existing.d.ts": 'declare module "existing" {\n  export const x: number;\n}\n',
@@ -417,19 +475,35 @@ describe("runExportTypes over an existing types folder", () => {
     expect(readFileSync(join(cwd, "types", "other.d.ts"), "utf8")).toBe(
       "declare const other: number;\n",
     );
-
-    const wrapper = `${target.sourceId}-main/`;
-    const located = locateShippedDeclarations(filesUnder(cwd).map((file) => `${wrapper}${file}`));
-    const files = located.map((entry) => ({
-      entry,
-      contents: readFileSync(join(cwd, entry.slice(wrapper.length)), "utf8"),
-    }));
-    const selected = selectShippedDeclarations(files);
-    const kept = selected.map(({ entry }) => entry);
-    for (const entry of written) {
-      expect(kept).toContain(`${wrapper}${entry}`);
-    }
-    const messages = [...checkShippedDeclarations(selected, typesRoot()).values()].flat();
-    expect(messages).toEqual([]);
+    expectReadsBackAsShipped(cwd, target.sourceId, written);
   });
+
+  test.skipIf(!TMP_FOLDS_CASE)(
+    "an existing file whose name differs only in case is the file the export replaces",
+    () => {
+      const { cwd, libraryTypesRoot } = caseAliasFixture();
+
+      const result = runExportTypes({ library: "defold-glob", cwd, libraryTypesRoot });
+
+      expect(result).toEqual({ sourceId: "defold-glob", written: ["types/GLOB.d.ts"] });
+      expect(filesUnder(cwd)).toEqual(["types/GLOB.d.ts", "types/other.d.ts"]);
+      expect(readFileSync(join(cwd, "types", "GLOB.d.ts"), "utf8")).toBe(GLOB_CURATED);
+      expect(readFileSync(join(cwd, "types", "other.d.ts"), "utf8")).toBe(OTHER);
+      expectReadsBackAsShipped(cwd, "defold-glob", result.written);
+    },
+  );
+
+  test.skipIf(TMP_FOLDS_CASE)(
+    "an existing file whose name differs only in case stays a separate file",
+    () => {
+      const { cwd, libraryTypesRoot } = caseAliasFixture();
+      const before = snapshot(cwd);
+
+      const message = thrownMessage(() =>
+        runExportTypes({ library: "defold-glob", cwd, libraryTypesRoot }),
+      );
+      expect(message).toContain("resolve skips types/glob.d.ts");
+      expect(snapshot(cwd)).toEqual(before);
+    },
+  );
 });
