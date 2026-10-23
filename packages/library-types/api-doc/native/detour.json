@@ -1,0 +1,382 @@
+{
+  "info": {
+    "namespace": "detour",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Loads a navigation mesh.",
+      "description": "Loads a navigation mesh.",
+      "parameters": [
+        {
+          "name": "navmesh",
+          "doc": "The bytes of a Recast navmesh set file, such as\n`sys.load_resource` returns.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The mesh.",
+          "types": [
+            "NavMesh"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "NavMesh",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "find_path",
+          "brief": "Finds a path between the points of the mesh nearest to `start` and",
+          "description": "Finds a path between the points of the mesh nearest to `start` and\n`finish`. When `finish` cannot be reached, the path ends at the\nreachable point nearest to it; when no path is found, the table is empty.",
+          "parameters": [
+            {
+              "name": "start",
+              "doc": "Where to start from.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "finish",
+              "doc": "Where to go.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "straight_path_options",
+              "doc": "Detour `dtStraightPathOptions`: `1` adds a\ncorner where the path crosses into another area, `2` where it crosses\nany polygon edge. Default is `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The corners of the path, in order. Read them with `get` or\n`pairs`: keys start at 0, so this is not an array.\n**0️⃣ 0-based; passed to `detour` unchanged.**",
+              "types": [
+                "LuaTable<number, PathPoint>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_area_cost",
+          "brief": "Sets the cost of crossing each area. The defaults are `1` for areas 0, 2",
+          "description": "Sets the cost of crossing each area. The defaults are `1` for areas 0, 2\nand 3, `10` for area 1, `2` for area 4 and `1.5` for area 5.",
+          "parameters": [
+            {
+              "name": "costs",
+              "doc": "Cost per area: `costs[0]` is the cost of area 0.",
+              "types": [
+                "number[]"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_include_flags",
+          "brief": "Sets the polygon flags a path may cross. The default is every flag but",
+          "description": "Sets the polygon flags a path may cross. The default is every flag but\n`0x10`, which marks disabled polygons.",
+          "parameters": [
+            {
+              "name": "flags",
+              "doc": "Bit mask of polygon flags.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "create_crowd",
+          "brief": "Prepares the mesh's crowd for up to 128 agents. Calling it again resets",
+          "description": "Prepares the mesh's crowd for up to 128 agents. Calling it again resets\nthe same crowd.",
+          "parameters": [
+            {
+              "name": "max_agent_radius",
+              "doc": "Radius of the largest agent the crowd will hold.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The crowd.",
+              "types": [
+                "Crowd"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "delete",
+          "brief": "Frees the mesh and its crowd. Neither can be used after it.",
+          "description": "Frees the mesh and its crowd. Neither can be used after it.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PathPoint",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "Where the corner lies on the mesh.",
+          "description": "Where the corner lies on the mesh.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "area",
+          "brief": "Area id of the polygon the corner lies on.",
+          "description": "Area id of the polygon the corner lies on.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "start",
+          "brief": "`true` on the corner the path starts from.",
+          "description": "`true` on the corner the path starts from.",
+          "types": [
+            "true"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "end",
+          "brief": "`true` on the corner the path ends at.",
+          "description": "`true` on the corner the path ends at.",
+          "types": [
+            "true"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "offmesh",
+          "brief": "`true` on a corner that starts an off-mesh connection.",
+          "description": "`true` on a corner that starts an off-mesh connection.",
+          "types": [
+            "true"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Crowd",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "add_agent",
+          "brief": "Adds an agent at a position on the mesh.",
+          "description": "Adds an agent at a position on the mesh.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "Where the agent starts.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "radius",
+              "doc": "Radius of the agent.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "height",
+              "doc": "Height of the agent.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "max_acceleration",
+              "doc": "Largest change of velocity per second.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "max_speed",
+              "doc": "Largest speed.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "update_flags",
+              "doc": "Detour `dtUpdateFlags` to steer with: `1` anticipate\nturns, `2` avoid obstacles, `4` keep apart from other agents, `8` optimize\nthe path by visibility, `16` optimize the path by topology.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The agent id, or `-1` when the crowd already holds 128 agents.\n**0️⃣ 0-based; passed to `detour` unchanged.**",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "remove_agent",
+          "brief": "Removes an agent from the crowd.",
+          "description": "Removes an agent from the crowd.",
+          "parameters": [
+            {
+              "name": "agent",
+              "doc": "Id of the agent, as {@link Crowd.add_agent} returned it.\n**0️⃣ 0-based; passed to `detour` unchanged.**",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_target",
+          "brief": "Sends agents toward the point of the mesh nearest to `target`.",
+          "description": "Sends agents toward the point of the mesh nearest to `target`.",
+          "parameters": [
+            {
+              "name": "target",
+              "doc": "Where to go.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "agent",
+              "doc": "Id of the agent to send. When omitted, every active agent\nis sent. **0️⃣ 0-based; passed to `detour` unchanged.**",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reset_target",
+          "brief": "Stops agents moving toward their target.",
+          "description": "Stops agents moving toward their target.",
+          "parameters": [
+            {
+              "name": "agent",
+              "doc": "Id of the agent to stop. When omitted, every agent is\nstopped. **0️⃣ 0-based; passed to `detour` unchanged.**",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "update",
+          "brief": "Moves every agent by one step of the simulation.",
+          "description": "Moves every agent by one step of the simulation.",
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "Time step in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The active agents, keyed by agent id. Read them with `get` or\n`pairs`: keys start at 0 and skip inactive agents, so this is not an\narray. **0️⃣ 0-based; passed to `detour` unchanged.**",
+              "types": [
+                "LuaTable<number, CrowdAgent>"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CrowdAgent",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "Where the agent is after the update.",
+          "description": "Where the agent is after the update.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "velocity",
+          "brief": "The agent's velocity after the update.",
+          "description": "The agent's velocity after the update.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "state",
+          "brief": "`\"walk\"` on the mesh, `\"offmesh\"` on an off-mesh connection, else `\"invalid\"`.",
+          "description": "`\"walk\"` on the mesh, `\"offmesh\"` on an off-mesh connection, else `\"invalid\"`.",
+          "types": [
+            "\"walk\" | \"offmesh\" | \"invalid\""
+          ]
+        }
+      ]
+    }
+  ]
+}

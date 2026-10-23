@@ -729,6 +729,7 @@ describe("loadApiSurface library descriptions", () => {
       "box2d",
       "daabbcc3d",
       "wave",
+      "detour",
     ]) {
       const page = libraryPages.find((p) => p.route === `/api/${namespace}`);
       expect(page?.namespace).toBe(namespace);
@@ -3431,6 +3432,13 @@ describe("native helper shape definitions", () => {
     const names = group("def_windward_jps", "Grid")?.symbols.map((s) => s.name) ?? [];
     expect(names).toContain("Grid.find_path");
     expect(names).toContain("Grid.is_walkable");
+  });
+
+  test("renders detour's NavMesh and Crowd with the methods their plain tables carry", () => {
+    expect(group("detour", "NavMesh")?.symbols.map((s) => s.name) ?? []).toContain(
+      "NavMesh.find_path",
+    );
+    expect(group("detour", "Crowd")?.symbols.map((s) => s.name) ?? []).toContain("Crowd.update");
   });
 
   test("renders box2d's body methods and its nested constant tables", () => {

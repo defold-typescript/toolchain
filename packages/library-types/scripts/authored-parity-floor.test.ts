@@ -502,6 +502,8 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "3e85a9b227a48eb84717e907774096ab8f73aad679b420ca62b00e44539509c9",
   "fixtures/upstream-native/defold-daabbcc3d/daabbcc3d/src/extension.cpp":
     "40c4a14c59bec593c250b252991692ae122d708a0b8c8dec14a8752ea9672d40",
+  "fixtures/upstream-native/defold-detour/detour/src/detour.cpp":
+    "2bbee4eb120dc711c7c23391dab2bf886fc3e5e019409011a3d9c58a16249290",
   "fixtures/upstream-native/defold-sharing/share/api/share.lua":
     "f441787bb953d0fd836c5981bf2430b525f0c2b9350730ff3bd06ac940be705d",
   "fixtures/upstream-native/defold-sharing/share/src/share.cpp":

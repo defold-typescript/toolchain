@@ -1880,6 +1880,53 @@ describe("runResolve daabbcc3d and wave through the shipped native registry", ()
   });
 });
 
+describe("runResolve detour through the shipped native registry", () => {
+  const DETOUR_URL =
+    "https://github.com/abadonna/defold-detour/archive/95ce965cb404cecfacd5ba1fc8115a6bb7341a85.zip";
+  const DETOUR_TOP = "defold-detour-95ce965cb404cecfacd5ba1fc8115a6bb7341a85";
+
+  async function resolveDetour(
+    manifest: string,
+  ): Promise<{ cwd: string; result: Awaited<ReturnType<typeof runResolve>> }> {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${DETOUR_URL}\n`);
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip({
+        [extensionArchiveKey(DETOUR_URL)]: { entries: [manifest], contents: {} },
+      }),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: loadVendoredNativeRegistry(),
+    });
+    return { cwd, result };
+  }
+
+  test("a commit-pinned detour archive confirmed by its detour/ext.manifest gets the shipped declaration", async () => {
+    const { cwd, result } = await resolveDetour(`${DETOUR_TOP}/detour/ext.manifest`);
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", "detour.d.ts"), "utf8")).toBe(
+      readFileSync(
+        join(import.meta.dir, "..", "..", "library-types", "generated", "native", "detour.d.ts"),
+        "utf8",
+      ),
+    );
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(result.extensions[0]?.namespaces).toEqual(["detour"]);
+  });
+
+  test("a detour repo match with its ext.manifest at the archive root writes no declaration", async () => {
+    const { cwd, result } = await resolveDetour(`${DETOUR_TOP}/ext.manifest`);
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "detour.d.ts"))).toBe(false);
+    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
+  });
+});
+
 describe("runResolve druid LuaLS library", () => {
   const DRUID = "declare module 'druid.druid' { export const version: string; }\n";
 

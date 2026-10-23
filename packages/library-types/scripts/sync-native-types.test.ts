@@ -127,6 +127,22 @@ describe("lowerNativeApiDoc", () => {
     expect(byName.get("Heuristic")?.types).toEqual(['"octile"', '"manhattan"', '"euclidean"']);
   });
 
+  test("lowers detour's init, its NavMesh and Crowd methods and the result shapes", () => {
+    const doc = lowered("detour");
+    expect(doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name)).toEqual(["init"]);
+    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(0);
+    const byName = new Map(doc.elements.map((e) => [e.name, e]));
+    for (const name of ["NavMesh", "Crowd"]) {
+      expect(byName.get(name)?.type).toBe("TYPEDEF");
+      expect(byName.get(name)?.functions).toHaveLength(5);
+      expect(byName.get(name)?.properties).toBeUndefined();
+    }
+    for (const name of ["PathPoint", "CrowdAgent"]) {
+      expect(byName.get(name)?.properties?.length).toBeGreaterThan(0);
+      expect(byName.get(name)?.functions).toBeUndefined();
+    }
+  });
+
   // A userdata method lowered as a property, or a callback lowered as a method, reads on
   // the page as a member the runtime does not have.
   test("lowers box2d methods as functions, callbacks as properties and constants by table", () => {
