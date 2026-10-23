@@ -2,11 +2,13 @@
 // `types/` folder that library can ship itself, so a release carrying it
 // replaces the curated copy with the same declarations. Each file is written
 // verbatim, and only once the folder as it will be -- the `.d.ts` files already
-// directly in `types/`, with each curated file in place of one of the same name
-// -- passes the selection and the check `resolve` runs on shipped types: a
-// folder `resolve` would reject or trim is never left behind.
+// directly in `types/`, with each curated file in place of the existing file it
+// lands on: one of the same name or, where the file system ignores case, one
+// whose name differs only in case, which keeps its name -- passes the selection
+// and the check `resolve` runs on shipped types: a folder `resolve` would
+// reject or trim is never left behind.
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { normalizeSourceId } from "./library-match";
@@ -65,9 +67,20 @@ function byEntryPath(a: ShippedDeclarationFile, b: ShippedDeclarationFile): numb
   return a.entry < b.entry ? -1 : a.entry > b.entry ? 1 : 0;
 }
 
+// The file `file` reaches on disk, as the file system itself tells files apart,
+// so two names it routes to one file -- by ignoring case, by normalizing
+// Unicode, or as hard links -- share one identity. `bigint` because NTFS file
+// indexes exceed `Number.MAX_SAFE_INTEGER`.
+function fileIdentity(file: string): string | undefined {
+  const stat = statSync(file, { bigint: true, throwIfNoEntry: false });
+  return stat === undefined ? undefined : `${stat.dev}:${stat.ino}`;
+}
+
 // The files already in `<cwd>/types/` that `resolve` would read as shipped
 // types once the folder is released.
-function existingShippedFiles(cwd: string): ShippedDeclarationFile[] {
+function existingShippedFiles(
+  cwd: string,
+): Array<ShippedDeclarationFile & { readonly identity: string | undefined }> {
   const dir = path.join(cwd, SHIPPED_DIR);
   if (!existsSync(dir)) {
     return [];
@@ -76,7 +89,10 @@ function existingShippedFiles(cwd: string): ShippedDeclarationFile[] {
     .filter((dirent) => dirent.isFile())
     .map((dirent) => path.posix.join(SHIPPED_DIR, dirent.name))
     .filter(isShippedDeclarationPath)
-    .map((entry) => ({ entry, contents: readFileSync(path.join(cwd, entry), "utf8") }));
+    .map((entry) => {
+      const file = path.join(cwd, entry);
+      return { entry, contents: readFileSync(file, "utf8"), identity: fileIdentity(file) };
+    });
 }
 
 export function runExportTypes(opts: RunExportTypesOptions): RunExportTypesResult {
@@ -101,19 +117,30 @@ export function runExportTypes(opts: RunExportTypesOptions): RunExportTypesResul
     .map(([entry, source]) => ({ entry, contents: readFileSync(source, "utf8") }))
     .sort(byEntryPath);
 
-  const projected = new Map(
-    existingShippedFiles(opts.cwd).map(({ entry, contents }) => [entry, contents]),
-  );
+  const existing = existingShippedFiles(opts.cwd);
+  const projected = new Map(existing.map(({ entry, contents }) => [entry, contents]));
+  // The names the curated files will be found under once written: an existing
+  // file a destination reaches keeps its own name.
+  const landed = new Set<string>();
   for (const { entry, contents } of files) {
-    projected.set(entry, contents);
+    const identity = fileIdentity(path.join(opts.cwd, entry));
+    const reached =
+      identity === undefined
+        ? []
+        : existing.filter((file) => file.identity === identity).map((file) => file.entry);
+    for (const target of reached.length > 0 ? reached : [entry]) {
+      projected.set(target, contents);
+      landed.add(target);
+    }
   }
+  const written = [...landed].sort();
   const folder: ShippedDeclarationFile[] = [...projected]
     .map(([entry, contents]) => ({ entry, contents }))
     .sort(byEntryPath);
 
   const selected = selectShippedDeclarations(folder);
   const kept = new Set(selected.map(({ entry }) => entry));
-  const skipped = files.map(({ entry }) => entry).filter((entry) => !kept.has(entry));
+  const skipped = written.filter((entry) => !kept.has(entry));
   if (skipped.length > 0) {
     throw new Error(
       `curated types for ${sourceId} would not install as shipped types: resolve skips ${skipped.join(", ")}, which add global names beside a module declaration`,
@@ -139,5 +166,5 @@ export function runExportTypes(opts: RunExportTypesOptions): RunExportTypesResul
   for (const { entry, contents } of files) {
     writeFileSync(path.join(opts.cwd, entry), contents);
   }
-  return { sourceId, written: files.map(({ entry }) => entry) };
+  return { sourceId, written };
 }
