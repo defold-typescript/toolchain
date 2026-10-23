@@ -1702,68 +1702,6 @@ declare module "pixels" {
   });
 });
 
-describe("runResolve defold-pixels through the shipped native registry", () => {
-  const PIXELS_URL = "https://github.com/king8fisher/defold-pixels/archive/refs/heads/master.zip";
-  const SHIPPED = readFileSync(
-    join(import.meta.dir, "..", "..", "library-types", "generated", "native", "pixels.d.ts"),
-    "utf8",
-  );
-  const DOC_PATH = "defold-pixels-master/defold-pixels/api/pixels.script_api";
-  const DOC_PIXELS = `
-- name: pixels
-  type: table
-  desc: Doc-emitted namespace.
-  members:
-  - name: fill
-    type: function
-    desc: only the doc declares this
-`;
-
-  async function resolvePixels(manifest: string): Promise<{
-    cwd: string;
-    result: Awaited<ReturnType<typeof runResolve>>;
-  }> {
-    const cwd = tmp();
-    writeProject(cwd, `[project]\ndependencies#0 = ${PIXELS_URL}\n`);
-    const result = await runResolve({
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip({
-        [extensionArchiveKey(PIXELS_URL)]: {
-          entries: [manifest, DOC_PATH],
-          contents: { [DOC_PATH]: DOC_PIXELS },
-        },
-      }),
-      libraryRegistry: [],
-      libraryGeneratedDir: null,
-      nativeRegistry: loadVendoredNativeRegistry(),
-    });
-    return { cwd, result };
-  }
-
-  test("an archive confirmed by defold-pixels/ext.manifest gets the shipped curated declaration", async () => {
-    const { cwd, result } = await resolvePixels("defold-pixels-master/defold-pixels/ext.manifest");
-
-    expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8")).toBe(
-      SHIPPED,
-    );
-    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
-    expect(result.extensions[0]?.namespaces).toEqual(["pixels"]);
-  });
-
-  test("an archive with its ext.manifest elsewhere keeps the .script_api emission", async () => {
-    const { cwd, result } = await resolvePixels("defold-pixels-master/other/ext.manifest");
-
-    expect(result.ok).toBe(true);
-    const written = readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8");
-    expect(written).not.toBe(SHIPPED);
-    expect(written).toContain("only the doc declares this");
-    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
-  });
-});
-
 describe("runResolve def-windward-jps through the shipped native registry", () => {
   const JPS_URL = "https://github.com/s-kania/def-windward-jps/archive/refs/tags/v1.1.0.zip";
   const SHIPPED = readFileSync(

@@ -25,9 +25,13 @@ import { PACKAGES } from "./release-pack-proof";
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const RUNTIMES = ["node", "bun"] as const;
 export const STARTER_ARTIFACT_REL = "src/main.ts.script";
-// The archive ships `defold-pixels/ext.manifest`, which confirms the curated
-// native target, so `resolve` copies the packed library-types declaration.
+// The archive ships `daabbcc/ext.manifest`, which confirms the curated native
+// target, so `resolve` copies the packed library-types declaration.
 const NATIVE_EXTENSION_URL =
+  "https://github.com/selimanac/defold-daabbcc/archive/refs/tags/v3.0.8.zip";
+// The archive ships its own `types/pixels.d.ts` and `types/pixels.global.d.ts`,
+// which `resolve` installs ahead of every other surface.
+const SHIPPED_TYPES_URL =
   "https://github.com/king8fisher/defold-pixels/archive/refs/heads/master.zip";
 // No curated target matches this archive, so `resolve` writes `drawpixels.d.ts`
 // from its `api/drawpixels.script_api`.
@@ -47,8 +51,17 @@ function record(name: string, ok: boolean, detail = ""): boolean {
   return ok;
 }
 
-function spawn(cmd: string[], cwd: string): { code: number; output: string } {
-  const proc = Bun.spawnSync(cmd, { cwd, stdout: "pipe", stderr: "pipe" });
+function spawn(
+  cmd: string[],
+  cwd: string,
+  env?: Record<string, string>,
+): { code: number; output: string } {
+  const proc = Bun.spawnSync(cmd, {
+    cwd,
+    stdout: "pipe",
+    stderr: "pipe",
+    ...(env ? { env: { ...process.env, ...env } } : {}),
+  });
   return { code: proc.exitCode, output: `${proc.stdout.toString()}${proc.stderr.toString()}` };
 }
 
@@ -197,12 +210,17 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
       gameProject,
       readFileSync(gameProject, "utf8").replace(
         /^\[project\]\n/m,
-        `[project]\ndependencies#0 = ${NATIVE_EXTENSION_URL}\ndependencies#1 = ${SCRIPT_API_EXTENSION_URL}\n`,
+        `[project]\ndependencies#0 = ${NATIVE_EXTENSION_URL}\ndependencies#1 = ${SCRIPT_API_EXTENSION_URL}\ndependencies#2 = ${SHIPPED_TYPES_URL}\n`,
       ),
     );
-    const resolve = spawn([runtime, bin, "resolve", app], app);
+    // An empty cache makes `resolve` download every archive, so the branch URL
+    // types from the live archive rather than a snapshot cached before upstream
+    // shipped `types/`.
+    const resolve = spawn([runtime, bin, "resolve", app], app, {
+      DEFOLD_TYPESCRIPT_CACHE: path.join(proj, "cache"),
+    });
     const extensionsDir = path.join(app, ".defold-types", "extensions");
-    const extensionTypes = path.join(extensionsDir, "pixels.d.ts");
+    const extensionTypes = path.join(extensionsDir, "daabbcc.d.ts");
     const curated = path.join(
       proj,
       "node_modules",
@@ -210,7 +228,7 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
       "library-types",
       "generated",
       "native",
-      "pixels.d.ts",
+      "daabbcc.d.ts",
     );
     record(
       `${runtime} resolve types a native extension`,
@@ -223,6 +241,15 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
     record(
       `${runtime} resolve types a .script_api extension`,
       resolve.code === 0 && existsSync(path.join(extensionsDir, "drawpixels.d.ts")),
+      resolve.code === 0 ? "" : resolve.output.slice(-300),
+    );
+    const shippedDir = path.join(extensionsDir, "shipped", "defold-pixels");
+    record(
+      `${runtime} resolve installs shipped types`,
+      resolve.code === 0 &&
+        resolve.output.includes("(shipped types)") &&
+        existsSync(path.join(shippedDir, "pixels.d.ts")) &&
+        existsSync(path.join(shippedDir, "pixels.global.d.ts")),
       resolve.code === 0 ? "" : resolve.output.slice(-300),
     );
 

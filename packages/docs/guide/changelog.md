@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Libraries ship their own types](./resolve.md#types-a-library-ships)**: `resolve` installs a dependency's `types/*.d.ts` under their own names ahead of every other surface, so [pixels](/api/pixels) is typed by upstream's files; delete any copies of them.
+> - **[Libraries ship their own types](./resolve.md#types-a-library-ships)**: `resolve` installs a dependency's `types/*.d.ts` under their own names ahead of every other surface, so `king8fisher/defold-pixels` is typed by upstream's files; delete any copies of them.
 > - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters and typed callbacks, and none is lost when extensions share a namespace or differ only in letter case.
 > - **[Curated native namespaces](./resolve.md#curated-native-extensions)** type [def_windward_jps](/api/def_windward_jps) and [box2d](/api/box2d).
 > - **[`resolve` runs under Node and Bun](./resolve.md)** on every OS for a project with a native extension, with no `unzip`.
@@ -22,7 +22,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Breaking
 
 - **A `.script_api` callback parameter is typed from its documented arguments** in the `.defold-types/extensions/<namespace>.d.ts` that [resolve](./resolve.md#the-generated-surface) writes: `iap.set_listener` takes `(self: unknown, transaction: { ident: string; state: string; ... }, error: Record<string | number, unknown>) => void` where it took `(...args: unknown[]) => unknown`, so a listener declared with other argument types or a non-`void` return no longer type-checks. A callback whose doc lists no arguments keeps `(...args: unknown[]) => unknown`.
-- **[pixels](/api/pixels) (`king8fisher/defold-pixels`) is typed by the declarations its archive ships in `types/`** in place of its `.script_api` ([Types a library ships](./resolve.md#types-a-library-ships)), so every buffer argument takes a `PixelsBufferInfo` where it took any table; an archive older than commit `70f7784`, which ships none, gets a curated `pixels` namespace. A project that copied upstream's `types/` files deletes the copies, which otherwise redeclare its names (TS2451, TS2300).
+- **`king8fisher/defold-pixels` is typed by the declarations its archive ships in `types/`** in place of its `.script_api` ([Types a library ships](./resolve.md#types-a-library-ships)): use it through `import * as pixels from "pixels"` or the global `pixels`, and every buffer argument takes a `PixelsBufferInfo` where it took any table. A project that copied upstream's `types/pixels.d.ts` deletes the copy, which otherwise redeclares its names (TS2451, TS2300).
 
 ### Improved
 
