@@ -71,9 +71,11 @@ resolve every use of the token to it:
 "externalTypes": { "event": { "module": "event.event", "name": "event" } }
 ```
 
-emits `import { event } from 'event.event';`, types all 46 of druid's callback
+emits `import type { event } from 'event.event';`, types all 46 of druid's callback
 fields as `event`, and resolves the `---@class event.on_size_changed: event`
-parent to a real `extends`. The key is the LuaLS token as written; `module` must
+parent to a real `extends`. The import is type-only, so it binds no value and a
+library that exports a function of the same name (`quest.event`) still
+compiles. The key is the LuaLS token as written; `module` must
 be the owning target's `moduleId` exactly, and `name` its exported type. A token
 whose local name would collide with one the library declares itself fails loudly
 rather than silently shadowing it.
@@ -82,7 +84,9 @@ The consuming project must declare that upstream library too. `resolve` builds n
 inter-library dependency graph, so a project that lists druid alone materializes
 `generated/druid.d.ts` without `generated/event.d.ts` — the import then degrades
 to an error-`any` under the repo-wide `skipLibCheck`. Declare both; druid does not
-run without `event.event` at runtime either.
+run without `event.event` at runtime either. quest and token import `event` from
+`event.event` the same way (quest also imports `queue`), so a project that lists
+either one declares defold-event beside it.
 
 Prefer `externalTypes` over a `typeRenames` entry pointing at an `import(...)`
 type: the api-doc lowering maps through the same context, so an inline

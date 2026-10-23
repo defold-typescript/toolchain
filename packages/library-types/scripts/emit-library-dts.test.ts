@@ -943,7 +943,7 @@ test("an external token emits an import as the first line in the block and types
     externalTypes: { ext: { module: "other.mod", name: "ext" } },
   });
 
-  expect(out.split("\n")[2]).toBe("\timport { ext } from 'other.mod';");
+  expect(out.split("\n")[2]).toBe("\timport type { ext } from 'other.mod';");
   expect(out).toContain("hook: ext;");
   expect(out).not.toContain("unknown");
 });
@@ -959,7 +959,7 @@ test("two tokens from one external module emit a single sorted import, rendered 
 
   const out = emitLibraryDeclarations(externalModel, opts);
 
-  expect(out).toContain("import { ext, zeta } from 'other.mod';");
+  expect(out).toContain("import type { ext, zeta } from 'other.mod';");
   expect(out.match(/import /g)).toHaveLength(1);
   expect(emitLibraryDeclarations(externalModel, opts)).toBe(out);
 });
@@ -975,9 +975,62 @@ test("two external modules emit two imports sorted by module id", () => {
 
   const imports = out.split("\n").filter((line) => line.includes("import "));
   expect(imports).toEqual([
-    "\timport { other } from 'alpha.mod';",
-    "\timport { ext } from 'zed.mod';",
+    "\timport type { other } from 'alpha.mod';",
+    "\timport type { ext } from 'zed.mod';",
   ]);
+});
+
+test("a dotted external token binds its export through a type-only as clause", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "holder",
+        generics: [],
+        fields: [{ name: "hook", types: ["ext.thing"], doc: "", isOptional: false }],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, {
+    moduleId: "demo.demo",
+    externalTypes: { "ext.thing": { module: "other.mod", name: "thing" } },
+  });
+
+  expect(out.split("\n")[2]).toBe("\timport type { thing as ext_thing } from 'other.mod';");
+  expect(out).toContain("hook: ext_thing;");
+});
+
+test("a module function named like an imported type emits beside a type-only import", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      { name: "child", extends: "event", generics: [], fields: [], methods: [], brief: "" },
+    ],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "event",
+        brief: "",
+        generics: [],
+        params: [
+          { name: "action", types: ["string"], doc: "", isOptional: false, isVararg: false },
+        ],
+        returns: [],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, {
+    moduleId: "demo.demo",
+    externalTypes: { event: { module: "other.mod", name: "event" } },
+  });
+
+  expect(out.split("\n")[2]).toBe("\timport type { event } from 'other.mod';");
+  expect(out).toContain("interface child extends event {");
+  expect(out).toContain("export function event(this: void, action: string): void;");
 });
 
 test("an external alias colliding with a declared name throws, naming the token and the declaration", () => {
