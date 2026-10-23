@@ -15,6 +15,7 @@ import {
   lookupSignature,
   luaMultiReturn,
   normalizedFunctionSignature,
+  parseLibraryIndexSlotClassifications,
   type SignatureStore,
   type SlotTypes,
   segmentExampleRegions,
@@ -27,6 +28,9 @@ import {
   withIndexBaseNotes,
   withLibraryIndexBaseNotes,
 } from "@defold-typescript/types";
+import libraryIndexSlotClassificationsJson from "../../../library-types/index-slot-classifications.json" with {
+  type: "json",
+};
 import { slugify } from "./headings";
 import { platformDocText } from "./platform-icons";
 
@@ -1055,6 +1059,10 @@ function typeList(types: string[], mapType: MapType = mapDocType): string {
   return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
+export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS = parseLibraryIndexSlotClassifications(
+  libraryIndexSlotClassificationsJson,
+);
+
 // A library page reads its own classifications under its page key and names the
 // library; every other page reads the engine map and names Defold.
 function withSlotBaseNotes(
@@ -1066,7 +1074,14 @@ function withSlotBaseNotes(
 ): string {
   return libraryPage === undefined
     ? withIndexBaseNotes(elementName, kind, slotName, doc)
-    : withLibraryIndexBaseNotes(libraryPage, elementName, kind, slotName, doc);
+    : withLibraryIndexBaseNotes(
+        LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+        libraryPage,
+        elementName,
+        kind,
+        slotName,
+        doc,
+      );
 }
 
 // The page key a library page's notes read, absent on every other page.
@@ -1083,7 +1098,14 @@ function withFieldBaseNotes(
 ): string {
   return libraryPage === undefined
     ? doc
-    : withLibraryIndexBaseNotes(libraryPage, typeName, "field", fieldName, doc);
+    : withLibraryIndexBaseNotes(
+        LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+        libraryPage,
+        typeName,
+        "field",
+        fieldName,
+        doc,
+      );
 }
 
 /**
@@ -1709,7 +1731,14 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
           const pdoc =
             libraryPage === undefined
               ? htmlToDocText(p.doc)
-              : withLibraryIndexBaseNotes(libraryPage, fn.name, kind, p.name, htmlToDocText(p.doc));
+              : withLibraryIndexBaseNotes(
+                  LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+                  libraryPage,
+                  fn.name,
+                  kind,
+                  p.name,
+                  htmlToDocText(p.doc),
+                );
           if (!pdoc) continue;
           lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
         }

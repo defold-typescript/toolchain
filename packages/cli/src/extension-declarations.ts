@@ -18,6 +18,7 @@ import {
 import type { ExtensionDependency } from "./extension-deps";
 import { type EmittedExtension, emitExtensionDeclaration } from "./extension-emit";
 import { curatedIndexPages, loadCuratedExtensionManifest } from "./extension-index-pages";
+import { loadLibraryIndexSlotClassifications } from "./library-registry";
 import { locateShippedDeclarations, selectShippedDeclarations } from "./shipped-declarations";
 
 export interface ExtensionDeclarations {
@@ -122,6 +123,7 @@ export async function resolveExtensionDeclarations(
   const open = opts.readZip ?? defaultReadZip;
   const resolved = await resolveExtensions(deps, opts);
   const curated = loadCuratedExtensionManifest();
+  const classifications = loadLibraryIndexSlotClassifications();
 
   const bundles: ExtensionDeclarations[] = [];
   for (const archive of resolved) {
@@ -154,7 +156,9 @@ export async function resolveExtensionDeclarations(
     const declarations: EmittedExtension[] = [];
     for (const scriptApi of archive.scriptApis) {
       const pages = curatedIndexPages(archive.url, scriptApi, zip.entries(), curated);
-      declarations.push(await emitExtensionDeclaration(zip.read(scriptApi), pages));
+      declarations.push(
+        await emitExtensionDeclaration(zip.read(scriptApi), pages, classifications),
+      );
     }
     bundles.push({
       url: archive.url,

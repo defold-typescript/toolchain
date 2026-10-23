@@ -126,6 +126,7 @@ import {
 } from "./emit-dts";
 import { engineTypeName } from "./engine-type-name";
 import { hashExampleSource } from "./example-store";
+import { parseLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import { splitTopLevel } from "./luals-type-expr";
 import type { UrlParameterTable } from "./url-parameters";
 
@@ -6794,9 +6795,14 @@ describe("library index base notes", () => {
     return lines.slice(at, end < 0 ? undefined : end).join("\n");
   }
 
+  const classifications = parseLibraryIndexSlotClassifications({
+    "steam/steam.friends_get_friend_by_index:param:iFriend": { class: "native-0", evidence: "x" },
+    "spine.gui/gui.cancel_spine:param:options:track": { class: "native-1", evidence: "x" },
+  });
+
   test("a library page's classified param names the library as its receiver", () => {
     const emitted = emitDeclarations(parseDefoldApiDoc(curatedDoc("steam")), {
-      indexBaseSource: { pages: ["steam"] },
+      indexBaseSource: { pages: ["steam"], classifications },
     });
     expect(paramDoc(docBlock(emitted, "friends_get_friend_by_index"), "iFriend")).toEndWith(
       "**0️⃣ 0-based; passed to `steam` unchanged.**",
@@ -6806,16 +6812,28 @@ describe("library index base notes", () => {
 
   test("a library field note reads the map under the page key, not the element's namespace", () => {
     const module = parseDefoldApiDoc(curatedDoc("spine.gui"));
-    const noted = emitDeclarations(module, { indexBaseSource: { pages: ["spine.gui"] } });
+    const noted = emitDeclarations(module, {
+      indexBaseSource: { pages: ["spine.gui"], classifications },
+    });
     expect(paramDoc(docBlock(noted, "cancel_spine"), "options")).toContain(
       "**⚠️ `track` is 1-based; passed to `spine.gui` unchanged.**",
     );
-    const unnoted = emitDeclarations(module, { indexBaseSource: { pages: [] } });
+    const unnoted = emitDeclarations(module, { indexBaseSource: { pages: [], classifications } });
+    expect(docBlock(unnoted, "cancel_spine")).not.toContain("based; passed to");
+  });
+
+  test("a library page reads its notes only from the map its source carries", () => {
+    const module = parseDefoldApiDoc(curatedDoc("spine.gui"));
+    const unnoted = emitDeclarations(module, {
+      indexBaseSource: { pages: ["spine.gui"], classifications: new Map() },
+    });
     expect(docBlock(unnoted, "cancel_spine")).not.toContain("based; passed to");
   });
 
   test("a declaration with no library page never gains an engine note", () => {
-    const unnoted = emitDeclarations(parseDefoldApiDoc(guiDoc), { indexBaseSource: { pages: [] } });
+    const unnoted = emitDeclarations(parseDefoldApiDoc(guiDoc), {
+      indexBaseSource: { pages: [], classifications },
+    });
     expect(unnoted.includes("passed to Defold")).toBe(false);
     expect(docBlock(emitDeclarations(parseDefoldApiDoc(guiDoc)), "set")).toContain(
       "**⚠️ `index` is 1-based; passed to Defold unchanged.**",
