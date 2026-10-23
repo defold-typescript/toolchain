@@ -1,0 +1,78 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`each shipped native declaration emits the receiver form its expectation records box2d: a consumer transpiles with the call forms the declaration produces: box2d 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.simulate()
+    local world = box2d.NewWorld(vmath.vector3(0, -10, 0))
+    local body = world:CreateBody({type = box2d.b2BodyType.b2_dynamicBody})
+    local shape = box2d.NewCircleShape()
+    shape:SetRadius(0.5)
+    body:CreateFixture(shape, 1)
+    world:SetContactListener({BeginContact = function(contact)
+        contact:SetEnabled(false)
+    end})
+    local hits = 0
+    world:RayCast(
+        function(fixture, point, normal, fraction)
+            hits = hits + 1
+            return fraction
+        end,
+        vmath.vector3(-5, 0, 0),
+        vmath.vector3(5, 0, 0)
+    )
+    world:Step(1 / 60, 8, 3)
+    return hits
+end
+return ____exports
+"
+`;
+
+exports[`each shipped native declaration emits the receiver form its expectation records def_windward_jps: a consumer transpiles with the call forms the declaration produces: def_windward_jps 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.route()
+    local grid = def_windward_jps.create_grid(64, 64, {{10, 12}, {11, 12}})
+    if not grid:is_walkable({8, 8}) then
+        return nil
+    end
+    local path = grid:find_path({8, 8}, {40, 40}, "octile")
+    return path
+end
+return ____exports
+"
+`;
+
+exports[`each shipped native declaration emits the receiver form its expectation records detour: a consumer transpiles with the call forms the declaration produces: detour 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.navigate(data)
+    local mesh = detour.init(data)
+    local from = vmath.vector3(0, 0, 0)
+    local to = vmath.vector3(10, 0, 10)
+    local path = mesh:find_path(from, to)
+    local crowd = mesh:create_crowd(0.6)
+    local agent = crowd:add_agent(
+        from,
+        0.6,
+        2,
+        8,
+        3.5,
+        0
+    )
+    crowd:set_target(to, agent)
+    local agents = crowd:update(1 / 60)
+    mesh:delete()
+    local first = path[0]
+    local ____temp_2
+    if first == nil then
+        ____temp_2 = 0
+    else
+        local ____opt_0 = agents[agent]
+        ____temp_2 = ____opt_0 and ____opt_0.position.x or first.area
+    end
+    return ____temp_2
+end
+return ____exports
+"
+`;

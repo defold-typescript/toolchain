@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-daabbcc3d",
+    "manifestDir": "daabbcc3d"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/selimanac/defold-daabbcc3d/archive/refs/tags/v1.0.6.zip",
+    "confirmedManifest": "defold-daabbcc3d-1.0.6/daabbcc3d/ext.manifest",
+    "misplacedManifest": "defold-daabbcc3d-1.0.6/ext.manifest"
+  }
+}

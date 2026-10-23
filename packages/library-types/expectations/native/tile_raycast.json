@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-tile-raycast",
+    "manifestDir": "tile-raycast"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/selimanac/defold-tile-raycast/archive/refs/tags/v2.0.1.zip",
+    "confirmedManifest": "defold-tile-raycast-2.0.1/tile-raycast/ext.manifest",
+    "misplacedManifest": "defold-tile-raycast-2.0.1/ext.manifest"
+  }
+}

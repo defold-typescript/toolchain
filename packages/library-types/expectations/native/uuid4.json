@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-uuid4",
+    "manifestDir": "uuid4"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/selimanac/defold-uuid4/archive/refs/tags/v1.0.zip",
+    "confirmedManifest": "defold-uuid4-1.0/uuid4/ext.manifest",
+    "misplacedManifest": "defold-uuid4-1.0/ext.manifest"
+  }
+}

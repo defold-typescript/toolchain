@@ -1,0 +1,24 @@
+{
+  "registry": {
+    "sourceId": "def-windward-jps",
+    "manifestDir": "def_windward_jps"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/s-kania/def-windward-jps/archive/refs/tags/v1.1.0.zip",
+    "confirmedManifest": "def-windward-jps-1.1.0/def_windward_jps/ext.manifest",
+    "misplacedManifest": "def-windward-jps-1.1.0/other/ext.manifest"
+  },
+  "receiverEmit": {
+    "reason": "The native `FindPath` and `IsWalkable` read the grid from stack slot 1, so a dot call on a grid raises a bad-argument error; only TSTL's emit shows which call form the shipped declaration produces.",
+    "consumer": [
+      "export function route(): def_windward_jps.Point[] | undefined {",
+      "  const grid = def_windward_jps.create_grid(64, 64, [[10, 12], [11, 12]]);",
+      "  if (!grid.is_walkable([8, 8])) {",
+      "    return undefined;",
+      "  }",
+      "  const [path] = grid.find_path([8, 8], [40, 40], \"octile\");",
+      "  return path;",
+      "}"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-sharing",
+    "manifestDir": "share"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/britzl/defold-sharing/archive/refs/tags/4.7.0.zip",
+    "confirmedManifest": "defold-sharing-4.7.0/share/ext.manifest",
+    "misplacedManifest": "defold-sharing-4.7.0/ext.manifest"
+  }
+}
