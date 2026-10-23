@@ -47,7 +47,9 @@ interface NamespaceSource {
 }
 
 function dependencySlug(url: string): string {
-  return normalizeSourceId(url).replace(/[^a-z0-9._-]/g, "-") || "dep";
+  const slug = normalizeSourceId(url).replace(/[^a-z0-9._-]/g, "-");
+  // `.` and `..` name the folder itself or its parent once joined to a path.
+  return /^\.*$/.test(slug) ? "dep" : slug;
 }
 
 // A namespace one declaration owns keeps `<ns>.d.ts`, and those names are

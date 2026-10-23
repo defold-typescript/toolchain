@@ -46,6 +46,12 @@ describe("locateShippedDeclarations", () => {
       [],
     );
   });
+
+  test("skips a file name holding a backslash", () => {
+    expect(
+      locateShippedDeclarations(["repo-main/types/ok.d.ts", "repo-main/types/..\\..\\evil.d.ts"]),
+    ).toEqual(["repo-main/types/ok.d.ts"]);
+  });
 });
 
 describe("checkShippedDeclarations", () => {

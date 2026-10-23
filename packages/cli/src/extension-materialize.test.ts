@@ -278,6 +278,35 @@ describe("materializeExtensionDeclarations", () => {
     expect(barrel).toContain('import "./shipped/lib-2/index";');
   });
 
+  test("a dot-only repo name gets a shipped folder of its own", () => {
+    const parent = "export declare const parent: number;\n";
+    const self = "export declare const self: number;\n";
+
+    materializeExtensionDeclarations({
+      cwd,
+      bundles: [
+        bundleAt("https://example.com/foo.zip", [decl("foo", declares("foo", "f"))]),
+        {
+          ...bundleAt("https://example.com/...zip", []),
+          shipped: [{ entry: "x-main/types/foo.d.ts", contents: parent }],
+        },
+        {
+          ...bundleAt("https://example.com/..zip", []),
+          shipped: [{ entry: "y-main/types/index.d.ts", contents: self }],
+        },
+      ],
+    });
+
+    const shippedDir = path.join(extensionsDir(), "shipped");
+    expect(readFileSync(path.join(extensionsDir(), "foo.d.ts"), "utf8")).toBe(declares("foo", "f"));
+    expect(readdirSync(shippedDir).sort()).toEqual(["dep", "dep-2"]);
+    expect(readFileSync(path.join(shippedDir, "dep", "foo.d.ts"), "utf8")).toBe(parent);
+    expect(readFileSync(path.join(shippedDir, "dep-2", "index.d.ts"), "utf8")).toBe(self);
+    const barrel = readFileSync(path.join(extensionsDir(), "index.d.ts"), "utf8");
+    expect(barrel).toContain('import "./shipped/dep/foo";');
+    expect(barrel).toContain('import "./shipped/dep-2/index";');
+  });
+
   describe("a namespace several declarations share", () => {
     const coreUrl = "https://github.com/defold/extension-firebase/archive/1.zip";
     const analyticsUrl = "https://github.com/defold/extension-firebase-analytics/archive/2.zip";
