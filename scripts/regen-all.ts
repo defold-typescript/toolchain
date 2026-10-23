@@ -2,12 +2,19 @@ import * as path from "node:path";
 
 // Single verb for "regenerate every committed generated artifact". A Defold
 // version bump touches five independent generators; running four of five
-// leaves the fifth stale, caught only by a drift test. This chains all five
-// in dependency order so the bump orchestrator and a human reuse one command.
+// leaves the fifth stale, caught only by a drift test. This chains those five
+// and the guide-table sync in dependency order so the bump orchestrator and a
+// human reuse one command.
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
-export type RegenUnitId = "instance-wall" | "declarations" | "availability" | "signatures" | "llms";
+export type RegenUnitId =
+  | "instance-wall"
+  | "declarations"
+  | "availability"
+  | "signatures"
+  | "guide-tables"
+  | "llms";
 
 export interface RegenUnit {
   readonly id: RegenUnitId;
@@ -17,11 +24,12 @@ export interface RegenUnit {
 // The per-target game-object instance manifest is derived from the vendored
 // bindings alone and read by the declarations, so it is written first.
 // Declarations regenerate next because the availability and signatures
-// artifacts read the emitted `.d.ts` surface; the llms corpus folds in every
-// other artifact, so it is written last. The path-form generators are
-// invoked directly (not via `bun --filter`) because argument forwarding through
-// a filtered package script is unreliable, and they resolve their output paths
-// from `import.meta.dir`, so cwd does not matter.
+// artifacts read the emitted `.d.ts` surface. The guide tables are rewritten
+// from the shipped registries before the llms corpus inlines the guide; that
+// corpus folds in every other artifact, so it is written last. The path-form
+// generators are invoked directly (not via `bun --filter`) because argument
+// forwarding through a filtered package script is unreliable, and they resolve
+// their output paths from `import.meta.dir`, so cwd does not matter.
 export const REGEN_UNITS: readonly RegenUnit[] = [
   {
     id: "instance-wall",
@@ -36,6 +44,7 @@ export const REGEN_UNITS: readonly RegenUnit[] = [
     id: "signatures",
     command: ["bun", "packages/types/scripts/generate-api-signatures.ts", "--write"],
   },
+  { id: "guide-tables", command: ["bun", "scripts/sync-guide-tables.ts", "--write"] },
   { id: "llms", command: ["bun", "--filter", "@defold-typescript/docs-site", "build-llms"] },
 ];
 
