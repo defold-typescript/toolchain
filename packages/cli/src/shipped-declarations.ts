@@ -8,7 +8,7 @@ import * as path from "node:path";
 import { archiveWrapperOf } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
 
-const SHIPPED_PATH = /^types\/[^/]+\.d\.ts$/;
+const SHIPPED_PATH = /^types\/[^/\\]+\.d\.ts$/;
 
 const VIRTUAL_DIR = "__shipped_declarations__";
 
@@ -30,6 +30,7 @@ export interface ShippedDeclarationFile {
 
 // Archive entry paths, sorted. Only the `types/` folder's own files count: a
 // nested folder or a `.d.ts` elsewhere in the archive is not a shipped surface.
+// A name holding `\` is skipped too, since Windows reads it as a folder.
 export function locateShippedDeclarations(entries: readonly string[]): string[] {
   const wrapper = archiveWrapperOf(entries);
   return entries
