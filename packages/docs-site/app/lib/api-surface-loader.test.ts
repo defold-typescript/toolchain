@@ -301,6 +301,7 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       "box2d",
       "daabbcc3d",
       "wave",
+      "detour",
     ]);
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     for (const target of targets) {
@@ -355,7 +356,9 @@ describe("loadLibraryProvenance — curated native extensions", () => {
     ]) {
       expect(metaFor(namespace).pinKind).toBeUndefined();
     }
-    expect(metaFor("wave").pinKind).toBe("commit");
+    for (const namespace of ["wave", "detour"]) {
+      expect(metaFor(namespace).pinKind).toBe("commit");
+    }
   });
 
   test("groups each native namespace under its upstream owner and repo", () => {

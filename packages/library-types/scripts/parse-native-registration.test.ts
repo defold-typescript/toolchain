@@ -57,6 +57,17 @@ describe("parseNativeRegistration over the vendored registering files", () => {
     expect(surface.methods).toEqual({ "def_windward_jps.Grid": ["find_path", "is_walkable"] });
     expect(surface.constants).toEqual([]);
   });
+
+  test("detour: init, and the NavMesh and Crowd tables keyed by the functions that build them", () => {
+    const surface = vendored("defold-detour/detour/src/detour.cpp");
+    expect(surface.moduleName).toBe("detour");
+    expect(surface.functions).toEqual(["init"]);
+    expect(surface.methods).toEqual({
+      "CreateCrowd()": ["add_agent", "remove_agent", "reset_target", "set_target", "update"],
+      "Init()": ["create_crowd", "delete", "find_path", "set_area_cost", "set_include_flags"],
+    });
+    expect(surface.constants).toEqual([]);
+  });
 });
 
 describe("parseNativeRegistration over the other spellings native extensions use", () => {
@@ -335,7 +346,7 @@ describe("a nameless luaL_register call is keyed by the metatable it fills", () 
     });
   });
 
-  test("a nameless call with no luaL_newmetatable before it in its function throws naming the file and table", () => {
+  test("a nameless call with no table opened before it in its function throws naming the file, table and all three openers", () => {
     const source = [
       ...MODULE,
       "static const luaL_reg Grid_methods[] = {",
@@ -344,15 +355,19 @@ describe("a nameless luaL_register call is keyed by the metatable it fills", () 
       "};",
       "static void MakeMeta(lua_State* L) {",
       '  luaL_newmetatable(L, "elsewhere");',
+      "  lua_newtable(L);",
+      "  lua_createtable(L, 0, 1);",
       "}",
       "static void LuaInit(lua_State* L) {",
       "  luaL_register(L, 0, Grid_methods);",
       '  luaL_register(L, "mod", Module_methods);',
       "}",
     ].join("\n");
-    expect(() => parseNativeRegistration(source, "ext/orphan.cpp")).toThrow(
-      /ext\/orphan\.cpp.*Grid_methods/s,
-    );
+    const thrown = () => parseNativeRegistration(source, "ext/orphan.cpp");
+    expect(thrown).toThrow(/ext\/orphan\.cpp.*Grid_methods/s);
+    expect(thrown).toThrow(/luaL_newmetatable/);
+    expect(thrown).toThrow(/lua_newtable/);
+    expect(thrown).toThrow(/lua_createtable/);
   });
 
   test("a metatable-name identifier with no string behind it throws naming the file", () => {
@@ -371,6 +386,84 @@ describe("a nameless luaL_register call is keyed by the metatable it fills", () 
     expect(() => parseNativeRegistration(source, "ext/unknown.cpp")).toThrow(
       /ext\/unknown\.cpp.*UNKNOWN_MT/s,
     );
+  });
+});
+
+describe("a nameless luaL_register call into a plain table is keyed by the function that builds it", () => {
+  const MODULE = [
+    "static const luaL_reg Module_methods[] = {",
+    '  {"init", Init},',
+    "  {0, 0}",
+    "};",
+  ];
+
+  test("each building function's own f is read, keyed `<function>()`", () => {
+    const source = [
+      "static int CreateCrowd(lua_State* L) {",
+      "  lua_newtable(L);",
+      '  lua_pushstring(L, "instance");',
+      "  lua_pushlightuserdata(L, instance);",
+      "  lua_settable(L, -3);",
+      "  static const luaL_Reg f[] =",
+      "  {",
+      '    {"add_agent", AddAgent},',
+      '    {"update", Update},',
+      "    {0, 0}",
+      "  };",
+      "  luaL_register(L, NULL, f);",
+      "  return 1;",
+      "}",
+      "static int Init(lua_State* L)",
+      "{",
+      "  lua_newtable(L);",
+      "  static const luaL_Reg f[] =",
+      "  {",
+      '    {"find_path", FindPath},',
+      '    {"delete", Delete},',
+      "    {0, 0}",
+      "  };",
+      "  luaL_register(L, NULL, f);",
+      "  return 1;",
+      "}",
+      ...MODULE,
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_register(L, "mod", Module_methods);',
+      "}",
+    ].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp").methods).toEqual({
+      "CreateCrowd()": ["add_agent", "update"],
+      "Init()": ["delete", "find_path"],
+    });
+  });
+
+  test("the nearest opener before the call keys it, metatable or plain table", () => {
+    const source = [
+      "static const luaL_reg a_methods[] = {",
+      '  {"Get", GetA},',
+      "  {0, 0}",
+      "};",
+      "static const luaL_reg b_methods[] = {",
+      '  {"Set", SetB},',
+      "  {0, 0}",
+      "};",
+      ...MODULE,
+      "static void Build(lua_State* L) {",
+      '  luaL_newmetatable(L, "Meta");',
+      "  lua_createtable(L, 0, 1);",
+      "  luaL_register(L, 0, a_methods);",
+      "  lua_pop(L, 1);",
+      "  lua_newtable(L);",
+      '  luaL_newmetatable(L, "Later");',
+      "  luaL_register(L, 0, b_methods);",
+      "}",
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_register(L, "mod", Module_methods);',
+      "}",
+    ].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp").methods).toEqual({
+      "Build()": ["Get"],
+      Later: ["Set"],
+    });
   });
 });
 

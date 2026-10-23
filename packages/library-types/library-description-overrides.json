@@ -6,6 +6,7 @@
   "def_windward_jps": "Find paths on 2D grids with Jump Point Search.",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
+  "detour": "Recast/Detour navigation meshes: path queries and crowd agents.",
   "gooey": "Defold GUI system",
   "immutable": "Runtime immutable Lua table implementation",
   "in.accelerometer": "Cross-platform input handling for Defold: keyboard, mouse, gamepad, touch, and on-screen controls.",
