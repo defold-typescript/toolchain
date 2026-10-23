@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { resolveTypesPackageRoot } from "./api-registry";
-import { checkShippedDeclarations, locateShippedDeclarations } from "./shipped-declarations";
+import {
+  checkShippedDeclarations,
+  locateShippedDeclarations,
+  selectShippedDeclarations,
+} from "./shipped-declarations";
 
 function typesRoot(): string {
   const root = resolveTypesPackageRoot();
@@ -51,6 +55,52 @@ describe("locateShippedDeclarations", () => {
     expect(
       locateShippedDeclarations(["repo-main/types/ok.d.ts", "repo-main/types/..\\..\\evil.d.ts"]),
     ).toEqual(["repo-main/types/ok.d.ts"]);
+  });
+});
+
+describe("selectShippedDeclarations", () => {
+  const file = (name: string, contents: string) => ({
+    entry: `repo-main/types/${name}`,
+    contents,
+  });
+
+  test("a module-form file leaves out the global file shipped beside it", () => {
+    const module = file(
+      "pixels.d.ts",
+      '/** @noResolution */\ndeclare module "pixels" {\n  export function fill(): void;\n}\n',
+    );
+    const global = file(
+      "pixels.global.d.ts",
+      'declare const pixels: typeof import("pixels");\ntype PixelsColor = import("pixels").PixelsColor;\n',
+    );
+    expect(selectShippedDeclarations([module, global])).toEqual([module]);
+  });
+
+  test("a global file over relative-path modules installs with them", () => {
+    const files = [
+      file("index.d.ts", 'export * from "./foo";\n'),
+      file("foo.d.ts", "export declare function bar(): number;\n"),
+      file("relib.global.d.ts", 'declare const relib: typeof import("./index");\n'),
+    ];
+    expect(selectShippedDeclarations(files)).toEqual(files);
+  });
+
+  test("a file mixing a module with a global name installs", () => {
+    const mixed = file(
+      "alib.d.ts",
+      'declare module "alib" {\n  export function a(): number;\n}\ndeclare const dup: number;\n',
+    );
+    expect(selectShippedDeclarations([mixed])).toEqual([mixed]);
+  });
+
+  test("declare global at any depth counts as adding global names", () => {
+    const module = file("m.d.ts", 'declare module "m" {\n  export const v: number;\n}\n');
+    const augmentation = file("aug.d.ts", "export {};\ndeclare global {\n  const g: number;\n}\n");
+    const nested = file(
+      "nested.d.ts",
+      'declare module "n" {\n  global {\n    const h: number;\n  }\n}\n',
+    );
+    expect(selectShippedDeclarations([module, augmentation, nested])).toEqual([module]);
   });
 });
 
