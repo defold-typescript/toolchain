@@ -8,6 +8,7 @@ import {
   isPublicMethod,
   sanitizeTypeName,
 } from "./emit-library-dts";
+import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import type { LibraryModel, LibraryParam } from "./parse-luals";
 import {
   buildTargetModel,
@@ -1122,14 +1123,24 @@ function docAbove(out: string, memberLine: string): string {
 }
 
 test("a library page notes each classified param, return and class field under the API reference's keys", () => {
-  const paramNotes = libraryIndexBaseNotes("druid", "get_pos", "param", "index");
-  const returnNotes = libraryIndexBaseNotes("druid", "get_index", "return", "");
-  const fieldNotes = libraryIndexBaseNotes("druid", "druid_grid", "field", "first_index");
+  const classifications = readLibraryIndexSlotClassifications();
+  const paramNotes = libraryIndexBaseNotes(classifications, "druid", "get_pos", "param", "index");
+  const returnNotes = libraryIndexBaseNotes(classifications, "druid", "get_index", "return", "");
+  const fieldNotes = libraryIndexBaseNotes(
+    classifications,
+    "druid",
+    "druid_grid",
+    "field",
+    "first_index",
+  );
   expect(paramNotes.length).toBeGreaterThan(0);
   expect(returnNotes.length).toBeGreaterThan(0);
   expect(fieldNotes.length).toBeGreaterThan(0);
 
-  const out = emitLibraryDeclarations(indexBaseModel, { moduleId: "x.x", indexBasePage: "druid" });
+  const out = emitLibraryDeclarations(indexBaseModel, {
+    moduleId: "x.x",
+    indexBase: { page: "druid", classifications },
+  });
 
   expect(docAbove(out, "get_pos(index: number)")).toContain(
     `@param index - ${appendNotes("The grid index", paramNotes)}`,

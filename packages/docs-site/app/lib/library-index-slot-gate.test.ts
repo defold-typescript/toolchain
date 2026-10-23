@@ -10,11 +10,11 @@ import {
   scanTypedefMemberSlots,
   tupleComponentKeys,
 } from "../../../types/scripts/index-slot-scan";
-import { LIBRARY_INDEX_SLOT_CLASSIFICATIONS } from "../../../types/src/library-index-slot-classifications";
+import { LIBRARY_INDEX_SLOT_CLASSIFICATIONS } from "./api-surface";
 import { loadLibraryPageSources } from "./api-surface-loader";
 
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
-const MAP_FILE = "packages/types/src/library-index-slot-classifications.ts";
+const MAP_FILE = "packages/library-types/index-slot-classifications.json";
 
 const sources = loadLibraryPageSources(REAL_LIBRARY_TYPES_DIR);
 
@@ -73,9 +73,7 @@ describe("library index slot classification gate", () => {
       .filter(([key]) => !LIBRARY_INDEX_SLOT_CLASSIFICATIONS.has(key))
       .map(([key, seen]) => `${key} (${seen.page}, ${seen.evidence})`);
     if (unclassified.length > 0) {
-      throw new Error(
-        `classify these index slots in LIBRARY_INDEX_SLOT_CLASSIFICATIONS (${MAP_FILE}):\n${unclassified.join("\n")}`,
-      );
+      throw new Error(`classify these index slots in ${MAP_FILE}:\n${unclassified.join("\n")}`);
     }
   });
 
@@ -108,7 +106,7 @@ describe("library index slot classification gate", () => {
     }
     if (missing.length > 0) {
       throw new Error(
-        `classify a slot of each function in LIBRARY_INDEX_SLOT_CLASSIFICATIONS (${MAP_FILE}) with the base it states:\n${missing.join("\n")}`,
+        `classify a slot of each function in ${MAP_FILE} with the base it states:\n${missing.join("\n")}`,
       );
     }
   });

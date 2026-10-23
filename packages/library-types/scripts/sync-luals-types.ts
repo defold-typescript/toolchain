@@ -2,6 +2,7 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { type AnnotationOverrides, applyAnnotationOverrides } from "./apply-luals-overrides";
 import { type ExternalTypeRef, emitLibraryDeclarations } from "./emit-library-dts";
+import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import { lowerLibraryModel } from "./lower-api-doc";
 import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
 import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
@@ -229,7 +230,10 @@ export function emitLualsTargetDeclarations(packageRoot: string, target: LualsTa
     moduleId: target.moduleId,
     typeRenames: target.typeRenames,
     externalTypes: target.externalTypes,
-    indexBasePage: target.namespace,
+    indexBase: {
+      page: target.namespace,
+      classifications: readLibraryIndexSlotClassifications(packageRoot),
+    },
   });
 }
 

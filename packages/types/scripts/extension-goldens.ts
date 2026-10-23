@@ -24,5 +24,5 @@ export const EXTENSION_GOLDEN_MANIFEST: readonly ModuleManifestEntry[] =
     namespace,
     doc: JSON.parse(readFileSync(resolve(EXTENSION_DOCS_DIR, `${namespace}.json`), "utf8")),
     outFile: `${namespace}.d.ts`,
-    indexBaseSource: { pages: [] },
+    indexBaseSource: { pages: [], classifications: new Map() },
   }));
