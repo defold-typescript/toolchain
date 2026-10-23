@@ -1580,9 +1580,12 @@ function dispatchCommand(
             for (const ext of result.extensions) {
               // A confirmed corpus match decides the surface, so look for the
               // library before branching on `assetOnly` — a self-documenting
-              // library is not asset-only yet still prints as a library.
+              // library is not asset-only yet still prints as a library. Shipped
+              // types outrank both, so they are checked first.
               const library = result.libraries.find((lib) => lib.url === ext.url);
-              if (library?.verified) {
+              if (ext.typeSurface === "shipped") {
+                io.stdout.write(`  ${ext.namespaces.join(", ")} <- ${ext.url} (shipped types)\n`);
+              } else if (library?.verified) {
                 io.stdout.write(
                   `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
                 );

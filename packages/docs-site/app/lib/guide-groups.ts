@@ -77,6 +77,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
       "upgrading",
       "upgrading-defold-versions",
       "extensions",
+      "shipping-library-types",
       "authoring-luals-library-types",
       "authoring-forked-library-types",
       "refreshing-library-pins",

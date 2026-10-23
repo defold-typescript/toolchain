@@ -36,6 +36,7 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
     sceneSources: [],
     sceneReasons: [],
     sceneRefused: [],
+    shipped: [],
   };
 }
 

@@ -55,6 +55,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Upgrading the toolchain](guide/upgrading.md)
 - [Upgrading Defold versions](guide/upgrading-defold-versions.md)
 - [Native extensions](guide/extensions.md)
+- [Shipping types with a library](guide/shipping-library-types.md)
 - [Authoring LuaLS library types](guide/authoring-luals-library-types.md)
 - [Authoring forked library types](guide/authoring-forked-library-types.md)
 - [Refreshing library pins](guide/refreshing-library-pins.md)

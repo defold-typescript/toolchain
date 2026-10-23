@@ -25,8 +25,9 @@ export interface ResolvedExtensionReportJson {
   readonly namespaces: readonly string[];
   // Which type surface this dependency contributed. `namespaces: []` is normal
   // for "vendored-library" (its curated types are in `libraries[]`) and for
-  // "none", rather than a failure.
-  readonly typeSurface: "none" | "extension" | "vendored-library" | "vendored-native";
+  // "none", rather than a failure. "shipped" lists the stems of the `types/*.d.ts`
+  // files the dependency ships.
+  readonly typeSurface: "none" | "extension" | "vendored-library" | "vendored-native" | "shipped";
   readonly scriptApiCount: number;
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;

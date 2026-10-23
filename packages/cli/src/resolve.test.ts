@@ -14,7 +14,7 @@ import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
-import { runResolve } from "./resolve";
+import { type RunResolveOptions, runResolve } from "./resolve";
 import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 
 // The materialized library surface carries the generating toolchain version;
@@ -1335,6 +1335,205 @@ describe("runResolve curated native extension", () => {
     expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
     expect(result.extensions[0]?.namespaces).toEqual(["daabbcc"]);
     expect(result.extensions[0]?.scriptApiCount).toBe(1);
+  });
+});
+
+describe("runResolve shipped declarations", () => {
+  const PIXELS_URL = "https://github.com/king8fisher/defold-pixels/archive/refs/heads/main.zip";
+  const MANIFEST = "defold-pixels-main/defold-pixels/ext.manifest";
+  const DOC_PATH = "defold-pixels-main/defold-pixels/api/pixels.script_api";
+  const MODULE_PATH = "defold-pixels-main/types/pixels.d.ts";
+  const GLOBAL_PATH = "defold-pixels-main/types/pixels.global.d.ts";
+  const DOC_PIXELS = `
+- name: pixels
+  type: table
+  desc: Doc-emitted namespace.
+  members:
+  - name: fill
+    type: function
+    desc: only the doc declares this
+`;
+  const GOOD_MODULE = `/** @noResolution */
+declare module "pixels" {
+  export function fill(buf: ReturnType<typeof buffer.create>): LuaMultiReturn<[number, number]>;
+}
+`;
+  const GOOD_GLOBAL = `declare const pixels: typeof import("pixels");
+`;
+  const BAD_MODULE = `/** @noResolution */
+declare module "pixels" {
+  export function fill(h: hash): void;
+}
+`;
+  const CURATED =
+    "/** @noSelfInFile */\ndeclare global {\n  namespace pixels {\n    function curated(): void;\n  }\n}\n\nexport {};\n";
+
+  function pixelsArchive(files: Record<string, string>): Record<string, FakeArchive> {
+    return {
+      [extensionArchiveKey(PIXELS_URL)]: {
+        entries: [MANIFEST, DOC_PATH, ...Object.keys(files)],
+        contents: { [DOC_PATH]: DOC_PIXELS, ...files },
+      },
+    };
+  }
+
+  async function resolvePixels(
+    byKey: Record<string, FakeArchive>,
+    extra: Partial<RunResolveOptions> = {},
+  ): Promise<{ cwd: string; result: Awaited<ReturnType<typeof runResolve>> }> {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${PIXELS_URL}\n`);
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: [],
+      ...extra,
+    });
+    return { cwd, result };
+  }
+
+  function writtenDeclarations(cwd: string): string[] {
+    return readdirSync(join(cwd, ".defold-types", "extensions"))
+      .filter((file) => file.endsWith(".d.ts"))
+      .sort();
+  }
+
+  function shippedWarnings(warnings: readonly string[]): string[] {
+    return warnings.filter((line) => line.startsWith("shipped types from"));
+  }
+
+  test("an archive's types/*.d.ts install verbatim in place of its .script_api", async () => {
+    const { cwd, result } = await resolvePixels(
+      pixelsArchive({ [MODULE_PATH]: GOOD_MODULE, [GLOBAL_PATH]: GOOD_GLOBAL }),
+    );
+
+    expect(result.ok).toBe(true);
+    const extensionsDir = join(cwd, ".defold-types", "extensions");
+    expect(readFileSync(join(extensionsDir, "pixels.d.ts"), "utf8")).toBe(GOOD_MODULE);
+    expect(readFileSync(join(extensionsDir, "pixels.global.d.ts"), "utf8")).toBe(GOOD_GLOBAL);
+    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts", "pixels.global.d.ts"]);
+    const index = readFileSync(join(extensionsDir, "index.d.ts"), "utf8");
+    expect(index).toContain('import "./pixels";');
+    expect(index).toContain('import "./pixels.global";');
+    expect(result.extensions[0]?.typeSurface).toBe("shipped");
+    expect(result.extensions[0]?.namespaces).toEqual(["pixels", "pixels.global"]);
+    expect(result.extensions[0]?.scriptApiCount).toBe(1);
+    expect(shippedWarnings(result.warnings)).toEqual([]);
+  });
+
+  test("shipped types win over a curated native target the archive confirms", async () => {
+    const declarationPath = join(tmp(), "pixels.d.ts");
+    writeFileSync(declarationPath, CURATED);
+
+    const { cwd, result } = await resolvePixels(
+      pixelsArchive({ [MODULE_PATH]: GOOD_MODULE, [GLOBAL_PATH]: GOOD_GLOBAL }),
+      {
+        nativeRegistry: [
+          {
+            sourceId: "defold-pixels",
+            namespace: "pixels",
+            manifestDir: "defold-pixels",
+            declarationPath,
+          },
+        ],
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8")).toBe(
+      GOOD_MODULE,
+    );
+    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts", "pixels.global.d.ts"]);
+    expect(result.extensions[0]?.typeSurface).toBe("shipped");
+  });
+
+  test("shipped types win over a vendored library match on an asset-only archive", async () => {
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    const shippedPath = "mylib-main/types/mylib.core.d.ts";
+    const shipped = 'declare module "mylib.core" {\n  export const shipped: string;\n}\n';
+    const generatedDir = tmp();
+    writeFileSync(
+      join(generatedDir, "mylib.core.d.ts"),
+      "declare module 'mylib.core' { export const version: string; }\n",
+    );
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip({
+        [extensionArchiveKey(url)]: {
+          entries: ["mylib-main/mylib/core.lua", shippedPath],
+          contents: { [shippedPath]: shipped },
+        },
+      }),
+      libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
+      libraryGeneratedDir: generatedDir,
+      nativeRegistry: [],
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", "mylib.core.d.ts"), "utf8")).toBe(
+      shipped,
+    );
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
+    expect(result.libraries).toEqual([]);
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+    expect(result.extensions[0]?.typeSurface).toBe("shipped");
+    expect(result.extensions[0]?.namespaces).toEqual(["mylib.core"]);
+  });
+
+  test("shipped types that do not compile fall back to the .script_api with one warning", async () => {
+    const { cwd, result } = await resolvePixels(pixelsArchive({ [MODULE_PATH]: BAD_MODULE }));
+
+    expect(result.ok).toBe(true);
+    const written = readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8");
+    expect(written).toContain("only the doc declares this");
+    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts"]);
+    expect(result.extensions[0]?.typeSurface).toBe("extension");
+    expect(result.extensions[0]?.namespaces).toEqual(["pixels"]);
+    const warnings = shippedWarnings(result.warnings);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(PIXELS_URL);
+    expect(warnings[0]).toContain("'hash'");
+  });
+
+  test("a .d.ts outside the root types folder is not a shipped surface", async () => {
+    const { cwd, result } = await resolvePixels(
+      pixelsArchive({
+        "defold-pixels-main/types/sub/x.d.ts": GOOD_MODULE,
+        "defold-pixels-main/src/y.d.ts": GOOD_GLOBAL,
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts"]);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8")).toContain(
+      "only the doc declares this",
+    );
+    expect(result.extensions[0]?.typeSurface).toBe("extension");
+  });
+
+  test("with no engine surface to check against, shipped types install unchecked", async () => {
+    const { cwd, result } = await resolvePixels(pixelsArchive({ [MODULE_PATH]: BAD_MODULE }), {
+      typesRoot: null,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8")).toBe(
+      BAD_MODULE,
+    );
+    expect(result.extensions[0]?.typeSurface).toBe("shipped");
+    const warnings = shippedWarnings(result.warnings);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(PIXELS_URL);
+    expect(warnings[0]).toContain("not checked");
   });
 });
 

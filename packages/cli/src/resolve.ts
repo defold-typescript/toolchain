@@ -9,7 +9,8 @@
 // network-free under test.
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, posix } from "node:path";
+import { resolveTypesPackageRoot } from "./api-registry";
 import {
   type DownloadExtensionArchive,
   type ExtensionArchiveProvenance,
@@ -33,14 +34,22 @@ import {
   type VendoredNativeExtension,
 } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
+import { checkShippedDeclarations } from "./shipped-declarations";
 
 // Which type surface a dependency actually contributed. `assetOnly` cannot
 // express this on its own: a superseded bundle is `assetOnly: false` and still
 // contributes no namespace, and an asset-only archive with no confirmed match
 // contributes neither surface, so calling it an extension would claim
 // declarations it does not have. `vendored-native` is a native extension whose
-// curated declaration replaced whatever its archive would have emitted.
-export type ResolvedTypeSurface = "none" | "extension" | "vendored-library" | "vendored-native";
+// curated declaration replaced whatever its archive would have emitted, and
+// `shipped` is a dependency whose own `types/*.d.ts` replaced every other
+// surface, curated ones included.
+export type ResolvedTypeSurface =
+  | "none"
+  | "extension"
+  | "vendored-library"
+  | "vendored-native"
+  | "shipped";
 
 export interface ResolvedExtensionReport {
   readonly url: string;
@@ -83,6 +92,9 @@ export interface RunResolveOptions {
   // The curated native-extension targets. Defaults to the installed
   // `@defold-typescript/library-types` `native-targets.json`.
   readonly nativeRegistry?: readonly VendoredNativeExtension[];
+  // The `@defold-typescript/types` root shipped declarations are checked
+  // against. Defaults to the installed package; `null` installs them unchecked.
+  readonly typesRoot?: string | null;
 }
 
 export interface RunResolveResult {
@@ -148,6 +160,70 @@ function applyNativeTargets(
     };
   });
   return { bundles: applied, confirmedUrls };
+}
+
+// A dependency's own `types/*.d.ts` replace whatever else it would contribute,
+// one declaration per file keyed by its stem, once they compile against the
+// engine surface. A rejected bundle is returned untouched, so it contributes
+// exactly what it would with no `types/` folder. Every candidate file checks in
+// one program, since building the engine surface dominates the cost.
+function applyShippedDeclarations(
+  bundles: readonly ExtensionDeclarations[],
+  typesRoot: string | null,
+): { bundles: ExtensionDeclarations[]; shippedUrls: Set<string>; warnings: string[] } {
+  const shippedUrls = new Set<string>();
+  const warnings: string[] = [];
+  const candidates = bundles.filter((bundle) => bundle.shipped.length > 0);
+  if (candidates.length === 0) {
+    return { bundles: [...bundles], shippedUrls, warnings };
+  }
+  const checked =
+    typesRoot === null
+      ? null
+      : checkShippedDeclarations(
+          candidates.flatMap((bundle) =>
+            bundle.shipped.map(({ entry, contents }) => ({
+              id: `${bundle.url}\0${entry}`,
+              contents,
+            })),
+          ),
+          typesRoot,
+        );
+  const applied = bundles.map((bundle) => {
+    if (bundle.shipped.length === 0) {
+      return bundle;
+    }
+    if (checked === null) {
+      warnings.push(
+        `shipped types from ${bundle.url} installed but not checked: @defold-typescript/types could not be found`,
+      );
+    } else {
+      // The id only keeps files apart across dependencies; the warning already
+      // names the URL, so each message keeps just its archive entry.
+      const messages = bundle.shipped.flatMap(({ entry }) =>
+        (checked.get(`${bundle.url}\0${entry}`) ?? []).map((message) =>
+          message.slice(bundle.url.length + 1),
+        ),
+      );
+      if (messages.length > 0) {
+        const more = messages.length > 1 ? ` (+${messages.length - 1} more)` : "";
+        warnings.push(
+          `shipped types from ${bundle.url} do not compile against @defold-typescript/types; using what the archive declares otherwise: ${messages[0]}${more}`,
+        );
+        return bundle;
+      }
+    }
+    shippedUrls.add(bundle.url);
+    return {
+      ...bundle,
+      declarations: bundle.shipped.map(({ entry, contents }) => ({
+        namespace: posix.basename(entry, ".d.ts"),
+        contents,
+        dropped: [],
+      })),
+    };
+  });
+  return { bundles: applied, shippedUrls, warnings };
 }
 
 function seedExtensionPins(
@@ -221,6 +297,17 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
   });
 
+  // Shipped declarations outrank every curated surface: the library's author
+  // keeps them in step with the library, where a curated copy is pinned here.
+  const {
+    bundles: shippedBundles,
+    shippedUrls,
+    warnings: shippedWarnings,
+  } = applyShippedDeclarations(
+    resolvedBundles,
+    opts.typesRoot !== undefined ? opts.typesRoot : resolveTypesPackageRoot(),
+  );
+
   // Match every dependency against the vendored pure-Lua corpus *before* the
   // extension surface is materialized, so a confirmed match can decide which
   // type surface the dependency contributes. A confirmed match already proves
@@ -240,6 +327,9 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
   const confirmedLibraryUrls = new Set<string>();
   for (const bundle of resolvedBundles) {
+    if (shippedUrls.has(bundle.url)) {
+      continue;
+    }
     const library = matchVendoredLibrary(bundle.url, libraryRegistry);
     if (library === null) {
       continue;
@@ -258,14 +348,14 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     matchedLibraries.push({ library, url: bundle.url, confirmed });
   }
 
-  // A confirmed library already superseded its bundle, so it is not a native
-  // candidate.
+  // A confirmed library or a shipped surface already superseded its bundle, so
+  // it is not a native candidate.
   const { bundles, confirmedUrls: confirmedNativeUrls } = applyNativeTargets(
-    resolvedBundles,
+    shippedBundles,
     opts.nativeRegistry ?? loadVendoredNativeRegistry(),
-    confirmedLibraryUrls,
+    new Set([...confirmedLibraryUrls, ...shippedUrls]),
   );
-  // `scriptApiCount` reports the archive's own docs, which the curated
+  // `scriptApiCount` reports the archive's own docs, which a curated or shipped
   // replacement does not change.
   const scriptApiCounts = new Map(resolvedBundles.map((b) => [b.url, b.declarations.length]));
 
@@ -281,7 +371,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // The dependency scene surface the editor plugin, `scene-types` and `build`
   // all read: unpacked here because the archive seam cannot run inside tsserver.
   const { counts: sceneSourceCounts } = materializeLibrarySceneSources({ cwd, bundles });
-  const warnings: string[] = [];
+  const warnings: string[] = [...shippedWarnings];
   for (const bundle of bundles) {
     for (const reason of bundle.sceneReasons) {
       warnings.push(`no scene source from ${bundle.url}: ${reason}`);
@@ -361,13 +451,15 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       url: bundle.url,
       provenance: bundle.provenance,
       namespaces,
-      typeSurface: supersededByLibrary
-        ? "vendored-library"
-        : confirmedNativeUrls.has(bundle.url)
-          ? "vendored-native"
-          : namespaces.length > 0
-            ? "extension"
-            : "none",
+      typeSurface: shippedUrls.has(bundle.url)
+        ? "shipped"
+        : supersededByLibrary
+          ? "vendored-library"
+          : confirmedNativeUrls.has(bundle.url)
+            ? "vendored-native"
+            : namespaces.length > 0
+              ? "extension"
+              : "none",
       scriptApiCount: scriptApiCounts.get(bundle.url) ?? 0,
       assetOnly: bundle.assetOnly,
       resolvedVersion: bundle.resolvedVersion,
