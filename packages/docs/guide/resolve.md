@@ -181,6 +181,8 @@ namespace instead. `resolve` uses it when the dependency's
 repo name matches **and** the archive ships the extension's `ext.manifest` in
 the named directory, so a repo-name collision alone writes nothing.
 
+<!-- curated-native-extensions:start -->
+
 | Extension | Pinned at | Namespace | Confirmed by        |
 | --------- | --------- | --------- | ------------------- |
 | [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | [`daabbcc`](/api/daabbcc) | `daabbcc/ext.manifest` |
@@ -192,6 +194,8 @@ the named directory, so a repo-name collision alone writes nothing.
 | [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | `v1.0.6` | [`daabbcc3d`](/api/daabbcc3d) | `daabbcc3d/ext.manifest` |
 | [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | `76ff0c9` | [`wave`](/api/wave) | `wave/ext.manifest` |
 | [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | `95ce965` | [`detour`](/api/detour) | `detour/ext.manifest` |
+
+<!-- curated-native-extensions:end -->
 
 The namespace lands in `.defold-types/extensions/` like a `.script_api`
 namespace and needs no import:
