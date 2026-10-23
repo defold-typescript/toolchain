@@ -188,6 +188,7 @@ describe("loadVendoredNativeRegistry", () => {
         namespace: "def_windward_jps",
         manifestDir: "def_windward_jps",
       },
+      { sourceId: "defold-detour", namespace: "detour", manifestDir: "detour" },
       { sourceId: "defold-sharing", namespace: "share", manifestDir: "share" },
       { sourceId: "defold-tile-raycast", namespace: "tile_raycast", manifestDir: "tile-raycast" },
       { sourceId: "defold-uuid4", namespace: "uuid4", manifestDir: "uuid4" },

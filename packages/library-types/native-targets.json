@@ -136,6 +136,17 @@
           "reason": "src/wave.cpp:191 reads a third `time` argument with `luaL_checknumber(L, 3)`, so the runtime raises without it; the two-parameter stub at annotations.lua:84 omits it, and the declaration follows the C++."
         }
       ]
+    },
+    {
+      "repo": "https://github.com/abadonna/defold-detour",
+      "ref": "95ce965cb404cecfacd5ba1fc8115a6bb7341a85",
+      "refKind": "commit",
+      "license": "MIT",
+      "namespace": "detour",
+      "manifestDir": "detour",
+      "declaration": "generated/native/detour.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-detour/detour/src/detour.cpp",
+      "methodTables": { "Init()": ["NavMesh"], "CreateCrowd()": ["Crowd"] }
     }
   ]
 }

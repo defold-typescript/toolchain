@@ -140,6 +140,50 @@ export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<
     },
   ],
   [
+    "detour/add_agent:return:",
+    {
+      class: "native-0",
+      evidence:
+        "detour.cpp:206 returns dtCrowd::addAgent's slot in its 0-based agent array, or -1 when the crowd is full",
+    },
+  ],
+  [
+    "detour/find_path:return:",
+    {
+      class: "native-0",
+      evidence: "detour.cpp:127 keys each path corner with lua_pushnumber(L, i) from i = 0",
+    },
+  ],
+  [
+    "detour/remove_agent:param:agent",
+    {
+      class: "native-0",
+      evidence: "detour.cpp:216 passes it to dtCrowd::removeAgent unchanged",
+    },
+  ],
+  [
+    "detour/reset_target:param:agent",
+    {
+      class: "native-0",
+      evidence: "detour.cpp:256 passes it to dtCrowd::resetMoveTarget unchanged",
+    },
+  ],
+  [
+    "detour/set_target:param:agent",
+    {
+      class: "native-0",
+      evidence: "detour.cpp:236 passes it to dtCrowd::requestMoveTarget unchanged",
+    },
+  ],
+  [
+    "detour/update:return:",
+    {
+      class: "native-0",
+      evidence:
+        "detour.cpp:282 keys each active agent by its crowd slot with lua_pushnumber(L, i) from i = 0",
+    },
+  ],
+  [
     "dragonbones/dragonbones.load_data:param:aramture_index",
     {
       class: "native-0",
