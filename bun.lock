@@ -119,6 +119,7 @@
         "typescript": "6.0.2",
       },
       "devDependencies": {
+        "@defold-typescript/transpiler": "workspace:*",
         "@typescript-to-lua/language-extensions": "1.19.0",
       },
     },

@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-wave",
+    "manifestDir": "wave"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/selimanac/defold-wave/archive/76ff0c9780730a7e7cc4f3e0a8752d8c1f426def.zip",
+    "confirmedManifest": "defold-wave-76ff0c9780730a7e7cc4f3e0a8752d8c1f426def/wave/ext.manifest",
+    "misplacedManifest": "defold-wave-76ff0c9780730a7e7cc4f3e0a8752d8c1f426def/ext.manifest"
+  }
+}

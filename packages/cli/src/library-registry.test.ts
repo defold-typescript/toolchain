@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { readNativeExpectations } from "../../library-types/scripts/target-expectations";
 import { matchVendoredLibrary } from "./library-match";
 import {
   loadLibraryIndexSlotClassifications,
@@ -177,25 +178,15 @@ describe("loadVendoredNativeRegistry", () => {
 
   test("the shipped list carries every curated native target with a declaration file on disk", () => {
     const registry = loadVendoredNativeRegistry();
-    const projected = registry
-      .map(({ sourceId, namespace, manifestDir }) => ({ sourceId, namespace, manifestDir }))
-      .sort((a, b) => a.namespace.localeCompare(b.namespace));
-    expect(projected).toEqual([
-      { sourceId: "defold-box2d", namespace: "box2d", manifestDir: "box2d/native" },
-      { sourceId: "defold-daabbcc", namespace: "daabbcc", manifestDir: "daabbcc" },
-      { sourceId: "defold-daabbcc3d", namespace: "daabbcc3d", manifestDir: "daabbcc3d" },
-      {
-        sourceId: "def-windward-jps",
-        namespace: "def_windward_jps",
-        manifestDir: "def_windward_jps",
-      },
-      { sourceId: "defold-detour", namespace: "detour", manifestDir: "detour" },
-      { sourceId: "defold-sharing", namespace: "share", manifestDir: "share" },
-      { sourceId: "defold-tile-raycast", namespace: "tile_raycast", manifestDir: "tile-raycast" },
-      { sourceId: "defold-uuid4", namespace: "uuid4", manifestDir: "uuid4" },
-      { sourceId: "defold-wave", namespace: "wave", manifestDir: "wave" },
-    ]);
+    const expectations = readNativeExpectations();
+    expect(registry.map((entry) => entry.namespace).sort()).toEqual(
+      [...expectations.keys()].sort(),
+    );
     for (const entry of registry) {
+      expect(expectations.get(entry.namespace)?.registry).toEqual({
+        sourceId: entry.sourceId,
+        manifestDir: entry.manifestDir,
+      });
       expect(existsSync(entry.declarationPath)).toBe(true);
     }
   });
