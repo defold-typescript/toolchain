@@ -25,5 +25,12 @@
       "  return first === undefined ? 0 : (agents.get(agent)?.position.x ?? first.area);",
       "}"
     ]
+  },
+  "pinKind": "commit",
+  "page": {
+    "shapes": {
+      "NavMesh": ["NavMesh.find_path"],
+      "Crowd": ["Crowd.update"]
+    }
   }
 }

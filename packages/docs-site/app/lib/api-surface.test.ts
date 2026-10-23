@@ -16,6 +16,7 @@ import {
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
+import { readNativeExpectations } from "../../../library-types/scripts/target-expectations";
 import { loadAnnotations } from "../../../types/scripts/lua-annotations";
 import { loadApiTargets } from "../../../types/scripts/regen";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
@@ -721,17 +722,7 @@ describe("loadApiSurface library descriptions", () => {
   });
 
   test("each curated native extension is a library page with its members and description", () => {
-    for (const namespace of [
-      "daabbcc",
-      "share",
-      "uuid4",
-      "tile_raycast",
-      "def_windward_jps",
-      "box2d",
-      "daabbcc3d",
-      "wave",
-      "detour",
-    ]) {
+    for (const namespace of readNativeExpectations().keys()) {
       const page = libraryPages.find((p) => p.route === `/api/${namespace}`);
       expect(page?.namespace).toBe(namespace);
       expect(page?.module.description).toBe(descByDir[namespace]);
@@ -3441,26 +3432,30 @@ describe("native helper shape definitions", () => {
     expect(chain?.signature).toContain("OpenChainShapeTable");
   });
 
-  test("renders def_windward_jps' grid with its userdata methods", () => {
-    const names = group("def_windward_jps", "Grid")?.symbols.map((s) => s.name) ?? [];
-    expect(names).toContain("Grid.find_path");
-    expect(names).toContain("Grid.is_walkable");
-  });
-
-  test("renders detour's NavMesh and Crowd with the methods their plain tables carry", () => {
-    expect(group("detour", "NavMesh")?.symbols.map((s) => s.name) ?? []).toContain(
-      "NavMesh.find_path",
-    );
-    expect(group("detour", "Crowd")?.symbols.map((s) => s.name) ?? []).toContain("Crowd.update");
-  });
-
-  test("renders box2d's body methods and its nested constant tables", () => {
-    expect(group("box2d", "Body")?.symbols.map((s) => s.name) ?? []).toContain(
-      "Body.CreateFixture",
-    );
-    expect(
-      apiModuleSymbols(page("box2d"), page("box2d").translations).map((s) => s.name),
-    ).toContain("b2BodyType.b2_dynamicBody");
+  test("groups each native expectation's recorded shapes and lists its recorded symbols", () => {
+    let checked = 0;
+    for (const [namespace, { page: recorded }] of readNativeExpectations()) {
+      if (recorded === undefined) continue;
+      checked++;
+      for (const [label, names] of Object.entries(recorded.shapes ?? {})) {
+        const grouped = group(namespace, label)?.symbols.map((s) => s.name) ?? [];
+        expect({ namespace, label, grouped }).toEqual({
+          namespace,
+          label,
+          grouped: expect.arrayContaining(names),
+        });
+      }
+      if (recorded.symbols !== undefined) {
+        const symbols = apiModuleSymbols(page(namespace), page(namespace).translations).map(
+          (s) => s.name,
+        );
+        expect({ namespace, symbols }).toEqual({
+          namespace,
+          symbols: expect.arrayContaining(recorded.symbols),
+        });
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 
   test("leaves a signature whose union is a return type unchanged", () => {

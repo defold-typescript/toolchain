@@ -1,0 +1,10 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/britzl/boom",
+    "authoredHere": true,
+    "commit": "5d47820c947dc7b68d1702dfadbf27e6e74e9319",
+    "sourceUrl": "https://github.com/britzl/boom/tree/5d47820c947dc7b68d1702dfadbf27e6e74e9319",
+    "license": "MIT",
+    "importString": "import * as boom from \"boom.boom\""
+  }
+}

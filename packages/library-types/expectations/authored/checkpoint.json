@@ -1,0 +1,11 @@
+{
+  "provenance": {
+    "authorUrl": "https://codeberg.org/Klaleus/defold-checkpoint",
+    "authoredHere": true,
+    "commit": "a5cf87e1dce8d8980f641301e33843747986ff81",
+    "sourceUrl": "https://codeberg.org/Klaleus/defold-checkpoint/src/commit/a5cf87e1dce8d8980f641301e33843747986ff81",
+    "license": "Zlib",
+    "importString": "import * as checkpoint from \"checkpoint.checkpoint\"",
+    "pinKind": "commit"
+  }
+}

@@ -3,8 +3,12 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
+import {
+  readLibraryExpectations,
+  readNativeExpectations,
+} from "../../../library-types/scripts/target-expectations";
 import { untypedListings } from "./api-content";
-import { apiModuleSymbols } from "./api-surface";
+import { apiModuleSymbols, type LibraryMeta } from "./api-surface";
 import {
   defoldListingsFromManifest,
   githubOwner,
@@ -170,107 +174,24 @@ describe("loadApiSurface library displayName", () => {
   });
 });
 
-describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
-  test("attributes druid to Insality/druid at the luals-targets ref, not the ts-defold/library pin", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("druid");
-    expect(meta.commit).toBe("1.4.1");
-    expect(meta.authorUrl).toBe("https://github.com/Insality/druid");
-    expect(meta.sourceUrl).toBe("https://github.com/Insality/druid/tree/1.4.1");
-    expect(meta.importString).toBe('import * as druid from "druid"');
-    expect(meta.license).toBe("MIT");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  // The vendored arm dropped out with the last `library-targets.json` row: every
-  // namespace that ships is authored here now, so a real-corpus subject for
-  // `authoredHere: false` no longer exists. That branch keeps its witness
-  // against the fixture corpus below.
-  test("flags druid and decore authoredHere", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("druid").authoredHere).toBe(true);
-    expect(meta("decore").authoredHere).toBe(true);
-  });
-
-  test("attributes tweener to Insality/defold-tweener as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("tweener").authoredHere).toBe(true);
-    expect(meta("tweener").authorUrl).toBe("https://github.com/Insality/defold-tweener");
-  });
-
-  test("attributes event to Insality/defold-event as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("event").authoredHere).toBe(true);
-    expect(meta("event").authorUrl).toBe("https://github.com/Insality/defold-event");
-  });
-
-  test("attributes lang to Insality/defold-lang as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("lang").authoredHere).toBe(true);
-    expect(meta("lang").authorUrl).toBe("https://github.com/Insality/defold-lang");
-  });
-
-  test("attributes log to Insality/defold-log as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("log").authoredHere).toBe(true);
-    expect(meta("log").authorUrl).toBe("https://github.com/Insality/defold-log");
-  });
-
-  test("attributes proto to Insality/defold-proto as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("proto").authoredHere).toBe(true);
-    expect(meta("proto").authorUrl).toBe("https://github.com/Insality/defold-proto");
-  });
-
-  test("attributes immutable to paweljarosz/lua-immutable as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("immutable").authoredHere).toBe(true);
-    expect(meta("immutable").authorUrl).toBe("https://github.com/paweljarosz/lua-immutable");
-  });
-
-  test("attributes squid to paweljarosz/squid as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("squid").authoredHere).toBe(true);
-    expect(meta("squid").authorUrl).toBe("https://github.com/paweljarosz/squid");
-  });
-
-  test("attributes narrator to astrochili/narrator as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("narrator").authoredHere).toBe(true);
-    expect(meta("narrator").authorUrl).toBe("https://github.com/astrochili/narrator");
-  });
-
-  test("attributes panthera to Insality/panthera as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("panthera").authoredHere).toBe(true);
-    expect(meta("panthera").authorUrl).toBe("https://github.com/Insality/panthera");
-  });
-
-  test("attributes saver.saver to Insality/defold-saver as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("saver.saver").authoredHere).toBe(true);
-    expect(meta("saver.saver").authorUrl).toBe("https://github.com/Insality/defold-saver");
-  });
-
-  test("attributes saver.storage to Insality/defold-saver as an authored-here LuaLS library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(meta("saver.storage").authoredHere).toBe(true);
-    expect(meta("saver.storage").authorUrl).toBe("https://github.com/Insality/defold-saver");
-  });
+describe("loadLibraryProvenance — LuaLS, authored and script_api lanes", () => {
+  for (const lane of ["luals", "authored", "script-api"] as const) {
+    test(`attributes each ${lane} expectation's library with the provenance it records`, () => {
+      const expectations = readLibraryExpectations(REAL_LIBRARY_TYPES_DIR, lane);
+      expect(expectations.size).toBeGreaterThan(0);
+      const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+      for (const [namespace, { provenance }] of expectations) {
+        const meta = metaFor(namespace);
+        const loaded = Object.fromEntries(
+          Object.keys(provenance).map((field) => [field, meta[field as keyof LibraryMeta]]),
+        );
+        expect({ namespace, ...loaded }).toEqual({ namespace, ...provenance });
+      }
+    });
+  }
 });
 
-describe("loadLibraryProvenance — script_api-sourced libraries", () => {
-  test("attributes bridge to Playgama/bridge-defold at the script-api-targets ref", () => {
-    // The page (and provenance) key is the api-doc file stem, which the migration
-    // names for the single-segment `namespace` — `bridge`, like the LuaLS libraries.
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("bridge");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("v2.3.0");
-    expect(meta.authorUrl).toBe("https://github.com/Playgama/bridge-defold");
-    expect(meta.sourceUrl).toBe("https://github.com/Playgama/bridge-defold/tree/v2.3.0");
-    expect(meta.license).toBe("MIT");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
+describe("loadLibraryProvenance — vendored libraries", () => {
   test("a genuinely vendored ts-defold namespace still reports authoredHere false", () => {
     // Read from the fixture corpus, whose `library-targets.json` still holds a
     // synthetic vendored row: the real corpus reached zero rows, so the vendored
@@ -290,19 +211,10 @@ describe("loadLibraryProvenance — curated native extensions", () => {
   const { targets } = JSON.parse(
     readFileSync(join(REAL_LIBRARY_TYPES_DIR, "native-targets.json"), "utf8"),
   ) as { targets: { repo: string; ref: string; license: string; namespace: string }[] };
+  const nativeExpectations = readNativeExpectations();
 
   test("attributes each native namespace to its upstream repo at the pin, as a global", () => {
-    expect(targets.map((t) => t.namespace)).toEqual([
-      "daabbcc",
-      "share",
-      "uuid4",
-      "tile_raycast",
-      "def_windward_jps",
-      "box2d",
-      "daabbcc3d",
-      "wave",
-      "detour",
-    ]);
+    expect(targets.map((t) => t.namespace).sort()).toEqual([...nativeExpectations.keys()].sort());
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     for (const target of targets) {
       const meta = metaFor(target.namespace);
@@ -345,19 +257,8 @@ describe("loadLibraryProvenance — curated native extensions", () => {
     expect(fixtureMeta("released").pinKind).toBeUndefined();
 
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    for (const namespace of [
-      "daabbcc",
-      "share",
-      "uuid4",
-      "tile_raycast",
-      "def_windward_jps",
-      "box2d",
-      "daabbcc3d",
-    ]) {
-      expect(metaFor(namespace).pinKind).toBeUndefined();
-    }
-    for (const namespace of ["wave", "detour"]) {
-      expect(metaFor(namespace).pinKind).toBe("commit");
+    for (const [namespace, { pinKind }] of nativeExpectations) {
+      expect({ namespace, pinKind: metaFor(namespace).pinKind }).toEqual({ namespace, pinKind });
     }
   });
 
@@ -365,194 +266,6 @@ describe("loadLibraryProvenance — curated native extensions", () => {
     const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
     expect(origins.get("daabbcc")).toEqual({ owner: "selimanac", repo: "defold-daabbcc" });
     expect(origins.get("share")).toEqual({ owner: "britzl", repo: "defold-sharing" });
-  });
-});
-
-describe("loadLibraryProvenance — authored/forked libraries", () => {
-  test("attributes defcon to britzl/defcon as an authored-here forked library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defcon");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("2.6.0");
-    expect(meta.authorUrl).toBe("https://github.com/britzl/defcon");
-    expect(meta.sourceUrl).toBe("https://github.com/britzl/defcon/tree/2.6.0");
-    expect(meta.license).toBe("MIT");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  // A library that was never in ts-defold's tree, so nothing about it is derived from
-  // a vendored classification dir — the maintained-here reading has to come from the
-  // authored-targets entry alone. Upstream publishes no tags, hence a commit pin.
-  test("attributes shutter to Klaleus/defold-shutter on Codeberg as an authored-here forked library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("shutter");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1");
-    expect(meta.pinKind).toBe("commit");
-    expect(meta.authorUrl).toBe("https://codeberg.org/Klaleus/defold-shutter");
-    expect(meta.sourceUrl).toBe(
-      "https://codeberg.org/Klaleus/defold-shutter/src/commit/fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1",
-    );
-    expect(meta.license).toBe("Zlib");
-    expect(meta.importString).toBe('import * as shutter from "shutter.shutter"');
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  // The same never-in-ts-defold shape as shutter, and the same author, so the
-  // maintained-here reading again comes from the authored-targets entry alone rather
-  // than from a vendored classification dir. Upstream publishes no tags or releases.
-  test("attributes checkpoint to Klaleus/defold-checkpoint on Codeberg as an authored-here forked library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("checkpoint");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("a5cf87e1dce8d8980f641301e33843747986ff81");
-    expect(meta.pinKind).toBe("commit");
-    expect(meta.authorUrl).toBe("https://codeberg.org/Klaleus/defold-checkpoint");
-    expect(meta.sourceUrl).toBe(
-      "https://codeberg.org/Klaleus/defold-checkpoint/src/commit/a5cf87e1dce8d8980f641301e33843747986ff81",
-    );
-    expect(meta.license).toBe("Zlib");
-    expect(meta.importString).toBe('import * as checkpoint from "checkpoint.checkpoint"');
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  // One repo, two separately required modules: each namespace carries the same
-  // attribution and pin, but its own import path.
-  test("attributes sprite_repeat and node_repeat to Dragosha/defold-sprite-repeat", () => {
-    for (const namespace of ["sprite_repeat", "node_repeat"]) {
-      const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)(namespace);
-      expect(meta.authoredHere).toBe(true);
-      expect(meta.commit).toBe("v0.3");
-      expect(meta.authorUrl).toBe("https://github.com/Dragosha/defold-sprite-repeat");
-      expect(meta.sourceUrl).toBe("https://github.com/Dragosha/defold-sprite-repeat/tree/v0.3");
-      expect(meta.license).toBe("MIT");
-      expect(meta.importString).toBe(`import * as ${namespace} from "${namespace}.${namespace}"`);
-    }
-  });
-
-  test("renders defcon's import with the namespace alias but the moduleId module path", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defcon");
-    expect(meta.importString).toBe('import * as defcon from "defcon.console"');
-  });
-
-  test("a moduleId-less LuaLS library keeps its namespace-as-module import (regression)", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("druid");
-    expect(meta.importString).toBe('import * as druid from "druid"');
-  });
-
-  test("attributes deftest to britzl/deftest as an authored-here forked library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("deftest");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("2.9.0");
-    expect(meta.authorUrl).toBe("https://github.com/britzl/deftest");
-    expect(meta.sourceUrl).toBe("https://github.com/britzl/deftest/tree/2.9.0");
-    expect(meta.license).toBe("MIT");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  test("renders deftest's import with the namespace alias but the moduleId module path", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("deftest");
-    expect(meta.importString).toBe('import * as deftest from "deftest.deftest"');
-  });
-
-  test("attributes persist to whiteboxdev/library-defold-persist as an authored-here forked library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("persist");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("b37f61040740f232d86f68e2606f27b6f1bd15c4");
-    expect(meta.authorUrl).toBe("https://github.com/whiteboxdev/library-defold-persist");
-    expect(meta.license).toBe("Zlib");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  test("renders persist's import with the namespace alias but the moduleId module path", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("persist");
-    expect(meta.importString).toBe('import * as persist from "persist.persist"');
-  });
-
-  test("attributes defmath to subsoap/defmath as an authored-here forked library pinned to a commit SHA", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defmath");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("c67c227322334056cea7a631f3ddcdf2bcfd480c");
-    expect(meta.authorUrl).toBe("https://github.com/subsoap/defmath");
-    expect(meta.sourceUrl).toBe(
-      "https://github.com/subsoap/defmath/tree/c67c227322334056cea7a631f3ddcdf2bcfd480c",
-    );
-    expect(meta.license).toBe("CC0-1.0");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  test("renders defmath's import with the namespace alias but the moduleId module path", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defmath");
-    expect(meta.importString).toBe('import * as defmath from "defmath.defmath"');
-  });
-
-  test("attributes zzfx to thejustinwalsh/defold-zzfx as an authored-here forked library pinned to a commit SHA", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("zzfx");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("8c90e12c5b83dd39ebc7a6c0fd28aafd8e7b1eac");
-    expect(meta.authorUrl).toBe("https://github.com/thejustinwalsh/defold-zzfx");
-    expect(meta.sourceUrl).toBe(
-      "https://github.com/thejustinwalsh/defold-zzfx/tree/8c90e12c5b83dd39ebc7a6c0fd28aafd8e7b1eac",
-    );
-    expect(meta.license).toBe("MIT");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  test("renders zzfx's import with the namespace alias but the moduleId module path", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("zzfx");
-    expect(meta.importString).toBe('import * as zzfx from "zzfx.api"');
-  });
-
-  test("attributes boom to britzl/boom as an authored-here forked library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("boom");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("5d47820c947dc7b68d1702dfadbf27e6e74e9319");
-    expect(meta.authorUrl).toBe("https://github.com/britzl/boom");
-    expect(meta.sourceUrl).toBe(
-      "https://github.com/britzl/boom/tree/5d47820c947dc7b68d1702dfadbf27e6e74e9319",
-    );
-    expect(meta.license).toBe("MIT");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  test("renders boom's import with the namespace alias but the moduleId module path", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("boom");
-    expect(meta.importString).toBe('import * as boom from "boom.boom"');
-  });
-
-  test("attributes defsave to subsoap/defsave as an authored-here forked library", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defsave");
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("v1.2.6");
-    expect(meta.authorUrl).toBe("https://github.com/subsoap/defsave");
-    expect(meta.sourceUrl).toBe("https://github.com/subsoap/defsave/tree/v1.2.6");
-    expect(meta.license).toBe("CC0-1.0");
-    expect(meta.sourceUrl).not.toContain("ts-defold/library");
-  });
-
-  test("renders defsave's import with the namespace alias but the moduleId module path", () => {
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defsave");
-    expect(meta.importString).toBe('import * as defsave from "defsave.defsave"');
-  });
-
-  test("attributes all five nakama modules to heroiclabs/nakama-defold as authored-here", () => {
-    // The core module joined its two helpers on the authored lane, so the
-    // provenance boundary this describe used to draw through `nakama-defold` is
-    // gone: one repo, one tag, one license across all five, the realtime socket
-    // and the session helpers included.
-    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    for (const namespace of [
-      "nakama",
-      "nakama.engine.defold",
-      "nakama.session",
-      "nakama.socket",
-      "nakama.util.log",
-    ]) {
-      const m = meta(namespace);
-      expect(m.authoredHere).toBe(true);
-      expect(m.commit).toBe("v3.4.0");
-      expect(m.authorUrl).toBe("https://github.com/heroiclabs/nakama-defold");
-      expect(m.sourceUrl).toBe("https://github.com/heroiclabs/nakama-defold/tree/v3.4.0");
-      expect(m.license).toBe("Apache-2.0");
-      expect(m.sourceUrl).not.toContain("ts-defold/library");
-    }
   });
 });
 

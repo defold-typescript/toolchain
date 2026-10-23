@@ -20,5 +20,10 @@
       "  return path;",
       "}"
     ]
+  },
+  "page": {
+    "shapes": {
+      "Grid": ["Grid.find_path", "Grid.is_walkable"]
+    }
   }
 }
