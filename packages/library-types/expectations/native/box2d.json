@@ -35,5 +35,11 @@
       "  return hits;",
       "}"
     ]
+  },
+  "page": {
+    "shapes": {
+      "Body": ["Body.CreateFixture"]
+    },
+    "symbols": ["b2BodyType.b2_dynamicBody"]
   }
 }

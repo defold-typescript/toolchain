@@ -1,0 +1,10 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/Dragosha/defold-sprite-repeat",
+    "authoredHere": true,
+    "commit": "v0.3",
+    "sourceUrl": "https://github.com/Dragosha/defold-sprite-repeat/tree/v0.3",
+    "license": "MIT",
+    "importString": "import * as sprite_repeat from \"sprite_repeat.sprite_repeat\""
+  }
+}
