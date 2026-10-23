@@ -4,6 +4,7 @@
   "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
   "checkpoint": "Checkpoint is a library for reading from and writing to files in a Defold game engine project.",
   "daabbcc": "Dynamic Tree (aka AABB Tree) native extension for Defold Engine",
+  "daabbcc3d": "Dynamic AABB trees in 3D for overlap queries and ray casts without a physics engine.",
   "decore": "Defold ECS Data Manager",
   "def_windward_jps": "Find paths on 2D grids with Jump Point Search.",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
@@ -57,5 +58,6 @@
   "squid": "Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold.",
   "tile_raycast": "Ray Casting in tiled worlds using DDA algorithm.",
   "uuid4": "Defold uuid4 generator native extension",
+  "wave": "Wave simulation that floats, pitches and rolls game objects on a water surface.",
   "yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine."
 }

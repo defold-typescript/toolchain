@@ -15,7 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[Libraries ship their own types](./resolve.md#types-a-library-ships)**: `resolve` installs a dependency's `types/*.d.ts` under their own names ahead of every other surface, so `king8fisher/defold-pixels` is typed by upstream's files; delete any copies of them.
 > - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters and typed callbacks, and none is lost when extensions share a namespace or differ only in letter case.
-> - **[Curated native namespaces](./resolve.md#curated-native-extensions)** type [def_windward_jps](/api/def_windward_jps) and [box2d](/api/box2d).
+> - **[Curated native namespaces](./resolve.md#curated-native-extensions)** type [def_windward_jps](/api/def_windward_jps), [box2d](/api/box2d), [daabbcc3d](/api/daabbcc3d) and [wave](/api/wave).
 > - **[`resolve` runs under Node and Bun](./resolve.md)** on every OS for a project with a native extension, with no `unzip`.
 > - **[Asset Portal libraries](/libraries)** get pages, typed from their `.script_api` when they ship one.
 
@@ -30,9 +30,11 @@ What changed in each published `defold-typescript` toolchain release.
 - **`resolve` extension declarations carry the whole documented surface**: the namespace's constants, including those one sub-table deep (`iap.PROVIDER_ID_GOOGLE`, `push.NOTIFICATION_BADGE`), each branded as the `string` or `number` its doc declares (`firebase.analytics.EVENT_ADIMPRESSION` is a `string` brand), a function returning a documented constant typed as that constant union, a parameter flagged `optional: true` emitted optional, and a table parameter typed from its documented fields. A `.script_api` slot typed `enum` is read as a constant-valued slot, so `webview.create`'s callback `type` argument is the union of the `webview.CALLBACK_RESULT_*` constants.
 - **The [facebook](/api/facebook), [playables](/api/playables) and [poki_sdk](/api/poki_sdk) Libraries pages** show the parameter types their `.script_api` spells as YAML lists (`[string, nil]`), which previously rendered as untyped.
 - **[Libraries](/libraries) lists the Defold Asset Portal's libraries under their GitHub owners**: one that ships a `.script_api` gets a reference page per doc, such as [defos](/api/defos), and one that ships no Lua API, such as shaders, materials and editor scripts, gets an icon-marked page, such as [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page gives the dependency step for its pin and links the library's Asset Portal entry.
-- **Two more native extensions are typed by curated namespaces** ([Curated native extensions](./resolve.md#curated-native-extensions)), so a project depending on either gets types where `resolve` wrote none:
+- **Four more native extensions are typed by curated namespaces** ([Curated native extensions](./resolve.md#curated-native-extensions)), so a project depending on any of them gets types where `resolve` wrote none:
   - **[def_windward_jps](/api/def_windward_jps)** (`s-kania/def-windward-jps`, tag `v1.1.0`) — `def_windward_jps.create_grid` returns a grid whose `def_windward_jps.Grid.find_path` and `def_windward_jps.Grid.is_walkable` take 1-based `def_windward_jps.Point` cells.
   - **[box2d](/api/box2d)** (`d954mas/defold-box2d`, tag `1.0.3`) — `box2d.NewWorld` returns a world whose bodies, fixtures, shapes and joints carry their methods, and `box2d.World.CreateJoint` accepts only the joint definitions the extension can build and returns the joint type each one names.
+  - **[daabbcc3d](/api/daabbcc3d)** (`selimanac/defold-daabbcc3d`, tag `v1.0.6`) — `daabbcc3d.insert_aabb` and `daabbcc3d.query_aabb` take a `Vector3` position with width, height and depth, and `daabbcc3d.rebuild_all` takes its flag second, where the runtime reads it.
+  - **[wave](/api/wave)** (`selimanac/defold-wave`, commit `76ff0c9`) — `wave.add_gameobject` floats a game object on the simulated water, and `wave.get_wave1_height` and `wave.get_wave2_height` require the `time` argument the runtime reads.
 
 ### Fixed
 

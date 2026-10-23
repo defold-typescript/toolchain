@@ -71,6 +71,22 @@ describe("lowerNativeApiDoc", () => {
     expect(byName.get("BitsHit")?.properties?.map((p) => p.name)).toContain("id");
   });
 
+  test("lowers daabbcc3d's registered functions and its rebuild constants", () => {
+    const doc = lowered("daabbcc3d");
+    expect(doc.info.namespace).toBe("daabbcc3d");
+    expect(doc.elements.filter((e) => e.type === "FUNCTION")).toHaveLength(18);
+    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(3);
+  });
+
+  test("lowers wave's registered functions and none of the stubs its C++ never registers", () => {
+    const functions = lowered("wave")
+      .elements.filter((e) => e.type === "FUNCTION")
+      .map((e) => e.name);
+    expect(functions).toHaveLength(12);
+    expect(functions).not.toContain("get_wave1_time_height");
+    expect(functions).not.toContain("get_wave2_time_height");
+  });
+
   test("keeps tile_raycast.cast's hit-or-miss return union", () => {
     const cast = lowered("tile_raycast").elements.find((e) => e.name === "cast");
     expect(cast?.returnvalues?.[0]?.types).toEqual([
