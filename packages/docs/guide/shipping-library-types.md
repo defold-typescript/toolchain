@@ -130,8 +130,10 @@ unchanged, into `<path>/types/`, and prints each one:
 defold-typescript export-types: wrote types/daabbcc.d.ts
 ```
 
-It runs the same check first. When a file fails it, or when `resolve` would
-skip a file, the command prints the first error and writes nothing. A curated
+It runs the same check first, over the folder as it will be: the `.d.ts` files
+directly in `types/`, with each exported file in place of one of the same name.
+When `resolve` would skip an exported file, or a file it would install fails
+the check, the command prints the first error and writes nothing. A curated
 file that relies on another library's types fails the check this way. A file
 already in `types/` with the same name is replaced; other files there are left
 alone.
