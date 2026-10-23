@@ -108,6 +108,45 @@ defold-typescript resolve: warning: shipped types from <url> do not compile agai
 The check covers the engine surface only. Each dependency's files are checked
 on their own, so a file cannot rely on another dependency's types.
 
+## Starting from the curated types
+
+If your library already has types here (see
+[Vendored library types](./resolve.md#vendored-library-types) and
+[Curated native extensions](./resolve.md#curated-native-extensions)), export
+them into your repository:
+
+```sh
+bunx @defold-typescript/cli export-types <library> [path]
+```
+
+`<library>` is the repository name, such as `defold-daabbcc`, or the URL a
+project puts in `game.project`. `path` is your repository root and defaults to
+the current folder.
+
+The command writes the files `resolve` installs for the library today,
+unchanged, into `<path>/types/`, and prints each one:
+
+```
+defold-typescript export-types: wrote types/daabbcc.d.ts
+```
+
+It runs the same check first. When a file fails it, or when `resolve` would
+skip a file, the command prints the first error and writes nothing. A curated
+file that relies on another library's types fails the check this way. A file
+already in `types/` with the same name is replaced; other files there are left
+alone.
+
+A native extension's file stays in global form (`declare global { namespace
+daabbcc { ... } }`), so a project that switches to your shipped types needs no
+change. Converting it to the [module form](#module-form-global-form-or-both)
+is your choice: projects then reach the API with
+`import * as daabbcc from "daabbcc"` instead of the global name.
+
+Once a release carries the `types/` folder, projects that depend on that
+release get your shipped types. The curated copy is then retired here in a
+reviewed change. A project still on an older release of your library loses
+the curated types at that point, until it updates the dependency.
+
 ## Checking your files
 
 Check the files from a project that depends on the library:

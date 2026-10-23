@@ -102,6 +102,16 @@ describe("renderHelp", () => {
     expect(text).toMatch(/^ {2}set-target {2,}\S/m);
   });
 
+  test("top-level help lists export-types, and its help gives the library-then-path usage", () => {
+    expect(renderHelp(null)).toMatch(/^ {2}export-types {2,}\S/m);
+    expect(renderHelp("export-types")).toStartWith(
+      "Usage: bunx @defold-typescript/cli export-types <library> [path]\n",
+    );
+    expect(JSON.parse(renderHelpJson("export-types")).usage).toBe(
+      "bunx @defold-typescript/cli export-types <library> [path]",
+    );
+  });
+
   test("set-target help names --detected and its --detect synonym", () => {
     const text = renderHelp("set-target");
 

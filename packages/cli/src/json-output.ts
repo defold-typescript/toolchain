@@ -17,7 +17,8 @@ export type CliCommand =
   | "reload"
   | "upgrade"
   | "set-target"
-  | "hsm-view";
+  | "hsm-view"
+  | "export-types";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;

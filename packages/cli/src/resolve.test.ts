@@ -13,6 +13,7 @@ import * as ts from "typescript";
 import { readNativeExpectations } from "../../library-types/scripts/target-expectations";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
+import { runExportTypes } from "./export-types";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
@@ -1496,6 +1497,50 @@ declare module "pixels" {
     expect(writtenDeclarations(cwd)).toEqual(["index.d.ts"]);
     expect(writtenShipped(cwd)).toEqual(PIXELS_SHIPPED);
     expect(result.extensions[0]?.typeSurface).toBe("shipped");
+  });
+
+  test("an exported curated native target installs as shipped types with the same bytes", async () => {
+    const nativeRegistry = loadVendoredNativeRegistry();
+    const target = nativeRegistry[0];
+    if (target === undefined) {
+      throw new Error("the committed corpus has no native target");
+    }
+    const exported = tmp();
+    const { written } = runExportTypes({ library: target.sourceId, cwd: exported });
+    const url = `https://github.com/owner/${target.sourceId}/archive/refs/heads/main.zip`;
+    const wrapper = `${target.sourceId}-main`;
+    const contents = Object.fromEntries(
+      written.map((file) => [`${wrapper}/${file}`, readFileSync(join(exported, file), "utf8")]),
+    );
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip({
+        [extensionArchiveKey(url)]: {
+          entries: [`${wrapper}/${target.manifestDir}/ext.manifest`, ...Object.keys(contents)],
+          contents,
+        },
+      }),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(shippedWarnings(result.warnings)).toEqual([]);
+    expect(result.extensions[0]?.typeSurface).toBe("shipped");
+    expect(result.extensions[0]?.namespaces).toEqual(
+      written.map((file) => basename(file, ".d.ts")).sort(),
+    );
+    const installed = writtenShipped(cwd);
+    expect(installed).toHaveLength(1);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", installed[0] ?? ""), "utf8")).toBe(
+      readFileSync(target.declarationPath, "utf8"),
+    );
   });
 
   test("shipped types win over a vendored library match on an asset-only archive", async () => {
