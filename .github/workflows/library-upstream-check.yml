@@ -9,6 +9,10 @@
 # `asset-portal.json`, so a library newly published there is noticed without
 # anyone browsing the portal.
 #
+# It also reads each curated repo's newest release for a `types/` folder that
+# `resolve` accepts, so a curated target that upstream has made redundant is
+# noticed and can be retired.
+#
 # Two GitHub scheduling facts this depends on: a `schedule:` trigger only ever
 # runs on the default branch (so edits must land on main to take effect), and it
 # is auto-disabled after 60 days without repository activity — `workflow_dispatch`
@@ -113,3 +117,39 @@ jobs:
           fi
           jq -r '.issueBody' portal.json > portal-issue-body.md
           gh issue create --title "$title" --body-file portal-issue-body.md
+
+      # `!cancelled()` so an unreadable pin or portal above does not withhold the
+      # sweep. Exit 1 here means a curated repo could not be read; a repo whose
+      # release ships types exits 0 and is read out of the JSON below.
+      - name: Find curated targets whose upstream release ships types
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bun scripts/shipped-types-check.ts --json > shipped.json
+
+      - name: Open one issue per repo that ships types
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ ! -s shipped.json ]; then
+            echo "no shipped-types report to consume"
+            exit 0
+          fi
+          jq -r '"\(.reports | length) repo(s), \([.reports[] | select(.actionable)] | length) actionable"' shipped.json
+          jq -c '.reports[] | select(.actionable)' shipped.json > shipped-actionable.jsonl
+          while read -r report; do
+            title=$(printf '%s' "$report" | jq -r '.issueTitle')
+            # The title is keyed on the repo slug and the release, so this finds
+            # the issue a previous run opened and stays a no-op until the
+            # retirement lands.
+            existing=$(gh issue list --state open --limit 100 --json number,title \
+              --jq "[.[] | select(.title == \"$title\") | .number] | first // empty")
+            if [ -n "$existing" ]; then
+              echo "already tracked as #$existing: $title"
+              continue
+            fi
+            printf '%s' "$report" | jq -r '.issueBody' > shipped-issue-body.md
+            gh issue create --title "$title" --body-file shipped-issue-body.md
+          done < shipped-actionable.jsonl
