@@ -731,7 +731,7 @@
           "name": "joint1",
           "doc": "The first revolute or prismatic joint.",
           "types": [
-            "Joint"
+            "RevoluteJoint | PrismaticJoint"
           ],
           "is_optional": "False"
         },
@@ -739,7 +739,7 @@
           "name": "joint2",
           "doc": "The second revolute or prismatic joint.",
           "types": [
-            "Joint"
+            "RevoluteJoint | PrismaticJoint"
           ],
           "is_optional": "False"
         }
@@ -1268,8 +1268,8 @@
         {
           "type": "FUNCTION",
           "name": "CreateJoint",
-          "brief": "Creates a joint whose type is not known statically. Not allowed during",
-          "description": "Creates a joint whose type is not known statically. Not allowed during\ncallbacks.",
+          "brief": "Creates a joint whose kind is known only at run time. Not allowed",
+          "description": "Creates a joint whose kind is known only at run time. Not allowed\nduring callbacks.",
           "parameters": [
             {
               "name": "def",
@@ -3986,6 +3986,14 @@
     {
       "type": "TYPEDEF",
       "name": "BoxShapeTable",
+      "types": [
+        "AxisAlignedBoxShapeTable",
+        "OrientedBoxShapeTable"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AxisAlignedBoxShapeTable",
       "properties": [
         {
           "name": "shape",
@@ -4021,21 +4029,75 @@
         },
         {
           "name": "box_center",
-          "brief": "The center in local coordinates. Set it together with `box_angle` or not at all.",
-          "description": "The center in local coordinates. Set it together with `box_angle` or not at all.",
+          "brief": "",
+          "description": "",
           "types": [
-            "Vector3"
+            "never"
           ],
           "is_optional": "True"
         },
         {
           "name": "box_angle",
-          "brief": "The rotation in radians. Set it together with `box_center` or not at all.",
-          "description": "The rotation in radians. Set it together with `box_center` or not at all.",
+          "brief": "",
+          "description": "",
           "types": [
-            "number"
+            "never"
           ],
           "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "OrientedBoxShapeTable",
+      "properties": [
+        {
+          "name": "shape",
+          "brief": "",
+          "description": "",
+          "types": [
+            "typeof b2Shape.e_polygon"
+          ]
+        },
+        {
+          "name": "box",
+          "brief": "",
+          "description": "",
+          "types": [
+            "true"
+          ]
+        },
+        {
+          "name": "box_hx",
+          "brief": "The half-width.",
+          "description": "The half-width.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "box_hy",
+          "brief": "The half-height.",
+          "description": "The half-height.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "box_center",
+          "brief": "The center in local coordinates.",
+          "description": "The center in local coordinates.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "box_angle",
+          "brief": "The rotation in radians.",
+          "description": "The rotation in radians.",
+          "types": [
+            "number"
+          ]
         }
       ]
     },
@@ -4073,6 +4135,14 @@
     {
       "type": "TYPEDEF",
       "name": "ChainShapeTable",
+      "types": [
+        "LoopChainShapeTable",
+        "OpenChainShapeTable"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LoopChainShapeTable",
       "properties": [
         {
           "name": "shape",
@@ -4092,30 +4162,58 @@
         },
         {
           "name": "chain_loop",
-          "brief": "`true` closes the chain into a loop.",
-          "description": "`true` closes the chain into a loop.",
+          "brief": "Closes the chain into a loop.",
+          "description": "Closes the chain into a loop.",
           "types": [
-            "boolean"
+            "true"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "OpenChainShapeTable",
+      "properties": [
+        {
+          "name": "shape",
+          "brief": "",
+          "description": "",
+          "types": [
+            "typeof b2Shape.e_chain"
+          ]
+        },
+        {
+          "name": "chain_vertices",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Vector3[]"
+          ]
+        },
+        {
+          "name": "chain_loop",
+          "brief": "",
+          "description": "",
+          "types": [
+            "false"
           ],
           "is_optional": "True"
         },
         {
           "name": "chain_prev_vertex",
-          "brief": "The vertex that connects to the start. Required unless `chain_loop` is set.",
-          "description": "The vertex that connects to the start. Required unless `chain_loop` is set.",
+          "brief": "The vertex that connects to the start.",
+          "description": "The vertex that connects to the start.",
           "types": [
             "Vector3"
-          ],
-          "is_optional": "True"
+          ]
         },
         {
           "name": "chain_next_vertex",
-          "brief": "The vertex that connects to the end. Required unless `chain_loop` is set.",
-          "description": "The vertex that connects to the end. Required unless `chain_loop` is set.",
+          "brief": "The vertex that connects to the end.",
+          "description": "The vertex that connects to the end.",
           "types": [
             "Vector3"
-          ],
-          "is_optional": "True"
+          ]
         }
       ]
     },
@@ -4803,8 +4901,8 @@
         {
           "type": "FUNCTION",
           "name": "SetUserData",
-          "brief": "Sets the application data.",
-          "description": "Sets the application data.",
+          "brief": "Sets the application data. This is the only way to attach it to a",
+          "description": "Sets the application data. This is the only way to attach it to a\njoint, since a joint definition carries none.",
           "parameters": [
             {
               "name": "userdata",
@@ -5257,21 +5355,13 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
       "type": "TYPEDEF",
-      "name": "JointDef",
+      "name": "JointDefBase",
       "properties": [
-        {
-          "name": "type",
-          "brief": "The joint type.",
-          "description": "The joint type.",
-          "types": [
-            "JointType"
-          ]
-        },
         {
           "name": "bodyA",
           "brief": "The first attached body.",
@@ -5294,15 +5384,6 @@
           "description": "`true` lets the attached bodies collide.",
           "types": [
             "boolean"
-          ],
-          "is_optional": "True"
-        },
-        {
-          "name": "userData",
-          "brief": "Application data. Must be a table.",
-          "description": "Application data. Must be a table.",
-          "types": [
-            "object"
           ],
           "is_optional": "True"
         }
@@ -5715,7 +5796,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -6114,7 +6195,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -6416,7 +6497,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -6590,7 +6671,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -6751,7 +6832,7 @@
           "brief": "The first revolute or prismatic joint.",
           "description": "The first revolute or prismatic joint.",
           "types": [
-            "Joint"
+            "RevoluteJoint | PrismaticJoint"
           ]
         },
         {
@@ -6759,7 +6840,7 @@
           "brief": "The second revolute or prismatic joint.",
           "description": "The second revolute or prismatic joint.",
           "types": [
-            "Joint"
+            "RevoluteJoint | PrismaticJoint"
           ]
         },
         {
@@ -6773,7 +6854,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -6963,7 +7044,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -7426,7 +7507,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -7602,7 +7683,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -7771,7 +7852,7 @@
         }
       ],
       "extends": [
-        "JointDef"
+        "JointDefBase"
       ]
     },
     {
@@ -7946,6 +8027,22 @@
       ],
       "extends": [
         "Joint"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "JointDef",
+      "types": [
+        "RevoluteJointDef",
+        "PrismaticJointDef",
+        "DistanceJointDef",
+        "PulleyJointDef",
+        "MouseJointDef",
+        "GearJointDef",
+        "WheelJointDef",
+        "WeldJointDef",
+        "FrictionJointDef",
+        "MotorJointDef"
       ]
     },
     {
