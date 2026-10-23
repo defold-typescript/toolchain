@@ -297,7 +297,6 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       "share",
       "uuid4",
       "tile_raycast",
-      "pixels",
       "def_windward_jps",
       "box2d",
     ]);
@@ -316,8 +315,33 @@ describe("loadLibraryProvenance — curated native extensions", () => {
   });
 
   test("carries a commit pin as the page's pin kind, and no pin kind for a release", () => {
+    const dir = mkdtempSync(join(tmpdir(), "native-pin-kind-"));
+    cpSync(LIBRARY_FIXTURE_DIR, dir, { recursive: true });
+    writeFileSync(
+      join(dir, "native-targets.json"),
+      JSON.stringify({
+        targets: [
+          {
+            repo: "https://github.com/someone/native-pinned",
+            ref: "0123456789abcdef0123456789abcdef01234567",
+            refKind: "commit",
+            license: "MIT",
+            namespace: "pinned",
+          },
+          {
+            repo: "https://github.com/someone/native-released",
+            ref: "v1.0.0",
+            license: "MIT",
+            namespace: "released",
+          },
+        ],
+      }),
+    );
+    const fixtureMeta = loadLibraryProvenance(dir);
+    expect(fixtureMeta("pinned").pinKind).toBe("commit");
+    expect(fixtureMeta("released").pinKind).toBeUndefined();
+
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    expect(metaFor("pixels").pinKind).toBe("commit");
     for (const namespace of [
       "daabbcc",
       "share",

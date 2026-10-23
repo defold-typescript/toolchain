@@ -183,7 +183,6 @@ the named directory, so a repo-name collision alone writes nothing.
 | [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | [`share`](/api/share) | `share/ext.manifest` |
 | [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | [`uuid4`](/api/uuid4) | `uuid4/ext.manifest` |
 | [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](/api/tile_raycast) | `tile-raycast/ext.manifest` |
-| [king8fisher/defold-pixels](https://github.com/king8fisher/defold-pixels) | `70f7784` | [`pixels`](/api/pixels) | `defold-pixels/ext.manifest` |
 | [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | `v1.1.0` | [`def_windward_jps`](/api/def_windward_jps) | `def_windward_jps/ext.manifest` |
 | [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | `1.0.3` | [`box2d`](/api/box2d) | `box2d/native/ext.manifest` |
 
@@ -200,10 +199,6 @@ The curated file wins over any `.script_api` the same archive ships, and the
 [Types the archive ships](#types-a-library-ships) win over the curated file.
 A project that still depends on the old `selimanac/DAABBCC` URL is not matched;
 point the dependency at `selimanac/defold-daabbcc`.
-
-defold-pixels ships its own declarations in `types/`, so an archive that
-carries them and passes the check gets those files instead of the curated
-`pixels` namespace. A project that copied them by hand deletes the copies.
 
 Each namespace types what the extension's C++ actually registers, which can
 differ from its README. `tile_raycast` registers its tile reader as `set_at` and

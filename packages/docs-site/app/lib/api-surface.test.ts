@@ -725,7 +725,6 @@ describe("loadApiSurface library descriptions", () => {
       "share",
       "uuid4",
       "tile_raycast",
-      "pixels",
       "def_windward_jps",
       "box2d",
     ]) {
@@ -3408,14 +3407,13 @@ describe("native helper shape definitions", () => {
     });
   });
 
-  test("defines pixels' buffer info, color and polyline option shapes", () => {
-    expect(group("pixels", "BufferInfo")?.symbols.map((s) => s.name)).toContain(
-      "BufferInfo.channels",
+  test("defines box2d's chain shape table as a union of its two table shapes", () => {
+    expect(group("box2d", "OpenChainShapeTable")?.symbols.map((s) => s.name)).toContain(
+      "OpenChainShapeTable.chain_prev_vertex",
     );
-    expect(row("pixels", "Color")?.signature).toContain("[ number, number, number, number ]");
-    const options = row("pixels", "PolylineOptions");
-    expect(options?.signature).toContain("PolylineWidth");
-    expect(options?.signature).toContain("PolylinePointWidths");
+    const chain = row("box2d", "ChainShapeTable");
+    expect(chain?.signature).toContain("LoopChainShapeTable");
+    expect(chain?.signature).toContain("OpenChainShapeTable");
   });
 
   test("renders def_windward_jps' grid with its userdata methods", () => {

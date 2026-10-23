@@ -78,30 +78,21 @@ describe("lowerNativeApiDoc", () => {
     ]);
   });
 
-  test("lowers pixels with its buffer, color and polyline option shapes", () => {
-    const doc = lowered("pixels");
-    expect(doc.elements.filter((e) => e.type === "FUNCTION")).toHaveLength(18);
-    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(0);
-    const byName = new Map(doc.elements.map((e) => [e.name, e]));
-    const bufferInfo = byName.get("BufferInfo");
-    expect(bufferInfo?.type).toBe("TYPEDEF");
-    expect(bufferInfo?.properties?.map((p) => [p.name, p.is_optional])).toEqual([
-      ["buffer", undefined],
-      ["width", undefined],
-      ["height", undefined],
-      ["channels", undefined],
-      ["premultiply_alpha", "True"],
+  test("lowers box2d's shape-table unions and joint-def inheritance", () => {
+    const byName = new Map(lowered("box2d").elements.map((e) => [e.name, e]));
+    const chain = byName.get("ChainShapeTable");
+    expect(chain?.type).toBe("TYPEDEF");
+    expect(chain?.types).toEqual(["LoopChainShapeTable", "OpenChainShapeTable"]);
+    expect(
+      byName.get("OpenChainShapeTable")?.properties?.map((p) => [p.name, p.is_optional]),
+    ).toEqual([
+      ["shape", undefined],
+      ["chain_vertices", undefined],
+      ["chain_loop", "True"],
+      ["chain_prev_vertex", undefined],
+      ["chain_next_vertex", undefined],
     ]);
-    expect(byName.get("Color")?.types).toEqual([
-      "[ number, number, number ]",
-      "[ number, number, number, number ]",
-    ]);
-    expect(byName.get("PolylineOptions")?.types).toEqual(["PolylineWidth", "PolylinePointWidths"]);
-    expect(byName.get("PolylineWidth")?.extends).toEqual(["PolylineStyle"]);
-    expect(byName.get("PolylinePointWidths")?.extends).toEqual(["PolylineStyle"]);
-    expect(byName.get("color")?.returnvalues?.[0]?.types).toEqual([
-      "LuaMultiReturn<[ undefined? ] | [ number, number, number ] | [ number, number, number, number ]>",
-    ]);
+    expect(byName.get("RevoluteJointDef")?.extends).toEqual(["JointDefBase"]);
   });
 
   test("lowers def_windward_jps with its grid methods and the point and heuristic shapes", () => {
