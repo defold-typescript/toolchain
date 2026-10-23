@@ -24,10 +24,11 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 
 ## Dependency kinds
 
-`resolve` inspects each declared archive and sorts it into one of four kinds:
+`resolve` inspects each declared archive and sorts it into one of five kinds:
 
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
 | **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated ambient namespace in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
@@ -88,6 +89,45 @@ the engine's type aliases, such as `gui.Playback`, to the engine surface.
 you change `[dependencies]`; each surface reconciles to exactly what is declared
 now, so removing a dependency prunes its generated types and drops the tsconfig
 entry — nothing stale is left behind.
+
+## Types a library ships
+
+A library can ship its own TypeScript declarations as `.d.ts` files in a
+`types/` folder at its repository root. `resolve` installs every `.d.ts` directly
+in that folder (subfolders are not read) into `.defold-types/extensions/`
+unchanged, and the dependency contributes nothing else. For each dependency the
+first surface that applies wins:
+
+1. the types it ships,
+2. a [vendored library](#vendored-library-types) match,
+3. a [curated native extension](#curated-native-extensions),
+4. its `.script_api` docs.
+
+```
+  pixels, pixels.global <- https://github.com/king8fisher/defold-pixels/archive/refs/heads/main.zip (shipped types)
+```
+
+The `--json` report marks the dependency `typeSurface: "shipped"`, and its
+`namespaces` lists the installed file stems.
+
+Before installing, `resolve` compiles the shipped files against the
+`@defold-typescript/types` package the CLI runs with. A file that names something
+that package does not declare, such as ts-defold's `hash` or `vmath.vector3` in
+place of `Hash` and `Vector3`, fails the check. The dependency then contributes
+exactly what it would with no `types/` folder, and `resolve` prints the first
+error:
+
+```
+defold-typescript resolve: warning: shipped types from <url> do not compile against @defold-typescript/types; using what the archive declares otherwise: <repo>-main/types/<file>.d.ts(3,27): 'hash' refers to a value, but is being used as a type here. Did you mean 'typeof hash'?
+```
+
+A project that copied a library's `types/` files into its own sources deletes
+the copies once `resolve` installs them: a second `declare const` of one name is
+TS2451 ("Cannot redeclare block-scoped variable"), and a second exported type
+alias is TS2300 ("Duplicate identifier").
+
+To ship types from a library you maintain, see
+[Shipping types with a library](./shipping-library-types.md).
 
 ## Vendored library types
 
@@ -152,15 +192,14 @@ const [hits, count] = daabbcc.query_aabb(group, 0, 0, 100, 100);
 ```
 
 The curated file wins over any `.script_api` the same archive ships, and the
-`--json` report marks the dependency `typeSurface: "vendored-native"`. A project
-that still depends on the old `selimanac/DAABBCC` URL is not matched; point
-the dependency at `selimanac/defold-daabbcc`.
+`--json` report marks the dependency `typeSurface: "vendored-native"`.
+[Types the archive ships](#types-a-library-ships) win over the curated file.
+A project that still depends on the old `selimanac/DAABBCC` URL is not matched;
+point the dependency at `selimanac/defold-daabbcc`.
 
-A project that copied defold-pixels' own `types/pixels.d.ts` deletes it: both
-files declare `pixels`, so TypeScript merges them into overloads that accept what
-the curated namespace rejects. Rename its `PixelsBufferInfo`, `PixelsColor` and
-`PixelsPolylineOptions` to `pixels.BufferInfo`, `pixels.Color` and
-`pixels.PolylineOptions`.
+defold-pixels ships its own declarations in `types/`, so an archive that
+carries them and passes the check gets those files instead of the curated
+`pixels` namespace. A project that copied them by hand deletes the copies.
 
 Each namespace types what the extension's C++ actually registers, which can
 differ from its README. `tile_raycast` registers its tile reader as `set_at` and
