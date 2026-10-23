@@ -1,0 +1,10 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/whiteboxdev/library-defold-persist",
+    "authoredHere": true,
+    "commit": "b37f61040740f232d86f68e2606f27b6f1bd15c4",
+    "sourceUrl": "https://github.com/whiteboxdev/library-defold-persist/tree/b37f61040740f232d86f68e2606f27b6f1bd15c4",
+    "license": "Zlib",
+    "importString": "import * as persist from \"persist.persist\""
+  }
+}

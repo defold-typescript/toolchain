@@ -1,0 +1,10 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/britzl/deftest",
+    "authoredHere": true,
+    "commit": "2.9.0",
+    "sourceUrl": "https://github.com/britzl/deftest/tree/2.9.0",
+    "license": "MIT",
+    "importString": "import * as deftest from \"deftest.deftest\""
+  }
+}

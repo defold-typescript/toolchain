@@ -1,0 +1,9 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/heroiclabs/nakama-defold",
+    "authoredHere": true,
+    "commit": "v3.4.0",
+    "sourceUrl": "https://github.com/heroiclabs/nakama-defold/tree/v3.4.0",
+    "license": "Apache-2.0"
+  }
+}

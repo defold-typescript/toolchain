@@ -1,0 +1,10 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/subsoap/defmath",
+    "authoredHere": true,
+    "commit": "c67c227322334056cea7a631f3ddcdf2bcfd480c",
+    "sourceUrl": "https://github.com/subsoap/defmath/tree/c67c227322334056cea7a631f3ddcdf2bcfd480c",
+    "license": "CC0-1.0",
+    "importString": "import * as defmath from \"defmath.defmath\""
+  }
+}

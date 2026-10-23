@@ -1,0 +1,11 @@
+{
+  "provenance": {
+    "authorUrl": "https://codeberg.org/Klaleus/defold-shutter",
+    "authoredHere": true,
+    "commit": "fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1",
+    "sourceUrl": "https://codeberg.org/Klaleus/defold-shutter/src/commit/fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1",
+    "license": "Zlib",
+    "importString": "import * as shutter from \"shutter.shutter\"",
+    "pinKind": "commit"
+  }
+}
