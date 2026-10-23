@@ -498,6 +498,10 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "55da1575a8da35ceb98415db1b9b85f3f67fb5fa0398e70ed71466df1ec2cae1",
   "fixtures/upstream-native/defold-box2d/box2d_header.lua":
     "ebc181a896bcb7baaad94968f71d958491da72abb61bde8c68cea7be6b815a4c",
+  "fixtures/upstream-native/defold-daabbcc3d/daabbcc3d/annotation.lua":
+    "3e85a9b227a48eb84717e907774096ab8f73aad679b420ca62b00e44539509c9",
+  "fixtures/upstream-native/defold-daabbcc3d/daabbcc3d/src/extension.cpp":
+    "40c4a14c59bec593c250b252991692ae122d708a0b8c8dec14a8752ea9672d40",
   "fixtures/upstream-native/defold-sharing/share/api/share.lua":
     "f441787bb953d0fd836c5981bf2430b525f0c2b9350730ff3bd06ac940be705d",
   "fixtures/upstream-native/defold-sharing/share/src/share.cpp":
@@ -506,6 +510,10 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "cc7fb70cf75b86a7a2dbef187b2c4ecde2f927dcbd34598bdde9daff862d8c09",
   "fixtures/upstream-native/defold-uuid4/uuid4/src/extension.cpp":
     "a2b98177e342dc218db4dd465997ffa72cfc2680802ccb758ca2d84c0ee58045",
+  "fixtures/upstream-native/defold-wave/wave/annotations.lua":
+    "72267a8e3c2906c8580aeb3f6bcf2171654a15adf65cc97ced96e3e92a4ec628",
+  "fixtures/upstream-native/defold-wave/wave/src/wave.cpp":
+    "153289f1ecc196258e0c9d8ad245e6ea06f2bf8037a0a28ca7dec16b8512ab7f",
 };
 
 describe("the vendored native C++ the registration surface is read from", () => {

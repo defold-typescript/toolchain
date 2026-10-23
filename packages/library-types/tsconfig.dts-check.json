@@ -66,6 +66,8 @@
     "generated/native/tile_raycast.d.ts",
     "generated/native/def_windward_jps.d.ts",
     "generated/native/box2d.d.ts",
+    "generated/native/daabbcc3d.d.ts",
+    "generated/native/wave.d.ts",
     "test-d/boom-usage.test-d.ts",
     "test-d/defsave-usage.test-d.ts",
     "test-d/bridge-usage.test-d.ts",
@@ -97,6 +99,8 @@
     "test-d/native-extensions-usage.test-d.ts",
     "test-d/def-windward-jps-usage.test-d.ts",
     "test-d/box2d-usage.test-d.ts",
+    "test-d/daabbcc3d-usage.test-d.ts",
+    "test-d/wave-usage.test-d.ts",
     "test-d/fixtures/engine-handle-module.d.ts",
     "test-d/engine-handle-module.test-d.ts",
     "test-d/dts-check-ambient.ts"

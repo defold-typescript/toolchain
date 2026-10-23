@@ -102,11 +102,44 @@ describe("parseLuaSurface over inline module shapes", () => {
     );
   });
 
-  test("a parameter list that does not close on its own line fails loudly, naming the line", () => {
+  test("a parameter list split one name per line is read to its closing parenthesis", () => {
+    const surface = parseLuaSurface(
+      [
+        "local m = {}",
+        "---@param a number",
+        "---@param b number",
+        "function m.init(",
+        "  a,",
+        "  b",
+        ")",
+        "end",
+        "return m",
+        "",
+      ].join("\n"),
+    );
+    expect(surface.members).toEqual([
+      {
+        name: "init",
+        params: ["a", "b"],
+        varargs: false,
+        doc: "@param a number\n@param b number",
+        refusedDoc: false,
+      },
+    ]);
+  });
+
+  test("a split list ending in a vararg tail sets `varargs` and keeps `...` out of params", () => {
+    const surface = parseLuaSurface(
+      ["local M = {}", "M.e = function(a,", "  ...)", "end", "return M", ""].join("\n"),
+    );
+    expect(surface.members).toEqual([
+      { name: "e", params: ["a"], varargs: true, doc: "", refusedDoc: false },
+    ]);
+  });
+
+  test("a parameter list that never closes fails loudly, naming the line that opened it", () => {
     expect(() =>
-      parseLuaSurface(
-        ["local M = {}", "function M.a(x,", "  y)", "end", "return M", ""].join("\n"),
-      ),
+      parseLuaSurface(["local M = {}", "function M.a(x,", "  y", "return M", ""].join("\n")),
     ).toThrow("line 2");
   });
 });

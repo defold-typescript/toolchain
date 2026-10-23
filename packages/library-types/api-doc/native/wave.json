@@ -1,0 +1,451 @@
+{
+  "info": {
+    "namespace": "wave",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Initialize the wave simulation. Call it once before any other wave",
+      "description": "Initialize the wave simulation. Call it once before any other wave\nfunction, with the same parameters the water shader uses.",
+      "parameters": [
+        {
+          "name": "wave1_direction",
+          "doc": "Wave 1 direction (0.0 to 2.0, multiplied by π internally).",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wave1_amplitude",
+          "doc": "Wave 1 height in world units.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wave1_wavelength",
+          "doc": "Wave 1 distance between peaks.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wave1_speed",
+          "doc": "Wave 1 animation speed.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wave2_direction",
+          "doc": "Wave 2 direction (0.0 to 2.0).",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wave2_amplitude",
+          "doc": "Wave 2 height in world units.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wave2_wavelength",
+          "doc": "Wave 2 distance between peaks.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wave2_speed",
+          "doc": "Wave 2 animation speed.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time_speed",
+          "doc": "Global time multiplier.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "gameobject_capacity",
+          "doc": "Pre-allocated entity table size (for example 256), fixed at init time.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_gameobject",
+      "brief": "Add a floating game object to the wave simulation.",
+      "description": "Add a floating game object to the wave simulation.\n\nThe model must face -Z in its unrotated state: wave sampling, pitch, roll\nand movement all assume it. To face another way at runtime, call\n`set_yaw` after registration, or pass the matching `forward`.",
+      "parameters": [
+        {
+          "name": "instance",
+          "doc": "The game object.",
+          "types": [
+            "SceneGameObjectAddress | Hash | Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "float_offset",
+          "doc": "Vertical offset from the water surface.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "water_base_y",
+          "doc": "Y coordinate of the flat water plane.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sample_distance",
+          "doc": "Probe offset used to compute the pitch and roll normals.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "rotation_smoothing",
+          "doc": "SLERP factor: `0` or omitted disables rotation, `1` snaps instantly.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "use_world_transform",
+          "doc": "`true` for objects nested under another moving object, `false` for root objects.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "forward",
+          "doc": "World-space direction the model's nose faces at registration. Default is `vmath.vector3(0, 0, -1)`.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The floater ID used by every later call, or `0` on error such as exceeded capacity.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_wave1",
+      "brief": "Live-update the wave 1 parameters. Call it in sync with the water",
+      "description": "Live-update the wave 1 parameters. Call it in sync with the water\nshader's wave 1 update to keep visuals and physics aligned.",
+      "parameters": [
+        {
+          "name": "direction",
+          "doc": "Wave direction.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "amplitude",
+          "doc": "Wave height.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wavelength",
+          "doc": "Distance between peaks.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "Animation speed.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_wave2",
+      "brief": "Live-update the wave 2 parameters. Call it in sync with the water",
+      "description": "Live-update the wave 2 parameters. Call it in sync with the water\nshader's wave 2 update to keep visuals and physics aligned.",
+      "parameters": [
+        {
+          "name": "direction",
+          "doc": "Wave direction.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "amplitude",
+          "doc": "Wave height.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wavelength",
+          "doc": "Distance between peaks.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "Animation speed.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_wave1_height",
+      "brief": "Sample the wave 1 height at a world position, at the simulation's",
+      "description": "Sample the wave 1 height at a world position, at the simulation's\ncurrent time.",
+      "parameters": [
+        {
+          "name": "pos_x",
+          "doc": "World X.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "pos_z",
+          "doc": "World Z.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time",
+          "doc": "Required by the runtime; the sample uses the simulation's own clock instead.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The wave height.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_wave2_height",
+      "brief": "Sample the wave 2 height at a world position, at the simulation's",
+      "description": "Sample the wave 2 height at a world position, at the simulation's\ncurrent time.",
+      "parameters": [
+        {
+          "name": "pos_x",
+          "doc": "World X.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "pos_z",
+          "doc": "World Z.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time",
+          "doc": "Required by the runtime; the sample uses the simulation's own clock instead.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The wave height.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_yaw",
+      "brief": "Override the yaw (heading) of a floater, for steering such as a boat",
+      "description": "Override the yaw (heading) of a floater, for steering such as a boat\nturning.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Floater ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "yaw",
+          "doc": "Yaw in radians.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "move",
+      "brief": "Begin moving a floater forward at up to `max_speed`, accelerating by",
+      "description": "Begin moving a floater forward at up to `max_speed`, accelerating by\n`speed_factor` per second.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Floater ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_speed",
+          "doc": "Target and maximum speed in world units per second.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed_factor",
+          "doc": "Acceleration factor; higher ramps up faster.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "stop",
+      "brief": "Stop a floater. Its target speed becomes `0` and it decelerates smoothly",
+      "description": "Stop a floater. Its target speed becomes `0` and it decelerates smoothly\nby its speed factor.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Floater ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pause",
+      "brief": "Pause or resume the wave update loop without removing entities.",
+      "description": "Pause or resume the wave update loop without removing entities.",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "`true` to pause, `false` to resume.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_pause",
+      "brief": "Whether the wave update loop is paused.",
+      "description": "Whether the wave update loop is paused.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "`true` when paused.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shutdown",
+      "brief": "Shut down the wave simulation and free all resources. The extension",
+      "description": "Shut down the wave simulation and free all resources. The extension\nfinalizer calls it automatically; call it yourself only to\nreinitialize.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

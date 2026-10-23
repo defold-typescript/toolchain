@@ -20,7 +20,7 @@ import { loadAnnotations } from "../../../types/scripts/lua-annotations";
 import { loadApiTargets } from "../../../types/scripts/regen";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { canonicalApiPages, windowedApiPages } from "./api-content";
-import { apiSignatureSymbolLinks } from "./api-page-render";
+import { apiLinkify, apiPageMarkdown, apiSignatureSymbolLinks } from "./api-page-render";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -727,6 +727,8 @@ describe("loadApiSurface library descriptions", () => {
       "tile_raycast",
       "def_windward_jps",
       "box2d",
+      "daabbcc3d",
+      "wave",
     ]) {
       const page = libraryPages.find((p) => p.route === `/api/${namespace}`);
       expect(page?.namespace).toBe(namespace);
@@ -737,6 +739,15 @@ describe("loadApiSurface library descriptions", () => {
       .find((p) => p.namespace === "tile_raycast")
       ?.module.functions.find((f) => f.name === "cast");
     expect(cast).toBeDefined();
+  });
+
+  test("the commit-pinned wave page shows its members and the commit archive to depend on", () => {
+    const wave = libraryPages.find((p) => p.route === "/api/wave");
+    if (wave === undefined) throw new Error("no /api/wave page");
+    expect(wave.module.functions.map((f) => f.name)).toContain("add_gameobject");
+    expect(apiPageMarkdown(wave, apiLinkify(pages))).toContain(
+      "This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, `https://github.com/selimanac/defold-wave/archive/76ff0c9780730a7e7cc4f3e0a8752d8c1f426def.zip`",
+    );
   });
 
   // orthographic severed into the authored lane, so it has no classification dir
