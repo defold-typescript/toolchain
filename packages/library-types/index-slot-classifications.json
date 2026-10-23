@@ -71,6 +71,10 @@
     "class": "native-1",
     "evidence": "def_windward_jps.cpp:PushLocation adds 1 to both components of each point"
   },
+  "detiled/detiled_map_params_scene:field:stagger_index": {
+    "class": "not-a-position",
+    "evidence": "the string \"odd\" or \"even\"; grid/isometric_staggered.lua:stagger_offset compares it to \"even\""
+  },
   "detour/add_agent:return:": {
     "class": "native-0",
     "evidence": "detour.cpp:206 returns dtCrowd::addAgent's slot in its 0-based agent array, or -1 when the crowd is full"
@@ -234,6 +238,18 @@
   "panthera/panthera_animation:field:animation_keys_index": {
     "class": "native-1",
     "evidence": "panthera.lua:update_animation walks keys from animation_keys_index to #keys"
+  },
+  "quest/add_task_progress:param:task_index": {
+    "class": "native-1",
+    "evidence": "quest.lua:add_task_progress reads quest_config.tasks[task_index], the array quest_progress.lua walks from 1 to #tasks"
+  },
+  "quest/get_task_progress:param:task_index": {
+    "class": "native-1",
+    "evidence": "quest.lua:get_task_progress reads quest_config.tasks[task_index] and progress[task_index], both walked from 1 to #tasks"
+  },
+  "quest/quest_event_data:field:task_index": {
+    "class": "native-1",
+    "evidence": "quest_progress.lua:apply_event passes the loop variable of for task_index = 1, #quest_config.tasks"
   },
   "random/rnd.card:return:Card": {
     "class": "native-1",

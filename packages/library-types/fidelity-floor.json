@@ -1,6 +1,7 @@
 {
   "fidelity/bridge.json": 1,
   "fidelity/decore.json": 1,
+  "fidelity/detiled.json": 1,
   "fidelity/druid.json": 1,
   "fidelity/event.json": 1,
   "fidelity/immutable.json": 1,
@@ -11,8 +12,10 @@
   "fidelity/orthographic.json": 1,
   "fidelity/panthera.json": 1,
   "fidelity/proto.json": 1,
+  "fidelity/quest.json": 1,
   "fidelity/saver.saver.json": 1,
   "fidelity/saver.storage.json": 1,
   "fidelity/squid.json": 1,
+  "fidelity/token.json": 1,
   "fidelity/tweener.json": 1
 }

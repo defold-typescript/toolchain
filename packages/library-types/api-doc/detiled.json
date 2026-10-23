@@ -1,0 +1,1598 @@
+{
+  "info": {
+    "namespace": "detiled",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "Set a logger instance",
+      "description": "Set a logger instance",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "",
+          "types": [
+            "detiled_logger | LuaTable | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "parse",
+      "brief": "Get layers and map params from a map. Each layer has entities, properties, layer_id, visible, position (offset).",
+      "description": "Get layers and map params from a map. Each layer has entities, properties, layer_id, visible, position (offset).",
+      "parameters": [
+        {
+          "name": "map_or_path",
+          "doc": "",
+          "types": [
+            "detiled_map | string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "detiled_layers"
+          ]
+        },
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "detiled_map_params | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cell_to_pos",
+      "brief": "Convert cell indices to world position",
+      "description": "Convert cell indices to world position",
+      "parameters": [
+        {
+          "name": "i",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "j",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "map_params",
+          "doc": "",
+          "types": [
+            "detiled_map_params"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pos_to_cell",
+      "brief": "Convert world position to cell indices",
+      "description": "Convert world position to cell indices",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "map_params",
+          "doc": "",
+          "types": [
+            "detiled_map_params"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_tileset",
+      "brief": "Load a tileset to internal cache, so maps can reference it by name while parsing",
+      "description": "Load a tileset to internal cache, so maps can reference it by name while parsing",
+      "parameters": [
+        {
+          "name": "tileset_or_path",
+          "doc": "Path to tileset JSON file or tileset table",
+          "types": [
+            "detiled_tileset | string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "detiled_tileset"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_tileset",
+      "properties": [
+        {
+          "name": "class",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "columns",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "image",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "fillmode",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "grid",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_tileset_grid"
+          ]
+        },
+        {
+          "name": "margin",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "objectalignment",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "spacing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "tilecount",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "tiledversion",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "tileheight",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "tiles",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_tileset_tile[]"
+          ]
+        },
+        {
+          "name": "tilewidth",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "transformations",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_tileset_transformations"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "version",
+          "brief": "Example: \"1.9\"",
+          "description": "Example: \"1.9\"",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_tileset_grid",
+      "properties": [
+        {
+          "name": "height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "orientation",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_tileset_tile",
+      "properties": [
+        {
+          "name": "class",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "image",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "imageheight",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "imagewidth",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "objectgroup",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_tileset_objectgroup | undefined"
+          ]
+        },
+        {
+          "name": "properties",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_property[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_tileset_objectgroup",
+      "properties": [
+        {
+          "name": "visible",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "draworder",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "opacity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "objects",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_tileset_objectgroup_object[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_tileset_objectgroup_object",
+      "properties": [
+        {
+          "name": "visible",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "point",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "class",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "rotation",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_tileset_transformations",
+      "properties": [
+        {
+          "name": "hflip",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "preferuntransformed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "rotate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "vflip",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_map",
+      "properties": [
+        {
+          "name": "class",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "compressionlevel",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "infinite",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "layers",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_layer[]"
+          ]
+        },
+        {
+          "name": "nextlayerid",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "nextobjectid",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "orientation",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "renderorder",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "tiledversion",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "tileheight",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "tilesets",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_tileset[]"
+          ]
+        },
+        {
+          "name": "tilewidth",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "staggeraxis",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "staggerindex",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "hexsidelength",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_map_layer",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Global tile id",
+          "description": "Global tile id",
+          "types": [
+            "number[]"
+          ]
+        },
+        {
+          "name": "encoding",
+          "brief": "Example: \"base64\"",
+          "description": "Example: \"base64\"",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "compression",
+          "brief": "Example: \"zlib\"",
+          "description": "Example: \"zlib\"",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "offsetx",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "offsety",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "opacity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "properties",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_property[]"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "visible",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "draworder",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "objects",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_object[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_map_property",
+      "properties": [
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | LuaTable"
+          ]
+        },
+        {
+          "name": "propertytype",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_map_object",
+      "properties": [
+        {
+          "name": "class",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ellipse",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "gid",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "point",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "polygon",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable | undefined"
+          ]
+        },
+        {
+          "name": "polyline",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable | undefined"
+          ]
+        },
+        {
+          "name": "properties",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_property[]"
+          ]
+        },
+        {
+          "name": "objectgroup",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown"
+          ]
+        },
+        {
+          "name": "rotation",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "visible",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_map_tileset",
+      "properties": [
+        {
+          "name": "firstgid",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "source",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_entity_transform",
+      "properties": [
+        {
+          "name": "position_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "position_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "position_z",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "scale_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "scale_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "size_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "size_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "rotation",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_entity",
+      "properties": [
+        {
+          "name": "prefab_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "image",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "transform",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_entity_transform"
+          ]
+        },
+        {
+          "name": "tiled_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "tiled_layer_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "object_type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "polyline",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable | undefined"
+          ]
+        },
+        {
+          "name": "polygon",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_layer_data",
+      "properties": [
+        {
+          "name": "entities",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_entity[]"
+          ]
+        },
+        {
+          "name": "properties",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_property[]"
+          ]
+        },
+        {
+          "name": "layer_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "visible",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "position_x",
+          "brief": "A layer Horizontal offset from layer settings",
+          "description": "A layer Horizontal offset from layer settings",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "position_y",
+          "brief": "A layer Vertical offset from layer settings",
+          "description": "A layer Vertical offset from layer settings",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "position_z",
+          "brief": "A position_z custom property value from layer settings",
+          "description": "A position_z custom property value from layer settings",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_map_params_tile",
+      "properties": [
+        {
+          "name": "width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "side",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_map_params_scene",
+      "properties": [
+        {
+          "name": "invert_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "tiles_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "tiles_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "size_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "size_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "hexmap_type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "stagger_index",
+          "brief": "\"odd\" or \"even\"",
+          "description": "\"odd\" or \"even\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "stagger_axis",
+          "brief": "\"x\" or \"y\", used for staggered orientation",
+          "description": "\"x\" or \"y\", used for staggered orientation",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_map_params",
+      "properties": [
+        {
+          "name": "orientation",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "tile",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_params_tile"
+          ]
+        },
+        {
+          "name": "scene",
+          "brief": "",
+          "description": "",
+          "types": [
+            "detiled_map_params_scene"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_grid",
+      "properties": [
+        {
+          "name": "get_map_params_from_tiled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(tiled_data: detiled_map) => detiled_map_params"
+          ]
+        },
+        {
+          "name": "cell_to_pos",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(i: number, j: number, map_params: detiled_map_params) => LuaMultiReturn<[number, number]>"
+          ]
+        },
+        {
+          "name": "pos_to_cell",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(x: number, y: number, map_params: detiled_map_params) => LuaMultiReturn<[number, number]>"
+          ]
+        },
+        {
+          "name": "get_tile_pos",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(i: number, j: number, z_layer: number | undefined, map_params: detiled_map_params) => LuaMultiReturn<[number, number, number]>"
+          ]
+        },
+        {
+          "name": "convert_object_position",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(x: number, y: number, map_params: detiled_map_params) => LuaMultiReturn<[number, number]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_logger",
+      "properties": [
+        {
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_grid_hexagonal_flattop"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_grid_hexagonal_pointytop"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_grid_hexagonal"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_grid_isometric"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_grid_staggered"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_grid_orthogonal"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "detiled_layers"
+    }
+  ]
+}

@@ -18,9 +18,11 @@
  * only for parents that resolve to a declared interface or an imported external type.
  *
  * A token owned by another target is declared through `externalTypes`: the emitter
- * writes a real `import { <name> } from '<module>';` into the `declare module` block
- * and resolves the token to that binding, so a cross-library reference carries its
- * real type instead of lowering to `unknown`.
+ * writes a real `import type { <name> } from '<module>';` into the `declare module`
+ * block and resolves the token to that binding, so a cross-library reference carries
+ * its real type instead of lowering to `unknown`. The import is type-only so it binds
+ * no value: a library that exports a function named like the imported type still
+ * compiles under `isolatedModules`.
  */
 
 import {
@@ -131,7 +133,7 @@ export function externalTypeRenames(
 }
 
 /**
- * `import { ... } from '<module>';` lines for the external tokens, one per source
+ * `import type { ... } from '<module>';` lines for the external tokens, one per source
  * module with its names sorted and the modules sorted by id, so re-rendering is
  * byte-identical. A token whose local alias differs from the export name binds
  * through an `as` clause.
@@ -148,7 +150,8 @@ function renderExternalImports(externalTypes?: Record<string, ExternalTypeRef>):
   return [...byModule.entries()]
     .sort(([a], [b]) => (a < b ? -1 : 1))
     .map(
-      ([module, names]) => `${INDENT}import { ${[...names].sort().join(", ")} } from '${module}';`,
+      ([module, names]) =>
+        `${INDENT}import type { ${[...names].sort().join(", ")} } from '${module}';`,
     );
 }
 
