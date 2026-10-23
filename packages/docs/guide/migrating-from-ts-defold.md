@@ -71,7 +71,8 @@ already has a `game.project`).
    TS config unless you pass `--force`. Your existing `src/*.ts` and
    `game.project` are left alone.
 2. **Reconcile `tsconfig.json`.** The defold-typescript scaffold sets `target: ES2022`,
-   `module: ESNext`, `moduleResolution: Bundler`, `types: ["@defold-typescript/types"]`,
+   `module: ESNext`, `moduleResolution: Bundler`, `noEmit: true`,
+   `types: ["@defold-typescript/types"]`,
    and `plugins: [{ name: "@defold-typescript/tstl-plugin" }]`. Point the
    `types` array at `@defold-typescript/types` (replacing `@ts-defold/types`)
    and add the `tstl-plugin` entry to keep live editor diagnostics.
