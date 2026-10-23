@@ -27,8 +27,8 @@ my-library/
     └── my_library.global.d.ts
 ```
 
-- Only files directly in `types/` are read. A `.d.ts` in a subfolder, or
-  anywhere else in the repository, is ignored.
+- Only files directly in `types/` are read. A `.d.ts` in a subfolder, one
+  whose name holds a `\`, or one anywhere else in the repository, is ignored.
 - Keep `types/` outside `include_dirs`. Defold copies the shared folders into
   every project that depends on the library, and the declarations have no use
   at runtime.
