@@ -1,11 +1,12 @@
 // Turns the curated declarations `resolve` installs for a library into the
 // `types/` folder that library can ship itself, so a release carrying it
 // replaces the curated copy with the same declarations. Each file is written
-// verbatim, and only once the whole set passes the selection and the check
-// `resolve` runs on shipped types: a folder `resolve` would reject or trim is
-// never left behind.
+// verbatim, and only once the folder as it will be -- the `.d.ts` files already
+// directly in `types/`, with each curated file in place of one of the same name
+// -- passes the selection and the check `resolve` runs on shipped types: a
+// folder `resolve` would reject or trim is never left behind.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { normalizeSourceId } from "./library-match";
@@ -16,6 +17,7 @@ import {
 } from "./library-registry";
 import {
   checkShippedDeclarations,
+  isShippedDeclarationPath,
   type ShippedDeclarationFile,
   selectShippedDeclarations,
 } from "./shipped-declarations";
@@ -59,6 +61,24 @@ function curatedFiles(sourceId: string, root: string | null): string[] {
   return [...files].filter((file) => existsSync(file));
 }
 
+function byEntryPath(a: ShippedDeclarationFile, b: ShippedDeclarationFile): number {
+  return a.entry < b.entry ? -1 : a.entry > b.entry ? 1 : 0;
+}
+
+// The files already in `<cwd>/types/` that `resolve` would read as shipped
+// types once the folder is released.
+function existingShippedFiles(cwd: string): ShippedDeclarationFile[] {
+  const dir = path.join(cwd, SHIPPED_DIR);
+  if (!existsSync(dir)) {
+    return [];
+  }
+  return readdirSync(dir, { withFileTypes: true })
+    .filter((dirent) => dirent.isFile())
+    .map((dirent) => path.posix.join(SHIPPED_DIR, dirent.name))
+    .filter(isShippedDeclarationPath)
+    .map((entry) => ({ entry, contents: readFileSync(path.join(cwd, entry), "utf8") }));
+}
+
 export function runExportTypes(opts: RunExportTypesOptions): RunExportTypesResult {
   const sourceId = normalizeSourceId(opts.library);
   const root =
@@ -78,10 +98,21 @@ export function runExportTypes(opts: RunExportTypesOptions): RunExportTypesResul
     byEntry.set(entry, source);
   }
   const files: ShippedDeclarationFile[] = [...byEntry]
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([entry, source]) => ({ entry, contents: readFileSync(source, "utf8") }));
+    .map(([entry, source]) => ({ entry, contents: readFileSync(source, "utf8") }))
+    .sort(byEntryPath);
 
-  const kept = new Set(selectShippedDeclarations(files).map(({ entry }) => entry));
+  const projected = new Map(
+    existingShippedFiles(opts.cwd).map(({ entry, contents }) => [entry, contents]),
+  );
+  for (const { entry, contents } of files) {
+    projected.set(entry, contents);
+  }
+  const folder: ShippedDeclarationFile[] = [...projected]
+    .map(([entry, contents]) => ({ entry, contents }))
+    .sort(byEntryPath);
+
+  const selected = selectShippedDeclarations(folder);
+  const kept = new Set(selected.map(({ entry }) => entry));
   const skipped = files.map(({ entry }) => entry).filter((entry) => !kept.has(entry));
   if (skipped.length > 0) {
     throw new Error(
@@ -95,12 +126,12 @@ export function runExportTypes(opts: RunExportTypesOptions): RunExportTypesResul
       `curated types for ${sourceId} were not exported: @defold-typescript/types could not be found to check them`,
     );
   }
-  const checked = checkShippedDeclarations(files, typesRoot);
-  const messages = files.flatMap(({ entry }) => checked.get(entry) ?? []);
+  const checked = checkShippedDeclarations(selected, typesRoot);
+  const messages = selected.flatMap(({ entry }) => checked.get(entry) ?? []);
   if (messages.length > 0) {
     const more = messages.length > 1 ? ` (+${messages.length - 1} more)` : "";
     throw new Error(
-      `curated types for ${sourceId} do not compile against @defold-typescript/types: ${messages[0]}${more}`,
+      `curated types for ${sourceId} were not exported: ${SHIPPED_DIR}/ would not compile against @defold-typescript/types: ${messages[0]}${more}`,
     );
   }
 
