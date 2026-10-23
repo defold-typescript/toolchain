@@ -4,5 +4,6 @@
   "moduleResolution": "Bundler",
   "lib": ["ES2022"],
   "strict": true,
-  "skipLibCheck": true
+  "skipLibCheck": true,
+  "noEmit": true
 }
