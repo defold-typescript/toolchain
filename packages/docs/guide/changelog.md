@@ -31,7 +31,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **[Libraries](/libraries) lists the Defold Asset Portal's libraries under their GitHub owners**: one that ships a `.script_api` gets a reference page per doc, such as [defos](/api/defos), and one that ships no Lua API, such as shaders, materials and editor scripts, gets an icon-marked page, such as [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page gives the dependency step for its pin and links the library's Asset Portal entry.
 - **Two more native extensions are typed by curated namespaces** ([Curated native extensions](./resolve.md#curated-native-extensions)), so a project depending on either gets types where `resolve` wrote none:
   - **[def_windward_jps](/api/def_windward_jps)** (`s-kania/def-windward-jps`, tag `v1.1.0`) — `def_windward_jps.create_grid` returns a grid whose `def_windward_jps.Grid.find_path` and `def_windward_jps.Grid.is_walkable` take 1-based `def_windward_jps.Point` cells.
-  - **[box2d](/api/box2d)** (`d954mas/defold-box2d`, tag `1.0.3`) — `box2d.NewWorld` returns a world whose bodies, fixtures, shapes and joints carry their methods, and `box2d.World.CreateJoint` returns the joint type its definition names.
+  - **[box2d](/api/box2d)** (`d954mas/defold-box2d`, tag `1.0.3`) — `box2d.NewWorld` returns a world whose bodies, fixtures, shapes and joints carry their methods, and `box2d.World.CreateJoint` accepts only the joint definitions the extension can build and returns the joint type each one names.
 
 ### Fixed
 
