@@ -4992,7 +4992,7 @@ describe("dispatch resolve", () => {
     });
 
     expect(code).toBe(0);
-    expect(out()).toContain(`  pixels, pixels.global <- ${url} (shipped types)\n`);
+    expect(out()).toContain(`  pixels <- ${url} (shipped types)\n`);
     expect(out()).not.toContain("asset-only, skipped");
   });
 

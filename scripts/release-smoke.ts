@@ -29,8 +29,9 @@ export const STARTER_ARTIFACT_REL = "src/main.ts.script";
 // target, so `resolve` copies the packed library-types declaration.
 const NATIVE_EXTENSION_URL =
   "https://github.com/selimanac/defold-daabbcc/archive/refs/tags/v3.0.8.zip";
-// The archive ships its own `types/pixels.d.ts` and `types/pixels.global.d.ts`,
-// which `resolve` installs ahead of every other surface.
+// The archive ships its own `types/pixels.d.ts` and `types/pixels.global.d.ts`;
+// `resolve` installs the module ahead of every other surface and skips the
+// global file.
 const SHIPPED_TYPES_URL =
   "https://github.com/king8fisher/defold-pixels/archive/refs/heads/master.zip";
 // No curated target matches this archive, so `resolve` writes `drawpixels.d.ts`
@@ -249,7 +250,7 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
       resolve.code === 0 &&
         resolve.output.includes("(shipped types)") &&
         existsSync(path.join(shippedDir, "pixels.d.ts")) &&
-        existsSync(path.join(shippedDir, "pixels.global.d.ts")),
+        !existsSync(path.join(shippedDir, "pixels.global.d.ts")),
       resolve.code === 0 ? "" : resolve.output.slice(-300),
     );
 
