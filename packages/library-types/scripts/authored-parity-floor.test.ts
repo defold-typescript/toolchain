@@ -498,10 +498,6 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "55da1575a8da35ceb98415db1b9b85f3f67fb5fa0398e70ed71466df1ec2cae1",
   "fixtures/upstream-native/defold-box2d/box2d_header.lua":
     "ebc181a896bcb7baaad94968f71d958491da72abb61bde8c68cea7be6b815a4c",
-  "fixtures/upstream-native/defold-pixels/defold-pixels/idea_autocomplite.lua":
-    "6e74062091e85dcef47475d0f18f55cb83c1b6fda9d911fdcd6eb47974fc0e7c",
-  "fixtures/upstream-native/defold-pixels/defold-pixels/src/pixels.cpp":
-    "2ee66457f697bf4b1edc7d93db1568b184e6629c173011c5b563f6086e61d5ce",
   "fixtures/upstream-native/defold-sharing/share/api/share.lua":
     "f441787bb953d0fd836c5981bf2430b525f0c2b9350730ff3bd06ac940be705d",
   "fixtures/upstream-native/defold-sharing/share/src/share.cpp":

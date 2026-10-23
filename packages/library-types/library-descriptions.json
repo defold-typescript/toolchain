@@ -44,7 +44,6 @@
   "node_repeat": "GUI box node texture repeat (tiling) shader helper: reads a box node's atlas animation and drives the repeat material's constants.",
   "orthographic.camera": "Orthographic camera functionality for the Defold game engine",
   "panthera": "Panthera Animation Runtime for Defold Game Engine",
-  "pixels": "Draw pixels and simple geometry into a texture buffer.",
   "platypus": "Defold platformer engine",
   "proto": "Protocol-buffer style message encoding for compact Defold network payloads.",
   "richtext.color": "Rich-text rendering for Defold: styled spans, embedded tags, and per-color text runs.",
