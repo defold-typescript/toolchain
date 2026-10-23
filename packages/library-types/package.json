@@ -83,6 +83,7 @@
     "openapi-targets.json",
     "native-targets.json",
     "defold-extensions.json",
+    "index-slot-classifications.json",
     "NOTICE",
     "!scripts/**/*.test.ts"
   ],

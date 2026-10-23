@@ -1,15 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import {
-  LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
-  libraryIndexBaseNotes,
-} from "@defold-typescript/types";
+import { libraryIndexBaseNotes } from "@defold-typescript/types";
 import * as ts from "typescript";
 import { emitExtensionDeclarationFromDoc } from "./extension-emit";
+import { loadLibraryIndexSlotClassifications } from "./library-registry";
 
 const LIBRARY_TYPES_DIR = join(import.meta.dir, "../../library-types");
-const MAP_FILE = "packages/types/src/library-index-slot-classifications.ts";
+const MAP_FILE = "packages/library-types/index-slot-classifications.json";
+const CLASSIFICATIONS = loadLibraryIndexSlotClassifications(LIBRARY_TYPES_DIR);
 
 type Lane = "script-api" | "extension" | "luals" | "authored" | "native" | "portal";
 
@@ -84,7 +83,7 @@ interface ClassifiedSlot {
 // slot's notes cover all of its classified fields at once.
 function classifiedSlots(): ClassifiedSlot[] {
   const slots = new Map<string, ClassifiedSlot>();
-  for (const [key, { class: base }] of LIBRARY_INDEX_SLOT_CLASSIFICATIONS) {
+  for (const [key, { class: base }] of CLASSIFICATIONS) {
     if (base !== "native-1" && base !== "native-0") continue;
     const page = key.slice(0, key.indexOf("/"));
     const [element = "", kind = "", slot = ""] = key.slice(page.length + 1).split(":");
@@ -215,7 +214,7 @@ async function emitLaneDeclaration(page: string, lane: Lane): Promise<string> {
   const doc = JSON.parse(
     readFileSync(join(LIBRARY_TYPES_DIR, docDir, "api-doc", `${page}.json`), "utf8"),
   ) as { info: { namespace: string } };
-  return (await emitExtensionDeclarationFromDoc(doc, [page])).contents;
+  return (await emitExtensionDeclarationFromDoc(doc, [page], CLASSIFICATIONS)).contents;
 }
 
 describe("library index base declaration gate", () => {
@@ -264,7 +263,13 @@ describe("library index base declaration gate", () => {
       const members = byMember ? declaredMembers(text) : undefined;
       for (const slot of pageSlots) {
         const label = `${slot.page}/${slot.element}:${slot.kind}:${slot.slot}`;
-        const notes = libraryIndexBaseNotes(slot.page, slot.element, slot.kind, slot.slot);
+        const notes = libraryIndexBaseNotes(
+          CLASSIFICATIONS,
+          slot.page,
+          slot.element,
+          slot.kind,
+          slot.slot,
+        );
         const texts =
           members !== undefined
             ? (memberSlotTexts(members, slot) ?? [])

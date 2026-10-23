@@ -1,5 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import type { LibraryIndexSlotClassifications } from "@defold-typescript/types";
+import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import type { FidelityReport } from "./luals-fidelity";
 
 /**
@@ -185,7 +187,10 @@ interface RegenModule {
     outFile: string;
     importsFrom?: string;
     moduleId?: string;
-    indexBaseSource?: { pages: readonly string[] };
+    indexBaseSource?: {
+      pages: readonly string[];
+      classifications: LibraryIndexSlotClassifications;
+    };
   }) => { contents: string; dropped: string[] };
 }
 
@@ -320,7 +325,10 @@ export async function emitScriptApiDeclaration(
     outFile: `${target.moduleId}.d.ts`,
     importsFrom: SCRIPT_API_CORE_TYPES_IMPORT,
     moduleId: target.moduleId,
-    indexBaseSource: { pages: [scriptApiPage(target)] },
+    indexBaseSource: {
+      pages: [scriptApiPage(target)],
+      classifications: readLibraryIndexSlotClassifications(packageRoot),
+    },
   });
   return contents;
 }

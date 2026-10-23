@@ -8,6 +8,8 @@
 // `.defold-types/`, and the CLI `resolve` verb are later slices; this stays
 // text-pure and IO-free.
 
+import type { LibraryIndexSlotClassifications } from "@defold-typescript/types";
+
 // Shared with the committed extension goldens, which import branded engine
 // handles from the types package's core-types via this relative path. Only
 // emitted when the declaration actually references one.
@@ -29,7 +31,10 @@ interface RegenModule {
     doc: unknown;
     outFile: string;
     importsFrom?: string;
-    indexBaseSource?: { pages: readonly string[] };
+    indexBaseSource?: {
+      pages: readonly string[];
+      classifications: LibraryIndexSlotClassifications;
+    };
     ownsConstantUnionAliases?: boolean;
   }) => { contents: string; dropped: string[] };
 }
@@ -49,13 +54,15 @@ async function loadEmitter(): Promise<ScriptApiToFixtureJson & RegenModule> {
 // committed `fixtures/<ns>_doc.json` reproduces the committed
 // `extension-goldens/<ns>.d.ts` byte-for-byte (regen writes the same
 // `generateModuleDeclaration` output with no formatting pass). `pages` are the
-// curated library pages documenting this doc, whose classified indexes the
-// declaration notes; an uncurated extension has none and gains no note. The
-// declaration owns no constant-union alias: an extension declaring an engine
-// namespace (`gui`) would otherwise re-declare the engine module's aliases.
+// curated library pages documenting this doc, whose indexes `classifications`
+// classifies and the declaration notes; an uncurated extension has none and
+// gains no note. The declaration owns no constant-union alias: an extension
+// declaring an engine namespace (`gui`) would otherwise re-declare the engine
+// module's aliases.
 export async function emitExtensionDeclarationFromDoc(
   doc: { info: { namespace: string } },
   pages: readonly string[] = [],
+  classifications: LibraryIndexSlotClassifications = new Map(),
 ): Promise<EmittedExtension> {
   const { generateModuleDeclaration } = await loadEmitter();
   const namespace = doc.info.namespace;
@@ -64,7 +71,7 @@ export async function emitExtensionDeclarationFromDoc(
     doc,
     outFile: `${namespace}.d.ts`,
     importsFrom: EXTENSION_CORE_TYPES_IMPORT,
-    indexBaseSource: { pages },
+    indexBaseSource: { pages, classifications },
     ownsConstantUnionAliases: false,
   });
   return { namespace, contents, dropped };
@@ -73,10 +80,11 @@ export async function emitExtensionDeclarationFromDoc(
 export async function emitExtensionDeclaration(
   scriptApiYaml: string,
   pages: readonly string[] = [],
+  classifications: LibraryIndexSlotClassifications = new Map(),
 ): Promise<EmittedExtension> {
   const { scriptApiToFixtureJson } = await loadEmitter();
   const doc = JSON.parse(scriptApiToFixtureJson(scriptApiYaml)) as {
     info: { namespace: string };
   };
-  return emitExtensionDeclarationFromDoc(doc, pages);
+  return emitExtensionDeclarationFromDoc(doc, pages, classifications);
 }

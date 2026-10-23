@@ -26,6 +26,7 @@
 import {
   appendNotes,
   type DocCommentParts,
+  type LibraryIndexSlotClassifications,
   type LualsPosition,
   libraryIndexBaseNotes,
   luaMultiReturn,
@@ -67,8 +68,14 @@ export interface EmitLibraryOptions {
   typeRenames?: Record<string, string>;
   externalTypes?: Record<string, ExternalTypeRef> | undefined;
   // The library page whose index-base notes the declarations carry, keyed the
-  // way the API reference keys them. Absent, no notes are written.
-  indexBasePage?: string | undefined;
+  // way the API reference keys them, and the classifications read under it.
+  // Absent, no notes are written.
+  indexBase?: LibraryIndexBase | undefined;
+}
+
+export interface LibraryIndexBase {
+  readonly page: string;
+  readonly classifications: LibraryIndexSlotClassifications;
 }
 
 const INDENT = "\t";
@@ -267,26 +274,39 @@ function pushDoc(
  * bare name as the API reference keys a typedef method. Only a noted slot gets a
  * tag.
  */
-function slotNoteDocs(fn: LibraryMethod, page: string | undefined): SlotDocs {
-  if (page === undefined) return {};
+function slotNoteDocs(fn: LibraryMethod, indexBase: LibraryIndexBase | undefined): SlotDocs {
+  if (indexBase === undefined) return {};
+  const { page, classifications } = indexBase;
   const params: { name: string; doc: string }[] = [];
   fn.params.forEach((param, index) => {
     if (param.isVararg) return;
-    const notes = libraryIndexBaseNotes(page, fn.name, "param", param.name);
+    const notes = libraryIndexBaseNotes(classifications, page, fn.name, "param", param.name);
     if (notes.length === 0) return;
     params.push({ name: safeParamName(param.name, index), doc: appendNotes(param.doc, notes) });
   });
   const returnNotes =
-    fn.returns.length > 0 ? libraryIndexBaseNotes(page, fn.name, "return", "") : [];
+    fn.returns.length > 0
+      ? libraryIndexBaseNotes(classifications, page, fn.name, "return", "")
+      : [];
   const returnDoc = fn.returns.length === 1 ? (fn.returns[0] as LibraryParam).doc : "";
   const returns = appendNotes(returnNotes.length > 0 ? returnDoc : "", returnNotes);
   return { params, returns };
 }
 
 /** A class field's index-base notes, keyed by the sanitized typedef name. */
-function fieldNotes(iface: LibraryInterface, field: LibraryField, page: string | undefined) {
-  if (page === undefined) return [];
-  return libraryIndexBaseNotes(page, sanitizeTypeName(iface.name), "field", field.name);
+function fieldNotes(
+  iface: LibraryInterface,
+  field: LibraryField,
+  indexBase: LibraryIndexBase | undefined,
+) {
+  if (indexBase === undefined) return [];
+  return libraryIndexBaseNotes(
+    indexBase.classifications,
+    indexBase.page,
+    sanitizeTypeName(iface.name),
+    "field",
+    field.name,
+  );
 }
 
 function renderAlias(alias: LibraryAlias, ctx: MapContext): string[] {
@@ -301,7 +321,7 @@ function renderInterface(
   ctx: MapContext,
   interfaceNames: ReadonlySet<string>,
   externalTokens: ReadonlySet<string>,
-  page: string | undefined,
+  indexBase: LibraryIndexBase | undefined,
 ): string[] {
   const lines: string[] = [];
   pushDoc(lines, iface.brief, INDENT, iface.deprecated);
@@ -316,7 +336,7 @@ function renderInterface(
     // method (`name?(...args: any[]): ret`) so a concrete subinterface's refined
     // override stays assignable under `extends`; strict function-field variance
     // would reject it.
-    const notes = fieldNotes(iface, field, page);
+    const notes = fieldNotes(iface, field, indexBase);
     const hookReturns = matchSelfHookField(field.types, iface.name);
     if (hookReturns !== null) {
       pushDoc(lines, appendNotes(field.doc, notes), body);
@@ -331,7 +351,7 @@ function renderInterface(
   }
   for (const method of iface.methods) {
     if (!isPublicMethod(method)) continue;
-    pushDoc(lines, method.brief, body, method.deprecated, slotNoteDocs(method, page));
+    pushDoc(lines, method.brief, body, method.deprecated, slotNoteDocs(method, indexBase));
     const methodCtx = scopeGenerics(ifaceCtx, method.generics);
     const methodParams = renderGenericParams(method.generics, methodCtx);
     lines.push(
@@ -374,10 +394,10 @@ function renderModuleConstants(iface: LibraryInterface, ctx: MapContext): string
 function renderModuleFunction(
   fn: LibraryMethod,
   ctx: MapContext,
-  page: string | undefined,
+  indexBase: LibraryIndexBase | undefined,
 ): string[] {
   const lines: string[] = [];
-  pushDoc(lines, fn.brief, INDENT, fn.deprecated, slotNoteDocs(fn, page));
+  pushDoc(lines, fn.brief, INDENT, fn.deprecated, slotNoteDocs(fn, indexBase));
   const fnCtx = scopeGenerics(ctx, fn.generics);
   const genericParams = renderGenericParams(fn.generics, fnCtx);
   const params = renderParams(fn.params, fnCtx);
@@ -453,11 +473,11 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
       out.push(...renderModuleConstants(iface, ctx));
       continue;
     }
-    out.push(...renderInterface(iface, ctx, interfaceNames, externalTokens, opts.indexBasePage));
+    out.push(...renderInterface(iface, ctx, interfaceNames, externalTokens, opts.indexBase));
   }
   for (const fn of model.moduleFunctions) {
     if (!isPublicMethod(fn)) continue;
-    out.push(...renderModuleFunction(fn, ctx, opts.indexBasePage));
+    out.push(...renderModuleFunction(fn, ctx, opts.indexBase));
   }
   out.push("}");
   return `${out.join("\n")}\n`;

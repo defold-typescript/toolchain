@@ -38,6 +38,7 @@ import {
   groupFunctionSymbols,
   groupOverloadForms,
   groupTypeSymbols,
+  LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
   mapDocType,
   outerCallArity,
   outerCallParams,
@@ -2663,7 +2664,13 @@ describe("index-base notes on library pages", () => {
 
   test("a hand-written declaration that carries its notes renders each once", () => {
     const gooey = page("gooey");
-    const [focusNote = ""] = libraryIndexBaseNotes("gooey", "set_focus", "param", "index");
+    const [focusNote = ""] = libraryIndexBaseNotes(
+      LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+      "gooey",
+      "set_focus",
+      "param",
+      "index",
+    );
     expect(occurrences(paramDoc(gooey, "set_focus", "index") ?? "", focusNote)).toBe(1);
     expect(occurrences(apiModuleMarkdown(gooey, gooey.translations), focusNote)).toBe(1);
     for (const [namespace, element] of [
@@ -2671,7 +2678,13 @@ describe("index-base notes on library pages", () => {
       ["sprite_repeat", "SpriteRepeatAnimation"],
     ] as const) {
       const p = page(namespace);
-      const [frameNote = ""] = libraryIndexBaseNotes(namespace, element, "field", "current_frame");
+      const [frameNote = ""] = libraryIndexBaseNotes(
+        LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+        namespace,
+        element,
+        "field",
+        "current_frame",
+      );
       const field = symbols(p).find((s) => s.name === `${element}.current_frame`);
       expect(occurrences(field?.docMarkdown ?? "", frameNote)).toBe(1);
       expect(occurrences(apiModuleMarkdown(p, p.translations), frameNote)).toBe(1);

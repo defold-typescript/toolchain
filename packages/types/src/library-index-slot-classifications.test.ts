@@ -1,16 +1,30 @@
 import { describe, expect, test } from "bun:test";
-import { withIndexBaseNotes, withLibraryIndexBaseNotes } from "./index-slot-classifications";
+import {
+  parseLibraryIndexSlotClassifications,
+  withIndexBaseNotes,
+  withLibraryIndexBaseNotes,
+} from "./index-slot-classifications";
+
+const classifications = parseLibraryIndexSlotClassifications({
+  "gooey/set_focus:param:index": { class: "native-1", evidence: "x" },
+  "bridge/bridge.daily_rewards.get_current_day:param:on_success:day": {
+    class: "native-0",
+    evidence: "x",
+  },
+  "decore/system:field:index": { class: "native-1", evidence: "x" },
+});
 
 describe("withLibraryIndexBaseNotes", () => {
   test("names the library as the receiver of a 1-based slot", () => {
-    expect(withLibraryIndexBaseNotes("gooey", "set_focus", "param", "index", "")).toBe(
-      "**⚠️ 1-based; passed to `gooey` unchanged.**",
-    );
+    expect(
+      withLibraryIndexBaseNotes(classifications, "gooey", "set_focus", "param", "index", ""),
+    ).toBe("**⚠️ 1-based; passed to `gooey` unchanged.**");
   });
 
   test("notes a 0-based callback argument under its slot", () => {
     expect(
       withLibraryIndexBaseNotes(
+        classifications,
         "bridge",
         "bridge.daily_rewards.get_current_day",
         "param",
@@ -21,8 +35,14 @@ describe("withLibraryIndexBaseNotes", () => {
   });
 
   test("notes a class field", () => {
-    expect(withLibraryIndexBaseNotes("decore", "system", "field", "index", "")).toBe(
-      "**⚠️ 1-based; passed to `decore` unchanged.**",
+    expect(
+      withLibraryIndexBaseNotes(classifications, "decore", "system", "field", "index", ""),
+    ).toBe("**⚠️ 1-based; passed to `decore` unchanged.**");
+  });
+
+  test("reads only the map it is given", () => {
+    expect(withLibraryIndexBaseNotes(new Map(), "gooey", "set_focus", "param", "index", "x")).toBe(
+      "x",
     );
   });
 });
@@ -33,7 +53,9 @@ describe("page keys stay on their own map", () => {
   });
 
   test("a library lookup never reads an engine classification", () => {
-    expect(withLibraryIndexBaseNotes("spine.gui", "gui.set", "param", "options", "x")).toBe("x");
+    expect(
+      withLibraryIndexBaseNotes(classifications, "spine.gui", "gui.set", "param", "options", "x"),
+    ).toBe("x");
   });
 
   test("the engine note still names Defold", () => {

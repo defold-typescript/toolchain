@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import * as ts from "typescript";
 import { emitExtensionDeclarationFromDoc } from "./extension-emit";
+import { loadLibraryIndexSlotClassifications } from "./library-registry";
 import { resolveCurrentSurfaceGeneratedDir } from "./materialize";
 
 const REPO_ROOT = join(import.meta.dir, "../../..");
@@ -59,6 +60,7 @@ describe("extension namespace clash gate", () => {
     const dir = mkdtempSync(join(tmpdir(), "extension-namespace-clash-"));
     try {
       const files: string[] = [];
+      const classifications = loadLibraryIndexSlotClassifications(LIBRARY_TYPES_DIR);
       for (const { page } of members) {
         const doc = JSON.parse(
           readFileSync(
@@ -66,7 +68,7 @@ describe("extension namespace clash gate", () => {
             "utf8",
           ),
         ) as { info: { namespace: string } };
-        const { contents } = await emitExtensionDeclarationFromDoc(doc, [page]);
+        const { contents } = await emitExtensionDeclarationFromDoc(doc, [page], classifications);
         const file = join(dir, `${page}.d.ts`);
         writeFileSync(
           file,
