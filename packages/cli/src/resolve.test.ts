@@ -1804,6 +1804,82 @@ describe("runResolve defold-box2d through the shipped native registry", () => {
   });
 });
 
+describe("runResolve daabbcc3d and wave through the shipped native registry", () => {
+  const DAABBCC3D_URL =
+    "https://github.com/selimanac/defold-daabbcc3d/archive/refs/tags/v1.0.6.zip";
+  const WAVE_URL =
+    "https://github.com/selimanac/defold-wave/archive/76ff0c9780730a7e7cc4f3e0a8752d8c1f426def.zip";
+  const WAVE_TOP = "defold-wave-76ff0c9780730a7e7cc4f3e0a8752d8c1f426def";
+
+  function shipped(namespace: string): string {
+    return readFileSync(
+      join(
+        import.meta.dir,
+        "..",
+        "..",
+        "library-types",
+        "generated",
+        "native",
+        `${namespace}.d.ts`,
+      ),
+      "utf8",
+    );
+  }
+
+  async function resolveNative(
+    url: string,
+    manifest: string,
+  ): Promise<{ cwd: string; result: Awaited<ReturnType<typeof runResolve>> }> {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip({
+        [extensionArchiveKey(url)]: { entries: [manifest], contents: {} },
+      }),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: loadVendoredNativeRegistry(),
+    });
+    return { cwd, result };
+  }
+
+  test("a daabbcc3d release confirmed by its daabbcc3d/ext.manifest gets the shipped declaration", async () => {
+    const { cwd, result } = await resolveNative(
+      DAABBCC3D_URL,
+      "defold-daabbcc3d-1.0.6/daabbcc3d/ext.manifest",
+    );
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", "daabbcc3d.d.ts"), "utf8")).toBe(
+      shipped("daabbcc3d"),
+    );
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(result.extensions[0]?.namespaces).toEqual(["daabbcc3d"]);
+  });
+
+  test("a commit-pinned wave archive confirmed by its wave/ext.manifest gets the shipped declaration", async () => {
+    const { cwd, result } = await resolveNative(WAVE_URL, `${WAVE_TOP}/wave/ext.manifest`);
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", "extensions", "wave.d.ts"), "utf8")).toBe(
+      shipped("wave"),
+    );
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(result.extensions[0]?.namespaces).toEqual(["wave"]);
+  });
+
+  test("a wave repo match with its ext.manifest at the archive root writes no declaration", async () => {
+    const { cwd, result } = await resolveNative(WAVE_URL, `${WAVE_TOP}/ext.manifest`);
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "wave.d.ts"))).toBe(false);
+    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
+  });
+});
+
 describe("runResolve druid LuaLS library", () => {
   const DRUID = "declare module 'druid.druid' { export const version: string; }\n";
 

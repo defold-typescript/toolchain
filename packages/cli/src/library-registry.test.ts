@@ -182,6 +182,7 @@ describe("loadVendoredNativeRegistry", () => {
     expect(projected).toEqual([
       { sourceId: "defold-box2d", namespace: "box2d", manifestDir: "box2d/native" },
       { sourceId: "defold-daabbcc", namespace: "daabbcc", manifestDir: "daabbcc" },
+      { sourceId: "defold-daabbcc3d", namespace: "daabbcc3d", manifestDir: "daabbcc3d" },
       {
         sourceId: "def-windward-jps",
         namespace: "def_windward_jps",
@@ -190,6 +191,7 @@ describe("loadVendoredNativeRegistry", () => {
       { sourceId: "defold-sharing", namespace: "share", manifestDir: "share" },
       { sourceId: "defold-tile-raycast", namespace: "tile_raycast", manifestDir: "tile-raycast" },
       { sourceId: "defold-uuid4", namespace: "uuid4", manifestDir: "uuid4" },
+      { sourceId: "defold-wave", namespace: "wave", manifestDir: "wave" },
     ]);
     for (const entry of registry) {
       expect(existsSync(entry.declarationPath)).toBe(true);

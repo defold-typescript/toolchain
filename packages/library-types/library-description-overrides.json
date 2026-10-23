@@ -2,6 +2,7 @@
   "box2d": "Box2D physics: worlds, bodies, fixtures, shapes and joints.",
   "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
   "daabbcc": "Dynamic Tree (aka AABB Tree) native extension for Defold Engine",
+  "daabbcc3d": "Dynamic AABB trees in 3D for overlap queries and ray casts without a physics engine.",
   "def_windward_jps": "Find paths on 2D grids with Jump Point Search.",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
@@ -35,5 +36,6 @@
   "squid": "Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold.",
   "tile_raycast": "Ray Casting in tiled worlds using DDA algorithm.",
   "uuid4": "Defold uuid4 generator native extension",
+  "wave": "Wave simulation that floats, pitches and rolls game objects on a water surface.",
   "yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine."
 }
