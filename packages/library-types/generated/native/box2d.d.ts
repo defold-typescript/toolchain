@@ -277,19 +277,37 @@ declare global {
       edge_v2: Vector3;
     }
 
-    /** A box polygon, described as a table. */
-    interface BoxShapeTable {
+    /** A box polygon centered on the body origin, described as a table. */
+    interface AxisAlignedBoxShapeTable {
       shape: typeof b2Shape.e_polygon;
       box: true;
       /** The half-width. */
       box_hx: number;
       /** The half-height. */
       box_hy: number;
-      /** The center in local coordinates. Set it together with `box_angle` or not at all. */
-      box_center?: Vector3;
-      /** The rotation in radians. Set it together with `box_center` or not at all. */
-      box_angle?: number;
+      box_center?: never;
+      box_angle?: never;
     }
+
+    /** A box polygon placed and rotated in local coordinates, described as a table. */
+    interface OrientedBoxShapeTable {
+      shape: typeof b2Shape.e_polygon;
+      box: true;
+      /** The half-width. */
+      box_hx: number;
+      /** The half-height. */
+      box_hy: number;
+      /** The center in local coordinates. */
+      box_center: Vector3;
+      /** The rotation in radians. */
+      box_angle: number;
+    }
+
+    /**
+     * A box polygon, described as a table. `box_center` and `box_angle` are set
+     * together or not at all.
+     */
+    type BoxShapeTable = AxisAlignedBoxShapeTable | OrientedBoxShapeTable;
 
     /** A convex polygon, described as a table. */
     interface PolygonShapeTable {
@@ -299,17 +317,27 @@ declare global {
       polygon_vertices: Vector3[];
     }
 
-    /** A chain, described as a table. */
-    interface ChainShapeTable {
+    /** A chain closed into a loop, described as a table. */
+    interface LoopChainShapeTable {
       shape: typeof b2Shape.e_chain;
       chain_vertices: Vector3[];
-      /** `true` closes the chain into a loop. */
-      chain_loop?: boolean;
-      /** The vertex that connects to the start. Required unless `chain_loop` is set. */
-      chain_prev_vertex?: Vector3;
-      /** The vertex that connects to the end. Required unless `chain_loop` is set. */
-      chain_next_vertex?: Vector3;
+      /** Closes the chain into a loop. */
+      chain_loop: true;
     }
+
+    /** An open chain with its neighbor vertices, described as a table. */
+    interface OpenChainShapeTable {
+      shape: typeof b2Shape.e_chain;
+      chain_vertices: Vector3[];
+      chain_loop?: false;
+      /** The vertex that connects to the start. */
+      chain_prev_vertex: Vector3;
+      /** The vertex that connects to the end. */
+      chain_next_vertex: Vector3;
+    }
+
+    /** A chain, described as a table. */
+    type ChainShapeTable = LoopChainShapeTable | OpenChainShapeTable;
 
     /** A shape described as a table, accepted wherever a shape object is. */
     type ShapeTable =
@@ -716,25 +744,24 @@ declare global {
     /**
      * What every joint definition holds. `type`, `bodyA` and `bodyB` are
      * required, and a key the joint type does not know raises an error.
+     *
+     * A definition carries no application data: {@link Joint.SetUserData} sets
+     * it after creation.
      */
-    interface JointDef {
-      /** The joint type. */
-      type: JointType;
+    interface JointDefBase {
       /** The first attached body. */
       bodyA: Body;
       /** The second attached body. */
       bodyB: Body;
       /** `true` lets the attached bodies collide. */
       collideConnected?: boolean;
-      /** Application data. Must be a table. */
-      userData?: object;
     }
 
     /**
      * A revolute joint definition. {@link box2d.InitializeRevoluteJointDef}
      * fills it from a world anchor.
      */
-    interface RevoluteJointDef extends JointDef {
+    interface RevoluteJointDef extends JointDefBase {
       type: typeof b2JointType.e_revoluteJoint;
       /** The anchor relative to bodyA's origin. */
       localAnchorA?: Vector3;
@@ -760,7 +787,7 @@ declare global {
      * A prismatic joint definition. {@link box2d.InitializePrismaticJointDef}
      * fills it from a world anchor and axis.
      */
-    interface PrismaticJointDef extends JointDef {
+    interface PrismaticJointDef extends JointDefBase {
       type: typeof b2JointType.e_prismaticJoint;
       /** The anchor relative to bodyA's origin. */
       localAnchorA?: Vector3;
@@ -788,7 +815,7 @@ declare global {
      * A distance joint definition. {@link box2d.InitializeDistanceJointDef}
      * fills it from two world anchors.
      */
-    interface DistanceJointDef extends JointDef {
+    interface DistanceJointDef extends JointDefBase {
       type: typeof b2JointType.e_distanceJoint;
       /** The anchor relative to bodyA's origin. */
       localAnchorA?: Vector3;
@@ -810,7 +837,7 @@ declare global {
      * A pulley joint definition. {@link box2d.InitializePulleyJointDef} fills it
      * from world anchors and a ratio.
      */
-    interface PulleyJointDef extends JointDef {
+    interface PulleyJointDef extends JointDefBase {
       type: typeof b2JointType.e_pulleyJoint;
       /** The first ground anchor in world coordinates. It never moves. */
       groundAnchorA?: Vector3;
@@ -829,7 +856,7 @@ declare global {
     }
 
     /** A mouse joint definition. */
-    interface MouseJointDef extends JointDef {
+    interface MouseJointDef extends JointDefBase {
       type: typeof b2JointType.e_mouseJoint;
       /** The initial world target point, assumed to coincide with the body anchor. */
       target?: Vector3;
@@ -845,12 +872,12 @@ declare global {
      * A gear joint definition. It connects two existing revolute or prismatic
      * joints, whose bodyB must both be dynamic.
      */
-    interface GearJointDef extends JointDef {
+    interface GearJointDef extends JointDefBase {
       type: typeof b2JointType.e_gearJoint;
       /** The first revolute or prismatic joint. */
-      joint1: Joint;
+      joint1: RevoluteJoint | PrismaticJoint;
       /** The second revolute or prismatic joint. */
-      joint2: Joint;
+      joint2: RevoluteJoint | PrismaticJoint;
       /** The gear ratio. */
       ratio?: number;
     }
@@ -859,7 +886,7 @@ declare global {
      * A wheel joint definition. {@link box2d.InitializeWheelJointDef} fills it
      * from a world anchor and axis.
      */
-    interface WheelJointDef extends JointDef {
+    interface WheelJointDef extends JointDefBase {
       type: typeof b2JointType.e_wheelJoint;
       /** The anchor relative to bodyA's origin. */
       localAnchorA?: Vector3;
@@ -889,7 +916,7 @@ declare global {
      * A weld joint definition. {@link box2d.InitializeWeldJointDef} fills it
      * from a world anchor.
      */
-    interface WeldJointDef extends JointDef {
+    interface WeldJointDef extends JointDefBase {
       type: typeof b2JointType.e_weldJoint;
       /** The anchor relative to bodyA's origin. */
       localAnchorA?: Vector3;
@@ -907,7 +934,7 @@ declare global {
      * A friction joint definition. {@link box2d.InitializeFrictionJointDef}
      * fills it from a world anchor.
      */
-    interface FrictionJointDef extends JointDef {
+    interface FrictionJointDef extends JointDefBase {
       type: typeof b2JointType.e_frictionJoint;
       /** The anchor relative to bodyA's origin. */
       localAnchorA?: Vector3;
@@ -923,7 +950,7 @@ declare global {
      * A motor joint definition. {@link box2d.InitializeMotorJointDef} fills it
      * from the current transforms.
      */
-    interface MotorJointDef extends JointDef {
+    interface MotorJointDef extends JointDefBase {
       type: typeof b2JointType.e_motorJoint;
       /** bodyB's position minus bodyA's position, in bodyA's frame, in meters. */
       linearOffset?: Vector3;
@@ -936,6 +963,19 @@ declare global {
       /** The position correction factor, from 0 to 1. */
       correctionFactor?: number;
     }
+
+    /** A definition of any joint kind the extension creates. */
+    type JointDef =
+      | RevoluteJointDef
+      | PrismaticJointDef
+      | DistanceJointDef
+      | PulleyJointDef
+      | MouseJointDef
+      | GearJointDef
+      | WheelJointDef
+      | WeldJointDef
+      | FrictionJointDef
+      | MotorJointDef;
 
     /**
      * Contact callbacks for {@link World.SetContactListener}. They run during
@@ -1857,7 +1897,8 @@ declare global {
       GetUserData(): object | undefined;
 
       /**
-       * Sets the application data.
+       * Sets the application data. This is the only way to attach it to a
+       * joint, since a joint definition carries none.
        *
        * @param userdata - A table, or `nil` to clear it.
        */
@@ -2867,8 +2908,8 @@ declare global {
       CreateJoint(def: MotorJointDef): MotorJoint;
 
       /**
-       * Creates a joint whose type is not known statically. Not allowed during
-       * callbacks.
+       * Creates a joint whose kind is known only at run time. Not allowed
+       * during callbacks.
        *
        * @param def - The joint definition.
        * @returns The joint.
@@ -3294,8 +3335,8 @@ declare global {
     function InitializeGearJointDef(
       bodyA: Body,
       bodyB: Body,
-      joint1: Joint,
-      joint2: Joint,
+      joint1: RevoluteJoint | PrismaticJoint,
+      joint2: RevoluteJoint | PrismaticJoint,
     ): GearJointDef;
 
     /**
