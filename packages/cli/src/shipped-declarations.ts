@@ -1,6 +1,9 @@
-// The declarations a dependency ships for itself: every `types/*.d.ts` at its
-// archive root. `resolve` installs them in place of anything else the dependency
-// would contribute, but only once they compile against the engine surface — the
+// The declarations a dependency ships for itself: the `types/*.d.ts` at its
+// archive root, minus the files that add global names when one of them declares
+// a module, since those names collide with project code and other libraries
+// while the module reaches the same API by import. `resolve` installs them in
+// place of anything else the dependency would contribute, but only once they
+// compile against the engine surface — the
 // scaffolded project sets `skipLibCheck`, so a name the engine surface lacks
 // (ts-defold's `hash`, `vmath.vector3`) would otherwise type as `any` silently.
 
@@ -38,6 +41,42 @@ export function locateShippedDeclarations(entries: readonly string[]): string[] 
       SHIPPED_PATH.test(wrapper === undefined ? entry : entry.slice(wrapper.length + 1)),
     )
     .sort();
+}
+
+// A global file over relative-path modules stays: no module reaches it by name.
+export function selectShippedDeclarations(
+  files: readonly ShippedDeclarationFile[],
+): ShippedDeclarationFile[] {
+  const classified = files.map((file) => {
+    const sourceFile = ts.createSourceFile(file.entry, file.contents, ts.ScriptTarget.ESNext, true);
+    return { file, global: addsGlobalNames(sourceFile), moduleForm: isModuleForm(sourceFile) };
+  });
+  if (!classified.some(({ moduleForm }) => moduleForm)) {
+    return [...files];
+  }
+  return classified.filter(({ global }) => !global).map(({ file }) => file);
+}
+
+function isStringNamedModule(statement: ts.Statement): boolean {
+  return ts.isModuleDeclaration(statement) && ts.isStringLiteral(statement.name);
+}
+
+function addsGlobalNames(sourceFile: ts.SourceFile): boolean {
+  if (!ts.isExternalModule(sourceFile) && !sourceFile.statements.every(isStringNamedModule)) {
+    return true;
+  }
+  const augmentsGlobal = (node: ts.Node): boolean =>
+    (ts.isModuleDeclaration(node) && (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0) ||
+    ts.forEachChild(node, augmentsGlobal) === true;
+  return ts.forEachChild(sourceFile, augmentsGlobal) === true;
+}
+
+function isModuleForm(sourceFile: ts.SourceFile): boolean {
+  return (
+    !ts.isExternalModule(sourceFile) &&
+    sourceFile.statements.some(isStringNamedModule) &&
+    !addsGlobalNames(sourceFile)
+  );
 }
 
 // One call checks one dependency's files together, served under their own

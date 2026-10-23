@@ -93,12 +93,16 @@ entry — nothing stale is left behind.
 ## Types a library ships
 
 A library can ship its own TypeScript declarations as `.d.ts` files in a
-`types/` folder at its repository root. `resolve` installs every `.d.ts` directly
-in that folder (subfolders are not read) into
-`.defold-types/extensions/shipped/<repo>/` unchanged and under its own name, so
-the files may reference each other by relative path, and the dependency
-contributes nothing else. For each dependency the first surface that applies
-wins:
+`types/` folder at its repository root. `resolve` installs the `.d.ts` files
+directly in that folder (subfolders are not read) into
+`.defold-types/extensions/shipped/<repo>/` unchanged and under their own names,
+so the files may reference each other by relative path, and the dependency
+contributes nothing else. When one file is in module form, holding only
+`declare module "<name>"` blocks, `resolve` skips each file that adds global
+names (a top-level declaration outside such a block, or a `declare global`
+block): those names collide with project code and other libraries, and the
+module reaches the same API by import. For each dependency the first surface
+that applies wins:
 
 1. the types it ships,
 2. a [vendored library](#vendored-library-types) match,
@@ -106,7 +110,7 @@ wins:
 4. its `.script_api` docs.
 
 ```
-  pixels, pixels.global <- https://github.com/king8fisher/defold-pixels/archive/refs/heads/main.zip (shipped types)
+  pixels <- https://github.com/king8fisher/defold-pixels/archive/refs/heads/main.zip (shipped types)
 ```
 
 The `--json` report marks the dependency `typeSurface: "shipped"`, and its
