@@ -8,7 +8,9 @@ import {
   loadVendoredNativeRegistry,
 } from "../packages/cli/src/library-registry.ts";
 import { checkShippedDeclarations } from "../packages/cli/src/shipped-declarations.ts";
+import { type ForgeFetch, forgeReadsFor } from "./library-upstream-check.ts";
 import {
+  evaluateShippedTypes,
   readCuratedRepos,
   runShippedTypesCheck,
   type ShippedTypesIo,
@@ -255,6 +257,172 @@ describe("runShippedTypesCheck verdicts", () => {
     expect(code).toBe(1);
     expect(err.join("")).toContain("acme/gadget");
   });
+});
+
+interface PagedForge {
+  readonly name: string;
+  readonly repo: string;
+  readonly pageSize: number;
+  readonly origin: string;
+  /** GitHub's `Link` points at a second route for the same tag pages. */
+  readonly tagPaths: readonly string[];
+  readonly pageUrl: (page: number) => string;
+  /** What the forge puts between the `rel="next"` and `rel="last"` entries. */
+  readonly linkSeparator: string;
+  readonly commitPath: (sha: string) => string;
+  readonly repoPath: string;
+  readonly downloadUrl: string;
+}
+
+const PAGED_FORGES: readonly PagedForge[] = [
+  {
+    name: "GitHub",
+    repo: WIDGET,
+    pageSize: 100,
+    origin: "https://api.github.com",
+    tagPaths: ["/repos/acme/widget/tags", "/repositories/4242/tags"],
+    pageUrl: (page) => `https://api.github.com/repositories/4242/tags?per_page=100&page=${page}`,
+    linkSeparator: ", ",
+    commitPath: (sha) => `/repos/acme/widget/commits/${sha}`,
+    repoPath: "/repos/acme/widget",
+    downloadUrl: "https://raw.githubusercontent.com/acme/widget/v9/types/a.d.ts",
+  },
+  {
+    name: "Codeberg",
+    repo: GADGET,
+    pageSize: 50,
+    origin: "https://codeberg.org",
+    tagPaths: ["/api/v1/repos/acme/gadget/tags"],
+    pageUrl: (page) => `https://codeberg.org/api/v1/repos/acme/gadget/tags?limit=50&page=${page}`,
+    linkSeparator: ",",
+    commitPath: (sha) => `/api/v1/repos/acme/gadget/git/commits/${sha}`,
+    repoPath: "/api/v1/repos/acme/gadget",
+    downloadUrl: "https://codeberg.org/acme/gadget/raw/tag/v9/types/a.d.ts",
+  },
+];
+
+interface PagedTag {
+  readonly name: string;
+  readonly sha: string;
+  readonly date: string;
+}
+
+interface PagedScenario {
+  readonly pages: ReadonlyArray<readonly PagedTag[]>;
+  /** The one ref whose `types/` folder holds `a.d.ts`. */
+  readonly typesAt?: string;
+  readonly failPage?: number;
+  readonly nextUrl?: (page: number) => string;
+}
+
+// Page 1 is full and predates `v9`, which sits between older tags on page 2, so
+// neither page 1 alone nor any listing position finds it.
+function pagedTags(pageSize: number): PagedTag[][] {
+  const day = (offset: number) => new Date(Date.UTC(2024, 0, 1 + offset)).toISOString();
+  const first = Array.from({ length: pageSize }, (_, i) => ({
+    name: `0.${i}`,
+    sha: `a${i}`,
+    date: day(i),
+  }));
+  const second = [
+    { name: "1.0", sha: "b0", date: day(pageSize + 1) },
+    { name: "v9", sha: "b1", date: day(pageSize + 30) },
+    { name: "1.1", sha: "b2", date: day(pageSize + 2) },
+  ];
+  return [first, second];
+}
+
+function pagedFetch(forge: PagedForge, scenario: PagedScenario) {
+  const requested: string[] = [];
+  const nextUrl = scenario.nextUrl ?? forge.pageUrl;
+  const tags = scenario.pages.flat();
+  const fetchImpl: ForgeFetch = async (url) => {
+    requested.push(url);
+    if (url === forge.downloadUrl) return new Response(OK_MODULE);
+    const { origin, pathname, searchParams } = new URL(url);
+    if (origin !== forge.origin) return new Response(null, { status: 404 });
+    if (forge.tagPaths.includes(pathname)) {
+      const page = Number(searchParams.get("page") ?? "1");
+      if (page === scenario.failPage) return new Response(null, { status: 500 });
+      const last = scenario.pages.length;
+      const headers: Record<string, string> =
+        page < last
+          ? {
+              link: `<${nextUrl(page + 1)}>; rel="next"${forge.linkSeparator}<${nextUrl(last)}>; rel="last"`,
+            }
+          : {};
+      const body = (scenario.pages[page - 1] ?? []).map(({ name, sha }) => ({
+        name,
+        commit: { sha },
+      }));
+      return Response.json(body, { headers });
+    }
+    const tag = tags.find(({ sha }) => pathname === forge.commitPath(sha));
+    if (tag !== undefined) {
+      return Response.json({ sha: tag.sha, commit: { committer: { date: tag.date } } });
+    }
+    if (pathname === forge.repoPath) return Response.json({ default_branch: "main" });
+    if (
+      pathname === `${forge.repoPath}/contents/types` &&
+      searchParams.get("ref") === scenario.typesAt
+    ) {
+      return Response.json([{ name: "a.d.ts", type: "file", download_url: forge.downloadUrl }]);
+    }
+    return new Response(null, { status: 404 });
+  };
+  return { fetchImpl, requested };
+}
+
+describe("evaluateShippedTypes over every forge tag page", () => {
+  for (const forge of PAGED_FORGES) {
+    const evaluate = async (scenario: PagedScenario) => {
+      const fake = pagedFetch(forge, scenario);
+      const curated = readCuratedRepos(root).find(({ repo }) => repo === forge.repo);
+      if (curated === undefined) throw new Error(`no curated repo ${forge.repo}`);
+      const io = {
+        ...forgeReadsFor(forge.repo, fake.fetchImpl),
+        stdout: () => {},
+        stderr: () => {},
+      };
+      return { report: await evaluateShippedTypes(curated, io, TYPES_ROOT), ...fake };
+    };
+
+    test(`${forge.name}: the newest-dated tag on a later page is the release read`, async () => {
+      const { report } = await evaluate({ pages: pagedTags(forge.pageSize), typesAt: "v9" });
+      expect(report).toMatchObject({ reason: "accepted", ref: "v9", files: ["a.d.ts"] });
+    });
+
+    test(`${forge.name}: an empty first tag page is read at the default branch`, async () => {
+      const { report } = await evaluate({ pages: [[]] });
+      expect(report.ref).toBe("main");
+    });
+
+    test(`${forge.name}: a failed later page is unknown and names that page`, async () => {
+      const { report } = await evaluate({
+        pages: pagedTags(forge.pageSize),
+        typesAt: "v9",
+        failPage: 2,
+      });
+      expect(report).toMatchObject({
+        reason: "unknown",
+        actionable: false,
+        error: `GET ${forge.pageUrl(2)} responded 500`,
+      });
+      expect(report.ref).toBeUndefined();
+    });
+
+    test(`${forge.name}: a next page on another origin is refused, never requested`, async () => {
+      const elsewhere = (page: number) => `https://elsewhere.example/tags?page=${page}`;
+      const { report, requested } = await evaluate({
+        pages: pagedTags(forge.pageSize),
+        typesAt: "v9",
+        nextUrl: elsewhere,
+      });
+      expect(report.reason).toBe("unknown");
+      expect(report.error).toContain(elsewhere(2));
+      expect(requested.filter((url) => url.startsWith("https://elsewhere.example"))).toEqual([]);
+    });
+  }
 });
 
 describe("readCuratedRepos over the committed corpus", () => {

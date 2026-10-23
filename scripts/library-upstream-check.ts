@@ -440,14 +440,50 @@ export interface ForgeReads
   readonly listTypesFolder: (repo: string, ref: string) => Promise<TypesFolderFile[] | null>;
 }
 
-async function getJson(url: string, headers: Record<string, string>): Promise<unknown> {
-  const response = await fetch(url, { headers });
+export type ForgeFetch = (
+  url: string,
+  init?: { headers?: Record<string, string> },
+) => Promise<Response>;
+
+async function getJson(
+  fetchImpl: ForgeFetch,
+  url: string,
+  headers: Record<string, string>,
+): Promise<unknown> {
+  const response = await fetchImpl(url, { headers });
   if (!response.ok) throw new Error(`GET ${url} responded ${response.status}`);
   return response.json();
 }
 
-async function getText(url: string): Promise<string> {
-  const response = await fetch(url);
+// Reads both forges' `Link` forms: GitHub separates entries with ", ", Codeberg
+// with a bare ",".
+const NEXT_LINK = /<([^>]+)>\s*;\s*rel="next"/;
+
+// Follows `rel="next"` rather than stopping on a short page: Codeberg caps
+// `limit` at 50 whatever is asked and still links the rest.
+async function readJsonPages(
+  fetchImpl: ForgeFetch,
+  url: string,
+  headers: Record<string, string>,
+): Promise<unknown[]> {
+  const origin = new URL(url).origin;
+  const items: unknown[] = [];
+  let next: string | undefined = url;
+  while (next !== undefined) {
+    // Each GitHub page carries the token, so it never leaves the first origin.
+    if (new URL(next).origin !== origin) {
+      throw new Error(`GET ${url} links its next page to another origin: ${next}`);
+    }
+    const response = await fetchImpl(next, { headers });
+    if (!response.ok) throw new Error(`GET ${next} responded ${response.status}`);
+    items.push(...((await response.json()) as unknown[]));
+    next = response.headers.get("link")?.match(NEXT_LINK)?.[1];
+  }
+  return items;
+}
+
+async function getText(fetchImpl: ForgeFetch, url: string): Promise<string> {
+  const response = await fetchImpl(url);
   if (!response.ok) throw new Error(`GET ${url} responded ${response.status}`);
   return response.text();
 }
@@ -461,10 +497,11 @@ interface ContentsEntry {
 // GitHub and Forgejo answer a contents read alike: 404 for a missing path, an
 // array for a folder, a single object for a file.
 async function readTypesFolder(
+  fetchImpl: ForgeFetch,
   url: string,
   headers: Record<string, string>,
 ): Promise<TypesFolderFile[] | null> {
-  const response = await fetch(url, { headers });
+  const response = await fetchImpl(url, { headers });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`GET ${url} responded ${response.status}`);
   const listing = (await response.json()) as ContentsEntry[] | ContentsEntry;
@@ -472,7 +509,7 @@ async function readTypesFolder(
   const files: TypesFolderFile[] = [];
   for (const entry of listing) {
     if (entry.type !== "file" || entry.download_url === null) continue;
-    files.push({ name: entry.name, contents: await getText(entry.download_url) });
+    files.push({ name: entry.name, contents: await getText(fetchImpl, entry.download_url) });
   }
   return files;
 }
@@ -487,45 +524,46 @@ function githubHeaders(): Record<string, string> {
   };
 }
 
-function githubJson(path: string): Promise<unknown> {
-  return getJson(`${GITHUB_API}${path}`, githubHeaders());
+function githubReads(fetchImpl: ForgeFetch): ForgeReads {
+  const githubJson = (path: string) => getJson(fetchImpl, `${GITHUB_API}${path}`, githubHeaders());
+  return {
+    listTags: async (repo) => {
+      const tags = (await readJsonPages(
+        fetchImpl,
+        `${GITHUB_API}/repos/${repoSlug(repo)}/tags?per_page=100`,
+        githubHeaders(),
+      )) as Array<{ name: string; commit: { sha: string } }>;
+      return tags.map((tag) => ({ name: tag.name, sha: tag.commit.sha }));
+    },
+    readCommit: async (repo, sha) => {
+      const commit = (await githubJson(`/repos/${repoSlug(repo)}/commits/${sha}`)) as {
+        sha: string;
+        commit: { committer: { date: string } };
+      };
+      return { sha: commit.sha, date: commit.commit.committer.date };
+    },
+    readRepo: async (repo) => {
+      const meta = (await githubJson(`/repos/${repoSlug(repo)}`)) as { default_branch: string };
+      return { defaultBranch: meta.default_branch };
+    },
+    compareRefs: async (repo, base, head) => {
+      const compare = (await githubJson(`/repos/${repoSlug(repo)}/compare/${base}...${head}`)) as {
+        ahead_by: number;
+        files?: Array<{ filename: string }>;
+      };
+      return {
+        aheadBy: compare.ahead_by,
+        files: (compare.files ?? []).map((file) => file.filename),
+      };
+    },
+    listTypesFolder: (repo, ref) =>
+      readTypesFolder(
+        fetchImpl,
+        `${GITHUB_API}/repos/${repoSlug(repo)}/contents/types?ref=${encodeURIComponent(ref)}`,
+        githubHeaders(),
+      ),
+  };
 }
-
-const githubReads: ForgeReads = {
-  listTags: async (repo) => {
-    const tags = (await githubJson(`/repos/${repoSlug(repo)}/tags?per_page=100`)) as Array<{
-      name: string;
-      commit: { sha: string };
-    }>;
-    return tags.map((tag) => ({ name: tag.name, sha: tag.commit.sha }));
-  },
-  readCommit: async (repo, sha) => {
-    const commit = (await githubJson(`/repos/${repoSlug(repo)}/commits/${sha}`)) as {
-      sha: string;
-      commit: { committer: { date: string } };
-    };
-    return { sha: commit.sha, date: commit.commit.committer.date };
-  },
-  readRepo: async (repo) => {
-    const meta = (await githubJson(`/repos/${repoSlug(repo)}`)) as { default_branch: string };
-    return { defaultBranch: meta.default_branch };
-  },
-  compareRefs: async (repo, base, head) => {
-    const compare = (await githubJson(`/repos/${repoSlug(repo)}/compare/${base}...${head}`)) as {
-      ahead_by: number;
-      files?: Array<{ filename: string }>;
-    };
-    return {
-      aheadBy: compare.ahead_by,
-      files: (compare.files ?? []).map((file) => file.filename),
-    };
-  },
-  listTypesFolder: (repo, ref) =>
-    readTypesFolder(
-      `${GITHUB_API}/repos/${repoSlug(repo)}/contents/types?ref=${encodeURIComponent(ref)}`,
-      githubHeaders(),
-    ),
-};
 
 // Codeberg runs Forgejo. Its routes differ from GitHub's in the commit path, the
 // page-size parameter and the compare count, and it never receives the GitHub
@@ -534,44 +572,48 @@ const CODEBERG_API = "https://codeberg.org/api/v1";
 
 const CODEBERG_HEADERS = { accept: "application/json" };
 
-function codebergJson(path: string): Promise<unknown> {
-  return getJson(`${CODEBERG_API}${path}`, CODEBERG_HEADERS);
+function codebergReads(fetchImpl: ForgeFetch): ForgeReads {
+  const codebergJson = (path: string) =>
+    getJson(fetchImpl, `${CODEBERG_API}${path}`, CODEBERG_HEADERS);
+  return {
+    listTags: async (repo) => {
+      const tags = (await readJsonPages(
+        fetchImpl,
+        `${CODEBERG_API}/repos/${repoSlug(repo)}/tags?limit=50`,
+        CODEBERG_HEADERS,
+      )) as Array<{ name: string; commit: { sha: string } }>;
+      return tags.map((tag) => ({ name: tag.name, sha: tag.commit.sha }));
+    },
+    readCommit: async (repo, sha) => {
+      const commit = (await codebergJson(
+        `/repos/${repoSlug(repo)}/git/commits/${sha}?stat=false&files=false&verification=false`,
+      )) as { sha: string; commit: { committer: { date: string } } };
+      return { sha: commit.sha, date: commit.commit.committer.date };
+    },
+    readRepo: async (repo) => {
+      const meta = (await codebergJson(`/repos/${repoSlug(repo)}`)) as { default_branch: string };
+      return { defaultBranch: meta.default_branch };
+    },
+    compareRefs: async (repo, base, head) => {
+      const compare = (await codebergJson(
+        `/repos/${repoSlug(repo)}/compare/${base}...${head}`,
+      )) as {
+        total_commits: number;
+        files?: Array<{ filename: string }>;
+      };
+      return {
+        aheadBy: compare.total_commits,
+        files: (compare.files ?? []).map((file) => file.filename),
+      };
+    },
+    listTypesFolder: (repo, ref) =>
+      readTypesFolder(
+        fetchImpl,
+        `${CODEBERG_API}/repos/${repoSlug(repo)}/contents/types?ref=${encodeURIComponent(ref)}`,
+        CODEBERG_HEADERS,
+      ),
+  };
 }
-
-const codebergReads: ForgeReads = {
-  listTags: async (repo) => {
-    const tags = (await codebergJson(`/repos/${repoSlug(repo)}/tags?limit=50`)) as Array<{
-      name: string;
-      commit: { sha: string };
-    }>;
-    return tags.map((tag) => ({ name: tag.name, sha: tag.commit.sha }));
-  },
-  readCommit: async (repo, sha) => {
-    const commit = (await codebergJson(
-      `/repos/${repoSlug(repo)}/git/commits/${sha}?stat=false&files=false&verification=false`,
-    )) as { sha: string; commit: { committer: { date: string } } };
-    return { sha: commit.sha, date: commit.commit.committer.date };
-  },
-  readRepo: async (repo) => {
-    const meta = (await codebergJson(`/repos/${repoSlug(repo)}`)) as { default_branch: string };
-    return { defaultBranch: meta.default_branch };
-  },
-  compareRefs: async (repo, base, head) => {
-    const compare = (await codebergJson(`/repos/${repoSlug(repo)}/compare/${base}...${head}`)) as {
-      total_commits: number;
-      files?: Array<{ filename: string }>;
-    };
-    return {
-      aheadBy: compare.total_commits,
-      files: (compare.files ?? []).map((file) => file.filename),
-    };
-  },
-  listTypesFolder: (repo, ref) =>
-    readTypesFolder(
-      `${CODEBERG_API}/repos/${repoSlug(repo)}/contents/types?ref=${encodeURIComponent(ref)}`,
-      CODEBERG_HEADERS,
-    ),
-};
 
 export type ForgeId = "github" | "codeberg";
 
@@ -580,7 +622,7 @@ const FORGE_HOSTS: Readonly<Record<string, ForgeId>> = {
   "codeberg.org": "codeberg",
 };
 
-const FORGE_READS: Readonly<Record<ForgeId, ForgeReads>> = {
+const FORGE_READS: Readonly<Record<ForgeId, (fetchImpl: ForgeFetch) => ForgeReads>> = {
   github: githubReads,
   codeberg: codebergReads,
 };
@@ -596,8 +638,11 @@ export function forgeFor(repo: string): ForgeId {
   return forge;
 }
 
-export function forgeReadsFor(repo: string): ForgeReads {
-  return FORGE_READS[forgeFor(repo)];
+export function forgeReadsFor(
+  repo: string,
+  fetchImpl: ForgeFetch = (url, init) => fetch(url, init),
+): ForgeReads {
+  return FORGE_READS[forgeFor(repo)](fetchImpl);
 }
 
 const forgeIo: LibraryCheckIo = {
