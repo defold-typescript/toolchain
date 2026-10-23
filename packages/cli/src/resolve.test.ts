@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import * as ts from "typescript";
+import { readNativeExpectations } from "../../library-types/scripts/target-expectations";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
@@ -1732,129 +1733,8 @@ declare module "pixels" {
   });
 });
 
-describe("runResolve def-windward-jps through the shipped native registry", () => {
-  const JPS_URL = "https://github.com/s-kania/def-windward-jps/archive/refs/tags/v1.1.0.zip";
-  const SHIPPED = readFileSync(
-    join(
-      import.meta.dir,
-      "..",
-      "..",
-      "library-types",
-      "generated",
-      "native",
-      "def_windward_jps.d.ts",
-    ),
-    "utf8",
-  );
-  const WRITTEN = join(".defold-types", "extensions", "def_windward_jps.d.ts");
-
-  async function resolveJps(manifest: string): Promise<{
-    cwd: string;
-    result: Awaited<ReturnType<typeof runResolve>>;
-  }> {
-    const cwd = tmp();
-    writeProject(cwd, `[project]\ndependencies#0 = ${JPS_URL}\n`);
-    const result = await runResolve({
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip({
-        [extensionArchiveKey(JPS_URL)]: { entries: [manifest], contents: {} },
-      }),
-      libraryRegistry: [],
-      libraryGeneratedDir: null,
-      nativeRegistry: loadVendoredNativeRegistry(),
-    });
-    return { cwd, result };
-  }
-
-  test("an archive confirmed by def_windward_jps/ext.manifest gets the shipped curated declaration", async () => {
-    const { cwd, result } = await resolveJps(
-      "def-windward-jps-1.1.0/def_windward_jps/ext.manifest",
-    );
-
-    expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, WRITTEN), "utf8")).toBe(SHIPPED);
-    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
-    expect(result.extensions[0]?.namespaces).toEqual(["def_windward_jps"]);
-  });
-
-  test("a repo-name match with its ext.manifest elsewhere writes no declaration", async () => {
-    const { cwd, result } = await resolveJps("def-windward-jps-1.1.0/other/ext.manifest");
-
-    expect(result.ok).toBe(true);
-    expect(existsSync(join(cwd, WRITTEN))).toBe(false);
-    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
-  });
-});
-
-describe("runResolve defold-box2d through the shipped native registry", () => {
-  const BOX2D_URL = "https://github.com/d954mas/defold-box2d/archive/refs/tags/1.0.3.zip";
-  const SHIPPED = readFileSync(
-    join(import.meta.dir, "..", "..", "library-types", "generated", "native", "box2d.d.ts"),
-    "utf8",
-  );
-  const WRITTEN = join(".defold-types", "extensions", "box2d.d.ts");
-
-  async function resolveBox2d(manifest: string): Promise<{
-    cwd: string;
-    result: Awaited<ReturnType<typeof runResolve>>;
-  }> {
-    const cwd = tmp();
-    writeProject(cwd, `[project]\ndependencies#0 = ${BOX2D_URL}\n`);
-    const result = await runResolve({
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip({
-        [extensionArchiveKey(BOX2D_URL)]: { entries: [manifest], contents: {} },
-      }),
-      libraryRegistry: [],
-      libraryGeneratedDir: null,
-      nativeRegistry: loadVendoredNativeRegistry(),
-    });
-    return { cwd, result };
-  }
-
-  test("an archive confirmed by the nested box2d/native/ext.manifest gets the shipped curated declaration", async () => {
-    const { cwd, result } = await resolveBox2d("defold-box2d-1.0.3/box2d/native/ext.manifest");
-
-    expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, WRITTEN), "utf8")).toBe(SHIPPED);
-    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
-    expect(result.extensions[0]?.namespaces).toEqual(["box2d"]);
-  });
-
-  test("a repo-name match with its ext.manifest one level up writes no declaration", async () => {
-    const { cwd, result } = await resolveBox2d("defold-box2d-1.0.3/box2d/ext.manifest");
-
-    expect(result.ok).toBe(true);
-    expect(existsSync(join(cwd, WRITTEN))).toBe(false);
-    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
-  });
-});
-
-describe("runResolve daabbcc3d and wave through the shipped native registry", () => {
-  const DAABBCC3D_URL =
-    "https://github.com/selimanac/defold-daabbcc3d/archive/refs/tags/v1.0.6.zip";
-  const WAVE_URL =
-    "https://github.com/selimanac/defold-wave/archive/76ff0c9780730a7e7cc4f3e0a8752d8c1f426def.zip";
-  const WAVE_TOP = "defold-wave-76ff0c9780730a7e7cc4f3e0a8752d8c1f426def";
-
-  function shipped(namespace: string): string {
-    return readFileSync(
-      join(
-        import.meta.dir,
-        "..",
-        "..",
-        "library-types",
-        "generated",
-        "native",
-        `${namespace}.d.ts`,
-      ),
-      "utf8",
-    );
-  }
+describe("runResolve each curated native target through the shipped native registry", () => {
+  const nativeRegistry = loadVendoredNativeRegistry();
 
   async function resolveNative(
     url: string,
@@ -1871,90 +1751,45 @@ describe("runResolve daabbcc3d and wave through the shipped native registry", ()
       }),
       libraryRegistry: [],
       libraryGeneratedDir: null,
-      nativeRegistry: loadVendoredNativeRegistry(),
+      nativeRegistry,
     });
     return { cwd, result };
   }
 
-  test("a daabbcc3d release confirmed by its daabbcc3d/ext.manifest gets the shipped declaration", async () => {
-    const { cwd, result } = await resolveNative(
-      DAABBCC3D_URL,
-      "defold-daabbcc3d-1.0.6/daabbcc3d/ext.manifest",
-    );
+  for (const [namespace, { resolve }] of readNativeExpectations()) {
+    const written = join(".defold-types", "extensions", `${namespace}.d.ts`);
 
-    expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "extensions", "daabbcc3d.d.ts"), "utf8")).toBe(
-      shipped("daabbcc3d"),
-    );
-    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
-    expect(result.extensions[0]?.namespaces).toEqual(["daabbcc3d"]);
-  });
+    test(`${namespace}: an archive confirmed by its manifest gets the shipped declaration`, async () => {
+      const { cwd, result } = await resolveNative(resolve.archiveUrl, resolve.confirmedManifest);
 
-  test("a commit-pinned wave archive confirmed by its wave/ext.manifest gets the shipped declaration", async () => {
-    const { cwd, result } = await resolveNative(WAVE_URL, `${WAVE_TOP}/wave/ext.manifest`);
-
-    expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "extensions", "wave.d.ts"), "utf8")).toBe(
-      shipped("wave"),
-    );
-    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
-    expect(result.extensions[0]?.namespaces).toEqual(["wave"]);
-  });
-
-  test("a wave repo match with its ext.manifest at the archive root writes no declaration", async () => {
-    const { cwd, result } = await resolveNative(WAVE_URL, `${WAVE_TOP}/ext.manifest`);
-
-    expect(result.ok).toBe(true);
-    expect(existsSync(join(cwd, ".defold-types", "extensions", "wave.d.ts"))).toBe(false);
-    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
-  });
-});
-
-describe("runResolve detour through the shipped native registry", () => {
-  const DETOUR_URL =
-    "https://github.com/abadonna/defold-detour/archive/95ce965cb404cecfacd5ba1fc8115a6bb7341a85.zip";
-  const DETOUR_TOP = "defold-detour-95ce965cb404cecfacd5ba1fc8115a6bb7341a85";
-
-  async function resolveDetour(
-    manifest: string,
-  ): Promise<{ cwd: string; result: Awaited<ReturnType<typeof runResolve>> }> {
-    const cwd = tmp();
-    writeProject(cwd, `[project]\ndependencies#0 = ${DETOUR_URL}\n`);
-    const result = await runResolve({
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip({
-        [extensionArchiveKey(DETOUR_URL)]: { entries: [manifest], contents: {} },
-      }),
-      libraryRegistry: [],
-      libraryGeneratedDir: null,
-      nativeRegistry: loadVendoredNativeRegistry(),
+      expect(result.ok).toBe(true);
+      expect(readFileSync(join(cwd, written), "utf8")).toBe(
+        readFileSync(
+          join(
+            import.meta.dir,
+            "..",
+            "..",
+            "library-types",
+            "generated",
+            "native",
+            `${namespace}.d.ts`,
+          ),
+          "utf8",
+        ),
+      );
+      expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+      expect(result.extensions[0]?.namespaces).toEqual([namespace]);
     });
-    return { cwd, result };
+
+    test(`${namespace}: a repo match with its manifest elsewhere writes no declaration`, async () => {
+      const { cwd, result } = await resolveNative(resolve.archiveUrl, resolve.misplacedManifest);
+
+      expect(result.ok).toBe(true);
+      expect(existsSync(join(cwd, written))).toBe(false);
+      expect(result.extensions).toHaveLength(1);
+      expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
+    });
   }
-
-  test("a commit-pinned detour archive confirmed by its detour/ext.manifest gets the shipped declaration", async () => {
-    const { cwd, result } = await resolveDetour(`${DETOUR_TOP}/detour/ext.manifest`);
-
-    expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "extensions", "detour.d.ts"), "utf8")).toBe(
-      readFileSync(
-        join(import.meta.dir, "..", "..", "library-types", "generated", "native", "detour.d.ts"),
-        "utf8",
-      ),
-    );
-    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
-    expect(result.extensions[0]?.namespaces).toEqual(["detour"]);
-  });
-
-  test("a detour repo match with its ext.manifest at the archive root writes no declaration", async () => {
-    const { cwd, result } = await resolveDetour(`${DETOUR_TOP}/ext.manifest`);
-
-    expect(result.ok).toBe(true);
-    expect(existsSync(join(cwd, ".defold-types", "extensions", "detour.d.ts"))).toBe(false);
-    expect(result.extensions[0]?.typeSurface).not.toBe("vendored-native");
-  });
 });
 
 describe("runResolve druid LuaLS library", () => {
