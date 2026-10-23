@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import * as ts from "typescript";
+import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
 import { buildLualsRegistryEntries } from "./library-match";
@@ -1415,16 +1416,13 @@ declare module "pixels" {
       .sort();
   }
 
-  const PIXELS_SHIPPED = [
-    "shipped/defold-pixels/pixels.d.ts",
-    "shipped/defold-pixels/pixels.global.d.ts",
-  ];
+  const PIXELS_SHIPPED = ["shipped/defold-pixels/pixels.d.ts"];
 
   function shippedWarnings(warnings: readonly string[]): string[] {
     return warnings.filter((line) => line.startsWith("shipped types from"));
   }
 
-  test("an archive's types/*.d.ts install verbatim in place of its .script_api", async () => {
+  test("an archive's module-form types install verbatim and its global file is skipped", async () => {
     const { cwd, result } = await resolvePixels(
       pixelsArchive({ [MODULE_PATH]: GOOD_MODULE, [GLOBAL_PATH]: GOOD_GLOBAL }),
     );
@@ -1433,16 +1431,40 @@ declare module "pixels" {
     const extensionsDir = join(cwd, ".defold-types", "extensions");
     const shippedDir = join(extensionsDir, "shipped", "defold-pixels");
     expect(readFileSync(join(shippedDir, "pixels.d.ts"), "utf8")).toBe(GOOD_MODULE);
-    expect(readFileSync(join(shippedDir, "pixels.global.d.ts"), "utf8")).toBe(GOOD_GLOBAL);
+    expect(existsSync(join(shippedDir, "pixels.global.d.ts"))).toBe(false);
     expect(writtenDeclarations(cwd)).toEqual(["index.d.ts"]);
     expect(writtenShipped(cwd)).toEqual(PIXELS_SHIPPED);
     const index = readFileSync(join(extensionsDir, "index.d.ts"), "utf8");
     expect(index).toContain('import "./shipped/defold-pixels/pixels";');
-    expect(index).toContain('import "./shipped/defold-pixels/pixels.global";');
+    expect(index).not.toContain("pixels.global");
     expect(result.extensions[0]?.typeSurface).toBe("shipped");
-    expect(result.extensions[0]?.namespaces).toEqual(["pixels", "pixels.global"]);
+    expect(result.extensions[0]?.namespaces).toEqual(["pixels"]);
     expect(result.extensions[0]?.scriptApiCount).toBe(1);
     expect(shippedWarnings(result.warnings)).toEqual([]);
+  });
+
+  test("a skipped global file is not checked", async () => {
+    const { cwd, result } = await resolvePixels(
+      pixelsArchive({ [MODULE_PATH]: GOOD_MODULE, [GLOBAL_PATH]: "declare const pixels: hash;\n" }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.typeSurface).toBe("shipped");
+    expect(shippedWarnings(result.warnings)).toEqual([]);
+    expect(writtenShipped(cwd)).toEqual(PIXELS_SHIPPED);
+  });
+
+  test("a project reaches the module by import and has no pixels global", async () => {
+    const { cwd } = await resolvePixels(
+      pixelsArchive({ [MODULE_PATH]: GOOD_MODULE, [GLOBAL_PATH]: GOOD_GLOBAL }),
+    );
+
+    expect(
+      usageDiagnostics(
+        cwd,
+        'import * as defold_pixels from "pixels";\ndeclare const b: ReturnType<typeof buffer.create>;\nconst r: LuaMultiReturn<[number, number]> = defold_pixels.fill(b);\n// @ts-expect-error\npixels.fill(b);\nexport { r };\n',
+      ),
+    ).toEqual([]);
   });
 
   test("shipped types win over a curated native target the archive confirms", async () => {
@@ -1619,6 +1641,10 @@ declare module "pixels" {
   }
 
   function usageDiagnostics(cwd: string, usage: string): string[] {
+    const typesRoot = resolveTypesPackageRoot();
+    if (typesRoot === null) {
+      throw new Error("@defold-typescript/types is not resolvable from the CLI package");
+    }
     const usagePath = join(cwd, "usage.ts");
     writeFileSync(usagePath, usage);
     const options: ts.CompilerOptions = {
@@ -1632,7 +1658,11 @@ declare module "pixels" {
       moduleResolution: ts.ModuleResolutionKind.Bundler,
     };
     const program = ts.createProgram(
-      [usagePath, join(cwd, ".defold-types", "extensions", "index.d.ts")],
+      [
+        usagePath,
+        join(typesRoot, "index.d.ts"),
+        join(cwd, ".defold-types", "extensions", "index.d.ts"),
+      ],
       options,
       ts.createCompilerHost(options),
     );

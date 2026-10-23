@@ -23,8 +23,7 @@ my-library/
 ├── my_library/        # the folder [library] include_dirs shares
 │   └── ...
 └── types/
-    ├── my_library.d.ts
-    └── my_library.global.d.ts
+    └── my_library.d.ts
 ```
 
 - Only files directly in `types/` are read. A `.d.ts` in a subfolder, one
@@ -32,9 +31,11 @@ my-library/
 - Keep `types/` outside `include_dirs`. Defold copies the shared folders into
   every project that depends on the library, and the declarations have no use
   at runtime.
-- Every file installs, under its own name, into the project's
+- Each file installs under its own name into the project's
   `.defold-types/extensions/shipped/<repo>/` folder, and `resolve` reports each
-  file name without `.d.ts`.
+  installed file name without `.d.ts`. A file that adds global names is not
+  installed when another file is in module form (see
+  [Module form, global form, or both](#module-form-global-form-or-both)).
 - The files keep their names, so they may reference each other by relative
   path (`export * from "./foo"`, `typeof import("./index")`), and an
   `index.d.ts` is fine.
@@ -70,22 +71,27 @@ declare module "my_library" {
 
 A project then writes `import * as my_library from "my_library"`.
 
-A native extension also registers a global table. To type it with no import,
-add a second file that points the global at the module:
+A native extension also registers a global table. A file that points the global
+at the module adds a global name:
 
 ```ts
 declare const my_library: typeof import("my_library");
 ```
 
-Ship one form or both. Every file in `types/` installs, so shipping both lets a
-project either import the module or use the global.
+A file adds global names when it holds a top-level declaration outside a
+`declare module "<name>"` block, or a `declare global` block. Such a file
+installs only when the library ships no module-form file. Beside a module,
+`resolve` skips it: a global name collides with project code and other
+libraries, and the import reaches the same API under any name the project
+picks. Ship the module form; a library that ships both gives projects the
+module alone.
 
 ## What `resolve` prints
 
 When the files pass the check, the project's `resolve` run prints:
 
 ```
-  my_library, my_library.global <- <url> (shipped types)
+  my_library <- <url> (shipped types)
 ```
 
 and `resolve --json` marks the dependency `typeSurface: "shipped"`.
