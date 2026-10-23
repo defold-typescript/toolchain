@@ -780,6 +780,61 @@ describe("panthera ingestion spans the subtree and hides its private module func
   });
 });
 
+describe("detiled, token and quest ingest their module surfaces and inherit their event members", () => {
+  function target(namespace: string): LualsTarget {
+    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+    if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
+    return found;
+  }
+
+  test.each([
+    ["detiled", ["parse", "cell_to_pos", "pos_to_cell", "load_tileset"]],
+    ["token", ["container", "init", "delete_container"]],
+    ["quest", ["event", "start_quest", "complete_quest"]],
+  ])("%s's public module surface carries its documented entry points", (namespace, expected) => {
+    const names = buildTargetModel(PACKAGE_ROOT, target(namespace))
+      .moduleFunctions.filter(isPublicMethod)
+      .map((f) => f.name);
+    for (const name of expected) expect(names).toContain(name);
+  });
+
+  // Upstream restates event's `trigger` and `subscribe` as `fun(_, ...)` fields on
+  // every typed event; emitted as-is they fail `extends event` and make a TS caller
+  // pass a dummy first argument. The overrides drop them so the inherited methods,
+  // called with a colon as Lua does, are the only ones.
+  test.each([
+    ["token", "token.container.event.on_token_change", "event"],
+    ["token", "token.container.event.on_token_visual_change", "event"],
+    ["token", "token.event.on_token_change", "event"],
+    ["token", "token.event.on_token_visual_change", "event"],
+    ["token", "token.event.on_token_restore_change", "event"],
+    ["quest", "quest.event.is_can_start", "event"],
+    ["quest", "quest.event.is_can_complete", "event"],
+    ["quest", "quest.event.is_can_event", "event"],
+    ["quest", "quest.queue.quest_event", "queue"],
+  ])("%s's %s extends %s without restating trigger or subscribe", (namespace, name, parent) => {
+    const iface = buildTargetModel(PACKAGE_ROOT, target(namespace)).interfaces.find(
+      (i) => i.name === name,
+    );
+    expect(iface?.extends).toBe(parent);
+    const members = [...(iface?.fields ?? []), ...(iface?.methods ?? [])].map((m) => m.name);
+    expect(members).not.toContain("trigger");
+    expect(members).not.toContain("subscribe");
+  });
+
+  // Built live rather than read off `fidelity/<namespace>.json`: dropping the
+  // `event` or `queue` external entry, or keeping quest's stray `_)` field, must
+  // red here on the config alone, without a regen first.
+  test.each([
+    "token",
+    "quest",
+  ])("every LuaLS token %s writes resolves — no unknown fallback", (namespace) => {
+    const report = buildTargetFidelity(PACKAGE_ROOT, target(namespace));
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.unknownFallbacks).toBe(0);
+  });
+});
+
 describe("log's dropped call signature matches the runtime's non-callable logger", () => {
   function logTarget(): LualsTarget {
     const log = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "log");

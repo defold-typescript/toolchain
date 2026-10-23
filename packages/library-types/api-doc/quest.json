@@ -1,0 +1,903 @@
+{
+  "info": {
+    "namespace": "quest",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_state",
+      "brief": "Set state (for saving/loading)",
+      "description": "Set state (for saving/loading)",
+      "parameters": [
+        {
+          "name": "external_state",
+          "doc": "",
+          "types": [
+            "quest_state"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_state",
+      "brief": "Get state (for saving/loading)",
+      "description": "Get state (for saving/loading)",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "quest_state"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Initialize quest system with config and start processing quests\nquest.init()\nquest.init(require(\"game.quests\"))\nquest.init(\"/resources/quests.json\")",
+      "description": "Initialize quest system with config and start processing quests\nquest.init()\nquest.init(require(\"game.quests\"))\nquest.init(\"/resources/quests.json\")",
+      "parameters": [
+        {
+          "name": "quest_config_or_path",
+          "doc": "Path to quest config or config table. Can be nil to init without quests.",
+          "types": [
+            "LuaMap<string, quest_config> | Record<string, quest_config> | string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_quests",
+      "brief": "Add quests to the system from config file or table\nquest.add_quests(require(\"game.quests\"))\nquest.add_quests(\"/resources/quests.json\")",
+      "description": "Add quests to the system from config file or table\nquest.add_quests(require(\"game.quests\"))\nquest.add_quests(\"/resources/quests.json\")",
+      "parameters": [
+        {
+          "name": "quest_config_or_path",
+          "doc": "Lua table or path to quest config. Example: \"/resources/quests.json\"",
+          "types": [
+            "LuaMap<string, quest_config> | Record<string, quest_config> | string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "event",
+      "brief": "Main function to apply event to all current quests. Call it when specific quest action is performed.\nquest.event(\"game_started\")\nquest.event(\"kill\", \"enemy\")\nquest.event(\"kill\", \"enemy\", 2)\nquest.event(\"collect\", \"coin\", 3)",
+      "description": "Main function to apply event to all current quests. Call it when specific quest action is performed.\nquest.event(\"game_started\")\nquest.event(\"kill\", \"enemy\")\nquest.event(\"kill\", \"enemy\", 2)\nquest.event(\"collect\", \"coin\", 3)",
+      "parameters": [
+        {
+          "name": "action",
+          "doc": "Event action",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "object",
+          "doc": "Event object",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "amount",
+          "doc": "Event amount default 1",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_task_progress",
+      "brief": "Add progress to task",
+      "description": "Add progress to task",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "Quest id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "task_index",
+          "doc": "Task index",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "amount",
+          "doc": "Amount to add",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_active",
+      "brief": "Check quest is active",
+      "description": "Check quest is active",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Quest active state",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_completed",
+      "brief": "Check quest is completed",
+      "description": "Check quest is completed",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Quest completed state",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_can_start_quest",
+      "brief": "Check quest is can be started now",
+      "description": "Check quest is can be started now",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Quest can start state",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_can_complete_quest",
+      "brief": "Check quest is can be completed now",
+      "description": "Check quest is can be completed now",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Quest can complete state",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_progress",
+      "brief": "Get current progress on quest tasks.\nReturns an array-like table with task progress values.\nlocal progress = quest.get_progress(\"kill_enemies\")\nprint(progress[1]) -- Progress on first task\nprint(progress[2]) -- Progress on second task\n--\nlocal progress = quest.get_progress(\"nonexistent_quest\")\nprint(#progress) -- Will be 0 for non-existent quests",
+      "description": "Get current progress on quest tasks.\nReturns an array-like table with task progress values.\nlocal progress = quest.get_progress(\"kill_enemies\")\nprint(progress[1]) -- Progress on first task\nprint(progress[2]) -- Progress on second task\n--\nlocal progress = quest.get_progress(\"nonexistent_quest\")\nprint(#progress) -- Will be 0 for non-existent quests",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "Quest identifier",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "List of task progress, ex {0, 2, 0}",
+          "types": [
+            "LuaTable<number, number>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_task_progress",
+      "brief": "Get task progress by task index",
+      "description": "Get task progress by task index",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "task_index",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "start_quest",
+      "brief": "Start quest, if it can be started",
+      "description": "Start quest, if it can be started",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Quest started state",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "complete_quest",
+      "brief": "Complete quest, if it can be completed",
+      "description": "Complete quest, if it can be completed",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "Quest id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "force_complete_quest",
+      "brief": "Force complete quest, without checking conditions",
+      "description": "Force complete quest, without checking conditions",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "Quest id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset_progress",
+      "brief": "Reset quest progress",
+      "description": "Reset quest progress",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "Quest id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset_quest",
+      "brief": "Reset quest, remove from current and completed lists, and update can be started list",
+      "description": "Reset quest, remove from current and completed lists, and update can be started list",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "Quest id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clear_all_progress",
+      "brief": "Clear all quest progress",
+      "description": "Clear all quest progress",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_current",
+      "brief": "Get current active quests",
+      "description": "Get current active quests",
+      "parameters": [
+        {
+          "name": "category",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable<string, quest_progress>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_completed",
+      "brief": "Get completed quests map",
+      "description": "Get completed quests map",
+      "parameters": [
+        {
+          "name": "category",
+          "doc": "Optional category filter",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Map of completed quests",
+          "types": [
+            "LuaTable<string, boolean>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_can_be_started",
+      "brief": "Get quests that can be started",
+      "description": "Get quests that can be started",
+      "parameters": [
+        {
+          "name": "category",
+          "doc": "Optional category filter",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable<string, boolean>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_quest_config",
+      "brief": "Get quest config by id",
+      "description": "Get quest config by id",
+      "parameters": [
+        {
+          "name": "quest_id",
+          "doc": "Quest id",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "quest_config"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_current_with_task",
+      "brief": "Get current quests that have tasks matching the specified action and object.\nReturns an array of quest IDs that contain matching tasks.\nlocal quests = quest.is_current_with_task(\"kill\", \"enemy\")\nif #quests > 0 then\nprint(\"Found \" .. #quests .. \" quests with kill enemy task\")\nend\n--\nlocal quests = quest.is_current_with_task(\"collect\")\nfor i, quest_id in ipairs(quests) do\nprint(\"Quest \" .. quest_id .. \" has collect task\")\nend",
+      "description": "Get current quests that have tasks matching the specified action and object.\nReturns an array of quest IDs that contain matching tasks.\nlocal quests = quest.is_current_with_task(\"kill\", \"enemy\")\nif #quests > 0 then\nprint(\"Found \" .. #quests .. \" quests with kill enemy task\")\nend\n--\nlocal quests = quest.is_current_with_task(\"collect\")\nfor i, quest_id in ipairs(quests) do\nprint(\"Quest \" .. quest_id .. \" has collect task\")\nend",
+      "parameters": [
+        {
+          "name": "action",
+          "doc": "Action to check (e.g., \"kill\", \"collect\")",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "object",
+          "doc": "Object to check (e.g., \"enemy\", \"coin\"). Can be nil for any object",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "List of quest IDs that have matching tasks",
+          "types": [
+            "string[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_logger",
+      "brief": "Customize the logging mechanism used by Quest Module. You can use **Defold Log** library or provide a custom logger.",
+      "description": "Customize the logging mechanism used by Quest Module. You can use **Defold Log** library or provide a custom logger.",
+      "parameters": [
+        {
+          "name": "logger_instance",
+          "doc": "",
+          "types": [
+            "quest_logger | LuaTable | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset_state",
+      "brief": "Reset Module quest state, probably you want to use it only in case of soft game reload",
+      "description": "Reset Module quest state, probably you want to use it only in case of soft game reload",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_quests_data",
+      "brief": "Get quests data",
+      "description": "Get quests data",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable<string, quest_config>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_quests_count",
+      "brief": "Get total quests count in quests config",
+      "description": "Get total quests count in quests config",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Total quests count",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_config",
+      "properties": [
+        {
+          "name": "tasks",
+          "brief": "List of tasks to complete",
+          "description": "List of tasks to complete",
+          "types": [
+            "quest_task[]"
+          ]
+        },
+        {
+          "name": "required_quests",
+          "brief": "List of required quests or single required quest",
+          "description": "List of required quests or single required quest",
+          "types": [
+            "string[] | string | undefined"
+          ]
+        },
+        {
+          "name": "category",
+          "brief": "Used for filtering quests",
+          "description": "Used for filtering quests",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "events_offline",
+          "brief": "If true, the quest events will be stored and processed even quest is not active",
+          "description": "If true, the quest events will be stored and processed even quest is not active",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "autostart",
+          "brief": "If true, the quest will be started automatically after all requirements are met",
+          "description": "If true, the quest will be started automatically after all requirements are met",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "autofinish",
+          "brief": "If true, the quest will be finished automatically after all tasks are completed",
+          "description": "If true, the quest will be finished automatically after all tasks are completed",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "repeatable",
+          "brief": "If true, the quest will be not stored in the completed list",
+          "description": "If true, the quest will be not stored in the completed list",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "use_max_task_value",
+          "brief": "If true, the maximum value of the task is used instead of the sum of all quest events",
+          "description": "If true, the maximum value of the task is used instead of the sum of all quest events",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_task",
+      "properties": [
+        {
+          "name": "action",
+          "brief": "Action to perform to complete the task. Example: \"destroy\" or \"collect\"",
+          "description": "Action to perform to complete the task. Example: \"destroy\" or \"collect\"",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "object",
+          "brief": "Object to specify the task, example: \"enemy\" or \"money\"",
+          "description": "Object to specify the task, example: \"enemy\" or \"money\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "required",
+          "brief": "Required amount of the object to complete the task. Example: 100. Default: 1",
+          "description": "Required amount of the object to complete the task. Example: 100. Default: 1",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "initial",
+          "brief": "Initial amount of the object. Example: 0",
+          "description": "Initial amount of the object. Example: 0",
+          "types": [
+            "number | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_event_data",
+      "properties": [
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "quest_event_type"
+          ]
+        },
+        {
+          "name": "quest_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "quest_config",
+          "brief": "Quest configuration",
+          "description": "Quest configuration",
+          "types": [
+            "quest_config"
+          ]
+        },
+        {
+          "name": "delta",
+          "brief": "Progress delta (for \"progress\" type)",
+          "description": "Progress delta (for \"progress\" type)",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "total",
+          "brief": "Total progress (for \"progress\" type)",
+          "description": "Total progress (for \"progress\" type)",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "task_index",
+          "brief": "Task index (for \"progress\" and \"task_completed\" types)",
+          "description": "Task index (for \"progress\" and \"task_completed\" types)",
+          "types": [
+            "number | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_queue_quest_event"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_event_is_can_start"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_event_is_can_complete"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_event_is_can_event"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_logger",
+      "properties": [
+        {
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(_: unknown, msg: string, data: unknown) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_state",
+      "properties": [
+        {
+          "name": "current",
+          "brief": "quest_id -> quest.progress",
+          "description": "quest_id -> quest.progress",
+          "types": [
+            "LuaTable<string, quest_progress>"
+          ]
+        },
+        {
+          "name": "completed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_progress",
+      "properties": [
+        {
+          "name": "progress",
+          "brief": "Quest progress",
+          "description": "Quest progress",
+          "types": [
+            "number[]"
+          ]
+        },
+        {
+          "name": "is_active",
+          "brief": "Is quest started to earn quest events",
+          "description": "Is quest started to earn quest events",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "start_time",
+          "brief": "Quest start time in seconds since epoch",
+          "description": "Quest start time in seconds since epoch",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "quest_event_type"
+    }
+  ]
+}
