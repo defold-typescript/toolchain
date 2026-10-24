@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-imp",
+    "manifestDir": "imp"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/britzl/defold-imp/archive/refs/tags/1.1.0.zip",
+    "confirmedManifest": "defold-imp-1.1.0/imp/ext.manifest",
+    "misplacedManifest": "defold-imp-1.1.0/ext.manifest"
+  }
+}

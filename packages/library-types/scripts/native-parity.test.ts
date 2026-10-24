@@ -62,6 +62,8 @@ describe("buildNativeParity over the shipped declarations", () => {
     fontscale: [1, 0, 0],
     uptime: [1, 0, 0],
     directories: [1, 5, 0],
+    png: [5, 5, 0],
+    imp: [1, 0, 0],
   };
 
   test("every native target is measured", () => {
@@ -332,6 +334,8 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
       "gyro",
       "fontscale",
       "uptime",
+      "png",
+      "imp",
     ]) {
       const report = buildNativeParity(PACKAGE_ROOT, target(namespace));
       expect(report.arityMeasured).toBe(false);
