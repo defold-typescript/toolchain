@@ -6787,6 +6787,8 @@ the named directory, so a repo-name collision alone writes nothing.
 | [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | `v0.1.0` | [`fontscale`](/api/fontscale) | `fontscale/ext.manifest` |
 | [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | `2023870` | [`directories`](/api/directories) | `directories/ext.manifest` |
 | [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | `1.2.0` | [`uptime`](/api/uptime) | `uptime/ext.manifest` |
+| [britzl/defold-png](https://github.com/britzl/defold-png) | `1.2.2` | [`png`](/api/png) | `png/ext.manifest` |
+| [britzl/defold-imp](https://github.com/britzl/defold-imp) | `1.1.0` | [`imp`](/api/imp) | `imp/ext.manifest` |
 
 <!-- curated-native-extensions:end -->
 

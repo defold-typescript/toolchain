@@ -78,6 +78,8 @@
     "generated/native/fontscale.d.ts",
     "generated/native/uptime.d.ts",
     "generated/native/directories.d.ts",
+    "generated/native/png.d.ts",
+    "generated/native/imp.d.ts",
     "test-d/boom-usage.test-d.ts",
     "test-d/defsave-usage.test-d.ts",
     "test-d/bridge-usage.test-d.ts",

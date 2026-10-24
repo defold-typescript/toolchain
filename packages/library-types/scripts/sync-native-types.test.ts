@@ -152,6 +152,24 @@ describe("lowerNativeApiDoc", () => {
     expect(doc.elements.map((e) => e.name).filter((n) => n.startsWith("global."))).toEqual([]);
   });
 
+  test("lowers png's codec functions and its LodePNG color-type constants, named bare", () => {
+    const doc = lowered("png");
+    expect(doc.info.namespace).toBe("png");
+    expect(
+      doc.elements
+        .filter((e) => e.type === "FUNCTION")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["decode_rgb", "decode_rgba", "encode_rgb", "encode_rgba", "info"]);
+    expect(
+      doc.elements
+        .filter((e) => e.type === "VARIABLE")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["GREY", "GREY_ALPHA", "PALETTE", "RGB", "RGBA"]);
+    expect(doc.elements.map((e) => e.name).filter((n) => n.startsWith("global."))).toEqual([]);
+  });
+
   test("lowers detour's init, its NavMesh and Crowd methods and the result shapes", () => {
     const doc = lowered("detour");
     expect(doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name)).toEqual(["init"]);

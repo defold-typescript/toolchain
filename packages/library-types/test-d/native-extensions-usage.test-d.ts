@@ -83,4 +83,33 @@ directories.path_for_file();
 // @ts-expect-error the call returns nothing on an error path, so the miss arm must be checked.
 const _s: string = directories.path_for_file("a");
 
+declare const pixels: string;
+
+const encoded: string = png.encode_rgba(pixels, 16, 16);
+png.encode_rgb(pixels, 16, 16);
+// @ts-expect-error the pixel dimensions are required.
+png.encode_rgb(pixels);
+
+const [buf, w, h] = png.decode_rgba(encoded, true);
+if (buf !== undefined) {
+  const _area: number = w * h;
+}
+const [, plainW] = png.decode_rgb(encoded);
+// @ts-expect-error a failed decode returns three nils, so the width is only there after checking the buffer.
+const _unguarded: number = plainW;
+
+const i = png.info(encoded);
+const _paletted: boolean = i.colortype === png.PALETTE;
+const _depth: number = i.width + i.height + i.bitdepth;
+const _colortypes: number[] = [png.RGBA, png.RGB, png.GREY, png.GREY_ALPHA, png.PALETTE];
+
+declare const src: Opaque<"buffer"> & { length: LuaLengthMethod<number> };
+declare const dst: Opaque<"buffer"> & { length: LuaLengthMethod<number> };
+
+imp.convolution(src, dst, 16, 16, [0, 0, 0, 0, 1, 0, 0, 0, 0]);
+// @ts-expect-error the kernel is a row-major 3x3, so it takes exactly nine numbers.
+imp.convolution(src, dst, 16, 16, [0, 0, 0, 0, 1, 0, 0, 0]);
+// @ts-expect-error the destination buffer is required.
+imp.convolution(src);
+
 export {};

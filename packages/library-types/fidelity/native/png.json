@@ -1,0 +1,20 @@
+{
+  "namespace": "png",
+  "moduleName": "png",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 5,
+  "declaredFunctions": 5,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "upstreamMethods": 0,
+  "declaredMethods": 0,
+  "missingMethods": [],
+  "phantomMethods": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 5,
+  "declaredConstants": 5,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1,
+  "arityMeasured": false
+}
