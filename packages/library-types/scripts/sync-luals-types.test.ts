@@ -11,6 +11,7 @@ import {
   fetchLualsFixtures,
   type ListLualsTree,
   type LualsTarget,
+  listTargetFixtures,
   lualsCorpusTargets,
   type ReadFixtureDir,
   readLualsTargets,
@@ -910,6 +911,11 @@ describe("pigeon ingests its message API and drops the base letter's restated da
     const report = buildTargetFidelity(PACKAGE_ROOT, pigeonTarget());
     expect(report.unknownTokens).toEqual([]);
     expect(report.unknownFallbacks).toBe(0);
+  });
+
+  test("pigeon's sourceGlobs keep every fixture its model reads and the ignore drops upstream's test file", () => {
+    const fixtures = listTargetFixtures(PACKAGE_ROOT, pigeonTarget());
+    expect(selectLualsSources([...fixtures, "pigeon/test.lua"], pigeonTarget())).toEqual(fixtures);
   });
 });
 
