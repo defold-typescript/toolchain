@@ -15,7 +15,7 @@ import { generateProbes, type ProbeCall, probeTarget } from "./witness";
 
 const PROJECT_DIR = resolve(import.meta.dir, "..", "project");
 const TYPES_DIR = resolve(import.meta.dir, "..", "..", "types");
-const BUILD_SERVER = "https://build.defold.com";
+export const BUILD_SERVER = "https://build.defold.com";
 const V3_MANIFEST = "/box2d-v3.appmanifest";
 
 export interface ProbePass {
@@ -115,7 +115,7 @@ export async function stockEngine(head: EngineHead): Promise<string> {
 // bob writes a custom engine under the host's build folder; `targetPlatform`
 // carries bob's name for it, which on macOS is `<arch>-osx`, not the
 // `<arch>-macos` the engine archive uses.
-function builtEngine(cwd: string): string {
+export function builtEngine(cwd: string): string {
   const platform = targetPlatform(process.platform, process.arch);
   const enginePath = join(cwd, "build", platform.buildFolder, platform.executable);
   if (existsSync(enginePath)) return enginePath;

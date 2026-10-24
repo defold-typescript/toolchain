@@ -1,0 +1,13 @@
+[project]
+title = native-import-probe
+dependencies#0 = https://github.com/selimanac/defold-uuid4/archive/refs/tags/v1.0.zip
+
+[bootstrap]
+main_collection = /main/main.collectionc
+
+[input]
+game_binding = /builtins/input/all.input_bindingc
+
+[display]
+width = 320
+height = 240

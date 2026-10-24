@@ -1,0 +1,6 @@
+name: "main"
+instances {
+  id: "probe"
+  prototype: "/main/probe.go"
+}
+scale_along_z: 0
