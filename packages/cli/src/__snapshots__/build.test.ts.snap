@@ -3,7 +3,7 @@
 exports[`runBuild a @globalTable module import builds to a global alias with no surviving require 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local pixels = pixels
+local pixels = _G.pixels
 function init()
     pixels.fill(7)
 end
