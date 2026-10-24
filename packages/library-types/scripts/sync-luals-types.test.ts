@@ -835,6 +835,42 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
   });
 });
 
+describe("pigeon ingests its message API and drops the base letter's restated data", () => {
+  function pigeonTarget(): LualsTarget {
+    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "pigeon");
+    if (!found) throw new Error("pigeon target missing from luals-targets.json");
+    return found;
+  }
+
+  test("pigeon's public module surface carries its message entry points", () => {
+    const names = buildTargetModel(PACKAGE_ROOT, pigeonTarget())
+      .moduleFunctions.filter(isPublicMethod)
+      .map((f) => f.name);
+    for (const name of ["define", "subscribe", "send", "send_to"]) expect(names).toContain(name);
+  });
+
+  // The `Letter*` subclasses restate `data` as their own message shape or as optional,
+  // which the base's required `data` rejects under `extends`; dropping the base field
+  // leaves each subclass its own.
+  test("BaseLetterDefinition carries no data field while a letter subclass keeps its own", () => {
+    const interfaces = buildTargetModel(PACKAGE_ROOT, pigeonTarget()).interfaces;
+    const fieldNames = (name: string): string[] => {
+      const iface = interfaces.find((i) => i.name === name);
+      if (!iface) throw new Error(`${name} missing from the pigeon model`);
+      return iface.fields.map((f) => f.name);
+    };
+    expect(fieldNames("BaseLetterDefinition")).not.toContain("data");
+    expect(fieldNames("LetterSetCamera")).toContain("data");
+  });
+
+  // Built live, so dropping the `vector*` renames reds here on the config alone.
+  test("every LuaLS token pigeon writes resolves — no unknown fallback", () => {
+    const report = buildTargetFidelity(PACKAGE_ROOT, pigeonTarget());
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.unknownFallbacks).toBe(0);
+  });
+});
+
 describe("log's dropped call signature matches the runtime's non-callable logger", () => {
   function logTarget(): LualsTarget {
     const log = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "log");

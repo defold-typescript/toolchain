@@ -818,3 +818,46 @@ test("a string-keyed table param lowers to the same widened type the emitter dec
   ]);
   expect(fn?.returnvalues).toEqual([{ name: "", doc: "", types: ["LuaTable<string, unknown>"] }]);
 });
+
+test("a declaration named like an engine type lowers under the name the emitter declares", () => {
+  const param = (name: string, types: string[]) => ({
+    name,
+    types,
+    doc: "",
+    isOptional: false,
+    isVararg: false,
+  });
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "Vector3",
+        generics: [],
+        fields: [{ name: "x", types: ["number"], doc: "", isOptional: false }],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [{ name: "Url", types: ["url", "string"], doc: "" }],
+    moduleFunctions: [
+      {
+        name: "send_to",
+        brief: "",
+        generics: [],
+        params: [param("receiver", ["Url"]), param("sender", ["url"])],
+        returns: [],
+      },
+    ],
+  };
+
+  const elements = elementsOf(
+    lowerLibraryModel(model, { namespace: "demo", typeRenames: { vector3: "Vector3" } }),
+  );
+  const fn = elements.find((element) => element.name === "send_to");
+  const params = Array.isArray(fn?.parameters) ? fn.parameters.filter(isRecord) : [];
+
+  expect(params.map((p) => p.types)).toEqual([["Url_"], ["Url"]]);
+  expect(elements.filter((element) => element.type === "TYPEDEF").map((e) => e.name)).toEqual([
+    "Vector3_",
+    "Url_",
+  ]);
+});

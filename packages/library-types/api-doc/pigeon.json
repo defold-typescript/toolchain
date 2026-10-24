@@ -1,0 +1,2159 @@
+{
+  "info": {
+    "namespace": "pigeon",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "define",
+      "brief": "------------------------\n------------------------\n------------------------\n------------------------\nDefine a single message schema for runtime validation.\nBuilt-in Defold/system message ids are always protected from redefinition.",
+      "description": "------------------------\n------------------------\n------------------------\n------------------------\nDefine a single message schema for runtime validation.\nBuilt-in Defold/system message ids are always protected from redefinition.",
+      "parameters": [
+        {
+          "name": "message_id",
+          "doc": "@Defold message_id string or hashed.",
+          "types": [
+            "MessageId"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message_def",
+          "doc": "@Optional message definition table.",
+          "types": [
+            "MessageDefinition"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@True if defined successfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "define_batch",
+      "brief": "Define multiple message schemas at once from a table of letter definitions.\nBuilt-in Defold/system message ids are always protected from redefinition.",
+      "description": "Define multiple message schemas at once from a table of letter definitions.\nBuilt-in Defold/system message ids are always protected from redefinition.",
+      "parameters": [
+        {
+          "name": "letters_table",
+          "doc": "@Table mapping keys to {id = MessageId, data = MessageDefinition}.",
+          "types": [
+            "LuaMap<string, LetterEntry> | Record<string, LetterEntry>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "is_overwriting",
+          "doc": "@If true, allows overwriting existing user-defined definitions.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@Per-key result map.",
+          "types": [
+            "LuaTable<string, boolean>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "subscribe",
+      "brief": "Subscribe to given message_id(s) and optionally add a hook called immediately on send.\nHook runs synchronously in the sender context (inside Pigeon.send) before msg.post,\nand does not run in the receiver script.",
+      "description": "Subscribe to given message_id(s) and optionally add a hook called immediately on send.\nHook runs synchronously in the sender context (inside Pigeon.send) before msg.post,\nand does not run in the receiver script.",
+      "parameters": [
+        {
+          "name": "messages",
+          "doc": "@Table containing message_id(s) that caller will be subscribed to. Can be a single message as string or hash or a table containing messages as strings or hashes.",
+          "types": [
+            "MessagesGroup"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "@Optional callback function to be called everytime, when sending subscribed message(s). Uses context parameter.",
+          "types": [
+            "(...args: any[]) => unknown"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "url",
+          "doc": "@Optional URL of the subscriber (v1.3 order).",
+          "types": [
+            "Url | Opaque<\"userdata\"> | string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "context",
+          "doc": "@Optional context to be passed to the callback function.",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "is_optimizing",
+          "doc": "@If true, skips subscribing to messages already registered for the same url.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@Unique id of the subscription if subscribed succesfully, false otherwise.",
+          "types": [
+            "number | boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "extend_subscription",
+      "brief": "Add message subscriptions to an existing subscriber id.",
+      "description": "Add message subscriptions to an existing subscriber id.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "@Id of the subscriber to update.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "messages",
+          "doc": "@Table containing message_id(s) to add.",
+          "types": [
+            "MessagesGroup"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@True if updated successfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reduce_subscription",
+      "brief": "Remove message subscriptions from an existing subscriber id.",
+      "description": "Remove message subscriptions from an existing subscriber id.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "@Id of the subscriber to update.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "messages",
+          "doc": "@Table containing message_id(s) to remove.",
+          "types": [
+            "MessagesGroup"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@True if updated successfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unsubscribe",
+      "brief": "Unsubscribe one or more subscriptions.",
+      "description": "Unsubscribe one or more subscriptions.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "@Single subscriber id, or a table of subscriber ids. If false or nil it will do nothing and will return false.",
+          "types": [
+            "number | number[] | boolean | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@True if all unsubscribed succesfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unsubscribe_all",
+      "brief": "Unsubscribe all saved subscriptions.",
+      "description": "Unsubscribe all saved subscriptions.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@True if unsubscribed all succesfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send",
+      "brief": "Send a message of given message_id with given message table to all subscribed subscribers.\nAdditionally, Pigeon checks in runtime if message is correct if defined.\nIf the message has a hook attached, it will be called immediately.",
+      "description": "Send a message of given message_id with given message table to all subscribed subscribers.\nAdditionally, Pigeon checks in runtime if message is correct if defined.\nIf the message has a hook attached, it will be called immediately.",
+      "parameters": [
+        {
+          "name": "message_id",
+          "doc": "@Defold message_id string or hashed. It will be prehashed anyway.",
+          "types": [
+            "MessageId"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message",
+          "doc": "@Optional definition message table to check before sending.",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@True if data is correct and send succesfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send_to",
+      "brief": "Equivalent to Defold built-in `msg.post`. Sends a message of given message_id with an optional data in message table to a specified url.\nAccepts the same target forms as `msg.post`: a `url` userdata, a url-like\n`string` (e.g. \"/gui#hud\" or \"#fragment\"), or a `hash` game object id\n(e.g. the id returned by `factory.create` or `go.get_id`).\nAdditionally, Pigeon checks in runtime if message is correct if defined.",
+      "description": "Equivalent to Defold built-in `msg.post`. Sends a message of given message_id with an optional data in message table to a specified url.\nAccepts the same target forms as `msg.post`: a `url` userdata, a url-like\n`string` (e.g. \"/gui#hud\" or \"#fragment\"), or a `hash` game object id\n(e.g. the id returned by `factory.create` or `go.get_id`).\nAdditionally, Pigeon checks in runtime if message is correct if defined.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "@Target's url, url-like string, or game object hash id.",
+          "types": [
+            "Url | string | hash | Opaque<\"userdata\">"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "@Defold message_id string or hashed. It will be prehashed anyway.",
+          "types": [
+            "MessageId"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message",
+          "doc": "@Optional message table to check.",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@True if data is correct and send succesfully, false otherwise.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "toggle_logging",
+      "brief": "Enable or disable logging functionality.\nIt only switches between default logging (printing to console) and not logging.\nIf you want to use dependency logging, you need to set dependency again after enabling logging.\nThe correctness of arguments is not checked! Use responsibly!",
+      "description": "Enable or disable logging functionality.\nIt only switches between default logging (printing to console) and not logging.\nIf you want to use dependency logging, you need to set dependency again after enabling logging.\nThe correctness of arguments is not checked! Use responsibly!",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "@Flag to set logging enabled (true) or disabled (false).",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_dependency_module_log",
+      "brief": "Replace internal printing with logging from Log module.\nIt is suited for Log API, so if you want to provide your own module, follow the API,\nor modify internal Pigeon calls for logging accordingly.\nThe correctness of arguments is not checked! Use responsibly!",
+      "description": "Replace internal printing with logging from Log module.\nIt is suited for Log API, so if you want to provide your own module, follow the API,\nor modify internal Pigeon calls for logging accordingly.\nThe correctness of arguments is not checked! Use responsibly!",
+      "parameters": [
+        {
+          "name": "module",
+          "doc": "@Lua module being replacement for logging. Nil resets to default print logger.",
+          "types": [
+            "LuaTable | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "@Optional own string tag to replace the default tag (\"pign\").",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_dependency_module_hashed",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module",
+          "doc": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "deprecated": "Pigeon always uses its internal `hashed` module. This function is a no-op kept for backward compatibility."
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates a new instance that registers message handlers and subscribes to their messages with an optional tag for logging.",
+      "description": "Creates a new instance that registers message handlers and subscribes to their messages with an optional tag for logging.",
+      "parameters": [
+        {
+          "name": "handlers",
+          "doc": "@Table of message handlers where key is hashed message_id and value is handler function",
+          "types": [
+            "LuaMap<hash, (...args: any[]) => unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tag",
+          "doc": "@Optional own string tag to replace the default tag (\"pign\").",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "@Table containing on_message function and final function to be used in script",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BaseLetterDefinition",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "@Hashed message id",
+          "description": "@Hashed message id",
+          "types": [
+            "HashedMessageId"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CameraMessageDefinition",
+      "properties": [
+        {
+          "name": "aspect_ratio",
+          "brief": "@[number] The aspect ratio of the camera (width/height)",
+          "description": "@[number] The aspect ratio of the camera (width/height)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "fov",
+          "brief": "@[number] Field of view (in radians)",
+          "description": "@[number] Field of view (in radians)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "near_z",
+          "brief": "@[number] Near Z plane distance",
+          "description": "@[number] Near Z plane distance",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "far_z",
+          "brief": "@[number] Far Z plane distance",
+          "description": "@[number] Far Z plane distance",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "orthographic_projection",
+          "brief": "@[boolean] Whether to use orthographic projection",
+          "description": "@[boolean] Whether to use orthographic projection",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "orthographic_zoom",
+          "brief": "@[number] Zoom level for orthographic projection",
+          "description": "@[number] Zoom level for orthographic projection",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "orthographic_mode",
+          "brief": "@[number] Orthographic zoom behavior when orthographic_projection is enabled",
+          "description": "@[number] Orthographic zoom behavior when orthographic_projection is enabled",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterSetCamera",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Camera properties to set",
+          "description": "Camera properties to set",
+          "types": [
+            "CameraMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterAcquireCameraFocus"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterReleaseCameraFocus"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TimeStepMessageDefinition",
+      "properties": [
+        {
+          "name": "factor",
+          "brief": "@[number] Time-step scaling factor",
+          "description": "@[number] Time-step scaling factor",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "mode",
+          "brief": "@[number] Time-step mode (0=continuous, 1=discrete)",
+          "description": "@[number] Time-step mode (0=continuous, 1=discrete)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterSetTimeStep",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Time step configuration",
+          "description": "Time step configuration",
+          "types": [
+            "TimeStepMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterLoad"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterUnload"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterAsyncLoad"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterProxyLoaded"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterProxyUnloaded"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterInit"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterFinal"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterEnable"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterDisable"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterAcquireInputFocus"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterReleaseInputFocus"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SetParentMessageDefinition",
+      "properties": [
+        {
+          "name": "parent_id",
+          "brief": "@[hash] The id of the new parent",
+          "description": "@[hash] The id of the new parent",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "keep_world_transform",
+          "brief": "@[number] 0/1 - whether to keep world transform (1) or not (0)",
+          "description": "@[number] 0/1 - whether to keep world transform (1) or not (0)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterSetParent",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Parent configuration",
+          "description": "Parent configuration",
+          "types": [
+            "SetParentMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LayoutChangedMessageDefinition",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "@[hash] Current layout id",
+          "description": "@[hash] Current layout id",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "previous_id",
+          "brief": "@[hash] Previous layout id",
+          "description": "@[hash] Previous layout id",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterLayoutChanged",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Layout change information",
+          "description": "Layout change information",
+          "types": [
+            "LayoutChangedMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ModelAnimationDoneMessageDefinition",
+      "properties": [
+        {
+          "name": "animation_id",
+          "brief": "@[hash] \tID of the completed animation",
+          "description": "@[hash] \tID of the completed animation",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "playback",
+          "brief": "@[number] Playback mode constant",
+          "description": "@[number] Playback mode constant",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterModelAnimationDone",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Animation completion data",
+          "description": "Animation completion data",
+          "types": [
+            "ModelAnimationDoneMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ApplyForceMessageDefinition",
+      "properties": [
+        {
+          "name": "force",
+          "brief": "@[vector3] Force to be applied on the collision object (in Newtons)",
+          "description": "@[vector3] Force to be applied on the collision object (in Newtons)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "position",
+          "brief": "@[vector3] Position where the force should be applied",
+          "description": "@[vector3] Position where the force should be applied",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterApplyForce",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Force application data",
+          "description": "Force application data",
+          "types": [
+            "ApplyForceMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CollisionObjectMessageDefinition",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "@[vector3] World position of the object",
+          "description": "@[vector3] World position of the object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "@[hash] ID of the object",
+          "description": "@[hash] ID of the object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "group",
+          "brief": "@[hash] Collision group of the object",
+          "description": "@[hash] Collision group of the object",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CollisionEventMessageDefinition",
+      "properties": [
+        {
+          "name": "a",
+          "brief": "@[table with position, id, group] Collision information for object A",
+          "description": "@[table with position, id, group] Collision information for object A",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "b",
+          "brief": "@[table with position, id, group] Collision information for object B",
+          "description": "@[table with position, id, group] Collision information for object B",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterCollisionEvent",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Collision event data",
+          "description": "Collision event data",
+          "types": [
+            "CollisionEventMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CollisionResponseMessageDefinition",
+      "properties": [
+        {
+          "name": "other_id",
+          "brief": "@[hash] ID of the instance that collided with",
+          "description": "@[hash] ID of the instance that collided with",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "other_position",
+          "brief": "@[vector3] World position of the other instance",
+          "description": "@[vector3] World position of the other instance",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "other_group",
+          "brief": "@[hash] Collision group of the other object",
+          "description": "@[hash] Collision group of the other object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "own_group",
+          "brief": "@[hash] Collision group of own object",
+          "description": "@[hash] Collision group of own object",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterCollisionResponse",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Collision response data",
+          "description": "Collision response data",
+          "types": [
+            "CollisionResponseMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ContactPointObjectMessageDefinition",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "@[vector3] World position of the object",
+          "description": "@[vector3] World position of the object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "@[hash] ID of the object",
+          "description": "@[hash] ID of the object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "group",
+          "brief": "@[hash] Collision group of the object",
+          "description": "@[hash] Collision group of the object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "relative_velocity",
+          "brief": "@[vector3] Relative velocity as observed from other object",
+          "description": "@[vector3] Relative velocity as observed from other object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "mass",
+          "brief": "@[number] Mass of the object in kg",
+          "description": "@[number] Mass of the object in kg",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "normal",
+          "brief": "@[vector3] Normal in world space",
+          "description": "@[vector3] Normal in world space",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ContactPointEventMessageDefinition",
+      "properties": [
+        {
+          "name": "applied_impulse",
+          "brief": "@[number] Impulse the contact resulted in",
+          "description": "@[number] Impulse the contact resulted in",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "distance",
+          "brief": "@[number] Penetration distance between objects (always positive)",
+          "description": "@[number] Penetration distance between objects (always positive)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "a",
+          "brief": "@[table with position, id, group, relative_velocity, mass, normal] Contact point information for object A",
+          "description": "@[table with position, id, group, relative_velocity, mass, normal] Contact point information for object A",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "b",
+          "brief": "@[table with position, id, group, relative_velocity, mass, normal] Contact point information for object B",
+          "description": "@[table with position, id, group, relative_velocity, mass, normal] Contact point information for object B",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterContactPointEvent",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Contact point event data",
+          "description": "Contact point event data",
+          "types": [
+            "ContactPointEventMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ContactPointResponseMessageDefinition",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "@[vector3] World position of contact point",
+          "description": "@[vector3] World position of contact point",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "normal",
+          "brief": "@[vector3] Normal in world space (points from other object to current)",
+          "description": "@[vector3] Normal in world space (points from other object to current)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "relative_velocity",
+          "brief": "@[vector3] Relative velocity as observed from other object",
+          "description": "@[vector3] Relative velocity as observed from other object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "distance",
+          "brief": "@[number] Penetration distance (always positive)",
+          "description": "@[number] Penetration distance (always positive)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "applied_impulse",
+          "brief": "@[number] Resulting impulse",
+          "description": "@[number] Resulting impulse",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "life_time",
+          "brief": "@[number] Contact life time (not currently used)",
+          "description": "@[number] Contact life time (not currently used)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "mass",
+          "brief": "@[number] Mass of current object in kg",
+          "description": "@[number] Mass of current object in kg",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "other_mass",
+          "brief": "@[number] Mass of other object in kg",
+          "description": "@[number] Mass of other object in kg",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "other_id",
+          "brief": "@[hash] Other instance ID",
+          "description": "@[hash] Other instance ID",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "other_position",
+          "brief": "@[vector3] Other object position",
+          "description": "@[vector3] Other object position",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "other_group",
+          "brief": "@[hash] Other collision group",
+          "description": "@[hash] Other collision group",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "own_group",
+          "brief": "@[hash] Own collision group",
+          "description": "@[hash] Own collision group",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterContactPointResponse",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Contact point response data",
+          "description": "Contact point response data",
+          "types": [
+            "ContactPointResponseMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RayCastMissedMessageDefinition",
+      "properties": [
+        {
+          "name": "request_id",
+          "brief": "@[number] Ray cast request ID",
+          "description": "@[number] Ray cast request ID",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterRayCastMissed",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Ray cast missed data",
+          "description": "Ray cast missed data",
+          "types": [
+            "RayCastMissedMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RayCastResponseMessageDefinition",
+      "properties": [
+        {
+          "name": "fraction",
+          "brief": "@[number] Fraction of ray length where hit occurred (0-1)",
+          "description": "@[number] Fraction of ray length where hit occurred (0-1)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "position",
+          "brief": "@[vector3] Hit position in world space",
+          "description": "@[vector3] Hit position in world space",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "normal",
+          "brief": "@[vector3] Surface normal at hit point",
+          "description": "@[vector3] Surface normal at hit point",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "@[hash] Hit object ID",
+          "description": "@[hash] Hit object ID",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "group",
+          "brief": "@[hash] Hit object collision group",
+          "description": "@[hash] Hit object collision group",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "request_id",
+          "brief": "@[number] Ray cast request ID",
+          "description": "@[number] Ray cast request ID",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterRayCastResponse",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Ray cast response data",
+          "description": "Ray cast response data",
+          "types": [
+            "RayCastResponseMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TriggerObjectMessageDefinition",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "@[hash] ID of the object",
+          "description": "@[hash] ID of the object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "group",
+          "brief": "@[hash] Collision group of the object",
+          "description": "@[hash] Collision group of the object",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TriggerEventMessageDefinition",
+      "properties": [
+        {
+          "name": "enter",
+          "brief": "@[boolean] True if entering trigger, false if exiting",
+          "description": "@[boolean] True if entering trigger, false if exiting",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "a",
+          "brief": "@[table with id, group] Information for object A",
+          "description": "@[table with id, group] Information for object A",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "b",
+          "brief": "@[table with id, group] Information for object B",
+          "description": "@[table with id, group] Information for object B",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterTriggerEvent",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Trigger event data",
+          "description": "Trigger event data",
+          "types": [
+            "TriggerEventMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TriggerResponseMessageDefinition",
+      "properties": [
+        {
+          "name": "other_id",
+          "brief": "@[hash] ID of the triggering instance",
+          "description": "@[hash] ID of the triggering instance",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "enter",
+          "brief": "@[boolean] True if entering trigger, false if exiting",
+          "description": "@[boolean] True if entering trigger, false if exiting",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "other_group",
+          "brief": "@[hash] Collision group of triggering object",
+          "description": "@[hash] Collision group of triggering object",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "own_group",
+          "brief": "@[hash] Collision group of own object",
+          "description": "@[hash] Collision group of own object",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterTriggerResponse",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Trigger response data",
+          "description": "Trigger response data",
+          "types": [
+            "TriggerResponseMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DrawDebugTextMessageDefinition",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "@[vector3] Text position",
+          "description": "@[vector3] Text position",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "text",
+          "brief": "@[string] Debug text",
+          "description": "@[string] Debug text",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "@[vector4] Text color",
+          "description": "@[vector4] Text color",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterDrawDebugText",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Debug text data",
+          "description": "Debug text data",
+          "types": [
+            "DrawDebugTextMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DrawLineMessageDefinition",
+      "properties": [
+        {
+          "name": "start_point",
+          "brief": "@[vector3] Line start point",
+          "description": "@[vector3] Line start point",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "end_point",
+          "brief": "@[vector3] Line end point",
+          "description": "@[vector3] Line end point",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "@[vector4] Line color",
+          "description": "@[vector4] Line color",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterDrawLine",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Line drawing data",
+          "description": "Line drawing data",
+          "types": [
+            "DrawLineMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "WindowDimensionsMessageDefinition",
+      "properties": [
+        {
+          "name": "height",
+          "brief": "@[number] Window height",
+          "description": "@[number] Window height",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "brief": "@[number] Window width",
+          "description": "@[number] Window width",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterWindowResized",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Window dimensions",
+          "description": "Window dimensions",
+          "types": [
+            "WindowDimensionsMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterResize",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Window dimensions",
+          "description": "Window dimensions",
+          "types": [
+            "WindowDimensionsMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ClearColorMessageDefinition",
+      "properties": [
+        {
+          "name": "color",
+          "brief": "@[vector4] Clear color",
+          "description": "@[vector4] Clear color",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterClearColor",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Clear color data",
+          "description": "Clear color data",
+          "types": [
+            "ClearColorMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PlaySoundMessageDefinition",
+      "properties": [
+        {
+          "name": "delay",
+          "brief": "@[number?] Optional delay in seconds before the sound starts playing (default: 0)",
+          "description": "@[number?] Optional delay in seconds before the sound starts playing (default: 0)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "gain",
+          "brief": "@[number?] Optional sound gain between 0 and 1 (default: 1)",
+          "description": "@[number?] Optional sound gain between 0 and 1 (default: 1)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "play_id",
+          "brief": "@[number?] Optional identifier of the sound for distinguishing consecutive plays",
+          "description": "@[number?] Optional identifier of the sound for distinguishing consecutive plays",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "start_time",
+          "brief": "@[number?] Optional start offset in seconds (mutually exclusive with start_frame)",
+          "description": "@[number?] Optional start offset in seconds (mutually exclusive with start_frame)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "start_frame",
+          "brief": "@[number?] Optional start offset in frames (takes precedence over start_time)",
+          "description": "@[number?] Optional start offset in frames (takes precedence over start_time)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterPlaySound",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Optional sound playback configuration",
+          "description": "Optional sound playback configuration",
+          "types": [
+            "PlaySoundMessageDefinition | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterStopSound"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SetGainMessageDefinition",
+      "properties": [
+        {
+          "name": "gain",
+          "brief": "@[number?] Optional sound gain between 0 and 1 (default: 1)",
+          "description": "@[number?] Optional sound gain between 0 and 1 (default: 1)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterSetGain",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Optional gain configuration",
+          "description": "Optional gain configuration",
+          "types": [
+            "SetGainMessageDefinition | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SoundDoneMessageDefinition",
+      "properties": [
+        {
+          "name": "play_id",
+          "brief": "@[number?] Optional ID number supplied with play_sound message",
+          "description": "@[number?] Optional ID number supplied with play_sound message",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterSoundDone",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Optional sound completion data",
+          "description": "Optional sound completion data",
+          "types": [
+            "SoundDoneMessageDefinition | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SoundStoppedMessageDefinition",
+      "properties": [
+        {
+          "name": "play_id",
+          "brief": "@[number?] Optional ID number supplied with play_sound message",
+          "description": "@[number?] Optional ID number supplied with play_sound message",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterSoundStopped",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Optional sound stop data",
+          "description": "Optional sound stop data",
+          "types": [
+            "SoundStoppedMessageDefinition | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PlayAnimationMessageDefinition",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "@[hash] The id of the animation to play",
+          "description": "@[hash] The id of the animation to play",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "offset",
+          "brief": "@[number?] Normalized initial value of animation cursor",
+          "description": "@[number?] Normalized initial value of animation cursor",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "playback_rate",
+          "brief": "@[number?] Animation playback rate (must be positive)",
+          "description": "@[number?] Animation playback rate (must be positive)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterPlayAnimation",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Animation data",
+          "description": "Animation data",
+          "types": [
+            "PlayAnimationMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AnimationDoneMessageDefinition",
+      "properties": [
+        {
+          "name": "current_tile",
+          "brief": "@[number] The current tile of the sprite",
+          "description": "@[number] The current tile of the sprite",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "id",
+          "brief": "@[hash] ID of the animation that was completed",
+          "description": "@[hash] ID of the animation that was completed",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterAnimationDone",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Animation completion data",
+          "description": "Animation completion data",
+          "types": [
+            "AnimationDoneMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ExitMessageDefinition",
+      "properties": [
+        {
+          "name": "code",
+          "brief": "@[number] Exit code to report to the OS (0 means clean exit)",
+          "description": "@[number] Exit code to report to the OS (0 means clean exit)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterExit",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Exit configuration",
+          "description": "Exit configuration",
+          "types": [
+            "ExitMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterToggleProfile"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterTogglePhysicsDebug"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "StartRecordMessageDefinition",
+      "properties": [
+        {
+          "name": "file_name",
+          "brief": "@[string] Output file name for the video recording",
+          "description": "@[string] Output file name for the video recording",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "frame_period",
+          "brief": "@[number] Frame period to record (write every nth frame, default: 2)",
+          "description": "@[number] Frame period to record (write every nth frame, default: 2)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "fps",
+          "brief": "@[number] Playback speed in frames per second (default: 30)",
+          "description": "@[number] Playback speed in frames per second (default: 30)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterStartRecord",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Recording configuration",
+          "description": "Recording configuration",
+          "types": [
+            "StartRecordMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterStopRecord"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RebootMessageDefinition",
+      "properties": [
+        {
+          "name": "arg1",
+          "brief": "@[string] First command line argument",
+          "description": "@[string] First command line argument",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "arg2",
+          "brief": "@[string] Second command line argument",
+          "description": "@[string] Second command line argument",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "arg3",
+          "brief": "@[string] Third command line argument",
+          "description": "@[string] Third command line argument",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "arg4",
+          "brief": "@[string] Fourth command line argument",
+          "description": "@[string] Fourth command line argument",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "arg5",
+          "brief": "@[string] Fifth command line argument",
+          "description": "@[string] Fifth command line argument",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "arg6",
+          "brief": "@[string] Sixth command line argument",
+          "description": "@[string] Sixth command line argument",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterReboot",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Reboot configuration (optional)",
+          "description": "Reboot configuration (optional)",
+          "types": [
+            "RebootMessageDefinition | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterResumeRendering"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SetVsyncMessageDefinition",
+      "properties": [
+        {
+          "name": "swap_interval",
+          "brief": "@[number] Target swap interval (0=disabled, 1=every v-blank, 2=every other v-blank)",
+          "description": "@[number] Target swap interval (0=disabled, 1=every v-blank, 2=every other v-blank)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterSetVsync",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Vsync configuration",
+          "description": "Vsync configuration",
+          "types": [
+            "SetVsyncMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SetUpdateFrequencyMessageDefinition",
+      "properties": [
+        {
+          "name": "frequency",
+          "brief": "@[number] Target update frequency (e.g. 60 for 60 fps)",
+          "description": "@[number] Target update frequency (e.g. 60 for 60 fps)",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterSetUpdateFrequency",
+      "properties": [
+        {
+          "name": "data",
+          "brief": "Frequency configuration",
+          "description": "Frequency configuration",
+          "types": [
+            "SetUpdateFrequencyMessageDefinition"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "logger",
+      "properties": [
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "trace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Pigeon",
+      "properties": [
+        {
+          "name": "letters",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Letters"
+          ]
+        },
+        {
+          "name": "define",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(message_id: MessageId, message_def?: MessageDefinition) => boolean"
+          ]
+        },
+        {
+          "name": "define_batch",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(letters_table: LuaTable<string, LetterEntry>, is_overwriting?: boolean) => LuaTable<string, boolean>"
+          ]
+        },
+        {
+          "name": "subscribe",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(messages: MessagesGroup, callback?: (...args: any[]) => unknown, url?: Url | Opaque<\"userdata\"> | string, context?: LuaTable, is_optimizing?: boolean) => number | boolean"
+          ]
+        },
+        {
+          "name": "extend_subscription",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(id: number, messages: MessagesGroup) => boolean"
+          ]
+        },
+        {
+          "name": "reduce_subscription",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(id: number, messages: MessagesGroup) => boolean"
+          ]
+        },
+        {
+          "name": "unsubscribe",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(id: number | number[] | boolean | undefined) => boolean"
+          ]
+        },
+        {
+          "name": "unsubscribe_all",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => boolean"
+          ]
+        },
+        {
+          "name": "send",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(message_id: MessageId, message?: LuaTable) => boolean"
+          ]
+        },
+        {
+          "name": "send_to",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(url: Url | Opaque<\"userdata\"> | string | hash, message_id: MessageId, message?: LuaTable) => boolean"
+          ]
+        },
+        {
+          "name": "toggle_logging",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(enable: boolean) => boolean"
+          ]
+        },
+        {
+          "name": "set_dependency_module_log",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(module: LuaTable | undefined, tag?: string) => boolean"
+          ]
+        },
+        {
+          "name": "set_dependency_module_hashed",
+          "brief": "@Deprecated, no-op.",
+          "description": "@Deprecated, no-op.",
+          "types": [
+            "(module: (...args: any[]) => unknown) => boolean"
+          ]
+        },
+        {
+          "name": "new",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(handlers: LuaTable<hash, (...args: any[]) => unknown>, tag?: string) => LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LetterEntry",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown"
+          ]
+        },
+        {
+          "name": "data",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PigeonImpl"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Typer"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "hash"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HashedMessageId"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MessageId"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MessagesGroup"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MessageDefinition"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Letters"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MessageIds"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HashedMessageIds"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Url_"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DataType"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ExpectedDataType"
+    }
+  ]
+}

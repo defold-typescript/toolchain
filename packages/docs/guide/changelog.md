@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[`resolve` extension declarations](./resolve.md#the-generated-surface)** carry branded constants, optional parameters and typed callbacks, and none is lost when extensions share a namespace or differ only in letter case.
 > - **[Curated native namespaces](./resolve.md#curated-native-extensions)** type [def_windward_jps](/api/def_windward_jps), [box2d](/api/box2d), [daabbcc3d](/api/daabbcc3d), [wave](/api/wave) and [detour](/api/detour).
 > - **[`resolve` runs under Node and Bun](./resolve.md)** on every OS for a project with a native extension, with no `unzip`.
-> - **[Asset Portal libraries](/libraries)** get pages, typed from their `.script_api` when they ship one, and [detiled](/api/detiled), [token](/api/token) and [quest](/api/quest) from their LuaLS annotations.
+> - **[Asset Portal libraries](/libraries)** get pages, typed from their `.script_api` when they ship one, and [detiled](/api/detiled), [token](/api/token), [quest](/api/quest) and [pigeon](/api/pigeon) from their LuaLS annotations.
 
 ### Breaking
 
@@ -35,6 +35,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **[detiled](/api/detiled)** (`Insality/detiled`, tag `3`) — `detiled.parse` returns a Tiled map's layers and map params, which `detiled.cell_to_pos` and `detiled.pos_to_cell` take to convert between cells and positions.
   - **[token](/api/token)** (`Insality/defold-token`, tag `9`) — `token.container` returns a container whose change events take a callback alone, as they do in Lua.
   - **[quest](/api/quest)** (`Insality/defold-quest`, tag `3`) — `quest.event` reports a game event to the active quests, and `quest.start_quest` returns whether the quest started.
+  - **[pigeon](/api/pigeon)** (`paweljarosz/pigeon`, tag `v1.5`) — `pigeon.send_to` takes any receiver `msg.post` takes (a `Url`, a URL string or a `hash` id), and `pigeon.send` posts to every subscriber `pigeon.subscribe` registers.
 - **Five more native extensions are typed by curated namespaces** ([Curated native extensions](./resolve.md#curated-native-extensions)), so a project depending on any of them gets types where `resolve` wrote none:
   - **[def_windward_jps](/api/def_windward_jps)** (`s-kania/def-windward-jps`, tag `v1.1.0`) — `def_windward_jps.create_grid` returns a grid whose `def_windward_jps.Grid.find_path` and `def_windward_jps.Grid.is_walkable` take 1-based `def_windward_jps.Point` cells.
   - **[box2d](/api/box2d)** (`d954mas/defold-box2d`, tag `1.0.3`) — `box2d.NewWorld` returns a world whose bodies, fixtures, shapes and joints carry their methods, and `box2d.World.CreateJoint` accepts only the joint definitions the extension can build and returns the joint type each one names.
