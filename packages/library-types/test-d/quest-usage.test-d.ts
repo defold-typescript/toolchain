@@ -15,4 +15,11 @@ quest.event("kill", "enemy", 2);
 const started: boolean = quest.start_quest("q1");
 quest.complete_quest("q1");
 
+// quest re-exports its internal event queue as a module field; the queue's own
+// `subscribe` takes the handler alone.
+const queued: boolean = quest.on_quest_event.subscribe((event_data: unknown) => {
+  void event_data;
+});
+
 void started;
+void queued;

@@ -56,7 +56,7 @@ declare module 'token.token' {
 		/**
 		 * Get token amount from the container
 		 */
-		get(token_id: string | token_token_config_data): number | unknown;
+		get(token_id: string | token_token_config_data): number;
 		/**
 		 * Pay (subtract) tokens from the container
 		 */
@@ -230,11 +230,20 @@ declare module 'token.token' {
 		get_token_id(): string | undefined;
 	}
 	/**
-	 * The Defold Token module.
-	 * Used to manage all countable items in the game.
+	 * Triggers when token amount was changed. `amount` is the new total, `delta` is the applied change
+	 * Callback is fun(container_id: string, token_id: string, amount: number, reason: string|nil, delta: number)
 	 */
-	interface token {
-	}
+	export const on_token_change: token_event_on_token_change;
+	/**
+	 * Triggers when token visual amount was changed. `amount` is the new visual total, `delta` is the applied visual change
+	 * Callback is fun(container_id: string, token_id: string, amount: number, delta: number)
+	 */
+	export const on_token_visual_change: token_event_on_token_visual_change;
+	/**
+	 * Triggers when token restore config was changed
+	 * Callback is fun(container_id: string, token_id: string, config: token.token_restore_config)
+	 */
+	export const on_token_restore_change: token_event_on_token_restore_change;
 	/**
 	 * Triggers when token amount was changed. `amount` is the new total, `delta` is the applied change
 	 * Callback is fun(container_id: string, token_id: string, amount: number, reason: string|nil, delta: number)
