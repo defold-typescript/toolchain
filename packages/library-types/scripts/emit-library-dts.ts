@@ -54,6 +54,7 @@ import type {
   LibraryModel,
   LibraryParam,
 } from "./parse-luals";
+import { CORE_TYPE_RENAMES } from "./sync-library-types";
 
 /**
  * A type token owned by another target: the module id that declares it and the name
@@ -296,9 +297,9 @@ function slotNoteDocs(fn: LibraryMethod, indexBase: LibraryIndexBase | undefined
   return { params, returns };
 }
 
-/** A class field's index-base notes, keyed by the sanitized typedef name. */
+/** A class field's index-base notes, keyed by the declared typedef name. */
 function fieldNotes(
-  iface: LibraryInterface,
+  typedefName: string,
   field: LibraryField,
   indexBase: LibraryIndexBase | undefined,
 ) {
@@ -306,16 +307,18 @@ function fieldNotes(
   return libraryIndexBaseNotes(
     indexBase.classifications,
     indexBase.page,
-    sanitizeTypeName(iface.name),
+    typedefName,
     "field",
     field.name,
   );
 }
 
-function renderAlias(alias: LibraryAlias, ctx: MapContext): string[] {
+function renderAlias(alias: LibraryAlias, ctx: ModelContext): string[] {
   const lines: string[] = [];
   pushDoc(lines, alias.doc, INDENT, alias.deprecated);
-  lines.push(`${INDENT}type ${sanitizeTypeName(alias.name)} = ${mapTypes(alias.types, ctx)};`);
+  lines.push(
+    `${INDENT}type ${declaredName(ctx, alias.name)} = ${mapTypes(alias.types, scopeAliasBody(ctx, alias))};`,
+  );
   return lines;
 }
 
@@ -331,7 +334,8 @@ function renderInterface(
   const ifaceCtx = scopeGenerics(ctx, iface.generics);
   const params = renderGenericParams(iface.generics, ifaceCtx);
   const extendsClause = renderExtends(iface, ifaceCtx, interfaceNames, externalTokens);
-  lines.push(`${INDENT}interface ${sanitizeTypeName(iface.name)}${params}${extendsClause} {`);
+  const name = declaredName(ctx, iface.name);
+  lines.push(`${INDENT}interface ${name}${params}${extendsClause} {`);
   const body = INDENT + INDENT;
   for (const field of iface.fields) {
     if (!isPublicField(field)) continue;
@@ -339,7 +343,7 @@ function renderInterface(
     // method (`name?(...args: any[]): ret`) so a concrete subinterface's refined
     // override stays assignable under `extends`; strict function-field variance
     // would reject it.
-    const notes = fieldNotes(iface, field, indexBase);
+    const notes = fieldNotes(name, field, indexBase);
     const hookReturns = matchSelfHookField(field.types, iface.name);
     if (hookReturns !== null) {
       pushDoc(lines, appendNotes(field.doc, notes), body);
@@ -422,37 +426,84 @@ function renderModuleFunction(
 }
 
 /**
+ * A library model's `MapContext`, plus the rename each alias's own name carried
+ * before the model declared it — what a self-reference in that alias's body means.
+ */
+export interface ModelContext extends MapContext {
+  aliasSelfRenames: Readonly<Record<string, string>>;
+}
+
+/**
  * The `MapContext` a library model maps every type token through: each interface
  * and alias name is a known reference plus a sanitized rename (dotted `druid.button`
  * -> `druid_button`), layered over the caller's `typeRenames`. Shared by the emitter
  * (declaration text) and the api-doc lowering so both resolve model references
  * identically — the invariant that keeps `api-doc/<ns>.json` byte-equivalent to
  * `generated/<ns>.d.ts`.
+ *
+ * A declaration whose sanitized name is a core or target rename's value is declared
+ * as `<name>_`, so a local `---@alias Url url|string` never hides the engine `Url`
+ * that `url` renames to.
  */
 export function buildModelContext(
   model: LibraryModel,
   typeRenames?: Record<string, string>,
   externalTypes?: Record<string, ExternalTypeRef>,
-): MapContext {
+): ModelContext {
   const declaredNames = [
     ...model.interfaces.map((iface) => iface.name),
     ...model.aliases.map((alias) => alias.name),
   ];
+  const renamedTo = new Set([
+    ...Object.values(CORE_TYPE_RENAMES),
+    ...Object.values(typeRenames ?? {}),
+  ]);
   const nameRenames: Record<string, string> = {};
-  for (const name of declaredNames) nameRenames[name] = sanitizeTypeName(name);
+  for (const name of declaredNames) {
+    const sanitized = sanitizeTypeName(name);
+    nameRenames[name] = renamedTo.has(sanitized) ? `${sanitized}_` : sanitized;
+  }
   const externalRenames = externalTypeRenames(externalTypes);
   for (const [token, alias] of Object.entries(externalRenames)) {
-    const collision = declaredNames.find((name) => sanitizeTypeName(name) === alias);
+    const collision = declaredNames.find((name) => nameRenames[name] === alias);
     if (collision !== undefined) {
       throw new Error(
         `buildModelContext: external type "${token}" resolves to local name "${alias}", which the model already declares as "${collision}".`,
       );
     }
   }
+  const aliasSelfRenames: Record<string, string> = {};
+  for (const alias of model.aliases) {
+    const outer = typeRenames?.[alias.name] ?? CORE_TYPE_RENAMES[alias.name];
+    if (outer !== undefined) aliasSelfRenames[alias.name] = outer;
+  }
   return {
     knownNames: new Set([...declaredNames, ...Object.values(externalRenames)]),
     typeRenames: { ...(typeRenames ?? {}), ...externalRenames, ...nameRenames },
+    aliasSelfRenames,
   };
+}
+
+/**
+ * The context an alias's body maps through: a self-reference resolves to what the
+ * token named before the model declared it (`---@alias hash userdata|hash` means
+ * Defold's `hash`), since an alias that names itself is circular. With nothing to fall
+ * back to, the self-reference keeps the local name. Shared by the emitter and the
+ * fidelity report, like `scopeGenerics`.
+ */
+export function scopeAliasBody(ctx: ModelContext, alias: LibraryAlias): MapContext {
+  const outer = ctx.aliasSelfRenames[alias.name];
+  if (outer === undefined) return ctx;
+  return { knownNames: ctx.knownNames, typeRenames: { ...ctx.typeRenames, [alias.name]: outer } };
+}
+
+/** The name a model interface or alias is declared under, read from the context. */
+export function declaredName(ctx: MapContext, name: string): string {
+  const declared = ctx.typeRenames[name];
+  if (declared === undefined) {
+    throw new Error(`declaredName: "${name}" is not declared by the model.`);
+  }
+  return declared;
 }
 
 /**

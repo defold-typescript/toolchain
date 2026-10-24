@@ -16,13 +16,13 @@
 import type { LualsPosition } from "@defold-typescript/types";
 import {
   buildModelContext,
+  declaredName,
   type ExternalTypeRef,
   isPublicField,
   isPublicMethod,
   mapTypes,
   paramOptionalFlags,
   renderGenericParams,
-  sanitizeTypeName,
 } from "./emit-library-dts";
 import { type MapContext, scopeGenerics } from "./map-luals-types";
 import type { LibraryField, LibraryMethod, LibraryModel, LibraryParam } from "./parse-luals";
@@ -140,7 +140,7 @@ export function lowerLibraryModel(
       .map((field) => propertyElement(field, ifaceCtx));
     elements.push({
       type: "TYPEDEF",
-      name: sanitizeTypeName(iface.name),
+      name: declaredName(ctx, iface.name),
       ...(functions.length > 0 ? { functions } : {}),
       ...(properties.length > 0 ? { properties } : {}),
       ...(iface.deprecated !== undefined ? { deprecated: iface.deprecated } : {}),
@@ -150,7 +150,7 @@ export function lowerLibraryModel(
   for (const alias of model.aliases) {
     elements.push({
       type: "TYPEDEF",
-      name: sanitizeTypeName(alias.name),
+      name: declaredName(ctx, alias.name),
       ...(alias.deprecated !== undefined ? { deprecated: alias.deprecated } : {}),
     });
   }
