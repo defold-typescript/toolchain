@@ -30,6 +30,11 @@ export interface NativeTarget {
   declaration: string;
   /** The vendored C++ file that registers the module, under `fixtures/upstream-native/`. */
   upstreamSource: string;
+  /** Vendored headers, under `fixtures/upstream-native/`, whose `#define`s the
+   * registration in `upstreamSource` resolves its module name through. Their text is
+   * prepended to the source text before parsing, so calls are still found only in the
+   * source. Absent where the source names its module itself. */
+  upstreamHeaders?: string[];
   /** Vendored C++ files, under `fixtures/upstream-native/`, whose nameless
    * `luaL_register` calls fill the metatables of the userdata the module returns.
    * Absent where every metatable is filled in `upstreamSource`. */

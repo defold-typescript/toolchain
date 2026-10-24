@@ -1,0 +1,87 @@
+{
+  "info": {
+    "namespace": "directories",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "application_support",
+      "brief": "The platform's application-support directory, for {@link directories.path_for_file}.",
+      "description": "The platform's application-support directory, for {@link directories.path_for_file}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "caches",
+      "brief": "The platform's directory for cached files, which the OS may clear to free space, for {@link directories.path_for_file}.",
+      "description": "The platform's directory for cached files, which the OS may clear to free space, for {@link directories.path_for_file}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "documents",
+      "brief": "The platform's directory for the app's private data files, persistent across restarts, for {@link directories.path_for_file}.",
+      "description": "The platform's directory for the app's private data files, persistent across restarts, for {@link directories.path_for_file}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "resource",
+      "brief": "The app's resource directory, the default base, for {@link directories.path_for_file}.",
+      "description": "The app's resource directory, the default base, for {@link directories.path_for_file}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "temporary",
+      "brief": "The platform's directory for temporary files, for {@link directories.path_for_file}.",
+      "description": "The platform's directory for temporary files, for {@link directories.path_for_file}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "path_for_file",
+      "brief": "Resolves an absolute path for a file inside one of the system",
+      "description": "Resolves an absolute path for a file inside one of the system\ndirectories.",
+      "parameters": [
+        {
+          "name": "file_path",
+          "doc": "The file name, or a path relative to `directory`. Pass nothing to get the directory itself.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "directory",
+          "doc": "The base directory constant. Default is {@link directories.resource}.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The resolved absolute path, or nothing when the directory cannot be created or resolved.",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    }
+  ]
+}

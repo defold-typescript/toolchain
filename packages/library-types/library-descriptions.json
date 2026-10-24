@@ -17,6 +17,7 @@
   "detiled": "Tiled to Defold Map Parser.",
   "detour": "Recast/Detour navigation meshes: path queries and crowd agents.",
   "dicebag": "Dicebag is a Defold extension containing probability functions designed specifically for games.",
+  "directories": "Absolute paths inside the platform's standard directories: application support, caches, documents, resource and temporary.",
   "fontscale": "Reads the operating system's font-scale (text size) setting.",
   "gooey": "Defold GUI system",
   "gyro": "Gyroscope rotation for Defold on iOS and Android, delivered as a quaternion every frame.",

@@ -75,4 +75,12 @@ fontscale.get(1);
 
 const _uptime: number = uptime.get();
 
+const p = directories.path_for_file("save.json", directories.documents);
+if (p !== undefined) {
+  const _resolved: string = p;
+}
+directories.path_for_file();
+// @ts-expect-error the call returns nothing on an error path, so the miss arm must be checked.
+const _s: string = directories.path_for_file("a");
+
 export {};

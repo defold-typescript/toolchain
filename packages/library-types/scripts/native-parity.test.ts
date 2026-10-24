@@ -29,6 +29,7 @@ function tempRoot(entry: NativeTarget, declaration: string): string {
   for (const relative of [
     entry.upstreamSource,
     entry.upstreamAnnotation,
+    ...(entry.upstreamHeaders ?? []),
     ...(entry.upstreamMethodSources ?? []),
   ]) {
     if (relative === undefined) continue;
@@ -60,6 +61,7 @@ describe("buildNativeParity over the shipped declarations", () => {
     gyro: [2, 0, 0],
     fontscale: [1, 0, 0],
     uptime: [1, 0, 0],
+    directories: [1, 5, 0],
   };
 
   test("every native target is measured", () => {
