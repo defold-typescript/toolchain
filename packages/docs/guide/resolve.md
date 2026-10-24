@@ -194,6 +194,10 @@ the named directory, so a repo-name collision alone writes nothing.
 | [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | `v1.0.6` | [`daabbcc3d`](/api/daabbcc3d) | `daabbcc3d/ext.manifest` |
 | [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | `76ff0c9` | [`wave`](/api/wave) | `wave/ext.manifest` |
 | [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | `95ce965` | [`detour`](/api/detour) | `detour/ext.manifest` |
+| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | `v1.2` | [`taptic_engine`](/api/taptic_engine) | `taptic_engine/ext.manifest` |
+| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | `1.1.1` | [`gyro`](/api/gyro) | `gyro/ext.manifest` |
+| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | `v0.1.0` | [`fontscale`](/api/fontscale) | `fontscale/ext.manifest` |
+| [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | `1.2.0` | [`uptime`](/api/uptime) | `uptime/ext.manifest` |
 
 <!-- curated-native-extensions:end -->
 

@@ -1,0 +1,20 @@
+{
+  "namespace": "gyro",
+  "moduleName": "gyro",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 2,
+  "declaredFunctions": 2,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "upstreamMethods": 0,
+  "declaredMethods": 0,
+  "missingMethods": [],
+  "phantomMethods": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 0,
+  "declaredConstants": 0,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1,
+  "arityMeasured": false
+}

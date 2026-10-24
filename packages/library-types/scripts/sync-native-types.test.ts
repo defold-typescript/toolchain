@@ -127,6 +127,31 @@ describe("lowerNativeApiDoc", () => {
     expect(byName.get("Heuristic")?.types).toEqual(['"octile"', '"manhattan"', '"euclidean"']);
   });
 
+  test("lowers taptic_engine to bare function and constant names", () => {
+    const doc = lowered("taptic_engine");
+    expect(doc.info.namespace).toBe("taptic_engine");
+    expect(
+      doc.elements
+        .filter((e) => e.type === "FUNCTION")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["impact", "isSupported", "notification", "selection"]);
+    expect(
+      doc.elements
+        .filter((e) => e.type === "VARIABLE")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual([
+      "IMPACT_HEAVY",
+      "IMPACT_LIGHT",
+      "IMPACT_MEDIUM",
+      "NOTIFICATION_ERROR",
+      "NOTIFICATION_SUCCESS",
+      "NOTIFICATION_WARNING",
+    ]);
+    expect(doc.elements.map((e) => e.name).filter((n) => n.startsWith("global."))).toEqual([]);
+  });
+
   test("lowers detour's init, its NavMesh and Crowd methods and the result shapes", () => {
     const doc = lowered("detour");
     expect(doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name)).toEqual(["init"]);

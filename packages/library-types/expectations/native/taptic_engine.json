@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "def_taptic_engine",
+    "manifestDir": "taptic_engine"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/MaratGilyazov/def_taptic_engine/archive/refs/tags/v1.2.zip",
+    "confirmedManifest": "def_taptic_engine-1.2/taptic_engine/ext.manifest",
+    "misplacedManifest": "def_taptic_engine-1.2/ext.manifest"
+  }
+}

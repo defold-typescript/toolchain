@@ -1,0 +1,25 @@
+{
+  "info": {
+    "namespace": "uptime",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Returns the time since the device booted, in seconds.",
+      "description": "Returns the time since the device booted, in seconds.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Seconds since boot.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

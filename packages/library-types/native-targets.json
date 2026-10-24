@@ -147,6 +147,42 @@
       "declaration": "generated/native/detour.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-detour/detour/src/detour.cpp",
       "methodTables": { "Init()": ["NavMesh"], "CreateCrowd()": ["Crowd"] }
+    },
+    {
+      "repo": "https://github.com/MaratGilyazov/def_taptic_engine",
+      "ref": "v1.2",
+      "license": "MIT",
+      "namespace": "taptic_engine",
+      "manifestDir": "taptic_engine",
+      "declaration": "generated/native/taptic_engine.d.ts",
+      "upstreamSource": "fixtures/upstream-native/def_taptic_engine/taptic_engine/src/tapticengine.cpp"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-gyro",
+      "ref": "1.1.1",
+      "license": "MIT",
+      "namespace": "gyro",
+      "manifestDir": "gyro",
+      "declaration": "generated/native/gyro.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-gyro/gyro/src/gyro.cpp"
+    },
+    {
+      "repo": "https://github.com/myopic-design/defold-fontscale",
+      "ref": "v0.1.0",
+      "license": "MIT",
+      "namespace": "fontscale",
+      "manifestDir": "fontscale",
+      "declaration": "generated/native/fontscale.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-fontscale/fontscale/src/fontscale.cpp"
+    },
+    {
+      "repo": "https://github.com/AGulev/defold-extension-uptime",
+      "ref": "1.2.0",
+      "license": "MIT",
+      "namespace": "uptime",
+      "manifestDir": "uptime",
+      "declaration": "generated/native/uptime.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-extension-uptime/uptime/src/UpTime.cpp"
     }
   ]
 }
