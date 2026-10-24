@@ -1295,3 +1295,101 @@ test("a string-keyed table param accepts an object literal while the same return
   );
   expect(out).toContain("entries: LuaTable<string, number>;");
 });
+
+const typedParam = (name: string, types: string[]): LibraryParam => ({
+  name,
+  types,
+  doc: "",
+  isOptional: false,
+  isVararg: false,
+});
+
+test("an alias naming itself maps its body past its own declaration, while other references keep the local", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "letter",
+        generics: [],
+        fields: [{ name: "id", types: ["hash"], doc: "", isOptional: false }],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [{ name: "hash", types: ["userdata", "hash"], doc: "" }],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+
+  expect(out).toContain('\ttype hash = Opaque<"userdata"> | Hash;');
+  expect(out).toContain("\t\tid: hash;");
+});
+
+test("an alias naming itself with no rename to fall back to keeps its own declared name", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [{ name: "demo.tree", types: ["table<string, demo.tree>"], doc: "" }],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+
+  expect(out).toContain("\ttype demo_tree = LuaTable<string, demo_tree>;");
+});
+
+test("a declaration named like an engine type is declared and referenced as <name>_, leaving the engine name free", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [{ name: "Url", types: ["url", "string"], doc: "" }],
+    moduleFunctions: [
+      {
+        name: "send_to",
+        brief: "",
+        generics: [],
+        params: [typedParam("receiver", ["Url"]), typedParam("sender", ["url"])],
+        returns: [],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+
+  expect(out).toContain("\ttype Url_ = Url | string;");
+  expect(out).toContain(
+    "\texport function send_to(this: void, receiver: Url_, sender: Url): void;",
+  );
+  expect(out).not.toContain("type Url =");
+});
+
+test("a target rename's value reserves its name like a core one", () => {
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "Vector3",
+        generics: [],
+        fields: [{ name: "x", types: ["number"], doc: "", isOptional: false }],
+        methods: [],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [
+      {
+        name: "move",
+        brief: "",
+        generics: [],
+        params: [typedParam("to", ["vector3"]), typedParam("point", ["Vector3"])],
+        returns: [],
+      },
+    ],
+  };
+
+  const out = emitLibraryDeclarations(model, {
+    moduleId: "demo.demo",
+    typeRenames: { vector3: "Vector3" },
+  });
+
+  expect(out).toContain("\tinterface Vector3_ {");
+  expect(out).toContain("\texport function move(this: void, to: Vector3, point: Vector3_): void;");
+  expect(out).not.toContain("interface Vector3 {");
+});
