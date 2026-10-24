@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test",
     "test:probe": "bun test ./src/runtime-probe.e2e.ts",
+    "test:probe:native-import": "bun test ./src/native-import-probe.e2e.ts",
     "bench:hsm": "bun test ./src/hsm-bench.e2e.ts"
   },
   "dependencies": {
