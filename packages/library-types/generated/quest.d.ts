@@ -89,8 +89,28 @@ declare module 'quest.quest' {
 		is_active: boolean;
 		start_time: number;
 	}
-	interface quest {
-	}
+	/**
+	 * Single queue for all quest events in proper order: register -> start -> progress -> task_completed -> completed
+	 */
+	export const on_quest_event: quest_queue_quest_event;
+	/**
+	 * Triggered when a quest can be started.
+	 * You can add additional conditions to the quest start validation.
+	 * Callback is fun(quest_id: string, quest_config: quest.config): boolean
+	 */
+	export const is_can_start: quest_event_is_can_start;
+	/**
+	 * Triggered when a quest can be completed.
+	 * You can add additional conditions to the quest completion validation.
+	 * Callback is fun(quest_id: string, quest_config: quest.config): boolean
+	 */
+	export const is_can_complete: quest_event_is_can_complete;
+	/**
+	 * Triggered when a quest can be processed.
+	 * You can add additional conditions to the quest event processing.
+	 * Callback is fun(quest_id: string, quest_config: quest.config): boolean
+	 */
+	export const is_can_event: quest_event_is_can_event;
 	/**
 	 * Set state (for saving/loading)
 	 */

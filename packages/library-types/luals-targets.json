@@ -230,6 +230,15 @@
           },
           "token.event.on_token_restore_change": {
             "fields": { "trigger": { "drop": true }, "subscribe": { "drop": true } }
+          },
+          "token.container": { "methods": { "get": { "return": "number" } } }
+        },
+        "moduleObject": {
+          "interface": "token",
+          "fields": {
+            "on_token_change": { "type": "token.event.on_token_change" },
+            "on_token_visual_change": { "type": "token.event.on_token_visual_change" },
+            "on_token_restore_change": { "type": "token.event.on_token_restore_change" }
           }
         }
       }
@@ -260,6 +269,15 @@
           },
           "quest.event.is_can_event": {
             "fields": { "trigger": { "drop": true }, "subscribe": { "drop": true } }
+          }
+        },
+        "moduleObject": {
+          "interface": "quest",
+          "fields": {
+            "on_quest_event": { "type": "quest.queue.quest_event" },
+            "is_can_start": { "type": "quest.event.is_can_start" },
+            "is_can_complete": { "type": "quest.event.is_can_complete" },
+            "is_can_event": { "type": "quest.event.is_can_event" }
           }
         }
       }

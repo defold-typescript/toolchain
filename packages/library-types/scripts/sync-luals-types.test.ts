@@ -822,6 +822,48 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
     expect(members).not.toContain("subscribe");
   });
 
+  // Upstream binds each event's `---@class` to a module-table assignment
+  // (`M.on_token_change = event.create()`), which the parser does not lift to a module
+  // value; the `moduleObject` override does.
+  test.each([
+    ["token", "on_token_change", "token.event.on_token_change"],
+    ["token", "on_token_visual_change", "token.event.on_token_visual_change"],
+    ["token", "on_token_restore_change", "token.event.on_token_restore_change"],
+    ["quest", "on_quest_event", "quest.queue.quest_event"],
+    ["quest", "is_can_start", "quest.event.is_can_start"],
+    ["quest", "is_can_complete", "quest.event.is_can_complete"],
+    ["quest", "is_can_event", "quest.event.is_can_event"],
+  ])("%s exports its module value %s typed %s", (namespace, name, type) => {
+    const model = buildTargetModel(PACKAGE_ROOT, target(namespace));
+    expect(model.moduleObject).toBe(namespace);
+    const field = model.interfaces
+      .find((i) => i.name === namespace)
+      ?.fields.find((f) => f.name === name);
+    expect(field?.types).toEqual([type]);
+  });
+
+  function getReturnTypes(model: LibraryModel, iface: string): string[][] | undefined {
+    return model.interfaces
+      .find((i) => i.name === iface)
+      ?.methods.find((m) => m.name === "get")
+      ?.returns.map((r) => r.types);
+  }
+
+  // The runtime's `container:get` is `return token:get()`, so it returns exactly what
+  // `token.value`'s `get` does.
+  test("token.container's get returns what its token.value delegate's get returns", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, target("token"));
+    const delegate = getReturnTypes(model, "token.value");
+    expect(delegate).toHaveLength(1);
+    expect(getReturnTypes(model, "token.container")).toEqual(delegate);
+  });
+
+  test("upstream still annotates token.container's get as number|any", () => {
+    const { annotationOverrides: _, ...upstream } = target("token");
+    const model = buildTargetModel(PACKAGE_ROOT, upstream);
+    expect(getReturnTypes(model, "token.container")).toEqual([["number|any"]]);
+  });
+
   // Built live rather than read off `fidelity/<namespace>.json`: dropping the
   // `event` or `queue` external entry, or keeping quest's stray `_)` field, must
   // red here on the config alone, without a regen first.
