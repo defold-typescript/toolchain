@@ -1,0 +1,134 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`@globalTable import lowering namespace import lowers to a global alias 1`] = `
+{
+  "main.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local pixels = pixels
+pixels.fill(7)
+return ____exports
+"
+,
+}
+`;
+
+exports[`@globalTable import lowering named imports lower to a global alias 1`] = `
+{
+  "main.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local _____40NoResolution_3A_40defold_2Dtypescript_3Aglobal_2Dtable_3Apixels = pixels
+local fill = _____40NoResolution_3A_40defold_2Dtypescript_3Aglobal_2Dtable_3Apixels.fill
+local version = _____40NoResolution_3A_40defold_2Dtypescript_3Aglobal_2Dtable_3Apixels.version
+fill(7)
+print(version)
+return ____exports
+"
+,
+}
+`;
+
+exports[`@globalTable import lowering an explicit dotted tag argument names the global 1`] = `
+{
+  "main.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local body = b2d.body
+print(body.mass())
+return ____exports
+"
+,
+}
+`;
+
+exports[`@globalTable import lowering a type-only import emits no alias and no require 1`] = `
+{
+  "main.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local c = 7
+print(c)
+return ____exports
+"
+,
+}
+`;
+
+exports[`@globalTable import lowering a side-effect import of a tagged module emits nothing 1`] = `
+{
+  "main.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+print(1)
+return ____exports
+"
+,
+}
+`;
+
+exports[`@globalTable import lowering a re-export from a tagged module reads the global 1`] = `
+{
+  "main.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+do
+    local _____40NoResolution_3A_40defold_2Dtypescript_3Aglobal_2Dtable_3Apixels = pixels
+    ____exports.fill = _____40NoResolution_3A_40defold_2Dtypescript_3Aglobal_2Dtable_3Apixels.fill
+end
+return ____exports
+"
+,
+}
+`;
+
+exports[`@globalTable import lowering a dynamic import of a tagged module resolves to the global 1`] = `
+{
+  "main.ts": 
+"local ____lualib = require("lualib_bundle")
+local __TS__Promise = ____lualib.__TS__Promise
+local ____self_0 = __TS__Promise.resolve(pixels)
+____self_0["then"](
+    ____self_0,
+    function(____, m) return m.fill(7) end
+)
+"
+,
+}
+`;
+
+exports[`@globalTable import lowering an untagged ambient module keeps its require 1`] = `
+{
+  "main.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local p = require("plain")
+p.go()
+return ____exports
+"
+,
+}
+`;
+
+exports[`@globalTable import lowering a real source file wins over a tagged ambient module 1`] = `
+{
+  "main.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local ____pixels = require("pixels")
+local fill = ____pixels.fill
+fill(7)
+return ____exports
+"
+,
+  "pixels.ts": 
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.fill(color)
+    print(color)
+end
+return ____exports
+"
+,
+}
+`;
