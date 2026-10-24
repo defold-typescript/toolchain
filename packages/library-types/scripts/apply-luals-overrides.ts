@@ -2,15 +2,17 @@
  * Per-target corrections applied to a parsed `LibraryModel` after the merge, for the
  * cases where upstream LuaLS annotations diverge from the library's runtime and the
  * fixtures freeze the annotation verbatim (so it is not hand-patchable in the fixture
- * or the emitted `.d.ts`). The six shapes covered are a module function whose trailing
+ * or the emitted `.d.ts`). The seven shapes covered are a module function whose trailing
  * parameter is runtime-optional despite a non-`|nil` `@param`, an interface method
  * whose `@return` omits an alternative arm, an interface field whose type token is
  * wrong or underspecified (a stray character, or an untyped `fun(...)` callback), an
  * interface method parameter with the same underspecification, an interface field
  * that only restates a member inherited from a parent, incompatibly enough that the
- * emitted redeclaration would not type-check (`drop`), and a class-level `@overload`
+ * emitted redeclaration would not type-check (`drop`), a class-level `@overload`
  * that describes the module table rather than the instance the emitted call signature
- * lands on (`callSignature`). Every named target
+ * lands on (`callSignature`), and a `---@class` bound to a module-table field assignment
+ * (`M.x = event.create()`), which the parser does not model as a module value
+ * (`moduleObject`). Every named target
  * must exist — a missing function, param, interface, field, method, or call signature
  * throws naming the
  * absent key, mirroring `buildTargetModel`'s loud-fail on an absent `ownFile`, so a
@@ -29,6 +31,7 @@ export interface AnnotationOverrides {
       methods?: Record<string, { return?: string; params?: Record<string, { type?: string }> }>;
     }
   >;
+  moduleObject?: { interface: string; fields: Record<string, { type: string }> };
 }
 
 export function applyAnnotationOverrides(
@@ -102,6 +105,45 @@ export function applyAnnotationOverrides(
         if (paramOverride.type !== undefined) param.types = [paramOverride.type];
       }
     }
+  }
+  if (overrides.moduleObject !== undefined) {
+    const { interface: objectName, fields } = overrides.moduleObject;
+    const object = model.interfaces.find((i) => i.name === objectName);
+    if (!object) {
+      throw new Error(
+        `applyAnnotationOverrides: module object interface "${objectName}" is absent from the model.`,
+      );
+    }
+    if (model.moduleObject !== undefined && model.moduleObject !== objectName) {
+      throw new Error(
+        `applyAnnotationOverrides: module object "${objectName}" conflicts with the parsed module object "${model.moduleObject}".`,
+      );
+    }
+    for (const [fieldName, fieldOverride] of Object.entries(fields)) {
+      if (object.fields.some((f) => f.name === fieldName)) {
+        throw new Error(
+          `applyAnnotationOverrides: field "${fieldName}" of module object "${objectName}" is already declared upstream.`,
+        );
+      }
+      if (model.moduleFunctions.some((f) => f.name === fieldName)) {
+        throw new Error(
+          `applyAnnotationOverrides: field "${fieldName}" of module object "${objectName}" collides with a module function.`,
+        );
+      }
+      const typeClass = model.interfaces.find((i) => i.name === fieldOverride.type);
+      if (!typeClass) {
+        throw new Error(
+          `applyAnnotationOverrides: type "${fieldOverride.type}" of module object field "${fieldName}" is absent from the model.`,
+        );
+      }
+      object.fields.push({
+        name: fieldName,
+        types: [fieldOverride.type],
+        doc: typeClass.brief,
+        isOptional: false,
+      });
+    }
+    model.moduleObject = objectName;
   }
   return model;
 }

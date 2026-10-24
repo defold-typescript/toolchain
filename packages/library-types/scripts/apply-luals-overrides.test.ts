@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { type AnnotationOverrides, applyAnnotationOverrides } from "./apply-luals-overrides";
+import { emitLibraryDeclarations } from "./emit-library-dts";
 import type { LibraryModel } from "./parse-luals";
 
 function moduleFnModel(): LibraryModel {
@@ -106,7 +107,93 @@ function overloadModel(): LibraryModel {
   };
 }
 
+function boundEventModel(): LibraryModel {
+  return {
+    interfaces: [
+      { name: "lib", generics: [], brief: "The lib module.", fields: [], methods: [] },
+      {
+        name: "lib.event.changed",
+        generics: [],
+        brief: "Fires on change.",
+        fields: [],
+        methods: [],
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [{ name: "reset", brief: "", generics: [], params: [], returns: [] }],
+  };
+}
+
+const BOUND_EVENT: AnnotationOverrides = {
+  moduleObject: { interface: "lib", fields: { on_changed: { type: "lib.event.changed" } } },
+};
+
 describe("applyAnnotationOverrides", () => {
+  test("binds a class-typed field to the named module object, doc read from its class", () => {
+    const result = applyAnnotationOverrides(boundEventModel(), BOUND_EVENT);
+    expect(result.moduleObject).toBe("lib");
+    expect(result.interfaces.find((i) => i.name === "lib")?.fields).toEqual([
+      {
+        name: "on_changed",
+        types: ["lib.event.changed"],
+        doc: "Fires on change.",
+        isOptional: false,
+      },
+    ]);
+  });
+
+  test("the bound field emits as a documented export const, not as an interface", () => {
+    const out = emitLibraryDeclarations(applyAnnotationOverrides(boundEventModel(), BOUND_EVENT), {
+      moduleId: "lib.lib",
+    });
+    expect(out).toContain(
+      "\t/**\n\t * Fires on change.\n\t */\n\texport const on_changed: lib_event_changed;",
+    );
+    expect(out).not.toContain("interface lib {");
+  });
+
+  test("throws naming the module object when the model has no such interface", () => {
+    expect(() =>
+      applyAnnotationOverrides(boundEventModel(), {
+        moduleObject: { interface: "ghost", fields: { on_changed: { type: "lib.event.changed" } } },
+      }),
+    ).toThrow(/"ghost"/);
+  });
+
+  test("throws naming the field when the module object already declares it", () => {
+    const model = boundEventModel();
+    model.interfaces[0]?.fields.push({
+      name: "on_changed",
+      types: ["lib.event.changed"],
+      doc: "",
+      isOptional: false,
+    });
+    expect(() => applyAnnotationOverrides(model, BOUND_EVENT)).toThrow(/"on_changed"/);
+  });
+
+  test("throws naming the field when a module function shares its name", () => {
+    expect(() =>
+      applyAnnotationOverrides(boundEventModel(), {
+        moduleObject: { interface: "lib", fields: { reset: { type: "lib.event.changed" } } },
+      }),
+    ).toThrow(/"reset"/);
+  });
+
+  test("throws naming the field's type when it names no interface in the model", () => {
+    expect(() =>
+      applyAnnotationOverrides(boundEventModel(), {
+        moduleObject: { interface: "lib", fields: { on_changed: { type: "lib.event.gone" } } },
+      }),
+    ).toThrow(/"lib\.event\.gone"/);
+  });
+
+  test("throws naming both classes when the parser already tracks another module object", () => {
+    const model: LibraryModel = { ...boundEventModel(), moduleObject: "lib.event.changed" };
+    const run = () => applyAnnotationOverrides(model, BOUND_EVENT);
+    expect(run).toThrow(/"lib"/);
+    expect(run).toThrow(/"lib\.event\.changed"/);
+  });
+
   test("marks a named module-function param optional and leaves siblings unchanged", () => {
     const model = moduleFnModel();
     const overrides: AnnotationOverrides = {

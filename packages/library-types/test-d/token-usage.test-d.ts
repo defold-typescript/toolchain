@@ -21,5 +21,19 @@ const subscribed: boolean = wallet.on_token_change.subscribe((token_id: string, 
 // Reds if `container`'s return degrades to `unknown`.
 const walletId: string = wallet.id;
 
+// Upstream annotates `get` as `number|any`, which TS collapses to `unknown`.
+const coins: number = wallet.get("coins");
+
+// The module-level event is a runtime field of the module table.
+const watching: boolean = token.on_token_change.subscribe(
+  (container_id: string, token_id: string, amount: number) => {
+    void container_id;
+    void token_id;
+    void amount;
+  },
+);
+
 void subscribed;
 void walletId;
+void coins;
+void watching;

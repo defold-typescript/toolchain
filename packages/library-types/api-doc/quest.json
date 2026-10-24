@@ -892,8 +892,40 @@
       ]
     },
     {
-      "type": "TYPEDEF",
-      "name": "quest"
+      "type": "VARIABLE",
+      "name": "on_quest_event",
+      "brief": "Single queue for all quest events in proper order: register -> start -> progress -> task_completed -> completed",
+      "description": "Single queue for all quest events in proper order: register -> start -> progress -> task_completed -> completed",
+      "types": [
+        "quest_queue_quest_event"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "is_can_start",
+      "brief": "Triggered when a quest can be started.\nYou can add additional conditions to the quest start validation.\nCallback is fun(quest_id: string, quest_config: quest.config): boolean",
+      "description": "Triggered when a quest can be started.\nYou can add additional conditions to the quest start validation.\nCallback is fun(quest_id: string, quest_config: quest.config): boolean",
+      "types": [
+        "quest_event_is_can_start"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "is_can_complete",
+      "brief": "Triggered when a quest can be completed.\nYou can add additional conditions to the quest completion validation.\nCallback is fun(quest_id: string, quest_config: quest.config): boolean",
+      "description": "Triggered when a quest can be completed.\nYou can add additional conditions to the quest completion validation.\nCallback is fun(quest_id: string, quest_config: quest.config): boolean",
+      "types": [
+        "quest_event_is_can_complete"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "is_can_event",
+      "brief": "Triggered when a quest can be processed.\nYou can add additional conditions to the quest event processing.\nCallback is fun(quest_id: string, quest_config: quest.config): boolean",
+      "description": "Triggered when a quest can be processed.\nYou can add additional conditions to the quest event processing.\nCallback is fun(quest_id: string, quest_config: quest.config): boolean",
+      "types": [
+        "quest_event_is_can_event"
+      ]
     },
     {
       "type": "TYPEDEF",
