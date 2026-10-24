@@ -1,0 +1,121 @@
+{
+  "info": {
+    "namespace": "taptic_engine",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "IMPACT_LIGHT",
+      "brief": "Light impact style, for {@link taptic_engine.impact}.",
+      "description": "Light impact style, for {@link taptic_engine.impact}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "IMPACT_MEDIUM",
+      "brief": "Medium impact style, for {@link taptic_engine.impact}.",
+      "description": "Medium impact style, for {@link taptic_engine.impact}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "IMPACT_HEAVY",
+      "brief": "Heavy impact style, for {@link taptic_engine.impact}.",
+      "description": "Heavy impact style, for {@link taptic_engine.impact}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "NOTIFICATION_SUCCESS",
+      "brief": "Success notification type, for {@link taptic_engine.notification}.",
+      "description": "Success notification type, for {@link taptic_engine.notification}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "NOTIFICATION_WARNING",
+      "brief": "Warning notification type, for {@link taptic_engine.notification}.",
+      "description": "Warning notification type, for {@link taptic_engine.notification}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "NOTIFICATION_ERROR",
+      "brief": "Error notification type, for {@link taptic_engine.notification}.",
+      "description": "Error notification type, for {@link taptic_engine.notification}.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "isSupported",
+      "brief": "Reports whether the device supports the Taptic Engine.",
+      "description": "Reports whether the device supports the Taptic Engine.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "`true` when haptic feedback is available.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "impact",
+      "brief": "Plays an impact haptic.",
+      "description": "Plays an impact haptic.",
+      "parameters": [
+        {
+          "name": "style",
+          "doc": "One of `IMPACT_LIGHT`, `IMPACT_MEDIUM` or `IMPACT_HEAVY`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "notification",
+      "brief": "Plays a notification haptic.",
+      "description": "Plays a notification haptic.",
+      "parameters": [
+        {
+          "name": "type",
+          "doc": "One of `NOTIFICATION_SUCCESS`, `NOTIFICATION_WARNING` or\n`NOTIFICATION_ERROR`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "selection",
+      "brief": "Plays a selection-change haptic.",
+      "description": "Plays a selection-change haptic.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

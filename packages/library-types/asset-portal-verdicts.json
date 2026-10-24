@@ -7,6 +7,7 @@
     "physics-tools": "editor script with plugin binaries, no runtime module",
     "scml-parser": "import tool, no runtime module",
     "sonilo": "editor script whose runtime piece is a script component, no module to require",
-    "tilemaps-store": "import tool, no runtime module"
+    "tilemaps-store": "import tool, no runtime module",
+    "vibration": "no license file at 0.2.1 or master head and GitHub reports none, so its registering C++ cannot be vendored for a parity floor"
   }
 }

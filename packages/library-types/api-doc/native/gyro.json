@@ -1,0 +1,34 @@
+{
+  "info": {
+    "namespace": "gyro",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "start",
+      "brief": "Starts the gyroscope. While started, the listener is invoked every frame",
+      "description": "Starts the gyroscope. While started, the listener is invoked every frame\nwith the device rotation as a quaternion.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "Called every frame as `(self, quatx, quaty, quatz, quatw)`.",
+          "types": [
+            "(self: unknown, quatx: number, quaty: number, quatz: number, quatw: number) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "stop",
+      "brief": "Stops the gyroscope.",
+      "description": "Stops the gyroscope.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}
