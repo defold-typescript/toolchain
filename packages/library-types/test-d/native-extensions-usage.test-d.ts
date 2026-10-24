@@ -50,4 +50,29 @@ tile_raycast.get_at(1, 1);
 
 tile_raycast.reset();
 
+if (taptic_engine.isSupported()) {
+  taptic_engine.impact(taptic_engine.IMPACT_LIGHT);
+}
+taptic_engine.impact(taptic_engine.IMPACT_MEDIUM);
+taptic_engine.impact(taptic_engine.IMPACT_HEAVY);
+taptic_engine.notification(taptic_engine.NOTIFICATION_SUCCESS);
+taptic_engine.notification(taptic_engine.NOTIFICATION_WARNING);
+taptic_engine.notification(taptic_engine.NOTIFICATION_ERROR);
+taptic_engine.selection();
+// @ts-expect-error the impact style is required.
+taptic_engine.impact();
+
+gyro.start((_self, quatx, quaty, quatz, quatw) => {
+  const _sum: number = quatx + quaty + quatz + quatw;
+});
+gyro.stop();
+// @ts-expect-error the listener is required.
+gyro.start();
+
+const _scale: number = fontscale.get();
+// @ts-expect-error the font-scale getter takes no arguments.
+fontscale.get(1);
+
+const _uptime: number = uptime.get();
+
 export {};

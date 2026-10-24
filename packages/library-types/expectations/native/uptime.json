@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-extension-uptime",
+    "manifestDir": "uptime"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/AGulev/defold-extension-uptime/archive/refs/tags/1.2.0.zip",
+    "confirmedManifest": "defold-extension-uptime-1.2.0/uptime/ext.manifest",
+    "misplacedManifest": "defold-extension-uptime-1.2.0/ext.manifest"
+  }
+}
