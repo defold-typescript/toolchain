@@ -10653,7 +10653,7 @@ Every import of the module then compiles to a local alias of the runtime
 global — never a `require`:
 
 ```ts
-import * as pixels from "pixels"; // local pixels = pixels
+import * as pixels from "pixels"; // local pixels = _G.pixels
 import { fill } from "pixels"; // reads the same global
 ```
 
