@@ -77,6 +77,7 @@
     "generated/native/gyro.d.ts",
     "generated/native/fontscale.d.ts",
     "generated/native/uptime.d.ts",
+    "generated/native/directories.d.ts",
     "test-d/boom-usage.test-d.ts",
     "test-d/defsave-usage.test-d.ts",
     "test-d/bridge-usage.test-d.ts",

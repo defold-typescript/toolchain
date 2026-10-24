@@ -506,6 +506,10 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "552be769202229e0145f3d841cf1829c1c8dcd253de74cf8741a5313811f230b",
   "fixtures/upstream-native/defold-detour/detour/src/detour.cpp":
     "2bbee4eb120dc711c7c23391dab2bf886fc3e5e019409011a3d9c58a16249290",
+  "fixtures/upstream-native/extension-directories/directories/src/extension.h":
+    "06bd1b568def12947e5634c3b219125748f12b30cb10e199ac80fff16fa908b2",
+  "fixtures/upstream-native/extension-directories/directories/src/extension_linux.cpp":
+    "a4572bca96942c1d193d1a86f31930e646334f92b70a28d88e04573f85d98b0e",
   "fixtures/upstream-native/defold-extension-uptime/uptime/src/UpTime.cpp":
     "362b99d47547da200f91c3f2f4856d9ae2c2962a85c3da0e63822de889332a5b",
   "fixtures/upstream-native/defold-fontscale/fontscale/src/fontscale.cpp":
@@ -563,12 +567,16 @@ describe("the vendored native C++ the registration surface is read from", () => 
     ).toEqual([]);
   });
 
-  test("the pin covers every native target's upstreamSource and upstreamMethodSources", () => {
+  test("the pin covers every native target's upstreamSource, upstreamHeaders and upstreamMethodSources", () => {
     const targets = readNativeTargets(PACKAGE_ROOT);
     expect(targets.length).toBeGreaterThan(0);
     expect(
       targets.flatMap((target) =>
-        [target.upstreamSource, ...(target.upstreamMethodSources ?? [])]
+        [
+          target.upstreamSource,
+          ...(target.upstreamHeaders ?? []),
+          ...(target.upstreamMethodSources ?? []),
+        ]
           .filter((path) => !(path in UPSTREAM_NATIVE_HASHES))
           .map((path) => `${target.namespace}: ${path}`),
       ),
