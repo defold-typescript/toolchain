@@ -131,6 +131,42 @@ describe("@globalTable import lowering", () => {
     expect(result.lua).toMatchSnapshot();
   });
 
+  test("a local shadowing the global name does not capture the alias", () => {
+    const result = transpileProject({
+      files: {
+        "pixels.d.ts": PIXELS_DTS,
+        "util.ts": "export function go(): void { print(1); }\n",
+        "main.ts": [
+          'import * as pixels from "./util";',
+          'import { fill } from "pixels";',
+          "pixels.go();",
+          "fill(7);",
+          "",
+        ].join("\n"),
+      },
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchSnapshot();
+  });
+
+  test("a local shadowing a dotted global's root does not capture the alias", () => {
+    const result = transpileProject({
+      files: {
+        "body.d.ts": BODY_DTS,
+        "b2d.ts": "export function hello(): void { print(2); }\n",
+        "main.ts": [
+          'import * as b2d from "./b2d";',
+          'import { mass } from "body";',
+          "b2d.hello();",
+          "print(mass());",
+          "",
+        ].join("\n"),
+      },
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchSnapshot();
+  });
+
   test("a real source file wins over a tagged ambient module", () => {
     const result = transpileProject({
       files: {
@@ -167,6 +203,18 @@ describe("@globalTable diagnostics", () => {
     expect(diagnostic?.line).toBeGreaterThan(0);
     expect(diagnostic?.message).toContain("3px");
     expect(diagnostic?.category).toBeUndefined();
+  });
+
+  test("marker text in a user string is not a leak", () => {
+    const result = transpileProject({
+      files: {
+        "main.ts": [`const s = "${GLOBAL_TABLE_REQUIRE_MARKER}pixels";`, "print(s);", ""].join(
+          "\n",
+        ),
+      },
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchSnapshot();
   });
 
   test("a chunk still carrying the marker is an error naming the chunk", () => {

@@ -143,10 +143,10 @@ export const nativeGlobalModulesPlugin: Plugin = {
 
 /**
  * Replace every marker require the scanner can span with the global name it
- * encodes: `local p = require("<marker>pixels")` becomes `local p = pixels`,
- * which reads the global because the right side is evaluated before the local
- * binds. A marker site without a recoverable call span is left in place for
- * `findGlobalAliasMarkerLeak` to fail the build on.
+ * encodes: `local p = require("<marker>pixels")` becomes `local p = _G.pixels`,
+ * rooted in `_G` so no local in scope — including one named `pixels` — can
+ * shadow the global. A marker site without a recoverable call span is left in
+ * place for `findGlobalAliasMarkerLeak` to fail the build on.
  */
 export function rewriteGlobalAliasRequires(lua: string): string {
   let out = "";
@@ -159,23 +159,25 @@ export function rewriteGlobalAliasRequires(lua: string): string {
       continue;
     }
     out += lua.slice(cursor, site.callStart);
-    out += site.path.slice(GLOBAL_TABLE_REQUIRE_MARKER.length);
+    out += `_G.${site.path.slice(GLOBAL_TABLE_REQUIRE_MARKER.length)}`;
     cursor = site.callEnd;
   }
   return out + lua.slice(cursor);
 }
 
 /**
- * The global name of the first marker surviving in a chunk after the swap, or
- * undefined when the chunk is clean. A survivor means an emit shape the swap
- * cannot reach; the output would fail to load in Defold, so the caller turns
- * it into a build error rather than shipping it.
+ * The global name of the first marker require surviving in a chunk after the
+ * swap, or undefined when the chunk is clean. Only require paths the scanner
+ * yields count — marker text in an ordinary string or comment is user data,
+ * not a leak. A survivor means an emit shape the swap cannot reach; the output
+ * would fail to load in Defold, so the caller turns it into a build error
+ * rather than shipping it.
  */
 export function findGlobalAliasMarkerLeak(lua: string): string | undefined {
-  const index = lua.indexOf(GLOBAL_TABLE_REQUIRE_MARKER);
-  if (index === -1) {
-    return undefined;
+  for (const site of scanEmittedRequires(lua)) {
+    if (site.path.startsWith(GLOBAL_TABLE_REQUIRE_MARKER)) {
+      return site.path.slice(GLOBAL_TABLE_REQUIRE_MARKER.length);
+    }
   }
-  const rest = lua.slice(index + GLOBAL_TABLE_REQUIRE_MARKER.length);
-  return rest.match(/^[A-Za-z0-9_.]*/)?.[0] ?? "";
+  return undefined;
 }
