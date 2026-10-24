@@ -119,7 +119,11 @@ when the library references no mapped core types (persist), which is why the rul
 is safe to state unconditionally. For a hand-authored library, it is the
 declaration you wrote. Either way it must be a
 `declare module '<moduleId>'` ambient — the target form the emit passes through
-unchanged. Then run the two commands from `packages/library-types`:
+unchanged. When the library is a native extension, the declaration also carries
+`/** @globalTable */` so project imports lower to its runtime global rather
+than a `require` (see
+[Module form](./shipping-library-types.md#module-form-global-form-or-both)).
+Then run the two commands from `packages/library-types`:
 
 ```sh
 cd packages/library-types

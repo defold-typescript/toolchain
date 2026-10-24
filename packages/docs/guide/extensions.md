@@ -89,6 +89,36 @@ The handle types line up because the materialized surface imports its branded
 engine types from the published `@defold-typescript/types/core-types` entry, so
 an extension's `Opaque<"node">` is the very same type `gui.get_node` returns.
 
+## Module-form native extensions
+
+A hand-authored or shipped declaration can type a native extension as a module
+(`declare module "<id>"`) instead of an ambient namespace, so projects import
+it. A native extension registers a **global table** rather than a Lua module,
+so the declaration must carry `@globalTable`:
+
+```ts
+/** @globalTable */
+declare module "pixels" {
+  export function fill(color: number): void;
+}
+```
+
+Every import of the module then compiles to a local alias of the runtime
+global — never a `require`:
+
+```ts
+import * as pixels from "pixels"; // local pixels = pixels
+import { fill } from "pixels"; // reads the same global
+```
+
+Without the tag, a bare `declare module` makes the build emit
+`require("pixels")`. The build leaves that path as written (there is no Lua
+source to resolve it to), and the Defold engine then fails to load the script,
+because the extension registered a global, not a module. The tag's argument
+names the global when it differs from the module id
+(`/** @globalTable b2d.body */`); a tag naming an invalid Lua global fails the
+build with an error giving the file and line.
+
 ## Browsing Defold's own extensions
 
 The extensions Defold publishes on GitHub have reference pages under

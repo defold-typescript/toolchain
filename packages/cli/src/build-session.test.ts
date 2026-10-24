@@ -93,6 +93,42 @@ describe("createBuildSession", () => {
     }
   });
 
+  test("buildAll writes the same global-alias Lua as runBuild for a @globalTable module", () => {
+    const dts = [
+      "/**",
+      " * @noResolution",
+      " * @globalTable",
+      " */",
+      'declare module "pixels" {',
+      "  export function fill(color: number): void;",
+      "}",
+      "",
+    ].join("\n");
+    const main = [
+      'import { defineScript } from "@defold-typescript/types";',
+      'import * as pixels from "pixels";',
+      "export default defineScript({ init() { pixels.fill(7); } });",
+      "",
+    ].join("\n");
+    for (const root of [cwd, other]) {
+      writeIn(root, "tsconfig.json", DEFAULT_TSCONFIG);
+      writeIn(root, "src/pixels.d.ts", dts);
+      writeIn(root, "src/main.ts", main);
+    }
+
+    const reference = runBuild({ cwd: other });
+    const session = createBuildSession({ cwd });
+    const result = session.buildAll();
+
+    expect(result.written.sort()).toEqual(reference.written.sort());
+    expect(result.written).toContain("src/main.ts.script");
+    for (const rel of result.written) {
+      expect(readFileSync(path.join(cwd, rel), "utf8")).toBe(
+        readFileSync(path.join(other, rel), "utf8"),
+      );
+    }
+  });
+
   test("applyEvents re-reads and rewrites only the changed file", () => {
     writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
     writeIn(cwd, "src/util.ts", UTIL);
