@@ -1,0 +1,58 @@
+{
+  "info": {
+    "namespace": "imp",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "convolution",
+      "brief": "Applies a row-major 3x3 convolution kernel to `src` and writes the result",
+      "description": "Applies a row-major 3x3 convolution kernel to `src` and writes the result\ninto `dst`. Both buffers must carry a uint8 `rgb` stream of three or four\ncomponents per pixel, and must hold the same byte count — the call raises\nan error otherwise.",
+      "parameters": [
+        {
+          "name": "src",
+          "doc": "The source buffer, read only.",
+          "types": [
+            "Opaque<\"buffer\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "dst",
+          "doc": "The destination buffer the result is written into.",
+          "types": [
+            "Opaque<\"buffer\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the image in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the image in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "kernel",
+          "doc": "The row-major 3x3 kernel, nine numbers.",
+          "types": [
+            "[ number, number, number, number, number, number, number, number, number ]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

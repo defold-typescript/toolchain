@@ -196,6 +196,24 @@
       "manifestDir": "uptime",
       "declaration": "generated/native/uptime.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-extension-uptime/uptime/src/UpTime.cpp"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-png",
+      "ref": "1.2.2",
+      "license": "MIT",
+      "namespace": "png",
+      "manifestDir": "png",
+      "declaration": "generated/native/png.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-png/png/src/png.cpp"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-imp",
+      "ref": "1.1.0",
+      "license": "MIT",
+      "namespace": "imp",
+      "manifestDir": "imp",
+      "declaration": "generated/native/imp.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-imp/imp/src/imp.cpp"
     }
   ]
 }
