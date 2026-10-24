@@ -10989,6 +10989,29 @@ callable. Drop that signature with
 `"callSignature": { "drop": true }` on the interface. Same loud failure as the others: an
 override naming an interface that has no call signature throws.
 
+Some libraries bind a `---@class` to a field of the module table instead of declaring
+a `---@field` for it: token writes `---@class token.event.on_token_change: event`
+directly above `M.on_token_change = event.create()`. The class becomes an interface,
+but nothing exports the value, so `token.on_token_change` would not exist in
+TypeScript. A `moduleObject` override names the module's class and each bound field
+with its class:
+
+```json
+"annotationOverrides": {
+  "moduleObject": {
+    "interface": "token",
+    "fields": { "on_token_change": { "type": "token.event.on_token_change" } }
+  }
+}
+```
+
+Each field emits as `export const on_token_change: token_event_on_token_change;`,
+documented with its class's description, and the module's own class is no longer
+emitted as an empty interface. The override throws when the module class or a field's
+type is absent from the model, when the module class already declares the field
+(upstream added the `---@field`, so delete the entry), when a module function has the
+same name, and when the parser already treats a different class as the module object.
+
 #### 2. Generate the artifacts
 
 Run the four commands from `packages/library-types`, in order. Each iterates every
