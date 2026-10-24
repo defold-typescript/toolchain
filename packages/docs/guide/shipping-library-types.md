@@ -53,12 +53,14 @@ writes `h: hash` or `v: vmath.vector3` fails the check.
 
 ## Module form, global form, or both
 
-A Lua `require` path is typed with a module declaration. For a native
-extension, mark it `@noResolution` so the transpiler leaves the `require` path
-as written:
+A Lua `require` path is typed with a module declaration. A pure-Lua library's
+path names a real module, so mark it `@noResolution` and the transpiler leaves
+the `require` path as written. A native extension registers a **global table**
+instead — no Lua module answers to its name, so a plain `require` of it fails
+when Defold loads the script — so mark it `@globalTable`:
 
 ```ts
-/** @noResolution */
+/** @globalTable */
 declare module "my_library" {
   export interface Hit {
     id: Hash;
@@ -69,7 +71,12 @@ declare module "my_library" {
 }
 ```
 
-A project then writes `import * as my_library from "my_library"`.
+A project then writes `import * as my_library from "my_library"` or
+`import { cast } from "my_library"`; either import compiles to a local alias
+of the `my_library` global instead of a `require`. When the global's name
+differs from the module id, name it in the tag (`@globalTable b2d.body`); a
+tag naming an invalid Lua global fails the build with an error giving the
+file and line.
 
 A native extension also registers a global table. A file that points the global
 at the module adds a global name:
@@ -144,8 +151,9 @@ there are left alone.
 A native extension's file stays in global form (`declare global { namespace
 daabbcc { ... } }`), so a project that switches to your shipped types needs no
 change. Converting it to the [module form](#module-form-global-form-or-both)
-is your choice: projects then reach the API with
-`import * as daabbcc from "daabbcc"` instead of the global name.
+is your choice: the module declaration carries `/** @globalTable */`, and
+projects then reach the API with `import * as daabbcc from "daabbcc"` instead
+of the global name.
 
 Once a release carries the `types/` folder, projects that depend on that
 release get your shipped types. The curated copy is then retired here in a

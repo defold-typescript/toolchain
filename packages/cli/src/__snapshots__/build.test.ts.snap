@@ -1,0 +1,15 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`runBuild a @globalTable module import builds to a global alias with no surviving require 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local pixels = pixels
+function init()
+    pixels.fill(7)
+end
+return ____exports
+
+--# defold-typescript:generated
+--# sourceMappingURL=main.ts.script.map
+"
+`;

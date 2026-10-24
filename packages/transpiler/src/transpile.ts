@@ -21,6 +21,11 @@ import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { scanEmittedRequires } from "./lua-require-scan";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
+import {
+  findGlobalAliasMarkerLeak,
+  nativeGlobalModulesPlugin,
+  rewriteGlobalAliasRequires,
+} from "./native-global-modules";
 import { physicsEventGuardLoweringPlugin } from "./physics-event-guard-lowering";
 import { importsTimersModule, timersLoweringPlugin } from "./timers-lowering";
 import { TIMERS_RUNTIME } from "./timers-runtime";
@@ -258,6 +263,7 @@ export function collectOutputs(
   const lua: Record<string, string> = {};
   const sourceMaps: Record<string, string> = {};
   const companions: Record<string, string> = {};
+  const markerLeaks: { file: string; globalName: string }[] = [];
   let lualib: string | undefined;
   for (const file of transpiledFiles) {
     if (isLualibBundle(file) && typeof file.lua === "string") {
@@ -268,13 +274,25 @@ export function collectOutputs(
     if (!userSource || typeof file.lua !== "string") {
       continue;
     }
-    lua[userSource.fileName] = file.lua;
+    // Column offsets after a swap shift, as they already do under the CLI's
+    // require respelling — accepted.
+    const swapped = rewriteGlobalAliasRequires(file.lua);
+    lua[userSource.fileName] = swapped;
+    const leaked = findGlobalAliasMarkerLeak(swapped);
+    if (leaked !== undefined) {
+      markerLeaks.push({ file: userSource.fileName, globalName: leaked });
+    }
     if (typeof file.luaSourceMap === "string") {
       sourceMaps[userSource.fileName] = file.luaSourceMap;
     }
     const companion = emittedCompanions.get(userSource.fileName);
     if (companion !== undefined) {
-      companions[userSource.fileName] = companion;
+      const swappedCompanion = rewriteGlobalAliasRequires(companion);
+      companions[userSource.fileName] = swappedCompanion;
+      const companionLeak = findGlobalAliasMarkerLeak(swappedCompanion);
+      if (companionLeak !== undefined) {
+        markerLeaks.push({ file: userSource.fileName, globalName: companionLeak });
+      }
     }
   }
 
@@ -290,6 +308,15 @@ export function collectOutputs(
     const { line, character } = d.file.getLineAndCharacterOfPosition(d.start);
     return { file: fileName, message, line: line + 1, column: character + 1 };
   });
+
+  // A surviving marker is a build error, not a fallback: the alternative —
+  // leaving the original require — fails silently at load time in Defold.
+  for (const leak of markerLeaks) {
+    collectedDiagnostics.push({
+      file: leak.file,
+      message: `@globalTable lowering left an unrewritten require for \`${leak.globalName}\` in the emitted chunk; the output would fail to load in Defold.`,
+    });
+  }
 
   // Advisory scan of the user TypeScript AST for the deprecated direct
   // `go.property` call, plus detection of the timers polyfill import. Run here
@@ -378,6 +405,7 @@ function transpileVirtual(
         { plugin: physicsEventGuardLoweringPlugin },
         { plugin: messageDispatchLoweringPlugin },
         { plugin: timersLoweringPlugin },
+        { plugin: nativeGlobalModulesPlugin },
         { plugin: hsmLoweringPlugin },
         { plugin: typeApplicationErasurePlugin },
         { plugin: companionEmit.plugin },

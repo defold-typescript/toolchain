@@ -10635,6 +10635,36 @@ The handle types line up because the materialized surface imports its branded
 engine types from the published `@defold-typescript/types/core-types` entry, so
 an extension's `Opaque<"node">` is the very same type `gui.get_node` returns.
 
+#### Module-form native extensions
+
+A hand-authored or shipped declaration can type a native extension as a module
+(`declare module "<id>"`) instead of an ambient namespace, so projects import
+it. A native extension registers a **global table** rather than a Lua module,
+so the declaration must carry `@globalTable`:
+
+```ts
+/** @globalTable */
+declare module "pixels" {
+  export function fill(color: number): void;
+}
+```
+
+Every import of the module then compiles to a local alias of the runtime
+global — never a `require`:
+
+```ts
+import * as pixels from "pixels"; // local pixels = pixels
+import { fill } from "pixels"; // reads the same global
+```
+
+Without the tag, a bare `declare module` makes the build emit
+`require("pixels")`. The build leaves that path as written (there is no Lua
+source to resolve it to), and the Defold engine then fails to load the script,
+because the extension registered a global, not a module. The tag's argument
+names the global when it differs from the module id
+(`/** @globalTable b2d.body */`); a tag naming an invalid Lua global fails the
+build with an error giving the file and line.
+
 #### Browsing Defold's own extensions
 
 The extensions Defold publishes on GitHub have reference pages under
@@ -10729,12 +10759,14 @@ writes `h: hash` or `v: vmath.vector3` fails the check.
 
 #### Module form, global form, or both
 
-A Lua `require` path is typed with a module declaration. For a native
-extension, mark it `@noResolution` so the transpiler leaves the `require` path
-as written:
+A Lua `require` path is typed with a module declaration. A pure-Lua library's
+path names a real module, so mark it `@noResolution` and the transpiler leaves
+the `require` path as written. A native extension registers a **global table**
+instead — no Lua module answers to its name, so a plain `require` of it fails
+when Defold loads the script — so mark it `@globalTable`:
 
 ```ts
-/** @noResolution */
+/** @globalTable */
 declare module "my_library" {
   export interface Hit {
     id: Hash;
@@ -10745,7 +10777,12 @@ declare module "my_library" {
 }
 ```
 
-A project then writes `import * as my_library from "my_library"`.
+A project then writes `import * as my_library from "my_library"` or
+`import { cast } from "my_library"`; either import compiles to a local alias
+of the `my_library` global instead of a `require`. When the global's name
+differs from the module id, name it in the tag (`@globalTable b2d.body`); a
+tag naming an invalid Lua global fails the build with an error giving the
+file and line.
 
 A native extension also registers a global table. A file that points the global
 at the module adds a global name:
@@ -10820,8 +10857,9 @@ there are left alone.
 A native extension's file stays in global form (`declare global { namespace
 daabbcc { ... } }`), so a project that switches to your shipped types needs no
 change. Converting it to the [module form](#module-form-global-form-or-both)
-is your choice: projects then reach the API with
-`import * as daabbcc from "daabbcc"` instead of the global name.
+is your choice: the module declaration carries `/** @globalTable */`, and
+projects then reach the API with `import * as daabbcc from "daabbcc"` instead
+of the global name.
 
 Once a release carries the `types/` folder, projects that depend on that
 release get your shipped types. The curated copy is then retired here in a
@@ -11324,7 +11362,11 @@ when the library references no mapped core types (persist), which is why the rul
 is safe to state unconditionally. For a hand-authored library, it is the
 declaration you wrote. Either way it must be a
 `declare module '<moduleId>'` ambient — the target form the emit passes through
-unchanged. Then run the two commands from `packages/library-types`:
+unchanged. When the library is a native extension, the declaration also carries
+`/** @globalTable */` so project imports lower to its runtime global rather
+than a `require` (see
+[Module form](./shipping-library-types.md#module-form-global-form-or-both)).
+Then run the two commands from `packages/library-types`:
 
 ```sh
 cd packages/library-types
