@@ -97,6 +97,24 @@ const MAIN_SCRIPT =
 const EMPTY_SCRIPT =
   'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({});\n';
 
+const GLOBAL_TABLE_DTS = [
+  "/**",
+  " * @noResolution",
+  " * @globalTable",
+  " */",
+  'declare module "pixels" {',
+  "  export function fill(color: number): void;",
+  "}",
+  "",
+].join("\n");
+
+const GLOBAL_TABLE_MAIN = [
+  'import { defineScript } from "@defold-typescript/types";',
+  'import * as pixels from "pixels";',
+  "export default defineScript({ init() { pixels.fill(7); } });",
+  "",
+].join("\n");
+
 describe("runBuild (a scene-address declaration inside include)", () => {
   // Scaffold with the real writer, then fill the declaration with the real
   // generator, so the entry under test is the one `init` emits and the file it
@@ -170,6 +188,19 @@ describe("runBuild", () => {
     expect(result.written).toEqual(["src/main.ts.script"]);
     const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
     expect(lua.length).toBeGreaterThan(0);
+  });
+
+  test("a @globalTable module import builds to a global alias with no surviving require", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/pixels.d.ts", GLOBAL_TABLE_DTS);
+    writeFile("src/main.ts", GLOBAL_TABLE_MAIN);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
+    expect(scanEmittedRequires(lua)).toEqual([]);
+    expect(lua).toMatchSnapshot();
   });
 
   test("preserves nested directory structure for helper modules alongside source", () => {

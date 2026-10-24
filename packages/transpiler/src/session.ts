@@ -9,6 +9,7 @@ import { hsmLoweringPlugin } from "./hsm-builtin";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
+import { nativeGlobalModulesPlugin } from "./native-global-modules";
 import { physicsEventGuardLoweringPlugin } from "./physics-event-guard-lowering";
 import { timersLoweringPlugin } from "./timers-lowering";
 import { AMBIENT_FILES, collectOutputs, type TranspileProjectResult } from "./transpile";
@@ -54,6 +55,7 @@ function compilerOptions(companionEmit: CompanionEmitter): tstl.CompilerOptions 
       { plugin: physicsEventGuardLoweringPlugin },
       { plugin: messageDispatchLoweringPlugin },
       { plugin: timersLoweringPlugin },
+      { plugin: nativeGlobalModulesPlugin },
       { plugin: hsmLoweringPlugin },
       { plugin: typeApplicationErasurePlugin },
       { plugin: companionEmit.plugin },
