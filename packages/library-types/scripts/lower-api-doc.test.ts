@@ -861,3 +861,18 @@ test("a declaration named like an engine type lowers under the name the emitter 
     "Url_",
   ]);
 });
+
+test("two declarations reaching one generated name refuse to lower, matching the emitter", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [
+      { name: "Url", types: ["url", "string"], doc: "" },
+      { name: "Url_", types: ["string"], doc: "" },
+    ],
+    moduleFunctions: [],
+  };
+
+  expect(() => lowerLibraryModel(model, { namespace: "demo" })).toThrow(
+    /"Url" and "Url_" both emit as "Url_"/,
+  );
+});

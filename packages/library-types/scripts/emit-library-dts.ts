@@ -443,7 +443,9 @@ export interface ModelContext extends MapContext {
  *
  * A declaration whose sanitized name is a core or target rename's value is declared
  * as `<name>_`, so a local `---@alias Url url|string` never hides the engine `Url`
- * that `url` renames to.
+ * that `url` renames to. Two declarations reaching one generated name — a sanitize
+ * collision or a `<name>_` landing on the library's own name — throw rather than
+ * emit duplicate same-named declarations.
  */
 export function buildModelContext(
   model: LibraryModel,
@@ -459,9 +461,22 @@ export function buildModelContext(
     ...Object.values(typeRenames ?? {}),
   ]);
   const nameRenames: Record<string, string> = {};
+  const byGenerated = new Map<string, string[]>();
   for (const name of declaredNames) {
     const sanitized = sanitizeTypeName(name);
-    nameRenames[name] = renamedTo.has(sanitized) ? `${sanitized}_` : sanitized;
+    const generated = renamedTo.has(sanitized) ? `${sanitized}_` : sanitized;
+    nameRenames[name] = generated;
+    const reaching = byGenerated.get(generated) ?? [];
+    reaching.push(name);
+    byGenerated.set(generated, reaching);
+  }
+  for (const [generated, reaching] of byGenerated) {
+    if (reaching.length > 1) {
+      const quoted = reaching.map((n) => `"${n}"`);
+      const listed = `${quoted.slice(0, -1).join(", ")} and ${quoted[quoted.length - 1]}`;
+      const verb = reaching.length === 2 ? "both" : "all";
+      throw new Error(`buildModelContext: declarations ${listed} ${verb} emit as "${generated}".`);
+    }
   }
   const externalRenames = externalTypeRenames(externalTypes);
   for (const [token, alias] of Object.entries(externalRenames)) {
