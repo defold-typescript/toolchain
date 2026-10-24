@@ -174,6 +174,23 @@ export async function fetchLualsFixtures(
 }
 
 /**
+ * The one enumeration of a target's committed fixture `.lua` files (relative,
+ * forward-slash, sorted) — both the model build and the source-selection proof
+ * read it, so a glob proven against it is proven against what the model reads.
+ */
+export function listTargetFixtures(
+  packageRoot: string,
+  target: LualsTarget,
+  seams: { readDir?: ReadFixtureDir } = {},
+): string[] {
+  const readDir = seams.readDir ?? ((r) => readdirSync(r, { recursive: true }).map(String));
+  return readDir(join(packageRoot, "fixtures/luals", target.namespace))
+    .map((entry) => entry.replace(/\\/g, "/"))
+    .filter((entry) => entry.endsWith(".lua"))
+    .sort();
+}
+
+/**
  * Parse and merge a target's committed fixtures, then build its fidelity report.
  * Reads only `fixtures/luals/<namespace>/**` from disk — zero network — so both
  * the `--fidelity` CLI arm and its round-trip test drive the exact same path and
@@ -192,12 +209,8 @@ export function buildTargetModel(
   target: LualsTarget,
   seams: { readDir?: ReadFixtureDir } = {},
 ): LibraryModel {
-  const readDir = seams.readDir ?? ((r) => readdirSync(r, { recursive: true }).map(String));
   const root = join(packageRoot, "fixtures/luals", target.namespace);
-  const files = readDir(root)
-    .map((entry) => entry.replace(/\\/g, "/"))
-    .filter((entry) => entry.endsWith(".lua"))
-    .sort();
+  const files = listTargetFixtures(packageRoot, target, seams);
   const ownFile = `${target.moduleId.replace(/\./g, "/")}.lua`;
   if (!files.includes(ownFile)) {
     throw new Error(
