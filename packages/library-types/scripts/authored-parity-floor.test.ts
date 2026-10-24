@@ -516,6 +516,10 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "5685352a52bc182625d52e79e366de5323cc6fe1cd02a13122a8e3e272afb863",
   "fixtures/upstream-native/defold-gyro/gyro/src/gyro.cpp":
     "40fbeea34a035a055208cb81ffedd1b2773ae0dc8527738207463dd1e5e8af4c",
+  "fixtures/upstream-native/defold-imp/imp/src/imp.cpp":
+    "6396179b8f12570e8eaa48bceec8912b311bc20f7927e1c3e23856ffe2ced18b",
+  "fixtures/upstream-native/defold-png/png/src/png.cpp":
+    "656138e16880d5161ba33b77b7c11040675d35cdcaee546d422d0b0602193956",
   "fixtures/upstream-native/defold-sharing/share/api/share.lua":
     "f441787bb953d0fd836c5981bf2430b525f0c2b9350730ff3bd06ac940be705d",
   "fixtures/upstream-native/defold-sharing/share/src/share.cpp":

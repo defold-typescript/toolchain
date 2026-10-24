@@ -195,6 +195,14 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/native/imp.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/native/png.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/native/share.json": {
     "callable": 1,
     "field": 1

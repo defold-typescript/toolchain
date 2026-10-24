@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-png",
+    "manifestDir": "png"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/britzl/defold-png/archive/refs/tags/1.2.2.zip",
+    "confirmedManifest": "defold-png-1.2.2/png/ext.manifest",
+    "misplacedManifest": "defold-png-1.2.2/ext.manifest"
+  }
+}

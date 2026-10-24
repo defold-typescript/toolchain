@@ -1,0 +1,261 @@
+{
+  "info": {
+    "namespace": "png",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "RGBA",
+      "brief": "LodePNG color type: red, green, blue and alpha, as {@link png.info} reports it.",
+      "description": "LodePNG color type: red, green, blue and alpha, as {@link png.info} reports it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RGB",
+      "brief": "LodePNG color type: red, green and blue, as {@link png.info} reports it.",
+      "description": "LodePNG color type: red, green and blue, as {@link png.info} reports it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "GREY",
+      "brief": "LodePNG color type: greyscale, as {@link png.info} reports it.",
+      "description": "LodePNG color type: greyscale, as {@link png.info} reports it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "GREY_ALPHA",
+      "brief": "LodePNG color type: greyscale and alpha, as {@link png.info} reports it.",
+      "description": "LodePNG color type: greyscale and alpha, as {@link png.info} reports it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "PALETTE",
+      "brief": "LodePNG color type: palette, as {@link png.info} reports it.",
+      "description": "LodePNG color type: palette, as {@link png.info} reports it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "encode_rgb",
+      "brief": "Encodes raw RGB pixels (3 bytes per pixel) into PNG bytes.",
+      "description": "Encodes raw RGB pixels (3 bytes per pixel) into PNG bytes.",
+      "parameters": [
+        {
+          "name": "pixels",
+          "doc": "The raw pixel data, row by row.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the image in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the image in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The PNG bytes.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "encode_rgba",
+      "brief": "Encodes raw RGBA pixels (4 bytes per pixel) into PNG bytes.",
+      "description": "Encodes raw RGBA pixels (4 bytes per pixel) into PNG bytes.",
+      "parameters": [
+        {
+          "name": "pixels",
+          "doc": "The raw pixel data, row by row.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the image in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the image in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The PNG bytes.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "decode_rgb",
+      "brief": "Decodes PNG bytes into an RGB buffer with one uint8 `pixels` stream of",
+      "description": "Decodes PNG bytes into an RGB buffer with one uint8 `pixels` stream of\nthree components per pixel. The decoded rows are flipped vertically to\nmatch Defold's buffer orientation. A decode or buffer-validation failure\nreturns three nils, so check the buffer before reading the dimensions.",
+      "parameters": [
+        {
+          "name": "png",
+          "doc": "The PNG bytes.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "premultiply_alpha",
+          "doc": "Accepted for symmetry with\n{@link png.decode_rgba}; it only has effect in the RGBA path.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The pixel buffer, its width and its height, or three nils on\nfailure.",
+          "types": [
+            "LuaMultiReturn<[ Opaque<\"buffer\"> & { length: LuaLengthMethod<number>; }, number, number ] | [ undefined, undefined, undefined ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "decode_rgba",
+      "brief": "Decodes PNG bytes into an RGBA buffer with one uint8 `pixels` stream of",
+      "description": "Decodes PNG bytes into an RGBA buffer with one uint8 `pixels` stream of\nfour components per pixel. The decoded rows are flipped vertically to\nmatch Defold's buffer orientation. A decode or buffer-validation failure\nreturns three nils, so check the buffer before reading the dimensions.",
+      "parameters": [
+        {
+          "name": "png",
+          "doc": "The PNG bytes.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "premultiply_alpha",
+          "doc": "Multiply each pixel's color components by its\nalpha while decoding.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The pixel buffer, its width and its height, or three nils on\nfailure.",
+          "types": [
+            "LuaMultiReturn<[ Opaque<\"buffer\"> & { length: LuaLengthMethod<number>; }, number, number ] | [ undefined, undefined, undefined ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "info",
+      "brief": "Reads the header of PNG bytes without decoding the pixels.",
+      "description": "Reads the header of PNG bytes without decoding the pixels.",
+      "parameters": [
+        {
+          "name": "png",
+          "doc": "The PNG bytes.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The image's dimensions, its LodePNG color type ({@link png.RGBA},\n{@link png.RGB}, {@link png.GREY}, {@link png.GREY_ALPHA} or\n{@link png.PALETTE}) and its bit depth.",
+          "types": [
+            "{ width: number; height: number; colortype: number; bitdepth: number; }"
+          ],
+          "fields": [
+            {
+              "name": "width",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "height",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "colortype",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "bitdepth",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
