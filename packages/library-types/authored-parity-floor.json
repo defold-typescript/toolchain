@@ -183,6 +183,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/native/directories.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/native/fontscale.json": {
     "callable": 1,
     "field": 1

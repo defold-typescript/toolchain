@@ -217,6 +217,85 @@ describe("parseNativeRegistration over the other spellings native extensions use
   });
 });
 
+describe("parseNativeRegistration over the luaL_openlib spelling", () => {
+  function openlibSource(nameArgument: string, body: string[] = []): string {
+    return [
+      "dmExtension::Result Initialize(dmExtension::Params* params) {",
+      "  lua_State* L = params->m_L;",
+      "  const luaL_Reg lua_functions[] = {",
+      '    {"path_for_file", PathForFile},',
+      "    {NULL, NULL}",
+      "  };",
+      `  luaL_openlib(L, ${nameArgument}, lua_functions, 1);`,
+      ...body.map((line) => `  ${line}`),
+      "  return dmExtension::RESULT_OK;",
+      "}",
+    ].join("\n");
+  }
+
+  const NAME_HEADER = [
+    "#define EXTENSION_NAME directories",
+    "#define STRINGIFY(s) #s",
+    "#define STRINGIFY_EXPANDED(s) STRINGIFY(s)",
+    "#define EXTENSION_NAME_STRING STRINGIFY_EXPANDED(EXTENSION_NAME)",
+  ];
+
+  test("a named luaL_openlib call over a const luaL_Reg table reads as the registered module", () => {
+    const surface = parseNativeRegistration(openlibSource('"directories"'), "inline.cpp");
+    expect(surface.moduleName).toBe("directories");
+    expect(surface.functions).toEqual(["path_for_file"]);
+    expect(surface.methods).toEqual({});
+  });
+
+  test("constants after the luaL_openlib call are read, nested-table rules unchanged", () => {
+    const source = openlibSource('"directories"', [
+      "lua_pushnumber(L, 0);",
+      'lua_setfield(L, -2, "caches");',
+      "lua_newtable(L);",
+      "lua_pushnumber(L, 1);",
+      'lua_setfield(L, -2, "inner");',
+      'lua_setfield(L, -2, "outer");',
+    ]);
+    expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual([
+      "caches",
+      "outer.inner",
+    ]);
+  });
+
+  test("with header text prepended, EXTENSION_NAME_STRING resolves through the stringify chain", () => {
+    const source = [...NAME_HEADER, openlibSource("EXTENSION_NAME_STRING")].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp").moduleName).toBe("directories");
+  });
+
+  test("the chain without a #define for the stringified token throws naming the file", () => {
+    const source = [...NAME_HEADER.slice(1), openlibSource("EXTENSION_NAME_STRING")].join("\n");
+    expect(() => parseNativeRegistration(source, "inline.cpp")).toThrow(
+      /inline\.cpp.*EXTENSION_NAME/s,
+    );
+  });
+
+  test("a nameless luaL_openlib call still reads as a method table", () => {
+    const source = [
+      "void InitMeta(lua_State* L) {",
+      "  const luaL_Reg methods[] = {",
+      '    {"find", Find},',
+      '    {"__gc", Destroy},',
+      "    {NULL, NULL}",
+      "  };",
+      '  luaL_newmetatable(L, "ext.Thing");',
+      "  luaL_openlib(L, 0, methods, 0);",
+      "}",
+    ].join("\n");
+    expect(parseNativeMethodTables(source, "inline.cpp")).toEqual({ "ext.Thing": ["find"] });
+  });
+
+  test("a source with no call of either spelling throws naming the file and both spellings", () => {
+    const thrown = () => parseNativeRegistration('static const char* x = "y";', "ext/none.cpp");
+    expect(thrown).toThrow(/ext\/none\.cpp/);
+    expect(thrown).toThrow(/luaL_openlib/);
+  });
+});
+
 describe("parseNativeRegistration over a userdata method table", () => {
   function methodTableSource(nameArgument: string): string {
     return [

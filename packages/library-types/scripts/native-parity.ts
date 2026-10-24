@@ -322,7 +322,9 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
   }
 
   const registration = parseNativeRegistration(
-    readFileSync(join(packageRoot, target.upstreamSource), "utf8"),
+    [...(target.upstreamHeaders ?? []), target.upstreamSource]
+      .map((file) => readFileSync(join(packageRoot, file), "utf8"))
+      .join("\n"),
     target.upstreamSource,
   );
   const upstreamCallable = new Set(registration.functions);

@@ -1,0 +1,12 @@
+{
+  "registry": {
+    "sourceId": "extension-directories",
+    "manifestDir": "directories"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/Lerg/extension-directories/archive/2023870e8afda0028eec5432852c8f37d7177ecd.zip",
+    "confirmedManifest": "extension-directories-2023870e8afda0028eec5432852c8f37d7177ecd/directories/ext.manifest",
+    "misplacedManifest": "extension-directories-2023870e8afda0028eec5432852c8f37d7177ecd/ext.manifest"
+  },
+  "pinKind": "commit"
+}

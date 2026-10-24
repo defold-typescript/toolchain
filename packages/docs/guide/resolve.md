@@ -197,6 +197,7 @@ the named directory, so a repo-name collision alone writes nothing.
 | [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | `v1.2` | [`taptic_engine`](/api/taptic_engine) | `taptic_engine/ext.manifest` |
 | [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | `1.1.1` | [`gyro`](/api/gyro) | `gyro/ext.manifest` |
 | [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | `v0.1.0` | [`fontscale`](/api/fontscale) | `fontscale/ext.manifest` |
+| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | `2023870` | [`directories`](/api/directories) | `directories/ext.manifest` |
 | [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | `1.2.0` | [`uptime`](/api/uptime) | `uptime/ext.manifest` |
 
 <!-- curated-native-extensions:end -->

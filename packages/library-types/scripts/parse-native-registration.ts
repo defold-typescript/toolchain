@@ -3,15 +3,21 @@
  * name, function names and constant names its declaration must match.
  *
  * A native extension has no Lua to measure against, but every one registers its
- * whole surface in one place: `luaL_register(L, <name>, <table>)` over a
+ * whole surface in one place: `luaL_register(L, <name>, <table>)` — or Lua 5.1's
+ * `luaL_openlib(L, <name>, <table>, <nup>)`, which with a non-null name is the
+ * same call — over a
  * `static const luaL_reg <table>[] = { { "name", fn }, ..., {0, 0} }`, followed by
  * constants set on the module table (`SETCONSTANT(NAME)`, or
- * `lua_setfield(L, -2, "NAME")` after a push). Comments are stripped first, so a
+ * `lua_setfield(L, -2, "NAME")` after a push). A module name passed by identifier
+ * resolves through `#define NAME "..."` and `const char* NAME = "..."`, and through
+ * the stringified-macro idiom (`#define A B` chains, and `#define A M(B)` where `M`
+ * stringifies — its own body is `#x`, directly or through one forwarding macro — so
+ * `A` reads as `B`'s resolved token spelling). Comments are stripped first, so a
  * commented-out entry is never read as registered, and a commented-out `#define`
  * never resolves a module-name identifier.
  *
  * A userdata type registers its methods the same way, with no module name:
- * `luaL_register(L, 0, <table>)` (or `NULL`) fills the table on top of the
+ * `luaL_register(L, 0, <table>)` (or `NULL`, and `luaL_openlib` alike) fills the table on top of the
  * stack. Such a call is read as `methods`, with metamethods (`__gc`, `__index`,
  * ...) dropped, and keyed by the nearest table opened before it in the same
  * function: a `luaL_newmetatable(L, <name>)` keys it by that metatable name, and a
@@ -61,8 +67,18 @@ interface RegisterCall {
 interface ScannedSource {
   code: string;
   structure: string;
-  strings: Map<string, string>;
+  names: NameDefines;
   calls: RegisterCall[];
+}
+
+interface NameDefines {
+  /** `#define NAME "..."` and `const char* NAME = "...";`. */
+  strings: Map<string, string>;
+  /** Object-like `#define A B` bodies of one identifier each. */
+  tokens: Map<string, string>;
+  /** Object-like `#define A M(B)` arguments, kept only where `M` stringifies: its
+   * function-like body is `#x`, directly or through one forwarding macro. */
+  stringified: Map<string, string>;
 }
 
 export function parseNativeRegistration(source: string, file: string): NativeRegistration {
@@ -70,18 +86,18 @@ export function parseNativeRegistration(source: string, file: string): NativeReg
   const named = scanned.calls.filter((call) => !isMethodTable(call));
   if (named.length === 0) {
     throw new Error(
-      `native registration: ${file} makes only nameless luaL_register calls, which fill userdata metatables; with no named call its module cannot be read.`,
+      `native registration: ${file} makes only nameless luaL_register/luaL_openlib calls, which fill userdata metatables; with no named call its module cannot be read.`,
     );
   }
   if (named.length > 1) {
     throw new Error(
-      `native registration: ${file} makes ${named.length} named luaL_register calls; this reader measures one module per file.`,
+      `native registration: ${file} makes ${named.length} named luaL_register/luaL_openlib calls; this reader measures one module per file.`,
     );
   }
   const call = named[0] as RegisterCall;
 
   return {
-    moduleName: resolveName(call.nameArgument, scanned.strings, "module", file),
+    moduleName: resolveName(call.nameArgument, scanned.names, "module", file),
     functions: readRegisteredFunctions(scanned.code, scanned.structure, call, file),
     methods: readMethodTables(scanned, file),
     constants: readConstants(scanned.structure, call.index, file),
@@ -94,36 +110,41 @@ export function parseNativeMethodTables(source: string, file: string): Record<st
   const scanned = scanSource(source, file);
   if (scanned.calls.some((call) => !isMethodTable(call))) {
     throw new Error(
-      `native registration: ${file} makes a named luaL_register call, so it registers a module; it belongs in the target's upstreamSource, not among its method sources.`,
+      `native registration: ${file} makes a named luaL_register/luaL_openlib call, so it registers a module; it belongs in the target's upstreamSource, not among its method sources.`,
     );
   }
   return readMethodTables(scanned, file);
 }
 
+const CALL_SHAPES = [
+  /\bluaL_register\s*\(\s*\w+\s*,\s*("[^"]*"|\w+)\s*,\s*(\w+)\s*\)/g,
+  /\bluaL_openlib\s*\(\s*\w+\s*,\s*("[^"]*"|\w+)\s*,\s*(\w+)\s*,\s*\w+\s*\)/g,
+];
+
 function scanSource(source: string, file: string): ScannedSource {
   const live = stripComments(source);
-  const strings = readStringNames(live);
+  const names = readNameDefines(live);
   const code = blankPreprocessorLines(live);
   const structure = maskStringContents(code);
 
-  const calls: RegisterCall[] = [
-    ...structure.matchAll(/\bluaL_register\s*\(\s*\w+\s*,\s*("[^"]*"|\w+)\s*,\s*(\w+)\s*\)/g),
-  ].map((call) => {
-    const index = call.index ?? 0;
-    const name = call[1] as string;
-    const nameStart = index + call[0].indexOf(name);
-    return {
-      index,
-      nameArgument: code.slice(nameStart, nameStart + name.length),
-      tableName: call[2] as string,
-    };
-  });
+  const calls: RegisterCall[] = CALL_SHAPES.flatMap((shape) => [...structure.matchAll(shape)])
+    .map((call) => {
+      const index = call.index ?? 0;
+      const name = call[1] as string;
+      const nameStart = index + call[0].indexOf(name);
+      return {
+        index,
+        nameArgument: code.slice(nameStart, nameStart + name.length),
+        tableName: call[2] as string,
+      };
+    })
+    .sort((a, b) => a.index - b.index);
   if (calls.length === 0) {
     throw new Error(
-      `native registration: ${file} has no luaL_register call, so its registered surface cannot be read.`,
+      `native registration: ${file} has no luaL_register or luaL_openlib call, so its registered surface cannot be read.`,
     );
   }
-  return { code, structure, strings, calls };
+  return { code, structure, names, calls };
 }
 
 function isMethodTable(call: RegisterCall): boolean {
@@ -131,15 +152,15 @@ function isMethodTable(call: RegisterCall): boolean {
 }
 
 function readMethodTables(scanned: ScannedSource, file: string): Record<string, string[]> {
-  const { code, structure, strings } = scanned;
+  const { code, structure, names } = scanned;
   const byMetatable = new Map<string, Set<string>>();
   for (const call of scanned.calls.filter(isMethodTable)) {
-    const metatable = methodTableKey(code, structure, strings, call, file);
-    const names = byMetatable.get(metatable) ?? new Set<string>();
+    const metatable = methodTableKey(code, structure, names, call, file);
+    const methods = byMetatable.get(metatable) ?? new Set<string>();
     for (const name of readRegisteredFunctions(code, structure, call, file)) {
-      if (!name.startsWith("__")) names.add(name);
+      if (!name.startsWith("__")) methods.add(name);
     }
-    byMetatable.set(metatable, names);
+    byMetatable.set(metatable, methods);
   }
   return Object.fromEntries(
     [...byMetatable.keys()]
@@ -154,7 +175,7 @@ const TABLE_OPENERS =
 function methodTableKey(
   code: string,
   structure: string,
-  strings: Map<string, string>,
+  names: NameDefines,
   call: RegisterCall,
   file: string,
 ): string {
@@ -163,7 +184,7 @@ function methodTableKey(
     open === -1 ? undefined : [...structure.slice(open, call.index).matchAll(TABLE_OPENERS)].at(-1);
   if (before === undefined) {
     throw new Error(
-      `native registration: ${file} fills the table \`${call.tableName}\` with a nameless luaL_register call, but no luaL_newmetatable, lua_newtable or lua_createtable before it in the same function opens the table it fills.`,
+      `native registration: ${file} fills the table \`${call.tableName}\` with a nameless register call, but no luaL_newmetatable, lua_newtable or lua_createtable before it in the same function opens the table it fills.`,
     );
   }
   const name = before[1];
@@ -171,7 +192,7 @@ function methodTableKey(
     return `${enclosingFunctionName(structure, open, file)}()`;
   }
   const nameStart = open + (before.index ?? 0) + before[0].indexOf(name);
-  return resolveName(code.slice(nameStart, nameStart + name.length), strings, "metatable", file);
+  return resolveName(code.slice(nameStart, nameStart + name.length), names, "metatable", file);
 }
 
 /** The name of the function whose body brace is `open`, read from its signature:
@@ -195,20 +216,55 @@ function enclosingFunctionName(structure: string, open: number, file: string): s
 
 function resolveName(
   argument: string,
-  strings: Map<string, string>,
+  names: NameDefines,
   role: "module" | "metatable",
   file: string,
 ): string {
   if (argument.startsWith('"')) {
     return argument.slice(1, -1);
   }
-  const defined = strings.get(argument);
-  if (defined === undefined) {
+  const seen = new Set<string>();
+  let token = argument;
+  while (!seen.has(token)) {
+    seen.add(token);
+    const direct = names.strings.get(token);
+    if (direct !== undefined) return direct;
+    const stringifiedToken = names.stringified.get(token);
+    if (stringifiedToken !== undefined) {
+      return stringifiedSpelling(stringifiedToken, names, argument, role, file);
+    }
+    const next = names.tokens.get(token);
+    if (next === undefined) break;
+    token = next;
+  }
+  throw new Error(
+    `native registration: ${file} passes \`${argument}\` as the ${role} name, but defines no string for it with #define or a const char*.`,
+  );
+}
+
+/** The spelling a stringify macro produces: the token itself, once `#define A B`
+ * chains are followed. The stringified token must be #define'd — stringifying an
+ * undefined token is read as a missing name, not as a module literally named after
+ * the macro argument. */
+function stringifiedSpelling(
+  token: string,
+  names: NameDefines,
+  argument: string,
+  role: "module" | "metatable",
+  file: string,
+): string {
+  if (!names.tokens.has(token)) {
     throw new Error(
-      `native registration: ${file} passes \`${argument}\` as the ${role} name, but defines no string for it with #define or a const char*.`,
+      `native registration: ${file} passes \`${argument}\` as the ${role} name, which stringifies \`${token}\`, but no #define gives that token a value.`,
     );
   }
-  return defined;
+  const seen = new Set<string>();
+  let current = token;
+  while (names.tokens.has(current) && !seen.has(current)) {
+    seen.add(current);
+    current = names.tokens.get(current) as string;
+  }
+  return current;
 }
 
 function readRegisteredFunctions(
@@ -287,9 +343,11 @@ function readConstants(structure: string, callIndex: number, file: string): stri
 const CONSTANT_EVENTS =
   /\b(?:(lua_newtable|lua_createtable)\s*\(|SETCONSTANT\s*\(\s*(\w+)\s*\)|lua_setfield\s*\(\s*\w+\s*,\s*-2\s*,\s*"(\w+)"\s*\)|(?:lua_push\w+|dmScript::Push\w+)\s*\()/g;
 
-/** String names a call can pass by identifier: `#define NAME "..."` and
- * `const char* NAME = "...";`. */
-function readStringNames(source: string): Map<string, string> {
+/** Names a call can pass by identifier: string defines and `const char*` constants,
+ * plus the token defines and stringify macros `resolveName` follows. An object-like
+ * body starts after whitespace; a `(` straight after the name makes the define
+ * function-like, which is how the preprocessor itself tells them apart. */
+function readNameDefines(source: string): NameDefines {
   const strings = new Map<string, string>();
   for (const match of source.matchAll(/^[ \t]*#[ \t]*define[ \t]+(\w+)[ \t]+"([^"]*)"/gm)) {
     strings.set(match[1] as string, match[2] as string);
@@ -299,7 +357,36 @@ function readStringNames(source: string): Map<string, string> {
   )) {
     strings.set(match[1] as string, match[2] as string);
   }
-  return strings;
+
+  const tokens = new Map<string, string>();
+  for (const match of source.matchAll(/^[ \t]*#[ \t]*define[ \t]+(\w+)[ \t]+(\w+)[ \t]*\r?$/gm)) {
+    tokens.set(match[1] as string, match[2] as string);
+  }
+
+  const stringifiers = new Set<string>();
+  const forwarders = new Map<string, string>();
+  for (const match of source.matchAll(
+    /^[ \t]*#[ \t]*define[ \t]+(\w+)\(\s*(\w+)\s*\)[ \t]+(.+?)[ \t]*\r?$/gm,
+  )) {
+    const [, name, param, body] = match as unknown as [string, string, string, string];
+    if (body === `#${param}`) {
+      stringifiers.add(name);
+    } else {
+      const forward = new RegExp(`^(\\w+)\\(\\s*${param}\\s*\\)$`).exec(body);
+      if (forward !== null) forwarders.set(name, forward[1] as string);
+    }
+  }
+  const stringifies = (macro: string): boolean =>
+    stringifiers.has(macro) || stringifiers.has(forwarders.get(macro) ?? "");
+
+  const stringified = new Map<string, string>();
+  for (const match of source.matchAll(
+    /^[ \t]*#[ \t]*define[ \t]+(\w+)[ \t]+(\w+)\s*\(\s*(\w+)\s*\)[ \t]*\r?$/gm,
+  )) {
+    const [, name, macro, argument] = match as unknown as [string, string, string, string];
+    if (stringifies(macro)) stringified.set(name, argument);
+  }
+  return { strings, tokens, stringified };
 }
 
 /** Replaces `//` and `/* *\/` comments with spaces, leaving string and character
