@@ -1393,3 +1393,30 @@ test("a target rename's value reserves its name like a core one", () => {
   expect(out).toContain("\texport function move(this: void, to: Vector3, point: Vector3_): void;");
   expect(out).not.toContain("interface Vector3 {");
 });
+
+test("a declaration whose <name>_ rename lands on another declared name throws, naming both", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [
+      { name: "Url", types: ["url", "string"], doc: "" },
+      { name: "Url_", types: ["string"], doc: "" },
+    ],
+    moduleFunctions: [],
+  };
+
+  expect(() => emitLibraryDeclarations(model, { moduleId: "demo.demo" })).toThrow(
+    /"Url" and "Url_" both emit as "Url_"/,
+  );
+});
+
+test("a dotted name sanitizing onto another declared name throws, naming both and the generated name", () => {
+  const model: LibraryModel = {
+    interfaces: [{ name: "demo.tree", generics: [], fields: [], methods: [], brief: "" }],
+    aliases: [{ name: "demo_tree", types: ["string"], doc: "" }],
+    moduleFunctions: [],
+  };
+
+  expect(() => emitLibraryDeclarations(model, { moduleId: "demo.demo" })).toThrow(
+    /"demo\.tree" and "demo_tree" both emit as "demo_tree"/,
+  );
+});

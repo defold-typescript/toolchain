@@ -10970,7 +10970,8 @@ own body means the type it shadows: `---@alias hash userdata|hash` emits
 still names the local alias. A declaration named like a core or `typeRenames`
 value is declared with a trailing underscore: `---@alias Url url|string` emits
 `type Url_ = Url | string`, the library's own `Url` references read `Url_`, and an
-engine `url` still reads `Url`.
+engine `url` still reads `Url`. Two declarations that land on one generated name,
+such as `Url` beside the library's own `Url_`, fail the emit naming both.
 
 Where an upstream annotation restates a member it inherits from such a parent, and
 restates it incompatibly enough that the emitted redeclaration would not
