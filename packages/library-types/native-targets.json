@@ -176,6 +176,19 @@
       "upstreamSource": "fixtures/upstream-native/defold-fontscale/fontscale/src/fontscale.cpp"
     },
     {
+      "repo": "https://github.com/Lerg/extension-directories",
+      "ref": "2023870e8afda0028eec5432852c8f37d7177ecd",
+      "refKind": "commit",
+      "license": "MIT",
+      "namespace": "directories",
+      "manifestDir": "directories",
+      "declaration": "generated/native/directories.d.ts",
+      "upstreamSource": "fixtures/upstream-native/extension-directories/directories/src/extension_linux.cpp",
+      "upstreamHeaders": [
+        "fixtures/upstream-native/extension-directories/directories/src/extension.h"
+      ]
+    },
+    {
       "repo": "https://github.com/AGulev/defold-extension-uptime",
       "ref": "1.2.0",
       "license": "MIT",
