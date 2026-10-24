@@ -121,6 +121,15 @@ import; a token the **ambient** stdlib already declares takes a dotted
 `typeRenames` value and gets none. A library that declares the token itself wins
 over either, so a rename never shadows a real local declaration.
 
+Two naming rules keep such a local declaration from hiding the type a rename
+names, and both apply with no configuration. An alias that names itself in its
+own body means the type it shadows: `---@alias hash userdata|hash` emits
+`type hash = Opaque<"userdata"> | Hash`, and every other `hash` in the library
+still names the local alias. A declaration named like a core or `typeRenames`
+value is declared with a trailing underscore: `---@alias Url url|string` emits
+`type Url_ = Url | string`, the library's own `Url` references read `Url_`, and an
+engine `url` still reads `Url`.
+
 Where an upstream annotation restates a member it inherits from such a parent, and
 restates it incompatibly enough that the emitted redeclaration would not
 type-check, drop the restatement with an `annotationOverrides` field override —

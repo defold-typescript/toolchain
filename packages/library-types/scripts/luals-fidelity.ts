@@ -15,6 +15,7 @@ import {
   type ExternalTypeRef,
   isPublicField,
   isPublicMethod,
+  scopeAliasBody,
 } from "./emit-library-dts";
 import { type MapContext, mapLualsType, scopeGenerics } from "./map-luals-types";
 import type { LibraryGeneric, LibraryModel } from "./parse-luals";
@@ -116,7 +117,7 @@ export function buildFidelityReport(
     for (const ret of fn.returns) mapTokens(ret.types, fnCtx);
   }
 
-  for (const alias of model.aliases) mapTokens(alias.types, ctx);
+  for (const alias of model.aliases) mapTokens(alias.types, scopeAliasBody(ctx, alias));
 
   const coverage =
     totalTypeTokens === 0
