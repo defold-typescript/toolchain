@@ -56,6 +56,10 @@ describe("buildNativeParity over the shipped declarations", () => {
     daabbcc3d: [18, 3, 0],
     wave: [12, 0, 0],
     detour: [1, 0, 10],
+    taptic_engine: [4, 6, 0],
+    gyro: [2, 0, 0],
+    fontscale: [1, 0, 0],
+    uptime: [1, 0, 0],
   };
 
   test("every native target is measured", () => {
@@ -318,7 +322,15 @@ describe("the committed native parity reports", () => {
 
 describe("the arity axis, read from the shipped LuaLS annotation", () => {
   test("a target naming no annotation reports the axis unmeasured, with no lists", () => {
-    for (const namespace of ["uuid4", "tile_raycast", "def_windward_jps"]) {
+    for (const namespace of [
+      "uuid4",
+      "tile_raycast",
+      "def_windward_jps",
+      "taptic_engine",
+      "gyro",
+      "fontscale",
+      "uptime",
+    ]) {
       const report = buildNativeParity(PACKAGE_ROOT, target(namespace));
       expect(report.arityMeasured).toBe(false);
       expect(report.arityMismatches).toBeUndefined();

@@ -1,0 +1,25 @@
+{
+  "info": {
+    "namespace": "fontscale",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Returns the OS font-scale factor, where `1` is the default text size.",
+      "description": "Returns the OS font-scale factor, where `1` is the default text size.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The current font-scale factor.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

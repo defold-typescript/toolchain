@@ -1,0 +1,20 @@
+{
+  "namespace": "fontscale",
+  "moduleName": "fontscale",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 1,
+  "declaredFunctions": 1,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "upstreamMethods": 0,
+  "declaredMethods": 0,
+  "missingMethods": [],
+  "phantomMethods": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 0,
+  "declaredConstants": 0,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1,
+  "arityMeasured": false
+}

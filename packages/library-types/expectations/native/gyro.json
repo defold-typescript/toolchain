@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-gyro",
+    "manifestDir": "gyro"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/britzl/defold-gyro/archive/refs/tags/1.1.1.zip",
+    "confirmedManifest": "defold-gyro-1.1.1/gyro/ext.manifest",
+    "misplacedManifest": "defold-gyro-1.1.1/ext.manifest"
+  }
+}

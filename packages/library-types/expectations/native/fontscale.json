@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "defold-fontscale",
+    "manifestDir": "fontscale"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/myopic-design/defold-fontscale/archive/refs/tags/v0.1.0.zip",
+    "confirmedManifest": "defold-fontscale-0.1.0/fontscale/ext.manifest",
+    "misplacedManifest": "defold-fontscale-0.1.0/ext.manifest"
+  }
+}

@@ -502,8 +502,16 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "3e85a9b227a48eb84717e907774096ab8f73aad679b420ca62b00e44539509c9",
   "fixtures/upstream-native/defold-daabbcc3d/daabbcc3d/src/extension.cpp":
     "40c4a14c59bec593c250b252991692ae122d708a0b8c8dec14a8752ea9672d40",
+  "fixtures/upstream-native/def_taptic_engine/taptic_engine/src/tapticengine.cpp":
+    "552be769202229e0145f3d841cf1829c1c8dcd253de74cf8741a5313811f230b",
   "fixtures/upstream-native/defold-detour/detour/src/detour.cpp":
     "2bbee4eb120dc711c7c23391dab2bf886fc3e5e019409011a3d9c58a16249290",
+  "fixtures/upstream-native/defold-extension-uptime/uptime/src/UpTime.cpp":
+    "362b99d47547da200f91c3f2f4856d9ae2c2962a85c3da0e63822de889332a5b",
+  "fixtures/upstream-native/defold-fontscale/fontscale/src/fontscale.cpp":
+    "5685352a52bc182625d52e79e366de5323cc6fe1cd02a13122a8e3e272afb863",
+  "fixtures/upstream-native/defold-gyro/gyro/src/gyro.cpp":
+    "40fbeea34a035a055208cb81ffedd1b2773ae0dc8527738207463dd1e5e8af4c",
   "fixtures/upstream-native/defold-sharing/share/api/share.lua":
     "f441787bb953d0fd836c5981bf2430b525f0c2b9350730ff3bd06ac940be705d",
   "fixtures/upstream-native/defold-sharing/share/src/share.cpp":

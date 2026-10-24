@@ -183,11 +183,27 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/native/fontscale.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/native/gyro.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/native/share.json": {
     "callable": 1,
     "field": 1
   },
+  "fidelity/native/taptic_engine.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/native/tile_raycast.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/native/uptime.json": {
     "callable": 1,
     "field": 1
   },
