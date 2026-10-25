@@ -104,7 +104,7 @@ When the files pass the check, the project's `resolve` run prints:
 and `resolve --json` marks the dependency `typeSurface: "shipped"`.
 
 When a file fails the check, the project gets what it would get without a
-`types/` folder (a `.script_api` namespace, a curated declaration, or nothing),
+`types/` folder (a `.script_api` module, a curated declaration, or nothing),
 and `resolve` prints a warning with the first error and how many more there
 are:
 

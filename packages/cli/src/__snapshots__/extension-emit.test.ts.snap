@@ -1,10 +1,34 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
-exports[`emitExtensionDeclaration reads the namespace from the doc and emits an ambient namespace declaration 1`] = `
+exports[`emitExtensionDeclaration reads the namespace from the doc and emits a @globalTable module beside a deprecated ambient global 1`] = `
+"/** @noSelfInFile */
+/**
+ * A sample native extension.
+ */
+/** @globalTable */
+declare module "myext" {
+  /**
+   * a module constant
+   */
+  const MAX: number & { readonly __brand: "myext.MAX" };
+  /**
+   * Does a thing.
+   *
+   * @param count - how many times
+   * @returns whether it worked
+   */
+  function do_thing(count: number): boolean;
+}
+"
+`;
+
+exports[`emitExtensionDeclaration reads the namespace from the doc and emits a @globalTable module beside a deprecated ambient global 2`] = `
 "/** @noSelfInFile */
 declare global {
   /**
    * A sample native extension.
+   *
+   * @deprecated Import it: import * as myext from "myext"
    */
   namespace myext {
     /**
@@ -18,6 +42,43 @@ declare global {
      * @returns whether it worked
      */
     function do_thing(count: number): boolean;
+  }
+}
+
+export {};
+"
+`;
+
+exports[`emitExtensionDeclaration a dotted namespace emits the dotted module id 1`] = `
+"/** @noSelfInFile */
+/**
+ * Rive commands.
+ */
+/** @globalTable */
+declare module "rive.cmd" {
+  /**
+   * Runs a command.
+   */
+  function run(): void;
+}
+"
+`;
+
+exports[`emitExtensionDeclaration a namespace the engine declares emits only the ambient form, with no deprecation 1`] = `
+"/** @noSelfInFile */
+import type { Vector3 } from "../src/core-types";
+
+declare global {
+  /**
+   * Spine gui nodes.
+   */
+  namespace gui {
+    /**
+     * Creates a spine node.
+     *
+     * @param pos - the node position
+     */
+    function new_spine_node(pos: Vector3): void;
   }
 }
 

@@ -30,7 +30,12 @@ import {
   formatFieldCorrectionGaps,
 } from "../src/field-correction-coverage";
 import type { IndexBaseSource } from "../src/index-slot-classifications";
-import { wrapAsAmbientGlobal, wrapAsModule } from "../src/publish-dts";
+import {
+  globalTableImportHint,
+  wrapAsAmbientGlobal,
+  wrapAsGlobalTableModule,
+  wrapAsModule,
+} from "../src/publish-dts";
 import type { UrlParameterTable } from "../src/url-parameters";
 import {
   type DocSourceProvenance,
@@ -429,6 +434,10 @@ export interface GenerateResult {
   dropped: string[];
 }
 
+export interface GlobalTableResult extends GenerateResult {
+  deprecatedGlobal: string;
+}
+
 // Every CONSTANT FQN across the manifest, so a module's emit can brand a
 // constant token owned by a *different* module (e.g. render's
 // `graphics.BUFFER_TYPE_*` params) to the same FQN-keyed brand the owning
@@ -755,10 +764,10 @@ export function assertCommittedFieldCorrectionCoverage(
   return targets.length;
 }
 
-export function generateModuleDeclaration(
+function emitModuleBody(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
-): GenerateResult {
+): { namespace: string; emitted: string; importsFrom: string; dropped: string[] } {
   const {
     module,
     knownConstantFqns,
@@ -788,10 +797,38 @@ export function generateModuleDeclaration(
       : {}),
   });
   const importsFrom = entry.importsFrom ?? "../src/core-types";
+  return { namespace: module.namespace, emitted, importsFrom, dropped };
+}
+
+export function generateModuleDeclaration(
+  entry: ModuleManifestEntry,
+  options?: GenerateOptions,
+): GenerateResult {
+  const { namespace, emitted, importsFrom, dropped } = emitModuleBody(entry, options);
   const contents = entry.moduleId
-    ? wrapAsModule({ namespace: module.namespace, emitted, importsFrom, moduleId: entry.moduleId })
-    : wrapAsAmbientGlobal({ namespace: module.namespace, emitted, importsFrom });
+    ? wrapAsModule({ namespace, emitted, importsFrom, moduleId: entry.moduleId })
+    : wrapAsAmbientGlobal({ namespace, emitted, importsFrom });
   return { contents, dropped };
+}
+
+// A `.script_api` namespace as `resolve` writes it: a `@globalTable` module, and
+// beside it the ambient namespace it replaces, tagged `@deprecated` for one
+// release.
+export function generateGlobalTableDeclaration(
+  entry: ModuleManifestEntry,
+  options?: GenerateOptions,
+): GlobalTableResult {
+  const { namespace, emitted, importsFrom, dropped } = emitModuleBody(entry, options);
+  return {
+    contents: wrapAsGlobalTableModule({ namespace, emitted, importsFrom }),
+    deprecatedGlobal: wrapAsAmbientGlobal({
+      namespace,
+      emitted,
+      importsFrom,
+      deprecated: globalTableImportHint(namespace),
+    }),
+    dropped,
+  };
 }
 
 // The authoritative per-symbol signatures for a manifest entry, rendered through
@@ -1365,13 +1402,18 @@ export async function regenerate(
   const goldens = resolve(PACKAGE_ROOT, EXTENSION_GOLDENS_DIR);
   io.mkdir(goldens);
   for (const entry of EXTENSION_GOLDEN_MANIFEST) {
-    const { contents, dropped } = generateModuleDeclaration(entry);
+    const { contents, deprecatedGlobal, dropped } = generateGlobalTableDeclaration(entry);
     if (dropped.length > 0) {
       io.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
     }
-    const out = resolve(goldens, entry.outFile);
-    io.write(out, contents);
-    io.log(`wrote ${out}`);
+    for (const [file, text] of [
+      [entry.outFile, contents],
+      [entry.globalOutFile, deprecatedGlobal],
+    ] as const) {
+      const out = resolve(goldens, file);
+      io.write(out, text);
+      io.log(`wrote ${out}`);
+    }
   }
 
   // The target's own `generatedDir` is where a version lands, so a declaring

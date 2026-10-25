@@ -1,3 +1,6 @@
+import * as iac from "iac";
+import * as push from "push";
+
 // The platform/OS-sourced opaque blobs are arbitrary lua tables: their layout is
 // set by the host OS or the invoking app, not by Defold, so the faithful type is
 // an arbitrary record that must be narrowed/cast before a concrete field is read.

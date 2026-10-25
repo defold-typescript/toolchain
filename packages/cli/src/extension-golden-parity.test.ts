@@ -10,6 +10,7 @@ interface GoldenManifestModule {
     namespace: string;
     doc: { info: { namespace: string } };
     outFile: string;
+    globalOutFile: string;
   }[];
 }
 
@@ -28,10 +29,13 @@ describe("extension golden parity", () => {
 
   for (const entry of EXTENSION_GOLDEN_MANIFEST) {
     test(`${entry.namespace}: resolve emit is byte-equal to the committed extension golden`, async () => {
-      const golden = readFileSync(join(typesRoot, EXTENSION_GOLDENS_DIR, entry.outFile), "utf8");
-      const { namespace, contents, dropped } = await emitExtensionDeclarationFromDoc(entry.doc);
+      const golden = (file: string): string =>
+        readFileSync(join(typesRoot, EXTENSION_GOLDENS_DIR, file), "utf8");
+      const { namespace, contents, deprecatedGlobal, dropped } =
+        await emitExtensionDeclarationFromDoc(entry.doc);
       expect(namespace).toBe(entry.namespace);
-      expect(contents).toBe(golden);
+      expect(contents).toBe(golden(entry.outFile));
+      expect(deprecatedGlobal).toBe(golden(entry.globalOutFile));
       expect(dropped).toEqual([]);
     });
   }

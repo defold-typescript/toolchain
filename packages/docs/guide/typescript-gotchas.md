@@ -739,7 +739,7 @@ The scaffold configures no `outDir`, so generated Lua lands next to its source: 
 - The output path strips the **longest matching** include base, but **only when `compilerOptions.outDir` names a directory other than `"."`** — an absent `outDir`, `""`, and `"."` all mean alongside output, where the tree mirrors the source tree exactly and nothing is stripped. With an `outDir` of `"build"` and `["src/**/*.ts", "vendor/**/*.ts"]`, `vendor/pure-pkg.ts` lands flattened at `build/pure-pkg.lua` — in the outDir root, where it can collide with a `src/` name. Vendoring under `src/vendor/` keeps the folder in the output either way.
 - Routing the vendored code back through `node_modules` — a workspace package or a `file:` dependency — reintroduces the no-resolve failure. The import has to stay relative.
 
-For Defold engine features and third-party Defold libraries, do not look on npm at all: the engine namespaces are ambient from `@defold-typescript/types`, and native-extension APIs come from [`resolve`](./resolve.md), which generates ambient namespaces from your `game.project` dependencies.
+For Defold engine features and third-party Defold libraries, do not look on npm at all: the engine namespaces are ambient from `@defold-typescript/types`, and native-extension APIs come from [`resolve`](./resolve.md), which generates importable modules from your `game.project` dependencies.
 
 **How we pin this.** `packages/docs-site/app/lib/guide-links.test.ts` resolves every cross-page link and `#anchor` in the guide against the heading ids the site renderer actually emits — so renaming this heading without retargeting the links that point at it, including the [TypeScript vs Lua](./typescript-vs-lua.md) cross-links, fails the gate.
 
