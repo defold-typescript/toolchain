@@ -1,0 +1,667 @@
+{
+  "info": {
+    "namespace": "gamepush.core.player",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "is_logged_in",
+      "brief": "Whether the player is logged in.",
+      "description": "Whether the player is logged in.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has_any_credentials",
+      "brief": "Whether the player uses any sign-in method: a cookie, an account or a secret code.",
+      "description": "Whether the player uses any sign-in method: a cookie, an account or a secret code.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_logged_in_by_platform",
+      "brief": "Whether the player is logged in on the platform.",
+      "description": "Whether the player is logged in on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "sync",
+      "brief": "Syncs the player with the server.",
+      "description": "Syncs the player with the server.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The sync options, or nil for the defaults.",
+          "types": [
+            "SyncParameters"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Called when the sync finishes.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load",
+      "brief": "Loads the player from the server, overwriting the local one.",
+      "description": "Loads the player from the server, overwriting the local one.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Called when the load finishes.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "login",
+      "brief": "Opens the login flow.",
+      "description": "Opens the login flow.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives whether the player logged in.",
+          "types": [
+            "(result: boolean) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "logout",
+      "brief": "Logs the player out.",
+      "description": "Logs the player out.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives whether the player logged out.",
+          "types": [
+            "(result: boolean) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "enable_auto_sync",
+      "brief": "Turns on automatic syncing for a storage. Raises when the table is missing.",
+      "description": "Turns on automatic syncing for a storage. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "",
+          "types": [
+            "AutoSyncParameters"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "disable_auto_sync",
+      "brief": "Turns off automatic syncing for a storage. Raises when the table is missing.",
+      "description": "Turns off automatic syncing for a storage. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "",
+          "types": [
+            "DisableAutoSyncParameters"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_fields",
+      "brief": "Fetches the list of player fields.",
+      "description": "Fetches the list of player fields.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Called when the fetch finishes.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "id",
+      "brief": "The player's id.",
+      "description": "The player's id.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "score",
+      "brief": "The player's score, `0` when it has none.",
+      "description": "The player's score, `0` when it has none.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "name",
+      "brief": "The player's name, `\"\"` when it has none.",
+      "description": "The player's name, `\"\"` when it has none.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "avatar",
+      "brief": "The URL of the player's avatar.",
+      "description": "The URL of the player's avatar.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_stub",
+      "brief": "Whether the player is a stub: empty, or still holding only default data.",
+      "description": "Whether the player is a stub: empty, or still holding only default data.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fields",
+      "brief": "The player's field descriptions.",
+      "description": "The player's field descriptions.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "The value of field `key`.",
+      "description": "The value of field `key`.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | number | boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set",
+      "brief": "Sets field `key` to `value`. Raises unless `value` is a string, number or boolean.",
+      "description": "Sets field `key` to `value`. Raises unless `value` is a string, number or boolean.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string | number | boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add",
+      "brief": "Adds `value` to field `key`. Raises unless `value` is a number.",
+      "description": "Adds `value` to field `key`. Raises unless `value` is a number.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "toggle",
+      "brief": "Inverts field `key`.",
+      "description": "Inverts field `key`.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has",
+      "brief": "Whether field `key` exists and is not empty: not `0`, `\"\"`, `false` or null.",
+      "description": "Whether field `key` exists and is not empty: not `0`, `\"\"`, `false` or null.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "to_json",
+      "brief": "The player's state as a table.",
+      "description": "The player's state as a table.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "from_json",
+      "brief": "Sets the player's state from a table of field keys and values.",
+      "description": "Sets the player's state from a table of field keys and values.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The state, in the shape `to_json` returns.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset",
+      "brief": "Resets the player's state to the defaults.",
+      "description": "Resets the player's state to the defaults.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove",
+      "brief": "Removes the player: resets its fields and clears its id.",
+      "description": "Removes the player: resets its fields and clears its id.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_field",
+      "brief": "The description of field `key`.",
+      "description": "The description of field `key`.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_field_name",
+      "brief": "The translated name of field `key`.",
+      "description": "The translated name of field `key`.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_field_variant_name",
+      "brief": "The translated name of variant `value` of enum field `key`. Raises unless `value` is",
+      "description": "The translated name of variant `value` of enum field `key`. Raises unless `value` is\na string.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "stats",
+      "brief": "The player's statistics, the same table as `gamepush.core.player_stats`.",
+      "description": "The player's statistics, the same table as `gamepush.core.player_stats`.",
+      "types": [
+        "typeof import('gamepush.core.player_stats')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The player event handlers.",
+      "description": "The player event handlers.",
+      "types": [
+        "PlayerCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SyncParameters",
+      "properties": [
+        {
+          "name": "override",
+          "brief": "Overwrite the player stored on the server with the local one.",
+          "description": "Overwrite the player stored on the server with the local one.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "silent",
+          "brief": "Passed through as the SDK's `silent` sync option.",
+          "description": "Passed through as the SDK's `silent` sync option.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AutoSyncParameters",
+      "properties": [
+        {
+          "name": "interval",
+          "brief": "The sync interval, in seconds.",
+          "description": "The sync interval, in seconds.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "storage",
+          "brief": "The storage to sync automatically.",
+          "description": "The storage to sync automatically.",
+          "types": [
+            "\"preferred\" | \"cloud\" | \"platform\" | \"local\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DisableAutoSyncParameters",
+      "properties": [
+        {
+          "name": "storage",
+          "brief": "The storage to stop syncing automatically.",
+          "description": "The storage to stop syncing automatically.",
+          "types": [
+            "\"preferred\" | \"cloud\" | \"platform\" | \"local\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PlayerCallbacks",
+      "properties": [
+        {
+          "name": "sync",
+          "brief": "The player was synced.",
+          "description": "The player was synced.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "load",
+          "brief": "The player was loaded from the server.",
+          "description": "The player was loaded from the server.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "login",
+          "brief": "The player logged in.",
+          "description": "The player logged in.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "logout",
+          "brief": "The player logged out.",
+          "description": "The player logged out.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_fields",
+          "brief": "The player's field list was fetched.",
+          "description": "The player's field list was fetched.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "change",
+          "brief": "A player field changed.",
+          "description": "A player field changed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

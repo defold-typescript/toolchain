@@ -1,0 +1,34 @@
+{
+  "info": {
+    "namespace": "gamepush.core.players",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches other players' data. Raises when the table is missing.",
+      "description": "Fetches other players' data. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The players to fetch, for example `{ ids: [62116670, 62142823] }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the fetched data.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

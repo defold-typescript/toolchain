@@ -1179,12 +1179,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other thirty-nine targets share no variadic member at all", () => {
+  test("the other fifty targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(39);
+    expect(untouched.length).toBe(50);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1959,6 +1959,72 @@ describe("sentinel.sentry declares the whole of its upstream module", () => {
     expect(report.refusedDocBlocksTotal).toBe(0);
     expect(report.refusedDocBlocks).toBe(0);
     expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// Built live from the target entries. Each GamePush module file is its own target,
+// because one target over every file would merge names the modules share (`has`, `get`,
+// `open`, `callbacks`) into a single unprefixed set. `core.lua`, `helpers.lua` and the
+// callback tables are internal and get no target.
+describe("the GamePush account and commerce modules declare the whole of their upstream", () => {
+  const upstream: Record<string, { callables: number; fields: number }> = {
+    "gamepush.core.player": { callables: 28, fields: 2 },
+    "gamepush.core.player_stats": { callables: 4, fields: 0 },
+    "gamepush.core.players": { callables: 1, fields: 0 },
+    "gamepush.core.payments": { callables: 10, fields: 1 },
+    "gamepush.core.ads": { callables: 18, fields: 1 },
+    "gamepush.core.achievements": { callables: 9, fields: 2 },
+    "gamepush.core.leaderboard": { callables: 7, fields: 0 },
+    "gamepush.core.rewards": { callables: 8, fields: 1 },
+    "gamepush.core.uniques": { callables: 5, fields: 1 },
+    "gamepush.core.variables": { callables: 4, fields: 2 },
+    "gamepush.core.storage": { callables: 5, fields: 1 },
+  };
+  const reports = Object.entries(upstream).map(([namespace, expected]) => ({
+    namespace,
+    expected,
+    report: buildAuthoredParity(PACKAGE_ROOT, target(namespace)),
+  }));
+
+  test("both axes close on every module, with nothing missing and nothing invented", () => {
+    for (const { namespace, report } of reports) {
+      expect({ namespace, missing: report.missingMembers }).toEqual({ namespace, missing: [] });
+      expect({ namespace, phantom: report.phantomMembers }).toEqual({ namespace, phantom: [] });
+      expect({ namespace, arity: report.arityMismatches }).toEqual({ namespace, arity: [] });
+      expect({ namespace, missing: report.missingFields }).toEqual({ namespace, missing: [] });
+      expect({ namespace, phantom: report.phantomFields }).toEqual({ namespace, phantom: [] });
+      expect({ namespace, callable: report.callableCoverage }).toEqual({ namespace, callable: 1 });
+      expect({ namespace, field: report.fieldCoverage }).toEqual({ namespace, field: 1 });
+    }
+  });
+
+  test("the measured surface is 99 callables and 11 fields across the eleven modules", () => {
+    for (const { namespace, expected, report } of reports) {
+      expect({
+        namespace,
+        callables: report.upstreamMembers,
+        fields: report.upstreamFields,
+      }).toEqual({ namespace, ...expected });
+      expect(report.parityExceptions).toEqual([]);
+    }
+    expect(reports.reduce((sum, { report }) => sum + report.upstreamMembers, 0)).toBe(99);
+    expect(reports.reduce((sum, { report }) => sum + report.upstreamFields, 0)).toBe(11);
+  });
+
+  // Every member is documented here in English. An undocumented one would take upstream's
+  // Russian prose onto the reference page through the doc import.
+  test("every member carries its own documentation and none is imported", () => {
+    for (const { namespace, report } of reports) {
+      expect({ namespace, undocumented: report.undocumentedMembers }).toEqual({
+        namespace,
+        undocumented: 0,
+      });
+      expect({ namespace, imported: report.importedDocs }).toEqual({ namespace, imported: 0 });
+      expect({ namespace, refused: report.refusedDocBlocksTotal }).toEqual({
+        namespace,
+        refused: 0,
+      });
+    }
   });
 });
 
