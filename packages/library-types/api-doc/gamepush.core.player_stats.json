@@ -1,0 +1,73 @@
+{
+  "info": {
+    "namespace": "gamepush.core.player_stats",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "active_days",
+      "brief": "The number of days the player has played.",
+      "description": "The number of days the player has played.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "active_days_consecutive",
+      "brief": "The number of consecutive days the player has played.",
+      "description": "The number of consecutive days the player has played.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playtime_today",
+      "brief": "The number of seconds the player has played today.",
+      "description": "The number of seconds the player has played today.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playtime_all",
+      "brief": "The number of seconds the player has played in total.",
+      "description": "The number of seconds the player has played in total.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

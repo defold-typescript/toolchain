@@ -31,6 +31,50 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/gamepush.core.achievements.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.ads.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.leaderboard.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.payments.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.player.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.player_stats.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.players.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.rewards.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.storage.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.uniques.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.variables.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gooey.json": {
     "callable": 1,
     "field": 1
