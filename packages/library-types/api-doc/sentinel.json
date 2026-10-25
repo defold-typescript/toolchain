@@ -240,10 +240,10 @@
         },
         {
           "name": "user",
-          "brief": "User information sent with every event, as given.",
-          "description": "User information sent with every event, as given.",
+          "brief": "User information sent with every event. The table is JSON-encoded and sent as",
+          "description": "User information sent with every event. The table is JSON-encoded and sent as\ngiven, nested tables included.",
           "types": [
-            "Fields"
+            "Record<string | number, unknown>"
           ],
           "is_optional": "True"
         },

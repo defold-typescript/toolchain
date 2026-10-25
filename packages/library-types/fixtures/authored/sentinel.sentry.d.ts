@@ -7,8 +7,8 @@
  */
 declare module 'sentinel.sentry' {
   /**
-   * Tag, extra or user values. Tag and extra values pass through `tostring` when an
-   * event is built, and an empty result is dropped.
+   * Tag or extra values. They pass through `tostring` when an event is built, and an
+   * empty result is dropped.
    */
   export type Fields = { [key: string]: string | number | boolean };
 
@@ -63,8 +63,11 @@ declare module 'sentinel.sentry' {
     tags?: Fields;
     /** Extra data sent with every event. */
     extra?: Fields;
-    /** User information sent with every event, as given. */
-    user?: Fields;
+    /**
+     * User information sent with every event. The table is JSON-encoded and sent as
+     * given, nested tables included.
+     */
+    user?: Record<string | number, unknown>;
     /**
      * Called after an uncaught error is captured; only installed with
      * `set_error_handler`. The first return value is concatenated into a log line, so
