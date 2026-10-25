@@ -1,0 +1,110 @@
+{
+  "info": {
+    "namespace": "gamepush.core.games_collections",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "open",
+      "brief": "Opens the overlay with games.",
+      "description": "Opens the overlay with games.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The collection, for example `{ tag: \"ALL\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Called once the overlay opens.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches a games collection.",
+      "description": "Fetches a games collection.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The collection, for example `{ tag: \"ALL\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the collection.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "GamesCollectionsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GamesCollectionsCallbacks",
+      "properties": [
+        {
+          "name": "open",
+          "brief": "The games overlay opened.",
+          "description": "The games overlay opened.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "close",
+          "brief": "The games overlay closed.",
+          "description": "The games overlay closed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch",
+          "brief": "A games collection was fetched.",
+          "description": "A games collection was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch",
+          "brief": "Fetching a games collection failed.",
+          "description": "Fetching a games collection failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

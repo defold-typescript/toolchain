@@ -1,0 +1,174 @@
+{
+  "info": {
+    "namespace": "gamepush.core.sounds",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "is_muted",
+      "brief": "Whether all sounds are muted.",
+      "description": "Whether all sounds are muted.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_sfx_muted",
+      "brief": "Whether sound effects are muted.",
+      "description": "Whether sound effects are muted.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_music_muted",
+      "brief": "Whether music is muted.",
+      "description": "Whether music is muted.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mute",
+      "brief": "Mutes all sounds.",
+      "description": "Mutes all sounds.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unmute",
+      "brief": "Unmutes all sounds.",
+      "description": "Unmutes all sounds.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mute_sfx",
+      "brief": "Mutes sound effects.",
+      "description": "Mutes sound effects.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unmute_sfx",
+      "brief": "Unmutes sound effects.",
+      "description": "Unmutes sound effects.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mute_music",
+      "brief": "Mutes music.",
+      "description": "Mutes music.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unmute_music",
+      "brief": "Unmutes music.",
+      "description": "Unmutes music.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "SoundsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SoundsCallbacks",
+      "properties": [
+        {
+          "name": "mute",
+          "brief": "All sounds were muted.",
+          "description": "All sounds were muted.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "unmute",
+          "brief": "All sounds were unmuted.",
+          "description": "All sounds were unmuted.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "mute_sfx",
+          "brief": "Sound effects were muted.",
+          "description": "Sound effects were muted.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "unmute_sfx",
+          "brief": "Sound effects were unmuted.",
+          "description": "Sound effects were unmuted.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "mute_music",
+          "brief": "Music was muted.",
+          "description": "Music was muted.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "unmute_music",
+          "brief": "Music was unmuted.",
+          "description": "Music was unmuted.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

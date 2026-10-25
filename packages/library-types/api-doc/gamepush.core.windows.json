@@ -1,0 +1,118 @@
+{
+  "info": {
+    "namespace": "gamepush.core.windows",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "show_confirm",
+      "brief": "Shows a confirmation window.",
+      "description": "Shows a confirmation window.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The window's options.",
+          "types": [
+            "ConfirmParameters"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives whether the player confirmed.",
+          "types": [
+            "(is_confirmed: boolean) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "WindowsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ConfirmParameters",
+      "properties": [
+        {
+          "name": "title",
+          "brief": "The window's title.",
+          "description": "The window's title.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "brief": "The window's text.",
+          "description": "The window's text.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "textConfirm",
+          "brief": "The confirm button's label.",
+          "description": "The confirm button's label.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "textCancel",
+          "brief": "The cancel button's label.",
+          "description": "The cancel button's label.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "invertButtonColors",
+          "brief": "Whether to swap the buttons' colors.",
+          "description": "Whether to swap the buttons' colors.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "hideCancelButton",
+          "brief": "Whether to hide the cancel button.",
+          "description": "Whether to hide the cancel button.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "WindowsCallbacks",
+      "properties": [
+        {
+          "name": "confirm_close",
+          "brief": "The confirmation window closed.",
+          "description": "The confirmation window closed.",
+          "types": [
+            "(is_confirmed: boolean) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

@@ -39,7 +39,19 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/gamepush.core.analytics.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.app.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gamepush.core.channels.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.documents.json": {
     "callable": 1,
     "field": 1
   },
@@ -47,11 +59,35 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/gamepush.core.experiments.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gamepush.core.feedbacks.json": {
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/gamepush.core.files.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.fullscreen.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.games_collections.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.images.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gamepush.core.leaderboard.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.logger.json": {
     "callable": 1,
     "field": 1
   },
@@ -60,6 +96,10 @@
     "field": 1
   },
   "fidelity/authored/gamepush.core.payments.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.platform.json": {
     "callable": 1,
     "field": 1
   },
@@ -87,7 +127,15 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/gamepush.core.segments.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gamepush.core.socials.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.sounds.json": {
     "callable": 1,
     "field": 1
   },
@@ -104,6 +152,14 @@
     "field": 1
   },
   "fidelity/authored/gamepush.core.variables.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.windows.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.json": {
     "callable": 1,
     "field": 1
   },

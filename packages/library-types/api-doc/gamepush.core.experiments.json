@@ -1,0 +1,74 @@
+{
+  "info": {
+    "namespace": "gamepush.core.experiments",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "map",
+      "brief": "The experiments the player takes part in, keyed by experiment tag; empty when none.",
+      "description": "The experiments the player takes part in, keyed by experiment tag; empty when none.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "The same as `map`, kept for backward compatibility.",
+      "description": "The same as `map`, kept for backward compatibility.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has",
+      "brief": "Whether the player is in a cohort of an experiment.",
+      "description": "Whether the player is in a cohort of an experiment.",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "The experiment's tag.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cohort",
+          "doc": "The cohort's tag.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}
