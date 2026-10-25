@@ -2214,6 +2214,87 @@ describe("defold-sprite-repeat type claims upstream states only in its body", ()
   });
 });
 
+// Parity sees names and arities only. Which config field `init` asserts, what a crash
+// callback must hand back, and the shape of the capture callback are stated by the Lua
+// body alone, so they are held here against the lowered model.
+describe("sentinel.sentry type claims upstream states only in its body", () => {
+  type Property = { name: string; types: string[]; is_optional?: string | null };
+
+  function element(name: string): Record<string, unknown> {
+    const found = apiDocElements("sentinel").find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/sentinel.json declares no ${name}`);
+    return found;
+  }
+
+  function property(typedef: string, name: string): Property {
+    const { properties } = element(typedef) as { properties: Property[] };
+    const found = properties.find((entry) => entry.name === name);
+    if (!found) throw new Error(`${typedef} declares no ${name}`);
+    return found;
+  }
+
+  test("the module registers as sentinel.sentry at the 1.3.1 pin", () => {
+    const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === "sentinel");
+    expect(entry?.moduleId).toBe("sentinel.sentry");
+    expect(entry?.repo).toBe("https://github.com/indiesoftby/defold-sentinel");
+    expect(entry?.ref).toBe("1.3.1");
+    expect(entry?.license).toBe("MIT");
+    expect(entry?.parityVerdict).toBeUndefined();
+    expect(entry?.upstreamLua).toEqual([
+      "fixtures/upstream-lua/defold-sentinel/sentinel/sentry.lua",
+    ]);
+  });
+
+  // `assert(type(M.config.dsn) == "string", ...)` is the only config field `init` demands.
+  test("init takes a Config whose dsn alone is required", () => {
+    const [config] = (element("init") as { parameters: Property[] }).parameters;
+    expect(config).toMatchObject({ name: "config", types: ["Config"], is_optional: "False" });
+    const dsn = property("Config", "dsn");
+    expect(dsn.types).toEqual(["string"]);
+    expect(dsn.is_optional).toBeUndefined();
+    for (const name of ["debug", "send_timeout", "set_error_handler", "tags", "user"]) {
+      expect(property("Config", name).is_optional).toBe("True");
+    }
+  });
+
+  // The first return value is concatenated into a log line (`sentry.lua:256`, `:341`),
+  // so a callback returning nothing raises there.
+  test("both crash callbacks must return a string or a number", () => {
+    for (const name of ["on_soft_crash", "on_hard_crash"]) {
+      expect(property("Config", name)).toMatchObject({
+        types: ["(info: CrashInfo) => string | number"],
+        is_optional: "True",
+      });
+    }
+  });
+
+  test("capture_message's level is one of the five Sentry severities", () => {
+    expect(property("MessageInfo", "level")).toMatchObject({
+      types: ['"fatal" | "error" | "warning" | "info" | "debug"'],
+      is_optional: "True",
+    });
+  });
+
+  // Success hands back the event id and nil; throttling or a failed request hands back
+  // nil and the error string.
+  test("each capture callback receives an optional id and an optional error", () => {
+    for (const typedef of ["ExceptionInfo", "MessageInfo"]) {
+      expect(property(typedef, "callback")).toMatchObject({
+        types: ["(id: string | undefined, err: string | undefined) => void"],
+        is_optional: "True",
+      });
+    }
+  });
+
+  test("tags and extra values are the scalars set_tag and set_extra accept", () => {
+    for (const name of ["set_tag", "set_extra"]) {
+      const [key, value] = (element(name) as { parameters: Property[] }).parameters;
+      expect(key).toMatchObject({ name: "key", types: ["string"] });
+      expect(value).toMatchObject({ name: "value", types: ["string | number | boolean"] });
+    }
+  });
+});
+
 describe("nakama.session type claims upstream states only in its body", () => {
   function element(name: string): Record<string, unknown> {
     const found = apiDocElements("nakama.session").find((entry) => entry.name === name);

@@ -452,6 +452,17 @@
       "generated": "generated/node_repeat.d.ts",
       "apiDoc": "api-doc/node_repeat.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-sprite-repeat/node_repeat/node_repeat.lua"]
+    },
+    {
+      "repo": "https://github.com/indiesoftby/defold-sentinel",
+      "ref": "1.3.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/sentinel.sentry.d.ts",
+      "moduleId": "sentinel.sentry",
+      "namespace": "sentinel",
+      "generated": "generated/sentinel.d.ts",
+      "apiDoc": "api-doc/sentinel.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-sentinel/sentinel/sentry.lua"]
     }
   ]
 }
