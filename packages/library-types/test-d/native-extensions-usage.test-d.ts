@@ -135,4 +135,35 @@ openal.set_distance_model("linear");
 openal.set_distance_model("loud");
 const _vendor: string = openal.get_info().vendor;
 
+const onReply = (_self: unknown, reply: ainpc.Reply): void => {
+  if (typeof reply === "object") {
+    const _field: unknown = reply.id;
+  }
+};
+const onFail = (_self: unknown, body: string, status: number): void => {
+  const _failure = `${status}: ${body}`;
+};
+const onLine = (_self: unknown, _chunk: ainpc.Reply): void => {};
+const onFinish = (_self: unknown): void => {};
+
+ainpc.chat_completion("hi", onReply, onFail);
+ainpc.chat_completion({ messages: [{ role: "user", content: "hi" }] }, onReply, onFail);
+ainpc.npc_spawn({ name: "Ada", short_name: "ada" }, onReply, onFail);
+ainpc.npc_spawn("game", '{"name":"Ada"}', onReply, onFail);
+ainpc.npc_chat("npc", { sender_message: "hello", sender_name: "" }, onReply, onFail);
+ainpc.npc_chat("game", "npc", "hello", onReply, onFail);
+ainpc.npc_kill("npc", onReply, onFail);
+ainpc.npc_kill("game", "npc", onReply, onFail);
+const stream: number = ainpc.npc_responses(onLine, onFinish, onFail);
+ainpc.npc_responses("game", onLine, onFinish, onFail);
+ainpc.stop_npc_responses(stream);
+// @ts-expect-error a string first argument is read as the game id, so the body-only form takes a table.
+ainpc.npc_spawn('{"name":"Ada"}', onReply, onFail);
+// @ts-expect-error a string second argument is read as the NPC id, so the one-id form takes a table.
+ainpc.npc_chat("npc", "hello", onReply, onFail);
+// @ts-expect-error every callback is required.
+ainpc.npc_kill("npc", onReply);
+// @ts-expect-error a body holds JSON values, and a function has no JSON form.
+ainpc.npc_spawn({ name: "Ada", greet: () => "hi" }, onReply, onFail);
+
 export {};

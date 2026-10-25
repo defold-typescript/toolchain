@@ -65,6 +65,7 @@ describe("buildNativeParity over the shipped declarations", () => {
     png: [5, 5, 0],
     imp: [1, 0, 0],
     openal: [5, 3, 4],
+    ainpc: [6, 0, 0],
   };
 
   test("every native target is measured", () => {
@@ -338,6 +339,7 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
       "png",
       "imp",
       "openal",
+      "ainpc",
     ]) {
       const report = buildNativeParity(PACKAGE_ROOT, target(namespace));
       expect(report.arityMeasured).toBe(false);

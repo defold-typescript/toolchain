@@ -6790,6 +6790,7 @@ the named directory, so a repo-name collision alone writes nothing.
 | [britzl/defold-png](https://github.com/britzl/defold-png) | `1.2.2` | [`png`](/api/png) | `png/ext.manifest` |
 | [britzl/defold-imp](https://github.com/britzl/defold-imp) | `1.1.0` | [`imp`](/api/imp) | `imp/ext.manifest` |
 | [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | `618292f` | [`openal`](/api/openal) | `openal/ext.manifest` |
+| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | `ecda39f` | [`ainpc`](/api/ainpc) | `player2-ai-npc/ext.manifest` |
 
 <!-- curated-native-extensions:end -->
 

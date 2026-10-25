@@ -526,6 +526,12 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "6396179b8f12570e8eaa48bceec8912b311bc20f7927e1c3e23856ffe2ced18b",
   "fixtures/upstream-native/defold-png/png/src/png.cpp":
     "656138e16880d5161ba33b77b7c11040675d35cdcaee546d422d0b0602193956",
+  "fixtures/upstream-native/player2-ai-npc-defold/LICENSE":
+    "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+  "fixtures/upstream-native/player2-ai-npc-defold/player2-ai-npc/include/Player2AINPC.hpp":
+    "5a1a28494a89d4436d5f84783a21300f67e7ba8ee47e4e4e9d2391d64f868ea5",
+  "fixtures/upstream-native/player2-ai-npc-defold/player2-ai-npc/src/Player2AINPC.cpp":
+    "60b1185b55c4cfa645f86d3cb79548f024729925347bc49545caa9a0f1e0abba",
   "fixtures/upstream-native/defold-sharing/share/api/share.lua":
     "f441787bb953d0fd836c5981bf2430b525f0c2b9350730ff3bd06ac940be705d",
   "fixtures/upstream-native/defold-sharing/share/src/share.cpp":
