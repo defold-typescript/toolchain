@@ -170,6 +170,30 @@ describe("lowerNativeApiDoc", () => {
     expect(doc.elements.map((e) => e.name).filter((n) => n.startsWith("global."))).toEqual([]);
   });
 
+  test("lowers ainpc's functions with one element per call shape, named bare", () => {
+    const doc = lowered("ainpc");
+    expect(doc.info.namespace).toBe("ainpc");
+    expect(
+      doc.elements
+        .filter((e) => e.type === "FUNCTION")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual([
+      "chat_completion",
+      "npc_chat",
+      "npc_chat",
+      "npc_kill",
+      "npc_kill",
+      "npc_responses",
+      "npc_responses",
+      "npc_spawn",
+      "npc_spawn",
+      "stop_npc_responses",
+    ]);
+    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(0);
+    expect(doc.elements.map((e) => e.name).filter((n) => n.startsWith("global."))).toEqual([]);
+  });
+
   test("lowers detour's init, its NavMesh and Crowd methods and the result shapes", () => {
     const doc = lowered("detour");
     expect(doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name)).toEqual(["init"]);

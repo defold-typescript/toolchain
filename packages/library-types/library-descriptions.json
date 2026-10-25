@@ -1,4 +1,5 @@
 {
+  "ainpc": "AI NPCs for Defold through the Player2 desktop app: chat completions, spawned NPCs to talk to, and a stream of their responses.",
   "boom": "Boom is a game framework built on top of Defold",
   "box2d": "Box2D physics: worlds, bodies, fixtures, shapes and joints.",
   "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
