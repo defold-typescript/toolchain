@@ -126,7 +126,23 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
     lane: Lane,
     scopes: readonly Scope[],
   ): void => {
-    const qualify = (name: string): string => (prefix ? `${prefix}.${name}` : name);
+    // A member whose Lua name is a TypeScript reserved word (`delete`, `new`) is
+    // declared under a local name and re-exported as `export { delete_ as delete }`,
+    // so it publishes under the exported name consumers call.
+    const exportedAs = new Map<string, string>();
+    for (const stmt of nodes) {
+      if (!ts.isExportDeclaration(stmt) || stmt.moduleSpecifier || !stmt.exportClause) continue;
+      if (!ts.isNamedExports(stmt.exportClause)) continue;
+      for (const specifier of stmt.exportClause.elements) {
+        if (specifier.propertyName) {
+          exportedAs.set(specifier.propertyName.getText(sf), specifier.name.getText(sf));
+        }
+      }
+    }
+    const qualify = (local: string): string => {
+      const name = exportedAs.get(local) ?? local;
+      return prefix ? `${prefix}.${name}` : name;
+    };
     const global = lane === "global";
     const mark = global ? { global: true } : {};
     const sink = global ? globalTypeNodes : moduleTypeNodes;

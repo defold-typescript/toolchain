@@ -1,0 +1,209 @@
+{
+  "info": {
+    "namespace": "gamepush.core.storage",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_storage",
+      "brief": "Chooses the context storage. Raises unless `storage_type` is a string.",
+      "description": "Chooses the context storage. Raises unless `storage_type` is a string.",
+      "parameters": [
+        {
+          "name": "storage_type",
+          "doc": "`\"platform\"` or `\"local\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set",
+      "brief": "Writes a value to the context storage.",
+      "description": "Writes a value to the context storage.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "The key.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "The value, encoded as JSON.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Reads a value from the context storage. Returns it when `callback` is nil, and",
+      "description": "Reads a value from the context storage. Returns it when `callback` is nil, and\nreturns nil and hands it to `callback` otherwise.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "The key.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the value.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_global",
+      "brief": "Writes a value to the global storage.",
+      "description": "Writes a value to the global storage.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "The key.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "The value, encoded as JSON.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_global",
+      "brief": "Reads a value from the global storage. Returns it when `callback` is nil, and",
+      "description": "Reads a value from the global storage. Returns it when `callback` is nil, and\nreturns nil and hands it to `callback` otherwise.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "The key.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the value.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The storage event handlers.",
+      "description": "The storage event handlers.",
+      "types": [
+        "StorageCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "StorageCallbacks",
+      "properties": [
+        {
+          "name": "set",
+          "brief": "A value was written to the context storage.",
+          "description": "A value was written to the context storage.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get",
+          "brief": "A value was read from the context storage.",
+          "description": "A value was read from the context storage.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "set_global",
+          "brief": "A value was written to the global storage.",
+          "description": "A value was written to the global storage.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_global",
+          "brief": "A value was read from the global storage.",
+          "description": "A value was read from the global storage.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

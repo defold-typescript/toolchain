@@ -1,0 +1,451 @@
+{
+  "info": {
+    "namespace": "gamepush.core.ads",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "is_adblock_enabled",
+      "brief": "Whether an ad blocker is on.",
+      "description": "Whether an ad blocker is on.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_sticky_available",
+      "brief": "Whether the sticky banner is available.",
+      "description": "Whether the sticky banner is available.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_fullscreen_available",
+      "brief": "Whether fullscreen ads are available.",
+      "description": "Whether fullscreen ads are available.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_rewarded_available",
+      "brief": "Whether rewarded videos are available.",
+      "description": "Whether rewarded videos are available.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_preloader_available",
+      "brief": "Whether preloader ads are available.",
+      "description": "Whether preloader ads are available.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_sticky_playing",
+      "brief": "Whether the sticky banner is showing.",
+      "description": "Whether the sticky banner is showing.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_fullscreen_playing",
+      "brief": "Whether a fullscreen ad is playing.",
+      "description": "Whether a fullscreen ad is playing.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_rewarded_playing",
+      "brief": "Whether a rewarded video is playing.",
+      "description": "Whether a rewarded video is playing.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_preloader_playing",
+      "brief": "Whether a preloader ad is playing.",
+      "description": "Whether a preloader ad is playing.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_countdown_overlay_enabled",
+      "brief": "Whether a countdown overlay shows before a fullscreen ad.",
+      "description": "Whether a countdown overlay shows before a fullscreen ad.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_rewarded_failed_overlay_enabled",
+      "brief": "Whether an overlay shows when a rewarded video fails to play.",
+      "description": "Whether an overlay shows when a rewarded video fails to play.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_show_fullscreen_before_gameplay",
+      "brief": "Whether the platform allows a fullscreen ad before gameplay starts.",
+      "description": "Whether the platform allows a fullscreen ad before gameplay starts.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_fullscreen",
+      "brief": "Shows a fullscreen ad.",
+      "description": "Shows a fullscreen ad.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives whether the ad was shown.",
+          "types": [
+            "(result: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "parameters",
+          "doc": "The ad options, or nil for the defaults.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_preloader",
+      "brief": "Shows a preloader ad.",
+      "description": "Shows a preloader ad.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives whether the ad was shown.",
+          "types": [
+            "(result: boolean) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_rewarded_video",
+      "brief": "Shows a rewarded video. Grant the reward when `callback` receives `true`, or in",
+      "description": "Shows a rewarded video. Grant the reward when `callback` receives `true`, or in\n`callbacks.rewarded_reward`.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives whether the video was watched to the reward.",
+          "types": [
+            "(result: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "parameters",
+          "doc": "The ad options, or nil for the defaults.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_sticky",
+      "brief": "Shows the sticky banner.",
+      "description": "Shows the sticky banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives whether the banner was shown.",
+          "types": [
+            "(result: boolean) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "refresh_sticky",
+      "brief": "Refreshes the sticky banner.",
+      "description": "Refreshes the sticky banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives whether the banner was refreshed.",
+          "types": [
+            "(result: boolean) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "close_sticky",
+      "brief": "Closes the sticky banner.",
+      "description": "Closes the sticky banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Called when the banner is closed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The ad event handlers.",
+      "description": "The ad event handlers.",
+      "types": [
+        "AdsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AdsCallbacks",
+      "properties": [
+        {
+          "name": "start",
+          "brief": "An ad of any kind started.",
+          "description": "An ad of any kind started.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "close",
+          "brief": "An ad of any kind closed.",
+          "description": "An ad of any kind closed.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fullscreen_start",
+          "brief": "A fullscreen ad started.",
+          "description": "A fullscreen ad started.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fullscreen_close",
+          "brief": "A fullscreen ad closed.",
+          "description": "A fullscreen ad closed.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "preloader_start",
+          "brief": "A preloader ad started.",
+          "description": "A preloader ad started.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "preloader_close",
+          "brief": "A preloader ad closed.",
+          "description": "A preloader ad closed.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rewarded_start",
+          "brief": "A rewarded video started.",
+          "description": "A rewarded video started.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rewarded_close",
+          "brief": "A rewarded video closed.",
+          "description": "A rewarded video closed.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rewarded_reward",
+          "brief": "The player earned the reward for watching a rewarded video.",
+          "description": "The player earned the reward for watching a rewarded video.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sticky_start",
+          "brief": "The sticky banner started.",
+          "description": "The sticky banner started.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sticky_render",
+          "brief": "The sticky banner rendered.",
+          "description": "The sticky banner rendered.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sticky_refresh",
+          "brief": "The sticky banner refreshed.",
+          "description": "The sticky banner refreshed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sticky_close",
+          "brief": "The sticky banner closed.",
+          "description": "The sticky banner closed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

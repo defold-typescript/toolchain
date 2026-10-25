@@ -1,0 +1,176 @@
+{
+  "info": {
+    "namespace": "gamepush.core.leaderboard",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "open",
+      "brief": "Shows the leaderboard in the in-game overlay.",
+      "description": "Shows the leaderboard in the in-game overlay.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The display options, for example\n`{ limit: 5, order: \"DESC\", withMe: \"last\" }`, or nil for the defaults.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches the leaderboard.",
+      "description": "Fetches the leaderboard.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The display options, or nil for the defaults.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the leaders.",
+          "types": [
+            "(leaders: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_player_rating",
+      "brief": "Fetches the player's rating.",
+      "description": "Fetches the player's rating.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The display options, for example `{ includeFields: [\"level\"] }`,\nor nil for the defaults.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the rating.",
+          "types": [
+            "(leaders: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "open_scoped",
+      "brief": "Shows a scoped leaderboard in the in-game overlay. Raises when the table is missing.",
+      "description": "Shows a scoped leaderboard in the in-game overlay. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The leaderboard, for example `{ tag: \"test\", variant: \"levels\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_scoped",
+      "brief": "Fetches a scoped leaderboard. Raises when the table is missing.",
+      "description": "Fetches a scoped leaderboard. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The leaderboard, for example `{ tag: \"test\", variant: \"levels\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the leaders.",
+          "types": [
+            "(leaders: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "publish_record",
+      "brief": "Publishes the player's record to a scoped leaderboard. Raises when the table is",
+      "description": "Publishes the player's record to a scoped leaderboard. Raises when the table is\nmissing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The leaderboard and the record, for example\n`{ tag: \"test\", variant: \"levels\", record: { level: 50 } }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_player_rating_scoped",
+      "brief": "Fetches the player's rating in a scoped leaderboard. Raises when the table is",
+      "description": "Fetches the player's rating in a scoped leaderboard. Raises when the table is\nmissing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The leaderboard, for example `{ tag: \"test\", variant: \"levels\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the rating.",
+          "types": [
+            "(leaders: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

@@ -359,6 +359,28 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "212a09cd57b1bac464d4a3cae52121780bf00cc900145e0f8d4114b78ccaa3e6",
   "fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua":
     "2b17a4f9d1fc55597d611880def782872029cdd095d94d5f07a9c1faa65008ba",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/achievements.lua":
+    "284ee4c93dc7d7cf6c26b4f0276230daff4a85646d38f58e4a0add963e25bf3b",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/ads.lua":
+    "30f0ce35fc49fea783b4abc88c782a94991e3974f911e7ff1e167b84cff6c7ac",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/leaderboard.lua":
+    "a596fefb5931bef5ee486f13914e5084e20bda09d103326946e2f69a335c1aa7",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/payments.lua":
+    "0333669353ba71f76129604e23e710e31e0eef4387d93cbb2020fe53cff3f9f3",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/player.lua":
+    "40475d548941d53eb906468f38eac07407627ba9306b857ac10a6a2c3d14d7b4",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/player_stats.lua":
+    "8cdbe67f3fb5a9c2b291a955385c39b047a68a3412ef65ff27d0f92e07e4fff6",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/players.lua":
+    "75c97b9b72c72bc88c23833945ba934c7322b3be36c989d682d3bc882ec47a95",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/rewards.lua":
+    "4798827ded5c500d9b7941aa915e23f881845a812bab15a90a8bd8574e459035",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/storage.lua":
+    "77b7076584824fe1ea3da5242df76fa8b3c111a5de211e05704393859d3b207f",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/uniques.lua":
+    "1d2736b581c60e268837dbaaf16ce29fff0dfdbde05c4115c35c6b8c886041fa",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/variables.lua":
+    "79369a31189b85d4575c76d7fc85d41d666f4c55f08c8af89871311065bfdd73",
   "fixtures/upstream-lua/defold-input/in/accelerometer.lua":
     "fbdf49f06a31bc860d24434d38fc5124f913cb43e88ad039640e0b32e2b545c0",
   "fixtures/upstream-lua/defold-input/in/button.lua":

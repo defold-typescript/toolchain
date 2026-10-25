@@ -422,6 +422,30 @@ describe("extractApiDoc bare and namespaced declarations", () => {
     expect(module.functions.map((f) => f.name)).toEqual(["go"]);
     expect(module.functions.map((f) => f.name)).not.toContain("internal");
   });
+
+  // A Lua member named after a TypeScript reserved word (`delete`, `new`) can only be
+  // declared under another local name and exported under its own.
+  test("publishes an aliased export under the name consumers call", () => {
+    const module = parseDefoldApiDoc(
+      extractApiDoc(
+        `declare module 'al.al' {
+	/** List them. */
+	export function list(): string[];
+	/** Delete one. */
+	function delete_(tag: string): void;
+	export { delete_ as delete };
+	export namespace inner {
+		/** Make one. */
+		function new_(): void;
+		export { new_ as new };
+	}
+}`,
+        "al.al",
+      ),
+    );
+    expect(module.functions.map((f) => f.name)).toEqual(["list", "delete", "inner.new"]);
+    expect(module.functions.find((f) => f.name === "delete")?.brief).toBe("Delete one.");
+  });
 });
 
 describe("extractApiDoc object-literal field tree", () => {

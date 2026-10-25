@@ -1,0 +1,242 @@
+{
+  "info": {
+    "namespace": "gamepush.core.rewards",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "give",
+      "brief": "Gives the player a reward. Raises when the table is missing.",
+      "description": "Gives the player a reward. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The reward, for example `{ id: 18 }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "accept",
+      "brief": "Accepts a reward the player was given. Raises when the table is missing.",
+      "description": "Accepts a reward the player was given. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The reward, for example `{ id: \"my_reward\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "All rewards.",
+      "description": "All rewards.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "given_list",
+      "brief": "The rewards the player was given.",
+      "description": "The rewards the player was given.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_reward",
+      "brief": "A reward's description.",
+      "description": "A reward's description.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The reward's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has",
+      "brief": "Whether the player was given a reward.",
+      "description": "Whether the player was given a reward.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The reward's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has_accepted",
+      "brief": "Whether the player accepted a reward.",
+      "description": "Whether the player accepted a reward.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The reward's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has_unaccepted",
+      "brief": "Whether the player was given a reward but has not accepted it.",
+      "description": "Whether the player was given a reward but has not accepted it.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The reward's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The reward event handlers.",
+      "description": "The reward event handlers.",
+      "types": [
+        "RewardsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RewardsCallbacks",
+      "properties": [
+        {
+          "name": "give",
+          "brief": "A reward was given.",
+          "description": "A reward was given.",
+          "types": [
+            "(reward: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_give",
+          "brief": "Giving a reward failed.",
+          "description": "Giving a reward failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "accept",
+          "brief": "A reward was accepted.",
+          "description": "A reward was accepted.",
+          "types": [
+            "(reward: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_accept",
+          "brief": "Accepting a reward failed.",
+          "description": "Accepting a reward failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

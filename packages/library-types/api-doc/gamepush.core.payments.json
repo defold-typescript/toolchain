@@ -1,0 +1,320 @@
+{
+  "info": {
+    "namespace": "gamepush.core.payments",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "is_available",
+      "brief": "Whether the platform supports payments.",
+      "description": "Whether the platform supports payments.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "products",
+      "brief": "The products on sale.",
+      "description": "The products on sale.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "purchases",
+      "brief": "The player's purchases.",
+      "description": "The player's purchases.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "purchase",
+      "brief": "Buys a product. Raises when the table is missing.",
+      "description": "Buys a product. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The product to buy, for example `{ id: 749 }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the purchase result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "consume",
+      "brief": "Consumes a purchase. Raises when the table is missing.",
+      "description": "Consumes a purchase. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The product to consume, for example `{ id: 749 }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the consume result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has",
+      "brief": "Whether the player owns a product.",
+      "description": "Whether the player owns a product.",
+      "parameters": [
+        {
+          "name": "product",
+          "doc": "The product's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_products",
+      "brief": "Fetches the product list.",
+      "description": "Fetches the product list.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives the fetch result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_subscriptions_available",
+      "brief": "Whether the platform supports subscriptions.",
+      "description": "Whether the platform supports subscriptions.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "subscribe",
+      "brief": "Subscribes the player. Raises when the table is missing.",
+      "description": "Subscribes the player. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The subscription, for example `{ tag: \"Test_subscription\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the subscription result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unsubscribe",
+      "brief": "Cancels a subscription. Raises when the table is missing.",
+      "description": "Cancels a subscription. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The subscription, for example `{ tag: \"Test_subscription\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the cancellation result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The payment event handlers.",
+      "description": "The payment event handlers.",
+      "types": [
+        "PaymentsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PaymentsCallbacks",
+      "properties": [
+        {
+          "name": "purchase",
+          "brief": "A product was purchased.",
+          "description": "A product was purchased.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_purchase",
+          "brief": "A purchase failed.",
+          "description": "A purchase failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "consume",
+          "brief": "A purchase was consumed.",
+          "description": "A purchase was consumed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_consume",
+          "brief": "Consuming a purchase failed.",
+          "description": "Consuming a purchase failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_products",
+          "brief": "The product list was fetched.",
+          "description": "The product list was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_products",
+          "brief": "Fetching the product list failed.",
+          "description": "Fetching the product list failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "subscribe",
+          "brief": "The player subscribed.",
+          "description": "The player subscribed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_subscribe",
+          "brief": "Subscribing failed.",
+          "description": "Subscribing failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "unsubscribe",
+          "brief": "The player unsubscribed.",
+          "description": "The player unsubscribed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_unsubscribe",
+          "brief": "Unsubscribing failed.",
+          "description": "Unsubscribing failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
