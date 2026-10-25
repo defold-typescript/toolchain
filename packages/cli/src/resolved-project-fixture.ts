@@ -1,0 +1,149 @@
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import * as path from "node:path";
+import { loadApiTargetsRegistry } from "./api-registry";
+import type { ExtensionDeclarations } from "./extension-declarations";
+import {
+  ensureExtensionTypesReference,
+  materializeExtensionDeclarations,
+} from "./extension-materialize";
+import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
+import { loadVendoredLibraryRegistry, loadVendoredNativeRegistry } from "./library-registry";
+import {
+  ensureMaterializedReference,
+  materializeApiSurface,
+  resolveCurrentSurfaceGeneratedDir,
+} from "./materialize";
+import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
+
+/** The tsconfig `init` leaves before `resolve` adds its `typeRoots` and `types`. */
+export const RESOLVED_PROJECT_TSCONFIG = `${JSON.stringify(
+  {
+    compilerOptions: {
+      target: "ES2022",
+      module: "ESNext",
+      strict: true,
+      types: [DEFAULT_TYPES_ENTRYPOINT],
+    },
+    include: ["src/**/*.ts"],
+  },
+  null,
+  2,
+)}\n`;
+
+/** The `types/` declaration a native extension ships for itself, in module form. */
+export const SHIPPED_GLOBAL_TABLE_DTS = [
+  "/**",
+  " * @noResolution",
+  " * @globalTable",
+  " */",
+  'declare module "pixels" {',
+  "  export function fill(color: number): void;",
+  "}",
+  "",
+].join("\n");
+
+/** A script that reaches each kind of declaration `installResolvedDeclarations` installs. */
+export const RESOLVED_PROJECT_MAIN = [
+  'import { defineScript } from "@defold-typescript/types";',
+  'import * as checkpoint from "checkpoint.checkpoint";',
+  'import * as pixels from "pixels";',
+  "export default defineScript({",
+  "  init() {",
+  "    print(uuid4.generate(), checkpoint.project_save_path);",
+  "    pixels.fill(7);",
+  "  },",
+  "});",
+  "",
+].join("\n");
+
+function extensionBundle(url: string): ExtensionDeclarations {
+  return {
+    url,
+    provenance: "cache",
+    assetOnly: false,
+    resolvedVersion: "sha256:stub",
+    declarations: [],
+    luaModules: [],
+    manifestDirs: [],
+    sceneSources: [],
+    sceneReasons: [],
+    sceneRefused: [],
+    shipped: [],
+  };
+}
+
+/**
+ * Installs what `resolve` writes for three dependencies — the curated `uuid4`
+ * native, a native shipping its own `@globalTable` declaration, and the vendored
+ * `checkpoint` library — through `resolve`'s own writers, so a test sees the
+ * tree and the `tsconfig.json` entries a real resolve leaves.
+ */
+export function installResolvedDeclarations(cwd: string): void {
+  const uuid4 = loadVendoredNativeRegistry().find((target) => target.namespace === "uuid4");
+  if (uuid4 === undefined) {
+    throw new Error("the vendored native registry carries no uuid4 target");
+  }
+  const { materializedDir: extensionsDir } = materializeExtensionDeclarations({
+    cwd,
+    bundles: [
+      {
+        ...extensionBundle("https://github.com/selimanac/defold-uuid4/archive/main.zip"),
+        declarations: [
+          {
+            namespace: uuid4.namespace,
+            contents: readFileSync(uuid4.declarationPath, "utf8"),
+            dropped: [],
+          },
+        ],
+      },
+      {
+        ...extensionBundle("https://github.com/king8fisher/defold-pixels/archive/main.zip"),
+        shipped: [
+          { entry: "defold-pixels-main/types/pixels.d.ts", contents: SHIPPED_GLOBAL_TABLE_DTS },
+        ],
+      },
+    ],
+  });
+  ensureExtensionTypesReference(cwd, extensionsDir);
+
+  const { registry, generatedDir } = loadVendoredLibraryRegistry();
+  const checkpoint = registry.find((library) => library.modules.includes("checkpoint.checkpoint"));
+  if (checkpoint === undefined) {
+    throw new Error("the vendored library registry carries no checkpoint.checkpoint module");
+  }
+  const { materializedDir: librariesDir } = materializeVendoredLibraries({
+    cwd,
+    matched: [{ ...checkpoint, modules: ["checkpoint.checkpoint"] }],
+    generatedDir,
+  });
+  ensureLibraryTypesReference(cwd, librariesDir);
+}
+
+/** Adds the engine `surfaceId` entry and surface `resolve` writes beside the two above. */
+export function installEngineSurface(cwd: string): void {
+  const target = loadApiTargetsRegistry().find((candidate) => candidate.default === true);
+  if (target === undefined) {
+    throw new Error("the API targets registry names no default target");
+  }
+  const { materializedDir } = materializeApiSurface({
+    cwd,
+    surface: { surfaceId: target.id, available: true },
+    sourceGeneratedDir: resolveCurrentSurfaceGeneratedDir(),
+  });
+  if (materializedDir === null) {
+    throw new Error(`the engine surface ${target.id} did not materialize`);
+  }
+  ensureMaterializedReference(cwd, materializedDir);
+}
+
+/** Writes a project holding only what `init` and `resolve` leave behind. */
+export function scaffoldResolvedProject(cwd: string): void {
+  const write = (rel: string, contents: string): void => {
+    const target = path.join(cwd, rel);
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, contents);
+  };
+  write("tsconfig.json", RESOLVED_PROJECT_TSCONFIG);
+  write("src/main.ts", RESOLVED_PROJECT_MAIN);
+  installResolvedDeclarations(cwd);
+}

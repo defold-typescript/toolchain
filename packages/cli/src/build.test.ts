@@ -33,6 +33,7 @@ import { decodeMappings } from "./console-source-map";
 import { dispatch } from "./dispatch";
 import type { CompileAnswer, EditorIssue, RunAnswer } from "./editor-attach";
 import { runInit } from "./init";
+import { installEngineSurface, scaffoldResolvedProject } from "./resolved-project-fixture";
 import {
   runSceneTypes,
   SCENE_ADDRESSES_DECLARATION,
@@ -175,6 +176,28 @@ describe("runBuild (a scene-address declaration inside include)", () => {
     );
 
     expect(() => runBuild({ cwd })).toThrow(/nobody/);
+  });
+});
+
+describe("runBuild (a project holding only what resolve writes)", () => {
+  test("builds a curated native global, a vendored library and a shipped @globalTable module", () => {
+    scaffoldResolvedProject(cwd);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
+    expect(scanEmittedRequires(lua).map(({ path: requirePath }) => requirePath)).not.toContain(
+      "pixels",
+    );
+    expect(lua).toMatchSnapshot();
+  });
+
+  test("builds under the tsconfig a resolve that also pins the engine surface leaves", () => {
+    scaffoldResolvedProject(cwd);
+    installEngineSurface(cwd);
+
+    expect(runBuild({ cwd }).written).toEqual(["src/main.ts.script"]);
   });
 });
 
