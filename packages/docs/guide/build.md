@@ -27,6 +27,11 @@ shared module must be built before the script importing it will run. Open the
 project in the [Defold editor](./defold-editor.md) (or run it headlessly, below)
 to play it.
 
+The declarations [`resolve`](./resolve.md) installed behind the `"extensions"`
+and `libraries@<cliVersion>` entries on the tsconfig `types` list are part of the
+compile too, as type information only: a dependency's types check your code, and
+nothing under `.defold-types/` is written as Lua.
+
 A script component is a resource addressed by path from a `.go` file, never a
 module on Defold's `require` path, so a `require` aimed at one resolves to nothing
 at runtime. A script that also **exports runtime values** therefore builds into
