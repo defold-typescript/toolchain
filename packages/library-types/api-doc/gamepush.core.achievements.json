@@ -1,0 +1,337 @@
+{
+  "info": {
+    "namespace": "gamepush.core.achievements",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "rare",
+      "brief": "The achievement rarity values.",
+      "description": "The achievement rarity values.",
+      "types": [
+        "{ readonly COMMON: \"COMMON\"; readonly UNCOMMON: \"UNCOMMON\"; readonly RARE: \"RARE\"; readonly EPIC: \"EPIC\"; readonly LEGENDARY: \"LEGENDARY\"; readonly MYTHIC: \"MYTHIC\"; }"
+      ],
+      "fields": [
+        {
+          "name": "COMMON",
+          "doc": "",
+          "types": [
+            "\"COMMON\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "UNCOMMON",
+          "doc": "",
+          "types": [
+            "\"UNCOMMON\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "RARE",
+          "doc": "",
+          "types": [
+            "\"RARE\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "EPIC",
+          "doc": "",
+          "types": [
+            "\"EPIC\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "LEGENDARY",
+          "doc": "",
+          "types": [
+            "\"LEGENDARY\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "MYTHIC",
+          "doc": "",
+          "types": [
+            "\"MYTHIC\""
+          ],
+          "is_optional": "False"
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "groups_list",
+      "brief": "The achievement groups.",
+      "description": "The achievement groups.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "All achievements.",
+      "description": "All achievements.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlocked_list",
+      "brief": "The achievements the player has unlocked.",
+      "description": "The achievements the player has unlocked.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlock",
+      "brief": "Unlocks an achievement. Raises when the table is missing.",
+      "description": "Unlocks an achievement. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The achievement, for example `{ tag: \"my_achiv\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the unlock result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_progress",
+      "brief": "Sets an achievement's progress. Raises when the table is missing.",
+      "description": "Sets an achievement's progress. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The achievement and its progress, for example\n`{ tag: \"my_achiv\", progress: 25 }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has",
+      "brief": "Whether the player has an achievement.",
+      "description": "Whether the player has an achievement.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The achievement's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_progress",
+      "brief": "An achievement's progress.",
+      "description": "An achievement's progress.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The achievement's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "open",
+      "brief": "Opens the achievements overlay.",
+      "description": "Opens the achievements overlay.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Called when the overlay opens.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches the achievements.",
+      "description": "Fetches the achievements.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives the achievements.",
+          "types": [
+            "(achievements: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The achievement event handlers.",
+      "description": "The achievement event handlers.",
+      "types": [
+        "AchievementsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AchievementsCallbacks",
+      "properties": [
+        {
+          "name": "unlock",
+          "brief": "An achievement was unlocked.",
+          "description": "An achievement was unlocked.",
+          "types": [
+            "(achievement: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_unlock",
+          "brief": "Unlocking an achievement failed.",
+          "description": "Unlocking an achievement failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "progress",
+          "brief": "An achievement's progress changed.",
+          "description": "An achievement's progress changed.",
+          "types": [
+            "(achievement: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_progress",
+          "brief": "Changing an achievement's progress failed.",
+          "description": "Changing an achievement's progress failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "brief": "The achievements overlay opened.",
+          "description": "The achievements overlay opened.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "close",
+          "brief": "The achievements overlay closed.",
+          "description": "The achievements overlay closed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch",
+          "brief": "The achievements were fetched.",
+          "description": "The achievements were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch",
+          "brief": "Fetching the achievements failed.",
+          "description": "Fetching the achievements failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

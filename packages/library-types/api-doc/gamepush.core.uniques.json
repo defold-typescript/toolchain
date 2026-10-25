@@ -1,0 +1,194 @@
+{
+  "info": {
+    "namespace": "gamepush.core.uniques",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "The player's unique values, an empty list when it has none.",
+      "description": "The player's unique values, an empty list when it has none.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "The value registered under `tag`, or nil. Raises unless `tag` is a string.",
+      "description": "The value registered under `tag`, or nil. Raises unless `tag` is a string.",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "register",
+      "brief": "Registers or updates a unique value. Raises when the table is missing.",
+      "description": "Registers or updates a unique value. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The tag and value, for example `{ tag: \"login\", value: \"defold_player_demo\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "check",
+      "brief": "Checks whether a unique value is free. Raises when the table is missing.",
+      "description": "Checks whether a unique value is free. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The tag and value, for example `{ tag: \"login\", value: \"defold_player_demo\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete",
+      "brief": "Deletes a unique value. Raises when the table is missing.",
+      "description": "Deletes a unique value. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The tag, for example `{ tag: \"login\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The unique value event handlers.",
+      "description": "The unique value event handlers.",
+      "types": [
+        "UniquesCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "UniquesCallbacks",
+      "properties": [
+        {
+          "name": "register",
+          "brief": "A unique value was registered.",
+          "description": "A unique value was registered.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_register",
+          "brief": "Registering a unique value failed.",
+          "description": "Registering a unique value failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "check",
+          "brief": "A unique value was checked.",
+          "description": "A unique value was checked.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_check",
+          "brief": "Checking a unique value failed.",
+          "description": "Checking a unique value failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "delete",
+          "brief": "A unique value was deleted.",
+          "description": "A unique value was deleted.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_delete",
+          "brief": "Deleting a unique value failed.",
+          "description": "Deleting a unique value failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

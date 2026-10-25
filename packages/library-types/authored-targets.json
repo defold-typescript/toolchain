@@ -463,6 +463,127 @@
       "generated": "generated/sentinel.d.ts",
       "apiDoc": "api-doc/sentinel.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-sentinel/sentinel/sentry.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.player.d.ts",
+      "moduleId": "gamepush.core.player",
+      "namespace": "gamepush.core.player",
+      "generated": "generated/gamepush.core.player.d.ts",
+      "apiDoc": "api-doc/gamepush.core.player.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/player.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.player_stats.d.ts",
+      "moduleId": "gamepush.core.player_stats",
+      "namespace": "gamepush.core.player_stats",
+      "generated": "generated/gamepush.core.player_stats.d.ts",
+      "apiDoc": "api-doc/gamepush.core.player_stats.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/player_stats.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.players.d.ts",
+      "moduleId": "gamepush.core.players",
+      "namespace": "gamepush.core.players",
+      "generated": "generated/gamepush.core.players.d.ts",
+      "apiDoc": "api-doc/gamepush.core.players.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/players.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.payments.d.ts",
+      "moduleId": "gamepush.core.payments",
+      "namespace": "gamepush.core.payments",
+      "generated": "generated/gamepush.core.payments.d.ts",
+      "apiDoc": "api-doc/gamepush.core.payments.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/payments.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.ads.d.ts",
+      "moduleId": "gamepush.core.ads",
+      "namespace": "gamepush.core.ads",
+      "generated": "generated/gamepush.core.ads.d.ts",
+      "apiDoc": "api-doc/gamepush.core.ads.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/ads.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.achievements.d.ts",
+      "moduleId": "gamepush.core.achievements",
+      "namespace": "gamepush.core.achievements",
+      "generated": "generated/gamepush.core.achievements.d.ts",
+      "apiDoc": "api-doc/gamepush.core.achievements.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/achievements.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.leaderboard.d.ts",
+      "moduleId": "gamepush.core.leaderboard",
+      "namespace": "gamepush.core.leaderboard",
+      "generated": "generated/gamepush.core.leaderboard.d.ts",
+      "apiDoc": "api-doc/gamepush.core.leaderboard.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/leaderboard.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.rewards.d.ts",
+      "moduleId": "gamepush.core.rewards",
+      "namespace": "gamepush.core.rewards",
+      "generated": "generated/gamepush.core.rewards.d.ts",
+      "apiDoc": "api-doc/gamepush.core.rewards.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/rewards.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.uniques.d.ts",
+      "moduleId": "gamepush.core.uniques",
+      "namespace": "gamepush.core.uniques",
+      "generated": "generated/gamepush.core.uniques.d.ts",
+      "apiDoc": "api-doc/gamepush.core.uniques.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/uniques.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.variables.d.ts",
+      "moduleId": "gamepush.core.variables",
+      "namespace": "gamepush.core.variables",
+      "generated": "generated/gamepush.core.variables.d.ts",
+      "apiDoc": "api-doc/gamepush.core.variables.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/variables.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.storage.d.ts",
+      "moduleId": "gamepush.core.storage",
+      "namespace": "gamepush.core.storage",
+      "generated": "generated/gamepush.core.storage.d.ts",
+      "apiDoc": "api-doc/gamepush.core.storage.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/storage.lua"]
     }
   ]
 }

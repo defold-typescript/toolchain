@@ -2295,6 +2295,117 @@ describe("sentinel.sentry type claims upstream states only in its body", () => {
   });
 });
 
+// Parity sees names and arities only. Which arguments the GamePush wrappers demand is
+// decided by the `helpers.check_*` call in each body, and what they return by the README
+// API table, so both are held here against the lowered models.
+describe("GamePush account and commerce type claims upstream states only in its body", () => {
+  type Property = { name: string; types: string[]; is_optional?: string | null };
+  type Returned = { types: string[] };
+
+  const MODULES = [
+    "player",
+    "player_stats",
+    "players",
+    "payments",
+    "ads",
+    "achievements",
+    "leaderboard",
+    "rewards",
+    "uniques",
+    "variables",
+    "storage",
+  ].map((name) => `gamepush.core.${name}`);
+
+  function element(namespace: string, name: string): Record<string, unknown> {
+    const found = apiDocElements(namespace).find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
+    return found;
+  }
+
+  function parameters(namespace: string, name: string): Property[] {
+    return (element(namespace, name) as { parameters: Property[] }).parameters;
+  }
+
+  function property(namespace: string, typedef: string, name: string): Property {
+    const { properties } = element(namespace, typedef) as { properties: Property[] };
+    const found = properties.find((entry) => entry.name === name);
+    if (!found) throw new Error(`${typedef} declares no ${name}`);
+    return found;
+  }
+
+  test("each module registers under its own module id at the v1.4.1 pin", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    for (const moduleId of MODULES) {
+      const entry = targets.find((t) => t.moduleId === moduleId);
+      expect(entry).toMatchObject({
+        namespace: moduleId,
+        repo: "https://github.com/megalanthus/defold-gamepush",
+        ref: "v1.4.1",
+        license: "MIT",
+      });
+      expect(entry?.parityVerdict).toBeUndefined();
+      expect(entry?.upstreamLua).toEqual([
+        `fixtures/upstream-lua/defold-gamepush/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
+      ]);
+    }
+  });
+
+  // `check_table_required` guards `enable_auto_sync`, and the README lists the storage
+  // values the table takes.
+  test("enable_auto_sync demands its table, whose storage is one of four kinds", () => {
+    const [table] = parameters("gamepush.core.player", "enable_auto_sync");
+    expect(table).toMatchObject({
+      name: "parameters",
+      types: ["AutoSyncParameters"],
+      is_optional: "False",
+    });
+    expect(property("gamepush.core.player", "AutoSyncParameters", "storage")).toMatchObject({
+      types: ['"preferred" | "cloud" | "platform" | "local"'],
+    });
+  });
+
+  // `check_table` and `check_callback` both let nil through.
+  test("both sync arguments are optional", () => {
+    const [table, callback] = parameters("gamepush.core.player", "sync");
+    expect(table).toMatchObject({ name: "parameters", is_optional: "True" });
+    expect(callback).toMatchObject({ name: "callback", is_optional: "True" });
+  });
+
+  test("a player field takes the scalars check_value accepts", () => {
+    const [key, value] = parameters("gamepush.core.player", "set");
+    expect(key).toMatchObject({ name: "key", types: ["string"] });
+    expect(value).toMatchObject({ name: "value", types: ["string | number | boolean"] });
+  });
+
+  // Upstream annotates all four `---@return boolean`; the README and the JS getters they
+  // read return day and second counts.
+  test("every player statistic returns a count", () => {
+    for (const name of [
+      "active_days",
+      "active_days_consecutive",
+      "playtime_today",
+      "playtime_all",
+    ]) {
+      const { returnvalues } = element("gamepush.core.player_stats", name) as {
+        returnvalues: Returned[];
+      };
+      expect({ name, types: returnvalues.map((r) => r.types) }).toEqual({
+        name,
+        types: [["number"]],
+      });
+    }
+  });
+
+  test("payments.has takes a product id or tag and compares the answer to true", () => {
+    const [product] = parameters("gamepush.core.payments", "has");
+    expect(product).toMatchObject({ name: "product", types: ["string | number"] });
+    const { returnvalues } = element("gamepush.core.payments", "has") as {
+      returnvalues: Returned[];
+    };
+    expect(returnvalues.map((r) => r.types)).toEqual([["boolean"]]);
+  });
+});
+
 describe("nakama.session type claims upstream states only in its body", () => {
   function element(name: string): Record<string, unknown> {
     const found = apiDocElements("nakama.session").find((entry) => entry.name === name);

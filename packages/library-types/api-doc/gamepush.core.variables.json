@@ -1,0 +1,193 @@
+{
+  "info": {
+    "namespace": "gamepush.core.variables",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "types",
+      "brief": "The variable type values `type` reports.",
+      "description": "The variable type values `type` reports.",
+      "types": [
+        "{ readonly DATA: \"data\"; readonly STATS: \"stats\"; readonly FLAG: \"flag\"; readonly DOC_HTML: \"doc_html\"; readonly IMAGE: \"image\"; readonly FILE: \"file\"; }"
+      ],
+      "fields": [
+        {
+          "name": "DATA",
+          "doc": "",
+          "types": [
+            "\"data\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "STATS",
+          "doc": "",
+          "types": [
+            "\"stats\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "FLAG",
+          "doc": "",
+          "types": [
+            "\"flag\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "DOC_HTML",
+          "doc": "",
+          "types": [
+            "\"doc_html\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "IMAGE",
+          "doc": "",
+          "types": [
+            "\"image\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "FILE",
+          "doc": "",
+          "types": [
+            "\"file\""
+          ],
+          "is_optional": "False"
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches the game variables.",
+      "description": "Fetches the game variables.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Called when the fetch finishes.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "The value of `variable`. Raises unless `variable` is a string.",
+      "description": "The value of `variable`. Raises unless `variable` is a string.",
+      "parameters": [
+        {
+          "name": "variable",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has",
+      "brief": "Whether `variable` exists. Raises unless `variable` is a string.",
+      "description": "Whether `variable` exists. Raises unless `variable` is a string.",
+      "parameters": [
+        {
+          "name": "variable",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "type",
+      "brief": "The type of `variable`, one of the `types` values. Raises unless `variable` is a string.",
+      "description": "The type of `variable`, one of the `types` values. Raises unless `variable` is a string.",
+      "parameters": [
+        {
+          "name": "variable",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The variable event handlers.",
+      "description": "The variable event handlers.",
+      "types": [
+        "VariablesCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "VariablesCallbacks",
+      "properties": [
+        {
+          "name": "fetch",
+          "brief": "The variables were fetched.",
+          "description": "The variables were fetched.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch",
+          "brief": "Fetching the variables failed.",
+          "description": "Fetching the variables failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
