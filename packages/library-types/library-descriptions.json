@@ -49,6 +49,7 @@
   "nakama.util.log": "Logging helpers for the Nakama Defold client.",
   "narrator": "The Ink language parser and runtime implementation in Lua",
   "node_repeat": "GUI box node texture repeat (tiling) shader helper: reads a box node's atlas animation and drives the repeat material's constants.",
+  "openal": "3D positional audio for Defold through OpenAL: WAV sound sources with position, pitch, gain and looping, heard from one listener.",
   "orthographic.camera": "Orthographic camera functionality for the Defold game engine",
   "panthera": "Panthera Animation Runtime for Defold Game Engine",
   "pigeon": "Easily and safely manage posting messages in Defold.",

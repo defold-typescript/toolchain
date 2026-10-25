@@ -23,9 +23,12 @@
  * function: a `luaL_newmetatable(L, <name>)` keys it by that metatable name, and a
  * `lua_newtable` or `lua_createtable` — an object built as a plain table of
  * methods — keys it `<function>()` after the C function that builds it, which no
- * metatable name can collide with. A file that registers the module must make
- * exactly one named call. A file that only fills metatables is read by
- * `parseNativeMethodTables`, so an extension whose userdata types live in files
+ * metatable name can collide with. An object a `<Class>::push(lua_State*)` method
+ * builds field by field — `lua_pushcfunction` then `lua_setfield` on the outermost
+ * table it opens — reads the same way, keyed `<Class>::push()`, with only its
+ * cfunction fields as methods. A file that registers the module must make
+ * exactly one named call. A file that only fills metatables or push tables is read
+ * by `parseNativeMethodTables`, so an extension whose userdata types live in files
  * of their own is measured whole.
  *
  * A call's `luaL_reg <table>[]` definition is looked up inside the function that
@@ -40,7 +43,13 @@
  * `lua_newtable` or `lua_createtable` nests: a `lua_setfield` with a value pushed
  * since the table opened or since its last `lua_setfield` stores a key in it, and
  * one with nothing pushed closes it under that name, so its keys read as
- * `<table>.<key>` and the table's own name is not a constant.
+ * `<table>.<key>` and the table's own name is not a constant. A table that
+ * `lua_setmetatable(L, -2)` consumes instead is a metatable: its keys are dropped,
+ * and when its `__index` is a cfunction, the `case HASH_<name>:` labels that
+ * function switches on read as the fields it serves. A `->push(L)` or
+ * `<Class>::push(L)` call pushes one value, and a `lua_setfield` into the module
+ * with no push since the call or the field before it throws, since the reader has
+ * lost track of what it stores.
  *
  * Like `parse-lua-surface.ts`, this prefers a loud failure to a short surface: a
  * file with no `luaL_register` call, a table it cannot find, a name it cannot
@@ -82,7 +91,12 @@ interface NameDefines {
 }
 
 export function parseNativeRegistration(source: string, file: string): NativeRegistration {
-  const scanned = scanSource(source, file);
+  const scanned = scanSource(source);
+  if (scanned.calls.length === 0) {
+    throw new Error(
+      `native registration: ${file} has no luaL_register or luaL_openlib call, so its registered surface cannot be read.`,
+    );
+  }
   const named = scanned.calls.filter((call) => !isMethodTable(call));
   if (named.length === 0) {
     throw new Error(
@@ -104,16 +118,22 @@ export function parseNativeRegistration(source: string, file: string): NativeReg
   };
 }
 
-/** The metatables a file fills and nothing else: the userdata methods of an extension
- * whose module is registered in another file. */
+/** The metatables and push tables a file fills and nothing else: the userdata methods
+ * of an extension whose module is registered in another file. */
 export function parseNativeMethodTables(source: string, file: string): Record<string, string[]> {
-  const scanned = scanSource(source, file);
+  const scanned = scanSource(source);
   if (scanned.calls.some((call) => !isMethodTable(call))) {
     throw new Error(
       `native registration: ${file} makes a named luaL_register/luaL_openlib call, so it registers a module; it belongs in the target's upstreamSource, not among its method sources.`,
     );
   }
-  return readMethodTables(scanned, file);
+  const tables = readMethodTables(scanned, file);
+  if (Object.keys(tables).length === 0) {
+    throw new Error(
+      `native registration: ${file} has no nameless luaL_register/luaL_openlib call and no <Class>::push table, so it fills no method table to read.`,
+    );
+  }
+  return tables;
 }
 
 const CALL_SHAPES = [
@@ -121,7 +141,7 @@ const CALL_SHAPES = [
   /\bluaL_openlib\s*\(\s*\w+\s*,\s*("[^"]*"|\w+)\s*,\s*(\w+)\s*,\s*\w+\s*\)/g,
 ];
 
-function scanSource(source: string, file: string): ScannedSource {
+function scanSource(source: string): ScannedSource {
   const live = stripComments(source);
   const names = readNameDefines(live);
   const code = blankPreprocessorLines(live);
@@ -139,11 +159,6 @@ function scanSource(source: string, file: string): ScannedSource {
       };
     })
     .sort((a, b) => a.index - b.index);
-  if (calls.length === 0) {
-    throw new Error(
-      `native registration: ${file} has no luaL_register or luaL_openlib call, so its registered surface cannot be read.`,
-    );
-  }
   return { code, structure, names, calls };
 }
 
@@ -154,19 +169,70 @@ function isMethodTable(call: RegisterCall): boolean {
 function readMethodTables(scanned: ScannedSource, file: string): Record<string, string[]> {
   const { code, structure, names } = scanned;
   const byMetatable = new Map<string, Set<string>>();
-  for (const call of scanned.calls.filter(isMethodTable)) {
-    const metatable = methodTableKey(code, structure, names, call, file);
+  const fill = (metatable: string, names: string[]) => {
     const methods = byMetatable.get(metatable) ?? new Set<string>();
-    for (const name of readRegisteredFunctions(code, structure, call, file)) {
+    for (const name of names) {
       if (!name.startsWith("__")) methods.add(name);
     }
     byMetatable.set(metatable, methods);
+  };
+  for (const call of scanned.calls.filter(isMethodTable)) {
+    fill(
+      methodTableKey(code, structure, names, call, file),
+      readRegisteredFunctions(code, structure, call, file),
+    );
   }
+  for (const [table, fields] of readPushTables(structure, file)) fill(table, fields);
   return Object.fromEntries(
     [...byMetatable.keys()]
       .sort()
       .map((metatable) => [metatable, [...(byMetatable.get(metatable) as Set<string>)].sort()]),
   );
+}
+
+const PUSH_DEFINITIONS = /\b(\w+)::push\s*\(\s*lua_State\s*\*\s*\w+\s*\)\s*(?:const\s*)?\{/g;
+
+/** What moves a push table's walk: a table opening, a cfunction push, a `lua_setfield`
+ * into the table below the top, a `lua_setmetatable` consuming the top, or any other
+ * push. */
+const PUSH_TABLE_EVENTS =
+  /\b(?:(lua_newtable|lua_createtable)\s*\(|lua_pushcfunction\s*\(\s*\w+\s*,\s*(\w+)\s*\)|lua_setfield\s*\(\s*\w+\s*,\s*-2\s*,\s*"(\w+)"\s*\)|(lua_setmetatable)\s*\(|(?:lua_push\w+|dmScript::Push\w+)\s*\()/g;
+
+/** The objects `<Class>::push(lua_State*)` methods build as plain tables: the fields
+ * holding a cfunction on the outermost table each opens. A table opened inside it is
+ * closed into a field or consumed by `lua_setmetatable`, so neither its keys nor a
+ * metatable's `__index` read as methods. A push body that opens no table builds no
+ * object here and yields no entry. */
+function readPushTables(structure: string, file: string): [table: string, fields: string[]][] {
+  const tables: [string, string[]][] = [];
+  for (const definition of structure.matchAll(PUSH_DEFINITIONS)) {
+    const open = (definition.index ?? 0) + definition[0].length - 1;
+    const body = structure.slice(open + 1, matchingBrace(structure, open, file));
+    const fields: string[] = [];
+    let depth = 0;
+    let opened = false;
+    let pushed: "cfunction" | "value" | undefined;
+    for (const [, opener, cfunction, field, setMetatable] of body.matchAll(PUSH_TABLE_EVENTS)) {
+      if (opener !== undefined) {
+        depth++;
+        opened = true;
+      } else if (cfunction !== undefined) {
+        pushed = "cfunction";
+        continue;
+      } else if (field !== undefined) {
+        if (pushed === undefined) depth--;
+        else if (depth === 1 && pushed === "cfunction") fields.push(field);
+      } else if (setMetatable !== undefined) {
+        depth--;
+      } else {
+        pushed = "value";
+        continue;
+      }
+      pushed = undefined;
+    }
+    if (opened) tables.push([`${definition[1]}::push()`, fields]);
+  }
+  return tables;
 }
 
 const TABLE_OPENERS =
@@ -307,27 +373,44 @@ function readConstants(structure: string, callIndex: number, file: string): stri
   }
   const body = structure.slice(callIndex, matchingBrace(structure, open, file));
   const constants = new Set<string>();
-  const tables: string[][] = [];
+  const tables: OpenTable[] = [];
   let pushed = false;
+  let cfunction: string | undefined;
   const store = (key: string) => {
     const table = tables.at(-1);
     if (table === undefined) constants.add(key);
-    else table.push(key);
+    else table.keys.push(key);
   };
-  for (const [, opened, setConstant, field] of body.matchAll(CONSTANT_EVENTS)) {
+  for (const [, opened, setConstant, pushedFunction, field, setMetatable] of body.matchAll(
+    CONSTANT_EVENTS,
+  )) {
     if (opened !== undefined) {
-      tables.push([]);
+      tables.push({ keys: [] });
     } else if (setConstant !== undefined) {
       store(setConstant);
+    } else if (pushedFunction !== undefined) {
+      pushed = true;
+      cfunction = pushedFunction;
+      continue;
+    } else if (setMetatable !== undefined) {
+      for (const key of metatableFields(structure, tables.pop(), file)) store(key);
     } else if (field === undefined) {
       pushed = true;
+      cfunction = undefined;
       continue;
-    } else if (pushed || tables.length === 0) {
+    } else if (pushed) {
+      const table = tables.at(-1);
+      if (table !== undefined && field === "__index") table.index = cfunction ?? null;
       store(field);
+    } else if (tables.length === 0) {
+      throw new Error(
+        `native registration: ${file} sets "${field}" on the module with lua_setfield, but pushes no value this reader recognizes since the register call or the field before it, so what it stores cannot be read.`,
+      );
     } else {
-      for (const key of tables.pop() as string[]) store(`${field}.${key}`);
+      for (const key of (tables.pop() as OpenTable).keys) store(`${field}.${key}`);
     }
     pushed = false;
+    cfunction = undefined;
   }
   if (tables.length > 0) {
     throw new Error(
@@ -337,11 +420,60 @@ function readConstants(structure: string, callIndex: number, file: string): stri
   return [...constants].sort();
 }
 
+/** A table the constant walk has opened and not yet closed. `index` is the cfunction
+ * stored under `__index`, or `null` when `__index` holds some other value. */
+interface OpenTable {
+  keys: string[];
+  index?: string | null;
+}
+
+/** The fields a metatable serves once `lua_setmetatable` consumes it: none of its own
+ * keys, and the `case HASH_<name>:` labels its `__index` cfunction switches on. A
+ * metatable with no `__index` serves no fields; one whose `__index` cannot be read
+ * throws rather than reading as serving none. */
+function metatableFields(structure: string, table: OpenTable | undefined, file: string): string[] {
+  if (table === undefined) {
+    throw new Error(
+      `native registration: ${file} calls lua_setmetatable after its luaL_register call with no table opened for it, so the metatable it sets cannot be read.`,
+    );
+  }
+  if (table.index === undefined) return [];
+  if (table.index === null) {
+    throw new Error(
+      `native registration: ${file} sets a metatable whose __index is not a cfunction, so the fields it serves cannot be read.`,
+    );
+  }
+  const definitions = [
+    ...structure.matchAll(
+      new RegExp(`\\b${table.index}\\s*\\(\\s*lua_State\\s*\\*\\s*\\w+\\s*\\)\\s*\\{`, "g"),
+    ),
+  ];
+  const definition = definitions[0];
+  if (definitions.length !== 1 || definition === undefined) {
+    throw new Error(
+      `native registration: ${file} sets a metatable whose __index is \`${table.index}\`, which it defines ${definitions.length} times, so the fields it serves cannot be read.`,
+    );
+  }
+  const open = (definition.index ?? 0) + definition[0].length - 1;
+  const labels = [
+    ...structure
+      .slice(open, matchingBrace(structure, open, file))
+      .matchAll(/\bcase\s+HASH_(\w+)\s*:/g),
+  ].map((label) => label[1] as string);
+  if (labels.length === 0) {
+    throw new Error(
+      `native registration: ${file} sets a metatable whose __index \`${table.index}\` switches on no case HASH_<name>: label, so the fields it serves cannot be read.`,
+    );
+  }
+  return labels;
+}
+
 /** Everything that moves the constant walk: a table opening, a `SETCONSTANT` (which
- * pushes and sets at once), a `lua_setfield` into the table below the top, or any
- * push. */
+ * pushes and sets at once), a cfunction push, a `lua_setfield` into the table below
+ * the top, a `lua_setmetatable` consuming the top, or any other push — a custom
+ * `->push(L)` or `<Class>::push(L)` among them. */
 const CONSTANT_EVENTS =
-  /\b(?:(lua_newtable|lua_createtable)\s*\(|SETCONSTANT\s*\(\s*(\w+)\s*\)|lua_setfield\s*\(\s*\w+\s*,\s*-2\s*,\s*"(\w+)"\s*\)|(?:lua_push\w+|dmScript::Push\w+)\s*\()/g;
+  /\b(?:(lua_newtable|lua_createtable)\s*\(|SETCONSTANT\s*\(\s*(\w+)\s*\)|lua_pushcfunction\s*\(\s*\w+\s*,\s*(\w+)\s*\)|lua_setfield\s*\(\s*\w+\s*,\s*-2\s*,\s*"(\w+)"\s*\)|(lua_setmetatable)\s*\(\s*\w+\s*,\s*-2\s*\)|(?:lua_push\w+|dmScript::Push\w+)\s*\()|(?:->|::)push\s*\(\s*\w+\s*\)/g;
 
 /** Names a call can pass by identifier: string defines and `const char*` constants,
  * plus the token defines and stringify macros `resolveName` follows. An object-like
