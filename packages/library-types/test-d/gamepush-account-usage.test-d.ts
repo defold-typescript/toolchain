@@ -32,6 +32,33 @@ player.callbacks.sync = (success) => {
   const _synced: boolean = success;
   void _synced;
 };
+player.callbacks.load = (success) => {
+  const _loaded: boolean = success;
+  void _loaded;
+};
+player.callbacks.login = (success) => {
+  const _loggedIn: boolean = success;
+  void _loggedIn;
+};
+player.callbacks.logout = (success) => {
+  const _loggedOut: boolean = success;
+  void _loggedOut;
+};
+
+// Off HTML5 the stand-in fires `fetch_fields` with no value.
+player.callbacks.fetch_fields = (success: boolean | undefined) => {
+  void success;
+};
+// @ts-expect-error a handler that requires a boolean cannot take the missing value.
+player.callbacks.fetch_fields = (success: boolean) => {
+  void success;
+};
+
+player.fetch_fields(() => {});
+// @ts-expect-error the completion callback receives nothing.
+player.fetch_fields((fields: unknown) => {
+  void fields;
+});
 
 // The submodule is reachable through `player.stats` as well as its own module id.
 const days: number = player.stats.active_days();
