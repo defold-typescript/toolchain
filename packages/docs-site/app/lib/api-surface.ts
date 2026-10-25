@@ -429,8 +429,9 @@ export interface LibraryMeta {
    */
   authoredHere: boolean;
   /**
-   * `import` for a Lua module a project requires; `ambient` for a Defold native
-   * extension, whose namespace is a global the engine registers, so the page
+   * `import` for a Lua module a project requires or a curated native extension
+   * a project imports; `ambient` for a Defold extension read from its
+   * `.script_api`, whose namespace is a global the engine registers, so the page
    * tells the reader to call it with no import.
    */
   usage: "import" | "ambient";

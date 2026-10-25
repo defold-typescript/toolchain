@@ -185,8 +185,11 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
       declaration: "generated/native/uuid.d.ts",
     };
     const source = readFileSync(join(PACKAGE_ROOT, shipped.declaration), "utf8");
-    const renamed = source.replace(/namespace uuid4\b/, "namespace uuid");
+    const renamed = source
+      .replaceAll('"uuid4"', '"uuid"')
+      .replace("declare const uuid4:", "declare const uuid:");
     expect(renamed).not.toBe(source);
+    expect(renamed).not.toContain('"uuid4"');
     const report = buildNativeParity(tempRoot(entry, renamed), entry);
     expect(report.moduleName).toBe("uuid4");
     expect(report.moduleNameMatches).toBe(false);
@@ -230,22 +233,20 @@ describe("buildNativeParity over methods registered in several files", () => {
   }
 
   const DECLARATION = [
-    "declare global {",
-    "  namespace m {",
-    "    function f(): A | B;",
-    "    namespace T {",
-    "      const k: 1;",
-    "    }",
-    "    interface A {",
-    "      Get(): void;",
-    "      Set(): void;",
-    "    }",
-    "    interface B {",
-    "      Set(): void;",
-    "    }",
+    "/** @globalTable */",
+    'declare module "m" {',
+    "  function f(): A | B;",
+    "  namespace T {",
+    "    const k: 1;",
+    "  }",
+    "  interface A {",
+    "    Get(): void;",
+    "    Set(): void;",
+    "  }",
+    "  interface B {",
+    "    Set(): void;",
     "  }",
     "}",
-    "export {};",
   ].join("\n");
 
   const SYNTHETIC: NativeTarget = {
@@ -300,8 +301,8 @@ describe("buildNativeParity over methods registered in several files", () => {
 
   test("a declared type with methods that no entry names throws", () => {
     const declaration = DECLARATION.replace(
-      "    function f(): A | B;",
-      "    function f(): A | B | Extra;\n    interface Extra {\n      Run(): void;\n    }",
+      "  function f(): A | B;",
+      "  function f(): A | B | Extra;\n  interface Extra {\n    Run(): void;\n  }",
     );
     expect(declaration).not.toBe(DECLARATION);
     expect(() => buildNativeParity(syntheticRoot(declaration), SYNTHETIC)).toThrow(/"Extra"/);

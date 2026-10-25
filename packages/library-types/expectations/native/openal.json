@@ -11,6 +11,7 @@
   "receiverEmit": {
     "reason": "Every Source method checks for exactly one argument and reads the source table's `__userdata` from it, so a dot call passes nothing and raises an argument-count error; only TSTL's emit shows which call form the shipped declaration produces.",
     "consumer": [
+      "import * as openal from \"openal\";",
       "export function playShot(path: string): void {",
       "  openal.init();",
       "  const shot = openal.new_source(resource.load(path));",
@@ -22,7 +23,8 @@
       "  shot.rewind();",
       "  shot.stop();",
       "  openal.listener.orientation_up_y = 1;",
-      "  openal.doppler_factor = 2;",
+      "  const al = openal;",
+      "  al.doppler_factor = 2;",
       "  openal.remove_source(shot);",
       "}"
     ]

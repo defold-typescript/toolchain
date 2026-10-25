@@ -1,6 +1,8 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as box2d from "box2d";
+
 // Compile-only proof for the curated box2d native-extension namespace. No assertions
 // execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
 
@@ -132,5 +134,3 @@ body.CreateFixture({ shape: e_polygon, box: true, box_hx: 1, box_hy: 1, box_angl
 body.CreateFixture({ shape: e_chain, chain_vertices: points, chain_prev_vertex: origin }, 1);
 // @ts-expect-error an open chain needs both neighbor vertices.
 body.CreateFixture({ shape: e_chain, chain_vertices: points, chain_loop: false }, 1);
-
-export {};

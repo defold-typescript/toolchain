@@ -11,6 +11,7 @@
   "receiverEmit": {
     "reason": "Every NavMesh and Crowd method reads its table's `instance` handle from stack slot 1, so a dot call raises a bad-argument error or reads the wrong slot; only TSTL's emit shows which call form the shipped declaration produces.",
     "consumer": [
+      "import * as detour from \"detour\";",
       "export function navigate(data: string): number {",
       "  const mesh = detour.init(data);",
       "  const from = vmath.vector3(0, 0, 0);",

@@ -1,6 +1,8 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as wave from "wave";
+
 // Compile-only proof for the curated wave native-extension namespace. No
 // assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
 
@@ -28,5 +30,3 @@ wave.stop(id);
 wave.pause(true);
 const _paused: boolean = wave.is_pause();
 wave.shutdown();
-
-export {};

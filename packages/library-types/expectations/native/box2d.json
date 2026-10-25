@@ -11,6 +11,7 @@
   "receiverEmit": {
     "reason": "Every box2d userdata method reads its object from stack slot 1, and the extension calls each listener and ray-cast callback with only its own arguments; only TSTL's emit shows which call form and which callback parameters the shipped declaration produces.",
     "consumer": [
+      "import * as box2d from \"box2d\";",
       "export function simulate(): number {",
       "  const world = box2d.NewWorld(vmath.vector3(0, -10, 0));",
       "  const body = world.CreateBody({ type: box2d.b2BodyType.b2_dynamicBody });",

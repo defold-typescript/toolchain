@@ -1,6 +1,8 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as def_windward_jps from "def_windward_jps";
+
 // Compile-only proof for the curated def-windward-jps native-extension namespace. No
 // assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
 
@@ -30,5 +32,3 @@ def_windward_jps.create_grid(64, 64);
 grid.is_walkable([1]);
 // @ts-expect-error a failed search returns no path, so check before use.
 const _unchecked: def_windward_jps.Point[] = grid.find_path([1, 1], [2, 2])[0];
-
-export {};

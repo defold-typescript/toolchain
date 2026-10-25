@@ -11,6 +11,7 @@
   "receiverEmit": {
     "reason": "The native `FindPath` and `IsWalkable` read the grid from stack slot 1, so a dot call on a grid raises a bad-argument error; only TSTL's emit shows which call form the shipped declaration produces.",
     "consumer": [
+      "import * as def_windward_jps from \"def_windward_jps\";",
       "export function route(): def_windward_jps.Point[] | undefined {",
       "  const grid = def_windward_jps.create_grid(64, 64, [[10, 12], [11, 12]]);",
       "  if (!grid.is_walkable([8, 8])) {",

@@ -148,12 +148,15 @@ another library's types fails the check this way. A file already in `types/`
 that an exported file overwrites is replaced under its own name; other files
 there are left alone.
 
-A native extension's file stays in global form (`declare global { namespace
-daabbcc { ... } }`), so a project that switches to your shipped types needs no
-change. Converting it to the [module form](#module-form-global-form-or-both)
-is your choice: the module declaration carries `/** @globalTable */`, and
-projects then reach the API with `import * as daabbcc from "daabbcc"` instead
-of the global name.
+A native extension's file is already in the
+[module form](#module-form-global-form-or-both): a
+`/** @globalTable */ declare module "daabbcc"` that projects reach with
+`import * as daabbcc from "daabbcc"`. The namespaces that were globals in
+v0.53.0 (`daabbcc`, `share`, `uuid4` and `tile_raycast`) also declare a
+deprecated `declare const daabbcc: typeof import("daabbcc")`, so a project
+still calling the global keeps compiling. That line makes the file add a
+global name, so it installs only while `types/` holds no module-form file;
+delete it once your users import the module.
 
 Once a release carries the `types/` folder, projects that depend on that
 release get your shipped types. The curated copy is then retired here in a
