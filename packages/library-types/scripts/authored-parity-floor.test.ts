@@ -391,6 +391,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "45fc934e5380ef71561a9f706148d66d011a4427383529f77439a55deb3fbb3f",
   "fixtures/upstream-lua/defold-richtext/richtext/tags.lua":
     "d7ae9b160623e4f250204cad8ca05cc8ccbdada7ed32cb529e48a8570337a4dc",
+  "fixtures/upstream-lua/defold-sentinel/sentinel/sentry.lua":
+    "13fbdaa52764b0d9952f8c94a979cd6156669e6697b9153877dddcab0dbdd69a",
   "fixtures/upstream-lua/defold-shutter/shutter/shutter.lua":
     "2554c3e742ce43d710c60cf09445e871c8ac3c748531ca72b53dcb1a30588fcd",
   "fixtures/upstream-lua/defold-sprite-repeat/node_repeat/node_repeat.lua":

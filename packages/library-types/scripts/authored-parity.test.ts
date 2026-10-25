@@ -1179,12 +1179,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other thirty-eight targets share no variadic member at all", () => {
+  test("the other thirty-nine targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(38);
+    expect(untouched.length).toBe(39);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1909,6 +1909,54 @@ describe("the defold-sprite-repeat modules declare the whole of their upstream m
   test("node_repeat's one declined block is answered by the fork rather than charged", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("node_repeat"));
     expect(report.refusedDocBlocksTotal).toBe(1);
+    expect(report.refusedDocBlocks).toBe(0);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// Built live from the target entry, on the checkpoint precedent. The native half of
+// defold-sentinel registers no Lua module, so `sentinel/sentry.lua` is the whole surface
+// a consumer reaches. `config`, `obj`, `transactions` and `breadcrumbs` are assigned onto
+// the module only inside `init` and the capture calls, so declaring any of them would
+// read as a phantom field here.
+describe("sentinel.sentry declares the whole of its upstream module", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("sentinel"));
+
+  test("both axes close, with nothing missing and nothing invented", () => {
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("the measured surface is upstream's six callables and no fields", () => {
+    expect(report.upstreamMembers).toBe(6);
+    expect(report.declaredMembers).toBe(6);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.declaredFields).toBe(0);
+    expect(report.parityExceptions).toEqual([]);
+  });
+
+  test("the state init and the capture calls assign stays off the module", () => {
+    const declared = apiDocElements(target("sentinel"));
+    expect(new Set(declared.filter((e) => e.type === "FUNCTION").map((e) => e.name))).toEqual(
+      new Set([
+        "add_breadcrumb",
+        "capture_exception",
+        "capture_message",
+        "init",
+        "set_extra",
+        "set_tag",
+      ]),
+    );
+    expect(declared.filter((e) => e.type === "VARIABLE")).toEqual([]);
+  });
+
+  test("no upstream doc block is refused", () => {
+    expect(report.refusedDocBlocksTotal).toBe(0);
     expect(report.refusedDocBlocks).toBe(0);
     expect(report.undocumentedMembers).toBe(0);
   });
