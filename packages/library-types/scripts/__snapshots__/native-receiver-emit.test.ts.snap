@@ -3,6 +3,7 @@
 exports[`each shipped native declaration emits the receiver form its expectation records box2d: a consumer transpiles with the call forms the declaration produces: box2d 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
+local box2d = _G.box2d
 function ____exports.simulate()
     local world = box2d.NewWorld(vmath.vector3(0, -10, 0))
     local body = world:CreateBody({type = box2d.b2BodyType.b2_dynamicBody})
@@ -31,6 +32,7 @@ return ____exports
 exports[`each shipped native declaration emits the receiver form its expectation records def_windward_jps: a consumer transpiles with the call forms the declaration produces: def_windward_jps 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
+local def_windward_jps = _G.def_windward_jps
 function ____exports.route()
     local grid = def_windward_jps.create_grid(64, 64, {{10, 12}, {11, 12}})
     if not grid:is_walkable({8, 8}) then
@@ -46,6 +48,7 @@ return ____exports
 exports[`each shipped native declaration emits the receiver form its expectation records detour: a consumer transpiles with the call forms the declaration produces: detour 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
+local detour = _G.detour
 function ____exports.navigate(data)
     local mesh = detour.init(data)
     local from = vmath.vector3(0, 0, 0)
@@ -80,6 +83,7 @@ return ____exports
 exports[`each shipped native declaration emits the receiver form its expectation records openal: a consumer transpiles with the call forms the declaration produces: openal 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
+local openal = _G.openal
 function ____exports.playShot(path)
     openal.init()
     local shot = openal.new_source(resource.load(path))
@@ -93,7 +97,8 @@ function ____exports.playShot(path)
     shot:rewind()
     shot:stop()
     openal.listener.orientation_up_y = 1
-    openal.doppler_factor = 2
+    local al = openal
+    al.doppler_factor = 2
     openal.remove_source(shot)
 end
 return ____exports

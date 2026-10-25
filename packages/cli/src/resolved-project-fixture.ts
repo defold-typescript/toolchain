@@ -47,14 +47,27 @@ export const RESOLVED_PROJECT_MAIN = [
   'import { defineScript } from "@defold-typescript/types";',
   'import * as checkpoint from "checkpoint.checkpoint";',
   'import * as pixels from "pixels";',
+  'import * as png from "png";',
   "export default defineScript({",
   "  init() {",
-  "    print(uuid4.generate(), checkpoint.project_save_path);",
+  "    print(uuid4.generate(), checkpoint.project_save_path, png.RGBA);",
   "    pixels.fill(7);",
   "  },",
   "});",
   "",
 ].join("\n");
+
+function curatedNative(namespace: string): ExtensionDeclarations["declarations"][number] {
+  const target = loadVendoredNativeRegistry().find((entry) => entry.namespace === namespace);
+  if (target === undefined) {
+    throw new Error(`the vendored native registry carries no ${namespace} target`);
+  }
+  return {
+    namespace: target.namespace,
+    contents: readFileSync(target.declarationPath, "utf8"),
+    dropped: [],
+  };
+}
 
 function extensionBundle(url: string): ExtensionDeclarations {
   return {
@@ -73,28 +86,23 @@ function extensionBundle(url: string): ExtensionDeclarations {
 }
 
 /**
- * Installs what `resolve` writes for three dependencies — the curated `uuid4`
- * native, a native shipping its own `@globalTable` declaration, and the vendored
- * `checkpoint` library — through `resolve`'s own writers, so a test sees the
- * tree and the `tsconfig.json` entries a real resolve leaves.
+ * Installs what `resolve` writes for four dependencies — the curated `png`
+ * native, the curated `uuid4` native with the deprecated global a release
+ * shipped, a native shipping its own `@globalTable` declaration, and the
+ * vendored `checkpoint` library — through `resolve`'s own writers, so a test
+ * sees the tree and the `tsconfig.json` entries a real resolve leaves.
  */
 export function installResolvedDeclarations(cwd: string): void {
-  const uuid4 = loadVendoredNativeRegistry().find((target) => target.namespace === "uuid4");
-  if (uuid4 === undefined) {
-    throw new Error("the vendored native registry carries no uuid4 target");
-  }
   const { materializedDir: extensionsDir } = materializeExtensionDeclarations({
     cwd,
     bundles: [
       {
+        ...extensionBundle("https://github.com/britzl/defold-png/archive/refs/tags/1.2.2.zip"),
+        declarations: [curatedNative("png")],
+      },
+      {
         ...extensionBundle("https://github.com/selimanac/defold-uuid4/archive/main.zip"),
-        declarations: [
-          {
-            namespace: uuid4.namespace,
-            contents: readFileSync(uuid4.declarationPath, "utf8"),
-            dropped: [],
-          },
-        ],
+        declarations: [curatedNative("uuid4")],
       },
       {
         ...extensionBundle("https://github.com/king8fisher/defold-pixels/archive/main.zip"),

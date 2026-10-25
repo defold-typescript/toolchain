@@ -1,6 +1,19 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as ainpc from "ainpc";
+import * as directories from "directories";
+import * as fontscale from "fontscale";
+import * as gyro from "gyro";
+import * as imp from "imp";
+import * as openal from "openal";
+import * as png from "png";
+import * as share from "share";
+import * as taptic_engine from "taptic_engine";
+import * as tile_raycast from "tile_raycast";
+import * as uptime from "uptime";
+import * as uuid4 from "uuid4";
+
 // Compile-only proof for the curated defold-sharing, defold-uuid4 and
 // defold-tile-raycast native-extension namespaces. No assertions execute;
 // `tsc --noEmit` under tsconfig.dts-check.json is the gate.
@@ -128,7 +141,11 @@ shot.play();
 openal.remove_source(shot);
 openal.listener.orientation_up_y = 1;
 openal.listener.x = 2;
+// @ts-expect-error a namespace import is read-only, so a module setting is written through a local.
 openal.doppler_factor = 2;
+const al = openal;
+al.doppler_factor = 2;
+al.speed_of_sound = 343.3;
 const _speed: number = openal.speed_of_sound;
 openal.set_distance_model("linear");
 // @ts-expect-error the distance model is one of seven named models.
@@ -165,5 +182,3 @@ ainpc.npc_chat("npc", "hello", onReply, onFail);
 ainpc.npc_kill("npc", onReply);
 // @ts-expect-error a body holds JSON values, and a function has no JSON form.
 ainpc.npc_spawn({ name: "Ada", greet: () => "hi" }, onReply, onFail);
-
-export {};

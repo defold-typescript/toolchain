@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import ts from "typescript";
 import {
   lowerNativeApiDoc,
   type NativeTarget,
@@ -274,32 +275,113 @@ describe("committed native api-docs", () => {
       expect(readFileSync(path, "utf8")).toBe(lowerNativeApiDoc(PACKAGE_ROOT, t));
     }
   });
+});
 
-  // The edit that turns a curated declaration into a `@globalTable` module, made
-  // mechanically, so the api-doc can be checked before any file changes form.
-  function asGlobalTableModule(source: string, namespace: string): string {
-    const opening = new RegExp(
-      `^declare global \\{\\n([\\s\\S]*?)^  namespace ${namespace} \\{$`,
-      "m",
-    );
-    const closing = /^\}\n\nexport \{\};\n$/m;
-    expect(source).toMatch(opening);
-    expect(source).toMatch(closing);
-    return source
-      .replace(opening, `$1  /** @globalTable */ declare module "${namespace}" {`)
-      .replace(closing, "");
-  }
+// The last release whose curated natives were globals. A namespace it shipped in
+// that form keeps a deprecated global alias for one release, and no other
+// namespace gets one. Pinned rather than read as the latest tag, because the
+// latest tag moves once a release ships every namespace in module form.
+const GLOBAL_FORM_RELEASE = "v0.53.0";
 
-  test("each declaration lowers to its committed api-doc as a @globalTable module", () => {
-    for (const t of readNativeTargets(PACKAGE_ROOT)) {
-      const source = asGlobalTableModule(
-        readFileSync(join(PACKAGE_ROOT, t.declaration), "utf8"),
-        t.namespace,
-      );
-      expect(source).not.toContain("declare global");
-      expect(lowerNativeApiDoc(PACKAGE_ROOT, t, source)).toBe(
-        readFileSync(join(PACKAGE_ROOT, nativeApiDocPath(t)), "utf8"),
-      );
+function atGlobalFormRelease(path: string): string {
+  const spec = `${GLOBAL_FORM_RELEASE}:packages/library-types/${path}`;
+  const proc = Bun.spawnSync(["git", "show", spec], {
+    cwd: PACKAGE_ROOT,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (proc.exitCode !== 0) throw new Error(`git show ${spec} failed: ${proc.stderr.toString()}`);
+  return proc.stdout.toString();
+}
+
+function releasedGlobalNamespaces(): string[] {
+  const { targets } = JSON.parse(atGlobalFormRelease("native-targets.json")) as {
+    targets: NativeTarget[];
+  };
+  return targets
+    .filter((t) => /^declare global \{$/m.test(atGlobalFormRelease(t.declaration)))
+    .map((t) => t.namespace);
+}
+
+interface DeclarationForm {
+  readonly scriptFile: boolean;
+  readonly noSelfInFile: boolean;
+  readonly modules: { readonly name: string; readonly globalTable: string | undefined }[];
+  readonly aliases: {
+    readonly name: string;
+    readonly type: string;
+    readonly deprecated: boolean;
+  }[];
+  readonly otherStatements: number;
+}
+
+// `scriptFile` matters because an `import` or `export {}` turns `declare module`
+// into an augmentation nothing can import. TSTL reads `@noSelfInFile` from every
+// comment before the first statement, not only the last one.
+function declarationForm(source: string): DeclarationForm {
+  const sf = ts.createSourceFile("native.d.ts", source, ts.ScriptTarget.Latest, true);
+  const modules: DeclarationForm["modules"] = [];
+  const aliases: DeclarationForm["aliases"] = [];
+  let otherStatements = 0;
+  for (const stmt of sf.statements) {
+    if (ts.isModuleDeclaration(stmt) && ts.isStringLiteral(stmt.name)) {
+      const tag = ts.getJSDocTags(stmt).find((t) => t.tagName.text === "globalTable");
+      modules.push({
+        name: stmt.name.text,
+        globalTable: tag && (ts.getTextOfJSDocComment(tag.comment) ?? "").trim(),
+      });
+    } else if (
+      ts.isVariableStatement(stmt) &&
+      (stmt.declarationList.flags & ts.NodeFlags.Const) !== 0 &&
+      stmt.declarationList.declarations.length === 1
+    ) {
+      const [decl] = stmt.declarationList.declarations;
+      aliases.push({
+        name: decl?.name.getText(sf) ?? "",
+        type: decl?.type?.getText(sf) ?? "",
+        deprecated: ts.getJSDocTags(stmt).some((t) => t.tagName.text === "deprecated"),
+      });
+    } else {
+      otherStatements++;
     }
+  }
+  const leading = ts.getLeadingCommentRanges(source, 0) ?? [];
+  return {
+    scriptFile: !ts.isExternalModule(sf),
+    noSelfInFile: leading.some(({ pos, end }) => source.slice(pos, end).includes("@noSelfInFile")),
+    modules,
+    aliases,
+    otherStatements,
+  };
+}
+
+describe("curated native declaration form", () => {
+  test(`each is a bare @globalTable module, aliased as a global only where ${GLOBAL_FORM_RELEASE} shipped one`, () => {
+    const targets = readNativeTargets(PACKAGE_ROOT);
+    const released = new Set(releasedGlobalNamespaces());
+    expect(released.size).toBeGreaterThan(0);
+    expect([...released].filter((ns) => !targets.some((t) => t.namespace === ns))).toEqual([]);
+
+    const actual = Object.fromEntries(
+      targets.map((t) => [
+        t.namespace,
+        declarationForm(readFileSync(join(PACKAGE_ROOT, t.declaration), "utf8")),
+      ]),
+    );
+    const expected = Object.fromEntries(
+      targets.map(({ namespace }): [string, DeclarationForm] => [
+        namespace,
+        {
+          scriptFile: true,
+          noSelfInFile: true,
+          modules: [{ name: namespace, globalTable: "" }],
+          aliases: released.has(namespace)
+            ? [{ name: namespace, type: `typeof import("${namespace}")`, deprecated: true }]
+            : [],
+          otherStatements: 0,
+        },
+      ]),
+    );
+    expect(actual).toEqual(expected);
   });
 });

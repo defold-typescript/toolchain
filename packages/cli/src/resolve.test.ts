@@ -1217,7 +1217,7 @@ describe("runResolve corpus match precedes .script_api", () => {
 describe("runResolve curated native extension", () => {
   const DAABBCC_URL = "https://github.com/selimanac/defold-daabbcc/archive/refs/tags/v3.0.8.zip";
   const CURATED =
-    "/** @noSelfInFile */\ndeclare global {\n  namespace daabbcc {\n    function reset(): void;\n  }\n}\n\nexport {};\n";
+    '/** @noSelfInFile */\n/** @globalTable */\ndeclare module "daabbcc" {\n  function reset(): void;\n}\n';
   const DOC_DAABBCC = `
 - name: daabbcc
   type: table
@@ -1370,7 +1370,7 @@ declare module "pixels" {
 }
 `;
   const CURATED =
-    "/** @noSelfInFile */\ndeclare global {\n  namespace pixels {\n    function curated(): void;\n  }\n}\n\nexport {};\n";
+    '/** @noSelfInFile */\n/** @globalTable */\ndeclare module "pixels" {\n  function curated(): void;\n}\n';
 
   function pixelsArchive(files: Record<string, string>): Record<string, FakeArchive> {
     return {

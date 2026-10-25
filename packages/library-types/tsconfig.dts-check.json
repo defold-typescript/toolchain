@@ -117,6 +117,7 @@
     "test-d/sentinel-usage.test-d.ts",
     "test-d/daabbcc-usage.test-d.ts",
     "test-d/native-extensions-usage.test-d.ts",
+    "test-d/native-global-alias.test-d.ts",
     "test-d/def-windward-jps-usage.test-d.ts",
     "test-d/box2d-usage.test-d.ts",
     "test-d/daabbcc3d-usage.test-d.ts",
