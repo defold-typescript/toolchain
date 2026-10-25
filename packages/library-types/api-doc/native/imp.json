@@ -9,7 +9,7 @@
       "type": "FUNCTION",
       "name": "convolution",
       "brief": "Applies a row-major 3x3 convolution kernel to `src` and writes the result",
-      "description": "Applies a row-major 3x3 convolution kernel to `src` and writes the result\ninto `dst`. Both buffers must carry a uint8 `rgb` stream of three or four\ncomponents per pixel, and must hold the same byte count — the call raises\nan error otherwise.",
+      "description": "Applies a row-major 3x3 convolution kernel to `src` and writes the result\ninto `dst`. Both buffers must carry a uint8 `rgb` stream of three or four\ncomponents per pixel and hold at least `width * height` elements. The\ncall checks that each stream is uint8 and that the two streams' component\ncounts match, but not either buffer's element count, so an undersized\nbuffer is read or written past its end.",
       "parameters": [
         {
           "name": "src",

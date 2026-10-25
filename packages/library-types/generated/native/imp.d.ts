@@ -11,8 +11,10 @@ declare global {
     /**
      * Applies a row-major 3x3 convolution kernel to `src` and writes the result
      * into `dst`. Both buffers must carry a uint8 `rgb` stream of three or four
-     * components per pixel, and must hold the same byte count — the call raises
-     * an error otherwise.
+     * components per pixel and hold at least `width * height` elements. The
+     * call checks that each stream is uint8 and that the two streams' component
+     * counts match, but not either buffer's element count, so an undersized
+     * buffer is read or written past its end.
      *
      * @param src - The source buffer, read only.
      * @param dst - The destination buffer the result is written into.
