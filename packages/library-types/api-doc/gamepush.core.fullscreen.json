@@ -1,0 +1,75 @@
+{
+  "info": {
+    "namespace": "gamepush.core.fullscreen",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "open",
+      "brief": "Enters fullscreen.",
+      "description": "Enters fullscreen.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "close",
+      "brief": "Leaves fullscreen.",
+      "description": "Leaves fullscreen.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "toggle",
+      "brief": "Toggles fullscreen.",
+      "description": "Toggles fullscreen.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "FullscreenCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FullscreenCallbacks",
+      "properties": [
+        {
+          "name": "open",
+          "brief": "The game entered fullscreen.",
+          "description": "The game entered fullscreen.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "close",
+          "brief": "The game left fullscreen.",
+          "description": "The game left fullscreen.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "change",
+          "brief": "Fullscreen was toggled.",
+          "description": "Fullscreen was toggled.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

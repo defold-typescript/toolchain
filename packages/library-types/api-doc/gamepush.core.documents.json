@@ -1,0 +1,102 @@
+{
+  "info": {
+    "namespace": "gamepush.core.documents",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "open",
+      "brief": "Opens the privacy policy. Raises when the table is missing.",
+      "description": "Opens the privacy policy. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The document, for example `{ type: \"PLAYER_PRIVACY_POLICY\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches the privacy policy. Raises when the table is missing.",
+      "description": "Fetches the privacy policy. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The document and its format, for example\n`{ type: \"PLAYER_PRIVACY_POLICY\", format: \"TXT\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the document.",
+          "types": [
+            "(document: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "DocumentsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DocumentsCallbacks",
+      "properties": [
+        {
+          "name": "open",
+          "brief": "The privacy policy opened.",
+          "description": "The privacy policy opened.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "close",
+          "brief": "The privacy policy closed.",
+          "description": "The privacy policy closed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch",
+          "brief": "The privacy policy was fetched.",
+          "description": "The privacy policy was fetched.",
+          "types": [
+            "(document: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch",
+          "brief": "Fetching the privacy policy failed.",
+          "description": "Fetching the privacy policy failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

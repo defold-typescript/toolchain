@@ -1,0 +1,77 @@
+{
+  "info": {
+    "namespace": "gamepush.core.logger",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "info",
+      "brief": "Shows an info toast.",
+      "description": "Shows an info toast.",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "The values to show, encoded as JSON.",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "warn",
+      "brief": "Shows a warning toast.",
+      "description": "Shows a warning toast.",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "The values to show, encoded as JSON.",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "error",
+      "brief": "Shows an error toast.",
+      "description": "Shows an error toast.",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "The values to show, encoded as JSON.",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "log",
+      "brief": "Logs to the console.",
+      "description": "Logs to the console.",
+      "parameters": [
+        {
+          "name": "args",
+          "doc": "The values to log, encoded as JSON.",
+          "types": [
+            "unknown[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

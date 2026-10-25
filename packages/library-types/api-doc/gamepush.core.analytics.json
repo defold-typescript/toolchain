@@ -1,0 +1,51 @@
+{
+  "info": {
+    "namespace": "gamepush.core.analytics",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "hit",
+      "brief": "Records a page visit or view.",
+      "description": "Records a page visit or view.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The page's address.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "goal",
+      "brief": "Records a reached goal.",
+      "description": "Records a reached goal.",
+      "parameters": [
+        {
+          "name": "event",
+          "doc": "The goal's event.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "The goal's value.",
+          "types": [
+            "string | number | boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

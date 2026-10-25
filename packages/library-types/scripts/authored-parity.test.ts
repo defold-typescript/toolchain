@@ -1179,12 +1179,21 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other fifty-eight targets share no variadic member at all", () => {
-    const moved = new Set(["deftest", "defmath", "zzfx"]);
+  // `logger` forwards its `...` straight to the SDK, so each of its four members is
+  // variadic upstream and declared with a rest parameter.
+  test("GamePush's four logger members meet their floor", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("gamepush.core.logger"));
+    expect(report.variadicMembers).toBe(4);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("the other seventy-one targets share no variadic member at all", () => {
+    const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(58);
+    expect(untouched.length).toBe(71);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2005,6 +2014,26 @@ const GAMEPUSH_SLICES: {
     callables: 112,
     fields: 10,
   },
+  {
+    title: "platform",
+    upstream: {
+      "gamepush.core.app": { callables: 9, fields: 0 },
+      "gamepush.core.platform": { callables: 5, fields: 12 },
+      "gamepush.core.analytics": { callables: 2, fields: 0 },
+      "gamepush.core.documents": { callables: 2, fields: 1 },
+      "gamepush.core.experiments": { callables: 3, fields: 0 },
+      "gamepush.core.files": { callables: 8, fields: 1 },
+      "gamepush.core.fullscreen": { callables: 3, fields: 1 },
+      "gamepush.core.games_collections": { callables: 2, fields: 1 },
+      "gamepush.core.images": { callables: 8, fields: 1 },
+      "gamepush.core.logger": { callables: 4, fields: 0 },
+      "gamepush.core.segments": { callables: 2, fields: 1 },
+      "gamepush.core.sounds": { callables: 9, fields: 1 },
+      "gamepush.core.windows": { callables: 1, fields: 1 },
+    },
+    callables: 58,
+    fields: 20,
+  },
 ];
 
 for (const slice of GAMEPUSH_SLICES) {
@@ -2064,6 +2093,34 @@ for (const slice of GAMEPUSH_SLICES) {
     });
   });
 }
+
+// `gamepush.lua` assigns each typed module to a field with `M.x = require(...)`, so the
+// field axis is what holds the entry module to reaching every one of them.
+describe("the GamePush entry module declares the whole of its upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("gamepush"));
+
+  test("both axes close, with nothing missing and nothing invented", () => {
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("the measured surface is 18 callables and 34 fields", () => {
+    expect(report.upstreamMembers).toBe(18);
+    expect(report.upstreamFields).toBe(34);
+    expect(report.parityExceptions).toEqual([]);
+  });
+
+  test("every member carries its own documentation and none is imported", () => {
+    expect(report.undocumentedMembers).toBe(0);
+    expect(report.importedDocs).toBe(0);
+    expect(report.refusedDocBlocksTotal).toBe(0);
+  });
+});
 
 describe("the artifact shape is diff-stable", () => {
   test("every list is sorted by name", () => {

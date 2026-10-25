@@ -1,0 +1,83 @@
+{
+  "info": {
+    "namespace": "gamepush.core.segments",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "The tags of the segments the player belongs to; empty when none.",
+      "description": "The tags of the segments the player belongs to; empty when none.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has",
+      "brief": "Whether the player belongs to a segment.",
+      "description": "Whether the player belongs to a segment.",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "The segment's tag.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "SegmentsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SegmentsCallbacks",
+      "properties": [
+        {
+          "name": "enter",
+          "brief": "The player entered a segment.",
+          "description": "The player entered a segment.",
+          "types": [
+            "(segment_tag: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "leave",
+          "brief": "The player left a segment.",
+          "description": "The player left a segment.",
+          "types": [
+            "(segment_tag: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
