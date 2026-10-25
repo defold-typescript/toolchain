@@ -905,7 +905,7 @@ describe("Asset Portal script_api libraries under Libraries", () => {
   const pageAt = (dir: string, route: string) =>
     loadVersionIndependentPages(ENGINE_FIXTURE_DIR, dir).find((page) => page.route === route);
 
-  test("each portal doc is a library page under its GitHub owner, called through its global", () => {
+  test("each portal doc is a library page under its GitHub owner, imported by its namespace", () => {
     const dir = libraryTypesWithPortalPages([{ page: "astar" }]);
     const page = pageAt(dir, "/api/astar");
     expect(page?.category).toBe("library");
@@ -918,11 +918,10 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       authorUrl: "https://github.com/someone/defold-lib-0",
       commit: "v1.0.0",
       sourceUrl: "https://github.com/someone/defold-lib-0/blob/v1.0.0/lib/api/astar.script_api",
-      importString: "",
+      importString: 'import * as astar from "astar"',
       license: "MIT",
       authoredHere: true,
-      usage: "ambient",
-      globalNamespace: "astar",
+      usage: "import",
       pinKind: "tag",
       portal: { id: "portal-0", url: "https://defold.com/assets/portal-0/" },
     });
@@ -931,6 +930,8 @@ describe("Asset Portal script_api libraries under Libraries", () => {
   test("a portal doc declaring an engine namespace says it extends that namespace", () => {
     const dir = libraryTypesWithPortalPages([{ page: "lib.gui", namespace: "gui" }]);
     const meta = pageAt(dir, "/api/lib.gui")?.libraryMeta;
+    expect(meta?.usage).toBe("ambient");
+    expect(meta?.importString).toBe("");
     expect(meta?.globalNamespace).toBe("gui");
     expect(meta?.extendsNamespace).toBe("gui");
   });

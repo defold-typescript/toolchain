@@ -2388,15 +2388,22 @@ describe("Defold extension pages", () => {
     return apiPageMarkdown(page, (t) => t);
   };
 
-  test("an extension page links its releases, keeps resolve, and calls the global with no import", () => {
+  const importStep = (statement: string) =>
+    `  3. Import it under a namespace alias of your choice:\n     \`\`\`ts\n     ${statement}\n     \`\`\``;
+
+  test("an extension page links its releases, keeps resolve, and imports its namespace", () => {
     const md = render("/api/iap");
     expect(md).toContain("](https://github.com/defold/extension-iap/releases)");
     expect(md).toContain(
       "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
     );
-    expect(md).not.toContain("import * as");
-    expect(md).toContain("  3. Call it through the global `iap` — no import.");
+    expect(md).toContain(importStep('import * as iap from "iap"'));
+    expect(md).not.toContain("no import");
     expect(md).not.toContain("/archive/");
+  });
+
+  test("a dotted extension page imports its module under the segments past the first", () => {
+    expect(render("/api/rive.cmd")).toContain(importStep('import * as cmd from "rive.cmd"'));
   });
 
   const manifest = JSON.parse(
@@ -2429,8 +2436,8 @@ describe("Defold extension pages", () => {
     expect(md).toContain(
       "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
     );
-    expect(md).toContain(`  3. Call it through the global \`${namespace}\` — no import.`);
-    expect(md).not.toContain("import * as");
+    expect(md).toContain(importStep(`import * as ${namespace} from "${namespace}"`));
+    expect(md).not.toContain("no import");
   };
 
   test("a tag-pinned extension page names its tag archive instead of picking a release", () => {
@@ -2479,7 +2486,7 @@ describe("Asset Portal script_api pages", () => {
   };
 
   for (const refKind of ["release", "tag", "commit"] as const) {
-    test(`the first ${refKind}-pinned portal page gives that pin's dependency step, its global and its portal entry`, () => {
+    test(`the first ${refKind}-pinned portal page gives that pin's dependency step, its import and its portal entry`, () => {
       const library = manifest.libraries.find((entry) => entry.refKind === refKind);
       const doc = library?.docs[0];
       if (!library || !doc) {
@@ -2492,12 +2499,13 @@ describe("Asset Portal script_api pages", () => {
       const md = apiPageMarkdown(page, (t) => t);
       const repoName = library.repo.split("/").at(-1);
       const portal = `- Asset Portal: [${repoName}](https://defold.com/assets/${library.id}/)`;
-      const global = `  3. Call it through the global \`${doc.namespace}\` — no import.`;
+      const imported = `     import * as ${doc.namespace} from "${doc.namespace}"`;
       expect(md).toContain(dependencyStep(library.repo, refKind, library.ref));
-      expect(md).toContain(global);
-      expect(md).not.toContain("import * as");
+      expect(md).toContain("  3. Import it under a namespace alias of your choice:");
+      expect(md).toContain(imported);
+      expect(md).not.toContain("no import");
       expect(md).toContain(portal);
-      expect(md.indexOf(portal)).toBeGreaterThan(md.indexOf(global));
+      expect(md.indexOf(portal)).toBeGreaterThan(md.indexOf(imported));
     });
   }
 });

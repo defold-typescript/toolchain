@@ -31,7 +31,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/shipped/<repo>/`, checked apart from every other dependency, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
 | **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
-| **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
+| **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one `@globalTable` module per doc, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
 | **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped                                                                                                     |
 
 The kinds are tried **in that order**: a confirmed corpus match decides the type
@@ -62,28 +62,46 @@ For each native extension, `resolve`:
 
 1. downloads and caches the archive (later runs are offline),
 2. locates every `.script_api` doc inside it,
-3. emits one ambient namespace per doc into `.defold-types/extensions/<namespace>.d.ts`,
+3. emits one `@globalTable` module per doc into `.defold-types/extensions/<namespace>.d.ts`,
    carrying the doc's functions and its constants (including those one sub-table
    deep, such as `iap.PROVIDER_ID_GOOGLE`), each constant branded as the `string`
    or `number` its doc declares, with a slot flagged `optional: true` emitted
    optional, a callback parameter typed from its documented arguments
    (`(self: unknown, code: number, data: { id: string }) => void`) and a table
-   parameter typed from its documented fields,
+   parameter typed from its documented fields, and beside it the doc's
+   deprecated ambient namespace in `<namespace>.global.d.ts`,
 4. writes an index barrel and a `package.json` for that sibling surface, and
 5. additively appends `"extensions"` to `tsconfig.json` `compilerOptions.types`, so
    it coexists with the pinned engine surface (and the `"libraries"` surface,
    below) under one `typeRoots`.
 
+Import each namespace under any local name. The build turns the import into a
+local alias of the extension's global, so no `require` reaches the Lua:
+
+```ts
+import * as iap from "iap"; // local iap = _G.iap
+
+iap.buy("my_iap", {});
+```
+
+A dotted namespace imports by its full name, as in
+`import * as cmd from "rive.cmd"`. The ambient namespace beside each module
+keeps a bare `iap.buy(...)` compiling, marked deprecated, until the next
+release removes it.
+
 When several dependencies declare one namespace — the Firebase extensions all
 declare `firebase` — each declaration is written to its own
 `<namespace>.<dependency>.d.ts`, named after the dependency's repository, and
-TypeScript merges them into one namespace. `resolve` reports it as
+TypeScript merges them into one module, so `import * as firebase from "firebase"`
+reaches every dependency's members. `resolve` reports it as
 `merged firebase from <url>, <url>`. A file name another file already uses,
 compared without letter case, gets a numbered suffix, such as `foo.bar-2.d.ts`
 when a `foo.bar` namespace already owns `foo.bar.d.ts`, or `foo-2.d.ts` beside a
 `Foo` namespace's `Foo.d.ts`. An extension that declares an engine
-namespace, such as Spine's `gui`, adds its members to that namespace and leaves
-the engine's type aliases, such as `gui.Playback`, to the engine surface.
+namespace, such as Spine's `gui`, stays an ambient namespace with no deprecated
+copy, because a module cannot add members to the engine's global: it adds its
+members to that namespace and leaves the engine's type aliases, such as
+`gui.Playback`, to the engine surface.
 
 `.defold-types/` is generated output and is gitignored. Re-run `resolve` whenever
 you change `[dependencies]`; each surface reconciles to exactly what is declared
@@ -165,9 +183,9 @@ shipped corpus is likewise warned and skipped rather than failing the run.
 
 A library that documents itself — shipping both its Lua modules and its own
 `.script_api` — keeps the curated types: the confirmed match wins, and that
-dependency contributes no ambient `extensions/` namespace. Upgrading to this
-behavior reconciles itself; an `extensions/` namespace an earlier run wrote for
-such a dependency is pruned and its tsconfig entry dropped, so the stale ambient
+dependency contributes no `extensions/` declaration. Upgrading to this
+behavior reconciles itself; an `extensions/` declaration an earlier run wrote for
+such a dependency is pruned and its tsconfig entry dropped, so the stale
 declarations cannot collide with the curated module.
 
 When such a self-documenting dependency's match stays **unconfirmed** — the

@@ -50,6 +50,30 @@ const SECOND = `
         desc: the script self
 `;
 
+const DOTTED = `
+- name: rive.cmd
+  type: table
+  desc: Rive commands.
+  members:
+  - name: run
+    type: function
+    desc: Runs a command.
+`;
+
+const ENGINE_EXTENDING = `
+- name: gui
+  type: table
+  desc: Spine gui nodes.
+  members:
+  - name: new_spine_node
+    type: function
+    desc: Creates a spine node.
+    parameters:
+      - name: pos
+        type: vector3
+        desc: the node position
+`;
+
 const CONSTANTS_ONLY = `
 - name: consts
   type: table
@@ -129,11 +153,12 @@ describe("extension handle-type brands", () => {
     expect(contents).toContain('Opaque<"texture">');
   });
 
-  test("imports the Opaque brand exactly once", async () => {
-    const { contents } = await emitExtensionDeclaration(HANDLES);
+  test("the deprecated global imports the Opaque brand exactly once, the module reads it ambient", async () => {
+    const { contents, deprecatedGlobal } = await emitExtensionDeclaration(HANDLES);
     const occurrences =
-      contents.split('import type { Opaque } from "../src/core-types";').length - 1;
+      (deprecatedGlobal ?? "").split('import type { Opaque } from "../src/core-types";').length - 1;
     expect(occurrences).toBe(1);
+    expect(contents).not.toContain("import type");
   });
 
   test("a genuinely non-engine token degrades to unknown, not a fabricated brand", async () => {
@@ -145,10 +170,24 @@ describe("extension handle-type brands", () => {
 });
 
 describe("emitExtensionDeclaration", () => {
-  test("reads the namespace from the doc and emits an ambient namespace declaration", async () => {
+  test("reads the namespace from the doc and emits a @globalTable module beside a deprecated ambient global", async () => {
     const result = await emitExtensionDeclaration(PRIMARY);
     expect(result.namespace).toBe("myext");
     expect(result.contents).toMatchSnapshot();
+    expect(result.deprecatedGlobal).toMatchSnapshot();
+  });
+
+  test("a dotted namespace emits the dotted module id", async () => {
+    const result = await emitExtensionDeclaration(DOTTED);
+    expect(result.namespace).toBe("rive.cmd");
+    expect(result.contents).toMatchSnapshot();
+  });
+
+  test("a namespace the engine declares emits only the ambient form, with no deprecation", async () => {
+    const result = await emitExtensionDeclaration(ENGINE_EXTENDING);
+    expect(result.namespace).toBe("gui");
+    expect(result.contents).toMatchSnapshot();
+    expect(result.deprecatedGlobal).toBeUndefined();
   });
 
   test("drops the implicit self parameter from the emitted signature", async () => {
@@ -160,13 +199,13 @@ describe("emitExtensionDeclaration", () => {
   test("derives the namespace from the doc, never a caller argument", async () => {
     const result = await emitExtensionDeclaration(SECOND);
     expect(result.namespace).toBe("other");
-    expect(result.contents).toContain("namespace other {");
+    expect(result.contents).toContain('declare module "other" {');
   });
 
   test("emits the constants of a constants-only doc and no function", async () => {
     const result = await emitExtensionDeclaration(CONSTANTS_ONLY);
     expect(result.namespace).toBe("consts");
-    expect(result.contents).toContain("namespace consts {");
+    expect(result.contents).toContain('declare module "consts" {');
     expect(result.contents).toContain(
       'const ALPHA: number & { readonly __brand: "consts.ALPHA" };',
     );

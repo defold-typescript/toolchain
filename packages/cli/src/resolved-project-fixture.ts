@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { loadApiTargetsRegistry } from "./api-registry";
 import type { ExtensionDeclarations } from "./extension-declarations";
+import { emitExtensionDeclarationFromDoc } from "./extension-emit";
 import {
   ensureExtensionTypesReference,
   materializeExtensionDeclarations,
@@ -154,4 +155,66 @@ export function scaffoldResolvedProject(cwd: string): void {
   write("tsconfig.json", RESOLVED_PROJECT_TSCONFIG);
   write("src/main.ts", RESOLVED_PROJECT_MAIN);
   installResolvedDeclarations(cwd);
+}
+
+const EXTENSION_API_DOCS = path.join(
+  import.meta.dir,
+  "../../library-types/defold-extensions/api-doc",
+);
+
+/**
+ * A script importing both dependencies' share of `firebase` and the dotted
+ * `rive.cmd`, and reading `rive.cmd` through its deprecated global.
+ */
+export const SCRIPT_API_PROJECT_MAIN = [
+  'import { defineScript } from "@defold-typescript/types";',
+  'import * as firebase from "firebase";',
+  'import * as cmd from "rive.cmd";',
+  "export default defineScript({",
+  "  init() {",
+  "    firebase.initialize();",
+  '    firebase.analytics.log("level_up");',
+  "    print(cmd.deleteArtboard, rive.cmd.deleteArtboard);",
+  "  },",
+  "});",
+  "",
+].join("\n");
+
+/**
+ * Writes a project holding what `init` and `resolve` leave for
+ * `extension-firebase` and `extension-firebase-analytics`, which share
+ * `firebase`, and `extension-rive`, whose `rive.cmd` is dotted: each committed
+ * `.script_api` doc through the real emitter and materializer.
+ */
+export async function scaffoldScriptApiProject(cwd: string): Promise<void> {
+  const write = (rel: string, contents: string): void => {
+    const target = path.join(cwd, rel);
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, contents);
+  };
+  write("tsconfig.json", RESOLVED_PROJECT_TSCONFIG);
+  write("src/main.ts", SCRIPT_API_PROJECT_MAIN);
+  const emit = (page: string) =>
+    emitExtensionDeclarationFromDoc(
+      JSON.parse(readFileSync(path.join(EXTENSION_API_DOCS, `${page}.json`), "utf8")),
+      [page],
+    );
+  const { materializedDir } = materializeExtensionDeclarations({
+    cwd,
+    bundles: [
+      {
+        ...extensionBundle("https://github.com/defold/extension-firebase/archive/1.zip"),
+        declarations: [await emit("firebase")],
+      },
+      {
+        ...extensionBundle("https://github.com/defold/extension-firebase-analytics/archive/1.zip"),
+        declarations: [await emit("firebase-analytics")],
+      },
+      {
+        ...extensionBundle("https://github.com/defold/extension-rive/archive/1.zip"),
+        declarations: [await emit("rive.cmd")],
+      },
+    ],
+  });
+  ensureExtensionTypesReference(cwd, materializedDir);
 }

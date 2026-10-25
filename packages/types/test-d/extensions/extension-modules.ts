@@ -1,3 +1,8 @@
+import * as iac from "iac";
+import * as iap from "iap";
+import * as push from "push";
+import * as webview from "webview";
+
 // One shallow, high-signal call per extension namespace. Optional params emit
 // as required (the established gotcha), so pass the required positional args;
 // callbacks map to `unknown`, so pass a no-op arrow. Constants (iap.TRANS_STATE_*,

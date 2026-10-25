@@ -2,7 +2,8 @@
 // pipeline: it takes the `resolveExtensionDeclarations` output (one
 // `ExtensionDeclarations` bundle per declared dependency) and writes each emitted
 // declaration into the gitignored sibling surface `.defold-types/extensions/` —
-// one file per namespace, or one per declaration when several share a namespace —
+// one file per namespace, or one per declaration when several share a namespace,
+// each module followed by its deprecated ambient form in `<stem>.global.d.ts` —
 // verbatim apart from the core-type retarget, because the emitter spells that
 // import relative to `packages/types/generated/` rather than to the materialized
 // surface, where it would dangle. A dependency's own shipped `types/*.d.ts`
@@ -44,6 +45,7 @@ export interface MaterializeExtensionDeclarationsResult {
 interface NamespaceSource {
   readonly url: string;
   readonly contents: string;
+  readonly deprecatedGlobal?: string;
 }
 
 function dependencySlug(url: string): string {
@@ -59,25 +61,35 @@ function dependencySlug(url: string): string {
 // is both namespace `foo.bar` and dependency `bar`'s share of `foo`) gets a
 // number instead. Names are compared without letter case, because macOS and
 // Windows disks treat `Foo.d.ts` and `foo.d.ts` as one file; the written name
-// keeps the namespace's spelling.
+// keeps the namespace's spelling. A deprecated global is named after its module's
+// file, `<stem>.global`, and claimed last, so it never takes a module's name.
 function allocateFileStems(
   namespaces: readonly string[],
   byNamespace: ReadonlyMap<string, readonly NamespaceSource[]>,
 ): Map<string, string> {
   const files = new Map<string, string>();
   const taken = new Set<string>();
-  const claim = (base: string, contents: string): void => {
+  const globals: { stem: string; contents: string }[] = [];
+  const claim = (base: string, contents: string): string => {
     let stem = base;
     for (let count = 2; taken.has(stem.toLowerCase()); count++) {
       stem = `${base}-${count}`;
     }
     taken.add(stem.toLowerCase());
     files.set(stem, contents);
+    return stem;
+  };
+  const claimModule = (base: string, source: NamespaceSource): void => {
+    const stem = claim(base, source.contents);
+    if (source.deprecatedGlobal !== undefined) {
+      globals.push({ stem, contents: source.deprecatedGlobal });
+    }
   };
   for (const namespace of namespaces) {
     const sources = byNamespace.get(namespace) ?? [];
-    if (sources.length === 1) {
-      claim(namespace, sources[0]?.contents ?? "");
+    const [only] = sources;
+    if (sources.length === 1 && only !== undefined) {
+      claimModule(namespace, only);
     }
   }
   for (const namespace of namespaces) {
@@ -85,9 +97,12 @@ function allocateFileStems(
     if (sources.length === 1) {
       continue;
     }
-    for (const { url, contents } of sources) {
-      claim(`${namespace}.${dependencySlug(url)}`, contents);
+    for (const source of sources) {
+      claimModule(`${namespace}.${dependencySlug(source.url)}`, source);
     }
+  }
+  for (const { stem, contents } of globals) {
+    claim(`${stem}.global`, contents);
   }
   return files;
 }
@@ -119,16 +134,22 @@ export function materializeExtensionDeclarations(
   const { cwd, bundles } = opts;
 
   // Group every bundle's declarations by namespace, in bundle order, and keep
-  // them all: each is its own `declare global` module file, so TypeScript merges
-  // a namespace across files, while concatenating them would repeat each file's
-  // core-type import. The retarget rides in here so the barrel and prune paths
+  // them all: each is its own file, so TypeScript merges a module or namespace
+  // across files, while concatenating them would repeat each file's core-type
+  // import. The retarget rides in here so the barrel and prune paths
   // stay untouched; `surfaceHasCoreTypes: false` is the published-subpath arm,
   // correct because the extensions dir mints no `core-types.d.ts` of its own.
   const byNamespace = new Map<string, NamespaceSource[]>();
   for (const bundle of bundles) {
-    for (const { namespace, contents } of bundle.declarations) {
+    for (const { namespace, contents, deprecatedGlobal } of bundle.declarations) {
       const sources = byNamespace.get(namespace) ?? [];
-      sources.push({ url: bundle.url, contents: retargetCoreTypes(contents, 0, false) });
+      sources.push({
+        url: bundle.url,
+        contents: retargetCoreTypes(contents, 0, false),
+        ...(deprecatedGlobal === undefined
+          ? {}
+          : { deprecatedGlobal: retargetCoreTypes(deprecatedGlobal, 0, false) }),
+      });
       byNamespace.set(namespace, sources);
     }
   }

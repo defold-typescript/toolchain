@@ -14,5 +14,5 @@ export {
   renderMaterializedKindIndex,
   targetKindManifest,
 } from "./materialize-version";
-export { generateModuleDeclaration } from "./regen";
+export { generateGlobalTableDeclaration, generateModuleDeclaration } from "./regen";
 export { readZip, scriptApiToFixtureJson, type ZipAccessor } from "./sync-api-docs";

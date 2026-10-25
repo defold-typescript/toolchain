@@ -564,7 +564,9 @@ describe("runResolve shared namespace", () => {
     const dir = join(cwd, ".defold-types", "extensions");
     expect(readdirSync(dir).sort()).toEqual([
       "firebase.firebase-analytics.d.ts",
+      "firebase.firebase-analytics.global.d.ts",
       "firebase.firebase-core.d.ts",
+      "firebase.firebase-core.global.d.ts",
       "index.d.ts",
       "package.json",
     ]);
@@ -1034,6 +1036,7 @@ describe("runResolve corpus match precedes .script_api", () => {
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
     expect(readdirSync(join(cwd, ".defold-types", "extensions")).sort()).toEqual([
       "alpha.d.ts",
+      "alpha.global.d.ts",
       "index.d.ts",
       "package.json",
     ]);
@@ -1590,7 +1593,7 @@ declare module "pixels" {
     expect(result.ok).toBe(true);
     const written = readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8");
     expect(written).toContain("only the doc declares this");
-    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts"]);
+    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts", "pixels.global.d.ts"]);
     expect(writtenShipped(cwd)).toEqual([]);
     expect(result.extensions[0]?.typeSurface).toBe("extension");
     expect(result.extensions[0]?.namespaces).toEqual(["pixels"]);
@@ -1609,7 +1612,7 @@ declare module "pixels" {
     );
 
     expect(result.ok).toBe(true);
-    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts"]);
+    expect(writtenDeclarations(cwd)).toEqual(["index.d.ts", "pixels.d.ts", "pixels.global.d.ts"]);
     expect(writtenShipped(cwd)).toEqual([]);
     expect(readFileSync(join(cwd, ".defold-types", "extensions", "pixels.d.ts"), "utf8")).toContain(
       "only the doc declares this",
