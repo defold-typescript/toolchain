@@ -1,0 +1,430 @@
+{
+  "info": {
+    "namespace": "ainpc",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "chat_completion",
+      "brief": "Requests a chat completion. A string is sent as one user message: the",
+      "description": "Requests a chat completion. A string is sent as one user message: the\nextension pastes it into `{\"messages\":[{\"content\":\"<text>\",\"role\":\"user\"}]}`\nwithout escaping, so text holding a quote, a backslash or a newline makes\ninvalid JSON. Pass a body with a `messages` list to send arbitrary text.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "The request body, or the text of one user message.",
+          "types": [
+            "Body | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_reply",
+          "doc": "Called with the completion.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the request fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "npc_spawn",
+      "brief": "Spawns an NPC.",
+      "description": "Spawns an NPC.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "The NPC definition, such as the `name`, `short_name`,\n`character_description`, `system_prompt` and `voice_id` the upstream\nexample sends.",
+          "types": [
+            "Body"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_reply",
+          "doc": "Called with the spawn reply.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the request fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "npc_spawn",
+      "brief": "Spawns an NPC from a body given as a table or as JSON text.",
+      "description": "Spawns an NPC from a body given as a table or as JSON text.",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "Accepted but not sent: the request path keeps the\nliteral `{game_id}` placeholder. This form is the only one that takes the\nbody as JSON text.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body",
+          "doc": "The NPC definition, or JSON text sent as it is.",
+          "types": [
+            "Body | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_reply",
+          "doc": "Called with the spawn reply.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the request fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "npc_chat",
+      "brief": "Sends a message to a spawned NPC.",
+      "description": "Sends a message to a spawned NPC.",
+      "parameters": [
+        {
+          "name": "npc_id",
+          "doc": "The NPC to talk to.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body",
+          "doc": "The message, such as the `sender_message`, `sender_name`\nand `game_state_info` the upstream example sends.",
+          "types": [
+            "Body"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_reply",
+          "doc": "Called with the chat reply.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the request fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "npc_chat",
+      "brief": "Sends a message to a spawned NPC, given as a body or as text.",
+      "description": "Sends a message to a spawned NPC, given as a body or as text.",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "Accepted but not sent: the request path keeps the\nliteral `{game_id}` placeholder.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "npc_id",
+          "doc": "The NPC to talk to.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body",
+          "doc": "The message body, or text sent as\n`{ sender_message = text, sender_name = \"\" }`.",
+          "types": [
+            "Body | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_reply",
+          "doc": "Called with the chat reply.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the request fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "npc_kill",
+      "brief": "Removes a spawned NPC.",
+      "description": "Removes a spawned NPC.",
+      "parameters": [
+        {
+          "name": "npc_id",
+          "doc": "The NPC to remove.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_reply",
+          "doc": "Called when the NPC is removed.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the request fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "npc_kill",
+      "brief": "Removes a spawned NPC.",
+      "description": "Removes a spawned NPC.",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "Accepted but not sent: the request path keeps the\nliteral `{game_id}` placeholder.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "npc_id",
+          "doc": "The NPC to remove.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_reply",
+          "doc": "Called when the NPC is removed.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the request fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "npc_responses",
+      "brief": "Opens the stream of NPC responses. Without a `game_id` the request path",
+      "description": "Opens the stream of NPC responses. Without a `game_id` the request path\nkeeps the literal `{game_id}` placeholder.",
+      "parameters": [
+        {
+          "name": "on_receive",
+          "doc": "Called with each chunk the stream delivers, decoded\nas JSON when it parses, otherwise as text.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_finish",
+          "doc": "Called when the stream ends, after `on_fail` when it\nfailed.",
+          "types": [
+            "(self: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the stream fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The stream id, for {@link ainpc.stop_npc_responses}.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "npc_responses",
+      "brief": "Opens the stream of NPC responses for a game.",
+      "description": "Opens the stream of NPC responses for a game.",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "The game whose responses to stream; it replaces\n`{game_id}` in the request path.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_receive",
+          "doc": "Called with each chunk the stream delivers, decoded\nas JSON when it parses, otherwise as text.",
+          "types": [
+            "ReplyCallback"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_finish",
+          "doc": "Called when the stream ends, after `on_fail` when it\nfailed.",
+          "types": [
+            "(self: unknown) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "on_fail",
+          "doc": "Called when the stream fails.",
+          "types": [
+            "FailCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The stream id, for {@link ainpc.stop_npc_responses}.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "stop_npc_responses",
+      "brief": "Stops a stream opened by {@link ainpc.npc_responses}. An id that names",
+      "description": "Stops a stream opened by {@link ainpc.npc_responses}. An id that names\nno open stream is ignored.",
+      "parameters": [
+        {
+          "name": "stream_id",
+          "doc": "The id `npc_responses` returned.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Body",
+      "types": [
+        "Record<string, JsonValue>"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "JsonValue",
+      "types": [
+        "string",
+        "number",
+        "boolean",
+        "readonly JsonValue[]",
+        "{ readonly [key: string]: JsonValue; }"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ReplyCallback",
+      "types": [
+        "(self: unknown, reply: Reply) => void"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Reply",
+      "types": [
+        "Record<string | number, unknown>",
+        "string",
+        "number",
+        "boolean",
+        "undefined"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FailCallback",
+      "types": [
+        "(self: unknown, body: string, status: number) => void"
+      ]
+    }
+  ]
+}

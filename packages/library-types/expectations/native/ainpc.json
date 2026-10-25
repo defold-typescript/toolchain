@@ -1,0 +1,12 @@
+{
+  "registry": {
+    "sourceId": "player2-ai-npc-defold",
+    "manifestDir": "player2-ai-npc"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/elefant-ai/player2-ai-npc-defold/archive/ecda39f58b3811442cb6945e329b127c891f9bdb.zip",
+    "confirmedManifest": "player2-ai-npc-defold-ecda39f58b3811442cb6945e329b127c891f9bdb/player2-ai-npc/ext.manifest",
+    "misplacedManifest": "player2-ai-npc-defold-ecda39f58b3811442cb6945e329b127c891f9bdb/ext.manifest"
+  },
+  "pinKind": "commit"
+}
