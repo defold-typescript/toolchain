@@ -6,9 +6,10 @@ import type { RefKind } from "./sync-defold-extensions";
 /**
  * The curated native-extension lane. A native extension ships C++ and no
  * `.script_api`, so its declaration is hand-authored at
- * `generated/native/<namespace>.d.ts` as a `declare global { namespace <ns> }`
- * ambient, and `resolve` copies it into a project verbatim. The only artifact
- * derived here is the `api-doc/native/<namespace>.json` the docs-site renders.
+ * `generated/native/<namespace>.d.ts` as a `@globalTable` `declare module "<ns>"`
+ * a project imports, and `resolve` copies it into a project verbatim. The only
+ * artifact derived here is the `api-doc/native/<namespace>.json` the docs-site
+ * renders.
  */
 /** Why the declaration is right to disagree with the annotation about a member's
  * parameter count. `reason` cites upstream's own file and line — the C++ that reads the
@@ -74,10 +75,11 @@ interface ApiDocElement {
 }
 
 /**
- * `extractApiDoc`'s ambient lane qualifies every member as
- * `global.<namespace>.<name>` and marks it `global`. A native page is the
- * namespace itself, which the page already presents as a global called with no
- * import, so each member is named bare and carries no per-member marker.
+ * A curated declaration is a `@globalTable` module, which `extractApiDoc` lowers
+ * the way the extension's global namespace publishes: members named bare, with
+ * no per-member marker. The deprecated global a released namespace keeps
+ * (`declare const <ns>: typeof import("<ns>")`) is the same namespace under its
+ * old name, not a member of it, so it never reaches the page.
  */
 export function lowerNativeApiDoc(
   packageRoot: string,
@@ -87,11 +89,14 @@ export function lowerNativeApiDoc(
   const doc = extractApiDoc(source, target.namespace) as Record<string, unknown> & {
     elements: ApiDocElement[];
   };
-  const prefix = `global.${target.namespace}.`;
-  const elements = doc.elements.map(({ global: _global, ...element }) => ({
-    ...element,
-    name: element.name.startsWith(prefix) ? element.name.slice(prefix.length) : element.name,
-  }));
+  const aliasType = `typeof import("${target.namespace}")`;
+  const isGlobalAlias = (element: ApiDocElement): boolean =>
+    element.global === true &&
+    element.type === "VARIABLE" &&
+    Array.isArray(element.types) &&
+    element.types.length === 1 &&
+    element.types[0] === aliasType;
+  const elements = doc.elements.filter((element) => !isGlobalAlias(element));
   return `${JSON.stringify({ ...doc, elements }, null, 2)}\n`;
 }
 

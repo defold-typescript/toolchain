@@ -180,16 +180,16 @@ describe("runBuild (a scene-address declaration inside include)", () => {
 });
 
 describe("runBuild (a project holding only what resolve writes)", () => {
-  test("builds a curated native global, a vendored library and a shipped @globalTable module", () => {
+  test("builds a curated native import, a deprecated native global, a vendored library and a shipped @globalTable module", () => {
     scaffoldResolvedProject(cwd);
 
     const result = runBuild({ cwd });
 
     expect(result.written).toEqual(["src/main.ts.script"]);
     const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
-    expect(scanEmittedRequires(lua).map(({ path: requirePath }) => requirePath)).not.toContain(
-      "pixels",
-    );
+    const requires = scanEmittedRequires(lua).map(({ path: requirePath }) => requirePath);
+    expect(requires).not.toContain("pixels");
+    expect(requires).not.toContain("png");
     expect(lua).toMatchSnapshot();
   });
 

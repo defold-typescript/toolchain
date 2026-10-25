@@ -1,6 +1,8 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as daabbcc3d from "daabbcc3d";
+
 // Compile-only proof for the curated daabbcc3d native-extension namespace. No
 // assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
 
@@ -74,5 +76,3 @@ const _modes: number[] = [
   daabbcc3d.UPDATE_FULLREBUILD,
   daabbcc3d.UPDATE_PARTIALREBUILD,
 ];
-
-export {};

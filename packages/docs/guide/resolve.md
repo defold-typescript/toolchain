@@ -30,7 +30,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/shipped/<repo>/`, checked apart from every other dependency, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
 | **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
-| **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated ambient namespace in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
+| **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
 | **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped                                                                                                     |
 
@@ -181,8 +181,9 @@ is missing and a warning would be noise.
 A native extension registers its Lua API in C++. One that ships no
 `.script_api` gives `resolve` nothing to emit, and one whose `.script_api` is too
 loose to type correct code emits a namespace that accepts calls failing at
-runtime. For the ones listed below, this toolchain ships a hand-written ambient
-namespace instead. `resolve` uses it when the dependency's
+runtime. For the ones listed below, this toolchain ships a hand-written
+[module-form](./extensions.md#module-form-native-extensions) declaration
+instead. `resolve` uses it when the dependency's
 repo name matches **and** the archive ships the extension's `ext.manifest` in
 the named directory, so a repo-name collision alone writes nothing.
 
@@ -211,13 +212,32 @@ the named directory, so a repo-name collision alone writes nothing.
 
 <!-- curated-native-extensions:end -->
 
-The namespace lands in `.defold-types/extensions/` like a `.script_api`
-namespace and needs no import:
+The declaration lands in `.defold-types/extensions/` as a `@globalTable`
+module. Import it under any local name; the build turns the import into a
+local alias of the extension's global, so no `require` reaches the Lua:
 
 ```ts
+import * as daabbcc from "daabbcc";
+
 const group = daabbcc.new_group(daabbcc.UPDATE_PARTIALREBUILD);
 const [hits, count] = daabbcc.query_aabb(group, 0, 0, 100, 100);
 ```
+
+A namespace import is read-only, so a setting the extension exposes as a field,
+such as `openal`'s `doppler_factor`, is written through a local that holds the
+module:
+
+```ts
+import * as openal from "openal";
+
+const al = openal;
+al.doppler_factor = 2;
+```
+
+`daabbcc`, `share`, `uuid4` and `tile_raycast` were globals in v0.53.0, so for
+one release each also keeps a deprecated global of the same name. A bare value
+call such as `uuid4.generate()` still compiles and runs, but a type named
+through the namespace, such as `share.FileOptions`, needs the import.
 
 The curated file wins over any `.script_api` the same archive ships, and the
 `--json` report marks the dependency `typeSurface: "vendored-native"`.

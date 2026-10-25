@@ -119,6 +119,10 @@ names the global when it differs from the module id
 (`/** @globalTable b2d.body */`); a tag naming an invalid Lua global fails the
 build with an error giving the file and line.
 
+The [curated native extensions](./resolve.md#curated-native-extensions) that
+`resolve` installs take this form, so a project writes
+`import * as daabbcc from "daabbcc"` to reach DAABBCC.
+
 ## Browsing Defold's own extensions
 
 The extensions Defold publishes on GitHub have reference pages under

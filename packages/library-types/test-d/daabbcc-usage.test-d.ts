@@ -1,6 +1,8 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as daabbcc from "daabbcc";
+
 // Compile-only proof for the curated DAABBCC native-extension namespace. No
 // assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
 
