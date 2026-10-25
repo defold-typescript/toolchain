@@ -1,0 +1,574 @@
+{
+  "info": {
+    "namespace": "gamepush.core.multiplayer",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "MODE_FAST",
+      "brief": "The fast sync mode, for `set_mode`.",
+      "description": "The fast sync mode, for `set_mode`.",
+      "types": [
+        "\"fast\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MODE_SMOOTH",
+      "brief": "The smooth sync mode, for `set_mode`.",
+      "description": "The smooth sync mode, for `set_mode`.",
+      "types": [
+        "\"smooth\""
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "connect",
+      "brief": "Connects to a room. The player must be a member of its channel. Raises when the table",
+      "description": "Connects to a room. The player must be a member of its channel. Raises when the table\nis missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The room's channel.",
+          "types": [
+            "RoomParameters"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "disconnect",
+      "brief": "Disconnects from a room.",
+      "description": "Disconnects from a room.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The room's channel, or nil for the current room.",
+          "types": [
+            "RoomParameters"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "define_player_schema",
+      "brief": "Declares the player fields to sync. Raises when the table is missing.",
+      "description": "Declares the player fields to sync. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "schema",
+          "doc": "The fields and their settings.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "define_global_schema",
+      "brief": "Declares the shared fields to sync. Raises when the table is missing.",
+      "description": "Declares the shared fields to sync. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "schema",
+          "doc": "The fields and their settings.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_player_initializer",
+      "brief": "Sets how the host creates a joining player's state. Raises unless `initializer` is a",
+      "description": "Sets how the host creates a joining player's state. Raises unless `initializer` is a\nfunction.",
+      "parameters": [
+        {
+          "name": "initializer",
+          "doc": "Receives the player's id and info and returns its initial state.",
+          "types": [
+            "(player_id: number, player_info: Record<string, unknown>) => Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_player_state",
+      "brief": "Updates the player's state. Raises when the table is missing.",
+      "description": "Updates the player's state. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "The fields to change.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_global_state",
+      "brief": "Sets the global state; the host only. Raises when the table is missing.",
+      "description": "Sets the global state; the host only. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "The world state.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_mode",
+      "brief": "Picks the sync mode. Raises unless `mode` is a string.",
+      "description": "Picks the sync mode. Raises unless `mode` is a string.",
+      "parameters": [
+        {
+          "name": "mode",
+          "doc": "`MODE_FAST` or `MODE_SMOOTH`.",
+          "types": [
+            "\"fast\" | \"smooth\""
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_tick",
+      "brief": "Subscribes to the SDK tick, delivered to `callbacks.tick`.",
+      "description": "Subscribes to the SDK tick, delivered to `callbacks.tick`.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "off_tick",
+      "brief": "Unsubscribes from the SDK tick.",
+      "description": "Unsubscribes from the SDK tick.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send_message",
+      "brief": "Sends a one-off event to other players. Raises unless `event_name` is a string.",
+      "description": "Sends a one-off event to other players. Raises unless `event_name` is a string.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "The message type.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "JSON-compatible data.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "target_or_options",
+          "doc": "`\"all\"`, a player id, or the target and echo options; nil\nsends to everyone.",
+          "types": [
+            "string | number | SendMessageOptions"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_message",
+      "brief": "Subscribes to messages from other players, delivered to `callbacks.message`.",
+      "description": "Subscribes to messages from other players, delivered to `callbacks.message`.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "off_message",
+      "brief": "Unsubscribes from messages from other players.",
+      "description": "Unsubscribes from messages from other players.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_connected",
+      "brief": "Whether the player is connected to a room.",
+      "description": "Whether the player is connected to a room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_host",
+      "brief": "Whether the player is the room's host.",
+      "description": "Whether the player is the room's host.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "connected_players",
+      "brief": "The players connected to the room.",
+      "description": "The players connected to the room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "network_stats",
+      "brief": "The current network figures.",
+      "description": "The current network figures.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "NetworkStats"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "my_state",
+      "brief": "The player's state, or nil before it is set.",
+      "description": "The player's state, or nil before it is set.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown> | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "players_state",
+      "brief": "Every player's state, keyed by player id.",
+      "description": "Every player's state, keyed by player id.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "global_state",
+      "brief": "The last global state, or nil before one is set.",
+      "description": "The last global state, or nil before one is set.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown> | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The multiplayer event handlers.",
+      "description": "The multiplayer event handlers.",
+      "types": [
+        "MultiplayerCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RoomParameters",
+      "properties": [
+        {
+          "name": "channelId",
+          "brief": "The id of the channel that hosts the room.",
+          "description": "The id of the channel that hosts the room.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SendMessageOptions",
+      "properties": [
+        {
+          "name": "target",
+          "brief": "Who receives the message: `\"all\"` or a player id.",
+          "description": "Who receives the message: `\"all\"` or a player id.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "echo",
+          "brief": "Deliver the message to the sender as well.",
+          "description": "Deliver the message to the sender as well.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "NetworkStats",
+      "properties": [
+        {
+          "name": "ping",
+          "brief": "The connection's ping.",
+          "description": "The connection's ping.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "bufferSize",
+          "brief": "The size of the state buffer.",
+          "description": "The size of the state buffer.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "bufferDelay",
+          "brief": "The delay of the state buffer.",
+          "description": "The delay of the state buffer.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MultiplayerCallbacks",
+      "properties": [
+        {
+          "name": "connect",
+          "brief": "The player connected to a room.",
+          "description": "The player connected to a room.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "disconnect",
+          "brief": "The player disconnected from a room.",
+          "description": "The player disconnected from a room.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "player_joined",
+          "brief": "A player joined the room.",
+          "description": "A player joined the room.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "player_left",
+          "brief": "A player left the room.",
+          "description": "A player left the room.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "became_host",
+          "brief": "The player became the room's host.",
+          "description": "The player became the room's host.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "became_peer",
+          "brief": "The player stopped being the room's host.",
+          "description": "The player stopped being the room's host.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "host_migrated",
+          "brief": "Another player became the room's host.",
+          "description": "Another player became the room's host.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "players_updated",
+          "brief": "The players' states changed.",
+          "description": "The players' states changed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "global_state_updated",
+          "brief": "The global state changed.",
+          "description": "The global state changed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_connect",
+          "brief": "Connecting to a room failed.",
+          "description": "Connecting to a room failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_send_state",
+          "brief": "Sending the player's state failed.",
+          "description": "Sending the player's state failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_disconnect",
+          "brief": "Disconnecting from a room failed.",
+          "description": "Disconnecting from a room failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tick",
+          "brief": "An SDK tick, while subscribed with `on_tick`.",
+          "description": "An SDK tick, while subscribed with `on_tick`.",
+          "types": [
+            "(delta: number) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "message",
+          "brief": "A message from another player, while subscribed with `on_message`.",
+          "description": "A message from another player, while subscribed with `on_message`.",
+          "types": [
+            "(payload: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "player_initializer",
+          "brief": "Set by `set_player_initializer`; call that instead of assigning this slot.",
+          "description": "Set by `set_player_initializer`; call that instead of assigning this slot.",
+          "types": [
+            "(data: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
