@@ -19,10 +19,16 @@ const EXTENSION_GOLDEN_NAMESPACES = ["iac", "iap", "push", "webview"] as const;
 // slots and callback arguments exactly as `resolve` would emit them for a project.
 const EXTENSION_DOCS_DIR = resolve(PACKAGE_ROOT, "../library-types/defold-extensions/api-doc");
 
-export const EXTENSION_GOLDEN_MANIFEST: readonly ModuleManifestEntry[] =
+export interface ExtensionGoldenEntry extends ModuleManifestEntry {
+  // The deprecated ambient namespace `resolve` writes beside the module.
+  readonly globalOutFile: string;
+}
+
+export const EXTENSION_GOLDEN_MANIFEST: readonly ExtensionGoldenEntry[] =
   EXTENSION_GOLDEN_NAMESPACES.map((namespace) => ({
     namespace,
     doc: JSON.parse(readFileSync(resolve(EXTENSION_DOCS_DIR, `${namespace}.json`), "utf8")),
     outFile: `${namespace}.d.ts`,
+    globalOutFile: `${namespace}.global.d.ts`,
     indexBaseSource: { pages: [], classifications: new Map() },
   }));

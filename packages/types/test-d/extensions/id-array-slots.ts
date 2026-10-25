@@ -1,3 +1,5 @@
+import * as iap from "iap";
+
 // The prose-only "table (array) of ids" slot is an array shape the field parser
 // cannot read; its element token is hand-curated in HOMOGENEOUS_ARRAY_SLOTS and
 // emitted as a plain array. iap.list's element is the single token `string`.

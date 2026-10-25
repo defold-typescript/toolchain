@@ -5,16 +5,17 @@ toc-title: Native extensions
 
 Defold native extensions ship their own Lua API alongside the engine's. When a
 project depends on an extension, `defold-typescript resolve` reads that
-extension's `.script_api` docs and generates an ambient TypeScript namespace for
-it — the same fan-out the built-in engine namespaces (`go`, `vmath`, …) go
-through, applied to whatever extensions your project actually declares. The
-generated surface lands in a project-local, gitignored `.defold-types/` package,
-so extension functions gain autocomplete and `tsc` coverage with no import.
+extension's `.script_api` docs and generates a TypeScript module for each
+namespace they declare — the same fan-out the built-in engine namespaces (`go`,
+`vmath`, …) go through, applied to whatever extensions your project actually
+declares. The generated surface lands in a project-local, gitignored
+`.defold-types/` package, so extension functions gain autocomplete and `tsc`
+coverage behind one import.
 
-No extension is ambient until it is resolved. That includes the ones Defold
+No extension is typed until it is resolved. That includes the ones Defold
 maintains, such as `iap`, `iac`, `push` and `webview`:
-`@defold-typescript/types` declares only the engine, so `iap.buy(...)` is a
-type error until the project depends on
+`@defold-typescript/types` declares only the engine, so
+`import * as iap from "iap"` is a type error until the project depends on
 [extension-iap](https://github.com/defold/extension-iap) and `resolve` has run.
 
 ## Declaring an extension
@@ -37,8 +38,8 @@ keys reports `no extension dependencies declared` and exits cleanly.
 ## Materializing the types: `resolve`
 
 The [`resolve`](./resolve.md) command reads every `dependencies#N` URL, downloads
-and caches each archive, and emits one ambient namespace per `.script_api` doc
-into `.defold-types/extensions/`, wiring it into `tsconfig.json`:
+and caches each archive, and emits one `@globalTable` module per `.script_api`
+doc into `.defold-types/extensions/`, wiring it into `tsconfig.json`:
 
 ```sh
 bunx @defold-typescript/cli resolve
@@ -51,25 +52,32 @@ behavior, the `--frozen` lockfile mode, version pinning, and the cache location.
 
 ## Consuming the generated namespace
 
-Each emitted namespace is **ambient**, so you call it with no import — exactly
-like the engine namespaces:
+Import each namespace under any local name. The build turns the import into a
+local alias of the extension's global, so no `require` reaches the Lua:
 
 ```ts
-// iap is ambient — resolved through the .defold-types/extensions surface.
+import * as iap from "iap"; // local iap = _G.iap
+
 iap.set_listener((self, transaction, error) => {
   // transaction and error are typed from the extension's .script_api
 });
 ```
 
 `tsc` picks the surface up through the `"extensions"` entry in
-`compilerOptions.types`.
+`compilerOptions.types`. A dotted namespace imports by its full name, as in
+`import * as cmd from "rive.cmd"`.
+
+For one release, `resolve` also writes each namespace's ambient form beside the
+module, marked deprecated, so a bare `iap.set_listener(...)` still compiles and
+runs; the next release removes it.
 
 ## Extensions that extend an engine namespace
 
 An extension's docs are not limited to a namespace of its own. A `.script_api`
 whose top-level `name` is an engine namespace adds its members **to** that
 namespace rather than replacing it, so the engine's members and the extension's
-sit side by side on the same object.
+sit side by side on the same object. Such a doc stays ambient, with no import,
+because a module cannot add members to the engine's global.
 
 [extension-spine](https://github.com/defold/extension-spine) is the worked
 example: it ships three docs, giving one new `spine` namespace plus additions on
@@ -119,8 +127,10 @@ names the global when it differs from the module id
 (`/** @globalTable b2d.body */`); a tag naming an invalid Lua global fails the
 build with an error giving the file and line.
 
-The [curated native extensions](./resolve.md#curated-native-extensions) that
-`resolve` installs take this form, so a project writes
+`resolve` writes this form: the declarations it generates from `.script_api`
+docs and the [curated native extensions](./resolve.md#curated-native-extensions)
+it installs are `@globalTable` modules, so a project writes
+`import * as iap from "iap"` to reach `iap` and
 `import * as daabbcc from "daabbcc"` to reach DAABBCC.
 
 ## Browsing Defold's own extensions

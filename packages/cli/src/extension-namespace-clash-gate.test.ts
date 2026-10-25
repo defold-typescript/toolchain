@@ -68,14 +68,24 @@ describe("extension namespace clash gate", () => {
             "utf8",
           ),
         ) as { info: { namespace: string } };
-        const { contents } = await emitExtensionDeclarationFromDoc(doc, [page], classifications);
-        const file = join(dir, `${page}.d.ts`);
-        writeFileSync(
-          file,
-          contents.replaceAll(EXTENSION_CORE_TYPES_IMPORT, JSON.stringify(CORE_TYPES)),
+        const { contents, deprecatedGlobal } = await emitExtensionDeclarationFromDoc(
+          doc,
+          [page],
+          classifications,
         );
-        files.push(file);
+        for (const [file, text] of [
+          [join(dir, `${page}.d.ts`), contents],
+          [join(dir, `${page}.global.d.ts`), deprecatedGlobal],
+        ] as const) {
+          if (text === undefined) continue;
+          writeFileSync(
+            file,
+            text.replaceAll(EXTENSION_CORE_TYPES_IMPORT, JSON.stringify(CORE_TYPES)),
+          );
+          files.push(file);
+        }
       }
+      expect(files.filter((file) => file.endsWith(".global.d.ts"))).not.toEqual([]);
 
       const program = ts.createProgram([TYPES_INDEX, ...files], compilerOptions());
       const diagnostics = ts.getPreEmitDiagnostics(program).map(describeDiagnostic);

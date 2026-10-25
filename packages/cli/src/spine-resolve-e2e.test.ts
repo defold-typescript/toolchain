@@ -119,9 +119,9 @@ describe("extension-spine resolves and its materialized types are usable end to 
       readdirSync(dir)
         .filter((e) => e.endsWith(".d.ts"))
         .sort(),
-    ).toEqual(["gui.d.ts", "index.d.ts", "resource.d.ts", "spine.d.ts"]);
+    ).toEqual(["gui.d.ts", "index.d.ts", "resource.d.ts", "spine.d.ts", "spine.global.d.ts"]);
     expect(readFileSync(join(dir, "index.d.ts"), "utf8")).toBe(
-      'import "./gui";\nimport "./resource";\nimport "./spine";\n\nexport {};\n',
+      'import "./gui";\nimport "./resource";\nimport "./spine";\nimport "./spine.global";\n\nexport {};\n',
     );
   });
 
@@ -132,7 +132,7 @@ describe("extension-spine resolves and its materialized types are usable end to 
     expect(branded.map(([name]) => name).sort()).toEqual([
       "gui.d.ts",
       "resource.d.ts",
-      "spine.d.ts",
+      "spine.global.d.ts",
     ]);
     for (const [, text] of branded) {
       expect(text).toContain('from "@defold-typescript/types/core-types"');
@@ -184,6 +184,7 @@ describe("extension-spine resolves and its materialized types are usable end to 
     const { declarations } = await resolveSpine();
 
     const good = [
+      'import * as spine from "spine";',
       "export function run(): void {",
       '  spine.play_anim(hash("/go#spinemodel"), "run", go.PLAYBACK_ONCE_FORWARD, undefined, () => {});',
       "}",
@@ -192,6 +193,7 @@ describe("extension-spine resolves and its materialized types are usable end to 
     expect(errorDiagnostics(good, declarations)).toEqual([]);
 
     const bad = [
+      'import * as spine from "spine";',
       "export function run(): void {",
       '  spine.play_anim(1, "run", go.PLAYBACK_ONCE_FORWARD, undefined, () => {});',
       "}",

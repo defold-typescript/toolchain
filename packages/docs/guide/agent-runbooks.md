@@ -158,7 +158,7 @@ surface that dependency actually contributed:
 | `typeSurface`        | Meaning                                                                    | `namespaces` |
 | -------------------- | -------------------------------------------------------------------------- | ------------ |
 | `"shipped"`          | the [declarations it ships](./resolve.md#types-a-library-ships) in `types/` replaced every other surface | its installed file stems |
-| `"extension"`        | it emitted `.script_api` declarations                                      | its namespaces |
+| `"extension"`        | it emitted a [`@globalTable` module](./extensions.md#module-form-native-extensions) per `.script_api` doc, or an ambient namespace for a doc that extends an engine namespace | its namespaces |
 | `"vendored-native"`  | a [curated native declaration](./resolve.md#curated-native-extensions) replaced anything the archive ships | its curated namespace |
 | `"vendored-library"` | a confirmed corpus match supersedes it; its types are in `libraries[]`     | `[]`         |
 | `"none"`             | asset-only with no confirmed match — it contributes no types at all        | `[]`         |
@@ -622,7 +622,7 @@ what it does to an existing `defold-target` pin.
 
 ## Regenerate extension types
 
-**Goal:** refresh the ambient TypeScript surface for native extensions after a
+**Goal:** refresh the TypeScript surface for native extensions after a
 `game.project` `[dependencies]` change, so extension namespaces stay in sync with
 the declared archives. This automates the workflow described in
 [Typing native extensions](./extensions.md).
@@ -634,8 +634,10 @@ bunx @defold-typescript/cli resolve --json
 ```
 
 `resolve` reads each declared extension's `.script_api`, regenerates the
-gitignored `.defold-types/extensions/` ambient surface, and rewrites its index
-and `package.json` to exactly the declared set.
+gitignored `.defold-types/extensions/` surface — a `@globalTable` module per
+namespace beside its deprecated ambient form, which scripts import as
+`import * as iap from "iap"` — and rewrites its index and `package.json` to
+exactly the declared set.
 
 **Returns** the same one-shot envelope keyed `command: "resolve"`, plus an
 `extensions` array reporting provenance for each resolved dependency:
