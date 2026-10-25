@@ -510,6 +510,12 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "06bd1b568def12947e5634c3b219125748f12b30cb10e199ac80fff16fa908b2",
   "fixtures/upstream-native/extension-directories/directories/src/extension_linux.cpp":
     "a4572bca96942c1d193d1a86f31930e646334f92b70a28d88e04573f85d98b0e",
+  "fixtures/upstream-native/extension-openal/openal/src/extension.cpp":
+    "00e708c23342c36b49421c35b0434c2b89c06bf777ad2340a642768f53e3f64d",
+  "fixtures/upstream-native/extension-openal/openal/src/LuaListener.cpp":
+    "54d882a9571e62ca6ddb0a46f82f1cac6e64bff1cf6fb2f7d9823d54294b082d",
+  "fixtures/upstream-native/extension-openal/openal/src/LuaSource.cpp":
+    "ac2686d5eaab4471f3ebea29619823e1238fa59d32635297fe70c4f8ead34821",
   "fixtures/upstream-native/defold-extension-uptime/uptime/src/UpTime.cpp":
     "362b99d47547da200f91c3f2f4856d9ae2c2962a85c3da0e63822de889332a5b",
   "fixtures/upstream-native/defold-fontscale/fontscale/src/fontscale.cpp":

@@ -76,3 +76,26 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped native declaration emits the receiver form its expectation records openal: a consumer transpiles with the call forms the declaration produces: openal 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+function ____exports.playShot(path)
+    openal.init()
+    local shot = openal.new_source(resource.load(path))
+    if shot == nil then
+        return
+    end
+    shot.is_looping = true
+    shot.x = 1
+    shot:play()
+    shot:pause()
+    shot:rewind()
+    shot:stop()
+    openal.listener.orientation_up_y = 1
+    openal.doppler_factor = 2
+    openal.remove_source(shot)
+end
+return ____exports
+"
+`;

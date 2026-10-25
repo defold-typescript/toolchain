@@ -6789,6 +6789,7 @@ the named directory, so a repo-name collision alone writes nothing.
 | [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | `1.2.0` | [`uptime`](/api/uptime) | `uptime/ext.manifest` |
 | [britzl/defold-png](https://github.com/britzl/defold-png) | `1.2.2` | [`png`](/api/png) | `png/ext.manifest` |
 | [britzl/defold-imp](https://github.com/britzl/defold-imp) | `1.1.0` | [`imp`](/api/imp) | `imp/ext.manifest` |
+| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | `618292f` | [`openal`](/api/openal) | `openal/ext.manifest` |
 
 <!-- curated-native-extensions:end -->
 
