@@ -79,8 +79,11 @@ interface ApiDocElement {
  * namespace itself, which the page already presents as a global called with no
  * import, so each member is named bare and carries no per-member marker.
  */
-export function lowerNativeApiDoc(packageRoot: string, target: NativeTarget): string {
-  const source = readFileSync(join(packageRoot, target.declaration), "utf8");
+export function lowerNativeApiDoc(
+  packageRoot: string,
+  target: NativeTarget,
+  source: string = readFileSync(join(packageRoot, target.declaration), "utf8"),
+): string {
   const doc = extractApiDoc(source, target.namespace) as Record<string, unknown> & {
     elements: ApiDocElement[];
   };

@@ -679,11 +679,17 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Alignment"
+      "name": "Alignment",
+      "types": [
+        "Hash & Readonly<{ __brand: 'richtext.alignment'; }>"
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "VAlignment"
+      "name": "VAlignment",
+      "types": [
+        "Hash & Readonly<{ __brand: 'richtext.v.alignment'; }>"
+      ]
     },
     {
       "type": "VARIABLE",

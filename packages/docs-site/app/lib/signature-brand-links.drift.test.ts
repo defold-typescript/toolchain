@@ -93,9 +93,12 @@ test("a rendered signature deep-links a shape it declares and leaves other token
     ].map((m) => [m[2] as string, m[1] as string]),
   );
   expect([...linked.keys()]).toContain("ShowOptions");
-  for (const inert of ["ScreenId", "Data", "Callback"]) {
-    expect([...linked.keys()]).not.toContain(inert);
+  // A union or function-type alias renders its definition as a type row, so it
+  // links to that row; an empty literal has nothing to show and stays inert.
+  for (const defined of ["ScreenId", "Callback"]) {
+    expect(linked.get(defined)?.startsWith(`${page.route}#`)).toBe(true);
   }
+  expect([...linked.keys()]).not.toContain("Data");
   expect(linked.get("ShowOptions")?.endsWith(`#${heading.id}`)).toBe(true);
 });
 

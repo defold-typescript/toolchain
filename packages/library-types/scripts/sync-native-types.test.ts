@@ -274,4 +274,32 @@ describe("committed native api-docs", () => {
       expect(readFileSync(path, "utf8")).toBe(lowerNativeApiDoc(PACKAGE_ROOT, t));
     }
   });
+
+  // The edit that turns a curated declaration into a `@globalTable` module, made
+  // mechanically, so the api-doc can be checked before any file changes form.
+  function asGlobalTableModule(source: string, namespace: string): string {
+    const opening = new RegExp(
+      `^declare global \\{\\n([\\s\\S]*?)^  namespace ${namespace} \\{$`,
+      "m",
+    );
+    const closing = /^\}\n\nexport \{\};\n$/m;
+    expect(source).toMatch(opening);
+    expect(source).toMatch(closing);
+    return source
+      .replace(opening, `$1  /** @globalTable */ declare module "${namespace}" {`)
+      .replace(closing, "");
+  }
+
+  test("each declaration lowers to its committed api-doc as a @globalTable module", () => {
+    for (const t of readNativeTargets(PACKAGE_ROOT)) {
+      const source = asGlobalTableModule(
+        readFileSync(join(PACKAGE_ROOT, t.declaration), "utf8"),
+        t.namespace,
+      );
+      expect(source).not.toContain("declare global");
+      expect(lowerNativeApiDoc(PACKAGE_ROOT, t, source)).toBe(
+        readFileSync(join(PACKAGE_ROOT, nativeApiDocPath(t)), "utf8"),
+      );
+    }
+  });
 });
