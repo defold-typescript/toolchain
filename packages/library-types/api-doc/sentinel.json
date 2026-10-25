@@ -1,0 +1,411 @@
+{
+  "info": {
+    "namespace": "sentinel",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "Fields"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Starts the client. Call it as early as possible. Sentinel keeps the table it is",
+      "description": "Starts the client. Call it as early as possible. Sentinel keeps the table it is\ngiven, filling in defaults and its `tags` and `extra`; `set_tag` and `set_extra`\nwrite into it.",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "Config"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_breadcrumb",
+      "brief": "Records something that happened, sent with every later event. Sentinel adds a",
+      "description": "Records something that happened, sent with every later event. Sentinel adds a\n`timestamp` to the table and keeps the last 10. Does nothing before `init`.",
+      "parameters": [
+        {
+          "name": "breadcrumb",
+          "doc": "",
+          "types": [
+            "Breadcrumb"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_tag",
+      "brief": "Sets a tag sent with every later event. Does nothing before `init`.",
+      "description": "Sets a tag sent with every later event. Does nothing before `init`.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string | number | boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_extra",
+      "brief": "Sets extra data sent with every later event. Does nothing before `init`.",
+      "description": "Sets extra data sent with every later event. Does nothing before `init`.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string | number | boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "capture_exception",
+      "brief": "Sends an error to Sentry. With `config.set_error_handler` on, every uncaught error",
+      "description": "Sends an error to Sentry. With `config.set_error_handler` on, every uncaught error\nis already sent through this. Raises before `init`. At most 10 events are sent per\n300 seconds; a throttled event goes to `callback` as an error.",
+      "parameters": [
+        {
+          "name": "err",
+          "doc": "",
+          "types": [
+            "ExceptionInfo"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "capture_message",
+      "brief": "Sends a message to Sentry. Raises before `init`. At most 10 events are sent per",
+      "description": "Sends a message to Sentry. Raises before `init`. At most 10 events are sent per\n300 seconds; a throttled event goes to `callback` as an error.",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "MessageInfo"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Config",
+      "properties": [
+        {
+          "name": "dsn",
+          "brief": "Where events are sent. `init` asserts it is a string that parses as",
+          "description": "Where events are sent. `init` asserts it is a string that parses as\n`{PROTOCOL}://{PUBLIC_KEY}@{HOST}/{PATH}{PROJECT_ID}`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "Print what Sentinel sends. Defaults to `false`.",
+          "description": "Print what Sentinel sends. Defaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "dry_run",
+          "brief": "Build events without sending them; each callback receives the id `\"(dry run)\"`. Defaults to `false`.",
+          "description": "Build events without sending them; each callback receives the id `\"(dry run)\"`. Defaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "gameanalytics",
+          "brief": "Also report each captured exception to GameAnalytics when that extension is",
+          "description": "Also report each captured exception to GameAnalytics when that extension is\npresent. Every exception then needs a `traceback`, or `capture_exception` raises.\nDefaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "send_timeout",
+          "brief": "HTTP request timeout in seconds. Defaults to `30`.",
+          "description": "HTTP request timeout in seconds. Defaults to `30`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "set_error_handler",
+          "brief": "Install a Lua error handler that captures every uncaught error. It takes the",
+          "description": "Install a Lua error handler that captures every uncaught error. It takes the\nsingle `sys.set_error_handler` slot, replacing any handler set before `init`.\nDefaults to `true`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "load_previous_crash",
+          "brief": "Submit the crash dump a previous session left, from inside `init`. Defaults to `true`.",
+          "description": "Submit the crash dump a previous session left, from inside `init`. Defaults to `true`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "release",
+          "brief": "The release id sent with every event.",
+          "description": "The release id sent with every event.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "dist",
+          "brief": "The distribution, to tell builds or deployment variants of one release apart.",
+          "description": "The distribution, to tell builds or deployment variants of one release apart.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "environment",
+          "brief": "A freeform environment name, e.g. `\"staging\"` or `\"prod\"`.",
+          "description": "A freeform environment name, e.g. `\"staging\"` or `\"prod\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tags",
+          "brief": "Tags sent with every event.",
+          "description": "Tags sent with every event.",
+          "types": [
+            "Fields"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "extra",
+          "brief": "Extra data sent with every event.",
+          "description": "Extra data sent with every event.",
+          "types": [
+            "Fields"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user",
+          "brief": "User information sent with every event, as given.",
+          "description": "User information sent with every event, as given.",
+          "types": [
+            "Fields"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "on_soft_crash",
+          "brief": "Called after an uncaught error is captured; only installed with",
+          "description": "Called after an uncaught error is captured; only installed with\n`set_error_handler`. The first return value is concatenated into a log line, so\nreturning nothing raises inside the error handler.",
+          "types": [
+            "(info: CrashInfo) => string | number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "on_hard_crash",
+          "brief": "Called from `init` after a previous session's crash dump is captured. The first",
+          "description": "Called from `init` after a previous session's crash dump is captured. The first\nreturn value is concatenated into a log line, so returning nothing raises out of\n`init`.",
+          "types": [
+            "(info: CrashInfo) => string | number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Breadcrumb",
+      "properties": [
+        {
+          "name": "category",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ExceptionInfo",
+      "properties": [
+        {
+          "name": "message",
+          "brief": "Sent as the exception type.",
+          "description": "Sent as the exception type.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "traceback",
+          "brief": "Sent as the exception value. Required when `config.gameanalytics` is on and the extension is present.",
+          "description": "Sent as the exception value. Required when `config.gameanalytics` is on and the extension is present.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "source",
+          "brief": "Sent as the `source` tag.",
+          "description": "Sent as the `source` tag.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fatal",
+          "brief": "Sends the event at level `\"fatal\"` instead of `\"error\"`.",
+          "description": "Sends the event at level `\"fatal\"` instead of `\"error\"`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tags",
+          "brief": "Tags for this event, merged over the global ones.",
+          "description": "Tags for this event, merged over the global ones.",
+          "types": [
+            "Fields"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "extra",
+          "brief": "Extra data for this event, merged over the global ones.",
+          "description": "Extra data for this event, merged over the global ones.",
+          "types": [
+            "Fields"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "brief": "Receives the event id on success, or the error when the request fails or the",
+          "description": "Receives the event id on success, or the error when the request fails or the\nevent is throttled.",
+          "types": [
+            "(id: string | undefined, err: string | undefined) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MessageInfo",
+      "properties": [
+        {
+          "name": "message",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "level",
+          "brief": "Defaults to `\"info\"`.",
+          "description": "Defaults to `\"info\"`.",
+          "types": [
+            "\"fatal\" | \"error\" | \"warning\" | \"info\" | \"debug\""
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "tags",
+          "brief": "Tags for this event, merged over the global ones.",
+          "description": "Tags for this event, merged over the global ones.",
+          "types": [
+            "Fields"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "extra",
+          "brief": "Extra data for this event, merged over the global ones.",
+          "description": "Extra data for this event, merged over the global ones.",
+          "types": [
+            "Fields"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "brief": "Receives the event id on success, or the error when the request fails or the",
+          "description": "Receives the event id on success, or the error when the request fails or the\nevent is throttled.",
+          "types": [
+            "(id: string | undefined, err: string | undefined) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
