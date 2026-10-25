@@ -1,0 +1,222 @@
+{
+  "info": {
+    "namespace": "gamepush.core.platform",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "NONE",
+      "brief": "No platform.",
+      "description": "No platform.",
+      "types": [
+        "\"NONE\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "CRAZY_GAMES",
+      "brief": "CrazyGames.",
+      "description": "CrazyGames.",
+      "types": [
+        "\"CRAZY_GAMES\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "GAME_DISTRIBUTION",
+      "brief": "GameDistribution.",
+      "description": "GameDistribution.",
+      "types": [
+        "\"GAME_DISTRIBUTION\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "GAME_MONETIZE",
+      "brief": "GameMonetize.",
+      "description": "GameMonetize.",
+      "types": [
+        "\"GAME_MONETIZE\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "OK",
+      "brief": "Odnoklassniki.",
+      "description": "Odnoklassniki.",
+      "types": [
+        "\"OK\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SMARTMARKET",
+      "brief": "SmartMarket.",
+      "description": "SmartMarket.",
+      "types": [
+        "\"SMARTMARKET\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "VK",
+      "brief": "VK.",
+      "description": "VK.",
+      "types": [
+        "\"VK\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "YANDEX",
+      "brief": "Yandex Games.",
+      "description": "Yandex Games.",
+      "types": [
+        "\"YANDEX\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "GAMEPIX",
+      "brief": "GamePix.",
+      "description": "GamePix.",
+      "types": [
+        "\"GAMEPIX\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POKI",
+      "brief": "Poki.",
+      "description": "Poki.",
+      "types": [
+        "\"POKI\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "VK_PLAY",
+      "brief": "VK Play.",
+      "description": "VK Play.",
+      "types": [
+        "\"VK_PLAY\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WG_PLAYGROUND",
+      "brief": "WG Playground.",
+      "description": "WG Playground.",
+      "types": [
+        "\"WG_PLAYGROUND\""
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "type",
+      "brief": "The platform the game runs on. The SDK can report platforms this module has no",
+      "description": "The platform the game runs on. The SDK can report platforms this module has no\nconstant for, so compare against the constants rather than narrowing to them.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has_integrated_auth",
+      "brief": "Whether the platform signs the player in itself.",
+      "description": "Whether the platform signs the player in itself.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_external_links_allowed",
+      "brief": "Whether the platform allows external links.",
+      "description": "Whether the platform allows external links.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_secret_code_auth_available",
+      "brief": "Whether sign-in by secret code is available.",
+      "description": "Whether sign-in by secret code is available.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "call_native_sdk",
+      "brief": "Calls a method of the platform's native SDK, or reads one of its objects or fields.",
+      "description": "Calls a method of the platform's native SDK, or reads one of its objects or fields.\nRaises when the method is not a non-empty string. An error comes back as\n`{ error = \"...\" }`.",
+      "parameters": [
+        {
+          "name": "method",
+          "doc": "The dotted path to the method, object or field, for example\n`\"feedback.canReview\"`. `var=path` saves the result in a JS variable, `var:method`\ncalls a method of a saved object.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "parameters",
+          "doc": "The method's argument, or a list of its arguments. Functions cannot\nbe passed. Ignored when the path names an object or a field.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result when the method returns a promise.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result, or nothing when a callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    }
+  ]
+}

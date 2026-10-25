@@ -1,0 +1,722 @@
+{
+  "info": {
+    "namespace": "gamepush",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The common event handlers.",
+      "description": "The common event handlers.",
+      "types": [
+        "CommonCallbacks"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "languages",
+      "brief": "The ISO 639-1 codes of the languages GamePush supports.",
+      "description": "The ISO 639-1 codes of the languages GamePush supports.",
+      "types": [
+        "{ readonly ENGLISH: \"en\"; readonly RUSSIAN: \"ru\"; readonly FRENCH: \"fr\"; readonly ITALIAN: \"it\"; readonly GERMAN: \"de\"; readonly SPANISH: \"es\"; readonly CHINESE: \"zh\"; readonly PORTUGUESE: \"pt\"; readonly KOREAN: \"ko\"; readonly JAPANESE: \"ja\"; readonly TURKISH: \"tr\"; readonly ARAB: \"ar\"; readonly HINDI: \"hi\"; readonly INDONESIAN: \"id\"; }"
+      ],
+      "fields": [
+        {
+          "name": "ENGLISH",
+          "doc": "",
+          "types": [
+            "\"en\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "RUSSIAN",
+          "doc": "",
+          "types": [
+            "\"ru\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "FRENCH",
+          "doc": "",
+          "types": [
+            "\"fr\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ITALIAN",
+          "doc": "",
+          "types": [
+            "\"it\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "GERMAN",
+          "doc": "",
+          "types": [
+            "\"de\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "SPANISH",
+          "doc": "",
+          "types": [
+            "\"es\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "CHINESE",
+          "doc": "",
+          "types": [
+            "\"zh\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "PORTUGUESE",
+          "doc": "",
+          "types": [
+            "\"pt\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "KOREAN",
+          "doc": "",
+          "types": [
+            "\"ko\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "JAPANESE",
+          "doc": "",
+          "types": [
+            "\"ja\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "TURKISH",
+          "doc": "",
+          "types": [
+            "\"tr\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ARAB",
+          "doc": "",
+          "types": [
+            "\"ar\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "HINDI",
+          "doc": "",
+          "types": [
+            "\"hi\""
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "INDONESIAN",
+          "doc": "",
+          "types": [
+            "\"id\""
+          ],
+          "is_optional": "False"
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Initializes GamePush. Call it once, before any other function. Raises when called",
+      "description": "Initializes GamePush. Call it once, before any other function. Raises when called\ntwice, without a callback, or when `gamepush.id` or `gamepush.token` is missing from\n`game.project`.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives whether initialization succeeded.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "language",
+      "brief": "The current language, as an ISO 639-1 code.",
+      "description": "The current language, as an ISO 639-1 code.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "change_language",
+      "brief": "Sets the language. Raises when the code is not a string.",
+      "description": "Sets the language. Raises when the code is not a string.",
+      "parameters": [
+        {
+          "name": "language_code",
+          "doc": "The ISO 639-1 code, for example `languages.RUSSIAN`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_mobile",
+      "brief": "Whether the game runs on a mobile device.",
+      "description": "Whether the game runs on a mobile device.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_portrait",
+      "brief": "Whether the screen is in portrait orientation.",
+      "description": "Whether the screen is in portrait orientation.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_dev",
+      "brief": "Whether the game runs in development mode.",
+      "description": "Whether the game runs in development mode.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_allowed_origin",
+      "brief": "Whether the game's host is a trusted origin.",
+      "description": "Whether the game's host is a trusted origin.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_server_time",
+      "brief": "The server time, in ISO 8601 format.",
+      "description": "The server time, in ISO 8601 format.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_paused",
+      "brief": "Whether the game is paused.",
+      "description": "Whether the game is paused.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pause",
+      "brief": "Pauses the game.",
+      "description": "Pauses the game.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resume",
+      "brief": "Resumes the game.",
+      "description": "Resumes the game.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_background",
+      "brief": "Sets the game's background image. Raises when the table is missing.",
+      "description": "Sets the game's background image. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The background, for example `{ url: \"/image.png\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "game_start",
+      "brief": "Reports that the game has finished loading.",
+      "description": "Reports that the game has finished loading.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_game_started",
+      "brief": "Whether the game has finished loading.",
+      "description": "Whether the game has finished loading.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gameplay_start",
+      "brief": "Reports that gameplay started.",
+      "description": "Reports that gameplay started.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gameplay_stop",
+      "brief": "Reports that gameplay stopped.",
+      "description": "Reports that gameplay stopped.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_game_play",
+      "brief": "Whether gameplay is running.",
+      "description": "Whether gameplay is running.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_plugin_version",
+      "brief": "The plugin's version string.",
+      "description": "The plugin's version string.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "app",
+      "brief": "The game's application details, reviews and shortcuts.",
+      "description": "The game's application details, reviews and shortcuts.",
+      "types": [
+        "typeof import('gamepush.core.app')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "platform",
+      "brief": "The platform the game runs on and its native SDK.",
+      "description": "The platform the game runs on and its native SDK.",
+      "types": [
+        "typeof import('gamepush.core.platform')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "player",
+      "brief": "The current player.",
+      "description": "The current player.",
+      "types": [
+        "typeof import('gamepush.core.player')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "players",
+      "brief": "Other players' data.",
+      "description": "Other players' data.",
+      "types": [
+        "typeof import('gamepush.core.players')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "payments",
+      "brief": "In-game purchases and subscriptions.",
+      "description": "In-game purchases and subscriptions.",
+      "types": [
+        "typeof import('gamepush.core.payments')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "leaderboard",
+      "brief": "Leaderboards.",
+      "description": "Leaderboards.",
+      "types": [
+        "typeof import('gamepush.core.leaderboard')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "channels",
+      "brief": "Channels and chats.",
+      "description": "Channels and chats.",
+      "types": [
+        "typeof import('gamepush.core.channels')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "events",
+      "brief": "Events.",
+      "description": "Events.",
+      "types": [
+        "typeof import('gamepush.core.events')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "rewards",
+      "brief": "Rewards.",
+      "description": "Rewards.",
+      "types": [
+        "typeof import('gamepush.core.rewards')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "schedulers",
+      "brief": "Reward schedulers.",
+      "description": "Reward schedulers.",
+      "types": [
+        "typeof import('gamepush.core.schedulers')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "triggers",
+      "brief": "Triggers.",
+      "description": "Triggers.",
+      "types": [
+        "typeof import('gamepush.core.triggers')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ads",
+      "brief": "Advertising.",
+      "description": "Advertising.",
+      "types": [
+        "typeof import('gamepush.core.ads')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "achievements",
+      "brief": "Achievements.",
+      "description": "Achievements.",
+      "types": [
+        "typeof import('gamepush.core.achievements')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "socials",
+      "brief": "Social actions: sharing, posts, invites and communities.",
+      "description": "Social actions: sharing, posts, invites and communities.",
+      "types": [
+        "typeof import('gamepush.core.socials')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "variables",
+      "brief": "Game variables.",
+      "description": "Game variables.",
+      "types": [
+        "typeof import('gamepush.core.variables')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "games_collections",
+      "brief": "Games collections.",
+      "description": "Games collections.",
+      "types": [
+        "typeof import('gamepush.core.games_collections')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "images",
+      "brief": "Images.",
+      "description": "Images.",
+      "types": [
+        "typeof import('gamepush.core.images')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "files",
+      "brief": "Files.",
+      "description": "Files.",
+      "types": [
+        "typeof import('gamepush.core.files')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "documents",
+      "brief": "Documents such as the privacy policy.",
+      "description": "Documents such as the privacy policy.",
+      "types": [
+        "typeof import('gamepush.core.documents')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "analytics",
+      "brief": "Analytics.",
+      "description": "Analytics.",
+      "types": [
+        "typeof import('gamepush.core.analytics')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "fullscreen",
+      "brief": "Fullscreen.",
+      "description": "Fullscreen.",
+      "types": [
+        "typeof import('gamepush.core.fullscreen')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "sounds",
+      "brief": "Sounds.",
+      "description": "Sounds.",
+      "types": [
+        "typeof import('gamepush.core.sounds')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "logger",
+      "brief": "Toasts and console logs.",
+      "description": "Toasts and console logs.",
+      "types": [
+        "typeof import('gamepush.core.logger')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "storage",
+      "brief": "Key-value storage.",
+      "description": "Key-value storage.",
+      "types": [
+        "typeof import('gamepush.core.storage')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "segments",
+      "brief": "Player segments.",
+      "description": "Player segments.",
+      "types": [
+        "typeof import('gamepush.core.segments')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "experiments",
+      "brief": "Experiments.",
+      "description": "Experiments.",
+      "types": [
+        "typeof import('gamepush.core.experiments')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "feedbacks",
+      "brief": "Feedback.",
+      "description": "Feedback.",
+      "types": [
+        "typeof import('gamepush.core.feedbacks')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "reactions",
+      "brief": "Reactions.",
+      "description": "Reactions.",
+      "types": [
+        "typeof import('gamepush.core.reactions')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "uniques",
+      "brief": "Unique values.",
+      "description": "Unique values.",
+      "types": [
+        "typeof import('gamepush.core.uniques')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "multiplayer",
+      "brief": "Multiplayer.",
+      "description": "Multiplayer.",
+      "types": [
+        "typeof import('gamepush.core.multiplayer')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "windows",
+      "brief": "Overlay windows.",
+      "description": "Overlay windows.",
+      "types": [
+        "typeof import('gamepush.core.windows')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "social_actions",
+      "brief": "The same module as `socials`.",
+      "description": "The same module as `socials`.",
+      "types": [
+        "typeof import('gamepush.core.socials')"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CommonCallbacks",
+      "properties": [
+        {
+          "name": "change_orientation",
+          "brief": "The screen orientation changed.",
+          "description": "The screen orientation changed.",
+          "types": [
+            "(is_portrait: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pause",
+          "brief": "The game was paused.",
+          "description": "The game was paused.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "resume",
+          "brief": "The game was resumed.",
+          "description": "The game was resumed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_connect",
+          "brief": "Another window of the game connected.",
+          "description": "Another window of the game connected.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

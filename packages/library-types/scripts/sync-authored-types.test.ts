@@ -2479,6 +2479,80 @@ describe("GamePush social and live-ops type claims upstream states only in its b
   });
 });
 
+// The platform modules follow the same split. `platform.lua` is where the body and the
+// annotations disagree most: a `---@return string` over an `== true` comparison, and a
+// native passthrough whose only check is on the method name.
+describe("GamePush platform type claims upstream states only in its body", () => {
+  type Property = { name: string; types: string[]; is_optional?: string | null };
+  type Returned = { types: string[] };
+
+  const MODULES = [
+    "app",
+    "platform",
+    "analytics",
+    "documents",
+    "experiments",
+    "files",
+    "fullscreen",
+    "games_collections",
+    "images",
+    "logger",
+    "segments",
+    "sounds",
+    "windows",
+  ].map((name) => `gamepush.core.${name}`);
+
+  function element(namespace: string, name: string): Record<string, unknown> {
+    const found = apiDocElements(namespace).find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
+    return found;
+  }
+
+  function parameters(namespace: string, name: string): Property[] {
+    return (element(namespace, name) as { parameters: Property[] }).parameters;
+  }
+
+  test("each module registers under its own module id at the v1.4.1 pin", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    for (const moduleId of MODULES) {
+      const entry = targets.find((t) => t.moduleId === moduleId);
+      expect(entry).toMatchObject({
+        namespace: moduleId,
+        repo: "https://github.com/megalanthus/defold-gamepush",
+        ref: "v1.4.1",
+        license: "MIT",
+      });
+      expect(entry?.parityVerdict).toBeUndefined();
+      expect(entry?.upstreamLua).toEqual([
+        `fixtures/upstream-lua/defold-gamepush/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
+      ]);
+    }
+  });
+
+  // Annotated `---@return string`, but the body returns `call_api(...) == true`.
+  test("is_secret_code_auth_available returns the boolean its comparison yields", () => {
+    const { returnvalues } = element("gamepush.core.platform", "is_secret_code_auth_available") as {
+      returnvalues: Returned[];
+    };
+    expect(returnvalues.map((r) => r.types)).toEqual([["boolean"]]);
+  });
+
+  // The body raises on a non-string or empty method, passes the parameters through
+  // unchecked, and lets a nil callback through `check_callback`.
+  test("call_native_sdk demands only its method name", () => {
+    const [method, passed, callback] = parameters("gamepush.core.platform", "call_native_sdk");
+    expect(method).toMatchObject({ name: "method", types: ["string"], is_optional: "False" });
+    expect(passed).toMatchObject({ name: "parameters", is_optional: "True" });
+    expect(callback).toMatchObject({ name: "callback", is_optional: "True" });
+  });
+
+  test("each platform constant is the literal of its own name", () => {
+    expect(element("gamepush.core.platform", "YANDEX")).toMatchObject({
+      types: ['"YANDEX"'],
+    });
+  });
+});
+
 describe("nakama.session type claims upstream states only in its body", () => {
   function element(name: string): Record<string, unknown> {
     const found = apiDocElements("nakama.session").find((entry) => entry.name === name);

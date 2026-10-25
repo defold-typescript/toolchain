@@ -1,0 +1,155 @@
+{
+  "info": {
+    "namespace": "gamepush.core.app",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "title",
+      "brief": "The game's title.",
+      "description": "The game's title.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "description",
+      "brief": "The game's description.",
+      "description": "The game's description.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "image",
+      "brief": "The game's image.",
+      "description": "The game's image.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "url",
+      "brief": "The game's URL.",
+      "description": "The game's URL.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "request_review",
+      "brief": "Asks the player to review the game.",
+      "description": "Asks the player to review the game.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_request_review",
+      "brief": "Whether the platform lets the game ask for a review.",
+      "description": "Whether the platform lets the game ask for a review.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_already_reviewed",
+      "brief": "Whether the player has already reviewed the game.",
+      "description": "Whether the player has already reviewed the game.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_shortcut",
+      "brief": "Asks the player to add a shortcut to the game or add it to their favorites.",
+      "description": "Asks the player to add a shortcut to the game or add it to their favorites.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_add_shortcut",
+      "brief": "Whether the platform lets the game add a shortcut or a favorite.",
+      "description": "Whether the platform lets the game add a shortcut or a favorite.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}
