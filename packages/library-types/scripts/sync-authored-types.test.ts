@@ -2406,6 +2406,79 @@ describe("GamePush account and commerce type claims upstream states only in its 
   });
 });
 
+// The same split as the account and commerce modules: parity holds the names and arities,
+// and the `helpers.check_*` calls and the Lua constants decide what is held here.
+describe("GamePush social and live-ops type claims upstream states only in its body", () => {
+  type Property = { name: string; types: string[]; is_optional?: string | null };
+
+  const MODULES = [
+    "channels",
+    "socials",
+    "multiplayer",
+    "events",
+    "triggers",
+    "schedulers",
+    "feedbacks",
+    "reactions",
+  ].map((name) => `gamepush.core.${name}`);
+
+  function element(namespace: string, name: string): Record<string, unknown> {
+    const found = apiDocElements(namespace).find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
+    return found;
+  }
+
+  function parameters(namespace: string, name: string): Property[] {
+    return (element(namespace, name) as { parameters: Property[] }).parameters;
+  }
+
+  test("each module registers under its own module id at the v1.4.1 pin", () => {
+    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    for (const moduleId of MODULES) {
+      const entry = targets.find((t) => t.moduleId === moduleId);
+      expect(entry).toMatchObject({
+        namespace: moduleId,
+        repo: "https://github.com/megalanthus/defold-gamepush",
+        ref: "v1.4.1",
+        license: "MIT",
+      });
+      expect(entry?.parityVerdict).toBeUndefined();
+      expect(entry?.upstreamLua).toEqual([
+        `fixtures/upstream-lua/defold-gamepush/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
+      ]);
+    }
+  });
+
+  // `check_table_required` raises on a missing table; `check_callback` lets nil through.
+  test("send_message demands its table and leaves the callback optional", () => {
+    const [table, callback] = parameters("gamepush.core.channels", "send_message");
+    expect(table).toMatchObject({ name: "parameters", is_optional: "False" });
+    expect(callback).toMatchObject({ name: "callback", is_optional: "True" });
+  });
+
+  // `check_table` lets nil through.
+  test("open_chat's table is optional", () => {
+    const [table] = parameters("gamepush.core.channels", "open_chat");
+    expect(table).toMatchObject({ name: "parameters", is_optional: "True" });
+  });
+
+  // `check_number` is called without `can_be_nil`, so the day is required.
+  test("claim_day takes a scheduler id or tag and demands its day", () => {
+    const [scheduler, day] = parameters("gamepush.core.schedulers", "claim_day");
+    expect(scheduler).toMatchObject({ name: "id_or_tag", types: ["string | number"] });
+    expect(day).toMatchObject({ name: "day", types: ["number"], is_optional: "False" });
+  });
+
+  test("the sync modes are the literals the Lua assigns", () => {
+    expect(element("gamepush.core.multiplayer", "MODE_FAST")).toMatchObject({
+      types: ['"fast"'],
+    });
+    expect(element("gamepush.core.multiplayer", "MODE_SMOOTH")).toMatchObject({
+      types: ['"smooth"'],
+    });
+  });
+});
+
 describe("nakama.session type claims upstream states only in its body", () => {
   function element(name: string): Record<string, unknown> {
     const found = apiDocElements("nakama.session").find((entry) => entry.name === name);

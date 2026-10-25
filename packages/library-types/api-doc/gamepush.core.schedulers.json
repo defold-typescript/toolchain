@@ -1,0 +1,518 @@
+{
+  "info": {
+    "namespace": "gamepush.core.schedulers",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "claim_day",
+      "brief": "Claims a day's reward. Raises unless `day` is a number.",
+      "description": "Claims a day's reward. Raises unless `day` is a number.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "day",
+          "doc": "The day.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "claim_day_additional",
+      "brief": "Claims a day's reward for an extra activity. Raises unless `day` is a number and",
+      "description": "Claims a day's reward for an extra activity. Raises unless `day` is a number and\n`trigger_id_or_tag` a string.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "day",
+          "doc": "The day.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "trigger_id_or_tag",
+          "doc": "The activity trigger's id or tag.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "claim_all_day",
+      "brief": "Claims a day's reward for every activity. Raises unless `day` is a number.",
+      "description": "Claims a day's reward for every activity. Raises unless `day` is a number.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "day",
+          "doc": "The day.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "claim_all_days",
+      "brief": "Claims the rewards for every completed day.",
+      "description": "Claims the rewards for every completed day.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "All schedulers.",
+      "description": "All schedulers.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "active_list",
+      "brief": "The schedulers the player is taking part in.",
+      "description": "The schedulers the player is taking part in.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_scheduler",
+      "brief": "A scheduler's description.",
+      "description": "A scheduler's description.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_scheduler_day",
+      "brief": "A scheduler day's description. Raises unless `day` is a number.",
+      "description": "A scheduler day's description. Raises unless `day` is a number.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "day",
+          "doc": "The day.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_scheduler_current_day",
+      "brief": "The description of a scheduler's current day.",
+      "description": "The description of a scheduler's current day.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_registered",
+      "brief": "Whether the player is taking part in a scheduler.",
+      "description": "Whether the player is taking part in a scheduler.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_today_reward_claimed",
+      "brief": "Whether today's reward was claimed.",
+      "description": "Whether today's reward was claimed.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_claim_day",
+      "brief": "Whether a day's reward can be claimed. Raises unless `day` is a number.",
+      "description": "Whether a day's reward can be claimed. Raises unless `day` is a number.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "day",
+          "doc": "The day.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_claim_day_additional",
+      "brief": "Whether a day's reward for an extra activity can be claimed. Raises unless `day` is a",
+      "description": "Whether a day's reward for an extra activity can be claimed. Raises unless `day` is a\nnumber and `trigger_id_or_tag` a string.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "day",
+          "doc": "The day.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "trigger_id_or_tag",
+          "doc": "The activity trigger's id or tag.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_claim_all_day",
+      "brief": "Whether a day's reward for every activity can be claimed. Raises unless `day` is a",
+      "description": "Whether a day's reward for every activity can be claimed. Raises unless `day` is a\nnumber.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The scheduler's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "day",
+          "doc": "The day.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The scheduler event handlers.",
+      "description": "The scheduler event handlers.",
+      "types": [
+        "SchedulersCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SchedulersCallbacks",
+      "properties": [
+        {
+          "name": "claim_day",
+          "brief": "A day's reward was claimed.",
+          "description": "A day's reward was claimed.",
+          "types": [
+            "(scheduler: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_claim_day",
+          "brief": "Claiming a day's reward failed.",
+          "description": "Claiming a day's reward failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "claim_day_additional",
+          "brief": "A day's reward for an extra activity was claimed.",
+          "description": "A day's reward for an extra activity was claimed.",
+          "types": [
+            "(scheduler: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_claim_day_additional",
+          "brief": "Claiming a day's reward for an extra activity failed.",
+          "description": "Claiming a day's reward for an extra activity failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "claim_all_day",
+          "brief": "A day's reward for every activity was claimed.",
+          "description": "A day's reward for every activity was claimed.",
+          "types": [
+            "(scheduler: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_claim_all_day",
+          "brief": "Claiming a day's reward for every activity failed.",
+          "description": "Claiming a day's reward for every activity failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "claim_all_days",
+          "brief": "The rewards for every completed day were claimed.",
+          "description": "The rewards for every completed day were claimed.",
+          "types": [
+            "(scheduler: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_claim_all_days",
+          "brief": "Claiming the rewards for every completed day failed.",
+          "description": "Claiming the rewards for every completed day failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "join",
+          "brief": "The player joined a scheduler.",
+          "description": "The player joined a scheduler.",
+          "types": [
+            "(scheduler: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_join",
+          "brief": "Joining a scheduler failed.",
+          "description": "Joining a scheduler failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

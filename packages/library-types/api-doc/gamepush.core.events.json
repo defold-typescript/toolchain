@@ -1,0 +1,174 @@
+{
+  "info": {
+    "namespace": "gamepush.core.events",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "join",
+      "brief": "Joins an event. Raises when the table is missing.",
+      "description": "Joins an event. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `events.join`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "All events.",
+      "description": "All events.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "active_list",
+      "brief": "The events the player is taking part in.",
+      "description": "The events the player is taking part in.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_event",
+      "brief": "An event's description.",
+      "description": "An event's description.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The event's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has",
+      "brief": "Whether an event is active.",
+      "description": "Whether an event is active.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The event's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_joined",
+      "brief": "Whether the player is taking part in an event.",
+      "description": "Whether the player is taking part in an event.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The event's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "EventsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "EventsCallbacks",
+      "properties": [
+        {
+          "name": "join",
+          "brief": "The player joined an event.",
+          "description": "The player joined an event.",
+          "types": [
+            "(event: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_join",
+          "brief": "Joining an event failed.",
+          "description": "Joining an event failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

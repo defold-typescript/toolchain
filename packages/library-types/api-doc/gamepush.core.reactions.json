@@ -1,0 +1,128 @@
+{
+  "info": {
+    "namespace": "gamepush.core.reactions",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set",
+      "brief": "Sets a reaction. Raises when the table is missing.",
+      "description": "Sets a reaction. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The reaction: its `entityType`, `entityId` and `reactionType`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unset",
+      "brief": "Removes a reaction. Raises when the table is missing.",
+      "description": "Removes a reaction. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The reaction, in the shape `set` takes.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The reaction event handlers.",
+      "description": "The reaction event handlers.",
+      "types": [
+        "ReactionsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ReactionsCallbacks",
+      "properties": [
+        {
+          "name": "set",
+          "brief": "A reaction was set.",
+          "description": "A reaction was set.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "unset",
+          "brief": "A reaction was removed.",
+          "description": "A reaction was removed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "set_error",
+          "brief": "Setting a reaction failed.",
+          "description": "Setting a reaction failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "unset_error",
+          "brief": "Removing a reaction failed.",
+          "description": "Removing a reaction failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_set",
+          "brief": "A reaction was set on an entity.",
+          "description": "A reaction was set on an entity.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_unset",
+          "brief": "A reaction was removed from an entity.",
+          "description": "A reaction was removed from an entity.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

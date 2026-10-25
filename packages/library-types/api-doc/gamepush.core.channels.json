@@ -1,0 +1,2045 @@
+{
+  "info": {
+    "namespace": "gamepush.core.channels",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "create_channel",
+      "brief": "Creates a channel. Raises when the table is missing.",
+      "description": "Creates a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.createChannel`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_channel",
+      "brief": "Updates a channel. Raises when the table is missing.",
+      "description": "Updates a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.updateChannel`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_channel",
+      "brief": "Deletes a channel. Raises when the table is missing.",
+      "description": "Deletes a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.deleteChannel`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_channel",
+      "brief": "Fetches a channel by its id. Raises when the table is missing.",
+      "description": "Fetches a channel by its id. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchChannel`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_channels",
+      "brief": "Fetches a list of channels. Raises when the table is missing.",
+      "description": "Fetches a list of channels. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchChannels`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_channels",
+      "brief": "Fetches the next page of channels. Raises when the table is missing.",
+      "description": "Fetches the next page of channels. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreChannels`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "open_chat",
+      "brief": "Opens the chat window.",
+      "description": "Opens the chat window.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.openChat`, or nil for the main chat.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_main_chat_enabled",
+      "brief": "Whether the main chat can be shown.",
+      "description": "Whether the main chat can be shown.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "main_chat_id",
+      "brief": "The main chat's id.",
+      "description": "The main chat's id.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "join",
+      "brief": "Joins a public channel, or asks to join it. Raises when the table is missing.",
+      "description": "Joins a public channel, or asks to join it. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.join`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_join",
+      "brief": "Cancels a request to join a channel. Raises when the table is missing.",
+      "description": "Cancels a request to join a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.cancelJoin`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leave",
+      "brief": "Leaves a channel. Raises when the table is missing.",
+      "description": "Leaves a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.leave`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "kick",
+      "brief": "Removes a member from a channel. Raises when the table is missing.",
+      "description": "Removes a member from a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.kick`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_members",
+      "brief": "Fetches a channel's members. Raises when the table is missing.",
+      "description": "Fetches a channel's members. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMembers`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_members",
+      "brief": "Fetches the next page of a channel's members. Raises when the table is missing.",
+      "description": "Fetches the next page of a channel's members. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreMembers`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mute",
+      "brief": "Mutes a player in a channel. Raises when the table is missing.",
+      "description": "Mutes a player in a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.mute`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unmute",
+      "brief": "Unmutes a player in a channel. Raises when the table is missing.",
+      "description": "Unmutes a player in a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.unmute`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send_invite",
+      "brief": "Invites a player to a channel. Raises when the table is missing.",
+      "description": "Invites a player to a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.sendInvite`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_invite",
+      "brief": "Cancels an invite. Raises when the table is missing.",
+      "description": "Cancels an invite. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.cancelInvite`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "accept_invite",
+      "brief": "Accepts an invite to a channel. Raises when the table is missing.",
+      "description": "Accepts an invite to a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.acceptInvite`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reject_invite",
+      "brief": "Rejects an invite to a channel. Raises when the table is missing.",
+      "description": "Rejects an invite to a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.rejectInvite`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_invites",
+      "brief": "Fetches the player's invites to channels. Raises when the table is missing.",
+      "description": "Fetches the player's invites to channels. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchInvites`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_invites",
+      "brief": "Fetches the next page of the player's invites. Raises when the table is missing.",
+      "description": "Fetches the next page of the player's invites. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreInvites`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_channel_invites",
+      "brief": "Fetches the invites sent from a channel. Raises when the table is missing.",
+      "description": "Fetches the invites sent from a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchChannelInvites`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_channel_invites",
+      "brief": "Fetches the next page of the invites sent from a channel. Raises when the table is missing.",
+      "description": "Fetches the next page of the invites sent from a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreChannelInvites`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_sent_invites",
+      "brief": "Fetches the invites the player sent to other players. Raises when the table is missing.",
+      "description": "Fetches the invites the player sent to other players. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchSentInvites`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_sent_invites",
+      "brief": "Fetches the next page of the invites the player sent. Raises when the table is missing.",
+      "description": "Fetches the next page of the invites the player sent. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreSentInvites`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "accept_join_request",
+      "brief": "Accepts a request to join a channel. Raises when the table is missing.",
+      "description": "Accepts a request to join a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.acceptJoinRequest`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reject_join_request",
+      "brief": "Rejects a request to join a channel. Raises when the table is missing.",
+      "description": "Rejects a request to join a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.rejectJoinRequest`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_join_requests",
+      "brief": "Fetches the requests to join a channel. Raises when the table is missing.",
+      "description": "Fetches the requests to join a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchJoinRequests`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_join_requests",
+      "brief": "Fetches the next page of the requests to join a channel. Raises when the table is missing.",
+      "description": "Fetches the next page of the requests to join a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreJoinRequests`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_sent_join_requests",
+      "brief": "Fetches the requests to join that the player sent. Raises when the table is missing.",
+      "description": "Fetches the requests to join that the player sent. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchSentJoinRequests`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_sent_join_requests",
+      "brief": "Fetches the next page of the requests to join that the player sent. Raises when the table is",
+      "description": "Fetches the next page of the requests to join that the player sent. Raises when the table is\nmissing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreSentJoinRequests`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send_message",
+      "brief": "Sends a message to a channel. Raises when the table is missing.",
+      "description": "Sends a message to a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.sendMessage`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send_personal_message",
+      "brief": "Sends a personal message to a player. Raises when the table is missing.",
+      "description": "Sends a personal message to a player. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.sendPersonalMessage`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send_feed_message",
+      "brief": "Posts a message to a player's feed. Raises when the table is missing.",
+      "description": "Posts a message to a player's feed. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.sendFeedMessage`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "edit_message",
+      "brief": "Edits a message. Raises when the table is missing.",
+      "description": "Edits a message. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.editMessage`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_message",
+      "brief": "Deletes a message. Raises when the table is missing.",
+      "description": "Deletes a message. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.deleteMessage`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_messages",
+      "brief": "Fetches the messages in a channel. Raises when the table is missing.",
+      "description": "Fetches the messages in a channel. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMessages`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_personal_messages",
+      "brief": "Fetches the personal messages with another player. Raises when the table is missing.",
+      "description": "Fetches the personal messages with another player. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchPersonalMessages`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_feed_messages",
+      "brief": "Fetches the messages in a player's feed. Raises when the table is missing.",
+      "description": "Fetches the messages in a player's feed. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchFeedMessages`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_messages",
+      "brief": "Fetches the next page of a channel's messages. Raises when the table is missing.",
+      "description": "Fetches the next page of a channel's messages. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreMessages`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_personal_messages",
+      "brief": "Fetches the next page of the personal messages with another player. Raises when the table is",
+      "description": "Fetches the next page of the personal messages with another player. Raises when the table is\nmissing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMorePersonalMessages`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more_feed_messages",
+      "brief": "Fetches the next page of the messages in a player's feed. Raises when the table is missing.",
+      "description": "Fetches the next page of the messages in a player's feed. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `channels.fetchMoreFeedMessages`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_value",
+      "brief": "Sets a value in a channel's state. Raises when the table is missing.",
+      "description": "Sets a value in a channel's state. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The channel, key and value.",
+          "types": [
+            "ChannelValueParameters"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_value",
+      "brief": "Adds to a number in a channel's state. Raises when the table is missing.",
+      "description": "Adds to a number in a channel's state. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The channel, key and amount.",
+          "types": [
+            "ChannelAddValueParameters"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The channel event handlers.",
+      "description": "The channel event handlers.",
+      "types": [
+        "ChannelsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ChannelValueParameters",
+      "properties": [
+        {
+          "name": "channelId",
+          "brief": "The channel's id.",
+          "description": "The channel's id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "key",
+          "brief": "The state key.",
+          "description": "The state key.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "brief": "The value to store under the key.",
+          "description": "The value to store under the key.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ChannelAddValueParameters",
+      "properties": [
+        {
+          "name": "channelId",
+          "brief": "The channel's id.",
+          "description": "The channel's id.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "key",
+          "brief": "The state key.",
+          "description": "The state key.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "brief": "The amount to add to the number stored under the key.",
+          "description": "The amount to add to the number stored under the key.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ChannelsCallbacks",
+      "properties": [
+        {
+          "name": "create_channel",
+          "brief": "A channel was created.",
+          "description": "A channel was created.",
+          "types": [
+            "(channel: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_create_channel",
+          "brief": "Creating a channel failed.",
+          "description": "Creating a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "update_channel",
+          "brief": "A channel was updated.",
+          "description": "A channel was updated.",
+          "types": [
+            "(channel: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_update_channel",
+          "brief": "Updating a channel failed.",
+          "description": "Updating a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_update_channel",
+          "brief": "A channel the player is in was changed.",
+          "description": "A channel the player is in was changed.",
+          "types": [
+            "(channel: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "delete_channel",
+          "brief": "A channel was deleted.",
+          "description": "A channel was deleted.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_delete_channel",
+          "brief": "Deleting a channel failed.",
+          "description": "Deleting a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_delete_channel",
+          "brief": "A channel the player is in was deleted.",
+          "description": "A channel the player is in was deleted.",
+          "types": [
+            "(channel: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_channel",
+          "brief": "A channel was fetched.",
+          "description": "A channel was fetched.",
+          "types": [
+            "(channel: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_channel",
+          "brief": "Fetching a channel failed.",
+          "description": "Fetching a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_channels",
+          "brief": "A list of channels was fetched.",
+          "description": "A list of channels was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_channels",
+          "brief": "Fetching a list of channels failed.",
+          "description": "Fetching a list of channels failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_channels",
+          "brief": "The next page of channels was fetched.",
+          "description": "The next page of channels was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_channels",
+          "brief": "Fetching the next page of channels failed.",
+          "description": "Fetching the next page of channels failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open_chat",
+          "brief": "The chat window was opened.",
+          "description": "The chat window was opened.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "close_chat",
+          "brief": "The chat window was closed.",
+          "description": "The chat window was closed.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_open_chat",
+          "brief": "Opening the chat window failed.",
+          "description": "Opening the chat window failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "join",
+          "brief": "The player joined a channel or asked to join it.",
+          "description": "The player joined a channel or asked to join it.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_join",
+          "brief": "Joining a channel failed.",
+          "description": "Joining a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_join",
+          "brief": "A player joined a channel.",
+          "description": "A player joined a channel.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_join_request",
+          "brief": "A player asked to join a channel.",
+          "description": "A player asked to join a channel.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cancel_join",
+          "brief": "A request to join was cancelled.",
+          "description": "A request to join was cancelled.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_cancel_join",
+          "brief": "Cancelling a request to join failed.",
+          "description": "Cancelling a request to join failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_cancel_join",
+          "brief": "A player cancelled a request to join.",
+          "description": "A player cancelled a request to join.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "leave",
+          "brief": "The player left a channel.",
+          "description": "The player left a channel.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_leave",
+          "brief": "Leaving a channel failed.",
+          "description": "Leaving a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_leave",
+          "brief": "A player left a channel.",
+          "description": "A player left a channel.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "kick",
+          "brief": "A member was removed from a channel.",
+          "description": "A member was removed from a channel.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_kick",
+          "brief": "Removing a member from a channel failed.",
+          "description": "Removing a member from a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_members",
+          "brief": "A channel's members were fetched.",
+          "description": "A channel's members were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_members",
+          "brief": "Fetching a channel's members failed.",
+          "description": "Fetching a channel's members failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_members",
+          "brief": "The next page of a channel's members was fetched.",
+          "description": "The next page of a channel's members was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_members",
+          "brief": "Fetching the next page of a channel's members failed.",
+          "description": "Fetching the next page of a channel's members failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "mute",
+          "brief": "A player was muted.",
+          "description": "A player was muted.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_mute",
+          "brief": "Muting a player failed.",
+          "description": "Muting a player failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_mute",
+          "brief": "A player was muted in a channel.",
+          "description": "A player was muted in a channel.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "unmute",
+          "brief": "A player was unmuted.",
+          "description": "A player was unmuted.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_unmute",
+          "brief": "Unmuting a player failed.",
+          "description": "Unmuting a player failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_unmute",
+          "brief": "A player was unmuted in a channel.",
+          "description": "A player was unmuted in a channel.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "send_invite",
+          "brief": "An invite was sent.",
+          "description": "An invite was sent.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_send_invite",
+          "brief": "Sending an invite failed.",
+          "description": "Sending an invite failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_invite",
+          "brief": "The player was invited to a channel.",
+          "description": "The player was invited to a channel.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cancel_invite",
+          "brief": "An invite was cancelled.",
+          "description": "An invite was cancelled.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_cancel_invite",
+          "brief": "Cancelling an invite failed.",
+          "description": "Cancelling an invite failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_cancel_invite",
+          "brief": "An invite to the player was cancelled.",
+          "description": "An invite to the player was cancelled.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "accept_invite",
+          "brief": "An invite was accepted.",
+          "description": "An invite was accepted.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_accept_invite",
+          "brief": "Accepting an invite failed.",
+          "description": "Accepting an invite failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reject_invite",
+          "brief": "An invite was rejected.",
+          "description": "An invite was rejected.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_reject_invite",
+          "brief": "Rejecting an invite failed.",
+          "description": "Rejecting an invite failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_reject_invite",
+          "brief": "A player rejected an invite.",
+          "description": "A player rejected an invite.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_invites",
+          "brief": "The player's invites were fetched.",
+          "description": "The player's invites were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_invites",
+          "brief": "Fetching the player's invites failed.",
+          "description": "Fetching the player's invites failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_invites",
+          "brief": "The next page of the player's invites was fetched.",
+          "description": "The next page of the player's invites was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_invites",
+          "brief": "Fetching the next page of the player's invites failed.",
+          "description": "Fetching the next page of the player's invites failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_channel_invites",
+          "brief": "The invites sent from a channel were fetched.",
+          "description": "The invites sent from a channel were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_channel_invites",
+          "brief": "Fetching the invites sent from a channel failed.",
+          "description": "Fetching the invites sent from a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_channel_invites",
+          "brief": "The next page of the invites sent from a channel was fetched.",
+          "description": "The next page of the invites sent from a channel was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_channel_invites",
+          "brief": "Fetching the next page of the invites sent from a channel failed.",
+          "description": "Fetching the next page of the invites sent from a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_sent_invites",
+          "brief": "The invites the player sent were fetched.",
+          "description": "The invites the player sent were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_sent_invites",
+          "brief": "Fetching the invites the player sent failed.",
+          "description": "Fetching the invites the player sent failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_sent_invites",
+          "brief": "The next page of the invites the player sent was fetched.",
+          "description": "The next page of the invites the player sent was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_sent_invites",
+          "brief": "Fetching the next page of the invites the player sent failed.",
+          "description": "Fetching the next page of the invites the player sent failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "accept_join_request",
+          "brief": "A request to join was accepted.",
+          "description": "A request to join was accepted.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_accept_join_request",
+          "brief": "Accepting a request to join failed.",
+          "description": "Accepting a request to join failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reject_join_request",
+          "brief": "A request to join was rejected.",
+          "description": "A request to join was rejected.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_reject_join_request",
+          "brief": "Rejecting a request to join failed.",
+          "description": "Rejecting a request to join failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_reject_join_request",
+          "brief": "The player's request to join was rejected.",
+          "description": "The player's request to join was rejected.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_join_requests",
+          "brief": "The requests to join a channel were fetched.",
+          "description": "The requests to join a channel were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_join_requests",
+          "brief": "Fetching the requests to join a channel failed.",
+          "description": "Fetching the requests to join a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_join_requests",
+          "brief": "The next page of the requests to join a channel was fetched.",
+          "description": "The next page of the requests to join a channel was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_join_requests",
+          "brief": "Fetching the next page of the requests to join a channel failed.",
+          "description": "Fetching the next page of the requests to join a channel failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_sent_join_requests",
+          "brief": "The requests to join that the player sent were fetched.",
+          "description": "The requests to join that the player sent were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_sent_join_requests",
+          "brief": "Fetching the requests to join that the player sent failed.",
+          "description": "Fetching the requests to join that the player sent failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_sent_join_requests",
+          "brief": "The next page of the requests to join that the player sent was fetched.",
+          "description": "The next page of the requests to join that the player sent was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_sent_join_requests",
+          "brief": "Fetching the next page of the requests to join that the player sent failed.",
+          "description": "Fetching the next page of the requests to join that the player sent failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "send_message",
+          "brief": "A message was sent.",
+          "description": "A message was sent.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_send_message",
+          "brief": "Sending a message failed.",
+          "description": "Sending a message failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_message",
+          "brief": "A new message arrived.",
+          "description": "A new message arrived.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "edit_message",
+          "brief": "A message was edited.",
+          "description": "A message was edited.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_edit_message",
+          "brief": "Editing a message failed.",
+          "description": "Editing a message failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_edit_message",
+          "brief": "A message in a channel was edited.",
+          "description": "A message in a channel was edited.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "delete_message",
+          "brief": "A message was deleted.",
+          "description": "A message was deleted.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_delete_message",
+          "brief": "Deleting a message failed.",
+          "description": "Deleting a message failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_delete_message",
+          "brief": "A message in a channel was deleted.",
+          "description": "A message in a channel was deleted.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_messages",
+          "brief": "Messages were fetched.",
+          "description": "Messages were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_messages",
+          "brief": "Fetching messages failed.",
+          "description": "Fetching messages failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_messages",
+          "brief": "The next page of messages was fetched.",
+          "description": "The next page of messages was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_messages",
+          "brief": "Fetching the next page of messages failed.",
+          "description": "Fetching the next page of messages failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "set_value",
+          "brief": "A channel state value was set.",
+          "description": "A channel state value was set.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_set_value",
+          "brief": "Setting a channel state value failed.",
+          "description": "Setting a channel state value failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "add_value",
+          "brief": "A channel state value was added to.",
+          "description": "A channel state value was added to.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_add_value",
+          "brief": "Adding to a channel state value failed.",
+          "description": "Adding to a channel state value failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_change_value",
+          "brief": "A channel state value changed.",
+          "description": "A channel state value changed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
