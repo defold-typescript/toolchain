@@ -213,7 +213,7 @@ describe("loadLibraryProvenance — curated native extensions", () => {
   ) as { targets: { repo: string; ref: string; license: string; namespace: string }[] };
   const nativeExpectations = readNativeExpectations();
 
-  test("attributes each native namespace to its upstream repo at the pin, as a global", () => {
+  test("attributes each native namespace to its upstream repo at the pin, as an import", () => {
     expect(targets.map((t) => t.namespace).sort()).toEqual([...nativeExpectations.keys()].sort());
     const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
     for (const target of targets) {
@@ -223,9 +223,9 @@ describe("loadLibraryProvenance — curated native extensions", () => {
       expect(meta.sourceUrl).toBe(`${target.repo}/tree/${target.ref}`);
       expect(meta.license).toBe(target.license);
       expect(meta.authoredHere).toBe(true);
-      expect(meta.importString).toBe("");
-      expect(meta.usage).toBe("ambient");
-      expect(meta.globalNamespace).toBe(target.namespace);
+      expect(meta.importString).toBe(`import * as ${target.namespace} from "${target.namespace}"`);
+      expect(meta.usage).toBe("import");
+      expect(meta.globalNamespace).toBeUndefined();
     }
   });
 

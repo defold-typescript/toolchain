@@ -25,6 +25,7 @@ function libraries(file: string): string {
 function resolvedFiles(): string[] {
   return [
     ".defold-types/extensions/index.d.ts",
+    ".defold-types/extensions/png.d.ts",
     ".defold-types/extensions/shipped/defold-pixels/pixels.d.ts",
     ".defold-types/extensions/uuid4.d.ts",
     libraries("checkpoint.checkpoint.d.ts"),

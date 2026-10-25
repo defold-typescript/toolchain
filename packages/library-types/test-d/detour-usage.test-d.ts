@@ -1,6 +1,8 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as detour from "detour";
+
 // Compile-only proof for the curated defold-detour native-extension namespace. No
 // assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
 
@@ -45,5 +47,3 @@ const _points: detour.PathPoint[] = mesh.find_path(from, to);
 detour.init(1);
 // @ts-expect-error an agent's state is one of "walk", "offmesh" and "invalid".
 const _state: "idle" = crowd.update(1 / 60).get(agent)?.state;
-
-export {};

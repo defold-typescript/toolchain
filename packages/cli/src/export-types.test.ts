@@ -56,6 +56,20 @@ function firstNativeTarget() {
   return target;
 }
 
+// A curated native that declares only its module, and one that also declares the
+// deprecated global a release shipped: `resolve` classifies the two forms apart.
+function nativeTargetsByForm() {
+  const targets = loadVendoredNativeRegistry();
+  const aliased = (target: (typeof targets)[number]): boolean =>
+    /^declare const /m.test(readFileSync(target.declarationPath, "utf8"));
+  const moduleOnly = targets.find((target) => !aliased(target));
+  const withAlias = targets.find(aliased);
+  if (moduleOnly === undefined || withAlias === undefined) {
+    throw new Error("the committed corpus lacks a module-only or an aliased native target");
+  }
+  return [moduleOnly, withAlias];
+}
+
 // The committed files a Lua-module source installs, keyed the way `resolve`
 // reads them: `generated/<generatedStems[module] ?? module>.d.ts`.
 function firstMultiFileLibrary(): { sourceId: string; files: string[] } {
@@ -131,18 +145,19 @@ function writeCorpus(corpus: {
 }
 
 describe("runExportTypes over the committed corpus", () => {
-  test("a native target exports its curated declaration unchanged", () => {
-    const target = firstNativeTarget();
-    const cwd = tmp();
+  test("a native target exports its curated declaration unchanged, with or without an alias", () => {
+    for (const target of nativeTargetsByForm()) {
+      const cwd = tmp();
 
-    const result = runExportTypes({ library: target.sourceId, cwd });
+      const result = runExportTypes({ library: target.sourceId, cwd });
 
-    const name = basename(target.declarationPath);
-    expect(result).toEqual({ sourceId: target.sourceId, written: [`types/${name}`] });
-    expect(filesUnder(cwd)).toEqual([`types/${name}`]);
-    expect(readFileSync(join(cwd, "types", name), "utf8")).toBe(
-      readFileSync(target.declarationPath, "utf8"),
-    );
+      const name = basename(target.declarationPath);
+      expect(result).toEqual({ sourceId: target.sourceId, written: [`types/${name}`] });
+      expect(filesUnder(cwd)).toEqual([`types/${name}`]);
+      expect(readFileSync(join(cwd, "types", name), "utf8")).toBe(
+        readFileSync(target.declarationPath, "utf8"),
+      );
+    }
   });
 
   test("a library spanning several committed files exports each one unchanged", () => {
@@ -182,7 +197,11 @@ describe("runExportTypes over the committed corpus", () => {
   });
 
   test("the written folder reads back as shipped types resolve installs", () => {
-    for (const sourceId of [firstNativeTarget().sourceId, firstMultiFileLibrary().sourceId]) {
+    const sourceIds = [
+      ...nativeTargetsByForm().map((target) => target.sourceId),
+      firstMultiFileLibrary().sourceId,
+    ];
+    for (const sourceId of sourceIds) {
       const cwd = tmp();
       runExportTypes({ library: sourceId, cwd });
 

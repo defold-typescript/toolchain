@@ -190,9 +190,9 @@ interface NativeTarget {
 }
 
 // Curated native extensions from `native-targets.json`: C++ extensions that ship
-// no `.script_api`, typed by a hand-authored global-namespace declaration and
-// rendered from the `api-doc/native/<namespace>.json` lowered from it. An absent
-// file degrades to no native pages.
+// no `.script_api`, typed by a hand-authored `@globalTable` module a project
+// imports and rendered from the `api-doc/native/<namespace>.json` lowered from
+// it. An absent file degrades to no native pages.
 function loadNativeTargets(libraryTypesDir: string): Map<string, NativeTarget> {
   const path = join(libraryTypesDir, "native-targets.json");
   if (!existsSync(path)) return new Map();
@@ -687,11 +687,10 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
         authorUrl: native.repo,
         commit: native.ref,
         sourceUrl: repoTreeUrl(native.repo, native.ref),
-        importString: "",
+        importString: libraryImportString(native.namespace),
         license: native.license,
         authoredHere: true,
-        usage: "ambient",
-        globalNamespace: native.namespace,
+        usage: "import",
         ...(native.refKind ? { pinKind: native.refKind } : {}),
       };
     }

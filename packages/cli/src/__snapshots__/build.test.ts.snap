@@ -14,15 +14,17 @@ return ____exports
 "
 `;
 
-exports[`runBuild (a project holding only what resolve writes) builds a curated native global, a vendored library and a shipped @globalTable module 1`] = `
+exports[`runBuild (a project holding only what resolve writes) builds a curated native import, a deprecated native global, a vendored library and a shipped @globalTable module 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
 local checkpoint = require("checkpoint.checkpoint")
 local pixels = _G.pixels
+local png = _G.png
 function init()
     print(
         uuid4.generate(),
-        checkpoint.project_save_path
+        checkpoint.project_save_path,
+        png.RGBA
     )
     pixels.fill(7)
 end
