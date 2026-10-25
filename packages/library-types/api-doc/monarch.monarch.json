@@ -7,7 +7,11 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "ScreenId"
+      "name": "ScreenId",
+      "types": [
+        "Hash",
+        "string"
+      ]
     },
     {
       "type": "TYPEDEF",
@@ -193,7 +197,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Callback"
+      "name": "Callback",
+      "types": [
+        "() => void"
+      ]
     },
     {
       "type": "VARIABLE",

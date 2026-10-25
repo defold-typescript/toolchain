@@ -878,10 +878,11 @@ declare module 'stub.stub' {
 });
 
 // Every branch the alias-shape reader must separate: an object literal reached
-// from a published parameter, a union / function type / empty literal that stays
-// bare even when reached, a literal nothing reaches, an alias hop ending in a
-// literal, and an interface carrying a member identical to the alias literal's
-// so both member readers can be compared against each other.
+// from a published parameter, a union / function type reached and carrying its
+// type text, an empty literal that stays bare even when reached, a literal
+// nothing reaches, an alias hop ending in a literal, and an interface carrying a
+// member identical to the alias literal's so both member readers can be compared
+// against each other.
 const ALIAS_SHAPES = `/**
  * Alias shape demo.
  * @noResolution
@@ -1019,10 +1020,18 @@ describe("extractApiDoc alias-backed shapes", () => {
     expect(fromAlias?.[0]).toEqual(fromInterface?.[0] ?? {});
   });
 
-  test("leaves a reachable non-object alias bare: union, function type, empty literal", () => {
-    for (const name of ["ScreenId", "Callback", "Data"]) {
-      expect(named(ALIAS_SHAPES, "alias.alias", name)).toEqual({ type: "TYPEDEF", name });
-    }
+  test("gives a reachable non-object alias its type text and leaves an empty literal bare", () => {
+    expect(named(ALIAS_SHAPES, "alias.alias", "ScreenId")).toEqual({
+      type: "TYPEDEF",
+      name: "ScreenId",
+      types: ["number", "string"],
+    });
+    expect(named(ALIAS_SHAPES, "alias.alias", "Callback")).toEqual({
+      type: "TYPEDEF",
+      name: "Callback",
+      types: ["() => void"],
+    });
+    expect(named(ALIAS_SHAPES, "alias.alias", "Data")).toEqual({ type: "TYPEDEF", name: "Data" });
   });
 
   test("leaves an alias no emitted member's type names bare", () => {
@@ -1032,8 +1041,12 @@ describe("extractApiDoc alias-backed shapes", () => {
     });
   });
 
-  test("follows an alias hop, populating the shape behind it and not the hop", () => {
-    expect(named(ALIAS_SHAPES, "alias.alias", "Alias")).toEqual({ type: "TYPEDEF", name: "Alias" });
+  test("follows an alias hop, populating the shape behind it and naming it on the hop", () => {
+    expect(named(ALIAS_SHAPES, "alias.alias", "Alias")).toEqual({
+      type: "TYPEDEF",
+      name: "Alias",
+      types: ["Deep"],
+    });
     expect(aliasElement("Deep").properties).toEqual([
       { name: "deep", brief: "Deep field.", description: "Deep field.", types: ["number"] },
     ]);
@@ -1295,5 +1308,136 @@ describe("extractApiDoc nested-namespace helper shapes", () => {
   test("resolves a namespace member's reference to the namespace shape, not the file-scope one", () => {
     expect(only("global.ns.Shadow")).toMatchObject({ properties: [{ name: "inner" }] });
     expect(only("Shadow")).toBeUndefined();
+  });
+});
+
+// The module-lane counterparts of the namespace shapes above: a plain `declare
+// module` whose members name a union alias, an interface extending another, and
+// an interface declared in a namespace nested in the module block.
+const MODULE_SHAPES = `/**
+ * Module shape demo.
+ * @noResolution
+ */
+declare module 'ms.ms' {
+	/** Base hit. */
+	interface A {
+		/** The id. */
+		x: number;
+	}
+
+	/** Hit with a distance. */
+	interface B extends A {
+		/** How far. */
+		y: number;
+	}
+
+	/** Plain ids, or full hits. */
+	type R = number[] | B[];
+
+	/** Query. */
+	export function query(): R;
+
+	namespace inner {
+		/** A point. */
+		interface P {
+			/** Across. */
+			x: number;
+		}
+
+		/** Find a point. */
+		function find(): P;
+	}
+}
+`;
+
+describe("extractApiDoc module-lane shapes", () => {
+  const elements = () =>
+    (extractApiDoc(MODULE_SHAPES, "ms.ms") as { elements: Array<Record<string, unknown>> })
+      .elements;
+  const only = (name: string) => elements().find((e) => e.type === "TYPEDEF" && e.name === name);
+
+  test("lowers a union alias a member names to its top-level arms", () => {
+    expect(only("R")).toEqual({ type: "TYPEDEF", name: "R", types: ["number[]", "B[]"] });
+  });
+
+  test("carries an interface's extends clause and publishes the parent it names", () => {
+    expect(only("B")).toMatchObject({ extends: ["A"], properties: [{ name: "y" }] });
+    expect(only("A")).toMatchObject({ properties: [{ name: "x", brief: "The id." }] });
+  });
+
+  test("publishes a nested-namespace interface under the name the ambient lane gives it", () => {
+    expect(only("inner.P")).toMatchObject({ properties: [{ name: "x", brief: "Across." }] });
+    expect(only("P")).toBeUndefined();
+  });
+});
+
+// One namespace body, wrapped once as a curated native's ambient global and once
+// as the `@globalTable` module that replaces it.
+const BOTH_WAYS_BODY = `
+		/** Base hit. */
+		interface A {
+			/** The id. */
+			x: number;
+		}
+
+		/** Hit with a distance. */
+		interface B extends A {
+			/** How far. */
+			y: number;
+		}
+
+		/** Plain ids, or full hits. */
+		type R = number[] | B[];
+
+		/** How many. */
+		const COUNT: number;
+
+		/** Query. */
+		function query(limit: number): R;
+
+		namespace inner {
+			/** A point. */
+			interface P {
+				/** Across. */
+				x: number;
+			}
+
+			/** Find a point. */
+			function find(): P;
+		}
+`;
+
+describe("extractApiDoc module lane matches the ambient lane", () => {
+  const lower = (source: string) =>
+    extractApiDoc(source, "ns") as {
+      info: Record<string, unknown>;
+      elements: Array<Record<string, unknown>>;
+    };
+  const ambient = lower(
+    `/** @noSelfInFile */\ndeclare global {\n\tnamespace ns {${BOTH_WAYS_BODY}\t}\n}\n\nexport {};\n`,
+  );
+  const module = lower(
+    `/** @noSelfInFile */\n/** @globalTable */\ndeclare module "ns" {${BOTH_WAYS_BODY}}\n`,
+  );
+
+  test("module lane matches the ambient lane", () => {
+    const unwrapped = ambient.elements.map(({ global: _global, ...element }) => ({
+      ...element,
+      name: String(element.name).replace(/^global\.ns\./, ""),
+    }));
+    expect(module.elements).toEqual(unwrapped);
+    expect(module.info).toEqual(ambient.info);
+  });
+
+  test("publishes the shared body's members first, then the shapes in the order they are reached", () => {
+    expect(module.elements.map((e) => [e.type, e.name])).toEqual([
+      ["VARIABLE", "COUNT"],
+      ["FUNCTION", "query"],
+      ["FUNCTION", "inner.find"],
+      ["TYPEDEF", "R"],
+      ["TYPEDEF", "B"],
+      ["TYPEDEF", "A"],
+      ["TYPEDEF", "inner.P"],
+    ]);
   });
 });

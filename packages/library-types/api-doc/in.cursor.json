@@ -124,7 +124,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "ListenerFunction"
+      "name": "ListenerFunction",
+      "types": [
+        "(message_id: Hash | string, message: {}) => boolean"
+      ]
     },
     {
       "type": "FUNCTION",

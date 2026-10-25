@@ -114,7 +114,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Direction"
+      "name": "Direction",
+      "types": [
+        "number"
+      ]
     },
     {
       "type": "VARIABLE",
@@ -679,6 +682,9 @@
             "Vector3"
           ]
         }
+      ],
+      "extends": [
+        "PlatypusConfig"
       ]
     }
   ]
