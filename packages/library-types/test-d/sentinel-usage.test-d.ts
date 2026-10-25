@@ -16,6 +16,18 @@ sentinel.init({
   tags: { build: 12 },
 });
 
+// `user` is JSON-encoded as given, so nested tables reach Sentry intact.
+sentinel.init({
+  dsn: "https://key@o0.ingest.sentry.io/0",
+  user: { id: "42", geo: { city: "Minsk", country_code: "BY" } },
+});
+
+sentinel.init({
+  dsn: "https://key@o0.ingest.sentry.io/0",
+  // @ts-expect-error a tag value is `tostring`ed, so a nested table would arrive as `"table: 0x..."`.
+  tags: { build: { major: 1 } },
+});
+
 // @ts-expect-error `config.dsn` is required; `init` asserts it is a string.
 sentinel.init({});
 
