@@ -656,25 +656,27 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
   const engineNamespaces = engineNamespacesBesideLibraryTypes(libraryTypesDir);
   const nativeTargets = loadNativeTargets(libraryTypesDir);
 
-  // A `.script_api` page, Defold's or the portal's, is an ambient global pinned
-  // to the release, tag or commit its manifest recorded.
+  // A `.script_api` page, Defold's or the portal's, is pinned to the release,
+  // tag or commit its manifest recorded, and imported as the module `resolve`
+  // writes for it. A doc adding members to an engine namespace stays that
+  // ambient global, as `resolve` keeps it.
   const scriptApiMeta = (
     entry: DefoldExtensionEntry,
     doc: DefoldExtensionEntry["docs"][number],
   ): LibraryMeta => {
-    const extendsEngine = doc.namespace !== doc.page && engineNamespaces.has(doc.namespace);
+    const extendsEngine = engineNamespaces.has(doc.namespace);
     return {
       author: "",
       authorUrl: entry.repo,
       commit: entry.ref,
       sourceUrl: `${entry.repo}/blob/${entry.ref}/${doc.path}`,
-      importString: "",
+      importString: extendsEngine ? "" : libraryImportString(doc.namespace),
       license: entry.license,
       authoredHere: true,
-      usage: "ambient",
-      globalNamespace: doc.namespace,
       pinKind: entry.refKind,
-      ...(extendsEngine ? { extendsNamespace: doc.namespace } : {}),
+      ...(extendsEngine
+        ? { usage: "ambient", globalNamespace: doc.namespace, extendsNamespace: doc.namespace }
+        : { usage: "import" }),
     };
   };
 

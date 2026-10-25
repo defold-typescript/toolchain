@@ -2,6 +2,11 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import {
+  globalTableImportHint,
+  wrapAsAmbientGlobal,
+  wrapAsGlobalTableModule,
+} from "@defold-typescript/types";
 import * as ts from "typescript";
 import type { ExtensionDeclarations } from "./extension-declarations";
 import type { EmittedExtension } from "./extension-emit";
@@ -63,6 +68,27 @@ function barrelDiagnostics(usage: string): string[] {
   return [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()].map((d) =>
     ts.flattenDiagnosticMessageText(d.messageText, "\n"),
   );
+}
+
+// A declaration in the shape `resolve` emits for a `.script_api` namespace: the
+// `@globalTable` module and its deprecated ambient form, from the same wrappers.
+function moduleForm(
+  namespace: string,
+  body: string,
+): EmittedExtension & { deprecatedGlobal: string } {
+  const emitted = `declare namespace ${namespace} {\n${body}\n}\n`;
+  const importsFrom = "../src/core-types";
+  return {
+    namespace,
+    contents: wrapAsGlobalTableModule({ namespace, emitted, importsFrom }),
+    deprecatedGlobal: wrapAsAmbientGlobal({
+      namespace,
+      emitted,
+      importsFrom,
+      deprecated: globalTableImportHint(namespace),
+    }),
+    dropped: [],
+  };
 }
 
 function declares(namespace: string, name: string): string {
@@ -525,6 +551,117 @@ describe("materializeExtensionDeclarations", () => {
         barrelDiagnostics("Foo.upperBar();\nFoo.upperOne();\nfoo.lowerBar();\nfoo.lowerTwo();\n"),
       ).toEqual([]);
     });
+  });
+});
+
+describe("module-form declarations", () => {
+  const acme = (repo: string): string => `https://github.com/acme/${repo}/archive/1.zip`;
+
+  test("a namespace writes its module and its deprecated global, and the barrel imports both", () => {
+    const iap = moduleForm("iap", "  function buy(): void;");
+    materializeExtensionDeclarations({ cwd, bundles: [bundleAt(acme("iap"), [iap])] });
+
+    const dir = extensionsDir();
+    expect(declarationFiles()).toEqual(["iap.d.ts", "iap.global.d.ts", "index.d.ts"]);
+    expect(readFileSync(path.join(dir, "iap.d.ts"), "utf8")).toBe(iap.contents);
+    expect(readFileSync(path.join(dir, "iap.global.d.ts"), "utf8")).toBe(iap.deprecatedGlobal);
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
+      'import "./iap";\nimport "./iap.global";\n\nexport {};\n',
+    );
+    expect(barrelDiagnostics('import * as store from "iap";\nstore.buy();\niap.buy();\n')).toEqual(
+      [],
+    );
+  });
+
+  test("a deprecated global's core-type import is retargeted like the module's", () => {
+    const handle = moduleForm("handles", '  function get(): Opaque<"node">;');
+    materializeExtensionDeclarations({ cwd, bundles: [bundleAt(acme("handles"), [handle])] });
+
+    expect(readFileSync(path.join(extensionsDir(), "handles.global.d.ts"), "utf8")).toContain(
+      'import type { Opaque } from "@defold-typescript/types/core-types";',
+    );
+  });
+
+  test("two dependencies sharing a namespace write two modules and two globals the import merges", () => {
+    const core = moduleForm("firebase", "  function initialize(): void;");
+    const analytics = moduleForm(
+      "firebase",
+      "  namespace analytics {\n    function log(name: string): void;\n  }",
+    );
+    materializeExtensionDeclarations({
+      cwd,
+      bundles: [
+        bundleAt("https://github.com/defold/extension-firebase/archive/1.zip", [core]),
+        bundleAt("https://github.com/defold/extension-firebase-analytics/archive/2.zip", [
+          analytics,
+        ]),
+      ],
+    });
+
+    const dir = extensionsDir();
+    expect(declarationFiles()).toEqual([
+      "firebase.extension-firebase-analytics.d.ts",
+      "firebase.extension-firebase-analytics.global.d.ts",
+      "firebase.extension-firebase.d.ts",
+      "firebase.extension-firebase.global.d.ts",
+      "index.d.ts",
+    ]);
+    expect(readFileSync(path.join(dir, "firebase.extension-firebase.d.ts"), "utf8")).toBe(
+      core.contents,
+    );
+    expect(
+      readFileSync(path.join(dir, "firebase.extension-firebase-analytics.global.d.ts"), "utf8"),
+    ).toBe(analytics.deprecatedGlobal);
+    expect(
+      barrelDiagnostics(
+        'import * as fb from "firebase";\nfb.initialize();\nfb.analytics.log("x");\n',
+      ),
+    ).toEqual([]);
+  });
+
+  test("namespaces that differ only in letter case each import", () => {
+    materializeExtensionDeclarations({
+      cwd,
+      bundles: [
+        bundleAt(acme("one"), [moduleForm("Foo", "  function upper(): void;")]),
+        bundleAt(acme("two"), [moduleForm("foo", "  function lower(): void;")]),
+      ],
+    });
+
+    expect(declarationFiles()).toEqual([
+      "Foo.d.ts",
+      "Foo.global.d.ts",
+      "foo-2.d.ts",
+      "foo-2.global.d.ts",
+      "index.d.ts",
+    ]);
+    expect(
+      barrelDiagnostics(
+        'import * as Upper from "Foo";\nimport * as lower from "foo";\nUpper.upper();\nlower.lower();\n',
+      ),
+    ).toEqual([]);
+  });
+
+  test("a deprecated global never takes another namespace's module name", () => {
+    const foo = moduleForm("foo", "  function plain(): void;");
+    const dotted = moduleForm("foo.global", "  function dotted(): void;");
+    materializeExtensionDeclarations({
+      cwd,
+      bundles: [bundleAt(acme("one"), [foo]), bundleAt(acme("two"), [dotted])],
+    });
+
+    const dir = extensionsDir();
+    expect(readFileSync(path.join(dir, "foo.d.ts"), "utf8")).toBe(foo.contents);
+    expect(readFileSync(path.join(dir, "foo.global.d.ts"), "utf8")).toBe(dotted.contents);
+    expect(readFileSync(path.join(dir, "foo.global-2.d.ts"), "utf8")).toBe(foo.deprecatedGlobal);
+    expect(readFileSync(path.join(dir, "foo.global.global.d.ts"), "utf8")).toBe(
+      dotted.deprecatedGlobal,
+    );
+    expect(
+      barrelDiagnostics(
+        'import * as foo from "foo";\nimport * as dotted from "foo.global";\nfoo.plain();\ndotted.dotted();\n',
+      ),
+    ).toEqual([]);
   });
 });
 

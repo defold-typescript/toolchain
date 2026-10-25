@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { wrapAsAmbientGlobal, wrapAsModule } from "./publish-dts";
+import {
+  globalTableImportHint,
+  wrapAsAmbientGlobal,
+  wrapAsGlobalTableModule,
+  wrapAsModule,
+} from "./publish-dts";
 
 describe("wrapAsAmbientGlobal", () => {
   test("preserves leading namespace JSDoc while rewriting declare namespace", () => {
@@ -207,5 +212,96 @@ describe("wrapAsModule", () => {
     expect(lines[0]).toBe("/** @noSelfInFile */");
     expect(lines[1]).toBe("/** @noResolution */");
     expect(lines[2]).toBe("declare module 'x.x' {");
+  });
+});
+
+describe("wrapAsGlobalTableModule", () => {
+  test("unwraps the namespace into a @globalTable module, keeping its description above the tag", () => {
+    const out = wrapAsGlobalTableModule({
+      namespace: "iap",
+      emitted:
+        "/**\n" +
+        " * In-app purchases\n" +
+        " */\n" +
+        "declare namespace iap {\n" +
+        "  function buy(id: string): void;\n" +
+        "  namespace store {\n" +
+        "    const NAME: string;\n" +
+        "  }\n" +
+        "}\n",
+      importsFrom: "../src/core-types",
+    });
+    expect(out).toBe(
+      "/** @noSelfInFile */\n" +
+        "/**\n" +
+        " * In-app purchases\n" +
+        " */\n" +
+        "/** @globalTable */\n" +
+        'declare module "iap" {\n' +
+        "  function buy(id: string): void;\n" +
+        "  namespace store {\n" +
+        "    const NAME: string;\n" +
+        "  }\n" +
+        "}\n",
+    );
+  });
+
+  test("a dotted namespace becomes the dotted module id", () => {
+    const out = wrapAsGlobalTableModule({
+      namespace: "rive.cmd",
+      emitted: "declare namespace rive.cmd {\n  function run(): void;\n}\n",
+      importsFrom: "../src/core-types",
+    });
+    expect(out).toContain('/** @globalTable */\ndeclare module "rive.cmd" {\n');
+    expect(out).not.toContain("namespace rive.cmd");
+  });
+
+  test("references engine handles as ambient globals and emits no export tail", () => {
+    const out = wrapAsGlobalTableModule({
+      namespace: "x",
+      emitted: 'declare namespace x {\n  function f(): Vector3 | Opaque<"node">;\n}\n',
+      importsFrom: "../src/core-types",
+    });
+    expect(out).not.toContain("import type");
+    expect(out).not.toContain("export {};");
+    expect(out).not.toContain("declare global");
+  });
+});
+
+describe("wrapAsAmbientGlobal deprecated", () => {
+  test("adds the deprecation to the namespace's own doc block", () => {
+    const out = wrapAsAmbientGlobal({
+      namespace: "iap",
+      emitted: "/**\n * In-app purchases\n */\ndeclare namespace iap {\n}\n",
+      importsFrom: "../src/core-types",
+      deprecated: globalTableImportHint("iap"),
+    });
+    expect(out).toContain(
+      "  /**\n" +
+        "   * In-app purchases\n" +
+        "   *\n" +
+        '   * @deprecated Import it: import * as iap from "iap"\n' +
+        "   */\n" +
+        "  namespace iap {",
+    );
+  });
+
+  test("gives an undocumented namespace a doc block of its own", () => {
+    const out = wrapAsAmbientGlobal({
+      namespace: "iap",
+      emitted: "declare namespace iap {\n}\n",
+      importsFrom: "../src/core-types",
+      deprecated: globalTableImportHint("iap"),
+    });
+    expect(out).toContain(
+      '  /**\n   * @deprecated Import it: import * as iap from "iap"\n   */\n  namespace iap {',
+    );
+  });
+});
+
+describe("globalTableImportHint", () => {
+  test("names a dotted module's local after its segments past the first", () => {
+    expect(globalTableImportHint("rive.cmd")).toBe('Import it: import * as cmd from "rive.cmd"');
+    expect(globalTableImportHint("a.b.c")).toBe('Import it: import * as b_c from "a.b.c"');
   });
 });

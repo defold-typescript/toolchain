@@ -104,7 +104,12 @@ function functionDeclarations(text: string): Map<string, ts.FunctionDeclaration[
   const visit = (node: ts.Node, scope: readonly string[]): void => {
     if (ts.isModuleDeclaration(node)) {
       const global = (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0;
-      const named = ts.isIdentifier(node.name) && !global;
+      // A `@globalTable` module's id is its namespace; another module's id is a
+      // require path wrapping a namespace of its own.
+      const globalTable =
+        ts.isStringLiteral(node.name) &&
+        ts.getJSDocTags(node).some((tag) => tag.tagName.text === "globalTable");
+      const named = (ts.isIdentifier(node.name) && !global) || globalTable;
       const inner = named ? [...scope, node.name.text] : scope;
       if (node.body !== undefined) visit(node.body, inner);
       return;

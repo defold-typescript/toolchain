@@ -33,7 +33,11 @@ import { decodeMappings } from "./console-source-map";
 import { dispatch } from "./dispatch";
 import type { CompileAnswer, EditorIssue, RunAnswer } from "./editor-attach";
 import { runInit } from "./init";
-import { installEngineSurface, scaffoldResolvedProject } from "./resolved-project-fixture";
+import {
+  installEngineSurface,
+  scaffoldResolvedProject,
+  scaffoldScriptApiProject,
+} from "./resolved-project-fixture";
 import {
   runSceneTypes,
   SCENE_ADDRESSES_DECLARATION,
@@ -190,6 +194,17 @@ describe("runBuild (a project holding only what resolve writes)", () => {
     const requires = scanEmittedRequires(lua).map(({ path: requirePath }) => requirePath);
     expect(requires).not.toContain("pixels");
     expect(requires).not.toContain("png");
+    expect(lua).toMatchSnapshot();
+  });
+
+  test("builds a shared and a dotted .script_api namespace as global aliases, with a deprecated global still compiling", async () => {
+    await scaffoldScriptApiProject(cwd);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8");
+    expect(scanEmittedRequires(lua)).toEqual([]);
     expect(lua).toMatchSnapshot();
   });
 

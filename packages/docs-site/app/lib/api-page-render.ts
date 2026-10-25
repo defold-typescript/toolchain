@@ -563,8 +563,8 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   const head = meta.authorUrl
     ? `- ${forgeOf(meta.authorUrl) ?? "Source"}: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`
     : `- Commit pin: ${pin}`;
-  // A `.script_api` extension registers its namespace as a Lua global, so step 3
-  // names that global instead of an import a user could not write.
+  // An extension adding members to an engine namespace has no module of its
+  // own, so step 3 names the engine global instead of an import.
   const step3 =
     meta.usage === "ambient"
       ? [

@@ -1,3 +1,6 @@
+import * as iap from "iap";
+import * as push from "push";
+
 // iap.buy's `options` and push.schedule's `notification_settings` are prose-only
 // option bags the field parser cannot read; each is hand-curated as a param-side
 // object curation, so every field is optional. A value shaped like the curated
