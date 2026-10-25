@@ -7,15 +7,24 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "Client"
+      "name": "Client",
+      "types": [
+        "symbol"
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "SessionToken"
+      "name": "SessionToken",
+      "types": [
+        "symbol"
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "RetryPolicy"
+      "name": "RetryPolicy",
+      "types": [
+        "symbol"
+      ]
     },
     {
       "type": "VARIABLE",

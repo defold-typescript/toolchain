@@ -7,11 +7,17 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "Context"
+      "name": "Context",
+      "types": [
+        "unknown"
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "ApiCallback"
+      "name": "ApiCallback",
+      "types": [
+        "(self: Context, err?: string, data?: unknown) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -69,7 +75,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "StickyBannerCallback"
+      "name": "StickyBannerCallback",
+      "types": [
+        "(ctx: Context, err?: string, result?: StickyBannerStatus) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -109,7 +118,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "StickyBannerHideCallback"
+      "name": "StickyBannerHideCallback",
+      "types": [
+        "(ctx: Context, err?: string, result?: { stickyAdvIsShowing: boolean; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -365,7 +377,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "PlayerGetIdsCallback"
+      "name": "PlayerGetIdsCallback",
+      "types": [
+        "(ctx: Context, err?: string, data?: Array<{ appID: string; userID: string; }>) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -430,7 +445,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "PlayerPersonalInfo"
+      "name": "PlayerPersonalInfo",
+      "types": [
+        "Record<string, unknown>"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -529,7 +547,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "PaymentsPurchaseCallback"
+      "name": "PaymentsPurchaseCallback",
+      "types": [
+        "(ctx: Context, err?: string, data?: { productId: string; purchaseToken: string; developerPayload: string; signature: string; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -559,7 +580,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "PaymentsPurchasesCallback"
+      "name": "PaymentsPurchasesCallback",
+      "types": [
+        "(ctx: Context, err?: string, data?: { purchases: Array<{ productId: string; purchaseToken: string; developerPayload: string; }>; signature: Array<string>; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -581,7 +605,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "PaymentsCatalogCallback"
+      "name": "PaymentsCatalogCallback",
+      "types": [
+        "(ctx: Context, err?: string, data?: Array<{ id: string; title: string; description: string; imageURI: string; price: string; priceValue: string; priceCurrencyCode: string; }>) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -656,7 +683,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "LeaderboardsDescriptionCallback"
+      "name": "LeaderboardsDescriptionCallback",
+      "types": [
+        "(ctx: Context, err?: string, data?: { appID: string; default: boolean; description: { invert_sort_order: boolean; score_format: { options: { decimal_offset: number; }; }; type: string; }; name: string; title: { en: string; ru: string; }; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -720,7 +750,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "LeaderboardsGetPlayerEntriesCallback"
+      "name": "LeaderboardsGetPlayerEntriesCallback",
+      "types": [
+        "(ctx: Context, err?: string, data?: { ranges: [ { start: number; size: number; } ]; userRank: number; entries: [ { score: number; extraData: string; rank: number; player: { getAvatarSrc: (size: string) => string; getAvatarSrcSet: (size: string) => string; lang: string; publicName: string; scopePermissions: { avatar: string; public_name: string; }; uniqueID: string; }; formattedScore: string; } ]; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -827,7 +860,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "GamesApiAllGamesCallback"
+      "name": "GamesApiAllGamesCallback",
+      "types": [
+        "(ctx: Context, err?: string, result?: { games: Array<GamesApiGame>; developerURL: string; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -849,7 +885,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "GamesApiGameByIdCallback"
+      "name": "GamesApiGameByIdCallback",
+      "types": [
+        "(ctx: Context, err?: string, result?: { isAvailable: boolean; game?: GamesApiGame; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -879,7 +918,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "FeedbackCanReviewCallback"
+      "name": "FeedbackCanReviewCallback",
+      "types": [
+        "(ctx: Context, err?: string, data?: { value: boolean; reason: string; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1104,7 +1146,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "ShortcutCanShowCallback"
+      "name": "ShortcutCanShowCallback",
+      "types": [
+        "(ctx: Context, err?: string, result?: { canShow: boolean; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1126,7 +1171,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "ShortcutShowPromptCallback"
+      "name": "ShortcutShowPromptCallback",
+      "types": [
+        "(ctx: Context, err?: string, result?: { outcome: string; }) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1288,7 +1336,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "FlagsCallback"
+      "name": "FlagsCallback",
+      "types": [
+        "(ctx: Context, err?: string, flags?: Record<string, string>) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1388,7 +1439,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "MultiplayerSessionsInitCallback"
+      "name": "MultiplayerSessionsInitCallback",
+      "types": [
+        "(ctx: Context, err?: string, result?: Array<MultiplayerSession>) => void"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1454,7 +1508,10 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "AvailableMethodCallback"
+      "name": "AvailableMethodCallback",
+      "types": [
+        "(ctx: Context, err?: string, result?: boolean) => void"
+      ]
     },
     {
       "type": "FUNCTION",
