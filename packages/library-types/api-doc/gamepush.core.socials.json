@@ -1,0 +1,265 @@
+{
+  "info": {
+    "namespace": "gamepush.core.socials",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "is_supports_share",
+      "brief": "Whether sharing is supported.",
+      "description": "Whether sharing is supported.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supports_native_share",
+      "brief": "Whether the platform's native sharing is supported.",
+      "description": "Whether the platform's native sharing is supported.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "share",
+      "brief": "Shares a link to the game.",
+      "description": "Shares a link to the game.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `socials.share`, or nil for the defaults.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supports_native_posts",
+      "brief": "Whether the platform's native posting is supported.",
+      "description": "Whether the platform's native posting is supported.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "post",
+      "brief": "Publishes a post.",
+      "description": "Publishes a post.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `socials.post`, or nil for the defaults.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supports_native_invite",
+      "brief": "Whether the platform's native invites are supported.",
+      "description": "Whether the platform's native invites are supported.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "invite",
+      "brief": "Invites friends to the game.",
+      "description": "Invites friends to the game.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `socials.invite`, or nil for the defaults.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_join_community",
+      "brief": "Whether the player can be invited to the community on this platform.",
+      "description": "Whether the player can be invited to the community on this platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supports_native_community_join",
+      "brief": "Whether the platform's native community join is supported.",
+      "description": "Whether the platform's native community join is supported.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "join_community",
+      "brief": "Joins the game's community.",
+      "description": "Joins the game's community.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "make_share_url",
+      "brief": "A share link that carries the given parameters. Raises when the table is missing.",
+      "description": "A share link that carries the given parameters. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The parameters to put in the link, read back by `get_share_param`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_share_param",
+      "brief": "The value of a parameter in the link the player came from, or nil when the link has",
+      "description": "The value of a parameter in the link the player came from, or nil when the link has\nnone. Raises unless `parameter` is a string.",
+      "parameters": [
+        {
+          "name": "parameter",
+          "doc": "The parameter's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The social action event handlers.",
+      "description": "The social action event handlers.",
+      "types": [
+        "SocialsCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SocialsCallbacks",
+      "properties": [
+        {
+          "name": "share",
+          "brief": "A share finished.",
+          "description": "A share finished.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "post",
+          "brief": "A post finished.",
+          "description": "A post finished.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "invite",
+          "brief": "An invite to friends finished.",
+          "description": "An invite to friends finished.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "join_community",
+          "brief": "Joining the community finished.",
+          "description": "Joining the community finished.",
+          "types": [
+            "(success: boolean) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

@@ -584,6 +584,94 @@
       "generated": "generated/gamepush.core.storage.d.ts",
       "apiDoc": "api-doc/gamepush.core.storage.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/storage.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.channels.d.ts",
+      "moduleId": "gamepush.core.channels",
+      "namespace": "gamepush.core.channels",
+      "generated": "generated/gamepush.core.channels.d.ts",
+      "apiDoc": "api-doc/gamepush.core.channels.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/channels.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.socials.d.ts",
+      "moduleId": "gamepush.core.socials",
+      "namespace": "gamepush.core.socials",
+      "generated": "generated/gamepush.core.socials.d.ts",
+      "apiDoc": "api-doc/gamepush.core.socials.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/socials.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.multiplayer.d.ts",
+      "moduleId": "gamepush.core.multiplayer",
+      "namespace": "gamepush.core.multiplayer",
+      "generated": "generated/gamepush.core.multiplayer.d.ts",
+      "apiDoc": "api-doc/gamepush.core.multiplayer.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/multiplayer.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.events.d.ts",
+      "moduleId": "gamepush.core.events",
+      "namespace": "gamepush.core.events",
+      "generated": "generated/gamepush.core.events.d.ts",
+      "apiDoc": "api-doc/gamepush.core.events.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/events.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.triggers.d.ts",
+      "moduleId": "gamepush.core.triggers",
+      "namespace": "gamepush.core.triggers",
+      "generated": "generated/gamepush.core.triggers.d.ts",
+      "apiDoc": "api-doc/gamepush.core.triggers.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/triggers.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.schedulers.d.ts",
+      "moduleId": "gamepush.core.schedulers",
+      "namespace": "gamepush.core.schedulers",
+      "generated": "generated/gamepush.core.schedulers.d.ts",
+      "apiDoc": "api-doc/gamepush.core.schedulers.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/schedulers.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.feedbacks.d.ts",
+      "moduleId": "gamepush.core.feedbacks",
+      "namespace": "gamepush.core.feedbacks",
+      "generated": "generated/gamepush.core.feedbacks.d.ts",
+      "apiDoc": "api-doc/gamepush.core.feedbacks.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/feedbacks.lua"]
+    },
+    {
+      "repo": "https://github.com/megalanthus/defold-gamepush",
+      "ref": "v1.4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/gamepush.core.reactions.d.ts",
+      "moduleId": "gamepush.core.reactions",
+      "namespace": "gamepush.core.reactions",
+      "generated": "generated/gamepush.core.reactions.d.ts",
+      "apiDoc": "api-doc/gamepush.core.reactions.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/reactions.lua"]
     }
   ]
 }
