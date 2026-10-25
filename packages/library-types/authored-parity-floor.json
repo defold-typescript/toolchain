@@ -199,6 +199,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/native/openal.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/native/png.json": {
     "callable": 1,
     "field": 1
