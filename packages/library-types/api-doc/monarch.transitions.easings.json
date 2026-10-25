@@ -7,11 +7,55 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "EasingIn"
+      "name": "EasingIn",
+      "types": [
+        "'BACK'",
+        "'BOUNCE'",
+        "'CIRC'",
+        "'CUBIC'",
+        "'ELASTIC'",
+        "'EXPO'",
+        "'OUTBACK'",
+        "'OUTBOUNCE'",
+        "'OUTCIRC'",
+        "'OUTCUBIC'",
+        "'OUTELASTIC'",
+        "'OUTEXPO'",
+        "'OUTQUAD'",
+        "'OUTQUART'",
+        "'OUTQUINT'",
+        "'OUTSINE'",
+        "'QUAD'",
+        "'QUART'",
+        "'QUINT'",
+        "'SINE'"
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "EasingOut"
+      "name": "EasingOut",
+      "types": [
+        "'BACK'",
+        "'BOUNCE'",
+        "'CIRC'",
+        "'CUBIC'",
+        "'ELASTIC'",
+        "'EXPO'",
+        "'INBACK'",
+        "'INBOUNCE'",
+        "'INCIRC'",
+        "'INCUBIC'",
+        "'INELASTIC'",
+        "'INEXPO'",
+        "'INQUAD'",
+        "'INQUART'",
+        "'INQUINT'",
+        "'INSINE'",
+        "'QUAD'",
+        "'QUART'",
+        "'QUINT'",
+        "'SINE'"
+      ]
     },
     {
       "type": "TYPEDEF",
