@@ -40,16 +40,18 @@ declare global {
     function encode_rgba(pixels: string, width: number, height: number): string;
 
     /**
-     * Decodes PNG bytes into an RGB buffer with one uint8 `pixels` stream of
+     * Decodes a valid PNG into an RGB buffer with one uint8 `pixels` stream of
      * three components per pixel. The decoded rows are flipped vertically to
-     * match Defold's buffer orientation. A decode or buffer-validation failure
-     * returns three nils, so check the buffer before reading the dimensions.
+     * match Defold's buffer orientation. The extension ignores LodePNG's decode
+     * error, so a corrupt PNG may crash the engine instead of returning nils.
+     * Three nils mean the buffer could not be created or failed validation, so
+     * check the buffer before reading the dimensions.
      *
-     * @param png - The PNG bytes.
+     * @param png - The PNG bytes, which must be a valid PNG.
      * @param premultiply_alpha - Accepted for symmetry with
      * {@link png.decode_rgba}; it only has effect in the RGBA path.
-     * @returns The pixel buffer, its width and its height, or three nils on
-     * failure.
+     * @returns The pixel buffer, its width and its height, or three nils when
+     * the buffer cannot be created or fails validation.
      */
     function decode_rgb(
       png: string,
@@ -60,16 +62,18 @@ declare global {
     >;
 
     /**
-     * Decodes PNG bytes into an RGBA buffer with one uint8 `pixels` stream of
+     * Decodes a valid PNG into an RGBA buffer with one uint8 `pixels` stream of
      * four components per pixel. The decoded rows are flipped vertically to
-     * match Defold's buffer orientation. A decode or buffer-validation failure
-     * returns three nils, so check the buffer before reading the dimensions.
+     * match Defold's buffer orientation. The extension ignores LodePNG's decode
+     * error, so a corrupt PNG may crash the engine instead of returning nils.
+     * Three nils mean the buffer could not be created or failed validation, so
+     * check the buffer before reading the dimensions.
      *
-     * @param png - The PNG bytes.
+     * @param png - The PNG bytes, which must be a valid PNG.
      * @param premultiply_alpha - Multiply each pixel's color components by its
      * alpha while decoding.
-     * @returns The pixel buffer, its width and its height, or three nils on
-     * failure.
+     * @returns The pixel buffer, its width and its height, or three nils when
+     * the buffer cannot be created or fails validation.
      */
     function decode_rgba(
       png: string,
