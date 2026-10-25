@@ -38,8 +38,8 @@ declare module 'gamepush.core.player' {
     login?: (success: boolean) => void;
     /** The player logged out. */
     logout?: (success: boolean) => void;
-    /** The player's field list was fetched. */
-    fetch_fields?: (success: boolean) => void;
+    /** The player's field list was fetched; `success` is set on HTML5 and absent elsewhere. */
+    fetch_fields?: (success?: boolean) => void;
     /** A player field changed. */
     change?: () => void;
   }

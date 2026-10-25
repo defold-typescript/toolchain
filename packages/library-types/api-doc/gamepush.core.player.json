@@ -645,10 +645,10 @@
         },
         {
           "name": "fetch_fields",
-          "brief": "The player's field list was fetched.",
-          "description": "The player's field list was fetched.",
+          "brief": "The player's field list was fetched; `success` is set on HTML5 and absent elsewhere.",
+          "description": "The player's field list was fetched; `success` is set on HTML5 and absent elsewhere.",
           "types": [
-            "(success: boolean) => void"
+            "(success?: boolean) => void"
           ],
           "is_optional": "True"
         },
