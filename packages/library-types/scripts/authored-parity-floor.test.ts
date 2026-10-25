@@ -363,8 +363,16 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "284ee4c93dc7d7cf6c26b4f0276230daff4a85646d38f58e4a0add963e25bf3b",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/ads.lua":
     "30f0ce35fc49fea783b4abc88c782a94991e3974f911e7ff1e167b84cff6c7ac",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/channels.lua":
+    "7b7055bbe222f51ccfb327cc74160cb2abb415b9201bffdda3a8de0959d95abb",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/events.lua":
+    "0a765272d083dbd8ff6d95e317133ddc03bbc369942a9e3df41d92e8c89fb216",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/feedbacks.lua":
+    "52f815977dae27936e18d0fd0d7159516d63d7cc5d8b081cec1d642ecc96def7",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/leaderboard.lua":
     "a596fefb5931bef5ee486f13914e5084e20bda09d103326946e2f69a335c1aa7",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/multiplayer.lua":
+    "be85390de70f2934fc2e54e7e45f6ddbbd1d974e285718d385fd4122a52b8b51",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/payments.lua":
     "0333669353ba71f76129604e23e710e31e0eef4387d93cbb2020fe53cff3f9f3",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/player.lua":
@@ -373,10 +381,18 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "8cdbe67f3fb5a9c2b291a955385c39b047a68a3412ef65ff27d0f92e07e4fff6",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/players.lua":
     "75c97b9b72c72bc88c23833945ba934c7322b3be36c989d682d3bc882ec47a95",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/reactions.lua":
+    "b59614926bd253d005a3f87339723b69d29493e3d9aae475ae80d76a7830d410",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/rewards.lua":
     "4798827ded5c500d9b7941aa915e23f881845a812bab15a90a8bd8574e459035",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/schedulers.lua":
+    "a42e0d42ba60000ad4386117e0a4fccb1d8944f0fc74349b015c00f67b7e93f3",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/socials.lua":
+    "7b9982870c36d3c24558dc24c53a83487be44d894120e59a3d6b00279ab14395",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/storage.lua":
     "77b7076584824fe1ea3da5242df76fa8b3c111a5de211e05704393859d3b207f",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/triggers.lua":
+    "99dab0e001a1bf31cb799fc8fc9e93cae64c0c77215c095f78f285ff46ce8915",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/uniques.lua":
     "1d2736b581c60e268837dbaaf16ce29fff0dfdbde05c4115c35c6b8c886041fa",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/variables.lua":

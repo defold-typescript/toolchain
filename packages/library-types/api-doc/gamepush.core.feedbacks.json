@@ -1,0 +1,316 @@
+{
+  "info": {
+    "namespace": "gamepush.core.feedbacks",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "send",
+      "brief": "Sends a feedback. Raises when the table is missing.",
+      "description": "Sends a feedback. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The feedback, for example `{ type: \"SUGGESTION\", text: \"...\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "open",
+      "brief": "Opens the feedback list window.",
+      "description": "Opens the feedback list window.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The list filter, or nil for every feedback.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "open_feedback",
+      "brief": "Opens one feedback. Raises when the table is missing.",
+      "description": "Opens one feedback. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The feedback, for example `{ feedbackId: 1 }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches the player's feedbacks.",
+      "description": "Fetches the player's feedbacks.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The list filter, or nil for every feedback.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result when called without `callback`, else nil.",
+          "types": [
+            "Record<string, unknown> | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more",
+      "brief": "Fetches the next page of the player's feedbacks.",
+      "description": "Fetches the next page of the player's feedbacks.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The list filter, or nil for every feedback.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result when called without `callback`, else nil.",
+          "types": [
+            "Record<string, unknown> | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send_message",
+      "brief": "Sends a message to a feedback's chat. Raises when the table is missing.",
+      "description": "Sends a message to a feedback's chat. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The message, for example `{ feedbackId: 1, text: \"...\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The feedback event handlers.",
+      "description": "The feedback event handlers.",
+      "types": [
+        "FeedbacksCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FeedbacksCallbacks",
+      "properties": [
+        {
+          "name": "create_feedback",
+          "brief": "A feedback was sent.",
+          "description": "A feedback was sent.",
+          "types": [
+            "(feedback: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_create_feedback",
+          "brief": "Sending a feedback failed.",
+          "description": "Sending a feedback failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open_feedbacks_list",
+          "brief": "The feedback list window was opened.",
+          "description": "The feedback list window was opened.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_open_feedbacks_list",
+          "brief": "Opening the feedback list window failed.",
+          "description": "Opening the feedback list window failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_feedbacks",
+          "brief": "The player's feedbacks were fetched.",
+          "description": "The player's feedbacks were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_feedbacks",
+          "brief": "Fetching the player's feedbacks failed.",
+          "description": "Fetching the player's feedbacks failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more_feedbacks",
+          "brief": "The next page of feedbacks was fetched.",
+          "description": "The next page of feedbacks was fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more_feedbacks",
+          "brief": "Fetching the next page of feedbacks failed.",
+          "description": "Fetching the next page of feedbacks failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "send_message",
+          "brief": "A message was sent to a feedback's chat.",
+          "description": "A message was sent to a feedback's chat.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_send_message",
+          "brief": "Sending a message to a feedback's chat failed.",
+          "description": "Sending a message to a feedback's chat failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_feedback_message",
+          "brief": "A message arrived in a feedback's chat.",
+          "description": "A message arrived in a feedback's chat.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_feedback_created",
+          "brief": "A feedback was created.",
+          "description": "A feedback was created.",
+          "types": [
+            "(feedback: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_feedback_status_updated",
+          "brief": "A feedback's status changed.",
+          "description": "A feedback's status changed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "event_feedback_platform_status_updated",
+          "brief": "A feedback's status on the platform changed.",
+          "description": "A feedback's status on the platform changed.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

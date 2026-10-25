@@ -39,7 +39,23 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/gamepush.core.channels.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.events.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.feedbacks.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gamepush.core.leaderboard.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.multiplayer.json": {
     "callable": 1,
     "field": 1
   },
@@ -59,11 +75,27 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/gamepush.core.reactions.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gamepush.core.rewards.json": {
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/gamepush.core.schedulers.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.socials.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gamepush.core.storage.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/gamepush.core.triggers.json": {
     "callable": 1,
     "field": 1
   },

@@ -1,0 +1,183 @@
+{
+  "info": {
+    "namespace": "gamepush.core.triggers",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "claim",
+      "brief": "Claims a trigger's reward. Raises when the table is missing.",
+      "description": "Claims a trigger's reward. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The options for the SDK's `triggers.claim`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "All triggers.",
+      "description": "All triggers.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "activated_list",
+      "brief": "The triggers the player activated.",
+      "description": "The triggers the player activated.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_trigger",
+      "brief": "A trigger's description. Raises unless `id_or_tag` is a string.",
+      "description": "A trigger's description. Raises unless `id_or_tag` is a string.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The trigger's id or tag.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_activated",
+      "brief": "Whether the player activated a trigger. Raises unless `id_or_tag` is a string.",
+      "description": "Whether the player activated a trigger. Raises unless `id_or_tag` is a string.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The trigger's id or tag.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_claimed",
+      "brief": "Whether a trigger's reward was given.",
+      "description": "Whether a trigger's reward was given.",
+      "parameters": [
+        {
+          "name": "id_or_tag",
+          "doc": "The trigger's id or tag.",
+          "types": [
+            "string | number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The trigger event handlers.",
+      "description": "The trigger event handlers.",
+      "types": [
+        "TriggersCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TriggersCallbacks",
+      "properties": [
+        {
+          "name": "activate",
+          "brief": "A trigger was activated.",
+          "description": "A trigger was activated.",
+          "types": [
+            "(trigger: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "claim",
+          "brief": "A trigger's reward was given.",
+          "description": "A trigger's reward was given.",
+          "types": [
+            "(trigger: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_claim",
+          "brief": "Giving a trigger's reward failed.",
+          "description": "Giving a trigger's reward failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
