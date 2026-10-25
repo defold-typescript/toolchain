@@ -90,6 +90,11 @@ you change `[dependencies]`; each surface reconciles to exactly what is declared
 now, so removing a dependency prunes its generated types and drops the tsconfig
 entry — nothing stale is left behind.
 
+`build` and `watch` read the same `types` list: the declarations behind the
+`"extensions"` and current `libraries@<cliVersion>` entries join the build as
+type information only, so a resolved project builds with `.defold-types/` kept
+off `include`, and none of those files is written as Lua.
+
 ## Types a library ships
 
 A library can ship its own TypeScript declarations as `.d.ts` files in a

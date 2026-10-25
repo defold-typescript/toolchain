@@ -43,6 +43,7 @@ import {
   throwOnUnaddressableArtifacts,
   throwOnUnresolvedRequires,
 } from "./require-resolution";
+import { collectResolvedDeclarations } from "./resolved-declarations";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { mergeTextPropertyFailures } from "./text-property-gate";
@@ -135,9 +136,11 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   // A session rather than `transpileProject`: the one-shot entry never surfaces
   // a `ts.Program`, and the reachability check needs one. Its compiler options
   // are kept in lockstep with `transpileProject`'s, which
-  // `session.test.ts`'s output-equivalence cases are what hold.
+  // `session.test.ts`'s output-equivalence cases are what hold. The declarations
+  // `resolve` installed join the program only: `sources` never names them, so
+  // nothing below checks or writes them.
   const session = createTranspileSession();
-  const result = session.update(files);
+  const result = session.update({ ...files, ...collectResolvedDeclarations(cwd) });
   const failures = collectFailures(result.diagnostics);
 
   const outputBySource: Record<string, string> = {};

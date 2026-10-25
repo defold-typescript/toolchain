@@ -49,6 +49,7 @@ import {
   throwOnUnaddressableArtifacts,
   throwOnUnresolvedRequires,
 } from "./require-resolution";
+import { collectResolvedDeclarations } from "./resolved-declarations";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { mergeTextPropertyFailures } from "./text-property-gate";
@@ -391,7 +392,8 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       files[rel] = readFileSync(path.join(cwd, rel), "utf8");
     }
 
-    const result = session.update(files);
+    // Declaration-only, as `runBuild` loads them: `sourceTexts` never holds them.
+    const result = session.update({ ...files, ...collectResolvedDeclarations(cwd) });
     sourceTexts.clear();
     for (const rel of sources) {
       sourceTexts.set(rel, files[rel] ?? "");

@@ -29,6 +29,7 @@ import {
 } from "./build-output";
 import { createBuildSession } from "./build-session";
 import { scanOrphanOutputs } from "./orphan-scan";
+import { scaffoldResolvedProject } from "./resolved-project-fixture";
 
 const OUTDIR_CONFIG: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
 
@@ -127,6 +128,21 @@ describe("createBuildSession", () => {
         readFileSync(path.join(other, rel), "utf8"),
       );
     }
+  });
+
+  test("buildAll writes the same Lua as runBuild for a project holding only what resolve writes", () => {
+    for (const root of [cwd, other]) {
+      scaffoldResolvedProject(root);
+    }
+
+    const reference = runBuild({ cwd: other });
+    const result = createBuildSession({ cwd }).buildAll();
+
+    expect(result.written).toEqual(["src/main.ts.script"]);
+    expect(result.written).toEqual(reference.written);
+    expect(readFileSync(path.join(cwd, "src/main.ts.script"), "utf8")).toBe(
+      readFileSync(path.join(other, "src/main.ts.script"), "utf8"),
+    );
   });
 
   test("applyEvents re-reads and rewrites only the changed file", () => {
