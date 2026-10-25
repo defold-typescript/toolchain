@@ -1,0 +1,296 @@
+{
+  "info": {
+    "namespace": "gamepush.core.images",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "upload",
+      "brief": "Uploads an image the player chooses. Raises when the table is missing.",
+      "description": "Uploads an image the player chooses. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The upload options, for example `{ tags: [\"screenshot\", \"level7\"] }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the image.",
+          "types": [
+            "(image: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "upload_url",
+      "brief": "Uploads an image from a URL. Raises when the table is missing.",
+      "description": "Uploads an image from a URL. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The upload options, including the image's `url`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the image.",
+          "types": [
+            "(image: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "choose_file",
+      "brief": "Asks the player to choose an image.",
+      "description": "Asks the player to choose an image.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "choice_file",
+      "brief": "Asks the player to choose an image.",
+      "description": "Asks the player to choose an image.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [],
+      "deprecated": "Use `choose_file` instead."
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches images.",
+      "description": "Fetches images.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The fetch options.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more",
+      "brief": "Fetches more images.",
+      "description": "Fetches more images.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The fetch options.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resize",
+      "brief": "Resizes an image and returns the link to the resized copy.",
+      "description": "Resizes an image and returns the link to the resized copy.",
+      "parameters": [
+        {
+          "name": "uri",
+          "doc": "The image's address.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "The width to resize to.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "height",
+          "doc": "The height to resize to.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "crop",
+          "doc": "Whether to crop the image.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_upload",
+      "brief": "Whether the player can upload images.",
+      "description": "Whether the player can upload images.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "ImagesCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ImagesCallbacks",
+      "properties": [
+        {
+          "name": "upload",
+          "brief": "An image was uploaded.",
+          "description": "An image was uploaded.",
+          "types": [
+            "(image: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_upload",
+          "brief": "Uploading an image failed.",
+          "description": "Uploading an image failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "choose",
+          "brief": "The player chose an image.",
+          "description": "The player chose an image.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_choose",
+          "brief": "Choosing an image failed.",
+          "description": "Choosing an image failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch",
+          "brief": "The images were fetched.",
+          "description": "The images were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch",
+          "brief": "Fetching the images failed.",
+          "description": "Fetching the images failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more",
+          "brief": "More images were fetched.",
+          "description": "More images were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more",
+          "brief": "Fetching more images failed.",
+          "description": "Fetching more images failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

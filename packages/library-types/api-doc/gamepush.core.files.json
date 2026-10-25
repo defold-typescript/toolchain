@@ -1,0 +1,305 @@
+{
+  "info": {
+    "namespace": "gamepush.core.files",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "upload",
+      "brief": "Uploads a file the player chooses. Raises when the table is missing.",
+      "description": "Uploads a file the player chooses. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The upload options, for example `{ accept: \".txt, .json\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "upload_url",
+      "brief": "Uploads a file from a URL. Raises when the table is missing.",
+      "description": "Uploads a file from a URL. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The upload options, for example\n`{ filename: \"save.txt\", url: \"https://...\", tags: [\"level7\"] }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "upload_content",
+      "brief": "Uploads content as a file. Raises when the table is missing.",
+      "description": "Uploads content as a file. Raises when the table is missing.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The upload options, for example\n`{ filename: \"save.txt\", content: \"Hello world!\" }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_content",
+      "brief": "Loads a file's content.",
+      "description": "Loads a file's content.",
+      "parameters": [
+        {
+          "name": "uri",
+          "doc": "The file's address.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the content.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "choose_file",
+      "brief": "Asks the player to choose a file. The binding checks `accept` but does not pass it",
+      "description": "Asks the player to choose a file. The binding checks `accept` but does not pass it\non to the SDK.",
+      "parameters": [
+        {
+          "name": "accept",
+          "doc": "The file types to offer, for example `\".txt, .json\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch",
+      "brief": "Fetches files.",
+      "description": "Fetches files.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The fetch options.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fetch_more",
+      "brief": "Fetches more files.",
+      "description": "Fetches more files.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "The fetch options, for example `{ limit: 2 }`.",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the result.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "can_upload",
+      "brief": "Whether the player can upload files.",
+      "description": "Whether the player can upload files.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "The event handlers.",
+      "description": "The event handlers.",
+      "types": [
+        "FilesCallbacks"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FilesCallbacks",
+      "properties": [
+        {
+          "name": "upload",
+          "brief": "A file was uploaded.",
+          "description": "A file was uploaded.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_upload",
+          "brief": "Uploading a file failed.",
+          "description": "Uploading a file failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "load_content",
+          "brief": "A file's content was loaded.",
+          "description": "A file's content was loaded.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_load_content",
+          "brief": "Loading a file's content failed.",
+          "description": "Loading a file's content failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "choose",
+          "brief": "The player chose a file.",
+          "description": "The player chose a file.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_choose",
+          "brief": "Choosing a file failed.",
+          "description": "Choosing a file failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch",
+          "brief": "The files were fetched.",
+          "description": "The files were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch",
+          "brief": "Fetching the files failed.",
+          "description": "Fetching the files failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fetch_more",
+          "brief": "More files were fetched.",
+          "description": "More files were fetched.",
+          "types": [
+            "(result: unknown) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "error_fetch_more",
+          "brief": "Fetching more files failed.",
+          "description": "Fetching more files failed.",
+          "types": [
+            "(error: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

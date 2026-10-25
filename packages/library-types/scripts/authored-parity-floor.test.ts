@@ -363,18 +363,38 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "284ee4c93dc7d7cf6c26b4f0276230daff4a85646d38f58e4a0add963e25bf3b",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/ads.lua":
     "30f0ce35fc49fea783b4abc88c782a94991e3974f911e7ff1e167b84cff6c7ac",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/analytics.lua":
+    "40095d6be10d1f571ff80b88513917f8ce5393de887ac8cae50045ff32756d1c",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/app.lua":
+    "068e648426e41c84d244d20d3f17f2a757777b994d35cc0914584124a4794057",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/channels.lua":
     "7b7055bbe222f51ccfb327cc74160cb2abb415b9201bffdda3a8de0959d95abb",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/documents.lua":
+    "59ef06aea08a5f81d629ec648cc44f370476d78574d50bc24366019704c24d19",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/events.lua":
     "0a765272d083dbd8ff6d95e317133ddc03bbc369942a9e3df41d92e8c89fb216",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/experiments.lua":
+    "0760c61e8f3448484e0434420f4e1290e19c59e1429654389fd0534e73f442d1",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/feedbacks.lua":
     "52f815977dae27936e18d0fd0d7159516d63d7cc5d8b081cec1d642ecc96def7",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/files.lua":
+    "4d8bc3bb7c2fddfd9cf20b05f088389873f91c8d9025aa132e41d278a7b66341",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/fullscreen.lua":
+    "ec1a6d4cc6bcdcc6c02c8caff41bde69b2466794f6ade69e348dc71adaa91e53",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/games_collections.lua":
+    "585f8e47885dbb09e8dfd4c891187c90df81c060a97d6f2b134111c8e9fadfbb",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/images.lua":
+    "5d9cd1b55c317298f4717094f3989e6ba8f728225e73cd5676ad98aeccb919b9",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/leaderboard.lua":
     "a596fefb5931bef5ee486f13914e5084e20bda09d103326946e2f69a335c1aa7",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/logger.lua":
+    "0a50548fdd9d7b8ac234289ddcb3ecd438d0b58e34106d28e39453f739708ee3",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/multiplayer.lua":
     "be85390de70f2934fc2e54e7e45f6ddbbd1d974e285718d385fd4122a52b8b51",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/payments.lua":
     "0333669353ba71f76129604e23e710e31e0eef4387d93cbb2020fe53cff3f9f3",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/platform.lua":
+    "60c67f0d7be63419a4d939520169f8b950c8bca4c8c32590a270a5df4547df5a",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/player.lua":
     "40475d548941d53eb906468f38eac07407627ba9306b857ac10a6a2c3d14d7b4",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/player_stats.lua":
@@ -387,8 +407,12 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "4798827ded5c500d9b7941aa915e23f881845a812bab15a90a8bd8574e459035",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/schedulers.lua":
     "a42e0d42ba60000ad4386117e0a4fccb1d8944f0fc74349b015c00f67b7e93f3",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/segments.lua":
+    "309ce08e6918efe5291079200d5e8d9a083fe3f4bb1708c1f788b18cccae969a",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/socials.lua":
     "7b9982870c36d3c24558dc24c53a83487be44d894120e59a3d6b00279ab14395",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/sounds.lua":
+    "b938e51cfad8ac2e8ce12582f34e84e0adeb6b51df4ffe3737d1ca93776ebe0e",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/storage.lua":
     "77b7076584824fe1ea3da5242df76fa8b3c111a5de211e05704393859d3b207f",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/triggers.lua":
@@ -397,6 +421,10 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "1d2736b581c60e268837dbaaf16ce29fff0dfdbde05c4115c35c6b8c886041fa",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/variables.lua":
     "79369a31189b85d4575c76d7fc85d41d666f4c55f08c8af89871311065bfdd73",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/core/windows.lua":
+    "99791b9da12d466e07106db54a16e323af0ef08a7f59d21670c606aa98f4da6c",
+  "fixtures/upstream-lua/defold-gamepush/gamepush/gamepush.lua":
+    "96466c631148284e0cb22d9322869df84a40c65410e44f1b18d64ef8c9f236bb",
   "fixtures/upstream-lua/defold-input/in/accelerometer.lua":
     "fbdf49f06a31bc860d24434d38fc5124f913cb43e88ad039640e0b32e2b545c0",
   "fixtures/upstream-lua/defold-input/in/button.lua":

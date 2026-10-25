@@ -100,6 +100,52 @@ describe("loadVendoredLibraryRegistry", () => {
     // where the two differ.
     expect(nakama[0]?.generatedStems?.["nakama.nakama"]).toBe("nakama");
   });
+
+  // The entry module's fields are `typeof import` of the 32 module ids, so `resolve`
+  // has to install all 33 goldens together for any of them to compile.
+  test("keeps defold-gamepush's entry module and its 32 typed modules in one entry", () => {
+    const { registry } = loadVendoredLibraryRegistry();
+    const gamepush = registry.filter((library) => library.sourceId === "defold-gamepush");
+    expect(gamepush).toHaveLength(1);
+    const core = [
+      "achievements",
+      "ads",
+      "analytics",
+      "app",
+      "channels",
+      "documents",
+      "events",
+      "experiments",
+      "feedbacks",
+      "files",
+      "fullscreen",
+      "games_collections",
+      "images",
+      "leaderboard",
+      "logger",
+      "multiplayer",
+      "payments",
+      "platform",
+      "player",
+      "player_stats",
+      "players",
+      "reactions",
+      "rewards",
+      "schedulers",
+      "segments",
+      "socials",
+      "sounds",
+      "storage",
+      "triggers",
+      "uniques",
+      "variables",
+      "windows",
+    ].map((name) => `gamepush.core.${name}`);
+    expect(core).toHaveLength(32);
+    expect([...(gamepush[0]?.modules ?? [])].sort()).toEqual([...core, "gamepush.gamepush"].sort());
+    expect(gamepush[0]?.generatedStems?.["gamepush.gamepush"]).toBe("gamepush");
+    expect(gamepush[0]?.generatedStems?.["gamepush.core.player"]).toBe("gamepush.core.player");
+  });
 });
 
 describe("loadVendoredNativeRegistry", () => {
