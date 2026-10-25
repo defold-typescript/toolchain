@@ -1,0 +1,483 @@
+{
+  "info": {
+    "namespace": "openal",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Opens the default audio device and creates the context every other call",
+      "description": "Opens the default audio device and creates the context every other call\nworks through. Call it once, before creating sources.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_info",
+      "brief": "Reads which OpenAL implementation is running.",
+      "description": "Reads which OpenAL implementation is running.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Info"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_distance_model",
+      "brief": "Sets the model every source's attenuation with distance is calculated by.",
+      "description": "Sets the model every source's attenuation with distance is calculated by.",
+      "parameters": [
+        {
+          "name": "distance_model",
+          "doc": "The attenuation model; a name outside the seven is ignored.",
+          "types": [
+            "\"inverse\" | \"inverse_clamped\" | \"linear\" | \"linear_clamped\" | \"exponent\" | \"exponent_clamped\" | \"none\""
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new_source",
+      "brief": "Creates a sound source and loads a WAV file into it. Only a mono sound is",
+      "description": "Creates a sound source and loads a WAV file into it. Only a mono sound is\npositioned; a stereo one plays as if it were at the listener.",
+      "parameters": [
+        {
+          "name": "resource",
+          "doc": "The WAV file's data, as `resource.load` returns it.",
+          "types": [
+            "Opaque<\"buffer\">"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The source, or `undefined` when the data cannot be loaded as a WAV file.",
+          "types": [
+            "Source | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove_source",
+      "brief": "Destroys a source and frees its sound. Reading or writing the source's",
+      "description": "Destroys a source and frees its sound. Reading or writing the source's\nproperties afterwards is an error.",
+      "parameters": [
+        {
+          "name": "source",
+          "doc": "The source to destroy; `undefined` is ignored, so a failed\n{@link new_source} result can be passed as is.",
+          "types": [
+            "Source | undefined"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "doppler_factor",
+      "brief": "Scales the Doppler effect; a higher value makes it more noticeable. A value that is not positive is ignored.",
+      "description": "Scales the Doppler effect; a higher value makes it more noticeable. A value that is not positive is ignored.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "speed_of_sound",
+      "brief": "The speed of sound the Doppler effect is calculated with. A value that is not positive is ignored.",
+      "description": "The speed of sound the Doppler effect is calculated with. A value that is not positive is ignored.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "listener",
+      "brief": "The point every sound is heard from.",
+      "description": "The point every sound is heard from.",
+      "types": [
+        "Listener"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Info",
+      "properties": [
+        {
+          "name": "vendor",
+          "brief": "Who made the implementation.",
+          "description": "Who made the implementation.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "version",
+          "brief": "The implementation's version.",
+          "description": "The implementation's version.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "renderer",
+          "brief": "The renderer the implementation plays through.",
+          "description": "The renderer the implementation plays through.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "extensions",
+          "brief": "The OpenAL extensions the implementation supports, separated by spaces.",
+          "description": "The OpenAL extensions the implementation supports, separated by spaces.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Source",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "play",
+          "brief": "Starts playback.",
+          "description": "Starts playback.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "pause",
+          "brief": "Pauses playback.",
+          "description": "Pauses playback.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "rewind",
+          "brief": "Moves playback back to the start of the sound.",
+          "description": "Moves playback back to the start of the sound.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "stop",
+          "brief": "Stops playback.",
+          "description": "Stops playback.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "x",
+          "brief": "X position.",
+          "description": "X position.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "Y position.",
+          "description": "Y position.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "z",
+          "brief": "Z position.",
+          "description": "Z position.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "vx",
+          "brief": "X component of the velocity.",
+          "description": "X component of the velocity.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "vy",
+          "brief": "Y component of the velocity.",
+          "description": "Y component of the velocity.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "vz",
+          "brief": "Z component of the velocity.",
+          "description": "Z component of the velocity.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "dx",
+          "brief": "X component of the direction the sound cone points in.",
+          "description": "X component of the direction the sound cone points in.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "dy",
+          "brief": "Y component of the direction.",
+          "description": "Y component of the direction.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "dz",
+          "brief": "Z component of the direction.",
+          "description": "Z component of the direction.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "pitch",
+          "brief": "Pitch adjustment, `1` by default.",
+          "description": "Pitch adjustment, `1` by default.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "gain",
+          "brief": "Gain from `0` to `1`.",
+          "description": "Gain from `0` to `1`.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_distance",
+          "brief": "The distance past which the source no longer attenuates under a clamped distance model, `1000` by default.",
+          "description": "The distance past which the source no longer attenuates under a clamped distance model, `1000` by default.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "rolloff_factor",
+          "brief": "How fast the source attenuates with distance.",
+          "description": "How fast the source attenuates with distance.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "reference_distance",
+          "brief": "The distance at which the volume drops by half before `rolloff_factor` and `max_distance` apply, `50` by default.",
+          "description": "The distance at which the volume drops by half before `rolloff_factor` and `max_distance` apply, `50` by default.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min_gain",
+          "brief": "The lowest gain the source attenuates to.",
+          "description": "The lowest gain the source attenuates to.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_gain",
+          "brief": "The highest gain the source plays at.",
+          "description": "The highest gain the source plays at.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cone_outer_gain",
+          "brief": "The gain outside the sound cone.",
+          "description": "The gain outside the sound cone.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cone_inner_angle",
+          "brief": "Inner angle of the sound cone, in degrees.",
+          "description": "Inner angle of the sound cone, in degrees.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cone_outer_angle",
+          "brief": "Outer angle of the sound cone, in degrees.",
+          "description": "Outer angle of the sound cone, in degrees.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "time",
+          "brief": "Playback position in seconds; setting it seeks.",
+          "description": "Playback position in seconds; setting it seeks.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "is_looping",
+          "brief": "Whether the sound repeats indefinitely, `false` by default.",
+          "description": "Whether the sound repeats indefinitely, `false` by default.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "is_relative",
+          "brief": "Whether the position is relative to the listener, `false` by default.",
+          "description": "Whether the position is relative to the listener, `false` by default.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "state",
+          "brief": "The playback state.",
+          "description": "The playback state.",
+          "types": [
+            "\"initial\" | \"playing\" | \"paused\" | \"stopped\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Listener",
+      "properties": [
+        {
+          "name": "x",
+          "brief": "X position.",
+          "description": "X position.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "Y position.",
+          "description": "Y position.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "z",
+          "brief": "Z position.",
+          "description": "Z position.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "vx",
+          "brief": "X component of the velocity.",
+          "description": "X component of the velocity.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "vy",
+          "brief": "Y component of the velocity.",
+          "description": "Y component of the velocity.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "vz",
+          "brief": "Z component of the velocity.",
+          "description": "Z component of the velocity.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "orientation_at_x",
+          "brief": "X component of the \"at\" vector, the direction the listener faces.",
+          "description": "X component of the \"at\" vector, the direction the listener faces.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "orientation_at_y",
+          "brief": "Y component of the \"at\" vector.",
+          "description": "Y component of the \"at\" vector.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "orientation_at_z",
+          "brief": "Z component of the \"at\" vector.",
+          "description": "Z component of the \"at\" vector.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "orientation_up_x",
+          "brief": "X component of the \"up\" vector.",
+          "description": "X component of the \"up\" vector.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "orientation_up_y",
+          "brief": "Y component of the \"up\" vector.",
+          "description": "Y component of the \"up\" vector.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "orientation_up_z",
+          "brief": "Z component of the \"up\" vector.",
+          "description": "Z component of the \"up\" vector.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

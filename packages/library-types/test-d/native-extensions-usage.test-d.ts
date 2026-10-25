@@ -112,4 +112,27 @@ imp.convolution(src, dst, 16, 16, [0, 0, 0, 0, 1, 0, 0, 0]);
 // @ts-expect-error the destination buffer is required.
 imp.convolution(src);
 
+openal.init();
+const shot = openal.new_source(resource.load("/sounds/shot.wav"));
+if (shot !== undefined) {
+  shot.is_looping = true;
+  shot.x = 1;
+  shot.gain = 0.5;
+  shot.play();
+  const _playing: boolean = shot.state === "playing";
+  // @ts-expect-error the playback state is read-only.
+  shot.state = "playing";
+}
+// @ts-expect-error a WAV that fails to load returns nil, so the source is only there after checking it.
+shot.play();
+openal.remove_source(shot);
+openal.listener.orientation_up_y = 1;
+openal.listener.x = 2;
+openal.doppler_factor = 2;
+const _speed: number = openal.speed_of_sound;
+openal.set_distance_model("linear");
+// @ts-expect-error the distance model is one of seven named models.
+openal.set_distance_model("loud");
+const _vendor: string = openal.get_info().vendor;
+
 export {};

@@ -1,0 +1,31 @@
+{
+  "registry": {
+    "sourceId": "extension-openal",
+    "manifestDir": "openal"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/Lerg/extension-openal/archive/618292f0bff56b6cd38652a97baf90ba89b56e91.zip",
+    "confirmedManifest": "extension-openal-618292f0bff56b6cd38652a97baf90ba89b56e91/openal/ext.manifest",
+    "misplacedManifest": "extension-openal-618292f0bff56b6cd38652a97baf90ba89b56e91/ext.manifest"
+  },
+  "receiverEmit": {
+    "reason": "Every Source method checks for exactly one argument and reads the source table's `__userdata` from it, so a dot call passes nothing and raises an argument-count error; only TSTL's emit shows which call form the shipped declaration produces.",
+    "consumer": [
+      "export function playShot(path: string): void {",
+      "  openal.init();",
+      "  const shot = openal.new_source(resource.load(path));",
+      "  if (shot === undefined) return;",
+      "  shot.is_looping = true;",
+      "  shot.x = 1;",
+      "  shot.play();",
+      "  shot.pause();",
+      "  shot.rewind();",
+      "  shot.stop();",
+      "  openal.listener.orientation_up_y = 1;",
+      "  openal.doppler_factor = 2;",
+      "  openal.remove_source(shot);",
+      "}"
+    ]
+  },
+  "pinKind": "commit"
+}

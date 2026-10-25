@@ -1,0 +1,20 @@
+{
+  "namespace": "openal",
+  "moduleName": "openal",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 5,
+  "declaredFunctions": 5,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "upstreamMethods": 4,
+  "declaredMethods": 4,
+  "missingMethods": [],
+  "phantomMethods": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 3,
+  "declaredConstants": 3,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1,
+  "arityMeasured": false
+}

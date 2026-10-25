@@ -586,10 +586,72 @@ describe("parseNativeMethodTables over a file that only fills metatables", () =>
     );
   });
 
-  test("a file with no luaL_register call throws naming the file", () => {
-    expect(() => parseNativeMethodTables('static const char* x = "y";', "ext/none.cpp")).toThrow(
-      /ext\/none\.cpp/,
-    );
+  test("a file with neither a luaL_register call nor a ::push table throws naming the file and both shapes", () => {
+    const thrown = () => parseNativeMethodTables('static const char* x = "y";', "ext/none.cpp");
+    expect(thrown).toThrow(/ext\/none\.cpp/);
+    expect(thrown).toThrow(/luaL_register/);
+    expect(thrown).toThrow(/::push/);
+  });
+});
+
+describe("parseNativeMethodTables over objects a <Class>::push builds as plain tables", () => {
+  const sourcePush = [
+    "int LuaSource::play(lua_State *L) { return 0; }",
+    "void LuaSource::push(lua_State *L) {",
+    "  lua_createtable(L, 0, 1);",
+    "  lua_pushlightuserdata(L, this);",
+    '  lua_setfield(L, -2, "__userdata");',
+    "  lua_pushcfunction(L, play);",
+    '  lua_setfield(L, -2, "play");',
+    "  lua_pushnumber(L, 1);",
+    '  lua_setfield(L, -2, "id");',
+    "  lua_pushcfunction(L, stop);",
+    '  lua_setfield(L, -2, "stop");',
+    "  lua_createtable(L, 0, 2);",
+    "  lua_pushcfunction(L, index);",
+    '  lua_setfield(L, -2, "__index");',
+    "  lua_pushcfunction(L, newindex);",
+    '  lua_setfield(L, -2, "__newindex");',
+    "  lua_setmetatable(L, -2);",
+    "}",
+  ].join("\n");
+
+  test("the object's cfunction fields read as its methods, keyed `<Class>::push()`, internal and data fields and the metatable's own fields dropped", () => {
+    expect(parseNativeMethodTables(sourcePush, "LuaSource.cpp")).toEqual({
+      "LuaSource::push()": ["play", "stop"],
+    });
+  });
+
+  test("a push body that only sets a metatable reads as a type with no methods", () => {
+    const source = [
+      "void LuaListener::push(lua_State *L) {",
+      "  lua_createtable(L, 0, 1);",
+      "  lua_createtable(L, 0, 2);",
+      "  lua_pushcfunction(L, index);",
+      '  lua_setfield(L, -2, "__index");',
+      "  lua_setmetatable(L, -2);",
+      "}",
+    ].join("\n");
+    expect(parseNativeMethodTables(source, "LuaListener.cpp")).toEqual({
+      "LuaListener::push()": [],
+    });
+  });
+
+  test("a module file's ::push tables read beside its metatables", () => {
+    const source = [
+      "static const luaL_reg methods[] = {",
+      '  {"new_source", NewSource},',
+      "  {0, 0}",
+      "};",
+      sourcePush,
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_register(L, "mod", methods);',
+      "  lua_pop(L, 1);",
+      "}",
+    ].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp").methods).toEqual({
+      "LuaSource::push()": ["play", "stop"],
+    });
   });
 });
 
@@ -654,6 +716,97 @@ describe("constants set in a nested table read as dotted names", () => {
       'lua_setfield(L, -2, "k");',
     ]);
     expect(() => parseNativeRegistration(source, "ext/open.cpp")).toThrow(/ext\/open\.cpp/);
+  });
+});
+
+describe("a module metatable and custom-pushed fields after the register call", () => {
+  function moduleWith(body: string[]): string {
+    return [
+      "int mod_index(lua_State *L) {",
+      "  const char *key = lua_tostring(L, 2);",
+      "  switch (hash_string(key)) {",
+      "    case HASH_doppler_factor:",
+      "      lua_pushnumber(L, 1);",
+      "      break;",
+      "    case HASH_speed_of_sound:",
+      "      lua_pushnumber(L, 2);",
+      "      break;",
+      "  }",
+      "  return 1;",
+      "}",
+      "int mod_newindex(lua_State *L) {",
+      "  switch (hash_string(lua_tostring(L, 2))) {",
+      "    case HASH_write_only:",
+      "      break;",
+      "  }",
+      "  return 0;",
+      "}",
+      "int mod_plain(lua_State *L) { return 0; }",
+      "static const luaL_reg methods[] = {",
+      '  {"init", Init},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      '  luaL_register(L, "mod", methods);',
+      ...body.map((line) => `  ${line}`),
+      "  lua_pop(L, 1);",
+      "}",
+    ].join("\n");
+  }
+
+  const metatable = (index: string) => [
+    "lua_createtable(L, 0, 2);",
+    index,
+    'lua_setfield(L, -2, "__index");',
+    "lua_pushcfunction(L, mod_newindex);",
+    'lua_setfield(L, -2, "__newindex");',
+    "lua_setmetatable(L, -2);",
+  ];
+
+  test("the __index cfunction's case HASH_ labels read as module fields, and the metatable's own keys do not", () => {
+    const source = moduleWith(metatable("lua_pushcfunction(L, mod_index);"));
+    expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual([
+      "doppler_factor",
+      "speed_of_sound",
+    ]);
+  });
+
+  test("the same table with no lua_setmetatable is left open and throws naming the file", () => {
+    const source = moduleWith(
+      metatable("lua_pushcfunction(L, mod_index);").filter(
+        (line) => !line.startsWith("lua_setmetatable"),
+      ),
+    );
+    expect(() => parseNativeRegistration(source, "ext/meta.cpp")).toThrow(/ext\/meta\.cpp/);
+  });
+
+  test("an __index the reader cannot read fields from throws naming the file", () => {
+    for (const index of ["lua_pushcfunction(L, mod_plain);", "lua_pushvalue(L, -1);"]) {
+      const source = moduleWith(metatable(index));
+      expect(() => parseNativeRegistration(source, "ext/index.cpp")).toThrow(
+        /ext\/index\.cpp.*__index/s,
+      );
+    }
+  });
+
+  test("a value pushed by ->push(L) or <Class>::push(L) is stored under the lua_setfield after it", () => {
+    const source = moduleWith([
+      "LuaListener::getInstance()->push(L);",
+      'lua_setfield(L, -2, "listener");',
+      "Registry::push(L);",
+      'lua_setfield(L, -2, "registry");',
+    ]);
+    expect(parseNativeRegistration(source, "inline.cpp").constants).toEqual([
+      "listener",
+      "registry",
+    ]);
+  });
+
+  test("a lua_setfield into the module with nothing pushed since the register call throws naming the file", () => {
+    const source = moduleWith(['lua_setfield(L, -2, "listener");']);
+    expect(() => parseNativeRegistration(source, "ext/bare.cpp")).toThrow(
+      /ext\/bare\.cpp.*listener/s,
+    );
   });
 });
 
