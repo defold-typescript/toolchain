@@ -958,6 +958,39 @@ describe("live_unbundler ingests its module file and types its unannotated const
   });
 });
 
+describe("ads_wrapper's meta network class reaches the model as dot-called methods", () => {
+  test("ads_network carries the 18 functions of ads_network.lua, each without self", () => {
+    const target = readLualsTargets(PACKAGE_ROOT).find(
+      (t) => t.moduleId === "ads_wrapper.ads_wrapper",
+    );
+    if (!target) throw new Error("ads_wrapper.ads_wrapper target missing from luals-targets.json");
+    const network = buildTargetModel(PACKAGE_ROOT, target).interfaces.find(
+      (i) => i.name === "ads_network",
+    );
+    expect(network?.methods.map((m) => m.name)).toEqual([
+      "setup",
+      "init",
+      "request_idfa",
+      "is_supported",
+      "is_initialized",
+      "show_rewarded",
+      "load_rewarded",
+      "is_rewarded_loaded",
+      "show_interstitial",
+      "load_interstitial",
+      "is_interstitial_loaded",
+      "is_banner_setup",
+      "load_banner",
+      "unload_banner",
+      "is_banner_loaded",
+      "show_banner",
+      "hide_banner",
+      "is_banner_showed",
+    ]);
+    expect(network?.methods.every((m) => m.noSelf === true)).toBe(true);
+  });
+});
+
 describe("log's dropped call signature matches the runtime's non-callable logger", () => {
   function logTarget(): LualsTarget {
     const log = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "log");

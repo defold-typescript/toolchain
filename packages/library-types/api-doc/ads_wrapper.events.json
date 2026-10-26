@@ -1,0 +1,692 @@
+{
+  "info": {
+    "namespace": "ads_wrapper.events",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "ads_network",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "setup",
+          "brief": "Api setup",
+          "description": "Api setup",
+          "parameters": [
+            {
+              "name": "params",
+              "doc": "",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "init",
+          "brief": "Initializes `admob` sdk.",
+          "description": "Initializes `admob` sdk.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "request_idfa",
+          "brief": "Requests IDFA",
+          "description": "Requests IDFA",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_supported",
+          "brief": "Check if the environment supports admob api",
+          "description": "Check if the environment supports admob api",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_initialized",
+          "brief": "Check if the admob is initialized",
+          "description": "Check if the admob is initialized",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "show_rewarded",
+          "brief": "Shows rewarded ads.",
+          "description": "Shows rewarded ads.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "load_rewarded",
+          "brief": "Loads rewarded ads",
+          "description": "Loads rewarded ads",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_rewarded_loaded",
+          "brief": "Check if the rewarded ads is loaded",
+          "description": "Check if the rewarded ads is loaded",
+          "parameters": [
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "show_interstitial",
+          "brief": "Shows interstitial ads.",
+          "description": "Shows interstitial ads.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "load_interstitial",
+          "brief": "Loads interstitial ads",
+          "description": "Loads interstitial ads",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_interstitial_loaded",
+          "brief": "Check if the interstitial ads is loaded",
+          "description": "Check if the interstitial ads is loaded",
+          "parameters": [
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_banner_setup",
+          "brief": "Check if the banner is set up",
+          "description": "Check if the banner is set up",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "load_banner",
+          "brief": "Loads banner. Use `ads.T_BANNER` parameter.",
+          "description": "Loads banner. Use `ads.T_BANNER` parameter.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "unload_banner",
+          "brief": "Unloads active banner.",
+          "description": "Unloads active banner.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_banner_loaded",
+          "brief": "Check if the banner is loaded",
+          "description": "Check if the banner is loaded",
+          "parameters": [
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "show_banner",
+          "brief": "Shows loaded banner.",
+          "description": "Shows loaded banner.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "hide_banner",
+          "brief": "Hides loaded banner.",
+          "description": "Hides loaded banner.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "the function is called after execution.",
+              "types": [
+                "ads_callback | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_banner_showed",
+          "brief": "Check if the banner is showed",
+          "description": "Check if the banner is showed",
+          "parameters": [
+            {
+              "name": "params",
+              "doc": "additional parameters",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ads_order",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ads_mediator",
+      "properties": [
+        {
+          "name": "order",
+          "brief": "",
+          "description": "",
+          "types": [
+            "ads_network[]"
+          ]
+        },
+        {
+          "name": "networks",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<number, ads_network>"
+          ]
+        },
+        {
+          "name": "current_network_num",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "repeater",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "repeat_num",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ads_response",
+      "properties": [
+        {
+          "name": "result",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "message",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "data",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown | undefined"
+          ]
+        },
+        {
+          "name": "code",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | undefined"
+          ]
+        },
+        {
+          "name": "cancelled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "network_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ABORT",
+      "brief": "Result a network step returns to stop the queue early; the callback receives it as `SUCCESS`.",
+      "description": "Result a network step returns to stop the queue early; the callback receives it as `SUCCESS`.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SUCCESS",
+      "brief": "`response.result` when the call succeeded.",
+      "description": "`response.result` when the call succeeded.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR",
+      "brief": "`response.result` when the call failed.",
+      "description": "`response.result` when the call failed.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "C_SKIPPED",
+      "brief": "`response.code` when the rewarded ad was skipped.",
+      "description": "`response.code` when the rewarded ad was skipped.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "C_ERROR_UNKNOWN",
+      "brief": "`response.code` for an unknown error.",
+      "description": "`response.code` for an unknown error.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "C_ERROR_AD_BLOCK",
+      "brief": "`response.code` when an ad blocker caused the error.",
+      "description": "`response.code` when an ad blocker caused the error.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "C_ERROR_NO_CONNECTION",
+      "brief": "`response.code` when there is no internet connection.",
+      "description": "`response.code` when there is no internet connection.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "V_NONE",
+      "brief": "`queue.set_verbose_mode` level that logs nothing; the default.",
+      "description": "`queue.set_verbose_mode` level that logs nothing; the default.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "V_ERROR",
+      "brief": "`queue.set_verbose_mode` level that logs every error.",
+      "description": "`queue.set_verbose_mode` level that logs every error.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "V_SUCCESS",
+      "brief": "`queue.set_verbose_mode` level that logs every success response.",
+      "description": "`queue.set_verbose_mode` level that logs every success response.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "V_ALL",
+      "brief": "`queue.set_verbose_mode` level that logs every message.",
+      "description": "`queue.set_verbose_mode` level that logs every message.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ads_queue"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ads_callback"
+    }
+  ]
+}
