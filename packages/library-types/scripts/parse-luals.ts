@@ -74,6 +74,10 @@ export interface LibraryMethod {
   // `function cls.name()` on a local bound to `---@class cls`. Set only when true, so
   // a colon method carries no key; the emitter renders it with `this: void`.
   noSelf?: true;
+  // A method the library checks for before calling it (`if network.request_idfa then`),
+  // so an implementation may omit it. Set only when true, and only by an
+  // `annotationOverrides` entry: LuaLS has no annotation the parser could read it from.
+  optional?: true;
 }
 
 export interface LibraryParam {

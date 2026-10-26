@@ -1,0 +1,385 @@
+{
+  "info": {
+    "namespace": "ads_wrapper.ads_networks.portalsdk",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "setup",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "portalsdk_params | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supported",
+      "brief": "Check if the environment supports portalsdk sdk",
+      "description": "Check if the environment supports portalsdk sdk",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_initialized",
+      "brief": "Check if the portalsdk is initialized",
+      "description": "Check if the portalsdk is initialized",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_rewarded",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "portalsdk_params | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_rewarded",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_rewarded_loaded",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_interstitial",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "portalsdk_params | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_interstitial",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_interstitial_loaded",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_setup",
+      "brief": "Not supported. Always `false`",
+      "description": "Not supported. Always `false`",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_banner",
+      "brief": "Not supported.",
+      "description": "Not supported.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unload_banner",
+      "brief": "Not supported.",
+      "description": "Not supported.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_loaded",
+      "brief": "Not supported. Always `false`",
+      "description": "Not supported. Always `false`",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_banner",
+      "brief": "Not supported.",
+      "description": "Not supported.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hide_banner",
+      "brief": "Not supported.",
+      "description": "Not supported.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_position",
+      "brief": "Not supported.",
+      "description": "Not supported.",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_size",
+      "brief": "Not supported.",
+      "description": "Not supported.",
+      "parameters": [
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_showed",
+      "brief": "Not supported. Always `false`",
+      "description": "Not supported. Always `false`",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "portalsdk_params",
+      "properties": [
+        {
+          "name": "placement_id",
+          "brief": "Placement identifier for ad analytics; omitted to use the SDK default.",
+          "description": "Placement identifier for ad analytics; omitted to use the SDK default.",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    }
+  ]
+}

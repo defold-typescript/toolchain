@@ -840,7 +840,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "unknown"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -920,7 +920,7 @@
               "name": "params",
               "doc": "additional parameters",
               "types": [
-                "LuaTable | undefined"
+                "unknown"
               ],
               "is_optional": "True",
               "is_vararg": "False"

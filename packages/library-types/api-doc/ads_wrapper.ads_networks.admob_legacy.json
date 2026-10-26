@@ -1,0 +1,371 @@
+{
+  "info": {
+    "namespace": "ads_wrapper.ads_networks.admob_legacy",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "setup",
+      "brief": "Api setup",
+      "description": "Api setup",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Initializes `admob` sdk.",
+      "description": "Initializes `admob` sdk.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "request_idfa",
+      "brief": "Requests IDFA",
+      "description": "Requests IDFA",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supported",
+      "brief": "Check if the environment supports admob api",
+      "description": "Check if the environment supports admob api",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_initialized",
+      "brief": "Check if the admob is initialized",
+      "description": "Check if the admob is initialized",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_rewarded",
+      "brief": "Shows rewarded ads.",
+      "description": "Shows rewarded ads.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_rewarded",
+      "brief": "Loads rewarded ads",
+      "description": "Loads rewarded ads",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_rewarded_loaded",
+      "brief": "Check if the rewarded ads is loaded",
+      "description": "Check if the rewarded ads is loaded",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_interstitial",
+      "brief": "Shows interstitial ads.",
+      "description": "Shows interstitial ads.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_interstitial",
+      "brief": "Loads interstitial ads",
+      "description": "Loads interstitial ads",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_interstitial_loaded",
+      "brief": "Check if the interstitial ads is loaded",
+      "description": "Check if the interstitial ads is loaded",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_setup",
+      "brief": "Check if the banner is set up",
+      "description": "Check if the banner is set up",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_banner",
+      "brief": "Loads banner. Use `ads.T_BANNER` parameter.",
+      "description": "Loads banner. Use `ads.T_BANNER` parameter.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unload_banner",
+      "brief": "Unloads active banner.",
+      "description": "Unloads active banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_loaded",
+      "brief": "Check if the banner is loaded",
+      "description": "Check if the banner is loaded",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_banner",
+      "brief": "Shows loaded banner.",
+      "description": "Shows loaded banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hide_banner",
+      "brief": "Hides loaded banner.",
+      "description": "Hides loaded banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_position",
+      "brief": "Sets banner position. It is imperative to hide and show the banner again after this function.\nPossible positions:\n`admob.POS_NONE`(default)\n`admob.POS_TOP_LEFT`\n`admob.POS_TOP_CENTER`\n`admob.POS_TOP_RIGHT`\n`admob.POS_BOTTOM_LEFT`\n`admob.POS_BOTTOM_CENTER`\n`admob.POS_BOTTOM_RIGHT`\n`admob.POS_CENTER`",
+      "description": "Sets banner position. It is imperative to hide and show the banner again after this function.\nPossible positions:\n`admob.POS_NONE`(default)\n`admob.POS_TOP_LEFT`\n`admob.POS_TOP_CENTER`\n`admob.POS_TOP_RIGHT`\n`admob.POS_BOTTOM_LEFT`\n`admob.POS_BOTTOM_CENTER`\n`admob.POS_BOTTOM_RIGHT`\n`admob.POS_CENTER`",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "banner position",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_size",
+      "brief": "Sets banner size. It is imperative to reload the banner again after this function.\nPossible sizes:\n`admob.SIZE_ADAPTIVE_BANNER`(default)\n`admob.SIZE_BANNER`\n`admob.SIZE_FLUID`\n`admob.SIZE_FULL_BANNER`\n`admob.SIZE_LARGE_BANNER`\n`admob.SIZE_LEADEARBOARD`\n`admob.SIZE_MEDIUM_RECTANGLE`\n`admob.SIZE_SEARH`\n`admob.SIZE_SKYSCRAPER`\n`admob.SIZE_SMART_BANNER`",
+      "description": "Sets banner size. It is imperative to reload the banner again after this function.\nPossible sizes:\n`admob.SIZE_ADAPTIVE_BANNER`(default)\n`admob.SIZE_BANNER`\n`admob.SIZE_FLUID`\n`admob.SIZE_FULL_BANNER`\n`admob.SIZE_LARGE_BANNER`\n`admob.SIZE_LEADEARBOARD`\n`admob.SIZE_MEDIUM_RECTANGLE`\n`admob.SIZE_SEARH`\n`admob.SIZE_SKYSCRAPER`\n`admob.SIZE_SMART_BANNER`",
+      "parameters": [
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_showed",
+      "brief": "Check if the banner is showed",
+      "description": "Check if the banner is showed",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

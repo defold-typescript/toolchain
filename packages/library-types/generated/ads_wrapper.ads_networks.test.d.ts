@@ -14,7 +14,7 @@ declare module 'ads_wrapper.ads_networks.test' {
 		/**
 		 * Requests IDFA
 		 */
-		request_idfa(this: void, callback?: ads_callback | undefined, params?: LuaTable | undefined): void;
+		request_idfa?(this: void, callback?: ads_callback | undefined, params?: LuaTable | undefined): void;
 		/**
 		 * Check if the environment supports admob api
 		 */
@@ -26,7 +26,7 @@ declare module 'ads_wrapper.ads_networks.test' {
 		/**
 		 * Shows rewarded ads.
 		 */
-		show_rewarded(this: void, callback?: ads_callback | undefined, params?: LuaTable | undefined): void;
+		show_rewarded(this: void, callback?: ads_callback | undefined, params?: unknown): void;
 		/**
 		 * Loads rewarded ads
 		 */
@@ -38,7 +38,7 @@ declare module 'ads_wrapper.ads_networks.test' {
 		/**
 		 * Shows interstitial ads.
 		 */
-		show_interstitial(this: void, callback?: ads_callback | undefined, params?: LuaTable | undefined): void;
+		show_interstitial(this: void, callback?: ads_callback | undefined, params?: unknown): void;
 		/**
 		 * Loads interstitial ads
 		 */
