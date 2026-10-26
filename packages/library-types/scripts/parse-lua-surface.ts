@@ -26,7 +26,12 @@
  *
  * The returned table's constructor is the one place a member sits off column 0: a
  * column-0 `local M = {` (or `M = {`) whose entries run to the matching `}` gives each
- * depth-1 `<name> = <value>` entry as a member, so `local M = { Client = Client }`
+ * depth-1 `<name> = <value>` entry as a member, so
+ *
+ *     local M = {
+ *       Client = Client,
+ *     }
+ *
  * reads the same as `M.Client = Client`. The same loud rule holds there: a constructor
  * that never closes, an entry that is not `<name> =` (a bracketed key, a positional
  * value), or entries on the opening line itself throw rather than read short. Only a
