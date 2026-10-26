@@ -11150,6 +11150,16 @@ Only a column-0 `M.NAME = ...` on the table the module's own file returns
 the name assigned at column 0, when a module function has the same name, and when
 the module object's class already declares it as a field.
 
+A `---@meta` file can describe a class's functions with dot syntax: ads-wrapper's
+`ads_networks/ads_network.lua` starts with `---@meta`, puts `---@class ads_network` on
+`local ads_network = { NAME = "ads_network" }`, and then annotates
+`function ads_network.setup(params)` and its siblings. When the tag is the file's
+first non-blank line, each such function becomes a method of `ads_network` declared
+with `this: void` (`setup(this: void, params?: unknown | undefined): void;`), because callers invoke
+it as `network.setup(params)`, not `network:setup(params)`. In any other file the
+same form stays a module function, since a runtime module may annotate its own table
+as a class and still export its functions.
+
 #### 2. Generate the artifacts
 
 Run the four commands from `packages/library-types`, in order. Each iterates every

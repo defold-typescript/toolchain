@@ -366,6 +366,177 @@
           }
         }
       }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": [
+        "ads_wrapper/*.lua",
+        "ads_wrapper/ads_networks/ads_network.lua",
+        "ads_wrapper/ads_networks/test.lua"
+      ],
+      "moduleId": "ads_wrapper.ads_wrapper",
+      "namespace": "ads_wrapper.ads_wrapper",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "annotationOverrides": {
+        "moduleConstants": {
+          "T_REWARDED": {
+            "type": "hash",
+            "doc": "Rewarded-video ad type, used to set network parameters."
+          },
+          "T_INTERSTITIAL": {
+            "type": "hash",
+            "doc": "Interstitial ad type, used to set network parameters."
+          },
+          "T_BANNER": {
+            "type": "hash",
+            "doc": "Banner ad type, used to set network parameters."
+          }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": [
+        "ads_wrapper/*.lua",
+        "ads_wrapper/ads_networks/ads_network.lua",
+        "ads_wrapper/ads_networks/test.lua"
+      ],
+      "moduleId": "ads_wrapper.events",
+      "namespace": "ads_wrapper.events",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "annotationOverrides": {
+        "moduleConstants": {
+          "ABORT": {
+            "type": "hash",
+            "doc": "Result a network step returns to stop the queue early; the callback receives it as `SUCCESS`."
+          },
+          "SUCCESS": {
+            "type": "hash",
+            "doc": "`response.result` when the call succeeded."
+          },
+          "ERROR": {
+            "type": "hash",
+            "doc": "`response.result` when the call failed."
+          },
+          "C_SKIPPED": {
+            "type": "hash",
+            "doc": "`response.code` when the rewarded ad was skipped."
+          },
+          "C_ERROR_UNKNOWN": {
+            "type": "hash",
+            "doc": "`response.code` for an unknown error."
+          },
+          "C_ERROR_AD_BLOCK": {
+            "type": "hash",
+            "doc": "`response.code` when an ad blocker caused the error."
+          },
+          "C_ERROR_NO_CONNECTION": {
+            "type": "hash",
+            "doc": "`response.code` when there is no internet connection."
+          },
+          "V_NONE": {
+            "type": "hash",
+            "doc": "`queue.set_verbose_mode` level that logs nothing; the default."
+          },
+          "V_ERROR": {
+            "type": "hash",
+            "doc": "`queue.set_verbose_mode` level that logs every error."
+          },
+          "V_SUCCESS": {
+            "type": "hash",
+            "doc": "`queue.set_verbose_mode` level that logs every success response."
+          },
+          "V_ALL": {
+            "type": "hash",
+            "doc": "`queue.set_verbose_mode` level that logs every message."
+          }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": [
+        "ads_wrapper/*.lua",
+        "ads_wrapper/ads_networks/ads_network.lua",
+        "ads_wrapper/ads_networks/test.lua"
+      ],
+      "moduleId": "ads_wrapper.platform",
+      "namespace": "ads_wrapper.platform",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "annotationOverrides": {
+        "moduleConstants": {
+          "PL_ANDROID": {
+            "type": "hash",
+            "doc": "Android, as returned by `get` and checked by `is_same`."
+          },
+          "PL_IOS": {
+            "type": "hash",
+            "doc": "iOS, as returned by `get` and checked by `is_same`."
+          },
+          "PL_HTML5": {
+            "type": "hash",
+            "doc": "HTML5, as returned by `get` and checked by `is_same`."
+          },
+          "PL_OTHER": {
+            "type": "hash",
+            "doc": "Any other platform, as returned by `get` and checked by `is_same`."
+          }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": [
+        "ads_wrapper/*.lua",
+        "ads_wrapper/ads_networks/ads_network.lua",
+        "ads_wrapper/ads_networks/test.lua"
+      ],
+      "moduleId": "ads_wrapper.queue",
+      "namespace": "ads_wrapper.queue",
+      "typeRenames": {
+        "bool": "boolean"
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": [
+        "ads_wrapper/*.lua",
+        "ads_wrapper/ads_networks/ads_network.lua",
+        "ads_wrapper/ads_networks/test.lua"
+      ],
+      "moduleId": "ads_wrapper.ads_networks.test",
+      "namespace": "ads_wrapper.ads_networks.test",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "annotationOverrides": {
+        "moduleConstants": {
+          "network1": {
+            "type": "ads_network",
+            "doc": "Test network that logs each call and succeeds without showing an ad."
+          },
+          "network2": {
+            "type": "ads_network",
+            "doc": "Second test network, for trying mediation across two networks."
+          }
+        }
+      }
     }
   ]
 }

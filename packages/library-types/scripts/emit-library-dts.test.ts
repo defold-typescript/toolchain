@@ -117,6 +117,40 @@ test("omits a non-public moduleFunction while keeping a public one", () => {
   expect(out).toContain("export function create(this: void): void;");
 });
 
+test("a noSelf interface method takes this: void, and a method without the flag is unchanged", () => {
+  const cb: LibraryParam = {
+    name: "cb",
+    types: ["fun()"],
+    doc: "",
+    isOptional: false,
+    isVararg: false,
+    isNilable: true,
+  };
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "net",
+        generics: [],
+        fields: [],
+        methods: [
+          { name: "init", brief: "", generics: [], params: [cb], returns: [], noSelf: true },
+          { name: "ready", brief: "", generics: [], params: [], returns: [], noSelf: true },
+          { name: "show", brief: "", generics: [], params: [cb], returns: [] },
+        ],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("init(this: void, cb?: () => void): void;");
+  expect(out).toContain("ready(this: void): void;");
+  expect(out).toContain("show(cb?: () => void): void;");
+});
+
 test("emits a reserved-word member through the reserved-name path, not raw", () => {
   const model: LibraryModel = {
     interfaces: [

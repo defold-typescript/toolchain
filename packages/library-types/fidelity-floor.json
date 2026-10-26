@@ -1,4 +1,9 @@
 {
+  "fidelity/ads_wrapper.ads_networks.test.json": 1,
+  "fidelity/ads_wrapper.ads_wrapper.json": 1,
+  "fidelity/ads_wrapper.events.json": 1,
+  "fidelity/ads_wrapper.platform.json": 1,
+  "fidelity/ads_wrapper.queue.json": 1,
   "fidelity/bridge.json": 1,
   "fidelity/decore.json": 1,
   "fidelity/detiled.json": 1,

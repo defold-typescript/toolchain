@@ -1,4 +1,9 @@
 {
+  "ads_wrapper.ads_networks.test": "Two test networks for Ads Wrapper that log each call and succeed without showing an ad.",
+  "ads_wrapper.ads_wrapper": "Ads Wrapper is a wrapper for advertising services. It allows you to use one interface for different services and show ads from different sources. Supports various services such as Admob, Unity Ads, Poki, Yandex, Vk Bridge, Applovin Max",
+  "ads_wrapper.events": "Ads Wrapper response results, response codes and debug verbosity levels, as hashes.",
+  "ads_wrapper.platform": "Platform constants and a check for the running platform, for Ads Wrapper network settings.",
+  "ads_wrapper.queue": "The Ads Wrapper call queue, including the switch for its debug output.",
   "ainpc": "AI NPCs for Defold through the Player2 desktop app: chat completions, spawned NPCs to talk to, and a stream of their responses.",
   "boom": "Boom is a game framework built on top of Defold",
   "box2d": "Box2D physics: worlds, bodies, fixtures, shapes and joints.",
