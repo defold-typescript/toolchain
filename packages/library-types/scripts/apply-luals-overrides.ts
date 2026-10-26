@@ -2,8 +2,9 @@
  * Per-target corrections applied to a parsed `LibraryModel` after the merge, for the
  * cases where upstream LuaLS annotations diverge from the library's runtime and the
  * fixtures freeze the annotation verbatim (so it is not hand-patchable in the fixture
- * or the emitted `.d.ts`). The eight shapes covered are a module function whose trailing
- * parameter is runtime-optional despite a non-`|nil` `@param`, an interface method
+ * or the emitted `.d.ts`). The nine shapes covered are a module function whose trailing
+ * parameter is runtime-optional despite a non-`|nil` `@param`, a module function
+ * parameter whose type token is wrong, an interface method
  * whose `@return` omits an alternative arm, an interface field whose type token is
  * wrong or underspecified (a stray character, or an untyped `fun(...)` callback), an
  * interface method parameter with the same underspecification, an interface field
@@ -23,7 +24,10 @@
 import type { LibraryModel } from "./parse-luals";
 
 export interface AnnotationOverrides {
-  moduleFunctions?: Record<string, { params?: Record<string, { optional?: boolean }> }>;
+  moduleFunctions?: Record<
+    string,
+    { params?: Record<string, { optional?: boolean; type?: string }> }
+  >;
   interfaces?: Record<
     string,
     {
@@ -55,6 +59,7 @@ export function applyAnnotationOverrides(
         );
       }
       if (paramOverride.optional) param.isOptional = true;
+      if (paramOverride.type !== undefined) param.types = [paramOverride.type];
     }
   }
   for (const [ifaceName, ifaceOverride] of Object.entries(overrides.interfaces ?? {})) {

@@ -111,7 +111,7 @@
           "name": "fn",
           "doc": "",
           "types": [
-            "ads_callback"
+            "(network: ads_network, callback: ads_callback, params?: LuaTable) => void"
           ],
           "is_optional": "False",
           "is_vararg": "False"

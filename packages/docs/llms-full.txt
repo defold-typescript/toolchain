@@ -11160,6 +11160,27 @@ it as `network.setup(params)`, not `network:setup(params)`. In any other file th
 same form stays a module function, since a runtime module may annotate its own table
 as a class and still export its functions.
 
+Where an annotation types a parameter wrongly, a `type` token on a `moduleFunctions`
+parameter replaces it: ads-wrapper's `queue.lua` writes `---@param fn ads_callback`,
+though `run` calls `fn(network, callback, params)`, so the `ads_wrapper.queue` target
+retypes it:
+
+```json
+"annotationOverrides": {
+  "moduleFunctions": {
+    "add": {
+      "params": {
+        "fn": { "type": "fun(network: ads_network, callback: ads_callback, params?: table)" }
+      }
+    }
+  }
+}
+```
+
+`add` then emits `fn: (network: ads_network, callback: ads_callback, params?: LuaTable) => void`.
+A parameter of `interfaces.<name>.methods.<method>.params` takes the same `type` key. Naming
+an absent function or parameter throws.
+
 #### 2. Generate the artifacts
 
 Run the four commands from `packages/library-types`, in order. Each iterates every
