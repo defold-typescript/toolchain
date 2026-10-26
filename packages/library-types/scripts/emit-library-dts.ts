@@ -380,13 +380,14 @@ function renderInterface(
 }
 
 /**
- * The module object's public fields rendered as module-level `export const`s — the
- * constants a returned module table (`return Squid`) carries. Emitted in place of the
- * standalone interface, since consumers reach them as `squid.TRACE`, not `Squid.TRACE`.
+ * Public fields rendered as module-level `export const`s: the module object's fields —
+ * the constants a returned module table (`return Squid`) carries, emitted in place of
+ * the standalone interface, since consumers reach them as `squid.TRACE`, not
+ * `Squid.TRACE` — and the model's `moduleConstants`.
  */
-function renderModuleConstants(iface: LibraryInterface, ctx: MapContext): string[] {
+function renderModuleConstants(fields: readonly LibraryField[], ctx: MapContext): string[] {
   const lines: string[] = [];
-  for (const field of iface.fields) {
+  for (const field of fields) {
     if (!isPublicField(field)) continue;
     pushDoc(lines, field.doc, INDENT);
     const name =
@@ -539,11 +540,12 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
     // The module object's fields become module-level `export const`s (below), so it is
     // not also rendered as a standalone interface.
     if (iface.name === model.moduleObject) {
-      out.push(...renderModuleConstants(iface, ctx));
+      out.push(...renderModuleConstants(iface.fields, ctx));
       continue;
     }
     out.push(...renderInterface(iface, ctx, interfaceNames, externalTokens, opts.indexBase));
   }
+  out.push(...renderModuleConstants(model.moduleConstants ?? [], ctx));
   for (const fn of model.moduleFunctions) {
     if (!isPublicMethod(fn)) continue;
     out.push(...renderModuleFunction(fn, ctx, opts.indexBase));

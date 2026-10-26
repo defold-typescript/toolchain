@@ -1,0 +1,1006 @@
+{
+  "info": {
+    "namespace": "live_unbundler",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_log_function",
+      "brief": "Assign a project logger. Signature: function(level, message), where level is\none of M.DEBUG..M.FATAL. Optional — defaults to a no-op.",
+      "description": "Assign a project logger. Signature: function(level, message), where level is\none of M.DEBUG..M.FATAL. Optional — defaults to a no-op.",
+      "parameters": [
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(level: number, message: string) => void"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_platform_supported",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "supported",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_save_cache_key",
+      "brief": "Sets the save-file key used to persist the list of downloaded archives. Must\nbe called before M.init. The value is whatever sys.get_save_file(...) returns;\nkeep it stable across releases so existing installs keep their saved state.",
+      "description": "Sets the save-file key used to persist the list of downloaded archives. Must\nbe called before M.init. The value is whatever sys.get_save_file(...) returns;\nkeep it stable across releases so existing installs keep their saved state.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "has_module",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_module_loaded",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "liveupdater_init_options"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "cb",
+          "doc": "",
+          "types": [
+            "(success: boolean, error_text: string | undefined) => void"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "module_available_fn",
+          "doc": "predicate gating non by_request modules; defaults to always-available",
+          "types": [
+            "((module_name: string) => boolean) | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_listener",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "",
+          "types": [
+            "Url | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove_listener",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "",
+          "types": [
+            "Url | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_module_progress",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "module",
+          "doc": "",
+          "types": [
+            "liveupdater_module | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "liveupdater_module_progress | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_liveupdate_loaded",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_downloadable_files",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable<string, liveupdater_file_progress>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_downloadable_missing_files",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable<string, string>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_modules_download_progress",
+      "brief": "Byte-based progress for a module or a set of modules, with a per-resolution\nbreakdown in the low/high fields. Shared dependency archives are counted once\nper set; an archive identical in both manifests counts toward the resolution\ncounted first (for RES_BOTH that is lowres — the pass that actually downloads\nit). Anchored to the download queue: an archive counts as downloaded when\nnothing for it is pending, so the result reaches 100 exactly when the set's\ndownloads drain. For by_request modules that were not requested yet, the\nfuture queue content is predicted from the same rules enqueue_modules uses;\nthat prediction can dip for a moment while a shared archive is remounted to\nits highres copy, it recovers on the next mount.",
+      "description": "Byte-based progress for a module or a set of modules, with a per-resolution\nbreakdown in the low/high fields. Shared dependency archives are counted once\nper set; an archive identical in both manifests counts toward the resolution\ncounted first (for RES_BOTH that is lowres — the pass that actually downloads\nit). Anchored to the download queue: an archive counts as downloaded when\nnothing for it is pending, so the result reaches 100 exactly when the set's\ndownloads drain. For by_request modules that were not requested yet, the\nfuture queue content is predicted from the same rules enqueue_modules uses;\nthat prediction can dip for a moment while a shared archive is remounted to\nits highres copy, it recovers on the next mount.",
+      "parameters": [
+        {
+          "name": "module_names",
+          "doc": "",
+          "types": [
+            "string | string[]"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "liveupdater_download_progress"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_download_progress",
+      "brief": "Byte-based progress of the current download session, with a per-resolution\nbreakdown in the low/high fields (requires manifest with file_sizes).",
+      "description": "Byte-based progress of the current download session, with a per-resolution\nbreakdown in the low/high fields (requires manifest with file_sizes).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "liveupdater_download_progress"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_total_downloadable_progress",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_module_in_queue",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "request_module_load",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "module_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_module",
+      "properties": [
+        {
+          "name": "files",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string[]"
+          ]
+        },
+        {
+          "name": "priority",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "res_mode",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_res_mode | undefined"
+          ]
+        },
+        {
+          "name": "by_request",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "processed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_file_version_info",
+      "properties": [
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_manifest",
+      "properties": [
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "deps",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, string[]>"
+          ]
+        },
+        {
+          "name": "file_versions",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, liveupdater_file_version_info | string>"
+          ]
+        },
+        {
+          "name": "file_sizes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, number> | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_manifest_group",
+      "properties": [
+        {
+          "name": "lowres",
+          "brief": "present only when the lowres resolution is active",
+          "description": "present only when the lowres resolution is active",
+          "types": [
+            "liveupdater_manifest | undefined"
+          ]
+        },
+        {
+          "name": "highres",
+          "brief": "present only when the highres resolution is active",
+          "description": "present only when the highres resolution is active",
+          "types": [
+            "liveupdater_manifest | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_manifest_side",
+      "properties": [
+        {
+          "name": "versions",
+          "brief": "archive name -> version hash",
+          "description": "archive name -> version hash",
+          "types": [
+            "LuaTable<string, string>"
+          ]
+        },
+        {
+          "name": "sizes",
+          "brief": "archive name -> archive size in bytes (0 if the manifest has no sizes)",
+          "description": "archive name -> archive size in bytes (0 if the manifest has no sizes)",
+          "types": [
+            "LuaTable<string, number>"
+          ]
+        },
+        {
+          "name": "dep_lists",
+          "brief": "collection file -> dependency archive names",
+          "description": "collection file -> dependency archive names",
+          "types": [
+            "LuaTable<string, string[]>"
+          ]
+        },
+        {
+          "name": "dep_set",
+          "brief": "set of all dependency archive names",
+          "description": "set of all dependency archive names",
+          "types": [
+            "LuaTable<string, boolean>"
+          ]
+        },
+        {
+          "name": "path",
+          "brief": "server path for this resolution",
+          "description": "server path for this resolution",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "prefix",
+          "brief": "progress prefix for this resolution",
+          "description": "progress prefix for this resolution",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_manifest_cache",
+      "properties": [
+        {
+          "name": "low",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_manifest_side | undefined"
+          ]
+        },
+        {
+          "name": "high",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_manifest_side | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_file_progress",
+      "properties": [
+        {
+          "name": "progress",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "prefix",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_queue_item",
+      "properties": [
+        {
+          "name": "file_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "priority",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "version",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "module_name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "path",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "prefix",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "resolution",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_resolution"
+          ]
+        },
+        {
+          "name": "remount",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean | undefined"
+          ]
+        },
+        {
+          "name": "order",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "reason",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_module_file_progress",
+      "properties": [
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "progress",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_module_progress",
+      "properties": [
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "progress",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "files",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_module_file_progress[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_resolution_progress",
+      "properties": [
+        {
+          "name": "total_bytes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "downloaded_bytes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "pending_files",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "progress",
+          "brief": "0..100, reaches 100 exactly when nothing is left to download",
+          "description": "0..100, reaches 100 exactly when nothing is left to download",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_download_progress",
+      "properties": [
+        {
+          "name": "low",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_resolution_progress"
+          ]
+        },
+        {
+          "name": "high",
+          "brief": "",
+          "description": "",
+          "types": [
+            "liveupdater_resolution_progress"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_init_options",
+      "properties": [
+        {
+          "name": "modules",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, liveupdater_module>"
+          ]
+        },
+        {
+          "name": "lowres_server_path",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "hires_server_path",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater",
+      "properties": [
+        {
+          "name": "initialized",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "saved_list",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, string>"
+          ]
+        },
+        {
+          "name": "save_cache_key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "modules",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, liveupdater_module>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_INITIALIZED",
+      "brief": "Posted to every listener once `init` finishes.",
+      "description": "Posted to every listener once `init` finishes.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_INITIALIZATION_FAILED",
+      "brief": "Message id reserved for a failed initialization; this version never posts it.",
+      "description": "Message id reserved for a failed initialization; this version never posts it.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_FILE_LOADED",
+      "brief": "Posted with `file_name` and `module_name` each time an archive is mounted.",
+      "description": "Posted with `file_name` and `module_name` each time an archive is mounted.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_MODULE_LOADED",
+      "brief": "Posted with `file_name` and `module_name` once every archive of a module is mounted.",
+      "description": "Posted with `file_name` and `module_name` once every archive of a module is mounted.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_ALL_LOADED",
+      "brief": "Posted once every queued archive is mounted.",
+      "description": "Posted once every queued archive is mounted.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_NETWORK_ERROR",
+      "brief": "Posted when an archive download fails; the download retries after five seconds.",
+      "description": "Posted when an archive download fails; the download retries after five seconds.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DEBUG",
+      "brief": "Debug log level passed to the `set_log_function` callback.",
+      "description": "Debug log level passed to the `set_log_function` callback.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "INFO",
+      "brief": "Info log level passed to the `set_log_function` callback.",
+      "description": "Info log level passed to the `set_log_function` callback.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "WARN",
+      "brief": "Warning log level passed to the `set_log_function` callback.",
+      "description": "Warning log level passed to the `set_log_function` callback.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR",
+      "brief": "Error log level passed to the `set_log_function` callback.",
+      "description": "Error log level passed to the `set_log_function` callback.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FATAL",
+      "brief": "Fatal log level passed to the `set_log_function` callback.",
+      "description": "Fatal log level passed to the `set_log_function` callback.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RES_HIGH_ONLY",
+      "brief": "`res_mode` that loads only the high-resolution archives; the default.",
+      "description": "`res_mode` that loads only the high-resolution archives; the default.",
+      "types": [
+        "liveupdater_res_mode"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RES_LOW_ONLY",
+      "brief": "`res_mode` that loads only the low-resolution archives.",
+      "description": "`res_mode` that loads only the low-resolution archives.",
+      "types": [
+        "liveupdater_res_mode"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RES_BOTH",
+      "brief": "`res_mode` that loads both resolutions.",
+      "description": "`res_mode` that loads both resolutions.",
+      "types": [
+        "liveupdater_res_mode"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_res_mode"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "liveupdater_resolution"
+    }
+  ]
+}

@@ -53,6 +53,23 @@ describe("buildFidelityReport", () => {
     expect(() => buildFidelityReport("broken", model, {})).toThrow(/vmath\.made_up/);
   });
 
+  test("module constants count as members and map their type tokens", () => {
+    const model: LibraryModel = {
+      interfaces: [],
+      aliases: [],
+      moduleFunctions: [],
+      moduleConstants: [
+        { name: "MSG_READY", types: ["hash"], doc: "Sent when ready.", isOptional: false },
+        { name: "RES_BOTH", types: ["lu.res_mod"], doc: "", isOptional: false },
+      ],
+    };
+    const report = buildFidelityReport("lu", model, {});
+    expect(report.totalMembers).toBe(2);
+    expect(report.totalTypeTokens).toBe(2);
+    expect(report.undocumentedMembers).toBe(1);
+    expect(report.unknownTokens).toEqual(["lu.res_mod"]);
+  });
+
   test("a moduleObject's constant fields and a captured instance interface's methods count toward totalMembers", () => {
     const model: LibraryModel = {
       moduleObject: "Squid",
