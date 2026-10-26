@@ -11,6 +11,18 @@ declare module 'yagames.yagames' {
 
   export function init(callback: ApiCallback): void;
 
+  /** `true` once `init` has succeeded; the calls that need the SDK assert it before they run. */
+  export const ysdk_ready: boolean;
+
+  /** `true` after the latest `payments_init` succeeded; the purchase calls assert it before they run. */
+  export const payments_ready: boolean;
+
+  /** `true` after the latest `player_init` succeeded; the player calls assert it before they run. */
+  export const player_ready: boolean;
+
+  /** Starts as `false`, and no call in this version of the library sets it, so it stays `false`. */
+  export const banner_ready: boolean;
+
   //* Advertisement
 
   export interface AdvCallbacks {

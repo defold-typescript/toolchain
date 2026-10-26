@@ -1,8 +1,8 @@
 {
   "namespace": "yagames",
   "upstreamMembers": 68,
-  "upstreamFields": 0,
-  "declaredFields": 0,
+  "upstreamFields": 4,
+  "declaredFields": 4,
   "missingFields": [],
   "phantomFields": [],
   "fieldCoverage": 1,

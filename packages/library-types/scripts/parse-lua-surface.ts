@@ -23,6 +23,16 @@
  *   scan will find. The whole point of the instrument is that a dropped member is
  *   visible; a parser that quietly skips what it cannot read would inflate every
  *   coverage number it feeds.
+ *
+ * The returned table's constructor is the one place a member sits off column 0: a
+ * column-0 `local M = {` (or `M = {`) whose entries run to the matching `}` gives each
+ * depth-1 `<name> = <value>` entry as a member, so `local M = { Client = Client }`
+ * reads the same as `M.Client = Client`. The same loud rule holds there: a constructor
+ * that never closes, an entry that is not `<name> =` (a bracketed key, a positional
+ * value), or entries on the opening line itself throw rather than read short. Only a
+ * module local derived from the trailing return reads its constructor: an annotation
+ * file named through `options.moduleLocal` is read for the function stubs its
+ * assignments declare, and its constructor holds constants.
  */
 
 export interface LuaMember {
@@ -60,6 +70,8 @@ export interface LuaSurfaceOptions {
 const RETURN_LINE = /^return\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$/;
 const RETURN_SETMETATABLE = /^return\s+setmetatable\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,/;
 const IDENTIFIER = "[A-Za-z_][A-Za-z0-9_]*";
+const FUNCTION_VALUE = /^function\s*\(/;
+const CONSTRUCTOR_ENTRY = new RegExp(`^\\s*(${IDENTIFIER})\\s*=(?!=)\\s*(.*)$`);
 
 /** The metatable argument of a `return setmetatable(<name>, …)`, refused unless its
  * keys are readable and none of them delegates. `text` runs from the comma to the end
@@ -122,6 +134,70 @@ function readParams(
   return { params: raw.filter((part) => part !== "..."), varargs: raw.includes("...") };
 }
 
+/** `line` with its quoted strings emptied and its trailing comment dropped, so the
+ * braces left are the ones Lua reads. */
+function stripStringsAndComment(line: string): string {
+  return line.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""').replace(/--.*$/, "");
+}
+
+function braceDelta(line: string): number {
+  let delta = 0;
+  for (const char of stripStringsAndComment(line)) {
+    if (char === "{") delta += 1;
+    else if (char === "}") delta -= 1;
+  }
+  return delta;
+}
+
+/** The depth-1 entries of the constructor whose `{` sits at `open` on line `index`, and
+ * the line holding its matching `}`. An entry is read at the line that starts it, so a
+ * nested table's keys stay out while its own entry counts. */
+function readConstructor(
+  lines: string[],
+  index: number,
+  open: number,
+): { entries: LuaMember[]; close: number } {
+  const opening = lines[index] as string;
+  const inline = stripStringsAndComment(opening.slice(open + 1)).trim();
+  if (inline === "}") return { entries: [], close: index };
+  if (inline !== "") {
+    throw new Error(
+      `lua surface: line ${index + 1} puts constructor entries on the line that opens it, which this reader does not split — ${opening.trim()}`,
+    );
+  }
+  const entries: LuaMember[] = [];
+  let depth = 1;
+  for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+    const line = lines[cursor] as string;
+    const trimmed = line.trim();
+    if (depth === 1 && trimmed !== "" && !trimmed.startsWith("--") && !trimmed.startsWith("}")) {
+      const entry = CONSTRUCTOR_ENTRY.exec(line);
+      if (!entry) {
+        throw new Error(
+          `lua surface: line ${cursor + 1} is a constructor entry that is not \`<name> = <value>\`, so its key is invisible — ${trimmed}`,
+        );
+      }
+      const name = entry[1] as string;
+      const rhs = entry[2] as string;
+      if (FUNCTION_VALUE.test(rhs)) {
+        const { params, varargs } = readParams(
+          lines,
+          cursor,
+          line.indexOf("(", line.length - rhs.length),
+        );
+        entries.push({ name, params, varargs, ...readDoc(lines, cursor) });
+      } else {
+        entries.push({ name, varargs: false, ...readDoc(lines, cursor) });
+      }
+    }
+    depth += braceDelta(line);
+    if (depth <= 0) return { entries, close: cursor };
+  }
+  throw new Error(
+    `lua surface: line ${index + 1} opens a constructor that never closes — ${opening.trim()}`,
+  );
+}
+
 /** The contiguous run of comment lines ending at `index - 1`, in source order. */
 function readSegment(lines: string[], index: number): string[] {
   const segment: string[] = [];
@@ -171,14 +247,25 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
   const moduleLocal = options.moduleLocal ?? resolveModuleLocal(lines);
   const definition = new RegExp(`^function\\s+${moduleLocal}\\.(${IDENTIFIER})\\s*\\(`);
   const assignment = new RegExp(`^${moduleLocal}\\.(${IDENTIFIER})\\s*=\\s*(.*)$`);
-  const assignedFunction = /^function\s*\(/;
+  const tableConstructor =
+    options.moduleLocal === undefined
+      ? new RegExp(`^(?:local\\s+)?${moduleLocal}\\s*=\\s*\\{`)
+      : undefined;
 
   const members = new Map<string, LuaMember>();
   const record = (member: LuaMember): void => {
     members.set(member.name, member);
   };
 
-  for (const [index, line] of lines.entries()) {
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] as string;
+    const opened = tableConstructor?.exec(line);
+    if (opened) {
+      const { entries, close } = readConstructor(lines, index, opened[0].length - 1);
+      for (const entry of entries) record(entry);
+      index = close;
+      continue;
+    }
     const defined = definition.exec(line);
     if (defined) {
       const { params, varargs } = readParams(lines, index, defined[0].length - 1);
@@ -189,7 +276,7 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
     if (!assigned) continue;
     const name = assigned[1] as string;
     const rhs = assigned[2] as string;
-    if (!assignedFunction.test(rhs)) {
+    if (!FUNCTION_VALUE.test(rhs)) {
       record({ name, varargs: false, ...readDoc(lines, index) });
       continue;
     }

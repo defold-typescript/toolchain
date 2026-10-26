@@ -436,3 +436,104 @@ describe("an annotation stub file, whose module table the source never returns",
     expect(byName(share.members).get("image")?.params).toEqual(["bytes", "text", "file_name"]);
   });
 });
+
+describe("a returned table's constructor entries are members", () => {
+  const source = [
+    "local M = {",
+    "  -- a comment line inside the constructor",
+    "  Client = Client,",
+    "  f = function(a, b) end,",
+    "  inner = {",
+    "    x = 1,",
+    "  },",
+    "  last = true",
+    "}",
+    "",
+    "M.g = 1",
+    "",
+    "return M",
+  ].join("\n");
+
+  test("each depth-1 entry is read, a nested table's keys are not", () => {
+    expect(parseLuaSurface(source).members.map((member) => member.name)).toEqual([
+      "Client",
+      "f",
+      "inner",
+      "last",
+      "g",
+    ]);
+  });
+
+  test("a `function(...)` entry is callable, any other value is a field", () => {
+    const members = byName(parseLuaSurface(source).members);
+    expect(members.get("f")).toEqual({
+      name: "f",
+      params: ["a", "b"],
+      varargs: false,
+      doc: "",
+      refusedDoc: false,
+    });
+    expect(members.get("Client")?.params).toBeUndefined();
+    expect(members.get("inner")?.params).toBeUndefined();
+  });
+
+  test("a comment above an entry is read by the same LuaDoc rule as above a definition", () => {
+    expect(byName(parseLuaSurface(source).members).get("Client")).toEqual({
+      name: "Client",
+      varargs: false,
+      doc: "",
+      refusedDoc: true,
+    });
+    const documented = ["local M = {", "  --- The client.", "  Client = Client,", "}", "return M"];
+    expect(parseLuaSurface(documented.join("\n")).members[0]?.doc).toBe("The client.");
+  });
+
+  test("the global form `M = {` opens a constructor too", () => {
+    const global = ["M = {", "  a = 1,", "}", "return M"].join("\n");
+    expect(parseLuaSurface(global).members.map((member) => member.name)).toEqual(["a"]);
+  });
+
+  test("a bracketed key throws, naming its line", () => {
+    const keyed = ["local M = {", '  ["key"] = 1,', "}", "return M"].join("\n");
+    expect(() => parseLuaSurface(keyed)).toThrow("line 2");
+  });
+
+  test("a positional entry throws, naming its line", () => {
+    const positional = ["local M = {", "  a = 1,", "  1,", "}", "return M"].join("\n");
+    expect(() => parseLuaSurface(positional)).toThrow("line 3");
+  });
+
+  test("a constructor missing its closing brace reads the next line as an entry and throws", () => {
+    const open = ["local M = {", "  a = 1,", "return M"].join("\n");
+    expect(() => parseLuaSurface(open)).toThrow("line 3");
+  });
+
+  test("a constructor that never closes throws, naming the line that opened it", () => {
+    const open = ["local M = {", "  a = {", "    x = 1,", "return M"].join("\n");
+    expect(() => parseLuaSurface(open)).toThrow("line 1 opens a constructor that never closes");
+  });
+
+  test("entries on the opening line throw rather than read short", () => {
+    const inline = ["local M = { a = 1 }", "return M"].join("\n");
+    expect(() => parseLuaSurface(inline)).toThrow("line 1");
+  });
+
+  test("with an explicit module table and no return, a constructor contributes nothing", () => {
+    const annotation = ["daabbcc = { A = 0 }", "function daabbcc.f(x) end"].join("\n");
+    expect(
+      parseLuaSurface(annotation, { moduleLocal: "daabbcc" }).members.map((member) => member.name),
+    ).toEqual(["f"]);
+  });
+
+  test("the vendored yagames module reads its four readiness flags", () => {
+    const flags = parseLuaSurface(upstream("defold-yagames/yagames/yagames.lua"))
+      .members.slice(0, 4)
+      .map((member) => [member.name, member.params]);
+    expect(flags).toEqual([
+      ["ysdk_ready", undefined],
+      ["payments_ready", undefined],
+      ["player_ready", undefined],
+      ["banner_ready", undefined],
+    ]);
+  });
+});

@@ -3,10 +3,17 @@ import { basename, join } from "node:path";
 
 export const NATIVE_EXPECTATIONS_DIR = join(import.meta.dir, "..", "expectations", "native");
 
+/** A consumer whose transpiled Lua is snapshotted beside the shipped declaration, so
+ * each call's `.` or `:` receiver is the one upstream defines. */
+export interface ReceiverEmit {
+  reason: string;
+  consumer: string[];
+}
+
 export interface NativeExpectation {
   registry: { sourceId: string; manifestDir: string };
   resolve: { archiveUrl: string; confirmedManifest: string; misplacedManifest: string };
-  receiverEmit?: { reason: string; consumer: string[] };
+  receiverEmit?: ReceiverEmit;
   pinKind?: "commit";
   page?: { shapes?: Record<string, string[]>; symbols?: string[] };
 }
@@ -23,6 +30,9 @@ export interface LibraryExpectation {
     importString?: string;
     pinKind?: "commit";
   };
+  /** Read only on the authored lane, the one lane with a receiver loop
+   * (`authored-receiver-emit.test.ts`). */
+  receiverEmit?: ReceiverEmit;
 }
 
 type JsonObject = Record<string, unknown>;
@@ -37,7 +47,9 @@ export function readLibraryExpectations(
   libraryTypesDir: string,
   lane: LibraryLane,
 ): ReadonlyMap<string, LibraryExpectation> {
-  return readExpectationDir(join(libraryTypesDir, "expectations", lane), parseLibraryExpectation);
+  return readExpectationDir(join(libraryTypesDir, "expectations", lane), (file, raw) =>
+    parseLibraryExpectation(file, raw, lane),
+  );
 }
 
 function readExpectationDir<T>(
@@ -92,11 +104,18 @@ function fieldReader(file: string) {
     if (parent.pinKind !== "commit") fail(`${path ? `${path}.` : ""}pinKind must be "commit"`);
     return "commit";
   };
-  return { fail, object, text, texts, commitPin };
+  const receiverEmit = (value: unknown): ReceiverEmit => {
+    const parent = object(value, "receiverEmit", ["reason", "consumer"]);
+    return {
+      reason: text(parent, "receiverEmit", "reason"),
+      consumer: texts(parent.consumer, "receiverEmit.consumer", { blankLines: true }),
+    };
+  };
+  return { fail, object, text, texts, commitPin, receiverEmit };
 }
 
 function parseNativeExpectation(file: string, raw: unknown): NativeExpectation {
-  const { object, text, texts, commitPin } = fieldReader(file);
+  const { object, text, commitPin, receiverEmit } = fieldReader(file);
   const root = object(raw, "", ["registry", "resolve", "receiverEmit", "pinKind", "page"]);
   const registry = object(root.registry, "registry", ["sourceId", "manifestDir"]);
   const resolve = object(root.resolve, "resolve", [
@@ -115,13 +134,7 @@ function parseNativeExpectation(file: string, raw: unknown): NativeExpectation {
       misplacedManifest: text(resolve, "resolve", "misplacedManifest"),
     },
   };
-  if (root.receiverEmit !== undefined) {
-    const receiverEmit = object(root.receiverEmit, "receiverEmit", ["reason", "consumer"]);
-    expectation.receiverEmit = {
-      reason: text(receiverEmit, "receiverEmit", "reason"),
-      consumer: texts(receiverEmit.consumer, "receiverEmit.consumer", { blankLines: true }),
-    };
-  }
+  if (root.receiverEmit !== undefined) expectation.receiverEmit = receiverEmit(root.receiverEmit);
   if (root.pinKind !== undefined) expectation.pinKind = commitPin(root, "");
   if (root.page !== undefined) expectation.page = parseNativePage(file, root.page);
   return expectation;
@@ -145,9 +158,13 @@ function parseNativePage(file: string, raw: unknown): NonNullable<NativeExpectat
   return parsed;
 }
 
-function parseLibraryExpectation(file: string, raw: unknown): LibraryExpectation {
-  const { fail, object, text, commitPin } = fieldReader(file);
-  const root = object(raw, "", ["provenance"]);
+function parseLibraryExpectation(
+  file: string,
+  raw: unknown,
+  lane: LibraryLane,
+): LibraryExpectation {
+  const { fail, object, text, commitPin, receiverEmit } = fieldReader(file);
+  const root = object(raw, "", ["provenance", "receiverEmit"]);
   const provenance = object(root.provenance, "provenance", [
     "authorUrl",
     "authoredHere",
@@ -173,6 +190,10 @@ function parseLibraryExpectation(file: string, raw: unknown): LibraryExpectation
   }
   if (provenance.pinKind !== undefined) {
     expectation.provenance.pinKind = commitPin(provenance, "provenance");
+  }
+  if (root.receiverEmit !== undefined) {
+    if (lane !== "authored") fail("receiverEmit is read only on the authored lane");
+    expectation.receiverEmit = receiverEmit(root.receiverEmit);
   }
   return expectation;
 }

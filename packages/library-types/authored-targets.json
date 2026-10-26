@@ -826,6 +826,17 @@
       "generated": "generated/gamepush.d.ts",
       "apiDoc": "api-doc/gamepush.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/gamepush.lua"]
+    },
+    {
+      "repo": "https://github.com/colyseus/colyseus-defold",
+      "ref": "0.18.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/colyseus.sdk.d.ts",
+      "moduleId": "colyseus.sdk",
+      "namespace": "colyseus",
+      "generated": "generated/colyseus.d.ts",
+      "apiDoc": "api-doc/colyseus.json",
+      "upstreamLua": ["fixtures/upstream-lua/colyseus-defold/colyseus/sdk.lua"]
     }
   ]
 }
