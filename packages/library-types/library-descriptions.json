@@ -4,6 +4,7 @@
   "box2d": "Box2D physics: worlds, bodies, fixtures, shapes and joints.",
   "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
   "checkpoint": "Checkpoint is a library for reading from and writing to files in a Defold game engine project.",
+  "colyseus": "Open-source Multiplayer Framework. Run your game servers on Node.js and connect to them via the Defold SDK.",
   "daabbcc": "Dynamic Tree (aka AABB Tree) native extension for Defold Engine",
   "daabbcc3d": "Dynamic AABB trees in 3D for overlap queries and ray casts without a physics engine.",
   "decore": "Defold ECS Data Manager",

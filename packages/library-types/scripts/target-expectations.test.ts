@@ -248,4 +248,46 @@ describe("readLibraryExpectations", () => {
       });
     }
   });
+
+  const receiverEmit = {
+    reason: "instance methods take `:`, a module-table function `.`",
+    consumer: ['import * as a from "a.a";', "", "a.f();"],
+  };
+
+  test("an authored expectation returns its receiverEmit reason and consumer lines", () => {
+    withLaneFiles({ authored: { "b.json": { ...LIBRARY_VALID, receiverEmit } } }, (root) => {
+      expect(readLibraryExpectations(root, "authored").get("b")?.receiverEmit).toEqual(
+        receiverEmit,
+      );
+    });
+  });
+
+  test("an authored expectation without receiverEmit carries none", () => {
+    withLaneFiles({ authored: { "b.json": LIBRARY_VALID } }, (root) => {
+      expect(readLibraryExpectations(root, "authored").get("b")).not.toHaveProperty("receiverEmit");
+    });
+  });
+
+  test("a receiverEmit on a lane no receiver loop reads throws naming the file", () => {
+    for (const lane of ["luals", "script-api"] as const) {
+      withLaneFiles({ [lane]: { "b.json": { ...LIBRARY_VALID, receiverEmit } } }, (root) => {
+        expect(() => readLibraryExpectations(root, lane)).toThrow(/b\.json/);
+        expect(() => readLibraryExpectations(root, lane)).toThrow(
+          "receiverEmit is read only on the authored lane",
+        );
+      });
+    }
+  });
+
+  test("a receiverEmit with an empty consumer or a blank reason throws naming the file", () => {
+    for (const bad of [
+      { ...receiverEmit, consumer: [] },
+      { ...receiverEmit, reason: " " },
+    ]) {
+      withLaneFiles({ authored: { "b.json": { ...LIBRARY_VALID, receiverEmit: bad } } }, (root) => {
+        expect(() => readLibraryExpectations(root, "authored")).toThrow(/b\.json/);
+        expect(() => readLibraryExpectations(root, "authored")).toThrow("receiverEmit");
+      });
+    }
+  });
 });

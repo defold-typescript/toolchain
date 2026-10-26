@@ -1,0 +1,457 @@
+{
+  "info": {
+    "namespace": "colyseus",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "MatchmakeError"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MatchmakeCallback"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HTTPCallback"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "Client",
+      "brief": "Creates a client: `Client(\"ws://localhost:2567\")`.",
+      "description": "Creates a client: `Client(\"ws://localhost:2567\")`.",
+      "types": [
+        "ClientConstructor"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "callbacks",
+      "brief": "Returns the schema change callbacks of a room: `callbacks(room)` or `callbacks.get(room)`.",
+      "description": "Returns the schema change callbacks of a room: `callbacks(room)` or `callbacks.get(room)`.",
+      "types": [
+        "CallbacksModule"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "protocol",
+      "brief": "The protocol codes the client and the server exchange.",
+      "description": "The protocol codes the client and the server exchange.",
+      "types": [
+        "{ readonly JOIN_ROOM: 10; readonly ERROR: 11; readonly LEAVE_ROOM: 12; readonly ROOM_DATA: 13; readonly ROOM_STATE: 14; readonly ROOM_STATE_PATCH: 15; readonly ROOM_DATA_SCHEMA: 16; readonly ROOM_DATA_BYTES: 17; readonly PING: 18; readonly ROOM_INPUT_RELIABLE: 19; readonly ROOM_INPUT_UNRELIABLE: 20; readonly ROOM_REQUEST: 21; readonly ROOM_RESPONSE: 22; readonly CODE_MASK: 0x1f; readonly MODIFIER_MASK: 0xe0; readonly MODIFIER_TIMED: 0x80; readonly RESPONSE_STATUS: { readonly OK: 0; readonly REJECTED: 1; readonly ERROR: 2; }; readonly HANDSHAKE_SECTION: { readonly INPUT_REFLECTION: 1; readonly INPUT_OPTIONS: 2; }; readonly INPUT_FLAGS: { readonly RENDER_TIME: 1; readonly FIXED_TIMESTEP: 2; readonly PATCH_RATE: 4; readonly SUB_STEPS: 8; readonly RECKON_TIME: 16; }; readonly CLOSE_CODE: { readonly NORMAL_CLOSURE: 1000; readonly GOING_AWAY: 1001; readonly NO_STATUS_RECEIVED: 1005; readonly ABNORMAL_CLOSURE: 1006; readonly CONSENTED: 4000; readonly SERVER_SHUTDOWN: 4001; readonly WITH_ERROR: 4002; readonly FAILED_TO_RECONNECT: 4003; readonly MAY_TRY_RECONNECT: 4010; }; }"
+      ],
+      "fields": [
+        {
+          "name": "JOIN_ROOM",
+          "doc": "A room was joined.",
+          "types": [
+            "10"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ERROR",
+          "doc": "The server sent an error.",
+          "types": [
+            "11"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "LEAVE_ROOM",
+          "doc": "The room is being left.",
+          "types": [
+            "12"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_DATA",
+          "doc": "A room message.",
+          "types": [
+            "13"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_STATE",
+          "doc": "A full room state.",
+          "types": [
+            "14"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_STATE_PATCH",
+          "doc": "A room state patch.",
+          "types": [
+            "15"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_DATA_SCHEMA",
+          "doc": "Deprecated in 0.18, and never dispatched.",
+          "types": [
+            "16"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_DATA_BYTES",
+          "doc": "A room message of raw bytes.",
+          "types": [
+            "17"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "PING",
+          "doc": "A ping, and the pong the server echoes.",
+          "types": [
+            "18"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_INPUT_RELIABLE",
+          "doc": "A reliable input.",
+          "types": [
+            "19"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_INPUT_UNRELIABLE",
+          "doc": "An unreliable input.",
+          "types": [
+            "20"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_REQUEST",
+          "doc": "A request awaiting a response.",
+          "types": [
+            "21"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ROOM_RESPONSE",
+          "doc": "The response to a request.",
+          "types": [
+            "22"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "CODE_MASK",
+          "doc": "Isolates the base protocol code (the low 5 bits).",
+          "types": [
+            "0x1f"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "MODIFIER_MASK",
+          "doc": "Isolates the modifier bits (the high 3 bits).",
+          "types": [
+            "0xe0"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "MODIFIER_TIMED",
+          "doc": "Marks a body prefixed with the server time and the last processed input.",
+          "types": [
+            "0x80"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "RESPONSE_STATUS",
+          "doc": "The status byte of a response.",
+          "types": [
+            "{ readonly OK: 0; readonly REJECTED: 1; readonly ERROR: 2; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "OK",
+              "doc": "The handler replied.",
+              "types": [
+                "0"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "REJECTED",
+              "doc": "The handler rejected the request; the reason is the payload.",
+              "types": [
+                "1"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "ERROR",
+              "doc": "The handler threw, or there is none; the payload is `{ name, message, code? }`.",
+              "types": [
+                "2"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "HANDSHAKE_SECTION",
+          "doc": "The tags of the sections that follow a join handshake.",
+          "types": [
+            "{ readonly INPUT_REFLECTION: 1; readonly INPUT_OPTIONS: 2; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "INPUT_REFLECTION",
+              "doc": "The reflection of the room's input schema.",
+              "types": [
+                "1"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "INPUT_OPTIONS",
+              "doc": "The input feature flags and rates.",
+              "types": [
+                "2"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "INPUT_FLAGS",
+          "doc": "The flags of an input options section.",
+          "types": [
+            "{ readonly RENDER_TIME: 1; readonly FIXED_TIMESTEP: 2; readonly PATCH_RATE: 4; readonly SUB_STEPS: 8; readonly RECKON_TIME: 16; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "RENDER_TIME",
+              "doc": "Reliable inputs carry the snapshot-timeline stamp.",
+              "types": [
+                "1"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "FIXED_TIMESTEP",
+              "doc": "A tick rate in Hz follows.",
+              "types": [
+                "2"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "PATCH_RATE",
+              "doc": "A patch rate in milliseconds follows.",
+              "types": [
+                "4"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "SUB_STEPS",
+              "doc": "A sub-step count follows.",
+              "types": [
+                "8"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "RECKON_TIME",
+              "doc": "Reliable inputs carry the reckon-timeline stamp.",
+              "types": [
+                "16"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "CLOSE_CODE",
+          "doc": "The websocket close codes.",
+          "types": [
+            "{ readonly NORMAL_CLOSURE: 1000; readonly GOING_AWAY: 1001; readonly NO_STATUS_RECEIVED: 1005; readonly ABNORMAL_CLOSURE: 1006; readonly CONSENTED: 4000; readonly SERVER_SHUTDOWN: 4001; readonly WITH_ERROR: 4002; readonly FAILED_TO_RECONNECT: 4003; readonly MAY_TRY_RECONNECT: 4010; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "NORMAL_CLOSURE",
+              "doc": "A normal close.",
+              "types": [
+                "1000"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "GOING_AWAY",
+              "doc": "The endpoint is going away.",
+              "types": [
+                "1001"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "NO_STATUS_RECEIVED",
+              "doc": "No status code was received.",
+              "types": [
+                "1005"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "ABNORMAL_CLOSURE",
+              "doc": "The connection closed abnormally.",
+              "types": [
+                "1006"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "CONSENTED",
+              "doc": "The client left deliberately.",
+              "types": [
+                "4000"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "SERVER_SHUTDOWN",
+              "doc": "The server shut down.",
+              "types": [
+                "4001"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "WITH_ERROR",
+              "doc": "The room closed with an error.",
+              "types": [
+                "4002"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "FAILED_TO_RECONNECT",
+              "doc": "Reconnection failed.",
+              "types": [
+                "4003"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "MAY_TRY_RECONNECT",
+              "doc": "The client may try to reconnect.",
+              "types": [
+                "4010"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ClientConstructor",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "select_by_latency",
+          "brief": "Measures the latency of each endpoint and calls back with a client for the fastest.",
+          "description": "Measures the latency of each endpoint and calls back with a client for the fastest.",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "endpoints",
+              "doc": "The endpoints to compare, each a URL or its settings.",
+              "types": [
+                "Array<string | ClientSettings>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the fastest endpoint's client, or an error when the list is\nempty or no endpoint responded.",
+              "types": [
+                "(err?: string, client?: Client) => void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "timeout",
+              "doc": "Seconds to wait for each endpoint (default: 1.5).",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CallbacksModule",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "get",
+          "brief": "Returns the schema change callbacks of a joined room's state, as calling the module does.",
+          "description": "Returns the schema change callbacks of a joined room's state, as calling the module does.",
+          "generics": "<State>",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "room",
+              "doc": "",
+              "types": [
+                "Room<State>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Callbacks"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
