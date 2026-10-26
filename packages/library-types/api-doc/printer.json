@@ -71,7 +71,7 @@
         },
         {
           "name": "source",
-          "doc": "A source added with `add_source_style`, whose style replaces the default style for this text.",
+          "doc": "A source added with `add_source_style`. Its style is copied over the default style and becomes this text's base style, which `{/}` returns to.",
           "types": [
             "string"
           ],
@@ -81,7 +81,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "`true` when the text starts printing; `false` when the previous text was still printing, which instead appears at once.",
+          "doc": "`true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once unless the style of the symbol currently appearing sets `can_skip` to `false`, in which case it keeps printing.",
           "types": [
             "boolean"
           ]
@@ -91,8 +91,8 @@
     {
       "type": "FUNCTION",
       "name": "instant_appear",
-      "brief": "Makes every symbol of the current text visible at once, unless its style sets",
-      "description": "Makes every symbol of the current text visible at once, unless its style sets\n`can_skip` to `false`.",
+      "brief": "Makes every symbol of the current text visible at once, unless the style of the",
+      "description": "Makes every symbol of the current text visible at once, unless the style of the\nsymbol currently appearing sets `can_skip` to `false`.",
       "parameters": [
         {
           "name": "self",
@@ -218,8 +218,8 @@
     {
       "type": "FUNCTION",
       "name": "add_source_style",
-      "brief": "Adds a source style: a `print` given this source uses the style in place of the",
-      "description": "Adds a source style: a `print` given this source uses the style in place of the\ndefault style.",
+      "brief": "Adds a source style: a `print` given this source copies the style over the default",
+      "description": "Adds a source style: a `print` given this source copies the style over the default\nstyle and uses it as the text's base style.",
       "parameters": [
         {
           "name": "source",
@@ -285,7 +285,7 @@
             },
             {
               "name": "source",
-              "doc": "A source added with `add_source_style`, whose style replaces the default style for this text.",
+              "doc": "A source added with `add_source_style`. Its style is copied over the default style and becomes this text's base style, which `{/}` returns to.",
               "types": [
                 "string"
               ],
@@ -295,7 +295,7 @@
           "returnvalues": [
             {
               "name": "",
-              "doc": "`true` when the text starts printing; `false` when the previous text was still printing, which instead appears at once.",
+              "doc": "`true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once unless the style of the symbol currently appearing sets `can_skip` to `false`, in which case it keeps printing.",
               "types": [
                 "boolean"
               ]
@@ -305,8 +305,8 @@
         {
           "type": "FUNCTION",
           "name": "instant_appear",
-          "brief": "Makes every symbol of the current text visible at once, unless its style sets `can_skip` to `false`.",
-          "description": "Makes every symbol of the current text visible at once, unless its style sets `can_skip` to `false`.",
+          "brief": "Makes every symbol of the current text visible at once, unless the style of the symbol currently appearing sets `can_skip` to `false`.",
+          "description": "Makes every symbol of the current text visible at once, unless the style of the symbol currently appearing sets `can_skip` to `false`.",
           "parameters": [],
           "returnvalues": []
         },

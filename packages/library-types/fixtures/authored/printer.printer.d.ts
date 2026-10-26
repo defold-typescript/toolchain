@@ -6,10 +6,11 @@
  */
 declare module 'printer.printer' {
   /**
-   * A style: a table of print parameters. A named style is copied over the default
-   * style, so every field is optional. The default style, or a source style that
-   * replaces it, must carry `font_height`, `spacing`, `scale`, `color`, `speed`,
-   * `appear` and `shaking`.
+   * A style: a table of print parameters. Every field is optional: a source style is
+   * copied over the default style, and a named style over the style in effect, so each
+   * carries only the fields it changes. A style named `default` added with
+   * `add_styles` replaces the default style and must carry `font_height`, `spacing`,
+   * `scale`, `color`, `speed`, `appear` and `shaking`.
    */
   export interface PrinterStyle {
     /** In pixels, the height of every symbol or image. It also sets where a new line starts. */
@@ -52,12 +53,12 @@ declare module 'printer.printer' {
      * `{/}` to return to the default style, `{n}` for a line break and `{image:name}`
      * for an image.
      * @param str The text to print.
-     * @param source A source added with `add_source_style`, whose style replaces the default style for this text.
-     * @returns `true` when the text starts printing; `false` when the previous text was still printing, which instead appears at once.
+     * @param source A source added with `add_source_style`. Its style is copied over the default style and becomes this text's base style, which `{/}` returns to.
+     * @returns `true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once unless the style of the symbol currently appearing sets `can_skip` to `false`, in which case it keeps printing.
      */
     print(str: string, source?: string): boolean;
 
-    /** Makes every symbol of the current text visible at once, unless its style sets `can_skip` to `false`. */
+    /** Makes every symbol of the current text visible at once, unless the style of the symbol currently appearing sets `can_skip` to `false`. */
     instant_appear(): void;
 
     /** Stops printing and fades every symbol of the current text out over 0.3 seconds. */
@@ -95,14 +96,14 @@ declare module 'printer.printer' {
    * `{image:name}` for an image.
    * @param self The printer instance, created by `new`.
    * @param str The text to print.
-   * @param source A source added with `add_source_style`, whose style replaces the default style for this text.
-   * @returns `true` when the text starts printing; `false` when the previous text was still printing, which instead appears at once.
+   * @param source A source added with `add_source_style`. Its style is copied over the default style and becomes this text's base style, which `{/}` returns to.
+   * @returns `true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once unless the style of the symbol currently appearing sets `can_skip` to `false`, in which case it keeps printing.
    */
   export function print(self: Printer, str: string, source?: string): boolean;
 
   /**
-   * Makes every symbol of the current text visible at once, unless its style sets
-   * `can_skip` to `false`.
+   * Makes every symbol of the current text visible at once, unless the style of the
+   * symbol currently appearing sets `can_skip` to `false`.
    * @param self The printer instance, created by `new`.
    */
   export function instant_appear(self: Printer): void;
@@ -149,8 +150,8 @@ declare module 'printer.printer' {
   export function add_styles(styles_new: Record<string, PrinterStyle>): void;
 
   /**
-   * Adds a source style: a `print` given this source uses the style in place of the
-   * default style.
+   * Adds a source style: a `print` given this source copies the style over the default
+   * style and uses it as the text's base style.
    * @param source The source name to pass to `print`.
    * @param style The style name.
    */
