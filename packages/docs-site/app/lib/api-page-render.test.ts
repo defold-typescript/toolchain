@@ -2592,6 +2592,36 @@ describe("listingPageMarkdown", () => {
     expect(md).not.toContain("## Engine APIs");
   });
 
+  test("names the Defold version current when the pin was cut on the pin bullet, and nothing without one", () => {
+    const pinLine = (md: string) => md.split("\n").find((line) => line.startsWith("- GitHub: "));
+    expect(pinLine(listingPageMarkdown(listing({ releaseEra: "1.9.0" })))).toEndWith(
+      " (released while Defold 1.9.0 was current)",
+    );
+    expect(listingPageMarkdown(listing())).not.toContain("released while");
+  });
+
+  test("a typed Defold page names the same era on its pin bullet, and nothing without one", () => {
+    const meta = {
+      author: "",
+      authorUrl: "https://github.com/defold/extension-x",
+      commit: "1.2.0",
+      sourceUrl: "https://github.com/defold/extension-x/blob/1.2.0/api/x.script_api",
+      importString: 'import * as x from "x"',
+      license: "MIT",
+      authoredHere: true,
+      usage: "import" as const,
+      pinKind: "release" as const,
+    };
+    const pinLine = (md: string) => md.split("\n").find((line) => line.startsWith("- GitHub: "));
+    const dated = apiPageMarkdown(
+      libraryPageWithMeta({ libraryMeta: { ...meta, releaseEra: "1.9.0" } }),
+      (text) => text,
+    );
+    expect(pinLine(dated)).toEndWith(" (released while Defold 1.9.0 was current)");
+    const undated = apiPageMarkdown(libraryPageWithMeta({ libraryMeta: meta }), (text) => text);
+    expect(undated).not.toContain("released while");
+  });
+
   for (const pinKind of ["release", "tag", "commit"] as const) {
     test(`a ${pinKind}-pinned listing gives the same step 1 as a typed library page with that pin`, () => {
       const ref = pinKind === "commit" ? "0123456789abcdef0123456789abcdef01234567" : "v1.2.0";

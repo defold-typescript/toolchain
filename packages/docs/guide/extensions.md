@@ -140,7 +140,9 @@ The extensions Defold publishes on GitHub have reference pages under
 [iap](/api/iap) and [spine.gui](/api/spine.gui). The defold section is listed
 first, in the sidebar and on the Libraries page, and marked `(official)` so it
 reads apart from community libraries. Each page shows the pin it was
-read from — the latest release, else the newest tag, else a commit. That pin
+read from — the latest release, else the newest tag, else a commit. A release
+or tag pin also names the Defold version that was current when it was cut, as a
+hint about its age, not a promise that it works with that version. That pin
 only fixes what the page shows: which version your project depends on is still
 your choice in `game.project`, and `resolve` types whichever one you pick.
 
