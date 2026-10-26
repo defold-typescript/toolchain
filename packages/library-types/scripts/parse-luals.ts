@@ -70,6 +70,10 @@ export interface LibraryMethod {
   // `""` for the bare form — absence of the key is the sole encoding of "not
   // deprecated", so a bare tag must never be collapsed away by a truthiness guard.
   deprecated?: string;
+  // A class function the caller invokes with `.` (no `self`): a `---@meta` file's
+  // `function cls.name()` on a local bound to `---@class cls`. Set only when true, so
+  // a colon method carries no key; the emitter renders it with `this: void`.
+  noSelf?: true;
 }
 
 export interface LibraryParam {
@@ -500,6 +504,7 @@ const FUNCTION_FORMS: {
   {
     re: /^function\s+([A-Za-z_][\w.]*)\.([A-Za-z_]\w*)\s*\(/,
     kind: "module",
+    recv: 1,
     name: 2,
     qualified: true,
   },
@@ -508,6 +513,7 @@ const FUNCTION_FORMS: {
   {
     re: /^([A-Za-z_][\w.]*)\.([A-Za-z_]\w*)\s*=\s*function\b/,
     kind: "module",
+    recv: 1,
     name: 2,
     qualified: true,
   },
@@ -519,11 +525,16 @@ function parseFunctionDecl(line: string): FunctionDecl | null {
     const m = form.re.exec(line);
     if (!m) continue;
     const name = m[form.name] ?? "";
+    const receiver = form.recv ? m[form.recv] : undefined;
     if (form.kind === "method") {
-      const receiver = form.recv ? m[form.recv] : undefined;
       return { kind: "method", name, qualified: true, ...(receiver ? { receiver } : {}) };
     }
-    return { kind: "module", name, qualified: form.qualified ?? false };
+    return {
+      kind: "module",
+      name,
+      qualified: form.qualified ?? false,
+      ...(receiver ? { receiver } : {}),
+    };
   }
   return null;
 }
@@ -545,8 +556,16 @@ const MODULE_ASSIGN = /^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*[=,]/;
  * Only dotted module forms (`function T.name`, `T.name = function`) count as module
  * surface; a bare or `local function` is a private helper and is skipped. Limitation:
  * a bare function later re-exported via `M.x = helper` is not recovered as surface.
+ *
+ * In a `---@meta` file (its first non-blank line is the tag), a dotted function whose
+ * receiver is a local bound to a `---@class` is a method of that class, flagged
+ * `noSelf` because callers invoke it with `.` (ads-wrapper's `ads_network.setup`). A
+ * meta file never runs, so such a function can only describe the class. Outside meta
+ * files the same form stays a module function: a runtime module may annotate its own
+ * table as a class (`---@class liveupdater` on `local M`) and still export `M.init`.
  */
 export function parseLualsSource(source: string): LibraryModel {
+  const isMeta = /^---@meta(?:\s|$)/.test(source.trimStart());
   const interfaces: LibraryInterface[] = [];
   const byName = new Map<string, LibraryInterface>();
   const aliases: LibraryAlias[] = [];
@@ -775,9 +794,16 @@ export function parseLualsSource(source: string): LibraryModel {
     const decl = parseFunctionDecl(raw);
     if (decl) {
       const method = methodFromPending(decl.name);
+      const metaClass =
+        isMeta && decl.kind === "module" && decl.receiver
+          ? receiverBinding.get(decl.receiver)
+          : undefined;
       if (decl.kind === "method") {
         const target = decl.receiver ? (receiverBinding.get(decl.receiver) ?? decl.receiver) : "";
         ensureInterface(target).methods.push(method);
+      } else if (metaClass) {
+        method.noSelf = true;
+        ensureInterface(metaClass).methods.push(method);
       } else if (decl.qualified) {
         moduleFunctions.push(method);
       }

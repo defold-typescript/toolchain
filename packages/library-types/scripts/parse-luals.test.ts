@@ -846,6 +846,74 @@ describe("parseLualsSource module table assignments", () => {
   });
 });
 
+describe("parseLualsSource ---@meta class functions", () => {
+  const netBody = [
+    "---@class net",
+    'local net = { NAME = "net" }',
+    "",
+    "---Starts the network.",
+    "---@param cb fun()|nil called when ready",
+    "function net.init(cb)",
+    "end",
+    "",
+    "---@param p table",
+    "net.load = function(p) end",
+    "",
+    "return net",
+  ];
+
+  test("a dotted function on a class-bound local becomes a self-less method of the class", () => {
+    const model = parseLualsSource(lua("---@meta", "", ...netBody));
+    const net = model.interfaces.find((i) => i.name === "net");
+    expect(net?.methods.map((m) => [m.name, m.noSelf])).toEqual([
+      ["init", true],
+      ["load", true],
+    ]);
+    expect(net?.methods[0]?.brief).toBe("Starts the network.");
+    expect(net?.methods[0]?.params.map((p) => [p.name, p.types])).toEqual([["cb", ["fun()|nil"]]]);
+    expect(net?.methods[1]?.params.map((p) => [p.name, p.types])).toEqual([["p", ["table"]]]);
+    expect(model.moduleFunctions).toEqual([]);
+  });
+
+  test("a leading blank line or byte-order mark still marks the file as meta", () => {
+    for (const head of ["\n---@meta", "﻿---@meta"]) {
+      const model = parseLualsSource(lua(head, ...netBody));
+      expect(model.interfaces.find((i) => i.name === "net")?.methods).toHaveLength(2);
+      expect(model.moduleFunctions).toEqual([]);
+    }
+  });
+
+  test("without ---@meta the same dotted functions stay module functions", () => {
+    const model = parseLualsSource(lua(...netBody));
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["init", "load"]);
+    expect(model.moduleFunctions.some((f) => "noSelf" in f)).toBe(false);
+    expect(model.interfaces.find((i) => i.name === "net")?.methods).toEqual([]);
+  });
+
+  test("a ---@meta not on the first non-blank line does not mark the file as meta", () => {
+    const model = parseLualsSource(lua("local x = 1", "---@meta", ...netBody));
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["init", "load"]);
+  });
+
+  test("in a meta file a colon method keeps self, and a dotted function on an unbound local stays a module function", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@meta",
+        "---@class net",
+        "local net = {}",
+        "function net:show() end",
+        "local M = {}",
+        "function M.f() end",
+        "return M",
+      ),
+    );
+    const show = model.interfaces.find((i) => i.name === "net")?.methods;
+    expect(show?.map((m) => m.name)).toEqual(["show"]);
+    expect(show?.[0] && "noSelf" in show[0]).toBe(false);
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["f"]);
+  });
+});
+
 describe("parseLualsSource @deprecated", () => {
   test("a @deprecated with text before a module function carries the text onto it", () => {
     const model = parseLualsSource(
