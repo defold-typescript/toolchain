@@ -11,6 +11,7 @@ import { join } from "node:path";
  */
 
 const ORG = "defold";
+const ENGINE_REPO = "defold";
 
 export interface GitHubRepo {
   name: string;
@@ -38,6 +39,8 @@ export interface DefoldExtensionEntry {
   repo: string;
   ref: string;
   refKind: RefKind;
+  // When a release or tag pin was cut (ISO 8601); a commit pin has none.
+  refDate?: string;
   license: string;
   description: string;
   docs: DefoldExtensionDoc[];
@@ -45,6 +48,11 @@ export interface DefoldExtensionEntry {
 
 export interface DefoldExtensionsManifest {
   libraries: DefoldExtensionEntry[];
+}
+
+export interface DefoldEngineRelease {
+  version: string;
+  date: string;
 }
 
 /** The GitHub REST + raw-content surface the sync reads; a seam for offline tests. */
@@ -56,6 +64,9 @@ export interface DefoldGitHub {
   headSha(name: string, branch: string): Promise<string>;
   tree(name: string, ref: string): Promise<string[]>;
   fetchText(url: string): Promise<string>;
+  releaseByTag(name: string, tag: string): Promise<{ published_at: string | null } | null>;
+  commitDate(name: string, ref: string): Promise<string>;
+  engineTags(): Promise<string[]>;
 }
 
 export interface ReservedNamespaces {
@@ -431,6 +442,107 @@ export async function reconvertDefoldExtensions(
   return written;
 }
 
+/**
+ * The earliest of the given ISO 8601 dates, as written. A GitHub release's
+ * `published_at` runs late when it was backfilled (`1.2.163`-`1.2.167` were
+ * published in April 2020) and a tagged commit's date runs late when the tag
+ * was moved after publishing (`1.14.0`), so the earlier one is the cut date.
+ */
+export function earliestDate(...dates: (string | null | undefined)[]): string | undefined {
+  let earliest: string | undefined;
+  for (const date of dates) {
+    if (!date) continue;
+    if (earliest === undefined || Date.parse(date) < Date.parse(earliest)) earliest = date;
+  }
+  return earliest;
+}
+
+async function cutDate(github: DefoldGitHub, name: string, tag: string): Promise<string> {
+  const [release, committed] = await Promise.all([
+    github.releaseByTag(name, tag),
+    github.commitDate(name, tag),
+  ]);
+  return earliestDate(release?.published_at, committed) ?? committed;
+}
+
+function withRefDate(
+  entry: DefoldExtensionEntry,
+  refDate: string | undefined,
+): DefoldExtensionEntry {
+  const dated: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(entry)) {
+    if (key === "refDate") continue;
+    dated[key] = value;
+    if (key === "refKind" && refDate !== undefined) dated.refDate = refDate;
+  }
+  return dated as unknown as DefoldExtensionEntry;
+}
+
+function compareVersions(a: string, b: string): number {
+  const left = a.split(".").map(Number);
+  const right = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+/**
+ * Date every release and tag pin in the committed `defold-extensions.json` at
+ * its recorded ref, and write `defold-engine-releases.json` with every `X.Y.Z`
+ * tag of the engine repo, newest first. Pins are read, never chosen, and no
+ * api-doc is touched; the docs site compares the two to name the Defold
+ * version that was current when a pin was cut.
+ */
+export async function syncDefoldReleaseDates(
+  packageRoot: string,
+  github: DefoldGitHub,
+): Promise<{ pins: number; releases: DefoldEngineRelease[] }> {
+  const manifestPath = join(packageRoot, "defold-extensions.json");
+  const { libraries } = JSON.parse(readFileSync(manifestPath, "utf8")) as DefoldExtensionsManifest;
+
+  let pins = 0;
+  const dated: DefoldExtensionEntry[] = [];
+  for (const entry of libraries) {
+    if (entry.refKind === "commit") {
+      dated.push(withRefDate(entry, undefined));
+      continue;
+    }
+    dated.push(withRefDate(entry, await cutDate(github, repoName(entry.repo), entry.ref)));
+    pins++;
+  }
+  const manifest: DefoldExtensionsManifest = { libraries: dated };
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  const versions = (await github.engineTags()).filter((tag) => /^\d+\.\d+\.\d+$/.test(tag));
+  const releases: DefoldEngineRelease[] = [];
+  for (const version of versions) {
+    releases.push({ version, date: await cutDate(github, ENGINE_REPO, version) });
+  }
+  releases.sort(
+    (a, b) => Date.parse(b.date) - Date.parse(a.date) || compareVersions(b.version, a.version),
+  );
+  writeFileSync(
+    join(packageRoot, "defold-engine-releases.json"),
+    `${JSON.stringify({ releases }, null, 2)}\n`,
+  );
+  return { pins, releases };
+}
+
+/** The `--fetch` path: resurvey the org, then date the pins it chose. */
+export async function fetchDefoldExtensions(
+  packageRoot: string,
+  github: DefoldGitHub,
+  reserved: ReservedNamespaces,
+): Promise<DefoldExtensionsManifest> {
+  await syncDefoldExtensions(packageRoot, github, reserved);
+  await syncDefoldReleaseDates(packageRoot, github);
+  return JSON.parse(
+    readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
+  ) as DefoldExtensionsManifest;
+}
+
 export function gitHubToken(): string | undefined {
   return process.env.GITHUB_TOKEN || process.env.GH_TOKEN || undefined;
 }
@@ -492,18 +604,49 @@ const liveGitHub: DefoldGitHub = {
     if (!res.ok) throw new Error(`fetch failed: ${url} -> ${res.status} ${res.statusText}`);
     return res.text();
   },
+  releaseByTag: (name, tag) =>
+    apiJsonOrNull<{ published_at: string | null }>(`repos/${ORG}/${name}/releases/tags/${tag}`),
+  async commitDate(name, ref) {
+    const commit = await apiJson<{ commit: { committer: { date: string } } }>(
+      `repos/${ORG}/${name}/commits/${ref}`,
+    );
+    return commit.commit.committer.date;
+  },
+  async engineTags() {
+    const names: string[] = [];
+    for (let page = 1; ; page++) {
+      const batch = await apiJson<{ name: string }[]>(
+        `repos/${ORG}/${ENGINE_REPO}/tags?per_page=100&page=${page}`,
+      );
+      names.push(...batch.map((tag) => tag.name));
+      if (batch.length < 100) return names;
+    }
+  },
 };
+
+function requireGitHubToken(flag: string): void {
+  if (gitHubToken()) return;
+  console.error(
+    `${flag} dates every pin and Defold engine tag (several hundred GitHub API calls): set GITHUB_TOKEN or GH_TOKEN, e.g. GITHUB_TOKEN="$(gh auth token)".`,
+  );
+  process.exit(1);
+}
 
 if (import.meta.main) {
   const root = join(import.meta.dir, "..");
   if (process.argv.includes("--fetch")) {
-    const manifest = await syncDefoldExtensions(
+    requireGitHubToken("--fetch");
+    const manifest = await fetchDefoldExtensions(
       root,
       liveGitHub,
       await loadReservedNamespaces(root),
     );
     const docs = manifest.libraries.reduce((sum, entry) => sum + entry.docs.length, 0);
     console.log(`surveyed ${manifest.libraries.length} Defold libraries, ${docs} docs`);
+  } else if (process.argv.includes("--dates")) {
+    requireGitHubToken("--dates");
+    const { pins, releases } = await syncDefoldReleaseDates(root, liveGitHub);
+    console.log(`dated ${pins} Defold library pins and ${releases.length} Defold engine versions`);
   } else if (process.argv.includes("--reconvert")) {
     const written = await reconvertDefoldExtensions(root, liveGitHub.fetchText);
     console.log(`reconverted ${written} Defold library docs at their pinned refs`);

@@ -4,6 +4,7 @@
       "repo": "https://github.com/defold/asset-pbr",
       "ref": "0.1.0",
       "refKind": "release",
+      "refDate": "2026-06-25T13:05:04Z",
       "license": "MIT",
       "description": "",
       "docs": []
@@ -20,6 +21,7 @@
       "repo": "https://github.com/defold/codepad",
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2020-11-13T22:21:07Z",
       "license": "MIT",
       "description": "Online Defold compiler/interpreter",
       "docs": []
@@ -28,6 +30,7 @@
       "repo": "https://github.com/defold/defold-pbr",
       "ref": "0.1.1",
       "refKind": "release",
+      "refDate": "2024-03-13T10:52:06Z",
       "license": "",
       "description": "",
       "docs": []
@@ -44,6 +47,7 @@
       "repo": "https://github.com/defold/extension-adinfo",
       "ref": "3.0.3",
       "refKind": "release",
+      "refDate": "2026-09-06T06:25:44Z",
       "license": "MIT",
       "description": "Extension for retrieving advertising identifier",
       "docs": [
@@ -58,6 +62,7 @@
       "repo": "https://github.com/defold/extension-admob",
       "ref": "4.2.2",
       "refKind": "release",
+      "refDate": "2026-09-06T06:27:07Z",
       "license": "MIT",
       "description": "Defold native extension which provides access to AdMob functionality on Android and iOS",
       "docs": [
@@ -94,6 +99,7 @@
       "repo": "https://github.com/defold/extension-automation-bridge",
       "ref": "2.3.2",
       "refKind": "release",
+      "refDate": "2026-09-08T14:51:22Z",
       "license": "",
       "description": "Debug-only native extension for inspecting a running Defold game and sending input from local automation clients such as Codex",
       "docs": []
@@ -102,6 +108,7 @@
       "repo": "https://github.com/defold/extension-camera",
       "ref": "2.2.3",
       "refKind": "release",
+      "refDate": "2026-09-05T14:46:47Z",
       "license": "MIT",
       "description": "Example of interacting with the camera through native extensions",
       "docs": [
@@ -116,6 +123,7 @@
       "repo": "https://github.com/defold/extension-crazygames",
       "ref": "1.3.0",
       "refKind": "release",
+      "refDate": "2026-09-07T22:00:46Z",
       "license": "MIT",
       "description": "CrazyGames SDK for Defold",
       "docs": [
@@ -130,6 +138,7 @@
       "repo": "https://github.com/defold/extension-crypt",
       "ref": "1.1.0",
       "refKind": "release",
+      "refDate": "2023-07-15T14:18:45Z",
       "license": "MIT",
       "description": "Native extension binding the dmCrypt Defold C++ SDK to Lua",
       "docs": [
@@ -144,6 +153,7 @@
       "repo": "https://github.com/defold/extension-energy-saver",
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2026-07-20T08:12:37Z",
       "license": "MIT",
       "description": "Extension to help reduce power consumption in your Defold game",
       "docs": []
@@ -160,6 +170,7 @@
       "repo": "https://github.com/defold/extension-facebook",
       "ref": "9.0.2",
       "refKind": "release",
+      "refDate": "2026-09-06T06:28:17Z",
       "license": "MIT",
       "description": "Facebook extension using the official SDKs",
       "docs": [
@@ -174,6 +185,7 @@
       "repo": "https://github.com/defold/extension-fbinstant",
       "ref": "8.0.0",
       "refKind": "release",
+      "refDate": "2024-04-10T09:10:05Z",
       "license": "MIT",
       "description": "Facebook Instant Games extension for the Defold game engine",
       "docs": []
@@ -182,6 +194,7 @@
       "repo": "https://github.com/defold/extension-firebase",
       "ref": "2.3.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:29:10Z",
       "license": "MIT",
       "description": "Firebase is Google's mobile platform that helps you quickly develop high-quality apps and grow your business. This repository contains the core components required by the various products included in Firebase. It is not intended for use on its own",
       "docs": [
@@ -196,6 +209,7 @@
       "repo": "https://github.com/defold/extension-firebase-analytics",
       "ref": "3.3.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:35:51Z",
       "license": "MIT",
       "description": "Google Firebase Analytics extension for the Defold game engine",
       "docs": [
@@ -210,6 +224,7 @@
       "repo": "https://github.com/defold/extension-firebase-crashlytics",
       "ref": "1.0.3",
       "refKind": "release",
+      "refDate": "2026-09-06T06:30:50Z",
       "license": "MIT",
       "description": "",
       "docs": [
@@ -224,6 +239,7 @@
       "repo": "https://github.com/defold/extension-firebase-remoteconfig",
       "ref": "2.3.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:30:01Z",
       "license": "MIT",
       "description": "Firebase Remote Config integration with the Defold game engine.",
       "docs": [
@@ -238,6 +254,7 @@
       "repo": "https://github.com/defold/extension-fontgen",
       "ref": "0.9",
       "refKind": "release",
+      "refDate": "2025-05-21T09:27:15Z",
       "license": "MIT",
       "description": "Adds custom font support",
       "docs": [
@@ -252,6 +269,7 @@
       "repo": "https://github.com/defold/extension-gamelift",
       "ref": "2.0.1",
       "refKind": "release",
+      "refDate": "2019-09-30T18:30:30Z",
       "license": "MIT",
       "description": "Amazon Gamelift extension for the Defold game engine",
       "docs": []
@@ -260,6 +278,7 @@
       "repo": "https://github.com/defold/extension-gpgs",
       "ref": "5.0.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:34:52Z",
       "license": "MIT",
       "description": "Defold native extension for Google Play Game Services",
       "docs": [
@@ -282,6 +301,7 @@
       "repo": "https://github.com/defold/extension-iac",
       "ref": "1.5.0",
       "refKind": "release",
+      "refDate": "2026-09-11T21:05:28Z",
       "license": "MIT",
       "description": "Inter-app communication extension for Defold",
       "docs": [
@@ -296,6 +316,7 @@
       "repo": "https://github.com/defold/extension-iap",
       "ref": "8.4.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:31:37Z",
       "license": "MIT",
       "description": "In-app purchase extension for Defold",
       "docs": [
@@ -310,6 +331,7 @@
       "repo": "https://github.com/defold/extension-imgui",
       "ref": "2.14.0",
       "refKind": "release",
+      "refDate": "2026-05-25T11:56:49Z",
       "license": "MIT",
       "description": "Dear ImGUI extension for Defold",
       "docs": [
@@ -332,6 +354,7 @@
       "repo": "https://github.com/defold/extension-kaiads",
       "ref": "2.0.0",
       "refKind": "release",
+      "refDate": "2024-04-10T11:46:39Z",
       "license": "MIT",
       "description": "Integration of the KaiAds SDK with the Defold game engine",
       "docs": [
@@ -354,6 +377,7 @@
       "repo": "https://github.com/defold/extension-levelplay",
       "ref": "2.0.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:32:27Z",
       "license": "MIT",
       "description": "Defold native extension which provides access to Unity LevelPlay mediation on Android and iOS",
       "docs": [
@@ -368,6 +392,7 @@
       "repo": "https://github.com/defold/extension-lua-preprocessor",
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2026-01-18T21:21:01Z",
       "license": "MIT",
       "description": "Small and simple Lua preprocessor for Defold",
       "docs": []
@@ -390,6 +415,7 @@
       "repo": "https://github.com/defold/extension-odin",
       "ref": "1.0.0",
       "refKind": "tag",
+      "refDate": "2025-09-15T22:34:28Z",
       "license": "MIT",
       "description": "Defold native extension for the ODIN Voice SDK framework.",
       "docs": [
@@ -426,6 +452,7 @@
       "repo": "https://github.com/defold/extension-pad",
       "ref": "1.0.2",
       "refKind": "release",
+      "refDate": "2026-09-07T06:11:14Z",
       "license": "MIT",
       "description": "Extension for the Google Play Asset Delivery API",
       "docs": [
@@ -440,6 +467,7 @@
       "repo": "https://github.com/defold/extension-permissions",
       "ref": "1.1.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:36:41Z",
       "license": "MIT",
       "description": "Extension to query for and request application permissions from the user or operating system",
       "docs": [
@@ -454,6 +482,7 @@
       "repo": "https://github.com/defold/extension-photon-fusion",
       "ref": "1.0",
       "refKind": "release",
+      "refDate": "2026-08-19T13:08:27Z",
       "license": "MIT",
       "description": "Defold native extension for the Photon Fusion framework.",
       "docs": [
@@ -468,6 +497,7 @@
       "repo": "https://github.com/defold/extension-photon-realtime",
       "ref": "1.0.0",
       "refKind": "tag",
+      "refDate": "2025-08-13T11:27:38Z",
       "license": "MIT",
       "description": "Defold native extension for the Photon Realtime framework.",
       "docs": [
@@ -504,6 +534,7 @@
       "repo": "https://github.com/defold/extension-poco",
       "ref": "1.0.2",
       "refKind": "release",
+      "refDate": "2022-02-04T18:47:15Z",
       "license": "MIT",
       "description": "Test automation from a computer to a test device using the Poco APO",
       "docs": []
@@ -512,6 +543,7 @@
       "repo": "https://github.com/defold/extension-poki-sdk",
       "ref": "4.1.0",
       "refKind": "release",
+      "refDate": "2026-07-30T06:39:17Z",
       "license": "MIT",
       "description": "Poki SDK native extension for Defold game engine",
       "docs": [
@@ -534,6 +566,7 @@
       "repo": "https://github.com/defold/extension-prometheus",
       "ref": "2.0.3",
       "refKind": "release",
+      "refDate": "2026-02-09T10:08:29Z",
       "license": "MIT",
       "description": "Lua obfuscation using Prometheus",
       "docs": []
@@ -556,6 +589,7 @@
       "repo": "https://github.com/defold/extension-push",
       "ref": "4.2.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:34:06Z",
       "license": "MIT",
       "description": "This is a Defold native extension which provides access to Push Notifications functionality on iOs and Android devices.",
       "docs": [
@@ -570,6 +604,7 @@
       "repo": "https://github.com/defold/extension-qrcode",
       "ref": "1.1",
       "refKind": "release",
+      "refDate": "2018-05-22T09:00:17Z",
       "license": "MIT",
       "description": "A small extension to encode and decode QR codes.",
       "docs": []
@@ -586,6 +621,7 @@
       "repo": "https://github.com/defold/extension-review",
       "ref": "3.2.3",
       "refKind": "release",
+      "refDate": "2026-09-05T15:01:18Z",
       "license": "MIT",
       "description": "Native iOS and Android ratings and reviews window for Defold",
       "docs": [
@@ -600,6 +636,7 @@
       "repo": "https://github.com/defold/extension-rive",
       "ref": "13.1.0",
       "refKind": "release",
+      "refDate": "2026-09-05T07:45:00Z",
       "license": "MIT",
       "description": "Adding Rive.app support to the Defold engine",
       "docs": [
@@ -619,6 +656,7 @@
       "repo": "https://github.com/defold/extension-safearea",
       "ref": "1.5.2",
       "refKind": "release",
+      "refDate": "2025-11-14T22:45:22Z",
       "license": "MIT",
       "description": "Simple native extension library for Defold that will change the view/render of a game to fit into the safe area on newer iPhones.",
       "docs": [
@@ -633,6 +671,7 @@
       "repo": "https://github.com/defold/extension-simpledata",
       "ref": "v1.2.0",
       "refKind": "release",
+      "refDate": "2026-02-03T08:23:01Z",
       "license": "MIT",
       "description": "Example how to bring custom data to a game object",
       "docs": []
@@ -641,6 +680,7 @@
       "repo": "https://github.com/defold/extension-siwa",
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2025-02-22T09:22:37Z",
       "license": "MIT",
       "description": "Sign in with Apple extension for Defold",
       "docs": [
@@ -655,6 +695,7 @@
       "repo": "https://github.com/defold/extension-spine",
       "ref": "4.8.0",
       "refKind": "release",
+      "refDate": "2026-09-06T11:36:06Z",
       "license": "NOASSERTION",
       "description": "The Defold specific Spine runtime implementation",
       "docs": [
@@ -679,6 +720,7 @@
       "repo": "https://github.com/defold/extension-steam",
       "ref": "1.15.0",
       "refKind": "release",
+      "refDate": "2026-06-20T20:29:20Z",
       "license": "MIT",
       "description": "Steamworks SDK integration with Defold",
       "docs": [
@@ -693,6 +735,7 @@
       "repo": "https://github.com/defold/extension-teal",
       "ref": "v1.5",
       "refKind": "release",
+      "refDate": "2026-07-29T09:49:53Z",
       "license": "MIT",
       "description": "Defold transpilation support for Teal",
       "docs": []
@@ -701,6 +744,7 @@
       "repo": "https://github.com/defold/extension-texturepacker",
       "ref": "2.7.0",
       "refKind": "release",
+      "refDate": "2026-04-29T15:33:21Z",
       "license": "MIT",
       "description": "Adds support for the TexturePacker atlas format",
       "docs": []
@@ -709,6 +753,7 @@
       "repo": "https://github.com/defold/extension-videoplayer",
       "ref": "1.0.0",
       "refKind": "tag",
+      "refDate": "2025-11-21T14:28:26Z",
       "license": "MIT",
       "description": "Videoplayer for the Defold engine",
       "docs": []
@@ -717,6 +762,7 @@
       "repo": "https://github.com/defold/extension-videoplayer-mpeg",
       "ref": "1.1.1",
       "refKind": "release",
+      "refDate": "2025-06-28T18:56:13Z",
       "license": "MIT",
       "description": "Native extension to play back mpeg1 video using pl_mpeg",
       "docs": [
@@ -731,6 +777,7 @@
       "repo": "https://github.com/defold/extension-videoplayer-native",
       "ref": "1.4.0",
       "refKind": "release",
+      "refDate": "2026-09-04T11:20:41Z",
       "license": "MIT",
       "description": "Videoplayer extension using native views",
       "docs": [
@@ -745,6 +792,7 @@
       "repo": "https://github.com/defold/extension-vulkan",
       "ref": "1.1.0",
       "refKind": "release",
+      "refDate": "2020-10-31T16:05:01Z",
       "license": "MIT",
       "description": "Enables support for Vulkan graphics",
       "docs": []
@@ -753,6 +801,7 @@
       "repo": "https://github.com/defold/extension-webmonetization",
       "ref": "4.0.0",
       "refKind": "release",
+      "refDate": "2024-04-11T13:04:09Z",
       "license": "MIT",
       "description": "Defold integration to the Web Monetization API",
       "docs": []
@@ -761,6 +810,7 @@
       "repo": "https://github.com/defold/extension-websocket",
       "ref": "4.2.4",
       "refKind": "release",
+      "refDate": "2026-08-22T06:48:33Z",
       "license": "MIT",
       "description": "A native websocket implementation for Defold",
       "docs": [
@@ -783,6 +833,7 @@
       "repo": "https://github.com/defold/extension-webview",
       "ref": "1.5.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:33:21Z",
       "license": "MIT",
       "description": "Defold extension for creating and controlling webviews to show html pages or evaluate javascript.",
       "docs": [
@@ -797,6 +848,7 @@
       "repo": "https://github.com/defold/extension-xsolla",
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2025-06-10T22:30:46Z",
       "license": "MIT",
       "description": "Xsolla integration for Defold",
       "docs": [
@@ -811,6 +863,7 @@
       "repo": "https://github.com/defold/extension-zendesk",
       "ref": "1.0.1",
       "refKind": "release",
+      "refDate": "2026-09-05T14:55:11Z",
       "license": "MIT",
       "description": "Zendesk SDK integration for Defold",
       "docs": [

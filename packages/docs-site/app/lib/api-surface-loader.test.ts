@@ -410,7 +410,25 @@ describe("Defold extensions under Libraries", () => {
     expect(pages.find((p) => p.route === "/api/extension-camera")?.category).toBe("library");
   });
 
-  function libraryTypesWithDefoldPages(pages: string[]): string {
+  interface PinDating {
+    refDate?: string;
+    engineReleases?: { version: string; date: string }[];
+  }
+
+  function writeEngineReleases(dir: string, dating: PinDating): void {
+    if (!dating.engineReleases) return;
+    writeFileSync(
+      join(dir, "defold-engine-releases.json"),
+      JSON.stringify({ releases: dating.engineReleases }),
+    );
+  }
+
+  const ENGINE_RELEASES = [
+    { version: "1.9.1", date: "2024-07-22T08:00:00Z" },
+    { version: "1.9.0", date: "2024-06-25T11:35:28Z" },
+  ];
+
+  function libraryTypesWithDefoldPages(pages: string[], dating: PinDating = {}): string {
     const dir = mkdtempSync(join(tmpdir(), "defold-extensions-loader-"));
     cpSync(LIBRARY_FIXTURE_DIR, dir, { recursive: true });
     mkdirSync(join(dir, "defold-extensions", "api-doc"), { recursive: true });
@@ -427,12 +445,14 @@ describe("Defold extensions under Libraries", () => {
           repo: `https://github.com/defold/extension-${index}`,
           ref: "1.0.0",
           refKind: "release",
+          ...(dating.refDate ? { refDate: dating.refDate } : {}),
           license: "MIT",
           description: "",
           docs: [{ path: `api/${page}.script_api`, namespace: page, page }],
         })),
       }),
     );
+    writeEngineReleases(dir, dating);
     return dir;
   }
 
@@ -485,16 +505,22 @@ describe("Defold extensions under Libraries", () => {
     "",
   ].join("\n");
 
-  function libraryTypesWithListings(repos: string[], summaries: Record<string, string>): string {
+  function libraryTypesWithListings(
+    repos: string[],
+    summaries: Record<string, string>,
+    dating: PinDating & { refKind?: "release" | "tag" | "commit" } = {},
+  ): string {
     const dir = mkdtempSync(join(tmpdir(), "defold-listings-loader-"));
     mkdirSync(join(dir, "defold-extensions", "summaries"), { recursive: true });
+    writeEngineReleases(dir, dating);
     writeFileSync(
       join(dir, "defold-extensions.json"),
       JSON.stringify({
         libraries: repos.map((repo) => ({
           repo: `https://github.com/defold/${repo}`,
           ref: "1.0.0",
-          refKind: "release",
+          refKind: dating.refKind ?? "release",
+          ...(dating.refDate ? { refDate: dating.refDate } : {}),
           license: "MIT",
           description: "",
           docs: [],
@@ -625,6 +651,60 @@ describe("Defold extensions under Libraries", () => {
       const dir = libraryTypesWithListings(["extension-tuner"], { "extension-tuner": body });
       expect(() => defoldListingsFromManifest(dir)).toThrow(/summaries\/extension-tuner\.md/);
     }
+  });
+
+  test("a dated release pin's page names the Defold version current when it was cut", () => {
+    const dated = libraryTypesWithDefoldPages(["fresh"], {
+      refDate: "2024-07-01T00:00:00Z",
+      engineReleases: ENGINE_RELEASES,
+    });
+    expect(loadLibraryProvenance(dated)("fresh").releaseEra).toBe("1.9.0");
+  });
+
+  test("a page without a pin date, or beside no engine releases list, names no era", () => {
+    const undated = libraryTypesWithDefoldPages(["fresh"], { engineReleases: ENGINE_RELEASES });
+    expect(loadLibraryProvenance(undated)("fresh")).not.toHaveProperty("releaseEra");
+    const noReleases = libraryTypesWithDefoldPages(["fresh"], { refDate: "2024-07-01T00:00:00Z" });
+    expect(loadLibraryProvenance(noReleases)("fresh")).not.toHaveProperty("releaseEra");
+  });
+
+  test("a dated tag-pinned listing names the Defold version current when it was cut", () => {
+    const summaries = { "extension-tuner": structuredSummary };
+    const [dated] = defoldListingsFromManifest(
+      libraryTypesWithListings(["extension-tuner"], summaries, {
+        refKind: "tag",
+        refDate: "2024-08-01T00:00:00Z",
+        engineReleases: ENGINE_RELEASES,
+      }),
+    );
+    expect(dated?.releaseEra).toBe("1.9.1");
+    const [undated] = defoldListingsFromManifest(
+      libraryTypesWithListings(["extension-tuner"], summaries, {
+        refKind: "tag",
+        engineReleases: ENGINE_RELEASES,
+      }),
+    );
+    expect(undated).not.toHaveProperty("releaseEra");
+    const [noReleases] = defoldListingsFromManifest(
+      libraryTypesWithListings(["extension-tuner"], summaries, {
+        refKind: "tag",
+        refDate: "2024-08-01T00:00:00Z",
+      }),
+    );
+    expect(noReleases).not.toHaveProperty("releaseEra");
+  });
+
+  test("the committed manifest dates every release and tag pin and no commit pin", () => {
+    const { libraries } = JSON.parse(
+      readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+    ) as { libraries: { repo: string; refKind: string; refDate?: string }[] };
+    for (const entry of libraries) {
+      if (entry.refKind === "commit") expect(entry).not.toHaveProperty("refDate");
+      else expect(Number.isNaN(Date.parse(entry.refDate ?? ""))).toBe(false);
+    }
+    expect(loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("iap").releaseEra).toMatch(
+      /^\d+\.\d+\.\d+$/,
+    );
   });
 
   test("a Defold page key equal to a vendored library namespace or another Defold key throws", () => {

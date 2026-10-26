@@ -18,6 +18,11 @@ import {
   type CombinedSurface,
   type SignaturesArtifact,
 } from "./combined-surface";
+import {
+  type DefoldEngineRelease,
+  loadDefoldEngineReleases,
+  releaseEra,
+} from "./defold-release-era";
 import { repoTreeUrl } from "./forge";
 import { parseFrontmatter } from "./frontmatter";
 import { parseGlobalTypes } from "./global-types";
@@ -101,9 +106,19 @@ interface DefoldExtensionEntry {
   repo: string;
   ref: string;
   refKind: "release" | "tag" | "commit";
+  // When a release or tag pin was cut; a commit pin carries none.
+  refDate?: string;
   license: string;
   description: string;
   docs: { path: string; namespace: string; page: string }[];
+}
+
+function eraOf(
+  entry: Pick<DefoldExtensionEntry, "refDate">,
+  releases: readonly DefoldEngineRelease[],
+): { releaseEra?: string } {
+  const era = entry.refDate ? releaseEra(entry.refDate, releases) : undefined;
+  return era === undefined ? {} : { releaseEra: era };
 }
 
 // Defold's own libraries, surveyed from the `defold` GitHub org by
@@ -404,6 +419,7 @@ function parseListingSummary(
 export function defoldListingsFromManifest(libraryTypesDir: string): LibraryListing[] {
   const summariesDir = join(libraryTypesDir, "defold-extensions", "summaries");
   const untyped = loadDefoldExtensions(libraryTypesDir).filter((entry) => entry.docs.length === 0);
+  const engineReleases = loadDefoldEngineReleases(libraryTypesDir);
   const untypedRepos = new Set(untyped.map((entry) => githubRepo(entry.repo)));
   if (existsSync(summariesDir)) {
     for (const file of readdirSync(summariesDir)) {
@@ -450,6 +466,7 @@ export function defoldListingsFromManifest(libraryTypesDir: string): LibraryList
         url: entry.repo,
         ref: entry.ref,
         pinKind: entry.refKind,
+        ...eraOf(entry, engineReleases),
         description: entry.description,
         official: true as const,
         route: `/libraries/${owner}/${repo}`,
@@ -655,11 +672,13 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
   const portalDocs = portalScriptApiDocs(libraryTypesDir);
   const engineNamespaces = engineNamespacesBesideLibraryTypes(libraryTypesDir);
   const nativeTargets = loadNativeTargets(libraryTypesDir);
+  const engineReleases = loadDefoldEngineReleases(libraryTypesDir);
 
   // A `.script_api` page, Defold's or the portal's, is pinned to the release,
   // tag or commit its manifest recorded, and imported as the module `resolve`
   // writes for it. A doc adding members to an engine namespace stays that
-  // ambient global, as `resolve` keeps it.
+  // ambient global, as `resolve` keeps it. A dated pin names the Defold version
+  // current when it was cut; only Defold's own manifest records pin dates.
   const scriptApiMeta = (
     entry: DefoldExtensionEntry,
     doc: DefoldExtensionEntry["docs"][number],
@@ -674,6 +693,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
       license: entry.license,
       authoredHere: true,
       pinKind: entry.refKind,
+      ...eraOf(entry, engineReleases),
       ...(extendsEngine
         ? { usage: "ambient", globalNamespace: doc.namespace, extendsNamespace: doc.namespace }
         : { usage: "import" }),
