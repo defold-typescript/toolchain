@@ -1190,12 +1190,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other seventy-three targets share no variadic member at all", () => {
+  test("the other seventy-four targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(73);
+    expect(untouched.length).toBe(74);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2172,6 +2172,40 @@ describe("ads_wrapper.ads_networks.admob declares the whole of its upstream", ()
 
   test("every api-doc member carries a description, and no upstream prose is dropped", () => {
     const members = apiDocElements(target("ads_wrapper.ads_networks.admob")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `printer.lua` carries no annotations. Its one field is `M.printers = {}` and its 11
+// functions are column-0 definitions that each take the instance `new` returns as `self`,
+// except `play_sound` and the three style registrars. It has no member prose either, so
+// the description check reads the api-doc, as for admob.
+describe("printer.printer declares the whole of its upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("printer"));
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(11);
+    expect(report.upstreamFields).toBe(1);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description, and no upstream prose is dropped", () => {
+    const members = apiDocElements(target("printer")).filter(
       (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
     );
     expect(new Set(members.map((element) => element.name)).size).toBe(

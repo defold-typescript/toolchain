@@ -848,6 +848,17 @@
       "generated": "generated/ads_wrapper.ads_networks.admob.d.ts",
       "apiDoc": "api-doc/ads_wrapper.ads_networks.admob.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-ads-wrapper/ads_wrapper/ads_networks/admob.lua"]
+    },
+    {
+      "repo": "https://github.com/Insality/defold-printer",
+      "ref": "1.2.2",
+      "license": "MIT",
+      "authored": "fixtures/authored/printer.printer.d.ts",
+      "moduleId": "printer.printer",
+      "namespace": "printer",
+      "generated": "generated/printer.d.ts",
+      "apiDoc": "api-doc/printer.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-printer/printer/printer.lua"]
     }
   ]
 }
