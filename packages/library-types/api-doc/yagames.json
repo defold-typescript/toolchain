@@ -38,6 +38,42 @@
       "returnvalues": []
     },
     {
+      "type": "VARIABLE",
+      "name": "ysdk_ready",
+      "brief": "`true` once `init` has succeeded; the calls that need the SDK assert it before they run.",
+      "description": "`true` once `init` has succeeded; the calls that need the SDK assert it before they run.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "payments_ready",
+      "brief": "`true` after the latest `payments_init` succeeded; the purchase calls assert it before they run.",
+      "description": "`true` after the latest `payments_init` succeeded; the purchase calls assert it before they run.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "player_ready",
+      "brief": "`true` after the latest `player_init` succeeded; the player calls assert it before they run.",
+      "description": "`true` after the latest `player_init` succeeded; the player calls assert it before they run.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "banner_ready",
+      "brief": "Starts as `false`, and no call in this version of the library sets it, so it stays `false`.",
+      "description": "Starts as `false`, and no call in this version of the library sets it, so it stays `false`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
       "type": "FUNCTION",
       "name": "adv_show_fullscreen_adv",
       "brief": "Calls the fullscreen ad.",
