@@ -205,6 +205,21 @@ describe("applyAnnotationOverrides", () => {
     expect(fn?.params.find((p) => p.name === "a")?.isOptional).toBe(false);
   });
 
+  test("replaces a named module-function param's types and leaves its optionality and siblings unchanged", () => {
+    const model = moduleFnModel();
+    const b = model.moduleFunctions[0]?.params.find((p) => p.name === "b");
+    if (!b) throw new Error("moduleFnModel lost param b");
+    b.isOptional = true;
+    const overrides: AnnotationOverrides = {
+      moduleFunctions: { f: { params: { b: { type: "fun(x: string)" } } } },
+    };
+    const result = applyAnnotationOverrides(model, overrides);
+    const fn = result.moduleFunctions.find((f) => f.name === "f");
+    expect(fn?.params.find((p) => p.name === "b")?.types).toEqual(["fun(x: string)"]);
+    expect(fn?.params.find((p) => p.name === "b")?.isOptional).toBe(true);
+    expect(fn?.params.find((p) => p.name === "a")?.types).toEqual(["string"]);
+  });
+
   test("replaces a named interface method's returns with a single override-typed entry", () => {
     const model = interfaceModel();
     const overrides: AnnotationOverrides = {
@@ -230,6 +245,14 @@ describe("applyAnnotationOverrides", () => {
     expect(() =>
       applyAnnotationOverrides(moduleFnModel(), {
         moduleFunctions: { f: { params: { nope: { optional: true } } } },
+      }),
+    ).toThrow(/nope/);
+  });
+
+  test("throws naming an absent module-function param when the override only sets a type", () => {
+    expect(() =>
+      applyAnnotationOverrides(moduleFnModel(), {
+        moduleFunctions: { f: { params: { nope: { type: "string" } } } },
       }),
     ).toThrow(/nope/);
   });

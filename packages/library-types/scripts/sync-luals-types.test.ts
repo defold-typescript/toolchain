@@ -991,6 +991,21 @@ describe("ads_wrapper's meta network class reaches the model as dot-called metho
   });
 });
 
+describe("ads_wrapper.queue.add takes the queue function run calls", () => {
+  test("add's fn param carries exactly the configured override token", () => {
+    const target = readLualsTargets(PACKAGE_ROOT).find((t) => t.moduleId === "ads_wrapper.queue");
+    if (!target) throw new Error("ads_wrapper.queue target missing from luals-targets.json");
+    const token = target.annotationOverrides?.moduleFunctions?.add?.params?.fn?.type;
+    if (token === undefined) {
+      throw new Error("ads_wrapper.queue carries no annotationOverrides type for add's fn param");
+    }
+    const add = buildTargetModel(PACKAGE_ROOT, target).moduleFunctions.find(
+      (f) => f.name === "add",
+    );
+    expect(add?.params.find((p) => p.name === "fn")?.types).toEqual([token]);
+  });
+});
+
 describe("log's dropped call signature matches the runtime's non-callable logger", () => {
   function logTarget(): LualsTarget {
     const log = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "log");

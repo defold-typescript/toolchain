@@ -36,6 +36,21 @@ ads_wrapper.init(true, true, (response) => {
 
 queue.set_verbose_mode(events.V_ALL);
 
+// run calls each queued function as fn(network, callback, params).
+const q = queue.create();
+queue.add(q, (network, callback, params) => {
+  network.init(callback, params);
+});
+const queueId = queue.run(q, test.network1, (response) => {
+  const done: boolean = response.result === events.SUCCESS;
+  void done;
+});
+queue.cancel(queueId);
+// @ts-expect-error a queued function receives the network, not a response
+queue.add(q, (response: queue.ads_response) => {
+  void response;
+});
+
 const onHtml5: boolean = platform.is_same(platform.PL_HTML5);
 const supported: boolean = test.network1.is_supported();
 void onHtml5;
