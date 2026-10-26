@@ -1,0 +1,473 @@
+{
+  "info": {
+    "namespace": "printer",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "printers",
+      "brief": "A table the module creates and never reads.",
+      "description": "A table the module creates and never reads.",
+      "types": [
+        "LuaTable"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates a printer instance on a gui scene that holds a printer template. The",
+      "description": "Creates a printer instance on a gui scene that holds a printer template. The\nmodule reads the template's `prefab`, `prefab_icon` and `text_parent` nodes, and\nplaces text from the top left of `text_parent`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui script's `self`.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "template_name",
+          "doc": "The name of the printer template in the gui scene.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Printer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "print",
+      "brief": "Starts printing text on an instance. Wrap a style name in braces to switch style",
+      "description": "Starts printing text on an instance. Wrap a style name in braces to switch style\n(`{red}`), use `{/}` to return to the default style, `{n}` for a line break and\n`{image:name}` for an image.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The printer instance, created by `new`.",
+          "types": [
+            "Printer"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "str",
+          "doc": "The text to print.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "source",
+          "doc": "A source added with `add_source_style`, whose style replaces the default style for this text.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "`true` when the text starts printing; `false` when the previous text was still printing, which instead appears at once.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "instant_appear",
+      "brief": "Makes every symbol of the current text visible at once, unless its style sets",
+      "description": "Makes every symbol of the current text visible at once, unless its style sets\n`can_skip` to `false`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The printer instance, created by `new`.",
+          "types": [
+            "Printer"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fadeout",
+      "brief": "Stops printing and fades every symbol of the current text out over 0.3 seconds.",
+      "description": "Stops printing and fades every symbol of the current text out over 0.3 seconds.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The printer instance, created by `new`.",
+          "types": [
+            "Printer"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clear",
+      "brief": "Deletes all of the current printed text.",
+      "description": "Deletes all of the current printed text.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The printer instance, created by `new`.",
+          "types": [
+            "Printer"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Advances printing and the text shake. Call it from the gui script's `update`.",
+      "description": "Advances printing and the text shake. Call it from the gui script's `update`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The printer instance, created by `new`.",
+          "types": [
+            "Printer"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "The `dt` of the gui script's `update`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Deletes the printed text and stops printing. Call it from the gui script's `final`.",
+      "description": "Deletes the printed text and stops printing. Call it from the gui script's `final`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The printer instance, created by `new`.",
+          "types": [
+            "Printer"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "play_sound",
+      "brief": "Called whenever a symbol with a style `sound` appears; it does nothing until a",
+      "description": "Called whenever a symbol with a style `sound` appears; it does nothing until a\nproject replaces it with its own sound playback. A namespace import is read-only,\nso assign through a cast that keeps the function free of `self`:\n`(printer as { play_sound: (this: void, name: string) => void }).play_sound = (name) => { ... }`.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "The `sound` of the symbol's style.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_styles",
+      "brief": "Adds styles to the module, shared by every instance. A style with an existing name",
+      "description": "Adds styles to the module, shared by every instance. A style with an existing name\nreplaces it, and a style named `default` replaces the default style.",
+      "parameters": [
+        {
+          "name": "styles_new",
+          "doc": "The styles, keyed by style name.",
+          "types": [
+            "Record<string, PrinterStyle>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_source_style",
+      "brief": "Adds a source style: a `print` given this source uses the style in place of the",
+      "description": "Adds a source style: a `print` given this source uses the style in place of the\ndefault style.",
+      "parameters": [
+        {
+          "name": "source",
+          "doc": "The source name to pass to `print`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "style",
+          "doc": "The style name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_word_style",
+      "brief": "Adds a word style: every occurrence of the word in printed text is wrapped in the",
+      "description": "Adds a word style: every occurrence of the word in printed text is wrapped in the\nstyle, then returns to the default style. The match is case sensitive.",
+      "parameters": [
+        {
+          "name": "word",
+          "doc": "The text to style.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "style",
+          "doc": "The style name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Printer",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "print",
+          "brief": "Starts printing text. Wrap a style name in braces to switch style (`{red}`), use",
+          "description": "Starts printing text. Wrap a style name in braces to switch style (`{red}`), use\n`{/}` to return to the default style, `{n}` for a line break and `{image:name}`\nfor an image.",
+          "parameters": [
+            {
+              "name": "str",
+              "doc": "The text to print.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "source",
+              "doc": "A source added with `add_source_style`, whose style replaces the default style for this text.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "`true` when the text starts printing; `false` when the previous text was still printing, which instead appears at once.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "instant_appear",
+          "brief": "Makes every symbol of the current text visible at once, unless its style sets `can_skip` to `false`.",
+          "description": "Makes every symbol of the current text visible at once, unless its style sets `can_skip` to `false`.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "fadeout",
+          "brief": "Stops printing and fades every symbol of the current text out over 0.3 seconds.",
+          "description": "Stops printing and fades every symbol of the current text out over 0.3 seconds.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clear",
+          "brief": "Deletes all of the current printed text.",
+          "description": "Deletes all of the current printed text.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "update",
+          "brief": "Advances printing and the text shake. Call it from the gui script's `update`.",
+          "description": "Advances printing and the text shake. Call it from the gui script's `update`.",
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "The `dt` of the gui script's `update`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "final",
+          "brief": "Deletes the printed text and stops printing. Call it from the gui script's `final`.",
+          "description": "Deletes the printed text and stops printing. Call it from the gui script's `final`.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "is_print",
+          "brief": "Whether the printer is printing text now. It is unset until the first `print`,",
+          "description": "Whether the printer is printing text now. It is unset until the first `print`,\n`fadeout` or `final`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PrinterStyle",
+      "properties": [
+        {
+          "name": "font_height",
+          "brief": "In pixels, the height of every symbol or image. It also sets where a new line starts.",
+          "description": "In pixels, the height of every symbol or image. It also sets where a new line starts.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "spacing",
+          "brief": "In pixels, the horizontal distance between symbols.",
+          "description": "In pixels, the horizontal distance between symbols.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "scale",
+          "brief": "The scale of every symbol.",
+          "description": "The scale of every symbol.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "speed",
+          "brief": "In seconds, the time between printing one symbol and the next.",
+          "description": "In seconds, the time between printing one symbol and the next.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "appear",
+          "brief": "In seconds, how long a symbol takes to fade in from alpha 0 to 1.",
+          "description": "In seconds, how long a symbol takes to fade in from alpha 0 to 1.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "shaking",
+          "brief": "In pixels, how far every symbol in this style shakes. `0` disables it.",
+          "description": "In pixels, how far every symbol in this style shakes. `0` disables it.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "shake_on_write",
+          "brief": "In pixels, how far the whole text shakes when a symbol in this style appears. `0` disables it.",
+          "description": "In pixels, how far the whole text shakes when a symbol in this style appears. `0` disables it.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "color",
+          "brief": "The hex color code of every symbol in this style, for example `\"#CACACA\"`.",
+          "description": "The hex color code of every symbol in this style, for example `\"#CACACA\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "waving",
+          "brief": "`true` makes the symbols wave up and down.",
+          "description": "`true` makes the symbols wave up and down.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "can_skip",
+          "brief": "`false` disables `instant_appear` while text in this style is appearing.",
+          "description": "`false` disables `instant_appear` while text in this style is appearing.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sound",
+          "brief": "The sound name passed to `play_sound` when a symbol appears, or `false` for none.",
+          "description": "The sound name passed to `play_sound` when a symbol appears, or `false` for none.",
+          "types": [
+            "string | false"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

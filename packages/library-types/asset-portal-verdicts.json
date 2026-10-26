@@ -2,6 +2,7 @@
   "verdicts": {
     "asset-store": "editor script only",
     "defold-graph-pathfinder": "closed-source license at 0.0.4 grants no right to redistribute its source, so no registering C++ can be vendored for a parity floor",
+    "dirtylarry": "no license file at 09d07c6 (master head) and GitHub reports none, so its Lua cannot be vendored for a parity floor",
     "editor-script-check-dependencies-versions": "editor script only",
     "lowrezjamtemplate": "project template, not a dependency",
     "physics-tools": "editor script with plugin binaries, no runtime module",
