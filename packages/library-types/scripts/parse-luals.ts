@@ -22,9 +22,14 @@ export interface LibraryModel {
   // so a module with a plain returned table carries no key.
   moduleObject?: string;
   // Each column-0 `<table>.<NAME>` that starts a non-function assignment, in source
-  // order: the names an unannotated constant can be typed under via the
-  // `moduleConstants` override. Omitted when empty, like `moduleObject`.
-  moduleAssignments?: string[];
+  // order, with its receiver: an unannotated constant can be typed via the
+  // `moduleConstants` override only under a name assigned on `moduleReturn`. Omitted
+  // when empty, like `moduleObject`.
+  moduleAssignments?: { table: string; name: string }[];
+  // The identifier of the last column-0 `return <ident>` in the file: the table the
+  // module hands back. Omitted when the file has none (a dotted or call-expression
+  // return, or only indented ones).
+  moduleReturn?: string;
   // Module-level constants the Lua assigns without an annotation, added by the
   // `moduleConstants` override and emitted as `export const`s. Omitted when empty.
   moduleConstants?: LibraryField[];
@@ -525,9 +530,10 @@ function parseFunctionDecl(line: string): FunctionDecl | null {
 
 const LOCAL_ASSIGN = /^local\s+([A-Za-z_]\w*)\s*=/;
 
-// `M.NAME = ...` or the first target of `M.NAME, M[1] = ...`; `M.NAME = function` is
-// matched as a module function first, so it never reaches this.
-const MODULE_ASSIGN = /^[A-Za-z_]\w*\.([A-Za-z_]\w*)\s*[=,]/;
+// `M.NAME = ...` or the first target of `M.NAME, M[1] = ...`, capturing the receiver
+// `M` and the field `NAME`; `M.NAME = function` is matched as a module function first,
+// so it never reaches this.
+const MODULE_ASSIGN = /^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*[=,]/;
 
 /**
  * Scan one LuaLS-annotated source into a `LibraryModel`. Only column-0 lines are
@@ -545,7 +551,8 @@ export function parseLualsSource(source: string): LibraryModel {
   const byName = new Map<string, LibraryInterface>();
   const aliases: LibraryAlias[] = [];
   const moduleFunctions: LibraryMethod[] = [];
-  const moduleAssignments: string[] = [];
+  const moduleAssignments: { table: string; name: string }[] = [];
+  let moduleReturn: string | undefined;
   const receiverBinding = new Map<string, string>();
 
   let pending = emptyPending();
@@ -794,7 +801,10 @@ export function parseLualsSource(source: string): LibraryModel {
 
     const moduleAssign = MODULE_ASSIGN.exec(raw);
     if (moduleAssign) {
-      moduleAssignments.push(moduleAssign[1] as string);
+      moduleAssignments.push({
+        table: moduleAssign[1] as string,
+        name: moduleAssign[2] as string,
+      });
       continue;
     }
 
@@ -806,9 +816,12 @@ export function parseLualsSource(source: string): LibraryModel {
     // public field, and it has no methods. A component/instance class (colon methods),
     // an opaque handle (no fields), or an `M`-aliased module table is a type consumers
     // reference or a plain namespace, so it stays a standalone interface.
+    // Any bare-identifier return is recorded as `moduleReturn` first, independent of
+    // those conditions; a later column-0 return replaces it.
     const returnStmt = /^return\s+([A-Za-z_][\w.]*)\s*$/.exec(raw);
     if (returnStmt) {
       const name = returnStmt[1] as string;
+      if (!name.includes(".")) moduleReturn = name;
       const resolvedName = receiverBinding.get(name) ?? (byName.has(name) ? name : undefined);
       const resolved = resolvedName ? byName.get(resolvedName) : undefined;
       if (
@@ -828,6 +841,7 @@ export function parseLualsSource(source: string): LibraryModel {
     moduleFunctions,
     ...(moduleObject ? { moduleObject } : {}),
     ...(moduleAssignments.length > 0 ? { moduleAssignments } : {}),
+    ...(moduleReturn ? { moduleReturn } : {}),
   };
 }
 

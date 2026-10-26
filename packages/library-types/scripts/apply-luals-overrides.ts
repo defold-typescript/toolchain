@@ -12,11 +12,11 @@
  * that describes the module table rather than the instance the emitted call signature
  * lands on (`callSignature`), a `---@class` bound to a module-table field assignment
  * (`M.x = event.create()`), which the parser does not model as a module value
- * (`moduleObject`), and an unannotated column-0 constant (`M.RES_BOTH = 3`), typed by a
- * LuaLS token and emitted as an `export const` (`moduleConstants`). Every named target
- * must exist — a missing function, param, interface, field, method, call signature, or
- * assigned constant throws naming the
- * absent key, mirroring `buildTargetModel`'s loud-fail on an absent `ownFile`, so a
+ * (`moduleObject`), and an unannotated column-0 constant (`M.RES_BOTH = 3`) on the table
+ * the module file returns, typed by a LuaLS token and emitted as an `export const`
+ * (`moduleConstants`). Every named target must exist — a missing function, param,
+ * interface, field, method, call signature, or constant assigned on the returned table
+ * throws naming the absent key, mirroring `buildTargetModel`'s loud-fail on an absent `ownFile`, so a
  * stale override never degrades into a silent no-op.
  */
 
@@ -152,9 +152,15 @@ export function applyAnnotationOverrides(
     const objectFields = model.interfaces.find((i) => i.name === model.moduleObject)?.fields ?? [];
     const moduleConstants = model.moduleConstants ?? [];
     for (const [name, constant] of constants) {
-      if (!model.moduleAssignments?.includes(name)) {
+      const assigned =
+        model.moduleReturn !== undefined &&
+        (model.moduleAssignments ?? []).some(
+          (a) => a.table === model.moduleReturn && a.name === name,
+        );
+      if (!assigned) {
+        const returned = model.moduleReturn ? ` ("${model.moduleReturn}")` : "";
         throw new Error(
-          `applyAnnotationOverrides: module constant "${name}" is not assigned at column 0 of the module file.`,
+          `applyAnnotationOverrides: module constant "${name}" is not assigned at column 0 on the table the module file returns${returned}.`,
         );
       }
       if (model.moduleFunctions.some((f) => f.name === name)) {

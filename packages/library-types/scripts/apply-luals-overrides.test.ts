@@ -405,7 +405,13 @@ function moduleConstantsModel(): LibraryModel {
     aliases: [],
     moduleFunctions: [{ name: "reset", brief: "", generics: [], params: [], returns: [] }],
     moduleObject: "M",
-    moduleAssignments: ["A", "reset", "K"],
+    moduleAssignments: [
+      { table: "M", name: "A" },
+      { table: "M", name: "reset" },
+      { table: "M", name: "K" },
+      { table: "Other", name: "X" },
+    ],
+    moduleReturn: "M",
   };
 }
 
@@ -425,6 +431,23 @@ describe("applyAnnotationOverrides moduleConstants", () => {
         moduleConstants: { GHOST: { type: "hash" } },
       }),
     ).toThrow(/"GHOST".*not assigned/);
+  });
+
+  test("throws naming the constant when only a table the module does not return assigns it", () => {
+    expect(() =>
+      applyAnnotationOverrides(moduleConstantsModel(), {
+        moduleConstants: { X: { type: "hash" } },
+      }),
+    ).toThrow(/"X".*not assigned/);
+  });
+
+  test("throws naming the constant when the module file returns no table", () => {
+    const { moduleReturn: _, ...model } = moduleConstantsModel();
+    expect(() =>
+      applyAnnotationOverrides(model, {
+        moduleConstants: { A: { type: "hash" } },
+      }),
+    ).toThrow(/"A".*not assigned/);
   });
 
   test("throws naming the constant when a module function has its name", () => {
