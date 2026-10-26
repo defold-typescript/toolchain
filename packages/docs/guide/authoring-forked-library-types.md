@@ -199,9 +199,16 @@ close and is ignored, which is what the column-0 rule buys.
 
 The reader also reads the entries of the returned table's constructor: a column-0
 `local M = {` whose entries run over the following lines gives each top-level
-`name = value` entry as a member, a `function(…)` value as a callable one, so
-`local M = { Client = Client }` counts `Client` as `M.Client = Client` would. A
-nested table's keys stay out. An entry it cannot name — a bracketed `["key"]` or a
+`name = value` entry as a member, a `function(…)` value as a callable one, so this
+constructor counts `Client` as `M.Client = Client` would:
+
+```lua
+local M = {
+  Client = Client,
+}
+```
+
+A nested table's keys stay out. An entry it cannot name — a bracketed `["key"]` or a
 positional value — or entries written on the opening line itself throw, for the same
 reason a delegating metatable does.
 

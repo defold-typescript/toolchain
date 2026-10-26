@@ -322,8 +322,9 @@ describe("yagames declares the whole callable surface yagames.lua defines", () =
   });
 
   // The field side is the four readiness flags `yagames.lua` opens its module table
-  // with (`local M = { ysdk_ready = false, … }`): the reader takes them from the
-  // returned table's constructor, so a fork that drops one reds `missingFields`.
+  // with (`ysdk_ready = false` and three more, one per line below `local M = {`): the
+  // reader takes them from the returned table's constructor, so a fork that drops one
+  // reds `missingFields`.
   test("the four readiness flags of the module table's constructor are declared", () => {
     expect(report.upstreamFields).toBe(4);
     expect(report.declaredFields).toBe(4);
@@ -2123,7 +2124,7 @@ describe("the GamePush entry module declares the whole of its upstream", () => {
 });
 
 // `sdk.lua`'s whole surface is the three entries of its returned table's constructor
-// (`local M = { Client = Client, callbacks = callbacks, protocol = protocol }`); every
+// (`Client`, `callbacks` and `protocol`, one per line below `local M = {`); every
 // method is reached through those values, so it is declared on interfaces and measured
 // by neither axis.
 describe("colyseus.sdk declares the three values its module table exports", () => {
