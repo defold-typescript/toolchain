@@ -800,7 +800,42 @@ describe("parseLualsSource module table assignments", () => {
         "return M",
       ),
     );
-    expect(model.moduleAssignments).toEqual(["A", "B"]);
+    expect(model.moduleAssignments).toEqual([
+      { table: "M", name: "A" },
+      { table: "M", name: "B" },
+    ]);
+    expect(model.moduleReturn).toBe("M");
+  });
+
+  test("keeps each assignment's receiver, so an assignment on another table stays distinct", () => {
+    const model = parseLualsSource(
+      lua("local M = {}", "local Other = {}", "Other.A = 1", "M.B = 2", "return M"),
+    );
+    expect(model.moduleAssignments).toEqual([
+      { table: "Other", name: "A" },
+      { table: "M", name: "B" },
+    ]);
+    expect(model.moduleReturn).toBe("M");
+  });
+
+  test("an indented or call-expression return sets no moduleReturn", () => {
+    const model = parseLualsSource(
+      lua(
+        "local M = {}",
+        "M.A = 1",
+        "function M.f()",
+        "  return M",
+        "end",
+        "return setmetatable(M, {})",
+      ),
+    );
+    expect("moduleReturn" in model).toBe(false);
+    expect(model.moduleAssignments).toEqual([{ table: "M", name: "A" }]);
+  });
+
+  test("a dotted return sets no moduleReturn", () => {
+    const model = parseLualsSource(lua("local M = {}", "M.A = 1", "return M.inner"));
+    expect("moduleReturn" in model).toBe(false);
   });
 
   test("a source with no column-0 table assignment carries no moduleAssignments key", () => {

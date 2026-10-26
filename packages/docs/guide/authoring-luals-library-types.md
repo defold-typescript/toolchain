@@ -187,10 +187,12 @@ live-unbundler writes `M.MSG_ALL_LOADED = hash("all_loaded")` and
 
 Each entry emits as a documented `export const MSG_ALL_LOADED: Hash;` and appears on
 the `/api` page, and its token counts toward the fidelity report like any annotation.
-Only a column-0 `M.NAME = ...` in the module's own file counts as an assignment, as
-does the first target of `M.DEBUG, M[1] = 1, "DEBUG"`. The override throws when the
-module file never assigns the name at column 0, when a module function has the same
-name, and when the module object's class already declares it as a field.
+Only a column-0 `M.NAME = ...` on the table the module's own file returns
+(`return M`) counts as an assignment, as does the first target of
+`M.DEBUG, M[1] = 1, "DEBUG"`; an assignment on another table, such as
+`Other.NAME = 1`, does not. The override throws when the returned table never has
+the name assigned at column 0, when a module function has the same name, and when
+the module object's class already declares it as a field.
 
 ## 2. Generate the artifacts
 
