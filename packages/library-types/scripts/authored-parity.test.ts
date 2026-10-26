@@ -1190,12 +1190,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other seventy-four targets share no variadic member at all", () => {
+  test("the other seventy-five targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(74);
+    expect(untouched.length).toBe(75);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2206,6 +2206,39 @@ describe("printer.printer declares the whole of its upstream", () => {
 
   test("every api-doc member carries a description, and no upstream prose is dropped", () => {
     const members = apiDocElements(target("printer")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `story.lua` exports one function, `M.create`. The story it returns is a table whose
+// members are assigned inside `create`, so the parity scan sees only `create`, and the
+// README is the only member prose, so the description check reads the api-doc.
+describe("ink.story declares the whole of its upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("ink"));
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(1);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description, and no upstream prose is dropped", () => {
+    const members = apiDocElements(target("ink")).filter(
       (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
     );
     expect(new Set(members.map((element) => element.name)).size).toBe(
