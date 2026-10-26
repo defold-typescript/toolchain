@@ -81,7 +81,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "`true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once unless the style of the symbol currently appearing sets `can_skip` to `false`, in which case it keeps printing.",
+          "doc": "`true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once only when the effective style of the symbol currently appearing has `can_skip` set to `true`; otherwise it keeps printing.",
           "types": [
             "boolean"
           ]
@@ -91,8 +91,8 @@
     {
       "type": "FUNCTION",
       "name": "instant_appear",
-      "brief": "Makes every symbol of the current text visible at once, unless the style of the",
-      "description": "Makes every symbol of the current text visible at once, unless the style of the\nsymbol currently appearing sets `can_skip` to `false`.",
+      "brief": "Makes every symbol of the current text visible at once, only when the effective",
+      "description": "Makes every symbol of the current text visible at once, only when the effective\nstyle of the symbol currently appearing has `can_skip` set to `true`; otherwise the\ntext keeps printing.",
       "parameters": [
         {
           "name": "self",
@@ -295,7 +295,7 @@
           "returnvalues": [
             {
               "name": "",
-              "doc": "`true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once unless the style of the symbol currently appearing sets `can_skip` to `false`, in which case it keeps printing.",
+              "doc": "`true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once only when the effective style of the symbol currently appearing has `can_skip` set to `true`; otherwise it keeps printing.",
               "types": [
                 "boolean"
               ]
@@ -305,8 +305,8 @@
         {
           "type": "FUNCTION",
           "name": "instant_appear",
-          "brief": "Makes every symbol of the current text visible at once, unless the style of the symbol currently appearing sets `can_skip` to `false`.",
-          "description": "Makes every symbol of the current text visible at once, unless the style of the symbol currently appearing sets `can_skip` to `false`.",
+          "brief": "Makes every symbol of the current text visible at once, only when the effective style of the symbol currently appearing has `can_skip` set to `true`; otherwise the text keeps printing.",
+          "description": "Makes every symbol of the current text visible at once, only when the effective style of the symbol currently appearing has `can_skip` set to `true`; otherwise the text keeps printing.",
           "parameters": [],
           "returnvalues": []
         },
@@ -451,8 +451,8 @@
         },
         {
           "name": "can_skip",
-          "brief": "`false` disables `instant_appear` while text in this style is appearing.",
-          "description": "`false` disables `instant_appear` while text in this style is appearing.",
+          "brief": "`true` lets `instant_appear` reveal text in this style at once. The default style sets it, so a style that omits it inherits it; a replacement `default` style that omits it disables `instant_appear`.",
+          "description": "`true` lets `instant_appear` reveal text in this style at once. The default style sets it, so a style that omits it inherits it; a replacement `default` style that omits it disables `instant_appear`.",
           "types": [
             "boolean"
           ],

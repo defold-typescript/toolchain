@@ -31,7 +31,7 @@ declare module 'printer.printer' {
     color?: string;
     /** `true` makes the symbols wave up and down. */
     waving?: boolean;
-    /** `false` disables `instant_appear` while text in this style is appearing. */
+    /** `true` lets `instant_appear` reveal text in this style at once. The default style sets it, so a style that omits it inherits it; a replacement `default` style that omits it disables `instant_appear`. */
     can_skip?: boolean;
     /** The sound name passed to `play_sound` when a symbol appears, or `false` for none. */
     sound?: string | false;
@@ -54,11 +54,11 @@ declare module 'printer.printer' {
      * for an image.
      * @param str The text to print.
      * @param source A source added with `add_source_style`. Its style is copied over the default style and becomes this text's base style, which `{/}` returns to.
-     * @returns `true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once unless the style of the symbol currently appearing sets `can_skip` to `false`, in which case it keeps printing.
+     * @returns `true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once only when the effective style of the symbol currently appearing has `can_skip` set to `true`; otherwise it keeps printing.
      */
     print(str: string, source?: string): boolean;
 
-    /** Makes every symbol of the current text visible at once, unless the style of the symbol currently appearing sets `can_skip` to `false`. */
+    /** Makes every symbol of the current text visible at once, only when the effective style of the symbol currently appearing has `can_skip` set to `true`; otherwise the text keeps printing. */
     instant_appear(): void;
 
     /** Stops printing and fades every symbol of the current text out over 0.3 seconds. */
@@ -97,13 +97,14 @@ declare module 'printer.printer' {
    * @param self The printer instance, created by `new`.
    * @param str The text to print.
    * @param source A source added with `add_source_style`. Its style is copied over the default style and becomes this text's base style, which `{/}` returns to.
-   * @returns `true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once unless the style of the symbol currently appearing sets `can_skip` to `false`, in which case it keeps printing.
+   * @returns `true` when the new text starts printing; `false` when text was still printing, so the new text did not start. `print` then calls `instant_appear`, which reveals that text at once only when the effective style of the symbol currently appearing has `can_skip` set to `true`; otherwise it keeps printing.
    */
   export function print(self: Printer, str: string, source?: string): boolean;
 
   /**
-   * Makes every symbol of the current text visible at once, unless the style of the
-   * symbol currently appearing sets `can_skip` to `false`.
+   * Makes every symbol of the current text visible at once, only when the effective
+   * style of the symbol currently appearing has `can_skip` set to `true`; otherwise the
+   * text keeps printing.
    * @param self The printer instance, created by `new`.
    */
   export function instant_appear(self: Printer): void;
