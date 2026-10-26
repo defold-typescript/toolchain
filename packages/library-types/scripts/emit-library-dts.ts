@@ -365,8 +365,9 @@ function renderInterface(
     const signatureParams = method.noSelf
       ? ["this: void", params].filter((part) => part !== "").join(", ")
       : params;
+    const optional = method.optional ? "?" : "";
     lines.push(
-      `${body}${memberKey(method.name)}${methodParams}(${signatureParams}): ${renderReturn(
+      `${body}${memberKey(method.name)}${optional}${methodParams}(${signatureParams}): ${renderReturn(
         method.returns,
         methodCtx,
       )};`,

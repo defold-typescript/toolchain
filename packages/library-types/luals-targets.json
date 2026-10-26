@@ -382,6 +382,15 @@
         "bool": "boolean"
       },
       "annotationOverrides": {
+        "interfaces": {
+          "ads_network": {
+            "methods": {
+              "request_idfa": { "optional": true },
+              "show_rewarded": { "params": { "params": { "type": "any" } } },
+              "show_interstitial": { "params": { "params": { "type": "any" } } }
+            }
+          }
+        },
         "moduleConstants": {
           "T_REWARDED": {
             "type": "hash",
@@ -413,6 +422,15 @@
         "bool": "boolean"
       },
       "annotationOverrides": {
+        "interfaces": {
+          "ads_network": {
+            "methods": {
+              "request_idfa": { "optional": true },
+              "show_rewarded": { "params": { "params": { "type": "any" } } },
+              "show_interstitial": { "params": { "params": { "type": "any" } } }
+            }
+          }
+        },
         "moduleConstants": {
           "ABORT": {
             "type": "hash",
@@ -476,6 +494,15 @@
         "bool": "boolean"
       },
       "annotationOverrides": {
+        "interfaces": {
+          "ads_network": {
+            "methods": {
+              "request_idfa": { "optional": true },
+              "show_rewarded": { "params": { "params": { "type": "any" } } },
+              "show_interstitial": { "params": { "params": { "type": "any" } } }
+            }
+          }
+        },
         "moduleConstants": {
           "PL_ANDROID": {
             "type": "hash",
@@ -511,6 +538,15 @@
         "bool": "boolean"
       },
       "annotationOverrides": {
+        "interfaces": {
+          "ads_network": {
+            "methods": {
+              "request_idfa": { "optional": true },
+              "show_rewarded": { "params": { "params": { "type": "any" } } },
+              "show_interstitial": { "params": { "params": { "type": "any" } } }
+            }
+          }
+        },
         "moduleFunctions": {
           "add": {
             "params": {
@@ -537,6 +573,15 @@
         "bool": "boolean"
       },
       "annotationOverrides": {
+        "interfaces": {
+          "ads_network": {
+            "methods": {
+              "request_idfa": { "optional": true },
+              "show_rewarded": { "params": { "params": { "type": "any" } } },
+              "show_interstitial": { "params": { "params": { "type": "any" } } }
+            }
+          }
+        },
         "moduleConstants": {
           "network1": {
             "type": "ads_network",
@@ -546,6 +591,337 @@
             "type": "ads_network",
             "doc": "Second test network, for trying mediation across two networks."
           }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/admob_legacy.lua"],
+      "moduleId": "ads_wrapper.ads_networks.admob_legacy",
+      "namespace": "ads_wrapper.ads_networks.admob_legacy",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/applovin_max.lua"],
+      "moduleId": "ads_wrapper.ads_networks.applovin_max",
+      "namespace": "ads_wrapper.ads_networks.applovin_max",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      },
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "set_banner_position": {
+            "params": {
+              "position": {
+                "type": "string"
+              }
+            }
+          },
+          "set_banner_size": {
+            "params": {
+              "size": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "moduleConstants": {
+          "POS_BOTTOM_CENTER": {
+            "type": "string",
+            "doc": "Bottom-center banner position, passed to `set_banner_position`."
+          },
+          "POS_BOTTOM_LEFT": {
+            "type": "string",
+            "doc": "Bottom-left banner position, passed to `set_banner_position`."
+          },
+          "POS_BOTTOM_RIGHT": {
+            "type": "string",
+            "doc": "Bottom-right banner position, passed to `set_banner_position`."
+          },
+          "POS_NONE": {
+            "type": "string",
+            "doc": "The `maxsdk.POS_NONE` banner position, passed to `set_banner_position`."
+          },
+          "POS_TOP_LEFT": {
+            "type": "string",
+            "doc": "Top-left banner position, passed to `set_banner_position`."
+          },
+          "POS_TOP_CENTER": {
+            "type": "string",
+            "doc": "Top-center banner position, passed to `set_banner_position`."
+          },
+          "POS_TOP_RIGHT": {
+            "type": "string",
+            "doc": "Top-right banner position, passed to `set_banner_position`."
+          },
+          "POS_CENTER": {
+            "type": "string",
+            "doc": "Centered banner position, passed to `set_banner_position`."
+          },
+          "SIZE_BANNER": {
+            "type": "string",
+            "doc": "Standard banner size, passed to `set_banner_size`; the default."
+          },
+          "SIZE_LEADER": {
+            "type": "string",
+            "doc": "Leaderboard banner size, passed to `set_banner_size`."
+          },
+          "SIZE_MREC": {
+            "type": "string",
+            "doc": "Medium-rectangle banner size, passed to `set_banner_size`."
+          }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/game_distribution.lua"],
+      "moduleId": "ads_wrapper.ads_networks.game_distribution",
+      "namespace": "ads_wrapper.ads_networks.game_distribution",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      },
+      "annotationOverrides": {
+        "moduleConstants": {
+          "LISTENER": {
+            "type": "hash",
+            "doc": "Params key for a `function(self, message_id, message)` listener that receives every GameDistribution message."
+          },
+          "SIZE_NONE": {
+            "type": "integer",
+            "doc": "Banner `size` option that sets no fixed size."
+          },
+          "SIZE_336x280": {
+            "type": "integer",
+            "doc": "Banner `size` option for a 336x280 banner; the default."
+          },
+          "SIZE_300x250": {
+            "type": "integer",
+            "doc": "Banner `size` option for a 300x250 banner."
+          },
+          "SIZE_970x250": {
+            "type": "integer",
+            "doc": "Banner `size` option for a 970x250 banner."
+          },
+          "SIZE_728x90": {
+            "type": "integer",
+            "doc": "Banner `size` option for a 728x90 banner."
+          },
+          "SIZE_120x600": {
+            "type": "integer",
+            "doc": "Banner `size` option for a 120x600 banner."
+          },
+          "SIZE_160x600": {
+            "type": "integer",
+            "doc": "Banner `size` option for a 160x600 banner."
+          }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/ironsource.lua"],
+      "moduleId": "ads_wrapper.ads_networks.ironsource",
+      "namespace": "ads_wrapper.ads_networks.ironsource",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/poki.lua"],
+      "moduleId": "ads_wrapper.ads_networks.poki",
+      "namespace": "ads_wrapper.ads_networks.poki",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/poki_legacy.lua"],
+      "moduleId": "ads_wrapper.ads_networks.poki_legacy",
+      "namespace": "ads_wrapper.ads_networks.poki_legacy",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/portalsdk.lua"],
+      "moduleId": "ads_wrapper.ads_networks.portalsdk",
+      "namespace": "ads_wrapper.ads_networks.portalsdk",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/unity.lua"],
+      "moduleId": "ads_wrapper.ads_networks.unity",
+      "namespace": "ads_wrapper.ads_networks.unity",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/vk.lua"],
+      "moduleId": "ads_wrapper.ads_networks.vk",
+      "namespace": "ads_wrapper.ads_networks.vk",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/yandex.lua"],
+      "moduleId": "ads_wrapper.ads_networks.yandex",
+      "namespace": "ads_wrapper.ads_networks.yandex",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "sourceGlobs": ["ads_wrapper/ads_networks/yandex_mobile.lua"],
+      "moduleId": "ads_wrapper.ads_networks.yandex_mobile",
+      "namespace": "ads_wrapper.ads_networks.yandex_mobile",
+      "typeRenames": {
+        "bool": "boolean"
+      },
+      "externalTypes": {
+        "ads_callback": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_callback"
+        },
+        "ads_response": {
+          "module": "ads_wrapper.ads_wrapper",
+          "name": "ads_response"
         }
       }
     }

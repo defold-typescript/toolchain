@@ -2,10 +2,12 @@
  * Per-target corrections applied to a parsed `LibraryModel` after the merge, for the
  * cases where upstream LuaLS annotations diverge from the library's runtime and the
  * fixtures freeze the annotation verbatim (so it is not hand-patchable in the fixture
- * or the emitted `.d.ts`). The nine shapes covered are a module function whose trailing
+ * or the emitted `.d.ts`). The ten shapes covered are a module function whose trailing
  * parameter is runtime-optional despite a non-`|nil` `@param`, a module function
  * parameter whose type token is wrong, an interface method
- * whose `@return` omits an alternative arm, an interface field whose type token is
+ * whose `@return` omits an alternative arm, an interface method the library checks
+ * for before calling it, so an implementation may omit it (`optional`), an interface
+ * field whose type token is
  * wrong or underspecified (a stray character, or an untyped `fun(...)` callback), an
  * interface method parameter with the same underspecification, an interface field
  * that only restates a member inherited from a parent, incompatibly enough that the
@@ -33,7 +35,10 @@ export interface AnnotationOverrides {
     {
       callSignature?: { drop?: boolean };
       fields?: Record<string, { type?: string; drop?: boolean }>;
-      methods?: Record<string, { return?: string; params?: Record<string, { type?: string }> }>;
+      methods?: Record<
+        string,
+        { return?: string; optional?: boolean; params?: Record<string, { type?: string }> }
+      >;
     }
   >;
   moduleObject?: { interface: string; fields: Record<string, { type: string }> };
@@ -102,6 +107,7 @@ export function applyAnnotationOverrides(
           { name: "", types: [methodOverride.return], doc: "", isOptional: false, isVararg: false },
         ];
       }
+      if (methodOverride.optional) method.optional = true;
       for (const [paramName, paramOverride] of Object.entries(methodOverride.params ?? {})) {
         const param = method.params.find((p) => p.name === paramName);
         if (!param) {

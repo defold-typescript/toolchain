@@ -82,6 +82,25 @@ function classShapeModel(): LibraryModel {
   };
 }
 
+function twoMethodModel(): LibraryModel {
+  return {
+    interfaces: [
+      {
+        name: "net",
+        generics: [],
+        brief: "",
+        fields: [],
+        methods: [
+          { name: "ping", brief: "", generics: [], params: [], returns: [], noSelf: true },
+          { name: "pong", brief: "", generics: [], params: [], returns: [], noSelf: true },
+        ],
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+}
+
 function overloadModel(): LibraryModel {
   return {
     interfaces: [
@@ -331,6 +350,35 @@ describe("applyAnnotationOverrides", () => {
         interfaces: { I: { methods: { init: { params: { nope: { type: "fun()" } } } } } },
       }),
     ).toThrow(/nope/);
+  });
+
+  test("marks a named interface method optional and leaves its siblings without the key", () => {
+    const result = applyAnnotationOverrides(twoMethodModel(), {
+      interfaces: { net: { methods: { ping: { optional: true } } } },
+    });
+    const methods = result.interfaces.find((i) => i.name === "net")?.methods;
+    expect(methods?.find((m) => m.name === "ping")?.optional).toBe(true);
+    expect(methods?.find((m) => m.name === "pong")).not.toHaveProperty("optional");
+  });
+
+  test("optional: false or an absent optional key leaves the method without the key", () => {
+    for (const override of [{ optional: false }, {}]) {
+      const result = applyAnnotationOverrides(twoMethodModel(), {
+        interfaces: { net: { methods: { ping: override } } },
+      });
+      const ping = result.interfaces
+        .find((i) => i.name === "net")
+        ?.methods.find((m) => m.name === "ping");
+      expect(ping).not.toHaveProperty("optional");
+    }
+  });
+
+  test("throws naming an absent method when an optional override targets it", () => {
+    expect(() =>
+      applyAnnotationOverrides(twoMethodModel(), {
+        interfaces: { net: { methods: { ghost: { optional: true } } } },
+      }),
+    ).toThrow(/ghost/);
   });
 
   test("a dropped field is removed while every sibling field and method survives", () => {
