@@ -919,6 +919,45 @@ describe("pigeon ingests its message API and drops the base letter's restated da
   });
 });
 
+describe("live_unbundler ingests its module file and types its unannotated constants", () => {
+  function liveUnbundlerTarget(): LualsTarget {
+    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "live_unbundler");
+    if (!found) throw new Error("live_unbundler target missing from luals-targets.json");
+    return found;
+  }
+
+  test("the module file feeds the 17 module functions and the 14 constants", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, liveUnbundlerTarget());
+    const names = model.moduleFunctions.filter(isPublicMethod).map((f) => f.name);
+    expect(names).toHaveLength(17);
+    for (const name of ["init", "request_module_load", "get_download_progress"]) {
+      expect(names).toContain(name);
+    }
+    expect(model.moduleConstants?.map((c) => c.name)).toEqual([
+      "MSG_INITIALIZED",
+      "MSG_INITIALIZATION_FAILED",
+      "MSG_FILE_LOADED",
+      "MSG_MODULE_LOADED",
+      "MSG_ALL_LOADED",
+      "MSG_NETWORK_ERROR",
+      "DEBUG",
+      "INFO",
+      "WARN",
+      "ERROR",
+      "FATAL",
+      "RES_HIGH_ONLY",
+      "RES_LOW_ONLY",
+      "RES_BOTH",
+    ]);
+  });
+
+  test("every LuaLS token live_unbundler writes, constants included, resolves", () => {
+    const report = buildTargetFidelity(PACKAGE_ROOT, liveUnbundlerTarget());
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.unknownFallbacks).toBe(0);
+  });
+});
+
 describe("log's dropped call signature matches the runtime's non-callable logger", () => {
   function logTarget(): LualsTarget {
     const log = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "log");

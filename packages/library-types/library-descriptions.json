@@ -70,6 +70,7 @@
   "lang": "Localization helpers for Defold: string tables, pluralization, and locale fallback.",
   "library-defold-persist": "Defold Persist provides a simple interface for saving and loading data in a Defold game engine project.",
   "library-defold-rendy": "Defold Rendy provides a versatile camera suite and render pipeline in a Defold game engine project.",
+  "live_unbundler": "Live Update helper for splitting large archives into smaller dependency-aware chunks, and downloading and mounting them at runtime.",
   "log": "Logger with Performance Metrics for Defold",
   "metrics.fps": "Calculate and display performance metrics in Defold games",
   "metrics.mem": "Calculate and display performance metrics in Defold games",

@@ -2,7 +2,7 @@
  * Per-target corrections applied to a parsed `LibraryModel` after the merge, for the
  * cases where upstream LuaLS annotations diverge from the library's runtime and the
  * fixtures freeze the annotation verbatim (so it is not hand-patchable in the fixture
- * or the emitted `.d.ts`). The seven shapes covered are a module function whose trailing
+ * or the emitted `.d.ts`). The eight shapes covered are a module function whose trailing
  * parameter is runtime-optional despite a non-`|nil` `@param`, an interface method
  * whose `@return` omits an alternative arm, an interface field whose type token is
  * wrong or underspecified (a stray character, or an untyped `fun(...)` callback), an
@@ -10,11 +10,12 @@
  * that only restates a member inherited from a parent, incompatibly enough that the
  * emitted redeclaration would not type-check (`drop`), a class-level `@overload`
  * that describes the module table rather than the instance the emitted call signature
- * lands on (`callSignature`), and a `---@class` bound to a module-table field assignment
+ * lands on (`callSignature`), a `---@class` bound to a module-table field assignment
  * (`M.x = event.create()`), which the parser does not model as a module value
- * (`moduleObject`). Every named target
- * must exist — a missing function, param, interface, field, method, or call signature
- * throws naming the
+ * (`moduleObject`), and an unannotated column-0 constant (`M.RES_BOTH = 3`), typed by a
+ * LuaLS token and emitted as an `export const` (`moduleConstants`). Every named target
+ * must exist — a missing function, param, interface, field, method, call signature, or
+ * assigned constant throws naming the
  * absent key, mirroring `buildTargetModel`'s loud-fail on an absent `ownFile`, so a
  * stale override never degrades into a silent no-op.
  */
@@ -32,6 +33,7 @@ export interface AnnotationOverrides {
     }
   >;
   moduleObject?: { interface: string; fields: Record<string, { type: string }> };
+  moduleConstants?: Record<string, { type: string; doc?: string }>;
 }
 
 export function applyAnnotationOverrides(
@@ -144,6 +146,35 @@ export function applyAnnotationOverrides(
       });
     }
     model.moduleObject = objectName;
+  }
+  const constants = Object.entries(overrides.moduleConstants ?? {});
+  if (constants.length > 0) {
+    const objectFields = model.interfaces.find((i) => i.name === model.moduleObject)?.fields ?? [];
+    const moduleConstants = model.moduleConstants ?? [];
+    for (const [name, constant] of constants) {
+      if (!model.moduleAssignments?.includes(name)) {
+        throw new Error(
+          `applyAnnotationOverrides: module constant "${name}" is not assigned at column 0 of the module file.`,
+        );
+      }
+      if (model.moduleFunctions.some((f) => f.name === name)) {
+        throw new Error(
+          `applyAnnotationOverrides: module constant "${name}" collides with a module function.`,
+        );
+      }
+      if (objectFields.some((f) => f.name === name)) {
+        throw new Error(
+          `applyAnnotationOverrides: module constant "${name}" is already declared by module object "${model.moduleObject}".`,
+        );
+      }
+      moduleConstants.push({
+        name,
+        types: [constant.type],
+        doc: constant.doc ?? "",
+        isOptional: false,
+      });
+    }
+    model.moduleConstants = moduleConstants;
   }
   return model;
 }

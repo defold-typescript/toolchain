@@ -89,8 +89,9 @@ function propertyElement(field: LibraryField, ctx: MapContext): Record<string, u
   };
 }
 
-// A module object's field lowered as a top-level `VARIABLE` — the ref-doc shape for a
-// module constant (`squid.TRACE`), matching the emitter's module-level `export const`.
+// A module object's field or a model module constant lowered as a top-level
+// `VARIABLE` — the ref-doc shape for a module constant (`squid.TRACE`), matching the
+// emitter's module-level `export const`.
 function variableElement(field: LibraryField, ctx: MapContext): Record<string, unknown> {
   return {
     type: "VARIABLE",
@@ -145,6 +146,11 @@ export function lowerLibraryModel(
       ...(properties.length > 0 ? { properties } : {}),
       ...(iface.deprecated !== undefined ? { deprecated: iface.deprecated } : {}),
     });
+  }
+
+  for (const constant of model.moduleConstants ?? []) {
+    if (!isPublicField(constant)) continue;
+    elements.push(variableElement(constant, ctx));
   }
 
   for (const alias of model.aliases) {
