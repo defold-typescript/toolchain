@@ -509,6 +509,17 @@
       "namespace": "ads_wrapper.queue",
       "typeRenames": {
         "bool": "boolean"
+      },
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "add": {
+            "params": {
+              "fn": {
+                "type": "fun(network: ads_network, callback: ads_callback, params?: table)"
+              }
+            }
+          }
+        }
       }
     },
     {

@@ -111,7 +111,7 @@ declare module 'ads_wrapper.queue' {
 	/**
 	 * Adds function to queue. Function must be like `func(network: network, callback: function)`
 	 */
-	export function add(this: void, queue: ads_queue, fn: ads_callback): void;
+	export function add(this: void, queue: ads_queue, fn: (network: ads_network, callback: ads_callback, params?: LuaTable) => void): void;
 	/**
 	 * Cancel queue execution
 	 */
