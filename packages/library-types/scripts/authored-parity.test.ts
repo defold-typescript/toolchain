@@ -31,6 +31,7 @@ interface ApiDocElement {
   name: string;
   global?: boolean;
   parameters?: unknown[];
+  description?: string;
 }
 
 function apiDocElements(entry: AuthoredTarget): ApiDocElement[] {
@@ -2152,6 +2153,8 @@ describe("colyseus.sdk declares the three values its module table exports", () =
 // `admob.lua` carries no annotations, so it is forked here rather than read by the LuaLS
 // lane. Its one field sits in a constructor that closes on its opening line,
 // `local M = { NAME = "admob" }`, and its 24 functions are column-0 definitions.
+// `admob.lua` has no prose, so `undocumentedMembers` cannot charge a blank member here,
+// and the description check reads the api-doc the docs site loads instead.
 describe("ads_wrapper.ads_networks.admob declares the whole of its upstream", () => {
   const report = buildAuthoredParity(PACKAGE_ROOT, target("ads_wrapper.ads_networks.admob"));
 
@@ -2167,7 +2170,17 @@ describe("ads_wrapper.ads_networks.admob declares the whole of its upstream", ()
     expect(report.fieldCoverage).toBe(1);
   });
 
-  test("every member carries its own documentation", () => {
+  test("every api-doc member carries a description, and no upstream prose is dropped", () => {
+    const members = apiDocElements(target("ads_wrapper.ads_networks.admob")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
     expect(report.undocumentedMembers).toBe(0);
   });
 });
