@@ -208,9 +208,10 @@ local M = {
 }
 ```
 
-A nested table's keys stay out. An entry it cannot name — a bracketed `["key"]` or a
-positional value — or entries written on the opening line itself throw, for the same
-reason a delegating metatable does.
+A constructor that closes on its opening line, `local M = { NAME = "admob" }`, is read
+too. A nested table's keys stay out. An entry it cannot name — a bracketed `["key"]` or
+a positional value — or entries written on an opening line whose constructor continues
+past it throw, for the same reason a delegating metatable does.
 
 List the vendored paths in `upstreamLua`, then regenerate:
 

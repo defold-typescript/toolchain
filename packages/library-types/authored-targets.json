@@ -837,6 +837,17 @@
       "generated": "generated/colyseus.d.ts",
       "apiDoc": "api-doc/colyseus.json",
       "upstreamLua": ["fixtures/upstream-lua/colyseus-defold/colyseus/sdk.lua"]
+    },
+    {
+      "repo": "https://github.com/potatojam/defold-ads-wrapper",
+      "ref": "1.5.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/ads_wrapper.ads_networks.admob.d.ts",
+      "moduleId": "ads_wrapper.ads_networks.admob",
+      "namespace": "ads_wrapper.ads_networks.admob",
+      "generated": "generated/ads_wrapper.ads_networks.admob.d.ts",
+      "apiDoc": "api-doc/ads_wrapper.ads_networks.admob.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-ads-wrapper/ads_wrapper/ads_networks/admob.lua"]
     }
   ]
 }

@@ -1,0 +1,591 @@
+{
+  "info": {
+    "namespace": "ads_wrapper.ads_networks.admob",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "NAME",
+      "brief": "The network's name, `\"admob\"`, reported as `networkName` in every response.",
+      "description": "The network's name, `\"admob\"`, reported as `networkName` in every response.",
+      "types": [
+        "\"admob\""
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_on_event",
+      "brief": "Internal. Handles an AdMob extension event. The module registers it with",
+      "description": "Internal. Handles an AdMob extension event. The module registers it with\n`admob.set_callback` itself during `init` and `request_idfa`, so a project never\ncalls it.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "setup",
+      "brief": "Api setup. Takes the network parameters given to `register_network`: the unit id",
+      "description": "Api setup. Takes the network parameters given to `register_network`: the unit id\nfor `ads_wrapper.T_REWARDED` and `ads_wrapper.T_INTERSTITIAL`, and for\n`ads_wrapper.T_BANNER` a table with `id` and optional `size` and `position`. In\ndebug mode AdMob's test unit ids replace them. Cancels every pending operation\nexcept an IDFA request.",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supported",
+      "brief": "Check if the environment supports admob api: Android or iOS with the extension.",
+      "description": "Check if the environment supports admob api: Android or iOS with the extension.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Initializes `admob` sdk.",
+      "description": "Initializes `admob` sdk.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_initialized",
+      "brief": "Check if the admob is initialized",
+      "description": "Check if the admob is initialized",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "request_idfa",
+      "brief": "Requests IDFA. Off iOS it succeeds without asking. The response is cached and given",
+      "description": "Requests IDFA. Off iOS it succeeds without asking. The response is cached and given\nto every later call.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_rewarded",
+      "brief": "Loads rewarded ads",
+      "description": "Loads rewarded ads",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_rewarded_loaded",
+      "brief": "Check if the rewarded ads is loaded",
+      "description": "Check if the rewarded ads is loaded",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_rewarded",
+      "brief": "Shows rewarded ads. The response succeeds when the ad closes after the reward was",
+      "description": "Shows rewarded ads. The response succeeds when the ad closes after the reward was\nearned, and is skipped when it closes without one.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_interstitial",
+      "brief": "Loads interstitial ads",
+      "description": "Loads interstitial ads",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_interstitial_loaded",
+      "brief": "Check if the interstitial ads is loaded",
+      "description": "Check if the interstitial ads is loaded",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_interstitial",
+      "brief": "Shows interstitial ads.",
+      "description": "Shows interstitial ads.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_setup",
+      "brief": "Check if the banner is set up",
+      "description": "Check if the banner is set up",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_banner",
+      "brief": "Loads banner. Use `ads.T_BANNER` parameter.",
+      "description": "Loads banner. Use `ads.T_BANNER` parameter.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unload_banner",
+      "brief": "Unloads active banner.",
+      "description": "Unloads active banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_loaded",
+      "brief": "Check if the banner is loaded",
+      "description": "Check if the banner is loaded",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_banner",
+      "brief": "Shows loaded banner.",
+      "description": "Shows loaded banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hide_banner",
+      "brief": "Hides loaded banner.",
+      "description": "Hides loaded banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ads_callback"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_showed",
+      "brief": "Check if the banner is showed",
+      "description": "Check if the banner is showed",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_position",
+      "brief": "Sets the banner position, one of the extension's `admob.POS_*` constants. It applies",
+      "description": "Sets the banner position, one of the extension's `admob.POS_*` constants. It applies\nthe next time the banner is shown.",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_size",
+      "brief": "Sets the banner size, one of the extension's `admob.SIZE_*` constants. It applies",
+      "description": "Sets the banner size, one of the extension's `admob.SIZE_*` constants. It applies\nthe next time the banner is loaded.",
+      "parameters": [
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_rewarded",
+      "brief": "Cancels a pending rewarded load (`\"load\"`) or show (any other value), completing its",
+      "description": "Cancels a pending rewarded load (`\"load\"`) or show (any other value), completing its\ncallbacks with an error that carries `reason`.",
+      "parameters": [
+        {
+          "name": "operation",
+          "doc": "",
+          "types": [
+            "\"load\" | \"show\""
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reason",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_interstitial",
+      "brief": "Cancels a pending interstitial load (`\"load\"`) or show (any other value), completing",
+      "description": "Cancels a pending interstitial load (`\"load\"`) or show (any other value), completing\nits callbacks with an error that carries `reason`.",
+      "parameters": [
+        {
+          "name": "operation",
+          "doc": "",
+          "types": [
+            "\"load\" | \"show\""
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reason",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_banner",
+      "brief": "Cancels a pending banner load (`\"load\"`) or unload (any other value), completing its",
+      "description": "Cancels a pending banner load (`\"load\"`) or unload (any other value), completing its\ncallbacks with an error that carries `reason`.",
+      "parameters": [
+        {
+          "name": "operation",
+          "doc": "",
+          "types": [
+            "\"load\" | \"unload\""
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reason",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
