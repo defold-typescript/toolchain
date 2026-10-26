@@ -587,6 +587,29 @@ test("a moduleObject sources the page description and lowers its fields as modul
   expect(elements.some((e) => e.type === "TYPEDEF" && e.name === "Squid")).toBe(false);
 });
 
+test("each module constant lowers as a top-level VARIABLE with its mapped type", () => {
+  const model: LibraryModel = {
+    interfaces: [],
+    aliases: [],
+    moduleFunctions: [],
+    moduleConstants: [
+      { name: "MSG_READY", types: ["hash"], doc: "Sent when ready.", isOptional: false },
+      { name: "DEBUG", types: ["integer"], doc: "", isOptional: false },
+    ],
+  };
+  const elements = elementsOf(lowerLibraryModel(model, { namespace: "lu" }));
+  expect(elements.filter((e) => e.type === "VARIABLE")).toEqual([
+    {
+      type: "VARIABLE",
+      name: "MSG_READY",
+      brief: "Sent when ready.",
+      description: "Sent when ready.",
+      types: ["Hash"],
+    },
+    { type: "VARIABLE", name: "DEBUG", brief: "", description: "", types: ["number"] },
+  ]);
+});
+
 test("with no moduleObject, the namespace-named class still sources the description and stays a TYPEDEF", () => {
   const model: LibraryModel = {
     interfaces: [
