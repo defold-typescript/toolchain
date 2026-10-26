@@ -361,11 +361,15 @@ function renderInterface(
     pushDoc(lines, method.brief, body, method.deprecated, slotNoteDocs(method, indexBase));
     const methodCtx = scopeGenerics(ifaceCtx, method.generics);
     const methodParams = renderGenericParams(method.generics, methodCtx);
+    const params = renderParams(method.params, methodCtx);
+    const signatureParams = method.noSelf
+      ? ["this: void", params].filter((part) => part !== "").join(", ")
+      : params;
     lines.push(
-      `${body}${memberKey(method.name)}${methodParams}(${renderParams(
-        method.params,
+      `${body}${memberKey(method.name)}${methodParams}(${signatureParams}): ${renderReturn(
+        method.returns,
         methodCtx,
-      )}): ${renderReturn(method.returns, methodCtx)};`,
+      )};`,
     );
   }
   // A class `@overload fun(...)` becomes an interface call signature, making the
