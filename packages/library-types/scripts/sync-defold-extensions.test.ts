@@ -507,6 +507,8 @@ const PIN_DATES = {
     "extension-iap@8.4.0": "2024-06-01T10:00:00Z",
     // Published before its tagged commit (the tag moved): the publish date wins.
     "extension-admob@3.0.0": "2023-02-01T10:00:00Z",
+    // A tag pin ignores its release even when it is earlier than the tagged commit.
+    "extension-rive@13.1.0": "2024-01-01T00:00:00Z",
   },
   commits: {
     "extension-iap@8.4.0": "2024-03-02T09:00:00Z",
