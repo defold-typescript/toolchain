@@ -225,6 +225,7 @@ export function buildTargetModel(
     ...merged,
     moduleFunctions: own?.moduleFunctions ?? [],
     ...(own?.moduleAssignments ? { moduleAssignments: own.moduleAssignments } : {}),
+    ...(own?.moduleReturn ? { moduleReturn: own.moduleReturn } : {}),
   };
   return target.annotationOverrides
     ? applyAnnotationOverrides(model, target.annotationOverrides)
