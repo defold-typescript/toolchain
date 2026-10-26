@@ -21,6 +21,13 @@ export interface LibraryModel {
   // standalone interface. Set only when a returned local resolves to an opened class,
   // so a module with a plain returned table carries no key.
   moduleObject?: string;
+  // Each column-0 `<table>.<NAME>` that starts a non-function assignment, in source
+  // order: the names an unannotated constant can be typed under via the
+  // `moduleConstants` override. Omitted when empty, like `moduleObject`.
+  moduleAssignments?: string[];
+  // Module-level constants the Lua assigns without an annotation, added by the
+  // `moduleConstants` override and emitted as `export const`s. Omitted when empty.
+  moduleConstants?: LibraryField[];
 }
 
 export interface LibraryInterface {
@@ -518,6 +525,10 @@ function parseFunctionDecl(line: string): FunctionDecl | null {
 
 const LOCAL_ASSIGN = /^local\s+([A-Za-z_]\w*)\s*=/;
 
+// `M.NAME = ...` or the first target of `M.NAME, M[1] = ...`; `M.NAME = function` is
+// matched as a module function first, so it never reaches this.
+const MODULE_ASSIGN = /^[A-Za-z_]\w*\.([A-Za-z_]\w*)\s*[=,]/;
+
 /**
  * Scan one LuaLS-annotated source into a `LibraryModel`. Only column-0 lines are
  * recognized (module- and class-level declarations and their leading `---@` block);
@@ -534,6 +545,7 @@ export function parseLualsSource(source: string): LibraryModel {
   const byName = new Map<string, LibraryInterface>();
   const aliases: LibraryAlias[] = [];
   const moduleFunctions: LibraryMethod[] = [];
+  const moduleAssignments: string[] = [];
   const receiverBinding = new Map<string, string>();
 
   let pending = emptyPending();
@@ -780,6 +792,12 @@ export function parseLualsSource(source: string): LibraryModel {
       continue;
     }
 
+    const moduleAssign = MODULE_ASSIGN.exec(raw);
+    if (moduleAssign) {
+      moduleAssignments.push(moduleAssign[1] as string);
+      continue;
+    }
+
     // A column-0 `return <name>` handing back a local bound to an opened `---@class`
     // marks that class as the module object (its fields become module-level consts).
     // Restricted to squid's constants-table idiom to keep every other library's golden
@@ -804,7 +822,13 @@ export function parseLualsSource(source: string): LibraryModel {
     }
   }
 
-  return { interfaces, aliases, moduleFunctions, ...(moduleObject ? { moduleObject } : {}) };
+  return {
+    interfaces,
+    aliases,
+    moduleFunctions,
+    ...(moduleObject ? { moduleObject } : {}),
+    ...(moduleAssignments.length > 0 ? { moduleAssignments } : {}),
+  };
 }
 
 /**

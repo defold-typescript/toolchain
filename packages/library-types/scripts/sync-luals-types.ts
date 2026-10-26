@@ -220,9 +220,11 @@ export function buildTargetModel(
   const parsed = new Map<string, LibraryModel>();
   for (const rel of files) parsed.set(rel, parseLualsSource(readFileSync(join(root, rel), "utf8")));
   const merged = mergeLibraryModels([...parsed.values()]);
+  const own = parsed.get(ownFile);
   const model: LibraryModel = {
     ...merged,
-    moduleFunctions: parsed.get(ownFile)?.moduleFunctions ?? [],
+    moduleFunctions: own?.moduleFunctions ?? [],
+    ...(own?.moduleAssignments ? { moduleAssignments: own.moduleAssignments } : {}),
   };
   return target.annotationOverrides
     ? applyAnnotationOverrides(model, target.annotationOverrides)

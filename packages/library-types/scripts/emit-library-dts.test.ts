@@ -820,6 +820,9 @@ function missingDeclarations(model: LibraryModel, out: string): string[] {
       missing.push(`interface ${iface.name}`);
     }
   }
+  for (const constant of model.moduleConstants ?? []) {
+    if (!out.includes(`export const ${constant.name}:`)) missing.push(`const ${constant.name}`);
+  }
   for (const fn of model.moduleFunctions) {
     if (!isPublicMethod(fn)) continue;
     // A plain function emits `export function name(` or, when generic, `export function
@@ -908,6 +911,22 @@ test("emit drops no public modeled surface for a hand-built moduleObject model",
 test("the structural drop guard reds when a modeled declaration is absent from the output", () => {
   const emptyOut = "/** @noResolution */\ndeclare module 'squid.squid' {\n}\n";
   expect(missingDeclarations(moduleObjectModel, emptyOut).length).toBeGreaterThan(0);
+});
+
+test("module constants emit as documented export consts after the module object's constants and before the module functions", () => {
+  const model: LibraryModel = {
+    ...moduleObjectModel,
+    moduleConstants: [
+      { name: "MSG_READY", types: ["hash"], doc: "Sent when ready.", isOptional: false },
+    ],
+  };
+  const out = emitLibraryDeclarations(model, { moduleId: "squid.squid" });
+  const constant = "\t/**\n\t * Sent when ready.\n\t */\n\texport const MSG_READY: Hash;";
+  expect(out).toContain(constant);
+  const at = out.indexOf(constant);
+  expect(out.indexOf("export const ALLOWLIST: LuaTable;")).toBeLessThan(at);
+  expect(at).toBeLessThan(out.indexOf("export function new_("));
+  expect(missingDeclarations(model, out)).toEqual([]);
 });
 
 test.each(

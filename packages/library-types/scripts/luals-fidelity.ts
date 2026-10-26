@@ -40,9 +40,9 @@ function round3(value: number): number {
  * on what resolves — the model's own interface and alias names, plus the
  * `externalTypes` tokens reached through a cross-module import — and all three
  * reject an external alias that collides with a declared name. Every field, every
- * param and return of every method and module function, and every alias expression
- * is mapped; `undocumentedMembers` counts fields/methods/moduleFunctions whose doc
- * or brief is empty. Deterministic; no I/O.
+ * param and return of every method and module function, every module constant, and
+ * every alias expression is mapped; `undocumentedMembers` counts
+ * fields/methods/moduleFunctions/moduleConstants whose doc or brief is empty. Deterministic; no I/O.
  */
 export function buildFidelityReport(
   namespace: string,
@@ -115,6 +115,12 @@ export function buildFidelityReport(
     mapConstraints(fn.generics, fnCtx);
     for (const param of fn.params) mapTokens(param.types, fnCtx);
     for (const ret of fn.returns) mapTokens(ret.types, fnCtx);
+  }
+
+  for (const constant of model.moduleConstants ?? []) {
+    totalMembers++;
+    if (undocumented(constant.doc)) undocumentedMembers++;
+    mapTokens(constant.types, ctx);
   }
 
   for (const alias of model.aliases) mapTokens(alias.types, scopeAliasBody(ctx, alias));

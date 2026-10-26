@@ -390,3 +390,56 @@ describe("applyAnnotationOverrides", () => {
     expect(result).toEqual(classShapeModel());
   });
 });
+
+function moduleConstantsModel(): LibraryModel {
+  return {
+    interfaces: [
+      {
+        name: "M",
+        generics: [],
+        brief: "",
+        fields: [{ name: "K", types: ["integer"], doc: "", isOptional: false }],
+        methods: [],
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [{ name: "reset", brief: "", generics: [], params: [], returns: [] }],
+    moduleObject: "M",
+    moduleAssignments: ["A", "reset", "K"],
+  };
+}
+
+describe("applyAnnotationOverrides moduleConstants", () => {
+  test("adds a typed, documented module constant for a name the Lua assigns", () => {
+    const result = applyAnnotationOverrides(moduleConstantsModel(), {
+      moduleConstants: { A: { type: "hash", doc: "Sent when the module loads." } },
+    });
+    expect(result.moduleConstants).toEqual([
+      { name: "A", types: ["hash"], doc: "Sent when the module loads.", isOptional: false },
+    ]);
+  });
+
+  test("throws naming the constant when the Lua never assigns it", () => {
+    expect(() =>
+      applyAnnotationOverrides(moduleConstantsModel(), {
+        moduleConstants: { GHOST: { type: "hash" } },
+      }),
+    ).toThrow(/"GHOST".*not assigned/);
+  });
+
+  test("throws naming the constant when a module function has its name", () => {
+    expect(() =>
+      applyAnnotationOverrides(moduleConstantsModel(), {
+        moduleConstants: { reset: { type: "hash" } },
+      }),
+    ).toThrow(/"reset".*module function/);
+  });
+
+  test("throws naming the constant when the module object already declares it", () => {
+    expect(() =>
+      applyAnnotationOverrides(moduleConstantsModel(), {
+        moduleConstants: { K: { type: "integer" } },
+      }),
+    ).toThrow(/"K".*module object "M"/);
+  });
+});

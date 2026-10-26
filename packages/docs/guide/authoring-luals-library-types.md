@@ -171,6 +171,27 @@ type is absent from the model, when the module class already declares the field
 (upstream added the `---@field`, so delete the entry), when a module function has the
 same name, and when the parser already treats a different class as the module object.
 
+Other libraries assign constants to the module table with no annotation at all:
+live-unbundler writes `M.MSG_ALL_LOADED = hash("all_loaded")` and
+`M.RES_BOTH = 3` at the top of its module file, so the lane exports neither. A
+`moduleConstants` override types each one with a LuaLS token and an optional doc line:
+
+```json
+"annotationOverrides": {
+  "moduleConstants": {
+    "MSG_ALL_LOADED": { "type": "hash", "doc": "Sent when every requested module has loaded." },
+    "RES_BOTH": { "type": "liveupdater.res_mode", "doc": "Download both resolutions." }
+  }
+}
+```
+
+Each entry emits as a documented `export const MSG_ALL_LOADED: Hash;` and appears on
+the `/api` page, and its token counts toward the fidelity report like any annotation.
+Only a column-0 `M.NAME = ...` in the module's own file counts as an assignment, as
+does the first target of `M.DEBUG, M[1] = 1, "DEBUG"`. The override throws when the
+module file never assigns the name at column 0, when a module function has the same
+name, and when the module object's class already declares it as a field.
+
 ## 2. Generate the artifacts
 
 Run the four commands from `packages/library-types`, in order. Each iterates every

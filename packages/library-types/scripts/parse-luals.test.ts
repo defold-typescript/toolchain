@@ -786,6 +786,31 @@ describe("parseLualsSource returned module object and function-local class", () 
   });
 });
 
+describe("parseLualsSource module table assignments", () => {
+  test("records each column-0 table-field assignment, including a multi-assignment's first target", () => {
+    const model = parseLualsSource(
+      lua(
+        "local M = {}",
+        'M.A = hash("a")',
+        'M.B, M[1] = 1, "B"',
+        "function M.f()",
+        "  M.C = 1",
+        "end",
+        "M.g = function() end",
+        "return M",
+      ),
+    );
+    expect(model.moduleAssignments).toEqual(["A", "B"]);
+  });
+
+  test("a source with no column-0 table assignment carries no moduleAssignments key", () => {
+    const model = parseLualsSource(
+      lua("local M = {}", "function M.f()", "  M.C = 1", "end", "M.g = function() end", "return M"),
+    );
+    expect("moduleAssignments" in model).toBe(false);
+  });
+});
+
 describe("parseLualsSource @deprecated", () => {
   test("a @deprecated with text before a module function carries the text onto it", () => {
     const model = parseLualsSource(
