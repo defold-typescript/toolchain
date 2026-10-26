@@ -54,3 +54,21 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records printer: a consumer transpiles with the call forms the declaration produces: printer 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local printer = require("printer.printer")
+function ____exports.init(____self, dt)
+    local p = printer.new(____self, "printer")
+    p:print("{red}hi", "Illidan")
+    p:update(dt)
+    printer.print(p, "again")
+    printer.add_word_style("powerful", "red")
+    printer.play_sound = function(name)
+        print(name)
+    end
+end
+return ____exports
+"
+`;
