@@ -32,9 +32,11 @@
  *       Client = Client,
  *     }
  *
- * reads the same as `M.Client = Client`. The same loud rule holds there: a constructor
- * that never closes, an entry that is not `<name> =` (a bracketed key, a positional
- * value), or entries on the opening line itself throw rather than read short. Only a
+ * reads the same as `M.Client = Client`. A constructor that closes on its opening line,
+ * `local M = { NAME = "x" }`, is fully visible and is split at its top-level separators.
+ * The same loud rule holds there: a constructor that never closes, an entry that is not
+ * `<name> =` (a bracketed key, a positional value), or entries on an opening line whose
+ * constructor continues past it throw rather than read short. Only a
  * module local derived from the trailing return reads its constructor: an annotation
  * file named through `options.moduleLocal` is read for the function stubs its
  * assignments declare, and its constructor holds constants.
@@ -154,21 +156,80 @@ function braceDelta(line: string): number {
   return delta;
 }
 
+/** The text between a constructor's opening `{` and its matching `}` when both sit on
+ * `stripped`, a line already passed through `stripStringsAndComment` from just after the
+ * `{`; `undefined` when the constructor continues past it. */
+function closedOnLine(stripped: string): string | undefined {
+  let depth = 1;
+  for (let position = 0; position < stripped.length; position += 1) {
+    const char = stripped[position];
+    if (char === "{") depth += 1;
+    else if (char === "}") depth -= 1;
+    if (depth === 0) return stripped.slice(0, position);
+  }
+  return undefined;
+}
+
+/** `body` split at the `,` and `;` separators outside any nested braces or parentheses,
+ * so a nested table's entries and a function's parameter list stay whole. */
+function splitTopLevel(body: string): string[] {
+  const pieces: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let position = 0; position < body.length; position += 1) {
+    const char = body[position];
+    if (char === "{" || char === "(") depth += 1;
+    else if (char === "}" || char === ")") depth -= 1;
+    else if (depth === 0 && (char === "," || char === ";")) {
+      pieces.push(body.slice(start, position));
+      start = position + 1;
+    }
+  }
+  pieces.push(body.slice(start));
+  return pieces.map((piece) => piece.trim()).filter((piece) => piece !== "");
+}
+
+/** The name and value of one `<name> = <value>` constructor entry; `line` names it in the
+ * throw when its key is not a plain name. */
+function readEntry(
+  entry: RegExpExecArray | null,
+  line: number,
+  text: string,
+): { name: string; rhs: string } {
+  if (!entry) {
+    throw new Error(
+      `lua surface: line ${line} is a constructor entry that is not \`<name> = <value>\`, so its key is invisible — ${text}`,
+    );
+  }
+  return { name: entry[1] as string, rhs: entry[2] as string };
+}
+
 /** The depth-1 entries of the constructor whose `{` sits at `open` on line `index`, and
  * the line holding its matching `}`. An entry is read at the line that starts it, so a
- * nested table's keys stay out while its own entry counts. */
+ * nested table's keys stay out while its own entry counts. A constructor that closes on
+ * its opening line is split at its top-level separators; its entries carry no doc, since
+ * no comment can sit above an entry that shares the opening line. */
 function readConstructor(
   lines: string[],
   index: number,
   open: number,
 ): { entries: LuaMember[]; close: number } {
   const opening = lines[index] as string;
-  const inline = stripStringsAndComment(opening.slice(open + 1)).trim();
-  if (inline === "}") return { entries: [], close: index };
-  if (inline !== "") {
-    throw new Error(
-      `lua surface: line ${index + 1} puts constructor entries on the line that opens it, which this reader does not split — ${opening.trim()}`,
-    );
+  const inline = stripStringsAndComment(opening.slice(open + 1));
+  if (inline.trim() !== "") {
+    const body = closedOnLine(inline);
+    if (body === undefined) {
+      throw new Error(
+        `lua surface: line ${index + 1} puts constructor entries on an opening line whose constructor continues past it, which this reader does not split — ${opening.trim()}`,
+      );
+    }
+    const entries = splitTopLevel(body).map((piece): LuaMember => {
+      const { name, rhs } = readEntry(CONSTRUCTOR_ENTRY.exec(piece), index + 1, opening.trim());
+      if (!FUNCTION_VALUE.test(rhs)) return { name, varargs: false, doc: "", refusedDoc: false };
+      const { params, varargs } = readParams([rhs], 0, rhs.indexOf("("));
+      return { name, params, varargs, doc: "", refusedDoc: false };
+    });
+    return { entries, close: index };
   }
   const entries: LuaMember[] = [];
   let depth = 1;
@@ -176,14 +237,7 @@ function readConstructor(
     const line = lines[cursor] as string;
     const trimmed = line.trim();
     if (depth === 1 && trimmed !== "" && !trimmed.startsWith("--") && !trimmed.startsWith("}")) {
-      const entry = CONSTRUCTOR_ENTRY.exec(line);
-      if (!entry) {
-        throw new Error(
-          `lua surface: line ${cursor + 1} is a constructor entry that is not \`<name> = <value>\`, so its key is invisible — ${trimmed}`,
-        );
-      }
-      const name = entry[1] as string;
-      const rhs = entry[2] as string;
+      const { name, rhs } = readEntry(CONSTRUCTOR_ENTRY.exec(line), cursor + 1, trimmed);
       if (FUNCTION_VALUE.test(rhs)) {
         const { params, varargs } = readParams(
           lines,

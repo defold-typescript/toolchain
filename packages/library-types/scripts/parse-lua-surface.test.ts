@@ -513,9 +513,34 @@ describe("a returned table's constructor entries are members", () => {
     expect(() => parseLuaSurface(open)).toThrow("line 1 opens a constructor that never closes");
   });
 
-  test("entries on the opening line throw rather than read short", () => {
-    const inline = ["local M = { a = 1 }", "return M"].join("\n");
-    expect(() => parseLuaSurface(inline)).toThrow("line 1");
+  test("entries on an opening line whose constructor continues throw rather than read short", () => {
+    const continued = ["local M = { a = 1,", "  b = 2 }", "return M"].join("\n");
+    expect(() => parseLuaSurface(continued)).toThrow("line 1");
+  });
+
+  test("a constructor that closes on its opening line reads each depth-1 entry", () => {
+    const oneLine = [
+      'local M = { NAME = "ad, mob", inner = { x = 1, y = 2 }, f = function(a, b) end }',
+      "function M.g(c) end",
+      "return M",
+    ].join("\n");
+    const members = parseLuaSurface(oneLine).members;
+    expect(members.map((member) => [member.name, member.params])).toEqual([
+      ["NAME", undefined],
+      ["inner", undefined],
+      ["f", ["a", "b"]],
+      ["g", ["c"]],
+    ]);
+  });
+
+  test("a bracketed key in a one-line constructor throws, naming its line", () => {
+    expect(() => parseLuaSurface(['local M = { ["k"] = 1 }', "return M"].join("\n"))).toThrow(
+      "line 1",
+    );
+  });
+
+  test("an empty one-line constructor reads no member", () => {
+    expect(parseLuaSurface(["local M = {}", "return M"].join("\n")).members).toEqual([]);
   });
 
   test("with an explicit module table and no return, a constructor contributes nothing", () => {

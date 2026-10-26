@@ -1,6 +1,7 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as admob from "ads_wrapper.ads_networks.admob";
 import * as admob_legacy from "ads_wrapper.ads_networks.admob_legacy";
 import * as applovin_max from "ads_wrapper.ads_networks.applovin_max";
 import * as game_distribution from "ads_wrapper.ads_networks.game_distribution";
@@ -14,10 +15,11 @@ import * as yandex from "ads_wrapper.ads_networks.yandex";
 import * as yandex_mobile from "ads_wrapper.ads_networks.yandex_mobile";
 import * as ads_wrapper from "ads_wrapper.ads_wrapper";
 
-// Compile-only proof that every annotated network module satisfies ads_network, the way
-// upstream's docs/networks.md registers them. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// Compile-only proof that every typed network module, annotated or authored, satisfies
+// ads_network, the way upstream's docs/networks.md registers them. No assertions execute;
+// tsc --noEmit under tsconfig.dts-check.json (skipLibCheck: false) is the gate.
 
+ads_wrapper.register_network(admob, {});
 ads_wrapper.register_network(admob_legacy, {});
 ads_wrapper.register_network(applovin_max, {});
 ads_wrapper.register_network(game_distribution, {});
@@ -45,6 +47,14 @@ void placed;
 void sized;
 void sizeNone;
 void listener;
+
+const admobPlaced: ads_wrapper.ads_response = admob.set_banner_position(0);
+void admobPlaced;
+admob.cancel_rewarded("load");
+
+// admob's banner cancels pick between its load and unload operations, never a show.
+// @ts-expect-error a banner cancel takes "load" or "unload"
+admob.cancel_banner("show");
 
 unity.request_idfa((response) => {
   void response.result;
