@@ -76,6 +76,9 @@ export interface LibraryListing extends LibraryOrigin {
   url: string;
   ref: string;
   pinKind: "release" | "tag" | "commit";
+  // The Defold version current when a dated release or tag pin was cut: a hint
+  // about the pin's age, not a compatibility claim.
+  releaseEra?: string;
   description: string;
   route: string;
   api: LibraryApiKind;

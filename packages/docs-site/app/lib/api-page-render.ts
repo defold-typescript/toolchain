@@ -507,6 +507,11 @@ function pinLabel(ref: string): string {
 // `fork` listing's authored steps already start from the fork, and an
 // `unavailable` one has nothing to install, so theirs number from 1. An Asset
 // Portal listing closes the bullets with a link to its portal entry.
+// Appended to a pin bullet: the Defold version current when the pin was cut.
+function releaseEraSuffix(releaseEra: string | undefined): string {
+  return releaseEra ? ` (released while Defold ${releaseEra} was current)` : "";
+}
+
 export function listingPageMarkdown(listing: LibraryListing): string {
   const repo = `${listing.owner}/${listing.repo}`;
   const standard = listing.adoption === "standard";
@@ -516,7 +521,7 @@ export function listingPageMarkdown(listing: LibraryListing): string {
     "",
     LIBRARY_API_KIND_SENTENCE[listing.api],
     "",
-    `- GitHub: [${repo}](${listing.url}) — pinned to [\`${pinLabel(listing.ref)}\`](${listing.url}/tree/${listing.ref})`,
+    `- GitHub: [${repo}](${listing.url}) — pinned to [\`${pinLabel(listing.ref)}\`](${listing.url}/tree/${listing.ref})${releaseEraSuffix(listing.releaseEra)}`,
     ...(standard ? [dependencyStep(listing.url, listing.pinKind, listing.ref)] : []),
     ...listing.steps.map((step, index) => `  ${index + firstNumber}. ${step}`),
     ...(listing.portal ? [`- Asset Portal: [${listing.repo}](${listing.portal.url})`] : []),
@@ -561,8 +566,8 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   // Step 3's import stays a fenced block at the ordered-item content column
   // (5 spaces) so it renders a copyable <pre>.
   const head = meta.authorUrl
-    ? `- ${forgeOf(meta.authorUrl) ?? "Source"}: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`
-    : `- Commit pin: ${pin}`;
+    ? `- ${forgeOf(meta.authorUrl) ?? "Source"}: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}${releaseEraSuffix(meta.releaseEra)}`
+    : `- Commit pin: ${pin}${releaseEraSuffix(meta.releaseEra)}`;
   // An extension adding members to an engine namespace has no module of its
   // own, so step 3 names the engine global instead of an import.
   const step3 =
