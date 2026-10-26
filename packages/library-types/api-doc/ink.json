@@ -1,0 +1,148 @@
+{
+  "info": {
+    "namespace": "ink",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "StoryOutput"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Parses a compiled ink story and returns a story instance.",
+      "description": "Parses a compiled ink story and returns a story instance.",
+      "parameters": [
+        {
+          "name": "s",
+          "doc": "The ink JSON text, for example from `sys.load_resource`. It must be UTF-8.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The story instance.",
+          "types": [
+            "Story"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Story",
+      "properties": [
+        {
+          "name": "variables",
+          "brief": "A table of all global variables, to read and set. Use `assign_value` to notify",
+          "description": "A table of all global variables, to read and set. Use `assign_value` to notify\nobserver functions about a change.",
+          "types": [
+            "LuaTable<string, unknown>"
+          ]
+        },
+        {
+          "name": "continue",
+          "brief": "Returns the next paragraphs and choices.",
+          "description": "Returns the next paragraphs and choices.",
+          "types": [
+            "(answer?: number) => StoryOutput"
+          ]
+        },
+        {
+          "name": "add_observer",
+          "brief": "Assigns an observer function to a global variable. Each global variable can have",
+          "description": "Assigns an observer function to a global variable. Each global variable can have\nmultiple observers.",
+          "types": [
+            "(name: string, f: (this: void, value: unknown) => void) => void"
+          ]
+        },
+        {
+          "name": "remove_observer",
+          "brief": "Removes an observer function.",
+          "description": "Removes an observer function.",
+          "types": [
+            "(name: string, f?: (this: void, value: unknown) => void) => void"
+          ]
+        },
+        {
+          "name": "assign_value",
+          "brief": "Assigns a value to a global variable and calls all its observers.",
+          "description": "Assigns a value to a global variable and calls all its observers.",
+          "types": [
+            "(name: string, value: unknown) => void"
+          ]
+        },
+        {
+          "name": "bind",
+          "brief": "Binds a Lua function to an ink external function, which the story then calls",
+          "description": "Binds a Lua function to an ink external function, which the story then calls\nwith the external function's arguments.",
+          "types": [
+            "(name: string, f: (this: void, ...args: any[]) => unknown) => void"
+          ]
+        },
+        {
+          "name": "jump",
+          "brief": "Jumps to a named knot or stitch, and returns its paragraphs and choices.",
+          "description": "Jumps to a named knot or stitch, and returns its paragraphs and choices.",
+          "types": [
+            "(path: string) => StoryOutput"
+          ]
+        },
+        {
+          "name": "switch_flow",
+          "brief": "Creates a new parallel flow or switches to an existing one.",
+          "description": "Creates a new parallel flow or switches to an existing one.",
+          "types": [
+            "(name?: string) => void"
+          ]
+        },
+        {
+          "name": "restore",
+          "brief": "Restores the story from a state saved with `get_state`, by replaying it from the",
+          "description": "Restores the story from a state saved with `get_state`, by replaying it from the\nstart, and returns its last paragraphs and choices. The story should be created\nfrom the same, or a similar, JSON.",
+          "types": [
+            "(state: StoryState, with_bindings?: boolean, ignore_errors?: boolean) => StoryOutput"
+          ]
+        },
+        {
+          "name": "get_state",
+          "brief": "Returns the current state of the story, to save and pass to `restore` later.",
+          "description": "Returns the current state of the story, to save and pass to `restore` later.",
+          "types": [
+            "() => StoryState"
+          ]
+        },
+        {
+          "name": "eval",
+          "brief": "Returns the result of evaluating a Lua expression, with the name of every global",
+          "description": "Returns the result of evaluating a Lua expression, with the name of every global\nvariable replaced by its value.",
+          "types": [
+            "(expression: string) => unknown"
+          ]
+        },
+        {
+          "name": "serialize",
+          "brief": "Returns the story's variables and visit counts, an alternative to `get_state`",
+          "description": "Returns the story's variables and visit counts, an alternative to `get_state`\nthat survives script changes better. Pass it to `deserialize`, not to `restore`.",
+          "types": [
+            "() => SerializedStory"
+          ]
+        },
+        {
+          "name": "deserialize",
+          "brief": "Restores the story's variables and visit counts from `serialize`, then jumps to a",
+          "description": "Restores the story's variables and visit counts from `serialize`, then jumps to a\npath and returns its paragraphs and choices.",
+          "types": [
+            "(data: SerializedStory, path: string, reset_observers?: boolean) => StoryOutput"
+          ]
+        }
+      ]
+    }
+  ]
+}

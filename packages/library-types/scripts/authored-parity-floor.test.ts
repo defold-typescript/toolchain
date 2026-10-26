@@ -429,6 +429,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "99791b9da12d466e07106db54a16e323af0ef08a7f59d21670c606aa98f4da6c",
   "fixtures/upstream-lua/defold-gamepush/gamepush/gamepush.lua":
     "96466c631148284e0cb22d9322869df84a40c65410e44f1b18d64ef8c9f236bb",
+  "fixtures/upstream-lua/defold-ink/ink/story.lua":
+    "52da9951272d796fa989b5677bbc8b834b623021db2aeba6f8150bc6aa835bf5",
   "fixtures/upstream-lua/defold-input/in/accelerometer.lua":
     "fbdf49f06a31bc860d24434d38fc5124f913cb43e88ad039640e0b32e2b545c0",
   "fixtures/upstream-lua/defold-input/in/button.lua":
