@@ -72,3 +72,25 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records ink: a consumer transpiles with the call forms the declaration produces: ink 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local ink = require("ink.story")
+function ____exports.play(json)
+    local story = ink.create(json)
+    local paragraphs, answers = story.continue(1)
+    story.jump("knot")
+    story.add_observer(
+        "x",
+        function(value) return print(value) end
+    )
+    story.bind(
+        "add",
+        function(a, b) return a + b end
+    )
+    print(#paragraphs, #answers)
+end
+return ____exports
+"
+`;

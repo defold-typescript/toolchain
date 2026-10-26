@@ -215,6 +215,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/ink.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/metrics.fps.json": {
     "callable": 1,
     "field": 1

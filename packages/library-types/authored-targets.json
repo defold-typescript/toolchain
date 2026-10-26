@@ -859,6 +859,17 @@
       "generated": "generated/printer.d.ts",
       "apiDoc": "api-doc/printer.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-printer/printer/printer.lua"]
+    },
+    {
+      "repo": "https://github.com/abadonna/defold-ink",
+      "ref": "5e871c42f645689e7263d85015fab2b2f2743907",
+      "license": "Unlicense",
+      "authored": "fixtures/authored/ink.story.d.ts",
+      "moduleId": "ink.story",
+      "namespace": "ink",
+      "generated": "generated/ink.d.ts",
+      "apiDoc": "api-doc/ink.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-ink/ink/story.lua"]
     }
   ]
 }
