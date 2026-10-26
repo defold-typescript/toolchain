@@ -450,6 +450,12 @@ export interface LibraryMeta {
    * generation source, not the user's dependency.
    */
   pinKind?: "release" | "tag" | "commit";
+  /**
+   * The Defold version that was current when a Defold extension's release or
+   * tag pin was cut. A hint about the pin's age, not a compatibility claim;
+   * absent when the pin carries no date.
+   */
+  releaseEra?: string;
   /** The Asset Portal entry a portal `.script_api` page links; absent on every other page. */
   portal?: { id: string; url: string };
 }
