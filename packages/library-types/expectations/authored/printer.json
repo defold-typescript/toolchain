@@ -1,0 +1,25 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/Insality/defold-printer",
+    "authoredHere": true,
+    "commit": "1.2.2",
+    "sourceUrl": "https://github.com/Insality/defold-printer/tree/1.2.2",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's `new` returns a table whose metatable indexes the module, so the README calls the instance with `:` (`self.printer:print(...)`) while the same functions are `.` module members taking the instance first, and a project overrides `play_sound` by assigning a function that takes only the sound name; only TSTL's emit shows which call form each produces.",
+    "consumer": [
+      "import * as printer from \"printer.printer\";",
+      "export function init(self: unknown, dt: number): void {",
+      "  const p = printer.new(self, \"printer\");",
+      "  p.print(\"{red}hi\", \"Illidan\");",
+      "  p.update(dt);",
+      "  printer.print(p, \"again\");",
+      "  printer.add_word_style(\"powerful\", \"red\");",
+      "  (printer as { play_sound: (this: void, name: string) => void }).play_sound = (name) => {",
+      "    print(name);",
+      "  };",
+      "}"
+    ]
+  }
+}
