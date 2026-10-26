@@ -225,6 +225,12 @@ retypes it:
 A parameter of `interfaces.<name>.methods.<method>.params` takes the same `type` key. Naming
 an absent function or parameter throws.
 
+`"optional": true` on `interfaces.<name>.methods.<method>` emits the method as `name?(...)`,
+for a method the library checks for before it calls it. ads-wrapper's `wrapper.lua` guards
+the call with `if network.request_idfa then`, so the `ads_wrapper` targets mark
+`ads_network.request_idfa` optional, and a network without it still passes
+`ads_wrapper.ads_wrapper.register_network`.
+
 ## 2. Generate the artifacts
 
 Run the four commands from `packages/library-types`, in order. Each iterates every

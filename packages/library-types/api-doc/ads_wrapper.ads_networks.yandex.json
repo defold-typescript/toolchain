@@ -1,0 +1,437 @@
+{
+  "info": {
+    "namespace": "ads_wrapper.ads_networks.yandex",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_yandex_extention",
+      "brief": "Sets yandex extention",
+      "description": "Sets yandex extention",
+      "parameters": [
+        {
+          "name": "ex_yagames",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_player",
+      "brief": "Asks the `player` sdk to save data",
+      "description": "Asks the `player` sdk to save data",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "setup",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supported",
+      "brief": "Check if the environment supports yandex api",
+      "description": "Check if the environment supports yandex api",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_lang",
+      "brief": "Returns Yandex.Games interface language in ISO 639-1 format.",
+      "description": "Returns Yandex.Games interface language in ISO 639-1 format.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_initialized",
+      "brief": "Check if the yandex is initialized",
+      "description": "Check if the yandex is initialized",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_rewarded",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_rewarded",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_rewarded_loaded",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_interstitial",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_interstitial",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_interstitial_loaded",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_storage_supported",
+      "brief": "Check if the yandex supports safe storage",
+      "description": "Check if the yandex supports safe storage",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_player_authorized",
+      "brief": "Check if the yandex player is authorized",
+      "description": "Check if the yandex player is authorized",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_setup",
+      "brief": "Check if the banner is set up",
+      "description": "Check if the banner is set up",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_banner",
+      "brief": "Loads banner. Use `ads.T_BANNER` parameter.",
+      "description": "Loads banner. Use `ads.T_BANNER` parameter.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unload_banner",
+      "brief": "Unloads active banner.",
+      "description": "Unloads active banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_loaded",
+      "brief": "Check if the banner is loaded",
+      "description": "Check if the banner is loaded",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_banner",
+      "brief": "Shows loaded banner.",
+      "description": "Shows loaded banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hide_banner",
+      "brief": "Hides loaded banner.",
+      "description": "Hides loaded banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_position",
+      "brief": "Sets banner position.",
+      "description": "Sets banner position.",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "table `{x = string, y = string}`",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_size",
+      "brief": "Sets banner size.",
+      "description": "Sets banner size.",
+      "parameters": [
+        {
+          "name": "size",
+          "doc": "table `{width = string, height = string}`",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_showed",
+      "brief": "Check if the banner is showed",
+      "description": "Check if the banner is showed",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

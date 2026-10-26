@@ -151,6 +151,59 @@ test("a noSelf interface method takes this: void, and a method without the flag 
   expect(out).toContain("show(cb?: () => void): void;");
 });
 
+test("an optional interface method renders as name? ahead of its generics, with or without noSelf", () => {
+  const cb: LibraryParam = {
+    name: "cb",
+    types: ["fun()"],
+    doc: "",
+    isOptional: false,
+    isVararg: false,
+    isNilable: true,
+  };
+  const x: LibraryParam = { name: "x", types: ["T"], doc: "", isOptional: false, isVararg: false };
+  const model: LibraryModel = {
+    interfaces: [
+      {
+        name: "net",
+        generics: [],
+        fields: [],
+        methods: [
+          {
+            name: "ping",
+            brief: "",
+            generics: [],
+            params: [cb],
+            returns: [],
+            noSelf: true,
+            optional: true,
+          },
+          { name: "pong", brief: "", generics: [], params: [cb], returns: [], optional: true },
+          {
+            name: "map",
+            brief: "",
+            generics: [{ name: "T" }],
+            params: [x],
+            returns: [],
+            noSelf: true,
+            optional: true,
+          },
+          { name: "ready", brief: "", generics: [], params: [cb], returns: [], noSelf: true },
+        ],
+        brief: "",
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+
+  const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
+
+  expect(out).toContain("ping?(this: void, cb?: () => void): void;");
+  expect(out).toContain("pong?(cb?: () => void): void;");
+  expect(out).toContain("map?<T>(this: void, x: T): void;");
+  expect(out).toContain("ready(this: void, cb?: () => void): void;");
+});
+
 test("emits a reserved-word member through the reserved-name path, not raw", () => {
   const model: LibraryModel = {
     interfaces: [

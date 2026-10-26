@@ -1,0 +1,452 @@
+{
+  "info": {
+    "namespace": "ads_wrapper.ads_networks.applovin_max",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "setup",
+      "brief": "Api setup",
+      "description": "Api setup",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Initializes `applovin_max` sdk.",
+      "description": "Initializes `applovin_max` sdk.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_supported",
+      "brief": "Check if the environment supports applovin_max api",
+      "description": "Check if the environment supports applovin_max api",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_initialized",
+      "brief": "Check if the applovin max is initialized",
+      "description": "Check if the applovin max is initialized",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_rewarded",
+      "brief": "Shows rewarded ads.",
+      "description": "Shows rewarded ads.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_rewarded",
+      "brief": "Loads rewarded ads",
+      "description": "Loads rewarded ads",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_rewarded_loaded",
+      "brief": "Check if the rewarded ads is loaded",
+      "description": "Check if the rewarded ads is loaded",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_interstitial",
+      "brief": "Shows interstitial ads.",
+      "description": "Shows interstitial ads.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_interstitial",
+      "brief": "Loads interstitial ads",
+      "description": "Loads interstitial ads",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_interstitial_loaded",
+      "brief": "Check if the interstitial ads is loaded",
+      "description": "Check if the interstitial ads is loaded",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_setup",
+      "brief": "Check if the banner is set up",
+      "description": "Check if the banner is set up",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_banner",
+      "brief": "Loads banner. Use `ads.T_BANNER` parameter.",
+      "description": "Loads banner. Use `ads.T_BANNER` parameter.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unload_banner",
+      "brief": "Unloads active banner.",
+      "description": "Unloads active banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_loaded",
+      "brief": "Check if the banner is loaded",
+      "description": "Check if the banner is loaded",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "show_banner",
+      "brief": "Shows loaded banner.",
+      "description": "Shows loaded banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hide_banner",
+      "brief": "Hides loaded banner.",
+      "description": "Hides loaded banner.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "the function is called after execution.",
+          "types": [
+            "ads_callback | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_position",
+      "brief": "Sets banner position. It is imperative to hide and show the banner again after this function.\nPossible positions:\n`applovin_max.POS_TOP_CENTER`(default)\n`applovin_max.POS_BOTTOM_CENTER`\n`applovin_max.POS_BOTTOM_LEFT`\n`applovin_max.POS_BOTTOM_RIGHT`\n`applovin_max.POS_NONE`\n`applovin_max.POS_TOP_LEFT`\n`applovin_max.POS_TOP_RIGHT`\n`applovin_max.POS_CENTER`",
+      "description": "Sets banner position. It is imperative to hide and show the banner again after this function.\nPossible positions:\n`applovin_max.POS_TOP_CENTER`(default)\n`applovin_max.POS_BOTTOM_CENTER`\n`applovin_max.POS_BOTTOM_LEFT`\n`applovin_max.POS_BOTTOM_RIGHT`\n`applovin_max.POS_NONE`\n`applovin_max.POS_TOP_LEFT`\n`applovin_max.POS_TOP_RIGHT`\n`applovin_max.POS_CENTER`",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "banner position",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_banner_size",
+      "brief": "Sets banner size. It is imperative to reload the banner again after this function.\nPossible sizes:\n`applovin_max.SIZE_BANNER`(default)\n`applovin_max.SIZE_LEADER`\n`applovin_max.SIZE_MREC`",
+      "description": "Sets banner size. It is imperative to reload the banner again after this function.\nPossible sizes:\n`applovin_max.SIZE_BANNER`(default)\n`applovin_max.SIZE_LEADER`\n`applovin_max.SIZE_MREC`",
+      "parameters": [
+        {
+          "name": "size",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ads_response"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_banner_showed",
+      "brief": "Check if the banner is showed",
+      "description": "Check if the banner is showed",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POS_BOTTOM_CENTER",
+      "brief": "Bottom-center banner position, passed to `set_banner_position`.",
+      "description": "Bottom-center banner position, passed to `set_banner_position`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POS_BOTTOM_LEFT",
+      "brief": "Bottom-left banner position, passed to `set_banner_position`.",
+      "description": "Bottom-left banner position, passed to `set_banner_position`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POS_BOTTOM_RIGHT",
+      "brief": "Bottom-right banner position, passed to `set_banner_position`.",
+      "description": "Bottom-right banner position, passed to `set_banner_position`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POS_NONE",
+      "brief": "The `maxsdk.POS_NONE` banner position, passed to `set_banner_position`.",
+      "description": "The `maxsdk.POS_NONE` banner position, passed to `set_banner_position`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POS_TOP_LEFT",
+      "brief": "Top-left banner position, passed to `set_banner_position`.",
+      "description": "Top-left banner position, passed to `set_banner_position`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POS_TOP_CENTER",
+      "brief": "Top-center banner position, passed to `set_banner_position`.",
+      "description": "Top-center banner position, passed to `set_banner_position`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POS_TOP_RIGHT",
+      "brief": "Top-right banner position, passed to `set_banner_position`.",
+      "description": "Top-right banner position, passed to `set_banner_position`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "POS_CENTER",
+      "brief": "Centered banner position, passed to `set_banner_position`.",
+      "description": "Centered banner position, passed to `set_banner_position`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SIZE_BANNER",
+      "brief": "Standard banner size, passed to `set_banner_size`; the default.",
+      "description": "Standard banner size, passed to `set_banner_size`; the default.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SIZE_LEADER",
+      "brief": "Leaderboard banner size, passed to `set_banner_size`.",
+      "description": "Leaderboard banner size, passed to `set_banner_size`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SIZE_MREC",
+      "brief": "Medium-rectangle banner size, passed to `set_banner_size`.",
+      "description": "Medium-rectangle banner size, passed to `set_banner_size`.",
+      "types": [
+        "string"
+      ]
+    }
+  ]
+}
