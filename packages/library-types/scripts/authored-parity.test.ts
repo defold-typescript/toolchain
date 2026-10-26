@@ -321,13 +321,13 @@ describe("yagames declares the whole callable surface yagames.lua defines", () =
     expect(report.parityExceptions).toEqual([]);
   });
 
-  // The scope line of this slice, in the same shape gooey's carries: `fieldCoverage`
-  // alone could not fail here — upstream declares no constants, so the ratio short-
-  // circuits to 1 — and it is `declaredFields`/`phantomFields` that move if a
-  // correction reached the field side.
-  test("the field axis did not move: this slice touched one axis", () => {
-    expect(report.upstreamFields).toBe(0);
-    expect(report.declaredFields).toBe(0);
+  // The field side is the four readiness flags `yagames.lua` opens its module table
+  // with (`local M = { ysdk_ready = false, … }`): the reader takes them from the
+  // returned table's constructor, so a fork that drops one reds `missingFields`.
+  test("the four readiness flags of the module table's constructor are declared", () => {
+    expect(report.upstreamFields).toBe(4);
+    expect(report.declaredFields).toBe(4);
+    expect(report.missingFields).toEqual([]);
     expect(report.phantomFields).toEqual([]);
     expect(report.fieldCoverage).toBe(1);
   });
@@ -1188,12 +1188,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other seventy-one targets share no variadic member at all", () => {
+  test("the other seventy-two targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(71);
+    expect(untouched.length).toBe(72);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2119,6 +2119,32 @@ describe("the GamePush entry module declares the whole of its upstream", () => {
     expect(report.undocumentedMembers).toBe(0);
     expect(report.importedDocs).toBe(0);
     expect(report.refusedDocBlocksTotal).toBe(0);
+  });
+});
+
+// `sdk.lua`'s whole surface is the three entries of its returned table's constructor
+// (`local M = { Client = Client, callbacks = callbacks, protocol = protocol }`); every
+// method is reached through those values, so it is declared on interfaces and measured
+// by neither axis.
+describe("colyseus.sdk declares the three values its module table exports", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("colyseus"));
+
+  test("the field axis closes on the three constructor entries, nothing invented", () => {
+    expect(report.upstreamMembers).toBe(0);
+    expect(report.upstreamFields).toBe(3);
+    expect(report.declaredFields).toBe(3);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every value carries its own documentation and none is imported", () => {
+    expect(report.undocumentedMembers).toBe(0);
+    expect(report.importedDocs).toBe(0);
   });
 });
 

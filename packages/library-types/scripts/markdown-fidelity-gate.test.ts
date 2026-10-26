@@ -859,19 +859,22 @@ const PERSIST: LibraryRecord = {
 // below re-measures that against the *forked* snapshot rather than the retired
 // ts-defold one. Unlike persist (verbatim) and orthographic (a rename and a
 // widened union, neither of which the gate scores), the yagames fork has moved
-// twice since the severance, so the recorded numbers move with it by design. The
+// three times since the severance, so the recorded numbers move with it by design. The
 // severance retired `banner_init`, `banner_create`, `banner_delete`,
 // `banner_refresh`, `banner_set` in favour of the documented
 // `adv_show_banner_adv`/`adv_hide_banner_adv`/`adv_get_banner_adv_status`; the
 // upstream-parity correction then declared the 22 members the fork had never
 // carried and withdrew the four `sitelock.`-receiver names the pinned
-// `yagames.lua` does not export. The surface is 68 members, and the
-// generous-reading gap is the 2 upstream still declares but no longer documents —
-// `leaderboards_init` and `player_get_id`. Any gap at all forces `no-go` for
-// surface-loss, so the verdict is unchanged; what the smaller number costs is only
-// the size of the margin. Reading only the `yagames.` prefix the uniform-prefix
-// rule would enforce, the gap is the same 2: the restriction used to strand the
-// four sitelock declarations, and there are none left to strand.
+// `yagames.lua` does not export; the constructor reader then added the four
+// readiness flags (`ysdk_ready`, `payments_ready`, `player_ready`, `banner_ready`)
+// the module table opens with. The surface is 72 members, and the generous-reading
+// gap is 6: the 2 upstream still declares but no longer documents —
+// `leaderboards_init` and `player_get_id` — and the 4 flags, which the README never
+// documents. Any gap at all forces `no-go` for surface-loss, so the verdict is
+// unchanged; the number moves only the size of the margin. Reading only the
+// `yagames.` prefix the uniform-prefix rule would enforce, the gap is the same 6:
+// the restriction used to strand the four sitelock declarations, and there are
+// none left to strand.
 //
 // yagames is also the library that exposed the comparator's `//*` comment-strip
 // defect: its fixture's `//* Advertisement` section markers opened a block
@@ -1566,7 +1569,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/richtext.tags.d.ts":
     "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
   "fixtures/authored/yagames.yagames.d.ts":
-    "2fde3ee97ce24ba40de2fea7b21040882b3bbae94a8a08875417d070bd603b06",
+    "6764a3932fc288ac39c60fdd542c5849a34ca036101bac5893fd886f1f58aad0",
   "fixtures/markdown/bzAnim.bzLibrary.md":
     "ffc299add5db0e4348fcdf59fa432b4606071c7188aaa51fae4206f7fa04d8b1",
   "fixtures/markdown/dicebag.dicebag.md":
@@ -2039,17 +2042,21 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
   // Exact rather than a count, because this is also what gates the sticky-banner
   // correction: the three replacement members are documented under `yagames.`, so
   // any misspelling of one lands it in this list and reds the test.
-  test("dialect support could not flip the decision — 2 documented-member gaps remain", () => {
+  test("dialect support could not flip the decision — 6 documented-member gaps remain", () => {
     // The generous reading: every heading regardless of receiver, which is more
     // than the parser's uniform-prefix rule would allow through.
     const documented = new Set(headings().map(([, , member]) => member as string));
     expect(tsSurface().filter((member) => !documented.has(member))).toEqual([
+      "banner_ready",
       "leaderboards_init",
+      "payments_ready",
       "player_get_id",
+      "player_ready",
+      "ysdk_ready",
     ]);
   });
 
-  test("reading only the `yagames.` prefix the parser would enforce, the gap is the same 2", () => {
+  test("reading only the `yagames.` prefix the parser would enforce, the gap is the same 6", () => {
     const documented = new Set(
       headings()
         .filter(([, receiver]) => receiver === "yagames")
@@ -2057,20 +2064,24 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
     );
     // Exact rather than a count for the same reason as the test above, and it is
     // what makes the record's "the prefix restriction costs nothing" reading
-    // checkable rather than asserted. The restriction used to widen this to 6 by
-    // stranding the four `sitelock.`-receiver members; the fork no longer declares
+    // checkable rather than asserted. The restriction used to widen this by the
+    // four `sitelock.`-receiver members it stranded; the fork no longer declares
     // them, so the two readings now agree.
     expect(tsSurface().filter((member) => !documented.has(member))).toEqual([
+      "banner_ready",
       "leaderboards_init",
+      "payments_ready",
       "player_get_id",
+      "player_ready",
+      "ysdk_ready",
     ]);
   });
 
-  test("the comment-strip fix is load-bearing: the fixture surface is 68 members", () => {
+  test("the comment-strip fix is load-bearing: the fixture surface is 72 members", () => {
     // `tsDefoldMembers` — the comparator's own surface reader — over the forked
     // snapshot; too long to write out, so the samples below carry the specifics.
     const surface = tsSurface();
-    expect(surface.length).toBe(68);
+    expect(surface.length).toBe(72);
     // Members a `//*`-blind stripper silently dropped, sampled at both ends.
     expect(surface).toContain("adv_show_fullscreen_adv");
     expect(surface).toContain("player_get_data");

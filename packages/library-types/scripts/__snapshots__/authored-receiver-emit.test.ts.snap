@@ -1,0 +1,56 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`each shipped authored declaration emits the receiver form its expectation records colyseus: a consumer transpiles with the call forms the declaration produces: colyseus 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local Colyseus = require("colyseus.sdk")
+function ____exports.connect()
+    local client = Colyseus.Client("ws://localhost:2567")
+    client:join_or_create(
+        "my_room",
+        function(err, room)
+            if err ~= nil or room == nil then
+                return
+            end
+            local callbacks = Colyseus.callbacks(room)
+            callbacks:listen(
+                "currentTurn",
+                function(current, previous)
+                    print(current, previous)
+                end
+            )
+            room:on(
+                "leave",
+                function(event)
+                    print(event and event.code)
+                end
+            )
+            room.reconnection.backoff = function(attempt, delay) return attempt * delay end
+            local handle = room:input({allow_rewind = function(data) return data.x ~= nil end})
+            handle:send()
+            room.connection:once(
+                "close",
+                function(event)
+                    print(event.code)
+                end
+            )
+            room:send("move", {x = 1, y = 2})
+            room.connection:close(Colyseus.protocol.CLOSE_CODE.MAY_TRY_RECONNECT)
+        end
+    )
+    client.http:get(
+        "/test",
+        function(err, response)
+            print(err and err.message, response)
+        end
+    )
+    Colyseus.Client.select_by_latency(
+        {"ws://localhost:2567"},
+        function(err, best)
+            print(err, best and best.settings.hostname)
+        end
+    )
+end
+return ____exports
+"
+`;

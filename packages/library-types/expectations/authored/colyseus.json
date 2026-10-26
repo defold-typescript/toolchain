@@ -1,0 +1,42 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/colyseus/colyseus-defold",
+    "authoredHere": true,
+    "commit": "0.18.1",
+    "sourceUrl": "https://github.com/colyseus/colyseus-defold/tree/0.18.1",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream defines every instance method with `:` and calls each listener, callback and settings function (`reconnection.backoff`, the input's `allow_rewind`) with only its own arguments, while the module's `Client` and `callbacks` are callable tables and `Client.select_by_latency` is a `.` function; only TSTL's emit shows which call form and which callback parameters the shipped declaration produces.",
+    "consumer": [
+      "import * as Colyseus from \"colyseus.sdk\";",
+      "export function connect(): void {",
+      "  const client = Colyseus.Client(\"ws://localhost:2567\");",
+      "  client.join_or_create(\"my_room\", (err, room) => {",
+      "    if (err !== undefined || room === undefined) return;",
+      "    const callbacks = Colyseus.callbacks(room);",
+      "    callbacks.listen(\"currentTurn\", (current, previous) => {",
+      "      print(current, previous);",
+      "    });",
+      "    room.on(\"leave\", (event) => {",
+      "      print(event?.code);",
+      "    });",
+      "    room.reconnection.backoff = (attempt, delay) => attempt * delay;",
+      "    const handle = room.input({ allow_rewind: (data) => data.x !== undefined });",
+      "    handle.send();",
+      "    room.connection.once(\"close\", (event) => {",
+      "      print(event.code);",
+      "    });",
+      "    room.send(\"move\", { x: 1, y: 2 });",
+      "    room.connection.close(Colyseus.protocol.CLOSE_CODE.MAY_TRY_RECONNECT);",
+      "  });",
+      "  client.http.get(\"/test\", (err, response) => {",
+      "    print(err?.message, response);",
+      "  });",
+      "  Colyseus.Client.select_by_latency([\"ws://localhost:2567\"], (err, best) => {",
+      "    print(err, best?.settings.hostname);",
+      "  });",
+      "}"
+    ]
+  }
+}
