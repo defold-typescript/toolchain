@@ -1189,12 +1189,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other seventy-two targets share no variadic member at all", () => {
+  test("the other seventy-three targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(72);
+    expect(untouched.length).toBe(73);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2146,6 +2146,29 @@ describe("colyseus.sdk declares the three values its module table exports", () =
   test("every value carries its own documentation and none is imported", () => {
     expect(report.undocumentedMembers).toBe(0);
     expect(report.importedDocs).toBe(0);
+  });
+});
+
+// `admob.lua` carries no annotations, so it is forked here rather than read by the LuaLS
+// lane. Its one field sits in a constructor that closes on its opening line,
+// `local M = { NAME = "admob" }`, and its 24 functions are column-0 definitions.
+describe("ads_wrapper.ads_networks.admob declares the whole of its upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("ads_wrapper.ads_networks.admob"));
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(24);
+    expect(report.upstreamFields).toBe(1);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every member carries its own documentation", () => {
+    expect(report.undocumentedMembers).toBe(0);
   });
 });
 

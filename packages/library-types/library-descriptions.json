@@ -1,4 +1,5 @@
 {
+  "ads_wrapper.ads_networks.admob": "Ads Wrapper network for AdMob on Android and iOS, through the defold/extension-admob extension, using test ad units in debug mode.",
   "ads_wrapper.ads_networks.admob_legacy": "Ads Wrapper legacy network for AdMob on Android and iOS, through the defold/extension-admob extension.",
   "ads_wrapper.ads_networks.applovin_max": "Ads Wrapper network for AppLovin MAX on Android, through the defold-maxsdk extension, with its banner position and size constants.",
   "ads_wrapper.ads_networks.game_distribution": "Ads Wrapper network for GameDistribution on HTML5, through the gd-defold extension, with its banner sizes and message listener key.",

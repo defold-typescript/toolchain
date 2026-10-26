@@ -66,6 +66,7 @@
     "generated/ads_wrapper.platform.d.ts",
     "generated/ads_wrapper.queue.d.ts",
     "generated/ads_wrapper.ads_networks.test.d.ts",
+    "generated/ads_wrapper.ads_networks.admob.d.ts",
     "generated/ads_wrapper.ads_networks.admob_legacy.d.ts",
     "generated/ads_wrapper.ads_networks.applovin_max.d.ts",
     "generated/ads_wrapper.ads_networks.game_distribution.d.ts",
