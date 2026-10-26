@@ -12,6 +12,9 @@ import * as uniques from "gamepush.core.uniques";
 // ships plain Lua whose annotations say only `table` and `function`, so this is where the
 // declared shapes are held to being callable as the README documents them.
 
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
 // `check_table` and `check_callback` both let nil through.
 player.sync();
 player.sync({ override: true }, () => {});
@@ -44,6 +47,22 @@ player.callbacks.logout = (success) => {
   const _loggedOut: boolean = success;
   void _loggedOut;
 };
+const _syncArgs: Equal<
+  Parameters<NonNullable<player.PlayerCallbacks["sync"]>>,
+  [success: boolean]
+> = true;
+const _loadArgs: Equal<
+  Parameters<NonNullable<player.PlayerCallbacks["load"]>>,
+  [success: boolean]
+> = true;
+const _loginArgs: Equal<
+  Parameters<NonNullable<player.PlayerCallbacks["login"]>>,
+  [success: boolean]
+> = true;
+const _logoutArgs: Equal<
+  Parameters<NonNullable<player.PlayerCallbacks["logout"]>>,
+  [success: boolean]
+> = true;
 
 // Off HTML5 the stand-in fires `fetch_fields` with no value.
 player.callbacks.fetch_fields = (success: boolean | undefined) => {
@@ -53,6 +72,11 @@ player.callbacks.fetch_fields = (success: boolean | undefined) => {
 player.callbacks.fetch_fields = (success: boolean) => {
   void success;
 };
+// exactOptionalPropertyTypes spells an optional parameter's tuple element with `| undefined`.
+const _fetchFieldsArgs: Equal<
+  Parameters<NonNullable<player.PlayerCallbacks["fetch_fields"]>>,
+  [success?: boolean | undefined]
+> = true;
 
 player.fetch_fields(() => {});
 // @ts-expect-error the completion callback receives nothing.
