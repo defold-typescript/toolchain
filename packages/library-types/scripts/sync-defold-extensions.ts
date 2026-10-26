@@ -490,8 +490,10 @@ function compareVersions(a: string, b: string): number {
 
 /**
  * Date every release and tag pin in the committed `defold-extensions.json` at
- * its recorded ref, and write `defold-engine-releases.json` with every `X.Y.Z`
- * tag of the engine repo, newest first. Pins are read, never chosen, and no
+ * its recorded ref -- a release pin by the earlier of its publish and commit
+ * dates, a tag pin by its tagged commit's date alone -- and write
+ * `defold-engine-releases.json` with every `X.Y.Z` tag of the engine repo,
+ * newest first. Pins are read, never chosen, and no
  * api-doc is touched; the docs site compares the two to name the Defold
  * version that was current when a pin was cut.
  */
@@ -509,7 +511,12 @@ export async function syncDefoldReleaseDates(
       dated.push(withRefDate(entry, undefined));
       continue;
     }
-    dated.push(withRefDate(entry, await cutDate(github, repoName(entry.repo), entry.ref)));
+    const name = repoName(entry.repo);
+    const refDate =
+      entry.refKind === "release"
+        ? await cutDate(github, name, entry.ref)
+        : await github.commitDate(name, entry.ref);
+    dated.push(withRefDate(entry, refDate));
     pins++;
   }
   const manifest: DefoldExtensionsManifest = { libraries: dated };
