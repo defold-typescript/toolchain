@@ -108,3 +108,34 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records operator.bezier: a consumer transpiles with the call forms the declaration produces: operator.bezier 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local bezier = require("operator.bezier")
+function ____exports.follow(points, t)
+    local path = bezier.new(points)
+    local uniform = path:uniform_position(t)
+    local classic = bezier.position(path, t)
+    print(uniform, classic)
+end
+return ____exports
+"
+`;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records operator.operator: a consumer transpiles with the call forms the declaration produces: operator.operator 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local operator = require("operator.operator")
+function ____exports.init()
+    operator.flight_look_easing = function(x) return x end
+    local look = operator.flight_look_easing(0.5)
+    local rotation = operator.quat_from_euler(vmath.vector3(0, look, 0))
+    print(
+        rotation,
+        operator.EASING_INOUT_QUART(0.5)
+    )
+end
+return ____exports
+"
+`;

@@ -1,0 +1,232 @@
+{
+  "info": {
+    "namespace": "operator.bezier",
+    "brief": "Linear, quadratic and cubic bezier curves through vector or number points, with a",
+    "description": "Linear, quadratic and cubic bezier curves through vector or number points, with a\nuniform position along the curve's length. The Operator camera moves along these\ncurves, and a project can use them for its own paths."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates a bezier instance from 2 to 4 points: 2 give a straight line, 3 a quadratic",
+      "description": "Creates a bezier instance from 2 to 4 points: 2 give a straight line, 3 a quadratic\ncurve and 4 a cubic curve. Any other count fails an assert. The default length\nfunction is `vmath.length`, which rejects numbers, so number points need a\n`length_func` such as `math.abs`.",
+      "generics": "<P extends Vector3 | Vector4>",
+      "parameters": [
+        {
+          "name": "points",
+          "doc": "The points, from the start of the curve to its end.",
+          "types": [
+            "P[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "samples_count",
+          "doc": "The number of segments `uniform_position` measures the curve\nwith, a whole number. It defaults to `1`, and 2 points always use `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "length_func",
+          "doc": "Returns the length of the difference of two points. Defaults to\n`vmath.length`.",
+          "types": [
+            "(v: P) => number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "lerp_func",
+          "doc": "Interpolates between two points. Defaults to `vmath.lerp`.",
+          "types": [
+            "(t: number, a: P, b: P) => P"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Bezier<P>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates a bezier instance from 2 to 4 number points: 2 give a straight line, 3 a",
+      "description": "Creates a bezier instance from 2 to 4 number points: 2 give a straight line, 3 a\nquadratic curve and 4 a cubic curve. Any other count fails an assert. The default\nlength function is `vmath.length`, which rejects numbers, so a `length_func` such as\n`math.abs` is required; the default lerp function, `vmath.lerp`, takes numbers.",
+      "parameters": [
+        {
+          "name": "points",
+          "doc": "The points, from the start of the curve to its end.",
+          "types": [
+            "number[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "samples_count",
+          "doc": "The number of segments `uniform_position` measures the curve\nwith, a whole number. It defaults to `1`, and 2 points always use `1`.",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "length_func",
+          "doc": "Returns the length of the difference of two points.",
+          "types": [
+            "(v: number) => number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "lerp_func",
+          "doc": "Interpolates between two points. Defaults to `vmath.lerp`.",
+          "types": [
+            "(t: number, a: number, b: number) => number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Bezier<number>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "position",
+      "brief": "Returns the classic position along the curve at a progress. `time` is not clamped,",
+      "description": "Returns the classic position along the curve at a progress. `time` is not clamped,\nso a value outside `0` to `1` extrapolates.",
+      "generics": "<P>",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The bezier instance, created by `new`.",
+          "types": [
+            "Bezier<P>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "P"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "uniform_position",
+      "brief": "Returns the uniform position along the curve: the point at that fraction of the",
+      "description": "Returns the uniform position along the curve: the point at that fraction of the\ncurve's length. `time` is clamped between `0` and `1`, and the accuracy depends on\nthe `samples_count` given to `new`.",
+      "generics": "<P>",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The bezier instance, created by `new`.",
+          "types": [
+            "Bezier<P>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "P"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Bezier",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "position",
+          "brief": "Returns the classic position along the curve at a progress. `time` is not clamped,",
+          "description": "Returns the classic position along the curve at a progress. `time` is not clamped,\nso a value outside `0` to `1` extrapolates.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The progress, from `0` to `1`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "P"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "uniform_position",
+          "brief": "Returns the uniform position along the curve: the point at that fraction of the",
+          "description": "Returns the uniform position along the curve: the point at that fraction of the\ncurve's length. `time` is clamped between `0` and `1`, and the accuracy depends on\nthe `samples_count` given to `new`.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The progress, from `0` to `1`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "P"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

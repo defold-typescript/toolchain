@@ -287,6 +287,14 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/operator.bezier.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/operator.operator.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/orthographic.camera.json": {
     "callable": 1,
     "field": 1

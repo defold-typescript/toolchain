@@ -26,6 +26,38 @@
       "reason": "upstream comments it `-- called from boom.script` (boom.lua:85): the library's own script calls it, not a consumer"
     }
   ],
+  "operator.operator": [
+    {
+      "name": "did_activate_operator",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal` (operator.lua:114) and only the bundled operator.script calls it (operator/operator/operator.script:111); a project call replaces the active operator in the module's private registry and posts the previous one `deactivate`"
+    },
+    {
+      "name": "did_deactivate_operator",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal` (operator.lua:114) and only the bundled operator.script calls it (operator/operator/operator.script:117); a project call clears the active operator in the module's private registry"
+    },
+    {
+      "name": "did_final_checkpoint",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal` (operator.lua:114) and only the bundled checkpoint.script calls it (operator/checkpoint/checkpoint.script:22); a project call drops a checkpoint from the module's private registry"
+    },
+    {
+      "name": "did_final_operator",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal` (operator.lua:114) and only the bundled operator.script calls it (operator/operator/operator.script:831); a project call drops an operator from the module's private registry"
+    },
+    {
+      "name": "did_init_checkpoint",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal` (operator.lua:114) and only the bundled checkpoint.script calls it (operator/checkpoint/checkpoint.script:18); a project call registers a checkpoint in the module's private registry and posts it `debug`"
+    },
+    {
+      "name": "did_init_operator",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal` (operator.lua:114) and only the bundled operator.script calls it (operator/operator/operator.script:750); a project call registers an operator in the module's private registry and posts it `debug`"
+    }
+  ],
   "orthographic.camera": [
     {
       "name": "add_projector",
