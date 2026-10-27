@@ -277,32 +277,6 @@ describe("committed native api-docs", () => {
   });
 });
 
-// The last release whose curated natives were globals. A namespace it shipped in
-// that form keeps a deprecated global alias for one release, and no other
-// namespace gets one. Pinned rather than read as the latest tag, because the
-// latest tag moves once a release ships every namespace in module form.
-const GLOBAL_FORM_RELEASE = "v0.53.0";
-
-function atGlobalFormRelease(path: string): string {
-  const spec = `${GLOBAL_FORM_RELEASE}:packages/library-types/${path}`;
-  const proc = Bun.spawnSync(["git", "show", spec], {
-    cwd: PACKAGE_ROOT,
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  if (proc.exitCode !== 0) throw new Error(`git show ${spec} failed: ${proc.stderr.toString()}`);
-  return proc.stdout.toString();
-}
-
-function releasedGlobalNamespaces(): string[] {
-  const { targets } = JSON.parse(atGlobalFormRelease("native-targets.json")) as {
-    targets: NativeTarget[];
-  };
-  return targets
-    .filter((t) => /^declare global \{$/m.test(atGlobalFormRelease(t.declaration)))
-    .map((t) => t.namespace);
-}
-
 interface DeclarationForm {
   readonly scriptFile: boolean;
   readonly noSelfInFile: boolean;
@@ -356,11 +330,8 @@ function declarationForm(source: string): DeclarationForm {
 }
 
 describe("curated native declaration form", () => {
-  test(`each is a bare @globalTable module, aliased as a global only where ${GLOBAL_FORM_RELEASE} shipped one`, () => {
+  test("each is a bare @globalTable module with no global alias", () => {
     const targets = readNativeTargets(PACKAGE_ROOT);
-    const released = new Set(releasedGlobalNamespaces());
-    expect(released.size).toBeGreaterThan(0);
-    expect([...released].filter((ns) => !targets.some((t) => t.namespace === ns))).toEqual([]);
 
     const actual = Object.fromEntries(
       targets.map((t) => [
@@ -375,9 +346,7 @@ describe("curated native declaration form", () => {
           scriptFile: true,
           noSelfInFile: true,
           modules: [{ name: namespace, globalTable: "" }],
-          aliases: released.has(namespace)
-            ? [{ name: namespace, type: `typeof import("${namespace}")`, deprecated: true }]
-            : [],
+          aliases: [],
           otherStatements: 0,
         },
       ]),

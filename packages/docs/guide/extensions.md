@@ -65,11 +65,8 @@ iap.set_listener((self, transaction, error) => {
 
 `tsc` picks the surface up through the `"extensions"` entry in
 `compilerOptions.types`. A dotted namespace imports by its full name, as in
-`import * as cmd from "rive.cmd"`.
-
-For one release, `resolve` also writes each namespace's ambient form beside the
-module, marked deprecated, so a bare `iap.set_listener(...)` still compiles and
-runs; the next release removes it.
+`import * as cmd from "rive.cmd"`. The namespace is not a global: a bare
+`iap.set_listener(...)` with no import fails with `Cannot find name 'iap'`.
 
 ## Extensions that extend an engine namespace
 

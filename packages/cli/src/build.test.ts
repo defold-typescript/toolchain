@@ -184,7 +184,7 @@ describe("runBuild (a scene-address declaration inside include)", () => {
 });
 
 describe("runBuild (a project holding only what resolve writes)", () => {
-  test("builds a curated native import, a deprecated native global, a vendored library and a shipped @globalTable module", () => {
+  test("builds curated native imports, a vendored library and a shipped @globalTable module", () => {
     scaffoldResolvedProject(cwd);
 
     const result = runBuild({ cwd });
@@ -197,7 +197,7 @@ describe("runBuild (a project holding only what resolve writes)", () => {
     expect(lua).toMatchSnapshot();
   });
 
-  test("builds a shared and a dotted .script_api namespace as global aliases, with a deprecated global still compiling", async () => {
+  test("builds a shared and a dotted .script_api namespace as global aliases", async () => {
     await scaffoldScriptApiProject(cwd);
 
     const result = runBuild({ cwd });

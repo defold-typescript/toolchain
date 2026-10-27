@@ -49,6 +49,7 @@ export const RESOLVED_PROJECT_MAIN = [
   'import * as checkpoint from "checkpoint.checkpoint";',
   'import * as pixels from "pixels";',
   'import * as png from "png";',
+  'import * as uuid4 from "uuid4";',
   "export default defineScript({",
   "  init() {",
   "    print(uuid4.generate(), checkpoint.project_save_path, png.RGBA);",
@@ -88,8 +89,7 @@ function extensionBundle(url: string): ExtensionDeclarations {
 
 /**
  * Installs what `resolve` writes for four dependencies — the curated `png`
- * native, the curated `uuid4` native with the deprecated global a release
- * shipped, a native shipping its own `@globalTable` declaration, and the
+ * and `uuid4` natives, a native shipping its own `@globalTable` declaration, and the
  * vendored `checkpoint` library — through `resolve`'s own writers, so a test
  * sees the tree and the `tsconfig.json` entries a real resolve leaves.
  */
@@ -164,7 +164,7 @@ const EXTENSION_API_DOCS = path.join(
 
 /**
  * A script importing both dependencies' share of `firebase` and the dotted
- * `rive.cmd`, and reading `rive.cmd` through its deprecated global.
+ * `rive.cmd`.
  */
 export const SCRIPT_API_PROJECT_MAIN = [
   'import { defineScript } from "@defold-typescript/types";',
@@ -174,7 +174,7 @@ export const SCRIPT_API_PROJECT_MAIN = [
   "  init() {",
   "    firebase.initialize();",
   '    firebase.analytics.log("level_up");',
-  "    print(cmd.deleteArtboard, rive.cmd.deleteArtboard);",
+  "    print(cmd.deleteArtboard);",
   "  },",
   "});",
   "",
