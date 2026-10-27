@@ -119,7 +119,8 @@ export function buildFidelityReport(
     }
   }
 
-  for (const fn of model.moduleFunctions) {
+  const tableFunctions = (model.moduleTables ?? []).flatMap((table) => table.functions);
+  for (const fn of [...model.moduleFunctions, ...tableFunctions]) {
     if (!isPublicMethod(fn)) continue;
     totalMembers++;
     if (undocumented(fn.brief)) undocumentedMembers++;
