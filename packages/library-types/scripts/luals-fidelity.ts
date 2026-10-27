@@ -41,7 +41,8 @@ function round3(value: number): number {
  * `externalTypes` tokens reached through a cross-module import — and all three
  * reject an external alias that collides with a declared name. Every field, every
  * param and return of every method and module function, every module constant, and
- * every alias expression is mapped; `undocumentedMembers` counts
+ * every alias expression is mapped, and a field, param or alias with no type token
+ * counts as one `(untyped)` fallback; `undocumentedMembers` counts
  * fields/methods/moduleFunctions/moduleConstants whose doc or brief is empty. Deterministic; no I/O.
  */
 export function buildFidelityReport(
@@ -65,6 +66,17 @@ export function buildFidelityReport(
       unknownFallbacks += unknowns.length;
       for (const u of unknowns) unknownTokens.add(u);
     }
+  };
+
+  // A slot with no type token emits `unknown`, so it is one fallback, not zero tokens.
+  const mapSlot = (tokens: string[], mapCtx: MapContext): void => {
+    if (tokens.length > 0) {
+      mapTokens(tokens, mapCtx);
+      return;
+    }
+    totalTypeTokens++;
+    unknownFallbacks++;
+    unknownTokens.add("(untyped)");
   };
 
   const undocumented = (doc: string): boolean => doc.trim() === "";
@@ -94,7 +106,7 @@ export function buildFidelityReport(
       if (!isPublicField(field)) continue;
       totalMembers++;
       if (undocumented(field.doc)) undocumentedMembers++;
-      mapTokens(field.types, ifaceCtx);
+      mapSlot(field.types, ifaceCtx);
     }
     for (const method of iface.methods) {
       if (!isPublicMethod(method)) continue;
@@ -102,7 +114,7 @@ export function buildFidelityReport(
       if (undocumented(method.brief)) undocumentedMembers++;
       const methodCtx = scopeGenerics(ifaceCtx, method.generics);
       mapConstraints(method.generics, methodCtx);
-      for (const param of method.params) mapTokens(param.types, methodCtx);
+      for (const param of method.params) mapSlot(param.types, methodCtx);
       for (const ret of method.returns) mapTokens(ret.types, methodCtx);
     }
   }
@@ -113,7 +125,7 @@ export function buildFidelityReport(
     if (undocumented(fn.brief)) undocumentedMembers++;
     const fnCtx = scopeGenerics(ctx, fn.generics);
     mapConstraints(fn.generics, fnCtx);
-    for (const param of fn.params) mapTokens(param.types, fnCtx);
+    for (const param of fn.params) mapSlot(param.types, fnCtx);
     for (const ret of fn.returns) mapTokens(ret.types, fnCtx);
   }
 
@@ -123,7 +135,7 @@ export function buildFidelityReport(
     mapTokens(constant.types, ctx);
   }
 
-  for (const alias of model.aliases) mapTokens(alias.types, scopeAliasBody(ctx, alias));
+  for (const alias of model.aliases) mapSlot(alias.types, scopeAliasBody(ctx, alias));
 
   const coverage =
     totalTypeTokens === 0

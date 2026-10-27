@@ -1,0 +1,312 @@
+{
+  "info": {
+    "namespace": "pixelart.scripts.pixelart",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set_depth_bias",
+      "brief": "Set shadow depth bias",
+      "description": "Set shadow depth bias",
+      "parameters": [
+        {
+          "name": "depth_bias",
+          "doc": "Depth Bias",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_shadow_opacity",
+      "brief": "Set shadow opacity",
+      "description": "Set shadow opacity",
+      "parameters": [
+        {
+          "name": "shadow_opacity",
+          "doc": "Shadow opacity",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_pixel_size",
+      "brief": "Set Pixel-art pixel size for post-processing shader",
+      "description": "Set Pixel-art pixel size for post-processing shader",
+      "parameters": [
+        {
+          "name": "pixel_size",
+          "doc": "Pixel size",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_normal_edge",
+      "brief": "Set Pixel-art normal edge for sharpening edges",
+      "description": "Set Pixel-art normal edge for sharpening edges",
+      "parameters": [
+        {
+          "name": "normal_edge",
+          "doc": "Normal edge",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_depth_edge",
+      "brief": "Set Pixel-art depth edge for outline",
+      "description": "Set Pixel-art depth edge for outline",
+      "parameters": [
+        {
+          "name": "depth_edge",
+          "doc": "Depth edge",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_ambient_light",
+      "brief": "Set Pixel-art models ambient light",
+      "description": "Set Pixel-art models ambient light",
+      "parameters": [
+        {
+          "name": "ambient_light",
+          "doc": "Ambient light",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_resolution",
+      "brief": "Set Pixel-art resolution for post-processing shader",
+      "description": "Set Pixel-art resolution for post-processing shader",
+      "parameters": [
+        {
+          "name": "pixel_size",
+          "doc": "Pixel size",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_light",
+      "brief": "Set Light source and target",
+      "description": "Set Light source and target",
+      "parameters": [
+        {
+          "name": "light_source",
+          "doc": "Light source gameobject URL",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "light_target",
+          "doc": "Light target gameobject URL",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Pixel-art post-process initial setup",
+      "description": "Pixel-art post-process initial setup",
+      "parameters": [
+        {
+          "name": "pixel_settings",
+          "doc": "Table of pixel-art post-process settings",
+          "types": [
+            "PixelartSettings"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "light_settings",
+          "doc": "Light source and target URLs.",
+          "types": [
+            "LightSettings"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "shadow_settings",
+          "doc": "Table of shadow post-process settings",
+          "types": [
+            "ShadowSettings"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ShadowSettings",
+      "properties": [
+        {
+          "name": "projection_width",
+          "brief": "Shadow projection width",
+          "description": "Shadow projection width",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "projection_height",
+          "brief": "Shadow projection height",
+          "description": "Shadow projection height",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "projection_near",
+          "brief": "Shadow projection near plane",
+          "description": "Shadow projection near plane",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "projection_far",
+          "brief": "Shadow projection far plane",
+          "description": "Shadow projection far plane",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "depth_bias",
+          "brief": "The 'depth_bias' value is per-scene dependant and must be tweaked ccordingly. It is needed to avoid shadow acne, which is basically a  precision issue.",
+          "description": "The 'depth_bias' value is per-scene dependant and must be tweaked ccordingly. It is needed to avoid shadow acne, which is basically a  precision issue.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "shadow_opacity",
+          "brief": "Shadow opacity",
+          "description": "Shadow opacity",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LightSettings",
+      "properties": [
+        {
+          "name": "source",
+          "brief": "Light source URL.",
+          "description": "Light source URL.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "target",
+          "brief": "Light target URL.",
+          "description": "Light target URL.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "diffuse_light_color",
+          "brief": "Diffuse light color.",
+          "description": "Diffuse light color.",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PixelartSettings",
+      "properties": [
+        {
+          "name": "pixel_size",
+          "brief": "Pixel size",
+          "description": "Pixel size",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "normal_edge_coefficient",
+          "brief": "Normal edge for sharpening edges",
+          "description": "Normal edge for sharpening edges",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "depth_edge_coefficient",
+          "brief": "Depth edge for outline",
+          "description": "Depth edge for outline",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}
