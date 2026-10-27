@@ -1108,3 +1108,74 @@ describe("the glass, hyper trails, pixel-art and outline targets", () => {
     expect(buildTargetFidelity(PACKAGE_ROOT, target(namespace)).unknownFallbacks).toBe(0);
   });
 });
+
+describe("the flow targets", () => {
+  function target(namespace: string): LualsTarget {
+    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+    if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
+    return found;
+  }
+
+  function field(model: LibraryModel, iface: string, name: string): string {
+    const found = model.interfaces
+      .find((i) => i.name === iface)
+      ?.fields.find((f) => f.name === name);
+    if (!found) throw new Error(`${iface}.${name} missing from the flow.types model`);
+    return found.types.join("|");
+  }
+
+  test("flow.types is the whole class vocabulary with no module functions", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, target("flow.types"));
+    expect(model.moduleFunctions).toHaveLength(0);
+    expect(model.interfaces).toHaveLength(32);
+    expect(model.aliases.map((a) => a.name).sort()).toEqual([
+      "Flow.ColorValue",
+      "Flow.DefRegistry",
+      "Flow.LogLevel",
+      "Flow.ScreenRegistry",
+    ]);
+  });
+
+  test("flow.types retypes the screen registry and navigation params a project passes as literals", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, target("flow.types"));
+    expect(field(model, "Flow.InitConfig", "screens")).toBe("flow_screen_registry");
+    expect(field(model, "Flow.RuntimeConfig", "screens")).toBe("flow_screen_registry");
+    expect(field(model, "Flow.InitConfig", "initial_params")).toBe("flow_params");
+    expect(field(model, "Flow.RuntimeConfig", "initial_params")).toBe("flow_params");
+    for (const name of ["push", "replace", "reset"]) {
+      expect(field(model, "Flow.Navigation", name)).toContain("params?: flow_params");
+    }
+  });
+
+  test("flow.ui and flow.navigation.runtime export the gui_script and .script lifecycle", () => {
+    const names = (namespace: string) =>
+      buildTargetModel(PACKAGE_ROOT, target(namespace)).moduleFunctions.map((f) => f.name);
+    expect(names("flow.ui")).toEqual(expect.arrayContaining(["mount", "render", "hit_test"]));
+    expect(names("flow.navigation.runtime")).toEqual(["init", "final", "on_message"]);
+  });
+
+  test.each([
+    "flow.ui",
+    "flow.navigation.runtime",
+    "flow.navigation.proxy",
+  ])("every %s self param is retyped to an open table", (namespace) => {
+    const selfParams = buildTargetModel(PACKAGE_ROOT, target(namespace)).moduleFunctions.flatMap(
+      (f) => f.params.filter((p) => p.name === "self"),
+    );
+    expect(selfParams.length).toBeGreaterThan(0);
+    expect(selfParams.every((p) => p.types.join() === "table<string, any>")).toBe(true);
+  });
+
+  test.each([
+    "flow.types",
+    "flow.ui",
+    "flow.layout",
+    "flow.flex",
+    "flow.navigation.messages",
+    "flow.navigation.runtime",
+    "flow.navigation.proxy",
+    "flow.navigation.gui",
+  ])("%s resolves every type token", (namespace) => {
+    expect(buildTargetFidelity(PACKAGE_ROOT, target(namespace)).unknownFallbacks).toBe(0);
+  });
+});

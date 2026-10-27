@@ -1,0 +1,44 @@
+{
+  "info": {
+    "namespace": "flow.navigation.messages",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "on_message",
+      "brief": "Map of all supported message ids keyed by operation name.\nMessage id for navigation.push — payload: {id, params?, options?}\nMessage id for navigation.pop — payload: {result?, options?}\nMessage id for navigation.replace — payload: {id, params?, options?}\nMessage id for navigation.reset — payload: {id, params?, options?}\nMessage id for navigation.back — payload: {result?, options?}\nMessage id for navigation.invalidate — no payload required\nHandle an incoming Defold message and dispatch it to the navigation module.\nReturns true when the message was a recognized navigation message and was handled.\nReturns false for all other messages so callers can chain additional handlers.\n\nSupported message payloads:\nPUSH/REPLACE/RESET: { id = \"screen_id\", params = {}, options = {} }\nPOP/BACK:           { result = {}, options = {} }\nINVALIDATE:         no payload needed",
+      "description": "Map of all supported message ids keyed by operation name.\nMessage id for navigation.push — payload: {id, params?, options?}\nMessage id for navigation.pop — payload: {result?, options?}\nMessage id for navigation.replace — payload: {id, params?, options?}\nMessage id for navigation.reset — payload: {id, params?, options?}\nMessage id for navigation.back — payload: {result?, options?}\nMessage id for navigation.invalidate — no payload required\nHandle an incoming Defold message and dispatch it to the navigation module.\nReturns true when the message was a recognized navigation message and was handled.\nReturns false for all other messages so callers can chain additional handlers.\n\nSupported message payloads:\nPUSH/REPLACE/RESET: { id = \"screen_id\", params = {}, options = {} }\nPOP/BACK:           { result = {}, options = {} }\nINVALIDATE:         no payload needed",
+      "parameters": [
+        {
+          "name": "message_id",
+          "doc": "The incoming Defold message id hash, or raw string in test environments",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message",
+          "doc": "The incoming Defold message payload",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True when the message was handled by navigation",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

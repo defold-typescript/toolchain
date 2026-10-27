@@ -1,0 +1,2375 @@
+{
+  "info": {
+    "namespace": "flow.types",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_Style",
+      "properties": [
+        {
+          "name": "width",
+          "brief": "Fixed width in px, or percentage \"50%\"",
+          "description": "Fixed width in px, or percentage \"50%\"",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "Fixed height in px, or percentage \"50%\"",
+          "description": "Fixed height in px, or percentage \"50%\"",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "min_width",
+          "brief": "Stored for compatibility; currently not enforced by flow/layout.lua",
+          "description": "Stored for compatibility; currently not enforced by flow/layout.lua",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min_height",
+          "brief": "Stored for compatibility; currently not enforced by flow/layout.lua",
+          "description": "Stored for compatibility; currently not enforced by flow/layout.lua",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_width",
+          "brief": "Stored for compatibility; currently not enforced by flow/layout.lua",
+          "description": "Stored for compatibility; currently not enforced by flow/layout.lua",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_height",
+          "brief": "Stored for compatibility; currently not enforced by flow/layout.lua",
+          "description": "Stored for compatibility; currently not enforced by flow/layout.lua",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flex_direction",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"column\" | \"row\""
+          ]
+        },
+        {
+          "name": "flex_grow",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flex_shrink",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flex_basis",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "align_items",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"start\" | \"center\" | \"end\" | \"stretch\""
+          ]
+        },
+        {
+          "name": "align_self",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"start\" | \"center\" | \"end\" | \"stretch\" | \"auto\""
+          ]
+        },
+        {
+          "name": "justify_content",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"start\" | \"center\" | \"end\" | \"space-between\" | \"space-around\" | \"space-evenly\""
+          ]
+        },
+        {
+          "name": "gap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "padding",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "padding_left",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "padding_right",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "padding_top",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "padding_bottom",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "margin",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "margin_left",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "margin_right",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "margin_top",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "margin_bottom",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "border",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "border_left",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "border_right",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "border_top",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "border_bottom",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "position_left",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "position_right",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "position_top",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "position_bottom",
+          "brief": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "description": "Stored for compatibility; currently not consumed by flow/layout.lua",
+          "types": [
+            "number | string"
+          ]
+        },
+        {
+          "name": "position_type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"static\" | \"relative\" | \"absolute\""
+          ]
+        },
+        {
+          "name": "flex_wrap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"no-wrap\" | \"wrap\" | \"wrap-reverse\""
+          ]
+        },
+        {
+          "name": "overflow",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"visible\" | \"hidden\" | \"scroll\""
+          ]
+        },
+        {
+          "name": "display",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"flex\" | \"none\""
+          ]
+        },
+        {
+          "name": "aspect_ratio",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "direction",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"inherit\" | \"ltr\" | \"rtl\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_Element",
+      "properties": [
+        {
+          "name": "key",
+          "brief": "Stable unique identifier for node caching",
+          "description": "Stable unique identifier for node caching",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "Element type (\"box\", \"text\", \"button\", etc.); filled by constructors like Box()/Text()/Button()",
+          "description": "Element type (\"box\", \"text\", \"button\", etc.); filled by constructors like Box()/Text()/Button()",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "style",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_Style"
+          ]
+        },
+        {
+          "name": "children",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_Element[]"
+          ]
+        },
+        {
+          "name": "layout",
+          "brief": "Computed layout (written by layout engine)",
+          "description": "Computed layout (written by layout engine)",
+          "types": [
+            "Flow_LayoutRect"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        },
+        {
+          "name": "scale",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | { x?: number; y?: number; z?: number }"
+          ]
+        },
+        {
+          "name": "text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "align",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"left\" | \"center\" | \"right\""
+          ]
+        },
+        {
+          "name": "font",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "line_break",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "image",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "texture",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "scale_mode",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"stretch\" | \"fit\""
+          ]
+        },
+        {
+          "name": "image_aspect",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "border",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | { left?: number; top?: number; right?: number; bottom?: number }"
+          ]
+        },
+        {
+          "name": "pressed_color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        },
+        {
+          "name": "on_click",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(element: Flow_Element) => void"
+          ]
+        },
+        {
+          "name": "backdrop_color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        },
+        {
+          "name": "on_backdrop_click",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(element: Flow_Element) => void"
+          ]
+        },
+        {
+          "name": "_visible",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_is_overlay",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_alpha",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_offset_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_offset_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_offset_x_pixels",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_offset_y_pixels",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_hovered",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_open",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_anim_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_anim_velocity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_on_anim_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(anim_y: number, velocity: number) => void"
+          ]
+        },
+        {
+          "name": "_sheet_height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_scrollbar",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_bounce",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_momentum",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_virtual_height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_virtual_width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_scroll_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_scroll_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_momentum_active",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_bouncing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_velocity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_dragging_axis",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"x\" | \"y\""
+          ]
+        },
+        {
+          "name": "_dragging",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_drag_start_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_drag_start_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_scroll_start_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_scroll_start_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_last_drag_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_last_drag_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_last_drag_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_cache_key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "_node_prefix",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "_background_screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_Element"
+          ]
+        },
+        {
+          "name": "_scroll_ancestor",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_Element"
+          ]
+        },
+        {
+          "name": "_needs_redraw",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_scroll_changed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_clips_children",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_clipping_visible",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_BoxProps"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_TextProps",
+      "properties": [
+        {
+          "name": "text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "align",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"left\" | \"center\" | \"right\""
+          ]
+        },
+        {
+          "name": "font",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "scale",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | { x?: number; y?: number; z?: number }"
+          ]
+        },
+        {
+          "name": "line_break",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_ButtonProps",
+      "properties": [
+        {
+          "name": "pressed_color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        },
+        {
+          "name": "on_click",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(element: Flow_Element) => void"
+          ]
+        },
+        {
+          "name": "image",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "texture",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "border",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | { left?: number; top?: number; right?: number; bottom?: number }"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_ButtonImageProps",
+      "properties": [
+        {
+          "name": "image",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_IconProps",
+      "properties": [
+        {
+          "name": "image",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "texture",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "scale",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | { x?: number; y?: number; z?: number }"
+          ]
+        },
+        {
+          "name": "scale_mode",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"stretch\" | \"fit\""
+          ]
+        },
+        {
+          "name": "image_aspect",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_ScrollProps",
+      "properties": [
+        {
+          "name": "_scrollbar",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_bounce",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_momentum",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_virtual_height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_virtual_width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_scroll_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_scroll_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_PopupProps",
+      "properties": [
+        {
+          "name": "backdrop_color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        },
+        {
+          "name": "on_backdrop_click",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(element: Flow_Element) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_BottomSheetProps",
+      "properties": [
+        {
+          "name": "backdrop_color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        },
+        {
+          "name": "_open",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_anim_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_anim_velocity",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "_on_anim_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(anim_y: number, velocity: number) => void"
+          ]
+        },
+        {
+          "name": "on_backdrop_click",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(element: Flow_Element) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_BottomSheetApi",
+      "properties": [
+        {
+          "name": "dismiss",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(result?: unknown) => boolean"
+          ]
+        },
+        {
+          "name": "invalidate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_BottomSheetSheetDef",
+      "properties": [
+        {
+          "name": "view",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(params: LuaTable, api: Flow_BottomSheetApi) => Flow_Element"
+          ]
+        },
+        {
+          "name": "screens",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, Flow_ScreenDef>"
+          ]
+        },
+        {
+          "name": "initial_screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "initial_params",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable | ((params: LuaTable, api: Flow_BottomSheetApi) => LuaTable)"
+          ]
+        },
+        {
+          "name": "backdrop_color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        },
+        {
+          "name": "dismiss_on_backdrop",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "on_dismiss",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(params: LuaTable, result: unknown, api: Flow_BottomSheetApi) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_BottomSheetHostConfig",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "sheet",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_BottomSheetSheetDef"
+          ]
+        },
+        {
+          "name": "open_message_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "close_message_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "background_focus_url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Url"
+          ]
+        },
+        {
+          "name": "render_order",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "on_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: LuaTable, dt: number, api: Flow_BottomSheetApi) => boolean | undefined"
+          ]
+        },
+        {
+          "name": "on_message",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: LuaTable, message_id: Hash | string, message: LuaTable | undefined, sender: Url | undefined, api: Flow_BottomSheetApi) => boolean | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_LayoutRect",
+      "properties": [
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "w",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "h",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_Logger",
+      "properties": [
+        {
+          "name": "levels",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string, number>"
+          ]
+        },
+        {
+          "name": "get_level",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => Flow_LogLevel"
+          ]
+        },
+        {
+          "name": "set_level",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(level: Flow_LogLevel | number) => Flow_LogLevel"
+          ]
+        },
+        {
+          "name": "get_context_level",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(context: string) => Flow_LogLevel | undefined"
+          ]
+        },
+        {
+          "name": "set_context_level",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(context: string, level: Flow_LogLevel | number) => Flow_LogLevel"
+          ]
+        },
+        {
+          "name": "clear_context_level",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(context: string) => boolean"
+          ]
+        },
+        {
+          "name": "none",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(context?: string) => Flow_LogLevel"
+          ]
+        },
+        {
+          "name": "is_enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(level: Flow_LogLevel | number, context?: string) => boolean"
+          ]
+        },
+        {
+          "name": "set_sink",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(fn?: (entry: LuaTable) => void) => boolean"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(context: string, ...args: unknown[]) => boolean"
+          ]
+        },
+        {
+          "name": "info",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(context: string, ...args: unknown[]) => boolean"
+          ]
+        },
+        {
+          "name": "warn",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(context: string, ...args: unknown[]) => boolean"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(context: string, ...args: unknown[]) => boolean"
+          ]
+        },
+        {
+          "name": "_reset_for_tests",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_TransitionMeta",
+      "properties": [
+        {
+          "name": "action",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"fade\" | \"slide_left\" | \"slide_right\" | \"none\""
+          ]
+        },
+        {
+          "name": "duration",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "from_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "to_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_ScreenDef",
+      "properties": [
+        {
+          "name": "view",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(params: LuaTable, navigation: Flow_Navigation) => Flow_Element | undefined"
+          ]
+        },
+        {
+          "name": "url",
+          "brief": "msg.url() for lifecycle message delivery",
+          "description": "msg.url() for lifecycle message delivery",
+          "types": [
+            "Url"
+          ]
+        },
+        {
+          "name": "focus_url",
+          "brief": "msg.url() of the script that owns input focus",
+          "description": "msg.url() of the script that owns input focus",
+          "types": [
+            "Url"
+          ]
+        },
+        {
+          "name": "proxy_url",
+          "brief": "msg.url() of a collection proxy to load",
+          "description": "msg.url() of a collection proxy to load",
+          "types": [
+            "Url"
+          ]
+        },
+        {
+          "name": "preload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "transition",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"fade\" | \"slide_left\" | \"slide_right\" | \"none\""
+          ]
+        },
+        {
+          "name": "meta",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown"
+          ]
+        },
+        {
+          "name": "on_enter",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(params: LuaTable, navigation: Flow_Navigation) => void"
+          ]
+        },
+        {
+          "name": "on_exit",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(params: LuaTable, navigation: Flow_Navigation) => void"
+          ]
+        },
+        {
+          "name": "on_pause",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(params: LuaTable, navigation: Flow_Navigation) => void"
+          ]
+        },
+        {
+          "name": "on_resume",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(params: LuaTable, navigation: Flow_Navigation) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_RegisteredScreen",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "_source",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ScreenDef"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_PushOptions",
+      "properties": [
+        {
+          "name": "transition",
+          "brief": "",
+          "description": "",
+          "types": [
+            "\"fade\" | \"slide_left\" | \"slide_right\" | \"none\""
+          ]
+        },
+        {
+          "name": "duration",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "on_result",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(result: unknown) => void"
+          ]
+        },
+        {
+          "name": "result_url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Url"
+          ]
+        },
+        {
+          "name": "result_message_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_StackEntry",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "params",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_RegisteredScreen"
+          ]
+        },
+        {
+          "name": "on_result",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(result: unknown) => void"
+          ]
+        },
+        {
+          "name": "result_url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Url"
+          ]
+        },
+        {
+          "name": "result_message_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_ScreenScope",
+      "properties": [
+        {
+          "name": "screen_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_Navigation",
+      "properties": [
+        {
+          "name": "register",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(id: string, screen_def: Flow_ScreenDef) => Flow_RegisteredScreen"
+          ]
+        },
+        {
+          "name": "get_screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(id: string) => Flow_RegisteredScreen | undefined"
+          ]
+        },
+        {
+          "name": "push",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(id: string, params?: LuaMap<string, unknown> | Record<string, unknown>, options?: Flow_PushOptions) => Flow_StackEntry | undefined"
+          ]
+        },
+        {
+          "name": "pop",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(result?: unknown, options?: Flow_PushOptions | string) => Flow_StackEntry | undefined"
+          ]
+        },
+        {
+          "name": "replace",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(id: string, params?: LuaMap<string, unknown> | Record<string, unknown>, options?: Flow_PushOptions) => Flow_StackEntry | undefined"
+          ]
+        },
+        {
+          "name": "reset",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(id: string, params?: LuaMap<string, unknown> | Record<string, unknown>, options?: Flow_PushOptions | string) => Flow_StackEntry | undefined"
+          ]
+        },
+        {
+          "name": "back",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(result?: unknown, options?: Flow_PushOptions | string) => Flow_StackEntry | undefined"
+          ]
+        },
+        {
+          "name": "current",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => Flow_StackEntry | undefined"
+          ]
+        },
+        {
+          "name": "peek",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(offset?: number) => Flow_StackEntry | undefined"
+          ]
+        },
+        {
+          "name": "stack_depth",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => number"
+          ]
+        },
+        {
+          "name": "invalidate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "is_invalidated",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => boolean"
+          ]
+        },
+        {
+          "name": "clear_invalidation",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "is_busy",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => boolean"
+          ]
+        },
+        {
+          "name": "get_transition",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => Flow_TransitionMeta | undefined"
+          ]
+        },
+        {
+          "name": "begin_transition",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(meta: Flow_TransitionMeta) => Flow_TransitionMeta"
+          ]
+        },
+        {
+          "name": "complete_transition",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => boolean"
+          ]
+        },
+        {
+          "name": "get_data",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(key_or_opts?: string | Flow_ScreenScope, opts?: Flow_ScreenScope) => unknown"
+          ]
+        },
+        {
+          "name": "set_data",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(key: string, value: unknown, opts?: Flow_ScreenScope) => unknown"
+          ]
+        },
+        {
+          "name": "get_scroll_offset",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(key: string, opts?: Flow_ScreenScope) => number"
+          ]
+        },
+        {
+          "name": "on",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(event: string, fn: (...args: any[]) => unknown) => (...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "off",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(event: string, fn: (...args: any[]) => unknown) => void"
+          ]
+        },
+        {
+          "name": "_reset_for_tests",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => boolean"
+          ]
+        },
+        {
+          "name": "_router",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_MountOptions",
+      "properties": [
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_InitConfig",
+      "properties": [
+        {
+          "name": "screens",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<string, Flow_ScreenDef> | Record<string, Flow_ScreenDef>"
+          ]
+        },
+        {
+          "name": "initial_screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "initial_params",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ]
+        },
+        {
+          "name": "debug",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "on_update",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: LuaTable, dt: number, nav: Flow_Navigation) => boolean"
+          ]
+        },
+        {
+          "name": "on_message",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: LuaTable, message_id: Hash | string, message: LuaTable | undefined, sender: Url | undefined, nav: Flow_Navigation) => boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_RuntimeConfig",
+      "properties": [
+        {
+          "name": "screens",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<string, Flow_ScreenDef> | Record<string, Flow_ScreenDef>"
+          ]
+        },
+        {
+          "name": "initial_screen",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "initial_params",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ]
+        },
+        {
+          "name": "initial_options",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_PushOptions | string"
+          ]
+        },
+        {
+          "name": "enable_proxy_runtime",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "proxy_options",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ProxyAttachOptions"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_ProxyAttachOptions",
+      "properties": [
+        {
+          "name": "preload_message_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "enable_message_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "disable_message_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "sync_existing",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_MarkdownOptions",
+      "properties": [
+        {
+          "name": "text",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "style",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_Style"
+          ]
+        },
+        {
+          "name": "font",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "scale",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | { x?: number; y?: number; z?: number }"
+          ]
+        },
+        {
+          "name": "_scrollbar",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_bounce",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "_momentum",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "auto_wrap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "wrap_width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flatten_formatting",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_FlexNodeOptions",
+      "properties": [
+        {
+          "name": "key",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        },
+        {
+          "name": "style",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_Style"
+          ]
+        },
+        {
+          "name": "children",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_Element[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_FlexNode",
+      "properties": [
+        {
+          "name": "style",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_Style"
+          ]
+        },
+        {
+          "name": "children",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_FlexNode[]"
+          ]
+        },
+        {
+          "name": "measure",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_InputDeps",
+      "properties": [
+        {
+          "name": "registry",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_DefRegistry"
+          ]
+        },
+        {
+          "name": "get_window_size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "get_gui_size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "is_debug_enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: LuaTable) => boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_AnimationDeps",
+      "properties": [
+        {
+          "name": "registry",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_DefRegistry"
+          ]
+        },
+        {
+          "name": "request_redraw",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(self: LuaTable) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_RendererDeps",
+      "properties": [
+        {
+          "name": "registry",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Flow_DefRegistry"
+          ]
+        },
+        {
+          "name": "get_window_size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "get_gui_size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(...args: any[]) => unknown"
+          ]
+        },
+        {
+          "name": "layout",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "set_node_color",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, r: number, g: number, b: number, a: number) => void"
+          ]
+        },
+        {
+          "name": "set_node_position",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, x: number, y: number) => void"
+          ]
+        },
+        {
+          "name": "set_node_size",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(node: Opaque<\"node\">, w: number, h: number) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_ColorValue"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_LogLevel"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_ScreenRegistry"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Flow_DefRegistry"
+    }
+  ]
+}

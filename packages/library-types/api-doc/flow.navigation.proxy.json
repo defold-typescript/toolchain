@@ -1,0 +1,62 @@
+{
+  "info": {
+    "namespace": "flow.navigation.proxy",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "attach",
+      "brief": "Attach the collection proxy runtime to a navigation instance.\nRegisters \"preload\" and \"changed\" event listeners so proxies are\nmanaged automatically as screens are navigated.\n\nWhen opts.sync_existing is true (the default), immediately preloads\nall already-registered screens with preload=true, and syncs the current\nactive proxy if a screen is already on the stack.",
+      "description": "Attach the collection proxy runtime to a navigation instance.\nRegisters \"preload\" and \"changed\" event listeners so proxies are\nmanaged automatically as screens are navigated.\n\nWhen opts.sync_existing is true (the default), immediately preloads\nall already-registered screens with preload=true, and syncs the current\nactive proxy if a screen is already on the stack.",
+      "parameters": [
+        {
+          "name": "nav",
+          "doc": "The navigation module; defaults to flow/navigation/init",
+          "types": [
+            "Flow_Navigation | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "Options overriding DEFAULTS",
+          "types": [
+            "Flow_ProxyAttachOptions | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The runtime instance (call :detach() to clean up)",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "detach",
+      "brief": "Remove all navigation event listeners and clean up the runtime.\nCall this in your bootstrap script's final() function to prevent\nleaked listeners after the script is destroyed.",
+      "description": "Remove all navigation event listeners and clean up the runtime.\nCall this in your bootstrap script's final() function to prevent\nleaked listeners after the script is destroyed.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The runtime instance created by M.attach()",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
