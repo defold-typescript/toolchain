@@ -1026,6 +1026,67 @@ describe("parseLualsSource re-exported module tables", () => {
     expect(model.moduleTables?.map((t) => t.name)).toEqual(["T"]);
   });
 
+  test("declares a reassigned field with the table assigned last", () => {
+    const model = parseLualsSource(
+      lua(
+        "local M = {}",
+        "local A = {}",
+        "function A.first() end",
+        "local B = {}",
+        "B.__index = B",
+        "---@return C",
+        "function B.new() end",
+        "---@return C self",
+        "function B:set() end",
+        "function M.run() end",
+        "M.X = A",
+        "M.X = B",
+        "return M",
+      ),
+    );
+    expect(
+      model.moduleTables?.map((t) => ({
+        name: t.name,
+        table: t.table,
+        functions: t.functions.map((f) => f.name),
+      })),
+    ).toEqual([{ name: "X", table: "B", functions: ["new"] }]);
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["first", "run"]);
+    expect(model.interfaces.find((i) => i.name === "B")?.extends).toBe("C");
+    expect(model.moduleTables?.[0]?.functions[0]?.returns.flatMap((r) => r.types)).toEqual(["B"]);
+  });
+
+  test("an overwritten field assignment leaves the model as if it were absent", () => {
+    function reassigned(overwritten: string[]): LibraryModel {
+      const { moduleAssignments: _, ...model } = parseLualsSource(
+        lua(
+          "local M = {}",
+          "local A = {}",
+          "A.__index = A",
+          "---@return C",
+          "function A.new() end",
+          "---@return C self",
+          "function A:set() end",
+          "local B = {}",
+          "B.__index = B",
+          "---@return D",
+          "function B.new() end",
+          "---@return D self",
+          "function B:set() end",
+          "function M.run() end",
+          ...overwritten,
+          "M.X = B",
+          "M.Y = B",
+          "return M",
+        ),
+      );
+      return model;
+    }
+    const withOverwrite = reassigned(["M.X = A"]);
+    expect(withOverwrite.moduleTables?.map((t) => t.name)).toEqual(["X", "Y"]);
+    expect(withOverwrite).toEqual(reassigned([]));
+  });
+
   test("a table the module never re-exports keeps its dot functions as module functions", () => {
     const model = parseLualsSource(source({ aliases: [] }));
     expect(model.moduleFunctions.map((f) => f.name)).toEqual(["new", "run"]);

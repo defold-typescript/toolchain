@@ -1534,6 +1534,30 @@ return M
   expect(out).not.toMatch(/export function new_?\(/);
 });
 
+test("a reassigned re-export field declares the table assigned last, once", () => {
+  const model = parseLualsSource(`
+local M = {}
+local A = {}
+function A.first() end
+local B = {}
+B.__index = B
+---@return C
+function B.new() end
+---@return C self
+function B:set() end
+function M.run() end
+M.X = A
+M.X = B
+return M
+`);
+  const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+
+  expect(out.split("export const X:")).toHaveLength(2);
+  expect(out).toMatch(/export const X: \{\s+"new"\(this: void/);
+  expect(out).not.toMatch(/export const X: \{[^}]*first/);
+  expect(out).not.toMatch(/export function new_?\(/);
+});
+
 test("a dotted name sanitizing onto another declared name throws, naming both and the generated name", () => {
   const model: LibraryModel = {
     interfaces: [{ name: "demo.tree", generics: [], fields: [], methods: [], brief: "" }],

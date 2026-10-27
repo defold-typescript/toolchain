@@ -906,6 +906,31 @@ return M
   expect(functions).not.toContain("new");
 });
 
+test("a reassigned re-export field lowers the table assigned last", () => {
+  const model = parseLualsSource(`
+local M = {}
+local A = {}
+function A.first() end
+local B = {}
+B.__index = B
+---@return C
+function B.new() end
+---@return C self
+function B:set() end
+function M.run() end
+M.X = A
+M.X = B
+return M
+`);
+  const functions = elementsOf(lowerLibraryModel(model, { namespace: "demo" }))
+    .filter((element) => element.type === "FUNCTION")
+    .map((element) => element.name);
+
+  expect(functions.filter((name) => name === "X.new")).toHaveLength(1);
+  expect(functions).not.toContain("X.first");
+  expect(functions).not.toContain("new");
+});
+
 test("two declarations reaching one generated name refuse to lower, matching the emitter", () => {
   const model: LibraryModel = {
     interfaces: [],
