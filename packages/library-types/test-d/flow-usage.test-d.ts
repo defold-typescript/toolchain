@@ -58,4 +58,37 @@ export function facadeModules(self: ProjectSelf): void {
   flow.ui.cp.Box({ key: "bad", style: { flex_direction: "diagonal" } });
   // @ts-expect-error log levels are restricted to Flow's supported literals or numbers
   flow.log.set_level("loud");
+  // @ts-expect-error bottom-sheet backdrop colors are color strings
+  flow.bottom_sheet({ key: "sheet", children: [], backdrop_color: 1 });
+}
+
+export function navigationMessages(messageId: Hash, message: Record<string, unknown>): boolean {
+  const transports = [flow.nav, flow.nav.messages];
+  const ids: (Hash | string)[] = [];
+  for (const transport of transports) {
+    ids.push(
+      transport.ids.push,
+      transport.ids.pop,
+      transport.ids.replace,
+      transport.ids.reset,
+      transport.ids.back,
+      transport.ids.invalidate,
+      transport.PUSH,
+      transport.POP,
+      transport.REPLACE,
+      transport.RESET,
+      transport.BACK,
+      transport.INVALIDATE,
+    );
+  }
+  void ids;
+
+  flow.nav.replace("screen", {}, "fade");
+
+  return (
+    flow.nav.on_message(messageId, message) ||
+    flow.nav.handle_message(messageId, message) ||
+    flow.nav.messages.on_message(messageId, message) ||
+    flow.nav.messages.handle_message(messageId, message)
+  );
 }
