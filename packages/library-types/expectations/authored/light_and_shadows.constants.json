@@ -1,0 +1,10 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/Dragosha/defold-light-and-shadows",
+    "authoredHere": true,
+    "commit": "v0.9.1",
+    "sourceUrl": "https://github.com/Dragosha/defold-light-and-shadows/tree/v0.9.1",
+    "license": "MIT",
+    "importString": "import * as constants from \"light_and_shadows.constants\""
+  }
+}

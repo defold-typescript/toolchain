@@ -1190,12 +1190,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other seventy-five targets share no variadic member at all", () => {
+  test("the other seventy-eight targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(75);
+    expect(untouched.length).toBe(78);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1575,6 +1575,10 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       defmath: 36,
       "in.onscreen": 1,
       "in.textbox": 1,
+      // The `-- List of light sources` block above `lights` in the returned literal.
+      "light_and_shadows.constants": 1,
+      // The plain `--` notes above seven settings fields and `draw_upscaled`.
+      "light_and_shadows.light_and_shadows": 8,
       "monarch.monarch": 6,
       "monarch.transitions.gui": 1,
       nakama: 3,
@@ -1590,7 +1594,7 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       rendy: 13,
       zzfx: 4,
     });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(93);
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(102);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
@@ -1726,6 +1730,8 @@ describe("only a refusal the fork left unanswered is charged", () => {
       "defmath",
       "in.onscreen",
       "in.textbox",
+      "light_and_shadows.constants",
+      "light_and_shadows.light_and_shadows",
       "monarch.monarch",
       "monarch.transitions.gui",
       "nakama",
@@ -1741,11 +1747,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 93 is what makes that a closure rather than a target quietly dropping out of the
+  // 102 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 93", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 102", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(93);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(102);
   });
 
   // The one target whose zero comes entirely from the ledger rather than from authored
@@ -2250,6 +2256,46 @@ describe("ink.story declares the whole of its upstream", () => {
     expect(blank).toEqual([]);
     expect(report.undocumentedMembers).toBe(0);
   });
+});
+
+// `light_and_shadows.lua` and `light.lua` annotate three of their thirteen functions and
+// none of their settings fields; `constants.lua` is a data module, its surface the keys
+// of the table literal it returns. Each api-doc member is described from the README and
+// the source comments.
+describe("the defold-light-and-shadows modules declare the whole of their upstream modules", () => {
+  const cases = [
+    { namespace: "light_and_shadows.light_and_shadows", members: 9, fields: 15 },
+    { namespace: "light_and_shadows.light", members: 4, fields: 7 },
+    { namespace: "light_and_shadows.constants", members: 0, fields: 15 },
+  ];
+
+  for (const { namespace, members, fields } of cases) {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+
+    test(`${namespace}: both axes close, with nothing missing, invented or short`, () => {
+      expect(report.upstreamMembers).toBe(members);
+      expect(report.upstreamFields).toBe(fields);
+      expect(report.missingMembers).toEqual([]);
+      expect(report.phantomMembers).toEqual([]);
+      expect(report.arityMismatches).toEqual([]);
+      expect(report.missingFields).toEqual([]);
+      expect(report.phantomFields).toEqual([]);
+      expect(report.callableCoverage).toBe(1);
+      expect(report.fieldCoverage).toBe(1);
+    });
+
+    test(`${namespace}: every api-doc member carries a description`, () => {
+      const declared = apiDocElements(target(namespace)).filter(
+        (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+      );
+      expect(new Set(declared.map((element) => element.name)).size).toBe(members + fields);
+      const blank = declared
+        .filter((element) => (element.description ?? "").trim() === "")
+        .map((element) => element.name);
+      expect(blank).toEqual([]);
+      expect(report.undocumentedMembers).toBe(0);
+    });
+  }
 });
 
 describe("the artifact shape is diff-stable", () => {
