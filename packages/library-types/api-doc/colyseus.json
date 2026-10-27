@@ -7,15 +7,26 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "MatchmakeError"
+      "name": "MatchmakeError",
+      "types": [
+        "HTTPError",
+        "RoomError",
+        "WebSocketEvent"
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "MatchmakeCallback"
+      "name": "MatchmakeCallback",
+      "types": [
+        "(err?: MatchmakeError, room?: Room<State>) => void"
+      ]
     },
     {
       "type": "TYPEDEF",
-      "name": "HTTPCallback"
+      "name": "HTTPCallback",
+      "types": [
+        "(err: HTTPError | undefined, data: unknown) => void"
+      ]
     },
     {
       "type": "VARIABLE",
@@ -372,6 +383,31 @@
       "functions": [
         {
           "type": "FUNCTION",
+          "name": "__call",
+          "brief": "Creates a client for a server endpoint.",
+          "description": "Creates a client for a server endpoint.",
+          "parameters": [
+            {
+              "name": "endpoint_or_settings",
+              "doc": "A `ws://`, `wss://`, `http://` or `https://` URL, or the\nsettings it would parse to.",
+              "types": [
+                "string | ClientSettings"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Client"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
           "name": "select_by_latency",
           "brief": "Measures the latency of each endpoint and calls back with a client for the fastest.",
           "description": "Measures the latency of each endpoint and calls back with a client for the fastest.",
@@ -415,8 +451,1902 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "ClientSettings",
+      "properties": [
+        {
+          "name": "hostname",
+          "brief": "The server's host name, without a trailing `/`.",
+          "description": "The server's host name, without a trailing `/`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "port",
+          "brief": "The server's port.",
+          "description": "The server's port.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "use_ssl",
+          "brief": "Whether to connect over `wss://` and `https://`.",
+          "description": "Whether to connect over `wss://` and `https://`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pathname",
+          "brief": "A path prefix the server is mounted under, without a trailing `/`.",
+          "description": "A path prefix the server is mounted under, without a trailing `/`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Auth",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on_change",
+          "brief": "Calls `handler` every time the user signs in or out. The first call also fetches the",
+          "description": "Calls `handler` every time the user signs in or out. The first call also fetches the\nuser's data.",
+          "parameters": [
+            {
+              "name": "handler",
+              "doc": "",
+              "types": [
+                "(auth_data: AuthData) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the handler.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_user_data",
+          "brief": "Fetches the signed-in user's data.",
+          "description": "Fetches the signed-in user's data.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "Receives the data, or `\"missing auth token\"` when signed out, or the\nrequest's error.",
+              "types": [
+                "(err: HTTPError | string | undefined, user_data: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "register_with_email_and_password",
+          "brief": "Registers a user with an email and a password, and signs them in.",
+          "description": "Registers a user with an email and a password, and signs them in.",
+          "parameters": [
+            {
+              "name": "email",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "password",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "register_with_email_and_password",
+          "brief": "Registers a user with an email and a password, and signs them in.",
+          "description": "Registers a user with an email and a password, and signs them in.",
+          "parameters": [
+            {
+              "name": "email",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "password",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "Request options, such as `headers`, merged into the request.",
+              "types": [
+                "HTTPRequestOptions"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "sign_in_with_email_and_password",
+          "brief": "Signs a user in with an email and a password.",
+          "description": "Signs a user in with an email and a password.",
+          "parameters": [
+            {
+              "name": "email",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "password",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "sign_in_anonymously",
+          "brief": "Signs in an anonymous user.",
+          "description": "Signs in an anonymous user.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "sign_in_anonymously",
+          "brief": "Signs in an anonymous user.",
+          "description": "Signs in an anonymous user.",
+          "parameters": [
+            {
+              "name": "options",
+              "doc": "Options sent to the server with the request.",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send_password_reset_email",
+          "brief": "Asks the server to email a password reset link.",
+          "description": "Asks the server to email a password reset link.",
+          "parameters": [
+            {
+              "name": "email",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "sign_in_with_provider",
+          "brief": "Not implemented: prints a notice and calls `callback` with `\"not_implemented\"`.",
+          "description": "Not implemented: prints a notice and calls `callback` with `\"not_implemented\"`.",
+          "parameters": [
+            {
+              "name": "provider_name",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "settings",
+              "doc": "Ignored.",
+              "types": [
+                "object | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(err: string, data: undefined) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "sign_out",
+          "brief": "Signs the user out, clearing the token.",
+          "description": "Signs the user out, clearing the token.",
+          "parameters": [],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "token",
+          "brief": "The session token, saved on the device and sent with every request; `undefined` when",
+          "description": "The session token, saved on the device and sent with every request; `undefined` when\nthere is none.",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "http",
+          "brief": "The HTTP helper the requests go through.",
+          "description": "The HTTP helper the requests go through.",
+          "types": [
+            "HTTP"
+          ]
+        },
+        {
+          "name": "settings",
+          "brief": "The route settings: `path` is the server's auth route prefix (default: `\"auth\"`).",
+          "description": "The route settings: `path` is the server's auth route prefix (default: `\"auth\"`).",
+          "types": [
+            "{ path: string; }"
+          ],
+          "fields": [
+            {
+              "name": "path",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HTTP",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "get",
+          "brief": "Sends a `GET` request to the route `segments`.",
+          "description": "Sends a `GET` request to the route `segments`.",
+          "parameters": [
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get",
+          "brief": "Sends a `GET` request to the route `segments`.",
+          "description": "Sends a `GET` request to the route `segments`.",
+          "parameters": [
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "HTTPRequestOptions"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "post",
+          "brief": "Sends a `POST` request to the route `segments`.",
+          "description": "Sends a `POST` request to the route `segments`.",
+          "parameters": [
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "post",
+          "brief": "Sends a `POST` request to the route `segments`.",
+          "description": "Sends a `POST` request to the route `segments`.",
+          "parameters": [
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "HTTPRequestOptions"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "put",
+          "brief": "Sends a `PUT` request to the route `segments`.",
+          "description": "Sends a `PUT` request to the route `segments`.",
+          "parameters": [
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "put",
+          "brief": "Sends a `PUT` request to the route `segments`.",
+          "description": "Sends a `PUT` request to the route `segments`.",
+          "parameters": [
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "HTTPRequestOptions"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "delete",
+          "brief": "Sends a `DELETE` request to the route `segments`.",
+          "description": "Sends a `DELETE` request to the route `segments`.",
+          "parameters": [
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "delete",
+          "brief": "Sends a `DELETE` request to the route `segments`.",
+          "description": "Sends a `DELETE` request to the route `segments`.",
+          "parameters": [
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "HTTPRequestOptions"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "request",
+          "brief": "Sends a request with `method` to the route `segments`.",
+          "description": "Sends a request with `method` to the route `segments`.",
+          "parameters": [
+            {
+              "name": "method",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "request",
+          "brief": "Sends a request with `method` to the route `segments`.",
+          "description": "Sends a request with `method` to the route `segments`.",
+          "parameters": [
+            {
+              "name": "method",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "segments",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "HTTPRequestOptions"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "HTTPCallback"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "auth_token",
+          "brief": "The bearer token sent with every request; `Auth.token` sets it.",
+          "description": "The bearer token sent with every request; `Auth.token` sets it.",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HTTPError",
+      "properties": [
+        {
+          "name": "status",
+          "brief": "The HTTP status, or `0` when the request never reached a server.",
+          "description": "The HTTP status, or `0` when the request never reached a server.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "message",
+          "brief": "What went wrong.",
+          "description": "What went wrong.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HTTPRequestOptions",
+      "properties": [
+        {
+          "name": "headers",
+          "brief": "Extra request headers, merged over the JSON defaults.",
+          "description": "Extra request headers, merged over the JSON defaults.",
+          "types": [
+            "Record<string, string>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "body",
+          "brief": "The request body, sent encoded as JSON.",
+          "description": "The request body, sent encoded as JSON.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AuthData",
+      "properties": [
+        {
+          "name": "token",
+          "brief": "The session token, or `undefined` when signed out.",
+          "description": "The session token, or `undefined` when signed out.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user",
+          "brief": "The signed-in user's data, or `undefined` when signed out.",
+          "description": "The signed-in user's data, or `undefined` when signed out.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RoomError",
+      "properties": [
+        {
+          "name": "code",
+          "brief": "The error code.",
+          "description": "The error code.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "The error message.",
+          "description": "The error message.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "WebSocketEvent",
+      "properties": [
+        {
+          "name": "event",
+          "brief": "One of the `websocket.EVENT_*` constants.",
+          "description": "One of the `websocket.EVENT_*` constants.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "message",
+          "brief": "The received data on a message, the error message otherwise.",
+          "description": "The received data on a message, the error message otherwise.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "code",
+          "brief": "The status code the server closed the connection with, present on a disconnect only.",
+          "description": "The status code the server closed the connection with, present on a disconnect only.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "handshake_response",
+          "brief": "The handshake response information (status, headers), present on a connect.",
+          "description": "The handshake response information (status, headers), present on a connect.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Room",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on",
+          "brief": "Calls `listener` every time the room emits `event`.",
+          "description": "Calls `listener` every time the room emits `event`.",
+          "generics": "<E extends keyof RoomEvents<State>>",
+          "parameters": [
+            {
+              "name": "event",
+              "doc": "",
+              "types": [
+                "E"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "listener",
+              "doc": "",
+              "types": [
+                "RoomEvents<State>[E]"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The listener, to pass to `off`.",
+              "types": [
+                "RoomEvents<State>[E]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "once",
+          "brief": "Calls `listener` the next time the room emits `event`.",
+          "description": "Calls `listener` the next time the room emits `event`.",
+          "generics": "<E extends keyof RoomEvents<State>>",
+          "parameters": [
+            {
+              "name": "event",
+              "doc": "",
+              "types": [
+                "E"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "listener",
+              "doc": "",
+              "types": [
+                "RoomEvents<State>[E]"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The listener, to pass to `off`.",
+              "types": [
+                "RoomEvents<State>[E]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "off",
+          "brief": "Removes the most recently added listener of every event.",
+          "description": "Removes the most recently added listener of every event.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "off",
+          "brief": "Removes `listener` from `event`, or the most recently added listener of `event` when",
+          "description": "Removes `listener` from `event`, or the most recently added listener of `event` when\n`listener` is omitted.",
+          "generics": "<E extends keyof RoomEvents<State>>",
+          "parameters": [
+            {
+              "name": "event",
+              "doc": "",
+              "types": [
+                "E"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "listener",
+              "doc": "",
+              "types": [
+                "RoomEvents<State>[E]"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_message",
+          "brief": "Handles every message whose type has no handler of its own.",
+          "description": "Handles every message whose type has no handler of its own.",
+          "parameters": [
+            {
+              "name": "type",
+              "doc": "",
+              "types": [
+                "\"*\""
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "handler",
+              "doc": "",
+              "types": [
+                "(message_type: string | number, message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the handler.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_message",
+          "brief": "Handles the messages of one type the server sends, replacing any handler the type had.",
+          "description": "Handles the messages of one type the server sends, replacing any handler the type had.",
+          "generics": "<T = unknown>",
+          "parameters": [
+            {
+              "name": "type",
+              "doc": "The message type.",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "handler",
+              "doc": "",
+              "types": [
+                "(message: T) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the handler.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "leave",
+          "brief": "Leaves the room.",
+          "description": "Leaves the room.",
+          "parameters": [
+            {
+              "name": "consented",
+              "doc": "Whether the leave is deliberate (default: `true`). `false` closes the\nconnection without telling the server, as a drop would.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "ping",
+          "brief": "Measures the round trip to the server. Does nothing while the connection is not open.",
+          "description": "Measures the round trip to the server. Does nothing while the connection is not open.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "Receives the round trip in whole milliseconds.",
+              "types": [
+                "(latency: number) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "input",
+          "brief": "Returns the room's input handle, creating it on the first call. Later calls return",
+          "description": "Returns the room's input handle, creating it on the first call. Later calls return\nthe same handle and ignore their options.",
+          "generics": "<Data extends object = Record<string, unknown>>",
+          "parameters": [
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "InputOptions<Data>"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "InputHandle<Data>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send",
+          "brief": "Sends a message to the server, or buffers it while reconnecting.",
+          "description": "Sends a message to the server, or buffers it while reconnecting.",
+          "parameters": [
+            {
+              "name": "message_type",
+              "doc": "The message type the server's room handles.",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "The payload, encoded with MessagePack.",
+              "types": [
+                "object | boolean | number | string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send_bytes",
+          "brief": "Sends raw bytes to the server, or buffers them while reconnecting.",
+          "description": "Sends raw bytes to the server, or buffers them while reconnecting.",
+          "parameters": [
+            {
+              "name": "message_type",
+              "doc": "The message type the server's room handles.",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "bytes",
+              "doc": "The bytes, each a number from 0 to 255.",
+              "types": [
+                "number[]"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "request",
+          "brief": "Sends a message and waits for the value the server's handler returns. The callback",
+          "description": "Sends a message and waits for the value the server's handler returns. The callback\nreceives exactly one of `response` and `err`: `err` when the handler rejects or\nthrows, the connection closes first, or no reply arrives in time.",
+          "parameters": [
+            {
+              "name": "message_type",
+              "doc": "The message type the server's room handles.",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "payload",
+              "doc": "The payload, encoded with MessagePack.",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the response, or the error.",
+              "types": [
+                "(response: unknown, err: unknown) => void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "timeout_ms",
+              "doc": "Milliseconds to wait for the reply (default: 10000).",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "state",
+          "brief": "The room's synchronized state.",
+          "description": "The room's synchronized state.",
+          "types": [
+            "State"
+          ]
+        },
+        {
+          "name": "session_id",
+          "brief": "This client's session id in the room.",
+          "description": "This client's session id in the room.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "room_id",
+          "brief": "The room's id.",
+          "description": "The room's id.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "The room's name.",
+          "description": "The room's name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "connection",
+          "brief": "The room's websocket connection.",
+          "description": "The room's websocket connection.",
+          "types": [
+            "Connection"
+          ]
+        },
+        {
+          "name": "reconnection",
+          "brief": "The automatic reconnection settings.",
+          "description": "The automatic reconnection settings.",
+          "types": [
+            "ReconnectionSettings"
+          ]
+        },
+        {
+          "name": "reconnection_token",
+          "brief": "What `Client.reconnect` takes to rejoin this room.",
+          "description": "What `Client.reconnect` takes to rejoin this room.",
+          "types": [
+            "ReconnectionToken"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Connection",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on",
+          "brief": "Calls `listener` every time the connection emits `event`.",
+          "description": "Calls `listener` every time the connection emits `event`.",
+          "generics": "<E extends keyof ConnectionEvents>",
+          "parameters": [
+            {
+              "name": "event",
+              "doc": "",
+              "types": [
+                "E"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "listener",
+              "doc": "",
+              "types": [
+                "ConnectionEvents[E]"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The listener, to pass to `off`.",
+              "types": [
+                "ConnectionEvents[E]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "once",
+          "brief": "Calls `listener` the next time the connection emits `event`.",
+          "description": "Calls `listener` the next time the connection emits `event`.",
+          "generics": "<E extends keyof ConnectionEvents>",
+          "parameters": [
+            {
+              "name": "event",
+              "doc": "",
+              "types": [
+                "E"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "listener",
+              "doc": "",
+              "types": [
+                "ConnectionEvents[E]"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The listener, to pass to `off`.",
+              "types": [
+                "ConnectionEvents[E]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "off",
+          "brief": "Removes the most recently added listener of every event.",
+          "description": "Removes the most recently added listener of every event.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "off",
+          "brief": "Removes `listener` from `event`, or the most recently added listener of `event` when",
+          "description": "Removes `listener` from `event`, or the most recently added listener of `event` when\n`listener` is omitted.",
+          "generics": "<E extends keyof ConnectionEvents>",
+          "parameters": [
+            {
+              "name": "event",
+              "doc": "",
+              "types": [
+                "E"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "listener",
+              "doc": "",
+              "types": [
+                "ConnectionEvents[E]"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send",
+          "brief": "Sends data over the websocket. Does nothing while the connection is not open.",
+          "description": "Sends data over the websocket. Does nothing while the connection is not open.",
+          "parameters": [
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "open",
+          "brief": "Connects to `endpoint`. Does nothing when the connection is already open.",
+          "description": "Connects to `endpoint`. Does nothing when the connection is already open.",
+          "parameters": [
+            {
+              "name": "endpoint",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reconnect",
+          "brief": "Connects again to the last endpoint, replacing its reconnection query parameters.",
+          "description": "Connects again to the last endpoint, replacing its reconnection query parameters.",
+          "parameters": [
+            {
+              "name": "query_params",
+              "doc": "The query parameters to append.",
+              "types": [
+                "Record<string, string | number>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "close",
+          "brief": "Closes the connection.",
+          "description": "Closes the connection.",
+          "parameters": [
+            {
+              "name": "close_code",
+              "doc": "The code the `close` event reports, for testing reconnection.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "state",
+          "brief": "The connection's state.",
+          "description": "The connection's state.",
+          "types": [
+            "\"CONNECTING\" | \"OPEN\" | \"CLOSING\" | \"CLOSED\""
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ConnectionEvents",
+      "properties": [
+        {
+          "name": "open",
+          "brief": "The websocket connected.",
+          "description": "The websocket connected.",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "close",
+          "brief": "The websocket closed.",
+          "description": "The websocket closed.",
+          "types": [
+            "(event: WebSocketEvent) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "The websocket failed.",
+          "description": "The websocket failed.",
+          "types": [
+            "(event: WebSocketEvent) => void"
+          ]
+        },
+        {
+          "name": "message",
+          "brief": "A message arrived.",
+          "description": "A message arrived.",
+          "types": [
+            "(message: string) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ReconnectionSettings",
+      "properties": [
+        {
+          "name": "enabled",
+          "brief": "Whether the room reconnects after a drop (default: `true`).",
+          "description": "Whether the room reconnects after a drop (default: `true`).",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "retry_count",
+          "brief": "The number of the current reconnection attempt.",
+          "description": "The number of the current reconnection attempt.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_retries",
+          "brief": "The attempts made before the room gives up and leaves (default: 15).",
+          "description": "The attempts made before the room gives up and leaves (default: 15).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "delay",
+          "brief": "The base delay `backoff` scales, in milliseconds (default: 100).",
+          "description": "The base delay `backoff` scales, in milliseconds (default: 100).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min_delay",
+          "brief": "The shortest delay between attempts, in milliseconds (default: 100).",
+          "description": "The shortest delay between attempts, in milliseconds (default: 100).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_delay",
+          "brief": "The longest delay between attempts, in milliseconds (default: 5000).",
+          "description": "The longest delay between attempts, in milliseconds (default: 5000).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min_uptime",
+          "brief": "How long the room must have been joined before a drop reconnects, in milliseconds (default: 5000).",
+          "description": "How long the room must have been joined before a drop reconnects, in milliseconds (default: 5000).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "backoff",
+          "brief": "Computes the delay before an attempt from its number and `delay` (default: exponential).",
+          "description": "Computes the delay before an attempt from its number and `delay` (default: exponential).",
+          "types": [
+            "(attempt: number, delay: number) => number"
+          ]
+        },
+        {
+          "name": "max_enqueued_messages",
+          "brief": "How many outgoing messages are buffered while disconnected (default: 10).",
+          "description": "How many outgoing messages are buffered while disconnected (default: 10).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "enqueued_messages",
+          "brief": "The outgoing messages buffered while disconnected, sent once reconnected.",
+          "description": "The outgoing messages buffered while disconnected, sent once reconnected.",
+          "types": [
+            "{ data: string; }[]"
+          ]
+        },
+        {
+          "name": "is_reconnecting",
+          "brief": "Whether a reconnection is in progress.",
+          "description": "Whether a reconnection is in progress.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ReconnectionToken",
+      "properties": [
+        {
+          "name": "room_id",
+          "brief": "The id of the room to rejoin.",
+          "description": "The id of the room to rejoin.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "reconnection_token",
+          "brief": "The token the server issued when the room was joined.",
+          "description": "The token the server issued when the room was joined.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RoomEvents",
+      "properties": [
+        {
+          "name": "join",
+          "brief": "The room was joined.",
+          "description": "The room was joined.",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "reconnect",
+          "brief": "The room reconnected after a drop.",
+          "description": "The room reconnected after a drop.",
+          "types": [
+            "(retry_count: number) => void"
+          ]
+        },
+        {
+          "name": "drop",
+          "brief": "The connection dropped with a code that allows reconnecting, and reconnection starts.",
+          "description": "The connection dropped with a code that allows reconnecting, and reconnection starts.",
+          "types": [
+            "(event: WebSocketEvent) => void"
+          ]
+        },
+        {
+          "name": "leave",
+          "brief": "The room was left. Receives the websocket's close data when the server closed the",
+          "description": "The room was left. Receives the websocket's close data when the server closed the\nconnection, `{ code }` when reconnection gave up or was disabled, and nothing when\n`leave` was called on a closed connection.",
+          "types": [
+            "(event?: WebSocketEvent | { code: number; }) => void"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "The server sent an error, or the websocket failed.",
+          "description": "The server sent an error, or the websocket failed.",
+          "types": [
+            "(error: RoomError | WebSocketEvent) => void"
+          ]
+        },
+        {
+          "name": "statechange",
+          "brief": "The state changed.",
+          "description": "The state changed.",
+          "types": [
+            "(state: State) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "InputOptions",
+      "properties": [
+        {
+          "name": "type",
+          "brief": "The input schema class. Optional when the server room called `defineInput()`.",
+          "description": "The input schema class. Optional when the server room called `defineInput()`.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "mode",
+          "brief": "`\"reliable\"` (the default) sends one delta per `send`; `\"unreliable\"` sends a ring of",
+          "description": "`\"reliable\"` (the default) sends one delta per `send`; `\"unreliable\"` sends a ring of\nthe latest deltas, over the same websocket.",
+          "types": [
+            "\"reliable\" | \"unreliable\""
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "history_size",
+          "brief": "The size of the `\"unreliable\"` ring (default: 3).",
+          "description": "The size of the `\"unreliable\"` ring (default: 3).",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "render_delay",
+          "brief": "How far in the past this client draws remote entities, in milliseconds.",
+          "description": "How far in the past this client draws remote entities, in milliseconds.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "allow_rewind",
+          "brief": "Decides, per reliable send, whether the input carries a lag-compensation stamp.",
+          "description": "Decides, per reliable send, whether the input carries a lag-compensation stamp.",
+          "types": [
+            "(data: Data) => boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "InputHandle",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "render_delay",
+          "brief": "How far in the past this client draws remote entities, in milliseconds. A",
+          "description": "How far in the past this client draws remote entities, in milliseconds. A\nlag-compensating server rewinds its targets by this much plus half the round trip.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_render_delay",
+          "brief": "Sets how far in the past this client draws remote entities.",
+          "description": "Sets how far in the past this client draws remote entities.",
+          "parameters": [
+            {
+              "name": "ms",
+              "doc": "The delay in milliseconds; `0` when omitted or negative.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "pending_count",
+          "brief": "The number of inputs sent but not yet acknowledged.",
+          "description": "The number of inputs sent but not yet acknowledged.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send",
+          "brief": "Encodes the staged input and sends it. Sends one input on every call while the",
+          "description": "Encodes the staged input and sends it. Sends one input on every call while the\nconnection is open, an empty frame when nothing changed.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The sequence number assigned to the input, or `0` when nothing was sent.",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_send",
+          "brief": "Calls `listener` with the sequence number at the end of each `send`.",
+          "description": "Calls `listener` with the sequence number at the end of each `send`.",
+          "parameters": [
+            {
+              "name": "listener",
+              "doc": "",
+              "types": [
+                "(seq: number) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that unsubscribes the listener.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reset",
+          "brief": "Resets the encoder and the round-trip state, as a reconnection does: the next `send`",
+          "description": "Resets the encoder and the round-trip state, as a reconnection does: the next `send`\ntransmits a full snapshot.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "at",
+          "brief": "The buffered snapshot of reliable input `seq`, for replaying it during",
+          "description": "The buffered snapshot of reliable input `seq`, for replaying it during\nreconciliation. The instance is reused, so read it right away.",
+          "parameters": [
+            {
+              "name": "seq",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The snapshot, or `undefined` when `seq` is acknowledged, unsent, or aged out.",
+              "types": [
+                "Data | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reckon_time_at",
+          "brief": "The server-clock instant, in milliseconds, stamped onto reliable input `seq`.",
+          "description": "The server-clock instant, in milliseconds, stamped onto reliable input `seq`.",
+          "parameters": [
+            {
+              "name": "seq",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The instant, or `0` when reckon stamping is off or `seq` is out of range.",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "ack_input",
+          "brief": "Records the last input sequence number the server processed.",
+          "description": "Records the last input sequence number the server processed.",
+          "parameters": [
+            {
+              "name": "seq",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The round-trip sample for that acknowledgement in milliseconds, or `-1`\nwhen it is unknown.",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "data",
+          "brief": "The staged input: change its fields, then call `send`.",
+          "description": "The staged input: change its fields, then call `send`.",
+          "types": [
+            "Data"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SeatReservation",
+      "properties": [
+        {
+          "name": "name",
+          "brief": "The room's name.",
+          "description": "The room's name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "roomId",
+          "brief": "The room's id.",
+          "description": "The room's id.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "sessionId",
+          "brief": "The session id reserved for this client.",
+          "description": "The session id reserved for this client.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "processId",
+          "brief": "The id of the server process the room runs in.",
+          "description": "The id of the server process the room runs in.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "publicAddress",
+          "brief": "The address to connect to instead of the client's own endpoint.",
+          "description": "The address to connect to instead of the client's own endpoint.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "reconnectionToken",
+          "brief": "A reconnection token, when the seat rejoins a room.",
+          "description": "A reconnection token, when the seat rejoins a room.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "CallbacksModule",
       "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "Returns the schema change callbacks of a joined room's state.",
+          "description": "Returns the schema change callbacks of a joined room's state.",
+          "generics": "<State>",
+          "parameters": [
+            {
+              "name": "room",
+              "doc": "",
+              "types": [
+                "Room<State>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Callbacks"
+              ]
+            }
+          ]
+        },
         {
           "type": "FUNCTION",
           "name": "get",
@@ -447,6 +2377,381 @@
               "doc": "",
               "types": [
                 "Callbacks"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Callbacks",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on_add",
+          "brief": "Calls `callback` for each item added to the collection `field` of the root state.",
+          "description": "Calls `callback` for each item added to the collection `field` of the root state.",
+          "generics": "<T = unknown, K = unknown>",
+          "parameters": [
+            {
+              "name": "field",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(value: T, key: K) => void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "immediate",
+              "doc": "Whether to call it at once for the items already there (default: `true`).",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_add",
+          "brief": "Calls `callback` for each item added to the collection `field` of `instance`.",
+          "description": "Calls `callback` for each item added to the collection `field` of `instance`.",
+          "generics": "<T = unknown, K = unknown>",
+          "parameters": [
+            {
+              "name": "instance",
+              "doc": "",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "field",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(value: T, key: K) => void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "immediate",
+              "doc": "Whether to call it at once for the items already there (default: `true`).",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_change",
+          "brief": "Calls `callback` for each item that changes in the collection `field` of the root",
+          "description": "Calls `callback` for each item that changes in the collection `field` of the root\nstate.",
+          "generics": "<T = unknown, K = unknown>",
+          "parameters": [
+            {
+              "name": "field",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(value: T, key: K) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_change",
+          "brief": "Calls `callback` for each item that changes in the collection `field` of `instance`.",
+          "description": "Calls `callback` for each item that changes in the collection `field` of `instance`.",
+          "generics": "<T = unknown, K = unknown>",
+          "parameters": [
+            {
+              "name": "instance",
+              "doc": "",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "field",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(value: T, key: K) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_change",
+          "brief": "Calls `callback` once per patch in which any field of `instance` changed.",
+          "description": "Calls `callback` once per patch in which any field of `instance` changed.",
+          "parameters": [
+            {
+              "name": "instance",
+              "doc": "",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(changes: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_remove",
+          "brief": "Calls `callback` for each item removed from the collection `field` of the root state.",
+          "description": "Calls `callback` for each item removed from the collection `field` of the root state.",
+          "generics": "<T = unknown, K = unknown>",
+          "parameters": [
+            {
+              "name": "field",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(value: T, key: K) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_remove",
+          "brief": "Calls `callback` for each item removed from the collection `field` of `instance`.",
+          "description": "Calls `callback` for each item removed from the collection `field` of `instance`.",
+          "generics": "<T = unknown, K = unknown>",
+          "parameters": [
+            {
+              "name": "instance",
+              "doc": "",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "field",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(value: T, key: K) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "listen",
+          "brief": "Calls `callback` whenever the field `field` of the root state changes.",
+          "description": "Calls `callback` whenever the field `field` of the root state changes.",
+          "generics": "<T = unknown>",
+          "parameters": [
+            {
+              "name": "field",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(value: T, previous_value: T | undefined) => void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "immediate",
+              "doc": "Whether to call it at once when the field is already set (default: `true`).",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "listen",
+          "brief": "Calls `callback` whenever the field `field` of `instance` changes.",
+          "description": "Calls `callback` whenever the field `field` of `instance` changes.",
+          "generics": "<T = unknown>",
+          "parameters": [
+            {
+              "name": "instance",
+              "doc": "",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "field",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(value: T, previous_value: T | undefined) => void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "immediate",
+              "doc": "Whether to call it at once when the field is already set (default: `true`).",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "A function that removes the callback.",
+              "types": [
+                "() => void"
               ]
             }
           ]

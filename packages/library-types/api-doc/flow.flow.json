@@ -589,6 +589,310 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "FlowComponents",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "Box",
+          "brief": "Creates a box element.",
+          "description": "Creates a box element.",
+          "parameters": [
+            {
+              "name": "props",
+              "doc": "",
+              "types": [
+                "Flow_BoxProps"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "Button",
+          "brief": "Creates a button element.",
+          "description": "Creates a button element.",
+          "parameters": [
+            {
+              "name": "props",
+              "doc": "",
+              "types": [
+                "Flow_ButtonProps"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "ButtonImage",
+          "brief": "Creates an image-backed button element.",
+          "description": "Creates an image-backed button element.",
+          "parameters": [
+            {
+              "name": "props",
+              "doc": "",
+              "types": [
+                "Flow_ButtonImageProps"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "Icon",
+          "brief": "Creates an icon element.",
+          "description": "Creates an icon element.",
+          "parameters": [
+            {
+              "name": "props",
+              "doc": "",
+              "types": [
+                "Flow_IconProps"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "Popup",
+          "brief": "Creates a popup element.",
+          "description": "Creates a popup element.",
+          "parameters": [
+            {
+              "name": "props",
+              "doc": "",
+              "types": [
+                "Flow_PopupProps"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "Scroll",
+          "brief": "Creates a scroll element.",
+          "description": "Creates a scroll element.",
+          "parameters": [
+            {
+              "name": "props",
+              "doc": "",
+              "types": [
+                "Flow_ScrollProps"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "Text",
+          "brief": "Creates a text element.",
+          "description": "Creates a text element.",
+          "parameters": [
+            {
+              "name": "props",
+              "doc": "",
+              "types": [
+                "Flow_TextProps"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "Markdown",
+          "brief": "Creates a Markdown viewer and exposes Markdown parsing helpers.",
+          "description": "Creates a Markdown viewer and exposes Markdown parsing helpers.",
+          "types": [
+            "FlowMarkdownComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowMarkdownComponent",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "Creates a scrollable Markdown viewer.",
+          "description": "Creates a scrollable Markdown viewer.",
+          "parameters": [
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "Flow_MarkdownOptions"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "parse",
+          "brief": "Parses Markdown into Flow elements.",
+          "description": "Parses Markdown into Flow elements.",
+          "parameters": [
+            {
+              "name": "markdown_text",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "key_prefix",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "Flow_MarkdownOptions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element[]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "viewer",
+          "brief": "Creates a scrollable Markdown viewer from text and style overrides.",
+          "description": "Creates a scrollable Markdown viewer from text and style overrides.",
+          "parameters": [
+            {
+              "name": "markdown_text",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "key",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "style_override",
+              "doc": "",
+              "types": [
+                "Flow_Style"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "FlowNavigationMessages",
       "properties": [
         {
@@ -653,6 +957,60 @@
           "description": "Alias of `on_message` for older call sites.",
           "types": [
             "FlowNavigationMessageModule['on_message']"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowNavigationMessageIds",
+      "properties": [
+        {
+          "name": "push",
+          "brief": "Message id for `push`.",
+          "description": "Message id for `push`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "pop",
+          "brief": "Message id for `pop`.",
+          "description": "Message id for `pop`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "replace",
+          "brief": "Message id for `replace`.",
+          "description": "Message id for `replace`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "reset",
+          "brief": "Message id for `reset`.",
+          "description": "Message id for `reset`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "back",
+          "brief": "Message id for `back`.",
+          "description": "Message id for `back`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "invalidate",
+          "brief": "Message id for `invalidate`.",
+          "description": "Message id for `invalidate`.",
+          "types": [
+            "Hash | string"
           ]
         }
       ]
@@ -775,6 +1133,111 @@
           "description": "Navigation's GUI adapter.",
           "types": [
             "typeof import('flow.navigation.gui')"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowRuntimeFacade",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "init",
+          "brief": "Initializes navigation on a script component.",
+          "description": "Initializes navigation on a script component.",
+          "parameters": [
+            {
+              "name": "self",
+              "doc": "",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "config",
+              "doc": "",
+              "types": [
+                "Flow_RuntimeConfig"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "LuaTable"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "final",
+          "brief": "Detaches navigation from a script component.",
+          "description": "Detaches navigation from a script component.",
+          "parameters": [
+            {
+              "name": "self",
+              "doc": "",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_message",
+          "brief": "Routes a message through script navigation.",
+          "description": "Routes a message through script navigation.",
+          "parameters": [
+            {
+              "name": "self",
+              "doc": "",
+              "types": [
+                "object"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message_id",
+              "doc": "",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "FlowParams"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "sender",
+              "doc": "",
+              "types": [
+                "Url"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
           ]
         }
       ]

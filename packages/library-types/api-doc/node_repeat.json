@@ -210,6 +210,44 @@
           "is_optional": "True"
         }
       ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RepeatFrame",
+      "properties": [
+        {
+          "name": "uv_coord",
+          "brief": "The frame's UV rectangle in the texture: `x`/`y` one corner, `z`/`w` the other.",
+          "description": "The frame's UV rectangle in the texture: `x`/`y` one corner, `z`/`w` the other.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "w",
+          "brief": "The frame's width in texture pixels.",
+          "description": "The frame's width in texture pixels.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "h",
+          "brief": "The frame's height in texture pixels.",
+          "description": "The frame's height in texture pixels.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "uv_rotated",
+          "brief": "`(0, 1, 0, 0)` when the atlas stores the frame rotated clockwise, else `(1, 0, 0, 0)`.",
+          "description": "`(0, 1, 0, 0)` when the atlas stores the frame rotated clockwise, else `(1, 0, 0, 0)`.",
+          "types": [
+            "Vector4"
+          ]
+        }
+      ]
     }
   ]
 }

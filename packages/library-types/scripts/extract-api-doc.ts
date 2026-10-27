@@ -205,7 +205,13 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
 
   const moduleValueInterfaces = exportedValueInterfaces(moduleBlock);
   for (const iface of moduleValueInterfaces) {
+    const calls: Record<string, unknown>[] = [];
     for (const member of iface.members) {
+      if (ts.isCallSignatureDeclaration(member)) {
+        collectFunctionReferenceTypes(member, moduleSink);
+        calls.push(functionElement(member, CALL_MEMBER, sf));
+        continue;
+      }
       if (!member.name) continue;
       const name = memberName(member.name, sf);
       if (emittedNames.has(name)) continue;
@@ -226,6 +232,13 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
         emittedNames.add(name);
       }
     }
+    // The value's own invocation has no member name to flatten under, so it
+    // publishes on the typedef of the interface declaring it; the named members
+    // stay top-level rather than appearing twice.
+    const name = iface.name.text;
+    if (calls.length === 0 || emittedNames.has(name)) continue;
+    elements.push({ type: "TYPEDEF", name, functions: calls, ...deprecatedKey(iface) });
+    emittedNames.add(name);
   }
 
   // Shapes the `table` and `global` lanes reach are appended in first-reached
@@ -271,13 +284,11 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   };
 
   if (lane === "table") {
-    publishShapes(reachedShapes(moduleTypeNodes, [], true), {});
+    publishShapes(reachedShapes(moduleTypeNodes, []), {});
   } else {
     // A module block's aliases were pushed where they are declared, so a reached
     // one is filled in place and only its interfaces append, in reached order.
-    // Its interfaces' members are not walked, so a shape named only by another
-    // shape's member stays off `/api`.
-    for (const { name, alias, iface, scoped } of reachedShapes(moduleTypeNodes, [], false)) {
+    for (const { name, alias, iface, scoped } of reachedShapes(moduleTypeNodes, [])) {
       if (alias) {
         const element = aliasElements.get(alias);
         if (element) fillAliasElement(element, alias, sf);
@@ -296,7 +307,7 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   // identity, so a file-scope shape never borrows a same-named module-block one.
   collect(sf.statements, "", "global", []);
   const fileScope: Scope = { ...blockScope("", sf.statements), scoped: false };
-  publishShapes(reachedShapes(globalTypeNodes, [fileScope], true), { global: true });
+  publishShapes(reachedShapes(globalTypeNodes, [fileScope]), { global: true });
 
   return {
     info: { namespace: moduleName, brief: briefOf(summary), description: summary },
@@ -304,23 +315,28 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   };
 }
 
+type DocumentedSignature =
+  | ts.FunctionDeclaration
+  | ts.MethodSignature
+  | ts.CallSignatureDeclaration;
+
+/** The function name the API model gives a callable value's invocation (`proto.json`). */
+const CALL_MEMBER = "__call";
+
 /**
  * A declaration's type parameter list as the pre-rendered string the sibling
  * `lower-api-doc` lane emits (`<T>`, `<T = unknown>`, `<A, B extends A>`), or
  * `""` when there is none — absence of the key, not an empty string, is how the
  * model encodes "takes no type arguments".
  */
-function genericClause(
-  decl: ts.FunctionDeclaration | ts.MethodSignature,
-  sf: ts.SourceFile,
-): string {
+function genericClause(decl: DocumentedSignature, sf: ts.SourceFile): string {
   const params = decl.typeParameters;
   if (!params || params.length === 0) return "";
   return `<${params.map((p) => oneLineText(p, sf)).join(", ")}>`;
 }
 
 function functionElement(
-  decl: ts.FunctionDeclaration | ts.MethodSignature,
+  decl: DocumentedSignature,
   name: string,
   sf: ts.SourceFile,
 ): Record<string, unknown> {
@@ -367,10 +383,7 @@ function functionElement(
   };
 }
 
-function collectFunctionReferenceTypes(
-  decl: ts.FunctionDeclaration | ts.MethodSignature,
-  out: TypeNodeSink,
-): void {
+function collectFunctionReferenceTypes(decl: DocumentedSignature, out: TypeNodeSink): void {
   for (const param of decl.parameters) {
     if (param.type) out.push(param.type);
   }
@@ -393,6 +406,10 @@ function shapeMembers(members: readonly ts.TypeElement[], sf: ts.SourceFile): Sh
   const functions: Record<string, unknown>[] = [];
   const properties: Record<string, unknown>[] = [];
   for (const member of members) {
+    if (ts.isCallSignatureDeclaration(member)) {
+      functions.push(functionElement(member, CALL_MEMBER, sf));
+      continue;
+    }
     if (!member.name) continue;
     const name = memberName(member.name, sf);
     if (ts.isMethodSignature(member)) {
@@ -545,15 +562,11 @@ function unionMemberTexts(node: ts.TypeNode, sf: ts.SourceFile): string[] {
  * outer one and publishes under the block's prefix; a declaration's own body
  * resolves from where it was declared, never back into a sibling block the
  * reference came from. An `extends` parent is not a type reference, so it is
- * followed by name. With `walkMembers`, a block-local interface's member types
- * are walked too, so a shape named only by another shape's field publishes; a
+ * followed by name. A block-local interface's member types are walked too, so a
+ * shape named only by another shape's field or call signature publishes; a
  * file-scope interface's are not, for the reason file-scope unions are skipped.
  */
-function reachedShapes(
-  nodes: readonly ScopedTypeNode[],
-  outer: readonly Scope[],
-  walkMembers: boolean,
-): ReachedShape[] {
+function reachedShapes(nodes: readonly ScopedTypeNode[], outer: readonly Scope[]): ReachedShape[] {
   const reached: ReachedShape[] = [];
   const seen = new Set<string>();
 
@@ -577,7 +590,7 @@ function reachedShapes(
       if (alias) walk(alias.type, outward);
       if (iface) {
         for (const parent of heritageNames(iface)) resolve(parent, outward);
-        if (walkMembers && scope.scoped) for (const member of iface.members) walk(member, outward);
+        if (scope.scoped) for (const member of iface.members) walk(member, outward);
       }
       return;
     }
@@ -701,10 +714,7 @@ function isStubSummary(summary: string): boolean {
   return summary.startsWith(STUB_SUMMARY_MARKER);
 }
 
-function paramDocMap(
-  decl: ts.FunctionDeclaration | ts.MethodSignature,
-  sf: ts.SourceFile,
-): Map<string, string> {
+function paramDocMap(decl: DocumentedSignature, sf: ts.SourceFile): Map<string, string> {
   const out = new Map<string, string>();
   for (const tag of ts.getAllJSDocTagsOfKind(decl, ts.SyntaxKind.JSDocParameterTag)) {
     const paramTag = tag as ts.JSDocParameterTag;
@@ -714,12 +724,12 @@ function paramDocMap(
   return out;
 }
 
-function returnDoc(decl: ts.FunctionDeclaration | ts.MethodSignature): string {
+function returnDoc(decl: DocumentedSignature): string {
   const [tag] = ts.getAllJSDocTagsOfKind(decl, ts.SyntaxKind.JSDocReturnTag);
   return tag ? cleanDoc(ts.getTextOfJSDocComment(tag.comment)) : "";
 }
 
-function exampleText(decl: ts.FunctionDeclaration | ts.MethodSignature): string {
+function exampleText(decl: DocumentedSignature): string {
   for (const tag of ts.getJSDocTags(decl)) {
     if (tag.tagName.text === "example") {
       return (ts.getTextOfJSDocComment(tag.comment) ?? "").trim();
