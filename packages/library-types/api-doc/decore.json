@@ -2126,7 +2126,15 @@
           "name": "onAddToWorld",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "world",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {

@@ -495,6 +495,9 @@ interface FunctionDecl {
   // A dotted module form (`function T.name`, `T.name = function`) is public module
   // surface; a bare/`local` form (`function name`, `local function name`) is not.
   qualified: boolean;
+  // The named parameters of the Lua signature, without `...`; absent when the
+  // parameter list does not close on the declaration line.
+  signature?: string[];
 }
 
 const FUNCTION_FORMS: {
@@ -530,17 +533,62 @@ function parseFunctionDecl(line: string): FunctionDecl | null {
     if (!m) continue;
     const name = m[form.name] ?? "";
     const receiver = form.recv ? m[form.recv] : undefined;
-    if (form.kind === "method") {
-      return { kind: "method", name, qualified: true, ...(receiver ? { receiver } : {}) };
-    }
-    return {
-      kind: "module",
+    const signature = readSignature(line, m[0].length);
+    const shared = {
       name,
-      qualified: form.qualified ?? false,
       ...(receiver ? { receiver } : {}),
+      ...(signature ? { signature } : {}),
     };
+    if (form.kind === "method") return { kind: "method", qualified: true, ...shared };
+    return { kind: "module", qualified: form.qualified ?? false, ...shared };
   }
   return null;
+}
+
+function readSignature(line: string, from: number): string[] | undefined {
+  // A `function name(` form's match ends on its `(`; a `= function` form's ends before it.
+  const start = line.indexOf("(", from - 1);
+  if (start === -1) return undefined;
+  const close = line.indexOf(")", start);
+  if (close === -1) return undefined;
+  return line
+    .slice(start + 1, close)
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part !== "" && part !== "...");
+}
+
+/**
+ * Order a function's params by its Lua signature, adding each signature param its
+ * `---@param` lines omit as an untyped slot. LuaLS treats an unannotated param as
+ * nullable, so a caller may leave it out; the slot is optional. A function whose
+ * annotations already name every signature param keeps its annotation order. An
+ * annotation naming no signature param stays after the param it followed, and the
+ * vararg stays last.
+ */
+function mergeSignatureParams(params: LibraryParam[], signature: string[]): LibraryParam[] {
+  if (signature.every((name) => params.some((p) => p.name === name))) return params;
+  const merged: LibraryParam[] = signature.map(
+    (name) =>
+      params.find((p) => p.name === name && !p.isVararg) ?? {
+        name,
+        types: [],
+        doc: "",
+        isOptional: true,
+        isVararg: false,
+      },
+  );
+  const varargs: LibraryParam[] = [];
+  params.forEach((param, index) => {
+    if (signature.includes(param.name)) return;
+    if (param.isVararg) {
+      varargs.push(param);
+      return;
+    }
+    const before = params[index - 1];
+    merged.splice(before ? merged.indexOf(before) + 1 : 0, 0, param);
+  });
+  return [...merged, ...varargs];
 }
 
 const LOCAL_ASSIGN = /^local\s+([A-Za-z_]\w*)\s*=/;
@@ -810,6 +858,7 @@ export function parseLualsSource(source: string): LibraryModel {
     const decl = parseFunctionDecl(raw);
     if (decl) {
       const method = methodFromPending(decl.name);
+      if (decl.signature) method.params = mergeSignatureParams(method.params, decl.signature);
       const metaClass =
         isMeta && decl.kind === "module" && decl.receiver
           ? receiverBinding.get(decl.receiver)

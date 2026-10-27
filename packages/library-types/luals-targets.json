@@ -986,6 +986,65 @@
         "vector3": "Vector3"
       },
       "ignore": []
+    },
+    {
+      "repo": "https://github.com/selimanac/defold-3D-outline-shader",
+      "ref": "07c2eee1abd821fb36daad6c7621258116ef75f2",
+      "license": "MIT",
+      "sourceGlobs": ["outline-shader/**/*.lua"],
+      "moduleId": "outline-shader.outline",
+      "namespace": "outline",
+      "typeRenames": {
+        "matrix4": "Matrix4",
+        "vector4": "Vector4",
+        "render_clear_buffers": "LuaMap<render.ClearBufferKey, number | Vector4>"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "init": { "params": { "self": { "type": "table<string, any>", "optional": false } } },
+          "update": {
+            "params": {
+              "self": { "type": "table<string, any>", "optional": false },
+              "predicates": { "type": "table<string, any>", "optional": false },
+              "frustum": { "type": "{ frustum: matrix4 }", "optional": false },
+              "clear_buffer": { "type": "render_clear_buffers" }
+            }
+          }
+        },
+        "moduleConstants": {
+          "type": { "type": "{ OUTLINE_STENCIL: integer, OUTLINE_INVERTED_HULL: integer }" }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/selimanac/defold-pixelart-shader",
+      "ref": "8db334df85d2ab9863746fde45f3ed0b28bb49c8",
+      "license": "MIT",
+      "sourceGlobs": ["pixelart/scripts/pixelart_render.lua"],
+      "moduleId": "pixelart.scripts.pixelart_render",
+      "namespace": "pixelart.scripts.pixelart_render",
+      "typeRenames": {
+        "matrix4": "Matrix4",
+        "render_clear_buffers": "LuaMap<render.ClearBufferKey, number | Vector4>"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "init": { "params": { "self": { "type": "table<string, any>", "optional": false } } },
+          "update": {
+            "params": {
+              "self": { "type": "table<string, any>", "optional": false },
+              "camera_frustum": { "type": "matrix4", "optional": false },
+              "view": { "type": "matrix4", "optional": false },
+              "proj": { "type": "matrix4", "optional": false },
+              "window_width": { "type": "number", "optional": false },
+              "window_height": { "type": "number", "optional": false },
+              "clear_buffers": { "type": "render_clear_buffers", "optional": false }
+            }
+          }
+        }
+      }
     }
   ]
 }

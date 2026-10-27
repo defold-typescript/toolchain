@@ -989,7 +989,15 @@ Remove an additional input action from the allowed drag actions
 
 </div>
 
-#### \`druid_drag._start_touch()\`
+#### \`druid_drag._start_touch(touch?: unknown)\`
+
+<div class="api-symbol-body">
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`touch\`</strong>?
+
+</div>
 
 #### \`druid_drag._end_touch(touch?: touch | undefined)\`
 
@@ -1775,17 +1783,43 @@ Strict drag scroll area. Useful for
 
 </div>
 
-#### \`druid_scroll._on_scroll_drag()\`
+#### \`druid_scroll._on_scroll_drag(dx?: unknown, dy?: unknown)\`
+
+<div class="api-symbol-body">
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`dx\`</strong>?
+- <strong class="api-name">\`dy\`</strong>?
+
+</div>
 
 #### \`druid_scroll._check_soft_zone()\`
 
 #### \`druid_scroll._cancel_animate()\`
 
-#### \`druid_scroll._set_scroll_position()\`
+#### \`druid_scroll._set_scroll_position(position_x?: unknown, position_y?: unknown)\`
+
+<div class="api-symbol-body">
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`position_x\`</strong>?
+- <strong class="api-name">\`position_y\`</strong>?
+
+</div>
 
 #### \`druid_scroll._check_threshold()\`
 
-#### \`druid_scroll._update_free_scroll()\`
+#### \`druid_scroll._update_free_scroll(dt?: unknown)\`
+
+<div class="api-symbol-body">
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`dt\`</strong>?
+
+</div>
 
 #### \`druid_scroll._update_hand_scroll()\`
 
@@ -1803,9 +1837,28 @@ Apply scroll cursors style to the inner drag. Cursors are shown only while conte
 
 </div>
 
-#### \`druid_scroll._process_scroll_wheel()\`
+#### \`druid_scroll._process_scroll_wheel(action_id?: unknown, action?: unknown)\`
 
-#### \`druid_scroll._inverse_lerp()\`
+<div class="api-symbol-body">
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`action_id\`</strong>?
+- <strong class="api-name">\`action\`</strong>?
+
+</div>
+
+#### \`druid_scroll._inverse_lerp(min?: unknown, max?: unknown, current?: unknown)\`
+
+<div class="api-symbol-body">
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`min\`</strong>?
+- <strong class="api-name">\`max\`</strong>?
+- <strong class="api-name">\`current\`</strong>?
+
+</div>
 
 #### \`druid_scroll._get_border_vector(vector: Vector4, offset: Vector3): Vector4\`
 
@@ -3657,9 +3710,13 @@ Set current size for layout node to fit inside it
 
 </div>
 
-#### \`druid_container.remove_container_by_node(): druid_container | undefined\`
+#### \`druid_container.remove_container_by_node(node?: unknown): druid_container | undefined\`
 
 <div class="api-symbol-body">
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`node\`</strong>?
 
 <p class="api-slot-label">Returns</p>
 
@@ -3703,7 +3760,17 @@ Set current size for layout node to fit inside it
 
 </div>
 
-#### \`druid_container._on_corner_drag()\`
+#### \`druid_container._on_corner_drag(x?: unknown, y?: unknown, corner_offset?: unknown)\`
+
+<div class="api-symbol-body">
+
+<p class="api-slot-label">Parameters</p>
+
+- <strong class="api-name">\`x\`</strong>?
+- <strong class="api-name">\`y\`</strong>?
+- <strong class="api-name">\`corner_offset\`</strong>?
+
+</div>
 
 #### \`druid_container.fit_into_node(node: string | Opaque<"node">): druid_container\`
 
@@ -4934,7 +5001,7 @@ Remove node from layout
 
 </div>
 
-#### \`druid_layout.set_node_position(node: Opaque<"node">, x: number, y: number): Opaque<"node">\`
+#### \`druid_layout.set_node_position(node: Opaque<"node">, x: number, y: number, is_instant?: unknown): Opaque<"node">\`
 
 <div class="api-symbol-body">
 
@@ -4943,6 +5010,7 @@ Remove node from layout
 - <strong class="api-name">\`node\`</strong>: <code class="api-type">Opaque&lt;&quot;node&quot;&gt;</code>
 - <strong class="api-name">\`x\`</strong>: <code class="api-type">number</code>
 - <strong class="api-name">\`y\`</strong>: <code class="api-type">number</code>
+- <strong class="api-name">\`is_instant\`</strong>?
 
 <p class="api-slot-label">Returns</p>
 

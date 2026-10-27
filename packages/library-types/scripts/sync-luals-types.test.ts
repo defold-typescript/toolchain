@@ -1037,7 +1037,7 @@ describe("log's dropped call signature matches the runtime's non-callable logger
   });
 });
 
-describe("the glass, hyper trails and pixel-art targets", () => {
+describe("the glass, hyper trails, pixel-art and outline targets", () => {
   function target(namespace: string): LualsTarget {
     const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
     if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
@@ -1072,10 +1072,38 @@ describe("the glass, hyper trails and pixel-art targets", () => {
     expect(names).toContain("set_light");
   });
 
+  test("outline's update takes its four signature params, the unused clear_buffer optional", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, target("outline"));
+    const update = model.moduleFunctions.find((f) => f.name === "update");
+    expect(update?.params.map((p) => [p.name, p.isOptional])).toEqual([
+      ["self", false],
+      ["predicates", false],
+      ["frustum", false],
+      ["clear_buffer", true],
+    ]);
+    expect(model.moduleConstants?.map((c) => c.name)).toEqual(["type"]);
+  });
+
+  test("pixelart_render's update takes all seven signature params, each required", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, target("pixelart.scripts.pixelart_render"));
+    const update = model.moduleFunctions.find((f) => f.name === "update");
+    expect(update?.params.map((p) => [p.name, p.isOptional])).toEqual([
+      ["self", false],
+      ["camera_frustum", false],
+      ["view", false],
+      ["proj", false],
+      ["window_width", false],
+      ["window_height", false],
+      ["clear_buffers", false],
+    ]);
+  });
+
   test.each([
     "fake_real_glass",
     "hyper_trails",
     "pixelart.scripts.pixelart",
+    "outline",
+    "pixelart.scripts.pixelart_render",
   ])("%s resolves every type token", (namespace) => {
     expect(buildTargetFidelity(PACKAGE_ROOT, target(namespace)).unknownFallbacks).toBe(0);
   });

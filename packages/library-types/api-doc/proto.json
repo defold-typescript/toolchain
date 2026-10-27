@@ -254,7 +254,22 @@
           "name": "__call",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "patt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "pos",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -262,7 +277,15 @@
           "name": "test",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "patt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -270,7 +293,22 @@
           "name": "expected",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "patt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -278,7 +316,15 @@
           "name": "pos2loc",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "pos",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -286,7 +332,15 @@
           "name": "error",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "fmt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -294,7 +348,22 @@
           "name": "opterror",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "msg",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -318,7 +387,15 @@
           "name": "line_end",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -334,7 +411,22 @@
           "name": "keyword",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "kw",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -342,7 +434,22 @@
           "name": "ident",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -350,7 +457,22 @@
           "name": "full_ident",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -358,7 +480,15 @@
           "name": "integer",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -366,7 +496,15 @@
           "name": "number",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -374,7 +512,15 @@
           "name": "quote",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -382,7 +528,15 @@
           "name": "structure",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -390,7 +544,15 @@
           "name": "array",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -398,7 +560,15 @@
           "name": "constant",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -422,7 +592,22 @@
           "name": "__call",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "patt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "pos",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -430,7 +615,15 @@
           "name": "test",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "patt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -438,7 +631,22 @@
           "name": "expected",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "patt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -446,7 +654,15 @@
           "name": "pos2loc",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "pos",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -454,7 +670,15 @@
           "name": "error",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "fmt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -462,7 +686,22 @@
           "name": "opterror",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "msg",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -486,7 +725,15 @@
           "name": "line_end",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -502,7 +749,22 @@
           "name": "keyword",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "kw",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -510,7 +772,22 @@
           "name": "ident",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -518,7 +795,22 @@
           "name": "full_ident",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -526,7 +818,15 @@
           "name": "integer",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -534,7 +834,15 @@
           "name": "number",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -542,7 +850,15 @@
           "name": "quote",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -550,7 +866,15 @@
           "name": "table",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -558,7 +882,15 @@
           "name": "constant",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "opt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -588,7 +920,15 @@
           "name": "error",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "msg",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -596,7 +936,15 @@
           "name": "addpath",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "path",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -604,7 +952,15 @@
           "name": "parsefile",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -612,7 +968,22 @@
           "name": "parse",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "src",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -620,7 +991,22 @@
           "name": "resolve",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -628,7 +1014,22 @@
           "name": "compile",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "s",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -636,7 +1037,15 @@
           "name": "compilefile",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -644,7 +1053,22 @@
           "name": "load",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "s",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -652,7 +1076,15 @@
           "name": "loadfile",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -660,7 +1092,15 @@
           "name": "error",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "msg",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -668,7 +1108,15 @@
           "name": "addpath",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "path",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -676,7 +1124,15 @@
           "name": "parsefile",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -684,7 +1140,22 @@
           "name": "parse",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "src",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -692,7 +1163,22 @@
           "name": "resolve",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -700,7 +1186,22 @@
           "name": "compile",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "s",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -708,7 +1209,15 @@
           "name": "compilefile",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -716,7 +1225,22 @@
           "name": "load",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "s",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -724,7 +1248,15 @@
           "name": "loadfile",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         }
       ]
@@ -738,7 +1270,22 @@
           "name": "package",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -746,7 +1293,22 @@
           "name": "import",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -754,7 +1316,22 @@
           "name": "message",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -762,7 +1339,22 @@
           "name": "enum",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -770,7 +1362,22 @@
           "name": "option",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -778,7 +1385,22 @@
           "name": "extend",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -786,7 +1408,22 @@
           "name": "service",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -794,7 +1431,22 @@
           "name": "package",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -802,7 +1454,22 @@
           "name": "import",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -810,7 +1477,22 @@
           "name": "message",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -818,7 +1500,22 @@
           "name": "enum",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -826,7 +1523,22 @@
           "name": "option",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -834,7 +1546,22 @@
           "name": "extend",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -842,7 +1569,22 @@
           "name": "service",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         }
       ]
@@ -856,7 +1598,22 @@
           "name": "message",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -864,7 +1621,22 @@
           "name": "enum",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -872,7 +1644,22 @@
           "name": "extend",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -880,7 +1667,22 @@
           "name": "extensions",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -888,7 +1690,22 @@
           "name": "reserved",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -896,7 +1713,22 @@
           "name": "oneof",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -904,7 +1736,22 @@
           "name": "option",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -912,7 +1759,22 @@
           "name": "message",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -920,7 +1782,22 @@
           "name": "enum",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -928,7 +1805,22 @@
           "name": "extend",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -936,7 +1828,22 @@
           "name": "extensions",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -944,7 +1851,22 @@
           "name": "reserved",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -952,7 +1874,22 @@
           "name": "oneof",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         }
       ]
@@ -966,7 +1903,22 @@
           "name": "rpc",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -974,7 +1926,22 @@
           "name": "option",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -982,7 +1949,22 @@
           "name": "rpc",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "lex",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "info",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         }
       ]
