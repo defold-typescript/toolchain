@@ -635,9 +635,8 @@ bunx @defold-typescript/cli resolve --json
 
 `resolve` reads each declared extension's `.script_api`, regenerates the
 gitignored `.defold-types/extensions/` surface — a `@globalTable` module per
-namespace beside its deprecated ambient form, which scripts import as
-`import * as iap from "iap"` — and rewrites its index and `package.json` to
-exactly the declared set.
+namespace, which scripts import as `import * as iap from "iap"` — and rewrites
+its index and `package.json` to exactly the declared set.
 
 **Returns** the same one-shot envelope keyed `command: "resolve"`, plus an
 `extensions` array reporting provenance for each resolved dependency:

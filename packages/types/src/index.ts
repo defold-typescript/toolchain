@@ -129,8 +129,6 @@ export {
   splitTopLevel,
 } from "./luals-type-expr";
 export {
-  type AmbientWrapOptions,
-  globalTableImportHint,
   type ModuleWrapOptions,
   type WrapOptions,
   wrapAsAmbientGlobal,

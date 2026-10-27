@@ -119,9 +119,9 @@ describe("extension-spine resolves and its materialized types are usable end to 
       readdirSync(dir)
         .filter((e) => e.endsWith(".d.ts"))
         .sort(),
-    ).toEqual(["gui.d.ts", "index.d.ts", "resource.d.ts", "spine.d.ts", "spine.global.d.ts"]);
+    ).toEqual(["gui.d.ts", "index.d.ts", "resource.d.ts", "spine.d.ts"]);
     expect(readFileSync(join(dir, "index.d.ts"), "utf8")).toBe(
-      'import "./gui";\nimport "./resource";\nimport "./spine";\nimport "./spine.global";\n\nexport {};\n',
+      'import "./gui";\nimport "./resource";\nimport "./spine";\n\nexport {};\n',
     );
   });
 
@@ -129,11 +129,7 @@ describe("extension-spine resolves and its materialized types are usable end to 
     const { declarations } = await resolveSpine();
 
     const branded = Object.entries(declarations).filter(([, text]) => text.includes("core-types"));
-    expect(branded.map(([name]) => name).sort()).toEqual([
-      "gui.d.ts",
-      "resource.d.ts",
-      "spine.global.d.ts",
-    ]);
+    expect(branded.map(([name]) => name).sort()).toEqual(["gui.d.ts", "resource.d.ts"]);
     for (const [, text] of branded) {
       expect(text).toContain('from "@defold-typescript/types/core-types"');
     }

@@ -1,14 +1,19 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
-exports[`runBuild (a project holding only what resolve writes) builds a shared and a dotted .script_api namespace as global aliases, with a deprecated global still compiling 1`] = `
+exports[`runBuild (a project holding only what resolve writes) builds curated native imports, a vendored library and a shipped @globalTable module 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local firebase = _G.firebase
-local cmd = _G.rive.cmd
+local checkpoint = require("checkpoint.checkpoint")
+local pixels = _G.pixels
+local png = _G.png
+local uuid4 = _G.uuid4
 function init()
-    firebase.initialize()
-    firebase.analytics.log("level_up")
-    print(cmd.deleteArtboard, rive.cmd.deleteArtboard)
+    print(
+        uuid4.generate(),
+        checkpoint.project_save_path,
+        png.RGBA
+    )
+    pixels.fill(7)
 end
 return ____exports
 
@@ -17,19 +22,15 @@ return ____exports
 "
 `;
 
-exports[`runBuild (a project holding only what resolve writes) builds a curated native import, a deprecated native global, a vendored library and a shipped @globalTable module 1`] = `
+exports[`runBuild (a project holding only what resolve writes) builds a shared and a dotted .script_api namespace as global aliases 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local checkpoint = require("checkpoint.checkpoint")
-local pixels = _G.pixels
-local png = _G.png
+local firebase = _G.firebase
+local cmd = _G.rive.cmd
 function init()
-    print(
-        uuid4.generate(),
-        checkpoint.project_save_path,
-        png.RGBA
-    )
-    pixels.fill(7)
+    firebase.initialize()
+    firebase.analytics.log("level_up")
+    print(cmd.deleteArtboard)
 end
 return ____exports
 

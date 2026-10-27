@@ -68,36 +68,17 @@ export function nativeApiDocPath(target: NativeTarget): string {
   return `api-doc/native/${target.namespace}.json`;
 }
 
-interface ApiDocElement {
-  name: string;
-  global?: boolean;
-  [key: string]: unknown;
-}
-
 /**
  * A curated declaration is a `@globalTable` module, which `extractApiDoc` lowers
  * the way the extension's global namespace publishes: members named bare, with
- * no per-member marker. The deprecated global a released namespace keeps
- * (`declare const <ns>: typeof import("<ns>")`) is the same namespace under its
- * old name, not a member of it, so it never reaches the page.
+ * no per-member marker.
  */
 export function lowerNativeApiDoc(
   packageRoot: string,
   target: NativeTarget,
   source: string = readFileSync(join(packageRoot, target.declaration), "utf8"),
 ): string {
-  const doc = extractApiDoc(source, target.namespace) as Record<string, unknown> & {
-    elements: ApiDocElement[];
-  };
-  const aliasType = `typeof import("${target.namespace}")`;
-  const isGlobalAlias = (element: ApiDocElement): boolean =>
-    element.global === true &&
-    element.type === "VARIABLE" &&
-    Array.isArray(element.types) &&
-    element.types.length === 1 &&
-    element.types[0] === aliasType;
-  const elements = doc.elements.filter((element) => !isGlobalAlias(element));
-  return `${JSON.stringify({ ...doc, elements }, null, 2)}\n`;
+  return `${JSON.stringify(extractApiDoc(source, target.namespace), null, 2)}\n`;
 }
 
 if (import.meta.main) {

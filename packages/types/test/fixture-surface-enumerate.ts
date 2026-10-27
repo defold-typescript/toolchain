@@ -192,7 +192,12 @@ export function enumerateDeclaredParameterSlots(
   const visit = (node: ts.Node): void => {
     if (ts.isModuleDeclaration(node)) {
       const isGlobalAugmentation = (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0;
-      const named = ts.isIdentifier(node.name) && !isGlobalAugmentation;
+      // A `@globalTable` module is the global its name spells, as an extension
+      // golden declares it.
+      const isGlobalTable =
+        ts.isStringLiteral(node.name) &&
+        ts.getJSDocTags(node).some((tag) => tag.tagName.text === "globalTable");
+      const named = (ts.isIdentifier(node.name) && !isGlobalAugmentation) || isGlobalTable;
       if (named) stack.push(node.name.text);
       if (node.body) visit(node.body);
       if (named) stack.pop();

@@ -1,7 +1,4 @@
 /** @noSelfInFile */
-/** @deprecated Import it: import * as daabbcc from "daabbcc" */
-declare const daabbcc: typeof import("daabbcc");
-
 /**
  * Dynamic AABB trees for broad-phase collision queries and ray casts, grouped
  * into independent trees. Game objects inserted into a group follow their
