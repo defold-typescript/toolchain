@@ -1,0 +1,474 @@
+{
+  "info": {
+    "namespace": "light_and_shadows.light_and_shadows",
+    "brief": "Real-time shadows from one light source, the sun, and many point light sources,",
+    "description": "Real-time shadows from one light source, the sun, and many point light sources,\nwired into a render script. Call `init(self)` from the render script's `init`,\n`update(self)` from its `update`, and `draw_upscaled(self)` after drawing the world\nwhen a post effect is on (see `light_and_shadows/render/default.render_script`, the\nlines marked `-- L_S Injection`). The settings fields are read every frame. Vector\nfields are mutated in place; assigning a new value to any other field goes through a\ncast, since a namespace import is read-only:\n`(light_and_shadows as { fxaa: boolean }).fxaa = true`."
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "shadow",
+      "brief": "Whether the sun casts shadows. The default is `true`.",
+      "description": "Whether the sun casts shadows. The default is `true`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "upscale",
+      "brief": "Whether the main render target is upscaled. When on, every object is first rendered",
+      "description": "Whether the main render target is upscaled. When on, every object is first rendered\nto a render target no larger than the project settings size, which is then placed on\nthe screen with linear scaling. Add `light_and_shadows/props/render_target_quad.go`\nto the main scene to use it. The default is `false`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "fxaa",
+      "brief": "Whether FXAA anti-aliasing is applied to the final image. The default is `false`.",
+      "description": "Whether FXAA anti-aliasing is applied to the final image. The default is `false`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "mix",
+      "brief": "Whether depth of field is on. `dof` sets it. The default is `false`.",
+      "description": "Whether depth of field is on. `dof` sets it. The default is `false`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "discard_threshold",
+      "brief": "The alpha below which the sprite shader discards semitransparent pixels. The default is `0.5`.",
+      "description": "The alpha below which the sprite shader discards semitransparent pixels. The default is `0.5`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "get_far_near_z_from_camera",
+      "brief": "Whether the reference render script reads the near and far Z planes from the camera component into `light_and_shadows.constants`. Set it to `false` to set `near_z` and `far_z` by hand. The default is `true`.",
+      "description": "Whether the reference render script reads the near and far Z planes from the camera component into `light_and_shadows.constants`. Set it to `false` to set `near_z` and `far_z` by hand. The default is `true`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "blur",
+      "brief": "Whether the game scene is blurred, so an unblurred GUI can be drawn on top. It uses the same render target as upscaling. The default is `false`.",
+      "description": "Whether the game scene is blurred, so an unblurred GUI can be drawn on top. It uses the same render target as upscaling. The default is `false`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "blur_power",
+      "brief": "How strong the blur is, `1` to `10`. The default is `2.5`.",
+      "description": "How strong the blur is, `1` to `10`. The default is `2.5`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "blur_resolution",
+      "brief": "How much the blur render target is reduced in size, for speed. The default is `2`.",
+      "description": "How much the blur render target is reduced in size, for speed. The default is `2`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "focus",
+      "brief": "The depth-of-field focus position, in `z`.",
+      "description": "The depth-of-field focus position, in `z`.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "depth_bias",
+      "brief": "The shadow depth bias. Too high a bias detaches shadows from their objects; too low a bias causes shadow acne. The default is `0.0004`.",
+      "description": "The shadow depth bias. Too high a bias detaches shadows from their objects; too low a bias causes shadow acne. The default is `0.0004`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "max_lights",
+      "brief": "How many point light sources the shader processes at once, at most `16`. The default is `8`.",
+      "description": "How many point light sources the shader processes at once, at most `16`. The default is `8`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "rt_list",
+      "brief": "Every render target `render_target` created, keyed by name.",
+      "description": "Every render target `render_target` created, keyed by name.",
+      "types": [
+        "LuaTable<string, SizedRenderTarget>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "polygon_offset",
+      "brief": "The polygon offset applied while drawing the shadow map. Raise it to reduce shadow acne; lower it if shadows detach from their casters.",
+      "description": "The polygon offset applied while drawing the shadow map. Raise it to reduce shadow acne; lower it if shadows detach from their casters.",
+      "types": [
+        "{ factor: number; units: number; }"
+      ],
+      "fields": [
+        {
+          "name": "factor",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "units",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "zoom",
+      "brief": "The zoom `update` computed for upscaling, `1` when `upscale` is off.",
+      "description": "The zoom `update` computed for upscaling, `1` when `upscale` is off.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "dof",
+      "brief": "Turns depth of field on or off.",
+      "description": "Turns depth of field on or off.",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "`true` turns depth of field on.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "The depth-of-field options. Omitted, every setting keeps its value.",
+          "types": [
+            "DofOptions"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "render_target",
+      "brief": "Returns the render target named `name`, creating it with a color buffer and, unless",
+      "description": "Returns the render target named `name`, creating it with a color buffer and, unless\n`no_depth` is set, a depth texture. A target that exists at another size is resized.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "The render target name, also its key in `rt_list`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "w",
+          "doc": "The width in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "h",
+          "doc": "The height in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "no_depth",
+          "doc": "`true` creates the target without a depth buffer.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "SizedRenderTarget"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_orthographic_projection",
+      "brief": "Sets an orthographic shadow projection, used for directional light. `init` sets one.",
+      "description": "Sets an orthographic shadow projection, used for directional light. `init` sets one.",
+      "parameters": [
+        {
+          "name": "proj_w",
+          "doc": "The width of the area the shadow is projected on.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "proj_h",
+          "doc": "The height of the area the shadow is projected on.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "near_z",
+          "doc": "The near clipping plane. The default is `-500`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "far_z",
+          "doc": "The far clipping plane. The default is `500`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_perspective_projection",
+      "brief": "Sets a perspective shadow projection, cast in the direction of `sun_dir` in",
+      "description": "Sets a perspective shadow projection, cast in the direction of `sun_dir` in\n`light_and_shadows.constants`. Experimental.",
+      "parameters": [
+        {
+          "name": "fov",
+          "doc": "The field of view in radians. The default is `3.14 / 1.5`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "aspect",
+          "doc": "The aspect ratio. The default is `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "near_z",
+          "doc": "The near clipping plane. The default is `50`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "far_z",
+          "doc": "The far clipping plane. The default is `500`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Sets up the shadow map, the orthographic shadow projection and the render",
+      "description": "Sets up the shadow map, the orthographic shadow projection and the render\nconstants on the render script. Call it from the render script's `init`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The render script instance.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_light",
+      "brief": "Writes the sun, the point light sources, the ambient and fog values and the camera",
+      "description": "Writes the sun, the point light sources, the ambient and fog values and the camera\nvalues from `light_and_shadows.constants` into the render constants. `update` calls it.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The render script instance.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "render_shadows",
+      "brief": "Draws every object tagged `shadow` into the shadow map. `update` calls it while",
+      "description": "Draws every object tagged `shadow` into the shadow map. `update` calls it while\n`shadow` is on. The render script's `self.predicates` must carry `shadow`,\n`shadow_local`, `shadow_instanced`, `shadow_instanced_billboard`,\n`shadow_instanced_textured`, `shadow_skinned_instanced` and `shadow_skinned`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The render script instance.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Updates the light constants, draws the shadow map, and creates or resizes the main",
+      "description": "Updates the light constants, draws the shadow map, and creates or resizes the main\nand blur render targets a post effect needs. Call it from the render script's\n`update`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The render script instance.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "draw_upscaled",
+      "brief": "Blurs the main render target when depth of field or blur is on, then draws it to the",
+      "description": "Blurs the main render target when depth of field or blur is on, then draws it to the\nscreen, with FXAA when `fxaa` is on. Call it after the world is drawn to the main\nrender target. The render script's `self.predicates` must carry `upscale`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The render script instance.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SizedRenderTarget",
+      "properties": [
+        {
+          "name": "rt",
+          "brief": "The render target.",
+          "description": "The render target.",
+          "types": [
+            "render.RenderTarget"
+          ]
+        },
+        {
+          "name": "w",
+          "brief": "The width in pixels.",
+          "description": "The width in pixels.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "h",
+          "brief": "The height in pixels.",
+          "description": "The height in pixels.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DofOptions",
+      "properties": [
+        {
+          "name": "blur_power",
+          "brief": "How strong the blur effect is, `2` to `10`. Omitted, `blur_power` keeps its value.",
+          "description": "How strong the blur effect is, `2` to `10`. Omitted, `blur_power` keeps its value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "focus_range",
+          "brief": "How wide the focus zone is, `0.1` to `4`. Omitted, `focus_range` in `light_and_shadows.constants` keeps its value.",
+          "description": "How wide the focus zone is, `0.1` to `4`. Omitted, `focus_range` in `light_and_shadows.constants` keeps its value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "blur_resolution",
+          "brief": "How much the blur render target is reduced in size, for speed; `1` to `2` is enough.",
+          "description": "How much the blur render target is reduced in size, for speed; `1` to `2` is enough.\n`dof` copies it with no fallback, so it is required: an options table without it\nleaves `blur_resolution` nil and the next `update` fails.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "upscale",
+          "brief": "Whether to upscale the main render target. `dof` sets `upscale` to `false` when it is omitted.",
+          "description": "Whether to upscale the main render target. `dof` sets `upscale` to `false` when it is omitted.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

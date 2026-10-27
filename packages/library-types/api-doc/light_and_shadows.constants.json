@@ -1,0 +1,191 @@
+{
+  "info": {
+    "namespace": "light_and_shadows.constants",
+    "brief": "The light options the render script forwards into shader uniform constants. Scripts",
+    "description": "The light options the render script forwards into shader uniform constants. Scripts\nsuch as `light_setting.script` and `sun.script` write them, and `light.update` and\nthe render script read them every frame. Vector fields are mutated in place\n(`constants.fog.x = 20`); assigning a new value to a field goes through a cast, since\na namespace import is read-only."
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "clear_color",
+      "brief": "The color that clears the default render target, which is the background color. RGB in `0`..`1`.",
+      "description": "The color that clears the default render target, which is the background color. RGB in `0`..`1`.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "fog",
+      "brief": "The minimum and maximum Z in camera view space between which the fog starts and ends, in `x` and `y`.",
+      "description": "The minimum and maximum Z in camera view space between which the fog starts and ends, in `x` and `y`.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ambient",
+      "brief": "The ambient color, added after every light source is blended. `w` is the maximum value of each final color component.",
+      "description": "The ambient color, added after every light source is blended. `w` is the maximum value of each final color component.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "fog_color",
+      "brief": "The fog color, usually the clear color. `w` is the fog density from `0` to `1`, where `0` is the densest.",
+      "description": "The fog color, usually the clear color. `w` is the fog density from `0` to `1`, where `0` is the densest.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "lights",
+      "brief": "The light sources, their world positions and colors. Only the first",
+      "description": "The light sources, their world positions and colors. Only the first\n`light_and_shadows.max_lights` reach the shader; missing ones are sent as zero\nvectors.",
+      "types": [
+        "LightEntry[]"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cam_position",
+      "brief": "The camera world position, which the shader uses for specular light. `light.update` copies it from `light.cam_position`.",
+      "description": "The camera world position, which the shader uses for specular light. `light.update` copies it from `light.cam_position`.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cam_look_at_position",
+      "brief": "The point the camera looks at, the center of the shadow projection. `light.update` copies it from `light.cam_look_at`.",
+      "description": "The point the camera looks at, the center of the shadow projection. `light.update` copies it from `light.cam_look_at`.",
+      "types": [
+        "Vector3"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "sun_position",
+      "brief": "The sun position, the one light source that casts shadows.",
+      "description": "The sun position, the one light source that casts shadows.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "sun_color",
+      "brief": "The sun color.",
+      "description": "The sun color.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "sun_dir",
+      "brief": "The sun direction, used for shadow casting with a perspective projection.",
+      "description": "The sun direction, used for shadow casting with a perspective projection.",
+      "types": [
+        "Vector3"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "shadow_color",
+      "brief": "The inverted shadow color, subtracted where shadows fall. `light_and_shadows.update` sets `w` to `1` when `light_and_shadows.shadow` is on and `0` when it is off.",
+      "description": "The inverted shadow color, subtracted where shadows fall. `light_and_shadows.update` sets `w` to `1` when `light_and_shadows.shadow` is on and `0` when it is off.",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cam_z",
+      "brief": "The camera Z coordinate, the distance from the focus point. `light.update` copies it from `light.cam_z`.",
+      "description": "The camera Z coordinate, the distance from the focus point. `light.update` copies it from `light.cam_z`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "focus_range",
+      "brief": "How wide the depth-of-field focus zone is. `light_and_shadows.dof` sets it from `focus_range`.",
+      "description": "How wide the depth-of-field focus zone is. `light_and_shadows.dof` sets it from `focus_range`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "near_z",
+      "brief": "The camera near Z plane. The reference render script reads it from the camera while `light_and_shadows.get_far_near_z_from_camera` is `true`.",
+      "description": "The camera near Z plane. The reference render script reads it from the camera while `light_and_shadows.get_far_near_z_from_camera` is `true`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "far_z",
+      "brief": "The camera far Z plane. The reference render script reads it from the camera while `light_and_shadows.get_far_near_z_from_camera` is `true`.",
+      "description": "The camera far Z plane. The reference render script reads it from the camera while `light_and_shadows.get_far_near_z_from_camera` is `true`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LightEntry",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "The world position. `w` carries the spotlight smoothness.",
+          "description": "The world position. `w` carries the spotlight smoothness.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "The color. `w` is the power after distance attenuation.",
+          "description": "The color. `w` is the power after distance attenuation.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "direction",
+          "brief": "The spotlight direction; `w` above `0` turns the spotlight on. `light_and_shadows.update` sends a zero vector when it is absent.",
+          "description": "The spotlight direction; `w` above `0` turns the spotlight on. `light_and_shadows.update` sends a zero vector when it is absent.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "distance",
+          "brief": "The squared distance from the point the camera looks at.",
+          "description": "The squared distance from the point the camera looks at.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "power",
+          "brief": "The power before distance attenuation.",
+          "description": "The power before distance attenuation.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}
