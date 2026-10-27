@@ -1,9 +1,11 @@
 {
   "namespace": "proto",
   "totalMembers": 101,
-  "totalTypeTokens": 20,
-  "unknownFallbacks": 0,
-  "unknownTokens": [],
+  "totalTypeTokens": 149,
+  "unknownFallbacks": 129,
+  "unknownTokens": [
+    "(untyped)"
+  ],
   "undocumentedMembers": 94,
-  "coverage": 1
+  "coverage": 0.134
 }
