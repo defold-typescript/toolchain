@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { emitLibraryDeclarations } from "./emit-library-dts";
 import {
   type LibraryField,
   type LibraryInterface,
@@ -153,6 +154,31 @@ describe("parseLualsSource", () => {
       parseLualsSource('---@alias druid.container.mode "stretch" | "fit" | "stretch_x"').aliases,
     ).toEqual([
       { name: "druid.container.mode", types: ['"stretch" | "fit" | "stretch_x"'], doc: "" },
+    ]);
+  });
+
+  test("a bare @alias collects its `---|` variant lines as types, dropping each `# comment`", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@alias Mode",
+        "---| 0 # off",
+        "---| 1",
+        '---| "a" # x',
+        "",
+        "---@param mode Mode",
+        "function M.set(mode) end",
+      ),
+    );
+    expect(model.aliases).toEqual([{ name: "Mode", types: ["0", "1", '"a"'], doc: "" }]);
+    expect(model.moduleFunctions[0]?.brief).toBe("");
+    const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+    expect(dts).toContain('type Mode = 0 | 1 | "a";');
+    expect(dts).toContain("mode: Mode");
+  });
+
+  test("a bare @alias with no variant lines still parses with empty types", () => {
+    expect(parseLualsSource(lua("---@alias Mode", "function M.set() end")).aliases).toEqual([
+      { name: "Mode", types: [], doc: "" },
     ]);
   });
 

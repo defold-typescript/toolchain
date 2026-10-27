@@ -187,6 +187,22 @@
     "class": "native-1",
     "evidence": "gooey.lua:set_focus reads group.components[index]; focus moves over 1 .. #components"
   },
+  "hyper_trails/fade_tail:param:data_from": {
+    "class": "native-1",
+    "evidence": "trail_maker.lua:fade_tail reads data_arr[i] for i = data_from up to the trail's point count; follow_position passes self._data_w - data_limit + 1"
+  },
+  "hyper_trails/pull_not_used_points:param:data_from": {
+    "class": "native-1",
+    "evidence": "trail_maker.lua:pull_not_used_points reads data_arr[data_from] and clears data_arr[1] to data_arr[data_from - 1]"
+  },
+  "hyper_trails/shrink_length:param:data_from": {
+    "class": "native-1",
+    "evidence": "trail_maker.lua:shrink_length reads data_arr[i] for i = data_from + 1 up to the trail's point count"
+  },
+  "hyper_trails/shrink_width:param:data_from": {
+    "class": "native-1",
+    "evidence": "trail_maker.lua:shrink_width reads data_arr[i] for i = data_from up to the trail's point count"
+  },
   "imgui/imgui.set_mouse_button:param:index": {
     "class": "native-0",
     "evidence": "extension_imgui.cpp:imgui_SetMouseButton writes io.MouseDown[index]"

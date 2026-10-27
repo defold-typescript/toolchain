@@ -1036,3 +1036,47 @@ describe("log's dropped call signature matches the runtime's non-callable logger
     expect(built[1]).toBe("METATABLE");
   });
 });
+
+describe("the glass, hyper trails and pixel-art targets", () => {
+  function target(namespace: string): LualsTarget {
+    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+    if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
+    return found;
+  }
+
+  test("glass binds its module object and lowers the probe-mode alias to its variants", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, target("fake_real_glass"));
+    expect(model.moduleObject).toBe("FakeRealGlassModule");
+    expect(model.aliases.find((a) => a.name === "FakeRealGlassProbeMode")?.types).toEqual([
+      "0",
+      "1",
+      "2",
+    ]);
+  });
+
+  test("every hyper_trails self param is retyped to an open options table", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, target("hyper_trails"));
+    const selfParams = model.moduleFunctions.flatMap((f) =>
+      f.params.filter((p) => p.name === "self"),
+    );
+    expect(selfParams).toHaveLength(17);
+    expect(selfParams.every((p) => p.types.join() === "table<string, any>")).toBe(true);
+  });
+
+  test("pixelart's module functions include init and set_light", () => {
+    const names = buildTargetModel(
+      PACKAGE_ROOT,
+      target("pixelart.scripts.pixelart"),
+    ).moduleFunctions.map((f) => f.name);
+    expect(names).toContain("init");
+    expect(names).toContain("set_light");
+  });
+
+  test.each([
+    "fake_real_glass",
+    "hyper_trails",
+    "pixelart.scripts.pixelart",
+  ])("%s resolves every type token", (namespace) => {
+    expect(buildTargetFidelity(PACKAGE_ROOT, target(namespace)).unknownFallbacks).toBe(0);
+  });
+});
