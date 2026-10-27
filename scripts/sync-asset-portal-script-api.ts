@@ -41,6 +41,8 @@ export interface AssetPortalScriptApiLibrary {
   repo: string;
   ref: string;
   refKind: RefKind;
+  // The portal entry's pin date; absent for a commit pin.
+  refDate?: string;
   license: string;
   description: string;
   docs: DefoldExtensionDoc[];
@@ -132,6 +134,7 @@ export async function syncAssetPortalScriptApi(
       repo,
       ref,
       refKind,
+      ...(entry.refDate === undefined ? {} : { refDate: entry.refDate }),
       license: meta.license?.spdx_id ?? "",
       description: entry.description,
       docs,

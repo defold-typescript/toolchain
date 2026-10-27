@@ -69,6 +69,9 @@ export interface DefoldGitHub {
   engineTags(): Promise<string[]>;
 }
 
+/** The two lookups that date a pin; both the Defold and the Asset Portal syncs implement it. */
+export type PinDating = Pick<DefoldGitHub, "releaseByTag" | "commitDate">;
+
 export interface ReservedNamespaces {
   // Every engine namespace any tracked Defold version documents.
   engineNamespaces: ReadonlySet<string>;
@@ -457,7 +460,7 @@ export function earliestDate(...dates: (string | null | undefined)[]): string | 
   return earliest;
 }
 
-async function cutDate(github: DefoldGitHub, name: string, tag: string): Promise<string> {
+async function cutDate(github: PinDating, name: string, tag: string): Promise<string> {
   const [release, committed] = await Promise.all([
     github.releaseByTag(name, tag),
     github.commitDate(name, tag),
@@ -465,17 +468,32 @@ async function cutDate(github: DefoldGitHub, name: string, tag: string): Promise
   return earliestDate(release?.published_at, committed) ?? committed;
 }
 
-function withRefDate(
-  entry: DefoldExtensionEntry,
+/**
+ * When `pin` was cut: a release pin by the earlier of its publish and commit
+ * dates, a tag pin by its tagged commit's date alone, a commit pin not at all.
+ */
+export async function pinDate(
+  github: PinDating,
+  name: string,
+  pin: Pin,
+): Promise<string | undefined> {
+  if (pin.refKind === "commit") return undefined;
+  if (pin.refKind === "release") return cutDate(github, name, pin.ref);
+  return github.commitDate(name, pin.ref);
+}
+
+/** `entry` with `refDate` replaced, placed directly after `refKind`, or dropped when undefined. */
+export function withRefDate<T extends { refKind: unknown; refDate?: string }>(
+  entry: T,
   refDate: string | undefined,
-): DefoldExtensionEntry {
+): T {
   const dated: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(entry)) {
     if (key === "refDate") continue;
     dated[key] = value;
     if (key === "refKind" && refDate !== undefined) dated.refDate = refDate;
   }
-  return dated as unknown as DefoldExtensionEntry;
+  return dated as T;
 }
 
 function compareVersions(a: string, b: string): number {
@@ -507,17 +525,9 @@ export async function syncDefoldReleaseDates(
   let pins = 0;
   const dated: DefoldExtensionEntry[] = [];
   for (const entry of libraries) {
-    if (entry.refKind === "commit") {
-      dated.push(withRefDate(entry, undefined));
-      continue;
-    }
-    const name = repoName(entry.repo);
-    const refDate =
-      entry.refKind === "release"
-        ? await cutDate(github, name, entry.ref)
-        : await github.commitDate(name, entry.ref);
+    const refDate = await pinDate(github, repoName(entry.repo), entry);
     dated.push(withRefDate(entry, refDate));
-    pins++;
+    if (refDate !== undefined) pins++;
   }
   const manifest: DefoldExtensionsManifest = { libraries: dated };
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);

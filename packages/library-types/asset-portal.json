@@ -1,8 +1,8 @@
 {
   "source": {
     "repo": "https://github.com/defold/asset-portal",
-    "commit": "fd944a2780b25ed5335d93d04a90a4aeb6ea9c30",
-    "syncedAt": "2026-10-21T01:45:34.492Z"
+    "commit": "2458c0acafba43cc6c943c4af7d5ca1fb5562287",
+    "syncedAt": "2026-10-27T02:04:16.094Z"
   },
   "entries": [
     {
@@ -48,6 +48,7 @@
       "stars": 4,
       "ref": "v0.0.1",
       "refKind": "release",
+      "refDate": "2024-09-08T00:05:44Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -124,6 +125,7 @@
       "stars": 2,
       "ref": "3.0.3",
       "refKind": "release",
+      "refDate": "2026-09-06T06:25:44Z",
       "includeDirs": [
         "extension-adinfo"
       ],
@@ -149,6 +151,7 @@
       "stars": 3,
       "ref": "1.0",
       "refKind": "release",
+      "refDate": "2019-04-08T09:49:41Z",
       "includeDirs": [
         "adjust"
       ],
@@ -202,6 +205,7 @@
       "stars": 56,
       "ref": "4.3.1",
       "refKind": "release",
+      "refDate": "2026-10-07T13:52:03Z",
       "includeDirs": [
         "extension-admob"
       ],
@@ -253,6 +257,7 @@
       "stars": 21,
       "ref": "1.5.1",
       "refKind": "release",
+      "refDate": "2026-09-16T07:00:11Z",
       "includeDirs": [
         "ads_wrapper"
       ],
@@ -280,6 +285,7 @@
       "stars": 176,
       "ref": "0.3.0",
       "refKind": "release",
+      "refDate": "2024-03-03T11:20:53Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -304,6 +310,7 @@
       "stars": 111,
       "ref": "v1.2.3",
       "refKind": "release",
+      "refDate": "2026-04-16T14:20:28Z",
       "includeDirs": [
         "astar"
       ],
@@ -357,6 +364,7 @@
       "stars": 8,
       "ref": "v2.0.0",
       "refKind": "release",
+      "refDate": "2020-12-26T20:30:05Z",
       "includeDirs": [
         "apkx"
       ],
@@ -383,6 +391,7 @@
       "stars": 17,
       "ref": "release_1_1_0",
       "refKind": "release",
+      "refDate": "2024-02-20T23:58:47Z",
       "includeDirs": [
         "extension-applovin"
       ],
@@ -410,6 +419,7 @@
       "stars": 29,
       "ref": "v0.3",
       "refKind": "release",
+      "refDate": "2026-05-07T14:02:56Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -435,6 +445,7 @@
       "stars": 4,
       "ref": "v1.18.1",
       "refKind": "release",
+      "refDate": "2026-08-18T15:15:51Z",
       "includeDirs": [
         "asobi"
       ],
@@ -462,6 +473,7 @@
       "stars": 32,
       "ref": "4",
       "refKind": "tag",
+      "refDate": "2026-08-17T16:40:01Z",
       "includeDirs": [
         "asset_store"
       ],
@@ -485,10 +497,11 @@
       "repo": "https://github.com/defold/extension-automation-bridge",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-06T16:28:37Z",
-      "stars": 42,
-      "ref": "2.5.0",
+      "pushedAt": "2026-10-25T13:09:29Z",
+      "stars": 43,
+      "ref": "2.7.0",
       "refKind": "release",
+      "refDate": "2026-10-25T13:05:44Z",
       "includeDirs": [
         "automation_bridge"
       ],
@@ -514,6 +527,7 @@
       "stars": 7,
       "ref": "v0.3",
       "refKind": "release",
+      "refDate": "2021-01-07T03:08:35Z",
       "includeDirs": [
         "battery"
       ],
@@ -565,6 +579,7 @@
       "stars": 2,
       "ref": "1.0.2",
       "refKind": "release",
+      "refDate": "2019-06-02T02:19:15Z",
       "includeDirs": [
         "bit46"
       ],
@@ -590,6 +605,7 @@
       "stars": 24,
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2022-05-28T20:15:55Z",
       "includeDirs": [
         "blip"
       ],
@@ -639,6 +655,7 @@
       "stars": 8,
       "ref": "v1.1",
       "refKind": "release",
+      "refDate": "2019-11-15T15:15:06Z",
       "includeDirs": [
         "cafebazaar-iap"
       ],
@@ -665,6 +682,7 @@
       "stars": 11,
       "ref": "2.2.3",
       "refKind": "release",
+      "refDate": "2026-09-05T14:46:47Z",
       "includeDirs": [
         "camera"
       ],
@@ -767,6 +785,7 @@
       "stars": 16,
       "ref": "v1.1.0",
       "refKind": "release",
+      "refDate": "2022-02-21T00:32:04Z",
       "includeDirs": [
         "chrono"
       ],
@@ -823,6 +842,7 @@
       "stars": 12,
       "ref": "v1.0.0-legacy",
       "refKind": "release",
+      "refDate": "2024-09-07T20:50:13Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -846,6 +866,7 @@
       "stars": 21,
       "ref": "1.24.0",
       "refKind": "release",
+      "refDate": "2024-02-03T16:19:26Z",
       "includeDirs": [
         "clipboard"
       ],
@@ -918,10 +939,11 @@
       "repo": "https://github.com/colyseus/colyseus-defold",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-09-13T04:13:48Z",
+      "pushedAt": "2026-10-26T21:21:21Z",
       "stars": 69,
-      "ref": "0.18.1",
+      "ref": "0.18.2",
       "refKind": "release",
+      "refDate": "2026-10-26T18:59:53Z",
       "includeDirs": [
         "colyseus"
       ],
@@ -947,6 +969,7 @@
       "stars": 6,
       "ref": "v1.0.0",
       "refKind": "release",
+      "refDate": "2023-02-09T16:50:21Z",
       "includeDirs": [
         "compat53"
       ],
@@ -973,6 +996,7 @@
       "stars": 4,
       "ref": "v1.0.0",
       "refKind": "release",
+      "refDate": "2023-09-02T05:16:11Z",
       "includeDirs": [
         "coolmathgames"
       ],
@@ -1002,6 +1026,7 @@
       "stars": 16,
       "ref": "1.3.0",
       "refKind": "release",
+      "refDate": "2026-09-07T22:00:46Z",
       "includeDirs": [
         "crazygames"
       ],
@@ -1011,6 +1036,32 @@
       "luaSampled": 0,
       "luaAnnotated": 0,
       "kind": "script-api"
+    },
+    {
+      "id": "crowd",
+      "name": "Defold Crowd",
+      "description": "Native extension for 2D crowd avoidance, helping circular agents avoid each other and static polygonal or circular obstacles. It uses an ORCA solver to calculate movement from your agents' positions, radii, speeds and desired velocities, with navigation masks and configurable avoidance responsibility. Use it alongside your own pathfinding or steering logic. Standard is free for personal, educational, experimental and completely non-monetized games or apps. Support the author through GitHub Sponsors with a one-time payment of at least $10 USD to access Pro, which adds parallel simulation using Defold's JobSystem. Monetized projects using either version require a one-time payment of at least $10 USD per title.",
+      "tags": [
+        "Math"
+      ],
+      "portalLibrary": true,
+      "repo": "https://github.com/selimanac/defold-crowd",
+      "archived": false,
+      "fork": false,
+      "pushedAt": "2026-10-19T11:29:52Z",
+      "stars": 6,
+      "ref": "v0.9.1",
+      "refKind": "release",
+      "refDate": "2026-10-19T11:11:36Z",
+      "includeDirs": [
+        "crowd"
+      ],
+      "scriptApi": 0,
+      "extManifest": 1,
+      "lua": 1,
+      "luaSampled": 1,
+      "luaAnnotated": 1,
+      "kind": "native-untyped"
     },
     {
       "id": "crowd-runner-defold",
@@ -1052,6 +1103,7 @@
       "stars": 3,
       "ref": "IAP_defold",
       "refKind": "tag",
+      "refDate": "2024-07-20T07:49:30Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -1075,6 +1127,7 @@
       "stars": 95,
       "ref": "v3.0.9",
       "refKind": "release",
+      "refDate": "2026-10-14T08:02:47Z",
       "includeDirs": [
         "daabbcc"
       ],
@@ -1100,6 +1153,7 @@
       "stars": 12,
       "ref": "v1.0.6",
       "refKind": "release",
+      "refDate": "2026-10-15T16:13:12Z",
       "includeDirs": [
         "daabbcc3d"
       ],
@@ -1150,6 +1204,7 @@
       "stars": 84,
       "ref": "3.1.0",
       "refKind": "release",
+      "refDate": "2026-10-12T15:05:57Z",
       "includeDirs": [
         "imgui"
       ],
@@ -1175,6 +1230,7 @@
       "stars": 28,
       "ref": "debeat-2.2.0",
       "refKind": "release",
+      "refDate": "2017-07-28T14:49:29Z",
       "includeDirs": [
         "debeat"
       ],
@@ -1226,6 +1282,7 @@
       "stars": 3,
       "ref": "1.0.2",
       "refKind": "release",
+      "refDate": "2024-11-04T09:03:22Z",
       "includeDirs": [
         "def_usercentrics"
       ],
@@ -1253,6 +1310,7 @@
       "stars": 25,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2024-07-17T23:10:38Z",
       "includeDirs": [
         "def_behavior_tree"
       ],
@@ -1282,6 +1340,7 @@
       "stars": 34,
       "ref": "v0.3.2",
       "refKind": "release",
+      "refDate": "2022-09-16T11:59:49Z",
       "includeDirs": [
         "defarc"
       ],
@@ -1308,6 +1367,7 @@
       "stars": 53,
       "ref": "v1",
       "refKind": "release",
+      "refDate": "2019-11-04T05:59:48Z",
       "includeDirs": [
         "defarmy"
       ],
@@ -1330,7 +1390,7 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2024-07-11T19:04:27Z",
-      "stars": 26,
+      "stars": 27,
       "ref": "be63b4e7aba5b3c4443fa5c2176fba229e211c62",
       "refKind": "commit",
       "includeDirs": [
@@ -1361,6 +1421,7 @@
       "stars": 4,
       "ref": "1.1.5",
       "refKind": "release",
+      "refDate": "2019-01-21T11:02:26Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -1385,6 +1446,7 @@
       "stars": 64,
       "ref": "2.6.0",
       "refKind": "release",
+      "refDate": "2024-12-09T17:32:07Z",
       "includeDirs": [
         "defcon"
       ],
@@ -1438,6 +1500,7 @@
       "stars": 9,
       "ref": "0.7.3",
       "refKind": "release",
+      "refDate": "2026-08-16T12:33:01Z",
       "includeDirs": [
         "dragonbones"
       ],
@@ -1491,6 +1554,7 @@
       "stars": 44,
       "ref": "V4.1",
       "refKind": "release",
+      "refDate": "2019-10-30T09:44:49Z",
       "includeDirs": [
         "defgraph"
       ],
@@ -1544,6 +1608,7 @@
       "stars": 24,
       "ref": "defkit-0.2.0",
       "refKind": "release",
+      "refDate": "2017-08-27T23:50:46Z",
       "includeDirs": [
         "defkit"
       ],
@@ -1673,6 +1738,7 @@
       "stars": 41,
       "ref": "v1.6.0",
       "refKind": "release",
+      "refDate": "2023-09-25T14:12:12Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -1697,6 +1763,7 @@
       "stars": 42,
       "ref": "1.0.3",
       "refKind": "release",
+      "refDate": "2024-05-05T08:56:40Z",
       "includeDirs": [
         "box2d"
       ],
@@ -1750,6 +1817,7 @@
       "stars": 4,
       "ref": "v0.1.0",
       "refKind": "release",
+      "refDate": "2022-01-29T00:14:24Z",
       "includeDirs": [
         "defold-cognito"
       ],
@@ -1770,21 +1838,20 @@
       ],
       "portalLibrary": true,
       "repo": "https://github.com/whiteboxdev/library-defold-colors",
-      "archived": false,
-      "fork": false,
-      "pushedAt": "2024-05-24T16:21:16Z",
-      "stars": 21,
-      "ref": "8b2e6807ba5a328c979e28772cdf5575d9c30a6a",
-      "refKind": "commit",
-      "includeDirs": [
-        "dcolors"
-      ],
+      "reason": "not-found",
+      "archived": null,
+      "fork": null,
+      "pushedAt": null,
+      "stars": null,
+      "ref": null,
+      "refKind": null,
+      "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
-      "lua": 1,
-      "luaSampled": 1,
+      "lua": 0,
+      "luaSampled": 0,
       "luaAnnotated": 0,
-      "kind": "pure-lua"
+      "kind": "no-source"
     },
     {
       "id": "defold-depth-of-field-shader",
@@ -1858,6 +1925,7 @@
       "stars": 76,
       "ref": "21",
       "refKind": "tag",
+      "refDate": "2026-08-19T08:31:50Z",
       "includeDirs": [
         "event"
       ],
@@ -1883,6 +1951,7 @@
       "stars": 13,
       "ref": "v0.1.1",
       "refKind": "release",
+      "refDate": "2026-09-05T14:58:15Z",
       "includeDirs": [
         "fmod"
       ],
@@ -1910,6 +1979,7 @@
       "stars": 10,
       "ref": "v1.1",
       "refKind": "release",
+      "refDate": "2026-10-09T21:58:40Z",
       "includeDirs": [
         "fake_real_glass"
       ],
@@ -1936,6 +2006,7 @@
       "stars": 36,
       "ref": "0.0.4",
       "refKind": "tag",
+      "refDate": "2026-04-24T08:42:50Z",
       "includeDirs": [
         "graph_pathfinder"
       ],
@@ -1963,6 +2034,7 @@
       "stars": 6,
       "ref": "v1.0.1",
       "refKind": "release",
+      "refDate": "2024-07-05T02:48:54Z",
       "includeDirs": [
         "index"
       ],
@@ -2014,9 +2086,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-10-05T19:44:41Z",
-      "stars": 40,
+      "stars": 41,
       "ref": "5",
       "refKind": "tag",
+      "refDate": "2026-09-07T08:58:47Z",
       "includeDirs": [
         "lang"
       ],
@@ -2044,6 +2117,7 @@
       "stars": 37,
       "ref": "7",
       "refKind": "tag",
+      "refDate": "2026-08-06T21:16:24Z",
       "includeDirs": [
         "log"
       ],
@@ -2096,6 +2170,7 @@
       "stars": 6,
       "ref": "0.1.0",
       "refKind": "release",
+      "refDate": "2026-03-21T01:21:34Z",
       "includeDirs": [
         "mic"
       ],
@@ -2122,6 +2197,7 @@
       "stars": 4,
       "ref": "1.1.2",
       "refKind": "release",
+      "refDate": "2024-06-25T03:27:09Z",
       "includeDirs": [
         "mobilehtml5typing"
       ],
@@ -2171,6 +2247,7 @@
       "stars": 18,
       "ref": "v1.0.0",
       "refKind": "release",
+      "refDate": "2024-03-24T04:12:39Z",
       "includeDirs": [
         "myextension"
       ],
@@ -2196,6 +2273,7 @@
       "stars": 38,
       "ref": "v0.10.2",
       "refKind": "release",
+      "refDate": "2026-10-05T10:41:55Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -2266,10 +2344,11 @@
       "repo": "https://github.com/defold/asset-pbr",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-09-24T14:36:17Z",
+      "pushedAt": "2026-10-21T12:04:35Z",
       "stars": 6,
       "ref": "0.1.0",
       "refKind": "release",
+      "refDate": "2026-06-25T13:05:04Z",
       "includeDirs": [
         "defold-pbr"
       ],
@@ -2290,21 +2369,20 @@
       ],
       "portalLibrary": true,
       "repo": "https://github.com/whiteboxdev/library-defold-persist",
-      "archived": false,
-      "fork": false,
-      "pushedAt": "2026-10-16T07:48:03Z",
-      "stars": 16,
-      "ref": "7cdc63662d776fb82a5bcc7c3920b18ac2e6c44e",
-      "refKind": "commit",
-      "includeDirs": [
-        "persist"
-      ],
+      "reason": "not-found",
+      "archived": null,
+      "fork": null,
+      "pushedAt": null,
+      "stars": null,
+      "ref": null,
+      "refKind": null,
+      "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
-      "lua": 1,
-      "luaSampled": 1,
+      "lua": 0,
+      "luaSampled": 0,
       "luaAnnotated": 0,
-      "kind": "pure-lua"
+      "kind": "no-source"
     },
     {
       "id": "defold-pixelart-shader",
@@ -2320,7 +2398,7 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2025-01-30T15:12:15Z",
-      "stars": 14,
+      "stars": 15,
       "ref": "8db334df85d2ab9863746fde45f3ed0b28bb49c8",
       "refKind": "commit",
       "includeDirs": [
@@ -2377,6 +2455,7 @@
       "stars": 18,
       "ref": "1",
       "refKind": "tag",
+      "refDate": "2024-07-31T19:42:21Z",
       "includeDirs": [
         "proto"
       ],
@@ -2403,6 +2482,7 @@
       "stars": 24,
       "ref": "3",
       "refKind": "tag",
+      "refDate": "2026-03-05T08:04:10Z",
       "includeDirs": [
         "quest"
       ],
@@ -2424,21 +2504,20 @@
       ],
       "portalLibrary": true,
       "repo": "https://github.com/whiteboxdev/library-defold-rendy",
-      "archived": false,
-      "fork": false,
-      "pushedAt": "2026-10-16T04:40:23Z",
-      "stars": 77,
-      "ref": "9079cf3f18dfc485296c8fa6eba3845129dc34b3",
-      "refKind": "commit",
-      "includeDirs": [
-        "rendy"
-      ],
+      "reason": "not-found",
+      "archived": null,
+      "fork": null,
+      "pushedAt": null,
+      "stars": null,
+      "ref": null,
+      "refKind": null,
+      "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
-      "lua": 1,
-      "luaSampled": 1,
+      "lua": 0,
+      "luaSampled": 0,
       "luaAnnotated": 0,
-      "kind": "pure-lua"
+      "kind": "no-source"
     },
     {
       "id": "defold-rng",
@@ -2451,10 +2530,11 @@
       "repo": "https://github.com/alchimystic/defold-rng",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-04-13T23:16:43Z",
+      "pushedAt": "2026-10-22T00:10:56Z",
       "stars": 13,
-      "ref": "v1.2.0",
+      "ref": "v1.3.0",
       "refKind": "release",
+      "refDate": "2026-10-22T00:06:54Z",
       "includeDirs": [
         "rng"
       ],
@@ -2504,9 +2584,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-07-22T07:06:43Z",
-      "stars": 51,
+      "stars": 52,
       "ref": "8",
       "refKind": "tag",
+      "refDate": "2026-07-21T13:30:44Z",
       "includeDirs": [
         "saver"
       ],
@@ -2557,6 +2638,7 @@
       "stars": 21,
       "ref": "v2.0.1",
       "refKind": "release",
+      "refDate": "2025-05-25T09:23:31Z",
       "includeDirs": [
         "tile-raycast"
       ],
@@ -2577,21 +2659,20 @@
       ],
       "portalLibrary": true,
       "repo": "https://github.com/whiteboxdev/library-defold-timer",
-      "archived": false,
-      "fork": false,
-      "pushedAt": "2024-05-24T16:20:46Z",
-      "stars": 20,
-      "ref": "77c1f2bc92c70f14e4db7cd1a10abb6ba7c470c2",
-      "refKind": "commit",
-      "includeDirs": [
-        "dtimer"
-      ],
+      "reason": "not-found",
+      "archived": null,
+      "fork": null,
+      "pushedAt": null,
+      "stars": null,
+      "ref": null,
+      "refKind": null,
+      "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
-      "lua": 1,
-      "luaSampled": 1,
+      "lua": 0,
+      "luaSampled": 0,
       "luaAnnotated": 0,
-      "kind": "pure-lua"
+      "kind": "no-source"
     },
     {
       "id": "defold-token",
@@ -2609,6 +2690,7 @@
       "stars": 18,
       "ref": "9",
       "refKind": "tag",
+      "refDate": "2026-09-08T07:34:32Z",
       "includeDirs": [
         "token"
       ],
@@ -2659,9 +2741,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2025-11-25T17:16:44Z",
-      "stars": 65,
+      "stars": 66,
       "ref": "6",
       "refKind": "tag",
+      "refDate": "2025-11-25T17:16:34Z",
       "includeDirs": [
         "tweener"
       ],
@@ -2682,21 +2765,20 @@
       ],
       "portalLibrary": true,
       "repo": "https://github.com/whiteboxdev/library-defold-typewriter",
-      "archived": false,
-      "fork": false,
-      "pushedAt": "2024-05-24T16:19:57Z",
-      "stars": 29,
-      "ref": "d5f854ae693b25c1952abc07ae675ab83a8b1f9b",
-      "refKind": "commit",
-      "includeDirs": [
-        "dtypewriter"
-      ],
+      "reason": "not-found",
+      "archived": null,
+      "fork": null,
+      "pushedAt": null,
+      "stars": null,
+      "ref": null,
+      "refKind": null,
+      "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
-      "lua": 1,
-      "luaSampled": 1,
+      "lua": 0,
+      "luaSampled": 0,
       "luaAnnotated": 0,
-      "kind": "pure-lua"
+      "kind": "no-source"
     },
     {
       "id": "defold-uuid4",
@@ -2714,6 +2796,7 @@
       "stars": 11,
       "ref": "v1.0",
       "refKind": "release",
+      "refDate": "2024-03-28T11:33:38Z",
       "includeDirs": [
         "uuid4"
       ],
@@ -2735,10 +2818,11 @@
       "repo": "https://github.com/baochungit/defold-wrap",
       "archived": false,
       "fork": false,
-      "pushedAt": "2024-11-16T04:00:51Z",
+      "pushedAt": "2026-10-25T05:08:49Z",
       "stars": 6,
-      "ref": "1.0.0",
+      "ref": "1.1.0",
       "refKind": "release",
+      "refDate": "2026-10-24T07:31:02Z",
       "includeDirs": [
         "wrap"
       ],
@@ -2789,6 +2873,7 @@
       "stars": 11,
       "ref": "v1.2.6",
       "refKind": "tag",
+      "refDate": "2017-03-05T20:12:29Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -2807,21 +2892,20 @@
       ],
       "portalLibrary": true,
       "repo": "https://github.com/whiteboxdev/library-defold-grid-engine",
-      "archived": false,
-      "fork": false,
-      "pushedAt": "2024-05-24T16:19:42Z",
-      "stars": 54,
-      "ref": "0.4.2",
-      "refKind": "release",
-      "includeDirs": [
-        "dgrid"
-      ],
+      "reason": "not-found",
+      "archived": null,
+      "fork": null,
+      "pushedAt": null,
+      "stars": null,
+      "ref": null,
+      "refKind": null,
+      "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
-      "lua": 1,
-      "luaSampled": 1,
+      "lua": 0,
+      "luaSampled": 0,
       "luaAnnotated": 0,
-      "kind": "pure-lua"
+      "kind": "no-source"
     },
     {
       "id": "defoldinput",
@@ -2838,6 +2922,7 @@
       "stars": 167,
       "ref": "4.8.0",
       "refKind": "release",
+      "refDate": "2026-09-22T12:11:57Z",
       "includeDirs": [
         "in"
       ],
@@ -2864,6 +2949,7 @@
       "stars": 22,
       "ref": "1.2.2",
       "refKind": "release",
+      "refDate": "2022-03-07T22:40:56Z",
       "includeDirs": [
         "png"
       ],
@@ -2940,6 +3026,7 @@
       "stars": 169,
       "ref": "v2.8.7",
       "refKind": "release",
+      "refDate": "2026-03-26T08:48:16Z",
       "includeDirs": [
         "defos"
       ],
@@ -2992,6 +3079,7 @@
       "stars": 29,
       "ref": "1.1.1",
       "refKind": "release",
+      "refDate": "2019-02-13T13:22:33Z",
       "includeDirs": [
         "defpro"
       ],
@@ -3017,6 +3105,7 @@
       "stars": 7,
       "ref": "v1.1.0",
       "refKind": "release",
+      "refDate": "2018-01-04T19:36:42Z",
       "includeDirs": [
         "defquest"
       ],
@@ -3043,6 +3132,7 @@
       "stars": 98,
       "ref": "v1.2.6",
       "refKind": "release",
+      "refDate": "2024-03-26T00:57:17Z",
       "includeDirs": [
         "defsave"
       ],
@@ -3116,9 +3206,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-10-06T04:46:37Z",
-      "stars": 52,
+      "stars": 51,
       "ref": "2.9.0",
       "refKind": "release",
+      "refDate": "2026-10-06T04:45:41Z",
       "includeDirs": [
         "deftest",
         "luacov"
@@ -3142,7 +3233,7 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2018-10-29T19:50:14Z",
-      "stars": 7,
+      "stars": 8,
       "ref": "0693a1cdba93582534620f5f9233cfb17542b3db",
       "refKind": "commit",
       "includeDirs": [
@@ -3170,6 +3261,7 @@
       "stars": 11,
       "ref": "1.0",
       "refKind": "release",
+      "refDate": "2018-03-25T08:27:08Z",
       "includeDirs": [
         "defunico"
       ],
@@ -3196,6 +3288,7 @@
       "stars": 37,
       "ref": "4.21.0",
       "refKind": "release",
+      "refDate": "2026-10-04T15:50:00Z",
       "includeDirs": [
         "defunityads"
       ],
@@ -3222,6 +3315,7 @@
       "stars": 2,
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2023-01-03T00:50:13Z",
       "includeDirs": [
         "defvungle"
       ],
@@ -3248,6 +3342,7 @@
       "stars": 13,
       "ref": "v1.0.0",
       "refKind": "release",
+      "refDate": "2026-06-24T11:00:55Z",
       "includeDirs": [
         "defwin"
       ],
@@ -3297,9 +3392,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-06-04T08:51:46Z",
-      "stars": 48,
+      "stars": 49,
       "ref": "6",
       "refKind": "release",
+      "refDate": "2026-06-04T08:51:35Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -3324,6 +3420,7 @@
       "stars": 17,
       "ref": "v1.0.0",
       "refKind": "release",
+      "refDate": "2024-03-23T08:01:07Z",
       "includeDirs": [
         "derez"
       ],
@@ -3348,9 +3445,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-04-13T10:45:32Z",
-      "stars": 12,
+      "stars": 13,
       "ref": "3",
       "refKind": "tag",
+      "refDate": "2026-04-13T10:21:23Z",
       "includeDirs": [
         "detiled"
       ],
@@ -3377,6 +3475,7 @@
       "stars": 40,
       "ref": "0.3",
       "refKind": "tag",
+      "refDate": "2021-02-24T12:30:33Z",
       "includeDirs": [
         "dicebag"
       ],
@@ -3429,6 +3528,7 @@
       "stars": 16,
       "ref": "v1.0.5",
       "refKind": "release",
+      "refDate": "2019-08-13T13:31:37Z",
       "includeDirs": [
         "discordrich"
       ],
@@ -3454,6 +3554,7 @@
       "stars": 33,
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2026-02-17T08:50:04Z",
       "includeDirs": [
         "dissolve_fx"
       ],
@@ -3479,6 +3580,7 @@
       "stars": 93,
       "ref": "2.0.5",
       "refKind": "release",
+      "refDate": "2026-01-16T08:51:07Z",
       "includeDirs": [
         "drawpixels"
       ],
@@ -3502,9 +3604,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-10-17T16:13:17Z",
-      "stars": 601,
+      "stars": 604,
       "ref": "1.3.0",
       "refKind": "release",
+      "refDate": "2026-08-27T19:09:54Z",
       "includeDirs": [
         "druid"
       ],
@@ -3531,6 +3634,7 @@
       "stars": 9,
       "ref": "v1.0.1",
       "refKind": "release",
+      "refDate": "2020-05-08T14:37:17Z",
       "includeDirs": [
         "dsfonts"
       ],
@@ -3557,6 +3661,7 @@
       "stars": 9,
       "ref": "0.3.1",
       "refKind": "tag",
+      "refDate": "2026-03-14T22:29:53Z",
       "includeDirs": [
         "editor-script-align"
       ],
@@ -3583,6 +3688,7 @@
       "stars": 3,
       "ref": "v1.0.0",
       "refKind": "tag",
+      "refDate": "2025-02-21T21:30:32Z",
       "includeDirs": [
         "editor-script-check-dependencies"
       ],
@@ -3635,6 +3741,7 @@
       "stars": 4,
       "ref": "v0.1.0",
       "refKind": "tag",
+      "refDate": "2019-11-03T17:00:56Z",
       "includeDirs": [
         "editor-script-components"
       ],
@@ -3661,6 +3768,7 @@
       "stars": 3,
       "ref": "0.2.0",
       "refKind": "tag",
+      "refDate": "2026-03-14T22:11:36Z",
       "includeDirs": [
         "editor-script-distribute"
       ],
@@ -3715,6 +3823,7 @@
       "stars": 6,
       "ref": "v2.0.0",
       "refKind": "tag",
+      "refDate": "2024-09-29T09:06:58Z",
       "includeDirs": [
         "editor-script-templates"
       ],
@@ -3742,6 +3851,7 @@
       "stars": 21,
       "ref": "v2.0.1",
       "refKind": "release",
+      "refDate": "2024-09-28T20:35:14Z",
       "includeDirs": [
         "editor-script-atlas"
       ],
@@ -3768,6 +3878,7 @@
       "stars": 44,
       "ref": "2.1.1",
       "refKind": "release",
+      "refDate": "2024-09-01T14:54:56Z",
       "includeDirs": [
         "emthree"
       ],
@@ -3794,6 +3905,7 @@
       "stars": 176,
       "ref": "0.3.0",
       "refKind": "release",
+      "refDate": "2024-03-03T11:20:53Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -3815,10 +3927,11 @@
       "repo": "https://github.com/defold/extension-energy-saver",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-20T21:59:50Z",
+      "pushedAt": "2026-10-21T07:24:03Z",
       "stars": 9,
       "ref": "1.1.0",
       "refKind": "release",
+      "refDate": "2026-09-13T05:26:05Z",
       "includeDirs": [
         "energysaver"
       ],
@@ -3898,6 +4011,7 @@
       "stars": 13,
       "ref": "10.0.0",
       "refKind": "release",
+      "refDate": "2026-09-22T08:49:03Z",
       "includeDirs": [
         "facebook"
       ],
@@ -3952,6 +4066,7 @@
       "stars": 40,
       "ref": "8.0.0",
       "refKind": "release",
+      "refDate": "2024-04-10T09:10:05Z",
       "includeDirs": [
         "fbinstant"
       ],
@@ -4052,6 +4167,7 @@
       "stars": 6,
       "ref": "1.0.4",
       "refKind": "release",
+      "refDate": "2026-09-23T12:33:37Z",
       "includeDirs": [
         "firebase_crashlytics"
       ],
@@ -4077,6 +4193,7 @@
       "stars": 7,
       "ref": "2.3.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:30:01Z",
       "includeDirs": [
         "firebase_remoteconfig"
       ],
@@ -4103,6 +4220,7 @@
       "stars": 46,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2026-03-09T01:01:15Z",
       "includeDirs": [
         "flow"
       ],
@@ -4128,6 +4246,7 @@
       "stars": 8,
       "ref": "0.9",
       "refKind": "release",
+      "refDate": "2025-05-21T09:27:15Z",
       "includeDirs": [
         "fontgen"
       ],
@@ -4154,6 +4273,7 @@
       "stars": 12,
       "ref": "v0.1.0",
       "refKind": "release",
+      "refDate": "2023-09-06T23:05:15Z",
       "includeDirs": [
         "fontscale"
       ],
@@ -4179,6 +4299,7 @@
       "stars": 18,
       "ref": "4.2.6",
       "refKind": "tag",
+      "refDate": "2022-02-22T14:33:35Z",
       "includeDirs": [
         "gameanalytics"
       ],
@@ -4205,6 +4326,7 @@
       "stars": 11,
       "ref": "1.2.0",
       "refKind": "tag",
+      "refDate": "2021-02-01T23:39:40Z",
       "includeDirs": [
         "gamedistribution"
       ],
@@ -4258,10 +4380,11 @@
       "repo": "https://github.com/megalanthus/defold-gamepush",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-08-28T07:03:43Z",
+      "pushedAt": "2026-10-22T15:36:36Z",
       "stars": 15,
-      "ref": "v1.4.0",
+      "ref": "v1.4.1",
       "refKind": "release",
+      "refDate": "2026-10-22T15:35:22Z",
       "includeDirs": [
         "gamepush"
       ],
@@ -4336,6 +4459,7 @@
       "stars": 166,
       "ref": "10.5.3",
       "refKind": "release",
+      "refDate": "2026-05-26T06:05:17Z",
       "includeDirs": [
         "gooey"
       ],
@@ -4361,6 +4485,7 @@
       "stars": 22,
       "ref": "1.4.1",
       "refKind": "release",
+      "refDate": "2019-08-25T20:24:38Z",
       "includeDirs": [
         "googleanalytics"
       ],
@@ -4386,6 +4511,7 @@
       "stars": 23,
       "ref": "3.3.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:35:51Z",
       "includeDirs": [
         "firebase_analytics"
       ],
@@ -4413,6 +4539,7 @@
       "stars": 34,
       "ref": "5.0.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:34:52Z",
       "includeDirs": [
         "gpgs"
       ],
@@ -4438,6 +4565,7 @@
       "stars": 4,
       "ref": "1.0.3",
       "refKind": "release",
+      "refDate": "2024-01-26T11:41:44Z",
       "includeDirs": [
         "instantapps"
       ],
@@ -4463,6 +4591,7 @@
       "stars": 13,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2025-08-16T16:02:28Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -4511,6 +4640,7 @@
       "stars": 11,
       "ref": "1.1.1",
       "refKind": "release",
+      "refDate": "2025-12-27T22:42:30Z",
       "includeDirs": [
         "gyro"
       ],
@@ -4537,6 +4667,7 @@
       "stars": 233,
       "ref": "v2.1.0",
       "refKind": "tag",
+      "refDate": "2025-10-17T16:13:39Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -4561,6 +4692,7 @@
       "stars": 52,
       "ref": "v1.0.0-beta.3",
       "refKind": "tag",
+      "refDate": "2022-01-10T12:23:51Z",
       "includeDirs": [
         "horri-fold"
       ],
@@ -4584,9 +4716,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-01-20T11:56:32Z",
-      "stars": 95,
+      "stars": 96,
       "ref": "1.4.2",
       "refKind": "release",
+      "refDate": "2025-05-14T21:21:16Z",
       "includeDirs": [
         "hyper_trails"
       ],
@@ -4614,6 +4747,7 @@
       "stars": 9,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2024-06-19T07:49:29Z",
       "includeDirs": [
         "i18n"
       ],
@@ -4639,6 +4773,7 @@
       "stars": 8,
       "ref": "1.6.0",
       "refKind": "release",
+      "refDate": "2026-09-21T06:23:16Z",
       "includeDirs": [
         "extension-iac"
       ],
@@ -4664,6 +4799,7 @@
       "stars": 26,
       "ref": "8.4.1",
       "refKind": "release",
+      "refDate": "2026-09-06T06:31:37Z",
       "includeDirs": [
         "extension-iap"
       ],
@@ -4691,6 +4827,7 @@
       "stars": 58,
       "ref": "1.0.3",
       "refKind": "release",
+      "refDate": "2025-02-02T22:50:52Z",
       "includeDirs": [
         "illumination"
       ],
@@ -4743,6 +4880,7 @@
       "stars": 9,
       "ref": "v1.1",
       "refKind": "release",
+      "refDate": "2024-12-29T00:02:22Z",
       "includeDirs": [
         "immutable"
       ],
@@ -4769,6 +4907,7 @@
       "stars": 3,
       "ref": "1.1.0",
       "refKind": "release",
+      "refDate": "2018-07-08T22:52:35Z",
       "includeDirs": [
         "imp"
       ],
@@ -4795,6 +4934,7 @@
       "stars": 6,
       "ref": "1.2",
       "refKind": "release",
+      "refDate": "2020-03-07T12:20:55Z",
       "includeDirs": [
         "ironsource"
       ],
@@ -4849,6 +4989,7 @@
       "stars": 62,
       "ref": "1.3.2",
       "refKind": "release",
+      "refDate": "2024-02-04T17:01:06Z",
       "includeDirs": [
         "walker"
       ],
@@ -4875,6 +5016,7 @@
       "stars": 17,
       "ref": "2.0.2",
       "refKind": "release",
+      "refDate": "2026-10-04T16:43:09Z",
       "includeDirs": [
         "extension-levelplay"
       ],
@@ -4925,9 +5067,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-08-26T15:03:03Z",
-      "stars": 151,
+      "stars": 153,
       "ref": "v0.9.1",
       "refKind": "release",
+      "refDate": "2026-08-26T14:58:19Z",
       "includeDirs": [
         "light_and_shadows"
       ],
@@ -4952,10 +5095,11 @@
       "repo": "https://github.com/HGPoint/defold_live_unbundler",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-09-28T12:59:09Z",
+      "pushedAt": "2026-10-26T07:47:55Z",
       "stars": 14,
       "ref": "2.3",
       "refKind": "release",
+      "refDate": "2026-09-28T12:58:36Z",
       "includeDirs": [
         "live_unbundler"
       ],
@@ -4983,6 +5127,7 @@
       "stars": 12,
       "ref": "v1.1.0b",
       "refKind": "release",
+      "refDate": "2026-02-18T03:49:52Z",
       "includeDirs": [
         "log"
       ],
@@ -5008,6 +5153,7 @@
       "stars": 44,
       "ref": "1.5.1",
       "refKind": "release",
+      "refDate": "2025-10-12T08:43:37Z",
       "includeDirs": [
         "lowrez"
       ],
@@ -5034,6 +5180,7 @@
       "stars": 10,
       "ref": "1.0.4",
       "refKind": "release",
+      "refDate": "2023-03-04T12:17:23Z",
       "includeDirs": [
         "lpeg"
       ],
@@ -5059,6 +5206,7 @@
       "stars": 19,
       "ref": "v1.7795",
       "refKind": "release",
+      "refDate": "2024-06-10T12:34:50Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -5084,6 +5232,7 @@
       "stars": 15,
       "ref": "1.3.0",
       "refKind": "release",
+      "refDate": "2024-12-24T23:16:31Z",
       "includeDirs": [
         "lfs"
       ],
@@ -5111,6 +5260,7 @@
       "stars": 1,
       "ref": "4.1",
       "refKind": "release",
+      "refDate": "2025-03-22T22:20:13Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -5134,6 +5284,7 @@
       "stars": 12,
       "ref": "0.1.1",
       "refKind": "release",
+      "refDate": "2019-03-29T12:18:58Z",
       "includeDirs": [
         "lua_script_instance"
       ],
@@ -5160,6 +5311,7 @@
       "stars": 14,
       "ref": "0.11.1",
       "refKind": "release",
+      "refDate": "2019-08-13T13:59:27Z",
       "includeDirs": [
         "socket",
         "mime"
@@ -5186,6 +5338,7 @@
       "stars": 6,
       "ref": "1.0",
       "refKind": "release",
+      "refDate": "2022-11-11T12:54:12Z",
       "includeDirs": [
         "m"
       ],
@@ -5212,6 +5365,7 @@
       "stars": 176,
       "ref": "0.3.0",
       "refKind": "release",
+      "refDate": "2024-03-03T11:20:53Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -5238,6 +5392,7 @@
       "stars": 66,
       "ref": "v0.2.3",
       "refKind": "release",
+      "refDate": "2024-07-07T22:56:21Z",
       "includeDirs": [
         "matchanovel"
       ],
@@ -5275,6 +5430,32 @@
       "kind": "native-untyped"
     },
     {
+      "id": "microvania-toolkit",
+      "name": "Microvania Toolkit",
+      "description": "A Tiled-first toolkit for building short exploration platformers and microvanias in Defold. Create rooms with tiles or hand-drawn art, place gameplay objects in Tiled, connect rooms with the in-game Layout Editor or a Tiled World, and tune gameplay through Defold editor tools. Includes 57 gameplay templates, room streaming, saves and checkpoints, ability and key gates, enemies and bosses, dialogue, maps and traversal objects. Sample worlds and illustrated guides help you get started, and the Lua code can be customized. Windows is verified; macOS and Linux are experimental. Free for personal, non-commercial use; commercial use requires a paid license from the creator, and demonstration art and audio must be replaced before distributing a game. Support Michael Swisher through Ko-fi.",
+      "tags": [
+        "Editor",
+        "Tilemaps",
+        "Tools"
+      ],
+      "portalLibrary": false,
+      "repo": "https://github.com/schlista/Microvania-Toolkit",
+      "archived": false,
+      "fork": false,
+      "pushedAt": "2026-10-20T22:44:32Z",
+      "stars": 4,
+      "ref": "v0.1.0-beta.5",
+      "refKind": "tag",
+      "refDate": "2026-10-20T22:29:09Z",
+      "includeDirs": [],
+      "scriptApi": 0,
+      "extManifest": 0,
+      "lua": 0,
+      "luaSampled": 0,
+      "luaAnnotated": 0,
+      "kind": "not-a-dependency"
+    },
+    {
       "id": "minit-sdk",
       "name": "Minit SDK",
       "description": "Minit SDK for Defold\nIntegrate your Defold game with the Minit Games platform. Minit runs HTML5 games inside a mobile app WebView and on shareable play pages. This SDK is the thin Lua facade your game calls to talk to the Minit host: reveal the game when it's ready, report results, read per-game config, and persist player save data.",
@@ -5286,10 +5467,11 @@
       "repo": "https://github.com/Minit-Games/minit-defold",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-20T08:47:02Z",
+      "pushedAt": "2026-10-21T20:29:14Z",
       "stars": 1,
-      "ref": "v1.16.0",
+      "ref": "v1.17.0",
       "refKind": "release",
+      "refDate": "2026-10-21T20:29:05Z",
       "includeDirs": [
         "minit"
       ],
@@ -5341,6 +5523,7 @@
       "stars": 47,
       "ref": "Alpha_v2.2",
       "refKind": "tag",
+      "refDate": "2018-04-15T10:05:54Z",
       "includeDirs": [
         "moku"
       ],
@@ -5363,9 +5546,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-10-06T04:52:36Z",
-      "stars": 219,
+      "stars": 220,
       "ref": "6.0.3",
       "refKind": "release",
+      "refDate": "2026-10-06T04:51:37Z",
       "includeDirs": [
         "monarch"
       ],
@@ -5391,6 +5575,7 @@
       "stars": 2,
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2026-09-13T00:06:40Z",
       "includeDirs": [
         "myket-iap"
       ],
@@ -5420,6 +5605,7 @@
       "stars": 105,
       "ref": "v3.4.0",
       "refKind": "release",
+      "refDate": "2024-09-06T09:24:44Z",
       "includeDirs": [
         "nakama",
         "satori"
@@ -5447,6 +5633,7 @@
       "stars": 166,
       "ref": "1.8",
       "refKind": "release",
+      "refDate": "2023-09-25T10:28:33Z",
       "includeDirs": [
         "narrator"
       ],
@@ -5503,6 +5690,7 @@
       "stars": 15,
       "ref": "Alpha.18",
       "refKind": "release",
+      "refDate": "2022-05-29T03:12:51Z",
       "includeDirs": [
         "navGo_pathfinding"
       ],
@@ -5525,7 +5713,7 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2024-12-19T22:59:54Z",
-      "stars": 24,
+      "stars": 25,
       "ref": "618292f0bff56b6cd38652a97baf90ba89b56e91",
       "refKind": "commit",
       "includeDirs": [
@@ -5556,6 +5744,7 @@
       "stars": 62,
       "ref": "1.5.3",
       "refKind": "release",
+      "refDate": "2025-02-02T20:51:01Z",
       "includeDirs": [
         "operator"
       ],
@@ -5581,6 +5770,7 @@
       "stars": 220,
       "ref": "3.6.3",
       "refKind": "release",
+      "refDate": "2026-05-29T13:00:13Z",
       "includeDirs": [
         "orthographic"
       ],
@@ -5632,6 +5822,7 @@
       "stars": 12,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2025-03-23T14:04:06Z",
       "includeDirs": [
         "page_visibility"
       ],
@@ -5660,6 +5851,7 @@
       "stars": 102,
       "ref": "0.8.6",
       "refKind": "tag",
+      "refDate": "2022-11-19T20:28:12Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -5682,9 +5874,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-10-06T07:26:14Z",
-      "stars": 121,
+      "stars": 123,
       "ref": "editor.1259",
       "refKind": "release",
+      "refDate": "2026-10-06T06:50:49Z",
       "includeDirs": [
         "panthera"
       ],
@@ -5735,6 +5928,7 @@
       "stars": 34,
       "ref": "v1.3.0",
       "refKind": "release",
+      "refDate": "2026-07-27T11:12:50Z",
       "includeDirs": [
         "pcgrandom"
       ],
@@ -5784,6 +5978,7 @@
       "stars": 3,
       "ref": "1.1.0",
       "refKind": "release",
+      "refDate": "2026-10-12T17:33:33Z",
       "includeDirs": [
         "fusion"
       ],
@@ -5809,6 +6004,7 @@
       "stars": 8,
       "ref": "1.0.0",
       "refKind": "tag",
+      "refDate": "2025-08-13T11:27:38Z",
       "includeDirs": [
         "realtime"
       ],
@@ -5861,6 +6057,7 @@
       "stars": 17,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2026-02-19T11:19:49Z",
       "includeDirs": [
         "physics_tools"
       ],
@@ -5886,6 +6083,7 @@
       "stars": 64,
       "ref": "v1.5",
       "refKind": "release",
+      "refDate": "2026-04-20T13:26:28Z",
       "includeDirs": [
         "pigeon"
       ],
@@ -5935,6 +6133,7 @@
       "stars": 76,
       "ref": "4.3.1",
       "refKind": "release",
+      "refDate": "2024-02-21T08:52:34Z",
       "includeDirs": [
         "platypus"
       ],
@@ -5962,6 +6161,7 @@
       "stars": 64,
       "ref": "1.5.4",
       "refKind": "release",
+      "refDate": "2025-11-01T19:45:06Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -6013,6 +6213,7 @@
       "stars": 42,
       "ref": "0.120.220406",
       "refKind": "release",
+      "refDate": "2022-04-06T16:32:36Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -6036,10 +6237,11 @@
       "repo": "https://github.com/Playgama/bridge-defold",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-09-30T09:54:07Z",
-      "stars": 36,
+      "pushedAt": "2026-10-23T08:42:25Z",
+      "stars": 37,
       "ref": "v2.3.0",
       "refKind": "release",
+      "refDate": "2026-09-30T09:21:58Z",
       "includeDirs": [
         "bridge"
       ],
@@ -6065,6 +6267,7 @@
       "stars": 23,
       "ref": "2.1.0",
       "refKind": "release",
+      "refDate": "2026-08-07T07:51:30Z",
       "includeDirs": [
         "pointer_lock"
       ],
@@ -6092,6 +6295,7 @@
       "stars": 39,
       "ref": "4.1.0",
       "refKind": "release",
+      "refDate": "2026-07-30T06:39:17Z",
       "includeDirs": [
         "poki-sdk"
       ],
@@ -6145,6 +6349,7 @@
       "stars": 58,
       "ref": "1.2.2",
       "refKind": "release",
+      "refDate": "2026-07-01T14:23:28Z",
       "includeDirs": [
         "printer"
       ],
@@ -6171,6 +6376,7 @@
       "stars": 37,
       "ref": "2.0.3",
       "refKind": "release",
+      "refDate": "2026-02-09T10:08:29Z",
       "includeDirs": [
         "prometheus"
       ],
@@ -6222,6 +6428,7 @@
       "stars": 24,
       "ref": "4.3.1",
       "refKind": "release",
+      "refDate": "2026-09-29T11:14:21Z",
       "includeDirs": [
         "extension-push"
       ],
@@ -6248,6 +6455,7 @@
       "stars": 7,
       "ref": "1.1",
       "refKind": "release",
+      "refDate": "2018-05-22T09:00:17Z",
       "includeDirs": [
         "qrcode"
       ],
@@ -6298,6 +6506,7 @@
       "stars": 2,
       "ref": "1.0.2",
       "refKind": "release",
+      "refDate": "2019-06-02T10:23:16Z",
       "includeDirs": [
         "rand16"
       ],
@@ -6323,9 +6532,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-10-19T11:14:57Z",
-      "stars": 31,
+      "stars": 32,
       "ref": "0.6.0",
       "refKind": "release",
+      "refDate": "2026-03-17T14:10:59Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -6377,6 +6587,7 @@
       "stars": 39,
       "ref": "1.7.0",
       "refKind": "release",
+      "refDate": "2026-08-19T09:40:43Z",
       "includeDirs": [
         "liveupdate_reszip"
       ],
@@ -6402,6 +6613,7 @@
       "stars": 15,
       "ref": "3.2.3",
       "refKind": "release",
+      "refDate": "2026-09-05T15:01:18Z",
       "includeDirs": [
         "review"
       ],
@@ -6429,6 +6641,7 @@
       "stars": 82,
       "ref": "5.22.1",
       "refKind": "release",
+      "refDate": "2025-08-25T18:08:28Z",
       "includeDirs": [
         "richtext"
       ],
@@ -6451,10 +6664,11 @@
       "repo": "https://github.com/defold/extension-rive",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-02T10:11:49Z",
+      "pushedAt": "2026-10-26T20:14:52Z",
       "stars": 74,
       "ref": "13.2.2",
       "refKind": "release",
+      "refDate": "2026-09-21T08:27:17Z",
       "includeDirs": [
         "defold-rive"
       ],
@@ -6603,6 +6817,7 @@
       "stars": 31,
       "ref": "1.5.2",
       "refKind": "release",
+      "refDate": "2025-11-14T22:45:22Z",
       "includeDirs": [
         "safearea"
       ],
@@ -6633,6 +6848,7 @@
       "stars": 192,
       "ref": "1.2.1",
       "refKind": "release",
+      "refDate": "2024-06-25T22:48:44Z",
       "includeDirs": [
         "scene3d"
       ],
@@ -6688,6 +6904,7 @@
       "stars": 40,
       "ref": "1.13.0",
       "refKind": "release",
+      "refDate": "2026-04-14T07:29:37Z",
       "includeDirs": [
         "screenshot"
       ],
@@ -6714,6 +6931,7 @@
       "stars": 21,
       "ref": "1.3.1",
       "refKind": "release",
+      "refDate": "2025-06-08T21:48:24Z",
       "includeDirs": [
         "sentinel"
       ],
@@ -6764,6 +6982,7 @@
       "stars": 24,
       "ref": "4.7.0",
       "refKind": "release",
+      "refDate": "2026-09-06T11:30:50Z",
       "includeDirs": [
         "share"
       ],
@@ -6789,6 +7008,7 @@
       "stars": 78,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2025-05-15T15:50:13Z",
       "includeDirs": [
         "sharp_sprite"
       ],
@@ -6838,6 +7058,7 @@
       "stars": 9,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2025-05-04T19:26:58Z",
       "includeDirs": [
         "simplex_noise"
       ],
@@ -6863,6 +7084,7 @@
       "stars": 6,
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2025-02-22T09:22:37Z",
       "includeDirs": [
         "siwa"
       ],
@@ -6963,10 +7185,11 @@
       "repo": "https://github.com/defold/extension-spine",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-20T13:41:24Z",
+      "pushedAt": "2026-10-25T09:54:10Z",
       "stars": 47,
-      "ref": "4.9.3",
+      "ref": "4.10.0",
       "refKind": "release",
+      "refDate": "2026-10-25T09:51:12Z",
       "includeDirs": [
         "defold-spine"
       ],
@@ -6992,6 +7215,7 @@
       "stars": 25,
       "ref": "2.2.0",
       "refKind": "release",
+      "refDate": "2026-03-09T12:28:01Z",
       "includeDirs": [
         "splitmix64"
       ],
@@ -7015,10 +7239,11 @@
       "repo": "https://github.com/Balkan-Ram-Games/spriteloop-defold",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-20T11:05:32Z",
-      "stars": 49,
+      "pushedAt": "2026-10-26T15:27:24Z",
+      "stars": 50,
       "ref": "v0.15.0-alpha",
       "refKind": "tag",
+      "refDate": "2026-10-13T08:44:41Z",
       "includeDirs": [
         "spriteloop"
       ],
@@ -7072,6 +7297,7 @@
       "stars": 9,
       "ref": "1.2",
       "refKind": "release",
+      "refDate": "2025-01-20T22:30:12Z",
       "includeDirs": [
         "squid"
       ],
@@ -7099,6 +7325,7 @@
       "stars": 49,
       "ref": "1.15.0",
       "refKind": "release",
+      "refDate": "2026-06-20T20:29:20Z",
       "includeDirs": [
         "steam"
       ],
@@ -7122,7 +7349,7 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-07-05T10:05:27Z",
-      "stars": 13,
+      "stars": 14,
       "ref": "bdcc1d863c64015fb70b117042f551795eb04211",
       "refKind": "commit",
       "includeDirs": [
@@ -7198,6 +7425,7 @@
       "stars": 14,
       "ref": "v1.2",
       "refKind": "release",
+      "refDate": "2019-07-12T13:16:12Z",
       "includeDirs": [
         "taptic_engine"
       ],
@@ -7221,9 +7449,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2026-10-16T14:46:17Z",
-      "stars": 56,
+      "stars": 57,
       "ref": "v1.6",
       "refKind": "release",
+      "refDate": "2026-10-16T14:26:12Z",
       "includeDirs": [
         "teal"
       ],
@@ -7249,6 +7478,7 @@
       "stars": 1,
       "ref": "1.1",
       "refKind": "release",
+      "refDate": "2020-04-18T11:31:32Z",
       "includeDirs": [
         "tenjin"
       ],
@@ -7300,6 +7530,7 @@
       "stars": 23,
       "ref": "2.9.0",
       "refKind": "release",
+      "refDate": "2026-10-01T12:41:36Z",
       "includeDirs": [
         "texturepacker"
       ],
@@ -7322,10 +7553,11 @@
       "repo": "https://github.com/mapeditor/tiled",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-20T18:32:01Z",
-      "stars": 12978,
+      "pushedAt": "2026-10-26T10:02:36Z",
+      "stars": 13003,
       "ref": "v1.12.2",
       "refKind": "release",
+      "refDate": "2026-05-27T10:32:47Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -7343,21 +7575,20 @@
       ],
       "portalLibrary": true,
       "repo": "https://github.com/whiteboxdev/library-defold-tilemap-animator",
-      "archived": false,
-      "fork": false,
-      "pushedAt": "2024-05-24T16:14:33Z",
-      "stars": 42,
-      "ref": "0.4.0",
-      "refKind": "release",
-      "includeDirs": [
-        "dtile"
-      ],
+      "reason": "not-found",
+      "archived": null,
+      "fork": null,
+      "pushedAt": null,
+      "stars": null,
+      "ref": null,
+      "refKind": null,
+      "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
-      "lua": 1,
-      "luaSampled": 1,
+      "lua": 0,
+      "luaSampled": 0,
       "luaAnnotated": 0,
-      "kind": "pure-lua"
+      "kind": "no-source"
     },
     {
       "id": "tilemaps-store",
@@ -7376,6 +7607,7 @@
       "stars": 5,
       "ref": "1.3",
       "refKind": "release",
+      "refDate": "2026-08-18T00:52:16Z",
       "includeDirs": [
         "Tilemaps_Store"
       ],
@@ -7427,6 +7659,7 @@
       "stars": 11,
       "ref": "1.3-3",
       "refKind": "release",
+      "refDate": "2024-09-13T20:27:09Z",
       "includeDirs": [
         "tinyecs"
       ],
@@ -7452,6 +7685,7 @@
       "stars": 11,
       "ref": "v1.0",
       "refKind": "release",
+      "refDate": "2019-10-29T08:26:15Z",
       "includeDirs": [
         "TinyHttp"
       ],
@@ -7481,6 +7715,7 @@
       "stars": 78,
       "ref": "1.8.3",
       "refKind": "release",
+      "refDate": "2025-11-04T16:12:42Z",
       "includeDirs": [
         "trenchfold"
       ],
@@ -7581,9 +7816,10 @@
       "archived": false,
       "fork": false,
       "pushedAt": "2025-02-18T04:15:09Z",
-      "stars": 96,
+      "stars": 97,
       "ref": "v0.1.16",
       "refKind": "tag",
+      "refDate": "2023-06-29T02:59:05Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -7609,6 +7845,7 @@
       "stars": 8,
       "ref": "v4.0.2",
       "refKind": "release",
+      "refDate": "2026-10-02T06:23:46Z",
       "includeDirs": [
         "ump"
       ],
@@ -7634,6 +7871,7 @@
       "stars": 6,
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2021-09-25T17:23:42Z",
       "includeDirs": [
         "uptime"
       ],
@@ -7661,6 +7899,7 @@
       "stars": 10,
       "ref": "0.3.0",
       "refKind": "release",
+      "refDate": "2026-06-24T09:30:37Z",
       "includeDirs": [
         "vantage"
       ],
@@ -7686,6 +7925,7 @@
       "stars": 20,
       "ref": "0.2.1",
       "refKind": "release",
+      "refDate": "2018-06-12T01:30:06Z",
       "includeDirs": [
         "vibrate"
       ],
@@ -7712,6 +7952,7 @@
       "stars": 17,
       "ref": "1.4.0",
       "refKind": "release",
+      "refDate": "2026-09-04T11:20:41Z",
       "includeDirs": [
         "videoplayer"
       ],
@@ -7787,6 +8028,7 @@
       "stars": 16,
       "ref": "v0.10.0",
       "refKind": "release",
+      "refDate": "2026-07-22T14:04:25Z",
       "includeDirs": [
         "voronoi"
       ],
@@ -7808,10 +8050,11 @@
       "repo": "https://github.com/astrochili/vscode-defold",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-11T17:44:19Z",
+      "pushedAt": "2026-10-21T08:27:49Z",
       "stars": 218,
       "ref": "2.2.2",
       "refKind": "release",
+      "refDate": "2026-10-08T08:57:19Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -7838,6 +8081,7 @@
       "stars": 176,
       "ref": "0.3.0",
       "refKind": "release",
+      "refDate": "2024-03-03T11:20:53Z",
       "includeDirs": [],
       "scriptApi": 0,
       "extManifest": 0,
@@ -7886,10 +8130,11 @@
       "repo": "https://github.com/wvdsh/sdk-defold",
       "archived": false,
       "fork": false,
-      "pushedAt": "2026-10-20T20:13:26Z",
+      "pushedAt": "2026-10-25T21:30:24Z",
       "stars": 5,
-      "ref": "1.3.0",
+      "ref": "1.3.1",
       "refKind": "release",
+      "refDate": "2026-10-21T20:36:58Z",
       "includeDirs": [
         "wavedash"
       ],
@@ -7915,6 +8160,7 @@
       "stars": 18,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2024-04-24T17:14:22Z",
       "includeDirs": [
         "webgl_memory"
       ],
@@ -7940,6 +8186,7 @@
       "stars": 5,
       "ref": "4.0.0",
       "refKind": "release",
+      "refDate": "2024-04-11T13:04:09Z",
       "includeDirs": [
         "webmonetization"
       ],
@@ -7966,6 +8213,7 @@
       "stars": 8,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2026-03-11T01:06:26Z",
       "includeDirs": [
         "webp"
       ],
@@ -8018,6 +8266,7 @@
       "stars": 51,
       "ref": "4.2.4",
       "refKind": "release",
+      "refDate": "2026-08-22T06:48:33Z",
       "includeDirs": [
         "websocket"
       ],
@@ -8068,6 +8317,7 @@
       "stars": 10,
       "ref": "1.0.0",
       "refKind": "tag",
+      "refDate": "2019-05-25T08:49:37Z",
       "includeDirs": [
         "whdefquest"
       ],
@@ -8096,6 +8346,7 @@
       "stars": 2,
       "ref": "v3.0.3",
       "refKind": "release",
+      "refDate": "2024-11-08T07:06:07Z",
       "includeDirs": [
         "wortal"
       ],
@@ -8122,6 +8373,7 @@
       "stars": 37,
       "ref": "v1.0.1",
       "refKind": "release",
+      "refDate": "2026-07-11T03:20:56Z",
       "includeDirs": [
         "xmath"
       ],
@@ -8198,6 +8450,7 @@
       "stars": 3,
       "ref": "1.2.0",
       "refKind": "release",
+      "refDate": "2025-06-10T22:30:46Z",
       "includeDirs": [
         "xsolla"
       ],
@@ -8225,6 +8478,7 @@
       "stars": 77,
       "ref": "0.19.0",
       "refKind": "release",
+      "refDate": "2025-12-28T22:16:27Z",
       "includeDirs": [
         "yagames"
       ],
@@ -8250,6 +8504,7 @@
       "stars": 15,
       "ref": "1.0.0",
       "refKind": "release",
+      "refDate": "2022-01-13T09:26:42Z",
       "includeDirs": [
         "yametrica"
       ],
@@ -8276,6 +8531,7 @@
       "stars": 18,
       "ref": "v0.2.0",
       "refKind": "release",
+      "refDate": "2023-04-26T11:32:26Z",
       "includeDirs": [
         "yoga"
       ],
@@ -8329,6 +8585,7 @@
       "stars": 9,
       "ref": "1.5.7-3",
       "refKind": "release",
+      "refDate": "2025-10-30T12:10:52Z",
       "includeDirs": [
         "zstd"
       ],

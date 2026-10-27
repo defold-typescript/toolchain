@@ -5,9 +5,12 @@ import {
   apiJsonOrNull,
   gitHubToken,
   libraryIncludeDirs,
+  type PinDating,
+  pinDate,
   type RefKind,
   request,
   selectPin,
+  withRefDate,
 } from "./sync-defold-extensions";
 
 /**
@@ -66,7 +69,7 @@ export interface PortalHead {
  * Repo-scoped calls take `owner/repo`, so any owner the portal names is
  * reachable.
  */
-export interface PortalSource {
+export interface PortalSource extends PinDating {
   head(): Promise<string>;
   entries(sha: string): Promise<{ file: string; json: PortalAsset }[]>;
   repo(ownerRepo: string): Promise<PortalRepo | null>;
@@ -91,6 +94,8 @@ export interface PortalEntry {
   stars: number | null;
   ref: string | null;
   refKind: RefKind | null;
+  // When a release or tag pin was cut (ISO 8601); a commit pin has none.
+  refDate?: string;
   includeDirs: string[];
   scriptApi: number;
   extManifest: number;
@@ -322,6 +327,55 @@ export async function syncAssetPortal(
   return manifest;
 }
 
+/**
+ * Date every release and tag pin in the committed `asset-portal.json` at its
+ * recorded ref, by the rule the Defold pass uses. Pins are read, never chosen,
+ * and every date is looked up before the manifest is written, so a failed
+ * lookup leaves it untouched.
+ */
+export async function syncAssetPortalDates(
+  packageRoot: string,
+  source: PinDating,
+): Promise<{ pins: number }> {
+  const manifest = readAssetPortalManifest(packageRoot);
+  let pins = 0;
+  const entries: PortalEntry[] = [];
+  for (const entry of manifest.entries) {
+    if (entry.repo === null || entry.ref === null || entry.refKind === null) {
+      entries.push(entry);
+      continue;
+    }
+    const fullName = entry.repo.replace(/^https:\/\/github\.com\//, "");
+    let refDate: string | undefined;
+    try {
+      refDate = await pinDate(source, fullName, { ref: entry.ref, refKind: entry.refKind });
+    } catch (error) {
+      const cause = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `asset-portal: cannot date ${entry.id} at ${fullName}@${entry.ref} (${cause}); re-sync with --fetch`,
+      );
+    }
+    entries.push(withRefDate(entry, refDate));
+    if (refDate !== undefined) pins++;
+  }
+  writeFileSync(
+    join(packageRoot, "asset-portal.json"),
+    `${JSON.stringify({ ...manifest, entries }, null, 2)}\n`,
+  );
+  return { pins };
+}
+
+/** The `--fetch` path: reclassify the portal, then date the pins it chose. */
+export async function fetchAssetPortal(
+  packageRoot: string,
+  source: PortalSource,
+  syncedAt: string,
+): Promise<AssetPortalManifest> {
+  await syncAssetPortal(packageRoot, source, syncedAt);
+  await syncAssetPortalDates(packageRoot, source);
+  return readAssetPortalManifest(packageRoot);
+}
+
 async function fetchText(url: string): Promise<string> {
   const res = await request(url, "text/plain");
   if (!res.ok) throw new Error(`fetch failed: ${url} -> ${res.status} ${res.statusText}`);
@@ -387,11 +441,19 @@ export function livePortalSource(): PortalSource {
     },
     tree,
     fetchText,
+    releaseByTag: (fullName, tag) =>
+      apiJsonOrNull<{ published_at: string | null }>(`repos/${fullName}/releases/tags/${tag}`),
+    async commitDate(fullName, ref) {
+      const commit = await apiJson<{ commit: { committer: { date: string } } }>(
+        `repos/${fullName}/commits/${ref}`,
+      );
+      return commit.commit.committer.date;
+    },
   };
 }
 
 if (import.meta.main && process.argv.includes("--fetch")) {
-  const manifest = await syncAssetPortal(
+  const manifest = await fetchAssetPortal(
     join(import.meta.dir, ".."),
     livePortalSource(),
     new Date().toISOString(),
@@ -402,4 +464,9 @@ if (import.meta.main && process.argv.includes("--fetch")) {
   console.log(
     `classified ${manifest.entries.length} Asset Portal entries at ${manifest.source.commit}: ${counts}`,
   );
+}
+
+if (import.meta.main && process.argv.includes("--dates")) {
+  const { pins } = await syncAssetPortalDates(join(import.meta.dir, ".."), livePortalSource());
+  console.log(`dated ${pins} Asset Portal pins`);
 }

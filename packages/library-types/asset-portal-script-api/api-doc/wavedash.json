@@ -140,6 +140,21 @@
     },
     {
       "type": "FUNCTION",
+      "name": "wavedash.get_user_language",
+      "description": "Get the current user's preferred language code, such as \"en\" or \"pt-BR\". Compare it with the LANGUAGE_CODE_* constants.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "language",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "wavedash.get_user_jwt_async",
       "description": "Request a user JWT. This is an asynchronous function. The result will be delivered as an event with id 'getUserJwt' or as a return value if the function is called from a coroutine.\n",
       "parameters": [],
@@ -1665,6 +1680,339 @@
       "name": "wavedash.FULFILL_PURCHASE_STATUS_NOT_FOUND",
       "brief": "fulfill_purchase_async status: unknown purchase, or it was refunded. Don't grant it.\n",
       "description": "fulfill_purchase_async status: unknown purchase, or it was refunded. Don't grant it.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_ARABIC",
+      "brief": "Language code: ar.\n",
+      "description": "Language code: ar.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_BULGARIAN",
+      "brief": "Language code: bg.\n",
+      "description": "Language code: bg.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_CATALAN",
+      "brief": "Language code: ca.\n",
+      "description": "Language code: ca.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_CHINESE_SIMPLIFIED",
+      "brief": "Language code: zh-CN.\n",
+      "description": "Language code: zh-CN.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_CHINESE_TRADITIONAL",
+      "brief": "Language code: zh-TW.\n",
+      "description": "Language code: zh-TW.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_CROATIAN",
+      "brief": "Language code: hr.\n",
+      "description": "Language code: hr.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_CZECH",
+      "brief": "Language code: cs.\n",
+      "description": "Language code: cs.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_DANISH",
+      "brief": "Language code: da.\n",
+      "description": "Language code: da.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_DUTCH",
+      "brief": "Language code: nl.\n",
+      "description": "Language code: nl.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_ENGLISH",
+      "brief": "Language code: en.\n",
+      "description": "Language code: en.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_ESPERANTO",
+      "brief": "Language code: eo.\n",
+      "description": "Language code: eo.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_FINNISH",
+      "brief": "Language code: fi.\n",
+      "description": "Language code: fi.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_FRENCH",
+      "brief": "Language code: fr.\n",
+      "description": "Language code: fr.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_GALICIAN",
+      "brief": "Language code: gl.\n",
+      "description": "Language code: gl.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_GERMAN",
+      "brief": "Language code: de.\n",
+      "description": "Language code: de.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_GREEK",
+      "brief": "Language code: el.\n",
+      "description": "Language code: el.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_HUNGARIAN",
+      "brief": "Language code: hu.\n",
+      "description": "Language code: hu.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_INDONESIAN",
+      "brief": "Language code: id.\n",
+      "description": "Language code: id.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_ITALIAN",
+      "brief": "Language code: it.\n",
+      "description": "Language code: it.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_JAPANESE",
+      "brief": "Language code: ja.\n",
+      "description": "Language code: ja.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_KOREAN",
+      "brief": "Language code: ko.\n",
+      "description": "Language code: ko.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_LATVIAN",
+      "brief": "Language code: lv.\n",
+      "description": "Language code: lv.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_LITHUANIAN",
+      "brief": "Language code: lt.\n",
+      "description": "Language code: lt.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_MALAY",
+      "brief": "Language code: ms.\n",
+      "description": "Language code: ms.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_NORWEGIAN",
+      "brief": "Language code: no.\n",
+      "description": "Language code: no.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_POLISH",
+      "brief": "Language code: pl.\n",
+      "description": "Language code: pl.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_PORTUGUESE",
+      "brief": "Language code: pt.\n",
+      "description": "Language code: pt.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_PORTUGUESE_BRAZIL",
+      "brief": "Language code: pt-BR.\n",
+      "description": "Language code: pt-BR.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_ROMANIAN",
+      "brief": "Language code: ro.\n",
+      "description": "Language code: ro.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_RUSSIAN",
+      "brief": "Language code: ru.\n",
+      "description": "Language code: ru.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_SPANISH",
+      "brief": "Language code: es.\n",
+      "description": "Language code: es.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_SPANISH_LATIN_AMERICA",
+      "brief": "Language code: es-419.\n",
+      "description": "Language code: es-419.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_SWEDISH",
+      "brief": "Language code: sv.\n",
+      "description": "Language code: sv.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_THAI",
+      "brief": "Language code: th.\n",
+      "description": "Language code: th.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_TURKISH",
+      "brief": "Language code: tr.\n",
+      "description": "Language code: tr.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_UKRAINIAN",
+      "brief": "Language code: uk.\n",
+      "description": "Language code: uk.\n",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "wavedash.LANGUAGE_CODE_VIETNAMESE",
+      "brief": "Language code: vi.\n",
+      "description": "Language code: vi.\n",
       "types": [
         "string"
       ]

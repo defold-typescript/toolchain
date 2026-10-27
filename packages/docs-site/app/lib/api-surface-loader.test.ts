@@ -374,6 +374,24 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
   });
 });
 
+interface PinDating {
+  refDate?: string;
+  engineReleases?: { version: string; date: string }[];
+}
+
+function writeEngineReleases(dir: string, dating: PinDating): void {
+  if (!dating.engineReleases) return;
+  writeFileSync(
+    join(dir, "defold-engine-releases.json"),
+    JSON.stringify({ releases: dating.engineReleases }),
+  );
+}
+
+const ENGINE_RELEASES = [
+  { version: "1.9.1", date: "2024-07-22T08:00:00Z" },
+  { version: "1.9.0", date: "2024-06-25T11:35:28Z" },
+];
+
 describe("Defold extensions under Libraries", () => {
   const MOVED = ["iac", "iap", "push", "webview"];
 
@@ -409,24 +427,6 @@ describe("Defold extensions under Libraries", () => {
     expect(combined).toContain("camera");
     expect(pages.find((p) => p.route === "/api/extension-camera")?.category).toBe("library");
   });
-
-  interface PinDating {
-    refDate?: string;
-    engineReleases?: { version: string; date: string }[];
-  }
-
-  function writeEngineReleases(dir: string, dating: PinDating): void {
-    if (!dating.engineReleases) return;
-    writeFileSync(
-      join(dir, "defold-engine-releases.json"),
-      JSON.stringify({ releases: dating.engineReleases }),
-    );
-  }
-
-  const ENGINE_RELEASES = [
-    { version: "1.9.1", date: "2024-07-22T08:00:00Z" },
-    { version: "1.9.0", date: "2024-06-25T11:35:28Z" },
-  ];
 
   function libraryTypesWithDefoldPages(pages: string[], dating: PinDating = {}): string {
     const dir = mkdtempSync(join(tmpdir(), "defold-extensions-loader-"));
@@ -731,14 +731,16 @@ describe("Asset Portal libraries that ship no Lua API under Libraries", () => {
     description?: string;
     ref?: string;
     refKind?: string;
+    refDate?: string;
   }
 
   function libraryTypesWithPortal(
     entries: PortalEntryFixture[],
-    options: { base?: string; defoldRepos?: string[] } = {},
+    options: { base?: string; defoldRepos?: string[] } & Pick<PinDating, "engineReleases"> = {},
   ): string {
     const dir = mkdtempSync(join(tmpdir(), "asset-portal-listings-"));
     if (options.base) cpSync(options.base, dir, { recursive: true });
+    writeEngineReleases(dir, options);
     writeFileSync(
       join(dir, "asset-portal.json"),
       JSON.stringify({
@@ -876,6 +878,27 @@ describe("Asset Portal libraries that ship no Lua API under Libraries", () => {
     }
   });
 
+  test("a dated tag-pinned listing names the Defold version current when it was cut", () => {
+    const sharp: PortalEntryFixture = {
+      id: "sharpsprite",
+      repo: "https://github.com/indiesoftby/defold-sharp-sprite",
+      kind: "no-lua-api",
+      ref: "1.0.0",
+      refKind: "tag",
+    };
+    const dated = { ...sharp, refDate: "2024-08-01T00:00:00Z" };
+    const [listing] = portalListingsFromManifest(
+      libraryTypesWithPortal([dated], { engineReleases: ENGINE_RELEASES }),
+    );
+    expect(listing?.releaseEra).toBe("1.9.1");
+    const [undated] = portalListingsFromManifest(
+      libraryTypesWithPortal([sharp], { engineReleases: ENGINE_RELEASES }),
+    );
+    expect(undated).not.toHaveProperty("releaseEra");
+    const [noReleases] = portalListingsFromManifest(libraryTypesWithPortal([dated]));
+    expect(noReleases).not.toHaveProperty("releaseEra");
+  });
+
   test("an absent manifest yields no portal listings", () => {
     expect(portalListingsFromManifest(mkdtempSync(join(tmpdir(), "no-asset-portal-")))).toEqual([]);
   });
@@ -895,17 +918,22 @@ describe("Asset Portal script_api libraries under Libraries", () => {
     page: string;
     namespace?: string;
     description?: string;
+    refDate?: string;
   }
 
   // A library-types dir beside a `types` dir whose one engine target declares
   // `gui`, holding one portal library per doc (`someone/defold-lib-<index>`).
   function libraryTypesWithPortalPages(
     docs: PortalDocFixture[],
-    options: { defoldPages?: string[]; nativeNamespaces?: string[] } = {},
+    options: { defoldPages?: string[]; nativeNamespaces?: string[] } & Pick<
+      PinDating,
+      "engineReleases"
+    > = {},
   ): string {
     const base = mkdtempSync(join(tmpdir(), "asset-portal-pages-"));
     const dir = join(base, "library-types");
     cpSync(LIBRARY_FIXTURE_DIR, dir, { recursive: true });
+    writeEngineReleases(dir, options);
     mkdirSync(join(base, "types"), { recursive: true });
     writeFileSync(
       join(base, "types", "api-targets.json"),
@@ -931,6 +959,7 @@ describe("Asset Portal script_api libraries under Libraries", () => {
           repo: `https://github.com/someone/defold-lib-${index}`,
           ref: "v1.0.0",
           refKind: "tag",
+          ...(doc.refDate ? { refDate: doc.refDate } : {}),
           license: "MIT",
           description: `Portal description ${index}.`,
           docs: [
@@ -1005,6 +1034,38 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       pinKind: "tag",
       portal: { id: "portal-0", url: "https://defold.com/assets/portal-0/" },
     });
+  });
+
+  test("a dated portal page names the Defold version current when it was cut; an undated one names none", () => {
+    const dir = libraryTypesWithPortalPages(
+      [{ page: "dated", refDate: "2024-07-01T00:00:00Z" }, { page: "undated" }],
+      { engineReleases: ENGINE_RELEASES },
+    );
+    expect(pageAt(dir, "/api/dated")?.libraryMeta?.releaseEra).toBe("1.9.0");
+    expect(pageAt(dir, "/api/undated")?.libraryMeta).not.toHaveProperty("releaseEra");
+  });
+
+  test("the committed portal manifests date every release and tag pin and no commit pin", () => {
+    for (const file of ["asset-portal.json", "asset-portal-script-api.json"]) {
+      const manifest = JSON.parse(readFileSync(join(REAL_LIBRARY_TYPES_DIR, file), "utf8")) as {
+        entries?: { refKind: string | null; refDate?: string }[];
+        libraries?: { refKind: string; refDate?: string }[];
+      };
+      for (const entry of manifest.entries ?? manifest.libraries ?? []) {
+        if (entry.refKind === "release" || entry.refKind === "tag") {
+          expect(Number.isNaN(Date.parse(entry.refDate ?? ""))).toBe(false);
+        } else {
+          expect(entry).not.toHaveProperty("refDate");
+        }
+      }
+    }
+    const era = /^\d+\.\d+\.\d+$/;
+    expect(loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("astar").releaseEra).toMatch(era);
+    const pinned = portalListingsFromManifest(REAL_LIBRARY_TYPES_DIR).filter(
+      (listing) => listing.pinKind !== "commit",
+    );
+    expect(pinned.length).toBeGreaterThan(0);
+    for (const listing of pinned) expect(listing.releaseEra).toMatch(era);
   });
 
   test("a portal doc declaring an engine namespace says it extends that namespace", () => {
