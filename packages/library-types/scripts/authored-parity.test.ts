@@ -1190,12 +1190,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other eighty-one targets share no variadic member at all", () => {
+  test("the other eighty-two targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(81);
+    expect(untouched.length).toBe(82);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1591,10 +1591,13 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       // The `-- @param` block above `create`, a LuaDoc tag written with a plain `--`.
       node_repeat: 1,
       persist: 5,
+      // The `-- Visible or not` and `-- GUI Render Order. 15 is top.` notes above
+      // `cursor_visible` and `cursor_render_order`.
+      pointer_lock: 2,
       rendy: 13,
       zzfx: 4,
     });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(102);
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(104);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
@@ -1740,6 +1743,7 @@ describe("only a refusal the fork left unanswered is charged", () => {
       "nakama.util.log",
       "node_repeat",
       "persist",
+      "pointer_lock",
       "rendy",
       "zzfx",
     ]);
@@ -1747,11 +1751,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 102 is what makes that a closure rather than a target quietly dropping out of the
+  // 104 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 102", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 104", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(102);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(104);
   });
 
   // The one target whose zero comes entirely from the ledger rather than from authored
@@ -2320,6 +2324,40 @@ describe("the authored Flow modules declare their complete upstream surfaces", (
       expect(report.fieldCoverage).toBe(1);
     });
   }
+});
+
+// `pointer.lua` carries no annotations. Its seven fields are `M.x = ...` assignments and
+// its three functions are column-0 definitions. Upstream documents only `cursor_x`, with
+// a `---` block, and writes the notes above `cursor_visible` and `cursor_render_order`
+// with a plain `--`, so the description check reads the api-doc.
+describe("pointer_lock.pointer declares the whole of its upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("pointer_lock"));
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(3);
+    expect(report.upstreamFields).toBe(7);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description, and no upstream prose is dropped", () => {
+    const members = apiDocElements(target("pointer_lock")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
 });
 
 describe("the artifact shape is diff-stable", () => {
