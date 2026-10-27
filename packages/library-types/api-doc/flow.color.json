@@ -205,6 +205,61 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "FlowColorModule",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "Creates a hexadecimal color from normalized or byte-valued channels.",
+          "description": "Creates a hexadecimal color from normalized or byte-valued channels.",
+          "parameters": [
+            {
+              "name": "r",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "g",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "b",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "a",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_ColorValue"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "FlowColor",
       "properties": [
         {
