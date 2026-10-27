@@ -463,6 +463,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "bea985ec1b339b7dfd23215dfd948979b884c2e5baac5a177538ea7ef0a3656e",
   "fixtures/upstream-lua/defold-orthographic/orthographic/camera.lua":
     "d633e84a6052890b6149245c1f1c766077cdc651c243462bf179ac3c940e3dd9",
+  "fixtures/upstream-lua/defold-pointer-lock/pointer_lock/pointer.lua":
+    "3bbb04bb0bbadf74e25bc816691c4a172539d9690d193e518dc44dd51520560e",
   "fixtures/upstream-lua/defold-printer/printer/printer.lua":
     "8f138d031f229ac2e29253af829363dffa68dcc638c9ce4c0bf7573feec9cc74",
   "fixtures/upstream-lua/defold-richtext/richtext/color.lua":

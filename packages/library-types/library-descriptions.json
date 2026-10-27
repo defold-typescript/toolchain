@@ -128,6 +128,7 @@
   "pixelart.scripts.pixelart_render": "Render-script half of the pixel-art shader: creates its render targets and predicates, then draws the shadow, depth and pixelate passes each frame.",
   "platypus": "Defold platformer engine",
   "png": "Encode raw pixels into PNG bytes and decode PNG bytes into a Defold buffer, powered by LodePNG.",
+  "pointer_lock": "Pointer Lock is intended to simplify mouse locking to access mouse events even when the cursor goes past the boundary of the window or screen.",
   "printer": "A symbol-by-symbol text writer for Defold Engine. Developed for rich game dialogs.",
   "proto": "Protocol-buffer style message encoding for compact Defold network payloads.",
   "quest": "Quest system library for Defold games. Manage quests, objectives, and quest progression. Track events and customize behavior.",

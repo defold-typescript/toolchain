@@ -94,3 +94,17 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records pointer_lock: a consumer transpiles with the call forms the declaration produces: pointer_lock 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local pointer = require("pointer_lock.pointer")
+function ____exports.on_input(action_id, action)
+    local id, act = pointer.transform_input(action_id, action)
+    pointer.cursor_visible = true
+    pointer.update_lock_state()
+    print(id, act.x, act.y)
+end
+return ____exports
+"
+`;

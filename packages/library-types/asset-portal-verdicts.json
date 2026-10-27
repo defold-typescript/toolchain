@@ -9,6 +9,8 @@
     "scml-parser": "import tool, no runtime module",
     "sonilo": "editor script whose runtime piece is a script component, no module to require",
     "tilemaps-store": "import tool, no runtime module",
+    "trenchbroom": "import tool: an editor script and a desktop-Lua cli.lua convert TrenchBroom .map files to collections, no runtime module",
+    "vantage": "script component driven by go.set properties; vantage_core.lua is required only by vantage_component.script, no module a project requires",
     "vibration": "no license file at 0.2.1 or master head and GitHub reports none, so its registering C++ cannot be vendored for a parity floor",
     "wortal": "v3.0.3 (equal to master) does not compile for HTML5, the only platform that registers wortal: src/wortal.cpp:87-88 call the undeclared lua_pushListener and lua_pushBoolean"
   }

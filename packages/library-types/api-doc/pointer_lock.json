@@ -1,0 +1,149 @@
+{
+  "info": {
+    "namespace": "pointer_lock",
+    "brief": "Mouse lock state and a virtual in-game cursor. Add `pointer_lock/pointer_lock.script`",
+    "description": "Mouse lock state and a virtual in-game cursor. Add `pointer_lock/pointer_lock.script`\nto the bootstrap collection: it locks the cursor on a click and unlocks it on\n`key_esc`, and keeps `locked` current. The cursor fields are plain module fields;\nassigning one goes through a cast, since a namespace import is read-only:\n`(pointer as { cursor_visible: boolean }).cursor_visible = true`."
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "DISPLAY_WIDTH",
+      "brief": "The `display.width` project setting, read once when the module loads.",
+      "description": "The `display.width` project setting, read once when the module loads.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "DISPLAY_HEIGHT",
+      "brief": "The `display.height` project setting, read once when the module loads.",
+      "description": "The `display.height` project setting, read once when the module loads.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "locked",
+      "brief": "Whether the pointer is locked. Read-only for a project: `pointer_lock.script` sets",
+      "description": "Whether the pointer is locked. Read-only for a project: `pointer_lock.script` sets\nit, and `update_lock_state` copies the window's mouse lock into it. Starts `false`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cursor_x",
+      "brief": "The X position of the virtual in-game cursor, between `0` and `DISPLAY_WIDTH`.",
+      "description": "The X position of the virtual in-game cursor, between `0` and `DISPLAY_WIDTH`.\nStarts at the middle of the display; `update_cursor_position` moves it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cursor_y",
+      "brief": "The Y position of the virtual in-game cursor, between `0` and `DISPLAY_HEIGHT`.",
+      "description": "The Y position of the virtual in-game cursor, between `0` and `DISPLAY_HEIGHT`.\nStarts at the middle of the display; `update_cursor_position` moves it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cursor_visible",
+      "brief": "Whether the virtual in-game cursor is shown. Starts `false`. `transform_input`",
+      "description": "Whether the virtual in-game cursor is shown. Starts `false`. `transform_input`\npasses the action id through only while the pointer is locked and this is `true`.",
+      "types": [
+        "boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cursor_render_order",
+      "brief": "The GUI render order of the virtual cursor, `15` being the top. Starts at `15`.",
+      "description": "The GUI render order of the virtual cursor, `15` being the top. Starts at `15`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "transform_input",
+      "brief": "Converts `on_input` arguments into the virtual in-game cursor system: sets",
+      "description": "Converts `on_input` arguments into the virtual in-game cursor system: sets\n`action.x` and `action.y` to the cursor position, on the same table it returns, and\nreturns `undefined` as the action id unless the pointer is locked and the cursor is\nvisible. Call it first in `on_input`:\n`[action_id, action] = pointer.transform_input(action_id, action)`.",
+      "generics": "<A extends { x?: number; y?: number; }>",
+      "parameters": [
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "A"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ Hash | undefined, A & { x: number; y: number; } ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_cursor_position",
+      "brief": "Moves the virtual cursor by the action's `dx` and `dy`, clamped to the display",
+      "description": "Moves the virtual cursor by the action's `dx` and `dy`, clamped to the display\nsize. Pass it a pointer-movement action, which carries both.",
+      "parameters": [
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "{ dx: number; dy: number; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "dx",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "dy",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_lock_state",
+      "brief": "Copies the window's mouse lock state into `locked`.",
+      "description": "Copies the window's mouse lock state into `locked`.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}
