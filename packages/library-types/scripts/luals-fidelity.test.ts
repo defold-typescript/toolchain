@@ -36,6 +36,46 @@ describe("buildFidelityReport", () => {
     expect(report.totalMembers).toBeGreaterThan(0);
   });
 
+  test("an alias with no type token counts as an (untyped) unknown fallback", () => {
+    const model: LibraryModel = {
+      interfaces: [],
+      aliases: [{ name: "Mode", types: [], doc: "" }],
+      moduleFunctions: [],
+    };
+    const report = buildFidelityReport("modes", model, {});
+    expect(report.unknownFallbacks).toBe(1);
+    expect(report.unknownTokens).toEqual(["(untyped)"]);
+    expect(report.coverage).toBe(0);
+  });
+
+  test("a param or field with no type token counts as an (untyped) unknown fallback", () => {
+    const model: LibraryModel = {
+      interfaces: [
+        {
+          name: "Widget",
+          generics: [],
+          brief: "a widget",
+          methods: [],
+          fields: [{ name: "bare", types: [], doc: "a bare field", isOptional: false }],
+        },
+      ],
+      aliases: [],
+      moduleFunctions: [
+        {
+          name: "set",
+          brief: "sets",
+          generics: [],
+          params: [{ name: "x", types: [], doc: "", isOptional: false, isVararg: false }],
+          returns: [],
+        },
+      ],
+    };
+    const report = buildFidelityReport("widgets", model, {});
+    expect(report.unknownFallbacks).toBe(2);
+    expect(report.unknownTokens).toEqual(["(untyped)"]);
+    expect(report.totalTypeTokens).toBe(2);
+  });
+
   test("an unmapped vmath.* token makes the report throw (loud fail propagates)", () => {
     const model: LibraryModel = {
       interfaces: [

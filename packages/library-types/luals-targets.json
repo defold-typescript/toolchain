@@ -924,6 +924,68 @@
           "name": "ads_response"
         }
       }
+    },
+    {
+      "repo": "https://github.com/paweljarosz/defold-fake-real-glass",
+      "ref": "v1.1",
+      "license": "MIT",
+      "sourceGlobs": ["fake_real_glass/**/*.lua"],
+      "moduleId": "fake_real_glass.fake_real_glass",
+      "namespace": "fake_real_glass",
+      "typeRenames": {
+        "matrix4": "Matrix4",
+        "vector3": "Vector3",
+        "vector4": "Vector4"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleObject": { "interface": "FakeRealGlassModule", "fields": {} }
+      }
+    },
+    {
+      "repo": "https://github.com/indiesoftby/defold-hyper-trails",
+      "ref": "1.4.2",
+      "license": "MIT",
+      "sourceGlobs": ["hyper_trails/**/*.lua"],
+      "moduleId": "hyper_trails.trail_maker",
+      "namespace": "hyper_trails",
+      "typeRenames": {
+        "vector3": "Vector3"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "draw_trail": { "params": { "self": { "type": "table<string, any>" } } },
+          "encode_data_to_buffers": { "params": { "self": { "type": "table<string, any>" } } },
+          "fade_tail": { "params": { "self": { "type": "table<string, any>" } } },
+          "follow_position": { "params": { "self": { "type": "table<string, any>" } } },
+          "get_head_data_points": { "params": { "self": { "type": "table<string, any>" } } },
+          "get_position": { "params": { "self": { "type": "table<string, any>" } } },
+          "init_data_points": { "params": { "self": { "type": "table<string, any>" } } },
+          "init_buffers": { "params": { "self": { "type": "table<string, any>" } } },
+          "final": { "params": { "self": { "type": "table<string, any>" } } },
+          "init_props": { "params": { "self": { "type": "table<string, any>" } } },
+          "init_vars": { "params": { "self": { "type": "table<string, any>" } } },
+          "make_vectors_from_angle": { "params": { "self": { "type": "table<string, any>" } } },
+          "pull_not_used_points": { "params": { "self": { "type": "table<string, any>" } } },
+          "shrink_length": { "params": { "self": { "type": "table<string, any>" } } },
+          "shrink_width": { "params": { "self": { "type": "table<string, any>" } } },
+          "split_segments_by_length": { "params": { "self": { "type": "table<string, any>" } } },
+          "update_uv_opts": { "params": { "self": { "type": "table<string, any>" } } }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/selimanac/defold-pixelart-shader",
+      "ref": "8db334df85d2ab9863746fde45f3ed0b28bb49c8",
+      "license": "MIT",
+      "sourceGlobs": ["pixelart/scripts/pixelart.lua"],
+      "moduleId": "pixelart.scripts.pixelart",
+      "namespace": "pixelart.scripts.pixelart",
+      "typeRenames": {
+        "vector3": "Vector3"
+      },
+      "ignore": []
     }
   ]
 }

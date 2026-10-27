@@ -583,6 +583,8 @@ export function parseLualsSource(source: string): LibraryModel {
   let lastOpenedClass: string | null = null;
   let moduleObject: string | undefined;
   let lastModuleFunction: LibraryMethod | null = null;
+  // A bare `---@alias Name` whose type follows on contiguous `---| <value>` lines.
+  let openAlias: LibraryAlias | null = null;
   // The one open function-local `---@class` block (squid's `SquidInstance` inside
   // `Squid.new`). `owner` is the function whose body it sits in, so a returned local
   // bound to it infers the function's return; `pendingType` is a `---@type fun(...)`
@@ -665,6 +667,14 @@ export function parseLualsSource(source: string): LibraryModel {
   };
 
   for (const raw of source.split("\n")) {
+    if (openAlias) {
+      if (raw.startsWith("---|")) {
+        const { type } = readTypeToken(raw.slice(4).trim());
+        if (type) openAlias.types.push(type);
+        continue;
+      }
+      openAlias = null;
+    }
     const indented = /^\s/.test(raw);
     if (indented || raw.length === 0) {
       if (localClass) {
@@ -757,12 +767,14 @@ export function parseLualsSource(source: string): LibraryModel {
           const spaceAt = rest.search(/\s/);
           const name = spaceAt === -1 ? rest : rest.slice(0, spaceAt);
           const expr = spaceAt === -1 ? "" : rest.slice(spaceAt).trim();
-          aliases.push({
+          const alias: LibraryAlias = {
             name,
             types: expr ? [expr] : [],
             doc: pending.doc.join("\n"),
             ...(pending.deprecated !== undefined ? { deprecated: pending.deprecated } : {}),
-          });
+          };
+          aliases.push(alias);
+          if (!expr) openAlias = alias;
           pending = emptyPending();
           break;
         }

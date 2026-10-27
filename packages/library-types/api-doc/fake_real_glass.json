@@ -1,0 +1,704 @@
+{
+  "info": {
+    "namespace": "fake_real_glass",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Create the per-render-script state for the fake glass pipeline.\n\nThis allocates Lua-side state immediately. Screen-sized render targets are\ncreated by `resize()` and recreated automatically when sizes change.\n\nThe returned table is intended to be stored by one render script instance.\nIt tracks probe settings, render targets, and the constant buffer used when\ndrawing visible glass objects.\n",
+      "description": "Create the per-render-script state for the fake glass pipeline.\n\nThis allocates Lua-side state immediately. Screen-sized render targets are\ncreated by `resize()` and recreated automatically when sizes change.\n\nThe returned table is intended to be stored by one render script instance.\nIt tracks probe settings, render targets, and the constant buffer used when\ndrawing visible glass objects.\n",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Optional module setup overrides for tags, probe defaults, and materials.",
+          "types": [
+            "FakeRealGlassOptions"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "FakeRealGlassState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resize",
+      "brief": "Resize screen-sized render targets to match the current window size.\n\nCall this from `init()` and when the window size changes.\n\nIf probe rendering is enabled, this also ensures the cubemap exists,\nbut does not force it to be redrawn immediately.\n",
+      "description": "Resize screen-sized render targets to match the current window size.\n\nCall this from `init()` and when the window size changes.\n\nIf probe rendering is enabled, this also ensures the cubemap exists,\nbut does not force it to be redrawn immediately.\n",
+      "parameters": [
+        {
+          "name": "glass",
+          "doc": "Module state previously returned by `create()`.",
+          "types": [
+            "FakeRealGlassState | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "width",
+          "doc": "New window width in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "height",
+          "doc": "New window height in pixels.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Release all render targets owned by the module.\n\nCall this from the host render script's `final()` function to avoid leaking\nthe scene capture, back-face capture, and probe-face render targets.\n",
+      "description": "Release all render targets owned by the module.\n\nCall this from the host render script's `final()` function to avoid leaking\nthe scene capture, back-face capture, and probe-face render targets.\n",
+      "parameters": [
+        {
+          "name": "glass",
+          "doc": "Module state previously returned by `create()`.",
+          "types": [
+            "FakeRealGlassState | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_message",
+      "brief": "Handle probe-control messages sent to `@render:`.\n\nReturns `true` if the message belonged to this module and was handled.\nThat lets the host render script early-return without processing the same\nmessage twice.\n",
+      "description": "Handle probe-control messages sent to `@render:`.\n\nReturns `true` if the message belonged to this module and was handled.\nThat lets the host render script early-return without processing the same\nmessage twice.\n",
+      "parameters": [
+        {
+          "name": "glass",
+          "doc": "Module state previously returned by `create()`.",
+          "types": [
+            "FakeRealGlassState | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "Incoming render message id.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message",
+          "doc": "Probe message payload.",
+          "types": [
+            "FakeRealGlassMessage"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "draw",
+      "brief": "Run the fake glass passes for the current frame.\n\nThe host render script should:\n1. draw its normal opaque world to the default framebuffer\n2. call this function before GUI rendering\n\nThis function may:\n1. re-render the six probe faces\n2. capture the opaque scene into `scene_rt`\n3. capture the glass back faces into `backface_rt`\n4. draw the visible front-face glass to the default framebuffer\n",
+      "description": "Run the fake glass passes for the current frame.\n\nThe host render script should:\n1. draw its normal opaque world to the default framebuffer\n2. call this function before GUI rendering\n\nThis function may:\n1. re-render the six probe faces\n2. capture the opaque scene into `scene_rt`\n3. capture the glass back faces into `backface_rt`\n4. draw the visible front-face glass to the default framebuffer\n",
+      "parameters": [
+        {
+          "name": "glass",
+          "doc": "Module state previously returned by `create()`.",
+          "types": [
+            "FakeRealGlassState | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "params",
+          "doc": "Per-frame camera, target-size, clear-buffer, and world-redraw inputs.",
+          "types": [
+            "FakeRealGlassDrawParams"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassProbeModeTable",
+      "properties": [
+        {
+          "name": "DISABLED",
+          "brief": "Do not render probe faces; keep the material's fallback probe textures bound.",
+          "description": "Do not render probe faces; keep the material's fallback probe textures bound.",
+          "types": [
+            "FakeRealGlassProbeMode"
+          ]
+        },
+        {
+          "name": "CAPTURE_ONCE",
+          "brief": "Render the six probe faces only while the probe is marked dirty.",
+          "description": "Render the six probe faces only while the probe is marked dirty.",
+          "types": [
+            "FakeRealGlassProbeMode"
+          ]
+        },
+        {
+          "name": "EVERY_FRAME",
+          "brief": "Render the six probe faces every frame for fully dynamic reflections.",
+          "description": "Render the six probe faces every frame for fully dynamic reflections.",
+          "types": [
+            "FakeRealGlassProbeMode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassConstantBuffer",
+      "properties": [
+        {
+          "name": "view",
+          "brief": "Current camera view matrix used by the front-face shader.",
+          "description": "Current camera view matrix used by the front-face shader.",
+          "types": [
+            "Matrix4"
+          ]
+        },
+        {
+          "name": "view_proj",
+          "brief": "Current camera view-projection matrix used to reproject world points back to screen UVs.",
+          "description": "Current camera view-projection matrix used to reproject world points back to screen UVs.",
+          "types": [
+            "Matrix4"
+          ]
+        },
+        {
+          "name": "camera_position",
+          "brief": "World-space camera position; the shader uses the `xyz` components.",
+          "description": "World-space camera position; the shader uses the `xyz` components.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "render_state",
+          "brief": "Runtime state flags; `x = 1` means the live capture textures are currently bound.",
+          "description": "Runtime state flags; `x = 1` means the live capture textures are currently bound.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "probe_center",
+          "brief": "World-space local probe center; the shader uses the `xyz` components.",
+          "description": "World-space local probe center; the shader uses the `xyz` components.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "probe_extents",
+          "brief": "Local probe half-extents for box-projected reflections; the shader uses the `xyz` components.",
+          "description": "Local probe half-extents for box-projected reflections; the shader uses the `xyz` components.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "probe_params",
+          "brief": "Probe sampling parameters; `x = 1 / probe_size`, `y = max blur radius in texels`.",
+          "description": "Probe sampling parameters; `x = 1 / probe_size`, `y = max blur radius in texels`.",
+          "types": [
+            "Vector4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassProbeFace",
+      "properties": [
+        {
+          "name": "face",
+          "brief": "Cubemap face enum selected when binding the target.",
+          "description": "Cubemap face enum selected when binding the target.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "forward",
+          "brief": "Forward axis used when capturing this face.",
+          "description": "Forward axis used when capturing this face.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "up",
+          "brief": "Up axis used when capturing this face.",
+          "description": "Up axis used when capturing this face.",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_SET_PROBE_POSITION",
+      "brief": "Legacy message id that moves only the probe center and marks the probe dirty.",
+      "description": "Legacy message id that moves only the probe center and marks the probe dirty.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "MSG_SET_PROBE_SETTINGS",
+      "brief": "Message id for updating one or more probe settings in a single call.",
+      "description": "Message id for updating one or more probe settings in a single call.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "PROBE_MODE_DISABLED",
+      "brief": "Numeric constant for disabled probe rendering.",
+      "description": "Numeric constant for disabled probe rendering.",
+      "types": [
+        "FakeRealGlassProbeMode"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "PROBE_MODE_CAPTURE_ONCE",
+      "brief": "Numeric constant for capture-once probe rendering.",
+      "description": "Numeric constant for capture-once probe rendering.",
+      "types": [
+        "FakeRealGlassProbeMode"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "PROBE_MODE_EVERY_FRAME",
+      "brief": "Numeric constant for per-frame probe rendering.",
+      "description": "Numeric constant for per-frame probe rendering.",
+      "types": [
+        "FakeRealGlassProbeMode"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "PROBE_MODE",
+      "brief": "Named probe mode enum for gameplay/render code.",
+      "description": "Named probe mode enum for gameplay/render code.",
+      "types": [
+        "FakeRealGlassProbeModeTable"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassOptions",
+      "properties": [
+        {
+          "name": "glass_tag",
+          "brief": "Material tag used for visible glass models. Default: `\"glass\"`.",
+          "description": "Material tag used for visible glass models. Default: `\"glass\"`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "glass_predicate",
+          "brief": "Optional prebuilt glass predicate. Overrides `glass_tag`.",
+          "description": "Optional prebuilt glass predicate. Overrides `glass_tag`.",
+          "types": [
+            "Opaque<\"userdata\">"
+          ]
+        },
+        {
+          "name": "backface_material",
+          "brief": "Name of the `.render` material entry used for the back-face override pass.",
+          "description": "Name of the `.render` material entry used for the back-face override pass.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "probe_position",
+          "brief": "Initial probe center in world space.",
+          "description": "Initial probe center in world space.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "probe_extents",
+          "brief": "Initial local probe half-extents for box projection.",
+          "description": "Initial local probe half-extents for box projection.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "probe_size",
+          "brief": "Initial size of each probe face in pixels.",
+          "description": "Initial size of each probe face in pixels.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "probe_far",
+          "brief": "Optional probe far plane override.",
+          "description": "Optional probe far plane override.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "probe_near",
+          "brief": "Optional probe near plane override.",
+          "description": "Optional probe near plane override.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "probe_mode",
+          "brief": "Initial probe update mode.",
+          "description": "Initial probe update mode.",
+          "types": [
+            "FakeRealGlassProbeMode"
+          ]
+        },
+        {
+          "name": "probe_max_blur_texels",
+          "brief": "Maximum blur radius, in texels, for rough probe sampling.",
+          "description": "Maximum blur radius, in texels, for rough probe sampling.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassState",
+      "properties": [
+        {
+          "name": "glass_predicate",
+          "brief": "Predicate used to draw the visible glass objects in both back-face and front-face passes.",
+          "description": "Predicate used to draw the visible glass objects in both back-face and front-face passes.",
+          "types": [
+            "Opaque<\"userdata\">"
+          ]
+        },
+        {
+          "name": "backface_material",
+          "brief": "Name of the `.render` material entry enabled during the hidden back-face pass.",
+          "description": "Name of the `.render` material entry enabled during the hidden back-face pass.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "probe_position",
+          "brief": "World-space center of the local reflection probe.",
+          "description": "World-space center of the local reflection probe.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "probe_extents",
+          "brief": "Half-extents of the local box used for box-projected reflections.",
+          "description": "Half-extents of the local box used for box-projected reflections.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "probe_size",
+          "brief": "Resolution, in pixels, of each of the six probe faces.",
+          "description": "Resolution, in pixels, of each of the six probe faces.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "probe_near",
+          "brief": "Near clip plane used while rendering probe faces.",
+          "description": "Near clip plane used while rendering probe faces.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "probe_far",
+          "brief": "Far clip plane used while rendering probe faces.",
+          "description": "Far clip plane used while rendering probe faces.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "probe_projection",
+          "brief": "Shared 90-degree projection matrix used by every probe face.",
+          "description": "Shared 90-degree projection matrix used by every probe face.",
+          "types": [
+            "Matrix4"
+          ]
+        },
+        {
+          "name": "probe_mode",
+          "brief": "Current reflection probe update policy.",
+          "description": "Current reflection probe update policy.",
+          "types": [
+            "FakeRealGlassProbeMode"
+          ]
+        },
+        {
+          "name": "probe_dirty",
+          "brief": "Whether the probe needs to be re-rendered before it can be reused.",
+          "description": "Whether the probe needs to be re-rendered before it can be reused.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "probe_max_blur_texels",
+          "brief": "Maximum blur radius, in texels, used when rough surfaces sample the probe.",
+          "description": "Maximum blur radius, in texels, used when rough surfaces sample the probe.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "rt_width",
+          "brief": "Width of the window-sized scene/back-face render targets.",
+          "description": "Width of the window-sized scene/back-face render targets.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "rt_height",
+          "brief": "Height of the window-sized scene/back-face render targets.",
+          "description": "Height of the window-sized scene/back-face render targets.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "scene_rt",
+          "brief": "Render target containing the opaque scene color used for refraction sampling.",
+          "description": "Render target containing the opaque scene color used for refraction sampling.",
+          "types": [
+            "Opaque<\"userdata\"> | undefined"
+          ]
+        },
+        {
+          "name": "backface_rt",
+          "brief": "Render target containing back-face normals/depth for thickness and exit-ray reconstruction.",
+          "description": "Render target containing back-face normals/depth for thickness and exit-ray reconstruction.",
+          "types": [
+            "Opaque<\"userdata\"> | undefined"
+          ]
+        },
+        {
+          "name": "probe_rt",
+          "brief": "Cubemap render target containing all six probe faces.",
+          "description": "Cubemap render target containing all six probe faces.",
+          "types": [
+            "Opaque<\"userdata\"> | undefined"
+          ]
+        },
+        {
+          "name": "glass_constants",
+          "brief": "Constant buffer populated just before the visible glass draw.",
+          "description": "Constant buffer populated just before the visible glass draw.",
+          "types": [
+            "FakeRealGlassConstantBuffer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassMessage",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "Probe center in world space.",
+          "description": "Probe center in world space.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "extents",
+          "brief": "Probe half-extents used for box projection.",
+          "description": "Probe half-extents used for box projection.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "size",
+          "brief": "Probe face size in pixels.",
+          "description": "Probe face size in pixels.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "far",
+          "brief": "Probe far plane override.",
+          "description": "Probe far plane override.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "mode",
+          "brief": "Probe update mode.",
+          "description": "Probe update mode.",
+          "types": [
+            "FakeRealGlassProbeMode"
+          ]
+        },
+        {
+          "name": "rebuild",
+          "brief": "Force a new probe capture in capture-once mode.",
+          "description": "Force a new probe capture in capture-once mode.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassDrawParams",
+      "properties": [
+        {
+          "name": "view",
+          "brief": "Camera view matrix.",
+          "description": "Camera view matrix.",
+          "types": [
+            "Matrix4"
+          ]
+        },
+        {
+          "name": "projection",
+          "brief": "Camera projection matrix.",
+          "description": "Camera projection matrix.",
+          "types": [
+            "Matrix4"
+          ]
+        },
+        {
+          "name": "window_width",
+          "brief": "Current window width in pixels.",
+          "description": "Current window width in pixels.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "window_height",
+          "brief": "Current window height in pixels.",
+          "description": "Current window height in pixels.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "clear_buffers",
+          "brief": "Render clear buffer table, reused for probe and scene captures.",
+          "description": "Render clear buffer table, reused for probe and scene captures.",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "draw_world",
+          "brief": "Callback that redraws the opaque world into the currently bound target.",
+          "description": "Callback that redraws the opaque world into the currently bound target.",
+          "types": [
+            "FakeRealGlassWorldDrawFn"
+          ]
+        },
+        {
+          "name": "output_target",
+          "brief": "Destination for the visible glass pass; default is the backbuffer.",
+          "description": "Destination for the visible glass pass; default is the backbuffer.",
+          "types": [
+            "Opaque<\"userdata\">"
+          ]
+        },
+        {
+          "name": "capture_probe",
+          "brief": "Set false to reuse the current probe for an additional view.",
+          "description": "Set false to reuse the current probe for an additional view.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "flip_culling",
+          "brief": "Reverse face culling for a mirrored camera.",
+          "description": "Reverse face culling for a mirrored camera.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassProbeMode"
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FakeRealGlassWorldDrawFn"
+    }
+  ]
+}

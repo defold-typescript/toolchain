@@ -1,0 +1,498 @@
+{
+  "info": {
+    "namespace": "hyper_trails",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "queue_late_update",
+      "brief": "Queue late update for trail rendering\nBased on https://forum.defold.com/t/delay-when-using-draw-line-in-update/68695/2",
+      "description": "Queue late update for trail rendering\nBased on https://forum.defold.com/t/delay-when-using-draw-line-in-update/68695/2",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "draw_trail",
+      "brief": "Draw the trail by encoding data to buffers and updating UV options",
+      "description": "Draw the trail by encoding data to buffers and updating UV options",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "encode_data_to_buffers",
+      "brief": "Encode trail data into mesh buffers",
+      "description": "Encode trail data into mesh buffers",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fade_tail",
+      "brief": "Fade the tail of the trail by decreasing the alpha value of the tail points",
+      "description": "Fade the tail of the trail by decreasing the alpha value of the tail points",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "Delta time",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_arr",
+          "doc": "Array of trail point data",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_from",
+          "doc": "Starting index for fading",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "follow_position",
+      "brief": "Update trail position and properties based on object movement",
+      "description": "Update trail position and properties based on object movement",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "Delta time",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_head_data_points",
+      "brief": "Get the two points at the head of the trail",
+      "description": "Get the two points at the head of the trail",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Previous head point",
+          "types": [
+            "LuaTable"
+          ]
+        },
+        {
+          "name": "",
+          "doc": "Current head point",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_position",
+      "brief": "Get current position of the trail object",
+      "description": "Get current position of the trail object",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Current position",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init_data_points",
+      "brief": "Initialize trail data points",
+      "description": "Initialize trail data points",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init_buffers",
+      "brief": "Initialize mesh buffers for trail rendering",
+      "description": "Initialize mesh buffers for trail rendering",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Clean up resources on script destruction",
+      "description": "Clean up resources on script destruction",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init_props",
+      "brief": "Initialize trail properties",
+      "description": "Initialize trail properties",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init_vars",
+      "brief": "Initialize internal variables",
+      "description": "Initialize internal variables",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "make_angle",
+      "brief": "Calculate angle from position difference",
+      "description": "Calculate angle from position difference",
+      "parameters": [
+        {
+          "name": "diff_pos",
+          "doc": "Position difference vector",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Angle in radians",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "make_vectors_from_angle",
+      "brief": "Generate perpendicular vectors for trail width based on angle",
+      "description": "Generate perpendicular vectors for trail width based on angle",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "row",
+          "doc": "Trail point data row",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pull_not_used_points",
+      "brief": "Fill with zeros unused trail points",
+      "description": "Fill with zeros unused trail points",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_arr",
+          "doc": "Array of trail point data",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_from",
+          "doc": "Starting index for unused points",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shrink_length",
+      "brief": "Shrink trail length over time",
+      "description": "Shrink trail length over time",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "Delta time",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_arr",
+          "doc": "Array of trail point data",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_from",
+          "doc": "Starting index for shrinking",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shrink_width",
+      "brief": "Shrink trail width from head to tail",
+      "description": "Shrink trail width from head to tail",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "Delta time",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_from",
+          "doc": "Starting index",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_arr",
+          "doc": "Array of trail point data",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "data_limit",
+          "doc": "Maximum points to process",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "split_segments_by_length",
+      "brief": "Split trail segments that exceed maximum length",
+      "description": "Split trail segments that exceed maximum length",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_uv_opts",
+      "brief": "Update UV options for trail texture",
+      "description": "Update UV options for trail texture",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Script instance",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
