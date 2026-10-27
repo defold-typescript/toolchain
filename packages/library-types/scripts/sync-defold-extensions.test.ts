@@ -540,7 +540,7 @@ describe("earliestDate", () => {
 describe("syncDefoldReleaseDates", () => {
   test("dates release pins by the earlier of publish and commit, tag pins by commit, commit pins not at all", async () => {
     const root = stageDatesRoot();
-    const { github } = datesGitHub({ ...PIN_DATES, engineTags: [] });
+    const { github, calls } = datesGitHub({ ...PIN_DATES, engineTags: [] });
     await syncDefoldReleaseDates(root, github);
 
     const entries = byRepo(root);
@@ -548,6 +548,7 @@ describe("syncDefoldReleaseDates", () => {
     expect(entries["extension-admob"]?.refDate).toBe("2023-02-01T10:00:00Z");
     expect(entries["extension-rive"]?.refDate).toBe("2024-07-07T07:00:00Z");
     expect(entries["asset-pbr"]).not.toHaveProperty("refDate");
+    expect(calls.pinned).not.toContain("release extension-rive@13.1.0");
   });
 
   test("adds only refDate lines, right after refKind, reads the committed pins and touches no api-doc", async () => {
