@@ -213,6 +213,7 @@ declared on `export const Node: { "new"(this: void, ...): Node }`, not as a top-
 plus every method annotated `---@return Flow.FlexNode self` return `Node`, so
 `flex.Node.new({ key: "root" }).set_width(960).calculate_layout(960, 640)` keeps the
 chainable methods. A table exported under several fields is declared under each field.
+A field assigned more than once declares the table it is assigned last.
 
 Where an annotation types a parameter wrongly, a `type` token on a `moduleFunctions`
 parameter replaces it: ads-wrapper's `queue.lua` writes `---@param fn ads_callback`,

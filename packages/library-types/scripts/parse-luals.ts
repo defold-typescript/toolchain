@@ -619,7 +619,8 @@ interface TableAlias {
  * Split the dot functions of each local table the returned module re-exports
  * (`FL.Node = Node`) out of the module functions into one `moduleTables` entry per
  * distinct field, so `Node.new` is declared on every alias, not as a top-level
- * `flex.new`.
+ * `flex.new`. Each field's entry holds the table its last assignment exports, in the
+ * order of the field's first assignment.
  */
 function extractModuleTables(
   moduleReturn: string,
@@ -628,15 +629,17 @@ function extractModuleTables(
   aliases: TableAlias[],
   byName: Map<string, LibraryInterface>,
 ): { moduleFunctions: LibraryMethod[]; moduleTables: ModuleTable[] } {
+  const exported = new Map<string, string>();
+  for (const { table, name, value } of aliases) {
+    if (table === moduleReturn) exported.set(name, value);
+  }
   const moduleTables: ModuleTable[] = [];
   const moved = new Set<LibraryMethod>();
-  const emittedNames = new Set<string>();
   const boundTables = new Set<string>();
-  for (const { table, name, value } of aliases) {
-    if (table !== moduleReturn || value === moduleReturn || emittedNames.has(name)) continue;
+  for (const [name, value] of exported) {
+    if (value === moduleReturn) continue;
     const functions = moduleFunctions.filter((f) => receivers.get(f) === value);
     if (functions.length === 0) continue;
-    emittedNames.add(name);
     for (const f of functions) moved.add(f);
     moduleTables.push({ name, table: value, functions });
     const isMetatable = aliases.some(
@@ -698,7 +701,8 @@ function bindConstructedClass(
  *
  * A dot function on a local table that the returned module re-exports
  * (`FL.Node = Node` beside `return FL`) belongs to that table, not the module: it lands
- * in one `moduleTables` entry per distinct exported field. When that table is also a
+ * in one `moduleTables` entry per distinct exported field, and each field's entry
+ * holds the table its last assignment exports. When that table is also a
  * metatable class
  * (`Node.__index = Node`), its interface extends the class `new` returns, and `new`
  * plus each method returning that class as `self` return the interface.
