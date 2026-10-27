@@ -3,7 +3,8 @@
  * cases where upstream LuaLS annotations diverge from the library's runtime and the
  * fixtures freeze the annotation verbatim (so it is not hand-patchable in the fixture
  * or the emitted `.d.ts`). The ten shapes covered are a module function whose trailing
- * parameter is runtime-optional despite a non-`|nil` `@param`, a module function
+ * parameter is runtime-optional despite a non-`|nil` `@param` (or, with `optional:
+ * false`, required although no `@param` names it), a module function
  * parameter whose type token is wrong, an interface method
  * whose `@return` omits an alternative arm, an interface method the library checks
  * for before calling it, so an implementation may omit it (`optional`), an interface
@@ -63,7 +64,7 @@ export function applyAnnotationOverrides(
           `applyAnnotationOverrides: param "${paramName}" of module function "${fnName}" is absent from the model.`,
         );
       }
-      if (paramOverride.optional) param.isOptional = true;
+      if (paramOverride.optional !== undefined) param.isOptional = paramOverride.optional;
       if (paramOverride.type !== undefined) param.types = [paramOverride.type];
     }
   }

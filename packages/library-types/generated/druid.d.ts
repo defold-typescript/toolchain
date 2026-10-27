@@ -255,7 +255,7 @@ declare module 'druid.druid' {
 		 * Remove an additional input action from the allowed drag actions
 		 */
 		remove_drag_action(action_id: Hash): druid_drag;
-		_start_touch(): void;
+		_start_touch(touch?: unknown): void;
 		_end_touch(touch?: touch | undefined): void;
 		_process_touch(touch: touch): void;
 		/**
@@ -455,12 +455,12 @@ declare module 'druid.druid' {
 		 * Strict drag scroll area. Useful for
 		 */
 		set_click_zone(node: Opaque<"node"> | string): void;
-		_on_scroll_drag(): void;
+		_on_scroll_drag(dx?: unknown, dy?: unknown): void;
 		_check_soft_zone(): void;
 		_cancel_animate(): void;
-		_set_scroll_position(): void;
+		_set_scroll_position(position_x?: unknown, position_y?: unknown): void;
 		_check_threshold(): void;
-		_update_free_scroll(): void;
+		_update_free_scroll(dt?: unknown): void;
 		_update_hand_scroll(): void;
 		_on_touch_start(): void;
 		_on_touch_end(): void;
@@ -469,8 +469,8 @@ declare module 'druid.druid' {
 		 * Apply scroll cursors style to the inner drag. Cursors are shown only while content is scrollable
 		 */
 		_update_drag_cursors(): void;
-		_process_scroll_wheel(): void;
-		_inverse_lerp(): void;
+		_process_scroll_wheel(action_id?: unknown, action?: unknown): void;
+		_inverse_lerp(min?: unknown, max?: unknown, current?: unknown): void;
 		/**
 		 * Update vector with next conditions:
 		 * Field x have to <= field z
@@ -1060,14 +1060,14 @@ declare module 'druid.druid' {
 		 */
 		fit_into_window(): druid_container;
 		add_container(node_or_container: Opaque<"node"> | string | druid_container | LuaTable, mode?: druid_container_mode | undefined, on_resize_callback?: ((self: Opaque<"userdata">, size: Vector3) => void) | undefined): druid_container;
-		remove_container_by_node(): druid_container | undefined;
+		remove_container_by_node(node?: unknown): druid_container | undefined;
 		set_parent_container(parent_container?: druid_container | undefined): void;
 		refresh(): void;
 		refresh_scale(): void;
 		update_child_containers(): void;
 		create_draggable_corners(): druid_container;
 		clear_draggable_corners(): druid_container;
-		_on_corner_drag(): void;
+		_on_corner_drag(x?: unknown, y?: unknown, corner_offset?: unknown): void;
 		/**
 		 * Set node for layout node to fit inside it. Pass nil to reset
 		 */
@@ -1409,7 +1409,7 @@ declare module 'druid.druid' {
 		refresh_layout(is_instant?: boolean | undefined): druid_layout;
 		clear_layout(): druid_layout;
 		get_node_size(node: Opaque<"node">): LuaMultiReturn<[number, number]>;
-		set_node_position(node: Opaque<"node">, x: number, y: number): Opaque<"node">;
+		set_node_position(node: Opaque<"node">, x: number, y: number, is_instant?: unknown): Opaque<"node">;
 		/**
 		 * Set custom position function for layout nodes. It will call on update poses on layout elements. Default: gui.set_position
 		 */
