@@ -153,11 +153,9 @@ describe("extension handle-type brands", () => {
     expect(contents).toContain('Opaque<"texture">');
   });
 
-  test("the deprecated global imports the Opaque brand exactly once, the module reads it ambient", async () => {
-    const { contents, deprecatedGlobal } = await emitExtensionDeclaration(HANDLES);
-    const occurrences =
-      (deprecatedGlobal ?? "").split('import type { Opaque } from "../src/core-types";').length - 1;
-    expect(occurrences).toBe(1);
+  test("the module reads the Opaque brand ambient and imports nothing", async () => {
+    const { contents } = await emitExtensionDeclaration(HANDLES);
+    expect(contents).toContain("Opaque<");
     expect(contents).not.toContain("import type");
   });
 
@@ -170,11 +168,11 @@ describe("extension handle-type brands", () => {
 });
 
 describe("emitExtensionDeclaration", () => {
-  test("reads the namespace from the doc and emits a @globalTable module beside a deprecated ambient global", async () => {
+  test("reads the namespace from the doc and emits a @globalTable module with no ambient global", async () => {
     const result = await emitExtensionDeclaration(PRIMARY);
     expect(result.namespace).toBe("myext");
     expect(result.contents).toMatchSnapshot();
-    expect(result.deprecatedGlobal).toMatchSnapshot();
+    expect(result).not.toHaveProperty("deprecatedGlobal");
   });
 
   test("a dotted namespace emits the dotted module id", async () => {
@@ -183,11 +181,11 @@ describe("emitExtensionDeclaration", () => {
     expect(result.contents).toMatchSnapshot();
   });
 
-  test("a namespace the engine declares emits only the ambient form, with no deprecation", async () => {
+  test("a namespace the engine declares emits its ambient form alone", async () => {
     const result = await emitExtensionDeclaration(ENGINE_EXTENDING);
     expect(result.namespace).toBe("gui");
     expect(result.contents).toMatchSnapshot();
-    expect(result.deprecatedGlobal).toBeUndefined();
+    expect(result).not.toHaveProperty("deprecatedGlobal");
   });
 
   test("drops the implicit self parameter from the emitted signature", async () => {

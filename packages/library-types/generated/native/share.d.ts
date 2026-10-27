@@ -1,7 +1,4 @@
 /** @noSelfInFile */
-/** @deprecated Import it: import * as share from "share" */
-declare const share: typeof import("share");
-
 /**
  * Share text, images and files through the platform's native sharing dialog.
  * Available on Android, iOS, macOS and HTML5.
