@@ -617,8 +617,9 @@ interface TableAlias {
 
 /**
  * Split the dot functions of each local table the returned module re-exports
- * (`FL.Node = Node`) out of the module functions into a `moduleTables` entry, so
- * `Node.new` is declared on `flex.Node`, not as a top-level `flex.new`.
+ * (`FL.Node = Node`) out of the module functions into one `moduleTables` entry per
+ * distinct field, so `Node.new` is declared on every alias, not as a top-level
+ * `flex.new`.
  */
 function extractModuleTables(
   moduleReturn: string,
@@ -629,16 +630,22 @@ function extractModuleTables(
 ): { moduleFunctions: LibraryMethod[]; moduleTables: ModuleTable[] } {
   const moduleTables: ModuleTable[] = [];
   const moved = new Set<LibraryMethod>();
+  const emittedNames = new Set<string>();
+  const boundTables = new Set<string>();
   for (const { table, name, value } of aliases) {
-    if (table !== moduleReturn || value === moduleReturn) continue;
-    const functions = moduleFunctions.filter((f) => receivers.get(f) === value && !moved.has(f));
+    if (table !== moduleReturn || value === moduleReturn || emittedNames.has(name)) continue;
+    const functions = moduleFunctions.filter((f) => receivers.get(f) === value);
     if (functions.length === 0) continue;
+    emittedNames.add(name);
     for (const f of functions) moved.add(f);
     moduleTables.push({ name, table: value, functions });
     const isMetatable = aliases.some(
       (a) => a.table === value && a.name === "__index" && a.value === value,
     );
-    if (isMetatable) bindConstructedClass(value, functions, byName);
+    if (isMetatable && !boundTables.has(value)) {
+      boundTables.add(value);
+      bindConstructedClass(value, functions, byName);
+    }
   }
   return { moduleFunctions: moduleFunctions.filter((f) => !moved.has(f)), moduleTables };
 }
@@ -691,7 +698,8 @@ function bindConstructedClass(
  *
  * A dot function on a local table that the returned module re-exports
  * (`FL.Node = Node` beside `return FL`) belongs to that table, not the module: it lands
- * in a `moduleTables` entry. When that table is also a metatable class
+ * in one `moduleTables` entry per distinct exported field. When that table is also a
+ * metatable class
  * (`Node.__index = Node`), its interface extends the class `new` returns, and `new`
  * plus each method returning that class as `self` return the interface.
  */
