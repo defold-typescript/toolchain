@@ -9,7 +9,7 @@ import {
   sanitizeTypeName,
 } from "./emit-library-dts";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
-import type { LibraryModel, LibraryParam } from "./parse-luals";
+import { type LibraryModel, type LibraryParam, parseLualsSource } from "./parse-luals";
 import {
   buildTargetModel,
   emitLualsTargetDeclarations,
@@ -1513,6 +1513,25 @@ test("a declaration whose <name>_ rename lands on another declared name throws, 
   expect(() => emitLibraryDeclarations(model, { moduleId: "demo.demo" })).toThrow(
     /"Url" and "Url_" both emit as "Url_"/,
   );
+});
+
+test("re-exported table aliases each emit their table functions", () => {
+  const model = parseLualsSource(`
+local M = {}
+local T = {}
+T.__index = T
+---@return C
+function T.new() end
+function M.run() end
+M.T = T
+M.Alias = T
+return M
+`);
+  const out = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+
+  expect(out).toMatch(/export const T: \{\s+"new"\(this: void/);
+  expect(out).toMatch(/export const Alias: \{\s+"new"\(this: void/);
+  expect(out).not.toMatch(/export function new_?\(/);
 });
 
 test("a dotted name sanitizing onto another declared name throws, naming both and the generated name", () => {
