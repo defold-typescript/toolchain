@@ -1190,12 +1190,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other seventy-eight targets share no variadic member at all", () => {
+  test("the other eighty-one targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(78);
+    expect(untouched.length).toBe(81);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2294,6 +2294,30 @@ describe("the defold-light-and-shadows modules declare the whole of their upstre
         .map((element) => element.name);
       expect(blank).toEqual([]);
       expect(report.undocumentedMembers).toBe(0);
+    });
+  }
+});
+
+describe("the authored Flow modules declare their complete upstream surfaces", () => {
+  const cases = [
+    { namespace: "flow.color", members: 6, fields: 0 },
+    { namespace: "flow.bottom_sheet", members: 0, fields: 8 },
+    { namespace: "flow.flow", members: 12, fields: 5 },
+  ];
+
+  for (const { namespace, members, fields } of cases) {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+
+    test(`${namespace}: both axes close, with nothing missing, invented or short`, () => {
+      expect(report.upstreamMembers).toBe(members);
+      expect(report.upstreamFields).toBe(fields);
+      expect(report.missingMembers).toEqual([]);
+      expect(report.phantomMembers).toEqual([]);
+      expect(report.arityMismatches).toEqual([]);
+      expect(report.missingFields).toEqual([]);
+      expect(report.phantomFields).toEqual([]);
+      expect(report.callableCoverage).toBe(1);
+      expect(report.fieldCoverage).toBe(1);
     });
   }
 });

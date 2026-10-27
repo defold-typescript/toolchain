@@ -907,6 +907,39 @@
       "upstreamLua": [
         "fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/constants.lua"
       ]
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/flow.color.d.ts",
+      "moduleId": "flow.color",
+      "namespace": "flow.color",
+      "generated": "generated/flow.color.d.ts",
+      "apiDoc": "api-doc/flow.color.json",
+      "upstreamLua": ["fixtures/upstream-lua/flow/color.lua"]
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/flow.bottom_sheet.d.ts",
+      "moduleId": "flow.bottom_sheet",
+      "namespace": "flow.bottom_sheet",
+      "generated": "generated/flow.bottom_sheet.d.ts",
+      "apiDoc": "api-doc/flow.bottom_sheet.json",
+      "upstreamLua": ["fixtures/upstream-lua/flow/bottom_sheet/init.lua"]
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/flow.flow.d.ts",
+      "moduleId": "flow.flow",
+      "namespace": "flow.flow",
+      "generated": "generated/flow.flow.d.ts",
+      "apiDoc": "api-doc/flow.flow.json",
+      "upstreamLua": ["fixtures/upstream-lua/flow/flow.lua"]
     }
   ]
 }

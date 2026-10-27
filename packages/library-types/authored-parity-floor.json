@@ -39,6 +39,18 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/flow.bottom_sheet.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/flow.color.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/flow.flow.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/gamepush.core.achievements.json": {
     "callable": 1,
     "field": 1

@@ -1,0 +1,245 @@
+{
+  "info": {
+    "namespace": "flow.color",
+    "brief": "Color parsing and normalized hexadecimal color helpers for Flow.",
+    "description": "Color parsing and normalized hexadecimal color helpers for Flow."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "rgb",
+      "brief": "Creates an opaque hexadecimal color from normalized or byte-valued channels.",
+      "description": "Creates an opaque hexadecimal color from normalized or byte-valued channels.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "g",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rgba",
+      "brief": "Creates a hexadecimal color from normalized or byte-valued channels.",
+      "description": "Creates a hexadecimal color from normalized or byte-valued channels.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "g",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hex",
+      "brief": "Normalizes a hexadecimal color in `#RGB`, `#RGBA`, `#RRGGBB`, or `#RRGGBBAA` form.",
+      "description": "Normalizes a hexadecimal color in `#RGB`, `#RGBA`, `#RRGGBB`, or `#RRGGBBAA` form.",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "with_alpha",
+      "brief": "Returns a color with a replaced alpha channel.",
+      "description": "Returns a color with a replaced alpha channel.",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "Flow_ColorValue"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "alpha",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Flow_ColorValue"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "parse",
+      "brief": "Parses a hexadecimal or CSS named color into normalized channels.",
+      "description": "Parses a hexadecimal or CSS named color into normalized channels.",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "Flow_ColorValue"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "FlowColor"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "resolve",
+      "brief": "Resolves a hexadecimal or CSS named color to a Defold vector.",
+      "description": "Resolves a hexadecimal or CSS named color to a Defold vector.",
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "Flow_ColorValue"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowColor",
+      "properties": [
+        {
+          "name": "r",
+          "brief": "The red channel.",
+          "description": "The red channel.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "g",
+          "brief": "The green channel.",
+          "description": "The green channel.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "b",
+          "brief": "The blue channel.",
+          "description": "The blue channel.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "a",
+          "brief": "The alpha channel.",
+          "description": "The alpha channel.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}
