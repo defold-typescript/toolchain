@@ -951,6 +951,28 @@
       "generated": "generated/pointer_lock.d.ts",
       "apiDoc": "api-doc/pointer_lock.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-pointer-lock/pointer_lock/pointer.lua"]
+    },
+    {
+      "repo": "https://github.com/astrochili/defold-operator",
+      "ref": "1.5.3",
+      "license": "MIT",
+      "authored": "fixtures/authored/operator.operator.d.ts",
+      "moduleId": "operator.operator",
+      "namespace": "operator.operator",
+      "generated": "generated/operator.operator.d.ts",
+      "apiDoc": "api-doc/operator.operator.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-operator/operator/operator.lua"]
+    },
+    {
+      "repo": "https://github.com/astrochili/defold-operator",
+      "ref": "1.5.3",
+      "license": "MIT",
+      "authored": "fixtures/authored/operator.bezier.d.ts",
+      "moduleId": "operator.bezier",
+      "namespace": "operator.bezier",
+      "generated": "generated/operator.bezier.d.ts",
+      "apiDoc": "api-doc/operator.bezier.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-operator/operator/bezier.lua"]
     }
   ]
 }

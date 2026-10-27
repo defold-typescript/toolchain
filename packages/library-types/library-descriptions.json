@@ -120,6 +120,8 @@
   "narrator": "The Ink language parser and runtime implementation in Lua",
   "node_repeat": "GUI box node texture repeat (tiling) shader helper: reads a box node's atlas animation and drives the repeat material's constants.",
   "openal": "3D positional audio for Defold through OpenAL: WAV sound sources with position, pitch, gain and looping, heard from one listener.",
+  "operator.bezier": "Linear, quadratic and cubic bezier curves through vector or number points, with uniform positions along their length, as the Operator camera flies them.",
+  "operator.operator": "A tweakable camera movement controller for 3D games: its shared settings, debug mode, easing functions and angle and rotation helpers.",
   "orthographic.camera": "Orthographic camera functionality for the Defold game engine",
   "outline": "3D model outline shader for Defold: stencil or inverted-hull outlines drawn from a render script, with settable color, thickness and predicate tag.",
   "panthera": "Panthera Animation Runtime for Defold Game Engine",
