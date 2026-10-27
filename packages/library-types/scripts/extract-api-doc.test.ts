@@ -1395,6 +1395,142 @@ describe("extractApiDoc module-lane shapes", () => {
   });
 });
 
+// A published field names an interface whose field names a second, callable
+// interface; a third interface no published member reaches stays off `/api`.
+const REACHABLE = `/**
+ * Reachable shape demo.
+ * @noResolution
+ */
+declare module 'reach.reach' {
+	/** A callable leaf with a named helper. */
+	interface Leaf {
+		/**
+		 * Render the text.
+		 * @param text - the text to render
+		 * @param key - an optional key
+		 * @returns the rendered tag
+		 * @example leaf("x")
+		 */
+		<K>(text: string, key?: K): string;
+		/** Parse the text. */
+		parse(text: string): string[];
+	}
+
+	/** A first-level namespace. */
+	interface Branch {
+		/** The leaf. */
+		leaf: Leaf;
+	}
+
+	/** Named by no published member. */
+	interface Unreferenced {
+		/** Hidden. */
+		hidden: number;
+	}
+
+	/** The root namespace. */
+	export const root: Branch;
+}
+`;
+
+// An \`export =\` value whose interface is callable and also carries a named
+// method; the call's return names a shape, and a bare internal helper names a
+// private one.
+const CALLABLE_EXPORT = `/**
+ * Callable export demo.
+ * @noResolution
+ */
+declare module 'call.call' {
+	/** Only the internal helper names this. */
+	interface Hidden {
+		/** Secret. */
+		secret: number;
+	}
+
+	/** What a call makes. */
+	interface Made {
+		/** The count. */
+		count: number;
+	}
+
+	/** The callable module. */
+	interface CallModule {
+		/**
+		 * Make a value.
+		 * @param n - how many
+		 * @param tag - an optional label
+		 */
+		(n: number, tag?: string): Made;
+		/** Reset everything. */
+		reset(): void;
+	}
+
+	/** Internal helper, behind the re-export. */
+	function internal(): Hidden;
+
+	const v: CallModule;
+	export = v;
+}
+`;
+
+describe("extractApiDoc reachable shapes and callable interfaces", () => {
+  const reach = () => parseDefoldApiDoc(extractApiDoc(REACHABLE, "reach.reach"));
+  const callable = () => parseDefoldApiDoc(extractApiDoc(CALLABLE_EXPORT, "call.call"));
+
+  test("follows interface member references transitively", () => {
+    const { typedefs } = reach();
+    expect(typedefs.map((t) => t.name)).toEqual(["Branch", "Leaf"]);
+    expect(typedefs.find((t) => t.name === "Branch")?.properties).toEqual([
+      { name: "leaf", brief: "The leaf.", description: "The leaf.", types: ["Leaf"] },
+    ]);
+    expect(typedefs.find((t) => t.name === "Leaf")?.functions?.map((f) => f.name)).toEqual([
+      "__call",
+      "parse",
+    ]);
+  });
+
+  test("lowers a call signature to __call, keeping its parameters, return and docs", () => {
+    const leaf = (
+      extractApiDoc(REACHABLE, "reach.reach") as { elements: Array<Record<string, unknown>> }
+    ).elements.find((e) => e.name === "Leaf") as { functions: Array<Record<string, unknown>> };
+    expect(leaf.functions[0]).toEqual({
+      type: "FUNCTION",
+      name: "__call",
+      brief: "Render the text.",
+      description: "Render the text.",
+      generics: "<K>",
+      parameters: [
+        { name: "text", doc: "the text to render", types: ["string"], is_optional: "False" },
+        { name: "key", doc: "an optional key", types: ["K"], is_optional: "True" },
+      ],
+      returnvalues: [{ name: "", doc: "the rendered tag", types: ["string"] }],
+      examples: 'leaf("x")',
+    });
+    expect(leaf.functions[1]).toMatchObject({ name: "parse", brief: "Parse the text." });
+  });
+
+  test("publishes an export = value's call signature on its interface's typedef", () => {
+    const module = callable();
+    expect(module.functions.map((f) => f.name)).toEqual(["reset"]);
+    const root = module.typedefs.find((t) => t.name === "CallModule");
+    expect(root?.properties).toBeUndefined();
+    expect(root?.functions?.map((f) => f.name)).toEqual(["__call"]);
+    const call = root?.functions?.[0];
+    expect(call?.brief).toBe("Make a value.");
+    expect(call?.parameters.map((p) => [p.name, p.doc, p.types, p.isOptional])).toEqual([
+      ["n", "how many", ["number"], false],
+      ["tag", "an optional label", ["string"], true],
+    ]);
+    expect(call?.returnValues.map((r) => r.types)).toEqual([["Made"]]);
+  });
+
+  test("reaches the call signature's shapes but no internal helper's", () => {
+    const { functions, typedefs } = callable();
+    expect(typedefs.map((t) => t.name)).toEqual(["CallModule", "Made"]);
+    expect(functions.map((f) => f.name)).not.toContain("internal");
+  });
+});
+
 // One namespace body, wrapped once as a curated native's ambient global and once
 // as the `@globalTable` module that replaces it.
 const BOTH_WAYS_BODY = `

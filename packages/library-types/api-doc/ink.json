@@ -7,7 +7,10 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "StoryOutput"
+      "name": "StoryOutput",
+      "types": [
+        "LuaMultiReturn<[ Paragraph[], Answer[] ]>"
+      ]
     },
     {
       "type": "FUNCTION",
@@ -140,6 +143,94 @@
           "description": "Restores the story's variables and visit counts from `serialize`, then jumps to a\npath and returns its paragraphs and choices.",
           "types": [
             "(data: SerializedStory, path: string, reset_observers?: boolean) => StoryOutput"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Paragraph",
+      "properties": [
+        {
+          "name": "text",
+          "brief": "The paragraph text, trimmed. It is empty for a paragraph that only carries tags.",
+          "description": "The paragraph text, trimmed. It is empty for a paragraph that only carries tags.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "tags",
+          "brief": "The tags attached to the paragraph, empty when it has none.",
+          "description": "The tags attached to the paragraph, empty when it has none.",
+          "types": [
+            "string[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Answer",
+      "properties": [
+        {
+          "name": "text",
+          "brief": "The choice text.",
+          "description": "The choice text.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "tags",
+          "brief": "The tags attached to the choice, empty when it has none.",
+          "description": "The tags attached to the choice, empty when it has none.",
+          "types": [
+            "string[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "StoryState",
+      "properties": [
+        {
+          "name": "input",
+          "brief": "The player's inputs, in order: answers, jumps, flow switches and assigned values.",
+          "description": "The player's inputs, in order: answers, jumps, flow switches and assigned values.",
+          "types": [
+            "LuaTable[]"
+          ]
+        },
+        {
+          "name": "randoms",
+          "brief": "The random values the story rolled, so a replay rolls the same ones.",
+          "description": "The random values the story rolled, so a replay rolls the same ones.",
+          "types": [
+            "number[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SerializedStory",
+      "properties": [
+        {
+          "name": "globals",
+          "brief": "The story's global variables.",
+          "description": "The story's global variables.",
+          "types": [
+            "LuaTable<string, unknown>"
+          ]
+        },
+        {
+          "name": "root",
+          "brief": "The visit counts of the story's containers.",
+          "description": "The visit counts of the story's containers.",
+          "types": [
+            "LuaTable"
           ]
         }
       ]
