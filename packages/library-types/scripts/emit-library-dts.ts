@@ -328,6 +328,7 @@ function renderInterface(
   interfaceNames: ReadonlySet<string>,
   externalTokens: ReadonlySet<string>,
   indexBase: LibraryIndexBase | undefined,
+  exported = false,
 ): string[] {
   const lines: string[] = [];
   pushDoc(lines, iface.brief, INDENT, iface.deprecated);
@@ -335,7 +336,8 @@ function renderInterface(
   const params = renderGenericParams(iface.generics, ifaceCtx);
   const extendsClause = renderExtends(iface, ifaceCtx, interfaceNames, externalTokens);
   const name = declaredName(ctx, iface.name);
-  lines.push(`${INDENT}interface ${name}${params}${extendsClause} {`);
+  const exportKeyword = exported ? "export " : "";
+  lines.push(`${INDENT}${exportKeyword}interface ${name}${params}${extendsClause} {`);
   const body = INDENT + INDENT;
   for (const field of iface.fields) {
     if (!isPublicField(field)) continue;
@@ -404,6 +406,38 @@ function renderModuleConstants(fields: readonly LibraryField[], ctx: MapContext)
   return lines;
 }
 
+/** A dot-called function's `<generics>(this: void, ...params): ret` signature. */
+function dotCallSignature(fn: LibraryMethod, ctx: MapContext): string {
+  const fnCtx = scopeGenerics(ctx, fn.generics);
+  const genericParams = renderGenericParams(fn.generics, fnCtx);
+  const params = renderParams(fn.params, fnCtx);
+  return `${genericParams}(${params ? `this: void, ${params}` : "this: void"}): ${renderReturn(
+    fn.returns,
+    fnCtx,
+  )}`;
+}
+
+/**
+ * A table the module re-exports (`FL.Node = Node`) as an `export const` whose members
+ * are the table's dot functions. A reserved member name stays quoted (`"new"(...)`):
+ * a bare `new(` inside a type literal is a construct signature.
+ */
+function renderModuleTable(
+  table: NonNullable<LibraryModel["moduleTables"]>[number],
+  ctx: MapContext,
+  indexBase: LibraryIndexBase | undefined,
+): string[] {
+  const body = INDENT + INDENT;
+  const lines: string[] = [`${INDENT}export const ${table.name}: {`];
+  for (const fn of table.functions) {
+    if (!isPublicMethod(fn)) continue;
+    pushDoc(lines, fn.brief, body, fn.deprecated, slotNoteDocs(fn, indexBase));
+    lines.push(`${body}${memberKey(fn.name)}${dotCallSignature(fn, ctx)};`);
+  }
+  lines.push(`${INDENT}};`);
+  return lines;
+}
+
 function renderModuleFunction(
   fn: LibraryMethod,
   ctx: MapContext,
@@ -411,13 +445,7 @@ function renderModuleFunction(
 ): string[] {
   const lines: string[] = [];
   pushDoc(lines, fn.brief, INDENT, fn.deprecated, slotNoteDocs(fn, indexBase));
-  const fnCtx = scopeGenerics(ctx, fn.generics);
-  const genericParams = renderGenericParams(fn.generics, fnCtx);
-  const params = renderParams(fn.params, fnCtx);
-  const signature = `${genericParams}(${params ? `this: void, ${params}` : "this: void"}): ${renderReturn(
-    fn.returns,
-    fnCtx,
-  )}`;
+  const signature = dotCallSignature(fn, ctx);
   const isReserved = TS_RESERVED_NAMES.has(fn.name) || !TS_IDENTIFIER.test(fn.name);
   if (isReserved) {
     // A reserved call name (`new`, `delete`) is illegal as a `function` identifier,
@@ -538,6 +566,9 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
 
   const interfaceNames = new Set(model.interfaces.map((iface) => iface.name));
   const externalTokens = new Set(Object.keys(opts.externalTypes ?? {}));
+  // A re-exported table's interface is exported so it merges with the same-named
+  // `export const` instead of failing TS2395 against a local interface.
+  const tableInterfaces = new Set((model.moduleTables ?? []).map((table) => table.table));
   const out: string[] = ["/** @noResolution */", `declare module '${opts.moduleId}' {`];
   out.push(...renderExternalImports(opts.externalTypes));
   for (const alias of model.aliases) out.push(...renderAlias(alias, ctx));
@@ -548,12 +579,24 @@ export function emitLibraryDeclarations(model: LibraryModel, opts: EmitLibraryOp
       out.push(...renderModuleConstants(iface.fields, ctx));
       continue;
     }
-    out.push(...renderInterface(iface, ctx, interfaceNames, externalTokens, opts.indexBase));
+    out.push(
+      ...renderInterface(
+        iface,
+        ctx,
+        interfaceNames,
+        externalTokens,
+        opts.indexBase,
+        tableInterfaces.has(iface.name),
+      ),
+    );
   }
   out.push(...renderModuleConstants(model.moduleConstants ?? [], ctx));
   for (const fn of model.moduleFunctions) {
     if (!isPublicMethod(fn)) continue;
     out.push(...renderModuleFunction(fn, ctx, opts.indexBase));
+  }
+  for (const table of model.moduleTables ?? []) {
+    out.push(...renderModuleTable(table, ctx, opts.indexBase));
   }
   out.push("}");
   return `${out.join("\n")}\n`;
