@@ -1045,6 +1045,198 @@
           }
         }
       }
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "sourceGlobs": ["flow/types.lua"],
+      "moduleId": "flow.types",
+      "namespace": "flow.types",
+      "typeRenames": {
+        "flow_screen_registry": "LuaMap<string, Flow_ScreenDef> | Record<string, Flow_ScreenDef>",
+        "flow_params": "LuaMap<string, unknown> | Record<string, unknown>",
+        "userdata": "Url"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "interfaces": {
+          "Flow.InitConfig": {
+            "fields": {
+              "screens": { "type": "flow_screen_registry" },
+              "initial_params": { "type": "flow_params" }
+            }
+          },
+          "Flow.RuntimeConfig": {
+            "fields": {
+              "screens": { "type": "flow_screen_registry" },
+              "initial_params": { "type": "flow_params" }
+            }
+          },
+          "Flow.Navigation": {
+            "fields": {
+              "push": {
+                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions): Flow.StackEntry|nil"
+              },
+              "replace": {
+                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions): Flow.StackEntry|nil"
+              },
+              "reset": {
+                "type": "fun(id: string, params?: flow_params, options?: Flow.PushOptions|string): Flow.StackEntry|nil"
+              }
+            }
+          },
+          "Flow.RendererDeps": {
+            "fields": {
+              "set_node_color": {
+                "type": "fun(node: node, r: number, g: number, b: number, a: number)"
+              },
+              "set_node_position": { "type": "fun(node: node, x: number, y: number)" },
+              "set_node_size": { "type": "fun(node: node, w: number, h: number)" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "sourceGlobs": ["flow/ui.lua"],
+      "moduleId": "flow.ui",
+      "namespace": "flow.ui",
+      "typeRenames": {},
+      "externalTypes": {
+        "Flow.Element": { "module": "flow.types", "name": "Flow_Element" },
+        "Flow.MountOptions": { "module": "flow.types", "name": "Flow_MountOptions" }
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "mount": { "params": { "self": { "type": "table<string, any>" } } },
+          "set_debug": { "params": { "self": { "type": "table<string, any>" } } },
+          "_set_layout_space_unsafe": { "params": { "self": { "type": "table<string, any>" } } },
+          "request_redraw": { "params": { "self": { "type": "table<string, any>" } } },
+          "update": { "params": { "self": { "type": "table<string, any>" } } },
+          "hit_test": { "params": { "self": { "type": "table<string, any>" } } },
+          "on_input": {
+            "params": {
+              "self": { "type": "table<string, any>" },
+              "action_id": { "type": "hash|nil" },
+              "action": {
+                "type": "{x?: number, y?: number, pressed?: boolean, released?: boolean}"
+              }
+            }
+          },
+          "update_animations": { "params": { "self": { "type": "table<string, any>" } } },
+          "render": { "params": { "self": { "type": "table<string, any>" } } },
+          "render_if_size_changed": { "params": { "self": { "type": "table<string, any>" } } }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "sourceGlobs": ["flow/layout.lua"],
+      "moduleId": "flow.layout",
+      "namespace": "flow.layout",
+      "typeRenames": {},
+      "externalTypes": {
+        "Flow.Element": { "module": "flow.types", "name": "Flow_Element" }
+      },
+      "ignore": []
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "sourceGlobs": ["flow/flex.lua"],
+      "moduleId": "flow.flex",
+      "namespace": "flow.flex",
+      "typeRenames": {},
+      "externalTypes": {
+        "Flow.Element": { "module": "flow.types", "name": "Flow_Element" },
+        "Flow.FlexNode": { "module": "flow.types", "name": "Flow_FlexNode" },
+        "Flow.FlexNodeOptions": { "module": "flow.types", "name": "Flow_FlexNodeOptions" },
+        "Flow.LayoutRect": { "module": "flow.types", "name": "Flow_LayoutRect" }
+      },
+      "ignore": []
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "sourceGlobs": ["flow/navigation/messages.lua"],
+      "moduleId": "flow.navigation.messages",
+      "namespace": "flow.navigation.messages",
+      "typeRenames": {},
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "on_message": { "params": { "message": { "type": "table<string, any>" } } }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "sourceGlobs": ["flow/navigation/runtime.lua"],
+      "moduleId": "flow.navigation.runtime",
+      "namespace": "flow.navigation.runtime",
+      "typeRenames": {
+        "userdata": "Url"
+      },
+      "externalTypes": {
+        "Flow.RuntimeConfig": { "module": "flow.types", "name": "Flow_RuntimeConfig" }
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "init": { "params": { "self": { "type": "table<string, any>" } } },
+          "final": { "params": { "self": { "type": "table<string, any>" } } },
+          "on_message": {
+            "params": {
+              "self": { "type": "table<string, any>" },
+              "message": { "type": "table<string, any>" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "sourceGlobs": ["flow/navigation/proxy.lua"],
+      "moduleId": "flow.navigation.proxy",
+      "namespace": "flow.navigation.proxy",
+      "typeRenames": {},
+      "externalTypes": {
+        "Flow.Navigation": { "module": "flow.types", "name": "Flow_Navigation" },
+        "Flow.ProxyAttachOptions": { "module": "flow.types", "name": "Flow_ProxyAttachOptions" }
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "detach": { "params": { "self": { "type": "table<string, any>" } } }
+        }
+      }
+    },
+    {
+      "repo": "https://github.com/Pause-Games/flow",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "sourceGlobs": ["flow/navigation/gui.lua"],
+      "moduleId": "flow.navigation.gui",
+      "namespace": "flow.navigation.gui",
+      "typeRenames": {},
+      "externalTypes": {
+        "Flow.Element": { "module": "flow.types", "name": "Flow_Element" },
+        "Flow.Navigation": { "module": "flow.types", "name": "Flow_Navigation" }
+      },
+      "ignore": []
     }
   ]
 }

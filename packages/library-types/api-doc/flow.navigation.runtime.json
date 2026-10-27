@@ -1,0 +1,115 @@
+{
+  "info": {
+    "namespace": "flow.navigation.runtime",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Initialize navigation for a non-GUI script.\nRegisters screens, optionally attaches the collection proxy runtime,\nand navigates to the initial screen if specified.\n\nStores state in self.navigation and self.navigation_runtime so it can be\naccessed from on_message() and cleaned up in final().",
+      "description": "Initialize navigation for a non-GUI script.\nRegisters screens, optionally attaches the collection proxy runtime,\nand navigates to the initial screen if specified.\n\nStores state in self.navigation and self.navigation_runtime so it can be\naccessed from on_message() and cleaned up in final().",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The .script self table",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "config",
+          "doc": "Configuration options",
+          "types": [
+            "Flow_RuntimeConfig"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The navigation_runtime state table stored on self",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Clean up the navigation runtime for a non-GUI script.\nDetaches the proxy runtime (if any) to remove event listeners.\nCall this from the .script final() lifecycle function.",
+      "description": "Clean up the navigation runtime for a non-GUI script.\nDetaches the proxy runtime (if any) to remove event listeners.\nCall this from the .script final() lifecycle function.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The .script self table initialized by M.init()",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_message",
+      "brief": "Handle an incoming Defold message and route it to navigation.\nDelegates to navigation_messages.on_message() which dispatches\npush/pop/replace/reset/back/invalidate messages.\nReturns true when the message was consumed by navigation.",
+      "description": "Handle an incoming Defold message and route it to navigation.\nDelegates to navigation_messages.on_message() which dispatches\npush/pop/replace/reset/back/invalidate messages.\nReturns true when the message was consumed by navigation.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The .script self table",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "The incoming message id hash, or raw string in test environments",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message",
+          "doc": "The incoming message payload",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "sender",
+          "doc": "The sender's msg.url() (unused, for Defold API compat)",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True when the message was handled by navigation",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

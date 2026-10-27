@@ -183,6 +183,18 @@
     "class": "not-a-position",
     "evidence": "both unnamed returns share this key: a boolean, then the 1-based callback index (event.lua:is_subscribed); no note fits both"
   },
+  "flow.flex/get_child:param:index": {
+    "class": "native-0",
+    "evidence": "flex.lua:Node:get_child returns self.children[index + 1]"
+  },
+  "flow.flex/get_child:return:": {
+    "class": "not-a-position",
+    "evidence": "flex.lua:Node:get_child returns the child node itself, not its index"
+  },
+  "flow.flex/insert_child:param:index": {
+    "class": "native-1",
+    "evidence": "flex.lua:Node:insert_child passes index to table.insert(self.children, index or (#self.children + 1), child)"
+  },
   "gooey/set_focus:param:index": {
     "class": "native-1",
     "evidence": "gooey.lua:set_focus reads group.components[index]; focus moves over 1 .. #components"
