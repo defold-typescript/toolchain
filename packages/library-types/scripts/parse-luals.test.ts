@@ -964,6 +964,60 @@ describe("parseLualsSource module table assignments", () => {
   });
 });
 
+describe("parseLualsSource re-exported module tables", () => {
+  function source(options: { reExport?: boolean; metatable?: boolean } = {}): string {
+    const { reExport = true, metatable = true } = options;
+    return lua(
+      "local M = {}",
+      "local T = {}",
+      ...(metatable ? ["T.__index = T"] : []),
+      "---@return C",
+      "function T.new() end",
+      "---@return C self",
+      "function T:set() end",
+      "---@return C|nil",
+      "function T:get() end",
+      "function M.run() end",
+      ...(reExport ? ["M.T = T"] : []),
+      "return M",
+    );
+  }
+
+  function returns(model: LibraryModel, iface: string, name: string): string[] | undefined {
+    return model.interfaces
+      .find((i) => i.name === iface)
+      ?.methods.find((m) => m.name === name)
+      ?.returns.flatMap((r) => r.types);
+  }
+
+  test("moves a re-exported metatable class's dot functions into a module table whose instance extends the constructed class", () => {
+    const model = parseLualsSource(source());
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["run"]);
+    expect(
+      model.moduleTables?.map((t) => ({ ...t, functions: t.functions.map((f) => f.name) })),
+    ).toEqual([{ name: "T", table: "T", functions: ["new"] }]);
+    expect(model.interfaces.find((i) => i.name === "T")?.extends).toBe("C");
+    expect(model.moduleTables?.[0]?.functions[0]?.returns.flatMap((r) => r.types)).toEqual(["T"]);
+    expect(returns(model, "T", "set")).toEqual(["T"]);
+    expect(returns(model, "T", "get")).toEqual(["C|nil"]);
+  });
+
+  test("a table the module never re-exports keeps its dot functions as module functions", () => {
+    const model = parseLualsSource(source({ reExport: false }));
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["new", "run"]);
+    expect("moduleTables" in model).toBe(false);
+    expect(model.interfaces.find((i) => i.name === "T")?.extends).toBeUndefined();
+  });
+
+  test("a re-exported table without __index stays a module table but keeps its declared returns", () => {
+    const model = parseLualsSource(source({ metatable: false }));
+    expect(model.moduleTables?.map((t) => t.name)).toEqual(["T"]);
+    expect(model.interfaces.find((i) => i.name === "T")?.extends).toBeUndefined();
+    expect(model.moduleTables?.[0]?.functions[0]?.returns.flatMap((r) => r.types)).toEqual(["C"]);
+    expect(returns(model, "T", "set")).toEqual(["C"]);
+  });
+});
+
 describe("parseLualsSource ---@meta class functions", () => {
   const netBody = [
     "---@class net",

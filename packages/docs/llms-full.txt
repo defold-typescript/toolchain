@@ -11157,6 +11157,16 @@ it as `network.setup(params)`, not `network:setup(params)`. In any other file th
 same form stays a module function, since a runtime module may annotate its own table
 as a class and still export its functions.
 
+A dot function on another local table belongs to that table when the returned module
+re-exports it at column 0. flow's `flow/flex.lua` defines `function Node.new(opts)` on
+`local Node = {}`, assigns `FL.Node = Node`, and ends with `return FL`, so `new` is
+declared on `export const Node: { "new"(this: void, ...): Node }`, not as a top-level
+`flex.new`. Because the file also sets `Node.__index = Node` and `Node.new` declares
+`---@return Flow.FlexNode`, the `Node` interface extends `Flow_FlexNode`, and `new`
+plus every method annotated `---@return Flow.FlexNode self` return `Node`, so
+`flex.Node.new({ key: "root" }).set_width(960).calculate_layout(960, 640)` keeps the
+chainable methods.
+
 Where an annotation types a parameter wrongly, a `type` token on a `moduleFunctions`
 parameter replaces it: ads-wrapper's `queue.lua` writes `---@param fn ads_callback`,
 though `run` calls `fn(network, callback, params)`, so the `ads_wrapper.queue` target
