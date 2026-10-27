@@ -562,3 +562,48 @@ describe("a returned table's constructor entries are members", () => {
     ]);
   });
 });
+
+describe("a module that returns a table literal is a data module whose keys are its surface", () => {
+  const source = [
+    "local fog = vmath.vector4(20, 120, 1, 0)",
+    "",
+    "return {",
+    "    a = 1,",
+    "    b = {",
+    "        c = 2,",
+    "    },",
+    "    -- a trailing comment",
+    "    d = vmath.vector4(0, 0, 0, 0), -- comment",
+    "}",
+  ].join("\n");
+
+  test("each depth-1 key is a field, a nested table's keys are not", () => {
+    expect(parseLuaSurface(source).members.map((member) => [member.name, member.params])).toEqual([
+      ["a", undefined],
+      ["b", undefined],
+      ["d", undefined],
+    ]);
+  });
+
+  test("the literal names no module local", () => {
+    expect(parseLuaSurface(source).moduleLocal).toBeUndefined();
+  });
+
+  test("an `__index` key throws, as a delegating metatable does", () => {
+    expect(() => parseLuaSurface(["return {", "    __index = base,", "}"].join("\n"))).toThrow(
+      "`__index`",
+    );
+  });
+
+  test("a bracketed key throws, naming its line", () => {
+    expect(() =>
+      parseLuaSurface(["return {", "    a = 1,", '    ["b"] = 2,', "}"].join("\n")),
+    ).toThrow("line 3");
+  });
+
+  test("a trailing `return <name>` source parses exactly as before", () => {
+    const surface = parseLuaSurface(["local M = {}", "M.a = 1", "return M", ""].join("\n"));
+    expect(surface.moduleLocal).toBe("M");
+    expect(surface.members.map((member) => member.name)).toEqual(["a"]);
+  });
+});

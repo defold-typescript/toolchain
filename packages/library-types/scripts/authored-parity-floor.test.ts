@@ -451,6 +451,12 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "250b1cd13b3b2231bdbf6434efc9c3530e389fffc3caaade9fc05a0186e4a452",
   "fixtures/upstream-lua/defold-input/in/triggers.lua":
     "f9c1bbaa272e97efc3b360e446e6df5216906afdf7378e5edfc1b180fc3cf1d1",
+  "fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/constants.lua":
+    "64f4d28eaac0be33449ca7e8c6c2b8f10b2395974c258ac3b649597a2a17b4d6",
+  "fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/light.lua":
+    "2359f562ac28ddfa65dc38440ad462fa6fdd49ccaab5884ba700981bce0d3456",
+  "fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/light_and_shadows.lua":
+    "9fdbdd0b874481e3200e52d987907e0d4298307d6c4eee5cd57545156a0ba148",
   "fixtures/upstream-lua/defold-metrics/metrics/fps.lua":
     "ad8a7fe5e157108b2331c6bb6ea5c34020ef4da26132dc342f6c916105d84610",
   "fixtures/upstream-lua/defold-metrics/metrics/mem.lua":

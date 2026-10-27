@@ -219,6 +219,18 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/light_and_shadows.constants.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/light_and_shadows.light.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/light_and_shadows.light_and_shadows.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/metrics.fps.json": {
     "callable": 1,
     "field": 1
