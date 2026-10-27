@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { applyAnnotationOverrides } from "./apply-luals-overrides";
 import { emitLibraryDeclarations } from "./emit-library-dts";
 import {
   type LibraryField,
@@ -442,6 +443,97 @@ describe("parseLualsSource field visibility and @vararg", () => {
       { name: "a", types: ["number"], doc: "the a", isOptional: false, isVararg: false },
       { name: "...", types: ["any"], doc: "extra args", isOptional: false, isVararg: true },
     ]);
+  });
+});
+
+describe("parseLualsSource signature params", () => {
+  const untyped = (name: string) => ({
+    name,
+    types: [],
+    doc: "",
+    isOptional: true,
+    isVararg: false,
+  });
+
+  test("an unannotated function takes its params from the signature and emits them as optional unknown", () => {
+    const model = parseLualsSource(lua("function M.f(a, b)", "end"));
+    expect(model.moduleFunctions[0]?.params).toEqual([untyped("a"), untyped("b")]);
+    const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+    expect(dts).toContain("f(this: void, a?: unknown, b?: unknown): void");
+  });
+
+  test("a partly annotated function keeps the annotated type and orders params by the signature", () => {
+    const model = parseLualsSource(lua("---@param b string the b", "function M.f(a, b, c)", "end"));
+    expect(model.moduleFunctions[0]?.params).toEqual([
+      untyped("a"),
+      { name: "b", types: ["string"], doc: "the b", isOptional: false, isVararg: false },
+      untyped("c"),
+    ]);
+    const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+    expect(dts).toContain("f(this: void, a: unknown, b: string, c?: unknown): void");
+  });
+
+  test("the `= function` form reads its signature too", () => {
+    const model = parseLualsSource(lua("M.f = function(x, y)", "end"));
+    expect(model.moduleFunctions[0]?.params).toEqual([untyped("x"), untyped("y")]);
+  });
+
+  test("a fully annotated function keeps its annotation order", () => {
+    const model = parseLualsSource(
+      lua("---@param b string", "---@param a number", "function M.f(a, b)", "end"),
+    );
+    expect(model.moduleFunctions[0]?.params.map((p) => p.name)).toEqual(["b", "a"]);
+  });
+
+  test("a colon method gains no self, and an unannotated param still appears", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class Button",
+        "local Button = {}",
+        "",
+        "---@param text string",
+        "function Button:set(text, color)",
+        "end",
+      ),
+    );
+    const params = model.interfaces.find((i) => i.name === "Button")?.methods[0]?.params;
+    expect(params?.map((p) => p.name)).toEqual(["text", "color"]);
+    expect(params?.[1]).toEqual(untyped("color"));
+  });
+
+  test("a trailing `...` stays the annotated vararg, after the signature params", () => {
+    const model = parseLualsSource(
+      lua("---@param b number", "---@vararg any", "function M.f(a, b, ...)", "end"),
+    );
+    const params = model.moduleFunctions[0]?.params;
+    expect(params?.map((p) => p.name)).toEqual(["a", "b", "..."]);
+    expect(params?.[2]?.isVararg).toBe(true);
+  });
+
+  test("an unannotated `...` adds no param", () => {
+    const model = parseLualsSource(lua("function M.f(a, ...)", "end"));
+    expect(model.moduleFunctions[0]?.params).toEqual([untyped("a")]);
+  });
+
+  test("a @param naming no signature param is kept after the param it followed", () => {
+    const model = parseLualsSource(
+      lua("---@param a number", "---@param ghost string", "function M.f(a, b)", "end"),
+    );
+    expect(model.moduleFunctions[0]?.params.map((p) => p.name)).toEqual(["a", "ghost", "b"]);
+  });
+
+  test("a moduleFunctions override types an untyped param, and `optional: false` makes one required", () => {
+    const model = applyAnnotationOverrides(parseLualsSource(lua("function M.f(a, b)", "end")), {
+      moduleFunctions: {
+        f: { params: { a: { type: "number", optional: false }, b: { type: "table" } } },
+      },
+    });
+    expect(model.moduleFunctions[0]?.params).toEqual([
+      { name: "a", types: ["number"], doc: "", isOptional: false, isVararg: false },
+      { name: "b", types: ["table"], doc: "", isOptional: true, isVararg: false },
+    ]);
+    const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+    expect(dts).toContain("f(this: void, a: number, b?: LuaTable): void");
   });
 });
 

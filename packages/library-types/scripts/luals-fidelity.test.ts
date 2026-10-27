@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { emitLibraryDeclarations } from "./emit-library-dts";
 import { buildFidelityReport } from "./luals-fidelity";
-import type { LibraryModel } from "./parse-luals";
+import { type LibraryModel, parseLualsSource } from "./parse-luals";
 import { buildTargetFidelity, readLualsTargets } from "./sync-luals-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -74,6 +74,14 @@ describe("buildFidelityReport", () => {
     expect(report.unknownFallbacks).toBe(2);
     expect(report.unknownTokens).toEqual(["(untyped)"]);
     expect(report.totalTypeTokens).toBe(2);
+  });
+
+  test("an unannotated signature param parsed from source counts as an (untyped) fallback", () => {
+    const model = parseLualsSource("---Does f.\nfunction M.f(a, b)\nend");
+    const report = buildFidelityReport("widgets", model, {});
+    expect(report.unknownFallbacks).toBe(2);
+    expect(report.unknownTokens).toEqual(["(untyped)"]);
+    expect(report.coverage).toBeLessThan(1);
   });
 
   test("an unmapped vmath.* token makes the report throw (loud fail propagates)", () => {

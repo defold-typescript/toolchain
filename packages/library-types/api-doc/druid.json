@@ -1341,7 +1341,15 @@
           "name": "_start_touch",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "touch",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -2471,7 +2479,22 @@
           "name": "_on_scroll_drag",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "dx",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "dy",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -2495,7 +2518,22 @@
           "name": "_set_scroll_position",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "position_x",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "position_y",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -2511,7 +2549,15 @@
           "name": "_update_free_scroll",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -2559,7 +2605,22 @@
           "name": "_process_scroll_wheel",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "action",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -2567,7 +2628,29 @@
           "name": "_inverse_lerp",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "min",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "max",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "current",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -5743,7 +5826,15 @@
           "name": "remove_container_by_node",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "node",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": [
             {
               "name": "",
@@ -5833,7 +5924,29 @@
           "name": "_on_corner_drag",
           "brief": "",
           "description": "",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "y",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "corner_offset",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
           "returnvalues": []
         },
         {
@@ -7869,6 +7982,13 @@
                 "number"
               ],
               "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "is_instant",
+              "doc": "",
+              "types": [],
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],

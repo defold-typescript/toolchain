@@ -1,0 +1,153 @@
+{
+  "info": {
+    "namespace": "outline",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "set",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "thickness",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "color",
+          "doc": "",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "type",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "draw",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "toggle",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_tag",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "tag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "predicates",
+          "doc": "",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "frustum",
+          "doc": "",
+          "types": [
+            "{ frustum: Matrix4 }"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "clear_buffer",
+          "doc": "",
+          "types": [
+            "LuaMap<render.ClearBufferKey, number | Vector4>"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "type",
+      "brief": "",
+      "description": "",
+      "types": [
+        "{ OUTLINE_STENCIL: number; OUTLINE_INVERTED_HULL: number }"
+      ]
+    }
+  ]
+}

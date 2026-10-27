@@ -168,7 +168,7 @@ declare module 'decore.decore' {
 	 * System to manage event bus inside the world
 	 */
 	interface system_bus_event extends system {
-		onAddToWorld(): void;
+		onAddToWorld(world?: unknown): void;
 		postWrap(): void;
 	}
 	/**
