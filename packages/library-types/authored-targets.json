@@ -940,6 +940,17 @@
       "generated": "generated/flow.flow.d.ts",
       "apiDoc": "api-doc/flow.flow.json",
       "upstreamLua": ["fixtures/upstream-lua/flow/flow.lua"]
+    },
+    {
+      "repo": "https://github.com/indiesoftby/defold-pointer-lock",
+      "ref": "2.1.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/pointer_lock.pointer.d.ts",
+      "moduleId": "pointer_lock.pointer",
+      "namespace": "pointer_lock",
+      "generated": "generated/pointer_lock.d.ts",
+      "apiDoc": "api-doc/pointer_lock.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-pointer-lock/pointer_lock/pointer.lua"]
     }
   ]
 }
