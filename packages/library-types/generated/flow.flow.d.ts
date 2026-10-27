@@ -95,10 +95,51 @@ declare module 'flow.flow' {
     ): boolean;
   }
 
+  type FlowNavigationMessageModule = typeof import('flow.navigation.messages');
+
+  /** Navigation message ids keyed by operation name. */
+  interface FlowNavigationMessageIds {
+    /** Message id for `push`. */
+    push: Hash | string;
+    /** Message id for `pop`. */
+    pop: Hash | string;
+    /** Message id for `replace`. */
+    replace: Hash | string;
+    /** Message id for `reset`. */
+    reset: Hash | string;
+    /** Message id for `back`. */
+    back: Hash | string;
+    /** Message id for `invalidate`. */
+    invalidate: Hash | string;
+  }
+
+  /** Message ids and the dispatch alias published by the navigation message transport. */
+  interface FlowNavigationMessages {
+    /** Map of all supported message ids keyed by operation name. */
+    ids: FlowNavigationMessageIds;
+    /** Message id for `push`; payload `{ id, params?, options? }`. */
+    PUSH: Hash | string;
+    /** Message id for `pop`; payload `{ result?, options? }`. */
+    POP: Hash | string;
+    /** Message id for `replace`; payload `{ id, params?, options? }`. */
+    REPLACE: Hash | string;
+    /** Message id for `reset`; payload `{ id, params?, options? }`. */
+    RESET: Hash | string;
+    /** Message id for `back`; payload `{ result?, options? }`. */
+    BACK: Hash | string;
+    /** Message id for `invalidate`; no payload required. */
+    INVALIDATE: Hash | string;
+    /** Alias of `on_message` for older call sites. */
+    handle_message: FlowNavigationMessageModule['on_message'];
+  }
+
+  /** The navigation message transport, as published on `flow.nav` and `flow.nav.messages`. */
+  type FlowNavigationMessageTransport = FlowNavigationMessageModule & FlowNavigationMessages;
+
   /** Namespaces and transition shorthand added to the navigation facade. */
   interface FlowNavigationNamespaces {
     /** Navigation message transport. */
-    messages: typeof import('flow.navigation.messages');
+    messages: FlowNavigationMessageTransport;
     /** Navigation for plain script components. */
     runtime: typeof import('flow.navigation.runtime') & FlowRuntimeFacade;
     /** Collection-proxy navigation support. */
@@ -111,6 +152,12 @@ declare module 'flow.flow' {
       params?: FlowParams,
       options?: Flow_PushOptions | string,
     ): ReturnType<Flow_Navigation["push"]>;
+    /** Replaces the current screen, accepting the transition shorthand supported by the router. */
+    replace(
+      id: string,
+      params?: FlowParams,
+      options?: Flow_PushOptions | string,
+    ): ReturnType<Flow_Navigation["replace"]>;
   }
 
   /** The low-level UI module plus Flow's component and helper namespaces. */
@@ -118,7 +165,7 @@ declare module 'flow.flow' {
 
   /** The navigation API, message transport, and runtime adapters. */
   export const nav: Flow_Navigation &
-    typeof import('flow.navigation.messages') &
+    FlowNavigationMessageTransport &
     FlowNavigationNamespaces;
 
   /** Hosted bottom sheets. */

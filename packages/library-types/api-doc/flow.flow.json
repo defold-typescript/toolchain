@@ -63,6 +63,20 @@
       ]
     },
     {
+      "type": "TYPEDEF",
+      "name": "FlowNavigationMessageModule",
+      "types": [
+        "typeof import('flow.navigation.messages')"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowNavigationMessageTransport",
+      "types": [
+        "FlowNavigationMessageModule & FlowNavigationMessages"
+      ]
+    },
+    {
       "type": "VARIABLE",
       "name": "ui",
       "brief": "The low-level UI module plus Flow's component and helper namespaces.",
@@ -77,7 +91,7 @@
       "brief": "The navigation API, message transport, and runtime adapters.",
       "description": "The navigation API, message transport, and runtime adapters.",
       "types": [
-        "Flow_Navigation & typeof import('flow.navigation.messages') & FlowNavigationNamespaces"
+        "Flow_Navigation & FlowNavigationMessageTransport & FlowNavigationNamespaces"
       ]
     },
     {
@@ -575,6 +589,76 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "FlowNavigationMessages",
+      "properties": [
+        {
+          "name": "ids",
+          "brief": "Map of all supported message ids keyed by operation name.",
+          "description": "Map of all supported message ids keyed by operation name.",
+          "types": [
+            "FlowNavigationMessageIds"
+          ]
+        },
+        {
+          "name": "PUSH",
+          "brief": "Message id for `push`; payload `{ id, params?, options? }`.",
+          "description": "Message id for `push`; payload `{ id, params?, options? }`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "POP",
+          "brief": "Message id for `pop`; payload `{ result?, options? }`.",
+          "description": "Message id for `pop`; payload `{ result?, options? }`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "REPLACE",
+          "brief": "Message id for `replace`; payload `{ id, params?, options? }`.",
+          "description": "Message id for `replace`; payload `{ id, params?, options? }`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "RESET",
+          "brief": "Message id for `reset`; payload `{ id, params?, options? }`.",
+          "description": "Message id for `reset`; payload `{ id, params?, options? }`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "BACK",
+          "brief": "Message id for `back`; payload `{ result?, options? }`.",
+          "description": "Message id for `back`; payload `{ result?, options? }`.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "INVALIDATE",
+          "brief": "Message id for `invalidate`; no payload required.",
+          "description": "Message id for `invalidate`; no payload required.",
+          "types": [
+            "Hash | string"
+          ]
+        },
+        {
+          "name": "handle_message",
+          "brief": "Alias of `on_message` for older call sites.",
+          "description": "Alias of `on_message` for older call sites.",
+          "types": [
+            "FlowNavigationMessageModule['on_message']"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "FlowNavigationNamespaces",
       "functions": [
         {
@@ -617,6 +701,47 @@
               ]
             }
           ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "replace",
+          "brief": "Replaces the current screen, accepting the transition shorthand supported by the router.",
+          "description": "Replaces the current screen, accepting the transition shorthand supported by the router.",
+          "parameters": [
+            {
+              "name": "id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "params",
+              "doc": "",
+              "types": [
+                "FlowParams"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "Flow_PushOptions | string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "ReturnType<Flow_Navigation[\"replace\"]>"
+              ]
+            }
+          ]
         }
       ],
       "properties": [
@@ -625,7 +750,7 @@
           "brief": "Navigation message transport.",
           "description": "Navigation message transport.",
           "types": [
-            "typeof import('flow.navigation.messages')"
+            "FlowNavigationMessageTransport"
           ]
         },
         {
