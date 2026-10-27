@@ -1,0 +1,565 @@
+{
+  "info": {
+    "namespace": "operator.operator",
+    "brief": "Shared settings and math helpers for the Operator camera controller. The camera itself",
+    "description": "Shared settings and math helpers for the Operator camera controller. The camera itself\nis driven by the properties and messages of `operator/operator/operator.script`\n(`activate`, `follow_point`, `manual_control` and the rest), which are not members of\nthis module. The settings fields are plain module fields; assigning one goes through a\ncast, since a namespace import is read-only:\n`(operator as { flight_look_easing: (this: void, x: number) => number }).flight_look_easing = (x) => x`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "lerp",
+      "brief": "Linearly interpolates from `a` to `b`, returning `a + (b - a) * t`. `t` is not",
+      "description": "Linearly interpolates from `a` to `b`, returning `a + (b - a) * t`. `t` is not\nclamped, so a value outside `0` to `1` extrapolates.",
+      "parameters": [
+        {
+          "name": "t",
+          "doc": "The progress, `0` giving `a` and `1` giving `b`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "a",
+          "doc": "The start value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "The end value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "lerp",
+      "brief": "Linearly interpolates from vector `a` to vector `b`, returning `a + (b - a) * t` as a",
+      "description": "Linearly interpolates from vector `a` to vector `b`, returning `a + (b - a) * t` as a\nnew vector. `t` is not clamped, so a value outside `0` to `1` extrapolates.",
+      "parameters": [
+        {
+          "name": "t",
+          "doc": "The progress, `0` giving `a` and `1` giving `b`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "a",
+          "doc": "The start vector.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "The end vector.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "angle_between",
+      "brief": "Returns the angle between two vectors, in degrees from `0` to `180`. A vector of zero",
+      "description": "Returns the angle between two vectors, in degrees from `0` to `180`. A vector of zero\nlength gives NaN.",
+      "parameters": [
+        {
+          "name": "v1",
+          "doc": "The first vector.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "v2",
+          "doc": "The second vector.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "project_on_plane",
+      "brief": "Projects a vector onto the plane through the origin with the given normal, returning",
+      "description": "Projects a vector onto the plane through the origin with the given normal, returning\n`v - plane_normal * vmath.dot(plane_normal, v)`. The normal must have unit length for\nthe result to lie on the plane.",
+      "parameters": [
+        {
+          "name": "plane_normal",
+          "doc": "The plane's normal, of unit length.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "v",
+          "doc": "The vector to project.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "quat_from_euler",
+      "brief": "Converts Euler angles in degrees to a rotation, composed as `z * y * x` from the",
+      "description": "Converts Euler angles in degrees to a rotation, composed as `z * y * x` from the\nrotations about each axis.",
+      "parameters": [
+        {
+          "name": "euler",
+          "doc": "The angles about the `x`, `y` and `z` axes, in degrees.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Quaternion"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "euler_from_quat",
+      "brief": "Converts a rotation to Euler angles in degrees, about the `x`, `y` and `z` axes. It",
+      "description": "Converts a rotation to Euler angles in degrees, about the `x`, `y` and `z` axes. It\nreads them back in the order `y * x * z`, so it reverses `quat_from_euler` when the\n`z` angle is `0`. At an `x` angle near 90 or -90 degrees the `z` angle is `0`.",
+      "parameters": [
+        {
+          "name": "quat",
+          "doc": "The rotation.",
+          "types": [
+            "Quaternion"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "normalized_target_angle",
+      "brief": "Returns `target`, shifted by one full turn when that makes the turn from `original`",
+      "description": "Returns `target`, shifted by one full turn when that makes the turn from `original`\nno more than 180 degrees, so an animation from `original` takes the short way round.",
+      "parameters": [
+        {
+          "name": "original",
+          "doc": "The current angle, in degrees.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "target",
+          "doc": "The wanted angle, in degrees.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "normalized_target_euler",
+      "brief": "Applies `normalized_target_angle` to each of the `x`, `y` and `z` angles, returning a",
+      "description": "Applies `normalized_target_angle` to each of the `x`, `y` and `z` angles, returning a\nnew vector.",
+      "parameters": [
+        {
+          "name": "original",
+          "doc": "The current Euler angles, in degrees.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "target",
+          "doc": "The wanted Euler angles, in degrees.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clamp_angle",
+      "brief": "Brings an angle beyond 360 or -360 degrees back by one full turn, then clamps it",
+      "description": "Brings an angle beyond 360 or -360 degrees back by one full turn, then clamps it\nbetween `min` and `max`.",
+      "parameters": [
+        {
+          "name": "angle",
+          "doc": "The angle, in degrees.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "min",
+          "doc": "The smallest angle returned, in degrees.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max",
+          "doc": "The largest angle returned, in degrees.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "EASING_INOUT_SINE",
+      "brief": "Sine ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to `1`.",
+      "description": "Sine ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to `1`.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "EASING_INOUT_CUBIC",
+      "brief": "Cubic ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to `1`.",
+      "description": "Cubic ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to `1`.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "EASING_INOUT_QUINT",
+      "brief": "Quintic ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to",
+      "description": "Quintic ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to\n`1`.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "EASING_INOUT_CIRC",
+      "brief": "Circular ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to",
+      "description": "Circular ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to\n`1`.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "EASING_INOUT_QUAD",
+      "brief": "Quadratic ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to",
+      "description": "Quadratic ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to\n`1`. It is the default `flight_look_easing`.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "EASING_INOUT_QUART",
+      "brief": "Quartic ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to",
+      "description": "Quartic ease-in-out: maps a progress from `0` to `1` to an eased progress from `0` to\n`1`.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "EASING_INOUT_EXPO",
+      "brief": "Exponential ease-in-out: maps a progress from `0` to `1` to an eased progress from `0`",
+      "description": "Exponential ease-in-out: maps a progress from `0` to `1` to an eased progress from `0`\nto `1`.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The progress, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "camera_collisions_groups",
+      "brief": "The collision groups tested by the raycast from the operator anchor to the camera, so",
+      "description": "The collision groups tested by the raycast from the operator anchor to the camera, so\nthe camera stays in front of obstacles. Read on every raycast. Starts as\n`[hash(\"default\")]`.",
+      "types": [
+        "Hash[]"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "flight_bezier_samples_count",
+      "brief": "The number of bezier segments an operator samples a flight path with, which sets how",
+      "description": "The number of bezier segments an operator samples a flight path with, which sets how\naccurate its uniform position is. Read each time an operator starts flying to the next\nmotion point. `16` is usually enough; starts at `32`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "flight_look_easing",
+      "brief": "The easing function that turns the camera between motion points, taking the progress",
+      "description": "The easing function that turns the camera between motion points, taking the progress\nfrom `0` to `1` and returning the eased progress. Starts as `EASING_INOUT_QUAD`; any of\nthe `EASING_INOUT_*` functions, or a project's own, can replace it.",
+      "types": [
+        "(x: number) => number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_active_operator",
+      "brief": "Returns the url of the active operator's game object, or `undefined` when no operator",
+      "description": "Returns the url of the active operator's game object, or `undefined` when no operator\nis active.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Url | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_debug",
+      "brief": "Turns debug mode on or off for every operator and checkpoint: on, they show their",
+      "description": "Turns debug mode on or off for every operator and checkpoint: on, they show their\ncamera and checkpoint meshes and draw the active bezier path.",
+      "parameters": [
+        {
+          "name": "is_debug",
+          "doc": "`true` to turn debug mode on.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_debug",
+      "brief": "Returns whether debug mode is on. Starts `false`.",
+      "description": "Returns whether debug mode is on. Starts `false`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

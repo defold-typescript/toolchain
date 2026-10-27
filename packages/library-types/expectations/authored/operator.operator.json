@@ -1,0 +1,21 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/astrochili/defold-operator",
+    "authoredHere": true,
+    "commit": "1.5.3",
+    "sourceUrl": "https://github.com/astrochili/defold-operator/tree/1.5.3",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "A project replaces `flight_look_easing` by assigning a function that takes only the progress, and calls the helpers as `.` module members; a cast type or a field declared without `this: void` still passes `tsc`, so only TSTL's emit shows the assigned function and the calls free of `self`.",
+    "consumer": [
+      "import * as operator from \"operator.operator\";",
+      "export function init(): void {",
+      "  (operator as { flight_look_easing: (this: void, x: number) => number }).flight_look_easing = (x) => x;",
+      "  const look = operator.flight_look_easing(0.5);",
+      "  const rotation = operator.quat_from_euler(vmath.vector3(0, look, 0));",
+      "  print(rotation, operator.EASING_INOUT_QUART(0.5));",
+      "}"
+    ]
+  }
+}
