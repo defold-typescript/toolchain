@@ -1,0 +1,122 @@
+{
+  "info": {
+    "namespace": "flow.bottom_sheet",
+    "brief": "Flow's hosted bottom-sheet component and GUI lifecycle adapter.",
+    "description": "Flow's hosted bottom-sheet component and GUI lifecycle adapter."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "FlowSelf",
+      "types": [
+        "object"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowParams",
+      "types": [
+        "LuaMap<string, unknown>",
+        "Record<string, unknown>"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowInputAction",
+      "properties": [
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "released",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "init",
+      "types": [
+        "(self: FlowSelf, config: Flow_BottomSheetHostConfig) => void"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "final",
+      "types": [
+        "(self: FlowSelf) => void"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "update",
+      "types": [
+        "(self: FlowSelf, dt: number) => boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "present",
+      "types": [
+        "(self: FlowSelf, params?: FlowParams) => void"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "dismiss",
+      "types": [
+        "(self: FlowSelf, result?: unknown) => boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "invalidate",
+      "types": [
+        "(self: FlowSelf) => boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "on_input",
+      "types": [
+        "(self: FlowSelf, action_id: Hash | undefined, action: FlowInputAction) => boolean"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "on_message",
+      "types": [
+        "(self: FlowSelf, message_id: Hash | string, message?: FlowParams, sender?: Url) => boolean"
+      ]
+    }
+  ]
+}
