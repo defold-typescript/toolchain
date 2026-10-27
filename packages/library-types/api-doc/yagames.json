@@ -2004,6 +2004,28 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "FlagsClientFeature",
+      "properties": [
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "MultiplayerSessionsInitOptions",
       "properties": [
         {
@@ -2037,6 +2059,61 @@
           "description": "",
           "types": [
             "MultiplayerSessionsMeta"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MultiplayerSessionsMeta",
+      "properties": [
+        {
+          "name": "meta1",
+          "brief": "",
+          "description": "",
+          "types": [
+            "MultiplayerSessionsMetaRange"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "meta2",
+          "brief": "",
+          "description": "",
+          "types": [
+            "MultiplayerSessionsMetaRange"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "meta3",
+          "brief": "",
+          "description": "",
+          "types": [
+            "MultiplayerSessionsMetaRange"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MultiplayerSessionsMetaRange",
+      "properties": [
+        {
+          "name": "min",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
           ]
         }
       ]
@@ -2112,6 +2189,36 @@
           "description": "",
           "types": [
             "Array<MultiplayerSessionEvent>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MultiplayerSessionEvent",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "payload",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Record<string, unknown>"
+          ]
+        },
+        {
+          "name": "time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
           ]
         }
       ]

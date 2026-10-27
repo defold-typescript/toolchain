@@ -2597,6 +2597,73 @@ describe("Flow authored module type claims", () => {
       types: ["(self: FlowSelf, config: Flow_BottomSheetHostConfig) => void"],
     });
   });
+
+  interface DocFunction {
+    name: string;
+    parameters: { name: string; types: string[]; is_optional: string }[];
+    returnvalues: { types: string[] }[];
+  }
+
+  interface DocTypedef {
+    functions?: DocFunction[];
+    properties?: { name: string; types: string[] }[];
+  }
+
+  function typedef(namespace: string, name: string): DocTypedef {
+    const found = element(namespace, name);
+    expect(found.type).toBe("TYPEDEF");
+    return found as DocTypedef;
+  }
+
+  const names = (members: { name: string }[] | undefined) => (members ?? []).map((m) => m.name);
+
+  test("flow.flow documents the component constructors reached through ui.cp", () => {
+    const components = typedef("flow.flow", "FlowComponents");
+    expect(names(components.functions)).toEqual([
+      "Box",
+      "Button",
+      "ButtonImage",
+      "Icon",
+      "Popup",
+      "Scroll",
+      "Text",
+    ]);
+    expect(components.properties?.map(({ name, types }) => ({ name, types }))).toEqual([
+      { name: "Markdown", types: ["FlowMarkdownComponent"] },
+    ]);
+    expect(names(typedef("flow.flow", "FlowMarkdownComponent").functions)).toEqual([
+      "__call",
+      "parse",
+      "viewer",
+    ]);
+  });
+
+  test("flow.flow documents the runtime facade reached through nav.runtime", () => {
+    expect(names(typedef("flow.flow", "FlowRuntimeFacade").functions)).toEqual([
+      "init",
+      "final",
+      "on_message",
+    ]);
+  });
+
+  test("the callable flow.color and flow.bottom_sheet modules document their direct call", () => {
+    const signature = ({ parameters, returnvalues }: DocFunction) => ({
+      parameters: parameters.map((p) => `${p.name}:${p.types.join("|")}:${p.is_optional}`),
+      returns: returnvalues.flatMap(({ types }) => types),
+    });
+    const [color] = typedef("flow.color", "FlowColorModule").functions ?? [];
+    expect(color?.name).toBe("__call");
+    expect(color && signature(color)).toEqual({
+      parameters: ["r:number:False", "g:number:False", "b:number:False", "a:number:True"],
+      returns: ["Flow_ColorValue"],
+    });
+    const [sheet] = typedef("flow.bottom_sheet", "FlowBottomSheetModule").functions ?? [];
+    expect(sheet?.name).toBe("__call");
+    expect(sheet && signature(sheet)).toEqual({
+      parameters: ["props:Flow_BottomSheetProps:False"],
+      returns: ["Flow_Element"],
+    });
+  });
 });
 
 describe("nakama.session type claims upstream states only in its body", () => {

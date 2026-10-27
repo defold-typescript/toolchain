@@ -117,6 +117,37 @@
       "types": [
         "(self: FlowSelf, message_id: Hash | string, message?: FlowParams, sender?: Url) => boolean"
       ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowBottomSheetModule",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "Creates a bottom-sheet element.",
+          "description": "Creates a bottom-sheet element.",
+          "parameters": [
+            {
+              "name": "props",
+              "doc": "",
+              "types": [
+                "Flow_BottomSheetProps"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_Element"
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

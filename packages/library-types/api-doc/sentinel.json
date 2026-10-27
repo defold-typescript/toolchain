@@ -269,6 +269,45 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "CrashInfo",
+      "properties": [
+        {
+          "name": "source",
+          "brief": "`\"lua\"` or `\"js\"` for a soft crash, `\"crash\"` for a hard one.",
+          "description": "`\"lua\"` or `\"js\"` for a soft crash, `\"crash\"` for a hard one.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message",
+          "brief": "The error message. On a hard crash, the JSON-encoded crash dump extra data.",
+          "description": "The error message. On a hard crash, the JSON-encoded crash dump extra data.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "traceback",
+          "brief": "The traceback. On a hard crash, the JSON-encoded crash dump backtrace.",
+          "description": "The traceback. On a hard crash, the JSON-encoded crash dump backtrace.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "fatal",
+          "brief": "`true` on a hard crash, absent on a soft one.",
+          "description": "`true` on a hard crash, absent on a soft one.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "Breadcrumb",
       "properties": [
         {

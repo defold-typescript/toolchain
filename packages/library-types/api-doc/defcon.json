@@ -145,6 +145,45 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CommandCallback",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "__call",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "args",
+              "doc": "",
+              "types": [
+                "Array<string>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "stream",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "string"
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }
