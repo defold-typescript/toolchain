@@ -965,8 +965,8 @@ describe("parseLualsSource module table assignments", () => {
 });
 
 describe("parseLualsSource re-exported module tables", () => {
-  function source(options: { reExport?: boolean; metatable?: boolean } = {}): string {
-    const { reExport = true, metatable = true } = options;
+  function source(options: { aliases?: string[]; metatable?: boolean } = {}): string {
+    const { aliases = ["T"], metatable = true } = options;
     return lua(
       "local M = {}",
       "local T = {}",
@@ -978,7 +978,7 @@ describe("parseLualsSource re-exported module tables", () => {
       "---@return C|nil",
       "function T:get() end",
       "function M.run() end",
-      ...(reExport ? ["M.T = T"] : []),
+      ...aliases.map((name) => `M.${name} = T`),
       "return M",
     );
   }
@@ -1002,8 +1002,32 @@ describe("parseLualsSource re-exported module tables", () => {
     expect(returns(model, "T", "get")).toEqual(["C|nil"]);
   });
 
+  test("declares a table exported under two fields under both", () => {
+    const model = parseLualsSource(source({ aliases: ["T", "Alias"] }));
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["run"]);
+    expect(
+      model.moduleTables?.map((t) => ({
+        name: t.name,
+        table: t.table,
+        functions: t.functions.map((f) => f.name),
+      })),
+    ).toEqual([
+      { name: "T", table: "T", functions: ["new"] },
+      { name: "Alias", table: "T", functions: ["new"] },
+    ]);
+    expect(model.interfaces.find((i) => i.name === "T")?.extends).toBe("C");
+    expect(model.moduleTables?.map((t) => t.functions[0]?.returns.flatMap((r) => r.types))).toEqual(
+      [["T"], ["T"]],
+    );
+  });
+
+  test("deduplicates repeated exports under the same field", () => {
+    const model = parseLualsSource(source({ aliases: ["T", "T"] }));
+    expect(model.moduleTables?.map((t) => t.name)).toEqual(["T"]);
+  });
+
   test("a table the module never re-exports keeps its dot functions as module functions", () => {
-    const model = parseLualsSource(source({ reExport: false }));
+    const model = parseLualsSource(source({ aliases: [] }));
     expect(model.moduleFunctions.map((f) => f.name)).toEqual(["new", "run"]);
     expect("moduleTables" in model).toBe(false);
     expect(model.interfaces.find((i) => i.name === "T")?.extends).toBeUndefined();

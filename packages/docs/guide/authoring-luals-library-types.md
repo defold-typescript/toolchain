@@ -212,7 +212,7 @@ declared on `export const Node: { "new"(this: void, ...): Node }`, not as a top-
 `---@return Flow.FlexNode`, the `Node` interface extends `Flow_FlexNode`, and `new`
 plus every method annotated `---@return Flow.FlexNode self` return `Node`, so
 `flex.Node.new({ key: "root" }).set_width(960).calculate_layout(960, 640)` keeps the
-chainable methods.
+chainable methods. A table exported under several fields is declared under each field.
 
 Where an annotation types a parameter wrongly, a `type` token on a `moduleFunctions`
 parameter replaces it: ads-wrapper's `queue.lua` writes `---@param fn ads_callback`,

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { lowerLibraryModel } from "./lower-api-doc";
-import type { LibraryModel } from "./parse-luals";
+import { type LibraryModel, parseLualsSource } from "./parse-luals";
 import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -883,6 +883,27 @@ test("a declaration named like an engine type lowers under the name the emitter 
     "Vector3_",
     "Url_",
   ]);
+});
+
+test("re-exported table aliases each lower their table functions", () => {
+  const model = parseLualsSource(`
+local M = {}
+local T = {}
+T.__index = T
+---@return C
+function T.new() end
+function M.run() end
+M.T = T
+M.Alias = T
+return M
+`);
+  const functions = elementsOf(lowerLibraryModel(model, { namespace: "demo" }))
+    .filter((element) => element.type === "FUNCTION")
+    .map((element) => element.name);
+
+  expect(functions).toContain("T.new");
+  expect(functions).toContain("Alias.new");
+  expect(functions).not.toContain("new");
 });
 
 test("two declarations reaching one generated name refuse to lower, matching the emitter", () => {
