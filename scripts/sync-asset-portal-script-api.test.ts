@@ -269,6 +269,16 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
     );
   });
 
+  test("a candidate whose portal entry carries refDate copies it directly after refKind", async () => {
+    const root = packageRoot([{ ...astar, refDate: "2024-03-01T00:00:00Z" }]);
+    const [library] = (await syncAssetPortalScriptApi(root, astarSource())).libraries;
+    expect(library?.refDate).toBe("2024-03-01T00:00:00Z");
+    const keys = Object.keys(library ?? {});
+    expect(keys.indexOf("refDate")).toBe(keys.indexOf("refKind") + 1);
+    const written = JSON.parse(readFileSync(join(root, "asset-portal-script-api.json"), "utf8"));
+    expect(written.libraries[0].refDate).toBe("2024-03-01T00:00:00Z");
+  });
+
   test("the written api-doc is the complete conversion, constants and nested callback fields included", async () => {
     const root = packageRoot([astar]);
     await syncAssetPortalScriptApi(root, astarSource());

@@ -486,6 +486,7 @@ interface AssetPortalEntry {
   repo?: string;
   ref?: string;
   refKind?: "release" | "tag" | "commit";
+  refDate?: string;
   kind: string;
 }
 
@@ -501,6 +502,7 @@ export function portalListingsFromManifest(libraryTypesDir: string): LibraryList
   const path = join(libraryTypesDir, "asset-portal.json");
   if (!existsSync(path)) return [];
   const { entries } = JSON.parse(readFileSync(path, "utf8")) as { entries: AssetPortalEntry[] };
+  const engineReleases = loadDefoldEngineReleases(libraryTypesDir);
   const repoKey = (owner: string, repo: string): string => `${owner}/${repo}`.toLowerCase();
   const listed = new Set([
     ...[...libraryOriginByNamespace(libraryTypesDir).values()].map(({ owner, repo }) =>
@@ -526,6 +528,7 @@ export function portalListingsFromManifest(libraryTypesDir: string): LibraryList
         url: entry.repo,
         ref: entry.ref,
         pinKind: entry.refKind,
+        ...eraOf(entry, engineReleases),
         description,
         route: `/libraries/${owner}/${repo}`,
         api: "none",
@@ -678,7 +681,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
   // tag or commit its manifest recorded, and imported as the module `resolve`
   // writes for it. A doc adding members to an engine namespace stays that
   // ambient global, as `resolve` keeps it. A dated pin names the Defold version
-  // current when it was cut; only Defold's own manifest records pin dates.
+  // current when it was cut; both manifests record a release or tag pin's date.
   const scriptApiMeta = (
     entry: DefoldExtensionEntry,
     doc: DefoldExtensionEntry["docs"][number],

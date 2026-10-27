@@ -172,7 +172,9 @@ Portal libraries that ship no Lua API, such as shaders, materials, sounds and
 editor scripts, are listed the same way under their GitHub owner, such as
 [defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page
 leads with the portal's description of the library, gives the dependency step
-for its pin, and links its Asset Portal entry.
+for its pin, and links its Asset Portal entry. On both kinds of portal page, a
+release or tag pin also names the Defold version that was current when it was
+cut, the same hint Defold's own libraries carry.
 
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).
