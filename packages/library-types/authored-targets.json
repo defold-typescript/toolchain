@@ -870,6 +870,43 @@
       "generated": "generated/ink.d.ts",
       "apiDoc": "api-doc/ink.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-ink/ink/story.lua"]
+    },
+    {
+      "repo": "https://github.com/Dragosha/defold-light-and-shadows",
+      "ref": "v0.9.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/light_and_shadows.light_and_shadows.d.ts",
+      "moduleId": "light_and_shadows.light_and_shadows",
+      "namespace": "light_and_shadows.light_and_shadows",
+      "generated": "generated/light_and_shadows.light_and_shadows.d.ts",
+      "apiDoc": "api-doc/light_and_shadows.light_and_shadows.json",
+      "upstreamLua": [
+        "fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/light_and_shadows.lua"
+      ]
+    },
+    {
+      "repo": "https://github.com/Dragosha/defold-light-and-shadows",
+      "ref": "v0.9.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/light_and_shadows.light.d.ts",
+      "moduleId": "light_and_shadows.light",
+      "namespace": "light_and_shadows.light",
+      "generated": "generated/light_and_shadows.light.d.ts",
+      "apiDoc": "api-doc/light_and_shadows.light.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/light.lua"]
+    },
+    {
+      "repo": "https://github.com/Dragosha/defold-light-and-shadows",
+      "ref": "v0.9.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/light_and_shadows.constants.d.ts",
+      "moduleId": "light_and_shadows.constants",
+      "namespace": "light_and_shadows.constants",
+      "generated": "generated/light_and_shadows.constants.d.ts",
+      "apiDoc": "api-doc/light_and_shadows.constants.json",
+      "upstreamLua": [
+        "fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/constants.lua"
+      ]
     }
   ]
 }

@@ -1,0 +1,297 @@
+{
+  "info": {
+    "namespace": "light_and_shadows.light",
+    "brief": "The light sources manager. It keeps the list of point light sources and the camera",
+    "description": "The light sources manager. It keeps the list of point light sources and the camera\nposition, and each frame writes the sorted sources and the camera values into\n`light_and_shadows.constants`. `light_setting.script` calls `set_color` and `update`,\nand a scene controller calls `set_position` as its camera moves. Assigning a new value\nto a field goes through a cast, since a namespace import is read-only."
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "list",
+      "brief": "Every point light source, keyed by its game object id. `update` reads it every frame.",
+      "description": "Every point light source, keyed by its game object id. `update` reads it every frame.",
+      "types": [
+        "LuaTable<Hash, LightSource>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cam_look_at",
+      "brief": "The point the camera looks at, set by `set_position`. Light sources are sorted by their distance from it.",
+      "description": "The point the camera looks at, set by `set_position`. Light sources are sorted by their distance from it.",
+      "types": [
+        "Vector3"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cam_position",
+      "brief": "The camera world position, set by `set_position`.",
+      "description": "The camera world position, set by `set_position`.",
+      "types": [
+        "Vector3"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cam_view",
+      "brief": "The camera rotation, set by `set_position`. A source with `rotate` set turns to it.",
+      "description": "The camera rotation, set by `set_position`. A source with `rotate` set turns to it.",
+      "types": [
+        "Quaternion"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "top_v",
+      "brief": "The up vector, rotated by a game object's world rotation to give a spotlight's direction.",
+      "description": "The up vector, rotated by a game object's world rotation to give a spotlight's direction.",
+      "types": [
+        "Vector3"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "cam_z",
+      "brief": "The camera Z coordinate, the distance from the focus point that depth of field needs. Set it here or with `set_position`'s `cam_z`.",
+      "description": "The camera Z coordinate, the distance from the focus point that depth of field needs. Set it here or with `set_position`'s `cam_z`.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "attenuation_coefficient",
+      "brief": "Divides a source's squared distance from the camera focus point before it scales the source's power.",
+      "description": "Divides a source's squared distance from the camera focus point before it scales the source's power.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_color",
+      "brief": "Sets the base light uniform constants in `light_and_shadows.constants`. An omitted",
+      "description": "Sets the base light uniform constants in `light_and_shadows.constants`. An omitted\nvalue leaves its constant as it is. It also posts `clear_color` to `@render:` with\n`clear_color`, or `fog_color` when that is omitted.",
+      "parameters": [
+        {
+          "name": "fog_color",
+          "doc": "The fog color in RGB; `w` is the fog density.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fog",
+          "doc": "The minimum and maximum Z in camera view space where the fog begins and ends.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "ambient",
+          "doc": "The ambient color.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "clear_color",
+          "doc": "The color that clears the default render target, which is the background color.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_position",
+      "brief": "Sets the camera rotation, the point the camera looks at, and the camera position.",
+      "description": "Sets the camera rotation, the point the camera looks at, and the camera position.",
+      "parameters": [
+        {
+          "name": "cam_rotation",
+          "doc": "The camera rotation.",
+          "types": [
+            "Quaternion"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cam_look_at_position",
+          "doc": "The point the camera looks at.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cam_position",
+          "doc": "The camera world position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "cam_z",
+          "doc": "The camera Z coordinate, the distance from the focus point, for depth of field. Omitted, `cam_z` keeps its value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset",
+      "brief": "Clears the light sources sent to the shader and restores the module's default",
+      "description": "Clears the light sources sent to the shader and restores the module's default\nambient, fog color and fog constants.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Unused.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Prepares the constants for the render script: updates each source's position and",
+      "description": "Prepares the constants for the render script: updates each source's position and\nspotlight direction from its game object, sorts the sources by distance from the\npoint the camera looks at into `light_and_shadows.constants.lights`, attenuates\ntheir power, and copies the camera values. Call it from `update`.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "Unused.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "Unused.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LightSource",
+      "properties": [
+        {
+          "name": "value",
+          "brief": "The color in `x`, `y`, `z`. `w` is the power `update` attenuates by distance; `bulb.script` sets it to `1 / power`.",
+          "description": "The color in `x`, `y`, `z`. `w` is the power `update` attenuates by distance; `bulb.script` sets it to `1 / power`.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "current_value",
+          "brief": "The color sent to the shader, its `w` attenuated by distance. `update` creates it from nothing when it is absent.",
+          "description": "The color sent to the shader, its `w` attenuated by distance. `update` creates it from nothing when it is absent.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "position",
+          "brief": "The world position. `w` carries the spotlight smoothness, from `0` (soft) to `1` (hard).",
+          "description": "The world position. `w` carries the spotlight smoothness, from `0` (soft) to `1` (hard).",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "direction",
+          "brief": "The spotlight direction. `w` is the cone angle in radians; `0` or less turns the spotlight off.",
+          "description": "The spotlight direction. `w` is the cone angle in radians; `0` or less turns the spotlight off.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "num",
+          "brief": "A positive number keeps the source out of the distance sort and always visible; the default is `-1`.",
+          "description": "A positive number keeps the source out of the distance sort and always visible; the default is `-1`.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "static",
+          "brief": "When `true`, `update` never reads the game object's world position again.",
+          "description": "When `true`, `update` never reads the game object's world position again.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "static_spot",
+          "brief": "When `true`, `update` never reads the game object's rotation for the spotlight direction again.",
+          "description": "When `true`, `update` never reads the game object's rotation for the spotlight direction again.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "rotate",
+          "brief": "When `true`, `update` rotates the game object to the camera rotation, as a billboard.",
+          "description": "When `true`, `update` rotates the game object to the camera rotation, as a billboard.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "y_offset",
+          "brief": "Added to the world Y position each frame.",
+          "description": "Added to the world Y position each frame.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "id",
+          "brief": "The game object id, as `bulb.script` stores it.",
+          "description": "The game object id, as `bulb.script` stores it.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timer",
+          "brief": "A timer `bulb.script` stores; `update` does not read it.",
+          "description": "A timer `bulb.script` stores; `update` does not read it.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

@@ -40,6 +40,11 @@
  * module local derived from the trailing return reads its constructor: an annotation
  * file named through `options.moduleLocal` is read for the function stubs its
  * assignments declare, and its constructor holds constants.
+ *
+ * A data module returns its table as a literal, a column-0 `return {` closing the file.
+ * There is no module local then, and that constructor's depth-1 entries are the whole
+ * surface, read by the same rule; an `__index` key is refused as it is in a returned
+ * metatable.
  */
 
 export interface LuaMember {
@@ -59,7 +64,8 @@ export interface LuaMember {
 }
 
 export interface LuaSurface {
-  moduleLocal: string;
+  /** Undefined for a module that returns a table literal, which names no local. */
+  moduleLocal: string | undefined;
   members: LuaMember[];
 }
 
@@ -75,6 +81,7 @@ export interface LuaSurfaceOptions {
 }
 
 const RETURN_LINE = /^return\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$/;
+const RETURN_LITERAL = /^return\s*\{/;
 const RETURN_SETMETATABLE = /^return\s+setmetatable\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,/;
 const IDENTIFIER = "[A-Za-z_][A-Za-z0-9_]*";
 const FUNCTION_VALUE = /^function\s*\(/;
@@ -98,21 +105,24 @@ function assertNoDelegation(text: string): void {
   }
 }
 
-function resolveModuleLocal(lines: string[]): string {
+type ModuleReturn = { local: string } | { literal: number };
+
+function resolveModuleReturn(lines: string[]): ModuleReturn {
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index] as string;
     const bare = RETURN_LINE.exec(line);
-    if (bare) return bare[1] as string;
+    if (bare) return { local: bare[1] as string };
+    if (RETURN_LITERAL.test(line)) return { literal: index };
     const wrapped = RETURN_SETMETATABLE.exec(line);
     if (wrapped) {
       assertNoDelegation(
         [line.slice((wrapped[0] as string).length), ...lines.slice(index + 1)].join("\n"),
       );
-      return wrapped[1] as string;
+      return { local: wrapped[1] as string };
     }
   }
   throw new Error(
-    "lua surface: the source has no trailing `return <name>`, so the module-local name cannot be derived.",
+    "lua surface: the source has no trailing `return <name>` or `return { … }`, so the module-local name cannot be derived.",
   );
 }
 
@@ -295,15 +305,32 @@ function readDoc(lines: string[], index: number): Pick<LuaMember, "doc" | "refus
   return { doc, refusedDoc: false };
 }
 
+/** The entries of the table literal a data module returns at line `index`. */
+function readReturnedLiteral(lines: string[], index: number): LuaMember[] {
+  const { entries } = readConstructor(lines, index, (lines[index] as string).indexOf("{"));
+  if (entries.some((entry) => entry.name === "__index")) {
+    throw new Error(
+      "lua surface: the returned table carries `__index`, so members reached through it would be invisible and the surface would read as complete while short.",
+    );
+  }
+  return entries;
+}
+
 /**
  * The public surface of a Lua module source: the module-local name it returns — or the
  * one `options.moduleLocal` names — and every member assigned to it at column 0, in
  * source order. A name defined more than once keeps its first position and its last
- * definition, matching Lua.
+ * definition, matching Lua. A source returning a table literal has the literal's entries
+ * as its surface and no module local.
  */
 export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {}): LuaSurface {
   const lines = source.split("\n");
-  const moduleLocal = options.moduleLocal ?? resolveModuleLocal(lines);
+  const returned: ModuleReturn =
+    options.moduleLocal !== undefined ? { local: options.moduleLocal } : resolveModuleReturn(lines);
+  if ("literal" in returned) {
+    return { moduleLocal: undefined, members: readReturnedLiteral(lines, returned.literal) };
+  }
+  const moduleLocal = returned.local;
   const definition = new RegExp(`^function\\s+${moduleLocal}\\.(${IDENTIFIER})\\s*\\(`);
   const assignment = new RegExp(`^${moduleLocal}\\.(${IDENTIFIER})\\s*=\\s*(.*)$`);
   const tableConstructor =
