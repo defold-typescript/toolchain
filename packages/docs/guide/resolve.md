@@ -84,9 +84,8 @@ iap.buy("my_iap", {});
 ```
 
 A dotted namespace imports by its full name, as in
-`import * as cmd from "rive.cmd"`. The ambient namespace beside each module
-keeps a bare `iap.buy(...)` compiling, marked deprecated, until the next
-release removes it.
+`import * as cmd from "rive.cmd"`. The namespace is not a global: a bare
+`iap.buy(...)` with no import fails with `Cannot find name 'iap'`.
 
 When several dependencies declare one namespace — the Firebase extensions all
 declare `firebase` — each declaration is written to its own
@@ -97,8 +96,8 @@ reaches every dependency's members. `resolve` reports it as
 compared without letter case, gets a numbered suffix, such as `foo.bar-2.d.ts`
 when a `foo.bar` namespace already owns `foo.bar.d.ts`, or `foo-2.d.ts` beside a
 `Foo` namespace's `Foo.d.ts`. An extension that declares an engine
-namespace, such as Spine's `gui`, stays an ambient namespace with no deprecated
-copy, because a module cannot add members to the engine's global: it adds its
+namespace, such as Spine's `gui`, is the one ambient case and needs no import,
+because a module cannot add members to the engine's global: it adds its
 members to that namespace and leaves the engine's type aliases, such as
 `gui.Playback`, to the engine surface.
 
