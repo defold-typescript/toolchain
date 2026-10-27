@@ -1,7 +1,4 @@
 /** @noSelfInFile */
-/** @deprecated Import it: import * as tile_raycast from "tile_raycast" */
-declare const tile_raycast: typeof import("tile_raycast");
-
 /**
  * Ray casts through a tile map with the DDA algorithm, for line of sight,
  * bullet paths and similar checks in tile-based games. Tile coordinates and

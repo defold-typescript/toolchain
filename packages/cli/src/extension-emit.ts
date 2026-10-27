@@ -1,7 +1,7 @@
 // Pure parse->emit core of the `[dependencies]`-driven extension typing pipeline.
 // Given one extension `.script_api` (YAML) text it produces the `.d.ts`
-// declaration — a `@globalTable` module with its deprecated ambient namespace, or
-// an engine namespace's ambient form — through `scriptApiToFixtureJson` (YAML ->
+// declaration — a `@globalTable` module, or an engine namespace's ambient form —
+// through `scriptApiToFixtureJson` (YAML ->
 // core ref-doc JSON) feeding `generateGlobalTableDeclaration`, the same call
 // regen uses to write the committed extension goldens
 // (`packages/types/extension-goldens/`). The
@@ -21,10 +21,6 @@ const EXTENSION_CORE_TYPES_IMPORT = "../src/core-types";
 export interface EmittedExtension {
   namespace: string;
   contents: string;
-  // The ambient namespace kept beside the module for one release, tagged
-  // `@deprecated`. Absent when the namespace is the engine's: `contents` is then
-  // that ambient form itself.
-  deprecatedGlobal?: string;
   dropped: string[];
 }
 
@@ -46,11 +42,7 @@ interface RegenEntry {
 
 interface RegenModule {
   generateModuleDeclaration: (entry: RegenEntry) => { contents: string; dropped: string[] };
-  generateGlobalTableDeclaration: (entry: RegenEntry) => {
-    contents: string;
-    deprecatedGlobal: string;
-    dropped: string[];
-  };
+  generateGlobalTableDeclaration: (entry: RegenEntry) => { contents: string; dropped: string[] };
 }
 
 // Every namespace a registered engine target declares. A doc adding members to
@@ -76,15 +68,13 @@ async function loadEmitter(): Promise<ScriptApiToFixtureJson & RegenModule> {
 // Doc-level core shared by the YAML entrypoint and the extension golden parity
 // guard. The doc is the post-`scriptApiToFixtureJson` ref-doc JSON, so passing a
 // committed `fixtures/<ns>_doc.json` reproduces the committed
-// `extension-goldens/<ns>.d.ts` and `<ns>.global.d.ts` byte-for-byte (regen
-// writes the same `generateGlobalTableDeclaration` output with no formatting
-// pass). `pages` are the
+// `extension-goldens/<ns>.d.ts` byte-for-byte (regen writes the same
+// `generateGlobalTableDeclaration` output with no formatting pass). `pages` are the
 // curated library pages documenting this doc, whose indexes `classifications`
 // classifies and the declaration notes; an uncurated extension has none and
 // gains no note. The declaration owns no constant-union alias: an extension
 // declaring an engine namespace (`gui`) would otherwise re-declare the engine
-// module's aliases. Any other namespace is a `@globalTable` module beside its
-// deprecated ambient form.
+// module's aliases. Any other namespace is a `@globalTable` module.
 export async function emitExtensionDeclarationFromDoc(
   doc: { info: { namespace: string } },
   pages: readonly string[] = [],
@@ -101,12 +91,10 @@ export async function emitExtensionDeclarationFromDoc(
     indexBaseSource: { pages, classifications },
     ownsConstantUnionAliases: false,
   };
-  if (engine.has(namespace)) {
-    const { contents, dropped } = generateModuleDeclaration(entry);
-    return { namespace, contents, dropped };
-  }
-  const { contents, deprecatedGlobal, dropped } = generateGlobalTableDeclaration(entry);
-  return { namespace, contents, deprecatedGlobal, dropped };
+  const { contents, dropped } = engine.has(namespace)
+    ? generateModuleDeclaration(entry)
+    : generateGlobalTableDeclaration(entry);
+  return { namespace, contents, dropped };
 }
 
 export async function emitExtensionDeclaration(

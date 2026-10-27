@@ -68,8 +68,7 @@ For each native extension, `resolve`:
    or `number` its doc declares, with a slot flagged `optional: true` emitted
    optional, a callback parameter typed from its documented arguments
    (`(self: unknown, code: number, data: { id: string }) => void`) and a table
-   parameter typed from its documented fields, and beside it the doc's
-   deprecated ambient namespace in `<namespace>.global.d.ts`,
+   parameter typed from its documented fields,
 4. writes an index barrel and a `package.json` for that sibling surface, and
 5. additively appends `"extensions"` to `tsconfig.json` `compilerOptions.types`, so
    it coexists with the pinned engine surface (and the `"libraries"` surface,
@@ -252,10 +251,9 @@ const al = openal;
 al.doppler_factor = 2;
 ```
 
-`daabbcc`, `share`, `uuid4` and `tile_raycast` were globals in v0.53.0, so for
-one release each also keeps a deprecated global of the same name. A bare value
-call such as `uuid4.generate()` still compiles and runs, but a type named
-through the namespace, such as `share.FileOptions`, needs the import.
+`daabbcc`, `share`, `uuid4` and `tile_raycast` were globals in v0.53.0 and are
+imported like every other curated native: a bare `uuid4.generate()` fails with
+`Cannot find name 'uuid4'`.
 
 The curated file wins over any `.script_api` the same archive ships, and the
 `--json` report marks the dependency `typeSurface: "vendored-native"`.

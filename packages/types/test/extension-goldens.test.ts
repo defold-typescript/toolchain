@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 import * as ts from "typescript";
 import { EXTENSION_GOLDEN_MANIFEST, EXTENSION_GOLDENS_DIR } from "../scripts/extension-goldens";
@@ -44,7 +44,6 @@ describe("extension golden proofs — isolated from the ambient surface", () => 
       .filter((path) => !path.startsWith(".."));
     for (const entry of EXTENSION_GOLDEN_MANIFEST) {
       expect(inPackage).toContain(`extension-goldens/${entry.outFile}`);
-      expect(inPackage).toContain(`extension-goldens/${entry.globalOutFile}`);
     }
     expect(inPackage).not.toContain("index.d.ts");
     expect(inPackage.filter((path) => path.startsWith("generated/"))).toEqual([]);
@@ -69,19 +68,19 @@ function moduleDeclarations(file: string): ts.ModuleDeclaration[] {
 
 describe("extension golden forms", () => {
   for (const entry of EXTENSION_GOLDEN_MANIFEST) {
-    test(`${entry.namespace}: the module is a tagged global table and its ambient twin is deprecated`, () => {
+    test(`${entry.namespace}: the module is a tagged global table with no ambient twin`, () => {
       const module = moduleDeclarations(entry.outFile).find(
         (node) => ts.isStringLiteral(node.name) && node.name.text === entry.namespace,
       );
       if (module === undefined) throw new Error(`no declare module "${entry.namespace}"`);
       expect(ts.getJSDocTags(module).map((tag) => tag.tagName.text)).toEqual(["globalTable"]);
       expect(ts.getJSDocDeprecatedTag(module)).toBeUndefined();
-
-      const global = moduleDeclarations(entry.globalOutFile).find(
-        (node) => ts.isIdentifier(node.name) && node.name.text === entry.namespace,
-      );
-      if (global === undefined) throw new Error(`no ambient namespace ${entry.namespace}`);
-      expect(ts.getJSDocDeprecatedTag(global)).toBeDefined();
     });
   }
+
+  test("the goldens directory holds exactly the manifest's modules", () => {
+    expect(readdirSync(resolve(PACKAGE_ROOT, EXTENSION_GOLDENS_DIR)).sort()).toEqual(
+      EXTENSION_GOLDEN_MANIFEST.map((entry) => entry.outFile).sort(),
+    );
+  });
 });
