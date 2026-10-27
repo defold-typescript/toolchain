@@ -1034,12 +1034,18 @@ describe("a fork offering several call shapes is measured against the set", () =
     expect(report.fieldCoverage).toBe(1);
   });
 
+  // `operator.lerp` takes numbers or vectors, and `bezier.new` vector points or number
+  // points with a required `length_func`.
   test("the term is 0 on every target whose api-doc names each function once", () => {
     const overloaded = authoredParityTargets(PACKAGE_ROOT)
       .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
       .filter((report) => report.overloadedMembers > 0)
       .map((report) => `${report.namespace}: ${report.overloadedMembers}`);
-    expect(overloaded).toEqual(["monarch.transitions.gui: 1"]);
+    expect(overloaded).toEqual([
+      "monarch.transitions.gui: 1",
+      "operator.operator: 1",
+      "operator.bezier: 1",
+    ]);
   });
 });
 
@@ -1190,12 +1196,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other eighty-two targets share no variadic member at all", () => {
+  test("the other eighty-four targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(82);
+    expect(untouched.length).toBe(84);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2357,6 +2363,65 @@ describe("pointer_lock.pointer declares the whole of its upstream", () => {
       .map((element) => element.name);
     expect(blank).toEqual([]);
     expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// Neither module carries an annotation. `operator.lua` heads its six `did_*` functions
+// `-- Internal`, and only the bundled `operator.script` and `checkpoint.script` call them,
+// so the ledger records them rather than the fork declaring them. Its seven easings are
+// `operator.X = function` assignments, counted as functions. `bezier.lua`'s `position`
+// and `uniform_position` take the instance as `self`, which the fork declares twice: as
+// `Bezier` methods and as module functions.
+describe("the defold-operator modules declare the whole of their upstream modules", () => {
+  const cases = [
+    { namespace: "operator.operator", members: 24, fields: 3, lifecycle: 6 },
+    { namespace: "operator.bezier", members: 3, fields: 0, lifecycle: 0 },
+  ];
+
+  for (const { namespace, members, fields, lifecycle } of cases) {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+
+    test(`${namespace}: both axes close, with nothing missing, invented or short`, () => {
+      expect(report.upstreamMembers).toBe(members);
+      expect(report.upstreamFields).toBe(fields);
+      expect(report.missingMembers).toEqual([]);
+      expect(report.phantomMembers).toEqual([]);
+      expect(report.arityMismatches).toEqual([]);
+      expect(report.missingFields).toEqual([]);
+      expect(report.phantomFields).toEqual([]);
+      expect(report.callableCoverage).toBe(1);
+      expect(report.fieldCoverage).toBe(1);
+      expect(report.parityExceptions.length).toBe(lifecycle);
+    });
+
+    test(`${namespace}: every api-doc member carries a description`, () => {
+      const declared = apiDocElements(target(namespace)).filter(
+        (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+      );
+      expect(new Set(declared.map((element) => element.name)).size).toBe(
+        members - lifecycle + fields,
+      );
+      const blank = declared
+        .filter((element) => (element.description ?? "").trim() === "")
+        .map((element) => element.name);
+      expect(blank).toEqual([]);
+      expect(report.undocumentedMembers).toBe(0);
+    });
+  }
+
+  test("operator.operator's exceptions are exactly the six registry hooks", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("operator.operator"));
+    expect(report.parityExceptions.map((entry) => entry.name)).toEqual([
+      "did_activate_operator",
+      "did_deactivate_operator",
+      "did_final_checkpoint",
+      "did_final_operator",
+      "did_init_checkpoint",
+      "did_init_operator",
+    ]);
+    expect(report.parityExceptions.map((entry) => entry.kind)).toEqual(
+      Array(6).fill("script-lifecycle"),
+    );
   });
 });
 

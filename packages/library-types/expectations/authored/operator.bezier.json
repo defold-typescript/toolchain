@@ -1,0 +1,21 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/astrochili/defold-operator",
+    "authoredHere": true,
+    "commit": "1.5.3",
+    "sourceUrl": "https://github.com/astrochili/defold-operator/tree/1.5.3",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's `new` returns a table whose metatable indexes the module, so the README calls the instance with `:` (`bezier:uniform_position(time)`) while the same functions are `.` module members taking the instance first; a `Bezier` method declared `this: void`, or a module function without `self`, still passes `tsc`, so only TSTL's emit shows which call form each produces.",
+    "consumer": [
+      "import * as bezier from \"operator.bezier\";",
+      "export function follow(points: Vector3[], t: number): void {",
+      "  const path = bezier.new(points);",
+      "  const uniform = path.uniform_position(t);",
+      "  const classic = bezier.position(path, t);",
+      "  print(uniform, classic);",
+      "}"
+    ]
+  }
+}
