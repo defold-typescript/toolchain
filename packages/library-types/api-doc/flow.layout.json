@@ -1,0 +1,63 @@
+{
+  "info": {
+    "namespace": "flow.layout",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "compute",
+      "brief": "Compute layout for a node tree. Writes layout.x/y/w/h to every node\nin the tree recursively, using bottom-left origin coordinates.\n\nAlgorithm:\n1. Measure all regular (non-overlay) children to sum fixed sizes and flex_grow weights.\n2. Distribute remaining free space according to justify_content.\n3. Place each child along the main axis, applying align_items / align_self on the cross axis.\n4. Recurse into each child.\n5. Layout overlay children (popup, bottom_sheet) at full parent bounds as a final pass.",
+      "description": "Compute layout for a node tree. Writes layout.x/y/w/h to every node\nin the tree recursively, using bottom-left origin coordinates.\n\nAlgorithm:\n1. Measure all regular (non-overlay) children to sum fixed sizes and flex_grow weights.\n2. Distribute remaining free space according to justify_content.\n3. Place each child along the main axis, applying align_items / align_self on the cross axis.\n4. Recurse into each child.\n5. Layout overlay children (popup, bottom_sheet) at full parent bounds as a final pass.",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "The root element to compute layout for",
+          "types": [
+            "Flow_Element"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "x",
+          "doc": "Left edge of the available area in layout space (px)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "y",
+          "doc": "Bottom edge of the available area in layout space (px)",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "w",
+          "doc": "Available width in pixels",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "h",
+          "doc": "Available height in pixels",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

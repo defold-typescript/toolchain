@@ -1,0 +1,212 @@
+{
+  "info": {
+    "namespace": "flow.navigation.gui",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Create a new GUI adapter instance bound to the given navigation router.\nRegisters listeners for \"changed\", \"transition_begin\", and \"transition_complete\"\nso the adapter stays in sync with navigation state automatically.",
+      "description": "Create a new GUI adapter instance bound to the given navigation router.\nRegisters listeners for \"changed\", \"transition_begin\", and \"transition_complete\"\nso the adapter stays in sync with navigation state automatically.",
+      "parameters": [
+        {
+          "name": "navigation",
+          "doc": "The navigation facade (flow/navigation/init.lua)",
+          "types": [
+            "Flow_Navigation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The adapter object with all M methods mixed in",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "destroy",
+      "brief": "Remove all navigation listeners and clean up the adapter.\nCall this in gui_script final() to prevent leaking event handlers.",
+      "description": "Remove all navigation listeners and clean up the adapter.\nCall this in gui_script final() to prevent leaking event handlers.",
+      "parameters": [
+        {
+          "name": "adapter",
+          "doc": "The adapter instance created by M.new()",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "invalidate",
+      "brief": "Invalidate the adapter so the next build_tree() call regenerates the tree.",
+      "description": "Invalidate the adapter so the next build_tree() call regenerates the tree.",
+      "parameters": [
+        {
+          "name": "adapter",
+          "doc": "The adapter instance",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "needs_rebuild",
+      "brief": "Return true when the adapter's tree needs to be rebuilt.",
+      "description": "Return true when the adapter's tree needs to be rebuilt.",
+      "parameters": [
+        {
+          "name": "adapter",
+          "doc": "The adapter instance",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True when adapter._needs_rebuild is set",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clear_rebuild_flag",
+      "brief": "Clear the rebuild flag. Called after build_tree() has been invoked.",
+      "description": "Clear the rebuild flag. Called after build_tree() has been invoked.",
+      "parameters": [
+        {
+          "name": "adapter",
+          "doc": "The adapter instance",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "save_scroll_state",
+      "brief": "Save the current scroll offsets from a UI tree into the navigation params.\nTypically called just before a tree rebuild so that scroll position is preserved.",
+      "description": "Save the current scroll offsets from a UI tree into the navigation params.\nTypically called just before a tree rebuild so that scroll position is preserved.",
+      "parameters": [
+        {
+          "name": "adapter",
+          "doc": "The adapter instance",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "The UI tree to extract scroll state from",
+          "types": [
+            "Flow_Element"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "options",
+          "doc": "Optional {screen_id=...} to target a specific screen",
+          "types": [
+            "LuaTable | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "build_tree",
+      "brief": "Build (or rebuild) the UI element tree for the current navigation state.\nWhen a transition is active, renders both from and to trees and applies\n_alpha or _offset_x according to the transition type and eased progress.\n\nTransition types:\n\"fade\"        — cross-fade: from_tree._alpha fades out, to_tree._alpha fades in\n\"slide_left\"  — to slides in from the right: from moves left, to comes from right\n\"slide_right\" — to slides in from the left: from moves right, to comes from left\n\nReturns nil and clears adapter.tree when the stack is empty.",
+      "description": "Build (or rebuild) the UI element tree for the current navigation state.\nWhen a transition is active, renders both from and to trees and applies\n_alpha or _offset_x according to the transition type and eased progress.\n\nTransition types:\n\"fade\"        — cross-fade: from_tree._alpha fades out, to_tree._alpha fades in\n\"slide_left\"  — to slides in from the right: from moves left, to comes from right\n\"slide_right\" — to slides in from the left: from moves right, to comes from left\n\nReturns nil and clears adapter.tree when the stack is empty.",
+      "parameters": [
+        {
+          "name": "adapter",
+          "doc": "The adapter instance",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The UI tree to pass to the renderer",
+          "types": [
+            "Flow_Element | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Advance the active transition by dt seconds.\nUpdates transition.progress and requests an adapter rebuild each frame.\nWhen progress reaches 1.0, calls navigation.complete_transition() to\nsignal that the transition is done and clear the busy flag.",
+      "description": "Advance the active transition by dt seconds.\nUpdates transition.progress and requests an adapter rebuild each frame.\nWhen progress reaches 1.0, calls navigation.complete_transition() to\nsignal that the transition is done and clear the busy flag.",
+      "parameters": [
+        {
+          "name": "adapter",
+          "doc": "The adapter instance",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "Delta time in seconds since the last frame",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True when the transition just completed this frame",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}
