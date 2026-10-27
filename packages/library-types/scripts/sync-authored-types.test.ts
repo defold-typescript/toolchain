@@ -2553,6 +2553,52 @@ describe("GamePush platform type claims upstream states only in its body", () =>
   });
 });
 
+describe("Flow authored module type claims", () => {
+  function element(namespace: string, name: string): Record<string, unknown> {
+    const found = apiDocElements(namespace).find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
+    return found;
+  }
+
+  test("the three modules register at the Flow pin and measure their vendored Lua", () => {
+    for (const [moduleId, source] of [
+      ["flow.color", "color.lua"],
+      ["flow.bottom_sheet", "bottom_sheet/init.lua"],
+      ["flow.flow", "flow.lua"],
+    ] as const) {
+      expect(authoredTarget(moduleId)).toMatchObject({
+        moduleId,
+        namespace: moduleId,
+        repo: "https://github.com/Pause-Games/flow",
+        ref: "1.0.0",
+        license: "MIT",
+        upstreamLua: [`fixtures/upstream-lua/flow/${source}`],
+      });
+    }
+  });
+
+  test("flow.color.rgba takes four numbers and returns a color value", () => {
+    const rgba = element("flow.color", "rgba") as {
+      parameters: { name: string; types: string[] }[];
+      returnvalues: { types: string[] }[];
+    };
+    expect(rgba.parameters.map(({ name, types }) => ({ name, types }))).toEqual([
+      { name: "r", types: ["number"] },
+      { name: "g", types: ["number"] },
+      { name: "b", types: ["number"] },
+      { name: "a", types: ["number"] },
+    ]);
+    expect(rgba.returnvalues.flatMap(({ types }) => types)).toEqual(["Flow_ColorValue"]);
+  });
+
+  test("flow.bottom_sheet.init requires its host config", () => {
+    expect(element("flow.bottom_sheet", "init")).toMatchObject({
+      type: "VARIABLE",
+      types: ["(self: FlowSelf, config: Flow_BottomSheetHostConfig) => void"],
+    });
+  });
+});
+
 describe("nakama.session type claims upstream states only in its body", () => {
   function element(name: string): Record<string, unknown> {
     const found = apiDocElements("nakama.session").find((entry) => entry.name === name);

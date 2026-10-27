@@ -489,6 +489,14 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "cf3292bda13fe096ff4efaff86f3b23a64cfc97640bfff7d47916bfa59aed6d2",
   "fixtures/upstream-lua/dicebag/dicebag/dicebag.lua":
     "388d596a384f82d8052461505719f0a1c687533b96bf66bf97469fadd20107ad",
+  "fixtures/upstream-lua/flow/bottom_sheet/host.lua":
+    "1f3db1074787f2dc371d2afa9697869b5ae6c5000500b427a2bcc2eed0e5cf33",
+  "fixtures/upstream-lua/flow/bottom_sheet/init.lua":
+    "86ec542e8f2b37fe659296f16fb68c0dd5e999ffe97900b6aae6b0ca33770fe7",
+  "fixtures/upstream-lua/flow/color.lua":
+    "de856660b67135f13eda8126e2188737ad2acc7d7b5803ff36e71d33c651af56",
+  "fixtures/upstream-lua/flow/flow.lua":
+    "6a3e354304e6e86056b8bd966462711d949442768868a7331ea5ab6a57b7804f",
   "fixtures/upstream-lua/gooey/gooey/gooey.lua":
     "1bc4ba6d7eac6497923532fb4515d6a575c5b1e62e3b0ade5b05bfd1d163327e",
   "fixtures/upstream-lua/library-defold-persist/persist/persist.lua":

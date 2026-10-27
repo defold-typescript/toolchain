@@ -1,0 +1,658 @@
+{
+  "info": {
+    "namespace": "flow.flow",
+    "brief": "Flow's main facade for UI rendering, navigation, components, colors, logging, and",
+    "description": "Flow's main facade for UI rendering, navigation, components, colors, logging, and\nhosted bottom sheets."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "FlowSelf",
+      "types": [
+        "object"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowParams",
+      "types": [
+        "LuaMap<string, unknown>",
+        "Record<string, unknown>"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowInputAction",
+      "properties": [
+        {
+          "name": "x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "pressed",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "released",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ui",
+      "brief": "The low-level UI module plus Flow's component and helper namespaces.",
+      "description": "The low-level UI module plus Flow's component and helper namespaces.",
+      "types": [
+        "typeof import('flow.ui') & FlowUiNamespaces"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "nav",
+      "brief": "The navigation API, message transport, and runtime adapters.",
+      "description": "The navigation API, message transport, and runtime adapters.",
+      "types": [
+        "Flow_Navigation & typeof import('flow.navigation.messages') & FlowNavigationNamespaces"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "bottom_sheet",
+      "brief": "Hosted bottom sheets.",
+      "description": "Hosted bottom sheets.",
+      "types": [
+        "typeof import('flow.bottom_sheet')"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "log",
+      "brief": "Centralized logging.",
+      "description": "Centralized logging.",
+      "types": [
+        "Flow_Logger"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "color",
+      "brief": "Color parsing and hexadecimal color helpers.",
+      "description": "Color parsing and hexadecimal color helpers.",
+      "types": [
+        "typeof import('flow.color')"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Mounts Flow and configures navigation on a GUI script instance.",
+      "description": "Mounts Flow and configures navigation on a GUI script instance.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "Flow_InitConfig"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Releases input focus and destroys the active adapter.",
+      "description": "Releases input focus and destroys the active adapter.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_tree",
+      "brief": "Sets a static element tree and requests a redraw.",
+      "description": "Sets a static element tree and requests a redraw.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "",
+          "types": [
+            "Flow_Element"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Flow_Element"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "invalidate",
+      "brief": "Requests a rebuild of the current static or navigation tree.",
+      "description": "Requests a rebuild of the current static or navigation tree.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Advances animations and navigation, rebuilding and redrawing as needed.",
+      "description": "Advances animations and navigation, rebuilding and redrawing as needed.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "Routes a Defold input action through Flow.",
+      "description": "Routes a Defold input action through Flow.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "FlowInputAction"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_message",
+      "brief": "Handles navigation messages and forwards unhandled messages to the configured hook.",
+      "description": "Handles navigation messages and forwards unhandled messages to the configured hook.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "FlowParams"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sender",
+          "doc": "",
+          "types": [
+            "Url"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push",
+      "brief": "Pushes a screen through the facade's navigation singleton.",
+      "description": "Pushes a screen through the facade's navigation singleton.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "FlowParams"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "Flow_PushOptions | string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pop",
+      "brief": "Pops the current screen through the facade's navigation singleton.",
+      "description": "Pops the current screen through the facade's navigation singleton.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "result_or_transition",
+          "doc": "",
+          "types": [
+            "FlowParams | string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "Flow_PushOptions | string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "replace",
+      "brief": "Replaces the current screen through the facade's navigation singleton.",
+      "description": "Replaces the current screen through the facade's navigation singleton.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "FlowParams"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "Flow_PushOptions | string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset",
+      "brief": "Resets navigation to a root screen.",
+      "description": "Resets navigation to a root screen.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "FlowParams"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "Flow_PushOptions | string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_scroll_offset",
+      "brief": "Returns the current screen's saved vertical scroll offset.",
+      "description": "Returns the current screen's saved vertical scroll offset.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "",
+          "types": [
+            "FlowSelf"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowUiNamespaces",
+      "properties": [
+        {
+          "name": "Flex",
+          "brief": "Flow's imperative flexbox module.",
+          "description": "Flow's imperative flexbox module.",
+          "types": [
+            "typeof import('flow.flex')"
+          ]
+        },
+        {
+          "name": "flex",
+          "brief": "Alias of `Flex`.",
+          "description": "Alias of `Flex`.",
+          "types": [
+            "typeof import('flow.flex')"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "Flow's color helpers.",
+          "description": "Flow's color helpers.",
+          "types": [
+            "typeof import('flow.color')"
+          ]
+        },
+        {
+          "name": "layout",
+          "brief": "Flow's layout pass.",
+          "description": "Flow's layout pass.",
+          "types": [
+            "typeof import('flow.layout')"
+          ]
+        },
+        {
+          "name": "cp",
+          "brief": "Primitive component constructors.",
+          "description": "Primitive component constructors.",
+          "types": [
+            "FlowComponents"
+          ]
+        },
+        {
+          "name": "components",
+          "brief": "Alias of `cp`.",
+          "description": "Alias of `cp`.",
+          "types": [
+            "FlowComponents"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlowNavigationNamespaces",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "push",
+          "brief": "Pushes a screen, accepting the transition shorthand supported by the router.",
+          "description": "Pushes a screen, accepting the transition shorthand supported by the router.",
+          "parameters": [
+            {
+              "name": "id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "params",
+              "doc": "",
+              "types": [
+                "FlowParams"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "options",
+              "doc": "",
+              "types": [
+                "Flow_PushOptions | string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "ReturnType<Flow_Navigation[\"push\"]>"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "messages",
+          "brief": "Navigation message transport.",
+          "description": "Navigation message transport.",
+          "types": [
+            "typeof import('flow.navigation.messages')"
+          ]
+        },
+        {
+          "name": "runtime",
+          "brief": "Navigation for plain script components.",
+          "description": "Navigation for plain script components.",
+          "types": [
+            "typeof import('flow.navigation.runtime') & FlowRuntimeFacade"
+          ]
+        },
+        {
+          "name": "proxy",
+          "brief": "Collection-proxy navigation support.",
+          "description": "Collection-proxy navigation support.",
+          "types": [
+            "typeof import('flow.navigation.proxy')"
+          ]
+        },
+        {
+          "name": "gui",
+          "brief": "Navigation's GUI adapter.",
+          "description": "Navigation's GUI adapter.",
+          "types": [
+            "typeof import('flow.navigation.gui')"
+          ]
+        }
+      ]
+    }
+  ]
+}
