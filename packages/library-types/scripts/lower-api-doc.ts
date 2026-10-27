@@ -122,6 +122,13 @@ export function lowerLibraryModel(
     elements.push(functionElement(fn, ctx));
   }
 
+  for (const table of model.moduleTables ?? []) {
+    for (const fn of table.functions) {
+      if (!isPublicMethod(fn)) continue;
+      elements.push({ ...functionElement(fn, ctx), name: `${table.name}.${fn.name}` });
+    }
+  }
+
   for (const iface of model.interfaces) {
     const ifaceCtx = scopeGenerics(ctx, iface.generics);
     // The module object's public fields are module-level constants, lowered as top-level

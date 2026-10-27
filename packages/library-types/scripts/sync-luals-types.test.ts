@@ -1154,6 +1154,25 @@ describe("the flow targets", () => {
     expect(names("flow.navigation.runtime")).toEqual(["init", "final", "on_message"]);
   });
 
+  test("flow.flex exports its Node constructor table and a chainable Node instance", () => {
+    const model = buildTargetModel(PACKAGE_ROOT, target("flow.flex"));
+    const node = model.interfaces.find((i) => i.name === "Node");
+    const returns = (name: string) =>
+      node?.methods.find((m) => m.name === name)?.returns.flatMap((r) => r.types);
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["calculate_layout"]);
+    expect(
+      model.moduleTables?.map((t) => ({ ...t, functions: t.functions.map((f) => f.name) })),
+    ).toEqual([{ name: "Node", table: "Node", functions: ["new"] }]);
+    expect(model.moduleTables?.[0]?.functions[0]?.returns.flatMap((r) => r.types)).toEqual([
+      "Node",
+    ]);
+    expect(node?.extends).toBe("Flow.FlexNode");
+    expect(returns("set_width")).toEqual(["Node"]);
+    expect(returns("calculate_layout")).toEqual(["Node"]);
+    expect(returns("get_child")).toEqual(["Flow.FlexNode|nil"]);
+    expect("moduleConstants" in model).toBe(false);
+  });
+
   test.each([
     "flow.ui",
     "flow.navigation.runtime",

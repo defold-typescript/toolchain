@@ -2,9 +2,10 @@
 /// <reference types="@defold-typescript/types" />
 
 import type { InputAction } from "@defold-typescript/types";
+import * as flex from "flow.flex";
 import * as layout from "flow.layout";
 import * as runtime from "flow.navigation.runtime";
-import type { Flow_BoxProps } from "flow.types";
+import type { Flow_BoxProps, Flow_FlexNode } from "flow.types";
 import * as ui from "flow.ui";
 
 // Compile-only proof that the flow module LuaLS goldens, and the flow.types
@@ -53,4 +54,19 @@ export function scriptOnMessage(
 ): void {
   if (runtime.on_message(self, message_id, message, sender)) return;
   runtime.final(self);
+}
+
+// The flow/flex.lua header: a Node tree built with the constructor table and chained setters.
+export function flexTree(): Flow_FlexNode {
+  const root = flex.Node.new({ key: "root" })
+    .set_width(960)
+    .set_flex_direction("row")
+    .calculate_layout(960, 640);
+  const style = root.style;
+  const children: Flow_FlexNode[] = root.children;
+  const plain: Flow_FlexNode = flex.Node.new({ key: "n" });
+  flex.calculate_layout(tree, 960, 640);
+  // @ts-expect-error -- flow.flex exports the constructor as Node.new.
+  flex.new({ key: "root" });
+  return style && children.length > 0 ? plain : root;
 }

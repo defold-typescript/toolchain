@@ -7,32 +7,6 @@
   "elements": [
     {
       "type": "FUNCTION",
-      "name": "new",
-      "brief": "Create a new FlexNode with initial properties.\nAll fields have sensible defaults; only key is typically required.",
-      "description": "Create a new FlexNode with initial properties.\nAll fields have sensible defaults; only key is typically required.",
-      "parameters": [
-        {
-          "name": "opts",
-          "doc": "Initial properties",
-          "types": [
-            "Flow_FlexNodeOptions | undefined"
-          ],
-          "is_optional": "True",
-          "is_vararg": "False"
-        }
-      ],
-      "returnvalues": [
-        {
-          "name": "",
-          "doc": "A new node with the given properties",
-          "types": [
-            "Flow_FlexNode"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "FUNCTION",
       "name": "calculate_layout",
       "brief": "Run the layout engine on a node tree without creating a Node instance.\nConvenience function for callers using plain Lua table element trees.",
       "description": "Run the layout engine on a node tree without creating a Node instance.\nConvenience function for callers using plain Lua table element trees.",
@@ -76,6 +50,32 @@
       ]
     },
     {
+      "type": "FUNCTION",
+      "name": "Node.new",
+      "brief": "Create a new FlexNode with initial properties.\nAll fields have sensible defaults; only key is typically required.",
+      "description": "Create a new FlexNode with initial properties.\nAll fields have sensible defaults; only key is typically required.",
+      "parameters": [
+        {
+          "name": "opts",
+          "doc": "Initial properties",
+          "types": [
+            "Flow_FlexNodeOptions | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "A new node with the given properties",
+          "types": [
+            "Node"
+          ]
+        }
+      ]
+    },
+    {
       "type": "TYPEDEF",
       "name": "Node",
       "functions": [
@@ -109,7 +109,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -135,7 +135,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -212,7 +212,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -264,7 +264,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -290,7 +290,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -316,7 +316,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -342,7 +342,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -368,7 +368,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -394,7 +394,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -420,7 +420,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -446,7 +446,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -472,7 +472,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -498,7 +498,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -524,7 +524,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -550,7 +550,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -576,7 +576,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -602,7 +602,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -628,7 +628,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -654,7 +654,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -689,7 +689,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -724,7 +724,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -759,7 +759,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -794,7 +794,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -829,7 +829,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -864,7 +864,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -890,7 +890,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -916,7 +916,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -942,7 +942,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -968,7 +968,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -994,7 +994,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -1020,7 +1020,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -1046,7 +1046,7 @@
               "name": "",
               "doc": "",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]
@@ -1081,7 +1081,7 @@
               "name": "",
               "doc": "(for chaining or immediate result reading)",
               "types": [
-                "Flow_FlexNode"
+                "Node"
               ]
             }
           ]

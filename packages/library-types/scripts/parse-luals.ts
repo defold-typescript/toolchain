@@ -30,6 +30,11 @@ export interface LibraryModel {
   // module hands back. Omitted when the file has none (a dotted or call-expression
   // return, or only indented ones).
   moduleReturn?: string;
+  // Each local table the returned module re-exports under a field (`FL.Node = Node`),
+  // with the dot functions defined on it, in source order: a module value
+  // (`flex.Node.new()`), not module functions. Omitted when empty, like
+  // `moduleAssignments`.
+  moduleTables?: { name: string; table: string; functions: LibraryMethod[] }[];
   // Module-level constants the Lua assigns without an annotation, added by the
   // `moduleConstants` override and emitted as `export const`s. Omitted when empty.
   moduleConstants?: LibraryField[];
@@ -598,6 +603,74 @@ const LOCAL_ASSIGN = /^local\s+([A-Za-z_]\w*)\s*=/;
 // so it never reaches this.
 const MODULE_ASSIGN = /^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*[=,]/;
 
+// `T.name = X` with a bare identifier on the right: a re-export (`FL.Node = Node`) or a
+// metatable self-index (`Node.__index = Node`).
+const TABLE_ALIAS = /^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*=\s*([A-Za-z_]\w*)\s*$/;
+
+type ModuleTable = NonNullable<LibraryModel["moduleTables"]>[number];
+
+interface TableAlias {
+  table: string;
+  name: string;
+  value: string;
+}
+
+/**
+ * Split the dot functions of each local table the returned module re-exports
+ * (`FL.Node = Node`) out of the module functions into a `moduleTables` entry, so
+ * `Node.new` is declared on `flex.Node`, not as a top-level `flex.new`.
+ */
+function extractModuleTables(
+  moduleReturn: string,
+  moduleFunctions: LibraryMethod[],
+  receivers: Map<LibraryMethod, string>,
+  aliases: TableAlias[],
+  byName: Map<string, LibraryInterface>,
+): { moduleFunctions: LibraryMethod[]; moduleTables: ModuleTable[] } {
+  const moduleTables: ModuleTable[] = [];
+  const moved = new Set<LibraryMethod>();
+  for (const { table, name, value } of aliases) {
+    if (table !== moduleReturn || value === moduleReturn) continue;
+    const functions = moduleFunctions.filter((f) => receivers.get(f) === value && !moved.has(f));
+    if (functions.length === 0) continue;
+    for (const f of functions) moved.add(f);
+    moduleTables.push({ name, table: value, functions });
+    const isMetatable = aliases.some(
+      (a) => a.table === value && a.name === "__index" && a.value === value,
+    );
+    if (isMetatable) bindConstructedClass(value, functions, byName);
+  }
+  return { moduleFunctions: moduleFunctions.filter((f) => !moved.has(f)), moduleTables };
+}
+
+/**
+ * A metatable class (`Node.__index = Node`) whose `new` declares one class return
+ * (`---@return Flow.FlexNode`) builds instances that carry both that class's fields and
+ * the table's colon methods. The table's interface extends the class, and `new` plus
+ * every method returning `self` as that class return the interface, so chained calls
+ * keep the methods.
+ */
+function bindConstructedClass(
+  table: string,
+  functions: LibraryMethod[],
+  byName: Map<string, LibraryInterface>,
+): void {
+  const iface = byName.get(table);
+  const ctor = functions.find((f) => f.name === "new");
+  const ret = ctor?.returns.length === 1 ? ctor.returns[0] : undefined;
+  const constructed = ret?.types.length === 1 ? ret.types[0] : undefined;
+  if (!iface || !ctor || !ret || !constructed || constructed === table) return;
+  if (!/^[A-Za-z_][\w.]*$/.test(constructed)) return;
+  if (!iface.extends) iface.extends = constructed;
+  ctor.returns = [{ ...ret, types: [table] }];
+  for (const method of iface.methods) {
+    const [only] = method.returns;
+    if (method.returns.length !== 1 || !only || only.name !== "self") continue;
+    if (only.types.length !== 1 || only.types[0] !== constructed) continue;
+    method.returns = [{ ...only, types: [table] }];
+  }
+}
+
 /**
  * Scan one LuaLS-annotated source into a `LibraryModel`. Only column-0 lines are
  * recognized (module- and class-level declarations and their leading `---@` block);
@@ -615,6 +688,12 @@ const MODULE_ASSIGN = /^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*[=,]/;
  * meta file never runs, so such a function can only describe the class. Outside meta
  * files the same form stays a module function: a runtime module may annotate its own
  * table as a class (`---@class liveupdater` on `local M`) and still export `M.init`.
+ *
+ * A dot function on a local table that the returned module re-exports
+ * (`FL.Node = Node` beside `return FL`) belongs to that table, not the module: it lands
+ * in a `moduleTables` entry. When that table is also a metatable class
+ * (`Node.__index = Node`), its interface extends the class `new` returns, and `new`
+ * plus each method returning that class as `self` return the interface.
  */
 export function parseLualsSource(source: string): LibraryModel {
   const isMeta = /^---@meta(?:\s|$)/.test(source.trimStart());
@@ -625,6 +704,8 @@ export function parseLualsSource(source: string): LibraryModel {
   const moduleAssignments: { table: string; name: string }[] = [];
   let moduleReturn: string | undefined;
   const receiverBinding = new Map<string, string>();
+  const functionReceivers = new Map<LibraryMethod, string>();
+  const tableAliases: TableAlias[] = [];
 
   let pending = emptyPending();
   let openClass: LibraryInterface | null = null;
@@ -871,6 +952,7 @@ export function parseLualsSource(source: string): LibraryModel {
         ensureInterface(metaClass).methods.push(method);
       } else if (decl.qualified) {
         moduleFunctions.push(method);
+        if (decl.receiver) functionReceivers.set(method, decl.receiver);
       }
       // Any function may host a function-local `---@class`; remember the enclosing
       // function so a returned local can infer its return, even a bare helper.
@@ -896,6 +978,14 @@ export function parseLualsSource(source: string): LibraryModel {
         table: moduleAssign[1] as string,
         name: moduleAssign[2] as string,
       });
+      const alias = TABLE_ALIAS.exec(raw);
+      if (alias) {
+        tableAliases.push({
+          table: alias[1] as string,
+          name: alias[2] as string,
+          value: alias[3] as string,
+        });
+      }
       continue;
     }
 
@@ -926,13 +1016,18 @@ export function parseLualsSource(source: string): LibraryModel {
     }
   }
 
+  const split = moduleReturn
+    ? extractModuleTables(moduleReturn, moduleFunctions, functionReceivers, tableAliases, byName)
+    : { moduleFunctions, moduleTables: [] };
+
   return {
     interfaces,
     aliases,
-    moduleFunctions,
+    moduleFunctions: split.moduleFunctions,
     ...(moduleObject ? { moduleObject } : {}),
     ...(moduleAssignments.length > 0 ? { moduleAssignments } : {}),
     ...(moduleReturn ? { moduleReturn } : {}),
+    ...(split.moduleTables.length > 0 ? { moduleTables: split.moduleTables } : {}),
   };
 }
 
