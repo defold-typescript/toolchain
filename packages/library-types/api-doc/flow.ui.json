@@ -1,0 +1,430 @@
+{
+  "info": {
+    "namespace": "flow.ui",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "register",
+      "brief": "Register a custom element type definition.\nEvery element type string (\"box\", \"text\", \"button\", etc.) must be registered\nbefore it can appear in a UI tree. The definition describes how to create,\nupdate, and interact with the corresponding Defold GUI node.\n\nRequired fields in def:\ncreate_node(el) -> userdata  — creates and returns a new gui node\n\nOptional fields in def:\napply(self, el, node, alpha)            — update node visuals each frame\nis_visible(el) -> boolean               — custom visibility check\nis_hittable(el) -> boolean              — custom hit-test eligibility\nis_scroll_container -> boolean          — marks element as scroll root\nclips_children -> boolean               — node is used as parent for children\ncapture_descendant_hits -> boolean      — returns self instead of child on hit\nis_backdrop_click_target -> boolean     — receives backdrop click events\nget_text_anchor(el) -> \"left\"|\"center\"|\"right\" — text pivot anchor for positioning\nhover_begin(self, el, deps)             — called when pointer enters element\nhover_end(self, el, deps)               — called when pointer leaves element\npress_begin(self, el, deps)             — called when element is pressed\npress_update(self, el, is_hot, deps)    — called while dragging over element\npress_end(self, el, activated, deps)    — called on release\non_wheel(self, el, delta, deps)         — called on mouse wheel\non_drag_start(self, el, x, y, t, deps) — called when drag begins\non_drag_move(self, el, x, y, t, deps)  — called each drag frame\non_drag_end(self, el, action, t, deps)  — called when drag ends\nupdate_anim(el, dt, deps) -> bool,bool  — per-frame animation tick\nrender_extras(self, el, prefix, alpha, deps) — render auxiliary nodes\ncollect_extra_keys(el, prefix, keys, deps)   — declare extra cached node keys\nget_child_extra_offset_y(el) -> number  — additional Y offset for children",
+      "description": "Register a custom element type definition.\nEvery element type string (\"box\", \"text\", \"button\", etc.) must be registered\nbefore it can appear in a UI tree. The definition describes how to create,\nupdate, and interact with the corresponding Defold GUI node.\n\nRequired fields in def:\ncreate_node(el) -> userdata  — creates and returns a new gui node\n\nOptional fields in def:\napply(self, el, node, alpha)            — update node visuals each frame\nis_visible(el) -> boolean               — custom visibility check\nis_hittable(el) -> boolean              — custom hit-test eligibility\nis_scroll_container -> boolean          — marks element as scroll root\nclips_children -> boolean               — node is used as parent for children\ncapture_descendant_hits -> boolean      — returns self instead of child on hit\nis_backdrop_click_target -> boolean     — receives backdrop click events\nget_text_anchor(el) -> \"left\"|\"center\"|\"right\" — text pivot anchor for positioning\nhover_begin(self, el, deps)             — called when pointer enters element\nhover_end(self, el, deps)               — called when pointer leaves element\npress_begin(self, el, deps)             — called when element is pressed\npress_update(self, el, is_hot, deps)    — called while dragging over element\npress_end(self, el, activated, deps)    — called on release\non_wheel(self, el, delta, deps)         — called on mouse wheel\non_drag_start(self, el, x, y, t, deps) — called when drag begins\non_drag_move(self, el, x, y, t, deps)  — called each drag frame\non_drag_end(self, el, action, t, deps)  — called when drag ends\nupdate_anim(el, dt, deps) -> bool,bool  — per-frame animation tick\nrender_extras(self, el, prefix, alpha, deps) — render auxiliary nodes\ncollect_extra_keys(el, prefix, keys, deps)   — declare extra cached node keys\nget_child_extra_offset_y(el) -> number  — additional Y offset for children",
+      "parameters": [
+        {
+          "name": "type_name",
+          "doc": "The element type string (e.g. \"box\", \"scroll\")",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "def",
+          "doc": "Renderer definition table; must contain create_node",
+          "types": [
+            "LuaTable"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The registered def, same reference as the argument",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_size",
+      "brief": "Return the logical GUI display size (same as the [display] settings).\nExposed on the module so external code can query the design resolution.",
+      "description": "Return the logical GUI display size (same as the [display] settings).\nExposed on the module so external code can query the design resolution.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Logical display width in pixels",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "",
+          "doc": "Logical display height in pixels",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mount",
+      "brief": "Initialize the renderer state on a gui_script self table.\nMust be called once in gui_script init() before any other ui calls.\nCreates self.ui with an empty node cache, redraw flag, and debug toggle.",
+      "description": "Initialize the renderer state on a gui_script self table.\nMust be called once in gui_script init() before any other ui calls.\nCreates self.ui with an empty node cache, redraw flag, and debug toggle.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table to mount onto",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "Options table",
+          "types": [
+            "Flow_MountOptions"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_debug",
+      "brief": "Enable or disable debug logging for input and hit-testing.\nWhen enabled, every touch press emits debug logs through `flow.log`\nunder the `ui.input` context.",
+      "description": "Enable or disable debug logging for input and hit-testing.\nWhen enabled, every touch press emits debug logs through `flow.log`\nunder the `ui.input` context.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "enabled",
+          "doc": "True to enable debug output, false to disable",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The new debug state",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_set_layout_space_unsafe",
+      "brief": "Internal: switch between \"window\" and \"gui\" layout spaces.\nIn \"window\" mode, layout is computed in physical pixels and nodes are\nscaled back to GUI space via _scale_x/_scale_y. This gives pixel-perfect\nrendering on high-DPI displays. Not intended for direct consumer use.",
+      "description": "Internal: switch between \"window\" and \"gui\" layout spaces.\nIn \"window\" mode, layout is computed in physical pixels and nodes are\nscaled back to GUI space via _scale_x/_scale_y. This gives pixel-perfect\nrendering on high-DPI displays. Not intended for direct consumer use.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "space",
+          "doc": "\"window\" for physical pixels, anything else for GUI units",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "request_redraw",
+      "brief": "Request a renderer redraw so the next M.update() call triggers a full re-render.\nCall this whenever the data driving the UI tree changes and you want the\nscreen to reflect the new state immediately.",
+      "description": "Request a renderer redraw so the next M.update() call triggers a full re-render.\nCall this whenever the data driving the UI tree changes and you want the\nscreen to reflect the new state immediately.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "request_tree_redraw",
+      "brief": "Request a redraw for an element tree so renderer_core.update() re-renders it.\nUse this when you hold a reference to a tree and want to force a re-layout\nwithout going through the full renderer self table.",
+      "description": "Request a redraw for an element tree so renderer_core.update() re-renders it.\nUse this when you hold a reference to a tree and want to force a re-layout\nwithout going through the full renderer self table.",
+      "parameters": [
+        {
+          "name": "tree",
+          "doc": "The root element to flag for redraw; no-op if nil",
+          "types": [
+            "Flow_Element | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Update the renderer: re-layout and re-apply all nodes if the tree or\ndisplay size has changed since the last frame.\nInternally delegates to renderer_core.update() with the full dependency bundle.",
+      "description": "Update the renderer: re-layout and re-apply all nodes if the tree or\ndisplay size has changed since the last frame.\nInternally delegates to renderer_core.update() with the full dependency bundle.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "The element tree to render; may be nil (no-op)",
+          "types": [
+            "Flow_Element | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if a re-render was performed this frame",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hit_test",
+      "brief": "-----------------------------------------------------------------------------\n-----------------------------------------------------------------------------\nPerform a point hit-test against the current element tree.\nCoordinates must be in GUI space (as received from on_input action.x/y).\nReturns the deepest hittable element whose layout bounds contain the point,\nor nil if nothing was hit.",
+      "description": "-----------------------------------------------------------------------------\n-----------------------------------------------------------------------------\nPerform a point hit-test against the current element tree.\nCoordinates must be in GUI space (as received from on_input action.x/y).\nReturns the deepest hittable element whose layout bounds contain the point,\nor nil if nothing was hit.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "x",
+          "doc": "X coordinate in GUI space",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "y",
+          "doc": "Y coordinate in GUI space",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The hit element, or nil",
+          "types": [
+            "Flow_Element | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_input",
+      "brief": "Route a Defold input action to the appropriate element.\nHandles touch press/move/release, scroll wheel, and drag gestures.\nCall this from gui_script on_input(); returns true if the input was consumed.",
+      "description": "Route a Defold input action to the appropriate element.\nHandles touch press/move/release, scroll wheel, and drag gestures.\nCall this from gui_script on_input(); returns true if the input was consumed.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "The Defold action id hash (e.g. hash(\"touch\"))",
+          "types": [
+            "Hash | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "action",
+          "doc": "The Defold action table with x, y, pressed, released fields",
+          "types": [
+            "{ x?: number; y?: number; pressed?: boolean; released?: boolean }"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if the input was consumed and should not propagate",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_animations",
+      "brief": "-----------------------------------------------------------------------------\n-----------------------------------------------------------------------------\nAdvance all per-element animations by one frame (dt seconds).\nIterates the current tree and calls each element's update_anim handler.\nRequests a redraw when at least one element is still animating.\nCall this every frame from gui_script update() before M.update().",
+      "description": "-----------------------------------------------------------------------------\n-----------------------------------------------------------------------------\nAdvance all per-element animations by one frame (dt seconds).\nIterates the current tree and calls each element's update_anim handler.\nRequests a redraw when at least one element is still animating.\nCall this every frame from gui_script update() before M.update().",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "dt",
+          "doc": "Delta time in seconds since the last frame",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if at least one animation is still running",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "render",
+      "brief": "Force a full layout + render pass using the given tree and dimensions.\nBypasses redraw gating — always re-computes and re-applies all nodes.\nPrefer M.update() for normal frame rendering; use M.render() when you\nneed to guarantee an immediate re-render (e.g. after a window resize event\ndetected in on_input).",
+      "description": "Force a full layout + render pass using the given tree and dimensions.\nBypasses redraw gating — always re-computes and re-applies all nodes.\nPrefer M.update() for normal frame rendering; use M.render() when you\nneed to guarantee an immediate re-render (e.g. after a window resize event\ndetected in on_input).",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "The element tree to render",
+          "types": [
+            "Flow_Element"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "w",
+          "doc": "Available width in pixels (nil/0 = use GUI size)",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "h",
+          "doc": "Available height in pixels (nil/0 = use GUI size)",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "render_if_size_changed",
+      "brief": "Re-render only if the display size has changed since the last render pass.\nCheaper than M.update() — no redraw-flag check, just a size comparison.\nReturns true when a re-render was performed.",
+      "description": "Re-render only if the display size has changed since the last render pass.\nCheaper than M.update() — no redraw-flag check, just a size comparison.\nReturns true when a re-render was performed.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The gui_script self table with a mounted renderer",
+          "types": [
+            "LuaMap<string, unknown> | Record<string, unknown>"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "The element tree to render; falls back to self.ui.tree",
+          "types": [
+            "Flow_Element | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "True if a re-render was performed",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

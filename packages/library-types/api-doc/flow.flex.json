@@ -1,0 +1,1172 @@
+{
+  "info": {
+    "namespace": "flow.flex",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Create a new FlexNode with initial properties.\nAll fields have sensible defaults; only key is typically required.",
+      "description": "Create a new FlexNode with initial properties.\nAll fields have sensible defaults; only key is typically required.",
+      "parameters": [
+        {
+          "name": "opts",
+          "doc": "Initial properties",
+          "types": [
+            "Flow_FlexNodeOptions | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "A new node with the given properties",
+          "types": [
+            "Flow_FlexNode"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "calculate_layout",
+      "brief": "Run the layout engine on a node tree without creating a Node instance.\nConvenience function for callers using plain Lua table element trees.",
+      "description": "Run the layout engine on a node tree without creating a Node instance.\nConvenience function for callers using plain Lua table element trees.",
+      "parameters": [
+        {
+          "name": "root",
+          "doc": "The root element tree to compute layout for",
+          "types": [
+            "Flow_Element"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Available width (falls back to numeric root.style.width or 0)",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Available height (falls back to numeric root.style.height or 0)",
+          "types": [
+            "number | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The root element (layout written to root.layout and descendants)",
+          "types": [
+            "Flow_Element"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Node",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "insert_child",
+          "brief": "Insert a child node at a given index (1-based, default = append).\nChainable — returns self.",
+          "description": "Insert a child node at a given index (1-based, default = append).\nChainable — returns self.",
+          "parameters": [
+            {
+              "name": "child",
+              "doc": "The child node to insert",
+              "types": [
+                "Flow_FlexNode"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "index",
+              "doc": "1-based insertion index; default appends after last child",
+              "types": [
+                "number | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "remove_child",
+          "brief": "Remove a child node by reference. No-op when child is not found.\nChainable — returns self.",
+          "description": "Remove a child node by reference. No-op when child is not found.\nChainable — returns self.",
+          "parameters": [
+            {
+              "name": "child",
+              "doc": "The child node to remove (matched by reference)",
+              "types": [
+                "Flow_FlexNode"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_child",
+          "brief": "Return the child at a 0-based index (Yoga API convention).\nIndex 0 returns the first child.",
+          "description": "Return the child at a 0-based index (Yoga API convention).\nIndex 0 returns the first child.",
+          "parameters": [
+            {
+              "name": "index",
+              "doc": "0-based child index",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The child at that index, or nil",
+              "types": [
+                "Flow_FlexNode | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_child_count",
+          "brief": "Return the total number of children.",
+          "description": "Return the total number of children.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Child count",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_style",
+          "brief": "Set an arbitrary style property by key. Chainable.",
+          "description": "Set an arbitrary style property by key. Chainable.",
+          "parameters": [
+            {
+              "name": "key",
+              "doc": "The style field name (e.g. \"flex_direction\")",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "value",
+              "doc": "The value to assign",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_style",
+          "brief": "Read an arbitrary style property by key.",
+          "description": "Read an arbitrary style property by key.",
+          "parameters": [
+            {
+              "name": "key",
+              "doc": "The style field name",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The current value, or nil if not set",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_width",
+          "brief": "Set the fixed width in pixels. Chainable.",
+          "description": "Set the fixed width in pixels. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Width in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_height",
+          "brief": "Set the fixed height in pixels. Chainable.",
+          "description": "Set the fixed height in pixels. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Height in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_width_percent",
+          "brief": "Set the width as a percentage of the parent's width. Chainable.",
+          "description": "Set the width as a percentage of the parent's width. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Width percentage (0..100)",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_height_percent",
+          "brief": "Set the height as a percentage of the parent's height. Chainable.",
+          "description": "Set the height as a percentage of the parent's height. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Height percentage (0..100)",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_min_width",
+          "brief": "Store a minimum width constraint in pixels. Chainable.\nKept for API compatibility; the current layout engine does not enforce it.",
+          "description": "Store a minimum width constraint in pixels. Chainable.\nKept for API compatibility; the current layout engine does not enforce it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Minimum width in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_min_height",
+          "brief": "Store a minimum height constraint in pixels. Chainable.\nKept for API compatibility; the current layout engine does not enforce it.",
+          "description": "Store a minimum height constraint in pixels. Chainable.\nKept for API compatibility; the current layout engine does not enforce it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Minimum height in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_max_width",
+          "brief": "Store a maximum width constraint in pixels. Chainable.\nKept for API compatibility; the current layout engine does not enforce it.",
+          "description": "Store a maximum width constraint in pixels. Chainable.\nKept for API compatibility; the current layout engine does not enforce it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Maximum width in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_max_height",
+          "brief": "Store a maximum height constraint in pixels. Chainable.\nKept for API compatibility; the current layout engine does not enforce it.",
+          "description": "Store a maximum height constraint in pixels. Chainable.\nKept for API compatibility; the current layout engine does not enforce it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Maximum height in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_flex_direction",
+          "brief": "Set the main-axis direction for children. Chainable.",
+          "description": "Set the main-axis direction for children. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use FLEX_DIRECTION_* constants",
+              "types": [
+                "\"column\" | \"row\""
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_flex_grow",
+          "brief": "Set how much this node grows to fill available space on the main axis. Chainable.",
+          "description": "Set how much this node grows to fill available space on the main axis. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Growth factor (0 = no growth, 1 = equal share, >1 = larger share)",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_flex_shrink",
+          "brief": "Store the flex shrink factor. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store the flex shrink factor. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Shrink factor (default 1; 0 = do not shrink)",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_flex_basis",
+          "brief": "Store the flex basis value. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store the flex basis value. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Size in pixels or percentage string",
+              "types": [
+                "number | string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_justify_content",
+          "brief": "Set how children are distributed along the main axis. Chainable.",
+          "description": "Set how children are distributed along the main axis. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use JUSTIFY_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_align_items",
+          "brief": "Set how children are aligned on the cross axis. Chainable.",
+          "description": "Set how children are aligned on the cross axis. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use ALIGN_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_align_self",
+          "brief": "Override the parent's align_items for this node only. Chainable.",
+          "description": "Override the parent's align_items for this node only. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use ALIGN_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_gap",
+          "brief": "Set the gap between children in pixels. Chainable.",
+          "description": "Set the gap between children in pixels. Chainable.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Gap size in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_padding",
+          "brief": "Set padding on one or more edges. Chainable.",
+          "description": "Set padding on one or more edges. Chainable.",
+          "parameters": [
+            {
+              "name": "edge",
+              "doc": "Use EDGE_* constants (EDGE_ALL sets uniform padding)",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "value",
+              "doc": "Padding in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_padding_percent",
+          "brief": "Set padding on one or more edges as a percentage of parent size. Chainable.",
+          "description": "Set padding on one or more edges as a percentage of parent size. Chainable.",
+          "parameters": [
+            {
+              "name": "edge",
+              "doc": "Use EDGE_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "value",
+              "doc": "Padding as percentage (0..100)",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_margin",
+          "brief": "Store margin on one or more edges in pixels. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store margin on one or more edges in pixels. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "edge",
+              "doc": "Use EDGE_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "value",
+              "doc": "Margin in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_margin_percent",
+          "brief": "Store margin on one or more edges as a percentage of parent size. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store margin on one or more edges as a percentage of parent size. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "edge",
+              "doc": "Use EDGE_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "value",
+              "doc": "Margin as percentage (0..100)",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_border",
+          "brief": "Store border width on one or more edges in pixels. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store border width on one or more edges in pixels. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "edge",
+              "doc": "Use EDGE_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "value",
+              "doc": "Border width in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position",
+          "brief": "Store position offsets on one or more edges in pixels. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store position offsets on one or more edges in pixels. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "edge",
+              "doc": "Use EDGE_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            },
+            {
+              "name": "value",
+              "doc": "Position offset in pixels",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position_type",
+          "brief": "Store the position type (static / relative / absolute). Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store the position type (static / relative / absolute). Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use POSITION_TYPE_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_flex_wrap",
+          "brief": "Store the flex wrap behavior. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store the flex wrap behavior. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use WRAP_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_overflow",
+          "brief": "Store the overflow behavior. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store the overflow behavior. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use OVERFLOW_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_display",
+          "brief": "Store the display mode. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store the display mode. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use DISPLAY_FLEX or DISPLAY_NONE",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_aspect_ratio",
+          "brief": "Store the aspect ratio (width / height). Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store the aspect ratio (width / height). Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Desired width-to-height ratio (e.g. 16/9)",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_direction",
+          "brief": "Store the text direction for this subtree. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "description": "Store the text direction for this subtree. Chainable.\nKept for API compatibility; the current layout engine does not consume it.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Use DIRECTION_* constants",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_measure_func",
+          "brief": "Attach a custom measure function to this node.\nThe measure function is called by the layout engine to determine intrinsic\ncontent size (e.g. for text or image elements). Not used by the default\nflow/layout.lua but reserved for compatibility with future extensions.",
+          "description": "Attach a custom measure function to this node.\nThe measure function is called by the layout engine to determine intrinsic\ncontent size (e.g. for text or image elements). Not used by the default\nflow/layout.lua but reserved for compatibility with future extensions.",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "Returns measured width and height",
+              "types": [
+                "(...args: any[]) => unknown"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "calculate_layout",
+          "brief": "Run the layout engine on this node tree and store results in node.layout.\nAfter calling this, use get_computed_* or get_layout() to read the results.",
+          "description": "Run the layout engine on this node tree and store results in node.layout.\nAfter calling this, use get_computed_* or get_layout() to read the results.",
+          "parameters": [
+            {
+              "name": "width",
+              "doc": "Available width in pixels (falls back to numeric style.width or 0)",
+              "types": [
+                "number | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "height",
+              "doc": "Available height in pixels (falls back to numeric style.height or 0)",
+              "types": [
+                "number | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "(for chaining or immediate result reading)",
+              "types": [
+                "Flow_FlexNode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_layout",
+          "brief": "Return the full layout result table ({x, y, w, h}) after calculate_layout().",
+          "description": "Return the full layout result table ({x, y, w, h}) after calculate_layout().",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The computed layout, or nil if not yet calculated",
+              "types": [
+                "Flow_LayoutRect | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_computed_left",
+          "brief": "Return the computed left edge (x) of this node in layout space.",
+          "description": "Return the computed left edge (x) of this node in layout space.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The x coordinate, or 0 if layout has not been computed",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_computed_top",
+          "brief": "Return the computed top edge (y + h) of this node in layout space.\nNote: layout uses bottom-left origin, so \"top\" = y + height.",
+          "description": "Return the computed top edge (y + h) of this node in layout space.\nNote: layout uses bottom-left origin, so \"top\" = y + height.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The top coordinate, or 0 if layout has not been computed",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_computed_width",
+          "brief": "Return the computed width of this node in pixels.",
+          "description": "Return the computed width of this node in pixels.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Width in pixels, or 0 if layout has not been computed",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_computed_height",
+          "brief": "Return the computed height of this node in pixels.",
+          "description": "Return the computed height of this node in pixels.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Height in pixels, or 0 if layout has not been computed",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
