@@ -1,0 +1,19 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/baochungit/defold-wrap",
+    "authoredHere": true,
+    "commit": "1.1.0",
+    "sourceUrl": "https://github.com/baochungit/defold-wrap/tree/1.1.0",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's `new` returns a table whose metatable indexes the module, so every node method is a `:` method taking the wrapped node as `self` and returning it for the next call, while `new` takes none; a node method declared `this: void`, or a `new` taking `self`, still passes `tsc`, so only TSTL's emit shows which call form each link of the chain produces.",
+    "consumer": [
+      "import * as wrap_node from \"wrap.node\";",
+      "export function init(): void {",
+      "  const node = wrap_node.new(\"box\");",
+      "  node.set_alpha(0.5).set_enabled(true);",
+      "}"
+    ]
+  }
+}

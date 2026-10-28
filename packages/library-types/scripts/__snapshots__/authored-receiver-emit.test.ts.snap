@@ -219,3 +219,27 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records wrap.node: a consumer transpiles with the call forms the declaration produces: wrap.node 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local wrap_node = require("wrap.node")
+function ____exports.init()
+    local node = wrap_node.new("box")
+    node:set_alpha(0.5):set_enabled(true)
+end
+return ____exports
+"
+`;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records wrap.node_list: a consumer transpiles with the call forms the declaration produces: wrap.node_list 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local wrap_node_list = require("wrap.node_list")
+function ____exports.init()
+    local list = wrap_node_list.new({"title", "button"})
+    list.title:set_text("Admin")
+end
+return ____exports
+"
+`;

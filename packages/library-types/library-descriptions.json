@@ -155,5 +155,7 @@
   "uuid4": "Defold uuid4 generator native extension",
   "water": "A stylized water shader for the Defold game engine, with animated wave surfaces, foam effects, sparkles and customizable rendering parameters.",
   "wave": "Wave simulation that floats, pitches and rolls game objects on a water surface.",
+  "wrap.node": "A chainable wrapper around a GUI node: every gui.* node function as a method, with setters that return the node, component setters and hex colors.",
+  "wrap.node_list": "A table of wrapped GUI nodes keyed by the names they are built from, looked up in a cloned node tree first.",
   "yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine."
 }

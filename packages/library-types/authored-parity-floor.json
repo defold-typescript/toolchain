@@ -367,6 +367,14 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/wrap.node.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/wrap.node_list.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/yagames.json": {
     "callable": 1,
     "field": 1

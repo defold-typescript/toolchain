@@ -1042,6 +1042,29 @@
       "generated": "generated/water.d.ts",
       "apiDoc": "api-doc/water.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-stylized-water-shader/water/water.lua"]
+    },
+    {
+      "repo": "https://github.com/baochungit/defold-wrap",
+      "ref": "1.1.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/wrap.node.d.ts",
+      "moduleId": "wrap.node",
+      "namespace": "wrap.node",
+      "generated": "generated/wrap.node.d.ts",
+      "apiDoc": "api-doc/wrap.node.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/node.lua"],
+      "instanceType": "Node"
+    },
+    {
+      "repo": "https://github.com/baochungit/defold-wrap",
+      "ref": "1.1.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/wrap.node_list.d.ts",
+      "moduleId": "wrap.node_list",
+      "namespace": "wrap.node_list",
+      "generated": "generated/wrap.node_list.d.ts",
+      "apiDoc": "api-doc/wrap.node_list.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/node_list.lua"]
     }
   ]
 }
