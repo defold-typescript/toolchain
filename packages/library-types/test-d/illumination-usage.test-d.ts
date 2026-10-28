@@ -33,6 +33,20 @@ illumination.set_light(
 );
 illumination.set_light(undefined, url);
 
+// set_light compares `color.w`, `radius` and `cutoff` above 0 on every light it is given, and
+// update_light encodes `position` on every light that is on.
+type LightArg = NonNullable<Parameters<typeof illumination.set_light>[0]>;
+type IsRequired<K extends keyof LightArg> =
+  Pick<LightArg, K> extends Required<Pick<LightArg, K>> ? true : false;
+const _position: IsRequired<"position"> = true;
+void _position;
+const _color: IsRequired<"color"> = true;
+void _color;
+const _radius: IsRequired<"radius"> = true;
+void _radius;
+const _cutoff: IsRequired<"cutoff"> = true;
+void _cutoff;
+
 illumination.set_environment({ fog_type: illumination.FOG_TYPE_RADIAL, fog_min: 20 });
 illumination.set_environment({
   ambient_color: vmath.vector4(1, 1, 1, 0.2),
