@@ -1,0 +1,127 @@
+{
+  "info": {
+    "namespace": "asobi.device",
+    "brief": "Guest device credentials: a stable device id and secret that a game generates once, saves,",
+    "description": "Guest device credentials: a stable device id and secret that a game generates once, saves,\nand presents to guest sign-in on every launch, so the same pair resumes the same player."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "generate",
+      "brief": "Generates a new device id and secret without saving them. The secret is standard base64",
+      "description": "Generates a new device id and secret without saving them. The secret is standard base64\nof 32 random bytes, the shape the server requires.",
+      "parameters": [
+        {
+          "name": "opts",
+          "doc": "The random byte source and a fixed device id.",
+          "types": [
+            "Pick<DeviceOptions, 'random_bytes' | 'device_id'>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The device id and the device secret.",
+          "types": [
+            "LuaMultiReturn<[ device_id: string, device_secret: string ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "load_or_create",
+      "brief": "Loads the saved device id and secret, or generates a pair and saves it on first run. Outside",
+      "description": "Loads the saved device id and secret, or generates a pair and saves it on first run. Outside\nthe engine it generates a pair without saving. On HTML5 a pair saved in the older save\nformat is replaced, since web builds writing it all minted the same id.",
+      "parameters": [
+        {
+          "name": "opts",
+          "doc": "The save file, the random byte source and a fixed device id.",
+          "types": [
+            "DeviceOptions"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The device id and the device secret.",
+          "types": [
+            "LuaMultiReturn<[ device_id: string, device_secret: string ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clear",
+      "brief": "Erases the saved pair, so the next `load_or_create` mints a new guest. The server account",
+      "description": "Erases the saved pair, so the next `load_or_create` mints a new guest. The server account\nis not deleted. Pass the same save file used to sign in.",
+      "parameters": [
+        {
+          "name": "opts",
+          "doc": "The save file.",
+          "types": [
+            "Pick<DeviceOptions, 'app' | 'file'>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "_base64",
+      "brief": "Internal. The standard base64 encoder `generate` uses, exposed for upstream's encoder",
+      "description": "Internal. The standard base64 encoder `generate` uses, exposed for upstream's encoder\ntest.",
+      "types": [
+        "(bytes: string) => string"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DeviceOptions",
+      "properties": [
+        {
+          "name": "app",
+          "brief": "The save file's application name, passed to `sys.get_save_file`. Defaults to `\"asobi\"`.",
+          "description": "The save file's application name, passed to `sys.get_save_file`. Defaults to `\"asobi\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "file",
+          "brief": "The save file's name, passed to `sys.get_save_file`. Defaults to `\"guest_device\"`.",
+          "description": "The save file's name, passed to `sys.get_save_file`. Defaults to `\"guest_device\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "random_bytes",
+          "brief": "Returns `n` random bytes from a stronger source than the default, which uses the",
+          "description": "Returns `n` random bytes from a stronger source than the default, which uses the\nbrowser's crypto on HTML5 and a seeded `math.random` elsewhere. It must return at least\n32 bytes when asked for 32.",
+          "types": [
+            "(n: number) => string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "device_id",
+          "brief": "A fixed device id, used in place of a random one.",
+          "description": "A fixed device id, used in place of a random one.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

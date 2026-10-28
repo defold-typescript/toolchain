@@ -3,6 +3,18 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/asobi.client.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.device.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.realtime.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/boom.json": {
     "callable": 1,
     "field": 1

@@ -1,0 +1,301 @@
+{
+  "info": {
+    "namespace": "asobi.client",
+    "brief": "The asobi client. `create` builds a client for one asobi server, carrying its tokens and",
+    "description": "The asobi client. `create` builds a client for one asobi server, carrying its tokens and\nthe realtime connection, and `quick_start` signs a guest in, connects and queues for a\nmatch in one call."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "Payload",
+      "types": [
+        "Record<string, unknown>"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Creates a client for an asobi server, with its realtime connection. Nothing connects",
+      "description": "Creates a client for an asobi server, with its realtime connection. Nothing connects\nuntil `realtime.connect` is called.",
+      "parameters": [
+        {
+          "name": "host",
+          "doc": "The server's host name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "port",
+          "doc": "The server's port. Defaults to `8084`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "use_ssl",
+          "doc": "Whether to use `https` and `wss`. Defaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Client"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "quick_start",
+      "brief": "Signs a guest in, connects and queues for a match in one call, registering every handler",
+      "description": "Signs a guest in, connects and queues for a match in one call, registering every handler\nbefore it connects. The sign-in runs asynchronously, so the client returns at once; use\n`create` and the realtime connection directly for entity sync or custom match state.",
+      "parameters": [
+        {
+          "name": "opts",
+          "doc": "The server, the mode and the callbacks.",
+          "types": [
+            "QuickStartOptions"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The client, for disconnecting later or reaching the rest of the API.",
+          "types": [
+            "Client"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Client",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "set_tokens",
+          "brief": "Stores a new token pair and saves the refresh token with `sys.save`, so it survives a",
+          "description": "Stores a new token pair and saves the refresh token with `sys.save`, so it survives a\nrestart.",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "void"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "access_token",
+              "doc": "The access token.",
+              "types": [
+                "string | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "refresh_token",
+              "doc": "The refresh token.",
+              "types": [
+                "string | undefined"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clear_tokens",
+          "brief": "Forgets both tokens and erases the saved refresh token.",
+          "description": "Forgets both tokens and erases the saved refresh token.",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "host",
+          "brief": "The server's host name.",
+          "description": "The server's host name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "port",
+          "brief": "The server's port.",
+          "description": "The server's port.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "use_ssl",
+          "brief": "Whether the client connects over `https` and `wss`.",
+          "description": "Whether the client connects over `https` and `wss`.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "base_url",
+          "brief": "The REST base url, without the port when it is the scheme's default.",
+          "description": "The REST base url, without the port when it is the scheme's default.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ws_url",
+          "brief": "The realtime websocket url, `<base>/ws`, without the port when it is the scheme's default.",
+          "description": "The realtime websocket url, `<base>/ws`, without the port when it is the scheme's default.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "access_token",
+          "brief": "The access token, kept in memory only.",
+          "description": "The access token, kept in memory only.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refresh_token",
+          "brief": "The refresh token. `create` loads the one an earlier session saved with `sys.save`, and",
+          "description": "The refresh token. `create` loads the one an earlier session saved with `sys.save`, and\n`set_tokens` and `clear_tokens` save it again.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "player_id",
+          "brief": "The signed-in player's id.",
+          "description": "The signed-in player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "realtime",
+          "brief": "The realtime connection, created with the client.",
+          "description": "The realtime connection, created with the client.",
+          "types": [
+            "Realtime"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "QuickStartOptions",
+      "properties": [
+        {
+          "name": "host",
+          "brief": "The server's host name.",
+          "description": "The server's host name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ssl",
+          "brief": "Whether to connect over `https` and `wss`. Defaults to `true`.",
+          "description": "Whether to connect over `https` and `wss`. Defaults to `true`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "port",
+          "brief": "The server's port. Defaults to `443` with `ssl`, `8084` without.",
+          "description": "The server's port. Defaults to `443` with `ssl`, `8084` without.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "mode",
+          "brief": "The matchmaker mode to queue for. Defaults to `\"default\"`.",
+          "description": "The matchmaker mode to queue for. Defaults to `\"default\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "on_queued",
+          "brief": "Called when the matchmaker accepts the ticket, with `ticket_id` and `players_needed`.",
+          "description": "Called when the matchmaker accepts the ticket, with `ticket_id` and `players_needed`.",
+          "types": [
+            "(payload: Payload) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "on_matched",
+          "brief": "Called when the matchmaker places the player in a match, with its `match_id`.",
+          "description": "Called when the matchmaker places the player in a match, with its `match_id`.",
+          "types": [
+            "(payload: Payload) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "on_state",
+          "brief": "Called with each match state snapshot.",
+          "description": "Called with each match state snapshot.",
+          "types": [
+            "(state: Payload) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "on_failed",
+          "brief": "Called when the guest sign-in fails, when the match cannot start, and on every realtime",
+          "description": "Called when the guest sign-in fails, when the match cannot start, and on every realtime\n`error`, with the failure's `reason`.",
+          "types": [
+            "(payload: Payload & { reason?: string; }) => void"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "on_signed_in",
+          "brief": "Called after the guest sign-in succeeds, before the client connects.",
+          "description": "Called after the guest sign-in succeeds, before the client connects.",
+          "types": [
+            "(data: Payload) => void"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
