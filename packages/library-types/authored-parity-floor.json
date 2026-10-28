@@ -19,6 +19,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/def_behavior_tree.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/defarmy.json": {
     "callable": 1,
     "field": 1

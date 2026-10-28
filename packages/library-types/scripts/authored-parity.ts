@@ -19,8 +19,11 @@
  * and never averaged. The *callable* axis puts upstream members carrying a parameter
  * list against api-doc `FUNCTION` elements; the *field* axis puts upstream constants
  * (`M.APIOPERATOR_BEST = "BEST"`) against api-doc `VARIABLE` elements. A `TYPEDEF` is
- * a type rather than a runtime member and enters neither. The same reason picks the
- * declared side for both: `api-doc` is what the docs-site renders.
+ * a type rather than a runtime member and enters neither, with one exception: an upstream
+ * `function M:name(…)` method is declared on the interface the target names as its
+ * `instanceType`, so that `TYPEDEF`'s `functions` join the callable axis, both sides
+ * keyed `<instanceType>:<name>`. The same reason picks the declared side for all of it:
+ * `api-doc` is what the docs-site renders.
  *
  * A name that is callable on *either* side belongs to the callable axis and is never
  * counted as a field, so one defect cannot be charged twice. `monarch.transitions.gui`
@@ -170,6 +173,12 @@ interface UpstreamSurface {
   refusedDocs: Set<string>;
 }
 
+/** The callable-axis key of an instance method, shared by both sides so a method and a
+ * module function of the same name stay apart. */
+function methodKey(instanceType: string, name: string): string {
+  return `${instanceType}:${name}`;
+}
+
 function upstreamSurface(packageRoot: string, target: AuthoredTarget): UpstreamSurface {
   const callable = new Map<string, LuaMember>();
   const fields = new Set<string>();
@@ -177,9 +186,18 @@ function upstreamSurface(packageRoot: string, target: AuthoredTarget): UpstreamS
   for (const relative of target.upstreamLua) {
     const surface = parseLuaSurface(readFileSync(join(packageRoot, relative), "utf8"));
     for (const member of surface.members) {
-      if (member.refusedDoc) refusedDocs.add(member.name);
-      if (member.params === undefined) fields.add(member.name);
-      else callable.set(member.name, member);
+      let name = member.name;
+      if (member.method === true) {
+        if (target.instanceType === undefined) {
+          throw new Error(
+            `${relative}: \`${member.name}\` is a \`:\` method, but authored-targets.json gives ${target.namespace} no instanceType to measure it against — name the interface its instances are declared with.`,
+          );
+        }
+        name = methodKey(target.instanceType, member.name);
+      }
+      if (member.refusedDoc) refusedDocs.add(name);
+      if (member.params === undefined) fields.add(name);
+      else callable.set(name, member);
     }
   }
   return { callable, fields, refusedDocs };
@@ -201,23 +219,43 @@ interface DeclaredSurface {
   documented: Set<string>;
 }
 
+interface ApiDocFunction {
+  name: string;
+  brief?: string;
+  description?: string;
+  docSource?: string;
+  parameters?: unknown[];
+}
+
 function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredSurface {
   const doc = JSON.parse(readFileSync(join(packageRoot, target.apiDoc), "utf8")) as {
-    elements: {
+    elements: (ApiDocFunction & {
       type: string;
-      name: string;
       global?: boolean;
-      brief?: string;
-      description?: string;
-      docSource?: string;
-      parameters?: unknown[];
-    }[];
+      functions?: ApiDocFunction[];
+    })[];
   };
   const callable = new Map<string, DeclaredMember>();
   const fields = new Set<string>();
   const documented = new Set<string>();
   let globals = 0;
   let imported = 0;
+  const hasProse = (element: ApiDocFunction) =>
+    (element.brief ?? "") !== "" || (element.description ?? "") !== "";
+  // Merged rather than overwritten: the api-doc holds one element per overload, and
+  // keeping only the last read a correctly-modelled pair as whichever shape happened to
+  // come last. `documented` is true when *any* of them carries prose — the docs-site
+  // renders the group, not the element.
+  const addCallable = (name: string, element: ApiDocFunction) => {
+    const existing = callable.get(name);
+    const params = [...(existing?.params ?? []), element.parameters?.length ?? 0].sort(
+      (a, b) => a - b,
+    );
+    callable.set(name, {
+      params,
+      documented: (existing?.documented ?? false) || hasProse(element),
+    });
+  };
   for (const element of doc.elements) {
     if (element.type !== "FUNCTION" && element.type !== "VARIABLE") continue;
     if (element.global === true) {
@@ -225,24 +263,26 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
       continue;
     }
     if (element.docSource === "upstream") imported += 1;
-    if ((element.brief ?? "") !== "" || (element.description ?? "") !== "") {
-      documented.add(element.name);
-    }
-    if (element.type === "FUNCTION") {
-      // Merged rather than overwritten: the api-doc holds one `FUNCTION` element per
-      // overload, and keeping only the last read a correctly-modelled pair as whichever
-      // shape happened to come last. `documented` is true when *any* of them carries
-      // prose — the docs-site renders the group, not the element.
-      const documented = (element.brief ?? "") !== "" || (element.description ?? "") !== "";
-      const existing = callable.get(element.name);
-      const params = [...(existing?.params ?? []), element.parameters?.length ?? 0].sort(
-        (a, b) => a - b,
+    if (hasProse(element)) documented.add(element.name);
+    if (element.type === "FUNCTION") addCallable(element.name, element);
+    else fields.add(element.name);
+  }
+  const { instanceType } = target;
+  if (instanceType !== undefined) {
+    const typedef = doc.elements.find(
+      (element) => element.type === "TYPEDEF" && element.name === instanceType,
+    );
+    if (typedef === undefined) {
+      throw new Error(
+        `${target.apiDoc}: authored-targets.json names \`${instanceType}\` as ${target.namespace}'s instanceType, but the api-doc holds no TYPEDEF of that name — export the interface, or correct the name.`,
       );
-      callable.set(element.name, {
-        params,
-        documented: (existing?.documented ?? false) || documented,
-      });
-    } else fields.add(element.name);
+    }
+    for (const method of typedef.functions ?? []) {
+      const name = methodKey(instanceType, method.name);
+      if (method.docSource === "upstream") imported += 1;
+      if (hasProse(method)) documented.add(name);
+      addCallable(name, method);
+    }
   }
   return { callable, fields, globals, imported, documented };
 }

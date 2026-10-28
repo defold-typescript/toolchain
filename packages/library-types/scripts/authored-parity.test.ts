@@ -1196,12 +1196,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other eighty-six targets share no variadic member at all", () => {
+  test("the other eighty-seven targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(86);
+    expect(untouched.length).toBe(87);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1408,6 +1408,77 @@ describe("the declared field side reads only api-doc VARIABLE elements", () => {
   });
 });
 
+// A colon method has no `FUNCTION` element to meet: the fork declares it on the
+// interface its constructor returns, which api-doc lowers to a `TYPEDEF`. Both sides key
+// it `<instanceType>:<name>`, so the callable axis compares it unchanged.
+describe("an upstream colon method is measured against the instance type's methods", () => {
+  function methodReport(typedefs: { name: string; functions: unknown[] }[], instanceType?: string) {
+    const root = mkdtempSync(join(tmpdir(), "authored-parity-method-axis-"));
+    mkdirSync(join(root, "api-doc"), { recursive: true });
+    mkdirSync(join(root, "upstream"), { recursive: true });
+    const lua = [
+      "local Thing = {}",
+      "Thing.__index = Thing",
+      "function Thing:start(a)",
+      "end",
+      "function Thing:stop()",
+      "end",
+      "function Thing.new()",
+      "  return setmetatable({}, Thing)",
+      "end",
+      "return Thing",
+    ];
+    writeFileSync(join(root, "upstream/mod.lua"), `${lua.join("\n")}\n`);
+    writeFileSync(
+      join(root, "api-doc/mod.json"),
+      JSON.stringify({
+        elements: [
+          { type: "FUNCTION", name: "new", parameters: [], description: "Creates a thing." },
+          ...typedefs.map((typedef) => ({ type: "TYPEDEF", ...typedef })),
+        ],
+      }),
+    );
+    return buildAuthoredParity(
+      root,
+      {
+        repo: "",
+        ref: "",
+        license: "",
+        authored: "fixtures/authored/mod.d.ts",
+        moduleId: "mod",
+        namespace: "mod",
+        generated: "generated/mod.d.ts",
+        apiDoc: "api-doc/mod.json",
+        fidelity: "fidelity/mod.json",
+        upstreamLua: ["upstream/mod.lua"],
+        ...(instanceType === undefined ? {} : { instanceType }),
+      },
+      {},
+    );
+  }
+
+  const startOnly = [
+    { name: "Thing", functions: [{ name: "start", parameters: [], description: "Starts." }] },
+  ];
+
+  test("a method the instance type omits is missing, and a short one mismatches", () => {
+    const report = methodReport(startOnly, "Thing");
+    expect(report.upstreamMembers).toBe(3);
+    expect(report.missingMembers).toEqual(["Thing:stop"]);
+    expect(report.arityMismatches).toEqual([{ name: "Thing:start", upstream: 1, declared: 0 }]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.callableCoverage).toBe(0.3333);
+  });
+
+  test("an upstream with methods and a target naming no instance type throws", () => {
+    expect(() => methodReport(startOnly)).toThrow("instanceType");
+  });
+
+  test("an instance type naming no TYPEDEF throws, naming it", () => {
+    expect(() => methodReport(startOnly, "Other")).toThrow("`Other`");
+  });
+});
+
 describe("the two callable-module targets the setmetatable reader lifted", () => {
   test("in.accelerometer declares all ten upstream members at upstream arity", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("in.accelerometer"));
@@ -1485,14 +1556,20 @@ describe("an ambient global is not a member of the module", () => {
   });
 
   // By name, as `declaredMembers` is: `monarch.transitions.gui` declares `create` twice
-  // as overloads, which are one member of the surface rather than two.
-  test("the declared callable side is exactly the api-doc functions that are not global", () => {
+  // as overloads, which are one member of the surface rather than two. A target naming an
+  // `instanceType` adds that interface's methods, the one `TYPEDEF` the axis reads.
+  test("the declared callable side is the non-global functions and the instance methods", () => {
     for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
-      const members = new Set(
-        apiDocElements(entry)
+      const elements = apiDocElements(entry);
+      const instance = elements.find(
+        (element) => element.type === "TYPEDEF" && element.name === entry.instanceType,
+      ) as { functions?: { name: string }[] } | undefined;
+      const members = new Set([
+        ...elements
           .filter((element) => element.type === "FUNCTION" && element.global !== true)
           .map((element) => element.name),
-      );
+        ...(instance?.functions ?? []).map((method) => `${entry.instanceType}:${method.name}`),
+      ]);
       expect(
         `${entry.namespace}: ${buildAuthoredParity(PACKAGE_ROOT, entry).declaredMembers}`,
       ).toBe(`${entry.namespace}: ${members.size}`);
@@ -2484,6 +2561,46 @@ describe("defgraph.defgraph declares the whole of its upstream", () => {
       report.upstreamMembers + report.upstreamFields,
     );
     const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `behavior_tree.lua` is a class module: `new` is its one `.` function, and the seven
+// tree methods are `function BehaviorTree:x` definitions measured against the fork's
+// `BehaviorTree` interface. Its fifteen fields are the registry, the twelve node types
+// and the two registry functions it re-exports by assignment. Upstream documents none
+// of it, so every description is the fork's own.
+describe("def_behavior_tree declares the whole of its upstream", () => {
+  const entry = target("def_behavior_tree");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, the tree methods included, with nothing missing or short", () => {
+    expect(report.upstreamMembers).toBe(8);
+    expect(report.upstreamFields).toBe(15);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member and every tree method carries a description", () => {
+    const elements = apiDocElements(entry);
+    const members = elements.filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    const tree = elements.find(
+      (element) => element.type === "TYPEDEF" && element.name === entry.instanceType,
+    ) as unknown as { functions: ApiDocElement[] };
+    expect(new Set(members.map((element) => element.name)).size + tree.functions.length).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = [...members, ...tree.functions]
       .filter((element) => (element.description ?? "").trim() === "")
       .map((element) => element.name);
     expect(blank).toEqual([]);
