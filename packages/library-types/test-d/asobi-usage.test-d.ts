@@ -3,6 +3,7 @@
 
 import * as asobi from "asobi.client";
 import * as device from "asobi.device";
+import type { HttpError } from "asobi.http";
 import type { RpcError } from "asobi.realtime";
 
 // Compile-only proof for the asobi forks, written as upstream's README drives them. No
@@ -82,3 +83,47 @@ device.generate({ random_bytes: (n) => "x".repeat(n) });
 device.clear({ random_bytes: () => "" });
 // @ts-expect-error random_bytes receives the byte count
 device.generate({ random_bytes: (n: string) => n });
+
+// REST: every module function takes the client first and the optional callback last.
+client.http.get(client, "/api/v1/x", { limit: 10, open: true }, (data, err) => {
+  const _data: Equal<typeof data, asobi.Payload | undefined> = true;
+  void _data;
+  const _err: Equal<typeof err, HttpError | undefined> = true;
+  void _err;
+  if (err !== undefined) {
+    const _code: Equal<typeof err.code, string | undefined> = true;
+    void _code;
+  }
+});
+client.http.delete(client, "/x", () => {});
+client.http.delete(client, "/x", { id: "a" }, () => {});
+client.http.post(client, "/x");
+
+client.auth.guest_device(client, (data, err) => {
+  void data;
+  void err;
+});
+client.auth.guest_device(client, { app: "game" }, () => {});
+client.leaderboards.get_top(client, "weekly");
+client.social.create_group(client, "Guild");
+client.storage.put_storage(client, "saves", "slot1", { level: 3 });
+client.matchmaker.add(client, "default");
+client.matchmaker.add(client, { mode: "ranked" });
+client.matches.live(client, { has_capacity: true });
+client.notifications.list(client, { read: false, limit: 20 });
+client.worlds.list(client, "open_world");
+
+// @ts-expect-error a query value is a string, number or boolean, never a table
+client.http.get(client, "/x", { filter: { a: 1 } });
+// @ts-expect-error the third argument is either the callback or the body
+client.http.delete(client, "/x", done, done);
+// @ts-expect-error a score is required
+client.leaderboards.submit_score(client, "weekly");
+// @ts-expect-error login takes the password
+client.auth.login(client, "user");
+// @ts-expect-error a mode goes in a `mode` field, never at a positional index
+client.matchmaker.add(client, ["default"]);
+// @ts-expect-error a quantity is a number
+client.inventory.consume(client, "sword", "2");
+// @ts-expect-error the REST modules are read through the client, not replaced
+client.auth = asobi.create("example.dev").auth;

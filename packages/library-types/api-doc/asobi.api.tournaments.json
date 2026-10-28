@@ -1,0 +1,132 @@
+{
+  "info": {
+    "namespace": "asobi.api.tournaments",
+    "brief": "asobi tournaments over REST. A project reaches it as `client.tournaments`.",
+    "description": "asobi tournaments over REST. A project reaches it as `client.tournaments`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "Fetches tournaments.",
+      "description": "Fetches tournaments.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "The filters.",
+          "types": [
+            "TournamentListOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the tournaments, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Fetches one tournament.",
+      "description": "Fetches one tournament.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tournament_id",
+          "doc": "The tournament's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the tournament, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "join",
+      "brief": "Joins a tournament.",
+      "description": "Joins a tournament.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tournament_id",
+          "doc": "The tournament's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TournamentListOptions",
+      "properties": [
+        {
+          "name": "status",
+          "brief": "Only tournaments with this status.",
+          "description": "Only tournaments with this status.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "brief": "The most tournaments to return.",
+          "description": "The most tournaments to return.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

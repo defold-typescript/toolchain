@@ -1180,6 +1180,182 @@
       "generated": "generated/asobi.device.d.ts",
       "apiDoc": "api-doc/asobi.device.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/device.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.http.d.ts",
+      "moduleId": "asobi.http",
+      "namespace": "asobi.http",
+      "generated": "generated/asobi.http.d.ts",
+      "apiDoc": "api-doc/asobi.http.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/http.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.auth.d.ts",
+      "moduleId": "asobi.api.auth",
+      "namespace": "asobi.api.auth",
+      "generated": "generated/asobi.api.auth.d.ts",
+      "apiDoc": "api-doc/asobi.api.auth.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/auth.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.dm.d.ts",
+      "moduleId": "asobi.api.dm",
+      "namespace": "asobi.api.dm",
+      "generated": "generated/asobi.api.dm.d.ts",
+      "apiDoc": "api-doc/asobi.api.dm.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/dm.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.economy.d.ts",
+      "moduleId": "asobi.api.economy",
+      "namespace": "asobi.api.economy",
+      "generated": "generated/asobi.api.economy.d.ts",
+      "apiDoc": "api-doc/asobi.api.economy.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/economy.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.iap.d.ts",
+      "moduleId": "asobi.api.iap",
+      "namespace": "asobi.api.iap",
+      "generated": "generated/asobi.api.iap.d.ts",
+      "apiDoc": "api-doc/asobi.api.iap.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/iap.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.inventory.d.ts",
+      "moduleId": "asobi.api.inventory",
+      "namespace": "asobi.api.inventory",
+      "generated": "generated/asobi.api.inventory.d.ts",
+      "apiDoc": "api-doc/asobi.api.inventory.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/inventory.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.leaderboards.d.ts",
+      "moduleId": "asobi.api.leaderboards",
+      "namespace": "asobi.api.leaderboards",
+      "generated": "generated/asobi.api.leaderboards.d.ts",
+      "apiDoc": "api-doc/asobi.api.leaderboards.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/leaderboards.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.matches.d.ts",
+      "moduleId": "asobi.api.matches",
+      "namespace": "asobi.api.matches",
+      "generated": "generated/asobi.api.matches.d.ts",
+      "apiDoc": "api-doc/asobi.api.matches.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/matches.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.matchmaker.d.ts",
+      "moduleId": "asobi.api.matchmaker",
+      "namespace": "asobi.api.matchmaker",
+      "generated": "generated/asobi.api.matchmaker.d.ts",
+      "apiDoc": "api-doc/asobi.api.matchmaker.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/matchmaker.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.notifications.d.ts",
+      "moduleId": "asobi.api.notifications",
+      "namespace": "asobi.api.notifications",
+      "generated": "generated/asobi.api.notifications.d.ts",
+      "apiDoc": "api-doc/asobi.api.notifications.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/notifications.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.players.d.ts",
+      "moduleId": "asobi.api.players",
+      "namespace": "asobi.api.players",
+      "generated": "generated/asobi.api.players.d.ts",
+      "apiDoc": "api-doc/asobi.api.players.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/players.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.social.d.ts",
+      "moduleId": "asobi.api.social",
+      "namespace": "asobi.api.social",
+      "generated": "generated/asobi.api.social.d.ts",
+      "apiDoc": "api-doc/asobi.api.social.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/social.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.storage.d.ts",
+      "moduleId": "asobi.api.storage",
+      "namespace": "asobi.api.storage",
+      "generated": "generated/asobi.api.storage.d.ts",
+      "apiDoc": "api-doc/asobi.api.storage.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/storage.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.tournaments.d.ts",
+      "moduleId": "asobi.api.tournaments",
+      "namespace": "asobi.api.tournaments",
+      "generated": "generated/asobi.api.tournaments.d.ts",
+      "apiDoc": "api-doc/asobi.api.tournaments.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/tournaments.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.votes.d.ts",
+      "moduleId": "asobi.api.votes",
+      "namespace": "asobi.api.votes",
+      "generated": "generated/asobi.api.votes.d.ts",
+      "apiDoc": "api-doc/asobi.api.votes.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/votes.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.api.worlds.d.ts",
+      "moduleId": "asobi.api.worlds",
+      "namespace": "asobi.api.worlds",
+      "generated": "generated/asobi.api.worlds.d.ts",
+      "apiDoc": "api-doc/asobi.api.worlds.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/worlds.lua"]
     }
   ]
 }

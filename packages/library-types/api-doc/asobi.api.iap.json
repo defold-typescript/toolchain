@@ -1,0 +1,83 @@
+{
+  "info": {
+    "namespace": "asobi.api.iap",
+    "brief": "asobi in-app purchase verification over REST. A project reaches it as `client.iap`.",
+    "description": "asobi in-app purchase verification over REST. A project reaches it as `client.iap`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "verify_apple",
+      "brief": "Verifies an App Store purchase with the server.",
+      "description": "Verifies an App Store purchase with the server.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "signed_transaction",
+          "doc": "The signed transaction the App Store returned.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the verification, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "verify_google",
+      "brief": "Verifies a Google Play purchase with the server.",
+      "description": "Verifies a Google Play purchase with the server.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "product_id",
+          "doc": "The product's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "purchase_token",
+          "doc": "The purchase token Google Play returned.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the verification, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

@@ -349,10 +349,42 @@ function driftRemedy(path: string): string {
 /** The pinned SHA-256 of every vendored upstream `.lua`, each taken at the `ref`
  * its `authored-targets.json` entry pins. */
 const UPSTREAM_LUA_HASHES: Record<string, string> = {
+  "fixtures/upstream-lua/asobi-defold/asobi/api/auth.lua":
+    "7b22cd84ced10a91745b5c73f0f32591158cc08af65e05ee5a397718e82932c5",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/dm.lua":
+    "06acfcfaefe260fb0de43d8b418138433f1b274286b871b86adc804d7b218307",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/economy.lua":
+    "03f8887412ef52bc5b5527f5e938d7da2b85a152d7db84b00212f8fd417d5923",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/iap.lua":
+    "50bc56c1039ac16a7b12665192531bd46d41c3d97c6391a6e460610dfe431e08",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/inventory.lua":
+    "3cfdb70c87dbe580a4e4e0b9bd821364e65e624ffe1449a35853eeb64a803a46",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/leaderboards.lua":
+    "9966a205d4897595cd042edbfd21bd51c1ca9f9a3adead7d9e8f0efa228c7ec7",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/matches.lua":
+    "9e60c6374ccd6366f5f1abfff5bd0ca4e1918380a52d3b1c6be23edf22cf4c78",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/matchmaker.lua":
+    "c7992ed3a58c023f8ca82652d5eab345a83171cd212d98b00d270507276138aa",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/notifications.lua":
+    "aaab1e94570fddcccbf233a64b2cbb22e98e2c78ca67c4585313151ee79b24fe",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/players.lua":
+    "438b0b879ae4fc15e46d48cbab4d896b1eb4b5df1583aa5b5be65c6f784fdf28",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/social.lua":
+    "b7f702c73c5a680d14b4d7b1b2f132fc4dad64b9a467588ffd1a2f58558317f0",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/storage.lua":
+    "7d5d9e7eb70a653c4c693c700f4946bcded0bf41f24b03bad39b7d47980e8ec8",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/tournaments.lua":
+    "d1d08e9aa662d7c879f6df60be2d4560cd2c6e88e75ccd387d5721863ed81f33",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/votes.lua":
+    "53d1cbccf9cad61f99c019b706e4ac2a687f1df23d6e7aef010658eb8b1354ed",
+  "fixtures/upstream-lua/asobi-defold/asobi/api/worlds.lua":
+    "f88eeca37c8507eac1c1661045f9a506c2fe34274d3fd66d03574ba2a950cf4b",
   "fixtures/upstream-lua/asobi-defold/asobi/client.lua":
     "ff40e694ebef41d18bc9f104c0894d23344726ed623536eb068a1218a3e6c7d6",
   "fixtures/upstream-lua/asobi-defold/asobi/device.lua":
     "9411474ff0ebba7c3e4bd56534da02695f70b5dad254c60d360d2432831026ec",
+  "fixtures/upstream-lua/asobi-defold/asobi/http.lua":
+    "1a3d0e396d35fc1a4b59c57667b09e7dd555125f455b65c5fc429e221aba0b3c",
   "fixtures/upstream-lua/asobi-defold/asobi/realtime.lua":
     "a65e9edb668cabf5859dfae301ae614a71024329325b752ab9becb49bf8894b7",
   "fixtures/upstream-lua/boom/boom/boom.lua":

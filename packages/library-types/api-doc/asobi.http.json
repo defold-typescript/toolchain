@@ -1,0 +1,574 @@
+{
+  "info": {
+    "namespace": "asobi.http",
+    "brief": "The asobi REST transport. Each verb sends a JSON request to the client's server with its",
+    "description": "The asobi REST transport. Each verb sends a JSON request to the client's server with its\naccess token, refreshes the token pair once and retries on a 401 outside `/auth/`, and\ncalls back with the decoded body or an error. A project reaches it as `client.http`, and\nevery `asobi.api.*` module sends through it."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "HttpCallback",
+      "types": [
+        "(data: Payload | undefined, err: HttpError | undefined) => void"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HttpQuery",
+      "types": [
+        "Record<string, string | number | boolean>"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Sends a `GET` to the client's `base_url` plus `path`.",
+      "description": "Sends a `GET` to the client's `base_url` plus `path`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client to send as.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "The path, from its leading `/`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "query",
+          "doc": "The query string.",
+          "types": [
+            "HttpQuery"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the decoded body, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "post",
+      "brief": "Sends a `POST` with a JSON body to the client's `base_url` plus `path`.",
+      "description": "Sends a `POST` with a JSON body to the client's `base_url` plus `path`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client to send as.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "The path, from its leading `/`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body",
+          "doc": "The body. Defaults to `{}`.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the decoded body, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "put",
+      "brief": "Sends a `PUT` with a JSON body to the client's `base_url` plus `path`.",
+      "description": "Sends a `PUT` with a JSON body to the client's `base_url` plus `path`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client to send as.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "The path, from its leading `/`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body",
+          "doc": "The body. Defaults to `{}`.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the decoded body, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete",
+      "brief": "Sends a `DELETE` with no body to the client's `base_url` plus `path`.",
+      "description": "Sends a `DELETE` with no body to the client's `base_url` plus `path`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client to send as.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "The path, from its leading `/`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the decoded body, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete",
+      "brief": "Sends a `DELETE` to the client's `base_url` plus `path`, with a JSON body when one is",
+      "description": "Sends a `DELETE` to the client's `base_url` plus `path`, with a JSON body when one is\ngiven.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client to send as.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "The path, from its leading `/`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "body",
+          "doc": "The body.",
+          "types": [
+            "Payload | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the decoded body, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_request",
+      "brief": "Internal. Sends one request and, on a 401 outside `/auth/` while the client holds a",
+      "description": "Internal. Sends one request and, on a 401 outside `/auth/` while the client holds a\nrefresh token, refreshes once and replays it: every verb calls it.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "method",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "url",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "retried",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_refresh_and_retry",
+      "brief": "Internal. Refreshes the token pair through `client.auth.refresh` and replays the request,",
+      "description": "Internal. Refreshes the token pair through `client.auth.refresh` and replays the request,\nor calls back with `auth_expired`: `_request` calls it.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "method",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "url",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_error",
+      "brief": "Internal. Shapes a failed response's body into an `HttpError`: `_handle_response` calls it.",
+      "description": "Internal. Shapes a failed response's body into an `HttpError`: `_handle_response` calls it.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "status",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "HttpError"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_is_auth_path",
+      "brief": "Internal. Whether a path is an `/auth/` route, which never refreshes: `_request` calls it.",
+      "description": "Internal. Whether a path is an `/auth/` route, which never refreshes: `_request` calls it.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_headers",
+      "brief": "Internal. The JSON content type and, while the client holds an access token, its bearer",
+      "description": "Internal. The JSON content type and, while the client holds an access token, its bearer\nheader: `_request` calls it.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Record<string, string>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_urlencode",
+      "brief": "Internal. Url-encodes a value after `tostring`: `_build_url` and `asobi.api.auth`'s",
+      "description": "Internal. Url-encodes a value after `tostring`: `_build_url` and `asobi.api.auth`'s\n`unlink_provider` call it.",
+      "parameters": [
+        {
+          "name": "str",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_build_url",
+      "brief": "Internal. Joins the client's `base_url`, the path and the query string: every verb calls it.",
+      "description": "Internal. Joins the client's `base_url`, the path and the query string: every verb calls it.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "query",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_handle_response",
+      "brief": "Internal. Decodes a response's body and calls back with it, or with an error for a status",
+      "description": "Internal. Decodes a response's body and calls back with it, or with an error for a status\nof 400 or more or a body that is not JSON: `_request` calls it.",
+      "parameters": [
+        {
+          "name": "response",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HttpError",
+      "properties": [
+        {
+          "name": "status_code",
+          "brief": "The HTTP status code, `401` when the token refresh after a 401 failed.",
+          "description": "The HTTP status code, `401` when the token refresh after a 401 failed.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "error",
+          "brief": "The server's message, `HTTP <status>` when it sent none, `auth_expired` when the token",
+          "description": "The server's message, `HTTP <status>` when it sent none, `auth_expired` when the token\nrefresh after a 401 failed, or `invalid_response` when the body was not JSON.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "code",
+          "brief": "The server's machine-readable error code, empty when it sent none. Absent when the token",
+          "description": "The server's machine-readable error code, empty when it sent none. Absent when the token\nrefresh after a 401 failed, and when the body was not JSON.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "details",
+          "brief": "The details the server sent with the error.",
+          "description": "The details the server sent with the error.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fields",
+          "brief": "The per-field errors a form-validation route sends.",
+          "description": "The per-field errors a form-validation route sends.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "raw",
+          "brief": "The first 200 characters of a body that was not JSON.",
+          "description": "The first 200 characters of a body that was not JSON.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
