@@ -311,14 +311,27 @@ Lobby.init = function () {
   const _modal: Equal<typeof modal, gui_object.GuiObject | undefined> = true;
   void _modal;
 
-  // A modal may also be a plain table of hooks, which sees the object as `this`.
+  // A modal may also be a plain table of hooks and fields, which sees the object, with the
+  // table's own fields, as `this`.
   this.register_modal("note", {
+    label: "note",
     init() {
-      this.new_text(undefined, "note");
+      this.new_text(undefined, this.label);
+      const _note_label: Equal<typeof this.label, string> = true;
+      void _note_label;
       const _note_scene: Equal<typeof this.scene, gui_scene.GuiScene> = true;
       void _note_scene;
     },
   });
+
+  // @ts-expect-error a `__name` passes the table off as a class, whose missing `new` is called
+  this.register_modal("fake", { __name: "GuiObject" });
+
+  // @ts-expect-error a copied `new` replaces the constructor of the modal's class
+  this.register_modal("ctor", { new: () => Button.new() });
+
+  // @ts-expect-error a copied `__index` replaces method lookup for every modal instance
+  this.register_modal("lookup", { __index: Button });
 
   // @ts-expect-error props are checked against the class
   this.new_object(Button, { text: 1 });
@@ -358,6 +371,22 @@ app.register_scene("bouncing", {
     void _app;
   },
 });
+
+// @ts-expect-error a `__name` passes the table off as a class, whose missing `new` is called
+app.register_scene("fake", { __name: "GuiScene" });
+
+// @ts-expect-error a copied `new` replaces the constructor of the scene's class
+app.register_scene("ctor", { new: () => Lobby.new() });
+
+// @ts-expect-error a copied `__index` replaces method lookup for every scene instance
+app.register_scene("lookup", { __index: Lobby });
+
+// @ts-expect-error a `__name` passes the table off as a class, whose missing `new` is called
+app.show_scene({ __name: "GuiScene", init(): void {} });
+
+// @ts-expect-error a `__name` passes the table off as a class, whose missing `new` is called
+gui_applet.new("root", { __name: "GuiScene" });
+
 app.update(1 / 60);
 
 const consumed = app.on_input(hash("touch"), action);
@@ -404,6 +433,9 @@ const facade_applet = wrap.gui_applet("applet1", {
 const _facade_applet: Equal<typeof facade_applet, gui_applet.GuiApplet> = true;
 void _facade_applet;
 wrap.gui_applet("applet2").register_scene("lobby", Lobby);
+
+// @ts-expect-error a `__name` passes the table off as a class, whose missing `new` is called
+wrap.gui_applet("applet3", { __name: "GuiScene" });
 
 // @ts-expect-error a node is an id, a node, or a list of them
 wrap.node(1);
