@@ -1,0 +1,141 @@
+{
+  "info": {
+    "namespace": "asobi.api.economy",
+    "brief": "asobi wallets and the store over REST. A project reaches it as `client.economy`.",
+    "description": "asobi wallets and the store over REST. A project reaches it as `client.economy`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "get_wallets",
+      "brief": "Fetches the signed-in player's wallets.",
+      "description": "Fetches the signed-in player's wallets.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the wallets, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_history",
+      "brief": "Fetches the transactions of one wallet.",
+      "description": "Fetches the transactions of one wallet.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "currency",
+          "doc": "The wallet's currency.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit",
+          "doc": "The most transactions to return. Defaults to `50`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the transactions, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_store",
+      "brief": "Fetches the store's listings.",
+      "description": "Fetches the store's listings.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "currency",
+          "doc": "Only the listings priced in this currency. Every listing when left out.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the listings, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "purchase",
+      "brief": "Buys a store listing with the signed-in player's wallet.",
+      "description": "Buys a store listing with the signed-in player's wallet.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "listing_id",
+          "doc": "The listing's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the purchase, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

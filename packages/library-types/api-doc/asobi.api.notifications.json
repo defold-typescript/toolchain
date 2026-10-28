@@ -1,0 +1,132 @@
+{
+  "info": {
+    "namespace": "asobi.api.notifications",
+    "brief": "asobi notifications over REST. A project reaches it as `client.notifications`.",
+    "description": "asobi notifications over REST. A project reaches it as `client.notifications`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "Fetches the signed-in player's notifications.",
+      "description": "Fetches the signed-in player's notifications.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "The filters.",
+          "types": [
+            "NotificationListOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the notifications, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mark_read",
+      "brief": "Marks a notification read.",
+      "description": "Marks a notification read.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "notification_id",
+          "doc": "The notification's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete",
+      "brief": "Deletes a notification.",
+      "description": "Deletes a notification.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "notification_id",
+          "doc": "The notification's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "NotificationListOptions",
+      "properties": [
+        {
+          "name": "read",
+          "brief": "Only read, or only unread, notifications.",
+          "description": "Only read, or only unread, notifications.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "brief": "The most notifications to return.",
+          "description": "The most notifications to return.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

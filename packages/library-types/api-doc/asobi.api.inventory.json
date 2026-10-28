@@ -1,0 +1,83 @@
+{
+  "info": {
+    "namespace": "asobi.api.inventory",
+    "brief": "The asobi inventory over REST. A project reaches it as `client.inventory`.",
+    "description": "The asobi inventory over REST. A project reaches it as `client.inventory`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "Fetches the signed-in player's items.",
+      "description": "Fetches the signed-in player's items.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit",
+          "doc": "The most items to return. The server's default applies when left out.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the items, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "consume",
+      "brief": "Uses up some of an item.",
+      "description": "Uses up some of an item.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "item_id",
+          "doc": "The item's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "quantity",
+          "doc": "How many to use up. Defaults to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the updated item, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

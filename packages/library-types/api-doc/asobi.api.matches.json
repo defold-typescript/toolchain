@@ -1,0 +1,165 @@
+{
+  "info": {
+    "namespace": "asobi.api.matches",
+    "brief": "asobi matches over REST. A project reaches it as `client.matches`.",
+    "description": "asobi matches over REST. A project reaches it as `client.matches`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "Fetches matches.",
+      "description": "Fetches matches.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "The filters.",
+          "types": [
+            "MatchListOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the matches, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "live",
+      "brief": "Fetches the running matches.",
+      "description": "Fetches the running matches.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "The filters.",
+          "types": [
+            "LiveMatchOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the matches, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Fetches one match.",
+      "description": "Fetches one match.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "match_id",
+          "doc": "The match's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the match, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MatchListOptions",
+      "properties": [
+        {
+          "name": "mode",
+          "brief": "Only matches of this mode.",
+          "description": "Only matches of this mode.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "status",
+          "brief": "Only matches with this status.",
+          "description": "Only matches with this status.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "brief": "The most matches to return.",
+          "description": "The most matches to return.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "LiveMatchOptions",
+      "properties": [
+        {
+          "name": "mode",
+          "brief": "Only matches of this mode.",
+          "description": "Only matches of this mode.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "has_capacity",
+          "brief": "Only matches that have, or lack, room for another player.",
+          "description": "Only matches that have, or lack, room for another player.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

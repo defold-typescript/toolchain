@@ -8,6 +8,22 @@
  * @noResolution
  */
 declare module 'asobi.client' {
+  import * as auth from 'asobi.api.auth';
+  import * as dm from 'asobi.api.dm';
+  import * as economy from 'asobi.api.economy';
+  import * as iap from 'asobi.api.iap';
+  import * as inventory from 'asobi.api.inventory';
+  import * as leaderboards from 'asobi.api.leaderboards';
+  import * as matches from 'asobi.api.matches';
+  import * as matchmaker from 'asobi.api.matchmaker';
+  import * as notifications from 'asobi.api.notifications';
+  import * as players from 'asobi.api.players';
+  import * as social from 'asobi.api.social';
+  import * as storage from 'asobi.api.storage';
+  import * as tournaments from 'asobi.api.tournaments';
+  import * as votes from 'asobi.api.votes';
+  import * as worlds from 'asobi.api.worlds';
+  import * as http from 'asobi.http';
   import type { Realtime } from 'asobi.realtime';
 
   /** A table the server sends, which the SDK passes on without shaping it. */
@@ -36,6 +52,38 @@ declare module 'asobi.client' {
     player_id?: string;
     /** The realtime connection, created with the client. */
     readonly realtime: Realtime;
+    /** The REST transport every module below sends through. */
+    readonly http: typeof http;
+    /** Sign-in, guest devices, linked providers and the token pair. */
+    readonly auth: typeof auth;
+    /** Player profiles and account erasure. */
+    readonly players: typeof players;
+    /** The matchmaker queue. */
+    readonly matchmaker: typeof matchmaker;
+    /** Match listings. */
+    readonly matches: typeof matches;
+    /** Leaderboard entries and score submission. */
+    readonly leaderboards: typeof leaderboards;
+    /** Wallets and the store. */
+    readonly economy: typeof economy;
+    /** The player's items. */
+    readonly inventory: typeof inventory;
+    /** Friends, groups and chat history. */
+    readonly social: typeof social;
+    /** Tournament listings and entry. */
+    readonly tournaments: typeof tournaments;
+    /** The player's notifications. */
+    readonly notifications: typeof notifications;
+    /** Cloud saves and key-value storage. */
+    readonly storage: typeof storage;
+    /** In-app purchase verification. */
+    readonly iap: typeof iap;
+    /** Match votes. */
+    readonly votes: typeof votes;
+    /** World listings and creation. */
+    readonly worlds: typeof worlds;
+    /** Direct messages. */
+    readonly dm: typeof dm;
 
     /**
      * Stores a new token pair and saves the refresh token with `sys.save`, so it survives a

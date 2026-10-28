@@ -1,0 +1,141 @@
+{
+  "info": {
+    "namespace": "asobi.api.players",
+    "brief": "asobi player profiles over REST. A project reaches it as `client.players`.",
+    "description": "asobi player profiles over REST. A project reaches it as `client.players`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Fetches a player's profile.",
+      "description": "Fetches a player's profile.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player_id",
+          "doc": "The player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the profile, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Updates a player's profile.",
+      "description": "Updates a player's profile.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player_id",
+          "doc": "The player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fields",
+          "doc": "The profile fields to change.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the profile, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_self",
+      "brief": "Fetches the signed-in player's profile. The client must be signed in: it raises an error",
+      "description": "Fetches the signed-in player's profile. The client must be signed in: it raises an error\nwhile `client.player_id` is unset.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the profile, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "erase_self",
+      "brief": "Erases the signed-in account and everything the server holds for it, which cannot be",
+      "description": "Erases the signed-in account and everything the server holds for it, which cannot be\nundone. On success it forgets both tokens and `client.player_id`; a refused confirmation\nkeeps the session. Needs a server that serves `/api/v1/players/me/erase`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "password",
+          "doc": "The account's password, needed only for an account that has one. Leave\nit out for a guest or a provider-only account.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

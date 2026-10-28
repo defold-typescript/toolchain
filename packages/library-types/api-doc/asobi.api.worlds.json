@@ -1,0 +1,132 @@
+{
+  "info": {
+    "namespace": "asobi.api.worlds",
+    "brief": "asobi worlds over REST. A project reaches it as `client.worlds`.",
+    "description": "asobi worlds over REST. A project reaches it as `client.worlds`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "Fetches worlds.",
+      "description": "Fetches worlds.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "The mode to filter by, or the filters.",
+          "types": [
+            "string | WorldListOptions"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the worlds, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Fetches one world.",
+      "description": "Fetches one world.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "world_id",
+          "doc": "The world's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the world, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Creates a world.",
+      "description": "Creates a world.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "mode",
+          "doc": "The world's mode.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the world, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "WorldListOptions",
+      "properties": [
+        {
+          "name": "mode",
+          "brief": "Only worlds of this mode.",
+          "description": "Only worlds of this mode.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "has_capacity",
+          "brief": "Only worlds that have, or lack, room for another player.",
+          "description": "Only worlds that have, or lack, room for another player.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
