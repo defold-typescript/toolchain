@@ -973,6 +973,17 @@
       "generated": "generated/operator.bezier.d.ts",
       "apiDoc": "api-doc/operator.bezier.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-operator/operator/bezier.lua"]
+    },
+    {
+      "repo": "https://github.com/dev-masih/defarmy",
+      "ref": "v1",
+      "license": "MIT",
+      "authored": "fixtures/authored/defarmy.defarmy.d.ts",
+      "moduleId": "defarmy.defarmy",
+      "namespace": "defarmy",
+      "generated": "generated/defarmy.d.ts",
+      "apiDoc": "api-doc/defarmy.json",
+      "upstreamLua": ["fixtures/upstream-lua/defarmy/defarmy/defarmy.lua"]
     }
   ]
 }

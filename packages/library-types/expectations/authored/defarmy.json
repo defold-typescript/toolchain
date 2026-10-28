@@ -1,0 +1,20 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/dev-masih/defarmy",
+    "authoredHere": true,
+    "commit": "v1",
+    "sourceUrl": "https://github.com/dev-masih/defarmy/tree/v1",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's `soldier_move` returns the next position and rotation as two Lua values, and every module function is called with `.`; a `soldier_move` declared without `LuaMultiReturn`, or a module function taking `self`, still passes `tsc`, so only TSTL's emit shows the multiple assignment and the `.` calls.",
+    "consumer": [
+      "import * as defarmy from \"defarmy.defarmy\";",
+      "export function update(soldier: number, current: Vector3): void {",
+      "  const army = defarmy.army_create(current, vmath.quat(), 32, true, defarmy.PATTERN.CUSTOMIZED, (count) => [count]);",
+      "  const [position, rotation] = defarmy.soldier_move(soldier, current, 100);",
+      "  print(army, position, rotation);",
+      "}"
+    ]
+  }
+}
