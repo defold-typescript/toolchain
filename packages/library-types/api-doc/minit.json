@@ -1,0 +1,181 @@
+{
+  "info": {
+    "namespace": "minit",
+    "brief": "Publishes an HTML5 game to the Minit platform. Each call talks to the `window.minit`",
+    "description": "Publishes an HTML5 game to the Minit platform. Each call talks to the `window.minit`\nruntime the host injects into the page, through `html5.run`. Call `loading_done` once\nthe game is ready to show and `report_result` once when it ends. Outside an HTML5\nbuild every call prints or returns a fixed result, so each is safe to call anywhere."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "loading_done",
+      "brief": "Signals the host that the game is booted and ready to show. The host keeps the game",
+      "description": "Signals the host that the game is booted and ready to show. The host keeps the game\nhidden until this is called. Outside an HTML5 build it prints `loadingDone`.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "report_result",
+      "brief": "Submits the game's final result. Call it exactly once, when the game ends: the host",
+      "description": "Submits the game's final result. Call it exactly once, when the game ends: the host\nignores a repeat call, and the SDK warns about it. A higher score ranks better by\ndefault. For a time-sorted game (`resultSorting` `fastestTime` or `slowestTime` in\n`meta.json`) the score is in seconds, never milliseconds, and fractions are allowed.\nOutside an HTML5 build it prints the score.",
+      "parameters": [
+        {
+          "name": "score",
+          "doc": "The result, as a number or a string.",
+          "types": [
+            "number | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "options",
+          "doc": "The caption, delay and stored slot to send with the result.",
+          "types": [
+            "ReportResultOptions"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_config_value",
+      "brief": "Reads a game config value from the page URL's query parameters (`?difficulty=hard`).",
+      "description": "Reads a game config value from the page URL's query parameters (`?difficulty=hard`).\nDeclare each key the game reads in the `config` array of its `meta.json`. The key\n`userData` is reserved and always returns the default. Outside an HTML5 build it\nreturns the default.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "The query parameter to read.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "default_value",
+          "doc": "The value returned when the key is absent or reserved. Defaults\nto `\"\"`. Upstream names this parameter `default`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_user_data",
+      "brief": "Returns this player's single stored slot, which `report_result` writes through its",
+      "description": "Returns this player's single stored slot, which `report_result` writes through its\n`user_data` option. Reads the host's `window.minit.userData`, else the `?userData=`\nURL parameter when the host injected none, else returns `undefined`. A stored empty\nvalue returns `\"\"`, distinct from `undefined`. Outside an HTML5 build it returns\n`undefined`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "should_show_tutorial",
+      "brief": "Returns whether to run the first-play tutorial. `?tutorial=1` or `?tutorial=true`",
+      "description": "Returns whether to run the first-play tutorial. `?tutorial=1` or `?tutorial=true`\nforces it on and `?tutorial=0` or `?tutorial=false` forces it off; otherwise it\nreturns `false` only when the host reports that the player has played the game\nbefore. Outside an HTML5 build it returns `true`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_viewable",
+      "brief": "Returns whether the game is visible to the player right now: the host's",
+      "description": "Returns whether the game is visible to the player right now: the host's\n`window.minit.isViewable()` when it has one, else whether `document.visibilityState`\nis `visible`. It reads the value again on every call. Outside an HTML5 build it\nreturns `true`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_viewable_change",
+      "brief": "Calls `fn` each time the game's viewability changes, starting from its value at",
+      "description": "Calls `fn` each time the game's viewability changes, starting from its value at\nsubscribe time, and returns a function that unsubscribes `fn`. Lua polls the value\nevery 0.25 s, so a change arrives up to about 250 ms late. Subscribing the same `fn`\nagain returns its existing unsubscribe, and unsubscribing twice is safe. An error\n`fn` raises is printed and does not stop the other subscribers. The poll runs on a\n`timer` that belongs to the script that subscribed last and stops with it, so\nsubscribe from a script that outlives the subscription and unsubscribe in its\n`final`. Outside an HTML5 build `fn` is never called and the returned function does\nnothing.",
+      "parameters": [
+        {
+          "name": "fn",
+          "doc": "Gets `true` when the game becomes viewable and `false` when it stops.",
+          "types": [
+            "(viewable: boolean) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "() => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ReportResultOptions",
+      "properties": [
+        {
+          "name": "flavor_text",
+          "brief": "A short caption for the host's result screen and feed. Past 64 characters, counted",
+          "description": "A short caption for the host's result screen and feed. Past 64 characters, counted\nas a JS string so an emoji counts 2, the SDK warns and the platform cuts it to 64.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "delay",
+          "brief": "How many milliseconds the host waits before showing the result screen.",
+          "description": "How many milliseconds the host waits before showing the result screen.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user_data",
+          "brief": "Writes this player's single stored slot, which `get_user_data` reads back. Omit it",
+          "description": "Writes this player's single stored slot, which `get_user_data` reads back. Omit it\nto leave the slot unchanged; `\"\"` is a valid write.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

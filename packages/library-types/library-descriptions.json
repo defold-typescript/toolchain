@@ -114,6 +114,7 @@
   "log": "Logger with Performance Metrics for Defold",
   "metrics.fps": "Calculate and display performance metrics in Defold games",
   "metrics.mem": "Calculate and display performance metrics in Defold games",
+  "minit": "Lets Defold creators publish a game to the Minit platform.",
   "monarch": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
   "monarch.transitions.easings": "Screen manager for Defold with stacked, modal, and transition-aware navigation flows.",
   "nakama": "Nakama Defold Client SDK",

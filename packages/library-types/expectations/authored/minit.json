@@ -1,0 +1,20 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/Minit-Games/minit-defold",
+    "authoredHere": true,
+    "commit": "v1.17.0",
+    "sourceUrl": "https://github.com/Minit-Games/minit-defold/tree/v1.17.0",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream calls the `on_viewable_change` subscriber as `fn(viewable)` and returns an unsubscribe that takes no argument, and every module function is called with `.`; a callback or unsubscribe type declared with a `this` parameter still passes `tsc`, so only TSTL's emit shows the callback and the unsubscribe call without a leading `self`.",
+    "consumer": [
+      "import * as minit from \"minit.minit\";",
+      "export function init(): void {",
+      "  const off = minit.on_viewable_change((viewable) => print(viewable));",
+      "  off();",
+      "  minit.report_result(42, { flavor_text: \"gg\" });",
+      "}"
+    ]
+  }
+}
