@@ -354,8 +354,11 @@ function functionElement(
     };
   });
 
-  const returnText = decl.type ? typeText(decl.type, sf) : "";
-  const returnFields = objectFields(decl.type, sf);
+  // An `asserts` signature only narrows its argument, so like `void` it documents no return.
+  const asserts =
+    decl.type !== undefined && ts.isTypePredicateNode(decl.type) && !!decl.type.assertsModifier;
+  const returnText = decl.type && !asserts ? typeText(decl.type, sf) : "";
+  const returnFields = asserts ? undefined : objectFields(decl.type, sf);
   const returnvalues =
     returnText === "" || returnText === "void"
       ? []

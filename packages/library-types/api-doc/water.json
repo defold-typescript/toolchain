@@ -2,7 +2,7 @@
   "info": {
     "namespace": "water",
     "brief": "A stylized water shader: animated wave surfaces, foam, sparkles, refraction and",
-    "description": "A stylized water shader: animated wave surfaces, foam, sparkles, refraction and\nreflection, set through shader constants. A game object script calls `init` once with\nthe camera, sun and water objects, then `update(dt)` and `update_camera()` every frame.\nThe render script calls `render_init(self)` at the end of its `init` and\n`render_update(self, state, predicates, draw_options_world)` in its `update` (see\n`water/render/water.render_script`). The shader needs `exclude_gles_sm100 = 1` under\n`[shader]` in `game.project`. Every setter writes a shader constant the next\n`render_update` uploads, and every getter returns the stored values as separate\nvalues."
+    "description": "A stylized water shader: animated wave surfaces, foam, sparkles, refraction and\nreflection, set through shader constants. A game object script calls `init` once with\nthe camera, sun and water objects, then `update(dt)` and `update_camera()` every frame.\nThe render script calls `render_init(self)` at the end of its `init`, after which\n`self.predicates` holds the `water` predicate, and\n`render_update(self, state, self.predicates, draw_options_world)` in its `update` (see\n`water/render/water.render_script`). The shader needs `exclude_gles_sm100 = 1` under\n`[shader]` in `game.project`. Every setter writes a shader constant the next\n`render_update` uploads, and every getter returns the stored values as separate\nvalues."
   },
   "elements": [
     {
@@ -58,7 +58,7 @@
       "type": "FUNCTION",
       "name": "render_init",
       "brief": "Adds the `water` predicate to `self.predicates`, creates the scene render target at",
-      "description": "Adds the `water` predicate to `self.predicates`, creates the scene render target at\n`self.state.width` by `self.state.height` with a color and a depth buffer, and\ncreates the two constant buffers `render_update` draws with, all stored on `self`.\nCall it at the end of the render script's `init`, once `self.predicates` and\n`self.state` are set.",
+      "description": "Adds the `water` predicate to `self.predicates`, creates the scene render target at\n`self.state.width` by `self.state.height` with a color and a depth buffer, and\ncreates the two constant buffers `render_update` draws with, all stored on `self`.\nCall it at the end of the render script's `init`, once `self.predicates` and\n`self.state` are set. Afterwards `self.predicates` types as `Predicates`, which\n`render_update` takes. From a `defineRenderScript` `init`, call it on the state `init`\nreturns, which is merged onto `self`.",
       "parameters": [
         {
           "name": "self",
@@ -1134,10 +1134,20 @@
       "properties": [
         {
           "name": "predicates",
-          "brief": "The render script's predicates. `render_init` adds a `water` predicate to it.",
-          "description": "The render script's predicates. `render_init` adds a `water` predicate to it.",
+          "brief": "The render script's predicates, which hold `model`. `render_init` adds `water`.",
+          "description": "The render script's predicates, which hold `model`. `render_init` adds `water`.",
           "types": [
-            "object"
+            "{ model: render.RenderPredicate; }"
+          ],
+          "fields": [
+            {
+              "name": "model",
+              "doc": "The `model` predicate, drawn into the scene render target and then to the screen.",
+              "types": [
+                "render.RenderPredicate"
+              ],
+              "is_optional": "False"
+            }
           ]
         },
         {
@@ -1170,6 +1180,28 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "Predicates",
+      "properties": [
+        {
+          "name": "model",
+          "brief": "The `model` predicate, drawn into the scene render target and then to the screen.",
+          "description": "The `model` predicate, drawn into the scene render target and then to the screen.",
+          "types": [
+            "render.RenderPredicate"
+          ]
+        },
+        {
+          "name": "water",
+          "brief": "The `water` predicate `render_init` adds to the render script's `self.predicates`.",
+          "description": "The `water` predicate `render_init` adds to the render script's `self.predicates`.",
+          "types": [
+            "render.RenderPredicate"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "RenderState",
       "properties": [
         {
@@ -1194,28 +1226,6 @@
           "description": "The clear values `render.clear` receives for the scene render target.",
           "types": [
             "LuaMap<render.ClearBufferKey, number | Vector4>"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "TYPEDEF",
-      "name": "Predicates",
-      "properties": [
-        {
-          "name": "model",
-          "brief": "The `model` predicate, drawn into the scene render target and then to the screen.",
-          "description": "The `model` predicate, drawn into the scene render target and then to the screen.",
-          "types": [
-            "render.RenderPredicate"
-          ]
-        },
-        {
-          "name": "water",
-          "brief": "The `water` predicate `render_init` adds to the render script's `self.predicates`.",
-          "description": "The `water` predicate `render_init` adds to the render script's `self.predicates`.",
-          "types": [
-            "render.RenderPredicate"
           ]
         }
       ]
