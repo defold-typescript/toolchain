@@ -1,0 +1,1409 @@
+{
+  "info": {
+    "namespace": "wrap.go",
+    "brief": "A chainable wrapper around a game object. `new` stores a url, and each method calls the",
+    "description": "A chainable wrapper around a game object. `new` stores a url, and each method calls the\n`go.*` function of the same name with that url: setters return the wrapper, so calls\nchain, and getters return what the engine does."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "AnimatedValue",
+      "types": [
+        "number",
+        "Vector3",
+        "Vector4",
+        "Quaternion"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PropertyValue",
+      "types": [
+        "number",
+        "boolean",
+        "string",
+        "Hash",
+        "Url",
+        "Vector3",
+        "Vector4",
+        "Quaternion",
+        "Matrix4",
+        "Vector4[]"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Wraps a game object.",
+      "description": "Wraps a game object.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The game object's url.",
+          "types": [
+            "SceneGameObjectAddress | Hash | Url"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Go"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Go",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "get",
+          "brief": "Returns a property of the game object, from `go.get`.",
+          "description": "Returns a property of the game object, from `go.get`.",
+          "generics": "<K extends keyof go.Properties>",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property.",
+              "types": [
+                "K"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "An `index`, `key` or `keys` into the property. Defaults to `{}`.",
+              "types": [
+                "go.GoPropertyOptions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "go.Properties[K]"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get",
+          "brief": "Returns a property of the game object, from `go.get`.",
+          "description": "Returns a property of the game object, from `go.get`.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "An `index`, `key` or `keys` into the property. Defaults to `{}`.",
+              "types": [
+                "go.GoPropertyOptions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "PropertyValue"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set",
+          "brief": "Sets a property of the game object with `go.set`.",
+          "description": "Sets a property of the game object with `go.set`.",
+          "generics": "<K extends keyof go.Properties>",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property.",
+              "types": [
+                "K"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "value",
+              "doc": "The value.",
+              "types": [
+                "go.Properties[K]"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "An `index`, `key` or `keys` into the property. Defaults to `{}`.",
+              "types": [
+                "go.GoPropertyOptions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set",
+          "brief": "Sets a property of the game object with `go.set`.",
+          "description": "Sets a property of the game object with `go.set`.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "value",
+              "doc": "The value.",
+              "types": [
+                "PropertyValue"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "options",
+              "doc": "An `index`, `key` or `keys` into the property. Defaults to `{}`.",
+              "types": [
+                "go.GoPropertyOptions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "post",
+          "brief": "Posts a message to the game object with `msg.post`.",
+          "description": "Posts a message to the game object with `msg.post`.",
+          "generics": "<K extends MessageId | Hash | (string & {})>",
+          "parameters": [
+            {
+              "name": "message_id",
+              "doc": "The message id.",
+              "types": [
+                "K"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "The message payload. Defaults to an empty table.",
+              "types": [
+                "MessagePayload<K>"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_id",
+          "brief": "Returns the game object's id, from `go.get_id`. `go.get_id` takes a path string, so",
+          "description": "Returns the game object's id, from `go.get_id`. `go.get_id` takes a path string, so\ncall it only on a wrapper built from one.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "delete",
+          "brief": "Deletes the game object with `go.delete`. At `1.1.0` the deletion is always",
+          "description": "Deletes the game object with `go.delete`. At `1.1.0` the deletion is always\nrecursive: upstream reads `recursive or true`, so `false` still deletes the children.",
+          "parameters": [
+            {
+              "name": "recursive",
+              "doc": "Whether to delete the children as well.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "animate",
+          "brief": "Animates one property with `go.animate`.",
+          "description": "Animates one property with `go.animate`.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property to animate.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "playback",
+              "doc": "The playback mode.",
+              "types": [
+                "go.Playback"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "to",
+              "doc": "The value to animate it to.",
+              "types": [
+                "AnimatedValue"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "easing",
+              "doc": "An easing constant, or a vector of easing samples.",
+              "types": [
+                "go.Easing | Vector"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "duration",
+              "doc": "The duration in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "delay",
+              "doc": "The delay in seconds before the animation starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "complete_function",
+              "doc": "Called once the animation completes.",
+              "types": [
+                "(self: unknown, url: Url, property: Hash) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "animate",
+          "brief": "Animates several properties with `go.animate`, each to the value at the same index",
+          "description": "Animates several properties with `go.animate`, each to the value at the same index\nof `to`, all with the same playback, easing, duration and delay.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The properties to animate.",
+              "types": [
+                "readonly (string | Hash)[]"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "playback",
+              "doc": "The playback mode.",
+              "types": [
+                "go.Playback"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "to",
+              "doc": "The value to animate each property to, by index.",
+              "types": [
+                "readonly AnimatedValue[]"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "easing",
+              "doc": "An easing constant, or a vector of easing samples.",
+              "types": [
+                "go.Easing | Vector"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "duration",
+              "doc": "The duration in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "delay",
+              "doc": "The delay in seconds before the animations start. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "complete_function",
+              "doc": "Called once the first property's animation completes.",
+              "types": [
+                "(self: unknown, url: Url, property: Hash) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cancel_animations",
+          "brief": "Cancels the game object's animations with `go.cancel_animations`.",
+          "description": "Cancels the game object's animations with `go.cancel_animations`.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property, or the properties, whose animations to cancel. When\nomitted, every animation of the game object is canceled.",
+              "types": [
+                "string | Hash | readonly (string | Hash)[]"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position",
+          "brief": "Sets the game object's position with `go.set_position`.",
+          "description": "Sets the game object's position with `go.set_position`.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_position",
+          "brief": "Returns the game object's position, from `go.get_position`.",
+          "description": "Returns the game object's position, from `go.get_position`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_position",
+          "brief": "Meant to add to each component of the position. At `1.1.0` it adds to a copy of the",
+          "description": "Meant to add to each component of the position. At `1.1.0` it adds to a copy of the\nposition and leaves the game object unchanged; `add_position_x`, `add_position_y`\nand `add_position_z` write the result.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The amount to add to each component.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_position_x",
+          "brief": "Returns the x component of the game object's position.",
+          "description": "Returns the x component of the game object's position.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_position_y",
+          "brief": "Returns the y component of the game object's position.",
+          "description": "Returns the y component of the game object's position.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_position_z",
+          "brief": "Returns the z component of the game object's position.",
+          "description": "Returns the z component of the game object's position.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position_x",
+          "brief": "Sets the x component of the game object's position.",
+          "description": "Sets the x component of the game object's position.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The x component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position_y",
+          "brief": "Sets the y component of the game object's position.",
+          "description": "Sets the y component of the game object's position.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The y component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position_z",
+          "brief": "Sets the z component of the game object's position.",
+          "description": "Sets the z component of the game object's position.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The z component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_position_x",
+          "brief": "Adds to the x component of the game object's position.",
+          "description": "Adds to the x component of the game object's position.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_position_y",
+          "brief": "Adds to the y component of the game object's position.",
+          "description": "Adds to the y component of the game object's position.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_position_z",
+          "brief": "Adds to the z component of the game object's position.",
+          "description": "Adds to the z component of the game object's position.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_rotation",
+          "brief": "Returns the game object's rotation, from `go.get_rotation`.",
+          "description": "Returns the game object's rotation, from `go.get_rotation`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Quaternion"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_rotation",
+          "brief": "Sets the game object's rotation with `go.set_rotation`.",
+          "description": "Sets the game object's rotation with `go.set_rotation`.",
+          "parameters": [
+            {
+              "name": "rotation",
+              "doc": "The rotation.",
+              "types": [
+                "Quaternion"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_rotation",
+          "brief": "Meant to add to the x, y and z components of the rotation quaternion. At `1.1.0` it",
+          "description": "Meant to add to the x, y and z components of the rotation quaternion. At `1.1.0` it\nadds to a copy of the rotation and leaves the game object unchanged.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The amount to add to the x, y and z components.",
+              "types": [
+                "Quaternion"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_rotation_x",
+          "brief": "Returns the x component of the rotation quaternion, not an Euler angle.",
+          "description": "Returns the x component of the rotation quaternion, not an Euler angle.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_rotation_y",
+          "brief": "Returns the y component of the rotation quaternion, not an Euler angle.",
+          "description": "Returns the y component of the rotation quaternion, not an Euler angle.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_rotation_z",
+          "brief": "Returns the z component of the rotation quaternion, not an Euler angle.",
+          "description": "Returns the z component of the rotation quaternion, not an Euler angle.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_rotation_x",
+          "brief": "Sets the x component of the rotation quaternion, not an Euler angle, and leaves the",
+          "description": "Sets the x component of the rotation quaternion, not an Euler angle, and leaves the\nother components as they are.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The quaternion's x component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_rotation_y",
+          "brief": "Sets the y component of the rotation quaternion, not an Euler angle, and leaves the",
+          "description": "Sets the y component of the rotation quaternion, not an Euler angle, and leaves the\nother components as they are.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The quaternion's y component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_rotation_z",
+          "brief": "Sets the z component of the rotation quaternion, not an Euler angle, and leaves the",
+          "description": "Sets the z component of the rotation quaternion, not an Euler angle, and leaves the\nother components as they are.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The quaternion's z component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_rotation_x",
+          "brief": "Adds to the x component of the rotation quaternion, not an Euler angle.",
+          "description": "Adds to the x component of the rotation quaternion, not an Euler angle.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_rotation_y",
+          "brief": "Adds to the y component of the rotation quaternion, not an Euler angle.",
+          "description": "Adds to the y component of the rotation quaternion, not an Euler angle.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_rotation_z",
+          "brief": "Adds to the z component of the rotation quaternion, not an Euler angle.",
+          "description": "Adds to the z component of the rotation quaternion, not an Euler angle.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale",
+          "brief": "Returns the game object's scale, from `go.get_scale`.",
+          "description": "Returns the game object's scale, from `go.get_scale`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_scale",
+          "brief": "Sets the game object's scale with `go.set_scale`.",
+          "description": "Sets the game object's scale with `go.set_scale`.",
+          "parameters": [
+            {
+              "name": "scale",
+              "doc": "The scale, or one number for all three axes.",
+              "types": [
+                "number | Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_scale",
+          "brief": "Meant to add to each component of the scale. At `1.1.0` it adds to a copy of the",
+          "description": "Meant to add to each component of the scale. At `1.1.0` it adds to a copy of the\nscale and leaves the game object unchanged; `add_scale_x`, `add_scale_y` and\n`add_scale_z` write the result.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The amount to add to each component.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale_x",
+          "brief": "Returns the x component of the game object's scale.",
+          "description": "Returns the x component of the game object's scale.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale_y",
+          "brief": "Returns the y component of the game object's scale.",
+          "description": "Returns the y component of the game object's scale.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale_z",
+          "brief": "Returns the z component of the game object's scale.",
+          "description": "Returns the z component of the game object's scale.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_scale_x",
+          "brief": "Sets the x component of the game object's scale.",
+          "description": "Sets the x component of the game object's scale.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The x component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_scale_y",
+          "brief": "Sets the y component of the game object's scale.",
+          "description": "Sets the y component of the game object's scale.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The y component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_scale_z",
+          "brief": "Sets the z component of the game object's scale.",
+          "description": "Sets the z component of the game object's scale.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The z component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_scale_x",
+          "brief": "Adds to the x component of the game object's scale.",
+          "description": "Adds to the x component of the game object's scale.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_scale_y",
+          "brief": "Adds to the y component of the game object's scale.",
+          "description": "Adds to the y component of the game object's scale.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_scale_z",
+          "brief": "Adds to the z component of the game object's scale.",
+          "description": "Adds to the z component of the game object's scale.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_parent",
+          "brief": "Returns the id of the game object's parent, from `go.get_parent`.",
+          "description": "Returns the id of the game object's parent, from `go.get_parent`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_parent",
+          "brief": "Sets the game object's parent with `go.set_parent`.",
+          "description": "Sets the game object's parent with `go.set_parent`.",
+          "parameters": [
+            {
+              "name": "parent",
+              "doc": "The parent's url. When omitted, the game object is detached from its\nparent.",
+              "types": [
+                "SceneGameObjectAddress | Hash | Url"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "keep_world_transform",
+              "doc": "Whether to keep the world transform.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Go"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale_uniform",
+          "brief": "Returns the game object's uniform scale, from `go.get_scale_uniform`.",
+          "description": "Returns the game object's uniform scale, from `go.get_scale_uniform`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_world_position",
+          "brief": "Returns the game object's world position, from `go.get_world_position`.",
+          "description": "Returns the game object's world position, from `go.get_world_position`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_world_rotation",
+          "brief": "Returns the game object's world rotation, from `go.get_world_rotation`.",
+          "description": "Returns the game object's world rotation, from `go.get_world_rotation`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Quaternion"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_world_scale",
+          "brief": "Returns the game object's world scale, from `go.get_world_scale`.",
+          "description": "Returns the game object's world scale, from `go.get_world_scale`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_world_scale_uniform",
+          "brief": "Returns the game object's uniform world scale, from `go.get_world_scale_uniform`.",
+          "description": "Returns the game object's uniform world scale, from `go.get_world_scale_uniform`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_world_transform",
+          "brief": "Returns the game object's world transform, from `go.get_world_transform`.",
+          "description": "Returns the game object's world transform, from `go.get_world_transform`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Matrix4"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "url",
+          "brief": "The game object's url, passed to every `go.*` call.",
+          "description": "The game object's url, passed to every `go.*` call.",
+          "types": [
+            "SceneGameObjectAddress | Hash | Url"
+          ]
+        }
+      ]
+    }
+  ]
+}

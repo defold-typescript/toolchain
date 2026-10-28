@@ -1,0 +1,19 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/baochungit/defold-wrap",
+    "authoredHere": true,
+    "commit": "1.1.0",
+    "sourceUrl": "https://github.com/baochungit/defold-wrap/tree/1.1.0",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "A game object list is a plain table holding one wrapped game object per name, so a name is a `.` field and the object's method a `:` call on it; a list declared as a class whose names are methods, or a game object method declared `this: void`, still passes `tsc`, so only TSTL's emit shows which call form each produces.",
+    "consumer": [
+      "import * as wrap_go_list from \"wrap.go_list\";",
+      "export function init(): void {",
+      "  const list = wrap_go_list.new({ hero: \"/hero\", camera: \"/camera\" });",
+      "  list.hero.post(\"jump\");",
+      "}"
+    ]
+  }
+}
