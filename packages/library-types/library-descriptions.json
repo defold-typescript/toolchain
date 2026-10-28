@@ -153,6 +153,7 @@
   "tile_raycast": "Ray Casting in tiled worlds using DDA algorithm.",
   "uptime": "Time elapsed since the device booted, in seconds.",
   "uuid4": "Defold uuid4 generator native extension",
+  "water": "A stylized water shader for the Defold game engine, with animated wave surfaces, foam effects, sparkles and customizable rendering parameters.",
   "wave": "Wave simulation that floats, pitches and rolls game objects on a water surface.",
   "yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine."
 }

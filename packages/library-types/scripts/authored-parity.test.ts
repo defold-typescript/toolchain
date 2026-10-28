@@ -1197,12 +1197,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other eighty-nine targets share no variadic member at all", () => {
+  test("the other ninety targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(89);
+    expect(untouched.length).toBe(90);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2668,6 +2668,38 @@ describe("illumination.illumination declares the whole of its public upstream", 
     );
     expect(new Set(members.map((element) => element.name)).size).toBe(
       report.upstreamMembers - report.parityExceptions.length + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `water.lua` exports fifty `function water.x` definitions on `local water = {}` and no
+// fields. Upstream documents the setters and getters with `---` blocks but not the setup
+// functions or the two render-script hooks, so their descriptions are the fork's own.
+describe("water.water declares the whole of its upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("water"));
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(50);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(target("water")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
     );
     const blank = members
       .filter((element) => (element.description ?? "").trim() === "")

@@ -206,3 +206,16 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records water: a consumer transpiles with the call forms the declaration produces: water 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local water = require("water.water")
+function ____exports.update(____self, state, predicates, draw_options)
+    local direction, amplitude, wavelength, speed = water.get_wave1()
+    print(direction, amplitude, wavelength, speed)
+    water.render_update(____self, state, predicates, draw_options)
+end
+return ____exports
+"
+`;
