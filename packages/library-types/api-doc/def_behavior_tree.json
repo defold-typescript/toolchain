@@ -125,22 +125,30 @@
       "name": "NodeTemplate",
       "types": [
         "TaskTemplate<P>",
-        "CompositeTemplate<P>",
-        "DecoratorTemplate<P>"
+        "CompositeTemplate<P, Ref>",
+        "DecoratorTemplate<P, Ref>"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Templates",
+      "types": [
+        "NamedTemplates<P>",
+        "InlineTemplates<P>"
       ]
     },
     {
       "type": "FUNCTION",
       "name": "new",
-      "brief": "Creates a tree that runs a registered tree template. Register the templates with",
-      "description": "Creates a tree that runs a registered tree template. Register the templates with\n`registerTemplates` first.",
-      "generics": "<P = unknown>",
+      "brief": "Creates a tree that runs a registered tree template over a payload. Register the",
+      "description": "Creates a tree that runs a registered tree template over a payload. Register the\ntemplates with `registerTemplates` first.",
+      "generics": "<P>",
       "parameters": [
         {
           "name": "config",
           "doc": "`tree_name` names a tree under the templates' `TREES`, `payload` is\npassed to every task callback, and `rng` returns a whole number between its two\narguments for `Random` and `RandomWithChances`; it defaults to `math.random`.",
           "types": [
-            "{ tree_name: string; payload?: P; rng?: (this: void, range_start: number, range_end: number) => number; }"
+            "{ tree_name: string; payload: P; rng?: (this: void, range_start: number, range_end: number) => number; }"
           ],
           "is_optional": "False",
           "fields": [
@@ -157,6 +165,57 @@
               "doc": "",
               "types": [
                 "P"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "rng",
+              "doc": "",
+              "types": [
+                "(this: void, range_start: number, range_end: number) => number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "BehaviorTree<P>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates a tree that runs a registered tree template with no payload, so its task",
+      "description": "Creates a tree that runs a registered tree template with no payload, so its task\ncallbacks receive `undefined`. Register the templates with `registerTemplates` first.",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "`tree_name` names a tree under the templates' `TREES`, and `rng`\nreturns a whole number between its two arguments for `Random` and\n`RandomWithChances`; it defaults to `math.random`.",
+          "types": [
+            "{ tree_name: string; payload?: undefined; rng?: (this: void, range_start: number, range_end: number) => number; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "tree_name",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "payload",
+              "doc": "",
+              "types": [
+                "undefined"
               ],
               "is_optional": "True"
             },
@@ -176,7 +235,7 @@
           "name": "",
           "doc": "",
           "types": [
-            "BehaviorTree<P>"
+            "BehaviorTree<undefined>"
           ]
         }
       ]
@@ -454,7 +513,7 @@
     },
     {
       "type": "TYPEDEF",
-      "name": "Templates",
+      "name": "NamedTemplates",
       "properties": [
         {
           "name": "TREES",
@@ -470,8 +529,7 @@
           "description": "",
           "types": [
             "Record<string, NodeTemplate<P>>"
-          ],
-          "is_optional": "True"
+          ]
         }
       ]
     },
@@ -600,7 +658,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(string | NodeTemplate<P>)[]"
+            "(Ref | NodeTemplate<P, Ref>)[]"
           ]
         },
         {
@@ -640,7 +698,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "string | NodeTemplate<P>"
+            "Ref | NodeTemplate<P, Ref>"
           ]
         },
         {
@@ -658,6 +716,29 @@
           "description": "",
           "types": [
             "never"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "InlineTemplates",
+      "properties": [
+        {
+          "name": "TREES",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Record<string, { main_node: NodeTemplate<P, never>; }>"
+          ]
+        },
+        {
+          "name": "NODES",
+          "brief": "",
+          "description": "",
+          "types": [
+            "undefined"
           ],
           "is_optional": "True"
         }
