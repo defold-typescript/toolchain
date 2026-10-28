@@ -156,31 +156,14 @@
         {
           "type": "FUNCTION",
           "name": "show_scene",
-          "brief": "Shows a new scene of the class registered under a name: sets it up with `setup`,",
-          "description": "Shows a new scene of the class registered under a name: sets it up with `setup`,\nwhich runs its `init`, starts its transition in, and starts the transition out of the\nscene it replaces. Does nothing when no scene is registered under the name.",
+          "brief": "Shows a new scene of a class, or of the class registered under a name: sets it up",
+          "description": "Shows a new scene of a class, or of the class registered under a name: sets it up\nwith `setup`, which runs its `init`, starts its transition in, and starts the\ntransition out of the scene it replaces. Does nothing when no scene is registered\nunder the name.",
           "parameters": [
             {
               "name": "name_or_scene",
-              "doc": "The name the scene was registered under.",
+              "doc": "The name the scene was registered under, or a class\n`wrap.gui_scene.extend` returns.",
               "types": [
-                "string"
-              ],
-              "is_optional": "False"
-            }
-          ],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "show_scene",
-          "brief": "Shows a new scene of a class, as the first form does.",
-          "description": "Shows a new scene of a class, as the first form does.",
-          "parameters": [
-            {
-              "name": "name_or_scene",
-              "doc": "A class `wrap.gui_scene.extend` returns.",
-              "types": [
-                "GuiSceneClass<object>"
+                "string | GuiSceneClass<object>"
               ],
               "is_optional": "False"
             }

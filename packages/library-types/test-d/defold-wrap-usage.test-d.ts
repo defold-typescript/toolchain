@@ -361,6 +361,11 @@ app.show_scene({
     this.new_object(Button, { text: "x" });
   },
 });
+
+// A table mixing a field with a hook that does not read `this` compiles. A `show_scene`
+// overload taking only a name ahead of the plain-table one makes tsc report TS7023 here.
+app.show_scene({ direction: 1, init() {} });
+
 app.register_scene("bouncing", {
   direction: 1,
   update(dt: number) {
