@@ -1,0 +1,263 @@
+{
+  "info": {
+    "namespace": "illumination",
+    "brief": "Forward shading lighting for 3D games, with ambient and directional light, point and",
+    "description": "Forward shading lighting for 3D games, with ambient and directional light, point and\nspot lights, and linear or radial fog. Add `illumination.go` to the scene as the\nsunlight source, add `light_point.go` or `light_spot.go` for each light, and set\n`/illumination/materials/model.material` on the meshes. The lighting data reaches the\nshader as a texture, so no render script is needed. The module's functions toggle the\ndebug meshes and set lights and the environment by hand."
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "FOG_TYPE_NONE",
+      "brief": "No fog.",
+      "description": "No fog.",
+      "types": [
+        "0"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FOG_TYPE_LINEAR",
+      "brief": "Fog along the camera's view direction.",
+      "description": "Fog along the camera's view direction.",
+      "types": [
+        "1"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FOG_TYPE_RADIAL",
+      "brief": "Fog around the camera's position.",
+      "description": "Fog around the camera's position.",
+      "types": [
+        "2"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FogType",
+      "types": [
+        "typeof FOG_TYPE_NONE",
+        "typeof FOG_TYPE_LINEAR",
+        "typeof FOG_TYPE_RADIAL"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_debug",
+      "brief": "Shows or hides the debug meshes of the sun and the light sources.",
+      "description": "Shows or hides the debug meshes of the sun and the light sources.",
+      "parameters": [
+        {
+          "name": "is_enabled",
+          "doc": "Whether the debug meshes show.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_debug",
+      "brief": "Returns whether the debug meshes show.",
+      "description": "Returns whether the debug meshes show.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_environment",
+      "brief": "Patches the environment with the fields given and leaves the others as they are. The",
+      "description": "Patches the environment with the fields given and leaves the others as they are. The\nfog fields apply only while the stored fog type, including one set in the same call,\nis not `FOG_TYPE_NONE`, and `fog_color` also posts `clear_color` to `@render:`. The\nbundled `illumination.go` patches each field from its own properties on its first\nupdate and whenever that property changes, overwriting a value set here. Raises until\nthe bundled `illumination.go` has run its script's `init`.",
+      "parameters": [
+        {
+          "name": "environment",
+          "doc": "The fields to change.",
+          "types": [
+            "Environment"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_light",
+      "brief": "Adds, updates or removes a light source by hand, for lights that are not",
+      "description": "Adds, updates or removes a light source by hand, for lights that are not\n`light_point.go` or `light_spot.go`. `position`, `color`, `radius` and `cutoff` are\nrequired, `specular` and `smoothness` default to `1`, and each position axis must lie\nwithin -2048 to 2048. `undefined`, or a light whose `color.w`, `radius` or `cutoff` is\n`0` or below, removes the light. `url` keys the light, so pass the same value on every\ncall for the same light. It receives a `debug` message carrying `is_enabled` when the\nlight is added or removed and on every `set_debug`. Adding or updating a light raises\nuntil the bundled `illumination.go` has run its script's `init`.",
+      "parameters": [
+        {
+          "name": "light",
+          "doc": "The light, or `undefined` to remove it.",
+          "types": [
+            "Light | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "url",
+          "doc": "The light's key and the address of its `debug` messages.",
+          "types": [
+            "Url | string | Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Environment",
+      "properties": [
+        {
+          "name": "fog_type",
+          "brief": "The fog type. The fog fields below apply only while the fog type is not `FOG_TYPE_NONE`.",
+          "description": "The fog type. The fog fields below apply only while the fog type is not `FOG_TYPE_NONE`.",
+          "types": [
+            "FogType"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "ambient_color",
+          "brief": "The ambient light color, its `w` the ambient strength.",
+          "description": "The ambient light color, its `w` the ambient strength.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sunlight_color",
+          "brief": "The directional light color, its `w` the sunlight brightness.",
+          "description": "The directional light color, its `w` the sunlight brightness.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sunlight_direction",
+          "brief": "The direction the sunlight shines, normalized by upstream.",
+          "description": "The direction the sunlight shines, normalized by upstream.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "sunlight_specular",
+          "brief": "The sunlight's specular component, from `0` to `1`.",
+          "description": "The sunlight's specular component, from `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fog_color",
+          "brief": "The fog color, its `w` the fog's full strength. Also posted as `clear_color` to `@render:`.",
+          "description": "The fog color, its `w` the fog's full strength. Also posted as `clear_color` to `@render:`.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fog_min",
+          "brief": "The distance at which the fog begins. Values below `0` are raised to `0`.",
+          "description": "The distance at which the fog begins. Values below `0` are raised to `0`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "fog_max",
+          "brief": "The distance at which the fog reaches full strength. Values below `fog_min` are raised to it.",
+          "description": "The distance at which the fog reaches full strength. Values below `fog_min` are raised to it.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Light",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "The light's world position. Each axis is encoded within -2048 to 2048.",
+          "description": "The light's world position. Each axis is encoded within -2048 to 2048.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "color",
+          "brief": "The light color, multiplied with the diffuse color. Its `w` is the brightness.",
+          "description": "The light color, multiplied with the diffuse color. Its `w` is the brightness.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "radius",
+          "brief": "The light radius. Upstream rounds it up and caps it at `255`.",
+          "description": "The light radius. Upstream rounds it up and caps it at `255`.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cutoff",
+          "brief": "The spotlight cutoff, from `0` to `1`: `0.3` is like a flashlight, `0.5` half of the",
+          "description": "The spotlight cutoff, from `0` to `1`: `0.3` is like a flashlight, `0.5` half of the\nsphere, and `1` no cutoff.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "direction",
+          "brief": "The direction a spotlight shines. Read only while `cutoff` is below `1`.",
+          "description": "The direction a spotlight shines. Read only while `cutoff` is below `1`.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "specular",
+          "brief": "The light's specular component, from `0` to `1`. Defaults to `1`.",
+          "description": "The light's specular component, from `0` to `1`. Defaults to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "smoothness",
+          "brief": "The light's attenuation, from `0` to `1`: `0` fills the radius evenly and `1` fades",
+          "description": "The light's attenuation, from `0` to `1`: `0` fills the radius evenly and `1` fades\nfrom the center to the edge. Defaults to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

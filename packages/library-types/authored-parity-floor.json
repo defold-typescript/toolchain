@@ -51,6 +51,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/dissolve_fx.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/flow.bottom_sheet.json": {
     "callable": 1,
     "field": 1
@@ -196,6 +200,10 @@
     "field": 1
   },
   "fidelity/authored/gooey.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/illumination.json": {
     "callable": 1,
     "field": 1
   },

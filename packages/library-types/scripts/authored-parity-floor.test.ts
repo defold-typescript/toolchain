@@ -369,6 +369,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "fe137482036617b619b93c8dba1a7f4b976a27850c3dd351a0b26ddb4e634016",
   "fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua":
     "2b17a4f9d1fc55597d611880def782872029cdd095d94d5f07a9c1faa65008ba",
+  "fixtures/upstream-lua/defold-dissolve-fx/dissolve_fx/dissolve_fx.lua":
+    "03a889288fd71b3ab8721745334f5b5a8206f25ea3e3ff0ec6ad02d32cde3801",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/achievements.lua":
     "284ee4c93dc7d7cf6c26b4f0276230daff4a85646d38f58e4a0add963e25bf3b",
   "fixtures/upstream-lua/defold-gamepush/gamepush/core/ads.lua":
@@ -435,6 +437,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "99791b9da12d466e07106db54a16e323af0ef08a7f59d21670c606aa98f4da6c",
   "fixtures/upstream-lua/defold-gamepush/gamepush/gamepush.lua":
     "96466c631148284e0cb22d9322869df84a40c65410e44f1b18d64ef8c9f236bb",
+  "fixtures/upstream-lua/defold-illumination/illumination/illumination.lua":
+    "f906976082d793870deccaf2cf89594fa602006878f7e93aace50ae979d41b2d",
   "fixtures/upstream-lua/defold-ink/ink/story.lua":
     "52da9951272d796fa989b5677bbc8b834b623021db2aeba6f8150bc6aa835bf5",
   "fixtures/upstream-lua/defold-input/in/accelerometer.lua":
