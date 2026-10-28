@@ -208,6 +208,134 @@
           "types": [
             "Realtime"
           ]
+        },
+        {
+          "name": "http",
+          "brief": "The REST transport every module below sends through.",
+          "description": "The REST transport every module below sends through.",
+          "types": [
+            "typeof http"
+          ]
+        },
+        {
+          "name": "auth",
+          "brief": "Sign-in, guest devices, linked providers and the token pair.",
+          "description": "Sign-in, guest devices, linked providers and the token pair.",
+          "types": [
+            "typeof auth"
+          ]
+        },
+        {
+          "name": "players",
+          "brief": "Player profiles and account erasure.",
+          "description": "Player profiles and account erasure.",
+          "types": [
+            "typeof players"
+          ]
+        },
+        {
+          "name": "matchmaker",
+          "brief": "The matchmaker queue.",
+          "description": "The matchmaker queue.",
+          "types": [
+            "typeof matchmaker"
+          ]
+        },
+        {
+          "name": "matches",
+          "brief": "Match listings.",
+          "description": "Match listings.",
+          "types": [
+            "typeof matches"
+          ]
+        },
+        {
+          "name": "leaderboards",
+          "brief": "Leaderboard entries and score submission.",
+          "description": "Leaderboard entries and score submission.",
+          "types": [
+            "typeof leaderboards"
+          ]
+        },
+        {
+          "name": "economy",
+          "brief": "Wallets and the store.",
+          "description": "Wallets and the store.",
+          "types": [
+            "typeof economy"
+          ]
+        },
+        {
+          "name": "inventory",
+          "brief": "The player's items.",
+          "description": "The player's items.",
+          "types": [
+            "typeof inventory"
+          ]
+        },
+        {
+          "name": "social",
+          "brief": "Friends, groups and chat history.",
+          "description": "Friends, groups and chat history.",
+          "types": [
+            "typeof social"
+          ]
+        },
+        {
+          "name": "tournaments",
+          "brief": "Tournament listings and entry.",
+          "description": "Tournament listings and entry.",
+          "types": [
+            "typeof tournaments"
+          ]
+        },
+        {
+          "name": "notifications",
+          "brief": "The player's notifications.",
+          "description": "The player's notifications.",
+          "types": [
+            "typeof notifications"
+          ]
+        },
+        {
+          "name": "storage",
+          "brief": "Cloud saves and key-value storage.",
+          "description": "Cloud saves and key-value storage.",
+          "types": [
+            "typeof storage"
+          ]
+        },
+        {
+          "name": "iap",
+          "brief": "In-app purchase verification.",
+          "description": "In-app purchase verification.",
+          "types": [
+            "typeof iap"
+          ]
+        },
+        {
+          "name": "votes",
+          "brief": "Match votes.",
+          "description": "Match votes.",
+          "types": [
+            "typeof votes"
+          ]
+        },
+        {
+          "name": "worlds",
+          "brief": "World listings and creation.",
+          "description": "World listings and creation.",
+          "types": [
+            "typeof worlds"
+          ]
+        },
+        {
+          "name": "dm",
+          "brief": "Direct messages.",
+          "description": "Direct messages.",
+          "types": [
+            "typeof dm"
+          ]
         }
       ]
     },

@@ -1,0 +1,91 @@
+{
+  "info": {
+    "namespace": "asobi.api.dm",
+    "brief": "asobi direct messages over REST. A project reaches it as `client.dm`.",
+    "description": "asobi direct messages over REST. A project reaches it as `client.dm`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "send",
+      "brief": "Sends a direct message to a player.",
+      "description": "Sends a direct message to a player.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "recipient_id",
+          "doc": "The recipient's player id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "content",
+          "doc": "The message text.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the sent message, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "history",
+      "brief": "Fetches the direct messages exchanged with a player.",
+      "description": "Fetches the direct messages exchanged with a player.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player_id",
+          "doc": "The other player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit",
+          "doc": "The most messages to return. The server's default applies when left out.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the messages, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

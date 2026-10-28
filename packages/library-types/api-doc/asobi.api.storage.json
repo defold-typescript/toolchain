@@ -1,0 +1,304 @@
+{
+  "info": {
+    "namespace": "asobi.api.storage",
+    "brief": "asobi cloud saves and key-value storage over REST. A project reaches it as",
+    "description": "asobi cloud saves and key-value storage over REST. A project reaches it as\n`client.storage`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list_saves",
+      "brief": "Fetches the signed-in player's save slots.",
+      "description": "Fetches the signed-in player's save slots.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the saves, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_save",
+      "brief": "Fetches one save slot.",
+      "description": "Fetches one save slot.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "slot",
+          "doc": "The slot's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the save, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "put_save",
+      "brief": "Writes a save slot.",
+      "description": "Writes a save slot.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "slot",
+          "doc": "The slot's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "The save's contents.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "version",
+          "doc": "The version the write expects to replace. Writes unconditionally when left\nout.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the save, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list_storage",
+      "brief": "Fetches the entries of a storage collection.",
+      "description": "Fetches the entries of a storage collection.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "collection",
+          "doc": "The collection's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit",
+          "doc": "The most entries to return. Defaults to `50`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the entries, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_storage",
+      "brief": "Fetches one storage entry.",
+      "description": "Fetches one storage entry.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "collection",
+          "doc": "The collection's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "The entry's key.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the entry, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "put_storage",
+      "brief": "Writes a storage entry.",
+      "description": "Writes a storage entry.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "collection",
+          "doc": "The collection's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "The entry's key.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "value",
+          "doc": "The entry's value.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "read_perm",
+          "doc": "Who may read it. Defaults to `\"owner\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "write_perm",
+          "doc": "Who may write it. Defaults to `\"owner\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the entry, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "delete_storage",
+      "brief": "Deletes a storage entry.",
+      "description": "Deletes a storage entry.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "collection",
+          "doc": "The collection's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "key",
+          "doc": "The entry's key.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

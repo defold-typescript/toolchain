@@ -1046,6 +1046,8 @@ describe("a fork offering several call shapes is measured against the set", () =
   // `wrap.wrap` facade's `node` and `go` one value, an array or a record, and its
   // `gui_applet` the two scene shapes `wrap.gui_applet.new` takes. `asobi.realtime`'s
   // `join_match`, `find_or_create_match` and `join_world` take the callback second, or
+  // options then the callback, as `asobi.http`'s `delete` takes the callback or a body
+  // then the callback, and `asobi.api.auth`'s `guest_device` the callback or device
   // options then the callback.
   test("the term is 0 on every target whose api-doc names each function once", () => {
     const overloaded = authoredParityTargets(PACKAGE_ROOT)
@@ -1066,6 +1068,8 @@ describe("a fork offering several call shapes is measured against the set", () =
       "wrap.gui_applet: 3",
       "wrap.wrap: 3",
       "asobi.realtime: 3",
+      "asobi.http: 1",
+      "asobi.api.auth: 1",
     ]);
   });
 });
@@ -1217,12 +1221,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other hundred and two targets share no variadic member at all", () => {
+  test("the other hundred and eighteen targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(102);
+    expect(untouched.length).toBe(118);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1673,9 +1677,13 @@ describe("upstream prose the reader declined is reported, not absent", () => {
     expect(refused).toEqual({
       // asobi writes its notes with a plain `--`, the `---` block above `rpc` aside: above
       // `quick_start`, the three device functions and `_base64`, and sixteen realtime
-      // methods.
+      // methods. Over REST: above `guest_device` and `refresh`, `erase_self`, and
+      // `http.lua`'s `_request` and `_error`.
+      "asobi.api.auth": 2,
+      "asobi.api.players": 1,
       "asobi.client": 1,
       "asobi.device": 4,
+      "asobi.http": 2,
       "asobi.realtime": 16,
       boom: 5,
       // The `-- Example: /home/klaleus/...` line above `project_save_path`, the module's
@@ -1709,7 +1717,7 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       "wrap.gui_scene": 1,
       zzfx: 4,
     });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(126);
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(131);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
@@ -1839,8 +1847,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
       (report) => report.refusedDocBlocks < report.refusedDocBlocksTotal,
     );
     expect(narrowed.map((report) => report.namespace).sort()).toEqual([
+      "asobi.api.auth",
+      "asobi.api.players",
       "asobi.client",
       "asobi.device",
+      "asobi.http",
       "asobi.realtime",
       "boom",
       "checkpoint",
@@ -1867,11 +1878,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 126 is what makes that a closure rather than a target quietly dropping out of the
+  // 131 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 126", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 131", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(126);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(131);
   });
 
   // The one target whose zero comes entirely from the ledger rather than from authored
@@ -3102,6 +3113,95 @@ describe("asobi.device declares the whole of its upstream", () => {
     expect(blank).toEqual([]);
     expect(report.undocumentedMembers).toBe(0);
   });
+});
+
+// `http.lua` exports the four verbs and eight underscore helpers they share, each
+// declared with an `Internal.` brief: the request, the refresh-and-retry, the error
+// shaping and the url, header and response handling.
+describe("asobi.http declares the whole of its upstream", () => {
+  const entry = target("asobi.http");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(12);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(entry).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// Each `asobi/api/<name>.lua` is a `local M = {}` of `M.<name>(client, ..., callback)`
+// functions over `asobi.http`, with no fields and no helpers.
+describe("each asobi.api module declares the whole of its upstream", () => {
+  const members: Record<string, number> = {
+    "asobi.api.auth": 10,
+    "asobi.api.dm": 2,
+    "asobi.api.economy": 4,
+    "asobi.api.iap": 2,
+    "asobi.api.inventory": 2,
+    "asobi.api.leaderboards": 4,
+    "asobi.api.matches": 3,
+    "asobi.api.matchmaker": 3,
+    "asobi.api.notifications": 3,
+    "asobi.api.players": 4,
+    "asobi.api.social": 15,
+    "asobi.api.storage": 7,
+    "asobi.api.tournaments": 3,
+    "asobi.api.votes": 2,
+    "asobi.api.worlds": 3,
+  };
+
+  test("the corpus carries exactly these fifteen api modules", () => {
+    const api = TARGETS.filter((entry) => entry.namespace.startsWith("asobi.api."))
+      .map((entry) => entry.namespace)
+      .sort();
+    expect(api).toEqual(Object.keys(members).sort());
+  });
+
+  for (const [namespace, count] of Object.entries(members)) {
+    test(`${namespace}: both axes close and every member carries a description`, () => {
+      const entry = target(namespace);
+      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      expect(report.upstreamMembers).toBe(count);
+      expect(report.upstreamFields).toBe(0);
+      expect(report.missingMembers).toEqual([]);
+      expect(report.phantomMembers).toEqual([]);
+      expect(report.arityMismatches).toEqual([]);
+      expect(report.missingFields).toEqual([]);
+      expect(report.phantomFields).toEqual([]);
+      expect(report.callableCoverage).toBe(1);
+      expect(report.fieldCoverage).toBe(1);
+
+      const documented = apiDocElements(entry).filter(
+        (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+      );
+      expect(new Set(documented.map((element) => element.name)).size).toBe(count);
+      const blank = documented
+        .filter((element) => (element.description ?? "").trim() === "")
+        .map((element) => element.name);
+      expect(blank).toEqual([]);
+      expect(report.undocumentedMembers).toBe(0);
+    });
+  }
 });
 
 describe("the artifact shape is diff-stable", () => {
