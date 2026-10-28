@@ -1009,6 +1009,28 @@
         "fixtures/upstream-lua/def-behavior-tree/def_behavior_tree/behavior_tree.lua"
       ],
       "instanceType": "BehaviorTree"
+    },
+    {
+      "repo": "https://github.com/indiesoftby/defold-dissolve-fx",
+      "ref": "1.2.0",
+      "license": "CC0-1.0",
+      "authored": "fixtures/authored/dissolve_fx.dissolve_fx.d.ts",
+      "moduleId": "dissolve_fx.dissolve_fx",
+      "namespace": "dissolve_fx",
+      "generated": "generated/dissolve_fx.d.ts",
+      "apiDoc": "api-doc/dissolve_fx.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-dissolve-fx/dissolve_fx/dissolve_fx.lua"]
+    },
+    {
+      "repo": "https://github.com/astrochili/defold-illumination",
+      "ref": "1.0.3",
+      "license": "MIT",
+      "authored": "fixtures/authored/illumination.illumination.d.ts",
+      "moduleId": "illumination.illumination",
+      "namespace": "illumination",
+      "generated": "generated/illumination.d.ts",
+      "apiDoc": "api-doc/illumination.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-illumination/illumination/illumination.lua"]
     }
   ]
 }

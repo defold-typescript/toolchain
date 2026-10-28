@@ -1,0 +1,34 @@
+{
+  "namespace": "illumination",
+  "upstreamMembers": 6,
+  "upstreamFields": 3,
+  "declaredFields": 3,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
+  "declaredGlobals": 0,
+  "declaredMembers": 4,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "parityExceptions": [
+    {
+      "name": "init",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal functions` (illumination.lua:292) and only the bundled illumination.script calls it (illumination/illumination.script:39); a project call replaces the module's data buffer and drops every light and environment value already written to it"
+    },
+    {
+      "name": "post_update_data_texture",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal functions` (illumination.lua:292) and only the bundled illumination.script calls it (illumination/illumination.script:115); a project call raises before the bundled script's init has run, and otherwise clears the pending-update flag that script reads each frame"
+    }
+  ],
+  "undocumentedMembers": 0,
+  "importedDocs": 0,
+  "refusedDocBlocks": 0,
+  "refusedDocBlocksTotal": 0,
+  "variadicMembers": 0,
+  "overloadedMembers": 0,
+  "placeholderMembers": 0,
+  "callableCoverage": 1
+}

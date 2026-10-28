@@ -1,6 +1,7 @@
 {
   "verdicts": {
     "asset-store": "editor script only",
+    "defold-depth-of-field-shader": "no license file at 97945c1 or main head and GitHub reports none, so its Lua cannot be vendored for a parity floor",
     "defold-graph-pathfinder": "closed-source license at 0.0.4 grants no right to redistribute its source, so no registering C++ can be vendored for a parity floor",
     "defpro": "profiler.capture first reads /profile_strings and /profile_frame, which the engine no longer serves (profiling moved to Remotery), so at 1.1.1 every capture fails its STRS assert and never calls back",
     "dirtylarry": "no license file at 09d07c6 (master head) and GitHub reports none, so its Lua cannot be vendored for a parity floor",
