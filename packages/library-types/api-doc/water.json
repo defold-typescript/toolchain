@@ -1,0 +1,1224 @@
+{
+  "info": {
+    "namespace": "water",
+    "brief": "A stylized water shader: animated wave surfaces, foam, sparkles, refraction and",
+    "description": "A stylized water shader: animated wave surfaces, foam, sparkles, refraction and\nreflection, set through shader constants. A game object script calls `init` once with\nthe camera, sun and water objects, then `update(dt)` and `update_camera()` every frame.\nThe render script calls `render_init(self)` at the end of its `init` and\n`render_update(self, state, predicates, draw_options_world)` in its `update` (see\n`water/render/water.render_script`). The shader needs `exclude_gles_sm100 = 1` under\n`[shader]` in `game.project`. Every setter writes a shader constant the next\n`render_update` uploads, and every getter returns the stored values as separate\nvalues."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Stores the camera, sun and water objects and the time speed, then reads the camera",
+      "description": "Stores the camera, sun and water objects and the time speed, then reads the camera\nposition and near and far planes and the sun direction once. Call it from a game\nobject script's `init`.",
+      "parameters": [
+        {
+          "name": "camera_url",
+          "doc": "The camera game object, whose world position the shader uses.",
+          "types": [
+            "Url | string | Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "camera_component_url",
+          "doc": "The camera component, whose near and far Z planes the shader uses.",
+          "types": [
+            "Url | string | Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sun_url",
+          "doc": "The sun game object, whose position sets the light and the sun direction.",
+          "types": [
+            "Url | string | Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "water_url",
+          "doc": "The water surface game object, the origin of the sun direction.",
+          "types": [
+            "Url | string | Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "time_speed",
+          "doc": "The multiplier `update` applies to `dt` to advance the wave time.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "render_init",
+      "brief": "Adds the `water` predicate to `self.predicates`, creates the scene render target at",
+      "description": "Adds the `water` predicate to `self.predicates`, creates the scene render target at\n`self.state.width` by `self.state.height` with a color and a depth buffer, and\ncreates the two constant buffers `render_update` draws with, all stored on `self`.\nCall it at the end of the render script's `init`, once `self.predicates` and\n`self.state` are set.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The render script instance.",
+          "types": [
+            "RenderScriptSelf"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "render_update",
+      "brief": "Draws the `model` predicate into the scene render target, then draws `model` and the",
+      "description": "Draws the `model` predicate into the scene render target, then draws `model` and the\nwater to the default render target, sampling the scene's depth and color for edge\nfoam and refraction. It needs `render_init` to have run on the same `self`, and\nraises otherwise. Call it from the render script's `update` after the world view and\nprojection are set.",
+      "parameters": [
+        {
+          "name": "self",
+          "doc": "The render script instance `render_init` ran on.",
+          "types": [
+            "object"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "state",
+          "doc": "The render state: the window size and the clear values.",
+          "types": [
+            "RenderState"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "predicates",
+          "doc": "The render script's predicates; pass `self.predicates`, which holds\nthe `water` predicate `render_init` added.",
+          "types": [
+            "Predicates"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "draw_options_world",
+          "doc": "The draw options for the world, used for the scene pass.",
+          "types": [
+            "render.DrawOptions"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_sun",
+      "brief": "Re-reads the sun position, which moves the light and recomputes the sun direction",
+      "description": "Re-reads the sun position, which moves the light and recomputes the sun direction\nfrom the water object, replacing any direction `set_sun_direction` wrote.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_camera",
+      "brief": "Re-reads the camera world position and its near and far Z planes. Call it every frame.",
+      "description": "Re-reads the camera world position and its near and far Z planes. Call it every frame.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update",
+      "brief": "Advances the wave time by `dt` times the time speed `init` stored, unless the timer",
+      "description": "Advances the wave time by `dt` times the time speed `init` stored, unless the timer\nis paused. Call it every frame.",
+      "parameters": [
+        {
+          "name": "dt",
+          "doc": "The frame time in seconds.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pause",
+      "brief": "Pauses or resumes the wave timer.",
+      "description": "Pauses or resumes the wave timer.",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "`true` stops the timer, `false` resumes it.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_wave1",
+      "brief": "Sets the first wave layer.",
+      "description": "Sets the first wave layer.",
+      "parameters": [
+        {
+          "name": "direction",
+          "doc": "The wave direction in radians, `0` to `2π`: `0` east, `π/2` north, `π` west, `3π/2` south.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "amplitude",
+          "doc": "The wave height: `0.1` to `0.5` gentle, `0.5` to `1` medium, `1` to `2` rough, above `2` a storm.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wavelength",
+          "doc": "The distance between wave peaks: `10` to `20` choppy, `20` to `40` ocean waves, above `40` long gentle swells.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "The animation speed: `0.5` to `1` slow, `1` to `3` moderate, `3` to `5` fast, above `5` very fast.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_wave1",
+      "brief": "Returns the first wave layer's direction, amplitude, wavelength and speed.",
+      "description": "Returns the first wave layer's direction, amplitude, wavelength and speed.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ direction: number, amplitude: number, wavelength: number, speed: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_wave2",
+      "brief": "Sets the second wave layer, with the same ranges as `set_wave1`.",
+      "description": "Sets the second wave layer, with the same ranges as `set_wave1`.",
+      "parameters": [
+        {
+          "name": "direction",
+          "doc": "The wave direction in radians, `0` to `2π`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "amplitude",
+          "doc": "The wave height: `0.1` to `0.5` gentle, `0.5` to `1` medium, `1` to `2` rough, above `2` a storm.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "wavelength",
+          "doc": "The distance between wave peaks: `10` to `20` choppy, `20` to `40` ocean waves, above `40` long gentle swells.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "The animation speed: `0.5` to `1` slow, `1` to `3` moderate, `3` to `5` fast, above `5` very fast.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_wave2",
+      "brief": "Returns the second wave layer's direction, amplitude, wavelength and speed.",
+      "description": "Returns the second wave layer's direction, amplitude, wavelength and speed.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ direction: number, amplitude: number, wavelength: number, speed: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_wave_normal_params",
+      "brief": "Sets the animated normal map that adds ripple detail to the surface.",
+      "description": "Sets the animated normal map that adds ripple detail to the surface.",
+      "parameters": [
+        {
+          "name": "scale",
+          "doc": "The normal map tiling: `5` large ripples, `10` medium, `20` tiny.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "The animation speed: `0.5` slow, `1` normal, `2` fast.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_wave_normal_params",
+      "brief": "Returns the normal map tiling and animation speed.",
+      "description": "Returns the normal map tiling and animation speed.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ scale: number, speed: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_shallow_color",
+      "brief": "Sets the water color in shallow areas. The shader always uses an alpha of `1`.",
+      "description": "Sets the water color in shallow areas. The shader always uses an alpha of `1`.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "The red component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "g",
+          "doc": "The green component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "The blue component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_shallow_color",
+      "brief": "Returns the shallow water color's red, green and blue components.",
+      "description": "Returns the shallow water color's red, green and blue components.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ r: number, g: number, b: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_deep_color",
+      "brief": "Sets the water color in deep areas.",
+      "description": "Sets the water color in deep areas.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "The red component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "g",
+          "doc": "The green component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "The blue component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_deep_color",
+      "brief": "Returns the deep water color's red, green and blue components.",
+      "description": "Returns the deep water color's red, green and blue components.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ r: number, g: number, b: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_far_color",
+      "brief": "Sets the water color far from the camera, which the surface fades to with distance.",
+      "description": "Sets the water color far from the camera, which the surface fades to with distance.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "The red component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "g",
+          "doc": "The green component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "The blue component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_far_color",
+      "brief": "Returns the far water color's red, green and blue components.",
+      "description": "Returns the far water color's red, green and blue components.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ r: number, g: number, b: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_foam_params",
+      "brief": "Sets the foam's look and animation.",
+      "description": "Sets the foam's look and animation.",
+      "parameters": [
+        {
+          "name": "scale",
+          "doc": "The foam texture tiling; lower values give bigger foam patches.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "The animation speed.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "noise_scale",
+          "doc": "The normal map distortion: `0` none, `0.5` moderate, `1` heavy.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "contribution",
+          "doc": "The overall foam visibility: `0` no foam, `0.5` subtle, `1` full.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_foam_params",
+      "brief": "Returns the foam tiling, speed, normal map distortion and visibility.",
+      "description": "Returns the foam tiling, speed, normal map distortion and visibility.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ scale: number, speed: number, noise_scale: number, contribution: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_density_params",
+      "brief": "Sets how the color fades with distance and blends with depth.",
+      "description": "Sets how the color fades with distance and blends with depth.",
+      "parameters": [
+        {
+          "name": "distance_density",
+          "doc": "How quickly the color fades to the far color: `0.01` very slow, `0.1` normal, `0.5` quick.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "depth_density",
+          "doc": "How quickly the color moves from the shallow color to the deep color with water depth.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_density_params",
+      "brief": "Returns the distance fade rate and the depth blending intensity.",
+      "description": "Returns the distance fade rate and the depth blending intensity.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ distance_density: number, depth_density: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_sun_params",
+      "brief": "Sets the sharpness of the sun's specular highlight.",
+      "description": "Sets the sharpness of the sun's specular highlight.",
+      "parameters": [
+        {
+          "name": "exponent",
+          "doc": "The highlight sharpness: `100` big and soft, `1000` medium, `10000` tiny and sharp.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_sun_params",
+      "brief": "Returns the sun highlight sharpness.",
+      "description": "Returns the sun highlight sharpness.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_sun_color",
+      "brief": "Sets the sun light color.",
+      "description": "Sets the sun light color.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "The red component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "g",
+          "doc": "The green component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "The blue component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_sun_color",
+      "brief": "Returns the sun color's red, green and blue components.",
+      "description": "Returns the sun color's red, green and blue components.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ r: number, g: number, b: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_sun_direction",
+      "brief": "Sets the directional light direction. `init` and `update_sun` overwrite it with the",
+      "description": "Sets the directional light direction. `init` and `update_sun` overwrite it with the\ndirection from the water object to the sun.",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "The X component of the normalized direction.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "The Y component of the normalized direction.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "z",
+          "doc": "The Z component of the normalized direction.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_sun_direction",
+      "brief": "Returns the X, Y and Z components of the sun direction.",
+      "description": "Returns the X, Y and Z components of the sun direction.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ x: number, y: number, z: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_sparkle_params",
+      "brief": "Sets the sparkle (glitter) effect.",
+      "description": "Sets the sparkle (glitter) effect.",
+      "parameters": [
+        {
+          "name": "scale",
+          "doc": "The sparkle texture tiling.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "The animation speed.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "exponent",
+          "doc": "The sharpness: `1000` many soft sparkles, `10000` medium, `100000` very few, very sharp ones.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "enabled",
+          "doc": "`0` disables sparkles and `1` enables them. When omitted, the current\nvalue is kept.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_sparkle_params",
+      "brief": "Returns the sparkle tiling, speed and sharpness, and `1` when sparkles are enabled or `0` when not.",
+      "description": "Returns the sparkle tiling, speed and sharpness, and `1` when sparkles are enabled or `0` when not.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ scale: number, speed: number, exponent: number, enabled: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "enable_sparkle",
+      "brief": "Enables the sparkle effect.",
+      "description": "Enables the sparkle effect.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "disable_sparkle",
+      "brief": "Disables the sparkle effect, which saves eight texture samples per fragment.",
+      "description": "Disables the sparkle effect, which saves eight texture samples per fragment.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_sparkle_enabled",
+      "brief": "Returns `true` when the sparkle effect is enabled.",
+      "description": "Returns `true` when the sparkle effect is enabled.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_sparkle_color",
+      "brief": "Sets the sparkle tint color.",
+      "description": "Sets the sparkle tint color.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "The red component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "g",
+          "doc": "The green component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "The blue component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_sparkle_color",
+      "brief": "Returns the sparkle color's red, green and blue components.",
+      "description": "Returns the sparkle color's red, green and blue components.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ r: number, g: number, b: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_edge_foam_params",
+      "brief": "Sets the foam drawn where the water meets other geometry, based on water depth.",
+      "description": "Sets the foam drawn where the water meets other geometry, based on water depth.",
+      "parameters": [
+        {
+          "name": "depth_scale",
+          "doc": "How quickly the foam fades with depth; lower values give more foam.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "noise_strength",
+          "doc": "The noise distortion strength, about `0.2` to `0.5`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "edge_softness",
+          "doc": "The edge blend softness, about `0.02` to `0.15`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "alpha",
+          "doc": "The overall foam opacity, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_edge_foam_params",
+      "brief": "Returns the edge foam depth scale, noise strength, edge softness and opacity.",
+      "description": "Returns the edge foam depth scale, noise strength, edge softness and opacity.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ depth_scale: number, noise_strength: number, edge_softness: number, alpha: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_edge_foam_type",
+      "brief": "Sets how the edge foam is drawn. It also prints `SET` and the type on every call.",
+      "description": "Sets how the edge foam is drawn. It also prints `SET` and the type on every call.",
+      "parameters": [
+        {
+          "name": "type",
+          "doc": "`0` draws a solid color, `1` a texture.",
+          "types": [
+            "0 | 1"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_edge_foam_type",
+      "brief": "Returns the edge foam type: `0` for a solid color, `1` for a texture.",
+      "description": "Returns the edge foam type: `0` for a solid color, `1` for a texture.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_edge_foam_color",
+      "brief": "Sets the edge foam color.",
+      "description": "Sets the edge foam color.",
+      "parameters": [
+        {
+          "name": "r",
+          "doc": "The red component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "g",
+          "doc": "The green component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "b",
+          "doc": "The blue component, `0` to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_edge_foam_color",
+      "brief": "Returns the edge foam color's red, green and blue components.",
+      "description": "Returns the edge foam color's red, green and blue components.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ r: number, g: number, b: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_refraction_params",
+      "brief": "Sets the screen-space refraction.",
+      "description": "Sets the screen-space refraction.",
+      "parameters": [
+        {
+          "name": "strength",
+          "doc": "The refraction intensity: `0` off, `0.5` moderate, `1` strong.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "chromatic_aberration",
+          "doc": "The color separation: `0` off, `0.5` subtle, `1` strong.\nDefaults to `0`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_refraction_params",
+      "brief": "Returns the refraction strength and chromatic aberration.",
+      "description": "Returns the refraction strength and chromatic aberration.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ strength: number, chromatic_aberration: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_reflection_params",
+      "brief": "Sets the cubemap reflection. The reflection samples the cubemap bound to the water",
+      "description": "Sets the cubemap reflection. The reflection samples the cubemap bound to the water\nmaterial's `reflection_cubemap` sampler; this module binds none.",
+      "parameters": [
+        {
+          "name": "strength",
+          "doc": "The reflection intensity: `0` off, `0.5` moderate, `1` strong.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fresnel_power",
+          "doc": "How much stronger the reflection is at grazing angles, `1` to `5`:\n`1` the same at every angle, `3` natural, `5` very strong. Defaults to `3`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_reflection_params",
+      "brief": "Returns the reflection strength and fresnel power.",
+      "description": "Returns the reflection strength and fresnel power.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ strength: number, fresnel_power: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_skybox_cubemap",
+      "brief": "Prints a warning and does nothing else.",
+      "description": "Prints a warning and does nothing else.",
+      "parameters": [
+        {
+          "name": "cubemap_path",
+          "doc": "The cubemap texture path, for example `/main/skybox.cubemap`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [],
+      "deprecated": "Upstream does not implement cubemap reflections: a cubemap path cannot be\npassed to `render.enable_texture`."
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_skybox_cubemap",
+      "brief": "Returns `undefined`.",
+      "description": "Returns `undefined`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "undefined"
+          ]
+        }
+      ],
+      "deprecated": "Upstream does not implement cubemap reflections: a cubemap path cannot be\npassed to `render.enable_texture`."
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_lod_params",
+      "brief": "Sets the level-of-detail distances beyond which effects are simplified.",
+      "description": "Sets the level-of-detail distances beyond which effects are simplified.",
+      "parameters": [
+        {
+          "name": "sparkle_distance",
+          "doc": "The distance beyond which sparkles are skipped, saving eight texture samples, `0` to `500`. The default is `100`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "foam_distance",
+          "doc": "The distance beyond which a simplified foam is drawn, saving three texture samples, `0` to `500`. The default is `150`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_lod_params",
+      "brief": "Returns the sparkle and foam level-of-detail distances.",
+      "description": "Returns the sparkle and foam level-of-detail distances.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ sparkle_distance: number, foam_distance: number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RenderScriptSelf",
+      "properties": [
+        {
+          "name": "predicates",
+          "brief": "The render script's predicates. `render_init` adds a `water` predicate to it.",
+          "description": "The render script's predicates. `render_init` adds a `water` predicate to it.",
+          "types": [
+            "object"
+          ]
+        },
+        {
+          "name": "state",
+          "brief": "The render state, whose size `render_init` creates the scene render target at.",
+          "description": "The render state, whose size `render_init` creates the scene render target at.",
+          "types": [
+            "{ width: number; height: number; }"
+          ],
+          "fields": [
+            {
+              "name": "width",
+              "doc": "The width in pixels.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "height",
+              "doc": "The height in pixels.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RenderState",
+      "properties": [
+        {
+          "name": "window_width",
+          "brief": "The window width in pixels, which the scene render target is resized to.",
+          "description": "The window width in pixels, which the scene render target is resized to.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "window_height",
+          "brief": "The window height in pixels, which the scene render target is resized to.",
+          "description": "The window height in pixels, which the scene render target is resized to.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "clear_buffers",
+          "brief": "The clear values `render.clear` receives for the scene render target.",
+          "description": "The clear values `render.clear` receives for the scene render target.",
+          "types": [
+            "LuaMap<render.ClearBufferKey, number | Vector4>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Predicates",
+      "properties": [
+        {
+          "name": "model",
+          "brief": "The `model` predicate, drawn into the scene render target and then to the screen.",
+          "description": "The `model` predicate, drawn into the scene render target and then to the screen.",
+          "types": [
+            "render.RenderPredicate"
+          ]
+        },
+        {
+          "name": "water",
+          "brief": "The `water` predicate `render_init` adds to the render script's `self.predicates`.",
+          "description": "The `water` predicate `render_init` adds to the render script's `self.predicates`.",
+          "types": [
+            "render.RenderPredicate"
+          ]
+        }
+      ]
+    }
+  ]
+}
