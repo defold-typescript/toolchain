@@ -37,17 +37,14 @@ declare module 'wrap.gui_applet' {
     unregister_scene(name: string): void;
 
     /**
-     * Shows a new scene of the class registered under a name: sets it up with `setup`,
-     * which runs its `init`, starts its transition in, and starts the transition out of the
-     * scene it replaces. Does nothing when no scene is registered under the name.
-     * @param name_or_scene The name the scene was registered under.
+     * Shows a new scene of a class, or of the class registered under a name: sets it up
+     * with `setup`, which runs its `init`, starts its transition in, and starts the
+     * transition out of the scene it replaces. Does nothing when no scene is registered
+     * under the name.
+     * @param name_or_scene The name the scene was registered under, or a class
+     * `wrap.gui_scene.extend` returns.
      */
-    show_scene(name_or_scene: string): void;
-    /**
-     * Shows a new scene of a class, as the first form does.
-     * @param name_or_scene A class `wrap.gui_scene.extend` returns.
-     */
-    show_scene(name_or_scene: GuiSceneClass<object>): void;
+    show_scene(name_or_scene: string | GuiSceneClass<object>): void;
     /**
      * Shows a scene built from a plain table of hooks and fields, as the first form does.
      * The keys are copied onto a fresh `wrap.gui_scene.extend()`, which is the scene shown.
