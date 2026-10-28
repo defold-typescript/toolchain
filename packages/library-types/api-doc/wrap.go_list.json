@@ -8,6 +8,7 @@
     {
       "type": "TYPEDEF",
       "name": "GoList",
+      "generics": "<K extends string>",
       "types": [
         "{ readonly [P in K]: Go; }"
       ]

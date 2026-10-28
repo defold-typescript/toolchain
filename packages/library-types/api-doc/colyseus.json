@@ -17,6 +17,7 @@
     {
       "type": "TYPEDEF",
       "name": "MatchmakeCallback",
+      "generics": "<State = unknown>",
       "types": [
         "(err?: MatchmakeError, room?: Room<State>) => void"
       ]

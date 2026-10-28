@@ -13,7 +13,10 @@ declare module 'wrap.node' {
     get: LuaTableGetMethod<string, Opaque<'node'>>;
   };
 
-  /** One hex digit, in either case. */
+  /**
+   * One hex digit, in either case.
+   * @internal
+   */
   type HexDigit =
     | '0'
     | '1'
@@ -38,7 +41,10 @@ declare module 'wrap.node' {
     | 'E'
     | 'F';
 
-  /** The number of characters in `S` when each is a hex digit, else `-1`. */
+  /**
+   * The number of characters in `S` when each is a hex digit, else `-1`.
+   * @internal
+   */
   type HexDigitCount<S extends string, N extends 1[] = []> = S extends `${infer C}${infer R}`
     ? C extends HexDigit
       ? HexDigitCount<R, [...N, 1]>
