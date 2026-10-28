@@ -1,0 +1,19 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/baochungit/defold-wrap",
+    "authoredHere": true,
+    "commit": "1.1.0",
+    "sourceUrl": "https://github.com/baochungit/defold-wrap/tree/1.1.0",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's `new` returns a table whose metatable indexes the module, so every game object method is a `:` method taking the wrapped object as `self` and returning it for the next call, while `new` takes none; a method declared `this: void`, or a `new` taking `self`, still passes `tsc`, so only TSTL's emit shows which call form each link of the chain produces.",
+    "consumer": [
+      "import * as wrap_go from \"wrap.go\";",
+      "export function init(): void {",
+      "  const hero = wrap_go.new(\"/hero\");",
+      "  hero.set_position_x(1).add_position_y(2);",
+      "}"
+    ]
+  }
+}

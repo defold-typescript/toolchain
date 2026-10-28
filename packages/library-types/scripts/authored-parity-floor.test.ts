@@ -497,6 +497,10 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "2e03a6b12d288bee454e38a376bfc157da5b93f0140b30f2ff3dcff671e4125e",
   "fixtures/upstream-lua/defold-stylized-water-shader/water/water.lua":
     "8b417f38b0afe814554323f0d989b4b496e5abdb63dc03009b91b4c41a593f39",
+  "fixtures/upstream-lua/defold-wrap/wrap/go.lua":
+    "dcde8fe00159c8756fe695042e0f3783f46fc56e1fc4528ca532711307ab59d1",
+  "fixtures/upstream-lua/defold-wrap/wrap/go_list.lua":
+    "1ebfcb9d4305418637059dfd21a808da8c71e555c42885992b33c6af940b15e1",
   "fixtures/upstream-lua/defold-wrap/wrap/node.lua":
     "ab7f5a5ff2fe12eff3ccde23f5d2d81e7f706c21bd308bc89558c48e0327e98d",
   "fixtures/upstream-lua/defold-wrap/wrap/node_list.lua":
