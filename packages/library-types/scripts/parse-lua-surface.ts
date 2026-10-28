@@ -45,6 +45,16 @@
  * There is no module local then, and that constructor's depth-1 entries are the whole
  * surface, read by the same rule; an `__index` key is refused as it is in a returned
  * metatable.
+ *
+ * A class module returns a table its instances index: a column-0
+ * `function M:name(…)` is a member marked `method`, its parameters read as a `.`
+ * definition's are, `self` not among them. The self-index `M.__index = M` that makes it
+ * a class adds no member. The loud rule holds here as well: a column-0 colon method on
+ * any other table throws, since its instances are reached through no member this reader
+ * sees, and so does a name defined both as a method and as anything else. Like the
+ * constructor, this applies only to a module local derived from the trailing return: an
+ * annotation file's colon stubs belong to the classes it annotates, not to the table the
+ * caller named.
  */
 
 export interface LuaMember {
@@ -54,6 +64,9 @@ export interface LuaMember {
   params?: string[];
   /** True when the definition ends in `...`, which is not a named parameter. */
   varargs: boolean;
+  /** Present on a `function M:name(…)` definition, called on an instance of the returned
+   * table; its implicit `self` is not in `params`. */
+  method?: true;
   /** The `---` LuaDoc block immediately above the definition, comment markers
    * stripped, one interior blank line crossed; empty when the block is absent or
    * opens with a plain `--`. */
@@ -85,6 +98,9 @@ const RETURN_LITERAL = /^return\s*\{/;
 const RETURN_SETMETATABLE = /^return\s+setmetatable\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,/;
 const IDENTIFIER = "[A-Za-z_][A-Za-z0-9_]*";
 const FUNCTION_VALUE = /^function\s*\(/;
+const COLON_DEFINITION = new RegExp(
+  `^function\\s+(${IDENTIFIER}(?:\\.${IDENTIFIER})*):(${IDENTIFIER})\\s*\\(`,
+);
 const CONSTRUCTOR_ENTRY = new RegExp(`^\\s*(${IDENTIFIER})\\s*=(?!=)\\s*(.*)$`);
 
 /** The metatable argument of a `return setmetatable(<name>, …)`, refused unless its
@@ -320,8 +336,9 @@ function readReturnedLiteral(lines: string[], index: number): LuaMember[] {
  * The public surface of a Lua module source: the module-local name it returns — or the
  * one `options.moduleLocal` names — and every member assigned to it at column 0, in
  * source order. A name defined more than once keeps its first position and its last
- * definition, matching Lua. A source returning a table literal has the literal's entries
- * as its surface and no module local.
+ * definition, matching Lua, unless one definition is a `:` method and another is not,
+ * which throws. A source returning a table literal has the literal's entries as its
+ * surface and no module local.
  */
 export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {}): LuaSurface {
   const lines = source.split("\n");
@@ -333,13 +350,20 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
   const moduleLocal = returned.local;
   const definition = new RegExp(`^function\\s+${moduleLocal}\\.(${IDENTIFIER})\\s*\\(`);
   const assignment = new RegExp(`^${moduleLocal}\\.(${IDENTIFIER})\\s*=\\s*(.*)$`);
-  const tableConstructor =
-    options.moduleLocal === undefined
-      ? new RegExp(`^(?:local\\s+)?${moduleLocal}\\s*=\\s*\\{`)
-      : undefined;
+  const derived = options.moduleLocal === undefined;
+  const tableConstructor = derived
+    ? new RegExp(`^(?:local\\s+)?${moduleLocal}\\s*=\\s*\\{`)
+    : undefined;
+  const selfIndex = new RegExp(`^${moduleLocal}\\.__index\\s*=\\s*${moduleLocal}\\s*;?\\s*$`);
 
   const members = new Map<string, LuaMember>();
   const record = (member: LuaMember): void => {
+    const existing = members.get(member.name);
+    if (existing !== undefined && (existing.method === true) !== (member.method === true)) {
+      throw new Error(
+        `lua surface: \`${member.name}\` is defined both as a \`:\` method and as a \`.\` member of \`${moduleLocal}\`, so which one a caller reaches depends on the receiver.`,
+      );
+    }
     members.set(member.name, member);
   };
 
@@ -350,6 +374,24 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
       const { entries, close } = readConstructor(lines, index, opened[0].length - 1);
       for (const entry of entries) record(entry);
       index = close;
+      continue;
+    }
+    if (selfIndex.test(line)) continue;
+    const colon = derived ? COLON_DEFINITION.exec(line) : null;
+    if (colon) {
+      if (colon[1] !== moduleLocal) {
+        throw new Error(
+          `lua surface: line ${index + 1} defines a \`:\` method on \`${colon[1]}\`, not on the returned \`${moduleLocal}\`, so the instances it serves are reached through no member this reader sees — ${line.trim()}`,
+        );
+      }
+      const { params, varargs } = readParams(lines, index, colon[0].length - 1);
+      record({
+        name: colon[2] as string,
+        params,
+        varargs,
+        method: true,
+        ...readDoc(lines, index),
+      });
       continue;
     }
     const defined = definition.exec(line);

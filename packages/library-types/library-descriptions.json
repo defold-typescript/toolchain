@@ -25,6 +25,7 @@
   "daabbcc": "Dynamic Tree (aka AABB Tree) native extension for Defold Engine",
   "daabbcc3d": "Dynamic AABB trees in 3D for overlap queries and ray casts without a physics engine.",
   "decore": "Defold ECS Data Manager",
+  "def_behavior_tree": "The def-behavior tree is a library for creating behavioral trees that allow you to easily manage advanced NPC behaviors in your game.",
   "def_windward_jps": "Find paths on 2D grids with Jump Point Search.",
   "defarmy": "This module helps you to create groups (army) of game objects (soldiers) and organize them in several different patterns or your customized pattern and manage moving and rotating game objects as a customizable group.",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",

@@ -995,6 +995,20 @@
       "generated": "generated/defgraph.d.ts",
       "apiDoc": "api-doc/defgraph.json",
       "upstreamLua": ["fixtures/upstream-lua/defgraph/defgraph/defgraph.lua"]
+    },
+    {
+      "repo": "https://github.com/s-kania/def-behavior-tree",
+      "ref": "1.0.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/def_behavior_tree.behavior_tree.d.ts",
+      "moduleId": "def_behavior_tree.behavior_tree",
+      "namespace": "def_behavior_tree",
+      "generated": "generated/def_behavior_tree.d.ts",
+      "apiDoc": "api-doc/def_behavior_tree.json",
+      "upstreamLua": [
+        "fixtures/upstream-lua/def-behavior-tree/def_behavior_tree/behavior_tree.lua"
+      ],
+      "instanceType": "BehaviorTree"
     }
   ]
 }

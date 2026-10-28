@@ -1,0 +1,667 @@
+{
+  "info": {
+    "namespace": "def_behavior_tree",
+    "brief": "Event-driven behavior trees for NPC logic. Register node templates once with",
+    "description": "Event-driven behavior trees for NPC logic. Register node templates once with\n`registerTemplates`, create a tree over a payload with `new`, and call `run`: each\nnode moves on only when the one before it reports success or failure, and a tree can\nstart from any node id, so an active node saved with a game can be resumed on load."
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "Task",
+      "brief": "The lowest-level node, which has no children and runs your behavior code through",
+      "description": "The lowest-level node, which has no children and runs your behavior code through\nits template's `start`, `run` and `finish`. Its type name is `\"Node\"`.",
+      "types": [
+        "NodeType<'Node'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "Composite",
+      "brief": "The archetype the four composites build on. Not a template type itself: use",
+      "description": "The archetype the four composites build on. Not a template type itself: use\n`Sequence`, `Selector`, `Random` or `RandomWithChances`.",
+      "types": [
+        "NodeType<'Composite'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "Sequence",
+      "brief": "A composite that runs its children in order, the next one when the last succeeds.",
+      "description": "A composite that runs its children in order, the next one when the last succeeds.\nIt fails as soon as a child fails, and succeeds when the last child succeeds.",
+      "types": [
+        "NodeType<'Sequence'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "Selector",
+      "brief": "A composite that runs its children in order, the next one when the last fails. It",
+      "description": "A composite that runs its children in order, the next one when the last fails. It\nsucceeds as soon as a child succeeds, and fails when every child fails.",
+      "types": [
+        "NodeType<'Selector'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "Random",
+      "brief": "A composite that runs one child picked at random, by the tree's `rng` over",
+      "description": "A composite that runs one child picked at random, by the tree's `rng` over\n`1` to the child count, and reports that child's result.",
+      "types": [
+        "NodeType<'Random'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RandomWithChances",
+      "brief": "A composite that runs one child picked by weight: the tree's `rng` draws from `1` to",
+      "description": "A composite that runs one child picked by weight: the tree's `rng` draws from `1` to\n`100`, and each child's `chance` is its share of that range, so the chances should\nadd up to `100`. To weight a node registered by name, wrap it in a `ChanceDecorator`.",
+      "types": [
+        "NodeType<'RandomWithChances'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "Decorator",
+      "brief": "The archetype the five decorators build on. Not a template type itself: use one of",
+      "description": "The archetype the five decorators build on. Not a template type itself: use one of\nthe decorators.",
+      "types": [
+        "NodeType<'Decorator'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "InvertDecorator",
+      "brief": "A decorator that reports the opposite of its child's result.",
+      "description": "A decorator that reports the opposite of its child's result.",
+      "types": [
+        "NodeType<'InvertDecorator'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "AlwaysFailDecorator",
+      "brief": "A decorator that fails whatever its child reports.",
+      "description": "A decorator that fails whatever its child reports.",
+      "types": [
+        "NodeType<'AlwaysFailDecorator'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "AlwaysSucceedDecorator",
+      "brief": "A decorator that succeeds whatever its child reports.",
+      "description": "A decorator that succeeds whatever its child reports.",
+      "types": [
+        "NodeType<'AlwaysSucceedDecorator'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RepeatUntilFailDecorator",
+      "brief": "A decorator that runs its child again each time it succeeds, and succeeds once the",
+      "description": "A decorator that runs its child again each time it succeeds, and succeeds once the\nchild fails. A good root node.",
+      "types": [
+        "NodeType<'RepeatUntilFailDecorator'>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ChanceDecorator",
+      "brief": "A decorator that passes its child's result through, so a node registered by name",
+      "description": "A decorator that passes its child's result through, so a node registered by name\ncan carry a `chance` inside a `RandomWithChances`.",
+      "types": [
+        "NodeType<'ChanceDecorator'>"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TaskCallback",
+      "types": [
+        "(this: void, task: TaskControl, payload: P) => void"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "NodeTemplate",
+      "types": [
+        "TaskTemplate<P>",
+        "CompositeTemplate<P>",
+        "DecoratorTemplate<P>"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates a tree that runs a registered tree template. Register the templates with",
+      "description": "Creates a tree that runs a registered tree template. Register the templates with\n`registerTemplates` first.",
+      "generics": "<P = unknown>",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "`tree_name` names a tree under the templates' `TREES`, `payload` is\npassed to every task callback, and `rng` returns a whole number between its two\narguments for `Random` and `RandomWithChances`; it defaults to `math.random`.",
+          "types": [
+            "{ tree_name: string; payload?: P; rng?: (this: void, range_start: number, range_end: number) => number; }"
+          ],
+          "is_optional": "False",
+          "fields": [
+            {
+              "name": "tree_name",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "payload",
+              "doc": "",
+              "types": [
+                "P"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "rng",
+              "doc": "",
+              "types": [
+                "(this: void, range_start: number, range_end: number) => number"
+              ],
+              "is_optional": "True"
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "BehaviorTree<P>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "registerTemplates",
+      "brief": "Registers the tree templates, giving every node of each tree under `TREES` its own",
+      "description": "Registers the tree templates, giving every node of each tree under `TREES` its own\nid. Call it once, before `new` creates any tree.",
+      "types": [
+        "<P>(templates: Templates<P>) => void"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "getTreeTemplate",
+      "brief": "Returns a registered tree template's nodes, indexed by node id.",
+      "description": "Returns a registered tree template's nodes, indexed by node id.",
+      "types": [
+        "(treeName: string) => TreeNode[] | undefined"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "Registry",
+      "brief": "The registry the tree templates are stored in.",
+      "description": "The registry the tree templates are stored in.",
+      "types": [
+        "{ registerTemplates<P>(this: void, templates: Templates<P>): void; getTreeTemplate(this: void, treeName: string): TreeNode[] | undefined; getNodeFromTree(this: void, id: number, treeName: string): TreeNode | undefined; }"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "NodeType",
+      "properties": [
+        {
+          "name": "name",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Name"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BehaviorTree",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "run",
+          "brief": "Starts the tree at a node. Does nothing while the tree is `running`.",
+          "description": "Starts the tree at a node. Does nothing while the tree is `running`.",
+          "parameters": [
+            {
+              "name": "activeNodeID",
+              "doc": "The id of the node to start at. Defaults to `1`, the root.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "restart",
+          "brief": "Starts the tree at a node whether or not it is `running`.",
+          "description": "Starts the tree at a node whether or not it is `running`.",
+          "parameters": [
+            {
+              "name": "activeNodeID",
+              "doc": "The id of the node to start at. Defaults to `1`, the root.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "setActiveNode",
+          "brief": "Sets the node the tree is at, without running it.",
+          "description": "Sets the node the tree is at, without running it.",
+          "parameters": [
+            {
+              "name": "node",
+              "doc": "A node of this tree.",
+              "types": [
+                "TreeNode"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "getNode",
+          "brief": "Returns a node of this tree by id.",
+          "description": "Returns a node of this tree by id.",
+          "parameters": [
+            {
+              "name": "nodeID",
+              "doc": "The node's id.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "TreeNode | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "success",
+          "brief": "Finishes the root node and stops the tree. Called when the root succeeds.",
+          "description": "Finishes the root node and stops the tree. Called when the root succeeds.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "fail",
+          "brief": "Finishes the root node and stops the tree. Called when the root fails.",
+          "description": "Finishes the root node and stops the tree. Called when the root fails.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "getRandomBetween",
+          "brief": "Returns a number from the tree's `rng`.",
+          "description": "Returns a number from the tree's `rng`.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The low end of the range.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "y",
+              "doc": "The high end of the range.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "name",
+          "brief": "The registered tree this tree runs, from `config.tree_name`.",
+          "description": "The registered tree this tree runs, from `config.tree_name`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "payload",
+          "brief": "The payload every task callback receives.",
+          "description": "The payload every task callback receives.",
+          "types": [
+            "P"
+          ]
+        },
+        {
+          "name": "running",
+          "brief": "Whether the tree is running: set by `run` and `restart`, cleared when the root finishes.",
+          "description": "Whether the tree is running: set by `run` and `restart`, cleared when the root finishes.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "activeNode",
+          "brief": "The node the tree is at, unset until the first `run` or `restart`. Save its `id` to resume later.",
+          "description": "The node the tree is at, unset until the first `run` or `restart`. Save its `id` to resume later.",
+          "types": [
+            "TreeNode | undefined"
+          ]
+        },
+        {
+          "name": "rng",
+          "brief": "The number generator `Random` and `RandomWithChances` draw with.",
+          "description": "The number generator `Random` and `RandomWithChances` draw with.",
+          "types": [
+            "(this: void, x: number, y: number) => number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TreeNode",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "The node's id in its tree, from `1` at the root. Pass it to `run` or `restart`.",
+          "description": "The node's id in its tree, from `1` at the root. Pass it to `run` or `restart`.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "name",
+          "brief": "The template's name for a node registered under `NODES`, followed by",
+          "description": "The template's name for a node registered under `NODES`, followed by\n` | <type name>` for one that is not a task; the type name for an inline node.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "brief": "The node's type.",
+          "description": "The node's type.",
+          "types": [
+            "NodeType"
+          ]
+        },
+        {
+          "name": "chance",
+          "brief": "The template's `chance`, if it gave one.",
+          "description": "The template's `chance`, if it gave one.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "nodes",
+          "brief": "A composite's children.",
+          "description": "A composite's children.",
+          "types": [
+            "TreeNode[]"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "node",
+          "brief": "A decorator's child.",
+          "description": "A decorator's child.",
+          "types": [
+            "TreeNode"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Templates",
+      "properties": [
+        {
+          "name": "TREES",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Record<string, { main_node: string | NodeTemplate<P>; }>"
+          ]
+        },
+        {
+          "name": "NODES",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Record<string, NodeTemplate<P>>"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TaskTemplate",
+      "properties": [
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "typeof Task"
+          ]
+        },
+        {
+          "name": "start",
+          "brief": "",
+          "description": "",
+          "types": [
+            "TaskCallback<P>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "run",
+          "brief": "",
+          "description": "",
+          "types": [
+            "TaskCallback<P>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "finish",
+          "brief": "",
+          "description": "",
+          "types": [
+            "TaskCallback<P>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "chance",
+          "brief": "This node's share of `1` to `100`, read only when a `RandomWithChances` lists it.",
+          "description": "This node's share of `1` to `100`, read only when a `RandomWithChances` lists it.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "nodes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "never"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "never"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "TaskControl",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "success",
+          "brief": "Reports the task as succeeded, which moves the tree on.",
+          "description": "Reports the task as succeeded, which moves the tree on.",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "fail",
+          "brief": "Reports the task as failed, which moves the tree on.",
+          "description": "Reports the task as failed, which moves the tree on.",
+          "parameters": [
+            {
+              "name": "this",
+              "doc": "",
+              "types": [
+                "void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "CompositeTemplate",
+      "properties": [
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "typeof Sequence | typeof Selector | typeof Random | typeof RandomWithChances"
+          ]
+        },
+        {
+          "name": "nodes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(string | NodeTemplate<P>)[]"
+          ]
+        },
+        {
+          "name": "chance",
+          "brief": "This node's share of `1` to `100`, read only when a `RandomWithChances` lists it.",
+          "description": "This node's share of `1` to `100`, read only when a `RandomWithChances` lists it.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "never"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "DecoratorTemplate",
+      "properties": [
+        {
+          "name": "type",
+          "brief": "",
+          "description": "",
+          "types": [
+            "typeof InvertDecorator | typeof AlwaysFailDecorator | typeof AlwaysSucceedDecorator | typeof RepeatUntilFailDecorator | typeof ChanceDecorator"
+          ]
+        },
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string | NodeTemplate<P>"
+          ]
+        },
+        {
+          "name": "chance",
+          "brief": "This node's share of `1` to `100`, read only when a `RandomWithChances` lists it.",
+          "description": "This node's share of `1` to `100`, read only when a `RandomWithChances` lists it.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "nodes",
+          "brief": "",
+          "description": "",
+          "types": [
+            "never"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
