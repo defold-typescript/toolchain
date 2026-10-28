@@ -1,12 +1,14 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import * as wrap_go from "wrap.go";
+import * as wrap_go_list from "wrap.go_list";
 import * as wrap_node from "wrap.node";
 import * as wrap_node_list from "wrap.node_list";
 
 // Compile-only proof for the defold-wrap forks, written as upstream's README wraps and
-// chains nodes. No assertions execute; tsc --noEmit under tsconfig.dts-check.json is the
-// gate.
+// chains nodes and game objects. No assertions execute; tsc --noEmit under
+// tsconfig.dts-check.json is the gate.
 
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
@@ -120,3 +122,77 @@ wrap_node_list.new(["title"]).other;
 
 // @ts-expect-error a record names a node id or a node
 wrap_node_list.new({ title: 1 });
+
+// A wrapped game object forwards each method to the `go.*` function of the same name,
+// with its url last where the engine takes it last, and its setters chain.
+const hero = wrap_go.new("/hero").set_position_x(1).add_position_y(2);
+const _hero: Equal<typeof hero, wrap_go.Go> = true;
+void _hero;
+
+const world_position = hero.get_world_position();
+const _world_position: Equal<typeof world_position, Vector3> = true;
+void _world_position;
+
+type GoChainableName = Extract<
+  keyof wrap_go.Go,
+  `set${string}` | `add_${string}` | "animate" | "cancel_animations" | "delete" | "post"
+>;
+type GoUnchained = {
+  [K in GoChainableName]: wrap_go.Go[K] extends (...args: never[]) => wrap_go.Go ? never : K;
+}[GoChainableName];
+const _go_unchained: Equal<GoUnchained, never> = true;
+void _go_unchained;
+
+hero.post("jump");
+hero.post("jump", { height: 2 });
+hero.set("position.x", 5).set(hash("speed"), 2);
+hero.animate("position.x", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1);
+hero.animate(
+  ["position.x", "position.y"],
+  go.PLAYBACK_ONCE_FORWARD,
+  [10, 20],
+  go.EASING_LINEAR,
+  1,
+  0.5,
+  (_self, url, property) => {
+    void url;
+    void property;
+  },
+);
+hero.cancel_animations(["position.x", "position.y"]).cancel_animations();
+hero.set_parent(msg.url("/world"), true).set_parent();
+
+const position_x = hero.get("position.x");
+const _position_x: Equal<typeof position_x, number> = true;
+void _position_x;
+
+const go_parent = hero.get_parent();
+const _go_parent: Equal<typeof go_parent, ReturnType<typeof go.get_parent>> = true;
+void _go_parent;
+
+// @ts-expect-error a position is a vector
+hero.set_position("x");
+
+// @ts-expect-error an array of properties takes an array of targets
+hero.animate(["position.x"], go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 1);
+
+// @ts-expect-error a parent is a url, not a wrapper
+hero.set_parent(hero);
+
+// A game object list's keys are the urls it is given, or the names they are paired with.
+const listed_hero = wrap_go_list.new(["/hero", "/enemy"])["/hero"];
+const _listed_hero: Equal<typeof listed_hero, wrap_go.Go> = true;
+void _listed_hero;
+
+const camera = wrap_go_list.new({ hero: "/hero", camera: msg.url("/camera") }).camera;
+const _camera: Equal<typeof camera, wrap_go.Go> = true;
+void _camera;
+
+// @ts-expect-error a list has only the names it was given
+wrap_go_list.new({ hero: "/hero" }).enemy;
+
+// @ts-expect-error a record names a url
+wrap_go_list.new({ hero: 1 });
+
+// @ts-expect-error unlike a node list, a game object list takes no tree
+wrap_go_list.new(["/hero"], undefined);
