@@ -1,6 +1,7 @@
 /// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
+import { defineRenderScript } from "@defold-typescript/types";
 import * as water from "water.water";
 
 // Compile-only proof for the water fork, written as upstream's example script and bundled
@@ -73,11 +74,10 @@ export function setters(): void {
 export function render_hooks(
   self: water.RenderScriptSelf,
   state: water.RenderState,
-  predicates: water.Predicates,
   options: render.DrawOptions,
 ): void {
   water.render_init(self);
-  water.render_update(self, state, predicates, options);
+  water.render_update(self, state, self.predicates, options);
 
   const clear_buffers = new LuaMap<render.ClearBufferKey, number | Vector4>();
   clear_buffers.set(graphics.BUFFER_TYPE_COLOR0_BIT, vmath.vector4(0, 0, 0, 0));
@@ -90,4 +90,43 @@ export function render_hooks(
   );
   // @ts-expect-error `render_update` draws the `water` predicate `render_init` adds
   water.render_update(self, state, { model: render.predicate(["model"]) }, options);
+  // @ts-expect-error `render_update` draws the caller's `model` predicate too
+  water.render_update(self, state, { water: render.predicate(["water"]) }, options);
 }
+
+export function render_before_init(
+  self: water.RenderScriptSelf,
+  state: water.RenderState,
+  options: render.DrawOptions,
+): void {
+  // @ts-expect-error `self.predicates` holds only `model` until `render_init` adds `water`
+  water.render_update(self, state, self.predicates, options);
+}
+
+export function render_init_needs_model(): void {
+  // @ts-expect-error `render_update` draws the `model` predicate the caller sets before `render_init`
+  water.render_init({ predicates: {}, state: { width: 960, height: 640 } });
+}
+
+export default defineRenderScript({
+  init() {
+    const state = {
+      predicates: { model: render.predicate(["model"]) },
+      state: { width: 960, height: 640 },
+    };
+    water.render_init(state);
+    return state;
+  },
+  update(self) {
+    water.render_update(
+      self,
+      {
+        window_width: 960,
+        window_height: 640,
+        clear_buffers: new LuaMap<render.ClearBufferKey, number | Vector4>(),
+      },
+      self.predicates,
+      {},
+    );
+  },
+});
