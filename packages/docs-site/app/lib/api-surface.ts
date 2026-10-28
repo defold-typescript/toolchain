@@ -1347,8 +1347,10 @@ function typedefDefinition(
 
 /**
  * The line that defines a shape rather than one of its members — a union alias's
- * arms, or an interface's parents. `undefined` for a typedef that carries
- * neither, which renders through its members alone.
+ * arms, an interface's parents, or a generic shape's bare `Name<params>` so the
+ * parameters its member rows use are declared. `undefined` for a typedef that
+ * carries none of these, which renders through its members alone, and for a
+ * generic shape with no members, which has nothing to head.
  */
 function typedefDefinitionSignature(
   td: ApiTypedef,
@@ -1357,7 +1359,11 @@ function typedefDefinitionSignature(
   const arms = normalizeTypes(td.types ?? []).map(mapType);
   if (arms.length > 0) return `type ${td.name}${td.generics ?? ""} = ${arms.join(" | ")}`;
   const parents = normalizeTypes(td.extends ?? []).map(mapType);
-  if (parents.length > 0) return `interface ${td.name} extends ${parents.join(", ")}`;
+  if (parents.length > 0) {
+    return `interface ${td.name}${td.generics ?? ""} extends ${parents.join(", ")}`;
+  }
+  const hasMembers = (td.functions?.length ?? 0) > 0 || (td.properties?.length ?? 0) > 0;
+  if (td.generics && hasMembers) return `${td.name}${td.generics}`;
   return undefined;
 }
 

@@ -334,14 +334,14 @@ type DocumentedSignature =
 const CALL_MEMBER = "__call";
 
 /**
- * A signature's or type alias declaration's type parameter list as the
+ * A signature's, type alias's or interface's type parameter list as the
  * pre-rendered string the sibling `lower-api-doc` lane emits (`<T>`,
  * `<T = unknown>`, `<A, B extends A>`), or `""` when there is none — absence of
  * the key, not an empty string, is how the model encodes "takes no type
  * arguments".
  */
 function genericClause(
-  decl: DocumentedSignature | ts.TypeAliasDeclaration,
+  decl: DocumentedSignature | ts.TypeAliasDeclaration | ts.InterfaceDeclaration,
   sf: ts.SourceFile,
 ): string {
   const params = decl.typeParameters;
@@ -456,12 +456,21 @@ function typedefElement(
   const { functions, properties } = shapeMembers(iface.members, sf);
   if (functions.length === 0 && properties.length === 0) return undefined;
   return {
-    type: "TYPEDEF",
-    name,
+    ...interfaceHead(iface, sf, name),
     ...(functions.length > 0 ? { functions } : {}),
     ...(properties.length > 0 ? { properties } : {}),
     ...deprecatedKey(iface),
   };
+}
+
+/** An interface TYPEDEF's leading keys: its name, then its type parameters if it has any. */
+function interfaceHead(
+  iface: ts.InterfaceDeclaration,
+  sf: ts.SourceFile,
+  name: string,
+): Record<string, unknown> {
+  const generics = genericClause(iface, sf);
+  return { type: "TYPEDEF", name, ...(generics === "" ? {} : { generics }) };
 }
 
 /**
@@ -478,7 +487,7 @@ function interfaceTypedef(
   const parents = scoped ? heritageTypeTexts(iface, sf) : [];
   if (!typedef && parents.length === 0) return undefined;
   return {
-    ...(typedef ?? { type: "TYPEDEF", name }),
+    ...(typedef ?? interfaceHead(iface, sf, name)),
     ...(parents.length > 0 ? { extends: parents } : {}),
   };
 }
