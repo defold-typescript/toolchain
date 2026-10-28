@@ -57,6 +57,7 @@ import {
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
+  loadLibraryPageSources,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import {
@@ -5177,5 +5178,33 @@ describe("defoldTypeRef", () => {
       "hash https://defold.com/ref/builtins-lua#hash",
       "script_instance https://defold.com/ref/builtins-lua#script_instance",
     ]);
+  });
+});
+
+describe("library typedef definitions", () => {
+  const sources = loadLibraryPageSources(join(import.meta.dir, "../../../library-types"));
+  const symbols = (namespace: string): ApiSymbol[] => {
+    const source = sources.find(({ page }) => page.namespace === namespace);
+    if (!source) throw new Error(`no library page ${namespace}`);
+    return apiModuleSymbols(source.page);
+  };
+  const signatureOf = (namespace: string, name: string): string | undefined =>
+    symbols(namespace).find((s) => s.name === name)?.signature;
+
+  test("a generic alias renders its type parameters", () => {
+    expect(signatureOf("wrap.node", "HexColorLiteral")).toStartWith(
+      "type HexColorLiteral<S extends string> = ",
+    );
+    expect(signatureOf("wrap.node", "HexColor")).toBeDefined();
+    expect(signatureOf("wrap.node_list", "NodeList")).toStartWith(
+      "type NodeList<K extends string> = ",
+    );
+  });
+
+  test("an @internal helper alias is not listed", () => {
+    const nodeNames = symbols("wrap.node").map((s) => s.name);
+    expect(nodeNames).not.toContain("HexDigit");
+    expect(nodeNames).not.toContain("HexDigitCount");
+    expect(symbols("wrap.node_list").map((s) => s.name)).not.toContain("OpenKey");
   });
 });

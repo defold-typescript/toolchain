@@ -181,9 +181,15 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
           emittedNames.add(name);
         }
       } else if (ts.isTypeAliasDeclaration(stmt)) {
-        if (lane !== "module") continue;
+        // `@internal` marks a fork's helper alias, so it gets no element to fill.
+        if (lane !== "module" || isInternal(stmt)) continue;
         const name = qualify(stmt.name.text);
-        const element: Record<string, unknown> = { type: "TYPEDEF", name };
+        const generics = genericClause(stmt, sf);
+        const element: Record<string, unknown> = {
+          type: "TYPEDEF",
+          name,
+          ...(generics === "" ? {} : { generics }),
+        };
         elements.push(element);
         emittedNames.add(name);
         aliasElements.set(stmt, element);
@@ -247,12 +253,15 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
     for (const { name, alias, iface, scoped } of shapes) {
       if (emittedNames.has(name)) continue;
       if (alias) {
+        const generics = genericClause(alias, sf);
+        const genericsKey = generics === "" ? {} : { generics };
         if (ts.isTypeLiteralNode(alias.type)) {
           const { functions, properties } = shapeMembers(alias.type.members, sf);
           if (functions.length === 0 && properties.length === 0) continue;
           elements.push({
             type: "TYPEDEF",
             name,
+            ...genericsKey,
             ...(functions.length > 0 ? { functions } : {}),
             ...(properties.length > 0 ? { properties } : {}),
             ...deprecatedKey(alias),
@@ -268,6 +277,7 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
         elements.push({
           type: "TYPEDEF",
           name,
+          ...genericsKey,
           types: unionMemberTexts(alias.type, sf),
           ...deprecatedKey(alias),
           ...mark,
@@ -324,12 +334,16 @@ type DocumentedSignature =
 const CALL_MEMBER = "__call";
 
 /**
- * A declaration's type parameter list as the pre-rendered string the sibling
- * `lower-api-doc` lane emits (`<T>`, `<T = unknown>`, `<A, B extends A>`), or
- * `""` when there is none — absence of the key, not an empty string, is how the
- * model encodes "takes no type arguments".
+ * A signature's or type alias declaration's type parameter list as the
+ * pre-rendered string the sibling `lower-api-doc` lane emits (`<T>`,
+ * `<T = unknown>`, `<A, B extends A>`), or `""` when there is none — absence of
+ * the key, not an empty string, is how the model encodes "takes no type
+ * arguments".
  */
-function genericClause(decl: DocumentedSignature, sf: ts.SourceFile): string {
+function genericClause(
+  decl: DocumentedSignature | ts.TypeAliasDeclaration,
+  sf: ts.SourceFile,
+): string {
   const params = decl.typeParameters;
   if (!params || params.length === 0) return "";
   return `<${params.map((p) => oneLineText(p, sf)).join(", ")}>`;
@@ -489,6 +503,11 @@ type Lane = "module" | "table" | "global";
 /** Whether a string-named module is an extension's global table behind an import. */
 function isGlobalTable(decl: ts.ModuleDeclaration): boolean {
   return ts.getJSDocTags(decl).some((tag) => tag.tagName.text === "globalTable");
+}
+
+/** Whether a fork's author marked a module-block alias as a helper `/api` omits. */
+function isInternal(decl: ts.TypeAliasDeclaration): boolean {
+  return ts.getJSDocTags(decl).some((tag) => tag.tagName.text === "internal");
 }
 
 interface TypeDeclarations {

@@ -116,6 +116,7 @@
     {
       "type": "TYPEDEF",
       "name": "TaskCallback",
+      "generics": "<P>",
       "types": [
         "(this: void, task: TaskControl, payload: P) => void"
       ]
@@ -123,6 +124,7 @@
     {
       "type": "TYPEDEF",
       "name": "NodeTemplate",
+      "generics": "<P, Ref extends string = string>",
       "types": [
         "TaskTemplate<P>",
         "CompositeTemplate<P, Ref>",
@@ -132,6 +134,7 @@
     {
       "type": "TYPEDEF",
       "name": "Templates",
+      "generics": "<P>",
       "types": [
         "NamedTemplates<P>",
         "InlineTemplates<P>"

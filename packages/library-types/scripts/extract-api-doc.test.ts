@@ -793,6 +793,58 @@ describe("extractApiDoc generic clauses", () => {
   });
 });
 
+// `Digit` is tagged `@internal` and `Helper` is merely unexported; the
+// `export { … }` clause makes neither importable, but only the tag hides one.
+const INTERNAL_ALIASES = `/**
+ * Alias demo.
+ * @noResolution
+ */
+declare module 'gen.alias' {
+	/**
+	 * One digit.
+	 * @internal
+	 */
+	type Digit = '0' | '1';
+
+	type Helper = number;
+
+	export type Checked<S extends string, N extends number = 0> = S extends Digit ? S : never;
+
+	export type Plain = string;
+
+	/** Make one. */
+	export function new_(): Checked<'0'>;
+
+	export { new_ as new };
+}
+`;
+
+describe("extractApiDoc internal and generic aliases", () => {
+  const elements = () =>
+    (extractApiDoc(INTERNAL_ALIASES, "gen.alias") as { elements: Array<Record<string, unknown>> })
+      .elements;
+
+  const typedef = (name: string) =>
+    elements().find((e) => e.type === "TYPEDEF" && e.name === name) as Record<string, unknown>;
+
+  test("drops an @internal alias, even one a published alias body reaches", () => {
+    expect(elements().some((e) => e.name === "Digit")).toBe(false);
+  });
+
+  test("keeps an untagged alias the module does not export", () => {
+    expect(typedef("Helper")).toBeDefined();
+  });
+
+  test("carries an alias's type parameter list, constraints and defaults included", () => {
+    expect(typedef("Checked").generics).toBe("<S extends string, N extends number = 0>");
+    expect(Object.keys(typedef("Checked"))).toEqual(["type", "name", "generics", "types"]);
+  });
+
+  test("emits no generics key for an alias without type parameters", () => {
+    expect(Object.hasOwn(typedef("Plain"), "generics")).toBe(false);
+  });
+});
+
 // An assertion signature narrows its argument and returns nothing at runtime;
 // `Full` is named only inside `fill`'s assertion.
 const ASSERTIONS = `/**
