@@ -1031,6 +1031,17 @@
       "generated": "generated/illumination.d.ts",
       "apiDoc": "api-doc/illumination.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-illumination/illumination/illumination.lua"]
+    },
+    {
+      "repo": "https://github.com/selimanac/defold-stylized-water-shader",
+      "ref": "bdcc1d863c64015fb70b117042f551795eb04211",
+      "license": "MIT",
+      "authored": "fixtures/authored/water.water.d.ts",
+      "moduleId": "water.water",
+      "namespace": "water",
+      "generated": "generated/water.d.ts",
+      "apiDoc": "api-doc/water.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-stylized-water-shader/water/water.lua"]
     }
   ]
 }
