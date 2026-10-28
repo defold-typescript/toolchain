@@ -299,3 +299,16 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records minit: a consumer transpiles with the call forms the declaration produces: minit 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local minit = require("minit.minit")
+function ____exports.init()
+    local off = minit.on_viewable_change(function(viewable) return print(viewable) end)
+    off()
+    minit.report_result(42, {flavor_text = "gg"})
+end
+return ____exports
+"
+`;
