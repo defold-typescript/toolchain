@@ -273,6 +273,7 @@
     {
       "type": "TYPEDEF",
       "name": "NodeType",
+      "generics": "<Name extends string = string>",
       "properties": [
         {
           "name": "name",
@@ -287,6 +288,7 @@
     {
       "type": "TYPEDEF",
       "name": "BehaviorTree",
+      "generics": "<P = unknown>",
       "functions": [
         {
           "type": "FUNCTION",
@@ -517,6 +519,7 @@
     {
       "type": "TYPEDEF",
       "name": "NamedTemplates",
+      "generics": "<P>",
       "properties": [
         {
           "name": "TREES",
@@ -539,6 +542,7 @@
     {
       "type": "TYPEDEF",
       "name": "TaskTemplate",
+      "generics": "<P>",
       "properties": [
         {
           "name": "type",
@@ -647,6 +651,7 @@
     {
       "type": "TYPEDEF",
       "name": "CompositeTemplate",
+      "generics": "<P, Ref extends string = string>",
       "properties": [
         {
           "name": "type",
@@ -687,6 +692,7 @@
     {
       "type": "TYPEDEF",
       "name": "DecoratorTemplate",
+      "generics": "<P, Ref extends string = string>",
       "properties": [
         {
           "name": "type",
@@ -727,6 +733,7 @@
     {
       "type": "TYPEDEF",
       "name": "InlineTemplates",
+      "generics": "<P>",
       "properties": [
         {
           "name": "TREES",
