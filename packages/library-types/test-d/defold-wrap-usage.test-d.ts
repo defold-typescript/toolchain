@@ -3,12 +3,16 @@
 
 import * as wrap_go from "wrap.go";
 import * as wrap_go_list from "wrap.go_list";
+import * as gui_applet from "wrap.gui_applet";
+import * as gui_object from "wrap.gui_object";
+import * as gui_scene from "wrap.gui_scene";
 import * as wrap_node from "wrap.node";
 import * as wrap_node_list from "wrap.node_list";
+import * as wrap from "wrap.wrap";
 
 // Compile-only proof for the defold-wrap forks, written as upstream's README wraps and
-// chains nodes and game objects. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json is the gate.
+// chains nodes and game objects, and as its example builds scenes and objects. No
+// assertions execute; tsc --noEmit under tsconfig.dts-check.json is the gate.
 
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
@@ -264,3 +268,145 @@ export type _HexDigitCount = wrap_node.HexDigitCount<"ff">;
 
 // @ts-expect-error a helper alias is not exported
 export type _OpenKey = wrap_node_list.OpenKey<string>;
+
+// A GUI object subclass types its props, its settings and the fields a game adds, and a
+// hook assigned to it sees the instance as `this`, as upstream's `function Object:init()`.
+const Button = gui_object.extend<
+  { text: string },
+  { on_click?: () => void },
+  { hover?: boolean }
+>();
+Button.init = function () {
+  this.new_text(undefined, this.props.text).set_font("default");
+  this.hover = false;
+  const _props: Equal<typeof this.props, { text: string }> = true;
+  void _props;
+  const _settings: Equal<typeof this.settings, { on_click?: () => void }> = true;
+  void _settings;
+  const _scene: Equal<typeof this.scene, gui_scene.GuiScene> = true;
+  void _scene;
+};
+
+// @ts-expect-error a hook takes the parameters of the lifecycle function it mirrors
+Button.init = function (_text: string) {
+  this.hover = true;
+};
+
+const Lobby = gui_scene.extend<{ label?: gui_object.GuiObject }>();
+Lobby.init = function () {
+  this.set_transitions({
+    transition_in: this.slide_in_left(),
+    transition_out: this.slide_out_right(),
+  });
+  this.register_modal("modal", Button, { text: "I'm a modal" });
+  this.label = this.new_object(Button, { text: "Hi" });
+
+  const button = this.new_object(Button, { text: "Hi" }, { on_click: () => undefined });
+  const _button_text: Equal<typeof button.props.text, string> = true;
+  void _button_text;
+  const _button_hover: Equal<typeof button.hover, boolean | undefined> = true;
+  void _button_hover;
+
+  const modal = this.open_modal("modal");
+  const _modal: Equal<typeof modal, gui_object.GuiObject | undefined> = true;
+  void _modal;
+
+  // A modal may also be a plain table of hooks, which sees the object as `this`.
+  this.register_modal("note", {
+    init() {
+      this.new_text(undefined, "note");
+      const _note_scene: Equal<typeof this.scene, gui_scene.GuiScene> = true;
+      void _note_scene;
+    },
+  });
+
+  // @ts-expect-error props are checked against the class
+  this.new_object(Button, { text: 1 });
+
+  // @ts-expect-error `setup` defaults omitted props to `{}`, which lacks `text`
+  this.new_object(Button);
+
+  // @ts-expect-error `new_object` calls `new` on what it is given, so it takes only a class
+  this.new_object({ init() {} });
+
+  // @ts-expect-error a transition is a function taking `on_done`
+  this.set_transitions({ transition_in: 1 });
+};
+
+const _lobby_label: Equal<(typeof Lobby)["label"], gui_object.GuiObject | undefined> = true;
+void _lobby_label;
+
+// An applet shows a registered scene by name, a scene class, or a plain table of hooks,
+// whose fields the hooks see beside the scene's own.
+declare const action: go.on_input.Action;
+const app = gui_applet.new("root");
+app.register_scene("lobby", Lobby);
+app.show_scene("lobby");
+app.show_scene(Lobby);
+app.show_scene({
+  init() {
+    this.new_object(Button, { text: "x" });
+  },
+});
+app.register_scene("bouncing", {
+  direction: 1,
+  update(dt: number) {
+    this.direction = -this.direction * dt;
+    const _direction: Equal<typeof this.direction, number> = true;
+    void _direction;
+    const _app: Equal<typeof this.app, gui_applet.GuiApplet> = true;
+    void _app;
+  },
+});
+app.update(1 / 60);
+
+const consumed = app.on_input(hash("touch"), action);
+const _consumed: Equal<typeof consumed, boolean> = true;
+void _consumed;
+
+const _app_root: Equal<typeof app.root, wrap_node.Node> = true;
+void _app_root;
+
+// @ts-expect-error a scene is a class or a table of hooks
+app.register_scene("x", 5);
+
+// The facade a project requires wraps one node or game object, or a list of them, as the
+// README's first chain does, and creates an applet.
+const facade_box = wrap.node("box").set_alpha(0.5).set_enabled(true);
+const _facade_box: Equal<typeof facade_box, wrap_node.Node> = true;
+void _facade_box;
+
+const facade_title = wrap.node(["title"]).title;
+const _facade_title: Equal<typeof facade_title, wrap_node.Node> = true;
+void _facade_title;
+
+const facade_button = wrap.node("button", gui.clone_tree(gui.get_node("button")));
+const _facade_button: Equal<typeof facade_button, wrap_node.Node> = true;
+void _facade_button;
+
+const facade_named = wrap.node({ title: "text_title", button: gui.get_node("button") }).button;
+const _facade_named: Equal<typeof facade_named, wrap_node.Node> = true;
+void _facade_named;
+
+const facade_hero = wrap.go("/hero");
+const _facade_hero: Equal<typeof facade_hero, wrap_go.Go> = true;
+void _facade_hero;
+
+const facade_listed = wrap.go({ hero: "/hero" }).hero;
+const _facade_listed: Equal<typeof facade_listed, wrap_go.Go> = true;
+void _facade_listed;
+
+const facade_applet = wrap.gui_applet("applet1", {
+  init() {
+    this.new_object(Button, { text: "x" });
+  },
+});
+const _facade_applet: Equal<typeof facade_applet, gui_applet.GuiApplet> = true;
+void _facade_applet;
+wrap.gui_applet("applet2").register_scene("lobby", Lobby);
+
+// @ts-expect-error a node is an id, a node, or a list of them
+wrap.node(1);
+
+// @ts-expect-error a list has only the urls it was given
+wrap.go(["/hero"]).enemy;

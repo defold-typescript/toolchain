@@ -1,0 +1,254 @@
+{
+  "info": {
+    "namespace": "wrap.wrap",
+    "brief": "The module a project requires to use defold-wrap: `node` and `go` wrap one GUI node or",
+    "description": "The module a project requires to use defold-wrap: `node` and `go` wrap one GUI node or\ngame object, or a list of them, so calls on them chain, and `gui_applet` creates an\napplet that shows scenes."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "node",
+      "brief": "Wraps a GUI node, from `wrap.node.new`.",
+      "description": "Wraps a GUI node, from `wrap.node.new`.",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "The node, or its id. An id is looked up in `tree` first, then with\n`gui.get_node`.",
+          "types": [
+            "string | Opaque<'node'>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "A table from `gui.clone_tree` or `gui.get_tree` to look an id up in.",
+          "types": [
+            "NodeTree"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Node"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "node",
+      "brief": "Wraps the node with each id, keyed by the id, from `wrap.node_list.new`.",
+      "description": "Wraps the node with each id, keyed by the id, from `wrap.node_list.new`.",
+      "generics": "<const K extends string>",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "The node ids.",
+          "types": [
+            "readonly K[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "A table from `gui.clone_tree` or `gui.get_tree` to look each id up in\nfirst. An id it lacks, or every id when it is omitted, is looked up with\n`gui.get_node`.",
+          "types": [
+            "NodeTree"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "NodeList<K>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "node",
+      "brief": "Wraps each node, keyed by its name, from `wrap.node_list.new`.",
+      "description": "Wraps each node, keyed by its name, from `wrap.node_list.new`.",
+      "generics": "<K extends string>",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "Each name, paired with a node id or a node.",
+          "types": [
+            "Record<K, string | Opaque<'node'>>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "A table from `gui.clone_tree` or `gui.get_tree` to look each id up in\nfirst. An id it lacks, or every id when it is omitted, is looked up with\n`gui.get_node`.",
+          "types": [
+            "NodeTree"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "NodeList<K>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go",
+      "brief": "Wraps a game object, from `wrap.go.new`.",
+      "description": "Wraps a game object, from `wrap.go.new`.",
+      "parameters": [
+        {
+          "name": "go",
+          "doc": "The game object's url.",
+          "types": [
+            "SceneGameObjectAddress | Hash | Url"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Go"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go",
+      "brief": "Wraps the game object at each url, keyed by the url, from `wrap.go_list.new`.",
+      "description": "Wraps the game object at each url, keyed by the url, from `wrap.go_list.new`.",
+      "generics": "<const K extends string>",
+      "parameters": [
+        {
+          "name": "go",
+          "doc": "The game object urls.",
+          "types": [
+            "readonly K[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GoList<K>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "go",
+      "brief": "Wraps each game object, keyed by its name, from `wrap.go_list.new`.",
+      "description": "Wraps each game object, keyed by its name, from `wrap.go_list.new`.",
+      "generics": "<K extends string>",
+      "parameters": [
+        {
+          "name": "go",
+          "doc": "Each name, paired with a game object url.",
+          "types": [
+            "Record<K, SceneGameObjectAddress | Hash | Url>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GoList<K>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gui_applet",
+      "brief": "Creates an applet on a node, from `wrap.gui_applet.new`, and when given a scene class",
+      "description": "Creates an applet on a node, from `wrap.gui_applet.new`, and when given a scene class\nshows a new scene of it.",
+      "parameters": [
+        {
+          "name": "root_node",
+          "doc": "The node, or the id `gui.get_node` looks it up by.",
+          "types": [
+            "string | Opaque<'node'>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "scene",
+          "doc": "A class `wrap.gui_scene.extend` returns.",
+          "types": [
+            "GuiSceneClass<object>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GuiApplet"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gui_applet",
+      "brief": "Creates an applet on a node, from `wrap.gui_applet.new`, and shows a scene built from a",
+      "description": "Creates an applet on a node, from `wrap.gui_applet.new`, and shows a scene built from a\nplain table of hooks and fields, copied onto a fresh `wrap.gui_scene.extend()`.",
+      "generics": "<F extends object = {}>",
+      "parameters": [
+        {
+          "name": "root_node",
+          "doc": "The node, or the id `gui.get_node` looks it up by.",
+          "types": [
+            "string | Opaque<'node'>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "scene",
+          "doc": "The hooks and fields, each hook seeing the scene as `this`.",
+          "types": [
+            "GuiSceneHooks<F>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GuiApplet"
+          ]
+        }
+      ]
+    }
+  ]
+}

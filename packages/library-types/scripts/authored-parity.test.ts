@@ -1038,8 +1038,13 @@ describe("a fork offering several call shapes is measured against the set", () =
   // points with a required `length_func`, `def_behavior_tree.new` a payload or none,
   // `wrap.node`'s `animate` one property and target or an array of each,
   // `wrap.node_list.new` an array of node ids or a record of them, `wrap.go`'s `animate`
-  // the same two shapes and its `get` and `set` a catalogued property or any other, and
-  // `wrap.go_list.new` an array of urls or a record of them.
+  // the same two shapes and its `get` and `set` a catalogued property or any other,
+  // `wrap.go_list.new` an array of urls or a record of them, `new_object` on a GUI object
+  // and a scene a class whose props and settings may be omitted, need props, or need
+  // settings, `register_modal`, `register_scene`, `show_scene` and `wrap.gui_applet.new`
+  // a class or a plain table of hooks, `show_scene` also a registered name, and the
+  // `wrap.wrap` facade's `node` and `go` one value, an array or a record, and its
+  // `gui_applet` the two scene shapes `wrap.gui_applet.new` takes.
   test("the term is 0 on every target whose api-doc names each function once", () => {
     const overloaded = authoredParityTargets(PACKAGE_ROOT)
       .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
@@ -1054,6 +1059,10 @@ describe("a fork offering several call shapes is measured against the set", () =
       "wrap.node_list: 1",
       "wrap.go: 3",
       "wrap.go_list: 1",
+      "wrap.gui_object: 1",
+      "wrap.gui_scene: 2",
+      "wrap.gui_applet: 3",
+      "wrap.wrap: 3",
     ]);
   });
 });
@@ -1205,12 +1214,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other ninety-four targets share no variadic member at all", () => {
+  test("the other ninety-eight targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(94);
+    expect(untouched.length).toBe(98);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1687,9 +1696,11 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       // `cursor_visible` and `cursor_render_order`.
       pointer_lock: 2,
       rendy: 13,
+      // The `-- Built-in transitions` section header directly above `fade_in`.
+      "wrap.gui_scene": 1,
       zzfx: 4,
     });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(104);
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(105);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
@@ -1837,17 +1848,18 @@ describe("only a refusal the fork left unanswered is charged", () => {
       "persist",
       "pointer_lock",
       "rendy",
+      "wrap.gui_scene",
       "zzfx",
     ]);
   });
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 104 is what makes that a closure rather than a target quietly dropping out of the
+  // 105 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 104", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 105", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(104);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(105);
   });
 
   // The one target whose zero comes entirely from the ledger rather than from authored
@@ -2837,6 +2849,86 @@ describe("wrap.go_list declares the whole of its upstream", () => {
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(1);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(entry).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// The scene framework's three files are class modules: `new` and `extend` (the applet has
+// no `extend`) are their `.` functions, `__name` is the one field, the class check
+// `register_scene`, `show_scene` and `register_modal` run, and every other definition is
+// a `function Class:x` method measured against the fork's instance interface. The
+// `bg_*` drivers and the no-op hooks are methods like any other.
+for (const { namespace, members } of [
+  { namespace: "wrap.gui_object", members: 16 },
+  { namespace: "wrap.gui_scene", members: 34 },
+  { namespace: "wrap.gui_applet", members: 9 },
+]) {
+  describe(`${namespace} declares the whole of its upstream`, () => {
+    const entry = target(namespace);
+    const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+    test("both axes close, the methods and `__name` included, with nothing missing or short", () => {
+      expect(report.upstreamMembers).toBe(members);
+      expect(report.upstreamFields).toBe(1);
+      expect(report.missingMembers).toEqual([]);
+      expect(report.phantomMembers).toEqual([]);
+      expect(report.arityMismatches).toEqual([]);
+      expect(report.missingFields).toEqual([]);
+      expect(report.phantomFields).toEqual([]);
+      expect(report.callableCoverage).toBe(1);
+      expect(report.fieldCoverage).toBe(1);
+    });
+
+    test("every api-doc member and every instance method carries a description", () => {
+      const elements = apiDocElements(entry);
+      const declared = elements.filter(
+        (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+      );
+      const instance = elements.find(
+        (element) => element.type === "TYPEDEF" && element.name === entry.instanceType,
+      ) as unknown as { functions: ApiDocElement[] };
+      expect(
+        new Set(declared.map((element) => element.name)).size +
+          new Set(instance.functions.map((method) => method.name)).size,
+      ).toBe(report.upstreamMembers + report.upstreamFields);
+      const blank = [...declared, ...instance.functions]
+        .filter((element) => (element.description ?? "").trim() === "")
+        .map((element) => element.name);
+      expect(blank).toEqual([]);
+      expect(report.undocumentedMembers).toBe(0);
+    });
+  });
+}
+
+// `wrap.lua` is the facade a project requires: `node`, `go` and `gui_applet`, each
+// forwarding to the module that wraps one value or a list of them.
+describe("wrap.wrap declares the whole of its upstream", () => {
+  const entry = target("wrap.wrap");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(3);
     expect(report.upstreamFields).toBe(0);
     expect(report.missingMembers).toEqual([]);
     expect(report.phantomMembers).toEqual([]);

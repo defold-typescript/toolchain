@@ -267,3 +267,35 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records wrap.gui_scene: a consumer transpiles with the call forms the declaration produces: wrap.gui_scene 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local gui_applet = require("wrap.gui_applet")
+local gui_scene = require("wrap.gui_scene")
+local Lobby = gui_scene.extend()
+Lobby.init = function(self)
+    self:set_transitions({
+        transition_in = self:slide_in_left(),
+        transition_out = self:slide_out_right()
+    })
+end
+local app = gui_applet.new("root")
+app:register_scene("lobby", Lobby)
+function ____exports.update(dt)
+    app:update(dt)
+end
+return ____exports
+"
+`;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records wrap.wrap: a consumer transpiles with the call forms the declaration produces: wrap.wrap 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local wrap = require("wrap.wrap")
+function ____exports.init()
+    wrap.node("box"):set_alpha(0.5):set_enabled(true)
+end
+return ____exports
+"
+`;

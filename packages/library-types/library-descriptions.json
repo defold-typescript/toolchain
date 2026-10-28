@@ -157,7 +157,11 @@
   "wave": "Wave simulation that floats, pitches and rolls game objects on a water surface.",
   "wrap.go": "A chainable wrapper around a game object: every go.* transform function as a method on its url, with setters that return the wrapper and component setters.",
   "wrap.go_list": "A table of wrapped game objects keyed by the urls or names they are built from.",
+  "wrap.gui_applet": "A GUI node that shows one scene at a time, transitioning between them, driven from a GUI script's lifecycle functions.",
+  "wrap.gui_object": "The base class a GUI object subclasses with extend: a root node, child objects, props and settings, and lifecycle hooks.",
+  "wrap.gui_scene": "The base class a GUI scene subclasses with extend: objects, modals, lifecycle hooks and built-in fade and slide transitions.",
   "wrap.node": "A chainable wrapper around a GUI node: every gui.* node function as a method, with setters that return the node, component setters and hex colors.",
   "wrap.node_list": "A table of wrapped GUI nodes keyed by the names they are built from, looked up in a cloned node tree first.",
+  "wrap.wrap": "This small library aims to help you change the way you write code on Defold.",
   "yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine."
 }
