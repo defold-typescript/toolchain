@@ -17,7 +17,7 @@
   "refusedDocBlocks": 0,
   "refusedDocBlocksTotal": 0,
   "variadicMembers": 0,
-  "overloadedMembers": 0,
+  "overloadedMembers": 1,
   "placeholderMembers": 0,
   "callableCoverage": 1
 }
