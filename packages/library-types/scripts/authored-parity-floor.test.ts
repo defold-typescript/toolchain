@@ -537,6 +537,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "883ac0e8216b428bbb237c5fef7fc5ce48966fc78590ae5bf05be3bfb5bbc37c",
   "fixtures/upstream-lua/library-defold-rendy/rendy/rendy.lua":
     "155cfbc6ee1dc0284e6546a4601ccf64418e5ede51ef4b204f71b13b93268fbc",
+  "fixtures/upstream-lua/minit-defold/minit/minit.lua":
+    "3d86ff11608337ace79cb7649dabf7575770552e334b3bf5c720522e30330f8f",
   "fixtures/upstream-lua/monarch/monarch/monarch.lua":
     "686f04e674e5436650d342f6ba310998b8eca88c9ff3eb6889dc36af43423192",
   "fixtures/upstream-lua/monarch/monarch/transitions/easings.lua":

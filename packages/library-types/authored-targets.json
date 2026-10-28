@@ -1135,6 +1135,17 @@
       "generated": "generated/wrap.wrap.d.ts",
       "apiDoc": "api-doc/wrap.wrap.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/wrap.lua"]
+    },
+    {
+      "repo": "https://github.com/Minit-Games/minit-defold",
+      "ref": "v1.17.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/minit.minit.d.ts",
+      "moduleId": "minit.minit",
+      "namespace": "minit",
+      "generated": "generated/minit.d.ts",
+      "apiDoc": "api-doc/minit.json",
+      "upstreamLua": ["fixtures/upstream-lua/minit-defold/minit/minit.lua"]
     }
   ]
 }
