@@ -1,0 +1,19 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/widgrensit/asobi-defold",
+    "authoredHere": true,
+    "commit": "v1.18.1",
+    "sourceUrl": "https://github.com/widgrensit/asobi-defold/tree/v1.18.1",
+    "license": "Apache-2.0"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's `generate` and `load_or_create` return the device id and secret as two values; a declaration returning a tuple instead of a `LuaMultiReturn` still passes `tsc`, so only TSTL's emit shows the two-value assignment.",
+    "consumer": [
+      "import * as device from \"asobi.device\";",
+      "export function init(): void {",
+      "  const [id, secret] = device.load_or_create();",
+      "  print(id, secret);",
+      "}"
+    ]
+  }
+}

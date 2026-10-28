@@ -1,0 +1,23 @@
+{
+  "namespace": "asobi.realtime",
+  "upstreamMembers": 46,
+  "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
+  "declaredGlobals": 0,
+  "declaredMembers": 46,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "parityExceptions": [],
+  "undocumentedMembers": 0,
+  "importedDocs": 0,
+  "refusedDocBlocks": 0,
+  "refusedDocBlocksTotal": 16,
+  "variadicMembers": 0,
+  "overloadedMembers": 3,
+  "placeholderMembers": 0,
+  "callableCoverage": 1
+}
