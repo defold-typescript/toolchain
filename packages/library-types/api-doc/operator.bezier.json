@@ -175,6 +175,7 @@
     {
       "type": "TYPEDEF",
       "name": "Bezier",
+      "generics": "<P>",
       "functions": [
         {
           "type": "FUNCTION",

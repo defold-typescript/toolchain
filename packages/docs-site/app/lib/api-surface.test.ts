@@ -16,6 +16,7 @@ import {
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
+import { extractApiDoc } from "../../../library-types/scripts/extract-api-doc";
 import { readNativeExpectations } from "../../../library-types/scripts/target-expectations";
 import { loadAnnotations } from "../../../types/scripts/lua-annotations";
 import { loadApiTargets } from "../../../types/scripts/regen";
@@ -3752,6 +3753,70 @@ describe("library-category token rendering", () => {
   });
 });
 
+describe("generic shape definitions", () => {
+  const source = `declare module "gen.shape" {
+  export type Box<T extends string = "a"> = { value: T };
+  export interface Room<State = unknown> { state: State }
+  export interface Base<T> { base: T }
+  export interface Tagged<T> extends Base<T> { tag: T }
+  export type Flat = { id: number };
+  export interface Plain { id: number }
+  export type Unused<T> = { unused: T };
+  export function box(): Box;
+  export function room(): Room;
+  export function tagged(): Tagged<number>;
+  export function flat(): Flat;
+  export function plain(): Plain;
+}`;
+  const page: ApiPage = {
+    namespace: "gen.shape",
+    route: "/api/gen.shape",
+    brief: "",
+    module: parseDefoldApiDoc(extractApiDoc(source, "gen.shape")),
+    translations: {},
+    signatures: {},
+    category: "library",
+  };
+  const symbols = apiModuleSymbols(page).filter((s) => s.kind === "type");
+  const layout = groupTypeSymbols(symbols);
+  const group = (label: string) => layout.shapes.find((g) => g.label === label);
+
+  test("heads a generic alias shape with its parameters, constraint and default", () => {
+    const box = group("Box");
+    expect(box?.symbols[0]).toMatchObject({
+      name: "Box",
+      signature: 'Box<T extends string = "a">',
+    });
+    expect(box?.symbols.find((s) => s.name === "Box.value")?.signature).toBe("Box.value: T");
+  });
+
+  test("heads a generic interface shape with its parameters and default", () => {
+    const room = group("Room");
+    expect(room?.symbols[0]).toMatchObject({ name: "Room", signature: "Room<State = unknown>" });
+    expect(room?.symbols.map((s) => s.name)).toContain("Room.state");
+  });
+
+  test("keeps the parameters on an interface that extends a parent", () => {
+    expect(group("Tagged")?.symbols[0]).toMatchObject({
+      name: "Tagged",
+      signature: "interface Tagged<T> extends Base<T>",
+    });
+  });
+
+  test("leaves a non-generic shape without a definition row", () => {
+    for (const label of ["Flat", "Plain"]) {
+      const names = group(label)?.symbols.map((s) => s.name) ?? [];
+      expect(names.length).toBeGreaterThan(0);
+      expect(names.every((name) => name.includes("."))).toBe(true);
+    }
+    expect(layout.types).toEqual([]);
+  });
+
+  test("lists no generic alias that has no members", () => {
+    expect(symbols.some((s) => s.name === "Unused")).toBe(false);
+  });
+});
+
 describe("mapDocType", () => {
   test("maps Defold engine tokens to their emitted TypeScript names", () => {
     expect(mapDocType("hash")).toBe("Hash");
@@ -5206,5 +5271,13 @@ describe("library typedef definitions", () => {
     expect(nodeNames).not.toContain("HexDigit");
     expect(nodeNames).not.toContain("HexDigitCount");
     expect(symbols("wrap.node_list").map((s) => s.name)).not.toContain("OpenKey");
+  });
+
+  test("a generic interface heads its shape with its type parameters", () => {
+    expect(signatureOf("operator.bezier", "Bezier")).toBe("Bezier<P>");
+    expect(signatureOf("def_behavior_tree", "NodeType")).toBe(
+      "NodeType<Name extends string = string>",
+    );
+    expect(signatureOf("colyseus", "Room")).toBe("Room<State = unknown>");
   });
 });

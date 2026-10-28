@@ -1247,6 +1247,7 @@
     {
       "type": "TYPEDEF",
       "name": "Room",
+      "generics": "<State = unknown>",
       "functions": [
         {
           "type": "FUNCTION",
@@ -1971,6 +1972,7 @@
     {
       "type": "TYPEDEF",
       "name": "RoomEvents",
+      "generics": "<State = unknown>",
       "properties": [
         {
           "name": "join",
@@ -2025,6 +2027,7 @@
     {
       "type": "TYPEDEF",
       "name": "InputOptions",
+      "generics": "<Data extends object>",
       "properties": [
         {
           "name": "type",
@@ -2076,6 +2079,7 @@
     {
       "type": "TYPEDEF",
       "name": "InputHandle",
+      "generics": "<Data extends object = Record<string, unknown>>",
       "functions": [
         {
           "type": "FUNCTION",
