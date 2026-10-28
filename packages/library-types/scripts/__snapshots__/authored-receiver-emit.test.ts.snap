@@ -139,3 +139,23 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records defarmy: a consumer transpiles with the call forms the declaration produces: defarmy 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local defarmy = require("defarmy.defarmy")
+function ____exports.update(soldier, current)
+    local army = defarmy.army_create(
+        current,
+        vmath.quat(),
+        32,
+        true,
+        defarmy.PATTERN.CUSTOMIZED,
+        function(count) return {count} end
+    )
+    local position, rotation = defarmy.soldier_move(soldier, current, 100)
+    print(army, position, rotation)
+end
+return ____exports
+"
+`;

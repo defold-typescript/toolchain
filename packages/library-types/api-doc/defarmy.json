@@ -1,0 +1,506 @@
+{
+  "info": {
+    "namespace": "defarmy",
+    "brief": "Groups game objects (soldiers) into armies, places them in a built-in or customized",
+    "description": "Groups game objects (soldiers) into armies, places them in a built-in or customized\npattern, and moves and rotates each army as a group. Create an army with `army_create`\nand a soldier for each game object with `soldier_create`, then call `soldier_move`\nfrom each soldier's `update` and apply the position and rotation it returns."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "PatternFunc",
+      "types": [
+        "(total_count: number) => number[]"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "PATTERN",
+      "brief": "The army patterns `army_create` and `army_update_pattern` take. The five named",
+      "description": "The army patterns `army_create` and `army_update_pattern` take. The five named\npatterns place the soldiers in built-in shapes. `CUSTOMIZED` takes its rows from the\n`pattern_func` passed beside it.",
+      "types": [
+        "{ BOTTOM_TO_TOP_SQUARE: Hash; TOP_TO_BOTTOM_SQUARE: Hash; TRIANGLE: Hash; RHOMBUS_TALL: Hash; RHOMBUS_SHORT: Hash; CUSTOMIZED: Hash; }"
+      ],
+      "fields": [
+        {
+          "name": "BOTTOM_TO_TOP_SQUARE",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "TOP_TO_BOTTOM_SQUARE",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "TRIANGLE",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "RHOMBUS_TALL",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "RHOMBUS_SHORT",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "CUSTOMIZED",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "army_create",
+      "brief": "Creates a group of game objects (an army) with the given member padding and pattern,",
+      "description": "Creates a group of game objects (an army) with the given member padding and pattern,\nand returns its id. `PATTERN.CUSTOMIZED` requires `pattern_func`, which upstream\nasserts, and every other pattern ignores it. Any value outside `PATTERN` fails an\nassert.",
+      "parameters": [
+        {
+          "name": "army_center_position",
+          "doc": "The army's center position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "army_initial_rotation",
+          "doc": "The army's initial rotation.",
+          "types": [
+            "Quaternion"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "member_padding",
+          "doc": "The distance between members.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "is_sticky",
+          "doc": "Whether members are glued to their places in the army, rather than\nfollowing them. It shows most while the army rotates.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "army_pattern",
+          "doc": "One of `PATTERN`.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "pattern_func",
+          "doc": "Builds the rows for `PATTERN.CUSTOMIZED`.",
+          "types": [
+            "PatternFunc"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "army_members",
+      "brief": "Returns the ids of the soldiers in an army. The list is the army's own, so editing",
+      "description": "Returns the ids of the soldiers in an army. The list is the army's own, so editing\nit edits the army.",
+      "parameters": [
+        {
+          "name": "army_id",
+          "doc": "The army's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number[]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "army_remove",
+      "brief": "Removes an army and releases its members, which stay as soldiers in no army.",
+      "description": "Removes an army and releases its members, which stay as soldiers in no army.",
+      "parameters": [
+        {
+          "name": "army_id",
+          "doc": "The army's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "army_update_position",
+      "brief": "Moves an army's center.",
+      "description": "Moves an army's center.",
+      "parameters": [
+        {
+          "name": "army_id",
+          "doc": "The army's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "army_center_position",
+          "doc": "The new center position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "army_update_rotation",
+      "brief": "Rotates an army.",
+      "description": "Rotates an army.",
+      "parameters": [
+        {
+          "name": "army_id",
+          "doc": "The army's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "army_rotation",
+          "doc": "The new rotation.",
+          "types": [
+            "Quaternion"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "army_update_pattern",
+      "brief": "Changes an army's pattern and rearranges its members at once. `PATTERN.CUSTOMIZED`",
+      "description": "Changes an army's pattern and rearranges its members at once. `PATTERN.CUSTOMIZED`\nrequires `pattern_func`, which upstream asserts, and every other pattern ignores it.",
+      "parameters": [
+        {
+          "name": "army_id",
+          "doc": "The army's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "army_pattern",
+          "doc": "One of `PATTERN`.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "pattern_func",
+          "doc": "Builds the rows for `PATTERN.CUSTOMIZED`.",
+          "types": [
+            "PatternFunc"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "army_update_stickiness",
+      "brief": "Changes whether an army's members are glued to their places in it.",
+      "description": "Changes whether an army's members are glued to their places in it.",
+      "parameters": [
+        {
+          "name": "army_id",
+          "doc": "The army's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "is_sticky",
+          "doc": "Whether members are glued to their places, rather than following\nthem.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "army_debug_draw",
+      "brief": "Draws an army's center and facing for one frame, by posting `draw_line` to",
+      "description": "Draws an army's center and facing for one frame, by posting `draw_line` to\n`@render:`. Call it every frame to keep it shown.",
+      "parameters": [
+        {
+          "name": "army_id",
+          "doc": "The army's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "debug_color",
+          "doc": "The color of the lines.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "soldier_create",
+      "brief": "Creates a soldier and returns its id, joining it to an army when `army_id` is given.",
+      "description": "Creates a soldier and returns its id, joining it to an army when `army_id` is given.",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "The soldier's current position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "initial_direction",
+          "doc": "The direction the soldier's game object faces at zero\nrotation. Every rotation `soldier_move` returns is relative to it.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "army_id",
+          "doc": "The army to join.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "soldier_join_army",
+      "brief": "Moves a soldier into an army, out of the army it was in.",
+      "description": "Moves a soldier into an army, out of the army it was in.",
+      "parameters": [
+        {
+          "name": "soldier_id",
+          "doc": "The soldier's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "army_id",
+          "doc": "The army's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "soldier_leave_army",
+      "brief": "Takes a soldier out of its army and rearranges the members left. A soldier in no",
+      "description": "Takes a soldier out of its army and rearranges the members left. A soldier in no\narmy is left as it is. At `v1` the rearrangement raises a Lua error when the soldier\nwas the army's last member, so call `army_remove` instead in that case.",
+      "parameters": [
+        {
+          "name": "soldier_id",
+          "doc": "The soldier's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "soldier_remove",
+      "brief": "Removes a soldier completely, rearranging the army it was in. `soldier_move` then",
+      "description": "Removes a soldier completely, rearranging the army it was in. `soldier_move` then\nreturns `undefined` for both values. At `v1` the rearrangement raises a Lua error\nwhen the soldier was the army's last member, so call `army_remove` first in that\ncase.",
+      "parameters": [
+        {
+          "name": "soldier_id",
+          "doc": "The soldier's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "soldier_debug_on",
+      "brief": "Turns on a soldier's debug marks: each `soldier_move` call then posts `draw_line` to",
+      "description": "Turns on a soldier's debug marks: each `soldier_move` call then posts `draw_line` to\n`@render:` to mark the position the soldier is heading for with a cross.",
+      "parameters": [
+        {
+          "name": "soldier_id",
+          "doc": "The soldier's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "debug_color",
+          "doc": "The color of the marks.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "soldier_debug_off",
+      "brief": "Turns off a soldier's debug marks.",
+      "description": "Turns off a soldier's debug marks.",
+      "parameters": [
+        {
+          "name": "soldier_id",
+          "doc": "The soldier's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "soldier_move",
+      "brief": "Calculates a soldier's next position and rotation, moving it toward its place in its",
+      "description": "Calculates a soldier's next position and rotation, moving it toward its place in its\narmy. A soldier in no army keeps `current_position`. Returns `undefined` for both\nvalues once the soldier is removed:\n`const [position, rotation] = defarmy.soldier_move(id, go.get_position(), speed)`.",
+      "parameters": [
+        {
+          "name": "soldier_id",
+          "doc": "The soldier's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "current_position",
+          "doc": "The soldier's current position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "How far the soldier moves this call.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "threshold",
+          "doc": "The distance from its place within which the soldier counts as\nplaced. Defaults to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ Vector3, Quaternion ] | [ undefined, undefined ]>"
+          ]
+        }
+      ]
+    }
+  ]
+}
