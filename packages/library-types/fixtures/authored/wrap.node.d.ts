@@ -13,6 +13,51 @@ declare module 'wrap.node' {
     get: LuaTableGetMethod<string, Opaque<'node'>>;
   };
 
+  /** One hex digit, in either case. */
+  type HexDigit =
+    | '0'
+    | '1'
+    | '2'
+    | '3'
+    | '4'
+    | '5'
+    | '6'
+    | '7'
+    | '8'
+    | '9'
+    | 'a'
+    | 'b'
+    | 'c'
+    | 'd'
+    | 'e'
+    | 'f'
+    | 'A'
+    | 'B'
+    | 'C'
+    | 'D'
+    | 'E'
+    | 'F';
+
+  /** The number of characters in `S` when each is a hex digit, else `-1`. */
+  type HexDigitCount<S extends string, N extends 1[] = []> = S extends `${infer C}${infer R}`
+    ? C extends HexDigit
+      ? HexDigitCount<R, [...N, 1]>
+      : -1
+    : N['length'];
+
+  /** `S` when it is `#` and six or eight hex digits, else `never`. */
+  export type HexColorLiteral<S extends string> = S extends `#${infer D}`
+    ? HexDigitCount<D> extends 6 | 8
+      ? S
+      : never
+    : never;
+
+  /**
+   * A hex color string that is not a literal. Cast a string to it only after checking it
+   * is `#` and six or eight hex digits, as `set_color` raises on any other string.
+   */
+  export type HexColor = string & { readonly __brand: 'wrap.node.HexColor' };
+
   /** A node property `animate` and `cancel_animations` take. */
   export type AnimatedProperty = keyof gui.NodeProperties | gui.Prop | Hash;
 
@@ -693,10 +738,10 @@ declare module 'wrap.node' {
 
     /**
      * Sets the node's color with `gui.set_color`.
-     * @param color The color, or a `#rrggbb` or `#rrggbbaa` hex string. A string without
-     * an alpha pair is opaque.
+     * @param color The color, a `#rrggbb` or `#rrggbbaa` hex literal in either case, or a
+     * checked `HexColor`. A string without an alpha pair is opaque.
      */
-    set_color(color: Vector3 | Vector4 | `#${string}`): Node;
+    set_color<S extends string>(color: Vector3 | Vector4 | HexColor | HexColorLiteral<S>): Node;
 
     /** Returns the outline color of a text node, from `gui.get_outline`. */
     get_outline(): Vector4;

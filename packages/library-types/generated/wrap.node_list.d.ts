@@ -10,17 +10,27 @@
 declare module 'wrap.node_list' {
   import type { Node, NodeTree } from 'wrap.node';
 
+  /** The members of `K` that are not literals, such as `string`, which any name fits. */
+  type OpenKey<K extends string> = K extends unknown
+    ? {} extends Record<K, 1>
+      ? K
+      : never
+    : never;
+
   /**
    * One wrapped node per name `new` was given, and the `tree` it was given. A node named
-   * `tree` replaces the tree, as `new` stores the tree first.
+   * `tree` replaces the tree, as `new` stores the tree first. When the names are not
+   * literals, `tree` may be either.
    */
-  export type NodeList<K extends string> = {
-    readonly [P in K | 'tree']: P extends 'tree'
-      ? 'tree' extends K
-        ? Node
-        : NodeTree | undefined
-      : Node;
-  };
+  export type NodeList<K extends string> = [OpenKey<K>] extends [never]
+    ? {
+        readonly [P in K | 'tree']: P extends 'tree'
+          ? 'tree' extends K
+            ? Node
+            : NodeTree | undefined
+          : Node;
+      }
+    : { readonly [P in K]: Node } & { readonly tree: Node | NodeTree | undefined };
 
   /**
    * Wraps the node with each id, keyed by the id.

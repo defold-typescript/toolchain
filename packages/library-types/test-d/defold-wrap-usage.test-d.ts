@@ -89,6 +89,41 @@ node.set_alpha("x");
 // @ts-expect-error a color string is `#rrggbb` or `#rrggbbaa`
 node.set_color("red");
 
+// A hex color takes six or eight digits in either case, or a string checked at run time.
+node.set_color("#FFFF0080");
+node.set_color("#A0b1C2");
+node.set_color(vmath.vector3(1, 1, 0));
+
+declare const checked: wrap_node.HexColor;
+node.set_color(checked);
+
+// @ts-expect-error a hex pair is two hex digits
+node.set_color("#red");
+
+// @ts-expect-error a hex color has digits
+node.set_color("#");
+
+// @ts-expect-error a hex color has six or eight digits
+node.set_color("#fff");
+
+// @ts-expect-error a hex color has six or eight digits
+node.set_color("#ffff00f");
+
+// @ts-expect-error a hex color has six or eight digits
+node.set_color("#ffff00ff00");
+
+// @ts-expect-error a hex digit is 0-9 or a-f
+node.set_color("#gg0000");
+
+declare const any_string: string;
+declare const hash_string: `#${string}`;
+
+// @ts-expect-error an unchecked string may not be a hex color
+node.set_color(any_string);
+
+// @ts-expect-error an unchecked string may not be a hex color
+node.set_color(hash_string);
+
 // @ts-expect-error an array of properties takes an array of targets
 node.animate(["position.x"], 1, gui.EASING_LINEAR, 1);
 
@@ -116,6 +151,28 @@ void _tree;
 const named_tree = wrap_node_list.new(["tree"]).tree;
 const _named_tree: Equal<typeof named_tree, wrap_node.Node> = true;
 void _named_tree;
+
+const record_tree = wrap_node_list.new({ tree: "box" }).tree;
+const _record_tree: Equal<typeof record_tree, wrap_node.Node> = true;
+void _record_tree;
+
+// Names that are not literals may include `tree`, so it is either a node or the tree.
+declare const names: readonly string[];
+const open_tree = wrap_node_list.new(names).tree;
+const _open_tree: Equal<typeof open_tree, wrap_node.Node | wrap_node.NodeTree | undefined> = true;
+void _open_tree;
+
+const open_title = wrap_node_list.new(names).title;
+const _open_title: Equal<typeof open_title, wrap_node.Node | undefined> = true;
+void _open_title;
+
+declare const named: Record<string, string | Opaque<"node">>;
+const named_open_tree = wrap_node_list.new(named).tree;
+const _named_open_tree: Equal<
+  typeof named_open_tree,
+  wrap_node.Node | wrap_node.NodeTree | undefined
+> = true;
+void _named_open_tree;
 
 // @ts-expect-error a list has only the names it was given
 wrap_node_list.new(["title"]).other;
