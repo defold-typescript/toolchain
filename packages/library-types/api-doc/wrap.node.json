@@ -14,6 +14,55 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "HexDigit",
+      "types": [
+        "'0'",
+        "'1'",
+        "'2'",
+        "'3'",
+        "'4'",
+        "'5'",
+        "'6'",
+        "'7'",
+        "'8'",
+        "'9'",
+        "'a'",
+        "'b'",
+        "'c'",
+        "'d'",
+        "'e'",
+        "'f'",
+        "'A'",
+        "'B'",
+        "'C'",
+        "'D'",
+        "'E'",
+        "'F'"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HexDigitCount",
+      "types": [
+        "S extends `${infer C}${infer R}` ? C extends HexDigit ? HexDigitCount<R, [ ...N, 1 ]> : -1 : N['length']"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HexColorLiteral",
+      "types": [
+        "S extends `#${infer D}` ? HexDigitCount<D> extends 6 | 8 ? S : never : never"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "HexColor",
+      "types": [
+        "string & { readonly __brand: 'wrap.node.HexColor'; }"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "AnimatedProperty",
       "types": [
         "keyof gui.NodeProperties",
@@ -2957,12 +3006,13 @@
           "name": "set_color",
           "brief": "Sets the node's color with `gui.set_color`.",
           "description": "Sets the node's color with `gui.set_color`.",
+          "generics": "<S extends string>",
           "parameters": [
             {
               "name": "color",
-              "doc": "The color, or a `#rrggbb` or `#rrggbbaa` hex string. A string without\nan alpha pair is opaque.",
+              "doc": "The color, a `#rrggbb` or `#rrggbbaa` hex literal in either case, or a\nchecked `HexColor`. A string without an alpha pair is opaque.",
               "types": [
-                "Vector3 | Vector4 | `#${string}`"
+                "Vector3 | Vector4 | HexColor | HexColorLiteral<S>"
               ],
               "is_optional": "False"
             }
