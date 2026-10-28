@@ -159,3 +159,20 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records defgraph: a consumer transpiles with the call forms the declaration produces: defgraph 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local defgraph = require("defgraph.defgraph")
+function ____exports.update(current)
+    local a = defgraph.map_add_node(vmath.vector3(10, 10, 0))
+    local b = defgraph.map_add_node(vmath.vector3(100, 10, 0))
+    defgraph.map_add_route(a, b)
+    local move = defgraph.move_initialize(current, {a, b}, defgraph.ROUTETYPE.CYCLE)
+    local result
+    move, result = defgraph.move_player(current, 2, move)
+    print(move, result.position)
+end
+return ____exports
+"
+`;

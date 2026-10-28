@@ -359,6 +359,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "dca55fee5442c25aa6af8d15a17a8222c532bddad6258f2802bd9e3d7f8505b0",
   "fixtures/upstream-lua/defcon/defcon/console.lua":
     "6756f6f5c8ff7820ef6cf2fa9953df9ac68f86356eb0074f86c072fb36f5995b",
+  "fixtures/upstream-lua/defgraph/defgraph/defgraph.lua":
+    "a1724ea62f81d7f0ee1b9fdd7d58197dcfae7bec9e890c92ecbfe2c7244a6c7c",
   "fixtures/upstream-lua/defmath/defmath/defmath.lua":
     "212a09cd57b1bac464d4a3cae52121780bf00cc900145e0f8d4114b78ccaa3e6",
   "fixtures/upstream-lua/defold-ads-wrapper/ads_wrapper/ads_networks/admob.lua":
