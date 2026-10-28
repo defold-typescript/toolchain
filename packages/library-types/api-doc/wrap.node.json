@@ -1,0 +1,3709 @@
+{
+  "info": {
+    "namespace": "wrap.node",
+    "brief": "A chainable wrapper around a GUI node. `new` wraps a node or looks one up by id, and",
+    "description": "A chainable wrapper around a GUI node. `new` wraps a node or looks one up by id, and\neach method calls the `gui.*` function of the same name with the wrapped node first:\nsetters return the wrapper, so calls chain, and getters return what the engine does."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "NodeTree",
+      "types": [
+        "LuaTable<Hash, Opaque<'node'>> & { get: LuaTableGetMethod<string, Opaque<'node'>>; }"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AnimatedProperty",
+      "types": [
+        "keyof gui.NodeProperties",
+        "gui.Prop",
+        "Hash"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AnimatedValue",
+      "types": [
+        "number",
+        "Vector3",
+        "Vector4",
+        "Quaternion"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Wraps a GUI node.",
+      "description": "Wraps a GUI node.",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "The node, or the id `gui.get_node` looks it up by.",
+          "types": [
+            "string | Opaque<'node'>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Node"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Node",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "get_id",
+          "brief": "Returns the node's id, from `gui.get_id`.",
+          "description": "Returns the node's id, from `gui.get_id`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_id",
+          "brief": "Sets the node's id with `gui.set_id`.",
+          "description": "Sets the node's id with `gui.set_id`.",
+          "parameters": [
+            {
+              "name": "new_id",
+              "doc": "The new id.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_index",
+          "brief": "Returns the node's index among its siblings, from `gui.get_index`.",
+          "description": "Returns the node's index among its siblings, from `gui.get_index`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "delete",
+          "brief": "Deletes the node with `gui.delete_node`. The wrapper still holds the deleted node.",
+          "description": "Deletes the node with `gui.delete_node`. The wrapper still holds the deleted node.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "animate",
+          "brief": "Animates one property with `gui.animate`.",
+          "description": "Animates one property with `gui.animate`.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property to animate.",
+              "types": [
+                "AnimatedProperty"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "to",
+              "doc": "The value to animate it to.",
+              "types": [
+                "AnimatedValue"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "easing",
+              "doc": "An easing constant, or a vector of easing samples.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "duration",
+              "doc": "The duration in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "delay",
+              "doc": "The delay in seconds before the animation starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "complete_function",
+              "doc": "Called once the animation completes.",
+              "types": [
+                "(self: unknown, node: Opaque<'node'>) => void"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "playback",
+              "doc": "The playback mode. Defaults to `gui.PLAYBACK_ONCE_FORWARD`.",
+              "types": [
+                "gui.Playback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "animate",
+          "brief": "Animates several properties with `gui.animate`, each to the value at the same index",
+          "description": "Animates several properties with `gui.animate`, each to the value at the same index\nof `to`, all with the same easing, duration, delay and playback.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The properties to animate.",
+              "types": [
+                "readonly AnimatedProperty[]"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "to",
+              "doc": "The value to animate each property to, by index.",
+              "types": [
+                "readonly AnimatedValue[]"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "easing",
+              "doc": "An easing constant, or a vector of easing samples.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "duration",
+              "doc": "The duration in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "delay",
+              "doc": "The delay in seconds before the animations start. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "complete_function",
+              "doc": "Called once the first property's animation completes.",
+              "types": [
+                "(self: unknown, node: Opaque<'node'>) => void"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "playback",
+              "doc": "The playback mode. Defaults to `gui.PLAYBACK_ONCE_FORWARD`.",
+              "types": [
+                "gui.Playback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cancel_animations",
+          "brief": "Cancels the node's animations with `gui.cancel_animations`.",
+          "description": "Cancels the node's animations with `gui.cancel_animations`.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property, or the properties, whose animations to cancel. When\nomitted, every animation of the node is canceled.",
+              "types": [
+                "AnimatedProperty | readonly AnimatedProperty[]"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cancel_animation",
+          "brief": "Cancels the node's animations, the same as `cancel_animations`.",
+          "description": "Cancels the node's animations, the same as `cancel_animations`.",
+          "parameters": [
+            {
+              "name": "property",
+              "doc": "The property, or the properties, whose animations to cancel. When\nomitted, every animation of the node is canceled.",
+              "types": [
+                "AnimatedProperty | readonly AnimatedProperty[]"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_box_node",
+          "brief": "Creates a box node with `gui.new_box_node` as a child of this node, inheriting its",
+          "description": "Creates a box node with `gui.new_box_node` as a child of this node, inheriting its\nalpha, and returns the new node.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position. Defaults to the origin.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "size",
+              "doc": "The size. Defaults to zero.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Opaque<'node'>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_box",
+          "brief": "Creates a box node as a child of this node, as `new_box_node` does, and returns it",
+          "description": "Creates a box node as a child of this node, as `new_box_node` does, and returns it\nwrapped.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position. Defaults to the origin.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "size",
+              "doc": "The size. Defaults to zero.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_text_node",
+          "brief": "Creates a text node with `gui.new_text_node` as a child of this node, inheriting its",
+          "description": "Creates a text node with `gui.new_text_node` as a child of this node, inheriting its\nalpha, and returns the new node.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position. Defaults to the origin.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "text",
+              "doc": "The text. Defaults to an empty string.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Opaque<'node'>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_text",
+          "brief": "Creates a text node as a child of this node, as `new_text_node` does, and returns it",
+          "description": "Creates a text node as a child of this node, as `new_text_node` does, and returns it\nwrapped.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position. Defaults to the origin.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "text",
+              "doc": "The text. Defaults to an empty string.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_pie_node",
+          "brief": "Creates a pie node with `gui.new_pie_node` as a child of this node, inheriting its",
+          "description": "Creates a pie node with `gui.new_pie_node` as a child of this node, inheriting its\nalpha, and returns the new node.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position. Defaults to the origin.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "size",
+              "doc": "The size. Defaults to zero.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Opaque<'node'>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_pie",
+          "brief": "Creates a pie node as a child of this node, as `new_pie_node` does, and returns it",
+          "description": "Creates a pie node as a child of this node, as `new_pie_node` does, and returns it\nwrapped.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position. Defaults to the origin.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "size",
+              "doc": "The size. Defaults to zero.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_particlefx_node",
+          "brief": "Creates a particle fx node with `gui.new_particlefx_node` as a child of this node,",
+          "description": "Creates a particle fx node with `gui.new_particlefx_node` as a child of this node,\ninheriting its alpha, and returns the new node.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position, `undefined` for the origin.",
+              "types": [
+                "Vector3 | Vector4 | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "particlefx",
+              "doc": "The particle fx resource name.",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Opaque<'node'>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_particlefx",
+          "brief": "Creates a particle fx node as a child of this node, as `new_particlefx_node` does,",
+          "description": "Creates a particle fx node as a child of this node, as `new_particlefx_node` does,\nand returns it wrapped.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position, `undefined` for the origin.",
+              "types": [
+                "Vector3 | Vector4 | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "particlefx",
+              "doc": "The particle fx resource name.",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_text",
+          "brief": "Returns the text of a text node, from `gui.get_text`.",
+          "description": "Returns the text of a text node, from `gui.get_text`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "string"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_text",
+          "brief": "Sets the text of a text node with `gui.set_text`.",
+          "description": "Sets the text of a text node with `gui.set_text`.",
+          "parameters": [
+            {
+              "name": "text",
+              "doc": "The text.",
+              "types": [
+                "string | number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_line_break",
+          "brief": "Returns whether a text node breaks lines, from `gui.get_line_break`.",
+          "description": "Returns whether a text node breaks lines, from `gui.get_line_break`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_line_break",
+          "brief": "Sets whether a text node breaks lines with `gui.set_line_break`.",
+          "description": "Sets whether a text node breaks lines with `gui.set_line_break`.",
+          "parameters": [
+            {
+              "name": "line_break",
+              "doc": "Whether to break lines.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_blend_mode",
+          "brief": "Returns the node's blend mode, from `gui.get_blend_mode`.",
+          "description": "Returns the node's blend mode, from `gui.get_blend_mode`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "gui.Blend"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_blend_mode",
+          "brief": "Sets the node's blend mode with `gui.set_blend_mode`.",
+          "description": "Sets the node's blend mode with `gui.set_blend_mode`.",
+          "parameters": [
+            {
+              "name": "blend_mode",
+              "doc": "The blend mode.",
+              "types": [
+                "gui.Blend"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_texture",
+          "brief": "Returns the node's texture, from `gui.get_texture`.",
+          "description": "Returns the node's texture, from `gui.get_texture`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_texture",
+          "brief": "Sets the node's texture with `gui.set_texture`.",
+          "description": "Sets the node's texture with `gui.set_texture`.",
+          "parameters": [
+            {
+              "name": "texture",
+              "doc": "The texture name.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_flipbook",
+          "brief": "Returns the node's flipbook animation, from `gui.get_flipbook`.",
+          "description": "Returns the node's flipbook animation, from `gui.get_flipbook`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "play_flipbook",
+          "brief": "Plays a flipbook animation on the node with `gui.play_flipbook`.",
+          "description": "Plays a flipbook animation on the node with `gui.play_flipbook`.",
+          "parameters": [
+            {
+              "name": "animation",
+              "doc": "The animation id.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "complete_function",
+              "doc": "Called once the animation completes.",
+              "types": [
+                "(self: unknown, node: Opaque<'node'>) => void"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "play_properties",
+              "doc": "The offset and playback rate. Defaults to an empty table.",
+              "types": [
+                "gui.PlayProperties"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cancel_flipbook",
+          "brief": "Cancels the node's flipbook animation with `gui.cancel_flipbook`.",
+          "description": "Cancels the node's flipbook animation with `gui.cancel_flipbook`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_material",
+          "brief": "Returns the node's material, from `gui.get_material`.",
+          "description": "Returns the node's material, from `gui.get_material`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_material",
+          "brief": "Sets the node's material with `gui.set_material`.",
+          "description": "Sets the node's material with `gui.set_material`.",
+          "parameters": [
+            {
+              "name": "material",
+              "doc": "The material name.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reset_material",
+          "brief": "Resets the node's material to the scene's with `gui.reset_material`.",
+          "description": "Resets the node's material to the scene's with `gui.reset_material`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_font",
+          "brief": "Returns the font of a text node, from `gui.get_font`.",
+          "description": "Returns the font of a text node, from `gui.get_font`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_font",
+          "brief": "Sets the font of a text node with `gui.set_font`.",
+          "description": "Sets the font of a text node with `gui.set_font`.",
+          "parameters": [
+            {
+              "name": "font",
+              "doc": "The font name.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_layer",
+          "brief": "Returns the node's layer, from `gui.get_layer`.",
+          "description": "Returns the node's layer, from `gui.get_layer`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_layer",
+          "brief": "Sets the node's layer with `gui.set_layer`.",
+          "description": "Sets the node's layer with `gui.set_layer`.",
+          "parameters": [
+            {
+              "name": "layer",
+              "doc": "The layer name.",
+              "types": [
+                "string | Hash"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_clipping_mode",
+          "brief": "Returns the node's clipping mode, from `gui.get_clipping_mode`.",
+          "description": "Returns the node's clipping mode, from `gui.get_clipping_mode`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "gui.ClippingMode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_clipping_mode",
+          "brief": "Sets the node's clipping mode with `gui.set_clipping_mode`.",
+          "description": "Sets the node's clipping mode with `gui.set_clipping_mode`.",
+          "parameters": [
+            {
+              "name": "clipping_mode",
+              "doc": "The clipping mode.",
+              "types": [
+                "gui.ClippingMode"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_clipping_visible",
+          "brief": "Returns whether the node's clipping is visible, from `gui.get_clipping_visible`.",
+          "description": "Returns whether the node's clipping is visible, from `gui.get_clipping_visible`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_clipping_visible",
+          "brief": "Sets whether the node's clipping is visible with `gui.set_clipping_visible`.",
+          "description": "Sets whether the node's clipping is visible with `gui.set_clipping_visible`.",
+          "parameters": [
+            {
+              "name": "visible",
+              "doc": "Whether the clipping is visible.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_clipping_inverted",
+          "brief": "Returns whether the node's clipping is inverted, from `gui.get_clipping_inverted`.",
+          "description": "Returns whether the node's clipping is inverted, from `gui.get_clipping_inverted`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_clipping_inverted",
+          "brief": "Sets whether the node's clipping is inverted with `gui.set_clipping_inverted`.",
+          "description": "Sets whether the node's clipping is inverted with `gui.set_clipping_inverted`.",
+          "parameters": [
+            {
+              "name": "inverted",
+              "doc": "Whether the clipping is inverted.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_xanchor",
+          "brief": "Returns the node's horizontal anchor, from `gui.get_xanchor`.",
+          "description": "Returns the node's horizontal anchor, from `gui.get_xanchor`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_xanchor",
+          "brief": "Sets the node's horizontal anchor with `gui.set_xanchor`.",
+          "description": "Sets the node's horizontal anchor with `gui.set_xanchor`.",
+          "parameters": [
+            {
+              "name": "anchor",
+              "doc": "The horizontal anchor.",
+              "types": [
+                "Exclude<gui.Anchor, typeof gui.ANCHOR_BOTTOM | typeof gui.ANCHOR_TOP>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_yanchor",
+          "brief": "Returns the node's vertical anchor, from `gui.get_yanchor`.",
+          "description": "Returns the node's vertical anchor, from `gui.get_yanchor`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_yanchor",
+          "brief": "Sets the node's vertical anchor with `gui.set_yanchor`.",
+          "description": "Sets the node's vertical anchor with `gui.set_yanchor`.",
+          "parameters": [
+            {
+              "name": "anchor",
+              "doc": "The vertical anchor.",
+              "types": [
+                "Exclude<gui.Anchor, typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_pivot",
+          "brief": "Returns the node's pivot, from `gui.get_pivot`.",
+          "description": "Returns the node's pivot, from `gui.get_pivot`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "gui.Pivot"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_pivot",
+          "brief": "Sets the node's pivot with `gui.set_pivot`.",
+          "description": "Sets the node's pivot with `gui.set_pivot`.",
+          "parameters": [
+            {
+              "name": "pivot",
+              "doc": "The pivot.",
+              "types": [
+                "gui.Pivot"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_slice9",
+          "brief": "Returns the slice-9 margins of a box node, from `gui.get_slice9`.",
+          "description": "Returns the slice-9 margins of a box node, from `gui.get_slice9`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector4"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_slice9",
+          "brief": "Sets the slice-9 margins of a box node with `gui.set_slice9`.",
+          "description": "Sets the slice-9 margins of a box node with `gui.set_slice9`.",
+          "parameters": [
+            {
+              "name": "values",
+              "doc": "The left, top, right and bottom margins.",
+              "types": [
+                "Vector4"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_perimeter_vertices",
+          "brief": "Returns the perimeter vertex count of a pie node, from `gui.get_perimeter_vertices`.",
+          "description": "Returns the perimeter vertex count of a pie node, from `gui.get_perimeter_vertices`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_perimeter_vertices",
+          "brief": "Sets the perimeter vertex count of a pie node with `gui.set_perimeter_vertices`.",
+          "description": "Sets the perimeter vertex count of a pie node with `gui.set_perimeter_vertices`.",
+          "parameters": [
+            {
+              "name": "vertices",
+              "doc": "The vertex count.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_fill_angle",
+          "brief": "Returns the fill angle of a pie node in degrees, from `gui.get_fill_angle`.",
+          "description": "Returns the fill angle of a pie node in degrees, from `gui.get_fill_angle`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_fill_angle",
+          "brief": "Sets the fill angle of a pie node with `gui.set_fill_angle`.",
+          "description": "Sets the fill angle of a pie node with `gui.set_fill_angle`.",
+          "parameters": [
+            {
+              "name": "angle",
+              "doc": "The angle in degrees.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_inner_radius",
+          "brief": "Returns the inner radius of a pie node, from `gui.get_inner_radius`.",
+          "description": "Returns the inner radius of a pie node, from `gui.get_inner_radius`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_inner_radius",
+          "brief": "Sets the inner radius of a pie node with `gui.set_inner_radius`.",
+          "description": "Sets the inner radius of a pie node with `gui.set_inner_radius`.",
+          "parameters": [
+            {
+              "name": "radius",
+              "doc": "The inner radius.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_outer_bounds",
+          "brief": "Returns the outer bounds mode of a pie node, from `gui.get_outer_bounds`.",
+          "description": "Returns the outer bounds mode of a pie node, from `gui.get_outer_bounds`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "gui.PieBounds"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_outer_bounds",
+          "brief": "Sets the outer bounds mode of a pie node with `gui.set_outer_bounds`.",
+          "description": "Sets the outer bounds mode of a pie node with `gui.set_outer_bounds`.",
+          "parameters": [
+            {
+              "name": "bounds_mode",
+              "doc": "The outer bounds mode.",
+              "types": [
+                "gui.PieBounds"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_leading",
+          "brief": "Returns the line spacing of a text node, from `gui.get_leading`.",
+          "description": "Returns the line spacing of a text node, from `gui.get_leading`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_leading",
+          "brief": "Sets the line spacing of a text node with `gui.set_leading`.",
+          "description": "Sets the line spacing of a text node with `gui.set_leading`.",
+          "parameters": [
+            {
+              "name": "leading",
+              "doc": "The line spacing.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_tracking",
+          "brief": "Returns the letter spacing of a text node, from `gui.get_tracking`.",
+          "description": "Returns the letter spacing of a text node, from `gui.get_tracking`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_tracking",
+          "brief": "Sets the letter spacing of a text node with `gui.set_tracking`.",
+          "description": "Sets the letter spacing of a text node with `gui.set_tracking`.",
+          "parameters": [
+            {
+              "name": "tracking",
+              "doc": "The letter spacing.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "in_bound",
+          "brief": "Returns whether a screen point is inside the node, from `gui.pick_node`.",
+          "description": "Returns whether a screen point is inside the node, from `gui.pick_node`.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The screen x coordinate.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "y",
+              "doc": "The screen y coordinate.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_enabled",
+          "brief": "Returns whether the node itself is enabled, from `gui.is_enabled`.",
+          "description": "Returns whether the node itself is enabled, from `gui.is_enabled`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_enabled",
+          "brief": "Enables or disables the node with `gui.set_enabled`.",
+          "description": "Enables or disables the node with `gui.set_enabled`.",
+          "parameters": [
+            {
+              "name": "enabled",
+              "doc": "Whether the node is enabled.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_visible",
+          "brief": "Returns whether the node is visible, from `gui.get_visible`.",
+          "description": "Returns whether the node is visible, from `gui.get_visible`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_visible",
+          "brief": "Sets whether the node is visible with `gui.set_visible`.",
+          "description": "Sets whether the node is visible with `gui.set_visible`.",
+          "parameters": [
+            {
+              "name": "visible",
+              "doc": "Whether the node is visible.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_adjust_mode",
+          "brief": "Returns the node's adjust mode, from `gui.get_adjust_mode`.",
+          "description": "Returns the node's adjust mode, from `gui.get_adjust_mode`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "gui.Adjust"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_adjust_mode",
+          "brief": "Sets the node's adjust mode with `gui.set_adjust_mode`.",
+          "description": "Sets the node's adjust mode with `gui.set_adjust_mode`.",
+          "parameters": [
+            {
+              "name": "adjust_mode",
+              "doc": "The adjust mode.",
+              "types": [
+                "gui.Adjust"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_size_mode",
+          "brief": "Returns the node's size mode, from `gui.get_size_mode`.",
+          "description": "Returns the node's size mode, from `gui.get_size_mode`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "gui.SizeMode"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_size_mode",
+          "brief": "Sets the node's size mode with `gui.set_size_mode`.",
+          "description": "Sets the node's size mode with `gui.set_size_mode`.",
+          "parameters": [
+            {
+              "name": "size_mode",
+              "doc": "The size mode.",
+              "types": [
+                "gui.SizeMode"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "move_above",
+          "brief": "Moves the node above another in the draw order with `gui.move_above`.",
+          "description": "Moves the node above another in the draw order with `gui.move_above`.",
+          "parameters": [
+            {
+              "name": "reference",
+              "doc": "The node to move above, wrapped or not, or `undefined` to move\nthis node to the top.",
+              "types": [
+                "Node | Opaque<'node'> | undefined"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "move_below",
+          "brief": "Moves the node below another in the draw order with `gui.move_below`.",
+          "description": "Moves the node below another in the draw order with `gui.move_below`.",
+          "parameters": [
+            {
+              "name": "reference",
+              "doc": "The node to move below, wrapped or not, or `undefined` to move\nthis node to the bottom.",
+              "types": [
+                "Node | Opaque<'node'> | undefined"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_parent",
+          "brief": "Returns the node's parent, from `gui.get_parent`, or `undefined` for a root node.",
+          "description": "Returns the node's parent, from `gui.get_parent`, or `undefined` for a root node.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Opaque<'node'> | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_parent",
+          "brief": "Sets the node's parent with `gui.set_parent`.",
+          "description": "Sets the node's parent with `gui.set_parent`.",
+          "parameters": [
+            {
+              "name": "parent",
+              "doc": "The new parent, wrapped or not, or `undefined` to make the node a root.",
+              "types": [
+                "Node | Opaque<'node'> | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "keep_scene_transform",
+              "doc": "Whether to keep the node's scene transform. Defaults to\n`false`.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_child",
+          "brief": "Makes a node a child of this node with `gui.set_parent`.",
+          "description": "Makes a node a child of this node with `gui.set_parent`.",
+          "parameters": [
+            {
+              "name": "node",
+              "doc": "The new child, wrapped or not.",
+              "types": [
+                "Node | Opaque<'node'>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "keep_scene_transform",
+              "doc": "Whether to keep the child's scene transform. Defaults to\n`false`.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clone",
+          "brief": "Clones the node with `gui.clone` and returns the clone.",
+          "description": "Clones the node with `gui.clone` and returns the clone.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Opaque<'node'>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "clone_tree",
+          "brief": "Clones the node and its children with `gui.clone_tree` and returns the clones by id.",
+          "description": "Clones the node and its children with `gui.clone_tree` and returns the clones by id.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "NodeTree"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_tree",
+          "brief": "Returns the node and its children by id, from `gui.get_tree`.",
+          "description": "Returns the node and its children by id, from `gui.get_tree`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "NodeTree"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_position",
+          "brief": "Returns the node's position, from `gui.get_position`.",
+          "description": "Returns the node's position, from `gui.get_position`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position",
+          "brief": "Sets the node's position with `gui.set_position`.",
+          "description": "Sets the node's position with `gui.set_position`.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The position. Defaults to the origin.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_position",
+          "brief": "Adds to the node's position.",
+          "description": "Adds to the node's position.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The offset, or a number added to each of x, y and z.",
+              "types": [
+                "number | Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_position_x",
+          "brief": "Returns the x component of the node's position.",
+          "description": "Returns the x component of the node's position.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_position_y",
+          "brief": "Returns the y component of the node's position.",
+          "description": "Returns the y component of the node's position.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_position_z",
+          "brief": "Returns the z component of the node's position.",
+          "description": "Returns the z component of the node's position.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position_x",
+          "brief": "Sets the x component of the node's position.",
+          "description": "Sets the x component of the node's position.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The x component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position_y",
+          "brief": "Sets the y component of the node's position.",
+          "description": "Sets the y component of the node's position.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The y component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_position_z",
+          "brief": "Sets the z component of the node's position.",
+          "description": "Sets the z component of the node's position.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The z component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_position_x",
+          "brief": "Adds to the x component of the node's position.",
+          "description": "Adds to the x component of the node's position.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_position_y",
+          "brief": "Adds to the y component of the node's position.",
+          "description": "Adds to the y component of the node's position.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_position_z",
+          "brief": "Adds to the z component of the node's position.",
+          "description": "Adds to the z component of the node's position.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_rotation",
+          "brief": "Returns the node's rotation as a quaternion, from `gui.get_rotation`.",
+          "description": "Returns the node's rotation as a quaternion, from `gui.get_rotation`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Quaternion"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_rotation",
+          "brief": "Sets the node's rotation with `gui.set_rotation`.",
+          "description": "Sets the node's rotation with `gui.set_rotation`.",
+          "parameters": [
+            {
+              "name": "rotation",
+              "doc": "The rotation.",
+              "types": [
+                "Quaternion | Vector4 | Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_rotation",
+          "brief": "Adds to the node's rotation.",
+          "description": "Adds to the node's rotation.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The offset, or a number added to each of x, y and z.",
+              "types": [
+                "number | Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ],
+          "deprecated": "Raises on every call: `gui.get_rotation` returns a quaternion, which\nhas no `+`. Use `add_euler`."
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_rotation_x",
+          "brief": "Returns the x component of the node's rotation quaternion, not an angle.",
+          "description": "Returns the x component of the node's rotation quaternion, not an angle.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_rotation_y",
+          "brief": "Returns the y component of the node's rotation quaternion, not an angle.",
+          "description": "Returns the y component of the node's rotation quaternion, not an angle.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_rotation_z",
+          "brief": "Returns the z component of the node's rotation quaternion, not an angle.",
+          "description": "Returns the z component of the node's rotation quaternion, not an angle.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_rotation_x",
+          "brief": "Sets the x component of the node's rotation quaternion, not an angle.",
+          "description": "Sets the x component of the node's rotation quaternion, not an angle.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The x component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_rotation_y",
+          "brief": "Sets the y component of the node's rotation quaternion, not an angle.",
+          "description": "Sets the y component of the node's rotation quaternion, not an angle.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The y component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_rotation_z",
+          "brief": "Sets the z component of the node's rotation quaternion, not an angle.",
+          "description": "Sets the z component of the node's rotation quaternion, not an angle.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The z component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_rotation_x",
+          "brief": "Adds to the x component of the node's rotation quaternion, not an angle.",
+          "description": "Adds to the x component of the node's rotation quaternion, not an angle.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_rotation_y",
+          "brief": "Adds to the y component of the node's rotation quaternion, not an angle.",
+          "description": "Adds to the y component of the node's rotation quaternion, not an angle.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_rotation_z",
+          "brief": "Adds to the z component of the node's rotation quaternion, not an angle.",
+          "description": "Adds to the z component of the node's rotation quaternion, not an angle.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_euler",
+          "brief": "Returns the node's rotation as euler angles in degrees, from `gui.get_euler`.",
+          "description": "Returns the node's rotation as euler angles in degrees, from `gui.get_euler`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_euler",
+          "brief": "Sets the node's rotation as euler angles in degrees with `gui.set_euler`.",
+          "description": "Sets the node's rotation as euler angles in degrees with `gui.set_euler`.",
+          "parameters": [
+            {
+              "name": "euler",
+              "doc": "The euler angles.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_euler",
+          "brief": "Adds to the node's euler angles.",
+          "description": "Adds to the node's euler angles.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The angles in degrees, or a number added to each of x, y and z.",
+              "types": [
+                "number | Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_euler_x",
+          "brief": "Returns the node's euler angle around x, in degrees.",
+          "description": "Returns the node's euler angle around x, in degrees.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_euler_y",
+          "brief": "Returns the node's euler angle around y, in degrees.",
+          "description": "Returns the node's euler angle around y, in degrees.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_euler_z",
+          "brief": "Returns the node's euler angle around z, in degrees.",
+          "description": "Returns the node's euler angle around z, in degrees.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_euler_x",
+          "brief": "Sets the node's euler angle around x.",
+          "description": "Sets the node's euler angle around x.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The angle in degrees.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_euler_y",
+          "brief": "Sets the node's euler angle around y.",
+          "description": "Sets the node's euler angle around y.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The angle in degrees.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_euler_z",
+          "brief": "Sets the node's euler angle around z.",
+          "description": "Sets the node's euler angle around z.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The angle in degrees.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_euler_x",
+          "brief": "Adds to the node's euler angle around x.",
+          "description": "Adds to the node's euler angle around x.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The angle in degrees.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_euler_y",
+          "brief": "Adds to the node's euler angle around y.",
+          "description": "Adds to the node's euler angle around y.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The angle in degrees.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_euler_z",
+          "brief": "Adds to the node's euler angle around z.",
+          "description": "Adds to the node's euler angle around z.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The angle in degrees.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale",
+          "brief": "Returns the node's scale, from `gui.get_scale`.",
+          "description": "Returns the node's scale, from `gui.get_scale`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_scale",
+          "brief": "Sets the node's scale with `gui.set_scale`.",
+          "description": "Sets the node's scale with `gui.set_scale`.",
+          "parameters": [
+            {
+              "name": "scale",
+              "doc": "The scale, or a number used for each of x, y and z.",
+              "types": [
+                "number | Vector3 | Vector4"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_scale",
+          "brief": "Adds to the node's scale.",
+          "description": "Adds to the node's scale.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The offset, or a number added to each of x, y and z.",
+              "types": [
+                "number | Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale_x",
+          "brief": "Returns the x component of the node's scale.",
+          "description": "Returns the x component of the node's scale.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale_y",
+          "brief": "Returns the y component of the node's scale.",
+          "description": "Returns the y component of the node's scale.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_scale_z",
+          "brief": "Returns the z component of the node's scale.",
+          "description": "Returns the z component of the node's scale.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_scale_x",
+          "brief": "Sets the x component of the node's scale.",
+          "description": "Sets the x component of the node's scale.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The x component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_scale_y",
+          "brief": "Sets the y component of the node's scale.",
+          "description": "Sets the y component of the node's scale.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The y component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_scale_z",
+          "brief": "Sets the z component of the node's scale.",
+          "description": "Sets the z component of the node's scale.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The z component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_scale_x",
+          "brief": "Adds to the x component of the node's scale.",
+          "description": "Adds to the x component of the node's scale.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_scale_y",
+          "brief": "Adds to the y component of the node's scale.",
+          "description": "Adds to the y component of the node's scale.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_scale_z",
+          "brief": "Adds to the z component of the node's scale.",
+          "description": "Adds to the z component of the node's scale.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_color",
+          "brief": "Returns the node's color, from `gui.get_color`.",
+          "description": "Returns the node's color, from `gui.get_color`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector4"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_color",
+          "brief": "Sets the node's color with `gui.set_color`.",
+          "description": "Sets the node's color with `gui.set_color`.",
+          "parameters": [
+            {
+              "name": "color",
+              "doc": "The color, or a `#rrggbb` or `#rrggbbaa` hex string. A string without\nan alpha pair is opaque.",
+              "types": [
+                "Vector3 | Vector4 | `#${string}`"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_outline",
+          "brief": "Returns the outline color of a text node, from `gui.get_outline`.",
+          "description": "Returns the outline color of a text node, from `gui.get_outline`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector4"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_outline",
+          "brief": "Sets the outline color of a text node with `gui.set_outline`.",
+          "description": "Sets the outline color of a text node with `gui.set_outline`.",
+          "parameters": [
+            {
+              "name": "color",
+              "doc": "The outline color.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_shadow",
+          "brief": "Returns the shadow color of a text node, from `gui.get_shadow`.",
+          "description": "Returns the shadow color of a text node, from `gui.get_shadow`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector4"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_shadow",
+          "brief": "Sets the shadow color of a text node with `gui.set_shadow`.",
+          "description": "Sets the shadow color of a text node with `gui.set_shadow`.",
+          "parameters": [
+            {
+              "name": "color",
+              "doc": "The shadow color.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_size",
+          "brief": "Returns the node's size, from `gui.get_size`.",
+          "description": "Returns the node's size, from `gui.get_size`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_size",
+          "brief": "Sets the node's size with `gui.set_size`.",
+          "description": "Sets the node's size with `gui.set_size`.",
+          "parameters": [
+            {
+              "name": "size",
+              "doc": "The size.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_size",
+          "brief": "Adds to the node's size.",
+          "description": "Adds to the node's size.",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "The offset, or a number added to each of x, y and z.",
+              "types": [
+                "number | Vector3"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_size_x",
+          "brief": "Returns the node's width.",
+          "description": "Returns the node's width.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_size_y",
+          "brief": "Returns the node's height.",
+          "description": "Returns the node's height.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_size_z",
+          "brief": "Returns the z component of the node's size.",
+          "description": "Returns the z component of the node's size.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_size_x",
+          "brief": "Sets the node's width.",
+          "description": "Sets the node's width.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The width.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_size_y",
+          "brief": "Sets the node's height.",
+          "description": "Sets the node's height.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The height.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_size_z",
+          "brief": "Sets the z component of the node's size.",
+          "description": "Sets the z component of the node's size.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The z component.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_size_x",
+          "brief": "Adds to the node's width.",
+          "description": "Adds to the node's width.",
+          "parameters": [
+            {
+              "name": "x",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_size_y",
+          "brief": "Adds to the node's height.",
+          "description": "Adds to the node's height.",
+          "parameters": [
+            {
+              "name": "y",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_size_z",
+          "brief": "Adds to the z component of the node's size.",
+          "description": "Adds to the z component of the node's size.",
+          "parameters": [
+            {
+              "name": "z",
+              "doc": "The amount to add.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_text_metrics",
+          "brief": "Measures a text node's text in its font with `resource.get_text_metrics`.",
+          "description": "Measures a text node's text in its font with `resource.get_text_metrics`.",
+          "parameters": [
+            {
+              "name": "apply_scale",
+              "doc": "Whether to multiply the width and height by the node's own x and\ny scale.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "resource.TextMetrics"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_total_scale",
+          "brief": "Returns the node's scale multiplied by the scale of each of its ancestors.",
+          "description": "Returns the node's scale multiplied by the scale of each of its ancestors.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_screen_position",
+          "brief": "Returns the node's screen position, from `gui.get_screen_position`.",
+          "description": "Returns the node's screen position, from `gui.get_screen_position`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_screen_position",
+          "brief": "Sets the node's screen position with `gui.set_screen_position`.",
+          "description": "Sets the node's screen position with `gui.set_screen_position`.",
+          "parameters": [
+            {
+              "name": "screen_position",
+              "doc": "The screen position.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "screen_to_local",
+          "brief": "Converts a screen position to the node's local space with `gui.screen_to_local`.",
+          "description": "Converts a screen position to the node's local space with `gui.screen_to_local`.",
+          "parameters": [
+            {
+              "name": "screen_position",
+              "doc": "The screen position.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "ignore_scale",
+              "doc": "Whether to divide the result by `get_total_scale`.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_flipbook_cursor",
+          "brief": "Returns the node's flipbook cursor, from `gui.get_flipbook_cursor`.",
+          "description": "Returns the node's flipbook cursor, from `gui.get_flipbook_cursor`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_flipbook_cursor",
+          "brief": "Sets the node's flipbook cursor with `gui.set_flipbook_cursor`.",
+          "description": "Sets the node's flipbook cursor with `gui.set_flipbook_cursor`.",
+          "parameters": [
+            {
+              "name": "cursor",
+              "doc": "The cursor, from `0` to `1`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_flipbook_playback_rate",
+          "brief": "Returns the node's flipbook playback rate, from `gui.get_flipbook_playback_rate`.",
+          "description": "Returns the node's flipbook playback rate, from `gui.get_flipbook_playback_rate`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_flipbook_playback_rate",
+          "brief": "Sets the node's flipbook playback rate with `gui.set_flipbook_playback_rate`.",
+          "description": "Sets the node's flipbook playback rate with `gui.set_flipbook_playback_rate`.",
+          "parameters": [
+            {
+              "name": "playback_rate",
+              "doc": "The playback rate.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "play_particlefx",
+          "brief": "Plays the particle fx of a particle fx node with `gui.play_particlefx`.",
+          "description": "Plays the particle fx of a particle fx node with `gui.play_particlefx`.",
+          "parameters": [
+            {
+              "name": "emitter_state_function",
+              "doc": "Called when an emitter changes state.",
+              "types": [
+                "(self: unknown, node: Opaque<'node'> | undefined, emitter: Hash, state: particlefx.EmitterState) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "stop_particlefx",
+          "brief": "Stops the particle fx of a particle fx node with `gui.stop_particlefx`.",
+          "description": "Stops the particle fx of a particle fx node with `gui.stop_particlefx`.",
+          "parameters": [
+            {
+              "name": "options",
+              "doc": "`clear` removes the live particles at once.",
+              "types": [
+                "particlefx.StopOptions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_particlefx",
+          "brief": "Returns the particle fx of a particle fx node, from `gui.get_particlefx`.",
+          "description": "Returns the particle fx of a particle fx node, from `gui.get_particlefx`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Hash"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_particlefx",
+          "brief": "Sets the particle fx of a particle fx node with `gui.set_particlefx`.",
+          "description": "Sets the particle fx of a particle fx node with `gui.set_particlefx`.",
+          "parameters": [
+            {
+              "name": "particlefx",
+              "doc": "The particle fx resource name.",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_inherit_alpha",
+          "brief": "Returns whether the node inherits its parent's alpha, from `gui.get_inherit_alpha`.",
+          "description": "Returns whether the node inherits its parent's alpha, from `gui.get_inherit_alpha`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_inherit_alpha",
+          "brief": "Sets whether the node inherits its parent's alpha with `gui.set_inherit_alpha`.",
+          "description": "Sets whether the node inherits its parent's alpha with `gui.set_inherit_alpha`.",
+          "parameters": [
+            {
+              "name": "inherit_alpha",
+              "doc": "Whether to inherit the parent's alpha.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_alpha",
+          "brief": "Returns the node's alpha, from `gui.get_alpha`.",
+          "description": "Returns the node's alpha, from `gui.get_alpha`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_alpha",
+          "brief": "Sets the node's alpha with `gui.set_alpha`.",
+          "description": "Sets the node's alpha with `gui.set_alpha`.",
+          "parameters": [
+            {
+              "name": "alpha",
+              "doc": "The alpha, from `0` to `1`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "node",
+          "brief": "The wrapped node, passed first to every `gui.*` call.",
+          "description": "The wrapped node, passed first to every `gui.*` call.",
+          "types": [
+            "Opaque<'node'>"
+          ]
+        }
+      ]
+    }
+  ]
+}
