@@ -1,0 +1,25 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/s-kania/def-behavior-tree",
+    "authoredHere": true,
+    "commit": "1.0.0",
+    "sourceUrl": "https://github.com/s-kania/def-behavior-tree/tree/1.0.0",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's `new` returns a table whose metatable indexes the module, so a tree's `run` and `restart` are `:` methods taking the tree as `self`, while `new`, `registerTemplates` and the `success` and `fail` closures a task receives take none; a tree method declared `this: void`, or a task control taking `self`, still passes `tsc`, so only TSTL's emit shows which call form each produces.",
+    "consumer": [
+      "import * as BehaviorTree from \"def_behavior_tree.behavior_tree\";",
+      "export function init(ship: { health: number }, id: number): void {",
+      "  BehaviorTree.registerTemplates({",
+      "    TREES: {",
+      "      SHIP: { main_node: { type: BehaviorTree.Task, run: (task) => task.success() } },",
+      "    },",
+      "  });",
+      "  const tree = BehaviorTree.new({ tree_name: \"SHIP\", payload: ship });",
+      "  tree.run();",
+      "  tree.restart(id);",
+      "}"
+    ]
+  }
+}

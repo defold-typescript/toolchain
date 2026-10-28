@@ -95,6 +95,7 @@ library is the sole maintainer of its namespace, so it carries its own
 | `fidelity` | no | Defaults to `fidelity/<namespace>.json`. A fork records no fidelity artifact (see below); the field mirrors the sibling lanes for a future hand-authored target that wants one. |
 | `upstreamLua` | one of two | Package-relative paths of the vendored upstream `.lua` this target's surface is measured against. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
 | `parityVerdict` | one of two | Why this target vendors no upstream `.lua`: `{ "reason": ..., "note": ... }`. Mutually exclusive with `upstreamLua`. |
+| `instanceType` | when upstream has methods | The exported interface the fork declares the module's instances with, e.g. `BehaviorTree`. Required once the vendored upstream defines a `function M:name(…)` method, which parity measures against that interface's methods; it needs `upstreamLua`. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
 
 A missing required field fails loudly, naming both the field and the offending
 entry.
@@ -212,6 +213,15 @@ A constructor that closes on its opening line, `local M = { NAME = "admob" }`, i
 too. A nested table's keys stay out. An entry it cannot name — a bracketed `["key"]` or
 a positional value — or entries written on an opening line whose constructor continues
 past it throw, for the same reason a delegating metatable does.
+
+A class module's column-0 `function M:name(…)` methods are read as well, each with its
+named parameters and without the implicit `self`. Parity keys them
+`<instanceType>:<name>` and compares them with the methods of the interface the entry
+names as its `instanceType`, so a missing or short method costs callable coverage like
+any other member. The self-index `M.__index = M` that makes the module a class adds no
+member. A column-0 colon method on any other table throws, since its instances are
+reached through nothing the reader sees, and so does a name defined both as a method
+and as a `.` member.
 
 List the vendored paths in `upstreamLua`, then regenerate:
 

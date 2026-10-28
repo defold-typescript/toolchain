@@ -176,3 +176,20 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records def_behavior_tree: a consumer transpiles with the call forms the declaration produces: def_behavior_tree 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local BehaviorTree = require("def_behavior_tree.behavior_tree")
+function ____exports.init(ship, id)
+    BehaviorTree.registerTemplates({TREES = {SHIP = {main_node = {
+        type = BehaviorTree.Task,
+        run = function(task) return task.success() end
+    }}}})
+    local tree = BehaviorTree.new({tree_name = "SHIP", payload = ship})
+    tree:run()
+    tree:restart(id)
+end
+return ____exports
+"
+`;
