@@ -1146,6 +1146,40 @@
       "generated": "generated/minit.d.ts",
       "apiDoc": "api-doc/minit.json",
       "upstreamLua": ["fixtures/upstream-lua/minit-defold/minit/minit.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.client.d.ts",
+      "moduleId": "asobi.client",
+      "namespace": "asobi.client",
+      "generated": "generated/asobi.client.d.ts",
+      "apiDoc": "api-doc/asobi.client.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/client.lua"]
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.realtime.d.ts",
+      "moduleId": "asobi.realtime",
+      "namespace": "asobi.realtime",
+      "generated": "generated/asobi.realtime.d.ts",
+      "apiDoc": "api-doc/asobi.realtime.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/realtime.lua"],
+      "instanceType": "Realtime"
+    },
+    {
+      "repo": "https://github.com/widgrensit/asobi-defold",
+      "ref": "v1.18.1",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/asobi.device.d.ts",
+      "moduleId": "asobi.device",
+      "namespace": "asobi.device",
+      "generated": "generated/asobi.device.d.ts",
+      "apiDoc": "api-doc/asobi.device.json",
+      "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/device.lua"]
     }
   ]
 }

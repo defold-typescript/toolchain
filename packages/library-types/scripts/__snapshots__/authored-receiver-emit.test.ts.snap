@@ -312,3 +312,32 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records asobi.client: a consumer transpiles with the call forms the declaration produces: asobi.client 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local asobi = require("asobi.client")
+function ____exports.init()
+    local client = asobi.create("localhost")
+    client.set_tokens("a", "b")
+    local rt = client.realtime
+    rt:on(
+        "connected",
+        function() return rt:quick_play("default") end
+    )
+end
+return ____exports
+"
+`;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records asobi.device: a consumer transpiles with the call forms the declaration produces: asobi.device 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local device = require("asobi.device")
+function ____exports.init()
+    local id, secret = device.load_or_create()
+    print(id, secret)
+end
+return ____exports
+"
+`;

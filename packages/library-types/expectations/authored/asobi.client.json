@@ -1,0 +1,21 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/widgrensit/asobi-defold",
+    "authoredHere": true,
+    "commit": "v1.18.1",
+    "sourceUrl": "https://github.com/widgrensit/asobi-defold/tree/v1.18.1",
+    "license": "Apache-2.0"
+  },
+  "receiverEmit": {
+    "reason": "Upstream defines every realtime method with `:` and calls event handlers as plain functions, while `create` and the client's `set_tokens` and `clear_tokens` closures are called with `.`; a closure declared without `this: void` or a method declared with it still passes `tsc`, so only TSTL's emit shows each call form.",
+    "consumer": [
+      "import * as asobi from \"asobi.client\";",
+      "export function init(): void {",
+      "  const client = asobi.create(\"localhost\");",
+      "  client.set_tokens(\"a\", \"b\");",
+      "  const rt = client.realtime;",
+      "  rt.on(\"connected\", () => rt.quick_play(\"default\"));",
+      "}"
+    ]
+  }
+}

@@ -349,6 +349,12 @@ function driftRemedy(path: string): string {
 /** The pinned SHA-256 of every vendored upstream `.lua`, each taken at the `ref`
  * its `authored-targets.json` entry pins. */
 const UPSTREAM_LUA_HASHES: Record<string, string> = {
+  "fixtures/upstream-lua/asobi-defold/asobi/client.lua":
+    "ff40e694ebef41d18bc9f104c0894d23344726ed623536eb068a1218a3e6c7d6",
+  "fixtures/upstream-lua/asobi-defold/asobi/device.lua":
+    "9411474ff0ebba7c3e4bd56534da02695f70b5dad254c60d360d2432831026ec",
+  "fixtures/upstream-lua/asobi-defold/asobi/realtime.lua":
+    "a65e9edb668cabf5859dfae301ae614a71024329325b752ab9becb49bf8894b7",
   "fixtures/upstream-lua/boom/boom/boom.lua":
     "0f033b071fc86c46c73a176205004c22b8c1eb74ea468ce66b3d326933a43811",
   "fixtures/upstream-lua/bzAnim/bzAnim/bzLibrary.lua":
