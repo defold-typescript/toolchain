@@ -253,3 +253,14 @@ wrap_go_list.new({ hero: 1 });
 
 // @ts-expect-error unlike a node list, a game object list takes no tree
 wrap_go_list.new(["/hero"], undefined);
+
+// The forks' helper aliases stay private: `export { new_ as new }` turns off the
+// implicit export of every other module member.
+// @ts-expect-error a helper alias is not exported
+export type _HexDigit = wrap_node.HexDigit;
+
+// @ts-expect-error a helper alias is not exported
+export type _HexDigitCount = wrap_node.HexDigitCount<"ff">;
+
+// @ts-expect-error a helper alias is not exported
+export type _OpenKey = wrap_node_list.OpenKey<string>;

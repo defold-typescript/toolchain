@@ -7,14 +7,8 @@
   "elements": [
     {
       "type": "TYPEDEF",
-      "name": "OpenKey",
-      "types": [
-        "K extends unknown ? {} extends Record<K, 1> ? K : never : never"
-      ]
-    },
-    {
-      "type": "TYPEDEF",
       "name": "NodeList",
+      "generics": "<K extends string>",
       "types": [
         "[ OpenKey<K> ] extends [ never ] ? { readonly [P in K | 'tree']: P extends 'tree' ? 'tree' extends K ? Node : NodeTree | undefined : Node; } : { readonly [P in K]: Node; } & { readonly tree: Node | NodeTree | undefined; }"
       ]
