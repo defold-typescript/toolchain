@@ -1,0 +1,75 @@
+{
+  "info": {
+    "namespace": "asobi.api.votes",
+    "brief": "asobi match votes over REST. A project reaches it as `client.votes`.",
+    "description": "asobi match votes over REST. A project reaches it as `client.votes`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "list_for_match",
+      "brief": "Fetches a match's votes.",
+      "description": "Fetches a match's votes.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "match_id",
+          "doc": "The match's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the votes, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get",
+      "brief": "Fetches one vote.",
+      "description": "Fetches one vote.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "vote_id",
+          "doc": "The vote's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the vote, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

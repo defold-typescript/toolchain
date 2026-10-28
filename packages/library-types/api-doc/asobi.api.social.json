@@ -1,0 +1,584 @@
+{
+  "info": {
+    "namespace": "asobi.api.social",
+    "brief": "asobi friends, groups and chat history over REST. A project reaches it as `client.social`.",
+    "description": "asobi friends, groups and chat history over REST. A project reaches it as `client.social`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "get_friends",
+      "brief": "Fetches the signed-in player's friends.",
+      "description": "Fetches the signed-in player's friends.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "status",
+          "doc": "Only friendships with this status. Every friendship when left out.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "limit",
+          "doc": "The most friends to return. Defaults to `50`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the friends, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "add_friend",
+      "brief": "Sends a friend request.",
+      "description": "Sends a friend request.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "friend_id",
+          "doc": "The player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the friendship, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "accept_friend",
+      "brief": "Accepts a friend request, setting the friendship's status to `accepted`.",
+      "description": "Accepts a friend request, setting the friendship's status to `accepted`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "friend_id",
+          "doc": "The player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the friendship, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "block_friend",
+      "brief": "Blocks a player, setting the friendship's status to `blocked`.",
+      "description": "Blocks a player, setting the friendship's status to `blocked`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "friend_id",
+          "doc": "The player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the friendship, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove_friend",
+      "brief": "Removes a friend.",
+      "description": "Removes a friend.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "friend_id",
+          "doc": "The player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_group",
+      "brief": "Creates a group.",
+      "description": "Creates a group.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "name",
+          "doc": "The group's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "description",
+          "doc": "The group's description. Defaults to `\"\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "max_members",
+          "doc": "The most members it holds. Defaults to `50`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "doc": "Whether any player may join without an invite. Defaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the group, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_group",
+      "brief": "Fetches a group.",
+      "description": "Fetches a group.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id",
+          "doc": "The group's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the group, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "join_group",
+      "brief": "Joins a group.",
+      "description": "Joins a group.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id",
+          "doc": "The group's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "leave_group",
+      "brief": "Leaves a group.",
+      "description": "Leaves a group.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id",
+          "doc": "The group's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_friend",
+      "brief": "Sets a friendship's status.",
+      "description": "Sets a friendship's status.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "friend_id",
+          "doc": "The player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "status",
+          "doc": "The new status.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the friendship, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_group",
+      "brief": "Updates a group.",
+      "description": "Updates a group.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id",
+          "doc": "The group's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fields",
+          "doc": "The group fields to change.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the group, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_group_members",
+      "brief": "Fetches a group's members.",
+      "description": "Fetches a group's members.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id",
+          "doc": "The group's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the members, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_member_role",
+      "brief": "Sets a member's role in a group.",
+      "description": "Sets a member's role in a group.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id",
+          "doc": "The group's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player_id",
+          "doc": "The member's player id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "role",
+          "doc": "The new role.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the member, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove_member",
+      "brief": "Removes a member from a group.",
+      "description": "Removes a member from a group.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "group_id",
+          "doc": "The group's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player_id",
+          "doc": "The member's player id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_chat_history",
+      "brief": "Fetches a chat channel's past messages.",
+      "description": "Fetches a chat channel's past messages.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "channel_id",
+          "doc": "The channel's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit",
+          "doc": "The most messages to return. The server's default applies when left out.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the messages, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

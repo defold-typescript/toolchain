@@ -1,0 +1,189 @@
+{
+  "info": {
+    "namespace": "asobi.api.leaderboards",
+    "brief": "asobi leaderboards over REST. A project reaches it as `client.leaderboards`.",
+    "description": "asobi leaderboards over REST. A project reaches it as `client.leaderboards`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "get_top",
+      "brief": "Fetches a leaderboard's top entries.",
+      "description": "Fetches a leaderboard's top entries.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id",
+          "doc": "The leaderboard's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "limit",
+          "doc": "The most entries to return. Defaults to `100`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the entries, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_around_player",
+      "brief": "Fetches the entries around a player's rank.",
+      "description": "Fetches the entries around a player's rank.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id",
+          "doc": "The leaderboard's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "player_id",
+          "doc": "The player's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "range_size",
+          "doc": "How many entries on each side. Defaults to `5`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the entries, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_around_self",
+      "brief": "Fetches the entries around the signed-in player's rank. The client must be signed in:",
+      "description": "Fetches the entries around the signed-in player's rank. The client must be signed in:\nit raises an error while `client.player_id` is unset.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id",
+          "doc": "The leaderboard's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "range_size",
+          "doc": "How many entries on each side. Defaults to `5`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the entries, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "submit_score",
+      "brief": "Submits the signed-in player's score.",
+      "description": "Submits the signed-in player's score.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "leaderboard_id",
+          "doc": "The leaderboard's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "score",
+          "doc": "The score.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "sub_score",
+          "doc": "The tie-breaking score. Defaults to `0`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the entry, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

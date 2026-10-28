@@ -1,0 +1,132 @@
+{
+  "info": {
+    "namespace": "asobi.api.matchmaker",
+    "brief": "The asobi matchmaker over REST. A project reaches it as `client.matchmaker`.",
+    "description": "The asobi matchmaker over REST. A project reaches it as `client.matchmaker`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "add",
+      "brief": "Queues the signed-in player for a match.",
+      "description": "Queues the signed-in player for a match.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "The mode to queue for, or the ticket. Queues for `\"default\"` when left out.",
+          "types": [
+            "string | MatchmakerTicket"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the ticket, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "status",
+      "brief": "Fetches a ticket's state.",
+      "description": "Fetches a ticket's state.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ticket_id",
+          "doc": "The ticket's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the ticket, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel",
+      "brief": "Leaves the queue.",
+      "description": "Leaves the queue.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ticket_id",
+          "doc": "The ticket's id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MatchmakerTicket",
+      "properties": [
+        {
+          "name": "mode",
+          "brief": "The mode to queue for. Defaults to `\"default\"`.",
+          "description": "The mode to queue for. Defaults to `\"default\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "properties",
+          "brief": "The properties the server matches players on.",
+          "description": "The properties the server matches players on.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

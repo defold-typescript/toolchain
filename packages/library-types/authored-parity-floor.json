@@ -3,11 +3,75 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/asobi.api.auth.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.dm.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.economy.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.iap.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.inventory.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.leaderboards.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.matches.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.matchmaker.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.notifications.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.players.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.social.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.storage.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.tournaments.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.votes.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.api.worlds.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/asobi.client.json": {
     "callable": 1,
     "field": 1
   },
   "fidelity/authored/asobi.device.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/asobi.http.json": {
     "callable": 1,
     "field": 1
   },

@@ -1,0 +1,19 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/widgrensit/asobi-defold",
+    "authoredHere": true,
+    "commit": "v1.18.1",
+    "sourceUrl": "https://github.com/widgrensit/asobi-defold/tree/v1.18.1",
+    "license": "Apache-2.0"
+  },
+  "receiverEmit": {
+    "reason": "Upstream defines every `asobi.http` function with `.` and passes the client as the first argument, and a project reaches the module through the client's `http` field; a `typeof` field whose module lacked `@noSelfInFile` still passes `tsc`, so only TSTL's emit shows that the call stays `.` with the client passed explicitly.",
+    "consumer": [
+      "import * as asobi from \"asobi.client\";",
+      "export function init(): void {",
+      "  const client = asobi.create(\"localhost\");",
+      "  client.http.post(client, \"/x\", { a: 1 }, (data, err) => {});",
+      "}"
+    ]
+  }
+}

@@ -1,0 +1,404 @@
+{
+  "info": {
+    "namespace": "asobi.api.auth",
+    "brief": "asobi sign-in over REST: accounts, OAuth, guest devices, linked providers and the token",
+    "description": "asobi sign-in over REST: accounts, OAuth, guest devices, linked providers and the token\npair. A project reaches it as `client.auth`."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "register",
+      "brief": "Creates an account and signs it in. On success it stores the returned tokens with",
+      "description": "Creates an account and signs it in. On success it stores the returned tokens with\n`client.set_tokens` and sets `client.player_id`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username",
+          "doc": "The account's username.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "password",
+          "doc": "The account's password.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "display_name",
+          "doc": "The name other players see. Defaults to `username`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the token pair and `player_id`, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "login",
+      "brief": "Signs an account in. On success it stores the returned tokens with `client.set_tokens`",
+      "description": "Signs an account in. On success it stores the returned tokens with `client.set_tokens`\nand sets `client.player_id`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username",
+          "doc": "The account's username.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "password",
+          "doc": "The account's password.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the token pair and `player_id`, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "oauth",
+      "brief": "Signs in with a token from an OAuth provider. On success it stores the returned tokens",
+      "description": "Signs in with a token from an OAuth provider. On success it stores the returned tokens\nwith `client.set_tokens` and sets `client.player_id`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "provider",
+          "doc": "The provider's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "token",
+          "doc": "The provider's token.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the token pair and `player_id`, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "guest",
+      "brief": "Signs a guest in with a device credential pair. On success it stores the returned tokens",
+      "description": "Signs a guest in with a device credential pair. On success it stores the returned tokens\nwith `client.set_tokens` and sets `client.player_id`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "device_id",
+          "doc": "The device id.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "device_secret",
+          "doc": "The device secret.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the token pair and `player_id`, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "guest_device",
+      "brief": "Loads the saved device credential pair, or generates and saves one, and signs a guest in",
+      "description": "Loads the saved device credential pair, or generates and saves one, and signs a guest in\nwith it through `guest`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the token pair and `player_id`, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "guest_device",
+      "brief": "Loads the saved device credential pair, or generates and saves one, and signs a guest in",
+      "description": "Loads the saved device credential pair, or generates and saves one, and signs a guest in\nwith it through `guest`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "Where the pair is saved and how it is generated, passed to\n`asobi.device.load_or_create`.",
+          "types": [
+            "DeviceOptions | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the token pair and `player_id`, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "upgrade_guest",
+      "brief": "Turns the signed-in guest into an account with a username and password. On success it",
+      "description": "Turns the signed-in guest into an account with a username and password. On success it\nstores the returned tokens with `client.set_tokens` and sets `client.player_id`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "username",
+          "doc": "The account's username.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "password",
+          "doc": "The account's password.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the token pair and `player_id`, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "link_provider",
+      "brief": "Links an OAuth provider to the signed-in account.",
+      "description": "Links an OAuth provider to the signed-in account.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "provider",
+          "doc": "The provider's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "token",
+          "doc": "The provider's token.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "unlink_provider",
+      "brief": "Unlinks an OAuth provider from the signed-in account.",
+      "description": "Unlinks an OAuth provider from the signed-in account.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "provider",
+          "doc": "The provider's name.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "refresh",
+      "brief": "Exchanges the refresh token for a new token pair, which it stores with",
+      "description": "Exchanges the refresh token for a new token pair, which it stores with\n`client.set_tokens`. The server accepts each refresh token once. An open realtime\nconnection re-authenticates with the new access token. `asobi.http` calls it on a 401.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the new token pair, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "logout",
+      "brief": "Signs out, then forgets both tokens and `client.player_id` whether or not the server",
+      "description": "Signs out, then forgets both tokens and `client.player_id` whether or not the server\nanswered with an error.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's answer, or the error.",
+          "types": [
+            "HttpCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
