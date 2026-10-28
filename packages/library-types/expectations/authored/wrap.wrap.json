@@ -1,0 +1,18 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/baochungit/defold-wrap",
+    "authoredHere": true,
+    "commit": "1.1.0",
+    "sourceUrl": "https://github.com/baochungit/defold-wrap/tree/1.1.0",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's facade is a plain table of `.` functions, while the node `wrap.node` returns indexes its module, so every link after the first is a `:` method taking the node as `self`; a facade function taking `self`, or a node method declared `this: void`, still passes `tsc`, so only TSTL's emit shows which call form each link of the chain produces.",
+    "consumer": [
+      "import * as wrap from \"wrap.wrap\";",
+      "export function init(): void {",
+      "  wrap.node(\"box\").set_alpha(0.5).set_enabled(true);",
+      "}"
+    ]
+  }
+}

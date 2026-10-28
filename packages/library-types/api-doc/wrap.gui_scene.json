@@ -1,0 +1,1111 @@
+{
+  "info": {
+    "namespace": "wrap.gui_scene",
+    "brief": "The base class of a GUI scene: one screen of an applet, with its own hidden root box",
+    "description": "The base class of a GUI scene: one screen of an applet, with its own hidden root box\nnode, the GUI objects created in it, the modals registered on it, and the transitions it\nplays when it is shown and replaced. A game subclasses it with `extend`, assigns hooks\nto the subclass, and hands it to an applet's `register_scene` or `show_scene`."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "Transition",
+      "types": [
+        "(this: void, on_done: (this: void) => void) => void"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GuiSceneClass",
+      "generics": "<F extends object = {}>",
+      "types": [
+        "GuiScene & F & { 'new'(this: void): GuiScene & F; }"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GuiSceneHooks",
+      "generics": "<F extends object = {}>"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "__name",
+      "brief": "The class name, the value `register_scene` and `show_scene` read to tell a class from",
+      "description": "The class name, the value `register_scene` and `show_scene` read to tell a class from\na plain table.",
+      "types": [
+        "'GuiScene'"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Returns a new, not yet set up scene of the base class.",
+      "description": "Returns a new, not yet set up scene of the base class.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GuiScene"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "extend",
+      "brief": "Returns a new subclass: a table indexing the base class, with its own `new`. Assign",
+      "description": "Returns a new subclass: a table indexing the base class, with its own `new`. Assign\nhooks such as `init` and `on_ready` to it, and pass it to an applet. `F` types the\nfields and methods a game adds to it.",
+      "generics": "<F extends object = {}>",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GuiSceneClass<F>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GuiScene",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "register_modal",
+          "brief": "Registers a modal under a name, for `open_modal` to create.",
+          "description": "Registers a modal under a name, for `open_modal` to create.",
+          "generics": "<C extends AnyGuiObjectClass>",
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "The name `open_modal` takes.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "object_class",
+              "doc": "A class `wrap.gui_object.extend` returns.",
+              "types": [
+                "C"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "Props `open_modal` starts from, before its own are copied over them.",
+              "types": [
+                "Partial<C['props']>"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "settings",
+              "doc": "Settings `open_modal` starts from, before its own are copied over\nthem.",
+              "types": [
+                "Partial<C['settings']>"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "register_modal",
+          "brief": "Registers a modal built from a plain table of hooks and fields, whose keys are copied",
+          "description": "Registers a modal built from a plain table of hooks and fields, whose keys are copied\nonto a fresh `wrap.gui_object.extend()` once, at registration.",
+          "generics": "<F extends object = {}>",
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "The name `open_modal` takes.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "object_class",
+              "doc": "The hooks and fields, each hook seeing the object as `this`.",
+              "types": [
+                "GuiObjectHooks<F>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "Props `open_modal` starts from, before its own are copied over them.",
+              "types": [
+                "object"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "settings",
+              "doc": "Settings `open_modal` starts from, before its own are copied over\nthem.",
+              "types": [
+                "object"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "unregister_modal",
+          "brief": "Removes the modal registered under a name.",
+          "description": "Removes the modal registered under a name.",
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "The name it was registered under.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "open_modal",
+          "brief": "Creates the modal registered under a name with `new_object`. Its props are a copy of",
+          "description": "Creates the modal registered under a name with `new_object`. Its props are a copy of\nthe registered props with the given ones copied over them, and its settings the same.",
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "The name it was registered under.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "Props copied over the registered ones.",
+              "types": [
+                "object"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "settings",
+              "doc": "Settings copied over the registered ones.",
+              "types": [
+                "object"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The modal, or `nil` when no modal is registered under the name.",
+              "types": [
+                "GuiObject | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_object",
+          "brief": "Creates an object in the scene: calls the class's `new`, sets the instance up with",
+          "description": "Creates an object in the scene: calls the class's `new`, sets the instance up with\n`setup`, which runs its `init`, and adds it to the objects `bg_update`, `bg_final`\nand `bg_on_input` fan out to.",
+          "generics": "<C extends AnyGuiObjectClass>",
+          "parameters": [
+            {
+              "name": "object_class",
+              "doc": "A class `wrap.gui_object.extend` returns, whose props and settings may\nboth be omitted.",
+              "types": [
+                "C & Omittable<C['props']> & Omittable<C['settings']>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "The object's props. Defaults to `{}`.",
+              "types": [
+                "C['props']"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "settings",
+              "doc": "The object's settings. Defaults to `{}`.",
+              "types": [
+                "C['settings']"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "ReturnType<C['new']>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_object",
+          "brief": "Creates an object whose class needs props, as the first form does.",
+          "description": "Creates an object whose class needs props, as the first form does.",
+          "generics": "<C extends AnyGuiObjectClass>",
+          "parameters": [
+            {
+              "name": "object_class",
+              "doc": "A class `wrap.gui_object.extend` returns, whose settings may be\nomitted.",
+              "types": [
+                "C & Omittable<C['settings']>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "The object's props.",
+              "types": [
+                "C['props']"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "settings",
+              "doc": "The object's settings. Defaults to `{}`.",
+              "types": [
+                "C['settings']"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "ReturnType<C['new']>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_object",
+          "brief": "Creates an object whose class needs settings, as the first form does.",
+          "description": "Creates an object whose class needs settings, as the first form does.",
+          "generics": "<C extends AnyGuiObjectClass>",
+          "parameters": [
+            {
+              "name": "object_class",
+              "doc": "A class `wrap.gui_object.extend` returns.",
+              "types": [
+                "C"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "The object's props, or `undefined` for `{}` when the class allows it.",
+              "types": [
+                "C['props'] | Defaulted<C['props']>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "settings",
+              "doc": "The object's settings.",
+              "types": [
+                "C['settings']"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "ReturnType<C['new']>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "setup",
+          "brief": "Sets the scene up in an applet and runs `init`. `show_scene` calls it on each scene",
+          "description": "Sets the scene up in an applet and runs `init`. `show_scene` calls it on each scene\nit shows; a game does not.",
+          "parameters": [
+            {
+              "name": "app",
+              "doc": "The applet showing the scene, under whose root `root` is created.",
+              "types": [
+                "GuiApplet"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_alive",
+          "brief": "Returns whether the scene is set up and not finalized: `nil` until `setup` has run",
+          "description": "Returns whether the scene is set up and not finalized: `nil` until `setup` has run\n`init`, so also during `init`, then `true` until `bg_final` makes it `false`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_ready",
+          "brief": "Returns whether the scene's transition in has finished and it is not yet",
+          "description": "Returns whether the scene's transition in has finished and it is not yet\ntransitioning out, the only state in which it receives messages and input.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_transitions",
+          "brief": "Sets the transitions the scene plays, replacing any set before.",
+          "description": "Sets the transitions the scene plays, replacing any set before.",
+          "parameters": [
+            {
+              "name": "transitions",
+              "doc": "The transitions. When omitted, the scene plays none.",
+              "types": [
+                "Transitions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "transition_in",
+          "brief": "Plays the transition in, if one is set, then makes the scene ready and runs",
+          "description": "Plays the transition in, if one is set, then makes the scene ready and runs\n`on_ready`. Does nothing unless the scene is newly set up. `show_scene` calls it.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "Called once the scene is ready.",
+              "types": [
+                "() => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_transition_in_done",
+          "brief": "Resumes the transition in where it waits for its animation. The transition in calls",
+          "description": "Resumes the transition in where it waits for its animation. The transition in calls\nit when done; at this tag it resumes whatever state the scene is in.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "transition_out",
+          "brief": "Plays the transition out, if one is set, then finalizes the scene with `bg_final`.",
+          "description": "Plays the transition out, if one is set, then finalizes the scene with `bg_final`.\nDoes nothing unless the scene is ready. `show_scene` calls it on the scene it\nreplaces.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "Called once the scene is finalized.",
+              "types": [
+                "() => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_transition_out_done",
+          "brief": "Resumes the transition out where it waits for its animation. The transition out",
+          "description": "Resumes the transition out where it waits for its animation. The transition out\ncalls it when done; at this tag it resumes whatever state the scene is in.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_ready",
+          "brief": "Runs once the transition in has finished, from `transition_in`. A no-op to replace.",
+          "description": "Runs once the transition in has finished, from `transition_in`. A no-op to replace.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "init",
+          "brief": "Runs once `setup` has created `root`, from `show_scene`. A no-op to replace.",
+          "description": "Runs once `setup` has created `root`, from `show_scene`. A no-op to replace.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "update",
+          "brief": "Runs each frame from `bg_update` while the scene is alive. A no-op to replace.",
+          "description": "Runs each frame from `bg_update` while the scene is alive. A no-op to replace.",
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "The time since the last frame, in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "final",
+          "brief": "Runs once from `bg_final`, before the objects and `root` are deleted. A no-op to replace.",
+          "description": "Runs once from `bg_final`, before the objects and `root` are deleted. A no-op to replace.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_message",
+          "brief": "Runs from `bg_on_message` while the scene is ready. A no-op to replace.",
+          "description": "Runs from `bg_on_message` while the scene is ready. A no-op to replace.",
+          "parameters": [
+            {
+              "name": "message_id",
+              "doc": "The message's id.",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "The message's data.",
+              "types": [
+                "Record<string | number, unknown>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "sender",
+              "doc": "The url of the message's sender.",
+              "types": [
+                "Url"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_input",
+          "brief": "Runs from `bg_on_input` when no object consumed the input. A no-op to replace.",
+          "description": "Runs from `bg_on_input` when no object consumed the input. A no-op to replace.",
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "The input action's id, or `nil` for mouse movement.",
+              "types": [
+                "Hash | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "action",
+              "doc": "The input data.",
+              "types": [
+                "go.on_input.Action"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "`true` to consume the input. The no-op returns `false`.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "bg_update",
+          "brief": "Runs `update`, then each object's `bg_update`, unless the scene is not alive. The",
+          "description": "Runs `update`, then each object's `bg_update`, unless the scene is not alive. The\napplet's `update` calls it each frame, for the scene transitioning out too.",
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "The time since the last frame, in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "bg_final",
+          "brief": "Finalizes the scene, unless it is not alive: marks it finalized, runs `final`,",
+          "description": "Finalizes the scene, unless it is not alive: marks it finalized, runs `final`,\ndeletes each object, then deletes `root` and the nodes under it. The transition out\nand the applet's `final` call it.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "bg_on_message",
+          "brief": "Passes a message to `on_message` while the scene is ready. The applet's `on_message`",
+          "description": "Passes a message to `on_message` while the scene is ready. The applet's `on_message`\ncalls it.",
+          "parameters": [
+            {
+              "name": "message_id",
+              "doc": "The message's id.",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "The message's data.",
+              "types": [
+                "Record<string | number, unknown>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "sender",
+              "doc": "The url of the message's sender.",
+              "types": [
+                "Url"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "bg_on_input",
+          "brief": "Offers input to each object's `bg_on_input`, the newest first, then to `on_input` if",
+          "description": "Offers input to each object's `bg_on_input`, the newest first, then to `on_input` if\nnone consumed it. Returns `false` unless the scene is ready. The applet's `on_input`\ncalls it.",
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "The input action's id, or `nil` for mouse movement.",
+              "types": [
+                "Hash | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "action",
+              "doc": "The input data.",
+              "types": [
+                "go.on_input.Action"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Whether an object or `on_input` consumed the input.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "fade_in",
+          "brief": "Returns a transition that sets the root's alpha to `0` and animates it to `1`.",
+          "description": "Returns a transition that sets the root's alpha to `0` and animates it to `1`.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "fade_out",
+          "brief": "Returns a transition that animates the root's alpha to `0`.",
+          "description": "Returns a transition that animates the root's alpha to `0`.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "slide_in_top",
+          "brief": "Returns a transition that moves the root up by the applet's height and animates it",
+          "description": "Returns a transition that moves the root up by the applet's height and animates it\ndown to `0`.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "slide_in_bottom",
+          "brief": "Returns a transition that moves the root down by the applet's height and animates it",
+          "description": "Returns a transition that moves the root down by the applet's height and animates it\nup to `0`.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "slide_in_right",
+          "brief": "Returns a transition that moves the root right by the applet's width and animates it",
+          "description": "Returns a transition that moves the root right by the applet's width and animates it\nleft to `0`.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "slide_in_left",
+          "brief": "Returns a transition that moves the root left by the applet's width and animates it",
+          "description": "Returns a transition that moves the root left by the applet's width and animates it\nright to `0`.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "slide_out_top",
+          "brief": "Returns a transition that animates the root up by the applet's height.",
+          "description": "Returns a transition that animates the root up by the applet's height.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "slide_out_bottom",
+          "brief": "Returns a transition that animates the root down by the applet's height.",
+          "description": "Returns a transition that animates the root down by the applet's height.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "slide_out_right",
+          "brief": "Returns a transition that animates the root right by the applet's width.",
+          "description": "Returns a transition that animates the root right by the applet's width.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "slide_out_left",
+          "brief": "Returns a transition that animates the root left by the applet's width.",
+          "description": "Returns a transition that animates the root left by the applet's width.",
+          "parameters": [
+            {
+              "name": "time",
+              "doc": "The duration in seconds. Defaults to `0.5`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "wait",
+              "doc": "The delay in seconds before it starts. Defaults to `0`.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "easing",
+              "doc": "The easing. Defaults to `gui.EASING_LINEAR`.",
+              "types": [
+                "gui.Easing | Vector"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Transition"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "app",
+          "brief": "The applet showing the scene, set by `setup`.",
+          "description": "The applet showing the scene, set by `setup`.",
+          "types": [
+            "GuiApplet"
+          ]
+        },
+        {
+          "name": "root",
+          "brief": "The scene's root, a box node `setup` creates hidden under the applet's root. Every",
+          "description": "The scene's root, a box node `setup` creates hidden under the applet's root. Every\nobject created in the scene has its own root under it, and the built-in transitions\nanimate it.",
+          "types": [
+            "Node"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Transitions",
+      "properties": [
+        {
+          "name": "transition_in",
+          "brief": "Played by `transition_in` before the scene is ready.",
+          "description": "Played by `transition_in` before the scene is ready.",
+          "types": [
+            "Transition"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "transition_out",
+          "brief": "Played by `transition_out` before the scene is finalized.",
+          "description": "Played by `transition_out` before the scene is finalized.",
+          "types": [
+            "Transition"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
