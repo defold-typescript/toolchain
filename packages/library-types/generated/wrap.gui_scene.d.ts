@@ -15,6 +15,7 @@ declare module 'wrap.gui_scene' {
     Defaulted,
     GuiObject,
     GuiObjectHooks,
+    NoClassKeys,
     Omittable,
   } from 'wrap.gui_object';
   import type { Node } from 'wrap.node';
@@ -347,10 +348,11 @@ declare module 'wrap.gui_scene' {
   /**
    * A plain table of scene hooks and fields, which `register_scene` and `show_scene` copy
    * onto a fresh `extend()`. Each hook sees the scene, with the table's own fields, as
-   * `this`.
+   * `this`. The table may not set `__name`, `new` or `__index`.
    */
   export type GuiSceneHooks<F extends object = {}> = Partial<GuiScene> &
     F &
+    NoClassKeys &
     ThisType<GuiScene & F>;
 
   /**
