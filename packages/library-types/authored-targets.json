@@ -1088,6 +1088,53 @@
       "generated": "generated/wrap.go_list.d.ts",
       "apiDoc": "api-doc/wrap.go_list.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/go_list.lua"]
+    },
+    {
+      "repo": "https://github.com/baochungit/defold-wrap",
+      "ref": "1.1.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/wrap.gui_object.d.ts",
+      "moduleId": "wrap.gui_object",
+      "namespace": "wrap.gui_object",
+      "generated": "generated/wrap.gui_object.d.ts",
+      "apiDoc": "api-doc/wrap.gui_object.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/gui_object.lua"],
+      "instanceType": "GuiObject"
+    },
+    {
+      "repo": "https://github.com/baochungit/defold-wrap",
+      "ref": "1.1.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/wrap.gui_scene.d.ts",
+      "moduleId": "wrap.gui_scene",
+      "namespace": "wrap.gui_scene",
+      "generated": "generated/wrap.gui_scene.d.ts",
+      "apiDoc": "api-doc/wrap.gui_scene.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/gui_scene.lua"],
+      "instanceType": "GuiScene"
+    },
+    {
+      "repo": "https://github.com/baochungit/defold-wrap",
+      "ref": "1.1.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/wrap.gui_applet.d.ts",
+      "moduleId": "wrap.gui_applet",
+      "namespace": "wrap.gui_applet",
+      "generated": "generated/wrap.gui_applet.d.ts",
+      "apiDoc": "api-doc/wrap.gui_applet.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/gui_applet.lua"],
+      "instanceType": "GuiApplet"
+    },
+    {
+      "repo": "https://github.com/baochungit/defold-wrap",
+      "ref": "1.1.0",
+      "license": "MIT",
+      "authored": "fixtures/authored/wrap.wrap.d.ts",
+      "moduleId": "wrap.wrap",
+      "namespace": "wrap.wrap",
+      "generated": "generated/wrap.wrap.d.ts",
+      "apiDoc": "api-doc/wrap.wrap.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/wrap.lua"]
     }
   ]
 }

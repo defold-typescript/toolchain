@@ -1,0 +1,23 @@
+{
+  "namespace": "wrap.gui_scene",
+  "upstreamMembers": 34,
+  "upstreamFields": 1,
+  "declaredFields": 1,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
+  "declaredGlobals": 0,
+  "declaredMembers": 34,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "parityExceptions": [],
+  "undocumentedMembers": 0,
+  "importedDocs": 0,
+  "refusedDocBlocks": 0,
+  "refusedDocBlocksTotal": 1,
+  "variadicMembers": 0,
+  "overloadedMembers": 2,
+  "placeholderMembers": 0,
+  "callableCoverage": 1
+}
