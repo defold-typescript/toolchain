@@ -113,46 +113,65 @@ declare module 'def_behavior_tree.behavior_tree' {
   }
 
   /**
-   * A composite template, with its children in `nodes`: each one a node registered
-   * under `NODES` by name, or a template written inline.
+   * A composite template, with its children in `nodes`: each one a template written
+   * inline, or, when the templates carry `NODES`, a node registered there by name.
    */
-  export interface CompositeTemplate<P> {
+  export interface CompositeTemplate<P, Ref extends string = string> {
     type: typeof Sequence | typeof Selector | typeof Random | typeof RandomWithChances;
-    nodes: (string | NodeTemplate<P>)[];
+    nodes: (Ref | NodeTemplate<P, Ref>)[];
     /** This node's share of `1` to `100`, read only when a `RandomWithChances` lists it. */
     chance?: number;
     node?: never;
   }
 
   /**
-   * A decorator template, with its one child in `node`: a node registered under
-   * `NODES` by name, or a template written inline.
+   * A decorator template, with its one child in `node`: a template written inline, or,
+   * when the templates carry `NODES`, a node registered there by name.
    */
-  export interface DecoratorTemplate<P> {
+  export interface DecoratorTemplate<P, Ref extends string = string> {
     type:
       | typeof InvertDecorator
       | typeof AlwaysFailDecorator
       | typeof AlwaysSucceedDecorator
       | typeof RepeatUntilFailDecorator
       | typeof ChanceDecorator;
-    node: string | NodeTemplate<P>;
+    node: Ref | NodeTemplate<P, Ref>;
     /** This node's share of `1` to `100`, read only when a `RandomWithChances` lists it. */
     chance?: number;
     nodes?: never;
   }
 
-  /** A node template: a task, a composite or a decorator, told apart by its `type`. */
-  export type NodeTemplate<P> = TaskTemplate<P> | CompositeTemplate<P> | DecoratorTemplate<P>;
+  /**
+   * A node template: a task, a composite or a decorator, told apart by its `type`. `Ref`
+   * is what a child may be named by, `never` in a tree written wholly inline.
+   */
+  export type NodeTemplate<P, Ref extends string = string> =
+    | TaskTemplate<P>
+    | CompositeTemplate<P, Ref>
+    | DecoratorTemplate<P, Ref>;
+
+  /**
+   * Templates whose trees name nodes by string. Every name, at any depth, is looked up
+   * in `NODES`.
+   */
+  export interface NamedTemplates<P> {
+    TREES: Record<string, { main_node: string | NodeTemplate<P> }>;
+    NODES: Record<string, NodeTemplate<P>>;
+  }
+
+  /** Templates whose trees are written wholly inline, with no node named by string. */
+  export interface InlineTemplates<P> {
+    TREES: Record<string, { main_node: NodeTemplate<P, never> }>;
+    NODES?: undefined;
+  }
 
   /**
    * The templates `registerTemplates` takes. `TREES` names each tree and its root node.
-   * `NODES` holds the templates a tree refers to by name, and is needed only for those
-   * string references. Register the templates once, before `new` creates any tree.
+   * A template that names a node by string needs `NODES` to hold it; one written wholly
+   * inline may leave `NODES` out. Register the templates once, before `new` creates any
+   * tree.
    */
-  export interface Templates<P> {
-    TREES: Record<string, { main_node: string | NodeTemplate<P> }>;
-    NODES?: Record<string, NodeTemplate<P>>;
-  }
+  export type Templates<P> = NamedTemplates<P> | InlineTemplates<P>;
 
   /**
    * A node of a registered tree template. Each use of a template in a tree is its own
@@ -228,17 +247,29 @@ declare module 'def_behavior_tree.behavior_tree' {
   }
 
   /**
-   * Creates a tree that runs a registered tree template. Register the templates with
-   * `registerTemplates` first.
+   * Creates a tree that runs a registered tree template over a payload. Register the
+   * templates with `registerTemplates` first.
    * @param config `tree_name` names a tree under the templates' `TREES`, `payload` is
    * passed to every task callback, and `rng` returns a whole number between its two
    * arguments for `Random` and `RandomWithChances`; it defaults to `math.random`.
    */
-  function new_<P = unknown>(config: {
+  function new_<P>(config: {
     tree_name: string;
-    payload?: P;
+    payload: P;
     rng?: (this: void, range_start: number, range_end: number) => number;
   }): BehaviorTree<P>;
+  /**
+   * Creates a tree that runs a registered tree template with no payload, so its task
+   * callbacks receive `undefined`. Register the templates with `registerTemplates` first.
+   * @param config `tree_name` names a tree under the templates' `TREES`, and `rng`
+   * returns a whole number between its two arguments for `Random` and
+   * `RandomWithChances`; it defaults to `math.random`.
+   */
+  function new_(config: {
+    tree_name: string;
+    payload?: undefined;
+    rng?: (this: void, range_start: number, range_end: number) => number;
+  }): BehaviorTree<undefined>;
   export { new_ as new };
 
   /**

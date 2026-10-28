@@ -1034,8 +1034,8 @@ describe("a fork offering several call shapes is measured against the set", () =
     expect(report.fieldCoverage).toBe(1);
   });
 
-  // `operator.lerp` takes numbers or vectors, and `bezier.new` vector points or number
-  // points with a required `length_func`.
+  // `operator.lerp` takes numbers or vectors, `bezier.new` vector points or number
+  // points with a required `length_func`, and `def_behavior_tree.new` a payload or none.
   test("the term is 0 on every target whose api-doc names each function once", () => {
     const overloaded = authoredParityTargets(PACKAGE_ROOT)
       .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
@@ -1045,6 +1045,7 @@ describe("a fork offering several call shapes is measured against the set", () =
       "monarch.transitions.gui: 1",
       "operator.operator: 1",
       "operator.bezier: 1",
+      "def_behavior_tree: 1",
     ]);
   });
 });
