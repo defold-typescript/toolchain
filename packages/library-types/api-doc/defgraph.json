@@ -1,0 +1,531 @@
+{
+  "info": {
+    "namespace": "defgraph",
+    "brief": "Builds a world map as a graph of nodes and routes that can change at any time, draws",
+    "description": "Builds a world map as a graph of nodes and routes that can change at any time, draws\nit for debugging, and moves game objects along it with a built-in pathfinder. Add\nnodes with `map_add_node` and join them with `map_add_route`, start each game object\nwith `move_initialize`, then call `move_player` from its `update` and apply the\nposition and rotation it returns."
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "ROUTETYPE",
+      "brief": "How `move_initialize` takes a game object through more than one destination.",
+      "description": "How `move_initialize` takes a game object through more than one destination.\n`ONETIME` visits them in order and stops at the last, `SHUFFLE` visits them in\nrandom order without stopping, and `CYCLE` visits them in order and starts over\nafter the last. With one destination they all behave the same.",
+      "types": [
+        "{ ONETIME: Hash; SHUFFLE: Hash; CYCLE: Hash; }"
+      ],
+      "fields": [
+        {
+          "name": "ONETIME",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "SHUFFLE",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "CYCLE",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "map_set_properties",
+      "brief": "Sets the module's path and movement settings, which every `move_initialize` call",
+      "description": "Sets the module's path and movement settings, which every `move_initialize` call\nfalls back to for a setting it is not given. A `nil` keeps a setting's current\nvalue, and each starts at the default stated on it.",
+      "parameters": [
+        {
+          "name": "settings_gameobject_threshold",
+          "doc": "The distance within which a game object counts\nas on a route or at a point. Use a larger value for faster game objects; the\nsmallest useful value is `1`. Defaults to `1`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_path_curve_tightness",
+          "doc": "How tight a turn on the path is; the smallest\nuseful value is `2`. Defaults to `4`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_path_curve_roundness",
+          "doc": "How round a turn on the path is. `0` gives no\ncurves and ignores the tightness and the corner distance, and a higher value costs\nmore processing, most of all while nodes move. Defaults to `3`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_path_curve_max_distance_from_corner",
+          "doc": "The farthest from its corner a\nturn may start. Defaults to `10`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_allow_enter_on_route",
+          "doc": "Whether a game object may enter the map partway\nalong a route, rather than only at a node. Defaults to `true`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "map_add_node",
+      "brief": "Adds a node at a position and returns its id. The position's `z` is ignored. A node",
+      "description": "Adds a node at a position and returns its id. The position's `z` is ignored. A node\nwith no route takes no part in routing, so remove one that is no longer used.",
+      "parameters": [
+        {
+          "name": "position",
+          "doc": "The node's position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "map_update_node_position",
+      "brief": "Moves an existing node, and the routes attached to it with it. An unknown id fails",
+      "description": "Moves an existing node, and the routes attached to it with it. An unknown id fails\nan assert.",
+      "parameters": [
+        {
+          "name": "node_id",
+          "doc": "The node's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "position",
+          "doc": "The node's new position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "map_remove_node",
+      "brief": "Removes a node and every route attached to it. An unknown id fails an assert.",
+      "description": "Removes a node and every route attached to it. An unknown id fails an assert.",
+      "parameters": [
+        {
+          "name": "node_id",
+          "doc": "The node's id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "map_add_route",
+      "brief": "Adds a route between two nodes, both ways unless `is_one_way` is `true`. A route",
+      "description": "Adds a route between two nodes, both ways unless `is_one_way` is `true`. A route\nfrom a node to itself is ignored, and an unknown id fails an assert. A one-way route\nis a little cheaper to path through when the other way is never needed.",
+      "parameters": [
+        {
+          "name": "source_id",
+          "doc": "The node the route starts at.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "destination_id",
+          "doc": "The node the route ends at.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "is_one_way",
+          "doc": "Whether the route runs from `source_id` to `destination_id` only.\nDefaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "map_remove_route",
+      "brief": "Removes the route between two nodes, both ways unless `is_remove_one_way` is `true`.",
+      "description": "Removes the route between two nodes, both ways unless `is_remove_one_way` is `true`.\nAn unknown id fails an assert.",
+      "parameters": [
+        {
+          "name": "source_id",
+          "doc": "The node the route starts at.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "destination_id",
+          "doc": "The node the route ends at.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "is_remove_one_way",
+          "doc": "Whether to remove only the way from `source_id` to\n`destination_id`. Defaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "debug_set_properties",
+      "brief": "Sets the colors and the scale the `debug_draw_*` functions draw with. A `nil` keeps",
+      "description": "Sets the colors and the scale the `debug_draw_*` functions draw with. A `nil` keeps\na value's current setting, and each starts at the default stated on it.",
+      "parameters": [
+        {
+          "name": "node_color",
+          "doc": "The color of the nodes. Defaults to `vmath.vector4(1, 0, 1, 1)`.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "two_way_route_color",
+          "doc": "The color of two-way routes. Defaults to\n`vmath.vector4(0, 1, 0, 1)`.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "one_way_route_color",
+          "doc": "The color of one-way routes. Defaults to\n`vmath.vector4(0, 1, 1, 1)`.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "draw_scale",
+          "doc": "The size of the node marks. Defaults to `5`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "debug_draw_map_nodes",
+      "brief": "Draws every node for one frame, by posting `draw_line` and, for the ids,",
+      "description": "Draws every node for one frame, by posting `draw_line` and, for the ids,\n`draw_text` to `@render:`. A node with no route is drawn as a triangle, a dead end\nas a cross and an intersection as a square. Call it every frame to keep it shown.",
+      "parameters": [
+        {
+          "name": "is_show_ids",
+          "doc": "Whether to draw each node's id beside it. Defaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "debug_draw_map_routes",
+      "brief": "Draws every route for one frame, by posting `draw_line` to `@render:`: two-way",
+      "description": "Draws every route for one frame, by posting `draw_line` to `@render:`: two-way\nroutes in one color, and one-way routes in another with a square near the end they\nrun to. Call it every frame to keep it shown.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "debug_draw_player_move",
+      "brief": "Draws the rest of a game object's path for one frame, by posting `draw_line` to",
+      "description": "Draws the rest of a game object's path for one frame, by posting `draw_line` to\n`@render:`. Nothing is drawn while the game object stands still for want of a\nroute. Call it every frame to keep it shown.",
+      "parameters": [
+        {
+          "name": "movement_data",
+          "doc": "The movement data from `move_initialize` or `move_player`.",
+          "types": [
+            "MoveData"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "color",
+          "doc": "The color of the path.",
+          "types": [
+            "Vector4"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "is_show_intersection",
+          "doc": "Whether to mark each point on the path with a cross.\nDefaults to `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "move_initialize",
+      "brief": "Starts a game object moving from its position through a list of destination nodes,",
+      "description": "Starts a game object moving from its position through a list of destination nodes,\nand returns the movement data `move_player` takes. Each setting it is not given\nfalls back to the value `map_set_properties` set. To change the destinations, call\nit again and replace the old movement data with the result.",
+      "parameters": [
+        {
+          "name": "source_position",
+          "doc": "The game object's current position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "destination_list",
+          "doc": "The destination node ids, in order. With an empty list the\ngame object stands still and `move_player` reports no `destination_id`.",
+          "types": [
+            "number[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "route_type",
+          "doc": "One of `ROUTETYPE`. Defaults to `ROUTETYPE.ONETIME`.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "initial_face_vector",
+          "doc": "The direction the game object faces at zero rotation.\nWithout it, `move_player` returns no rotation.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_gameobject_threshold",
+          "doc": "The distance within which the game object counts\nas on a route or at a point. Defaults to the `map_set_properties` value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_path_curve_tightness",
+          "doc": "How tight a turn on the path is. Defaults to the\n`map_set_properties` value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_path_curve_roundness",
+          "doc": "How round a turn on the path is, `0` for no\ncurves. Defaults to the `map_set_properties` value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_path_curve_max_distance_from_corner",
+          "doc": "The farthest from its corner a\nturn may start. Defaults to the `map_set_properties` value.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "settings_allow_enter_on_route",
+          "doc": "Whether the game object may enter the map partway\nalong a route. Defaults to the `map_set_properties` value.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "MoveData"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "move_player",
+      "brief": "Moves a game object one step along its path toward its current destination, and",
+      "description": "Moves a game object one step along its path toward its current destination, and\nreturns the movement data and the result of the move:\n`const [data, result] = defgraph.move_player(go.get_position(), speed * dt, move)`.\nKeep the returned movement data in place of the one passed in. When the map has\nchanged since the last call, the path is found again first. `result.rotation` is\n`undefined` unless `move_initialize` was given an `initial_face_vector`.",
+      "parameters": [
+        {
+          "name": "current_position",
+          "doc": "The game object's current position.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "speed",
+          "doc": "How far the game object moves this call, its speed already multiplied\nby `dt`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "move_data",
+          "doc": "The movement data from `move_initialize` or the last `move_player`.",
+          "types": [
+            "MoveData"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ MoveData, MoveResult ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MoveData",
+      "properties": [
+        {
+          "name": "destination_list",
+          "brief": "The destination node ids, the same list `move_initialize` was given.",
+          "description": "The destination node ids, the same list `move_initialize` was given.",
+          "types": [
+            "number[]"
+          ]
+        },
+        {
+          "name": "destination_index",
+          "brief": "The 1-based index of the current destination in `destination_list`.",
+          "description": "The 1-based index of the current destination in `destination_list`.\n**⚠️ 1-based; passed to `defgraph` unchanged.**",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "route_type",
+          "brief": "The `ROUTETYPE` the game object moves by.",
+          "description": "The `ROUTETYPE` the game object moves by.",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "path_index",
+          "brief": "The 1-based index of the next point on the path, or `0` while the game object",
+          "description": "The 1-based index of the next point on the path, or `0` while the game object\nstands still because the map has no route or `destination_list` is empty.\n**⚠️ 1-based; passed to `defgraph` unchanged.**",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MoveResult",
+      "properties": [
+        {
+          "name": "position",
+          "brief": "The game object's next position.",
+          "description": "The game object's next position.",
+          "types": [
+            "Vector3"
+          ]
+        },
+        {
+          "name": "rotation",
+          "brief": "The game object's next rotation around z, relative to the `initial_face_vector`",
+          "description": "The game object's next rotation around z, relative to the `initial_face_vector`\npassed to `move_initialize`. `undefined` when `move_initialize` was given none.",
+          "types": [
+            "Quaternion | undefined"
+          ]
+        },
+        {
+          "name": "is_reached",
+          "brief": "Whether the game object is at its destination. With more than one destination it",
+          "description": "Whether the game object is at its destination. With more than one destination it\nreads `true` on reaching each one, then `false` again while `destination_id` moves\non to the next.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "destination_id",
+          "brief": "The node id of the current destination.",
+          "description": "The node id of the current destination.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

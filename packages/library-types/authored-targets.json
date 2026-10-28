@@ -984,6 +984,17 @@
       "generated": "generated/defarmy.d.ts",
       "apiDoc": "api-doc/defarmy.json",
       "upstreamLua": ["fixtures/upstream-lua/defarmy/defarmy/defarmy.lua"]
+    },
+    {
+      "repo": "https://github.com/dev-masih/defgraph",
+      "ref": "V4.1",
+      "license": "MIT",
+      "authored": "fixtures/authored/defgraph.defgraph.d.ts",
+      "moduleId": "defgraph.defgraph",
+      "namespace": "defgraph",
+      "generated": "generated/defgraph.d.ts",
+      "apiDoc": "api-doc/defgraph.json",
+      "upstreamLua": ["fixtures/upstream-lua/defgraph/defgraph/defgraph.lua"]
     }
   ]
 }

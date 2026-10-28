@@ -1196,12 +1196,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other eighty-five targets share no variadic member at all", () => {
+  test("the other eighty-six targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(85);
+    expect(untouched.length).toBe(86);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2445,6 +2445,39 @@ describe("defarmy.defarmy declares the whole of its upstream", () => {
 
   test("every api-doc member carries a description", () => {
     const members = apiDocElements(target("defarmy")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `defgraph.lua` carries no LuaLS annotations either. Its twelve functions are
+// `function M.x` definitions under LDoc `---- summary` / `-- @param name (type) text`
+// blocks, and its one field is the `M.ROUTETYPE` table of three hashes.
+describe("defgraph.defgraph declares the whole of its upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("defgraph"));
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(12);
+    expect(report.upstreamFields).toBe(1);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(target("defgraph")).filter(
       (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
     );
     expect(new Set(members.map((element) => element.name)).size).toBe(
