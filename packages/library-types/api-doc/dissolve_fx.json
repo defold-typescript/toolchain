@@ -1,0 +1,99 @@
+{
+  "info": {
+    "namespace": "dissolve_fx",
+    "brief": "A dissolve effect for sprites. Add a `noise` and a `ramp` image to the sprite's atlas",
+    "description": "A dissolve effect for sprites. Add a `noise` and a `ramp` image to the sprite's atlas\nand set `dissolve_fx/materials/sprite.material` as the sprite's material, then call\n`init` from the script's `init`. The noise drives the dissolve and the ramp colors its\nburning edge."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "ScaleMode",
+      "types": [
+        "\"stretch\"",
+        "\"cover\""
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "find_uvrect",
+      "brief": "Finds an image in the sprite's atlas and returns its uv rect in texture space as four",
+      "description": "Finds an image in the sprite's atlas and returns its uv rect in texture space as four\nvalues: center x, center y, width and height:\n`const [x, y, w, h] = dissolve_fx.find_uvrect(\"#sprite\", \"noise\")`.\nUpstream asserts that `image_id` is a string, that the atlas holds the image, and that\nthe image is not trimmed (trim mode off, 8 uvs). With `scale_mode`, the width and\nheight are also divided by the size of the sprite's current animation, so the vertex\nshader can map the noise from local positions.",
+      "parameters": [
+        {
+          "name": "sprite_url",
+          "doc": "The sprite component.",
+          "types": [
+            "string | Hash | Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "image_id",
+          "doc": "The image's id in the sprite's atlas.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "scale_mode",
+          "doc": "How the width and height are scaled to the sprite. Upstream asserts\n`stretch` or `cover`. When omitted, they are left in texture space.",
+          "types": [
+            "ScaleMode"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaMultiReturn<[ number, number, number, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "init",
+      "brief": "Sets the sprite's `noise_uvrect` and `ramp_uvrect` from the two images in its atlas.",
+      "description": "Sets the sprite's `noise_uvrect` and `ramp_uvrect` from the two images in its atlas.\nThe sprite must use the `dissolve_fx/materials/sprite.material` material. The effect\nis then driven by the sprite's `dissolve.z` property, the size of the burning edge,\nand `dissolve.w`, from `0` to `1`, through `go.set` and `go.animate`:\n`go.animate(\"#sprite\", \"dissolve.w\", go.PLAYBACK_LOOP_PINGPONG, 1, go.EASING_LINEAR, 3)`.",
+      "parameters": [
+        {
+          "name": "sprite_url",
+          "doc": "The sprite component with the dissolve material.",
+          "types": [
+            "string | Hash | Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "noise_image",
+          "doc": "The noise image's id in the sprite's atlas.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ramp_image",
+          "doc": "The ramp image's id in the sprite's atlas.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "noise_scale_mode",
+          "doc": "How the noise is scaled to the sprite. Defaults to `stretch`.",
+          "types": [
+            "ScaleMode"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

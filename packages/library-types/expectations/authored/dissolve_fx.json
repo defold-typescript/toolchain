@@ -1,0 +1,20 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/indiesoftby/defold-dissolve-fx",
+    "authoredHere": true,
+    "commit": "1.2.0",
+    "sourceUrl": "https://github.com/indiesoftby/defold-dissolve-fx/tree/1.2.0",
+    "license": "CC0-1.0"
+  },
+  "receiverEmit": {
+    "reason": "Upstream's `find_uvrect` returns the uv rect as four Lua values, and every module function is called with `.`; a `find_uvrect` declared without `LuaMultiReturn`, or a module function taking `self`, still passes `tsc`, so only TSTL's emit shows the multiple assignment and the `.` calls.",
+    "consumer": [
+      "import * as dissolve_fx from \"dissolve_fx.dissolve_fx\";",
+      "export function init(): void {",
+      "  dissolve_fx.init(\"#sprite\", \"noise\", \"ramp\", \"cover\");",
+      "  const [x, y, w, h] = dissolve_fx.find_uvrect(\"#sprite\", \"noise\", \"stretch\");",
+      "  print(x, y, w, h);",
+      "}"
+    ]
+  }
+}

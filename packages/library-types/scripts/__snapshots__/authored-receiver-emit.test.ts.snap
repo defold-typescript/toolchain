@@ -193,3 +193,16 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records dissolve_fx: a consumer transpiles with the call forms the declaration produces: dissolve_fx 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local dissolve_fx = require("dissolve_fx.dissolve_fx")
+function ____exports.init()
+    dissolve_fx.init("#sprite", "noise", "ramp", "cover")
+    local x, y, w, h = dissolve_fx.find_uvrect("#sprite", "noise", "stretch")
+    print(x, y, w, h)
+end
+return ____exports
+"
+`;
