@@ -10,7 +10,7 @@ const BUNDLE = join(PKG_DIR, "dist", "cli-runtime.js");
 
 // Cold-spawning `node` is slow and variable on the Windows CI runner, so the
 // spawn test gets the same headroom the CLI's bin smoke uses.
-const SPAWN_TEST_TIMEOUT_MS = 30_000;
+const SPAWN_TEST_TIMEOUT_MS = 60_000;
 
 const RUNTIME_EXPORTS = [
   "readZip",

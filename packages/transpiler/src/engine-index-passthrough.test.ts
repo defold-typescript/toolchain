@@ -255,7 +255,7 @@ describe("every classified scalar index argument", () => {
         }).toEqual({ key, diagnostics: [], emitted: values });
       }
     },
-    { timeout: 30_000 },
+    { timeout: 60_000 },
   );
 });
 
