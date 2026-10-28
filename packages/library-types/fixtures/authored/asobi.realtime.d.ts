@@ -472,13 +472,13 @@ declare module 'asobi.realtime' {
      * Internal. Sends a frame and records its callback for the reply: the methods taking a
      * callback call it.
      */
-    _send_with_callback(msg_type: unknown, payload: unknown, callback: unknown): void;
+    _send_with_callback(msg_type: unknown, payload: unknown, callback?: unknown): void;
 
     /**
      * Internal. Sends a frame with no correlation id: `send_match_input`, `send_world_input`,
      * `send_chat_message` and `send_heartbeat` call it.
      */
-    _send_fire_and_forget(msg_type: unknown, payload: unknown, seq: unknown): void;
+    _send_fire_and_forget(msg_type: unknown, payload: unknown, seq?: unknown): void;
 
     /** Internal. Applies one entity delta to `entities`: `_dispatch_tick` calls it. */
     _apply_entity_update(delta: unknown, zkey: unknown): unknown;
