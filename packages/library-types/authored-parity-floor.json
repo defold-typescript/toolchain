@@ -27,6 +27,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/defgraph.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/defmath.json": {
     "callable": 1,
     "field": 1

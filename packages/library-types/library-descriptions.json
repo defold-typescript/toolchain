@@ -28,6 +28,7 @@
   "def_windward_jps": "Find paths on 2D grids with Jump Point Search.",
   "defarmy": "This module helps you to create groups (army) of game objects (soldiers) and organize them in several different patterns or your customized pattern and manage moving and rotating game objects as a customizable group.",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
+  "defgraph": "This module contains functions to create a world map as a shape of a graph and the ability to manipulate it at any time, easily see debug drawing of this graph and move the game objects inside of this graph with utilizing auto pathfinder with different patterns.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
   "defold-orthographic": "Orthographic camera functionality for the Defold game engine",
   "defold-yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine.",
