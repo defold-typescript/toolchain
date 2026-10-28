@@ -859,7 +859,7 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "True"
             }
           ],
           "returnvalues": []
@@ -892,7 +892,7 @@
               "types": [
                 "unknown"
               ],
-              "is_optional": "False"
+              "is_optional": "True"
             }
           ],
           "returnvalues": []
