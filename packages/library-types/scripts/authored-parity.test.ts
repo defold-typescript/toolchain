@@ -1197,12 +1197,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other eighty-seven targets share no variadic member at all", () => {
+  test("the other eighty-nine targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(87);
+    expect(untouched.length).toBe(89);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2602,6 +2602,74 @@ describe("def_behavior_tree declares the whole of its upstream", () => {
       report.upstreamMembers + report.upstreamFields,
     );
     const blank = [...members, ...tree.functions]
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `dissolve_fx.lua` carries no annotations. Its two functions are bare `function M.x`
+// definitions on `local M = {}`, and the module has no fields.
+describe("dissolve_fx.dissolve_fx declares the whole of its upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("dissolve_fx"));
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(2);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(target("dissolve_fx")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `illumination.lua` exports six functions and the three `FOG_TYPE_*` numbers. `init` and
+// `post_update_data_texture` sit under its `-- Internal functions` heading and only the
+// bundled `illumination.script` calls them, so the fork leaves both undeclared.
+describe("illumination.illumination declares the whole of its public upstream", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("illumination"));
+
+  test("both axes close with the two internals excepted, nothing missing or short", () => {
+    expect(report.upstreamMembers).toBe(6);
+    expect(report.upstreamFields).toBe(3);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+    expect(report.parityExceptions.map((entry) => [entry.name, entry.kind])).toEqual([
+      ["init", "script-lifecycle"],
+      ["post_update_data_texture", "script-lifecycle"],
+    ]);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(target("illumination")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers - report.parityExceptions.length + report.upstreamFields,
+    );
+    const blank = members
       .filter((element) => (element.description ?? "").trim() === "")
       .map((element) => element.name);
     expect(blank).toEqual([]);

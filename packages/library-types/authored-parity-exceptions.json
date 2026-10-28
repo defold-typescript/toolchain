@@ -26,6 +26,18 @@
       "reason": "upstream comments it `-- called from boom.script` (boom.lua:85): the library's own script calls it, not a consumer"
     }
   ],
+  "illumination": [
+    {
+      "name": "init",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal functions` (illumination.lua:292) and only the bundled illumination.script calls it (illumination/illumination.script:39); a project call replaces the module's data buffer and drops every light and environment value already written to it"
+    },
+    {
+      "name": "post_update_data_texture",
+      "kind": "script-lifecycle",
+      "reason": "upstream heads it `-- Internal functions` (illumination.lua:292) and only the bundled illumination.script calls it (illumination/illumination.script:115); a project call raises before the bundled script's init has run, and otherwise clears the pending-update flag that script reads each frame"
+    }
+  ],
   "operator.operator": [
     {
       "name": "did_activate_operator",
