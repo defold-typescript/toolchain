@@ -10,7 +10,10 @@
 declare module 'wrap.node_list' {
   import type { Node, NodeTree } from 'wrap.node';
 
-  /** The members of `K` that are not literals, such as `string`, which any name fits. */
+  /**
+   * The members of `K` that are not literals, such as `string`, which any name fits.
+   * @internal
+   */
   type OpenKey<K extends string> = K extends unknown
     ? {} extends Record<K, 1>
       ? K

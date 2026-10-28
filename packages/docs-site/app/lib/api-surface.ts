@@ -1355,7 +1355,7 @@ function typedefDefinitionSignature(
   mapType: MapType = mapDocType,
 ): string | undefined {
   const arms = normalizeTypes(td.types ?? []).map(mapType);
-  if (arms.length > 0) return `type ${td.name} = ${arms.join(" | ")}`;
+  if (arms.length > 0) return `type ${td.name}${td.generics ?? ""} = ${arms.join(" | ")}`;
   const parents = normalizeTypes(td.extends ?? []).map(mapType);
   if (parents.length > 0) return `interface ${td.name} extends ${parents.join(", ")}`;
   return undefined;

@@ -68,6 +68,8 @@ export interface ApiTypedef {
   types?: string[];
   /** The type text of each parent an interface-backed typedef extends. */
   extends?: string[];
+  /** See {@link ApiFunction.generics}. */
+  generics?: string;
   /**
    * The type an engine ref-doc `TYPEDEF` aliases (`parameters[0].types`): a
    * handle's `userdata`/`number`, or the arms of a union, literal or record alias.
@@ -111,8 +113,9 @@ export interface ApiFunction {
   examples?: string;
   /**
    * A pre-rendered generic-parameter clause (`<T extends druid_widget>`) inserted
-   * between the name and the `(` at render time. Present only on LuaLS-lowered
-   * library functions; engine ref-docs carry no `generics`, so it stays absent.
+   * right after the name at render time, before a function's `(` or an alias's
+   * `=`. Present only on library functions and type aliases; engine ref-docs
+   * carry no `generics`, so it stays absent.
    */
   generics?: string;
   /**
@@ -364,6 +367,7 @@ function parseTypedef(element: Record<string, unknown>): ApiTypedef {
     ...(types.length > 0 ? { types } : {}),
     ...(parents.length > 0 ? { extends: parents } : {}),
     ...(aliasOf.length > 0 ? { aliasOf } : {}),
+    ...(typeof element.generics === "string" ? { generics: element.generics } : {}),
     ...globalKey(element),
   };
 }
