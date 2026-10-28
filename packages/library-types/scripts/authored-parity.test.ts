@@ -1044,7 +1044,9 @@ describe("a fork offering several call shapes is measured against the set", () =
   // settings, `register_modal`, `register_scene`, `show_scene` and `wrap.gui_applet.new`
   // a class or a plain table of hooks, `show_scene` also a registered name, and the
   // `wrap.wrap` facade's `node` and `go` one value, an array or a record, and its
-  // `gui_applet` the two scene shapes `wrap.gui_applet.new` takes.
+  // `gui_applet` the two scene shapes `wrap.gui_applet.new` takes. `asobi.realtime`'s
+  // `join_match`, `find_or_create_match` and `join_world` take the callback second, or
+  // options then the callback.
   test("the term is 0 on every target whose api-doc names each function once", () => {
     const overloaded = authoredParityTargets(PACKAGE_ROOT)
       .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
@@ -1063,6 +1065,7 @@ describe("a fork offering several call shapes is measured against the set", () =
       "wrap.gui_scene: 2",
       "wrap.gui_applet: 3",
       "wrap.wrap: 3",
+      "asobi.realtime: 3",
     ]);
   });
 });
@@ -1214,12 +1217,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other ninety-nine targets share no variadic member at all", () => {
+  test("the other hundred and two targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(99);
+    expect(untouched.length).toBe(102);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1668,6 +1671,12 @@ describe("upstream prose the reader declined is reported, not absent", () => {
         .sort(([a], [b]) => (a as string).localeCompare(b as string)),
     );
     expect(refused).toEqual({
+      // asobi writes its notes with a plain `--`, the `---` block above `rpc` aside: above
+      // `quick_start`, the three device functions and `_base64`, and sixteen realtime
+      // methods.
+      "asobi.client": 1,
+      "asobi.device": 4,
+      "asobi.realtime": 16,
       boom: 5,
       // The `-- Example: /home/klaleus/...` line above `project_save_path`, the module's
       // only comment sitting directly on a member.
@@ -1700,7 +1709,7 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       "wrap.gui_scene": 1,
       zzfx: 4,
     });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(105);
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(126);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
@@ -1830,6 +1839,9 @@ describe("only a refusal the fork left unanswered is charged", () => {
       (report) => report.refusedDocBlocks < report.refusedDocBlocksTotal,
     );
     expect(narrowed.map((report) => report.namespace).sort()).toEqual([
+      "asobi.client",
+      "asobi.device",
+      "asobi.realtime",
       "boom",
       "checkpoint",
       "defcon",
@@ -1855,11 +1867,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 105 is what makes that a closure rather than a target quietly dropping out of the
+  // 126 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 105", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 126", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(105);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(126);
   });
 
   // The one target whose zero comes entirely from the ledger rather than from authored
@@ -2963,6 +2975,111 @@ describe("minit.minit declares the whole of its upstream", () => {
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(7);
     expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(entry).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `realtime.lua` defines `M.new` and `M._is_auth_close` on the module and 44 `M:` methods
+// on the object `new` returns: the 30 a project calls and 14 underscore helpers the
+// object calls on itself, each declared on `Realtime` with an `Internal.` brief.
+describe("asobi.realtime declares the whole of its upstream", () => {
+  const entry = target("asobi.realtime");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, the realtime methods included, with nothing missing or short", () => {
+    expect(report.upstreamMembers).toBe(46);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member and every realtime method carries a description", () => {
+    const elements = apiDocElements(entry);
+    const members = elements.filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    const realtime = elements.find(
+      (element) => element.type === "TYPEDEF" && element.name === entry.instanceType,
+    ) as unknown as { functions: ApiDocElement[] };
+    expect(
+      new Set(members.map((element) => element.name)).size +
+        new Set(realtime.functions.map((method) => method.name)).size,
+    ).toBe(report.upstreamMembers + report.upstreamFields);
+    const blank = [...members, ...realtime.functions]
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `client.lua` exports `create` and `quick_start`. The client table `create` returns
+// carries `set_tokens` and `clear_tokens` as closures, which no `M.` definition names.
+describe("asobi.client declares the whole of its upstream", () => {
+  const entry = target("asobi.client");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(2);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(entry).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `device.lua` exports `generate`, `load_or_create` and `clear`, and assigns its local
+// encoder to `M._base64` for upstream's golden-vector test, which reads as a field.
+describe("asobi.device declares the whole of its upstream", () => {
+  const entry = target("asobi.device");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(3);
+    expect(report.upstreamFields).toBe(1);
     expect(report.missingMembers).toEqual([]);
     expect(report.phantomMembers).toEqual([]);
     expect(report.arityMismatches).toEqual([]);

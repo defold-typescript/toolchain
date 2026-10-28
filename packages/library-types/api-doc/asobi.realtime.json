@@ -1,0 +1,1570 @@
+{
+  "info": {
+    "namespace": "asobi.realtime",
+    "brief": "The realtime connection a client creates as `client.realtime`: one websocket that",
+    "description": "The realtime connection a client creates as `client.realtime`: one websocket that\nauthenticates the session, carries matchmaking, matches, worlds, chat, votes and\nextension calls, and keeps a registry of the entities the server syncs."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "RealtimeError",
+      "types": [
+        "Payload & { error?: string; reason?: string; }"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RequestCallback",
+      "types": [
+        "(payload: Payload | undefined, err: string | undefined) => void"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates the realtime connection for a client. `create` calls it, so a project reaches the",
+      "description": "Creates the realtime connection for a client. `create` calls it, so a project reaches the\nconnection as `client.realtime`.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "The client.",
+          "types": [
+            "Client"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Realtime"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_is_auth_close",
+      "brief": "Internal. Whether a close or error reason means the session's token was rejected:",
+      "description": "Internal. Whether a close or error reason means the session's token was rejected:\n`connect`'s socket callback and `_handle_message` call it to choose `auth_expired`.",
+      "parameters": [
+        {
+          "name": "reason",
+          "doc": "The reason.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Realtime",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "on",
+          "brief": "Registers a handler for an event. A name `RealtimeEvents` does not list raises an error,",
+          "description": "Registers a handler for an event. A name `RealtimeEvents` does not list raises an error,\nand handlers for one event run in the order they were registered. The reply to a request\nmade with a callback goes to that callback rather than to an event.",
+          "generics": "<E extends keyof RealtimeEvents>",
+          "parameters": [
+            {
+              "name": "event",
+              "doc": "The event.",
+              "types": [
+                "E"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "The handler.",
+              "types": [
+                "RealtimeEvents[E]"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "connect",
+          "brief": "Opens the websocket and authenticates with the client's access token. Set",
+          "description": "Opens the websocket and authenticates with the client's access token. Set\n`request_binary_wire` and `request_datagram` before calling it, and register handlers\nfirst. Does nothing while connected.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "update",
+          "brief": "Drains the datagram plane, and is a no-op without one. Call it once per frame from",
+          "description": "Drains the datagram plane, and is a no-op without one. Call it once per frame from\n`update` when `request_datagram` is set.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "disconnect",
+          "brief": "Closes the datagram plane and the websocket.",
+          "description": "Closes the datagram plane and the websocket.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "reauth",
+          "brief": "Re-authenticates the open socket with the client's current access token, after a token",
+          "description": "Re-authenticates the open socket with the client's current access token, after a token\nrefresh. Does nothing when not connected.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "join_match",
+          "brief": "Joins a match by id. A running match accepts joiners while it has room.",
+          "description": "Joins a match by id. A running match accepts joiners while it has room.",
+          "parameters": [
+            {
+              "name": "match_id",
+              "doc": "The match's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the `match.joined` payload, or a reason such as\n`match_not_found` or `match_full`.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "join_match",
+          "brief": "Joins a match by id. A running match accepts joiners while it has room.",
+          "description": "Joins a match by id. A running match accepts joiners while it has room.",
+          "parameters": [
+            {
+              "name": "match_id",
+              "doc": "The match's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "opts",
+              "doc": "The join context the game module receives.",
+              "types": [
+                "JoinOptions | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the `match.joined` payload, or a reason such as\n`match_not_found` or `match_full`.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "find_or_create_match",
+          "brief": "Joins a live match of `mode`, creating one when there is none. The server resolves it,",
+          "description": "Joins a live match of `mode`, creating one when there is none. The server resolves it,\nso simultaneous callers converge on one match. Needs an asobi server 0.86.0 or later.",
+          "parameters": [
+            {
+              "name": "mode",
+              "doc": "The match mode.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the `match.joined` payload, or a reason such as `not_found` or\n`quick_play_disabled`.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "find_or_create_match",
+          "brief": "Joins a live match of `mode`, creating one when there is none. The server resolves it,",
+          "description": "Joins a live match of `mode`, creating one when there is none. The server resolves it,\nso simultaneous callers converge on one match. Needs an asobi server 0.86.0 or later.",
+          "parameters": [
+            {
+              "name": "mode",
+              "doc": "The match mode.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "opts",
+              "doc": "The join context the game module receives.",
+              "types": [
+                "JoinOptions | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the `match.joined` payload, or a reason such as `not_found` or\n`quick_play_disabled`.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send_match_input",
+          "brief": "Sends input to the current match.",
+          "description": "Sends input to the current match.",
+          "parameters": [
+            {
+              "name": "input",
+              "doc": "The input.",
+              "types": [
+                "Payload"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "leave_match",
+          "brief": "Leaves the current match.",
+          "description": "Leaves the current match.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "list_matches",
+          "brief": "Lists matches.",
+          "description": "Lists matches.",
+          "parameters": [
+            {
+              "name": "opts",
+              "doc": "A mode, or the mode and whether to list only matches with room.",
+              "types": [
+                "string | ListOptions"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the list, or the reason it failed.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_to_matchmaker",
+          "brief": "Queues for a match with the matchmaker. Register `matchmaker_queued`, `error` and",
+          "description": "Queues for a match with the matchmaker. Register `matchmaker_queued`, `error` and\n`matchmaker_failed` first, or a failure goes unnoticed.",
+          "parameters": [
+            {
+              "name": "opts",
+              "doc": "A mode, or the mode and its matchmaking properties. Defaults to `\"default\"`.",
+              "types": [
+                "string | MatchmakerOptions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "quick_play",
+          "brief": "Queues for a match with the matchmaker, as `add_to_matchmaker` does.",
+          "description": "Queues for a match with the matchmaker, as `add_to_matchmaker` does.",
+          "parameters": [
+            {
+              "name": "opts",
+              "doc": "A mode, or the mode and its matchmaking properties. Defaults to `\"default\"`.",
+              "types": [
+                "string | MatchmakerOptions"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "remove_from_matchmaker",
+          "brief": "Takes a ticket out of the matchmaker.",
+          "description": "Takes a ticket out of the matchmaker.",
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "doc": "The ticket's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "join_chat",
+          "brief": "Joins a chat channel.",
+          "description": "Joins a chat channel.",
+          "parameters": [
+            {
+              "name": "channel_id",
+              "doc": "The channel's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send_chat_message",
+          "brief": "Sends a message to a chat channel.",
+          "description": "Sends a message to a chat channel.",
+          "parameters": [
+            {
+              "name": "channel_id",
+              "doc": "The channel's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "content",
+              "doc": "The message.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "leave_chat",
+          "brief": "Leaves a chat channel.",
+          "description": "Leaves a chat channel.",
+          "parameters": [
+            {
+              "name": "channel_id",
+              "doc": "The channel's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cast_vote",
+          "brief": "Casts a vote.",
+          "description": "Casts a vote.",
+          "parameters": [
+            {
+              "name": "vote_id",
+              "doc": "The vote's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "option_id",
+              "doc": "The chosen option's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "cast_veto",
+          "brief": "Vetoes a vote.",
+          "description": "Vetoes a vote.",
+          "parameters": [
+            {
+              "name": "vote_id",
+              "doc": "The vote's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send_dm",
+          "brief": "Sends a direct message.",
+          "description": "Sends a direct message.",
+          "parameters": [
+            {
+              "name": "recipient_id",
+              "doc": "The recipient's player id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "content",
+              "doc": "The message.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "update_presence",
+          "brief": "Sets the player's presence.",
+          "description": "Sets the player's presence.",
+          "parameters": [
+            {
+              "name": "status",
+              "doc": "The status. Defaults to `\"online\"`.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send_heartbeat",
+          "brief": "Sends a heartbeat.",
+          "description": "Sends a heartbeat.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "ping",
+          "brief": "Measures the round trip of one heartbeat.",
+          "description": "Measures the round trip of one heartbeat.",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "Receives the round trip in milliseconds, or the reason it failed.",
+              "types": [
+                "(rtt_ms: number | undefined, err: string | undefined) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "rpc",
+          "brief": "Calls a server extension's RPC method. Calls may answer out of order.",
+          "description": "Calls a server extension's RPC method. Calls may answer out of order.",
+          "parameters": [
+            {
+              "name": "method",
+              "doc": "The method, such as `\"quests.claim\"`.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "params",
+              "doc": "The method's parameters. Defaults to an empty table.",
+              "types": [
+                "Payload"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the method's result, or the error: an `RpcError` the method\nanswered with, or the reason the request failed.",
+              "types": [
+                "(result: Payload | undefined, err: RpcError | string | undefined) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "list_worlds",
+          "brief": "Lists worlds.",
+          "description": "Lists worlds.",
+          "parameters": [
+            {
+              "name": "opts",
+              "doc": "A mode, or the mode and whether to list only worlds with room.",
+              "types": [
+                "string | ListOptions"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the list, or the reason it failed.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "create_world",
+          "brief": "Creates a world.",
+          "description": "Creates a world.",
+          "parameters": [
+            {
+              "name": "mode",
+              "doc": "The world mode.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the reply, or the reason it failed.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "join_world",
+          "brief": "Joins a world by id.",
+          "description": "Joins a world by id.",
+          "parameters": [
+            {
+              "name": "world_id",
+              "doc": "The world's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the reply, or the reason it failed.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "join_world",
+          "brief": "Joins a world by id.",
+          "description": "Joins a world by id.",
+          "parameters": [
+            {
+              "name": "world_id",
+              "doc": "The world's id.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "opts",
+              "doc": "The join context the world's join callback receives, such as a lobby code.",
+              "types": [
+                "JoinOptions | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the reply, or the reason it failed.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "find_or_create_world",
+          "brief": "Joins an open world of `mode`, creating one when there is none. The server resolves it,",
+          "description": "Joins an open world of `mode`, creating one when there is none. The server resolves it,\nso simultaneous callers converge on one world.",
+          "parameters": [
+            {
+              "name": "mode",
+              "doc": "The world mode.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the reply, or the reason it failed.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "join_or_host",
+          "brief": "Joins an open world of `mode` or hosts a new one, as `find_or_create_world` does.",
+          "description": "Joins an open world of `mode` or hosts a new one, as `find_or_create_world` does.",
+          "parameters": [
+            {
+              "name": "mode",
+              "doc": "The world mode.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "Receives the reply, or the reason it failed.",
+              "types": [
+                "RequestCallback"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send_world_input",
+          "brief": "Sends input to the current world.",
+          "description": "Sends input to the current world.",
+          "parameters": [
+            {
+              "name": "input",
+              "doc": "The input.",
+              "types": [
+                "Payload"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "seq",
+              "doc": "An increasing input number for client-side prediction, which `world_ack`\nechoes back once the server consumes it.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "leave_world",
+          "brief": "Leaves the current world.",
+          "description": "Leaves the current world.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_datagram_open",
+          "brief": "Internal. Opens the datagram plane: `_handle_message` calls it on `session.connected`",
+          "description": "Internal. Opens the datagram plane: `_handle_message` calls it on `session.connected`\nwhen `request_datagram` is set.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_datagram_stop",
+          "brief": "Internal. Closes the datagram plane: `disconnect` and a failed open call it.",
+          "description": "Internal. Closes the datagram plane: `disconnect` and a failed open call it.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_apply_pose",
+          "brief": "Internal. Applies one datagram pose to `entities`: `update` calls it.",
+          "description": "Internal. Applies one datagram pose to `entities`: `update` calls it.",
+          "parameters": [
+            {
+              "name": "pose",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_datagram_endpoint",
+          "brief": "Internal. Splits the `host:port` endpoint a datagram mint answers with: `_datagram_open`",
+          "description": "Internal. Splits the `host:port` endpoint a datagram mint answers with: `_datagram_open`\ncalls it.",
+          "parameters": [
+            {
+              "name": "endpoint",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "LuaMultiReturn<[ host: string, port: number ] | [ host: undefined ]>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_send_session_connect",
+          "brief": "Internal. Sends `session.connect` with the access token: the open socket and `reauth`",
+          "description": "Internal. Sends `session.connect` with the access token: the open socket and `reauth`\ncall it.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_send",
+          "brief": "Internal. Sends a frame with a correlation id and no callback: `leave_match`, `join_chat`",
+          "description": "Internal. Sends a frame with a correlation id and no callback: `leave_match`, `join_chat`\nand the other methods that take no callback call it.",
+          "parameters": [
+            {
+              "name": "msg_type",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "payload",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_send_with_callback",
+          "brief": "Internal. Sends a frame and records its callback for the reply: the methods taking a",
+          "description": "Internal. Sends a frame and records its callback for the reply: the methods taking a\ncallback call it.",
+          "parameters": [
+            {
+              "name": "msg_type",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "payload",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_send_fire_and_forget",
+          "brief": "Internal. Sends a frame with no correlation id: `send_match_input`, `send_world_input`,",
+          "description": "Internal. Sends a frame with no correlation id: `send_match_input`, `send_world_input`,\n`send_chat_message` and `send_heartbeat` call it.",
+          "parameters": [
+            {
+              "name": "msg_type",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "payload",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "seq",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_apply_entity_update",
+          "brief": "Internal. Applies one entity delta to `entities`: `_dispatch_tick` calls it.",
+          "description": "Internal. Applies one entity delta to `entities`: `_dispatch_tick` calls it.",
+          "parameters": [
+            {
+              "name": "delta",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "zkey",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_dispatch_tick",
+          "brief": "Internal. Applies a `world.tick` or `match.state` frame and fires its events:",
+          "description": "Internal. Applies a `world.tick` or `match.state` frame and fires its events:\n`_handle_message` and `_handle_binary` call it.",
+          "parameters": [
+            {
+              "name": "payload",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_reconcile_keyframe",
+          "brief": "Internal. Removes the entities a keyframe left out: `_dispatch_tick` calls it.",
+          "description": "Internal. Removes the entities a keyframe left out: `_dispatch_tick` calls it.",
+          "parameters": [
+            {
+              "name": "zkey",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "updates",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_request_resync",
+          "brief": "Internal. Asks the server for a zone's keyframe after a gap: `_dispatch_tick` calls it.",
+          "description": "Internal. Asks the server for a zone's keyframe after a gap: `_dispatch_tick` calls it.",
+          "parameters": [
+            {
+              "name": "zkey",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "zone",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_handle_binary",
+          "brief": "Internal. Decodes a binary `world.tick` frame: `_handle_message` calls it.",
+          "description": "Internal. Decodes a binary `world.tick` frame: `_handle_message` calls it.",
+          "parameters": [
+            {
+              "name": "raw",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "_handle_message",
+          "brief": "Internal. Routes one websocket message: the socket's callback calls it.",
+          "description": "Internal. Routes one websocket message: the socket's callback calls it.",
+          "parameters": [
+            {
+              "name": "raw",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "client",
+          "brief": "The client this connection belongs to.",
+          "description": "The client this connection belongs to.",
+          "types": [
+            "Client"
+          ]
+        },
+        {
+          "name": "entities",
+          "brief": "Every synced entity's whole state, keyed by entity id. Emptied when a world is joined or",
+          "description": "Every synced entity's whole state, keyed by entity id. Emptied when a world is joined or\nleft.",
+          "types": [
+            "LuaMap<string, Payload>"
+          ]
+        },
+        {
+          "name": "local_player_id",
+          "brief": "The signed-in player's entity id, set once `connected` fires.",
+          "description": "The signed-in player's entity id, set once `connected` fires.",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "request_binary_wire",
+          "brief": "Set before `connect` to ask for the binary `world.tick` encoding.",
+          "description": "Set before `connect` to ask for the binary `world.tick` encoding.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "wire",
+          "brief": "The encoding the server granted, read once `connected` fires.",
+          "description": "The encoding the server granted, read once `connected` fires.",
+          "types": [
+            "'json' | 'binary'"
+          ]
+        },
+        {
+          "name": "request_datagram",
+          "brief": "Set before `connect` to also open the datagram plane, which carries entity positions",
+          "description": "Set before `connect` to also open the datagram plane, which carries entity positions\nover UDP. It never opens on HTML5, and the websocket keeps carrying everything either way.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RealtimeEvents",
+      "properties": [
+        {
+          "name": "error",
+          "brief": "An `error` frame, or `{ error }` with the websocket's message when the socket fails. A",
+          "description": "An `error` frame, or `{ error }` with the websocket's message when the socket fails. A\nframe whose `reason` rejects the access token fires `auth_expired` as well.",
+          "types": [
+            "(payload: RealtimeError) => void"
+          ]
+        },
+        {
+          "name": "connected",
+          "brief": "`session.connected`: the session is authenticated, and `local_player_id` and `wire` are",
+          "description": "`session.connected`: the session is authenticated, and `local_player_id` and `wire` are\nset. Send game messages only after this fires.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "heartbeat",
+          "brief": "`session.heartbeat`: the server's heartbeat.",
+          "description": "`session.heartbeat`: the server's heartbeat.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "match_state",
+          "brief": "`match.state`: a match state snapshot. A `{ tick, updates }` frame has already updated",
+          "description": "`match.state`: a match state snapshot. A `{ tick, updates }` frame has already updated\n`entities` and fired the entity events and `tick`.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "match_matched",
+          "brief": "`match.matched`: the matchmaker placed the player in a match, carrying its `match_id`.",
+          "description": "`match.matched`: the matchmaker placed the player in a match, carrying its `match_id`.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "match_joined",
+          "brief": "`match.joined`: the player joined a match.",
+          "description": "`match.joined`: the player joined a match.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "match_left",
+          "brief": "`match.left`: the player left the match.",
+          "description": "`match.left`: the player left the match.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "match_list",
+          "brief": "`match.list`: a list of matches.",
+          "description": "`match.list`: a list of matches.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "match_finished",
+          "brief": "`match.finished`: the match ended.",
+          "description": "`match.finished`: the match ended.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "matchmaker_expired",
+          "brief": "`match.matchmaker_expired`: the matchmaker ticket expired.",
+          "description": "`match.matchmaker_expired`: the matchmaker ticket expired.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "matchmaker_failed",
+          "brief": "`match.matchmaker_failed`: the match could not start, carrying a `reason`.",
+          "description": "`match.matchmaker_failed`: the match could not start, carrying a `reason`.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "vote_start",
+          "brief": "`match.vote_start`: a vote opened.",
+          "description": "`match.vote_start`: a vote opened.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "vote_tally",
+          "brief": "`match.vote_tally`: a vote's running tally.",
+          "description": "`match.vote_tally`: a vote's running tally.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "vote_result",
+          "brief": "`match.vote_result`: a vote's result.",
+          "description": "`match.vote_result`: a vote's result.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "vote_vetoed",
+          "brief": "`match.vote_vetoed`: a vote was vetoed.",
+          "description": "`match.vote_vetoed`: a vote was vetoed.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "matchmaker_queued",
+          "brief": "`matchmaker.queued`: the matchmaker accepted the ticket, carrying `ticket_id` and `players_needed`.",
+          "description": "`matchmaker.queued`: the matchmaker accepted the ticket, carrying `ticket_id` and `players_needed`.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "matchmaker_removed",
+          "brief": "`matchmaker.removed`: the ticket left the matchmaker.",
+          "description": "`matchmaker.removed`: the ticket left the matchmaker.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "chat_joined",
+          "brief": "`chat.joined`: the player joined a chat channel.",
+          "description": "`chat.joined`: the player joined a chat channel.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "chat_left",
+          "brief": "`chat.left`: the player left a chat channel.",
+          "description": "`chat.left`: the player left a chat channel.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "chat_message",
+          "brief": "`chat.message`: a message in a joined channel.",
+          "description": "`chat.message`: a message in a joined channel.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "dm_sent",
+          "brief": "`dm.sent`: a direct message was sent.",
+          "description": "`dm.sent`: a direct message was sent.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "dm_message",
+          "brief": "`dm.message`: a direct message arrived.",
+          "description": "`dm.message`: a direct message arrived.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "presence_changed",
+          "brief": "`presence.updated`: a player's presence changed.",
+          "description": "`presence.updated`: a player's presence changed.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "notification",
+          "brief": "`notification.new`: a new notification.",
+          "description": "`notification.new`: a new notification.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "game_message",
+          "brief": "`game.message` or `module.message`: a message from the game module. The server sends",
+          "description": "`game.message` or `module.message`: a message from the game module. The server sends\nboth names for each message, and the event fires for whichever the connection saw first.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "game_error",
+          "brief": "`game.error` or `module.error`: an error from the game module. The server sends both",
+          "description": "`game.error` or `module.error`: an error from the game module. The server sends both\nnames for each error, and the event fires for whichever the connection saw first.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "module_event",
+          "brief": "`module.event`: a named push from a server extension, carrying `event` and `data`.",
+          "description": "`module.event`: a named push from a server extension, carrying `event` and `data`.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "vote_cast_ok",
+          "brief": "`vote.cast_ok`: the vote was recorded.",
+          "description": "`vote.cast_ok`: the vote was recorded.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "vote_veto_ok",
+          "brief": "`vote.veto_ok`: the veto was recorded.",
+          "description": "`vote.veto_ok`: the veto was recorded.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "world_tick",
+          "brief": "`world.tick`: a world frame. It has already updated `entities` and fired the entity",
+          "description": "`world.tick`: a world frame. It has already updated `entities` and fired the entity\nevents and `tick`.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "world_terrain",
+          "brief": "`world.terrain`: the world's terrain.",
+          "description": "`world.terrain`: the world's terrain.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "world_list",
+          "brief": "`world.list`: a list of worlds.",
+          "description": "`world.list`: a list of worlds.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "world_joined",
+          "brief": "`world.joined`: the player joined a world. `entities` is emptied first.",
+          "description": "`world.joined`: the player joined a world. `entities` is emptied first.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "world_left",
+          "brief": "`world.left`: the player left the world. `entities` is emptied first.",
+          "description": "`world.left`: the player left the world. `entities` is emptied first.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "phase_changed",
+          "brief": "`world.phase_changed`: the world's phase changed.",
+          "description": "`world.phase_changed`: the world's phase changed.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "world_finished",
+          "brief": "`world.finished`: the world ended.",
+          "description": "`world.finished`: the world ended.",
+          "types": [
+            "(payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "world_ack",
+          "brief": "`world.ack`: the highest input `seq` the server consumed. It fires only for inputs sent",
+          "description": "`world.ack`: the highest input `seq` the server consumed. It fires only for inputs sent\nwith a `seq`.",
+          "types": [
+            "(ack: WorldAck) => void"
+          ]
+        },
+        {
+          "name": "auth_expired",
+          "brief": "The server rejected the access token: the socket closed, or an `error` frame arrived,",
+          "description": "The server rejected the access token: the socket closed, or an `error` frame arrived,\nfor a revoked, invalid or idle-timed-out session. Sign in again rather than retrying.",
+          "types": [
+            "(reason: string) => void"
+          ]
+        },
+        {
+          "name": "disconnected",
+          "brief": "The socket closed for any other reason, `\"closed\"` when it gave none.",
+          "description": "The socket closed for any other reason, `\"closed\"` when it gave none.",
+          "types": [
+            "(reason: string) => void"
+          ]
+        },
+        {
+          "name": "entity_added",
+          "brief": "An entity entered `entities`, with its full initial state.",
+          "description": "An entity entered `entities`, with its full initial state.",
+          "types": [
+            "(id: string, state: Payload) => void"
+          ]
+        },
+        {
+          "name": "entity_updated",
+          "brief": "An entity changed. `state` is its whole merged state, never a partial one, and `changed`",
+          "description": "An entity changed. `state` is its whole merged state, never a partial one, and `changed`\nnames the fields that changed.",
+          "types": [
+            "(id: string, state: Payload, changed: string[]) => void"
+          ]
+        },
+        {
+          "name": "entity_removed",
+          "brief": "An entity left `entities`.",
+          "description": "An entity left `entities`.",
+          "types": [
+            "(id: string) => void"
+          ]
+        },
+        {
+          "name": "tick",
+          "brief": "A `world.tick` or `match.state` frame was applied, after its entity events.",
+          "description": "A `world.tick` or `match.state` frame was applied, after its entity events.",
+          "types": [
+            "(tick: number | undefined, payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "match_event",
+          "brief": "A `match.<name>` frame that a match script sent with `game.broadcast(name, payload)`.",
+          "description": "A `match.<name>` frame that a match script sent with `game.broadcast(name, payload)`.\nFrames asobi itself sends keep their own events.",
+          "types": [
+            "(name: string, payload: Payload) => void"
+          ]
+        },
+        {
+          "name": "world_event",
+          "brief": "A `world.<name>` frame that a world script sent with `game.broadcast(name, payload)`.",
+          "description": "A `world.<name>` frame that a world script sent with `game.broadcast(name, payload)`.\nFrames asobi itself sends keep their own events.",
+          "types": [
+            "(name: string, payload: Payload) => void"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "WorldAck",
+      "properties": [
+        {
+          "name": "tick",
+          "brief": "The world tick the input was consumed by.",
+          "description": "The world tick the input was consumed by.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "seq",
+          "brief": "The highest `seq` passed to `send_world_input` that the server has consumed.",
+          "description": "The highest `seq` passed to `send_world_input` that the server has consumed.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "JoinOptions",
+      "properties": [
+        {
+          "name": "ctx",
+          "brief": "Passed untouched to the game module's join callback, such as a room code or a team pick.",
+          "description": "Passed untouched to the game module's join callback, such as a room code or a team pick.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ListOptions",
+      "properties": [
+        {
+          "name": "mode",
+          "brief": "Only sessions of this mode.",
+          "description": "Only sessions of this mode.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "has_capacity",
+          "brief": "Only sessions with room for another player.",
+          "description": "Only sessions with room for another player.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MatchmakerOptions",
+      "properties": [
+        {
+          "name": "mode",
+          "brief": "The matchmaker mode. Defaults to `\"default\"`.",
+          "description": "The matchmaker mode. Defaults to `\"default\"`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "properties",
+          "brief": "Properties the matchmaker groups tickets by.",
+          "description": "Properties the matchmaker groups tickets by.",
+          "types": [
+            "Payload"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "RpcError",
+      "properties": [
+        {
+          "name": "code",
+          "brief": "The error code, `\"internal\"` when the server sent none.",
+          "description": "The error code, `\"internal\"` when the server sent none.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message",
+          "brief": "A message for people, which may be reworded at any time.",
+          "description": "A message for people, which may be reworded at any time.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "details",
+          "brief": "Further detail the method attached.",
+          "description": "Further detail the method attached.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
