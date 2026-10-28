@@ -149,6 +149,8 @@
     "generated/water.d.ts",
     "generated/wrap.node.d.ts",
     "generated/wrap.node_list.d.ts",
+    "generated/wrap.go.d.ts",
+    "generated/wrap.go_list.d.ts",
     "generated/native/daabbcc.d.ts",
     "generated/native/share.d.ts",
     "generated/native/uuid4.d.ts",

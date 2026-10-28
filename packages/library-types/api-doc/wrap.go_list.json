@@ -1,0 +1,68 @@
+{
+  "info": {
+    "namespace": "wrap.go_list",
+    "brief": "Wraps several game objects at once. `new` takes urls, or names paired with urls, and",
+    "description": "Wraps several game objects at once. `new` takes urls, or names paired with urls, and\nreturns a table holding one `wrap.go` wrapper per url or name."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "GoList",
+      "types": [
+        "{ readonly [P in K]: Go; }"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Wraps the game object at each url, keyed by the url.",
+      "description": "Wraps the game object at each url, keyed by the url.",
+      "generics": "<const K extends string>",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The game object urls.",
+          "types": [
+            "readonly K[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GoList<K>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Wraps each game object, keyed by its name. A Lua table mixing urls and named entries",
+      "description": "Wraps each game object, keyed by its name. A Lua table mixing urls and named entries\nhas no TypeScript literal, so name every entry, a url under its own string.",
+      "generics": "<K extends string>",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "Each name, paired with a game object url.",
+          "types": [
+            "Record<K, SceneGameObjectAddress | Hash | Url>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GoList<K>"
+          ]
+        }
+      ]
+    }
+  ]
+}

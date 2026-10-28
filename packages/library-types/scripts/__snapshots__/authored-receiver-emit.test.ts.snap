@@ -243,3 +243,27 @@ end
 return ____exports
 "
 `;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records wrap.go: a consumer transpiles with the call forms the declaration produces: wrap.go 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local wrap_go = require("wrap.go")
+function ____exports.init()
+    local hero = wrap_go.new("/hero")
+    hero:set_position_x(1):add_position_y(2)
+end
+return ____exports
+"
+`;
+
+exports[`each shipped authored declaration emits the receiver form its expectation records wrap.go_list: a consumer transpiles with the call forms the declaration produces: wrap.go_list 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local wrap_go_list = require("wrap.go_list")
+function ____exports.init()
+    local list = wrap_go_list.new({hero = "/hero", camera = "/camera"})
+    list.hero:post("jump")
+end
+return ____exports
+"
+`;
