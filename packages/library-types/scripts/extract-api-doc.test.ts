@@ -793,6 +793,55 @@ describe("extractApiDoc generic clauses", () => {
   });
 });
 
+// An assertion signature narrows its argument and returns nothing at runtime;
+// `Full` is named only inside `fill`'s assertion.
+const ASSERTIONS = `/**
+ * Assertions demo.
+ * @noResolution
+ */
+declare module 'asrt.asrt' {
+	export interface Box {
+		a: number;
+	}
+
+	export interface Full {
+		a: number;
+		b: number;
+	}
+
+	/** Fill a box. */
+	export function fill(box: Box): asserts box is Box & Full;
+
+	/** Check a box. */
+	export function check(box: Box): asserts box;
+}
+`;
+
+describe("extractApiDoc assertion signatures", () => {
+  const elements = () =>
+    (extractApiDoc(ASSERTIONS, "asrt.asrt") as { elements: Array<Record<string, unknown>> })
+      .elements;
+
+  const fn = (name: string) =>
+    elements().find((e) => e.type === "FUNCTION" && e.name === name) as {
+      parameters: Array<{ name: string; types: string[] }>;
+      returnvalues: unknown[];
+    };
+
+  test("documents no return value for an assertion signature", () => {
+    expect(fn("fill").returnvalues).toEqual([]);
+    expect(fn("check").returnvalues).toEqual([]);
+  });
+
+  test("keeps the asserted parameter's own type", () => {
+    expect(fn("fill").parameters[0]?.types).toEqual(["Box"]);
+  });
+
+  test("still documents a type named only inside the assertion", () => {
+    expect(elements().some((e) => e.type === "TYPEDEF" && e.name === "Full")).toBe(true);
+  });
+});
+
 describe("extractApiDoc", () => {
   test("emits an { info, elements } object matching the parseDefoldApiDoc schema", () => {
     const emitted = extractApiDoc(DEMO, "demo.demo") as {

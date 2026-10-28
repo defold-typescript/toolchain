@@ -4,8 +4,9 @@
  * A stylized water shader: animated wave surfaces, foam, sparkles, refraction and
  * reflection, set through shader constants. A game object script calls `init` once with
  * the camera, sun and water objects, then `update(dt)` and `update_camera()` every frame.
- * The render script calls `render_init(self)` at the end of its `init` and
- * `render_update(self, state, predicates, draw_options_world)` in its `update` (see
+ * The render script calls `render_init(self)` at the end of its `init`, after which
+ * `self.predicates` holds the `water` predicate, and
+ * `render_update(self, state, self.predicates, draw_options_world)` in its `update` (see
  * `water/render/water.render_script`). The shader needs `exclude_gles_sm100 = 1` under
  * `[shader]` in `game.project`. Every setter writes a shader constant the next
  * `render_update` uploads, and every getter returns the stored values as separate
@@ -16,8 +17,11 @@
 declare module 'water.water' {
   /** The render script instance `render_init` reads and writes. */
   export interface RenderScriptSelf {
-    /** The render script's predicates. `render_init` adds a `water` predicate to it. */
-    predicates: object;
+    /** The render script's predicates, which hold `model`. `render_init` adds `water`. */
+    predicates: {
+      /** The `model` predicate, drawn into the scene render target and then to the screen. */
+      model: render.RenderPredicate;
+    };
     /** The render state, whose size `render_init` creates the scene render target at. */
     state: {
       /** The width in pixels. */
@@ -68,10 +72,14 @@ declare module 'water.water' {
    * `self.state.width` by `self.state.height` with a color and a depth buffer, and
    * creates the two constant buffers `render_update` draws with, all stored on `self`.
    * Call it at the end of the render script's `init`, once `self.predicates` and
-   * `self.state` are set.
+   * `self.state` are set. Afterwards `self.predicates` types as `Predicates`, which
+   * `render_update` takes. From a `defineRenderScript` `init`, call it on the state `init`
+   * returns, which is merged onto `self`.
    * @param self The render script instance.
    */
-  export function render_init(self: RenderScriptSelf): void;
+  export function render_init(
+    self: RenderScriptSelf,
+  ): asserts self is RenderScriptSelf & { predicates: Predicates };
 
   /**
    * Draws the `model` predicate into the scene render target, then draws `model` and the
