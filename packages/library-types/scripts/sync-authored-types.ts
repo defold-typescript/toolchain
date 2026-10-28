@@ -79,6 +79,10 @@ export interface AuthoredTarget {
   // `[]`: a target with no vendored upstream is simply unmeasured, which is why it
   // must not join `REQUIRED_FIELDS`.
   upstreamLua: string[];
+  // The fork's interface for the instances upstream's `function M:name(...)` methods
+  // serve, read from api-doc as the `TYPEDEF` of that name. Required by
+  // `authored-parity.ts` once upstream defines a method, and absent otherwise.
+  instanceType?: string;
   // Why this target vendors no upstream `.lua`. Mutually exclusive with a
   // non-empty `upstreamLua`, and one of the two is mandatory: neither field is
   // required on its own, but the *disjunction* is, so a target cannot land
@@ -157,6 +161,19 @@ export function readAuthoredTargets(packageRoot: string): AuthoredTarget[] {
     }
     const upstreamLua = entry.upstreamLua ?? [];
     validateParityDeclaration(label, upstreamLua, entry.parityVerdict);
+    if (
+      entry.instanceType !== undefined &&
+      (typeof entry.instanceType !== "string" || !/^[A-Za-z_$][\w$]*$/.test(entry.instanceType))
+    ) {
+      throw new Error(
+        `authored-targets.json: entry ${label} has instanceType ${JSON.stringify(entry.instanceType)}, which is not a type name.`,
+      );
+    }
+    if (entry.instanceType !== undefined && upstreamLua.length === 0) {
+      throw new Error(
+        `authored-targets.json: entry ${label} declares instanceType but vendors no upstreamLua, so no method is measured against it.`,
+      );
+    }
     return {
       repo: entry.repo as string,
       ref: entry.ref as string,
@@ -168,6 +185,7 @@ export function readAuthoredTargets(packageRoot: string): AuthoredTarget[] {
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",
       upstreamLua,
+      ...(entry.instanceType === undefined ? {} : { instanceType: entry.instanceType }),
       ...(entry.parityVerdict === undefined ? {} : { parityVerdict: entry.parityVerdict }),
     };
   });
@@ -191,12 +209,14 @@ export function emitAuthoredDeclaration(packageRoot: string, target: AuthoredTar
 
 /** The pinned upstream members by name, the way `authored-parity.ts` builds them:
  * a later definition of a name wins, matching Lua. Empty for a target that vendors
- * no upstream `.lua`, which is then never parsed. */
+ * no upstream `.lua`, which is then never parsed. A `:` method is left out: it is a
+ * member of the instance type, so its prose belongs to no module-level element of
+ * the same name. */
 function upstreamMembers(packageRoot: string, target: AuthoredTarget): Map<string, LuaMember> {
   const members = new Map<string, LuaMember>();
   for (const relative of target.upstreamLua) {
     for (const member of parseLuaSurface(readFileSync(join(packageRoot, relative), "utf8")).members)
-      members.set(member.name, member);
+      if (member.method !== true) members.set(member.name, member);
   }
   return members;
 }

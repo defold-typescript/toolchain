@@ -607,3 +607,67 @@ describe("a module that returns a table literal is a data module whose keys are 
     expect(surface.members.map((member) => member.name)).toEqual(["a"]);
   });
 });
+
+describe("a column-0 colon method of the returned table is a method member", () => {
+  const source = [
+    "local C = {}",
+    "C.__index = C",
+    "",
+    "function C:run(x, y)",
+    "  return self, x, y",
+    "end",
+    "",
+    "function C.new(config)",
+    "  return setmetatable({}, C)",
+    "end",
+    "",
+    "return C",
+    "",
+  ].join("\n");
+
+  test("`function C:run(x, y)` records `run` as a method, `self` not counted", () => {
+    expect(byName(parseLuaSurface(source).members).get("run")).toEqual({
+      name: "run",
+      params: ["x", "y"],
+      varargs: false,
+      method: true,
+      doc: "",
+      refusedDoc: false,
+    });
+  });
+
+  test("a `.` definition beside it stays a plain member", () => {
+    expect(byName(parseLuaSurface(source).members).get("new")?.method).toBeUndefined();
+  });
+
+  test("the self-index `C.__index = C` is no member", () => {
+    expect(parseLuaSurface(source).members.map((member) => member.name)).toEqual(["run", "new"]);
+  });
+
+  test("a colon method on another table throws, naming it", () => {
+    expect(() =>
+      parseLuaSurface(["local C = {}", "function D:run()", "end", "return C"].join("\n")),
+    ).toThrow("`D`");
+  });
+
+  test("a name defined both as a function and as a method throws, naming it", () => {
+    expect(() =>
+      parseLuaSurface(
+        ["local C = {}", "function C.run()", "end", "function C:run()", "end", "return C"].join(
+          "\n",
+        ),
+      ),
+    ).toThrow("`run`");
+  });
+
+  test("an annotation file's class stubs stay out, its module table named by the caller", () => {
+    const box2d = parseLuaSurface(
+      readFileSync(
+        join(PACKAGE_ROOT, "fixtures/upstream-native/defold-box2d/box2d_header.lua"),
+        "utf8",
+      ),
+      { moduleLocal: "box2d" },
+    );
+    expect(box2d.members.some((member) => member.method === true)).toBe(false);
+  });
+});
