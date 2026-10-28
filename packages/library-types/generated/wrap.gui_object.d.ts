@@ -26,6 +26,13 @@ declare module 'wrap.gui_object' {
   export type Omittable<T> = {} extends T ? unknown : never;
 
   /**
+   * The keys upstream reads to tell a class from a plain table, and copies over the `new`
+   * and `__index` of the `extend()` a plain table is adapted onto.
+   * @internal
+   */
+  export type NoClassKeys = { __name?: never; __index?: never; 'new'?: never };
+
+  /**
    * `undefined` when `{}`, the value `setup` puts in place of omitted props or settings,
    * fits `T`, else `never`.
    * @internal
@@ -197,9 +204,11 @@ declare module 'wrap.gui_object' {
   /**
    * A plain table of GUI object hooks and fields, which `register_modal` copies onto a
    * fresh `extend()`. Each hook sees the object, with the table's own fields, as `this`.
+   * The table may not set `__name`, `new` or `__index`.
    */
   export type GuiObjectHooks<F extends object = {}> = Partial<GuiObject> &
     F &
+    NoClassKeys &
     ThisType<GuiObject & F>;
 
   /** The class name, the value `register_modal` reads to tell a class from a plain table. */
