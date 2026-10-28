@@ -1035,7 +1035,9 @@ describe("a fork offering several call shapes is measured against the set", () =
   });
 
   // `operator.lerp` takes numbers or vectors, `bezier.new` vector points or number
-  // points with a required `length_func`, and `def_behavior_tree.new` a payload or none.
+  // points with a required `length_func`, `def_behavior_tree.new` a payload or none,
+  // `wrap.node`'s `animate` one property and target or an array of each, and
+  // `wrap.node_list.new` an array of node ids or a record of them.
   test("the term is 0 on every target whose api-doc names each function once", () => {
     const overloaded = authoredParityTargets(PACKAGE_ROOT)
       .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
@@ -1046,6 +1048,8 @@ describe("a fork offering several call shapes is measured against the set", () =
       "operator.operator: 1",
       "operator.bezier: 1",
       "def_behavior_tree: 1",
+      "wrap.node: 1",
+      "wrap.node_list: 1",
     ]);
   });
 });
@@ -1197,12 +1201,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other ninety targets share no variadic member at all", () => {
+  test("the other ninety-two targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(90);
+    expect(untouched.length).toBe(92);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2696,6 +2700,79 @@ describe("water.water declares the whole of its upstream", () => {
 
   test("every api-doc member carries a description", () => {
     const members = apiDocElements(target("water")).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `node.lua` is a class module: `new` is its one `.` function, and the 159 node methods
+// are `function Node:x` definitions measured against the fork's `Node` interface, the
+// two-space `function  Node:get_text_metrics` among them. Upstream documents none of
+// them, so every description is the fork's own.
+describe("wrap.node declares the whole of its upstream", () => {
+  const entry = target("wrap.node");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, the node methods included, with nothing missing or short", () => {
+    expect(report.upstreamMembers).toBe(160);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member and every node method carries a description", () => {
+    const elements = apiDocElements(entry);
+    const members = elements.filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    const node = elements.find(
+      (element) => element.type === "TYPEDEF" && element.name === entry.instanceType,
+    ) as unknown as { functions: ApiDocElement[] };
+    expect(
+      new Set(members.map((element) => element.name)).size +
+        new Set(node.functions.map((method) => method.name)).size,
+    ).toBe(report.upstreamMembers + report.upstreamFields);
+    const blank = [...members, ...node.functions]
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `node_list.lua` exports only `NodeList.new(data, tree)`: the list's keys are the names
+// it is given, so they have no upstream definition to measure.
+describe("wrap.node_list declares the whole of its upstream", () => {
+  const entry = target("wrap.node_list");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(1);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(entry).filter(
       (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
     );
     expect(new Set(members.map((element) => element.name)).size).toBe(

@@ -1,0 +1,84 @@
+{
+  "info": {
+    "namespace": "wrap.node_list",
+    "brief": "Wraps several GUI nodes at once. `new` takes node ids, or names paired with ids or",
+    "description": "Wraps several GUI nodes at once. `new` takes node ids, or names paired with ids or\nnodes, and returns a table holding one `wrap.node` wrapper per name, optionally looking\neach id up in a cloned tree first."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "NodeList",
+      "types": [
+        "{ readonly [P in K | 'tree']: P extends 'tree' ? 'tree' extends K ? Node : NodeTree | undefined : Node; }"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Wraps the node with each id, keyed by the id.",
+      "description": "Wraps the node with each id, keyed by the id.",
+      "generics": "<const K extends string>",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The node ids.",
+          "types": [
+            "readonly K[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "A table from `gui.clone_tree` or `gui.get_tree` to look each id up in\nfirst. An id it lacks, or every id when it is omitted, is looked up with\n`gui.get_node`.",
+          "types": [
+            "NodeTree"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "NodeList<K>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Wraps each node, keyed by its name. A Lua table mixing ids and named entries has no",
+      "description": "Wraps each node, keyed by its name. A Lua table mixing ids and named entries has no\nTypeScript literal, so name every entry, an id under its own name.",
+      "generics": "<K extends string>",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "Each name, paired with a node id or a node.",
+          "types": [
+            "Record<K, string | Opaque<'node'>>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tree",
+          "doc": "A table from `gui.clone_tree` or `gui.get_tree` to look each id up in\nfirst. An id it lacks, or every id when it is omitted, is looked up with\n`gui.get_node`.",
+          "types": [
+            "NodeTree"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "NodeList<K>"
+          ]
+        }
+      ]
+    }
+  ]
+}
