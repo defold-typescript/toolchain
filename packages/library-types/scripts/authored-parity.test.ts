@@ -1214,12 +1214,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other ninety-eight targets share no variadic member at all", () => {
+  test("the other ninety-nine targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(98);
+    expect(untouched.length).toBe(99);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -2929,6 +2929,39 @@ describe("wrap.wrap declares the whole of its upstream", () => {
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(3);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("every api-doc member carries a description", () => {
+    const members = apiDocElements(entry).filter(
+      (element) => element.type === "FUNCTION" || element.type === "VARIABLE",
+    );
+    expect(new Set(members.map((element) => element.name)).size).toBe(
+      report.upstreamMembers + report.upstreamFields,
+    );
+    const blank = members
+      .filter((element) => (element.description ?? "").trim() === "")
+      .map((element) => element.name);
+    expect(blank).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// `minit.lua` is the whole runtime: seven `function M.x` definitions under LDoc `---`
+// blocks and no fields. `get_config_value` takes `default` as its second parameter.
+describe("minit.minit declares the whole of its upstream", () => {
+  const entry = target("minit");
+  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+
+  test("both axes close, with nothing missing, invented or short", () => {
+    expect(report.upstreamMembers).toBe(7);
     expect(report.upstreamFields).toBe(0);
     expect(report.missingMembers).toEqual([]);
     expect(report.phantomMembers).toEqual([]);
