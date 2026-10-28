@@ -114,8 +114,8 @@ export interface ApiFunction {
   /**
    * A pre-rendered generic-parameter clause (`<T extends druid_widget>`) inserted
    * right after the name at render time, before a function's `(` or an alias's
-   * `=`. Present only on library functions and type aliases; engine ref-docs
-   * carry no `generics`, so it stays absent.
+   * `=`. Present only on library functions, type aliases and interfaces; engine
+   * ref-docs carry no `generics`, so it stays absent.
    */
   generics?: string;
   /**
