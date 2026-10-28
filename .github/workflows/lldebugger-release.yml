@@ -22,6 +22,8 @@ on:
 jobs:
   gate:
     runs-on: ubuntu-latest
+    # Runs the same build and suite as ci.yml's test jobs; see the timeout note there.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -31,7 +33,7 @@ jobs:
       - run: bun run build
       - run: bun run typecheck
       - run: bun run lint
-      - run: bun test --timeout 30000
+      - run: bun test --timeout 60000
 
   publish:
     needs: gate

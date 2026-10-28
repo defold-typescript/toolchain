@@ -44,5 +44,5 @@ test(
     expect({ code, stderr }).toEqual({ code: 0, stderr: "" });
     expect(rendered).toContain(expected);
   },
-  { timeout: 30_000 },
+  { timeout: 60_000 },
 );

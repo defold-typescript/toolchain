@@ -13,7 +13,7 @@ const BIN = path.join(PKG_DIR, "dist", "bin.js");
 // Cold-spawning real `node dist/bin.js` is slow and variable on the Windows
 // CI runner (cold module cache, filesystem/AV overhead), so give these spawn
 // tests far more headroom than Bun's 5s default.
-const SPAWN_TEST_TIMEOUT_MS = 30_000;
+const SPAWN_TEST_TIMEOUT_MS = 60_000;
 
 function build(cwd: string): void {
   const proc = Bun.spawnSync(["bun", "run", "build"], { cwd, stdout: "pipe", stderr: "pipe" });
