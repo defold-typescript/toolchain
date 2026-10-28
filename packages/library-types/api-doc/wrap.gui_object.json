@@ -1,0 +1,536 @@
+{
+  "info": {
+    "namespace": "wrap.gui_object",
+    "brief": "The base class of a GUI object: a part of a scene with its own hidden root box node, its",
+    "description": "The base class of a GUI object: a part of a scene with its own hidden root box node, its\nown child objects, and the props and settings it is created with. A game subclasses it\nwith `extend`, assigns hooks to the subclass, and creates instances with a scene's or\nanother object's `new_object`."
+  },
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "GuiObjectClass",
+      "generics": "<P extends object = {}, S extends object = {}, F extends object = {}>",
+      "types": [
+        "GuiObject<P, S> & F & { 'new'(this: void): GuiObject<P, S> & F; }"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GuiObjectHooks",
+      "generics": "<F extends object = {}>"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "__name",
+      "brief": "The class name, the value `register_modal` reads to tell a class from a plain table.",
+      "description": "The class name, the value `register_modal` reads to tell a class from a plain table.",
+      "types": [
+        "'GuiObject'"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Returns a new, not yet set up instance of the base class.",
+      "description": "Returns a new, not yet set up instance of the base class.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GuiObject"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "extend",
+      "brief": "Returns a new subclass: a table indexing the base class, with its own `new`. Assign",
+      "description": "Returns a new subclass: a table indexing the base class, with its own `new`. Assign\nhooks such as `init` and `update` to it, and pass it to `new_object`. `P` and `S` type\nthe props and settings its instances are created with, and `F` the fields and methods\na game adds to it.",
+      "generics": "<P extends object = {}, S extends object = {}, F extends object = {}>",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GuiObjectClass<P, S, F>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GuiObject",
+      "generics": "<P extends object = {}, S extends object = {}>",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "setup",
+          "brief": "Sets the object up in a scene and runs `init`. `new_object` calls it on each new",
+          "description": "Sets the object up in a scene and runs `init`. `new_object` calls it on each new\ninstance; a game does not.",
+          "parameters": [
+            {
+              "name": "scene",
+              "doc": "The scene the object belongs to, under whose root `root` is created.",
+              "types": [
+                "GuiScene"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "The object's props. Defaults to `{}`.",
+              "types": [
+                "P"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "settings",
+              "doc": "The object's settings. Defaults to `{}`.",
+              "types": [
+                "S"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_alive",
+          "brief": "Returns whether the object is set up and not deleted: `nil` until `setup` has run",
+          "description": "Returns whether the object is set up and not deleted: `nil` until `setup` has run\n`init`, so also during `init`, then `true` until `delete` makes it `false`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_box",
+          "brief": "Creates a box node under the object's root, from `wrap.node.Node.new_box`.",
+          "description": "Creates a box node under the object's root, from `wrap.node.Node.new_box`.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The node's position.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "size",
+              "doc": "The node's size.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_text",
+          "brief": "Creates a text node under the object's root, from `wrap.node.Node.new_text`.",
+          "description": "Creates a text node under the object's root, from `wrap.node.Node.new_text`.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The node's position.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "text",
+              "doc": "The node's text.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_pie",
+          "brief": "Creates a pie node under the object's root, from `wrap.node.Node.new_pie`.",
+          "description": "Creates a pie node under the object's root, from `wrap.node.Node.new_pie`.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The node's position.",
+              "types": [
+                "Vector3 | Vector4"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "size",
+              "doc": "The node's size.",
+              "types": [
+                "Vector3"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_particlefx",
+          "brief": "Creates a particle fx node under the object's root, from `wrap.node.Node.new_particlefx`.",
+          "description": "Creates a particle fx node under the object's root, from `wrap.node.Node.new_particlefx`.",
+          "parameters": [
+            {
+              "name": "position",
+              "doc": "The node's position.",
+              "types": [
+                "Vector3 | Vector4 | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "particlefx",
+              "doc": "The particle fx resource name.",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Node"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_object",
+          "brief": "Creates a child object in the object's scene: calls the class's `new`, sets the",
+          "description": "Creates a child object in the object's scene: calls the class's `new`, sets the\ninstance up with `setup`, which runs its `init`, and adds it to the objects\n`bg_update`, `delete` and `bg_on_input` fan out to.",
+          "generics": "<C extends AnyGuiObjectClass>",
+          "parameters": [
+            {
+              "name": "object_class",
+              "doc": "A class `extend` returns, whose props and settings may both be\nomitted.",
+              "types": [
+                "C & Omittable<C['props']> & Omittable<C['settings']>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "The child's props. Defaults to `{}`.",
+              "types": [
+                "C['props']"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "settings",
+              "doc": "The child's settings. Defaults to `{}`.",
+              "types": [
+                "C['settings']"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "ReturnType<C['new']>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_object",
+          "brief": "Creates a child object whose class needs props, as the first form does.",
+          "description": "Creates a child object whose class needs props, as the first form does.",
+          "generics": "<C extends AnyGuiObjectClass>",
+          "parameters": [
+            {
+              "name": "object_class",
+              "doc": "A class `extend` returns, whose settings may be omitted.",
+              "types": [
+                "C & Omittable<C['settings']>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "The child's props.",
+              "types": [
+                "C['props']"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "settings",
+              "doc": "The child's settings. Defaults to `{}`.",
+              "types": [
+                "C['settings']"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "ReturnType<C['new']>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "new_object",
+          "brief": "Creates a child object whose class needs settings, as the first form does.",
+          "description": "Creates a child object whose class needs settings, as the first form does.",
+          "generics": "<C extends AnyGuiObjectClass>",
+          "parameters": [
+            {
+              "name": "object_class",
+              "doc": "A class `extend` returns.",
+              "types": [
+                "C"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "props",
+              "doc": "The child's props, or `undefined` for `{}` when the class allows it.",
+              "types": [
+                "C['props'] | Defaulted<C['props']>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "settings",
+              "doc": "The child's settings.",
+              "types": [
+                "C['settings']"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "ReturnType<C['new']>"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "init",
+          "brief": "Runs once `setup` has created `root`, from `new_object`. A no-op to replace.",
+          "description": "Runs once `setup` has created `root`, from `new_object`. A no-op to replace.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "update",
+          "brief": "Runs each frame from `bg_update` while the object is alive. A no-op to replace.",
+          "description": "Runs each frame from `bg_update` while the object is alive. A no-op to replace.",
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "The time since the last frame, in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "final",
+          "brief": "Runs once from `delete`, before the child objects and `root` are deleted. A no-op to",
+          "description": "Runs once from `delete`, before the child objects and `root` are deleted. A no-op to\nreplace.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_input",
+          "brief": "Runs from `bg_on_input` when no child object consumed the input. A no-op to replace.",
+          "description": "Runs from `bg_on_input` when no child object consumed the input. A no-op to replace.",
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "The input action's id, or `nil` for mouse movement.",
+              "types": [
+                "Hash | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "action",
+              "doc": "The input data.",
+              "types": [
+                "go.on_input.Action"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "`true` to consume the input. The no-op returns `false`.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "bg_update",
+          "brief": "Runs `update`, then each child object's `update`, unless the object is not alive.",
+          "description": "Runs `update`, then each child object's `update`, unless the object is not alive.\nThe scene calls it each frame. At this tag it calls a child's `update` rather than\nits `bg_update`, so a child's own children are not updated.",
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "The time since the last frame, in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "delete",
+          "brief": "Deletes the object, unless it is not alive: marks it deleted, runs `final`, deletes",
+          "description": "Deletes the object, unless it is not alive: marks it deleted, runs `final`, deletes\neach child object, then deletes `root` and the nodes under it.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "bg_on_input",
+          "brief": "Offers input to each child object's `bg_on_input`, the newest first, then to",
+          "description": "Offers input to each child object's `bg_on_input`, the newest first, then to\n`on_input` if none consumed it. Returns `false` when the object is not alive.",
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "The input action's id, or `nil` for mouse movement.",
+              "types": [
+                "Hash | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "action",
+              "doc": "The input data.",
+              "types": [
+                "go.on_input.Action"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Whether a child object or `on_input` consumed the input.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "scene",
+          "brief": "The scene the object was created in, set by `setup`.",
+          "description": "The scene the object was created in, set by `setup`.",
+          "types": [
+            "GuiScene"
+          ]
+        },
+        {
+          "name": "root",
+          "brief": "The object's root, a box node `setup` creates hidden under its scene's root. Every",
+          "description": "The object's root, a box node `setup` creates hidden under its scene's root. Every\nnode the `new_*` methods create is its child.",
+          "types": [
+            "Node"
+          ]
+        },
+        {
+          "name": "props",
+          "brief": "The props the object was created with, or `{}` when it was given none.",
+          "description": "The props the object was created with, or `{}` when it was given none.",
+          "types": [
+            "P"
+          ]
+        },
+        {
+          "name": "settings",
+          "brief": "The settings the object was created with, or `{}` when it was given none.",
+          "description": "The settings the object was created with, or `{}` when it was given none.",
+          "types": [
+            "S"
+          ]
+        }
+      ]
+    }
+  ]
+}

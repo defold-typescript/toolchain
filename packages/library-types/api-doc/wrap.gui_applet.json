@@ -1,0 +1,328 @@
+{
+  "info": {
+    "namespace": "wrap.gui_applet",
+    "brief": "A GUI applet: a node that shows one scene at a time, playing the old scene's transition",
+    "description": "A GUI applet: a node that shows one scene at a time, playing the old scene's transition\nout while the new one transitions in. A GUI script creates it with `new`, and calls its\n`update`, `final`, `on_message` and `on_input` from its own, which drive the scenes."
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "__name",
+      "brief": "The class name.",
+      "description": "The class name.",
+      "types": [
+        "'GuiApplet'"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates an applet on a node and, when given a scene class, shows a new scene of it.",
+      "description": "Creates an applet on a node and, when given a scene class, shows a new scene of it.",
+      "parameters": [
+        {
+          "name": "root",
+          "doc": "The node, or the id `gui.get_node` looks it up by.",
+          "types": [
+            "string | Opaque<'node'>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "scene",
+          "doc": "A class `wrap.gui_scene.extend` returns.",
+          "types": [
+            "GuiSceneClass<object>"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GuiApplet"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new",
+      "brief": "Creates an applet on a node and shows a scene built from a plain table of hooks and",
+      "description": "Creates an applet on a node and shows a scene built from a plain table of hooks and\nfields, copied onto a fresh `wrap.gui_scene.extend()`.",
+      "generics": "<F extends object = {}>",
+      "parameters": [
+        {
+          "name": "root",
+          "doc": "The node, or the id `gui.get_node` looks it up by.",
+          "types": [
+            "string | Opaque<'node'>"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "scene",
+          "doc": "The hooks and fields, each hook seeing the scene as `this`.",
+          "types": [
+            "GuiSceneHooks<F>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "GuiApplet"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GuiApplet",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "register_scene",
+          "brief": "Registers a scene class under a name, for `show_scene` to show.",
+          "description": "Registers a scene class under a name, for `show_scene` to show.",
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "The name `show_scene` takes.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "scene",
+              "doc": "A class `wrap.gui_scene.extend` returns.",
+              "types": [
+                "GuiSceneClass<object>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "register_scene",
+          "brief": "Registers a scene built from a plain table of hooks and fields, whose keys are copied",
+          "description": "Registers a scene built from a plain table of hooks and fields, whose keys are copied\nonto a fresh `wrap.gui_scene.extend()` once, at registration.",
+          "generics": "<F extends object = {}>",
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "The name `show_scene` takes.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "scene",
+              "doc": "The hooks and fields, each hook seeing the scene as `this`.",
+              "types": [
+                "GuiSceneHooks<F>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "unregister_scene",
+          "brief": "Removes the scene registered under a name.",
+          "description": "Removes the scene registered under a name.",
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "The name it was registered under.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "show_scene",
+          "brief": "Shows a new scene of the class registered under a name: sets it up with `setup`,",
+          "description": "Shows a new scene of the class registered under a name: sets it up with `setup`,\nwhich runs its `init`, starts its transition in, and starts the transition out of the\nscene it replaces. Does nothing when no scene is registered under the name.",
+          "parameters": [
+            {
+              "name": "name_or_scene",
+              "doc": "The name the scene was registered under.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "show_scene",
+          "brief": "Shows a new scene of a class, as the first form does.",
+          "description": "Shows a new scene of a class, as the first form does.",
+          "parameters": [
+            {
+              "name": "name_or_scene",
+              "doc": "A class `wrap.gui_scene.extend` returns.",
+              "types": [
+                "GuiSceneClass<object>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "show_scene",
+          "brief": "Shows a scene built from a plain table of hooks and fields, as the first form does.",
+          "description": "Shows a scene built from a plain table of hooks and fields, as the first form does.\nThe keys are copied onto a fresh `wrap.gui_scene.extend()`, which is the scene shown.",
+          "generics": "<F extends object = {}>",
+          "parameters": [
+            {
+              "name": "name_or_scene",
+              "doc": "The hooks and fields, each hook seeing the scene as `this`.",
+              "types": [
+                "GuiSceneHooks<F>"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_size",
+          "brief": "Returns the size of the applet's root node, from `wrap.node.Node.get_size`.",
+          "description": "Returns the size of the applet's root node, from `wrap.node.Node.get_size`.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "Vector3"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "update",
+          "brief": "Runs `bg_update` on the scene transitioning out, if any, then on the current scene.",
+          "description": "Runs `bg_update` on the scene transitioning out, if any, then on the current scene.\nCall it from the GUI script's `update`.",
+          "parameters": [
+            {
+              "name": "dt",
+              "doc": "The time since the last frame, in seconds.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "final",
+          "brief": "Finalizes the current scene with `bg_final`. Call it from the GUI script's `final`.",
+          "description": "Finalizes the current scene with `bg_final`. Call it from the GUI script's `final`.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_message",
+          "brief": "Passes a message to the current scene's `bg_on_message`. Call it from the GUI",
+          "description": "Passes a message to the current scene's `bg_on_message`. Call it from the GUI\nscript's `on_message`.",
+          "parameters": [
+            {
+              "name": "message_id",
+              "doc": "The message's id.",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message",
+              "doc": "The message's data.",
+              "types": [
+                "Record<string | number, unknown>"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "sender",
+              "doc": "The url of the message's sender.",
+              "types": [
+                "Url"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_input",
+          "brief": "Passes input to the current scene's `bg_on_input`. Call it from the GUI script's",
+          "description": "Passes input to the current scene's `bg_on_input`. Call it from the GUI script's\n`on_input`, and return what it returns.",
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "The input action's id, or `nil` for mouse movement.",
+              "types": [
+                "Hash | undefined"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "action",
+              "doc": "The input data.",
+              "types": [
+                "go.on_input.Action"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Whether the scene consumed the input; `false` when no scene is shown.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "root",
+          "brief": "The wrapped node the applet was created on. Each scene's root is created under it.",
+          "description": "The wrapped node the applet was created on. Each scene's root is created under it.",
+          "types": [
+            "Node"
+          ]
+        }
+      ]
+    }
+  ]
+}

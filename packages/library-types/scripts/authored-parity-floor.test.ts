@@ -501,10 +501,18 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "dcde8fe00159c8756fe695042e0f3783f46fc56e1fc4528ca532711307ab59d1",
   "fixtures/upstream-lua/defold-wrap/wrap/go_list.lua":
     "1ebfcb9d4305418637059dfd21a808da8c71e555c42885992b33c6af940b15e1",
+  "fixtures/upstream-lua/defold-wrap/wrap/gui_applet.lua":
+    "e7fef1ca44e68573e803d56f5bae1dff80e92de842efd74a53a44a0bdb0cd10a",
+  "fixtures/upstream-lua/defold-wrap/wrap/gui_object.lua":
+    "f5ae89fb2aec8c4a597740c756b7d1cdeb76904ec968fc5215693b2498bcf780",
+  "fixtures/upstream-lua/defold-wrap/wrap/gui_scene.lua":
+    "01ba851bfcf1ab3c9df1c505f84455786d85af8919fb2b137e02b7350bca6fe0",
   "fixtures/upstream-lua/defold-wrap/wrap/node.lua":
     "ab7f5a5ff2fe12eff3ccde23f5d2d81e7f706c21bd308bc89558c48e0327e98d",
   "fixtures/upstream-lua/defold-wrap/wrap/node_list.lua":
     "f34a292a938ad99d1c09ec149efecac7a8b6676088a8ffe1c9b031cc93174456",
+  "fixtures/upstream-lua/defold-wrap/wrap/wrap.lua":
+    "0b7344bf9810103e785fe1d9f32f745d501f057a9d63622432ee405ff8c61f46",
   "fixtures/upstream-lua/defold-yagames/yagames/yagames.lua":
     "3942c90672a2022e5385c597da1f6f8aff6fc78c64776c4433dd5299f6f6f0ea",
   "fixtures/upstream-lua/defold-zzfx/zzfx/api.lua":

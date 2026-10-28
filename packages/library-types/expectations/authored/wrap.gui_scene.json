@@ -1,0 +1,25 @@
+{
+  "provenance": {
+    "authorUrl": "https://github.com/baochungit/defold-wrap",
+    "authoredHere": true,
+    "commit": "1.1.0",
+    "sourceUrl": "https://github.com/baochungit/defold-wrap/tree/1.1.0",
+    "license": "MIT"
+  },
+  "receiverEmit": {
+    "reason": "Upstream defines a scene's hooks as `function Scene:init()` on the table `extend` returns, so a hook assigned to that table must take the scene as `self`, every scene and applet method is a `:` method, and `extend` and `new` are `.` functions; a hook declared `this: void`, or an `extend` taking `self`, still passes `tsc`, so only TSTL's emit shows which call form each one produces.",
+    "consumer": [
+      "import * as gui_applet from \"wrap.gui_applet\";",
+      "import * as gui_scene from \"wrap.gui_scene\";",
+      "const Lobby = gui_scene.extend();",
+      "Lobby.init = function () {",
+      "  this.set_transitions({ transition_in: this.slide_in_left(), transition_out: this.slide_out_right() });",
+      "};",
+      "const app = gui_applet.new(\"root\");",
+      "app.register_scene(\"lobby\", Lobby);",
+      "export function update(dt: number): void {",
+      "  app.update(dt);",
+      "}"
+    ]
+  }
+}
