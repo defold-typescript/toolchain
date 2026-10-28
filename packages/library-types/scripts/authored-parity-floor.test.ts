@@ -355,6 +355,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "989ea96f2c5922bb4a0b57d195658d495b439513d5349033322e15d7b8a24788",
   "fixtures/upstream-lua/colyseus-defold/colyseus/sdk.lua":
     "86f1ef80eb452cf26d30f7b028281d6b92be73bca96a3f4585baf8fc61c3c447",
+  "fixtures/upstream-lua/defarmy/defarmy/defarmy.lua":
+    "dca55fee5442c25aa6af8d15a17a8222c532bddad6258f2802bd9e3d7f8505b0",
   "fixtures/upstream-lua/defcon/defcon/console.lua":
     "6756f6f5c8ff7820ef6cf2fa9953df9ac68f86356eb0074f86c072fb36f5995b",
   "fixtures/upstream-lua/defmath/defmath/defmath.lua":
