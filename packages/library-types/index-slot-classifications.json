@@ -71,6 +71,14 @@
     "class": "native-1",
     "evidence": "def_windward_jps.cpp:PushLocation adds 1 to both components of each point"
   },
+  "defgraph/MoveData:field:destination_index": {
+    "class": "native-1",
+    "evidence": "defgraph.lua:move_initialize starts it at 1, or at math.random(#destination_list) for SHUFFLE, and move_player reads destination_list[destination_index]"
+  },
+  "defgraph/MoveData:field:path_index": {
+    "class": "native-1",
+    "evidence": "defgraph.lua:move_internal_initialize sets it to 1, the path's first point, or to 0 while the game object stands still, and move_player reads path[path_index]"
+  },
   "detiled/detiled_map_params_scene:field:stagger_index": {
     "class": "not-a-position",
     "evidence": "the string \"odd\" or \"even\"; grid/isometric_staggered.lua:stagger_offset compares it to \"even\""
