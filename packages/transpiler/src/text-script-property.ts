@@ -1,13 +1,19 @@
 import * as ts from "typescript";
 import { findDirectGoPropertyCalls } from "./go-property-direct-call";
-import { factoryHooks, isPropertiesHook, propertyMembers } from "./lifecycle-erasure";
+import { factoryHooks, isPropertiesHook, propertySources } from "./lifecycle-erasure";
 
 export interface TextScriptPropertyFinding {
   readonly name: string;
   readonly file: string;
-  /** 1-based line of the default's initializer or the direct call's value. */
+  /**
+   * 1-based line of the default's initializer, the member that brings the name
+   * in, or the direct call's value.
+   */
   readonly line: number;
-  /** 1-based column of the default's initializer or the direct call's value. */
+  /**
+   * 1-based column of the default's initializer, the member that brings the
+   * name in, or the direct call's value.
+   */
   readonly column: number;
 }
 
@@ -15,7 +21,7 @@ export interface TextScriptPropertyFinding {
 // `properties` field or by a direct `go.property` call. Defold registers a
 // string `go.property` only from 1.13.2, so a build for an older target must
 // refuse them; typed rather than literal-driven, so a const holding a string
-// counts.
+// counts, and a name a spread brings in reports at the spread.
 export function findTextScriptProperties(
   program: ts.Program,
   fileNames: readonly string[],
@@ -36,9 +42,9 @@ export function findTextScriptProperties(
           if (!isPropertiesHook(property)) {
             continue;
           }
-          for (const { name, initializer } of propertyMembers(property)) {
-            if (mayHoldString(checker.getTypeAtLocation(initializer), checker)) {
-              located.push({ name, value: initializer });
+          for (const { name, type, node } of propertySources(property, checker)) {
+            if (mayHoldString(type, checker)) {
+              located.push({ name, value: node });
             }
           }
         }

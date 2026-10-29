@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
-import { lifecycleErasurePlugin } from "./lifecycle-erasure";
+import { createLifecycleErasure } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { physicsEventGuardLoweringPlugin } from "./physics-event-guard-lowering";
@@ -9,16 +9,20 @@ import { typeApplicationErasurePlugin } from "./type-application-erasure";
 import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
 // The same lua plugins the build path lists (transpile.ts / session.ts), so the
-// editor and the build agree on what is unsupported.
-const LUA_PLUGINS: tstl.Plugin[] = [
-  lifecycleErasurePlugin,
-  messageGuardLoweringPlugin,
-  windowEventGuardLoweringPlugin,
-  physicsEventGuardLoweringPlugin,
-  messageDispatchLoweringPlugin,
-  timersLoweringPlugin,
-  typeApplicationErasurePlugin,
-];
+// editor and the build agree on what is unsupported. The erasure is built per
+// call: the editor never evaluates, so the scripts it records as pending would
+// otherwise pile up across calls.
+function luaPlugins(): tstl.Plugin[] {
+  return [
+    createLifecycleErasure().plugin,
+    messageGuardLoweringPlugin,
+    windowEventGuardLoweringPlugin,
+    physicsEventGuardLoweringPlugin,
+    messageDispatchLoweringPlugin,
+    timersLoweringPlugin,
+    typeApplicationErasurePlugin,
+  ];
+}
 
 const noopWriteFile: ts.WriteFileCallback = () => {};
 
@@ -36,7 +40,7 @@ export function getProgramDiagnostics(
 ): ts.Diagnostic[] {
   const { diagnostics } = tstl.getProgramTranspileResult(ts.sys, noopWriteFile, {
     program,
-    plugins: LUA_PLUGINS,
+    plugins: luaPlugins(),
     ...(sourceFile ? { sourceFiles: [sourceFile] } : {}),
   });
   return diagnostics.filter((d) => d.file !== undefined && !isAmbient(d.file.fileName));

@@ -1879,7 +1879,7 @@ export default defineScript({
 
 Property-backed fields are present on `self` before `init` runs, so they need not appear in `init`'s return. The state `init` returns is still checked on its own — an omitted state field remains a compile error, while omitted property-backed fields are correct.
 
-Write `properties` as an object literal of `name: value` members; parentheses, `as` and `satisfies` around it are fine. A key may be a name or a literal, and registers under the name JavaScript gives it: `["a-b"]` registers `a-b` and `0x10` registers `16`. Defold's build reads each default from the generated Lua text alone, so the default must take a form it reads:
+Defold's build reads each default from the generated Lua text alone. A key may be a name or a literal, and registers under the name JavaScript gives it: `["a-b"]` registers `a-b` and `0x10` registers `16`. A default written in a form Defold's build reads is emitted as written:
 
 - a number, including an infinite one such as `1e400`
 - `true` or `false`
@@ -1889,7 +1889,27 @@ Write `properties` as an object literal of `name: value` members; parentheses, `
 - `vmath.vector3`, `vmath.vector4` or `vmath.quat` with no argument, one number or every component as a number
 - a [resource marker](#resource-properties)
 
-A `const enum` member and a template literal without substitutions compile to one of these forms and are accepted. A spread, a shorthand member, a method, an accessor, a key computed from a variable, or a default computed from a variable or an expression fails the build on that member, since it would register no property while `self` still types it.
+A `const enum` member and a template literal without substitutions compile to one of these forms. Any other default, spread, shorthand member or computed key is computed at build time, and so is a `properties` value that is not an object literal, such as a `const` declared elsewhere. The build runs the generated Lua in a sandbox and emits one `go.property` per property, with the computed value written in a form Defold's build reads. The names are the ones TypeScript types onto `self`, in JavaScript's key order: each name keeps the position where it first appears, and a later key overrides an earlier value.
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+import { TRAIL_DEFAULTS } from "./trail_defaults";
+
+const BASE = 10;
+
+export default defineScript({
+  properties: {
+    tint: vmath.vector4(1, 1, 1, 1),
+    ...TRAIL_DEFAULTS, // each of its names registers here, in its own order
+    width: BASE * 2, // registers `go.property("width", 20)`
+    id: hash(`trail_${BASE}`), // registers `hash("trail_10")`
+  },
+});
+```
+
+A computed default may use Lua's `math`, `string` and `table` libraries, the project's own modules, `hash`, `msg.url`, the `vmath.vector3`, `vmath.vector4` and `vmath.quat` constructors with their operators and components, and `vmath.quat_rotation_x`, `vmath.quat_rotation_y` and `vmath.quat_rotation_z`. A [resource marker](#resource-properties) stays a `name: value` member. The build fails, with a diagnostic on the script that names the cause, when a default calls an engine runtime API such as `go.get_position`, uses randomness or reads a file, reads from a library module, runs longer than a second, or computes a value that is not a property type, such as a table or `undefined`. A method or an accessor fails on that member, and a `properties` type with an index signature, such as `Record<string, number>`, fails because its names are not known at compile time.
+
+The sandbox runs Lua 5.4 and turns numbers into strings the way LuaJIT does, so a string built from a number matches what the game computes. Integer arithmetic that passes 2^63 can still differ from LuaJIT, which holds every number as a double.
 
 Only `defineScript` takes `properties`. Defold builds `go.property` only in `.script` files, so `defineGuiScript` and `defineRenderScript` reject the field at compile time and the transpiler refuses to emit it. A GUI or render script that needs a per-object value gets it from a sibling `defineScript`, which declares the property and sends its value with `msg.post` in `init`.
 
@@ -1967,7 +1987,7 @@ At runtime Defold owns `self` (a userdata-backed table) and a script can populat
 
 ##### Why not call `go.property` yourself
 
-Defold registers a script property with a chunk-scope `go.property("name", default)` call, and that call is what the editor reads to offer the property on a game object. The `properties` field *is* that call: the transpiler emits one registration per key, after the module's own `local` consts and before the hook assignments, so a default that references a module constant still resolves.
+Defold registers a script property with a chunk-scope `go.property("name", default)` call, and that call is what the editor reads to offer the property on a game object. The `properties` field *is* that call: the transpiler emits one registration per property, after the module's own `local` consts and before the hook assignments, with a default that references a module constant computed to the value Defold's build reads.
 
 Writing the call yourself is deprecated, and costs you the typing the field exists for:
 

@@ -4,10 +4,6 @@ import { fileURLToPath } from "node:url";
 import { RESOURCE_PROPERTY_MARKERS } from "./lifecycle-erasure";
 import { decodeWire, encodeWire, type PropertyEvaluationRequest } from "./property-default-wire";
 
-// The global a script's entry chunk assigns its properties value to; the
-// evaluator reads it after `require(entry)`.
-export const PROPERTIES_CAPTURE_GLOBAL = "____properties";
-
 const TIMEOUT_MS = 1000;
 const MEMORY_LIMIT_BYTES = 16 * 1024 * 1024;
 const TIMEOUT_MESSAGE = `computing the property defaults took longer than ${TIMEOUT_MS} ms (timeout)`;

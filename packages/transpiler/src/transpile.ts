@@ -1,10 +1,11 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
-import type * as ts from "typescript";
+import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
 import { createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
+import { LUALIB_REQUIRE_NAME } from "./emitted-requires";
 import {
   findDirectGoPropertyCalls,
   GO_PROPERTY_DIRECT_CALL_MESSAGE,
@@ -15,9 +16,14 @@ import {
   hsmClosure,
   hsmLoweringPlugin,
   hsmModules,
+  hsmRequireName,
   requireHsmSourceDir,
 } from "./hsm-builtin";
-import { lifecycleErasurePlugin } from "./lifecycle-erasure";
+import {
+  createLifecycleErasure,
+  type LifecycleErasure,
+  type PendingProperties,
+} from "./lifecycle-erasure";
 import { scanEmittedRequires } from "./lua-require-scan";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
@@ -26,9 +32,11 @@ import {
   nativeGlobalModulesPlugin,
   rewriteGlobalAliasRequires,
 } from "./native-global-modules";
+import { requirePathForRel } from "./output-paths";
 import { physicsEventGuardLoweringPlugin } from "./physics-event-guard-lowering";
+import { evaluatePropertyDefaults, type PropertyValue } from "./property-default-evaluator";
 import { importsTimersModule, timersLoweringPlugin } from "./timers-lowering";
-import { TIMERS_RUNTIME } from "./timers-runtime";
+import { TIMERS_REQUIRE_NAME, TIMERS_RUNTIME } from "./timers-runtime";
 import { typeApplicationErasurePlugin } from "./type-application-erasure";
 import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
@@ -373,6 +381,7 @@ function selectHsmSourceMaps(names: readonly string[]): Record<string, string> {
 function transpileVirtual(
   files: Readonly<Record<string, string>>,
   companionEmit: ReturnType<typeof createCompanionEmitPlugin>,
+  erasure: LifecycleErasure,
   overrides: Pick<tstl.CompilerOptions, "removeComments"> = {},
 ): tstl.TranspileVirtualProjectResult {
   return tstl.transpileVirtualProject(
@@ -398,7 +407,7 @@ function transpileVirtual(
       // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
       noImplicitSelf: true,
       luaPlugins: [
-        { plugin: lifecycleErasurePlugin },
+        { plugin: erasure.plugin },
         { plugin: editorScriptErasurePlugin },
         { plugin: messageGuardLoweringPlugin },
         { plugin: windowEventGuardLoweringPlugin },
@@ -417,15 +426,95 @@ function transpileVirtual(
 
 export function transpileProject(input: TranspileProjectInput): TranspileProjectResult {
   const userKeys = new Set(Object.keys(input.files));
+  const erasure = createLifecycleErasure();
   const companionEmit = createCompanionEmitPlugin();
-  const result = transpileVirtual(input.files, companionEmit);
-
-  return collectOutputs(
+  const result = transpileVirtual(input.files, companionEmit, erasure);
+  const emitted = collectOutputs(
     result.transpiledFiles,
     result.diagnostics,
     userKeys,
     companionEmit.companions,
   );
+  if (erasure.pending.size === 0) {
+    return emitted;
+  }
+
+  const evaluated = evaluatePendingProperties(erasure.pending, emitted);
+  const literalErasure = createLifecycleErasure();
+  literalErasure.setEvaluatedDefaults(evaluated.values);
+  const literalCompanions = createCompanionEmitPlugin();
+  const literal = transpileVirtual(input.files, literalCompanions, literalErasure);
+  return collectOutputs(
+    literal.transpiledFiles,
+    ts.sortAndDeduplicateDiagnostics([...result.diagnostics, ...evaluated.diagnostics]),
+    userKeys,
+    literalCompanions.companions,
+  );
+}
+
+export interface EvaluatedProperties {
+  readonly values: ReadonlyMap<string, ReadonlyMap<string, PropertyValue>>;
+  readonly diagnostics: readonly ts.Diagnostic[];
+}
+
+/**
+ * Computes the properties of every script an emit left pending. That emit is
+ * the evaluation input: every other module is already in its final form. Its
+ * diagnostics, not the literal emit's, are the ones to report, since only it
+ * transformed the `properties` values.
+ */
+export function evaluatePendingProperties(
+  pending: ReadonlyMap<string, PendingProperties>,
+  emitted: TranspileProjectResult,
+): EvaluatedProperties {
+  const modules = evaluationChunks(emitted);
+  const values = new Map<string, ReadonlyMap<string, PropertyValue>>();
+  const diagnostics: ts.Diagnostic[] = [];
+  for (const [fileName, script] of pending) {
+    const lua = emitted.lua[fileName];
+    if (lua === undefined) {
+      continue;
+    }
+    // Keyed by the source name, which no require spells, because a script
+    // with a companion shares its require name with that companion.
+    const result = evaluatePropertyDefaults({
+      chunks: { ...modules, [fileName]: lua },
+      entry: fileName,
+      names: script.names,
+    });
+    if (result.ok) {
+      values.set(fileName, result.values);
+    } else {
+      const { message, name } = result.error;
+      const span =
+        (name === undefined ? undefined : script.memberSpans.get(name)) ?? script.propertiesSpan;
+      diagnostics.push({
+        ...span,
+        category: ts.DiagnosticCategory.Error,
+        code: 0,
+        messageText: `\`properties\` could not be computed at build time: ${message}`,
+      });
+    }
+  }
+  return { values, diagnostics };
+}
+
+// Every module a script can require, under the name its require uses.
+function evaluationChunks(emitted: TranspileProjectResult): Record<string, string> {
+  const chunks: Record<string, string> = {};
+  for (const [fileName, lua] of Object.entries(emitted.lua)) {
+    chunks[requirePathForRel(fileName)] = emitted.companions?.[fileName] ?? lua;
+  }
+  if (emitted.lualib !== undefined) {
+    chunks[LUALIB_REQUIRE_NAME] = emitted.lualib;
+  }
+  if (emitted.timersRuntime !== undefined) {
+    chunks[TIMERS_REQUIRE_NAME] = emitted.timersRuntime;
+  }
+  for (const [name, lua] of Object.entries(emitted.hsmModules ?? {})) {
+    chunks[hsmRequireName(name)] = lua;
+  }
+  return chunks;
 }
 
 interface CompiledHsm {
@@ -471,7 +560,9 @@ function compileHsm(): CompiledHsm {
   }
   // The source's doc comments are for the editor, which reads the declarations; the Lua a
   // project gets carries none of them.
-  const result = transpileVirtual(files, createCompanionEmitPlugin(), { removeComments: true });
+  const result = transpileVirtual(files, createCompanionEmitPlugin(), createLifecycleErasure(), {
+    removeComments: true,
+  });
 
   const problems = result.diagnostics.map(
     (d) => `${d.file?.fileName ?? "(project)"}: ${flattenDiagnosticMessage(d.messageText)}`,
