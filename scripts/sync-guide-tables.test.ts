@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { readNativeTargets } from "../packages/library-types/scripts/sync-native-types.ts";
+import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
 import {
   CURATED_NATIVE_END,
   CURATED_NATIVE_START,

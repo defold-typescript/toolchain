@@ -10,9 +10,9 @@ import {
   portalEntryId,
   readAssetPortalManifest,
   readPortalAliases,
-} from "../packages/library-types/scripts/sync-asset-portal.ts";
-import type { DefoldExtensionsManifest } from "../packages/library-types/scripts/sync-defold-extensions.ts";
-import { readNativeTargets } from "../packages/library-types/scripts/sync-native-types.ts";
+} from "../packages/cli/src/library/sync-asset-portal.ts";
+import type { DefoldExtensionsManifest } from "../packages/cli/src/library/sync-defold-extensions.ts";
+import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
 import { type LaneId, type PinnedTarget, readPinnedTargets } from "./library-upstream-check.ts";
 
 // Joins the pinned Asset Portal manifest against every lane registry to answer,

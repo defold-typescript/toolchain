@@ -15,11 +15,11 @@ import type {
   AssetPortalManifest,
   PortalEntry,
   PortalRepo,
-} from "../packages/library-types/scripts/sync-asset-portal.ts";
+} from "../packages/cli/src/library/sync-asset-portal.ts";
 import {
   type DefoldExtensionsManifest,
   isSafePageKey,
-} from "../packages/library-types/scripts/sync-defold-extensions.ts";
+} from "../packages/cli/src/library/sync-defold-extensions.ts";
 import {
   type AssetPortalScriptApiManifest,
   type ScriptApiSource,
