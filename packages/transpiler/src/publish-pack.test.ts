@@ -48,6 +48,7 @@ describe("@defold-typescript/transpiler publish surface", () => {
     expect(paths).toContain("package.json");
     expect(paths).toContain("dist/index.js");
     expect(paths).toContain("dist/index.d.ts");
+    expect(paths).toContain("dist/property-default-child.js");
   });
 
   test("ships the hsm source the build compiles, one file per module", () => {
@@ -104,6 +105,19 @@ describe("@defold-typescript/transpiler publish surface", () => {
 
     expect(typeof built.parseSceneTextFormat).toBe("function");
     expect(typeof built.SceneTextFormatError).toBe("function");
+  });
+
+  test("the built index evaluates property defaults through its own child entry", async () => {
+    const built = await import(resolve(PKG_DIR, "dist/index.js"));
+    await built.loadPropertyEvaluator();
+    const result = built.evaluatePropertyDefaults({
+      chunks: { script: "____properties = { x = 1 }" },
+      entry: "script",
+      names: ["x"],
+    });
+
+    expect(result.ok).toBe(true);
+    expect(Object.fromEntries(result.values)).toEqual({ x: { kind: "number", value: 1 } });
   });
 
   test("built entry has no extensionless relative imports", () => {

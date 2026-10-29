@@ -71,6 +71,8 @@ export {
   parseDefignore,
   SCAFFOLDED_DEFIGNORE_LINES,
 } from "./project-resources";
+export type { PropertyEvaluationResult, PropertyValue } from "./property-default-evaluator";
+export { evaluatePropertyDefaults, loadPropertyEvaluator } from "./property-default-evaluator";
 export { rewriteEmittedRequires } from "./require-rewrite";
 export { buildSceneAddressDeclaration } from "./scene-address-declaration";
 export type { SceneCollectionRoles, SceneCollectionRolesInput } from "./scene-collection-roles";

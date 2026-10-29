@@ -340,6 +340,7 @@ end
 // name, or names the first value that is not a Defold property type.
 export const PROPERTY_DEFAULT_SERIALIZER = `
 local serializer_globals, type, find, rawget, ipairs = _G, type, string.find, rawget, ipairs
+local COMPONENT_LETTERS = { "x", "y", "z", "w" }
 local function serialize_properties(record_of, names)
   local properties = rawget(serializer_globals, "____properties")
   if type(properties) ~= "table" or record_of(properties) ~= nil then
@@ -395,6 +396,14 @@ local function serialize_properties(record_of, names)
         return nil, failure
       end
       return { kind = record.kind, value = checked }
+    end
+    local size = record.kind == "vector3" and 3 or 4
+    for index = 1, size do
+      local c = record[index]
+      if c ~= c then
+        local letter = COMPONENT_LETTERS[index]
+        return refuse(name, "has a NaN " .. letter .. " component, which is not a property value")
+      end
     end
     local components = { record[1], record[2], record[3], record[4] }
     return { kind = record.kind, value = components }
