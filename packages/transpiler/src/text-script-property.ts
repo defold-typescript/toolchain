@@ -42,7 +42,7 @@ export function findTextScriptProperties(
           if (!isPropertiesHook(property)) {
             continue;
           }
-          for (const { name, type, node } of propertySources(property, checker)) {
+          for (const { name, type, node } of propertySources(property, checker).sources) {
             if (mayHoldString(type, checker)) {
               located.push({ name, value: node });
             }
