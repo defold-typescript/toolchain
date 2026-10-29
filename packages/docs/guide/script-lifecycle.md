@@ -107,7 +107,7 @@ Defold's build reads each default from the generated Lua text alone. A key may b
 - `vmath.vector3`, `vmath.vector4` or `vmath.quat` with no argument, one number or every component as a number
 - a [resource marker](#resource-properties)
 
-A `const enum` member and a template literal without substitutions compile to one of these forms. Any other default, spread, shorthand member or computed key is computed at build time, and so is a `properties` value that is not an object literal, such as a `const` declared elsewhere. The build runs the generated Lua in a sandbox and emits one `go.property` per property, with the computed value written in a form Defold's build reads. The names are the ones TypeScript types onto `self`, in JavaScript's key order: each name keeps the position where it first appears, and a later key overrides an earlier value.
+A `const enum` member and a template literal without substitutions compile to one of these forms. Any other default, spread, shorthand member or computed key is computed at build time, and so is a `properties` value that is not an object literal, such as a `const` declared elsewhere. The build runs the generated Lua in a sandbox and emits one `go.property` per property, with the computed value written in a form Defold's build reads. The names are the ones TypeScript types onto `self`, in JavaScript's key order: each name keeps the position where it first appears, and a later key overrides an earlier value. The order is read from the source, through `const`s and their spreads, imported ones included, so a function result, a `let` or an object's field that brings in two or more names fails the build.
 
 ```ts
 import { defineScript } from "@defold-typescript/types";
