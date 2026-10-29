@@ -13,12 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Script properties](./script-lifecycle.md#script-properties-on-self)** compute any default at build time.
+> - **[Script properties](./script-lifecycle.md#script-properties-on-self)** compute their defaults at build time and register in the key order the source shows.
 > - **[The docs site](./README.md)** documents the npm version.
 
 ### Improved
 
-- **Script properties are computed at build time:** a `defineScript` `properties` default Defold's build cannot read as written, a spread, shorthand or const-keyed member, and a `properties` value that is not an object literal are evaluated in a sandbox and register one literal `go.property` per name, in JavaScript's key order. A default that needs an engine API, randomness or a file, or whose value is not a property type, fails the build with a diagnostic naming the cause, and the text-property version gate covers the strings a spread brings in.
+- **Script properties are computed at build time:** a `defineScript` `properties` default Defold's build cannot read as written, a spread, shorthand or const-keyed member, and a `properties` value that is not an object literal are evaluated in a sandbox and register one literal `go.property` per name, in JavaScript's key order as read through `const`s and their spreads, imported ones included. A default that needs an engine API, randomness or a file, whose value is not a property type, or whose key order the source does not show, such as two names from a function result, fails the build with a diagnostic naming the cause, and the text-property version gate covers the strings a spread brings in.
 
 ### Fixed
 
