@@ -204,6 +204,19 @@ describe("evaluatePropertyDefaults sandbox", () => {
     expect(performance.now() - started).toBeLessThan(5000);
   });
 
+  test.each([
+    ['string.find(("a"):rep(40), ("a-"):rep(30) .. "b")'],
+    ["table.move({}, 1, 2^53, 2, {})"],
+  ])("%s, which runs in C, stops at the time limit and the next evaluation succeeds", (statement) => {
+    const started = performance.now();
+    const message = messageOf(evaluateLua(statement));
+    expect(message).toContain("timeout");
+    expect(performance.now() - started).toBeLessThan(5000);
+    expect(valuesOf(evaluateLua("____properties = { x = 2 }"))).toEqual({
+      x: { kind: "number", value: 2 },
+    });
+  }, 15000);
+
   test("an allocation past the memory limit fails and the next evaluation succeeds", () => {
     const message = messageOf(
       evaluateLua('local t = {} for i = 1, 1e9 do t[i] = string.rep("x", 1024) end'),
@@ -239,10 +252,21 @@ describe("evaluatePropertyDefaults values", () => {
   });
 
   test("infinite numbers are numbers", () => {
-    expect(valuesOf(evaluateLua("____properties = { x = 1/0, y = -1/0 }", ["x", "y"]))).toEqual({
+    const values = valuesOf(
+      evaluateLua(
+        "____properties = { x = 1/0, y = -1/0, z = -0.0, v = vmath.vector3(1/0, -1/0, -0.0) }",
+        ["x", "y", "z", "v"],
+      ),
+    );
+    expect(values).toEqual({
       x: { kind: "number", value: Number.POSITIVE_INFINITY },
       y: { kind: "number", value: Number.NEGATIVE_INFINITY },
+      z: { kind: "number", value: -0 },
+      v: { kind: "vector3", value: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -0] },
     });
+    const { z, v } = values;
+    expect(z?.kind === "number" && Object.is(z.value, -0)).toBe(true);
+    expect(v?.kind === "vector3" && Object.is(v.value[2], -0)).toBe(true);
   });
 
   test.each([
@@ -260,6 +284,10 @@ describe("evaluatePropertyDefaults values", () => {
     ["vmath.vector3()", { kind: "vector3", value: [0, 0, 0] }],
     ["vmath.vector3(2)", { kind: "vector3", value: [2, 2, 2] }],
     ["vmath.vector3(vmath.vector3(1, 2, 3))", { kind: "vector3", value: [1, 2, 3] }],
+    [
+      "vmath.vector3(1/0, -1/0, 0)",
+      { kind: "vector3", value: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, 0] },
+    ],
     ["vmath.vector4()", { kind: "vector4", value: [0, 0, 0, 0] }],
     ["vmath.vector4(3)", { kind: "vector4", value: [3, 3, 3, 3] }],
     ["vmath.quat()", { kind: "quat", value: [0, 0, 0, 1] }],
@@ -291,5 +319,28 @@ describe("evaluatePropertyDefaults values", () => {
         evaluateLua("local v = vmath.vector3(1, 2, 3)\nv.x = 5\n____properties = { x = v }"),
       ),
     ).toEqual({ x: { kind: "vector3", value: [5, 2, 3] } });
+  });
+
+  test.each([
+    ["vmath.vector3(0/0, 1, 2)", "x"],
+    ["vmath.vector3(0/0)", "x"],
+    ["vmath.vector4(1, 1, 1, 0/0)", "w"],
+    ["vmath.quat(0, 0, 0/0, 1)", "z"],
+    ["vmath.vector3(1/0) - vmath.vector3(1/0)", "x"],
+    ["vmath.quat_rotation_z(1/0)", "z"],
+  ])("x = %s has a NaN %s component", (expression, component) => {
+    const result = evaluateLua(`____properties = { x = ${expression} }`);
+    expect(result.ok).toBe(false);
+    expect(result.ok ? undefined : result.error.name).toBe("x");
+    expect(messageOf(result)).toContain(`x has a NaN ${component} component`);
+  });
+
+  test("a NaN written into a component fails on that component", () => {
+    const result = evaluateLua(
+      "local v = vmath.vector3(1, 2, 3)\nv.y = 0/0\n____properties = { x = v }",
+    );
+    expect(result.ok).toBe(false);
+    expect(result.ok ? undefined : result.error.name).toBe("x");
+    expect(messageOf(result)).toContain("has a NaN y component");
   });
 });

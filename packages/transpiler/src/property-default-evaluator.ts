@@ -1,6 +1,8 @@
-import type { LuaEngine, LuaLibraries, LuaWasm } from "wasmoon";
+import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { RESOURCE_PROPERTY_MARKERS } from "./lifecycle-erasure";
-import { PROPERTY_DEFAULT_EVALUATION } from "./property-default-prelude";
+import { decodeWire, encodeWire, type PropertyEvaluationRequest } from "./property-default-wire";
 
 // The global a script's entry chunk assigns its properties value to; the
 // evaluator reads it after `require(entry)`.
@@ -8,6 +10,7 @@ export const PROPERTIES_CAPTURE_GLOBAL = "____properties";
 
 const TIMEOUT_MS = 1000;
 const MEMORY_LIMIT_BYTES = 16 * 1024 * 1024;
+const TIMEOUT_MESSAGE = `computing the property defaults took longer than ${TIMEOUT_MS} ms (timeout)`;
 
 export type PropertyValue =
   | { readonly kind: "number"; readonly value: number }
@@ -27,39 +30,27 @@ export interface PropertyEvaluationInput {
   readonly names: readonly string[];
 }
 
-interface EvaluatorRuntime {
-  readonly Engine: typeof LuaEngine;
-  readonly libraries: readonly LuaLibraries[];
-  readonly module: LuaWasm;
-}
+// The child's own limit ends a Lua loop at TIMEOUT_MS; the kill is for time
+// spent in C code, and its margin keeps a slow start under load from reading
+// as a timeout.
+const KILL_AFTER_MS = TIMEOUT_MS + 2000;
 
-let runtime: EvaluatorRuntime | undefined;
-let loading: Promise<void> | undefined;
+let childEntry: string | undefined;
 
-// wasmoon loads here, on first use, so a consumer that never evaluates (the
-// editor plugin) never pulls in the WebAssembly module.
-export function loadPropertyEvaluator(): Promise<void> {
-  if (runtime !== undefined) {
-    return Promise.resolve();
+// Each evaluation runs wasmoon in a child process, so a consumer that never
+// evaluates (the editor plugin) never pulls in the WebAssembly module.
+export async function loadPropertyEvaluator(): Promise<void> {
+  if (childEntry !== undefined) {
+    return;
   }
-  loading ??= (async () => {
-    const wasmoon = await import("wasmoon");
-    const module = await wasmoon.LuaWasm.initialize();
-    runtime = {
-      Engine: wasmoon.LuaEngine,
-      libraries: [
-        wasmoon.LuaLibraries.Base,
-        wasmoon.LuaLibraries.Coroutine,
-        wasmoon.LuaLibraries.Table,
-        wasmoon.LuaLibraries.String,
-        wasmoon.LuaLibraries.Math,
-      ],
-      module,
-    };
-  })().finally(() => {
-    loading = undefined;
-  });
-  return loading;
+  const name = import.meta.url.endsWith(".ts")
+    ? "./property-default-child.ts"
+    : "./property-default-child.js";
+  const entry = fileURLToPath(new URL(name, import.meta.url));
+  if (!existsSync(entry)) {
+    throw new Error(`the property evaluator entry is missing: ${entry}`);
+  }
+  childEntry = entry;
 }
 
 const RESOURCE_KINDS = [...RESOURCE_PROPERTY_MARKERS].map((marker) =>
@@ -67,39 +58,51 @@ const RESOURCE_KINDS = [...RESOURCE_PROPERTY_MARKERS].map((marker) =>
 );
 
 export function evaluatePropertyDefaults(input: PropertyEvaluationInput): PropertyEvaluationResult {
-  if (runtime === undefined) {
+  if (childEntry === undefined) {
     throw new Error("loadPropertyEvaluator() must complete before properties are evaluated");
   }
-  const engine = new runtime.Engine(runtime.module, {
-    openStandardLibs: false,
-    injectObjects: false,
-    enableProxy: false,
-    traceAllocations: true,
-    functionTimeout: TIMEOUT_MS,
-  });
-  try {
-    for (const library of runtime.libraries) {
-      engine.global.loadLibrary(library);
-    }
-    engine.global.setMemoryMax(MEMORY_LIMIT_BYTES);
-    const evaluate = engine.doStringSync(PROPERTY_DEFAULT_EVALUATION) as (
-      chunks: Record<string, string>,
-      resourceKinds: readonly string[],
-      entry: string,
-      names: readonly string[],
-    ) => unknown;
-    const chunks: Record<string, string> = {};
-    for (const [name, source] of Object.entries(input.chunks)) {
-      chunks[name] = floatLongIntegerLiterals(source);
-    }
-    const outcome = evaluate(chunks, RESOURCE_KINDS, input.entry, [...input.names]);
-    return readOutcome(outcome, input.names);
-  } catch (error) {
-    const text = error instanceof Error ? error.message : String(error);
-    return failure(text.split("\n", 1)[0] ?? text);
-  } finally {
-    engine.global.close();
+  const chunks: Record<string, string> = {};
+  for (const [name, source] of Object.entries(input.chunks)) {
+    chunks[name] = floatLongIntegerLiterals(source);
   }
+  const request: PropertyEvaluationRequest = {
+    chunks,
+    entry: input.entry,
+    names: input.names,
+    resourceKinds: RESOURCE_KINDS,
+    timeoutMs: TIMEOUT_MS,
+    memoryLimitBytes: MEMORY_LIMIT_BYTES,
+  };
+  const child = spawnSync(process.execPath, [childEntry], {
+    input: encodeWire(request),
+    encoding: "utf8",
+    timeout: KILL_AFTER_MS,
+    killSignal: "SIGKILL",
+    maxBuffer: 4 * MEMORY_LIMIT_BYTES,
+  });
+  // An output past maxBuffer also ends in SIGKILL, so only the error code or
+  // a kill with no error reads as the deadline.
+  const spawnError = child.error as NodeJS.ErrnoException | undefined;
+  if (
+    spawnError?.code === "ETIMEDOUT" ||
+    (spawnError === undefined && child.signal === "SIGKILL")
+  ) {
+    return failure(TIMEOUT_MESSAGE);
+  }
+  if (spawnError !== undefined || child.status !== 0) {
+    const ended =
+      child.signal !== null ? `signal ${child.signal}` : `exit status ${String(child.status)}`;
+    const detail = spawnError?.message ?? firstLine(child.stderr) ?? ended;
+    return failure(`the property evaluator failed: ${detail}`);
+  }
+  return readOutcome(decodeWire(child.stdout), input.names);
+}
+
+function firstLine(text: string): string | undefined {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line !== "");
 }
 
 const LONG_INTEGER = /^\d{15,}$/;
@@ -265,7 +268,7 @@ function failure(message: string, name?: string): PropertyEvaluationResult {
 
 function explainLimit(message: string): string {
   if (message.includes("timeout exceeded")) {
-    return `computing the property defaults took longer than ${TIMEOUT_MS} ms (timeout)`;
+    return TIMEOUT_MESSAGE;
   }
   if (message === "not enough memory") {
     return `computing the property defaults used more than ${MEMORY_LIMIT_BYTES / 1024 / 1024} MB of memory`;
