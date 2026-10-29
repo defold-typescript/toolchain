@@ -194,6 +194,31 @@ describe("findTextScriptProperties", () => {
     ]);
   });
 
+  test("reports a string a spread brings in at the spread, in the script's own file", () => {
+    const main = lines(
+      FACTORY_IMPORT,
+      'import { TEXTS } from "./texts";',
+      "",
+      "defineScript({",
+      "  properties: {",
+      "    ...TEXTS,",
+      "  },",
+      "});",
+    );
+    const session = createTranspileSession();
+    session.update({
+      "texts.ts": 'export const TEXTS = { greeting: "hi", count: 1 };\n',
+      "main.ts": main,
+    });
+    const program = session.getProgram();
+    if (!program) {
+      throw new Error("session produced no program");
+    }
+    expect(findTextScriptProperties(program, ["main.ts"])).toEqual([
+      { name: "greeting", file: "main.ts", line: 6, column: 5 },
+    ]);
+  });
+
   test("ignores a properties object on a local function named defineScript", () => {
     const findings = findingsOf(
       lines(

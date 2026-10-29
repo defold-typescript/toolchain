@@ -2,6 +2,7 @@ import { setDefaultTimeout } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
+import { loadPropertyEvaluator } from "../packages/transpiler/src/property-default-evaluator";
 
 // Bun's default per-test timeout is 5s. Several tests do real work — the
 // `build editor attach` cases each run two full `dispatch(["build", …])`
@@ -31,3 +32,7 @@ process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK = "1";
 if (!process.env.DEFOLD_TYPESCRIPT_CACHE) {
   process.env.DEFOLD_TYPESCRIPT_CACHE = mkdtempSync(path.join(tmpdir(), "dts-test-cache-"));
 }
+
+// The CLI binary loads the property evaluator before it dispatches; a suite
+// that builds through `dispatch` or a transpile session needs it loaded too.
+await loadPropertyEvaluator();

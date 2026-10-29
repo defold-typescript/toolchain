@@ -6,13 +6,18 @@ import * as tstl from "typescript-to-lua";
 import { type CompanionEmitter, createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import { hsmLoweringPlugin } from "./hsm-builtin";
-import { lifecycleErasurePlugin } from "./lifecycle-erasure";
+import { createLifecycleErasure, type LifecycleErasure } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
 import { messageGuardLoweringPlugin } from "./message-guard-lowering";
 import { nativeGlobalModulesPlugin } from "./native-global-modules";
 import { physicsEventGuardLoweringPlugin } from "./physics-event-guard-lowering";
 import { timersLoweringPlugin } from "./timers-lowering";
-import { AMBIENT_FILES, collectOutputs, type TranspileProjectResult } from "./transpile";
+import {
+  AMBIENT_FILES,
+  collectOutputs,
+  evaluatePendingProperties,
+  type TranspileProjectResult,
+} from "./transpile";
 import { typeApplicationErasurePlugin } from "./type-application-erasure";
 import { windowEventGuardLoweringPlugin } from "./window-event-guard-lowering";
 
@@ -23,10 +28,14 @@ export interface TranspileSession {
 
 const requireFromHere = createRequire(import.meta.url);
 
-// A function rather than a const because the companion emitter carries the
-// chunks of one transpile: a shared instance would hand an editor rebuild the
-// companions of the rebuild before it. Keep in lockstep with transpile.ts.
-function compilerOptions(companionEmit: CompanionEmitter): tstl.CompilerOptions {
+// A function rather than a const because the companion emitter and the
+// lifecycle erasure carry the state of one transpile: a shared instance would
+// hand an editor rebuild the companions of the rebuild before it. Keep in
+// lockstep with transpile.ts.
+function compilerOptions(
+  companionEmit: CompanionEmitter,
+  erasure: LifecycleErasure,
+): tstl.CompilerOptions {
   return {
     luaTarget: tstl.LuaTarget.Lua51,
     sourceMap: true,
@@ -48,7 +57,7 @@ function compilerOptions(companionEmit: CompanionEmitter): tstl.CompilerOptions 
     // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
     noImplicitSelf: true,
     luaPlugins: [
-      { plugin: lifecycleErasurePlugin },
+      { plugin: erasure.plugin },
       { plugin: editorScriptErasurePlugin },
       { plugin: messageGuardLoweringPlugin },
       { plugin: windowEventGuardLoweringPlugin },
@@ -174,18 +183,29 @@ export function createTranspileSession(): TranspileSession {
     const rootNames = [...Object.keys(AMBIENT_FILES).map(normalizeSlashes), ...userKeys];
 
     const companionEmit = createCompanionEmitPlugin();
-    program = ts.createProgram(rootNames, compilerOptions(companionEmit), host, program);
+    const erasure = createLifecycleErasure();
+    program = ts.createProgram(rootNames, compilerOptions(companionEmit, erasure), host, program);
 
     const preEmitDiagnostics = ts.getPreEmitDiagnostics(program);
-    const collector = createOutputCollector();
+    let collector = createOutputCollector();
     const { diagnostics: transpileDiagnostics } = new tstl.Transpiler().emit({
       program,
       writeFile: collector.writeFile,
     });
-    const diagnostics = [
-      ...ts.sortAndDeduplicateDiagnostics([...preEmitDiagnostics, ...transpileDiagnostics]),
-    ];
+    const reported = [...preEmitDiagnostics, ...transpileDiagnostics];
 
+    if (erasure.pending.size > 0) {
+      const emitted = collectOutputs(collector.files, [], userKeys, companionEmit.companions);
+      const evaluated = evaluatePendingProperties(erasure.pending, emitted);
+      reported.push(...evaluated.diagnostics);
+      erasure.pending.clear();
+      erasure.setEvaluatedDefaults(evaluated.values);
+      companionEmit.reset();
+      collector = createOutputCollector();
+      new tstl.Transpiler().emit({ program, writeFile: collector.writeFile });
+    }
+
+    const diagnostics = [...ts.sortAndDeduplicateDiagnostics(reported)];
     return collectOutputs(collector.files, diagnostics, userKeys, companionEmit.companions);
   }
 
