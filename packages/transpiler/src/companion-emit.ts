@@ -515,6 +515,8 @@ export interface CompanionEmitter {
    * after a transpile; a source absent from it emits a single chunk.
    */
   readonly companions: ReadonlyMap<string, string>;
+  /** Forgets the last emit's chunks, so the same program can be emitted again. */
+  reset(): void;
 }
 
 /**
@@ -619,12 +621,18 @@ export function createCompanionEmitPlugin(): CompanionEmitter {
       // leaves the require spelled the way `requirePathForRel` spells it, which
       // is the spelling the build's resolution check reads.
       if (emitted.length > 0) {
-        options.noResolvePaths = [...configuredNoResolvePaths, ...emitted];
+        options.noResolvePaths = [...new Set([...configuredNoResolvePaths, ...emitted])];
       }
     },
   };
 
-  return { plugin, companions };
+  function reset(): void {
+    owned.clear();
+    bootstraps.clear();
+    companions.clear();
+  }
+
+  return { plugin, companions, reset };
 }
 
 function emitCompanion(
