@@ -10,7 +10,7 @@ import * as ui from "flow.ui";
 
 // Compile-only proof that the flow module LuaLS goldens, and the flow.types
 // vocabulary they import, are callable the way upstream's README drives them from a
-// gui_script and a plain .script. tsc --noEmit under tsconfig.dts-check.json
+// gui_script and a plain .script. the `dts-declaration-validity` compile
 // (skipLibCheck: false) is the gate.
 
 type GuiSelf = { tree?: Flow_BoxProps };

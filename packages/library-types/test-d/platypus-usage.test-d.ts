@@ -5,8 +5,8 @@ import * as platypus from "platypus.platypus";
 
 // Compile-only proof for the severed platypus surface, replacing the platypus
 // block retired from library-types.test-d.ts when the `./platypus.platypus`
-// subpath went away. No assertions execute; `tsc --noEmit` under
-// tsconfig.dts-check.json is the gate.
+// subpath went away. No assertions execute; the `dts-declaration-validity`
+// compile is the gate.
 
 declare const _v3: Vector3;
 

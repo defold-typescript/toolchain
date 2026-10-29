@@ -4,7 +4,7 @@
 import * as def_windward_jps from "def_windward_jps";
 
 // Compile-only proof for the curated def-windward-jps native-extension namespace. No
-// assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 const grid = def_windward_jps.create_grid(64, 64, [
   [10, 12],

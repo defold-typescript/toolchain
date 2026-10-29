@@ -7,7 +7,7 @@ import * as log from "log.log";
 // ships the public logger surface and nothing more: get_logger yields a value
 // whose name/level are string and whose trace/debug/info/warn/error are
 // callable, while the @local (format/log) members stay absent. No assertions
-// execute; tsc --noEmit under tsconfig.dts-check.json (skipLibCheck: false) is
+// execute; the `dts-declaration-validity` compile (skipLibCheck: false) is
 // the gate. A non-public member reappearing on the public surface turns its
 // expect-error directive unused (TS2578), which the dts-declaration-validity
 // offender filter catches.

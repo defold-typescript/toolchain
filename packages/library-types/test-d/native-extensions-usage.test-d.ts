@@ -16,7 +16,7 @@ import * as uuid4 from "uuid4";
 
 // Compile-only proof for the curated defold-sharing, defold-uuid4 and
 // defold-tile-raycast native-extension namespaces. No assertions execute;
-// `tsc --noEmit` under tsconfig.dts-check.json is the gate.
+// the `dts-declaration-validity` compile is the gate.
 
 declare const bytes: string;
 

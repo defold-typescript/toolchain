@@ -305,8 +305,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // most once, only when a default is needed.
   const libraryTypesRoot =
     opts.libraryTypesRoot !== undefined ? opts.libraryTypesRoot : resolveLibraryTypesPackageRoot();
-  const libraryRegistry =
-    opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryTypesRoot).registry;
+  const libraryRegistry = opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryTypesRoot);
   const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
   const confirmedLibraryUrls = new Set<string>();
   for (const bundle of resolvedBundles) {

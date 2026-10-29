@@ -5,7 +5,7 @@ import type { InputAction } from "@defold-typescript/types";
 import * as pointer from "pointer_lock.pointer";
 
 // Compile-only proof for the pointer_lock fork, written as the `on_input` upstream's
-// README drives it. No assertions execute; tsc --noEmit under tsconfig.dts-check.json
+// README drives it. No assertions execute; the `dts-declaration-validity` compile
 // is the gate.
 
 type Equal<A, B> =

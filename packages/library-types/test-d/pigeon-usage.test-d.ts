@@ -4,8 +4,8 @@
 import * as pigeon from "pigeon.pigeon";
 
 // Compile-only proof that the pigeon LuaLS golden is callable with the types
-// upstream documents. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// upstream documents. No assertions execute; the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 // A receiver is a string, an engine `Url`, or a `hash`. Reds if the local `hash`
 // alias resolves to itself or the local `Url` alias hides the engine `Url`.

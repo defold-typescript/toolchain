@@ -4,8 +4,8 @@
 import * as trail_maker from "hyper_trails.trail_maker";
 
 // Compile-only proof that the hyper trails LuaLS golden accepts the plain
-// options table the upstream README passes as `self`. tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// options table the upstream README passes as `self`. the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 // Reds if `self` lowers to `LuaTable`, which an object literal cannot satisfy.
 trail_maker.init_vars({ trail_width: 15, points_count: 20 });

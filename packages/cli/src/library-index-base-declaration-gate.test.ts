@@ -4,6 +4,7 @@ import { basename, join } from "node:path";
 import { libraryIndexBaseNotes } from "@defold-typescript/types";
 import * as ts from "typescript";
 import { emitExtensionDeclarationFromDoc } from "./extension-emit";
+import { printCorpus } from "./library/print-corpus";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 
 const LIBRARY_TYPES_DIR = join(import.meta.dir, "../../library-types");
@@ -40,11 +41,21 @@ const portalPages = (
   ) as ExtensionManifest
 ).libraries.flatMap((library) => library.docs.map((doc) => doc.page));
 
-const scriptApiTargets = readTargets<{ apiDoc: string; generated: string }>(
+const scriptApiTargets = readTargets<{ apiDoc: string; moduleId: string }>(
   "script-api-targets.json",
 );
 
-const authoredTargets = readTargets<{ apiDoc: string; generated: string }>("authored-targets.json");
+const authoredTargets = readTargets<{ apiDoc: string; moduleId: string }>("authored-targets.json");
+
+const lualsTargets = readTargets<{ namespace: string; moduleId: string }>("luals-targets.json");
+
+const CORPUS = await printCorpus(LIBRARY_TYPES_DIR);
+
+function printed(moduleId: string): string {
+  const contents = CORPUS.get(moduleId);
+  if (contents === undefined) throw new Error(`library data prints no module ${moduleId}`);
+  return contents;
+}
 
 const nativeTargets = readTargets<{ namespace: string; declaration: string }>(
   "native-targets.json",
@@ -64,9 +75,7 @@ function pageLanes(): Map<string, Lane> {
   for (const target of scriptApiTargets) claim(basename(target.apiDoc, ".json"), "script-api");
   for (const page of extensionPages) claim(page, "extension");
   for (const page of portalPages) claim(page, "portal");
-  for (const { namespace } of readTargets<{ namespace: string }>("luals-targets.json")) {
-    claim(namespace, "luals");
-  }
+  for (const { namespace } of lualsTargets) claim(namespace, "luals");
   for (const { apiDoc } of authoredTargets) claim(basename(apiDoc, ".json"), "authored");
   for (const { namespace } of nativeTargets) claim(namespace, "native");
   return lanes;
@@ -198,17 +207,19 @@ function memberSlotTexts(members: DeclaredMembers, slot: ClassifiedSlot): string
 
 async function emitLaneDeclaration(page: string, lane: Lane): Promise<string> {
   if (lane === "luals") {
-    return readFileSync(join(LIBRARY_TYPES_DIR, "generated", `${page}.d.ts`), "utf8");
+    const target = lualsTargets.find((t) => t.namespace === page);
+    if (target === undefined) throw new Error(`no luals target for page ${page}`);
+    return printed(target.moduleId);
   }
   if (lane === "script-api") {
     const target = scriptApiTargets.find((t) => basename(t.apiDoc, ".json") === page);
     if (target === undefined) throw new Error(`no script-api target for page ${page}`);
-    return readFileSync(join(LIBRARY_TYPES_DIR, target.generated), "utf8");
+    return printed(target.moduleId);
   }
   if (lane === "authored") {
     const target = authoredTargets.find((t) => basename(t.apiDoc, ".json") === page);
     if (target === undefined) throw new Error(`no authored target for page ${page}`);
-    return readFileSync(join(LIBRARY_TYPES_DIR, target.generated), "utf8");
+    return printed(target.moduleId);
   }
   if (lane === "native") {
     const target = nativeTargets.find((t) => t.namespace === page);

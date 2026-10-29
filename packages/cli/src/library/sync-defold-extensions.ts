@@ -263,14 +263,41 @@ async function loadSyncApiDocs(packageRoot: string): Promise<SyncApiDocsModule> 
   )) as SyncApiDocsModule;
 }
 
+// The api-doc paths a library target names: a LuaLS target publishes
+// `api-doc/<namespace>.json`, and every other lane names its file in `apiDoc`.
+function targetApiDocs(packageRoot: string): Set<string> {
+  const targets = (file: string): { namespace: string; apiDoc?: string }[] => {
+    const path = join(packageRoot, file);
+    if (!existsSync(path)) return [];
+    return (
+      JSON.parse(readFileSync(path, "utf8")) as {
+        targets: { namespace: string; apiDoc?: string }[];
+      }
+    ).targets;
+  };
+  const apiDocs = new Set(
+    targets("luals-targets.json").map(({ namespace }) => `api-doc/${namespace}.json`),
+  );
+  for (const file of [
+    "script-api-targets.json",
+    "authored-targets.json",
+    "openapi-targets.json",
+    "markdown-targets.json",
+  ]) {
+    for (const { apiDoc } of targets(file)) if (apiDoc !== undefined) apiDocs.add(apiDoc);
+  }
+  return apiDocs;
+}
+
 export async function loadReservedNamespaces(packageRoot: string): Promise<ReservedNamespaces> {
   const { targets } = JSON.parse(
     readFileSync(join(packageRoot, "..", "types", "api-targets.json"), "utf8"),
   ) as { targets: { modules: { namespace: string }[] }[] };
+  const named = targetApiDocs(packageRoot);
   const libraryNamespaces = readdirSync(join(packageRoot, "api-doc"))
     .filter((file) => file.endsWith(".json"))
     .map((file) => file.replace(/\.json$/, ""))
-    .filter((namespace) => existsSync(join(packageRoot, "generated", `${namespace}.d.ts`)));
+    .filter((namespace) => named.has(`api-doc/${namespace}.json`));
   return {
     engineNamespaces: new Set(targets.flatMap((t) => t.modules.map((m) => m.namespace))),
     libraryNamespaces: new Set(libraryNamespaces),

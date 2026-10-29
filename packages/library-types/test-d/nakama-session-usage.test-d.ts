@@ -4,7 +4,7 @@
 import * as session from "nakama.session";
 
 // Compile-only proof for the session helpers the nakama family requires but never
-// re-exports. No assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the
+// re-exports. No assertions execute; the `dts-declaration-validity` compile is the
 // gate.
 
 // `create` asserts on `data.token` and reads `data.refresh_token` behind a truthy test,

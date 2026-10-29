@@ -4,8 +4,8 @@
 import type { Flow_BoxProps, Flow_InitConfig, Flow_Navigation } from "flow.types";
 
 // Compile-only proof that the flow.types LuaLS golden accepts the screen registry and
-// element tree upstream's README passes as plain tables. tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// element tree upstream's README passes as plain tables. the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 const box: Flow_BoxProps = {
   key: "root",

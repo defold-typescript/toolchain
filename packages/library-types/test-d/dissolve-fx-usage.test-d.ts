@@ -4,7 +4,7 @@
 import * as dissolve_fx from "dissolve_fx.dissolve_fx";
 
 // Compile-only proof for the dissolve_fx fork, written as upstream's Quick Start drives it.
-// No assertions execute; tsc --noEmit under tsconfig.dts-check.json is the gate.
+// No assertions execute; the `dts-declaration-validity` compile is the gate.
 
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;

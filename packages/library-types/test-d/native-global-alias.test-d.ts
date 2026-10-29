@@ -3,8 +3,8 @@
 
 // Compile-only proof that no curated native namespace is a global: each one,
 // including those v0.53.0 shipped as globals, needs its import. This file
-// imports nothing, so every name below is global. `tsc --noEmit` under
-// tsconfig.dts-check.json is the gate.
+// imports nothing, so every name below is global. the `dts-declaration-validity`
+// compile is the gate.
 
 declare const bytes: string;
 

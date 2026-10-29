@@ -4,8 +4,8 @@
 import * as token from "token.token";
 
 // Compile-only proof that the token LuaLS golden is callable with the types
-// upstream documents. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// upstream documents. No assertions execute; the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 const wallet = token.container("wallet", undefined);
 

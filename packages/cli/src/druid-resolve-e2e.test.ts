@@ -9,6 +9,7 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
+import { printedModule } from "./library/print-corpus";
 import { librariesDirName } from "./library-materialize";
 import { runResolve } from "./resolve";
 
@@ -17,7 +18,6 @@ import { runResolve } from "./resolve";
 const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
-const committedDruid = join(libraryTypesRoot, "generated", "druid.d.ts");
 const vendoredDruid = join(libraryTypesRoot, "fixtures", "luals", "druid");
 
 const druidRegistry = [
@@ -93,12 +93,14 @@ function errorDiagnostics(files: Record<string, string>): string[] {
 }
 
 describe("druid resolves and its materialized types are usable end to end", () => {
-  test("runResolve materializes druid.druid.d.ts byte-identical to the committed source", async () => {
+  test("runResolve materializes druid.druid.d.ts byte-identical to the pinned print", async () => {
     const cwd = tmp();
     await resolveDruid(cwd);
 
     const materialized = join(cwd, ".defold-types", LIBRARIES_DIR, "druid.druid.d.ts");
-    expect(readFileSync(materialized, "utf8")).toBe(readFileSync(committedDruid, "utf8"));
+    expect(readFileSync(materialized, "utf8")).toBe(
+      await printedModule(libraryTypesRoot, "druid.druid"),
+    );
   });
 
   test('a consumer compiles against the materialized types and transpiles to require("druid.druid")', async () => {

@@ -5,7 +5,7 @@ import * as bzAnim from "bzAnim.bzLibrary";
 
 // Compile-only proof for the severed bzAnim surface, replacing the bzAnim block
 // retired from library-types.test-d.ts when the `./bzAnim.bzLibrary` subpath went
-// away. No assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is
+// away. No assertions execute; the `dts-declaration-validity` compile is
 // the gate.
 
 declare const _hash: Hash;

@@ -92,7 +92,6 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
   const root = join(base, "library-types");
   mkdirSync(join(base, "types"), { recursive: true });
   mkdirSync(join(root, "api-doc"), { recursive: true });
-  mkdirSync(join(root, "generated"), { recursive: true });
   for (const file of readdirSync(REAL_PACKAGE_ROOT)) {
     if (file.endsWith(".json") && file !== "asset-portal-script-api.json") {
       copyFileSync(join(REAL_PACKAGE_ROOT, file), join(root, file));
@@ -103,7 +102,16 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
     JSON.stringify({ targets: [{ modules: [{ namespace: "gui" }] }] }),
   );
   writeFileSync(join(root, "api-doc", "monarch.json"), "{}");
-  writeFileSync(join(root, "generated", "monarch.d.ts"), "");
+  const authored = JSON.parse(readFileSync(join(root, "authored-targets.json"), "utf8")) as {
+    targets: Record<string, unknown>[];
+  };
+  authored.targets.push({
+    ...authored.targets[0],
+    moduleId: "monarch.vendored",
+    namespace: "monarch",
+    apiDoc: "api-doc/monarch.json",
+  });
+  writeFileSync(join(root, "authored-targets.json"), JSON.stringify(authored));
   writeFileSync(
     join(root, "defold-extensions.json"),
     JSON.stringify({

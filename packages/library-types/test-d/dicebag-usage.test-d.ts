@@ -5,8 +5,8 @@ import * as dicebag from "dicebag.dicebag";
 
 // Compile-only proof for the severed dicebag surface, replacing the dicebag
 // block retired from library-types.test-d.ts when the `./dicebag.dicebag`
-// subpath went away. No assertions execute; `tsc --noEmit` under
-// tsconfig.dts-check.json is the gate.
+// subpath went away. No assertions execute; the `dts-declaration-validity`
+// compile is the gate.
 
 declare const _hash: Hash;
 

@@ -5,7 +5,7 @@ import * as bezier from "operator.bezier";
 import * as operator from "operator.operator";
 
 // Compile-only proof for the operator forks, written as the calls upstream's README makes
-// from a script. No assertions execute; tsc --noEmit under tsconfig.dts-check.json is the
+// from a script. No assertions execute; the `dts-declaration-validity` compile is the
 // gate.
 
 type Equal<A, B> =

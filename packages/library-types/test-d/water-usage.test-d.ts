@@ -5,7 +5,7 @@ import { defineRenderScript } from "@defold-typescript/types";
 import * as water from "water.water";
 
 // Compile-only proof for the water fork, written as upstream's example script and bundled
-// render script drive it. No assertions execute; tsc --noEmit under tsconfig.dts-check.json
+// render script drive it. No assertions execute; the `dts-declaration-validity` compile
 // is the gate.
 
 type Equal<A, B> =
