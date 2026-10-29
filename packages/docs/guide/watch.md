@@ -12,7 +12,8 @@ bunx @defold-typescript/cli watch
 ```
 
 > [!TIP] `watch` keeps two derived surfaces current while it runs: it re-runs
-> [`resolve`](./resolve.md) on a `game.project` save, and regenerates the
+> [`resolve`](./resolve.md) on a `game.project` save or a Defold library fetch,
+> and regenerates the
 > [scene-address declaration](./scene-types.md) on a `.go`, `.collection`,
 > `.collectionproxy` or `.collectionfactory` save — and on a `game.project` save
 > too, once that resolve has settled. Only the scene declaration is bootstrapped
@@ -36,9 +37,11 @@ from the editor after a rebuild completes.
 
 `watch` re-runs [`resolve`](./resolve.md) whenever you save `game.project`,
 re-materializing `.defold-types/extensions/` from the declared `[dependencies]`.
-It does **not** bootstrap that surface: run `resolve` once before `watch` so the
-initial extension types exist; `watch` only reconciles later `[dependencies]`
-edits.
+It also re-runs it when the Defold editor fetches libraries (*Project -> Fetch
+Libraries*, which rewrites `.internal/lib/dependencies.json`), so the types
+follow the archives the game now builds with. It does **not** bootstrap that
+surface: run `resolve` once before `watch` so the initial extension types
+exist; `watch` only reconciles later changes.
 
 ## Keeping the scene addresses current
 

@@ -891,6 +891,67 @@ describe("runWatch resolve surface", () => {
     await handle.done;
   });
 
+  // Defold's Fetch Libraries rewrites this manifest once the archives it lists
+  // are in place, so it is the one event that says `resolve` has new input.
+  test("a .internal/lib/dependencies.json change invokes resolveSurface once after the debounce window", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    let resolveCalls = 0;
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      debounceMs: 5,
+      resolveSurface: () => {
+        resolveCalls++;
+      },
+    });
+    await handle.waitForIdle();
+
+    factory.trigger("change", ".internal/lib/dependencies.json");
+    await new Promise((r) => setTimeout(r, 20));
+    expect(resolveCalls).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a fetched .internal/lib zip invokes neither resolveSurface nor a rebuild", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    let resolveCalls = 0;
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      debounceMs: 5,
+      resolveSurface: () => {
+        resolveCalls++;
+      },
+    });
+    await handle.waitForIdle();
+    expect(countMatches(out(), /wrote 1 files/g)).toBe(1);
+
+    factory.trigger(
+      "change",
+      ".internal/lib/f7a4a6e51f23d741a5f233b044f3c47395025345-ImUxIg==.zip",
+    );
+    await new Promise((r) => setTimeout(r, 20));
+    expect(resolveCalls).toBe(0);
+    expect(countMatches(out(), /wrote 1 files/g)).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("a non-game.project, non-transpiler path invokes neither resolveSurface nor a rebuild", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));

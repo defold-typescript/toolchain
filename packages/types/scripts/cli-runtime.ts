@@ -15,4 +15,9 @@ export {
   targetKindManifest,
 } from "./materialize-version";
 export { generateGlobalTableDeclaration, generateModuleDeclaration } from "./regen";
-export { readZip, scriptApiToFixtureJson, type ZipAccessor } from "./sync-api-docs";
+export {
+  readZip,
+  scriptApiToFixtureJson,
+  type ZipAccessor,
+  type ZipArchive,
+} from "./sync-api-docs";

@@ -3,7 +3,11 @@ import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
-import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import {
+  type DownloadExtensionArchive,
+  type ExtensionZip,
+  extensionArchiveKey,
+} from "./extension-archive";
 import { runResolve } from "./resolve";
 
 // The three `.script_api` docs are vendored unmodified from
@@ -25,7 +29,10 @@ function tmp(): string {
   return mkdtempSync(join(tmpdir(), "spine-e2e-"));
 }
 
-const someBytes = async (): Promise<Uint8Array> => new TextEncoder().encode("z");
+const someBytes: DownloadExtensionArchive = async () => ({
+  status: "ok",
+  bytes: new TextEncoder().encode("z"),
+});
 
 function spineReadZip(zipPath: string): ExtensionZip {
   if (basename(dirname(zipPath)) !== extensionArchiveKey(URL)) {
@@ -33,6 +40,8 @@ function spineReadZip(zipPath: string): ExtensionZip {
   }
   return {
     entries: () => [...DOCS.map(entryFor), "extension-spine-4.8.0/README.md"],
+    comment: () => "",
+    bytes: () => new Uint8Array(0),
     read: (entry: string) => {
       const doc = DOCS.find((name) => entry === entryFor(name));
       if (doc === undefined) {
@@ -109,7 +118,7 @@ describe("extension-spine resolves and its materialized types are usable end to 
         scriptApiCount: 3,
         sceneSources: 0,
         assetOnly: false,
-        resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
+        resolvedVersion: expect.stringMatching(/^files-sha256:[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
       },
     ]);

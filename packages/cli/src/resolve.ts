@@ -24,7 +24,11 @@ import {
   materializeExtensionDeclarations,
   type SharedExtensionNamespace,
 } from "./extension-materialize";
-import { mergeResolvedVersionPins, readExtensionVersionPins } from "./extension-version";
+import {
+  isRetiredPin,
+  mergeResolvedVersionPins,
+  readExtensionVersionPins,
+} from "./extension-version";
 import { formatJsonLikeBiome } from "./format-json";
 import { matchVendoredLibrary, normalizeSourceId, type VendoredLibrary } from "./library-match";
 import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
@@ -51,6 +55,10 @@ export type ResolvedTypeSurface =
   | "vendored-native"
   | "shipped";
 
+// `retired` is a pin in the zip-byte form, which a plain run replaces and
+// `--frozen` refuses, whatever the archive now holds.
+export type PinStatus = "unpinned" | "match" | "drift" | "retired";
+
 export interface ResolvedExtensionReport {
   readonly url: string;
   readonly provenance: ExtensionArchiveProvenance;
@@ -60,7 +68,7 @@ export interface ResolvedExtensionReport {
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
   readonly pinnedVersion?: string;
-  readonly pinStatus: "unpinned" | "match" | "drift";
+  readonly pinStatus: PinStatus;
   // How many scene sources this dependency shares into the address universe.
   readonly sceneSources: number;
 }
@@ -204,8 +212,9 @@ function seedExtensionPins(
   existing: unknown,
   resolved: Record<string, string>,
   liveUrls: Iterable<string>,
+  retiredUrls: Iterable<string>,
 ): void {
-  const merged = mergeResolvedVersionPins(existing, resolved, liveUrls);
+  const merged = mergeResolvedVersionPins(existing, resolved, liveUrls, retiredUrls);
   writeFileSync(join(cwd, "package.json"), `${formatJsonLikeBiome(merged)}\n`);
 }
 
@@ -266,6 +275,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
 
   const resolvedBundles = await resolveExtensionDeclarations(deps, {
     cacheDir: opts.cacheDir ?? extensionCacheDir(),
+    projectDir: cwd,
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
   });
@@ -346,6 +356,9 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   const { counts: sceneSourceCounts } = materializeLibrarySceneSources({ cwd, bundles });
   const warnings: string[] = [...shippedWarnings];
   for (const bundle of bundles) {
+    if (bundle.warning !== undefined) {
+      warnings.push(bundle.warning);
+    }
     for (const reason of bundle.sceneReasons) {
       warnings.push(`no scene source from ${bundle.url}: ${reason}`);
     }
@@ -383,9 +396,15 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   const existingPkg = readExistingPackageJson(cwd);
   const pins = readExtensionVersionPins(existingPkg.value);
   const liveUrls = bundles.map((b) => b.url);
+  const retiredUrls = bundles
+    .filter((bundle) => {
+      const pin = pins[bundle.url];
+      return pin !== undefined && isRetiredPin(pin);
+    })
+    .map((bundle) => bundle.url);
   const resolvedForSeed: Record<string, string> = {};
   for (const bundle of bundles) {
-    if (!(bundle.url in pins)) {
+    if (!(bundle.url in pins) || retiredUrls.includes(bundle.url)) {
       resolvedForSeed[bundle.url] = bundle.resolvedVersion;
     }
   }
@@ -395,14 +414,20 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     existingPkg.writable &&
     (Object.keys(resolvedForSeed).length > 0 || orphaned)
   ) {
-    seedExtensionPins(cwd, existingPkg.value, resolvedForSeed, liveUrls);
+    seedExtensionPins(cwd, existingPkg.value, resolvedForSeed, liveUrls, retiredUrls);
   }
 
   const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {
     const supersededByLibrary = confirmedLibraryUrls.has(bundle.url);
     const pin = pins[bundle.url];
-    const pinStatus: "unpinned" | "match" | "drift" =
-      pin === undefined ? "unpinned" : pin === bundle.resolvedVersion ? "match" : "drift";
+    const pinStatus: PinStatus =
+      pin === undefined
+        ? "unpinned"
+        : isRetiredPin(pin)
+          ? "retired"
+          : pin === bundle.resolvedVersion
+            ? "match"
+            : "drift";
     // A superseded bundle contributed no namespace, so reporting the ones its
     // `.script_api` would have produced would double-count its modules against
     // `libraries[]`. `scriptApiCount` stays the real archive count.
@@ -420,7 +445,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       assetOnly: boolean;
       resolvedVersion: string;
       pinnedVersion?: string;
-      pinStatus: "unpinned" | "match" | "drift";
+      pinStatus: PinStatus;
       sceneSources: number;
     } = {
       url: bundle.url,

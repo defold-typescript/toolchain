@@ -33,7 +33,7 @@ export interface ResolvedExtensionReportJson {
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
   readonly pinnedVersion?: string;
-  readonly pinStatus: "unpinned" | "match" | "drift";
+  readonly pinStatus: "unpinned" | "match" | "drift" | "retired";
 }
 
 export interface ResolvedLibraryReportJson {

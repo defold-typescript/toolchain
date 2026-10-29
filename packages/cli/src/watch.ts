@@ -14,6 +14,7 @@ import {
 } from "./build-output";
 import { type BuildSession, createBuildSession } from "./build-session";
 import { mapConsoleLine } from "./console-source-map";
+import { DEFOLD_DEPENDENCIES_MANIFEST } from "./defold-library-cache";
 import {
   type CommandAnswer,
   type CommandResult,
@@ -822,7 +823,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (stopped) return;
     if (!e.path) return;
     const key = toPosix(e.path);
-    if (key === "game.project") {
+    // Defold's Fetch Libraries rewrites its manifest once the archives it
+    // lists are in place, which changes what `resolve` reads as surely as a
+    // `game.project` edit does.
+    if (key === "game.project" || key === DEFOLD_DEPENDENCIES_MANIFEST) {
       resolveBusy = true;
       // The resolve chains a scene regeneration, so `waitForIdle` has to cover
       // the pair from the moment the event lands — not from the moment the

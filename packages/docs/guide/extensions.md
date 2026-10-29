@@ -46,7 +46,8 @@ bunx @defold-typescript/cli resolve
 ```
 
 Run it once after declaring a dependency, and re-run it (or leave
-[`watch`](./watch.md) running, which re-resolves on every `game.project` save)
+[`watch`](./watch.md) running, which re-resolves on every `game.project` save and
+every *Fetch Libraries*)
 whenever you edit the `dependencies#N` keys. See [Resolve](./resolve.md) for the full
 behavior, the `--frozen` lockfile mode, version pinning, and the cache location.
 

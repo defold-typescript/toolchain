@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { readZip } from "@defold-typescript/types/cli-runtime";
+import { writeZipArchive, type ZipFixtureEntry } from "../../types/test/zip-fixture";
 import {
-  extensionArchiveVersion,
+  archivePin,
+  isRetiredPin,
   mergeResolvedVersionPins,
   readExtensionVersionPins,
 } from "./extension-version";
@@ -8,30 +14,68 @@ import {
 const URL_A = "https://github.com/defold/extension-iap/archive/main.zip";
 const URL_B = "https://github.com/defold/extension-push/archive/main.zip";
 
-describe("extensionArchiveVersion", () => {
-  test("returns a stable sha256-prefixed digest for the same bytes", () => {
-    const bytes = new TextEncoder().encode("alpha-bytes");
-    const a = extensionArchiveVersion(bytes);
-    const b = extensionArchiveVersion(new TextEncoder().encode("alpha-bytes"));
-    expect(a).toBe(b);
+describe("archivePin", () => {
+  const COMMIT = "5c33c398e3c1d3ab3c0ee0d5f8f45c4c7c4e0b21";
+  const GAME_PROJECT = "[project]\ntitle = monarch\n\n[library]\ninclude_dirs = monarch\n";
+
+  function pinOf(entries: readonly ZipFixtureEntry[], comment?: string): string {
+    const zipPath = join(mkdtempSync(join(tmpdir(), "archive-pin-")), "archive.zip");
+    writeFileSync(zipPath, writeZipArchive(entries, comment === undefined ? {} : { comment }));
+    return archivePin(readZip(zipPath));
+  }
+
+  function library(
+    overrides: { lua?: string; example?: string; wrapper?: string } = {},
+  ): ZipFixtureEntry[] {
+    const wrapper = overrides.wrapper ?? "monarch-master";
+    return [
+      { name: `${wrapper}/`, text: "" },
+      { name: `${wrapper}/game.project`, text: GAME_PROJECT },
+      { name: `${wrapper}/monarch/monarch.lua`, text: overrides.lua ?? "return {}\n" },
+      { name: `${wrapper}/monarch/monarch.gui`, text: "script: ''\n" },
+      { name: `${wrapper}/example/example.script`, text: overrides.example ?? "-- example\n" },
+    ];
+  }
+
+  test("names the commit a 40-hex zip comment carries", () => {
+    expect(pinOf(library(), COMMIT)).toBe(`commit:${COMMIT}`);
   });
 
-  test("prefixes the digest with 'sha256:'", () => {
-    const out = extensionArchiveVersion(new TextEncoder().encode("z"));
-    expect(out.startsWith("sha256:")).toBe(true);
+  test("hashes the files when the comment is not a lowercase 40-hex commit", () => {
+    const files = pinOf(library());
+    expect(files).toMatch(/^files-sha256:[0-9a-f]{64}$/);
+    for (const comment of [COMMIT.toUpperCase(), `${COMMIT}\n`, COMMIT.slice(1), "v1.0"]) {
+      expect(pinOf(library(), comment)).toBe(files);
+    }
   });
 
-  test("differs for different bytes", () => {
-    const a = extensionArchiveVersion(new TextEncoder().encode("alpha"));
-    const b = extensionArchiveVersion(new TextEncoder().encode("beta"));
-    expect(a).not.toBe(b);
+  test("a files pin ignores a change outside include_dirs", () => {
+    expect(pinOf(library({ example: "-- edited\n" }))).toBe(pinOf(library()));
   });
 
-  test("is insensitive to extra Uint8Array instances of the same content", () => {
-    const a = extensionArchiveVersion(new Uint8Array([1, 2, 3]));
-    const b = extensionArchiveVersion(new Uint8Array([1, 2, 3]));
-    expect(a).toBe(b);
-    expect(a).toMatch(/^sha256:[0-9a-f]{64}$/);
+  test("a files pin changes with any file inside include_dirs, a script as well as a scene", () => {
+    expect(pinOf(library({ lua: "return { edited = true }\n" }))).not.toBe(pinOf(library()));
+  });
+
+  test("a files pin does not depend on the archive wrapper's name", () => {
+    expect(pinOf(library({ wrapper: "monarch-6.0.3" }))).toBe(pinOf(library()));
+  });
+
+  test("an archive with no game.project hashes every entry", () => {
+    const bare = (readme: string): ZipFixtureEntry[] => [
+      { name: "lib/lib.lua", text: "return {}\n" },
+      { name: "lib/readme.md", text: readme },
+    ];
+    expect(pinOf(bare("a\n"))).toMatch(/^files-sha256:[0-9a-f]{64}$/);
+    expect(pinOf(bare("b\n"))).not.toBe(pinOf(bare("a\n")));
+  });
+});
+
+describe("isRetiredPin", () => {
+  test("recognizes the zip-byte form and neither current form", () => {
+    expect(isRetiredPin(`sha256:${"0".repeat(64)}`)).toBe(true);
+    expect(isRetiredPin(`files-sha256:${"0".repeat(64)}`)).toBe(false);
+    expect(isRetiredPin(`commit:${"0".repeat(40)}`)).toBe(false);
   });
 });
 
