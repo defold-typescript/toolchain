@@ -282,6 +282,10 @@ alongside a `dependencies.json` naming each key's URL. A library's
 `druid/druid.gui` therefore lands at its merged resource path, `druid/druid.gui`,
 exactly as a depending project addresses it.
 
+`include_dirs` may separate its directories with commas, whitespace or both, and
+a leading or trailing `/` on a directory is ignored. A nested directory such as
+`monarch/transitions` shares every file beneath it and nothing beside it.
+
 `resolve` does the unpacking (rather than the editor plugin reading archives
 itself) because opening a zip needs a subprocess, which cannot run inside the
 editor's synchronous TypeScript server. `/.defold-types` is listed in the
