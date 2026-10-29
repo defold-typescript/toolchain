@@ -46,6 +46,13 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - bzAnim              — jbp4444, https://github.com/jbp4444/bzAnim
     - library-defold-rendy — whiteboxdev, https://github.com/whiteboxdev/library-defold-rendy
 
+The `fixtures/authored/`, `fixtures/luals/` and `fixtures/script-api/` folders
+hold, for each library the CLI prints declarations for, either the upstream
+sources pinned to one ref or a hand-written declaration fork. The library's
+entry in `authored-targets.json`, `luals-targets.json` or
+`script-api-targets.json` names its upstream repository, the pinned ref and its
+license.
+
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition
 packaging that this package's `generated/` output is derived from.

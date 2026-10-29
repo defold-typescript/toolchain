@@ -76,9 +76,35 @@ function isReusableLibrarySurface(
   }
 }
 
+// The surface a previous run materialized, re-read from disk: its stamp's modules
+// and their files must still hash to the digest it recorded.
+function retainedLibrarySurface(
+  absDir: string,
+  relDir: string,
+): MaterializeVendoredLibrariesResult {
+  try {
+    const stamp = JSON.parse(readFileSync(path.join(absDir, "package.json"), "utf8")) as {
+      modules?: unknown;
+    };
+    const { modules } = stamp;
+    if (!Array.isArray(modules) || !modules.every((module) => typeof module === "string")) {
+      return { materializedDir: null, modules: [] };
+    }
+    const printed = modules.map((module) => ({
+      module,
+      contents: readFileSync(path.join(absDir, `${module}.d.ts`), "utf8"),
+    }));
+    if (isReusableLibrarySurface(absDir, modules, printedDigest(printed))) {
+      return { materializedDir: relDir, modules };
+    }
+  } catch {}
+  return { materializedDir: null, modules: [] };
+}
+
 export interface MaterializeVendoredLibrariesOptions {
   readonly cwd: string;
-  // `null` when library data is unavailable, which keeps a surface already there.
+  // `null` when library data is unavailable, which keeps an intact surface already
+  // there, and its tsconfig entry, without printing or pruning anything.
   readonly printed: readonly PrintedLibrary[] | null;
   // Defaults to the running package's version, so a consumer's directory always
   // names the toolchain that actually wrote it. Injected by tests.
@@ -100,9 +126,11 @@ export function materializeVendoredLibraries(
   const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
 
-  // library-data-unavailable: keep a good surface rather than nuke it.
+  // library-data-unavailable: keep a good surface rather than nuke it, and keep
+  // pointing at it only while every file it was stamped with is still intact.
+  // This branch never writes or deletes.
   if (opts.printed === null) {
-    return { materializedDir: null, modules: [] };
+    return retainedLibrarySurface(absDir, relDir);
   }
   const printed = [...opts.printed].sort((a, b) =>
     a.module < b.module ? -1 : a.module > b.module ? 1 : 0,

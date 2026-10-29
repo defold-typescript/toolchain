@@ -122,14 +122,44 @@ describe("materializeVendoredLibraries", () => {
     expect(existsSync(librariesDir())).toBe(false);
   });
 
-  test("a null print leaves an existing surface intact (library data unavailable, not a removal)", () => {
+  test("a null print keeps an intact surface and returns it (library data unavailable, not a removal)", () => {
     materializeVendoredLibraries({ cwd, printed: [printed("keep.keep")] });
     expect(existsSync(librariesDir())).toBe(true);
 
     const result = materializeVendoredLibraries({ cwd, printed: null });
 
-    expect(result).toEqual({ materializedDir: null, modules: [] });
+    expect(result).toEqual({
+      materializedDir: `.defold-types/${librariesDirName(readCliVersion())}`,
+      modules: ["keep.keep"],
+    });
     expect(existsSync(path.join(librariesDir(), "keep.keep.d.ts"))).toBe(true);
+  });
+
+  test.each([
+    [
+      "a stamp naming another toolchain version",
+      (dir: string) => {
+        const stampPath = path.join(dir, "package.json");
+        const stamp = JSON.parse(readFileSync(stampPath, "utf8")) as Record<string, unknown>;
+        writeFileSync(stampPath, JSON.stringify({ ...stamp, version: "999.0.0" }));
+      },
+    ],
+    ["a deleted module file", (dir: string) => rmSync(path.join(dir, "keep.keep.d.ts"))],
+    [
+      "a rewritten module file",
+      (dir: string) =>
+        writeFileSync(path.join(dir, "keep.keep.d.ts"), "declare module 'keep.keep' { x }\n"),
+    ],
+  ])("a null print does not vouch for %s and deletes nothing", (_label, damage) => {
+    materializeVendoredLibraries({ cwd, printed: [printed("keep.keep")] });
+    const dir = librariesDir();
+    damage(dir);
+    const before = readdirSync(dir).sort();
+
+    const result = materializeVendoredLibraries({ cwd, printed: null });
+
+    expect(result).toEqual({ materializedDir: null, modules: [] });
+    expect(readdirSync(dir).sort()).toEqual(before);
   });
 });
 

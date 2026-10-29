@@ -179,6 +179,10 @@ pins instead and warns:
 printed <module> from the <ref> sources pinned in library data, not from <url>: <reason>
 ```
 
+When library data itself cannot be read, `resolve` keeps the library
+declarations it printed earlier, and their tsconfig entry, as long as the same
+toolchain version wrote them and none of their files has changed.
+
 The match keys on the library's **source identity (the repository name)**, not
 exact URL equality, so a fork or a pinned-tag archive URL still resolves. Because
 a repo name alone can collide — a different library sharing the name, or a fork
