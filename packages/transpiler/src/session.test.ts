@@ -31,6 +31,34 @@ describe("createTranspileSession", () => {
     expect(sessionResult.sourceMaps).toEqual(projectResult.sourceMaps);
   });
 
+  test("output-equivalent for a script whose properties are evaluated", () => {
+    const files = {
+      "ribbon_trail.ts":
+        "export const DEFAULT_OPTIONS = { pointCount: 50, textureTiling: false, width: 30, z: -0.5 };\n",
+      "main.ts": [
+        'import { defineScript } from "@defold-typescript/types";',
+        'import { DEFAULT_OPTIONS } from "./ribbon_trail";',
+        "",
+        "export const TINT = vmath.vector4(1, 1, 1, 1);",
+        "",
+        "defineScript({",
+        "  properties: { trail_tint: TINT, ...DEFAULT_OPTIONS, width: 40 },",
+        "});",
+        "",
+      ].join("\n"),
+    };
+    const session = createTranspileSession();
+
+    const sessionResult = session.update(files);
+    const projectResult = transpileProject({ files });
+
+    expect(projectResult.diagnostics).toEqual([]);
+    expect(projectResult.companions?.["main.ts"]).toBeDefined();
+    expect(sessionResult.lua).toEqual(projectResult.lua);
+    expect(sessionResult.companions).toEqual(projectResult.companions);
+    expect(sessionResult.diagnostics).toEqual(projectResult.diagnostics);
+  });
+
   test("reuses the cached program: unchanged source file is the same reference", () => {
     const session = createTranspileSession();
     session.update({

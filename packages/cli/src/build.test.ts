@@ -2421,6 +2421,26 @@ describe("runBuild (text script properties)", () => {
 
     expect(runBuild({ cwd, defoldVersion: "1.12.4" }).written).toContain("src/mover.ts.script");
   });
+
+  test("a script spreading imported defaults builds with a literal registration per name", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/config/defaults.ts", "export const DEFAULTS = { pointCount: 50 };\n");
+    writeFile(
+      "src/trail.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types";',
+        'import { DEFAULTS } from "./config/defaults";',
+        "",
+        "defineScript({ properties: { ...DEFAULTS } });",
+        "",
+      ].join("\n"),
+    );
+
+    expect(runBuild({ cwd, defoldVersion: "1.12.4" }).written).toContain("src/trail.ts.script");
+    expect(readFileSync(path.join(cwd, "src/trail.ts.script"), "utf8")).toContain(
+      'go.property("pointCount", 50)',
+    );
+  });
 });
 
 describe("runBuild (companion module emit)", () => {
