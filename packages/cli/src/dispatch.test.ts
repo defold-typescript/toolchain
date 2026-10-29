@@ -36,6 +36,7 @@ import {
 } from "./extension-archive";
 import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
+import { writeAuthoredLibraryData } from "./library-data-fixture";
 import { loadVendoredNativeRegistry } from "./library-registry";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import {
@@ -4851,18 +4852,19 @@ describe("dispatch resolve", () => {
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
-      libraryGeneratedDir: string;
+      libraryTypesRoot: string;
     };
   } {
     const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
-    const generatedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-lib-generated-"));
-    writeFileSync(path.join(generatedDir, "mylib.core.d.ts"), "declare module 'mylib.core' {}\n");
+    const libraryData = writeAuthoredLibraryData({
+      "mylib.core": "declare module 'mylib.core' {}\n",
+    });
     const key = extensionArchiveKey(url);
     return {
       resolveInternals: {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
-        libraryGeneratedDir: generatedDir,
+        libraryTypesRoot: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -4887,18 +4889,19 @@ describe("dispatch resolve", () => {
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
-      libraryGeneratedDir: string;
+      libraryTypesRoot: string;
     };
   } {
     const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
-    const generatedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-lib-generated-"));
-    writeFileSync(path.join(generatedDir, "mylib.core.d.ts"), "declare module 'mylib.core' {}\n");
+    const libraryData = writeAuthoredLibraryData({
+      "mylib.core": "declare module 'mylib.core' {}\n",
+    });
     const key = extensionArchiveKey(url);
     return {
       resolveInternals: {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
-        libraryGeneratedDir: generatedDir,
+        libraryTypesRoot: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -4959,7 +4962,7 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
         libraryRegistry: [],
-        libraryGeneratedDir: null,
+        libraryTypesRoot: null,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -4999,7 +5002,7 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
         libraryRegistry: [],
-        libraryGeneratedDir: null,
+        libraryTypesRoot: null,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -5065,18 +5068,19 @@ describe("dispatch resolve", () => {
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
-      libraryGeneratedDir: string;
+      libraryTypesRoot: string;
     };
   } {
     const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
-    const generatedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-lib-generated-"));
-    writeFileSync(path.join(generatedDir, "mylib.core.d.ts"), "declare module 'mylib.core' {}\n");
+    const libraryData = writeAuthoredLibraryData({
+      "mylib.core": "declare module 'mylib.core' {}\n",
+    });
     const key = extensionArchiveKey(url);
     return {
       resolveInternals: {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
-        libraryGeneratedDir: generatedDir,
+        libraryTypesRoot: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -5168,7 +5172,7 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir,
         libraryRegistry: [],
-        libraryGeneratedDir: null,
+        libraryTypesRoot: null,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {

@@ -240,7 +240,7 @@ export async function buildMarkdownFidelity(
   packageRoot: string,
   target: MarkdownTarget,
 ): Promise<FidelityReport> {
-  const resolver = await loadTypeResolver(packageRoot);
+  const resolver = await loadTypeResolver();
   const doc = retargetedFixtureDoc(packageRoot, target);
   return computeMarkdownFidelity(target.namespace, doc, resolver);
 }

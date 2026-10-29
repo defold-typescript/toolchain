@@ -31,6 +31,7 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
     provenance: "cache",
     assetOnly: declarations.length === 0,
     resolvedVersion: "sha256:stub",
+    archivePath: "archive.zip",
     declarations,
     luaModules: [],
     manifestDirs: [],

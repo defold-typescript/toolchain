@@ -14,6 +14,7 @@ import {
   type LualsTarget,
   listTargetFixtures,
   lualsCorpusTargets,
+  lualsFixtureTree,
   type ReadFixtureDir,
   readLualsTargets,
   selectLualsSources,
@@ -265,9 +266,11 @@ describe("buildTargetModel module ownership", () => {
     if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
     const backslashReadDir: ReadFixtureDir = (root) =>
       readdirSync(root, { recursive: true }).map((entry) => String(entry).replace(/\//g, "\\"));
-    const backslashNames = buildTargetModel(PACKAGE_ROOT, druidTarget, {
-      readDir: backslashReadDir,
-    }).moduleFunctions.map((f) => f.name);
+    const backslashNames = buildTargetModel(
+      PACKAGE_ROOT,
+      druidTarget,
+      lualsFixtureTree(PACKAGE_ROOT, druidTarget, { readDir: backslashReadDir }),
+    ).moduleFunctions.map((f) => f.name);
     const posixNames = buildTargetModel(PACKAGE_ROOT, druidTarget).moduleFunctions.map(
       (f) => f.name,
     );

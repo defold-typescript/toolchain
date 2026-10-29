@@ -5,8 +5,8 @@ import { type ExternalTypeRef, emitLibraryDeclarations } from "./emit-library-dt
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import { lowerLibraryModel } from "./lower-api-doc";
 import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
+import type { LibrarySourceTree } from "./source-tree";
 
 /**
  * The LuaLS ingestion front-end pins its source per-entry: a druid-style library
@@ -190,35 +190,49 @@ export function listTargetFixtures(
     .sort();
 }
 
+/** The target's vendored `fixtures/luals/<namespace>/` copy as a source tree. */
+export function lualsFixtureTree(
+  packageRoot: string,
+  target: LualsTarget,
+  seams: { readDir?: ReadFixtureDir } = {},
+): LibrarySourceTree {
+  const root = join(packageRoot, "fixtures/luals", target.namespace);
+  return {
+    list: () => listTargetFixtures(packageRoot, target, seams),
+    read: (path) => readFileSync(join(root, path), "utf8"),
+  };
+}
+
 /**
- * Parse and merge a target's committed fixtures, then build its fidelity report.
- * Reads only `fixtures/luals/<namespace>/**` from disk — zero network — so both
- * the `--fidelity` CLI arm and its round-trip test drive the exact same path and
- * agree byte-for-byte. Fixture files are read in sorted order for determinism,
- * mirroring the parse snapshot.
+ * Parse and merge the `.lua` sources a target's globs select from `tree` — its
+ * vendored fixtures unless a dependency's archive is passed. Files are read in
+ * sorted order for determinism, mirroring the parse snapshot, and the selection
+ * runs on every tree, so an archive's examples and tests stay out of the model.
  *
  * Interfaces and aliases come from the full merge — the module's own signatures
  * reference cross-file classes — but module functions are scoped to the module's
  * own `.lua` file (`moduleId` dotted to a path, e.g. `druid.druid` →
  * `druid/druid.lua`). Merging every file's free functions would export every
  * library file's functions from the one module. A `moduleId` with no matching
- * fixture is a loud misconfiguration, not a silently empty surface.
+ * source is a loud misconfiguration, not a silently empty surface.
  */
 export function buildTargetModel(
   packageRoot: string,
   target: LualsTarget,
-  seams: { readDir?: ReadFixtureDir } = {},
+  tree: LibrarySourceTree = lualsFixtureTree(packageRoot, target),
 ): LibraryModel {
-  const root = join(packageRoot, "fixtures/luals", target.namespace);
-  const files = listTargetFixtures(packageRoot, target, seams);
+  const files = selectLualsSources(
+    tree.list().filter((path) => path.endsWith(".lua")),
+    target,
+  );
   const ownFile = `${target.moduleId.replace(/\./g, "/")}.lua`;
   if (!files.includes(ownFile)) {
     throw new Error(
-      `buildTargetModel: module "${target.moduleId}" expects fixture "${ownFile}" under fixtures/luals/${target.namespace}, but it is not among the ${files.length} fixture .lua files.`,
+      `${target.moduleId}'s own file ${ownFile} is not among the ${files.length} .lua sources its sourceGlobs select`,
     );
   }
   const parsed = new Map<string, LibraryModel>();
-  for (const rel of files) parsed.set(rel, parseLualsSource(readFileSync(join(root, rel), "utf8")));
+  for (const rel of files) parsed.set(rel, parseLualsSource(tree.read(rel)));
   const merged = mergeLibraryModels([...parsed.values()]);
   const own = parsed.get(ownFile);
   const model: LibraryModel = {
@@ -242,8 +256,12 @@ export function buildTargetFidelity(packageRoot: string, target: LualsTarget): F
   );
 }
 
-export function emitLualsTargetDeclarations(packageRoot: string, target: LualsTarget): string {
-  return emitLibraryDeclarations(buildTargetModel(packageRoot, target), {
+export function emitLualsTargetDeclarations(
+  packageRoot: string,
+  target: LualsTarget,
+  tree: LibrarySourceTree = lualsFixtureTree(packageRoot, target),
+): string {
+  return emitLibraryDeclarations(buildTargetModel(packageRoot, target, tree), {
     moduleId: target.moduleId,
     typeRenames: target.typeRenames,
     externalTypes: target.externalTypes,
@@ -303,7 +321,7 @@ const defaultFetchText: FetchText = async (url) => {
 };
 
 if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
+  const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   const argv = process.argv.slice(2);
   if (argv.includes("--fetch")) {
     const targets = readLualsTargets(root);
