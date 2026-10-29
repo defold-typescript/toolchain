@@ -8,11 +8,10 @@ name: Deploy docs
 # <owner>.github.io repo) means dropping DOCS_BASE so the base is `/`.
 
 on:
-  push:
-    branches: [main]
-  # scripts/release.ts dispatches this workflow on the default branch after pushing
-  # a v* tag, so the just-released `## vX.Y.Z` /changelog section re-renders from
-  # `- Unreleased` to its tag date. The tag ref itself is not used: the github-pages
+  # The release's docs job (release.yml) dispatches this workflow on the default
+  # branch once npm publish succeeds, so the site builds once per release and the
+  # just-released `## vX.Y.Z` /changelog section renders with its tag date. A push
+  # never deploys the site. The tag ref itself is not used: the github-pages
   # environment only permits the default branch to deploy.
   workflow_dispatch:
 
@@ -21,7 +20,7 @@ permissions:
   pages: write
   id-token: write
 
-# One in-flight Pages deploy at a time; let a newer push supersede an older run.
+# One in-flight Pages deploy at a time; let a newer dispatch supersede an older run.
 concurrency:
   group: pages
   cancel-in-progress: true

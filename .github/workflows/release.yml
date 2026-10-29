@@ -89,9 +89,8 @@ jobs:
       # Refuse to publish unless ci.yml already finished green on THIS commit.
       # The release never re-runs the checks; it reads CI's result from the
       # Checks API (keyed by SHA) and aborts if CI is absent, still running, or
-      # red. ci.yml runs lint-typecheck, a 3-OS `test` matrix and the docs site's
-      # page build, so the names are `lint-typecheck`, `test (<os>)` and
-      # `docs-site`. A commit pushed on a branch and then
+      # red. ci.yml runs lint-typecheck + a 3-OS `test` matrix, so the names are
+      # `lint-typecheck` and `test (<os>)`. A commit pushed on a branch and then
       # on main carries one CI run per push, and the Checks API returns them all,
       # so only the newest check of each name (the highest id) counts: an earlier
       # cancelled run cannot veto a later green one, and a later red one still blocks.
@@ -101,7 +100,7 @@ jobs:
         run: |
           sha="${{ github.sha }}"
           runs=$(gh api "repos/${{ github.repository }}/commits/$sha/check-runs?per_page=100" \
-                   --jq '[.check_runs[] | select(.name | test("^lint-typecheck$|^test |^docs-site$"))] | group_by(.name) | map(max_by(.id))')
+                   --jq '[.check_runs[] | select(.name | test("^lint-typecheck$|^test "))] | group_by(.name) | map(max_by(.id))')
           total=$(jq 'length' <<<"$runs")
           completed=$(jq '[.[] | select(.status=="completed")] | length' <<<"$runs")
           green=$(jq '[.[] | select(.status=="completed" and .conclusion=="success")] | length' <<<"$runs")
@@ -182,11 +181,10 @@ jobs:
             fi
           done
 
-  # Closing phase of the release. The docs site deploys on push to `main`, which
-  # necessarily happens before this tag exists (the publish job above refuses to
-  # run without CI green on the pushed SHA), so /changelog renders the
-  # just-released `## vX.Y.Z` section as "Unreleased" until a deploy runs with the
-  # tag visible. This job is that deploy.
+  # Closing phase of the release, and the only place the docs site deploys: no push
+  # deploys it, so the published site documents the version on npm, and this build
+  # sees the tag, so /changelog renders the just-released `## vX.Y.Z` section with
+  # its date.
   #
   # It dispatches deploy-docs.yml onto `main` rather than deploying from here: the
   # github-pages environment only permits the default branch, so a run whose ref

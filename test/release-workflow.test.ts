@@ -258,4 +258,14 @@ describe("release workflow publishes via OIDC on tags", () => {
       expect(runCmd(s)).toMatch(/npm view "\$name@\$VERSION" version/);
     }
   });
+
+  test("one job dispatches the docs deploy, and only after the publish", () => {
+    const jobs = loadWorkflow().jobs as Record<string, Job & { needs?: string | string[] }>;
+    const [publishId] = Object.keys(jobs);
+    const dispatchers = Object.values(jobs).filter((job) =>
+      (job.steps ?? []).some((s) => /gh workflow run deploy-docs\.yml\b/.test(runCmd(s))),
+    );
+    expect(dispatchers).toHaveLength(1);
+    expect([dispatchers[0]?.needs].flat()).toContain(publishId);
+  });
 });
