@@ -41,7 +41,7 @@ Declarations are adapted from
 [`ts-defold/library`](https://github.com/ts-defold/library) (MIT) at a pinned
 commit, recorded per module in `library-targets.json`. ts-defold's hand-written
 `declare module` files already model these libraries faithfully; the only surface
-that differs is core-type naming. A codemod (`scripts/sync-library-types.ts`)
+that differs is core-type naming. A codemod (`packages/cli/src/library/sync-library-types.ts`)
 walks the TypeScript AST and rewrites **type references only** — property names,
 JSDoc, `declare module`, and passthrough extensions (`LuaMultiReturn`, `LuaMap`)
 stay byte-identical:

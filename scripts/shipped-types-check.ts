@@ -1,13 +1,13 @@
 import { join } from "node:path";
+import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
+import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
+import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
+import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
 import {
   checkShippedDeclarations,
   locateShippedDeclarations,
   selectShippedDeclarations,
 } from "../packages/cli/src/shipped-declarations.ts";
-import { readAuthoredTargets } from "../packages/library-types/scripts/sync-authored-types.ts";
-import { readLualsTargets } from "../packages/library-types/scripts/sync-luals-types.ts";
-import { readNativeTargets } from "../packages/library-types/scripts/sync-native-types.ts";
-import { readScriptApiTargets } from "../packages/library-types/scripts/sync-script-api-types.ts";
 import {
   datedTags,
   type ForgeReads,

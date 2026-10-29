@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readNativeExpectations } from "../../library-types/scripts/target-expectations";
+import { readNativeExpectations } from "./library/target-expectations";
 import { matchVendoredLibrary } from "./library-match";
 import {
   loadLibraryIndexSlotClassifications,

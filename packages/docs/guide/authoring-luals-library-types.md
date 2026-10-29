@@ -382,7 +382,7 @@ project as `druid.druid`.
 
 A native or hybrid library that ships an extension `.script_api` (the same YAML
 format every Defold extension ships) has a **third** ingestion mode, distinct
-from the LuaLS front-end above: `packages/library-types/scripts/sync-script-api-types.ts`,
+from the LuaLS front-end above: `packages/cli/src/library/sync-script-api-types.ts`,
 driven by `packages/library-types/script-api-targets.json`. Instead of parsing
 `---@` annotations, it routes the committed `.script_api` snapshot through the
 **shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
@@ -400,10 +400,10 @@ output paths. The generate arms mirror the LuaLS ones:
 ```sh
 cd packages/library-types
 
-bun scripts/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into fixtures/script-api/<moduleId>.script_api
-bun scripts/sync-script-api-types.ts --emit       # emit the pinned generated/<...>.d.ts
-bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
-bun scripts/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
+bun ../cli/src/library/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into fixtures/script-api/<moduleId>.script_api
+bun ../cli/src/library/sync-script-api-types.ts --emit       # emit the pinned generated/<...>.d.ts
+bun ../cli/src/library/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
+bun ../cli/src/library/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```
 
 The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.3.0`),

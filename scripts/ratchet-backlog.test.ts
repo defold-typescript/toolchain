@@ -2,12 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { AUTHORED_FLOOR_MANIFEST_FILE } from "../packages/library-types/scripts/authored-parity.ts";
-import { FLOOR_MANIFEST_FILE } from "../packages/library-types/scripts/fidelity-floor.ts";
+import { AUTHORED_FLOOR_MANIFEST_FILE } from "../packages/cli/src/library/authored-parity.ts";
+import { FLOOR_MANIFEST_FILE } from "../packages/cli/src/library/fidelity-floor.ts";
 import type {
   AssetPortalManifest,
   PortalEntry,
-} from "../packages/library-types/scripts/sync-asset-portal.ts";
+} from "../packages/cli/src/library/sync-asset-portal.ts";
 import {
   VERDICTS_DIR,
   VERDICTS_FILE_NAME,

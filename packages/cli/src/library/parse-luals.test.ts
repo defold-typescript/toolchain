@@ -1,0 +1,1359 @@
+import { describe, expect, test } from "bun:test";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { applyAnnotationOverrides } from "./apply-luals-overrides";
+import { emitLibraryDeclarations } from "./emit-library-dts";
+import { LIBRARY_TYPES_ROOT } from "./package-root";
+import {
+  type LibraryField,
+  type LibraryInterface,
+  type LibraryMethod,
+  type LibraryModel,
+  mergeLibraryModels,
+  parseLualsSource,
+} from "./parse-luals";
+
+const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+
+// Build sources line-by-line so annotations and declarations sit at column 0 —
+// the scanner only recognizes column-0 lines, mirroring how LuaLS libraries
+// keep module- and class-level `---@` blocks flush-left.
+const lua = (...lines: string[]): string => lines.join("\n");
+
+describe("parseLualsSource", () => {
+  test("a @class with @field lines yields one interface carrying extends and raw field types", () => {
+    const model = parseLualsSource(
+      lua(
+        "---A clickable button",
+        "---@class Button : druid.component",
+        "---@field text string the label text",
+        "---@field on_click fun(self):nil the click handler",
+        "local Button = {}",
+      ),
+    );
+    expect(model.interfaces).toHaveLength(1);
+    const iface = model.interfaces[0];
+    expect(iface?.name).toBe("Button");
+    expect(iface?.extends).toBe("druid.component");
+    expect(iface?.brief).toBe("A clickable button");
+    expect(iface?.fields).toEqual([
+      { name: "text", types: ["string"], doc: "the label text", isOptional: false },
+      { name: "on_click", types: ["fun(self):nil"], doc: "the click handler", isOptional: false },
+    ]);
+  });
+
+  test("a @class with a same-line description and no inheritance names the class by its bare identifier", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class Immutable Immutable class to convert any table into runtime read-only table",
+        "local Immutable = {}",
+      ),
+    );
+    expect(model.interfaces).toHaveLength(1);
+    const iface = model.interfaces[0];
+    expect(iface?.name).toBe("Immutable");
+    expect(iface?.extends).toBeUndefined();
+    expect(iface?.name).not.toContain(" ");
+    expect(iface?.name).not.toContain("_");
+  });
+
+  test("a @class with inheritance and a same-line description parses name and parent, dropping the prose", () => {
+    const model = parseLualsSource(
+      lua("---@class Widget : druid.component a reusable widget base", "local Widget = {}"),
+    );
+    expect(model.interfaces).toHaveLength(1);
+    const iface = model.interfaces[0];
+    expect(iface?.name).toBe("Widget");
+    expect(iface?.extends).toBe("druid.component");
+  });
+
+  test("a Name: Parent head with no description is unchanged", () => {
+    const model = parseLualsSource(lua("---@class Button : druid.component", "local Button = {}"));
+    const iface = model.interfaces.find((i) => i.name === "Button");
+    expect(iface?.extends).toBe("druid.component");
+  });
+
+  test("a @param/@return block before function mod.new yields a typed module function", () => {
+    const model = parseLualsSource(
+      lua(
+        "---Create a new instance",
+        "---@param context table the parent",
+        "---@param style? table optional style",
+        "---@param ... any extra args",
+        "---@return druid.instance instance the new instance",
+        "function druid.new(context)",
+        "end",
+      ),
+    );
+    expect(model.moduleFunctions).toHaveLength(1);
+    const fn = model.moduleFunctions[0];
+    expect(fn?.name).toBe("new");
+    expect(fn?.brief).toBe("Create a new instance");
+    expect(fn?.params).toEqual([
+      { name: "context", types: ["table"], doc: "the parent", isOptional: false, isVararg: false },
+      { name: "style", types: ["table"], doc: "optional style", isOptional: true, isVararg: false },
+      { name: "...", types: ["any"], doc: "extra args", isOptional: false, isVararg: true },
+    ]);
+    expect(fn?.returns).toEqual([
+      {
+        name: "instance",
+        types: ["druid.instance"],
+        doc: "the new instance",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a colon-receiver function attaches as a method on its interface, not a module function", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class Button",
+        "local Button = {}",
+        "",
+        "---Set the label text",
+        "---@param text string the new text",
+        "function Button:set_text(text)",
+        "end",
+      ),
+    );
+    expect(model.moduleFunctions).toHaveLength(0);
+    const iface = model.interfaces.find((i) => i.name === "Button");
+    expect(iface?.methods).toHaveLength(1);
+    expect(iface?.methods[0]?.name).toBe("set_text");
+    expect(iface?.methods[0]?.brief).toBe("Set the label text");
+    expect(iface?.methods[0]?.params).toEqual([
+      { name: "text", types: ["string"], doc: "the new text", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("a colon method binds through the local that backs the @class, not only the class name", () => {
+    // Druid names a class `druid.button` but backs it with `local M = component.create(...)`,
+    // then defines `function M:init(...)`. The scanner must route M's methods to druid.button.
+    const model = parseLualsSource(
+      lua(
+        "---@class druid.button : druid.component",
+        "---@field node node the clickable node",
+        'local M = component.create("button")',
+        "",
+        "---@param node_id node the node",
+        "function M:init(node_id)",
+        "end",
+      ),
+    );
+    const iface = model.interfaces.find((i) => i.name === "druid.button");
+    expect(iface).toBeDefined();
+    expect(iface?.fields.map((f) => f.name)).toEqual(["node"]);
+    expect(iface?.methods.map((m) => m.name)).toEqual(["init"]);
+    expect(model.moduleFunctions).toHaveLength(0);
+  });
+
+  test("@alias preserves the whole raw type expression verbatim, including spaced unions", () => {
+    expect(parseLualsSource("---@alias DruidStyle table<string, any>").aliases).toEqual([
+      { name: "DruidStyle", types: ["table<string, any>"], doc: "" },
+    ]);
+    expect(
+      parseLualsSource('---@alias druid.container.mode "stretch" | "fit" | "stretch_x"').aliases,
+    ).toEqual([
+      { name: "druid.container.mode", types: ['"stretch" | "fit" | "stretch_x"'], doc: "" },
+    ]);
+  });
+
+  test("a bare @alias collects its `---|` variant lines as types, dropping each `# comment`", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@alias Mode",
+        "---| 0 # off",
+        "---| 1",
+        '---| "a" # x',
+        "",
+        "---@param mode Mode",
+        "function M.set(mode) end",
+      ),
+    );
+    expect(model.aliases).toEqual([{ name: "Mode", types: ["0", "1", '"a"'], doc: "" }]);
+    expect(model.moduleFunctions[0]?.brief).toBe("");
+    const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+    expect(dts).toContain('type Mode = 0 | 1 | "a";');
+    expect(dts).toContain("mode: Mode");
+  });
+
+  test("a bare @alias with no variant lines still parses with empty types", () => {
+    expect(parseLualsSource(lua("---@alias Mode", "function M.set() end")).aliases).toEqual([
+      { name: "Mode", types: [], doc: "" },
+    ]);
+  });
+
+  test("@generic on the following function preserves the generic name and constraint verbatim", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@generic T : druid.widget",
+        "---@param widget T the widget",
+        "---@return T",
+        "function druid.get(widget)",
+        "end",
+      ),
+    );
+    const fn = model.moduleFunctions[0];
+    expect(fn?.generics).toEqual([{ name: "T", constraint: "druid.widget" }]);
+    expect(fn?.params[0]?.types).toEqual(["T"]);
+    expect(fn?.returns[0]?.types).toEqual(["T"]);
+  });
+
+  test("an undocumented function is carried as a module-function gap, not dropped", () => {
+    const model = parseLualsSource(lua("function M.helper()", "end"));
+    const helper = model.moduleFunctions.find((f) => f.name === "helper");
+    expect(helper).toEqual({
+      name: "helper",
+      brief: "",
+      generics: [],
+      params: [],
+      returns: [],
+    });
+  });
+
+  test("raw LuaLS type expressions survive verbatim; a type-level ? is not the optional flag", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param a integer the count",
+        "---@param b string? maybe nil",
+        "---@param c fun(self):number the callback",
+        "---@param d table<K,V> the map",
+        "function M.f(a, b, c, d)",
+        "end",
+      ),
+    );
+    const params = model.moduleFunctions[0]?.params ?? [];
+    expect(params.map((p) => p.types[0])).toEqual([
+      "integer",
+      "string?",
+      "fun(self):number",
+      "table<K,V>",
+    ]);
+    // A type-suffix `?` now flags `isNilable`, not `isOptional`.
+    expect(params[1]).toEqual({
+      name: "b",
+      types: ["string?"],
+      doc: "maybe nil",
+      isOptional: false,
+      isVararg: false,
+      isNilable: true,
+    });
+  });
+
+  test("a @return whose trailing word is a description, not a name, keeps it as doc", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@return any[] The target array",
+        "---@return boolean is_enabled True if enabled",
+        "function M.g()",
+        "end",
+      ),
+    );
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["any[]"], doc: "The target array", isOptional: false, isVararg: false },
+      {
+        name: "is_enabled",
+        types: ["boolean"],
+        doc: "True if enabled",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a multi-value @return splits into one entry per top-level comma segment", () => {
+    const model = parseLualsSource(lua("---@return number, number", "function M.size()", "end"));
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["number"], doc: "", isOptional: false, isVararg: false },
+      { name: "", types: ["number"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("a multi-value @return with an @-doc splits without reading the doc as a third type", () => {
+    const model = parseLualsSource(
+      lua("---@return string|nil, string|nil @success, reason", "function M.load()", "end"),
+    );
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["string|nil"], doc: "", isOptional: false, isVararg: false },
+      {
+        name: "",
+        types: ["string|nil"],
+        doc: "@success, reason",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a multi-value @return attaches the trailing name and doc to the last segment only", () => {
+    const model = parseLualsSource(
+      lua("---@return string, boolean result String representation", "function M.dump()", "end"),
+    );
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["string"], doc: "", isOptional: false, isVararg: false },
+      {
+        name: "result",
+        types: ["boolean"],
+        doc: "String representation",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a comma nested inside brackets never splits a @return", () => {
+    const generic = parseLualsSource(
+      lua("---@return table<string, number>", "function M.a()", "end"),
+    );
+    expect(generic.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["table<string, number>"], doc: "", isOptional: false, isVararg: false },
+    ]);
+
+    const callable = parseLualsSource(
+      lua("---@return fun(a: number, b: string)", "function M.b()", "end"),
+    );
+    expect(callable.moduleFunctions[0]?.returns).toEqual([
+      {
+        name: "",
+        types: ["fun(a: number, b: string)"],
+        doc: "",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a named single @return is unchanged by the split", () => {
+    const model = parseLualsSource(
+      lua("---@return boolean is_saved true if saved", "function M.c()", "end"),
+    );
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      {
+        name: "is_saved",
+        types: ["boolean"],
+        doc: "true if saved",
+        isOptional: false,
+        isVararg: false,
+      },
+    ]);
+  });
+
+  test("a @return ending in a vararg placeholder splits and keeps the placeholder token", () => {
+    const model = parseLualsSource(lua("---@return world, ...", "function M.d()", "end"));
+    expect(model.moduleFunctions[0]?.returns).toEqual([
+      { name: "", types: ["world"], doc: "", isOptional: false, isVararg: false },
+      { name: "", types: ["..."], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("parsing the same source twice yields deeply-equal models (determinism)", () => {
+    const source = lua(
+      "---@class Widget : druid.component",
+      "---@field id string the id",
+      "local M = {}",
+      "---@param x number",
+      "function M:move(x)",
+      "end",
+      '---@alias Mode "a" | "b"',
+      "function M.free()",
+      "end",
+    );
+    expect(parseLualsSource(source)).toEqual(parseLualsSource(source));
+  });
+});
+
+describe("parseLualsSource field visibility and @vararg", () => {
+  test("a @field with a leading visibility keyword captures it without shifting name/type/doc", () => {
+    const model = parseLualsSource(
+      lua("---@class Comp", "---@field private count integer the total", "local Comp = {}"),
+    );
+    expect(model.interfaces[0]?.fields).toEqual([
+      {
+        name: "count",
+        types: ["integer"],
+        doc: "the total",
+        isOptional: false,
+        visibility: "private",
+      },
+    ]);
+  });
+
+  test("each of the four visibility keywords is captured with aligned name/type/doc", () => {
+    for (const scope of ["public", "protected", "private", "package"] as const) {
+      const model = parseLualsSource(
+        lua("---@class Comp", `---@field ${scope} count integer the total`, "local Comp = {}"),
+      );
+      expect(model.interfaces[0]?.fields[0]).toEqual({
+        name: "count",
+        types: ["integer"],
+        doc: "the total",
+        isOptional: false,
+        visibility: scope,
+      });
+    }
+  });
+
+  test("an unmarked @field carries no visibility key at all", () => {
+    const model = parseLualsSource(
+      lua("---@class Comp", "---@field text string the label", "local Comp = {}"),
+    );
+    const field = model.interfaces[0]?.fields[0];
+    expect(field).toEqual({
+      name: "text",
+      types: ["string"],
+      doc: "the label",
+      isOptional: false,
+    });
+    expect(field && Object.keys(field)).not.toContain("visibility");
+  });
+
+  test("a modifier plus an optional name and a spaced raw type stays aligned", () => {
+    // The space inside `fun(self, a)` must not end the type token after the leading
+    // `private` is stripped — bracket depth is still honored. (A space after the
+    // top-level `:` would end the token, but that is readTypeToken's pre-existing
+    // behavior and remains outside this field-visibility fix.)
+    const model = parseLualsSource(
+      lua(
+        "---@class Comp",
+        "---@field private on_click? fun(self, a):b the handler",
+        "local Comp = {}",
+      ),
+    );
+    expect(model.interfaces[0]?.fields[0]).toEqual({
+      name: "on_click",
+      types: ["fun(self, a):b"],
+      doc: "the handler",
+      isOptional: true,
+      visibility: "private",
+    });
+  });
+
+  test("a bare @field private with no following token is a field literally named private", () => {
+    const model = parseLualsSource(lua("---@class Comp", "---@field private", "local Comp = {}"));
+    const field = model.interfaces[0]?.fields[0];
+    expect(field).toEqual({ name: "private", types: [], doc: "", isOptional: false });
+    expect(field && Object.keys(field)).not.toContain("visibility");
+  });
+
+  test("@vararg yields a ... param appended after the preceding @param in source order", () => {
+    const model = parseLualsSource(
+      lua("---@param a number the a", "---@vararg any extra args", "function M.f(a, ...)", "end"),
+    );
+    expect(model.moduleFunctions[0]?.params).toEqual([
+      { name: "a", types: ["number"], doc: "the a", isOptional: false, isVararg: false },
+      { name: "...", types: ["any"], doc: "extra args", isOptional: false, isVararg: true },
+    ]);
+  });
+});
+
+describe("parseLualsSource signature params", () => {
+  const untyped = (name: string) => ({
+    name,
+    types: [],
+    doc: "",
+    isOptional: true,
+    isVararg: false,
+  });
+
+  test("an unannotated function takes its params from the signature and emits them as optional unknown", () => {
+    const model = parseLualsSource(lua("function M.f(a, b)", "end"));
+    expect(model.moduleFunctions[0]?.params).toEqual([untyped("a"), untyped("b")]);
+    const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+    expect(dts).toContain("f(this: void, a?: unknown, b?: unknown): void");
+  });
+
+  test("a partly annotated function keeps the annotated type and orders params by the signature", () => {
+    const model = parseLualsSource(lua("---@param b string the b", "function M.f(a, b, c)", "end"));
+    expect(model.moduleFunctions[0]?.params).toEqual([
+      untyped("a"),
+      { name: "b", types: ["string"], doc: "the b", isOptional: false, isVararg: false },
+      untyped("c"),
+    ]);
+    const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+    expect(dts).toContain("f(this: void, a: unknown, b: string, c?: unknown): void");
+  });
+
+  test("the `= function` form reads its signature too", () => {
+    const model = parseLualsSource(lua("M.f = function(x, y)", "end"));
+    expect(model.moduleFunctions[0]?.params).toEqual([untyped("x"), untyped("y")]);
+  });
+
+  test("a fully annotated function keeps its annotation order", () => {
+    const model = parseLualsSource(
+      lua("---@param b string", "---@param a number", "function M.f(a, b)", "end"),
+    );
+    expect(model.moduleFunctions[0]?.params.map((p) => p.name)).toEqual(["b", "a"]);
+  });
+
+  test("a colon method gains no self, and an unannotated param still appears", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class Button",
+        "local Button = {}",
+        "",
+        "---@param text string",
+        "function Button:set(text, color)",
+        "end",
+      ),
+    );
+    const params = model.interfaces.find((i) => i.name === "Button")?.methods[0]?.params;
+    expect(params?.map((p) => p.name)).toEqual(["text", "color"]);
+    expect(params?.[1]).toEqual(untyped("color"));
+  });
+
+  test("a trailing `...` stays the annotated vararg, after the signature params", () => {
+    const model = parseLualsSource(
+      lua("---@param b number", "---@vararg any", "function M.f(a, b, ...)", "end"),
+    );
+    const params = model.moduleFunctions[0]?.params;
+    expect(params?.map((p) => p.name)).toEqual(["a", "b", "..."]);
+    expect(params?.[2]?.isVararg).toBe(true);
+  });
+
+  test("an unannotated `...` adds no param", () => {
+    const model = parseLualsSource(lua("function M.f(a, ...)", "end"));
+    expect(model.moduleFunctions[0]?.params).toEqual([untyped("a")]);
+  });
+
+  test("a @param naming no signature param is kept after the param it followed", () => {
+    const model = parseLualsSource(
+      lua("---@param a number", "---@param ghost string", "function M.f(a, b)", "end"),
+    );
+    expect(model.moduleFunctions[0]?.params.map((p) => p.name)).toEqual(["a", "ghost", "b"]);
+  });
+
+  test("a moduleFunctions override types an untyped param, and `optional: false` makes one required", () => {
+    const model = applyAnnotationOverrides(parseLualsSource(lua("function M.f(a, b)", "end")), {
+      moduleFunctions: {
+        f: { params: { a: { type: "number", optional: false }, b: { type: "table" } } },
+      },
+    });
+    expect(model.moduleFunctions[0]?.params).toEqual([
+      { name: "a", types: ["number"], doc: "", isOptional: false, isVararg: false },
+      { name: "b", types: ["table"], doc: "", isOptional: true, isVararg: false },
+    ]);
+    const dts = emitLibraryDeclarations(model, { moduleId: "demo.demo" });
+    expect(dts).toContain("f(this: void, a: number, b?: LuaTable): void");
+  });
+});
+
+describe("parseLualsSource method visibility", () => {
+  test("a @local before a colon method sets visibility to local, leaving name/params/returns/brief intact", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class Comp",
+        "local Comp = {}",
+        "---Do the thing",
+        "---@local",
+        "---@param x number the x",
+        "---@return boolean ok whether it worked",
+        "function Comp:run(x)",
+        "end",
+      ),
+    );
+    const method = model.interfaces.find((i) => i.name === "Comp")?.methods[0];
+    expect(method).toEqual({
+      name: "run",
+      brief: "Do the thing",
+      generics: [],
+      params: [{ name: "x", types: ["number"], doc: "the x", isOptional: false, isVararg: false }],
+      returns: [
+        {
+          name: "ok",
+          types: ["boolean"],
+          doc: "whether it worked",
+          isOptional: false,
+          isVararg: false,
+        },
+      ],
+      visibility: "local",
+    });
+  });
+
+  test("each of @private/@protected/@package before a method is captured as that visibility", () => {
+    for (const scope of ["private", "protected", "package"] as const) {
+      const model = parseLualsSource(
+        lua("---@class Comp", "local Comp = {}", `---@${scope}`, "function Comp:secret()", "end"),
+      );
+      expect(model.interfaces.find((i) => i.name === "Comp")?.methods[0]?.visibility).toBe(scope);
+    }
+  });
+
+  test("a @local before a dotted module function sets its visibility", () => {
+    const model = parseLualsSource(
+      lua("---@local", "---@param id string the id", "function mod.cleanup(id)", "end"),
+    );
+    const fn = model.moduleFunctions[0];
+    expect(fn?.name).toBe("cleanup");
+    expect(fn?.visibility).toBe("local");
+  });
+
+  test("an unmarked method carries no visibility key at all", () => {
+    const model = parseLualsSource(
+      lua("---@class Comp", "local Comp = {}", "---@param x number", "function Comp:run(x)", "end"),
+    );
+    const method = model.interfaces.find((i) => i.name === "Comp")?.methods[0];
+    expect(method?.visibility).toBeUndefined();
+    expect(method && Object.keys(method)).not.toContain("visibility");
+  });
+});
+
+describe("parseLualsSource module ownership and spaced fun returns", () => {
+  test("a spaced `fun(...): ret` return survives the top-level colon; the trailer is doc", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param cb fun(text_id: string): string Get localized text",
+        "function M.f(cb)",
+        "end",
+      ),
+    );
+    const param = model.moduleFunctions[0]?.params[0];
+    expect(param?.types).toEqual(["fun(text_id: string): string"]);
+    expect(param?.doc).toBe("Get localized text");
+  });
+
+  test("a spaced multi-return `fun(): number, string` survives the top-level colon and comma", () => {
+    const model = parseLualsSource(
+      lua("---@param cb fun(): number, string the cb", "function M.f(cb)", "end"),
+    );
+    const param = model.moduleFunctions[0]?.params[0];
+    expect(param?.types).toEqual(["fun(): number, string"]);
+    expect(param?.doc).toBe("the cb");
+  });
+
+  test("bare `local function` and bare `function` are not module surface; dotted `M.x` is", () => {
+    const model = parseLualsSource(
+      lua(
+        "local function helper()",
+        "end",
+        "function plain()",
+        "end",
+        "function M.public()",
+        "end",
+      ),
+    );
+    const names = model.moduleFunctions.map((f) => f.name);
+    expect(names).toContain("public");
+    expect(names).not.toContain("helper");
+    expect(names).not.toContain("plain");
+  });
+});
+
+describe("parseLualsSource nil-bearing params and @overload", () => {
+  test("a `string|nil` param is flagged nil-bearing; plain and `?` params are not", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param a string the required",
+        "---@param b string|nil the nullable",
+        "---@param c? string the optional",
+        "function M.f(a, b, c)",
+        "end",
+      ),
+    );
+    const params = model.moduleFunctions[0]?.params ?? [];
+    const [a, b, c] = params;
+    expect(a && Object.keys(a)).not.toContain("isNilable");
+    expect(b?.isNilable).toBe(true);
+    expect(b?.isOptional).toBe(false);
+    // A trailing `?` still drives the existing isOptional flag, not isNilable.
+    expect(c?.isOptional).toBe(true);
+    expect(c && Object.keys(c)).not.toContain("isNilable");
+  });
+
+  test("the top-level-nil detector honors bracket depth: a `fun():a|nil` return-union is not an outer nil", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param cb fun(): a|nil the callback returning a nullable",
+        "---@param gone fun()|nil the nullable callback",
+        "function M.f(cb, gone)",
+        "end",
+      ),
+    );
+    const [cb, gone] = model.moduleFunctions[0]?.params ?? [];
+    // The `|nil` sits inside the fun's return, so the param itself is not nil-bearing.
+    expect(cb?.types).toEqual(["fun(): a|nil"]);
+    expect(cb && Object.keys(cb)).not.toContain("isNilable");
+    // A `|nil` right after the `)` makes the whole function type nullable.
+    expect(gone?.isNilable).toBe(true);
+  });
+
+  test("a type-suffix `?` param is flagged nil-bearing; a plain param is not", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param a string? maybe the string",
+        "---@param b function? maybe the callback",
+        "---@param c any? maybe anything",
+        "---@param d string the required",
+        "function M.f(a, b, c, d)",
+        "end",
+      ),
+    );
+    const [a, b, c, d] = model.moduleFunctions[0]?.params ?? [];
+    expect(a?.isNilable).toBe(true);
+    expect(a?.isOptional).toBe(false);
+    expect(b?.isNilable).toBe(true);
+    expect(b?.isOptional).toBe(false);
+    expect(c?.isNilable).toBe(true);
+    expect(c?.isOptional).toBe(false);
+    expect(d && Object.keys(d)).not.toContain("isNilable");
+    expect(d?.isOptional).toBe(false);
+  });
+
+  test("the fun-return guard survives the type-suffix rule: `fun(): a|nil` is not flagged, `fun()?` is", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param cb fun(): a|nil the callback returning a nullable",
+        "---@param x fun()? maybe the callback",
+        "function M.f(cb, x)",
+        "end",
+      ),
+    );
+    const [cb, x] = model.moduleFunctions[0]?.params ?? [];
+    // A nullable *return* still never flags the param.
+    expect(cb && Object.keys(cb)).not.toContain("isNilable");
+    // A trailing `?` on the whole `fun()` token flags it nil-bearing.
+    expect(x?.isNilable).toBe(true);
+  });
+
+  test("a `|nil` or type-suffix `?` field is optional; a plain field is not", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@class widget",
+        "---@field loader function|nil the optional loader",
+        "---@field path string|table|nil the optional path",
+        "---@field id string the required id",
+        "---@field on_click? fun() the optional handler",
+        "local M = {}",
+      ),
+    );
+    const iface = model.interfaces.find((i) => i.name === "widget");
+    const byName = (n: string) => iface?.fields.find((f) => f.name === n);
+    expect(byName("loader")?.isOptional).toBe(true);
+    expect(byName("path")?.isOptional).toBe(true);
+    expect(byName("id")?.isOptional).toBe(false);
+    expect(byName("on_click")?.isOptional).toBe(true);
+  });
+
+  test("a class-level `@overload fun(...)` is captured onto the interface with its token and doc", () => {
+    const model = parseLualsSource(
+      lua(
+        "---The widget module",
+        "---@overload fun(a:string): number Build the widget",
+        "---@class widget",
+        "local M = {}",
+      ),
+    );
+    const iface = model.interfaces.find((i) => i.name === "widget");
+    expect(iface?.overloads).toEqual([{ type: "fun(a:string): number", doc: "Build the widget" }]);
+  });
+
+  test("a non-`fun` @overload is ignored, leaving no overloads on the interface", () => {
+    const model = parseLualsSource(lua("---@overload string", "---@class widget", "local M = {}"));
+    const iface = model.interfaces.find((i) => i.name === "widget");
+    expect(iface && Object.keys(iface)).not.toContain("overloads");
+  });
+});
+
+describe("parseLualsSource returned module object and function-local class", () => {
+  test("a `return <name>` bound to a @class marks the module object; the class stays a normal interface", () => {
+    const model = parseLualsSource(
+      lua("---@class M", "---@field K integer", "local M = {}", "return M"),
+    );
+    expect(model.moduleObject).toBe("M");
+    const iface = model.interfaces.find((i) => i.name === "M");
+    expect(iface?.fields.map((f) => f.name)).toEqual(["K"]);
+    expect(iface?.fields[0]?.types).toEqual(["integer"]);
+  });
+
+  test("a `return <name>` that resolves to no @class leaves moduleObject unset", () => {
+    const model = parseLualsSource(lua("local M = {}", "function M.f()", "end", "return M"));
+    expect(model.moduleObject).toBeUndefined();
+  });
+
+  test("a function-local @class is captured as an interface with methods and infers the function return", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param tag? string the tag",
+        "function M.new(tag)",
+        "\t---@class Inst",
+        "\tlocal instance = {",
+        "\t\ttag = tag,",
+        "\t\t---@type fun(self: Inst, a: string)",
+        "\t\tlog = function(self, a) end,",
+        "\t\t---@type fun()",
+        "\t\tsave = function() end,",
+        "\t}",
+        "\treturn instance",
+        "end",
+      ),
+    );
+    const inst = model.interfaces.find((i) => i.name === "Inst");
+    expect(inst).toBeDefined();
+    expect(inst?.methods.map((m) => m.name)).toEqual(["log", "save"]);
+    // `self` is elided and the remaining params keep their raw types.
+    expect(inst?.methods.find((m) => m.name === "log")?.params).toEqual([
+      { name: "a", types: ["string"], doc: "", isOptional: false, isVararg: false },
+    ]);
+    // A `fun()` member is a no-arg method.
+    expect(inst?.methods.find((m) => m.name === "save")?.params).toEqual([]);
+    // `tag = tag,` has no `---@type`, so it never becomes a member.
+    expect(inst?.fields).toEqual([]);
+    // The enclosing function has no `---@return`, so its return infers to the local's class.
+    const fn = model.moduleFunctions.find((f) => f.name === "new");
+    expect(fn?.returns).toEqual([
+      { name: "", types: ["Inst"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("column-0 discipline holds: indented @cast/@type outside a local @class create nothing", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@param x number the x",
+        "function M.f(x)",
+        "\t---@cast x integer",
+        "\t---@type table",
+        "\tlocal y = x",
+        "end",
+      ),
+    );
+    // No stray interface from the indented narrowing lines, and pending is untouched.
+    expect(model.interfaces).toHaveLength(0);
+    const fn = model.moduleFunctions.find((f) => f.name === "f");
+    expect(fn?.params.map((p) => p.name)).toEqual(["x"]);
+    expect(fn?.returns).toEqual([]);
+  });
+
+  test("an explicit @return wins over the returned-local inference", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@return Other",
+        "function M.make()",
+        "\t---@class Inst",
+        "\tlocal instance = {",
+        "\t\t---@type fun(self: Inst)",
+        "\t\tping = function(self) end,",
+        "\t}",
+        "\treturn instance",
+        "end",
+      ),
+    );
+    const fn = model.moduleFunctions.find((f) => f.name === "make");
+    expect(fn?.returns).toEqual([
+      { name: "", types: ["Other"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("a later local does not rebind the class instance", () => {
+    const model = parseLualsSource(
+      lua(
+        "function M.make()",
+        "\t---@class Inst",
+        "\tlocal instance = {",
+        "\t\t---@type fun(self: Inst)",
+        "\t\tping = function(self) end,",
+        "\t}",
+        "\tlocal scratch = compute()",
+        "\treturn instance",
+        "end",
+      ),
+    );
+    const inst = model.interfaces.find((i) => i.name === "Inst");
+    expect(inst?.methods.map((m) => m.name)).toEqual(["ping"]);
+    // The trailing `local scratch` must not steal the instance binding, so the
+    // `return instance` still infers the function's return.
+    const fn = model.moduleFunctions.find((f) => f.name === "make");
+    expect(fn?.returns).toEqual([
+      { name: "", types: ["Inst"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("an unmatched pending type cannot attach to a later key", () => {
+    const model = parseLualsSource(
+      lua(
+        "function M.make()",
+        "\t---@class Inst",
+        "\tlocal instance = {",
+        "\t\t---@type fun(self: Inst, a: string)",
+        "\t\tlog = function(self, a) end,",
+        "\t\t---@type fun(self: Inst)",
+        "\t\t-- persist to disk",
+        "\t\tsave = function() end,",
+        "\t}",
+        "\treturn instance",
+        "end",
+      ),
+    );
+    const inst = model.interfaces.find((i) => i.name === "Inst");
+    // The stray comment drops the armed `---@type`, so `save` is never captured.
+    expect(inst?.methods.map((m) => m.name)).toEqual(["log"]);
+    expect(inst?.methods.find((m) => m.name === "log")?.params).toEqual([
+      { name: "a", types: ["string"], doc: "", isOptional: false, isVararg: false },
+    ]);
+  });
+
+  test("mergeLibraryModels carries the first non-empty moduleObject", () => {
+    const without: LibraryModel = { interfaces: [], aliases: [], moduleFunctions: [] };
+    const withMod: LibraryModel = {
+      interfaces: [],
+      aliases: [],
+      moduleFunctions: [],
+      moduleObject: "Squid",
+    };
+    expect(mergeLibraryModels([without, withMod]).moduleObject).toBe("Squid");
+    expect(mergeLibraryModels([without]).moduleObject).toBeUndefined();
+  });
+});
+
+describe("parseLualsSource module table assignments", () => {
+  test("records each column-0 table-field assignment, including a multi-assignment's first target", () => {
+    const model = parseLualsSource(
+      lua(
+        "local M = {}",
+        'M.A = hash("a")',
+        'M.B, M[1] = 1, "B"',
+        "function M.f()",
+        "  M.C = 1",
+        "end",
+        "M.g = function() end",
+        "return M",
+      ),
+    );
+    expect(model.moduleAssignments).toEqual([
+      { table: "M", name: "A" },
+      { table: "M", name: "B" },
+    ]);
+    expect(model.moduleReturn).toBe("M");
+  });
+
+  test("keeps each assignment's receiver, so an assignment on another table stays distinct", () => {
+    const model = parseLualsSource(
+      lua("local M = {}", "local Other = {}", "Other.A = 1", "M.B = 2", "return M"),
+    );
+    expect(model.moduleAssignments).toEqual([
+      { table: "Other", name: "A" },
+      { table: "M", name: "B" },
+    ]);
+    expect(model.moduleReturn).toBe("M");
+  });
+
+  test("an indented or call-expression return sets no moduleReturn", () => {
+    const model = parseLualsSource(
+      lua(
+        "local M = {}",
+        "M.A = 1",
+        "function M.f()",
+        "  return M",
+        "end",
+        "return setmetatable(M, {})",
+      ),
+    );
+    expect("moduleReturn" in model).toBe(false);
+    expect(model.moduleAssignments).toEqual([{ table: "M", name: "A" }]);
+  });
+
+  test("a dotted return sets no moduleReturn", () => {
+    const model = parseLualsSource(lua("local M = {}", "M.A = 1", "return M.inner"));
+    expect("moduleReturn" in model).toBe(false);
+  });
+
+  test("a source with no column-0 table assignment carries no moduleAssignments key", () => {
+    const model = parseLualsSource(
+      lua("local M = {}", "function M.f()", "  M.C = 1", "end", "M.g = function() end", "return M"),
+    );
+    expect("moduleAssignments" in model).toBe(false);
+  });
+});
+
+describe("parseLualsSource re-exported module tables", () => {
+  function source(options: { aliases?: string[]; metatable?: boolean } = {}): string {
+    const { aliases = ["T"], metatable = true } = options;
+    return lua(
+      "local M = {}",
+      "local T = {}",
+      ...(metatable ? ["T.__index = T"] : []),
+      "---@return C",
+      "function T.new() end",
+      "---@return C self",
+      "function T:set() end",
+      "---@return C|nil",
+      "function T:get() end",
+      "function M.run() end",
+      ...aliases.map((name) => `M.${name} = T`),
+      "return M",
+    );
+  }
+
+  function returns(model: LibraryModel, iface: string, name: string): string[] | undefined {
+    return model.interfaces
+      .find((i) => i.name === iface)
+      ?.methods.find((m) => m.name === name)
+      ?.returns.flatMap((r) => r.types);
+  }
+
+  test("moves a re-exported metatable class's dot functions into a module table whose instance extends the constructed class", () => {
+    const model = parseLualsSource(source());
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["run"]);
+    expect(
+      model.moduleTables?.map((t) => ({ ...t, functions: t.functions.map((f) => f.name) })),
+    ).toEqual([{ name: "T", table: "T", functions: ["new"] }]);
+    expect(model.interfaces.find((i) => i.name === "T")?.extends).toBe("C");
+    expect(model.moduleTables?.[0]?.functions[0]?.returns.flatMap((r) => r.types)).toEqual(["T"]);
+    expect(returns(model, "T", "set")).toEqual(["T"]);
+    expect(returns(model, "T", "get")).toEqual(["C|nil"]);
+  });
+
+  test("declares a table exported under two fields under both", () => {
+    const model = parseLualsSource(source({ aliases: ["T", "Alias"] }));
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["run"]);
+    expect(
+      model.moduleTables?.map((t) => ({
+        name: t.name,
+        table: t.table,
+        functions: t.functions.map((f) => f.name),
+      })),
+    ).toEqual([
+      { name: "T", table: "T", functions: ["new"] },
+      { name: "Alias", table: "T", functions: ["new"] },
+    ]);
+    expect(model.interfaces.find((i) => i.name === "T")?.extends).toBe("C");
+    expect(model.moduleTables?.map((t) => t.functions[0]?.returns.flatMap((r) => r.types))).toEqual(
+      [["T"], ["T"]],
+    );
+  });
+
+  test("deduplicates repeated exports under the same field", () => {
+    const model = parseLualsSource(source({ aliases: ["T", "T"] }));
+    expect(model.moduleTables?.map((t) => t.name)).toEqual(["T"]);
+  });
+
+  test("declares a reassigned field with the table assigned last", () => {
+    const model = parseLualsSource(
+      lua(
+        "local M = {}",
+        "local A = {}",
+        "function A.first() end",
+        "local B = {}",
+        "B.__index = B",
+        "---@return C",
+        "function B.new() end",
+        "---@return C self",
+        "function B:set() end",
+        "function M.run() end",
+        "M.X = A",
+        "M.X = B",
+        "return M",
+      ),
+    );
+    expect(
+      model.moduleTables?.map((t) => ({
+        name: t.name,
+        table: t.table,
+        functions: t.functions.map((f) => f.name),
+      })),
+    ).toEqual([{ name: "X", table: "B", functions: ["new"] }]);
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["first", "run"]);
+    expect(model.interfaces.find((i) => i.name === "B")?.extends).toBe("C");
+    expect(model.moduleTables?.[0]?.functions[0]?.returns.flatMap((r) => r.types)).toEqual(["B"]);
+  });
+
+  test("an overwritten field assignment leaves the model as if it were absent", () => {
+    function reassigned(overwritten: string[]): LibraryModel {
+      const { moduleAssignments: _, ...model } = parseLualsSource(
+        lua(
+          "local M = {}",
+          "local A = {}",
+          "A.__index = A",
+          "---@return C",
+          "function A.new() end",
+          "---@return C self",
+          "function A:set() end",
+          "local B = {}",
+          "B.__index = B",
+          "---@return D",
+          "function B.new() end",
+          "---@return D self",
+          "function B:set() end",
+          "function M.run() end",
+          ...overwritten,
+          "M.X = B",
+          "M.Y = B",
+          "return M",
+        ),
+      );
+      return model;
+    }
+    const withOverwrite = reassigned(["M.X = A"]);
+    expect(withOverwrite.moduleTables?.map((t) => t.name)).toEqual(["X", "Y"]);
+    expect(withOverwrite).toEqual(reassigned([]));
+  });
+
+  test("a table the module never re-exports keeps its dot functions as module functions", () => {
+    const model = parseLualsSource(source({ aliases: [] }));
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["new", "run"]);
+    expect("moduleTables" in model).toBe(false);
+    expect(model.interfaces.find((i) => i.name === "T")?.extends).toBeUndefined();
+  });
+
+  test("a re-exported table without __index stays a module table but keeps its declared returns", () => {
+    const model = parseLualsSource(source({ metatable: false }));
+    expect(model.moduleTables?.map((t) => t.name)).toEqual(["T"]);
+    expect(model.interfaces.find((i) => i.name === "T")?.extends).toBeUndefined();
+    expect(model.moduleTables?.[0]?.functions[0]?.returns.flatMap((r) => r.types)).toEqual(["C"]);
+    expect(returns(model, "T", "set")).toEqual(["C"]);
+  });
+});
+
+describe("parseLualsSource ---@meta class functions", () => {
+  const netBody = [
+    "---@class net",
+    'local net = { NAME = "net" }',
+    "",
+    "---Starts the network.",
+    "---@param cb fun()|nil called when ready",
+    "function net.init(cb)",
+    "end",
+    "",
+    "---@param p table",
+    "net.load = function(p) end",
+    "",
+    "return net",
+  ];
+
+  test("a dotted function on a class-bound local becomes a self-less method of the class", () => {
+    const model = parseLualsSource(lua("---@meta", "", ...netBody));
+    const net = model.interfaces.find((i) => i.name === "net");
+    expect(net?.methods.map((m) => [m.name, m.noSelf])).toEqual([
+      ["init", true],
+      ["load", true],
+    ]);
+    expect(net?.methods[0]?.brief).toBe("Starts the network.");
+    expect(net?.methods[0]?.params.map((p) => [p.name, p.types])).toEqual([["cb", ["fun()|nil"]]]);
+    expect(net?.methods[1]?.params.map((p) => [p.name, p.types])).toEqual([["p", ["table"]]]);
+    expect(model.moduleFunctions).toEqual([]);
+  });
+
+  test("a leading blank line or byte-order mark still marks the file as meta", () => {
+    for (const head of ["\n---@meta", "﻿---@meta"]) {
+      const model = parseLualsSource(lua(head, ...netBody));
+      expect(model.interfaces.find((i) => i.name === "net")?.methods).toHaveLength(2);
+      expect(model.moduleFunctions).toEqual([]);
+    }
+  });
+
+  test("without ---@meta the same dotted functions stay module functions", () => {
+    const model = parseLualsSource(lua(...netBody));
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["init", "load"]);
+    expect(model.moduleFunctions.some((f) => "noSelf" in f)).toBe(false);
+    expect(model.interfaces.find((i) => i.name === "net")?.methods).toEqual([]);
+  });
+
+  test("a ---@meta not on the first non-blank line does not mark the file as meta", () => {
+    const model = parseLualsSource(lua("local x = 1", "---@meta", ...netBody));
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["init", "load"]);
+  });
+
+  test("in a meta file a colon method keeps self, and a dotted function on an unbound local stays a module function", () => {
+    const model = parseLualsSource(
+      lua(
+        "---@meta",
+        "---@class net",
+        "local net = {}",
+        "function net:show() end",
+        "local M = {}",
+        "function M.f() end",
+        "return M",
+      ),
+    );
+    const show = model.interfaces.find((i) => i.name === "net")?.methods;
+    expect(show?.map((m) => m.name)).toEqual(["show"]);
+    expect(show?.[0] && "noSelf" in show[0]).toBe(false);
+    expect(model.moduleFunctions.map((f) => f.name)).toEqual(["f"]);
+  });
+});
+
+describe("parseLualsSource @deprecated", () => {
+  test("a @deprecated with text before a module function carries the text onto it", () => {
+    const model = parseLualsSource(
+      lua(
+        "---Old entry point",
+        "---@deprecated Use `b` instead.",
+        "function M.old() end",
+        "function M.fresh() end",
+      ),
+    );
+    const old = model.moduleFunctions.find((f) => f.name === "old");
+    expect(old?.deprecated).toBe("Use `b` instead.");
+    const fresh = model.moduleFunctions.find((f) => f.name === "fresh");
+    expect(fresh?.deprecated).toBeUndefined();
+    expect(fresh && Object.keys(fresh)).not.toContain("deprecated");
+  });
+
+  test("a bare @deprecated yields an empty string, distinct from an absent key", () => {
+    const model = parseLualsSource(lua("---@deprecated", "function M.old() end"));
+    expect(model.moduleFunctions[0]?.deprecated).toBe("");
+  });
+
+  test("a @class captures the tag with text, bare, and not at all", () => {
+    const tagged = parseLualsSource(
+      lua("---@deprecated Superseded by Y.", "---@class X", "local X = {}"),
+    );
+    expect(tagged.interfaces[0]?.deprecated).toBe("Superseded by Y.");
+
+    const bare = parseLualsSource(lua("---@deprecated", "---@class X", "local X = {}"));
+    expect(bare.interfaces[0]?.deprecated).toBe("");
+
+    const untagged = parseLualsSource(lua("---@class X", "local X = {}"));
+    const iface = untagged.interfaces[0];
+    expect(iface?.deprecated).toBeUndefined();
+    expect(iface && Object.keys(iface)).not.toContain("deprecated");
+  });
+
+  test("an @alias captures the tag with text, bare, and not at all", () => {
+    const tagged = parseLualsSource(lua("---@deprecated Use `Mode`.", "---@alias OldMode string"));
+    expect(tagged.aliases[0]?.deprecated).toBe("Use `Mode`.");
+
+    const bare = parseLualsSource(lua("---@deprecated", "---@alias OldMode string"));
+    expect(bare.aliases[0]?.deprecated).toBe("");
+
+    const untagged = parseLualsSource(lua("---@alias OldMode string"));
+    const alias = untagged.aliases[0];
+    expect(alias?.deprecated).toBeUndefined();
+    expect(alias && Object.keys(alias)).not.toContain("deprecated");
+  });
+
+  test("a colon method captures the tag with text, bare, and not at all", () => {
+    const tagged = parseLualsSource(
+      lua(
+        "---@class Comp",
+        "local M = {}",
+        "---@deprecated Use `set_text`.",
+        "function M:set_to() end",
+      ),
+    );
+    expect(tagged.interfaces[0]?.methods[0]?.deprecated).toBe("Use `set_text`.");
+
+    const bare = parseLualsSource(
+      lua("---@class Comp", "local M = {}", "---@deprecated", "function M:set_to() end"),
+    );
+    expect(bare.interfaces[0]?.methods[0]?.deprecated).toBe("");
+
+    const untagged = parseLualsSource(
+      lua("---@class Comp", "local M = {}", "function M:set_to() end"),
+    );
+    const method = untagged.interfaces[0]?.methods[0];
+    expect(method?.deprecated).toBeUndefined();
+    expect(method && Object.keys(method)).not.toContain("deprecated");
+  });
+
+  test("a @deprecated consumed by a @class does not leak onto the next declaration", () => {
+    const model = parseLualsSource(
+      lua("---@deprecated Superseded.", "---@class X", "local X = {}", "function M.after() end"),
+    );
+    expect(model.interfaces[0]?.deprecated).toBe("Superseded.");
+    const after = model.moduleFunctions.find((f) => f.name === "after");
+    expect(after?.deprecated).toBeUndefined();
+    expect(after && Object.keys(after)).not.toContain("deprecated");
+  });
+
+  test("a @deprecated consumed by an @alias does not leak onto the next declaration", () => {
+    const model = parseLualsSource(
+      lua("---@deprecated Superseded.", "---@alias OldMode string", "function M.after() end"),
+    );
+    expect(model.aliases[0]?.deprecated).toBe("Superseded.");
+    const after = model.moduleFunctions.find((f) => f.name === "after");
+    expect(after?.deprecated).toBeUndefined();
+    expect(after && Object.keys(after)).not.toContain("deprecated");
+  });
+
+  test("mergeLibraryModels keeps a class's tag when an untagged block for the same class merges, in either order", () => {
+    const tagged = parseLualsSource(
+      lua("---@deprecated Superseded by Y.", "---@class X", "---@field a string", "local X = {}"),
+    );
+    const untagged = parseLualsSource(lua("---@class X", "---@field b string", "local X = {}"));
+
+    expect(mergeLibraryModels([tagged, untagged]).interfaces[0]?.deprecated).toBe(
+      "Superseded by Y.",
+    );
+    expect(mergeLibraryModels([untagged, tagged]).interfaces[0]?.deprecated).toBe(
+      "Superseded by Y.",
+    );
+  });
+});
+
+describe("druid parse snapshot", () => {
+  const druidRoot = join(PACKAGE_ROOT, "fixtures/luals/druid");
+  const files = readdirSync(druidRoot, { recursive: true })
+    .map((entry) => String(entry))
+    .filter((entry) => entry.endsWith(".lua"))
+    .sort();
+
+  test("merged model over the committed druid fixture matches its snapshot", () => {
+    const model: LibraryModel = mergeLibraryModels(
+      files.map((rel) => parseLualsSource(readFileSync(join(druidRoot, rel), "utf8"))),
+    );
+    expect(model).toMatchSnapshot();
+  });
+
+  test("the druid model is non-trivial: an interface with methods and a module function exist", () => {
+    const model = mergeLibraryModels(
+      files.map((rel) => parseLualsSource(readFileSync(join(druidRoot, rel), "utf8"))),
+    );
+    expect(model.interfaces.some((i) => i.methods.length > 0)).toBe(true);
+    expect(model.moduleFunctions.length).toBeGreaterThan(0);
+  });
+});
+
+describe("mergeLibraryModels field dedup", () => {
+  const field = (name: string, type: string): LibraryField => ({
+    name,
+    types: [type],
+    doc: "",
+    isOptional: false,
+  });
+  const method = (name: string): LibraryMethod => ({
+    name,
+    brief: "",
+    generics: [],
+    params: [],
+    returns: [],
+  });
+  const iface = (
+    name: string,
+    fields: LibraryField[],
+    methods: LibraryMethod[] = [],
+  ): LibraryInterface => ({ name, generics: [], fields, methods, brief: "" });
+  const model = (interfaces: LibraryInterface[]): LibraryModel => ({
+    interfaces,
+    aliases: [],
+    moduleFunctions: [],
+  });
+
+  test("a field named the same across two merged interfaces collapses to one, first wins", () => {
+    const a = model([iface("X", [field("f", "string"), field("keep_a", "number")])]);
+    const b = model([iface("X", [field("f", "boolean"), field("keep_b", "table")])]);
+    const merged = mergeLibraryModels([a, b]);
+    expect(merged.interfaces).toHaveLength(1);
+    const x = merged.interfaces[0];
+    expect(x?.fields.map((fld) => fld.name)).toEqual(["f", "keep_a", "keep_b"]);
+    expect(x?.fields.find((fld) => fld.name === "f")?.types).toEqual(["string"]);
+  });
+
+  test("a single interface repeating a field name collapses to one (dedup is a final pass)", () => {
+    const a = model([
+      iface("X", [field("f", "string"), field("f", "boolean"), field("g", "number")]),
+    ]);
+    const merged = mergeLibraryModels([a]);
+    const x = merged.interfaces[0];
+    expect(x?.fields.map((fld) => fld.name)).toEqual(["f", "g"]);
+    expect(x?.fields.find((fld) => fld.name === "f")?.types).toEqual(["string"]);
+  });
+
+  test("two same-named methods are not deduped (overloaded module-function non-goal)", () => {
+    const a = model([iface("X", [], [method("call")])]);
+    const b = model([iface("X", [], [method("call")])]);
+    const merged = mergeLibraryModels([a, b]);
+    const x = merged.interfaces[0];
+    expect(x?.methods.map((m) => m.name)).toEqual(["call", "call"]);
+  });
+});

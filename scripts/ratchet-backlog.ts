@@ -13,11 +13,8 @@ import { join } from "node:path";
 import {
   AUTHORED_FLOOR_MANIFEST_FILE,
   parseAuthoredFloors,
-} from "../packages/library-types/scripts/authored-parity.ts";
-import {
-  FLOOR_MANIFEST_FILE,
-  parseFloors,
-} from "../packages/library-types/scripts/fidelity-floor.ts";
+} from "../packages/cli/src/library/authored-parity.ts";
+import { FLOOR_MANIFEST_FILE, parseFloors } from "../packages/cli/src/library/fidelity-floor.ts";
 import {
   openVerdictSlots,
   parseVerdicts,

@@ -6,7 +6,7 @@ import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import {
   readLibraryExpectations,
   readNativeExpectations,
-} from "../../../library-types/scripts/target-expectations";
+} from "../../../cli/src/library/target-expectations";
 import { untypedListings } from "./api-content";
 import { apiModuleSymbols, type LibraryMeta } from "./api-surface";
 import {
