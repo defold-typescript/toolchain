@@ -1,9 +1,9 @@
 /**
- * Renders a `LibraryModel` (from `parse-luals.ts`) into a committed `.d.ts`: a
- * single `declare module '<moduleId>' { ... }` block of plain `interface`s, `type`
+ * Renders a `LibraryModel` (from `parse-luals.ts`) into the `.d.ts` `resolve` serves:
+ * a single `declare module '<moduleId>' { ... }` block of plain `interface`s, `type`
  * aliases, and `export function`s, mapping every member type through the shipped
  * `mapLualsType`. Pure and deterministic — output depends only on the model and the
- * options — so the `--emit` CLI arm and its golden round-trip test agree
+ * options — so a pinned print and an archive print of the same sources agree
  * byte-for-byte.
  *
  * A sibling to `@defold-typescript/types`' `emit-dts.ts`, not an extension of it:

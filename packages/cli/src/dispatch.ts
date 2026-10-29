@@ -583,7 +583,7 @@ function dispatchCommand(
       }
       const { runExportTypes } = await import("./export-types");
       try {
-        const { sourceId, written } = runExportTypes({ library, cwd });
+        const { sourceId, written } = await runExportTypes({ library, cwd });
         if (json) {
           io.stdout.write(renderResult({ command: "export-types", library: sourceId, written }));
         } else {

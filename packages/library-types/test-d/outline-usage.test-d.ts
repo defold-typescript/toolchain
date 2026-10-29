@@ -4,8 +4,8 @@
 import * as outline from "outline-shader.outline";
 
 // Compile-only proof that the outline shader LuaLS golden is callable the way the
-// library's render script and game scripts call it. tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// library's render script and game scripts call it. the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 export function renderInit(self: { predicates: Record<string, unknown> }): void {
   outline.init(self);

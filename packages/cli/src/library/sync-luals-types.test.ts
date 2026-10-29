@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { emitLibraryDeclarations, isPublicMethod } from "./emit-library-dts";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
 import type { LibraryInterface, LibraryModel } from "./parse-luals";
+import { printCorpus } from "./print-corpus";
 import {
   buildTargetFidelity,
   buildTargetModel,
@@ -482,11 +483,12 @@ describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () 
     expect(classification.dirs.some((l) => l.dir === "defold-saver")).toBe(false);
   });
 
-  test("only the retired ts-defold saver fixtures are gone; the regenerated generated/api-doc persist in place", () => {
+  test("only the retired ts-defold saver fixtures are gone; the printed modules and api-docs persist in place", async () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/saver.saver.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/saver.storage.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/saver.saver.d.ts"))).toBe(true);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/saver.storage.d.ts"))).toBe(true);
+    const corpus = await printCorpus(PACKAGE_ROOT);
+    expect(corpus.has("saver.saver")).toBe(true);
+    expect(corpus.has("saver.storage")).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/saver.saver.json"))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/saver.storage.json"))).toBe(true);
   });

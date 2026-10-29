@@ -6,8 +6,8 @@ import * as panthera from "panthera.panthera";
 // Compile-only proof (mirroring narrator-usage.test-d.ts) that the panthera LuaLS
 // golden is callable with the types upstream documents. The interfaces are not
 // exported from the module, so the proof drives them by inference from the module
-// functions rather than named imports. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// functions rather than named imports. No assertions execute; the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 const state = panthera.create_gui("/animations/hero.json", "hero");
 

@@ -5,7 +5,7 @@ import * as rendy from "rendy.rendy";
 
 // Compile-only proof for the severed rendy surface, replacing the rendy block
 // retired from library-types.test-d.ts when the `./rendy.rendy` subpath went
-// away. No assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is
+// away. No assertions execute; the `dts-declaration-validity` compile is
 // the gate.
 
 declare const _v3: Vector3;

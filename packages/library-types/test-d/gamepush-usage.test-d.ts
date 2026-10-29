@@ -4,7 +4,7 @@
 import * as gamepush from "gamepush.gamepush";
 
 // Compile-only proof for the GamePush entry module, the one a project requires. No
-// assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate. Each module
+// assertions execute; the `dts-declaration-validity` compile is the gate. Each module
 // field is a `typeof import` of a module id, so a call through a field compiles only when
 // the golden that declares that id is present and the field names it correctly.
 

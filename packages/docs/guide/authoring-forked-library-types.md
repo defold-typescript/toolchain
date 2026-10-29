@@ -124,19 +124,17 @@ unchanged. When the library is a native extension, the declaration also carries
 `/** @globalTable */` so project imports lower to its runtime global rather
 than a `require` (see
 [Module form](./shipping-library-types.md#module-form-global-form-or-both)).
-Then run the two commands from `packages/library-types`:
+Then run this command from `packages/library-types`:
 
 ```sh
 cd packages/library-types
 
-bun ../cli/src/library/sync-authored-types.ts --emit       # emit generated/<namespace>.d.ts — the committed types
 bun ../cli/src/library/sync-authored-types.ts --api-doc     # lower api-doc/<namespace>.json — the docs-site model
 ```
 
-- **`--emit`** writes the vendored `.d.ts` verbatim to the
-  `generated/<namespace>.d.ts` golden, for whatever stem the entry pins. There is
-  no parse or transform: an authored source is already target-form, so the
-  emitted surface *is* the vendored surface.
+- `resolve` serves the vendored `.d.ts` verbatim. There is no parse or transform:
+  an authored source is already target-form, so the served surface *is* the
+  vendored surface.
 - **`--api-doc`** runs `extractApiDoc` over the vendored `.d.ts` under the pinned
   publish `namespace`, producing the `api-doc/<namespace>.json` the docs-site `/api`
   page renders. A member's `@deprecated` tag carries through to the page as a
@@ -491,14 +489,14 @@ generated lanes use:
   `fixtures/ts-defold/<moduleId>.d.ts`. Its `generated/<moduleId>.d.ts` and
   `api-doc/<moduleId>.json` goldens are deleted only when the fork publishes under
   a *different* namespace; when `namespace` === `moduleId` they are instead
-  overwritten in place by the two commands above. The namespace now resolves to
+  overwritten in place by the command above. The namespace now resolves to
   your authored artifacts.
 - Remove the `./<moduleId>` subpath from `package.json` `exports` if present —
   authored libraries carry none, matching the LuaLS libraries.
-- Add `generated/<namespace>.d.ts` and `test-d/<library>-usage.test-d.ts` to the
-  `include` list in `tsconfig.dts-check.json` (the `dts-declaration-validity`
-  gate type-checks both under `skipLibCheck: false`), moving any hand-written
-  block for the old dotted specifier into that per-library compile proof.
+- Add a `test-d/<library>-usage.test-d.ts` compile proof, moving any hand-written
+  block for the old dotted specifier into it. The `dts-declaration-validity` gate
+  type-checks it under `skipLibCheck: false` together with every module `resolve`
+  prints, the fork among them.
 
 The ts-defold registry is now empty: every library it once carried has severed,
 so `library-targets.json` holds `"targets": []`. The file stays committed anyway
@@ -512,12 +510,12 @@ present in a first-party corpus — and its `/api` page carries the upstream pin
 automatically. Then run the gates:
 
 ```sh
-bun test           # from packages/library-types
-bun run typecheck  # from the repo root
+bun test packages/cli/src/library  # from the repo root
+bun run typecheck                  # from the repo root
 ```
 
-Commit the new entry, the vendored `fixtures/authored/<moduleId>.d.ts`, and both
-emitted artifacts (`generated/`, `api-doc/`) together, along with the config and
+Commit the new entry, the vendored `fixtures/authored/<moduleId>.d.ts`, and the
+emitted `api-doc/` artifact together, along with the config and
 manifest deletions. Every commit must also add a [changelog](./changelog.md)
 bullet — a pre-commit gate enforces it.
 

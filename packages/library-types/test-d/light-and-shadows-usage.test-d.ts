@@ -6,8 +6,8 @@ import * as light from "light_and_shadows.light";
 import * as light_and_shadows from "light_and_shadows.light_and_shadows";
 
 // Compile-only proof for the light-and-shadows forks, written as the calls upstream's
-// README and bundled scripts make. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json is the gate.
+// README and bundled scripts make. No assertions execute; the `dts-declaration-validity`
+// compile is the gate.
 
 export function render_hooks(self: object): void {
   light_and_shadows.init(self);

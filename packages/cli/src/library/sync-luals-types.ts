@@ -345,15 +345,6 @@ if (import.meta.main) {
       );
     }
   }
-  if (argv.includes("--emit")) {
-    const targets = readLualsTargets(root);
-    for (const target of targets) {
-      const dest = join(root, "generated", `${target.namespace}.d.ts`);
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, emitLualsTargetDeclarations(root, target));
-      console.log(`emitted ${target.moduleId} -> generated/${target.namespace}.d.ts`);
-    }
-  }
   if (argv.includes("--api-doc")) {
     const targets = readLualsTargets(root);
     for (const target of targets) {

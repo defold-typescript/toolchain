@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
 import type { MarkdownDoc } from "./parse-markdown-api";
+import { printCorpus, printedModule } from "./print-corpus";
 import {
   buildMarkdownFidelity,
   compareFidelityToTsDefold,
@@ -98,11 +99,12 @@ describe("orthographic severed to the authored lane without disturbing the markd
     );
   });
 
-  test("the markdown golden is still not wired into the dts-check include (no cutover)", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).not.toContain("generated/orthographic.d.ts");
+  test("resolve serves the authored fork, not the markdown emit (no cutover)", async () => {
+    const served = await printedModule(PACKAGE_ROOT, "orthographic.camera");
+    expect(served).toBe(
+      readFileSync(join(PACKAGE_ROOT, "fixtures/authored/orthographic.camera.d.ts"), "utf8"),
+    );
+    expect(served).not.toBe(await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC));
   });
 
   test("the markdown target, its no-go decision, and its fidelity artifact are untouched", () => {
@@ -131,9 +133,10 @@ describe("defold-input registers no markdown target on the all-no-go outcome", (
   // Registering a no-go target would therefore overwrite the live artifacts, and
   // the namespace-keyed `decision != "go"` skip would drop the module's docs page
   // outright. The decisions live in `markdown-fidelity-gate.test.ts` instead.
-  test("the live ts-defold in.* goldens are the ones the docs site still enumerates", () => {
+  test("the live ts-defold in.* goldens are the ones the docs site still enumerates", async () => {
+    const corpus = await printCorpus(PACKAGE_ROOT);
     for (const mod of ["cursor", "state"]) {
-      expect(existsSync(join(PACKAGE_ROOT, "generated", `in.${mod}.d.ts`))).toBe(true);
+      expect(corpus.has(`in.${mod}`)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `in.${mod}.json`))).toBe(true);
     }
   });
@@ -183,15 +186,14 @@ describe("evaluateMarkdownCandidate", () => {
   });
 
   test("writes nothing — the live in-place goldens survive byte-identical", async () => {
-    const live = [MONARCH.generated, MONARCH.apiDoc].map((rel) => ({
-      rel,
-      before: readFileSync(join(PACKAGE_ROOT, rel), "utf8"),
-    }));
+    const contents = (rel: string): string | null =>
+      existsSync(join(PACKAGE_ROOT, rel)) ? readFileSync(join(PACKAGE_ROOT, rel), "utf8") : null;
+    const live = [MONARCH.generated, MONARCH.apiDoc].map((rel) => ({ rel, before: contents(rel) }));
 
     await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH, MONARCH_SNAPSHOT);
 
     for (const { rel, before } of live) {
-      expect(readFileSync(join(PACKAGE_ROOT, rel), "utf8")).toBe(before);
+      expect(contents(rel)).toBe(before);
     }
     // The fidelity path has no live occupant, so it must simply never appear.
     expect(existsSync(join(PACKAGE_ROOT, MONARCH.fidelity))).toBe(false);
@@ -232,8 +234,8 @@ describe("emitMarkdownDeclaration", () => {
     expect(contents).toContain("function screen_to_world(");
   });
 
-  // The golden is deliberately outside `tsconfig.dts-check.json` (no cutover), so
-  // the proof that the README's `matrix` shorthand reaches a real type is the
+  // `resolve` does not serve the markdown emit (no cutover), so it is never
+  // compiled and the proof that the README's `matrix` shorthand reaches a real type is the
   // emitted text rather than a consumer compile.
   test("renders the README's `matrix` returns as Matrix4", async () => {
     const contents = await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC);
@@ -248,15 +250,7 @@ describe("emitMarkdownDeclaration", () => {
   });
 });
 
-describe("markdown goldens regenerate byte-for-byte", () => {
-  test("each target's .d.ts matches its committed generated golden", async () => {
-    for (const target of readMarkdownTargets(PACKAGE_ROOT)) {
-      const regenerated = await emitMarkdownDeclaration(PACKAGE_ROOT, target);
-      const committed = readFileSync(join(PACKAGE_ROOT, target.generated), "utf8");
-      expect(regenerated).toBe(committed);
-    }
-  });
-
+describe("markdown api-docs regenerate byte-for-byte", () => {
   test("each target's lowered api-doc matches its committed api-doc golden", () => {
     for (const target of readMarkdownTargets(PACKAGE_ROOT)) {
       const regenerated = lowerMarkdownApiDoc(PACKAGE_ROOT, target);

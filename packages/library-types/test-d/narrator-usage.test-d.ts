@@ -8,7 +8,7 @@ import * as narrator from "narrator.narrator";
 // and `Story.continue` returns a single paragraph or an array of them. The
 // interfaces are not exported from the module, so the proof drives them by
 // inference from the module functions rather than named imports. No assertions
-// execute; tsc --noEmit under tsconfig.dts-check.json (skipLibCheck: false) is the
+// execute; the `dts-declaration-validity` compile (skipLibCheck: false) is the
 // gate. A regression (inclusions turning required again, or continue narrowing
 // back to an array-only return) is a compile error here.
 

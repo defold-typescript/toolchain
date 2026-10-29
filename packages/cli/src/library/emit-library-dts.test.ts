@@ -1,6 +1,4 @@
 import { expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { appendNotes, libraryIndexBaseNotes } from "@defold-typescript/types";
 import {
   emitLibraryDeclarations,
@@ -11,11 +9,8 @@ import {
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LibraryModel, type LibraryParam, parseLualsSource } from "./parse-luals";
-import {
-  buildTargetModel,
-  emitLualsTargetDeclarations,
-  readLualsTargets,
-} from "./sync-luals-types";
+import { printedModule } from "./print-corpus";
+import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
 
 test("emits a declare module block with an interface, its field and method, and a module function", () => {
   const model: LibraryModel = {
@@ -869,21 +864,10 @@ test("the luals corpus carries more than one target, proving the pipeline genera
   expect(namespaces.length).toBeGreaterThan(1);
 });
 
-test.each(
-  EMIT_TARGETS,
-)("regenerating %s from the committed fixtures matches the committed golden byte-for-byte", (namespace, target) => {
-  const packageRoot = LIBRARY_TYPES_ROOT;
-  const emitted = emitLualsTargetDeclarations(packageRoot, target);
-  const golden = readFileSync(join(packageRoot, "generated", `${namespace}.d.ts`), "utf8");
-
-  expect(emitted).toBe(golden);
-});
-
-// The neighbouring round-trip proves the golden matches a rebuild; this names the
-// contract, so a regeneration that silently drops parameters reports as an arity
-// regression rather than as an opaque golden diff.
-test("the committed druid golden carries drag's full six-parameter callback signature", () => {
-  const golden = readFileSync(join(LIBRARY_TYPES_ROOT, "generated", "druid.d.ts"), "utf8");
+// Names the contract, so a print that silently drops parameters reports as an
+// arity regression rather than as an opaque declaration diff.
+test("the printed druid declaration carries drag's full six-parameter callback signature", async () => {
+  const golden = await printedModule(LIBRARY_TYPES_ROOT, "druid.druid");
 
   expect(golden).toContain(
     "on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void",

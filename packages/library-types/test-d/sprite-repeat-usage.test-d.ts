@@ -5,7 +5,7 @@ import * as node_repeat from "node_repeat.node_repeat";
 import * as sprite_repeat from "sprite_repeat.sprite_repeat";
 
 // Compile-only proof for the hand-authored defold-sprite-repeat surfaces. No
-// assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 const sprite = sprite_repeat.create("#sprite");
 sprite.animate(4, 4);

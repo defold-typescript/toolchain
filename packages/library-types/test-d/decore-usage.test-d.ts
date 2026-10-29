@@ -10,7 +10,7 @@ import { create, type entity, type tiny_ecs, type world } from "decore.decore";
 // cannot defend the signature — `LuaMultiReturn<T>` is an intersection, not a
 // tuple, so a rest binding never slices it and falls back to the union of every
 // element; that makes the tail `unknown[]` under a fixed-arity shape too.
-// No assertions execute; tsc --noEmit under tsconfig.dts-check.json
+// No assertions execute; the `dts-declaration-validity` compile
 // (skipLibCheck: false) is the gate.
 
 type Equal<A, B> =

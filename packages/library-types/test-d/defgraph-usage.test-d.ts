@@ -4,7 +4,7 @@
 import * as defgraph from "defgraph.defgraph";
 
 // Compile-only proof for the defgraph fork, written as upstream's examples drive it. No
-// assertions execute; tsc --noEmit under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;

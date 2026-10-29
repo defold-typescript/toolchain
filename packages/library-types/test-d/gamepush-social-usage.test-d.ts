@@ -11,7 +11,7 @@ import * as socials from "gamepush.core.socials";
 import * as triggers from "gamepush.core.triggers";
 
 // Compile-only proof for the hand-authored GamePush social and live-ops modules. No
-// assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate. As for the
+// assertions execute; the `dts-declaration-validity` compile is the gate. As for the
 // account and commerce modules, upstream's annotations say only `table` and `function`, so
 // this is where the declared shapes are held to being callable as the README documents them.
 

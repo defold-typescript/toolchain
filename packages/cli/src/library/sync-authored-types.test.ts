@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { printCorpus, printedModule } from "./print-corpus";
 import {
   type AuthoredTarget,
   emitAuthoredDeclaration,
@@ -209,34 +210,15 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
   });
 });
 
-describe("authored goldens regenerate byte-for-byte", () => {
-  test("each target's .d.ts matches its committed generated golden", () => {
-    for (const target of readAuthoredTargets(PACKAGE_ROOT)) {
-      const regenerated = emitAuthoredDeclaration(PACKAGE_ROOT, target);
-      const committed = readFileSync(join(PACKAGE_ROOT, target.generated), "utf8");
-      expect(regenerated).toBe(committed);
-    }
-  });
-
+// A fork's emit is lossless by construction: the emitted surface IS the vendored
+// `.d.ts`, which `print-library.test.ts` proves through the lane dispatch, so
+// only the api-doc lowering is compared against a committed golden.
+describe("authored api-docs regenerate byte-for-byte", () => {
   test("each target's lowered api-doc matches its committed api-doc golden", () => {
     for (const target of readAuthoredTargets(PACKAGE_ROOT)) {
       const regenerated = lowerAuthoredApiDoc(PACKAGE_ROOT, target);
       const committed = readFileSync(join(PACKAGE_ROOT, target.apiDoc), "utf8");
       expect(regenerated).toBe(committed);
-    }
-  });
-});
-
-// A fork's emit is lossless by construction: the emitted surface IS the vendored
-// `.d.ts`. The go/no-go gate is therefore a forked-vs-generated identity diff,
-// not a coverage comparison — it proves emission fidelity, not that the vendored
-// surface matches upstream.
-describe("fork identity (lossless emit by construction)", () => {
-  test("the generated golden is byte-identical to its vendored authored source", () => {
-    for (const target of readAuthoredTargets(PACKAGE_ROOT)) {
-      const vendored = readFileSync(join(PACKAGE_ROOT, target.authored), "utf8");
-      const generated = readFileSync(join(PACKAGE_ROOT, target.generated), "utf8");
-      expect(generated).toBe(vendored);
     }
   });
 });
@@ -330,14 +312,14 @@ describe("defmath.defmath migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "generated/defmath.defmath.d.ts"))).toBe(false);
   });
 
-  test("the golden carries the core-type-renamed ambient engine types", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defmath.d.ts"), "utf8");
+  test("the golden carries the core-type-renamed ambient engine types", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "defmath.defmath");
     expect(golden).toContain("Vector3 | Vector4");
     expect(golden).toContain(": Quaternion");
   });
 
-  test("the golden references no dotted vmath engine types", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defmath.d.ts"), "utf8");
+  test("the golden references no dotted vmath engine types", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "defmath.defmath");
     expect(golden).not.toContain("vmath.");
   });
 });
@@ -367,8 +349,8 @@ describe("zzfx.api migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "generated/zzfx.api.d.ts"))).toBe(false);
   });
 
-  test("the golden carries the module-external opaque handle declaration", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/zzfx.d.ts"), "utf8");
+  test("the golden carries the module-external opaque handle declaration", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "zzfx.api");
     expect(golden).toContain("type ZzFXSample = LuaUserdata");
     expect(golden).toContain("declare module 'zzfx.api' {");
   });
@@ -438,8 +420,8 @@ describe("boom.boom migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/boom.boom.json"))).toBe(false);
   });
 
-  test("the golden carries the core-type-renamed Hash/Url at every site ts-defold spelled lowercase", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/boom.d.ts"), "utf8");
+  test("the golden carries the core-type-renamed Hash/Url at every site ts-defold spelled lowercase", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "boom.boom");
     expect(golden).toContain("readonly __url?: Url;");
     expect(golden).toContain("readonly id: Hash;");
     expect(golden).toContain("readonly ids: LuaMap<Hash, Hash>;");
@@ -503,8 +485,8 @@ describe("defsave.defsave migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/defsave.defsave.json"))).toBe(false);
   });
 
-  test("the golden declares the members ts-defold omitted and corrects the wrong returns", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/defsave.d.ts"), "utf8");
+  test("the golden declares the members ts-defold omitted and corrects the wrong returns", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "defsave.defsave");
     for (const added of [
       "function obfuscate(",
       "function get_file_path(",
@@ -560,17 +542,6 @@ describe("persist.persist migration integrity", () => {
     expect(existsSync(join(PACKAGE_ROOT, "generated/persist.persist.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/persist.persist.json"))).toBe(false);
   });
-
-  // The dts-check gate compiles whatever the include lists, so a golden left out
-  // of it is silently never type-checked — the compile proof the retired
-  // `test-d/library-types.test-d.ts` block used to provide would just be gone.
-  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/persist.d.ts");
-    expect(include).not.toContain("generated/persist.persist.d.ts");
-  });
 });
 
 // The second Bucket-C severance, and the first whose publish namespace must stay
@@ -618,16 +589,8 @@ describe("orthographic.camera migration integrity", () => {
     expect("./orthographic.camera" in exports).toBe(false);
   });
 
-  test("the dotted golden joins the dts-check include and the markdown proof stays inert", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/orthographic.camera.d.ts");
-    expect(include).not.toContain("generated/orthographic.d.ts");
-  });
-
-  test("the golden widens follow to accept one target or an array of targets", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/orthographic.camera.d.ts"), "utf8");
+  test("the golden widens follow to accept one target or an array of targets", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "orthographic.camera");
     expect(golden).toContain("targets: Hash | Url | (Hash | Url)[],");
     expect(golden).not.toContain("target: Hash | Url,");
   });
@@ -683,17 +646,8 @@ describe("yagames.yagames migration integrity", () => {
     expect("./yagames.yagames" in exports).toBe(false);
   });
 
-  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/yagames.d.ts");
-    expect(include).toContain("test-d/yagames-usage.test-d.ts");
-    expect(include).not.toContain("generated/yagames.yagames.d.ts");
-  });
-
-  test("the sticky-banner API replaced the banner_* family in the golden", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/yagames.d.ts"), "utf8");
+  test("the sticky-banner API replaced the banner_* family in the golden", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "yagames.yagames");
     for (const fn of ["adv_show_banner_adv", "adv_hide_banner_adv", "adv_get_banner_adv_status"]) {
       expect(golden).toContain(`export function ${fn}(`);
     }
@@ -711,8 +665,8 @@ describe("yagames.yagames migration integrity", () => {
   // `player_get_id` is deprecated upstream, not removed, so the correction is the
   // misspelling in the existing tag — asserting only that the text names the
   // replacement would pass with `unqiue` still sitting beside it.
-  test("player_get_id survives with a correctly spelled deprecation", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/yagames.d.ts"), "utf8");
+  test("player_get_id survives with a correctly spelled deprecation", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "yagames.yagames");
     expect(golden).toContain("export function player_get_id(): string;");
     expect(golden).toContain("Use `player_get_unique_id` instead.");
     expect(golden).not.toContain("unqiue");
@@ -721,8 +675,8 @@ describe("yagames.yagames migration integrity", () => {
   // Removal needs positive evidence, and upstream supplies the opposite: at tag
   // 0.19.0 `M.leaderboards_init` still exists and prints its own deprecation
   // notice. The README simply stopped documenting it.
-  test("leaderboards_init survives, marked deprecated as upstream marks it", () => {
-    const golden = readFileSync(join(PACKAGE_ROOT, "generated/yagames.d.ts"), "utf8");
+  test("leaderboards_init survives, marked deprecated as upstream marks it", async () => {
+    const golden = await printedModule(PACKAGE_ROOT, "yagames.yagames");
     expect(golden).toContain("export function leaderboards_init(");
     // Anchored on the declaration so the tag cannot drift onto a neighbour.
     expect(golden).toMatch(/@deprecated[\s\S]{0,200}?\*\/\s*export function leaderboards_init\(/);
@@ -803,14 +757,14 @@ describe("defold-input migration integrity", () => {
   // `namespace === moduleId`, so unlike every prior severance nothing is renamed:
   // only the ts-defold snapshots die, and the goldens, api-docs and the subpaths
   // consumers import stay exactly where they were.
-  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", () => {
+  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", async () => {
     const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
       exports: Record<string, unknown>;
     };
     for (const mod of MODULES) {
       const moduleId = `in.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(true);
+      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
       expect(`./${moduleId}` in exports).toBe(true);
     }
@@ -830,16 +784,6 @@ describe("defold-input migration integrity", () => {
     );
     expect(accelerometer).toContain("Vector3");
     expect(accelerometer).not.toContain("vmath.vector3");
-  });
-
-  test("all ten goldens joined the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    for (const mod of MODULES) {
-      expect(include).toContain(`generated/in.${mod}.d.ts`);
-    }
-    expect(include).toContain("test-d/defold-input-usage.test-d.ts");
   });
 });
 
@@ -889,14 +833,14 @@ describe("monarch migration integrity", () => {
     expect(dirs.some((c) => c.dir === "monarch")).toBe(false);
   });
 
-  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", () => {
+  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", async () => {
     const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
       exports: Record<string, unknown>;
     };
     for (const mod of MODULES) {
       const moduleId = `monarch.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(true);
+      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
       expect(`./${moduleId}` in exports).toBe(true);
     }
@@ -935,16 +879,6 @@ describe("monarch migration integrity", () => {
     );
     expect(monarch).toContain("on_focus_changed");
     expect(monarch).not.toContain("on_focus_change(");
-  });
-
-  test("all three goldens joined the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    for (const mod of MODULES) {
-      expect(include).toContain(`generated/monarch.${mod}.d.ts`);
-    }
-    expect(include).toContain("test-d/monarch-usage.test-d.ts");
   });
 });
 
@@ -991,14 +925,14 @@ describe("richtext migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defold-richtext")).toBe(false);
   });
 
-  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", () => {
+  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", async () => {
     const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
       exports: Record<string, unknown>;
     };
     for (const mod of MODULES) {
       const moduleId = `richtext.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(true);
+      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
       expect(`./${moduleId}` in exports).toBe(true);
     }
@@ -1053,16 +987,6 @@ describe("richtext migration integrity", () => {
       expect(richtext).toContain(`type ${named} =`);
     }
   });
-
-  test("all three goldens joined the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    for (const mod of MODULES) {
-      expect(include).toContain(`generated/richtext.${mod}.d.ts`);
-    }
-    expect(include).toContain("test-d/richtext-usage.test-d.ts");
-  });
 });
 
 // The third dotted severance that regroups (`defold-metrics` -> `metrics`), and
@@ -1104,14 +1028,14 @@ describe("metrics migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defold-metrics")).toBe(false);
   });
 
-  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths survive", () => {
+  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths survive", async () => {
     const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
       exports: Record<string, unknown>;
     };
     for (const mod of MODULES) {
       const moduleId = `metrics.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect(existsSync(join(PACKAGE_ROOT, "generated", `${moduleId}.d.ts`))).toBe(true);
+      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
       expect(`./${moduleId}` in exports).toBe(true);
     }
@@ -1132,16 +1056,6 @@ describe("metrics migration integrity", () => {
       expect(fork).toContain("export interface Metrics {");
       expect(fork).toContain("): Metrics;");
     }
-  });
-
-  test("both goldens joined the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    for (const mod of MODULES) {
-      expect(include).toContain(`generated/metrics.${mod}.d.ts`);
-    }
-    expect(include).toContain("test-d/metrics-usage.test-d.ts");
   });
 });
 
@@ -1205,15 +1119,6 @@ describe("gooey.gooey migration integrity", () => {
       exports: Record<string, unknown>;
     };
     expect("./gooey.gooey" in exports).toBe(false);
-  });
-
-  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/gooey.d.ts");
-    expect(include).toContain("test-d/gooey-usage.test-d.ts");
-    expect(include).not.toContain("generated/gooey.gooey.d.ts");
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
@@ -1281,15 +1186,6 @@ describe("bzAnim.bzLibrary migration integrity", () => {
       exports: Record<string, unknown>;
     };
     expect("./bzAnim.bzLibrary" in exports).toBe(false);
-  });
-
-  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/bzAnim.d.ts");
-    expect(include).toContain("test-d/bzAnim-usage.test-d.ts");
-    expect(include).not.toContain("generated/bzAnim.bzLibrary.d.ts");
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
@@ -1433,15 +1329,6 @@ describe("platypus.platypus migration integrity", () => {
     expect("./platypus.platypus" in exports).toBe(false);
   });
 
-  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/platypus.d.ts");
-    expect(include).toContain("test-d/platypus-usage.test-d.ts");
-    expect(include).not.toContain("generated/platypus.platypus.d.ts");
-  });
-
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
     const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
     expect(fork).toContain("LuaMap<Hash, Direction>");
@@ -1570,15 +1457,6 @@ describe("dicebag.dicebag migration integrity", () => {
     expect("./dicebag.dicebag" in exports).toBe(false);
   });
 
-  test("the bare-namespace golden and its compile proof are in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/dicebag.d.ts");
-    expect(include).toContain("test-d/dicebag-usage.test-d.ts");
-    expect(include).not.toContain("generated/dicebag.dicebag.d.ts");
-  });
-
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
     const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
     for (const fn of ID_BEARING) {
@@ -1665,15 +1543,6 @@ describe("rendy.rendy migration integrity", () => {
       exports: Record<string, unknown>;
     };
     expect("./rendy.rendy" in exports).toBe(false);
-  });
-
-  test("the bare-namespace golden and its compile proof are in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/rendy.d.ts");
-    expect(include).toContain("test-d/rendy-usage.test-d.ts");
-    expect(include).not.toContain("generated/rendy.rendy.d.ts");
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
@@ -1794,17 +1663,6 @@ describe("nakama.nakama migration integrity", () => {
       exports: Record<string, unknown>;
     };
     expect("./nakama.nakama" in exports).toBe(false);
-  });
-
-  test("the bare-namespace golden and its compile proof are in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/nakama.d.ts");
-    expect(include).toContain("test-d/nakama-usage.test-d.ts");
-    expect(include).not.toContain("generated/nakama.nakama.d.ts");
-    // nakama was the last block the shared compile proof held.
-    expect(existsSync(join(PACKAGE_ROOT, "test-d/library-types.test-d.ts"))).toBe(false);
   });
 
   test("the fork keeps every member the recorded openapi no-go counts as missing", () => {

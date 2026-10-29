@@ -4,7 +4,7 @@
 import * as story from "ink.story";
 
 // Compile-only proof for the ink fork, written as the calls upstream's README makes.
-// No assertions execute; tsc --noEmit under tsconfig.dts-check.json is the gate.
+// No assertions execute; the `dts-declaration-validity` compile is the gate.
 
 export function play(json: string): void {
   const s: story.Story = story.create(json);

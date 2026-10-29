@@ -8,7 +8,7 @@ import * as lang from "lang.lang";
 // (its trailing type-suffix `lang_on_start?` omitted) over a `lang_data[]` whose
 // omittable `path`/`loader` fields may be dropped, `set_lang` with only the
 // required id, and `set_next_lang` with no args. No assertions execute;
-// `tsc --noEmit` under tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// the `dts-declaration-validity` compile (skipLibCheck: false) is the gate.
 // A regression (the type-suffix params reverting to required, or the nilable
 // fields losing their `?`) is a compile error here.
 

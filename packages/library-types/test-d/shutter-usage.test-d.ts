@@ -4,7 +4,7 @@
 import * as shutter from "shutter.shutter";
 
 // Compile-only proof for the hand-authored shutter surface. No assertions
-// execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate. Upstream
+// execute; the `dts-declaration-validity` compile is the gate. Upstream
 // ships plain Lua with no annotations, so this is where the declared shapes are
 // held to being callable as written.
 

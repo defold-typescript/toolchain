@@ -62,6 +62,10 @@ function servedTargets(root: string): Map<string, ServedTarget> {
   return served;
 }
 
+export function servedModules(root: string): string[] {
+  return [...servedTargets(root).keys()];
+}
+
 // With no tree, each lane reads the sources vendored in library data.
 async function printTarget(
   root: string,

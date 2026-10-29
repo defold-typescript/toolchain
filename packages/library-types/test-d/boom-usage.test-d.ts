@@ -8,7 +8,7 @@ import * as boom from "boom.boom";
 // `declare module 'boom.boom'` export and the ~82 ambient globals, component
 // interfaces, and generics that live outside it. This replaces the boom block
 // retired from library-types.test-d.ts when the `./boom.boom` subpath went away.
-// No assertions execute; `tsc --noEmit` under tsconfig.dts-check.json
+// No assertions execute; the `dts-declaration-validity` compile
 // (skipLibCheck: false) is the gate.
 
 boom.boom(() => {});

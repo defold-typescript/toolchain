@@ -16,37 +16,31 @@ describe("resolveLibraryTypesPackageRoot", () => {
     const root = resolveLibraryTypesPackageRoot();
     expect(root).not.toBeNull();
     expect(existsSync(join(root as string, "package.json"))).toBe(true);
-    expect(existsSync(join(root as string, "generated"))).toBe(true);
+    expect(existsSync(join(root as string, "luals-targets.json"))).toBe(true);
   });
 });
 
 describe("loadVendoredLibraryRegistry", () => {
-  test("builds a non-empty registry from the real corpus and points generatedDir at generated/", () => {
-    const { registry, generatedDir } = loadVendoredLibraryRegistry();
+  test("builds a non-empty registry from the real corpus", () => {
+    const registry = loadVendoredLibraryRegistry();
     expect(registry.length).toBeGreaterThan(0);
     for (const library of registry) {
       expect(typeof library.sourceId).toBe("string");
       expect(library.sourceId.length).toBeGreaterThan(0);
       expect(library.modules.length).toBeGreaterThan(0);
     }
-    expect(generatedDir).not.toBeNull();
-    expect(generatedDir as string).toEndWith("generated");
-    expect(existsSync(generatedDir as string)).toBe(true);
   });
 
   test("returns the empty fallback when the package root cannot be resolved", () => {
-    expect(loadVendoredLibraryRegistry(null)).toEqual({ registry: [], generatedDir: null });
+    expect(loadVendoredLibraryRegistry(null)).toEqual([]);
   });
 
   test("returns the empty fallback when the registry JSONs are absent under the given root", () => {
-    expect(loadVendoredLibraryRegistry("/nonexistent/library-types-root")).toEqual({
-      registry: [],
-      generatedDir: null,
-    });
+    expect(loadVendoredLibraryRegistry("/nonexistent/library-types-root")).toEqual([]);
   });
 
   test("includes the druid LuaLS target alongside the pure-Lua entries", () => {
-    const { registry } = loadVendoredLibraryRegistry();
+    const registry = loadVendoredLibraryRegistry();
     const druid = registry.find((library) => library.sourceId === "druid");
     expect(druid).toBeDefined();
     expect(druid?.modules).toEqual(["druid.druid"]);
@@ -56,7 +50,7 @@ describe("loadVendoredLibraryRegistry", () => {
   });
 
   test("includes the bridge script_api target so resolve still materializes it", () => {
-    const { registry } = loadVendoredLibraryRegistry();
+    const registry = loadVendoredLibraryRegistry();
     const bridge = registry.find((library) => library.sourceId === "bridge-defold");
     expect(bridge).toBeDefined();
     expect(bridge?.modules).toEqual(["bridge.bridge"]);
@@ -64,7 +58,7 @@ describe("loadVendoredLibraryRegistry", () => {
   });
 
   test("includes the defcon authored target so resolve materializes its dotted module", () => {
-    const { registry } = loadVendoredLibraryRegistry();
+    const registry = loadVendoredLibraryRegistry();
     const defcon = registry.find((library) => library.sourceId === "defcon");
     expect(defcon).toBeDefined();
     expect(defcon?.modules).toEqual(["defcon.console"]);
@@ -72,7 +66,7 @@ describe("loadVendoredLibraryRegistry", () => {
   });
 
   test("groups defold-saver's two modules into a single entry with both generated stems", () => {
-    const { registry } = loadVendoredLibraryRegistry();
+    const registry = loadVendoredLibraryRegistry();
     const saver = registry.filter((library) => library.sourceId === "defold-saver");
     expect(saver).toHaveLength(1);
     expect(saver[0]?.modules).toEqual(["saver.saver", "saver.storage"]);
@@ -81,7 +75,7 @@ describe("loadVendoredLibraryRegistry", () => {
   });
 
   test("keeps nakama-defold's five modules in one entry now that all come from the authored lane", () => {
-    const { registry } = loadVendoredLibraryRegistry();
+    const registry = loadVendoredLibraryRegistry();
     const nakama = registry.filter((library) => library.sourceId === "nakama-defold");
     expect(nakama).toHaveLength(1);
     expect(nakama[0]?.modules).toEqual([
@@ -104,7 +98,7 @@ describe("loadVendoredLibraryRegistry", () => {
   // The entry module's fields are `typeof import` of the 32 module ids, so `resolve`
   // has to install all 33 goldens together for any of them to compile.
   test("keeps defold-gamepush's entry module and its 32 typed modules in one entry", () => {
-    const { registry } = loadVendoredLibraryRegistry();
+    const registry = loadVendoredLibraryRegistry();
     const gamepush = registry.filter((library) => library.sourceId === "defold-gamepush");
     expect(gamepush).toHaveLength(1);
     const core = [
@@ -265,7 +259,7 @@ describe("loadLibraryIndexSlotClassifications", () => {
 // authored lane no matter which lane owns it, and `library-match.ts` goes back
 // to being tested as the IO-free matcher its module header promises.
 describe("matchVendoredLibrary over the composed real registry", () => {
-  const { registry } = loadVendoredLibraryRegistry();
+  const registry = loadVendoredLibraryRegistry();
 
   test("resolves dicebag's declared archive URL to its module and generated stem", () => {
     const match = matchVendoredLibrary(

@@ -4,7 +4,7 @@
 import * as daabbcc3d from "daabbcc3d";
 
 // Compile-only proof for the curated daabbcc3d native-extension namespace. No
-// assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 const group: number = daabbcc3d.new_group(daabbcc3d.UPDATE_INCREMENTAL);
 daabbcc3d.new_group();
