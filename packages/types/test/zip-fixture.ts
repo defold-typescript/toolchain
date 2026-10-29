@@ -4,9 +4,11 @@ import { crc32, deflateRawSync } from "node:zlib";
 // and an end record, nothing more. It shares no code with the production
 // reader, so an archive it writes is independent evidence of what the reader
 // parses. A name ending in `/` is a directory entry, as an archiver lists it.
+// `bytes` stands in for `text` when an entry is not UTF-8, as an image is.
 export interface ZipFixtureEntry {
   readonly name: string;
-  readonly text: string;
+  readonly text?: string;
+  readonly bytes?: Uint8Array;
   readonly stored?: boolean;
 }
 
@@ -46,7 +48,7 @@ export function writeZipArchive(
   for (const entry of entries) {
     const name = encoder.encode(entry.name);
     const directory = entry.name.endsWith("/");
-    const raw = directory ? new Uint8Array(0) : encoder.encode(entry.text);
+    const raw = directory ? new Uint8Array(0) : (entry.bytes ?? encoder.encode(entry.text ?? ""));
     const deflate = !directory && entry.stored !== true;
     const data = deflate ? new Uint8Array(deflateRawSync(raw)) : raw;
     const method = deflate ? METHOD_DEFLATE : METHOD_STORED;

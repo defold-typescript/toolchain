@@ -160,7 +160,10 @@ const COMMANDS: readonly HelpCommand[] = [
         flag: "--defold-target <version|stable|beta|alpha>",
         desc: "override the resolved Defold target",
       },
-      { flag: "--frozen", desc: "fail instead of fetching when the cache misses" },
+      {
+        flag: "--frozen",
+        desc: "fail on a drifted or retired extension pin and write no pins",
+      },
     ],
   },
   {

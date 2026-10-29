@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
 import { readCliVersion } from "./cli-version";
-import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import {
+  type DownloadExtensionArchive,
+  type ExtensionZip,
+  extensionArchiveKey,
+} from "./extension-archive";
 import { librariesDirName } from "./library-materialize";
 import { runResolve } from "./resolve";
 
@@ -24,7 +28,10 @@ function tmp(): string {
   return mkdtempSync(join(tmpdir(), "druid-e2e-"));
 }
 
-const someBytes = async (): Promise<Uint8Array> => new TextEncoder().encode("z");
+const someBytes: DownloadExtensionArchive = async () => ({
+  status: "ok",
+  bytes: new TextEncoder().encode("z"),
+});
 
 // A fake druid archive that ships `druid/druid.lua` under the GitHub wrapper
 // dir, so the repo-name match verifies against the `druid.druid` module.
@@ -36,6 +43,8 @@ function druidArchiveReadZip(url: string): (zipPath: string) => ExtensionZip {
     }
     return {
       entries: () => ["druid-1.2.5/druid/druid.lua", "druid-1.2.5/asset/foo.png"],
+      comment: () => "",
+      bytes: () => new Uint8Array(0),
       read: (entry: string) => {
         throw new Error(`unexpected read of ${entry}`);
       },

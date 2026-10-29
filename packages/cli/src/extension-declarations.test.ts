@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
-import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import {
+  type DownloadExtensionArchive,
+  type ExtensionZip,
+  extensionArchiveKey,
+} from "./extension-archive";
 import { resolveExtensionDeclarations } from "./extension-declarations";
 import type { ExtensionDependency } from "./extension-deps";
 
@@ -43,8 +47,11 @@ interface FakeArchive {
   contents: Record<string, string>;
 }
 
-const someBytes = async (): Promise<Uint8Array> => new TextEncoder().encode("z");
-const noDownload = async (): Promise<Uint8Array> => {
+const someBytes: DownloadExtensionArchive = async () => ({
+  status: "ok",
+  bytes: new TextEncoder().encode("z"),
+});
+const noDownload: DownloadExtensionArchive = async () => {
   throw new Error("download should not be called");
 };
 
@@ -59,6 +66,8 @@ function makeReadZip(
     }
     return {
       entries: () => archive.entries,
+      comment: () => "",
+      bytes: () => new Uint8Array(0),
       read: (entry: string) => {
         reads.push(entry);
         const text = archive.contents[entry];

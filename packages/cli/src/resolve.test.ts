@@ -14,7 +14,11 @@ import { readNativeExpectations } from "../../library-types/scripts/target-expec
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
 import { runExportTypes } from "./export-types";
-import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import {
+  type DownloadExtensionArchive,
+  type ExtensionZip,
+  extensionArchiveKey,
+} from "./extension-archive";
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
@@ -46,9 +50,17 @@ const ALPHA = `
 interface FakeArchive {
   entries: string[];
   contents: Record<string, string>;
+  comment?: string;
 }
 
-const someBytes = async (): Promise<Uint8Array> => new TextEncoder().encode("z");
+const someBytes: DownloadExtensionArchive = async () => ({
+  status: "ok",
+  bytes: new TextEncoder().encode("z"),
+});
+
+// The commit a GitHub archive names in its zip comment.
+const COMMIT = "5c33c398e3c1d3ab3c0ee0d5f8f45c4c7c4e0b21";
+const OTHER_COMMIT = "0123456789abcdef0123456789abcdef01234567";
 
 function makeReadZip(byKey: Record<string, FakeArchive>): (zipPath: string) => ExtensionZip {
   return (zipPath: string) => {
@@ -65,8 +77,26 @@ function makeReadZip(byKey: Record<string, FakeArchive>): (zipPath: string) => E
         }
         return text;
       },
+      comment: () => archive.comment ?? "",
+      bytes: (entry: string) => new TextEncoder().encode(archive.contents[entry] ?? ""),
     };
   };
+}
+
+function writePins(cwd: string, pins: Record<string, string>): string {
+  const pkgPath = join(cwd, "package.json");
+  writeFileSync(
+    pkgPath,
+    `${JSON.stringify({ "defold-typescript": { extensions: pins } }, null, 2)}\n`,
+  );
+  return pkgPath;
+}
+
+function readPins(pkgPath: string): Record<string, string> | undefined {
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+    "defold-typescript"?: { extensions?: Record<string, string> };
+  };
+  return pkg["defold-typescript"]?.extensions;
 }
 
 function writeProject(cwd: string, body: string): void {
@@ -114,7 +144,7 @@ describe("runResolve", () => {
         scriptApiCount: 1,
         sceneSources: 0,
         assetOnly: false,
-        resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
+        resolvedVersion: expect.stringMatching(/^files-sha256:[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
       },
     ]);
@@ -150,28 +180,22 @@ describe("runResolve", () => {
         scriptApiCount: 0,
         sceneSources: 0,
         assetOnly: true,
-        resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
+        resolvedVersion: expect.stringMatching(/^files-sha256:[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
       },
     ]);
   });
 
-  test("carries resolvedVersion and matches pinnedVersion when the project pins the url", async () => {
+  test("a commit pin that differs from the resolved commit reports drift and is kept", async () => {
     const cwd = tmp();
     const url = "https://example.com/alpha.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    writeFileSync(
-      join(cwd, "package.json"),
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: "sha256:pinned" } } },
-        null,
-        2,
-      )}\n`,
-    );
+    const pkgPath = writePins(cwd, { [url]: `commit:${OTHER_COMMIT}` });
     const byKey: Record<string, FakeArchive> = {
       [extensionArchiveKey(url)]: {
         entries: ["ext/api/alpha.script_api"],
         contents: { "ext/api/alpha.script_api": ALPHA },
+        comment: COMMIT,
       },
     };
 
@@ -184,14 +208,65 @@ describe("runResolve", () => {
 
     expect(result.ok).toBe(true);
     expect(result.extensions).toHaveLength(1);
-    const report = result.extensions[0] as {
-      resolvedVersion: string;
-      pinnedVersion?: string;
-      pinStatus: "unpinned" | "match" | "drift";
+    const report = result.extensions[0];
+    expect(report?.resolvedVersion).toBe(`commit:${COMMIT}`);
+    expect(report?.pinnedVersion).toBe(`commit:${OTHER_COMMIT}`);
+    expect(report?.pinStatus).toBe("drift");
+    expect(readPins(pkgPath)).toEqual({ [url]: `commit:${OTHER_COMMIT}` });
+  });
+
+  test("a plain run rewrites a retired zip-byte pin to the archive's commit", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/alpha.zip";
+    const retired = `sha256:${"a".repeat(64)}`;
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = writePins(cwd, { [url]: retired });
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+        comment: COMMIT,
+      },
     };
-    expect(report.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
-    expect(report.pinnedVersion).toBe("sha256:pinned");
-    expect(report.pinStatus).toBe("drift");
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.pinStatus).toBe("retired");
+    expect(result.extensions[0]?.pinnedVersion).toBe(retired);
+    expect(readPins(pkgPath)).toEqual({ [url]: `commit:${COMMIT}` });
+  });
+
+  test("freeze:true reports a retired pin and writes nothing", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = writePins(cwd, { [url]: `sha256:${"a".repeat(64)}` });
+    const original = readFileSync(pkgPath, "utf8");
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+        comment: COMMIT,
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      freeze: true,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.pinStatus).toBe("retired");
+    expect(readFileSync(pkgPath, "utf8")).toBe(original);
   });
 
   test("reports pinStatus:match when the pin equals the resolved archive digest", async () => {
@@ -212,7 +287,7 @@ describe("runResolve", () => {
     });
     expect(first.ok).toBe(true);
     const matchingDigest = first.extensions[0]?.resolvedVersion as string;
-    expect(matchingDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(matchingDigest).toMatch(/^files-sha256:[0-9a-f]{64}$/);
 
     // Re-run with a package.json that pins the same digest
     writeFileSync(
@@ -259,12 +334,12 @@ describe("runResolve", () => {
       pinnedVersion?: string;
       pinStatus: string;
     };
-    expect(report.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(report.resolvedVersion).toMatch(/^files-sha256:[0-9a-f]{64}$/);
     expect(report.pinnedVersion).toBeUndefined();
     expect(report.pinStatus).toBe("unpinned");
   });
 
-  test("seeds an absent pin into package.json from the resolved archive digest", async () => {
+  test("seeds an absent pin into package.json from the archive's commit", async () => {
     const cwd = tmp();
     const url = "https://example.com/alpha.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
@@ -274,6 +349,7 @@ describe("runResolve", () => {
       [extensionArchiveKey(url)]: {
         entries: ["ext/api/alpha.script_api"],
         contents: { "ext/api/alpha.script_api": ALPHA },
+        comment: COMMIT,
       },
     };
 
@@ -285,25 +361,14 @@ describe("runResolve", () => {
     });
 
     expect(result.ok).toBe(true);
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
-      "defold-typescript"?: { extensions?: Record<string, string> };
-    };
-    expect(pkg["defold-typescript"]?.extensions?.[url]).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(readPins(pkgPath)).toEqual({ [url]: `commit:${COMMIT}` });
   });
 
   test("preserves an existing pin instead of clobbering it", async () => {
     const cwd = tmp();
     const url = "https://example.com/alpha.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = join(cwd, "package.json");
-    writeFileSync(
-      pkgPath,
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: "sha256:kept" } } },
-        null,
-        2,
-      )}\n`,
-    );
+    const pkgPath = writePins(cwd, { [url]: `files-sha256:${"b".repeat(64)}` });
     const byKey: Record<string, FakeArchive> = {
       [extensionArchiveKey(url)]: {
         entries: ["ext/api/alpha.script_api"],
@@ -321,7 +386,7 @@ describe("runResolve", () => {
     const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
       "defold-typescript"?: { extensions?: Record<string, string> };
     };
-    expect(pkg["defold-typescript"]?.extensions?.[url]).toBe("sha256:kept");
+    expect(pkg["defold-typescript"]?.extensions?.[url]).toBe(`files-sha256:${"b".repeat(64)}`);
   });
 
   test("freeze:true skips seeding absent pins but still computes pinStatus", async () => {
@@ -360,7 +425,7 @@ describe("runResolve", () => {
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
     const pkgPath = join(cwd, "package.json");
     const original = `${JSON.stringify(
-      { "defold-typescript": { extensions: { [url]: "sha256:stale" } } },
+      { "defold-typescript": { extensions: { [url]: `commit:${OTHER_COMMIT}` } } },
       null,
       2,
     )}\n`;
@@ -398,7 +463,7 @@ describe("runResolve", () => {
       `${JSON.stringify(
         {
           "defold-typescript": {
-            extensions: { [url]: "sha256:live", [orphanUrl]: "sha256:orphan" },
+            extensions: { [url]: "files-sha256:live", [orphanUrl]: "sha256:orphan" },
           },
         },
         null,
@@ -423,7 +488,7 @@ describe("runResolve", () => {
     const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
       "defold-typescript"?: { extensions?: Record<string, string> };
     };
-    expect(pkg["defold-typescript"]?.extensions?.[url]).toBe("sha256:live");
+    expect(pkg["defold-typescript"]?.extensions?.[url]).toBe("files-sha256:live");
     expect(pkg["defold-typescript"]?.extensions?.[orphanUrl]).toBeUndefined();
   });
 
@@ -436,7 +501,7 @@ describe("runResolve", () => {
     const original = `${JSON.stringify(
       {
         "defold-typescript": {
-          extensions: { [url]: "sha256:live", [orphanUrl]: "sha256:orphan" },
+          extensions: { [url]: "files-sha256:live", [orphanUrl]: "sha256:orphan" },
         },
       },
       null,
@@ -977,7 +1042,7 @@ describe("runResolve corpus match precedes .script_api", () => {
     expect(result.ok).toBe(true);
     // Suppressing the type surface must not filter the bundle out of the run.
     expect(result.extensions[0]?.sceneSources).toBe(1);
-    expect(result.extensions[0]?.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(result.extensions[0]?.resolvedVersion).toMatch(/^files-sha256:[0-9a-f]{64}$/);
     expect(result.extensions[0]?.pinStatus).toBe("unpinned");
     expect(result.extensions[0]?.assetOnly).toBe(false);
   });

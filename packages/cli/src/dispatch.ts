@@ -1668,8 +1668,21 @@ function dispatchCommand(
         if (!result.ok) {
           return 1;
         }
+        const retired = result.extensions.filter((e) => e.pinStatus === "retired");
+        for (const ext of retired) {
+          const pinned = ext.pinnedVersion ?? "(none)";
+          if (frozen) {
+            writeError(
+              `defold-typescript resolve: retired pin for ${ext.url}: ${pinned} hashes the zip bytes; run \`defold-typescript resolve\` without --frozen to replace it`,
+            );
+          } else {
+            io.stderr.write(
+              `defold-typescript resolve: replaced retired pin for ${ext.url}: ${pinned} -> ${ext.resolvedVersion}\n`,
+            );
+          }
+        }
         const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
-        return frozen && drifted.length > 0 ? 1 : 0;
+        return frozen && (drifted.length > 0 || retired.length > 0) ? 1 : 0;
       })();
     }
 
