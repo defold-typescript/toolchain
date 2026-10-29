@@ -13,11 +13,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[The docs site](./README.md)** documents the version on npm.
+> - **[The docs site](./README.md)** documents the npm version.
+> - **[Script properties](./script-lifecycle.md)** drop no member.
 
 ### Fixed
 
 - **The docs site described unreleased changes:** it was published on every push to `main`, so a guide or API reference page could document behavior the version on npm lacks. It is now published once per release and documents that release.
+- **Script properties dropped silently:** a spread, shorthand, method, accessor or variable-keyed member of `defineScript` `properties`, or a whole object wrapped in `as` or `satisfies`, registered no `go.property` while `self` still typed it, and a default Defold's build cannot read, such as a module const, failed only in Defold's build. Each member now registers or fails the build on its own line, a literal key such as `["a-b"]` or `0x10` registers under its JavaScript name, and an infinite number registers as `1e999`.
 
 ## v0.54.0
 

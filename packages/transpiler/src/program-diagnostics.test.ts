@@ -105,6 +105,21 @@ describe("getProgramDiagnostics", () => {
     expect(diagnostics[0]?.start).toBe(source.indexOf("resource.tile_source("));
   });
 
+  test("squiggles a properties spread that registers no script property", () => {
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      "const D = { a: 1 };",
+      "",
+      "defineScript({ properties: { ...D } });",
+      "",
+    ].join("\n");
+    const program = programFor(source);
+    const diagnostics = getProgramDiagnostics(program, program.getSourceFile("main.ts"));
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]?.start).toBe(source.indexOf("...D"));
+  });
+
   test.each([
     ['const f = resource["material"];\n\ndefineScript({});\n', 'resource["material"]'],
     [

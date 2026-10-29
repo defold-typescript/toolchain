@@ -97,6 +97,18 @@ export default defineScript({
 
 Property-backed fields are present on `self` before `init` runs, so they need not appear in `init`'s return. The state `init` returns is still checked on its own — an omitted state field remains a compile error, while omitted property-backed fields are correct.
 
+Write `properties` as an object literal of `name: value` members; parentheses, `as` and `satisfies` around it are fine. A key may be a name or a literal, and registers under the name JavaScript gives it: `["a-b"]` registers `a-b` and `0x10` registers `16`. Defold's build reads each default from the generated Lua text alone, so the default must take a form it reads:
+
+- a number, including an infinite one such as `1e400`
+- `true` or `false`
+- a string without a NUL character
+- `hash("...")`
+- `msg.url()` with no argument, one string or three strings
+- `vmath.vector3`, `vmath.vector4` or `vmath.quat` with no argument, one number or every component as a number
+- a [resource marker](#resource-properties)
+
+A `const enum` member and a template literal without substitutions compile to one of these forms and are accepted. A spread, a shorthand member, a method, an accessor, a key computed from a variable, or a default computed from a variable or an expression fails the build on that member, since it would register no property while `self` still types it.
+
 Only `defineScript` takes `properties`. Defold builds `go.property` only in `.script` files, so `defineGuiScript` and `defineRenderScript` reject the field at compile time and the transpiler refuses to emit it. A GUI or render script that needs a per-object value gets it from a sibling `defineScript`, which declares the property and sends its value with `msg.post` in `init`.
 
 ### Resource properties
