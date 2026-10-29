@@ -13,6 +13,7 @@ import { join, posix } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import {
   type DownloadExtensionArchive,
+  defaultReadZip,
   type ExtensionArchiveProvenance,
   extensionCacheDir,
   type ReadExtensionZip,
@@ -30,11 +31,18 @@ import {
   readExtensionVersionPins,
 } from "./extension-version";
 import { formatJsonLikeBiome } from "./format-json";
+import { printLibraryModules } from "./library/print-library";
+import { archiveSourceTree } from "./library/source-tree";
 import { matchVendoredLibrary, normalizeSourceId, type VendoredLibrary } from "./library-match";
-import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
+import {
+  ensureLibraryTypesReference,
+  materializeVendoredLibraries,
+  type PrintedLibrary,
+} from "./library-materialize";
 import {
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
+  resolveLibraryTypesPackageRoot,
   type VendoredNativeExtension,
 } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
@@ -92,11 +100,12 @@ export interface RunResolveOptions {
   // When true, skip writing newly-resolved pins into `package.json`. Used by
   // `--frozen` to verify the committed pin set without mutating it.
   readonly freeze?: boolean;
-  // The vendored pure-Lua library corpus to match `assetOnly` dependencies
-  // against. Defaults to the installed `@defold-typescript/library-types`;
-  // tests inject a synthetic registry + generatedDir to stay hermetic.
+  // The library data dependencies are matched against and printed from. Both
+  // default to the installed `@defold-typescript/library-types`; tests inject a
+  // synthetic registry and root to stay hermetic, and a `null` root prints
+  // nothing and keeps a surface already there.
   readonly libraryRegistry?: readonly VendoredLibrary[];
-  readonly libraryGeneratedDir?: string | null;
+  readonly libraryTypesRoot?: string | null;
   // The curated native-extension targets. Defaults to the installed
   // `@defold-typescript/library-types` `native-targets.json`.
   readonly nativeRegistry?: readonly VendoredNativeExtension[];
@@ -251,11 +260,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     // No declared dependencies means no library, extension or scene surface, so
     // reconcile all three to zero — prune a previously-materialized one and drop
     // its tsconfig entry.
-    const { materializedDir: librariesDir } = materializeVendoredLibraries({
-      cwd,
-      matched: [],
-      generatedDir: null,
-    });
+    const { materializedDir: librariesDir } = materializeVendoredLibraries({ cwd, printed: [] });
     ensureLibraryTypesReference(cwd, librariesDir);
     const { materializedDir: extensionsDir } = materializeExtensionDeclarations({
       cwd,
@@ -298,15 +303,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // is then filtered to the modules the archive actually ships — so a library
   // that documents itself keeps its curated types. The registry is loaded at
   // most once, only when a default is needed.
-  const loaded =
-    opts.libraryRegistry === undefined || opts.libraryGeneratedDir === undefined
-      ? loadVendoredLibraryRegistry()
-      : null;
-  const libraryRegistry = opts.libraryRegistry ?? loaded?.registry ?? [];
-  const libraryGeneratedDir =
-    opts.libraryGeneratedDir !== undefined
-      ? opts.libraryGeneratedDir
-      : (loaded?.generatedDir ?? null);
+  const libraryTypesRoot =
+    opts.libraryTypesRoot !== undefined ? opts.libraryTypesRoot : resolveLibraryTypesPackageRoot();
+  const libraryRegistry =
+    opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryTypesRoot).registry;
   const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
   const confirmedLibraryUrls = new Set<string>();
   for (const bundle of resolvedBundles) {
@@ -367,22 +367,45 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     }
   }
 
-  const { materializedDir: librariesDir, skipped: skippedLibraryModules } =
-    materializeVendoredLibraries({
-      cwd,
-      matched: matchedLibraries
-        .filter((m) => m.confirmed.length > 0)
-        .map((m) => ({
-          sourceId: m.library.sourceId,
-          modules: m.confirmed,
-          ...(m.library.generatedStems ? { generatedStems: m.library.generatedStems } : {}),
-        })),
-      generatedDir: libraryGeneratedDir,
-    });
-  ensureLibraryTypesReference(cwd, librariesDir);
-  for (const module of skippedLibraryModules) {
-    warnings.push(`skipping library module ${module}: no generated .d.ts in the vendored corpus`);
+  // Each confirmed library prints from the archive the project depends on, so its
+  // types follow the version the game ships rather than the one library data pins.
+  let printedLibraries: PrintedLibrary[] | null = null;
+  if (libraryTypesRoot !== null) {
+    printedLibraries = [];
+    const archivePaths = new Map(resolvedBundles.map((b) => [b.url, b.archivePath]));
+    const open = opts.readZip ?? defaultReadZip;
+    const seen = new Set<string>();
+    for (const { url, confirmed } of matchedLibraries) {
+      const modules = confirmed.filter((module) => !seen.has(module));
+      const archivePath = archivePaths.get(url);
+      if (modules.length === 0 || archivePath === undefined) {
+        continue;
+      }
+      const archive = archiveSourceTree(await open(archivePath));
+      const { printed, unprintable } = await printLibraryModules(
+        libraryTypesRoot,
+        modules,
+        archive,
+      );
+      for (const { module, contents, ref, reason } of printed) {
+        seen.add(module);
+        printedLibraries.push({ module, contents });
+        if (reason !== undefined) {
+          warnings.push(
+            `printed ${module} from the ${ref} sources pinned in library data, not from ${url}: ${reason}`,
+          );
+        }
+      }
+      for (const module of unprintable) {
+        warnings.push(`skipping library module ${module}: no library data prints it`);
+      }
+    }
   }
+  const { materializedDir: librariesDir } = materializeVendoredLibraries({
+    cwd,
+    printed: printedLibraries,
+  });
+  ensureLibraryTypesReference(cwd, librariesDir);
   const libraries: ResolvedLibraryReport[] = matchedLibraries.map(
     ({ library, url, confirmed }) => ({
       url,

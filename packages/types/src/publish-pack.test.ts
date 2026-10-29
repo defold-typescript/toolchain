@@ -191,6 +191,8 @@ describe("@defold-typescript/types release packer", () => {
     for (const file of [
       "dist/cli-runtime.js",
       "scripts/cli-runtime.ts",
+      "dist/library-runtime.js",
+      "scripts/library-runtime.ts",
       "api-targets.json",
       "examples/translations.json",
       "url-parameters.json",

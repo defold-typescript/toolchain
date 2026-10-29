@@ -1,9 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import type { LibraryIndexSlotClassifications } from "@defold-typescript/types";
+import { isKnownDefoldTypeToken } from "@defold-typescript/types/library-runtime";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
 import type { FidelityReport } from "./luals-fidelity";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import type { LibrarySourceTree } from "./source-tree";
 
 /**
  * The script_api ingestion front-end: a third `library-types` corpus mode beside
@@ -195,11 +196,6 @@ interface RegenModule {
   }) => { contents: string; dropped: string[] };
 }
 
-interface EmitDtsModule {
-  recoverCallbackSignature: (token: string) => string | null;
-  isKnownDefoldTypeToken: (token: string) => boolean;
-}
-
 interface TypesModules {
   scriptApiToFixtureJson: (text: string) => string;
   generateModuleDeclaration: RegenModule["generateModuleDeclaration"];
@@ -213,13 +209,12 @@ interface TypesModules {
 const SCRIPT_API_CORE_TYPES_IMPORT = "../src/core-types";
 
 /**
- * Load the shared ref-doc emitter and the emitter's own type-mapping surface from
- * the sibling `@defold-typescript/types` package by resolved path, mirroring
- * `extension-emit.ts`'s `loadEmitter`: `scriptApiToFixtureJson` (YAML -> ref-doc
- * JSON) and `generateModuleDeclaration` live in the types package's `scripts/`,
- * `recoverCallbackSignature`/`isKnownDefoldTypeToken` in its `src/`. This is a
- * repo-only build script (never shipped), so the sibling `../types` path is
- * sufficient.
+ * Load the shared ref-doc emitter from the types package's `cli-runtime` export,
+ * mirroring `extension-emit.ts`'s `loadEmitter`: Node's loader reads a path as a
+ * URL and never strips types under `node_modules`, so `resolve` reaches
+ * `scriptApiToFixtureJson` (YAML -> ref-doc JSON) and `generateModuleDeclaration`
+ * by specifier, and the import stays dynamic so `regen.ts`'s registry-reading
+ * module graph loads only when a print needs it.
  *
  * Resolution delegates to the emitter's own exported `isKnownDefoldTypeToken` —
  * the predicate the engine-release importer already trusts — rather than
@@ -228,24 +223,35 @@ const SCRIPT_API_CORE_TYPES_IMPORT = "../src/core-types";
  * lowers it structurally (parameter-side optionality, return-side `undefined`)
  * rather than by lookup.
  */
-async function loadTypesModules(packageRoot: string): Promise<TypesModules> {
-  const typesRoot = join(packageRoot, "..", "types");
-  const sync = (await import(join(typesRoot, "scripts", "sync-api-docs.ts"))) as SyncApiDocsModule;
-  const regen = (await import(join(typesRoot, "scripts", "regen.ts"))) as RegenModule;
-  const emitDts = (await import(join(typesRoot, "src", "emit-dts.ts"))) as EmitDtsModule;
-  const resolver: TypeResolver = {
-    resolves: (token) => emitDts.isKnownDefoldTypeToken(token),
-  };
+async function loadTypesModules(): Promise<TypesModules> {
+  const runtime = (await import("@defold-typescript/types/cli-runtime")) as SyncApiDocsModule &
+    RegenModule;
   return {
-    scriptApiToFixtureJson: sync.scriptApiToFixtureJson,
-    generateModuleDeclaration: regen.generateModuleDeclaration,
-    resolver,
+    scriptApiToFixtureJson: runtime.scriptApiToFixtureJson,
+    generateModuleDeclaration: runtime.generateModuleDeclaration,
+    resolver: { resolves: (token) => isKnownDefoldTypeToken(token) },
   };
 }
 
 /** The emitter's type-mapping predicate, isolated for direct assertion. */
-export async function loadTypeResolver(packageRoot: string): Promise<TypeResolver> {
-  return (await loadTypesModules(packageRoot)).resolver;
+export async function loadTypeResolver(): Promise<TypeResolver> {
+  return (await loadTypesModules()).resolver;
+}
+
+/** The target's vendored `fixtures/script-api/<moduleId>.script_api`, at the path its archive ships it. */
+export function scriptApiFixtureTree(
+  packageRoot: string,
+  target: ScriptApiTarget,
+): LibrarySourceTree {
+  return {
+    list: () => [target.scriptApi],
+    read: (path) => {
+      if (path !== target.scriptApi) {
+        throw new Error(`library data vendors only ${target.scriptApi} for ${target.moduleId}`);
+      }
+      return readFileSync(fixturePath(packageRoot, target), "utf8");
+    },
+  };
 }
 
 function parseFixtureDoc(
@@ -266,7 +272,7 @@ export async function committedScriptApiDoc(
   packageRoot: string,
   target: ScriptApiTarget,
 ): Promise<ScriptApiDoc> {
-  const { scriptApiToFixtureJson } = await loadTypesModules(packageRoot);
+  const { scriptApiToFixtureJson } = await loadTypesModules();
   return parseFixtureDoc(packageRoot, target, scriptApiToFixtureJson);
 }
 
@@ -307,17 +313,20 @@ function scriptApiPage(target: ScriptApiTarget): string {
 }
 
 /**
- * `.script_api` -> `scriptApiToFixtureJson` -> `generateModuleDeclaration`. Returns
- * an importable module keyed by `moduleId` (`declare module '<moduleId>'`), with
- * one-level nested sub-namespaces intact per the nested-namespace parser slice.
+ * `.script_api` -> `scriptApiToFixtureJson` -> `generateModuleDeclaration`, reading
+ * the doc from `tree` — the vendored fixture unless a dependency's archive is
+ * passed. Returns an importable module keyed by `moduleId`
+ * (`declare module '<moduleId>'`), with one-level nested sub-namespaces intact per
+ * the nested-namespace parser slice.
  */
 export async function emitScriptApiDeclaration(
   packageRoot: string,
   target: ScriptApiTarget,
+  tree: LibrarySourceTree = scriptApiFixtureTree(packageRoot, target),
 ): Promise<string> {
-  const { scriptApiToFixtureJson, generateModuleDeclaration } = await loadTypesModules(packageRoot);
+  const { scriptApiToFixtureJson, generateModuleDeclaration } = await loadTypesModules();
   const doc = applyOmittableSlots(
-    parseFixtureDoc(packageRoot, target, scriptApiToFixtureJson),
+    JSON.parse(scriptApiToFixtureJson(tree.read(target.scriptApi))) as ScriptApiDoc,
     target.omittableSlots ?? [],
   );
   const { contents } = generateModuleDeclaration({
@@ -344,7 +353,7 @@ export async function lowerScriptApiApiDoc(
   packageRoot: string,
   target: ScriptApiTarget,
 ): Promise<string> {
-  const { scriptApiToFixtureJson } = await loadTypesModules(packageRoot);
+  const { scriptApiToFixtureJson } = await loadTypesModules();
   const doc = parseFixtureDoc(packageRoot, target, scriptApiToFixtureJson);
   return `${JSON.stringify(doc, null, 2)}\n`;
 }
@@ -411,7 +420,7 @@ export async function buildScriptApiFidelity(
   packageRoot: string,
   target: ScriptApiTarget,
 ): Promise<FidelityReport> {
-  const { scriptApiToFixtureJson, resolver } = await loadTypesModules(packageRoot);
+  const { scriptApiToFixtureJson, resolver } = await loadTypesModules();
   const doc = parseFixtureDoc(packageRoot, target, scriptApiToFixtureJson);
   return computeScriptApiFidelity(target.namespace, doc, resolver);
 }
@@ -425,7 +434,7 @@ const defaultFetchText: FetchText = async (url) => {
 };
 
 if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
+  const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   const argv = process.argv.slice(2);
   if (argv.includes("--fetch")) {
     for (const target of readScriptApiTargets(root)) {

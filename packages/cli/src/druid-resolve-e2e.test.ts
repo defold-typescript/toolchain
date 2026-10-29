@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
@@ -18,7 +18,7 @@ const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
 const committedDruid = join(libraryTypesRoot, "generated", "druid.d.ts");
-const generatedDir = join(libraryTypesRoot, "generated");
+const vendoredDruid = join(libraryTypesRoot, "fixtures", "luals", "druid");
 
 const druidRegistry = [
   { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
@@ -33,20 +33,32 @@ const someBytes: DownloadExtensionArchive = async () => ({
   bytes: new TextEncoder().encode("z"),
 });
 
-// A fake druid archive that ships `druid/druid.lua` under the GitHub wrapper
-// dir, so the repo-name match verifies against the `druid.druid` module.
+// A fake druid archive holding the vendored druid sources under the GitHub
+// wrapper dir, so the repo-name match verifies against the `druid.druid` module
+// and `resolve` prints it from the archive.
 function druidArchiveReadZip(url: string): (zipPath: string) => ExtensionZip {
   const key = extensionArchiveKey(url);
+  const files = new Map<string, string>();
+  for (const entry of readdirSync(vendoredDruid, { recursive: true }).map(String)) {
+    if (statSync(join(vendoredDruid, entry)).isFile()) {
+      files.set(
+        `druid-1.2.5/${entry.replace(/\\/g, "/")}`,
+        readFileSync(join(vendoredDruid, entry), "utf8"),
+      );
+    }
+  }
   return (zipPath: string) => {
     if (basename(dirname(zipPath)) !== key) {
       throw new Error(`no fake archive for ${zipPath}`);
     }
     return {
-      entries: () => ["druid-1.2.5/druid/druid.lua", "druid-1.2.5/asset/foo.png"],
+      entries: () => [...files.keys(), "druid-1.2.5/asset/foo.png"],
       comment: () => "",
       bytes: () => new Uint8Array(0),
       read: (entry: string) => {
-        throw new Error(`unexpected read of ${entry}`);
+        const text = files.get(entry);
+        if (text === undefined) throw new Error(`unexpected read of ${entry}`);
+        return text;
       },
     };
   };
@@ -65,12 +77,13 @@ async function resolveDruid(cwd: string): Promise<void> {
     download: someBytes,
     readZip: druidArchiveReadZip(url),
     libraryRegistry: druidRegistry,
-    libraryGeneratedDir: generatedDir,
+    libraryTypesRoot,
   });
   expect(result.ok).toBe(true);
   expect(result.libraries).toEqual([
     { url, source: "druid", modules: ["druid.druid"], provenance: "vendored", verified: true },
   ]);
+  expect(result.warnings.filter((warning) => warning.startsWith("printed "))).toEqual([]);
 }
 
 function errorDiagnostics(files: Record<string, string>): string[] {

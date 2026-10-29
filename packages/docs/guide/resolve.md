@@ -29,7 +29,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/shipped/<repo>/`, checked apart from every other dependency, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
-| **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
+| **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one `@globalTable` module per doc, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
 | **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped                                                                                                     |
@@ -161,12 +161,23 @@ To ship types from a library you maintain, see
 ## Vendored library types
 
 Many popular Defold libraries are plain Lua — installed via **Fetch Libraries**,
-and most carry no `.script_api`. This toolchain ships hand-vendored TypeScript types for
-a curated set of them in `@defold-typescript/library-types`. When a declared
-dependency matches one, its committed `.d.ts` is materialized verbatim (never
-regenerated), and the import specifier is the Lua `require` path —
+and most carry no `.script_api`. This toolchain ships library data for a curated
+set of them in `@defold-typescript/library-types`: each library's upstream sources
+pinned at one version with the corrections that type them, or a hand-written
+fork. When a declared dependency matches one, `resolve` prints its declarations
+from the dependency's own archive, so the types follow the library version the
+game depends on; a library typed by a hand-written fork gets that fork as
+written. The import specifier is the Lua `require` path —
 `import * as dicebag from 'dicebag.dicebag'` — so it matches what Fetch Libraries
 installs at runtime.
+
+When the archive cannot be printed — a version the corrections do not fit, or an
+annotation the printer cannot map — `resolve` prints the sources library data
+pins instead and warns:
+
+```text
+printed <module> from the <ref> sources pinned in library data, not from <url>: <reason>
+```
 
 The match keys on the library's **source identity (the repository name)**, not
 exact URL equality, so a fork or a pinned-tag archive URL still resolves. Because
@@ -176,8 +187,9 @@ downloaded archive**: `resolve` reads the archive's `.lua` require paths and
 materializes only the modules it actually ships. A repo-name match the archive
 does not confirm is reported **unverified** (a `stderr` warning) and never
 materialized when the dependency is asset-only, so a collision cannot inject the
-wrong types. A declared library whose vendored `.d.ts` is missing from the
-shipped corpus is likewise warned and skipped rather than failing the run.
+wrong types. A confirmed module that no library data prints is likewise warned
+(`skipping library module <module>: no library data prints it`) and skipped
+rather than failing the run.
 
 A library that documents itself — shipping both its Lua modules and its own
 `.script_api` — keeps the curated types: the confirmed match wins, and that

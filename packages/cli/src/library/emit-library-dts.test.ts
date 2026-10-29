@@ -1283,7 +1283,7 @@ function docAbove(out: string, memberLine: string): string {
 }
 
 test("a library page notes each classified param, return and class field under the API reference's keys", () => {
-  const classifications = readLibraryIndexSlotClassifications();
+  const classifications = readLibraryIndexSlotClassifications(LIBRARY_TYPES_ROOT);
   const paramNotes = libraryIndexBaseNotes(classifications, "druid", "get_pos", "param", "index");
   const returnNotes = libraryIndexBaseNotes(classifications, "druid", "get_index", "return", "");
   const fieldNotes = libraryIndexBaseNotes(

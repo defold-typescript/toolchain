@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -297,12 +305,71 @@ async function seedNativeExtensionProject(): Promise<{
   return { root, project, cache };
 }
 
+const IMMUTABLE_URL = "https://example.invalid/paweljarosz/lua-immutable/archive/v1.1.zip";
+const IMMUTABLE_MODULE_FILE = "immutable/immutable.lua";
+
+// A project depending on `lua-immutable`, a LuaLS target vendoring a single
+// source file, whose cached archive adds one function to that file: only a print
+// from the archive declares it.
+async function seedLualsLibraryProject(): Promise<{
+  root: string;
+  project: string;
+  cache: string;
+}> {
+  const { writeZipArchive } = (await import(
+    path.join(TYPES_DIR, "test", "zip-fixture.ts")
+  )) as ZipFixture;
+  const vendored = readFileSync(
+    path.join(
+      REPO_ROOT,
+      "packages",
+      "library-types",
+      "fixtures",
+      "luals",
+      "immutable",
+      IMMUTABLE_MODULE_FILE,
+    ),
+    "utf8",
+  );
+  const marker = "-- Metatable for the Immutable module";
+  const probed = vendored.replace(
+    marker,
+    [
+      "---@param\tvalue\tnumber\t\t@value to probe",
+      "function Immutable.print_probe(value)",
+      "end",
+      "",
+      marker,
+    ].join("\n"),
+  );
+  if (probed === vendored) throw new Error(`insertion point missing from ${IMMUTABLE_MODULE_FILE}`);
+  const root = tmp("resolve-library");
+  const project = path.join(root, "project");
+  mkdirSync(project);
+  writeFileSync(
+    path.join(project, "game.project"),
+    `[project]\ntitle = smoke\ndependencies#0 = ${IMMUTABLE_URL}\n`,
+  );
+  const cache = path.join(root, "cache");
+  const archiveDir = path.join(cache, "extensions", extensionArchiveKey(IMMUTABLE_URL));
+  mkdirSync(archiveDir, { recursive: true });
+  writeFileSync(
+    path.join(archiveDir, "archive.zip"),
+    writeZipArchive([
+      { name: "lua-immutable-1.1/", text: "" },
+      { name: `lua-immutable-1.1/${IMMUTABLE_MODULE_FILE}`, text: probed },
+    ]),
+  );
+  return { root, project, cache };
+}
+
 // The published `resolve` loads the types package's generator through
-// `@defold-typescript/types/cli-runtime`, resolved by each runtime's own
-// loader: Node to the built bundle, Bun to the source. Nothing is injected,
+// `@defold-typescript/types/cli-runtime` and the library printer's helpers
+// through `@defold-typescript/types/library-runtime`, each resolved by the
+// runtime's own loader: Node to the built bundle, Bun to the source. Nothing is injected,
 // so a path-based import, a wrong export condition, an unbuilt bundle or a
 // Bun-only call anywhere in the resolve graph fails here, on every OS.
-describe("built bin resolves a native extension from the cache", () => {
+describe("built bin resolves dependencies from the cache", () => {
   buildTypesRuntime();
   build(PKG_DIR);
 
@@ -333,6 +400,49 @@ describe("built bin resolves a native extension from the cache", () => {
               url: PIXELS_URL,
               provenance: "cache",
               namespaces: ["pixels"],
+            }),
+          ]);
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      },
+      SPAWN_TEST_TIMEOUT_MS,
+    );
+
+    test(
+      `${runtime} dist/bin.js resolve prints a LuaLS library from its cached archive`,
+      async () => {
+        const { root, project, cache } = await seedLualsLibraryProject();
+        try {
+          const proc = Bun.spawnSync([runtime, BIN, "resolve", project, "--json"], {
+            cwd: project,
+            env: { ...process.env, DEFOLD_TYPESCRIPT_CACHE: cache },
+            stdout: "pipe",
+            stderr: "pipe",
+          });
+          const stdout = proc.stdout.toString();
+          if (proc.exitCode !== 0) {
+            throw new Error(`resolve exited ${proc.exitCode}:\n${stdout}${proc.stderr.toString()}`);
+          }
+          const surfaces = readdirSync(path.join(project, ".defold-types")).filter((entry) =>
+            entry.startsWith("libraries@"),
+          );
+          expect(surfaces).toHaveLength(1);
+          const printed = readFileSync(
+            path.join(project, ".defold-types", surfaces[0] as string, "immutable.immutable.d.ts"),
+            "utf8",
+          );
+          expect(printed).toContain(
+            "export function print_probe(this: void, value: number): void;",
+          );
+          const report = JSON.parse(stdout) as {
+            libraries: { url: string; modules: string[]; verified: boolean }[];
+          };
+          expect(report.libraries).toEqual([
+            expect.objectContaining({
+              url: IMMUTABLE_URL,
+              modules: ["immutable.immutable"],
+              verified: true,
             }),
           ]);
         } finally {

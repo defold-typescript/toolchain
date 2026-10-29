@@ -2,7 +2,6 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
 import { type ApiDocElement, importUpstreamDocs } from "./import-upstream-docs";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 
 /**
@@ -247,7 +246,7 @@ export function lowerAuthoredApiDoc(packageRoot: string, target: AuthoredTarget)
 }
 
 if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
+  const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   const argv = process.argv.slice(2);
   if (argv.includes("--emit")) {
     for (const target of readAuthoredTargets(root)) {

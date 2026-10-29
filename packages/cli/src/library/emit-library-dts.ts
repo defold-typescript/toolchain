@@ -25,18 +25,21 @@
  * compiles under `isolatedModules`.
  */
 
+import type {
+  DocCommentParts,
+  LibraryIndexSlotClassifications,
+  LualsPosition,
+} from "@defold-typescript/types";
 import {
   appendNotes,
-  type DocCommentParts,
-  type LibraryIndexSlotClassifications,
-  type LualsPosition,
   libraryIndexBaseNotes,
   luaMultiReturn,
   renderDocComment,
   TS_IDENTIFIER,
   TS_RESERVED_NAMES,
   varargElementType,
-} from "@defold-typescript/types";
+} from "@defold-typescript/types/library-runtime";
+import { CORE_TYPE_RENAMES } from "./core-type-renames";
 import {
   LUALS_VARARG_TOKEN,
   type MapContext,
@@ -54,7 +57,6 @@ import type {
   LibraryModel,
   LibraryParam,
 } from "./parse-luals";
-import { CORE_TYPE_RENAMES } from "./sync-library-types";
 
 /**
  * A type token owned by another target: the module id that declares it and the name

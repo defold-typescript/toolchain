@@ -7,8 +7,9 @@ import {
   ensureExtensionTypesReference,
   materializeExtensionDeclarations,
 } from "./extension-materialize";
+import { emitAuthoredDeclaration, readAuthoredTargets } from "./library/sync-authored-types";
 import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
-import { loadVendoredLibraryRegistry, loadVendoredNativeRegistry } from "./library-registry";
+import { loadVendoredNativeRegistry, resolveLibraryTypesPackageRoot } from "./library-registry";
 import {
   ensureMaterializedReference,
   materializeApiSurface,
@@ -77,6 +78,7 @@ function extensionBundle(url: string): ExtensionDeclarations {
     provenance: "cache",
     assetOnly: false,
     resolvedVersion: "sha256:stub",
+    archivePath: "archive.zip",
     declarations: [],
     luaModules: [],
     manifestDirs: [],
@@ -115,15 +117,24 @@ export function installResolvedDeclarations(cwd: string): void {
   });
   ensureExtensionTypesReference(cwd, extensionsDir);
 
-  const { registry, generatedDir } = loadVendoredLibraryRegistry();
-  const checkpoint = registry.find((library) => library.modules.includes("checkpoint.checkpoint"));
-  if (checkpoint === undefined) {
-    throw new Error("the vendored library registry carries no checkpoint.checkpoint module");
+  const libraryTypesRoot = resolveLibraryTypesPackageRoot();
+  const checkpoint =
+    libraryTypesRoot === null
+      ? undefined
+      : readAuthoredTargets(libraryTypesRoot).find(
+          (target) => target.moduleId === "checkpoint.checkpoint",
+        );
+  if (libraryTypesRoot === null || checkpoint === undefined) {
+    throw new Error("library data carries no checkpoint.checkpoint target");
   }
   const { materializedDir: librariesDir } = materializeVendoredLibraries({
     cwd,
-    matched: [{ ...checkpoint, modules: ["checkpoint.checkpoint"] }],
-    generatedDir,
+    printed: [
+      {
+        module: checkpoint.moduleId,
+        contents: emitAuthoredDeclaration(libraryTypesRoot, checkpoint),
+      },
+    ],
   });
   ensureLibraryTypesReference(cwd, librariesDir);
 }
