@@ -6,7 +6,7 @@ import * as nakama from "nakama.nakama";
 // Compile-only proof for the severed nakama core surface, replacing the nakama
 // block retired from library-types.test-d.ts — the last block that file held,
 // which is why it went away with this severance rather than losing a section.
-// No assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the
+// No assertions execute; the `dts-declaration-validity` compile is the
 // gate.
 
 // The five assertions the retired block carried.

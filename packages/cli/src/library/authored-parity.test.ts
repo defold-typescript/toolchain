@@ -1906,9 +1906,9 @@ describe("only a refusal the fork left unanswered is charged", () => {
 // target input this suite reads -- the committed `api-doc/shutter.json` or the vendored
 // `shutter/shutter.lua` -- reds here immediately instead of waiting for a regen.
 // `buildAuthoredParity` never opens `fixtures/authored/shutter.shutter.d.ts`, so
-// a fork-only edit is caught one seam earlier instead: the authored-goldens and
-// fork-identity gates in `sync-authored-types.test.ts` re-emit and re-lower the vendored
-// source and diff it against the committed `generated/` and `api-doc/` artifacts. The
+// a fork-only edit is caught one seam earlier instead: the api-doc gate in
+// `sync-authored-types.test.ts` re-lowers the vendored source and diffs it against the
+// committed `api-doc/` artifact, and `print-library.test.ts` serves the fork verbatim. The
 // library is new to the corpus and has no ts-defold binding behind it, which makes the
 // measured agreement with upstream the only thing standing behind the declarations.
 describe("shutter.shutter declares the whole of its upstream module", () => {

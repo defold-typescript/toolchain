@@ -8,8 +8,8 @@ import * as platform from "ads_wrapper.platform";
 import * as queue from "ads_wrapper.queue";
 
 // Compile-only proof that the ads_wrapper LuaLS goldens are callable the way the
-// upstream README integrates them. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// upstream README integrates them. No assertions execute; the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 const id1 = ads_wrapper.register_network(test.network1, { param: "test_param 1" });
 const id2 = ads_wrapper.register_network(test.network2, { param: "test_param 2" });

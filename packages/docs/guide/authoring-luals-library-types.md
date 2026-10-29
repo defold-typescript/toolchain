@@ -244,7 +244,7 @@ the call with `if network.request_idfa then`, so the `ads_wrapper` targets mark
 
 ## 2. Generate the artifacts
 
-Run the four commands from `packages/library-types`, in order. Each iterates every
+Run the three commands from `packages/library-types`, in order. Each iterates every
 target in `luals-targets.json`, so an unchanged entry re-emits byte-for-byte and
 only your new entry produces new files.
 
@@ -253,7 +253,6 @@ cd packages/library-types
 
 bun run luals:fetch      # snapshot the pinned sources into fixtures/luals/<namespace>/
 bun run luals:fidelity   # build fidelity/<namespace>.json — the coverage report
-bun run luals:emit       # emit generated/<namespace>.d.ts — the committed types
 bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site model
 ```
 
@@ -263,9 +262,9 @@ bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site mode
   it reads those committed fixtures, so the pipeline is reproducible offline.
 - **`luals:fidelity`** parses the fixtures and reports how much of the surface
   resolved to a known type (see below).
-- **`luals:emit`** produces the `.d.ts` a consumer eventually sees. Interfaces and
-  aliases come from the whole snapshot; the module's own functions come only from
-  the `moduleId` file.
+- `resolve` prints the `.d.ts` a consumer sees from these fixtures, or from the
+  dependency's own archive. Interfaces and aliases come from the whole snapshot;
+  the module's own functions come only from the `moduleId` file.
 - **`luals:api-doc`** lowers the same model to the JSON the docs-site `/api` page
   renders.
 
@@ -326,14 +325,13 @@ the page description.
 
 ## 5. Validate, then commit
 
-The emitted `.d.ts` is type-checked under `skipLibCheck: false` by the
-`dts-declaration-validity` gate, and the byte-for-byte emit and fidelity parity are
-gated per namespace — so add your `generated/<namespace>.d.ts` to the
-`include` list in `packages/library-types/tsconfig.dts-check.json`, then run the
-package tests:
+The `dts-declaration-validity` gate type-checks every module `resolve` prints under
+`skipLibCheck: false`, together with the `test-d/` usage proofs, so a new target is
+compiled as soon as `luals-targets.json` lists it. Fidelity parity is gated per
+namespace. Run the library tests:
 
 ```sh
-bun test          # from packages/library-types
+bun test packages/cli/src/library  # from the repo root
 bun run typecheck  # from the repo root
 bun run --cwd packages/library-types fidelity:floor  # from the repo root
 ```
@@ -341,8 +339,8 @@ bun run --cwd packages/library-types fidelity:floor  # from the repo root
 A brand-new library has no floor entry yet, and the floor gate fails until it gets
 one — `fidelity:floor` seeds it at the coverage you just measured.
 
-Commit the new entry, the snapshotted `fixtures/luals/<namespace>/`, all three
-emitted artifacts (`generated/`, `fidelity/`, `api-doc/`), and the updated
+Commit the new entry, the snapshotted `fixtures/luals/<namespace>/`, both
+emitted artifacts (`fidelity/`, `api-doc/`), and the updated
 `fidelity-floor.json` together. Every commit
 must also add a [changelog](./changelog.md) bullet — a pre-commit gate enforces it.
 
@@ -373,10 +371,9 @@ examples; `moduleId` `druid.druid` scopes the exported functions to
 `druid/druid.lua` while the interfaces merge from every file; `typeRenames` maps
 druid's vmath references onto the toolchain's branded `Vector*` types;
 `externalTypes` hands druid's callback fields to the `event` library that owns
-them. Running the
-four commands emits `generated/druid.d.ts`, which
-[`resolve`](./resolve.md#vendored-library-types) materializes into a consuming
-project as `druid.druid`.
+them. From these fixtures, or from the druid archive a project depends on,
+[`resolve`](./resolve.md#vendored-library-types) prints the declaration it
+materializes into a consuming project as `druid.druid`.
 
 ## Libraries that ship a `.script_api`
 
@@ -401,7 +398,6 @@ output paths. The generate arms mirror the LuaLS ones:
 cd packages/library-types
 
 bun ../cli/src/library/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into fixtures/script-api/<moduleId>.script_api
-bun ../cli/src/library/sync-script-api-types.ts --emit       # emit the pinned generated/<...>.d.ts
 bun ../cli/src/library/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 bun ../cli/src/library/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```

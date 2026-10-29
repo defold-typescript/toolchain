@@ -4,8 +4,8 @@
 import * as detiled from "detiled.detiled";
 
 // Compile-only proof that the detiled LuaLS golden is callable with the types
-// upstream documents. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// upstream documents. No assertions execute; the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 // `parse` returns the layers and the map params as two values.
 const [layers, params] = detiled.parse("/maps/level.json");

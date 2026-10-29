@@ -1621,7 +1621,7 @@ declare module "pixels" {
       throw new Error("the committed corpus has no native target");
     }
     const exported = tmp();
-    const { written } = runExportTypes({ library: target.sourceId, cwd: exported });
+    const { written } = await runExportTypes({ library: target.sourceId, cwd: exported });
     const url = `https://github.com/owner/${target.sourceId}/archive/refs/heads/main.zip`;
     const wrapper = `${target.sourceId}-main`;
     const contents = Object.fromEntries(

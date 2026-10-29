@@ -4,7 +4,7 @@
 import * as detour from "detour";
 
 // Compile-only proof for the curated defold-detour native-extension namespace. No
-// assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 declare const data: string;
 const from = vmath.vector3(0, 0, 0);

@@ -9,6 +9,7 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
+import { printedModule } from "./library/print-corpus";
 import { librariesDirName } from "./library-materialize";
 import { runResolve } from "./resolve";
 
@@ -17,7 +18,6 @@ import { runResolve } from "./resolve";
 const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
-const committedDefcon = join(libraryTypesRoot, "generated", "defcon.d.ts");
 
 const defconRegistry = [
   {
@@ -83,12 +83,14 @@ function errorDiagnostics(files: Record<string, string>): string[] {
 }
 
 describe("defcon resolves and its materialized types are usable end to end", () => {
-  test("runResolve materializes defcon.console.d.ts byte-identical to the committed source", async () => {
+  test("runResolve materializes defcon.console.d.ts byte-identical to the pinned print", async () => {
     const cwd = tmp();
     await resolveDefcon(cwd);
 
     const materialized = join(cwd, ".defold-types", LIBRARIES_DIR, "defcon.console.d.ts");
-    expect(readFileSync(materialized, "utf8")).toBe(readFileSync(committedDefcon, "utf8"));
+    expect(readFileSync(materialized, "utf8")).toBe(
+      await printedModule(libraryTypesRoot, "defcon.console"),
+    );
   });
 
   test('a consumer compiles against the materialized types and transpiles to require("defcon.console")', async () => {

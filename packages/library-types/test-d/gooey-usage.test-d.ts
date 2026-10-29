@@ -5,7 +5,7 @@ import * as gooey from "gooey.gooey";
 
 // Compile-only proof for the severed gooey surface, replacing the gooey block
 // retired from library-types.test-d.ts when the `./gooey.gooey` subpath went
-// away. No assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is
+// away. No assertions execute; the `dts-declaration-validity` compile is
 // the gate.
 
 declare const _hash: Hash;

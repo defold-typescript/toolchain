@@ -27,6 +27,8 @@ import {
   lessonProjects,
   tsFences,
 } from "./hsm-guide-steps";
+import { LIBRARY_TYPES_ROOT } from "./library/package-root";
+import { printCorpus } from "./library/print-corpus";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const GUIDE_DIR = path.join(REPO_ROOT, "packages", "docs", "guide");
@@ -54,11 +56,10 @@ const TYPE_PATHS: Record<string, string[]> = {
 
 const ENV_DTS = 'import "@defold-typescript/types/script";\n';
 
-// The library declarations a fence imports, as `resolve` writes them into a
+// The library modules a fence imports, printed as `resolve` writes them into a
 // project's `.defold-types/`; each becomes a project file next to the fences.
-const LIBRARY_DECLARATIONS = [
-  path.join(REPO_ROOT, "packages/library-types/generated/monarch.monarch.d.ts"),
-];
+const LIBRARY_MODULES = ["monarch.monarch"];
+const LIBRARY_CORPUS = await printCorpus(LIBRARY_TYPES_ROOT);
 
 const SLOW = 120_000;
 
@@ -143,9 +144,10 @@ function writeFenceProject(fences: readonly Fence[]): FenceProject {
   mkdirSync(src, { recursive: true });
   writeFileSync(path.join(src, "env.d.ts"), ENV_DTS);
   const declarations = new Map<string, string>();
-  for (const file of LIBRARY_DECLARATIONS) {
-    const rel = path.basename(file);
-    const text = readFileSync(file, "utf8");
+  for (const moduleId of LIBRARY_MODULES) {
+    const rel = `${moduleId}.d.ts`;
+    const text = LIBRARY_CORPUS.get(moduleId);
+    if (text === undefined) throw new Error(`library data prints no module ${moduleId}`);
     writeFileSync(path.join(src, rel), text);
     declarations.set(rel, text);
   }

@@ -4,8 +4,8 @@
 import * as fake_real_glass from "fake_real_glass.fake_real_glass";
 
 // Compile-only proof that the defold-glass LuaLS golden is callable the way the
-// upstream README drives it from a render script. tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// upstream README drives it from a render script. the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 // Reds if the module constants stop exporting or the probe mode degrades to `unknown`.
 const glass: fake_real_glass.FakeRealGlassState = fake_real_glass.create({

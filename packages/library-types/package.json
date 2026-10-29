@@ -89,13 +89,11 @@
     "NOTICE"
   ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
     "regen": "bun ../cli/src/library/sync-library-types.ts",
     "check": "bun ../cli/src/library/sync-library-types.ts --check",
     "classify": "bun ../cli/src/library/sync-library-types.ts --classify",
     "luals:fetch": "bun ../cli/src/library/sync-luals-types.ts --fetch",
     "luals:fidelity": "bun ../cli/src/library/sync-luals-types.ts --fidelity",
-    "luals:emit": "bun ../cli/src/library/sync-luals-types.ts --emit",
     "luals:api-doc": "bun ../cli/src/library/sync-luals-types.ts --api-doc",
     "native:api-doc": "bun ../cli/src/library/sync-native-types.ts --api-doc",
     "asset-portal:sync": "bun ../cli/src/library/sync-asset-portal.ts --fetch",

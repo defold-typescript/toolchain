@@ -12,7 +12,7 @@ import * as wrap from "wrap.wrap";
 
 // Compile-only proof for the defold-wrap forks, written as upstream's README wraps and
 // chains nodes and game objects, and as its example builds scenes and objects. No
-// assertions execute; tsc --noEmit under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;

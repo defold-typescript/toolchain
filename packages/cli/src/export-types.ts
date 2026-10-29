@@ -11,6 +11,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
+import { printLibraryModules } from "./library/print-library";
 import { normalizeSourceId } from "./library-match";
 import {
   loadVendoredLibraryRegistry,
@@ -43,24 +44,36 @@ export interface RunExportTypesResult {
 
 const SHIPPED_DIR = "types";
 
-// The committed files `resolve` would install for `sourceId`, from both
-// registries, each once.
-function curatedFiles(sourceId: string, root: string | null): string[] {
-  const { registry, generatedDir } = loadVendoredLibraryRegistry(root);
-  const files = new Set<string>();
-  if (generatedDir !== null) {
-    for (const library of registry.filter((entry) => entry.sourceId === sourceId)) {
-      for (const module of library.modules) {
-        files.add(path.join(generatedDir, `${library.generatedStems?.[module] ?? module}.d.ts`));
+interface CuratedFile {
+  readonly name: string;
+  readonly contents: string;
+}
+
+// The declarations `resolve` would install for `sourceId`, from both registries,
+// each once under the name it is installed as. A library module is printed from
+// the sources library data pins, as `resolve` prints it with no archive at hand.
+async function curatedFiles(sourceId: string, root: string | null): Promise<CuratedFile[]> {
+  const files: CuratedFile[] = [];
+  if (root !== null) {
+    const printed = new Map<string, string>();
+    for (const library of loadVendoredLibraryRegistry(root)) {
+      if (library.sourceId !== sourceId) continue;
+      for (const { module, contents } of (await printLibraryModules(root, library.modules, null))
+        .printed) {
+        printed.set(`${library.generatedStems?.[module] ?? module}.d.ts`, contents);
       }
     }
+    for (const [name, contents] of printed) files.push({ name, contents });
   }
   for (const target of loadVendoredNativeRegistry(root)) {
-    if (target.sourceId === sourceId) {
-      files.add(target.declarationPath);
+    if (target.sourceId === sourceId && existsSync(target.declarationPath)) {
+      files.push({
+        name: path.basename(target.declarationPath),
+        contents: readFileSync(target.declarationPath, "utf8"),
+      });
     }
   }
-  return [...files].filter((file) => existsSync(file));
+  return files;
 }
 
 function byEntryPath(a: ShippedDeclarationFile, b: ShippedDeclarationFile): number {
@@ -95,26 +108,25 @@ function existingShippedFiles(
     });
 }
 
-export function runExportTypes(opts: RunExportTypesOptions): RunExportTypesResult {
+export async function runExportTypes(opts: RunExportTypesOptions): Promise<RunExportTypesResult> {
   const sourceId = normalizeSourceId(opts.library);
   const root =
     opts.libraryTypesRoot !== undefined ? opts.libraryTypesRoot : resolveLibraryTypesPackageRoot();
-  const sources = sourceId === "" ? [] : curatedFiles(sourceId, root);
+  const sources = sourceId === "" ? [] : await curatedFiles(sourceId, root);
   if (sources.length === 0) {
     throw new Error(`no curated types for "${opts.library}"`);
   }
 
   const byEntry = new Map<string, string>();
-  for (const source of sources) {
-    const name = path.basename(source);
+  for (const { name, contents } of sources) {
     const entry = path.posix.join(SHIPPED_DIR, name);
     if (byEntry.has(entry)) {
       throw new Error(`two curated files for ${sourceId} are both named ${name}`);
     }
-    byEntry.set(entry, source);
+    byEntry.set(entry, contents);
   }
   const files: ShippedDeclarationFile[] = [...byEntry]
-    .map(([entry, source]) => ({ entry, contents: readFileSync(source, "utf8") }))
+    .map(([entry, contents]) => ({ entry, contents }))
     .sort(byEntryPath);
 
   const existing = existingShippedFiles(opts.cwd);

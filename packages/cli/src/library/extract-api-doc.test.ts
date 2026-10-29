@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { extractApiDoc } from "./extract-api-doc";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { printCorpus } from "./print-corpus";
 import { lowerAuthoredApiDoc, readAuthoredTargets } from "./sync-authored-types";
 import { readLualsTargets } from "./sync-luals-types";
 import { readMarkdownTargets } from "./sync-markdown-types";
@@ -26,13 +27,21 @@ function externalFrontEndNamespaces(): Set<string> {
   ]);
 }
 
-function generatedModules(): string[] {
+const CORPUS = await printCorpus(PACKAGE_ROOT);
+
+// The page each printed module publishes under, keyed to its module, for every
+// module whose api-doc no external front-end lowers.
+function printedPages(): Map<string, string> {
   const excluded = externalFrontEndNamespaces();
-  return readdirSync(join(PACKAGE_ROOT, "generated"))
-    .filter((f) => f.endsWith(".d.ts"))
-    .map((f) => f.slice(0, -".d.ts".length))
-    .filter((name) => !excluded.has(name))
-    .sort();
+  const pages = new Map<string, string>();
+  for (const { namespace, moduleId } of [
+    ...readLualsTargets(PACKAGE_ROOT),
+    ...readScriptApiTargets(PACKAGE_ROOT),
+    ...readAuthoredTargets(PACKAGE_ROOT),
+  ]) {
+    if (CORPUS.has(moduleId) && !excluded.has(namespace)) pages.set(namespace, moduleId);
+  }
+  return new Map([...pages].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 }
 
 // A fixed module mixing every construct the extractor must handle: module-level
@@ -967,16 +976,16 @@ declare module 'stub.stub' {
 
   // Drift guard, mirroring the codemodDeclaration guard in
   // sync-library-types.test.ts: the committed api-doc/<module>.json must be
-  // exactly what its lane lowers from the current generated/<module>.d.ts. The
-  // authored lane lowers `extractApiDoc` *plus* upstream's LuaDoc for the members
-  // its fork leaves blank, so it is compared through `lowerAuthoredApiDoc`; the
-  // fork-identity test pins its vendored source to the generated golden, so this
-  // is still a comparison against `generated/`.
+  // exactly what its lane lowers from the module `resolve` prints. The authored
+  // lane lowers `extractApiDoc` *plus* upstream's LuaDoc for the members its fork
+  // leaves blank, so it is compared through `lowerAuthoredApiDoc`; the print of an
+  // authored module is its vendored source, so this is still a comparison against
+  // what `resolve` serves.
   describe("committed api-doc fixtures match what their lane lowers", () => {
     const authored = new Map(
       readAuthoredTargets(PACKAGE_ROOT).map((target) => [target.namespace, target]),
     );
-    for (const moduleName of generatedModules()) {
+    for (const [moduleName, moduleId] of printedPages()) {
       test(moduleName, () => {
         const committed = JSON.parse(
           readFileSync(join(PACKAGE_ROOT, "api-doc", `${moduleName}.json`), "utf8"),
@@ -986,20 +995,19 @@ declare module 'stub.stub' {
           expect(JSON.parse(lowerAuthoredApiDoc(PACKAGE_ROOT, target))).toEqual(committed);
           return;
         }
-        const source = readFileSync(join(PACKAGE_ROOT, "generated", `${moduleName}.d.ts`), "utf8");
-        expect(extractApiDoc(source, moduleName)).toEqual(committed);
+        expect(extractApiDoc(CORPUS.get(moduleId) as string, moduleName)).toEqual(committed);
       });
     }
   });
 
-  test("every generated module has exactly one api-doc fixture (no stale or missing)", () => {
+  test("every printed module has exactly one api-doc fixture (no stale or missing)", () => {
     const excluded = externalFrontEndNamespaces();
     const fixtures = readdirSync(join(PACKAGE_ROOT, "api-doc"))
       .filter((f) => f.endsWith(".json"))
       .map((f) => f.slice(0, -".json".length))
       .filter((name) => !excluded.has(name))
       .sort();
-    expect(fixtures).toEqual(generatedModules());
+    expect(fixtures).toEqual([...printedPages().keys()]);
   });
 });
 

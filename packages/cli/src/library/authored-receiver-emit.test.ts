@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { printCorpus } from "./print-corpus";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
 import { readLibraryExpectations } from "./target-expectations";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const CORPUS = await printCorpus(PACKAGE_ROOT);
 
 const IMPORT_SPECIFIER = /^\s*import\s[^;]*?\bfrom\s+['"]([^'"]+)['"]/gm;
 
@@ -21,7 +21,8 @@ function declarationWithSiblings(
   const seen = new Set([target.moduleId]);
   const pending = [target];
   for (let current = pending.pop(); current !== undefined; current = pending.pop()) {
-    const declaration = readFileSync(join(PACKAGE_ROOT, current.generated), "utf8");
+    const declaration = CORPUS.get(current.moduleId);
+    if (declaration === undefined) throw new Error(`no printed module ${current.moduleId}`);
     files[`${current.namespace}.d.ts`] = declaration;
     for (const [, specifier] of declaration.matchAll(IMPORT_SPECIFIER)) {
       const sibling = specifier === undefined ? undefined : byModule.get(specifier);

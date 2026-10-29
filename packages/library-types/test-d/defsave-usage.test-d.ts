@@ -7,8 +7,8 @@ import * as defsave from "defsave.defsave";
 // golden keeps everything ts-defold declared while adding the members it
 // omitted and narrowing the three returns it got wrong. This replaces the
 // defsave block retired from library-types.test-d.ts when the
-// `./defsave.defsave` subpath went away. No assertions execute; `tsc --noEmit`
-// under tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// `./defsave.defsave` subpath went away. No assertions execute; the
+// `dts-declaration-validity` compile (skipLibCheck: false) is the gate.
 
 // The surface ts-defold already declared still compiles unchanged.
 const appname: string = defsave.appname;

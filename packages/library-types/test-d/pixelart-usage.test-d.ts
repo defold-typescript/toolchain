@@ -4,7 +4,7 @@
 import * as pixelart from "pixelart.scripts.pixelart";
 
 // Compile-only proof that the pixel-art shader LuaLS golden is callable with
-// the settings upstream documents. tsc --noEmit under tsconfig.dts-check.json
+// the settings upstream documents. the `dts-declaration-validity` compile
 // (skipLibCheck: false) is the gate.
 
 pixelart.init({ pixel_size: 4, normal_edge_coefficient: 1, depth_edge_coefficient: 1 });

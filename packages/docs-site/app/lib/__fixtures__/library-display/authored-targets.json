@@ -4,19 +4,22 @@
       "namespace": "demo.one",
       "repo": "https://github.com/someone/demolib",
       "ref": "1.0.0",
-      "license": "MIT"
+      "license": "MIT",
+      "apiDoc": "api-doc/demo.one.json"
     },
     {
       "namespace": "demo.two",
       "repo": "https://github.com/someone/demolib",
       "ref": "1.0.0",
-      "license": "MIT"
+      "license": "MIT",
+      "apiDoc": "api-doc/demo.two.json"
     },
     {
       "namespace": "alias.actual",
       "repo": "https://github.com/alias/aliased",
       "ref": "1.0.0",
-      "license": "MIT"
+      "license": "MIT",
+      "apiDoc": "api-doc/alias.actual.json"
     }
   ]
 }

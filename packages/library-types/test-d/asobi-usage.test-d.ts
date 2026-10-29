@@ -13,7 +13,7 @@ import type {
 } from "asobi.realtime";
 
 // Compile-only proof for the asobi forks, written as upstream's README drives them. No
-// assertions execute; tsc --noEmit under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;

@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseMarkdownApi } from "./parse-markdown-api";
+import { printCorpus } from "./print-corpus";
 import { readAuthoredTargets } from "./sync-authored-types";
 import {
   compareFidelityToTsDefold,
@@ -390,8 +391,6 @@ function describeLibraryDecisions(record: LibraryRecord): void {
   // dropped all three, its verdict now resolving through `severedSource`.
   if (noGo.length > 0 && severedCount === 0) {
     describe(`every no-go ${library} module stays ts-defold-sourced`, () => {
-      const dtsCheck = readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8");
-
       const shippedModules = (
         JSON.parse(readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8")) as {
           targets: { module: string }[];
@@ -400,11 +399,11 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 
       test.each(
         noGo,
-      )(`${record.prefix}$module keeps its ts-defold row and fixture and stays out of the dts-check include`, (decision) => {
+      )(`${record.prefix}$module keeps its ts-defold row and fixture and stays out of the printed corpus`, async (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
         expect(shippedModules).toContain(moduleId);
         expect(existsSync(join(PACKAGE_ROOT, targetFor(moduleId).fixture))).toBe(true);
-        expect(dtsCheck).not.toContain(`generated/${moduleId}.d.ts`);
+        expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(false);
       });
 
       test("no no-go module is registered as a markdown target", () => {
@@ -445,13 +444,13 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       // demand deleting the file the fork still emits.
       test.each(
         noGo,
-      )(`${record.prefix}$module dropped its ts-defold row, and its dotted golden per its registered namespace`, (decision) => {
+      )(`${record.prefix}$module dropped its ts-defold row, and its dotted golden per its registered namespace`, async (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
         expect(shippedModules).not.toContain(moduleId);
         const target = authoredTargets.find((t) => t.moduleId === moduleId);
         const dottedGolden = `generated/${moduleId}.d.ts`;
         if (target?.namespace === moduleId) {
-          expect(existsSync(join(PACKAGE_ROOT, dottedGolden))).toBe(true);
+          expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
           expect(target.generated).toBe(dottedGolden);
         } else {
           expect(existsSync(join(PACKAGE_ROOT, dottedGolden))).toBe(false);
@@ -1905,13 +1904,13 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
   // `namespace === moduleId` for all three, so the dotted golden the fork emits is
   // the one the ts-defold row already published — the arm of the severance
   // assertion that requires the file to survive rather than die with its row.
-  test("each fork registers and re-emits the dotted golden it published before", () => {
+  test("each fork registers and re-emits the dotted golden it published before", async () => {
     for (const mod of ["color", "richtext", "tags"]) {
       const moduleId = `richtext.${mod}`;
       const target = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.moduleId === moduleId);
       expect(target?.namespace).toBe(moduleId);
       expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
-      expect(existsSync(join(PACKAGE_ROOT, `generated/${moduleId}.d.ts`))).toBe(true);
+      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
     }
   });
 

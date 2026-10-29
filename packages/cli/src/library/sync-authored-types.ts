@@ -248,15 +248,6 @@ export function lowerAuthoredApiDoc(packageRoot: string, target: AuthoredTarget)
 if (import.meta.main) {
   const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   const argv = process.argv.slice(2);
-  if (argv.includes("--emit")) {
-    for (const target of readAuthoredTargets(root)) {
-      const contents = emitAuthoredDeclaration(root, target);
-      const dest = join(root, target.generated);
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, contents);
-      console.log(`emitted ${target.moduleId} -> ${target.generated}`);
-    }
-  }
   if (argv.includes("--api-doc")) {
     for (const target of readAuthoredTargets(root)) {
       const json = lowerAuthoredApiDoc(root, target);
