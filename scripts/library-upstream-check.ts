@@ -1,9 +1,9 @@
 import { join } from "node:path";
-import { readAuthoredTargets } from "../packages/library-types/scripts/sync-authored-types.ts";
-import { readLualsTargets } from "../packages/library-types/scripts/sync-luals-types.ts";
-import { readMarkdownTargets } from "../packages/library-types/scripts/sync-markdown-types.ts";
-import { readOpenApiTargets } from "../packages/library-types/scripts/sync-openapi-types.ts";
-import { readScriptApiTargets } from "../packages/library-types/scripts/sync-script-api-types.ts";
+import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
+import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
+import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
+import { readOpenApiTargets } from "../packages/cli/src/library/sync-openapi-types.ts";
+import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
 
 // Checks every library-types lane registry for an upstream that has moved past
 // the pin. `upstream:release-check` is the same idea for the engine itself; the

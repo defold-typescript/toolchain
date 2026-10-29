@@ -16,8 +16,8 @@ import {
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
-import { extractApiDoc } from "../../../library-types/scripts/extract-api-doc";
-import { readNativeExpectations } from "../../../library-types/scripts/target-expectations";
+import { extractApiDoc } from "../../../cli/src/library/extract-api-doc";
+import { readNativeExpectations } from "../../../cli/src/library/target-expectations";
 import { loadAnnotations } from "../../../types/scripts/lua-annotations";
 import { loadApiTargets } from "../../../types/scripts/regen";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";

@@ -18,7 +18,7 @@ generated lanes.
 Like the other lanes, adding such a library is **data, not code**: you add one
 entry to `packages/library-types/authored-targets.json`, vendor the `.d.ts`, run
 the two generation commands, and commit the artifacts. The authored front-end
-(`packages/library-types/scripts/sync-authored-types.ts`) is the reusable
+(`packages/cli/src/library/sync-authored-types.ts`) is the reusable
 machinery; you touch config and fixtures, not the pipeline.
 
 > This page is for **library-type authors** working inside this repository. If you
@@ -129,8 +129,8 @@ Then run the two commands from `packages/library-types`:
 ```sh
 cd packages/library-types
 
-bun scripts/sync-authored-types.ts --emit       # emit generated/<namespace>.d.ts — the committed types
-bun scripts/sync-authored-types.ts --api-doc     # lower api-doc/<namespace>.json — the docs-site model
+bun ../cli/src/library/sync-authored-types.ts --emit       # emit generated/<namespace>.d.ts — the committed types
+bun ../cli/src/library/sync-authored-types.ts --api-doc     # lower api-doc/<namespace>.json — the docs-site model
 ```
 
 - **`--emit`** writes the vendored `.d.ts` verbatim to the
@@ -165,7 +165,7 @@ that is what "no structured type source" means. A *verbatim* fork inherits
 whatever accuracy the binding it copied already had; a *corrected* fork (see
 `defsave` below) is only as accurate as the manual audit behind it. So pin the
 corrections with per-library shape assertions in
-`packages/library-types/scripts/sync-authored-types.test.ts` — the closest thing
+`packages/cli/src/library/sync-authored-types.test.ts` — the closest thing
 this lane has to an upstream check.
 
 ## 4. Surface parity against the upstream Lua
@@ -605,7 +605,7 @@ the retired ts-defold surface. But that diff proves **emission** fidelity only �
 the golden loses nothing relative to the vendored `.d.ts`; it does not check the
 vendored surface against upstream. That accuracy rests on the manual audit
 against `defsave.lua` at the pin plus the per-library shape assertions in
-`packages/library-types/scripts/sync-authored-types.test.ts`, so correcting a
+`packages/cli/src/library/sync-authored-types.test.ts`, so correcting a
 fork moves the accuracy burden onto the author, not onto a gate. Narrowing a wrong return is a breaking change
 for consumers and belongs in the changelog's `### Breaking` section; a types
 package's value is accuracy, so do not keep a declaration you can see is wrong.

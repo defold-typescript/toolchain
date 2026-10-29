@@ -7,7 +7,7 @@ export interface DefoldEngineRelease {
 }
 
 // Every dated Defold engine version, written by
-// `library-types/scripts/sync-defold-extensions.ts --dates`. An absent file
+// `cli/src/library/sync-defold-extensions.ts --dates`. An absent file
 // degrades to no era on any page.
 export function loadDefoldEngineReleases(libraryTypesDir: string): DefoldEngineRelease[] {
   const path = join(libraryTypesDir, "defold-engine-releases.json");

@@ -165,9 +165,9 @@ Four lanes fetch and regenerate. Run their commands from
 | Lane | Registry | Commands |
 | ---- | -------- | -------- |
 | LuaLS | `luals-targets.json` | `bun run luals:fetch`, then `luals:fidelity`, `luals:emit`, `luals:api-doc` |
-| Markdown | `markdown-targets.json` | `bun scripts/sync-markdown-types.ts --fetch --fidelity --emit --api-doc` |
-| OpenAPI | `openapi-targets.json` | `bun scripts/sync-openapi-types.ts --fetch --fidelity --emit --api-doc` |
-| script_api | `script-api-targets.json` | `bun scripts/sync-script-api-types.ts --fetch --fidelity --emit --api-doc` |
+| Markdown | `markdown-targets.json` | `bun ../cli/src/library/sync-markdown-types.ts --fetch --fidelity --emit --api-doc` |
+| OpenAPI | `openapi-targets.json` | `bun ../cli/src/library/sync-openapi-types.ts --fetch --fidelity --emit --api-doc` |
+| script_api | `script-api-targets.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity --emit --api-doc` |
 
 `--fetch` is the only step that touches the network; everything after it reads
 the committed fixtures, so a regeneration is reproducible offline.
@@ -194,7 +194,7 @@ Refreshing an authored pin means:
    `fixtures/upstream-lua/<repo-name>/…` by hand (the fixture path mirrors the
    upstream path under a repo-name directory);
 3. update the hand-written `.d.ts` for whatever the new upstream added or changed;
-4. re-run `bun run parity` and `bun scripts/sync-authored-types.ts --emit --api-doc`.
+4. re-run `bun run parity` and `bun ../cli/src/library/sync-authored-types.ts --emit --api-doc`.
 
 ## The couplings a re-pin moves with it
 
@@ -221,7 +221,7 @@ skip it.
 - **The pin-refresh record.** `packages/library-types/pin-refresh.json` states which
   members a bump added and removed, one entry per refresh, each tagged with the
   `lane` it belongs to (`luals`, `script-api`, or `openapi`).
-  `packages/library-types/scripts/pin-refresh.test.ts` checks every name it states
+  `packages/cli/src/library/pin-refresh.test.ts` checks every name it states
   against the surface that lane's own parser yields for the committed fixtures —
   `buildTargetModel`, `committedScriptApiDoc`, or `parseOpenApi`. Regenerating the
   fixtures without updating the record reds `ci`, so derive the new
