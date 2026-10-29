@@ -1,0 +1,334 @@
+import { describe, expect, test } from "bun:test";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { LIBRARY_TYPES_ROOT } from "./package-root";
+import {
+  applyOmittableSlots,
+  buildScriptApiFidelity,
+  computeScriptApiFidelity,
+  emitScriptApiDeclaration,
+  type FetchText,
+  fetchScriptApiFixture,
+  loadTypeResolver,
+  lowerScriptApiApiDoc,
+  readScriptApiTargets,
+  type ScriptApiDoc,
+  type ScriptApiDocElement,
+  type ScriptApiTarget,
+} from "./sync-script-api-types";
+
+const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+
+// The bridge target as it appears in a validated config. Unlike the LuaLS
+// front-end (which pins source globs), a script_api target pins one `.script_api`
+// path and the exact canonical golden paths it owns. bridge is now the sole type
+// maintainer for its namespace, so — like the LuaLS libraries — its goldens are
+// named for the single-segment `namespace` (`generated/bridge.d.ts`), not the
+// dotted `moduleId`, keeping the docs tree and file layout clean.
+const BRIDGE: ScriptApiTarget = {
+  repo: "https://github.com/Playgama/bridge-defold",
+  ref: "v2.0.0",
+  license: "MIT",
+  scriptApi: "bridge/api/bridge.script_api",
+  moduleId: "bridge.bridge",
+  namespace: "bridge",
+  generated: "generated/bridge.d.ts",
+  apiDoc: "api-doc/bridge.json",
+  fidelity: "fidelity/bridge.json",
+};
+
+function writeConfig(config: unknown): string {
+  const root = mkdtempSync(join(tmpdir(), "script-api-targets-config-"));
+  writeFileSync(join(root, "script-api-targets.json"), JSON.stringify(config));
+  return root;
+}
+
+describe("readScriptApiTargets", () => {
+  test("parses the committed bridge entry into a typed target", () => {
+    const targets = readScriptApiTargets(PACKAGE_ROOT);
+    const bridge = targets.find((t) => t.moduleId === "bridge.bridge");
+    expect(bridge).toBeDefined();
+    expect(bridge?.namespace).toBe("bridge");
+    expect(bridge?.repo).toBe("https://github.com/Playgama/bridge-defold");
+    expect(bridge?.ref).toBe("v2.3.0");
+    expect(bridge?.scriptApi).toBe("bridge/api/bridge.script_api");
+    expect(bridge?.generated).toBe("generated/bridge.d.ts");
+    expect(bridge?.apiDoc).toBe("api-doc/bridge.json");
+  });
+
+  test("throws naming the missing field and the offending entry", () => {
+    const { scriptApi: _drop, ...missingScriptApi } = BRIDGE;
+    const root = writeConfig({ targets: [missingScriptApi] });
+    expect(() => readScriptApiTargets(root)).toThrow(/scriptApi/);
+    expect(() => readScriptApiTargets(root)).toThrow(/bridge\.bridge/);
+  });
+
+  test("names the entry index when moduleId itself is the missing field", () => {
+    const { moduleId: _drop, ...missingModuleId } = BRIDGE;
+    const root = writeConfig({ targets: [missingModuleId] });
+    expect(() => readScriptApiTargets(root)).toThrow(/moduleId/);
+    expect(() => readScriptApiTargets(root)).toThrow(/0/);
+  });
+
+  test("rejects an omittableSlots entry missing its element, slot or evidence", () => {
+    const complete = { element: "bridge.social.create_post", slot: "payload", evidence: "e" };
+    for (const field of ["element", "slot", "evidence"] as const) {
+      const { [field]: _drop, ...partial } = complete;
+      const root = writeConfig({ targets: [{ ...BRIDGE, omittableSlots: [partial] }] });
+      expect(() => readScriptApiTargets(root)).toThrow(new RegExp(field));
+    }
+    const blank = writeConfig({
+      targets: [{ ...BRIDGE, omittableSlots: [{ ...complete, evidence: "  " }] }],
+    });
+    expect(() => readScriptApiTargets(blank)).toThrow(/evidence/);
+  });
+
+  test("defaults fidelity to fidelity/<namespace>.json and license to '' when omitted", () => {
+    const { fidelity: _f, license: _l, ...bare } = BRIDGE;
+    const root = writeConfig({ targets: [bare] });
+    const [target] = readScriptApiTargets(root);
+    expect(target?.fidelity).toBe("fidelity/bridge.json");
+    expect(target?.license).toBe("");
+  });
+});
+
+describe("bridge migrated off the ts-defold corpus", () => {
+  test("bridge.bridge is no longer a ts-defold library-targets row", () => {
+    const targets = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+    ) as { targets: { module: string }[] };
+    expect(targets.targets.some((t) => t.module === "bridge.bridge")).toBe(false);
+  });
+
+  test("the defold-bridge dir is gone from the ts-defold classification", () => {
+    const classification = readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8");
+    expect(classification).not.toContain("defold-bridge");
+  });
+
+  test("the retired ts-defold bridge fixture is deleted", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/bridge.bridge.d.ts"))).toBe(false);
+  });
+
+  test("the script_api goldens are named for the namespace, not the dotted module or a subtree", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "generated/bridge.d.ts"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/bridge.json"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "fidelity/bridge.json"))).toBe(true);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/bridge.bridge.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "generated/script-api/bridge.bridge.d.ts"))).toBe(false);
+    expect(existsSync(join(PACKAGE_ROOT, "api-doc/script-api/bridge.bridge.json"))).toBe(false);
+  });
+});
+
+describe("fetchScriptApiFixture", () => {
+  test("snapshots the pinned .script_api under fixtures/script-api/<moduleId>.script_api, offline", async () => {
+    const root = mkdtempSync(join(tmpdir(), "script-api-fetch-"));
+    const fetched: string[] = [];
+    const fetchText: FetchText = async (url) => {
+      fetched.push(url);
+      return `# ${url}\n`;
+    };
+
+    await fetchScriptApiFixture(root, BRIDGE, { fetchText });
+
+    expect(fetched).toEqual([
+      "https://raw.githubusercontent.com/Playgama/bridge-defold/v2.0.0/bridge/api/bridge.script_api",
+    ]);
+    const dest = join(root, "fixtures/script-api/bridge.bridge.script_api");
+    expect(existsSync(dest)).toBe(true);
+    expect(readFileSync(dest, "utf8")).toBe(
+      "# https://raw.githubusercontent.com/Playgama/bridge-defold/v2.0.0/bridge/api/bridge.script_api\n",
+    );
+  });
+});
+
+describe("emitScriptApiDeclaration", () => {
+  test("routes the vendored .script_api through scriptApiToFixtureJson -> generateModuleDeclaration", async () => {
+    const contents = await emitScriptApiDeclaration(PACKAGE_ROOT, BRIDGE);
+    // The output is an importable module keyed by moduleId, not a global namespace.
+    expect(contents).toContain("declare module 'bridge.bridge' {");
+    expect(contents).toContain("export namespace bridge {");
+    // The one-level nested sub-namespace survives the parser.
+    expect(contents).toContain("namespace achievements {");
+    // A stable exported function symbol (assert on the symbol, not the whole blob).
+    expect(contents).toContain("function get_achievements(");
+  });
+
+  test("notes a classified callback argument naming the library, under its api-doc page", async () => {
+    const contents = await emitScriptApiDeclaration(PACKAGE_ROOT, BRIDGE);
+    expect(contents).toContain(
+      "@param on_success - function(_, day). **0️⃣ `day` is 0-based; passed to `bridge` unchanged.**",
+    );
+    expect(contents).not.toContain("passed to Defold");
+  });
+});
+
+describe("applyOmittableSlots", () => {
+  const post: ScriptApiDocElement = {
+    type: "FUNCTION",
+    name: "bridge.social.create_post",
+    description: "create a post",
+    parameters: [
+      { name: "options", types: ["table", "string"] },
+      { name: "payload", types: ["string"] },
+      { name: "on_success", types: ["function"] },
+      { name: "on_failure", types: ["function"] },
+    ],
+    returnvalues: [],
+  };
+  const share: ScriptApiDocElement = { ...post, name: "bridge.social.share" };
+  const doc: ScriptApiDoc = { info: { namespace: "bridge" }, elements: [post, share] };
+  const payload = { element: "bridge.social.create_post", slot: "payload", evidence: "e" };
+
+  test("follows the element with a same-named copy that omits the declared slot", () => {
+    const expanded = applyOmittableSlots(doc, [payload]);
+    expect(expanded.elements.map((e) => e.name)).toEqual([
+      "bridge.social.create_post",
+      "bridge.social.create_post",
+      "bridge.social.share",
+    ]);
+    expect(expanded.elements[0]).toEqual(post);
+    expect(expanded.elements[1]?.parameters.map((p) => p.name)).toEqual([
+      "options",
+      "on_success",
+      "on_failure",
+    ]);
+    expect(expanded.elements[2]).toEqual(share);
+  });
+
+  test("throws naming the element and slot when the slot is gone upstream", () => {
+    const stale = { ...payload, slot: "seed" };
+    expect(() => applyOmittableSlots(doc, [stale])).toThrow(/bridge\.social\.create_post/);
+    expect(() => applyOmittableSlots(doc, [stale])).toThrow(/seed/);
+  });
+
+  test("throws naming the element and slot when the element is gone upstream", () => {
+    const stale = { ...payload, element: "bridge.social.make_post" };
+    expect(() => applyOmittableSlots(doc, [stale])).toThrow(/bridge\.social\.make_post/);
+    expect(() => applyOmittableSlots(doc, [stale])).toThrow(/payload/);
+  });
+});
+
+describe("script_api goldens regenerate byte-for-byte", () => {
+  test("each target's .d.ts matches its committed generated golden", async () => {
+    for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
+      const regenerated = await emitScriptApiDeclaration(PACKAGE_ROOT, target);
+      const committed = readFileSync(join(PACKAGE_ROOT, target.generated), "utf8");
+      expect(regenerated).toBe(committed);
+    }
+  });
+
+  test("each target's lowered api-doc matches its committed api-doc golden", async () => {
+    for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
+      const regenerated = await lowerScriptApiApiDoc(PACKAGE_ROOT, target);
+      const committed = readFileSync(join(PACKAGE_ROOT, target.apiDoc), "utf8");
+      expect(regenerated).toBe(committed);
+    }
+  });
+});
+
+describe("script_api fidelity", () => {
+  test("each target's report matches its committed fidelity golden", async () => {
+    for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
+      const report = await buildScriptApiFidelity(PACKAGE_ROOT, target);
+      const committed = readFileSync(join(PACKAGE_ROOT, target.fidelity), "utf8");
+      expect(`${JSON.stringify(report, null, 2)}\n`).toBe(committed);
+    }
+  });
+
+  // A pipe-separated `.script_api` `type:` parses into its tokens, so bridge's
+  // `string | nil` returns count one resolved token per alternative rather than
+  // one unmapped union or none at all.
+  test("bridge fidelity reflects the real emitter: coverage 1, no unmapped tokens", async () => {
+    const report = await buildScriptApiFidelity(PACKAGE_ROOT, BRIDGE);
+    expect(report.namespace).toBe("bridge");
+    expect(report.totalMembers).toBe(90);
+    expect(report.totalTypeTokens).toBe(152);
+    expect(report.unknownFallbacks).toBe(0);
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.undocumentedMembers).toBe(0);
+    expect(report.coverage).toBe(1);
+  });
+
+  test("computeScriptApiFidelity loudly surfaces an unmapped token in unknownTokens", () => {
+    const doc: ScriptApiDoc = {
+      info: { namespace: "x" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "x.f",
+          description: "d",
+          parameters: [{ types: ["NopeType", "string"] }],
+          returnvalues: [],
+        },
+      ],
+    };
+    const report = computeScriptApiFidelity("x", doc, { resolves: (t) => t === "string" });
+    expect(report.unknownFallbacks).toBe(1);
+    expect(report.unknownTokens).toEqual(["NopeType"]);
+    expect(report.totalTypeTokens).toBe(2);
+    expect(report.coverage).toBe(0.5);
+  });
+
+  test("computeScriptApiFidelity counts a slot with no type token as an unknown fallback", () => {
+    const doc: ScriptApiDoc = {
+      info: { namespace: "x" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "x.f",
+          description: "d",
+          parameters: [{ types: [] }, { types: ["string"] }],
+          returnvalues: [],
+        },
+      ],
+    };
+    const report = computeScriptApiFidelity("x", doc, { resolves: (t) => t === "string" });
+    expect(report.totalTypeTokens).toBe(2);
+    expect(report.unknownFallbacks).toBe(1);
+    expect(report.unknownTokens).toEqual(["(untyped)"]);
+    expect(report.coverage).toBe(0.5);
+  });
+
+  test("the real emitter resolver maps bridge's mapped tokens and rejects a made-up token", async () => {
+    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    expect(resolver.resolves("string")).toBe(true);
+    expect(resolver.resolves("boolean")).toBe(true);
+    expect(resolver.resolves("table")).toBe(true);
+    expect(resolver.resolves("function")).toBe(true);
+    expect(resolver.resolves("string | nil")).toBe(true);
+    expect(resolver.resolves("string | Frobnicate")).toBe(false);
+    expect(resolver.resolves("Frobnicate")).toBe(false);
+  });
+
+  // `nil` is absent from `DEFOLD_TYPE_MAP` because the emitter lowers it
+  // structurally — stripped into optionality in parameter position, rendered
+  // `undefined` in return position — so counting it unresolved understated
+  // coverage for a token that is in fact fully mapped.
+  test("the real emitter resolver counts `nil` as resolved", async () => {
+    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    expect(resolver.resolves("nil")).toBe(true);
+    expect(resolver.resolves("enabled_state")).toBe(false);
+  });
+
+  test("a doc whose only slot type is `nil` reports full coverage", async () => {
+    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    const doc: ScriptApiDoc = {
+      info: { namespace: "x" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "x.f",
+          description: "d",
+          parameters: [],
+          returnvalues: [{ types: ["nil"] }],
+        },
+      ],
+    };
+    const report = computeScriptApiFidelity("x", doc, resolver);
+    expect(report.totalTypeTokens).toBe(1);
+    expect(report.unknownFallbacks).toBe(0);
+    expect(report.unknownTokens).toEqual([]);
+    expect(report.coverage).toBe(1);
+  });
+});

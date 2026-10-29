@@ -3,7 +3,7 @@ import { join } from "node:path";
 import {
   type NativeTarget,
   readNativeTargets,
-} from "../packages/library-types/scripts/sync-native-types.ts";
+} from "../packages/cli/src/library/sync-native-types.ts";
 
 // Guide tables that list one row per shipped target. Each lives in a marked
 // region of its guide page and is rewritten from the registry the toolchain

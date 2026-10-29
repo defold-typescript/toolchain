@@ -122,7 +122,7 @@ function eraOf(
 }
 
 // Defold's own libraries, surveyed from the `defold` GitHub org by
-// `library-types/scripts/sync-defold-extensions.ts`. Each `.script_api` doc is a
+// `cli/src/library/sync-defold-extensions.ts`. Each `.script_api` doc is a
 // Libraries page keyed by its manifest `page`, never its declared namespace:
 // four repos declare `firebase`, and `extension-camera` declares the engine
 // `camera`. An absent manifest degrades to no Defold pages.
@@ -491,7 +491,7 @@ interface AssetPortalEntry {
 }
 
 // Community libraries from the Defold Asset Portal, synced by
-// `library-types/scripts/sync-asset-portal.ts`. Only a `no-lua-api` entry gets a
+// `cli/src/library/sync-asset-portal.ts`. Only a `no-lua-api` entry gets a
 // listing: its `include_dirs` hold shaders, materials, sounds or editor scripts,
 // so there is nothing to type and the portal description is the whole page lead.
 // A repo that already has a Defold listing or a typed library page keeps that one,

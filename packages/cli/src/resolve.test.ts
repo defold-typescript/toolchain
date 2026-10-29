@@ -10,7 +10,6 @@ import {
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import * as ts from "typescript";
-import { readNativeExpectations } from "../../library-types/scripts/target-expectations";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
 import { runExportTypes } from "./export-types";
@@ -19,6 +18,7 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
+import { readNativeExpectations } from "./library/target-expectations";
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";

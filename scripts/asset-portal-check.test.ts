@@ -7,7 +7,7 @@ import type {
   PortalAsset,
   PortalEntry,
   PortalHead,
-} from "../packages/library-types/scripts/sync-asset-portal.ts";
+} from "../packages/cli/src/library/sync-asset-portal.ts";
 import {
   type AssetPortalCheckIo,
   type CoverageLane,

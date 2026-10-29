@@ -3,7 +3,7 @@
  * grouping parentheses, `fun(...)`, `table<K, V>`, inline records, string, numeric
  * and boolean literals), shared by the engine lane (`emit-dts.ts`
  * `defaultMapType`) and the library lane
- * (`packages/library-types/scripts/map-luals-types.ts`). Pure and deterministic.
+ * (`packages/cli/src/library/map-luals-types.ts`). Pure and deterministic.
  *
  * Every name that is not structure — `integer`, `table`, `function`, `...`,
  * `vmath.vector3`, `druid.component` — is a leaf handed to the caller's
