@@ -4,7 +4,7 @@
 import * as box2d from "box2d";
 
 // Compile-only proof for the curated box2d native-extension namespace. No assertions
-// execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
+// execute; the `dts-declaration-validity` compile is the gate.
 
 const world = box2d.NewWorld(vmath.vector3(0, -10, 0));
 const body = world.CreateBody({

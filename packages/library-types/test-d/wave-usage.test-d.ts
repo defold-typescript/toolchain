@@ -4,7 +4,7 @@
 import * as wave from "wave";
 
 // Compile-only proof for the curated wave native-extension namespace. No
-// assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 wave.init(0.25, 0.5, 10, 1, 1.5, 0.25, 6, 0.8, 1, 256);
 // @ts-expect-error both waves, the time multiplier and the capacity are required

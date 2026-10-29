@@ -5,8 +5,8 @@ import * as nakama from "nakama.nakama";
 import * as socket from "nakama.socket";
 
 // Compile-only proof for the realtime socket surface the residual nakama slice withdrew
-// and this target re-homes. No assertions execute; `tsc --noEmit` under
-// tsconfig.dts-check.json is the gate.
+// and this target re-homes. No assertions execute; the `dts-declaration-validity`
+// compile is the gate.
 
 const _client = nakama.create_client({
   host: "127.0.0.1",

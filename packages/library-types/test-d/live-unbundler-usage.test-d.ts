@@ -4,8 +4,8 @@
 import * as lu from "live_unbundler.live_unbundler";
 
 // Compile-only proof that the live_unbundler LuaLS golden is callable the way the
-// upstream README integrates it. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// upstream README integrates it. No assertions execute; the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 lu.add_listener();
 lu.set_save_cache_key("liveupdate_saved_files");

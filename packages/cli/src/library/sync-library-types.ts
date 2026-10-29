@@ -120,14 +120,14 @@ export function regenerate(packageRoot: string): void {
   writeApiDocs(packageRoot);
 }
 
-/** The pretty-printed ref-doc JSON a generated module extracts to. */
+/** The pretty-printed ref-doc JSON a module's codemodded fixture extracts to. */
 function apiDocJson(packageRoot: string, target: LibraryTarget): string {
-  const generated = readFileSync(join(packageRoot, target.generated), "utf8");
-  return `${JSON.stringify(extractApiDoc(generated, target.module), null, 2)}\n`;
+  const { output } = codemodDeclaration(readFileSync(join(packageRoot, target.fixture), "utf8"));
+  return `${JSON.stringify(extractApiDoc(output, target.module), null, 2)}\n`;
 }
 
 /**
- * Extract every generated `declare module` into a committed
+ * Extract every codemodded `declare module` into a committed
  * `api-doc/<module>.json` ref-doc fixture the docs-site loads via
  * `parseDefoldApiDoc`. Runs at the tail of `regenerate` so the fixtures never
  * drift from the `.d.ts` they describe.
@@ -145,7 +145,7 @@ export function writeApiDocs(packageRoot: string): void {
 
 /**
  * Verify each committed `api-doc/<module>.json` still equals a fresh extraction
- * from its generated file, without rewriting — the `--check` counterpart to
+ * from its codemodded fixture, without rewriting — the `--check` counterpart to
  * `writeApiDocs`. A missing or stale fixture reports `false`.
  */
 export function checkApiDocs(packageRoot: string): { module: string; ok: boolean }[] {

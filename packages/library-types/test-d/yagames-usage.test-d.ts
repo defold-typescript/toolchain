@@ -7,8 +7,8 @@ import * as yagames from "yagames.yagames";
 // yagames golden keeps the surface ts-defold declared while replacing the whole
 // `banner_*` family with the sticky-banner API upstream documents at `0.19.0`.
 // This replaces the yagames block retired from library-types.test-d.ts when the
-// `./yagames.yagames` subpath went away. No assertions execute; `tsc --noEmit`
-// under tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// `./yagames.yagames` subpath went away. No assertions execute; the
+// `dts-declaration-validity` compile (skipLibCheck: false) is the gate.
 
 // The surface ts-defold already declared still compiles unchanged.
 const _playerId: string = yagames.player_get_id();

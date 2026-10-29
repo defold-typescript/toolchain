@@ -4,8 +4,8 @@
 import * as Colyseus from "colyseus.sdk";
 
 // Compile-only proof for the Colyseus client, written as the calls upstream's
-// `example/main.script` makes. No assertions execute; `tsc --noEmit` under
-// tsconfig.dts-check.json is the gate.
+// `example/main.script` makes. No assertions execute; the `dts-declaration-validity`
+// compile is the gate.
 
 interface Item {
   name: string;

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiAvailability,
@@ -17,6 +17,10 @@ import {
   type TranslationStore,
 } from "@defold-typescript/types";
 import { extractApiDoc } from "../../../cli/src/library/extract-api-doc";
+import { printCorpus } from "../../../cli/src/library/print-corpus";
+import { readAuthoredTargets } from "../../../cli/src/library/sync-authored-types";
+import { readLualsTargets } from "../../../cli/src/library/sync-luals-types";
+import { readScriptApiTargets } from "../../../cli/src/library/sync-script-api-types";
 import { readNativeExpectations } from "../../../cli/src/library/target-expectations";
 import { loadAnnotations } from "../../../types/scripts/lua-annotations";
 import { loadApiTargets } from "../../../types/scripts/regen";
@@ -115,9 +119,8 @@ const RICHTEXT_MODULES = ["color", "richtext", "tags"];
 // namespace segment, so the severance regroups them the way richtext's did.
 const METRICS_MODULES = ["fps", "mem"];
 
-// Every `api-doc/*.json` fixture that also has a vendored `generated/*.d.ts`
-// sibling — the exact set the loader is expected to surface as `library` pages.
-// A markdown-front-end target whose recorded fidelity `decision` is not `go`
+// The page of every module `resolve` prints — the exact set the loader is
+// expected to surface as `library` pages. A markdown-front-end target whose recorded fidelity `decision` is not `go`
 // stays ts-defold-sourced; its golden is a regeneration proof, not a published
 // page, so it is excluded here exactly as the loader excludes it.
 function markdownDeferredNamespaces(): Set<string> {
@@ -129,14 +132,17 @@ function markdownDeferredNamespaces(): Set<string> {
   return new Set(targets.filter((t) => t.decision !== "go").map((t) => t.namespace));
 }
 
-function vendoredLibraryModules(): string[] {
-  const apiDocDir = join(REAL_LIBRARY_TYPES_DIR, "api-doc");
+async function vendoredLibraryModules(): Promise<string[]> {
+  const corpus = await printCorpus(REAL_LIBRARY_TYPES_DIR);
   const deferred = markdownDeferredNamespaces();
-  return readdirSync(apiDocDir)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => f.replace(/\.json$/, ""))
-    .filter((mod) => existsSync(join(REAL_LIBRARY_TYPES_DIR, "generated", `${mod}.d.ts`)))
-    .filter((mod) => !deferred.has(mod));
+  return [
+    ...readLualsTargets(REAL_LIBRARY_TYPES_DIR),
+    ...readScriptApiTargets(REAL_LIBRARY_TYPES_DIR),
+    ...readAuthoredTargets(REAL_LIBRARY_TYPES_DIR),
+  ]
+    .filter((target) => corpus.has(target.moduleId))
+    .map((target) => target.namespace)
+    .filter((namespace) => !deferred.has(namespace));
 }
 
 // The page keys the committed Defold manifest claims: each is a library page, and
@@ -274,8 +280,10 @@ describe("loadApiSurfaceForVersion", () => {
   });
 });
 
+const VENDORED_LIBRARY_MODULES = await vendoredLibraryModules();
+
 describe("loadApiSurface library pages", () => {
-  const modules = vendoredLibraryModules();
+  const modules = VENDORED_LIBRARY_MODULES;
   const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
   const libraryPages = pages.filter((p) => p.category === "library");
 

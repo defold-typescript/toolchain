@@ -429,7 +429,7 @@ describe("readCuratedRepos over the committed corpus", () => {
   test("sweeps exactly the sources `resolve` can install curated types for, each once", () => {
     const swept = readCuratedRepos().map(({ repo }) => normalizeSourceId(repo));
     const installable = new Set([
-      ...loadVendoredLibraryRegistry(PACKAGE_ROOT).registry.map(({ sourceId }) => sourceId),
+      ...loadVendoredLibraryRegistry(PACKAGE_ROOT).map(({ sourceId }) => sourceId),
       ...loadVendoredNativeRegistry(PACKAGE_ROOT).map(({ sourceId }) => sourceId),
     ]);
     expect(installable.size).toBeGreaterThan(0);

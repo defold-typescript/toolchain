@@ -17,7 +17,7 @@ import * as triggers from "in.triggers";
 // `skipLibCheck: false` — the four blocks retired from library-types.test-d.ts
 // covered only accelerometer, button, state and triggers, and the other six had
 // no compile coverage at all. `in` is a reserved word, so every import aliases
-// its leaf. No assertions execute; `tsc --noEmit` under tsconfig.dts-check.json
+// its leaf. No assertions execute; the `dts-declaration-validity` compile
 // is the gate.
 
 declare const _url: Url;

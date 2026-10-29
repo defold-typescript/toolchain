@@ -4,7 +4,7 @@
 import * as daabbcc from "daabbcc";
 
 // Compile-only proof for the curated DAABBCC native-extension namespace. No
-// assertions execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate.
+// assertions execute; the `dts-declaration-validity` compile is the gate.
 
 const group: number = daabbcc.new_group(daabbcc.UPDATE_PARTIALREBUILD);
 daabbcc.new_group();

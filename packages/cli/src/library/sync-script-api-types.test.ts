@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { printCorpus } from "./print-corpus";
 import {
   applyOmittableSlots,
   buildScriptApiFidelity,
@@ -110,8 +111,8 @@ describe("bridge migrated off the ts-defold corpus", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/bridge.bridge.d.ts"))).toBe(false);
   });
 
-  test("the script_api goldens are named for the namespace, not the dotted module or a subtree", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/bridge.d.ts"))).toBe(true);
+  test("the script_api goldens are named for the namespace, not the dotted module or a subtree", async () => {
+    expect((await printCorpus(PACKAGE_ROOT)).has("bridge.bridge")).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/bridge.json"))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "fidelity/bridge.json"))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "generated/bridge.bridge.d.ts"))).toBe(false);
@@ -209,15 +210,7 @@ describe("applyOmittableSlots", () => {
   });
 });
 
-describe("script_api goldens regenerate byte-for-byte", () => {
-  test("each target's .d.ts matches its committed generated golden", async () => {
-    for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
-      const regenerated = await emitScriptApiDeclaration(PACKAGE_ROOT, target);
-      const committed = readFileSync(join(PACKAGE_ROOT, target.generated), "utf8");
-      expect(regenerated).toBe(committed);
-    }
-  });
-
+describe("script_api api-docs regenerate byte-for-byte", () => {
   test("each target's lowered api-doc matches its committed api-doc golden", async () => {
     for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
       const regenerated = await lowerScriptApiApiDoc(PACKAGE_ROOT, target);

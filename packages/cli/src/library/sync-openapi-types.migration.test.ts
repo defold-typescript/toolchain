@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { printCorpus } from "./print-corpus";
 import { readOpenApiTargets } from "./sync-openapi-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
@@ -38,15 +39,14 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
     expect(dirs.flatMap((d) => d.modules)).not.toContain("nakama.nakama");
   });
 
-  test("the ts-defold fixture and dotted golden gave way to the authored fork", () => {
+  test("the ts-defold fixture and dotted golden gave way to the authored fork", async () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.nakama.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "generated/nakama.nakama.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/authored/nakama.nakama.d.ts"))).toBe(true);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/nakama.d.ts"))).toBe(true);
+    expect((await printCorpus(PACKAGE_ROOT)).has("nakama.nakama")).toBe(true);
   });
 
-  test("the openapi goldens exist as a committed regeneration proof", () => {
-    expect(existsSync(join(PACKAGE_ROOT, target.generated))).toBe(true);
+  test("the openapi api-doc and fidelity goldens exist as a committed regeneration proof", () => {
     expect(existsSync(join(PACKAGE_ROOT, target.apiDoc))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, target.fidelity))).toBe(true);
     // The proof lives under an `openapi/` subdir so it never shadows the

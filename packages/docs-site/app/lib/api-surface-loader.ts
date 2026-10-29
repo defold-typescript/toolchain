@@ -575,7 +575,7 @@ function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenan
 // from a primary source (here the upstream's own `.script_api`) that is absent
 // from the ts-defold classification, so it carries its own repo/ref rather than
 // the shared vendored commit. Keyed by the entry's `namespace`, which is also
-// the committed `generated/<namespace>.d.ts` stem and thus the page key.
+// the `api-doc/<namespace>.json` stem and thus the page key.
 function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
   const path = join(libraryTypesDir, "script-api-targets.json");
   if (!existsSync(path)) return new Map();
@@ -592,7 +592,7 @@ function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProv
 // as a first-party hand-authored or forked `.d.ts` (its upstream has no usable
 // structured source), absent from the ts-defold classification, so it carries
 // its own repo/ref rather than the shared vendored commit. Keyed by the entry's
-// `namespace`, bare or dotted, which is also the `generated/<namespace>.d.ts`
+// `namespace`, bare or dotted, which is also the `api-doc/<namespace>.json`
 // stem and thus the page key either way.
 function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
   const path = join(libraryTypesDir, "authored-targets.json");
@@ -623,7 +623,7 @@ function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProve
 
 // Markdown-front-end namespaces that are NOT published, read from
 // `markdown-targets.json`. The markdown corpus front-end regenerates a golden
-// `generated/<ns>.d.ts` + `api-doc/<ns>.json` for every target, but a target
+// `api-doc/<ns>.json` for every target, but a target
 // whose recorded fidelity `decision` is not `go` (README parse loses fidelity
 // versus the retired ts-defold `.d.ts`) keeps its markdown golden as an inert
 // regeneration proof rather than a published surface. Hiding the namespace from
@@ -638,6 +638,34 @@ function loadMarkdownDeferredNamespaces(libraryTypesDir: string): Set<string> {
     targets: { namespace: string; decision?: string }[];
   };
   return new Set(targets.filter((t) => t.decision !== "go").map((t) => t.namespace));
+}
+
+// The api-doc paths a library target names: a LuaLS target publishes
+// `api-doc/<namespace>.json`, and every other lane names its file in `apiDoc`.
+// `resolve` prints each target's declaration from library data, so a target is
+// what makes an api-doc a library page.
+function loadTargetApiDocs(libraryTypesDir: string): Set<string> {
+  const targets = (file: string): { namespace: string; apiDoc?: string }[] => {
+    const path = join(libraryTypesDir, file);
+    if (!existsSync(path)) return [];
+    return (
+      JSON.parse(readFileSync(path, "utf8")) as {
+        targets: { namespace: string; apiDoc?: string }[];
+      }
+    ).targets;
+  };
+  const apiDocs = new Set(
+    targets("luals-targets.json").map(({ namespace }) => `api-doc/${namespace}.json`),
+  );
+  for (const file of [
+    "script-api-targets.json",
+    "authored-targets.json",
+    "openapi-targets.json",
+    "markdown-targets.json",
+  ]) {
+    for (const { apiDoc } of targets(file)) if (apiDoc !== undefined) apiDocs.add(apiDoc);
+  }
+  return apiDocs;
 }
 
 // Per-library provenance, joined from `library-classification.json` (repo,
@@ -773,7 +801,7 @@ export function libraryModulePaths(libraryTypesDir: string): Map<string, string>
 
 // Docs-only pages for the vendored third-party libraries in
 // `@defold-typescript/library-types`: each `api-doc/*.json` fixture parsed by
-// `parseDefoldApiDoc`, gated on an already-vendored `generated/*.d.ts` sibling,
+// `parseDefoldApiDoc`, gated on a library target naming it,
 // tagged `category: "library"`, routed default-only under `/api/<slug>` (no
 // version prefix — library types are pinned to a ts-defold/library commit, not
 // a Defold version), and carrying a structured `libraryMeta` the render layer
@@ -803,10 +831,11 @@ export function loadLibraryPageSources(libraryTypesDir: string): { page: ApiPage
   const displayOverrides = loadLibraryDisplayOverrides(libraryTypesDir);
 
   const markdownDeferred = loadMarkdownDeferredNamespaces(libraryTypesDir);
+  const targetApiDocs = loadTargetApiDocs(libraryTypesDir);
   const namespaces = readdirSync(apiDocDir)
     .filter((file) => file.endsWith(".json"))
     .map((file) => file.replace(/\.json$/, ""))
-    .filter((namespace) => existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`)))
+    .filter((namespace) => targetApiDocs.has(`api-doc/${namespace}.json`))
     .filter((namespace) => !markdownDeferred.has(namespace));
 
   // Defold pages share the one `/api/<page>` route space with the vendored

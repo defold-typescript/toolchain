@@ -442,15 +442,6 @@ if (import.meta.main) {
       console.log(`snapshotted ${target.moduleId} from ${repoSlug(target.repo)}@${target.ref}`);
     }
   }
-  if (argv.includes("--emit")) {
-    for (const target of readScriptApiTargets(root)) {
-      const contents = await emitScriptApiDeclaration(root, target);
-      const dest = join(root, target.generated);
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, contents);
-      console.log(`emitted ${target.moduleId} -> ${target.generated}`);
-    }
-  }
   if (argv.includes("--api-doc")) {
     for (const target of readScriptApiTargets(root)) {
       const json = await lowerScriptApiApiDoc(root, target);

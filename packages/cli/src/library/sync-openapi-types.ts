@@ -277,15 +277,6 @@ if (import.meta.main) {
       console.log(`snapshotted ${target.moduleId} from ${repoSlug(target.repo)}@${target.ref}`);
     }
   }
-  if (argv.includes("--emit")) {
-    for (const target of readOpenApiTargets(root)) {
-      const contents = await emitOpenApiDeclaration(root, target);
-      const dest = join(root, target.generated);
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, contents);
-      console.log(`emitted ${target.moduleId} -> ${target.generated}`);
-    }
-  }
   if (argv.includes("--api-doc")) {
     for (const target of readOpenApiTargets(root)) {
       const json = lowerOpenApiApiDoc(root, target);

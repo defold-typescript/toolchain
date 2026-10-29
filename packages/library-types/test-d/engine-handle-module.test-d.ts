@@ -9,7 +9,7 @@ import { enginehandle } from "test.enginehandle";
 // remains a script and `declare module 'test.enginehandle'` is an importable
 // ambient module rather than an augmentation of an unresolvable specifier. A
 // regression that re-adds a top-level import to `wrapAsModule` reproduces here
-// as `TS2307` at the import below. `tsc --noEmit` under dts-check is the gate;
+// as `TS2307` at the import below. the `dts-declaration-validity` compile is the gate;
 // no assertions execute.
 
 const h: Hash = enginehandle.make();

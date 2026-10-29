@@ -6,8 +6,8 @@ import * as squid from "squid.squid";
 // Compile-only proof (mirroring lang-usage.test-d.ts) that the squid LuaLS golden
 // ships the bug-80 surface: `new` returns a typed `SquidInstance` handle carrying the
 // instance methods, the module constants export as module-level values, and
-// `get_config` is fully typed. No assertions execute; tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate. A regression (the
+// `get_config` is fully typed. No assertions execute; the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate. A regression (the
 // constants stranding on an unattached interface, `new` reverting to `void`, or the
 // instance handle vanishing) is a compile error here.
 

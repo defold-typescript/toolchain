@@ -4,7 +4,7 @@
 import * as BehaviorTree from "def_behavior_tree.behavior_tree";
 
 // Compile-only proof for the def_behavior_tree fork, written as upstream's README builds
-// and runs a tree. No assertions execute; tsc --noEmit under tsconfig.dts-check.json is
+// and runs a tree. No assertions execute; the `dts-declaration-validity` compile is
 // the gate.
 
 type Equal<A, B> =

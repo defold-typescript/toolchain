@@ -4,7 +4,7 @@
 import * as sentinel from "sentinel.sentry";
 
 // Compile-only proof for the hand-authored sentinel surface. No assertions
-// execute; `tsc --noEmit` under tsconfig.dts-check.json is the gate. Upstream
+// execute; the `dts-declaration-validity` compile is the gate. Upstream
 // ships plain Lua with LDoc prose only, so this is where the declared shapes are
 // held to being callable as written.
 

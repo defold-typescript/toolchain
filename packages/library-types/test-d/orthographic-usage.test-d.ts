@@ -7,8 +7,8 @@ import * as camera from "orthographic.camera";
 // orthographic golden keeps the surface ts-defold declared while correcting
 // `follow` to the multi-target signature the upstream README documents. This
 // replaces the orthographic block retired from library-types.test-d.ts when the
-// `./orthographic.camera` subpath went away. No assertions execute; `tsc --noEmit`
-// under tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// `./orthographic.camera` subpath went away. No assertions execute; the
+// `dts-declaration-validity` compile (skipLibCheck: false) is the gate.
 
 // The surface ts-defold already declared still compiles unchanged: `get_view` is
 // a `Matrix4`, `get_offset` a `Vector3`; `recoil` accepts a `Vector3`.

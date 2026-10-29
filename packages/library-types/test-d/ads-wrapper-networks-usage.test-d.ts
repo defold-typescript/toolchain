@@ -17,7 +17,7 @@ import * as ads_wrapper from "ads_wrapper.ads_wrapper";
 
 // Compile-only proof that every typed network module, annotated or authored, satisfies
 // ads_network, the way upstream's docs/networks.md registers them. No assertions execute;
-// tsc --noEmit under tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// the `dts-declaration-validity` compile (skipLibCheck: false) is the gate.
 
 ads_wrapper.register_network(admob, {});
 ads_wrapper.register_network(admob_legacy, {});

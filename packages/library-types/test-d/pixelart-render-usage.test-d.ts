@@ -4,8 +4,8 @@
 import * as pixelart_render from "pixelart.scripts.pixelart_render";
 
 // Compile-only proof that the pixel-art render module LuaLS golden is callable the
-// way the library's render script calls it. tsc --noEmit under
-// tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// way the library's render script calls it. the `dts-declaration-validity`
+// compile (skipLibCheck: false) is the gate.
 
 export function renderInit(self: { predicates: Record<string, unknown> }): void {
   pixelart_render.init(self);

@@ -4,7 +4,7 @@
 import * as printer from "printer.printer";
 
 // Compile-only proof for the printer fork, written as the calls upstream's README makes
-// from a gui_script. No assertions execute; tsc --noEmit under tsconfig.dts-check.json
+// from a gui_script. No assertions execute; the `dts-declaration-validity` compile
 // is the gate.
 
 export function setup(self: unknown): void {

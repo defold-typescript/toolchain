@@ -7,7 +7,7 @@ import * as event from "event.event";
 // golden accepts faithful upstream calls: `create` with its trailing nil-bearing
 // params omitted, `subscribe` with only the required callback, and a callable
 // event instance driven by the class `@overload`. No assertions execute;
-// `tsc --noEmit` under tsconfig.dts-check.json (skipLibCheck: false) is the gate.
+// the `dts-declaration-validity` compile (skipLibCheck: false) is the gate.
 // A regression (the trailing params reverting to required, or the interface
 // losing its call signature) is a compile error here. The instance type is taken
 // by inference: the emitter emits bare `interface`s, reachable structurally
