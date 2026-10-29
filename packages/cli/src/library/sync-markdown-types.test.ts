@@ -290,7 +290,7 @@ describe("markdown fidelity", () => {
   });
 
   test("computeMarkdownFidelity throws on an unresolved token outside KNOWN_LOSSY_TOKENS", async () => {
-    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    const resolver = await loadTypeResolver();
     const doc: MarkdownDoc = {
       info: { namespace: "demo", brief: "", description: "" },
       elements: [

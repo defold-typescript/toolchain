@@ -18,7 +18,6 @@ const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
 const committedDefcon = join(libraryTypesRoot, "generated", "defcon.d.ts");
-const generatedDir = join(libraryTypesRoot, "generated");
 
 const defconRegistry = [
   {
@@ -69,7 +68,7 @@ async function resolveDefcon(cwd: string): Promise<void> {
     download: someBytes,
     readZip: defconArchiveReadZip(url),
     libraryRegistry: defconRegistry,
-    libraryGeneratedDir: generatedDir,
+    libraryTypesRoot,
   });
   expect(result.ok).toBe(true);
   expect(result.libraries).toEqual([

@@ -13,16 +13,15 @@
  * verbatim and the emitter sanitizes it later.
  */
 
+import type { LualsLeafResolver, LualsPosition } from "@defold-typescript/types";
 import {
   LUALS_VARARG_TOKEN,
-  type LualsLeafResolver,
-  type LualsPosition,
   mapLualsCallSignatureExpression,
   mapLualsExpression,
   matchBracket,
   splitTopLevel,
-} from "@defold-typescript/types";
-import { CORE_TYPE_RENAMES } from "./sync-library-types";
+} from "@defold-typescript/types/library-runtime";
+import { CORE_TYPE_RENAMES } from "./core-type-renames";
 
 export { LUALS_VARARG_TOKEN };
 

@@ -291,7 +291,7 @@ describe("script_api fidelity", () => {
   });
 
   test("the real emitter resolver maps bridge's mapped tokens and rejects a made-up token", async () => {
-    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    const resolver = await loadTypeResolver();
     expect(resolver.resolves("string")).toBe(true);
     expect(resolver.resolves("boolean")).toBe(true);
     expect(resolver.resolves("table")).toBe(true);
@@ -306,13 +306,13 @@ describe("script_api fidelity", () => {
   // `undefined` in return position — so counting it unresolved understated
   // coverage for a token that is in fact fully mapped.
   test("the real emitter resolver counts `nil` as resolved", async () => {
-    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    const resolver = await loadTypeResolver();
     expect(resolver.resolves("nil")).toBe(true);
     expect(resolver.resolves("enabled_state")).toBe(false);
   });
 
   test("a doc whose only slot type is `nil` reports full coverage", async () => {
-    const resolver = await loadTypeResolver(PACKAGE_ROOT);
+    const resolver = await loadTypeResolver();
     const doc: ScriptApiDoc = {
       info: { namespace: "x" },
       elements: [
