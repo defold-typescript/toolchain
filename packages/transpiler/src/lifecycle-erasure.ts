@@ -327,16 +327,20 @@ function memberName(
 
 // Every name `self` is typed with, from the type of the `properties` value, in
 // JavaScript's key order: TypeScript lists a spread type's names in an order of
-// its own, so the order folds over the object's members, each name keeping the
-// position of its first appearance. Names the fold misses follow in the
-// checker's order.
+// its own, so the order folds over object literals and their spreads at any
+// depth, following a name that holds a `const` initializer, imported or not,
+// into that initializer, each name keeping the position of its first
+// appearance. Any other value is opaque and brings in the names of its type;
+// two or more of them with no position yet have no order the source shows, so
+// they are returned as unordered, at the member of the `properties` value that
+// brings them in. Names the fold misses follow in the checker's order.
 export function propertySources(
   property: ts.ObjectLiteralElementLike,
   checker: ts.TypeChecker,
-): PropertySource[] {
+): { sources: PropertySource[]; unordered: { node: ts.Node; names: string[] }[] } {
   const value = propertiesValue(property);
   if (value === undefined) {
-    return [];
+    return { sources: [], unordered: [] };
   }
   const typed = new Map(
     checker
@@ -345,38 +349,96 @@ export function propertySources(
   );
   const order: string[] = [];
   const sources = new Map<string, ts.Node>();
+  const unordered: { node: ts.Node; names: string[] }[] = [];
+  const followed = new Set<ts.VariableDeclaration>();
   const define = (name: string, node: ts.Node): void => {
     if (!sources.has(name)) {
       order.push(name);
     }
     sources.set(name, node);
   };
-  const object = innermostExpression(value);
-  for (const member of ts.isObjectLiteralExpression(object) ? object.properties : []) {
-    if (ts.isSpreadAssignment(member)) {
-      const spread = checker.getTypeAtLocation(member.expression);
-      for (const symbol of checker.getPropertiesOfType(spread)) {
-        define(symbol.getName(), member);
+  const fold = (expression: ts.Expression, anchor: ts.Node | undefined): void => {
+    const inner = innermostExpression(expression);
+    if (ts.isObjectLiteralExpression(inner)) {
+      for (const member of inner.properties) {
+        if (ts.isSpreadAssignment(member)) {
+          fold(member.expression, anchor ?? member);
+          continue;
+        }
+        const name = memberName(member, checker);
+        if (name !== undefined) {
+          define(name, anchor ?? (ts.isPropertyAssignment(member) ? member.initializer : member));
+        }
       }
-      continue;
+      return;
     }
-    const name = memberName(member, checker);
-    if (name !== undefined) {
-      define(name, ts.isPropertyAssignment(member) ? member.initializer : member);
+    const initializer = constInitializer(inner, checker, followed);
+    if (initializer !== undefined) {
+      fold(initializer, anchor ?? expression);
+      return;
     }
-  }
+    const names = checker
+      .getPropertiesOfType(checker.getTypeAtLocation(expression))
+      .map((symbol) => symbol.getName())
+      .filter((name) => typed.has(name));
+    const unplaced = names.filter((name) => !sources.has(name));
+    if (unplaced.length > 1) {
+      unordered.push({ node: anchor ?? expression, names: unplaced });
+    }
+    for (const name of names) {
+      define(name, anchor ?? expression);
+    }
+  };
+  fold(value, undefined);
   const names = [
     ...order.filter((name) => typed.has(name)),
     ...[...typed.keys()].filter((name) => !order.includes(name)),
   ];
-  return names.map((name) => {
-    const symbol = typed.get(name) as ts.Symbol;
-    return {
-      name,
-      type: checker.getTypeOfSymbolAtLocation(symbol, value),
-      node: sources.get(name) ?? value,
-    };
-  });
+  return {
+    sources: names.map((name) => {
+      const symbol = typed.get(name) as ts.Symbol;
+      return {
+        name,
+        type: checker.getTypeOfSymbolAtLocation(symbol, value),
+        node: sources.get(name) ?? value,
+      };
+    }),
+    unordered,
+  };
+}
+
+// The initializer of the `const` an identifier, a shorthand member or a
+// property access names, through import and export aliases, or `undefined` for
+// any other expression and for a declaration already in `followed`.
+function constInitializer(
+  expression: ts.Expression,
+  checker: ts.TypeChecker,
+  followed: Set<ts.VariableDeclaration>,
+): ts.Expression | undefined {
+  let symbol: ts.Symbol | undefined;
+  if (ts.isPropertyAccessExpression(expression)) {
+    symbol = checker.getSymbolAtLocation(expression.name);
+  } else if (ts.isIdentifier(expression)) {
+    symbol = ts.isShorthandPropertyAssignment(expression.parent)
+      ? checker.getShorthandAssignmentValueSymbol(expression.parent)
+      : checker.getSymbolAtLocation(expression);
+  }
+  if (symbol !== undefined && (symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+    symbol = checker.getAliasedSymbol(symbol);
+  }
+  const declaration = symbol?.valueDeclaration;
+  if (
+    declaration === undefined ||
+    !ts.isVariableDeclaration(declaration) ||
+    !ts.isIdentifier(declaration.name) ||
+    declaration.initializer === undefined ||
+    (ts.getCombinedNodeFlags(declaration) & ts.NodeFlags.BlockScoped) !== ts.NodeFlags.Const ||
+    followed.has(declaration)
+  ) {
+    return undefined;
+  }
+  followed.add(declaration);
+  return declaration.initializer;
 }
 
 // The property name JavaScript gives a key written as a literal, so `0x10`
@@ -601,7 +663,11 @@ function computedRegistrations(
     context.diagnostics.push(...refusals);
     return [];
   }
-  const sources = propertySources(property, context.checker);
+  const { sources, unordered } = propertySources(property, context.checker);
+  if (unordered.length > 0) {
+    context.diagnostics.push(...unordered.map(({ node, names }) => unorderedNames(node, names)));
+    return [];
+  }
   const fileName = context.sourceFile.fileName;
   const values = defaults.values(fileName);
   if (values !== undefined) {
@@ -724,6 +790,14 @@ function unknownNames(value: ts.Node): ts.Diagnostic {
   return fatalAt(
     value,
     "the names of `properties` must be known at compile time: Defold's build registers one `go.property` per name, and this value's type has an index signature or is not one object type.",
+  );
+}
+
+function unorderedNames(node: ts.Node, names: readonly string[]): ts.Diagnostic {
+  const list = names.map((name) => `\`${name}\``).join(", ");
+  return fatalAt(
+    node,
+    `the key order of ${list} in \`properties\` cannot be read at compile time: write them in an object literal, or a \`const\` that holds one, so each registers in JavaScript's key order.`,
   );
 }
 

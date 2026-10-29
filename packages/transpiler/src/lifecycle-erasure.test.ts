@@ -1090,6 +1090,94 @@ describe("evaluated properties", () => {
     `);
   });
 
+  test("names a followed const brings in register in JavaScript order through imports and nested spreads", () => {
+    const project = (properties: string) =>
+      transpileProject({
+        files: {
+          "base.ts": "export const BASE = { pointCount: 50, width: 30, z: -0.5 };\n",
+          "options.ts":
+            'import * as base from "./base";\nexport const OPTIONS = { trail: 1, ...base.BASE, width: 40, extra: 2 };\n',
+          "main.ts": scriptWith('import { OPTIONS } from "./options";', properties),
+        },
+      });
+    const alias = project("OPTIONS");
+    expect(alias.diagnostics).toEqual([]);
+    expect(alias.lua["main.ts"]).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      local ____options = require("options")
+      local OPTIONS = ____options.OPTIONS
+      go.property("trail", 1)
+      go.property("pointCount", 50)
+      go.property("width", 40)
+      go.property("z", -0.5)
+      go.property("extra", 2)
+      return ____exports
+      "
+    `);
+    const spread = project("{ ...OPTIONS }");
+    expect(spread.diagnostics).toEqual([]);
+    expect(spread.lua["main.ts"]).toBe(alias.lua["main.ts"] as string);
+  });
+
+  test("an annotated const registers in its initializer's order", () => {
+    const result = transpileProject({
+      files: { "main.ts": scriptWith("const Q: { a: number; b: number } = { b: 1, a: 2 };", "Q") },
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua["main.ts"]).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      local Q = {b = 1, a = 2}
+      go.property("b", 1)
+      go.property("a", 2)
+      return ____exports
+      "
+    `);
+  });
+
+  test("a shorthand properties field follows the const it names", () => {
+    const source = [
+      IMPORT,
+      "const properties = { b: 1, a: 2 };",
+      "",
+      "defineScript({ properties });",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua["main.ts"]).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      local properties = {b = 1, a = 2}
+      go.property("b", 1)
+      go.property("a", 2)
+      return ____exports
+      "
+    `);
+  });
+
+  test("a source the build cannot read that brings in one name registers at its position", () => {
+    const result = transpileProject({
+      files: {
+        "main.ts": scriptWith("function f() { return { b: 1 }; }", "{ a: 0, ...f(), c: 3 }"),
+      },
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua["main.ts"]).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      local function f()
+          return {b = 1}
+      end
+      go.property("a", 0)
+      go.property("b", 1)
+      go.property("c", 3)
+      return ____exports
+      "
+    `);
+  });
+
   test.each([
     [
       "an engine call",
@@ -1106,6 +1194,21 @@ describe("evaluated properties", () => {
       "known at compile time",
     ],
     ["an array", "", "{\n    x: [1, 2],\n  }", "    x: ", "x is a table"],
+    [
+      "a function result of two names",
+      "function f() { return { a: 1, b: 2 }; }",
+      "f()",
+      "properties:",
+      "the key order of `a`, `b`",
+    ],
+    [
+      "a spread of a function result of two names",
+      "function f() { return { a: 1, b: 2 }; }",
+      "{\n    ...f(),\n  }",
+      "    ...f()",
+      "the key order of `a`, `b`",
+    ],
+    ["a let binding", "let P = { a: 1, b: 2 };", "P", "properties:", "the key order of `a`, `b`"],
   ])("%s fails the build with one diagnostic", (_label, head, properties, needle, cause) => {
     const source = scriptWith(head, properties);
     const result = transpileProject({ files: { "main.ts": source } });
