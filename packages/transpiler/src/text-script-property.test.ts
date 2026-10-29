@@ -172,6 +172,28 @@ describe("findTextScriptProperties", () => {
     ]);
   });
 
+  test("reports a string default under a literal computed key by its JavaScript name", () => {
+    const findings = findingsOf(
+      lines(FACTORY_IMPORT, "", "defineScript({", '  properties: { ["a-b"]: "x" },', "});"),
+    );
+    expect(findings.map((finding) => finding.name)).toEqual(["a-b"]);
+  });
+
+  test("reports a string default inside a wrapped properties object", () => {
+    const source = lines(
+      FACTORY_IMPORT,
+      "",
+      "defineScript({",
+      '  properties: ({ greeting: "hi" } satisfies Record<string, string>),',
+      "});",
+    );
+    const findings = findingsOf(source);
+    const row = source.split("\n")[3] ?? "";
+    expect(findings).toEqual([
+      { name: "greeting", file: "main.ts", line: 4, column: row.indexOf('"hi"') + 1 },
+    ]);
+  });
+
   test("ignores a properties object on a local function named defineScript", () => {
     const findings = findingsOf(
       lines(

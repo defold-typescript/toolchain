@@ -679,6 +679,27 @@ describe("properties on the gui and render factories", () => {
         expect(lua).not.toContain("go.property");
       }
     });
+
+    test(`${factory} refuses a properties block holding only a spread`, () => {
+      const source = [
+        `import { ${factory} } from "@defold-typescript/types";`,
+        "",
+        "const D = { a: 1 };",
+        "",
+        `${factory}({`,
+        "  // @ts-expect-error",
+        "  properties: { ...D },",
+        "  init() {},",
+        "});",
+        "",
+      ].join("\n");
+      const propertiesLine = source.slice(0, source.indexOf("properties:")).split("\n").length;
+      const result = transpileProject({ files: { "main.ts": source } });
+      expect(result.diagnostics).toHaveLength(1);
+      expect(result.diagnostics[0]?.line).toBe(propertiesLine);
+      expect(result.diagnostics[0]?.category).toBeUndefined();
+      expect(result.diagnostics[0]?.message).toContain(factory);
+    });
   }
 
   test("defineGuiScript with properties: undefined erases like the no-properties form", () => {
@@ -692,6 +713,197 @@ describe("properties on the gui and render factories", () => {
     const result = transpile([...header, "  properties: undefined,", ...body].join("\n"));
     expect(result.diagnostics).toEqual([]);
     expect(result.lua).toBe(baseline.lua);
+  });
+});
+
+describe("properties members", () => {
+  const IMPORT = 'import { defineScript } from "@defold-typescript/types";';
+  const lineOf = (source: string, needle: string): number =>
+    source.slice(0, source.indexOf(needle)).split("\n").length;
+  const scriptWith = (setup: string, ...members: readonly string[]): string =>
+    [
+      IMPORT,
+      "",
+      setup,
+      "",
+      "defineScript({",
+      "  properties: {",
+      ...members.map((member) => `    ${member},`),
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+
+  test.each([
+    ["a spread", "const D = { a: 1 };", "...D", "...D"],
+    ["a shorthand member", "const a = 1;", "a", "a"],
+    ["a method", "", "m() { return 1; }", "m"],
+    ["an accessor", "", "get g() { return 1; }", "g"],
+    ["a computed key", 'const K = "k";', "[K]: 1", "[K]"],
+  ])("%s fails the build on the member", (_label, setup, member, text) => {
+    const source = scriptWith(setup, "speed: 1", member);
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    const [diagnostic] = result.diagnostics;
+    expect(diagnostic?.line).toBe(lineOf(source, `    ${member},`));
+    expect(diagnostic?.category).toBeUndefined();
+    expect(diagnostic?.message).toContain("properties");
+    expect(diagnostic?.message).toContain(`\`${text}\``);
+  });
+
+  test("a literal key registers under the name JavaScript gives it", () => {
+    const source = [
+      IMPORT,
+      "",
+      "defineScript({",
+      '  properties: { ["a-b"]: 1, [`c`]: 2, 0x10: 3, "q": 4, 1.5: 5 },',
+      "});",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      go.property("a-b", 1)
+      go.property("c", 2)
+      go.property("16", 3)
+      go.property("q", 4)
+      go.property("1.5", 5)
+      return ____exports
+      "
+    `);
+  });
+
+  test.each([
+    '({ speed: 1, a: resource.atlas("/a.atlas") } satisfies Record<string, unknown>)',
+    '{ speed: 1, a: resource.atlas("/a.atlas") } as const',
+  ])("a wrapped properties object %s registers every member", (value) => {
+    const source = [IMPORT, "", "defineScript({", `  properties: ${value},`, "});", ""].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      go.property("speed", 1)
+      go.property(
+          "a",
+          resource.atlas("/a.atlas")
+      )
+      return ____exports
+      "
+    `);
+  });
+
+  test("a properties value that is not an object literal fails the build", () => {
+    const source = [
+      IMPORT,
+      "",
+      "const P = { speed: 1 };",
+      "",
+      "defineScript({",
+      "  properties: P,",
+      "});",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.line).toBe(lineOf(source, "properties:"));
+    expect(result.diagnostics[0]?.category).toBeUndefined();
+    expect(result.diagnostics[0]?.message).toContain("properties");
+  });
+
+  test("a properties value of undefined registers nothing and reports nothing", () => {
+    const header = [IMPORT, "", "defineScript({"];
+    const body = ["  init() {},", "});", ""];
+    const baseline = transpile([...header, ...body].join("\n"));
+    const result = transpile([...header, "  properties: undefined,", ...body].join("\n"));
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toBe(baseline.lua);
+  });
+
+  test.each([
+    ["a module const", "const BASE = 1;", "BASE"],
+    ["arithmetic", "const BASE = 1;", "BASE * 2"],
+    ["a field read", "const D = { width: 1 };", "D.width"],
+    ["undefined", "", "undefined"],
+    ["a hash of a variable", 'const NAME = "n";', "hash(NAME)"],
+    ["a vector of a variable", "const BASE = 1;", "vmath.vector3(BASE, 0, 0)"],
+    ["a string holding NUL", "", '"a\\0b"'],
+  ])("a default Defold's build cannot read (%s) fails the build on the default", (_label, setup, value) => {
+    const source = scriptWith(setup, "speed: 1", `a: ${value}`);
+    const result = transpileProject({ files: { "main.ts": source } });
+    expect(result.diagnostics).toHaveLength(1);
+    const [diagnostic] = result.diagnostics;
+    expect(diagnostic?.line).toBe(lineOf(source, "    a: "));
+    expect(diagnostic?.category).toBeUndefined();
+    expect(diagnostic?.message).toContain("hash(");
+    expect(diagnostic?.message).toContain("vmath.vector3");
+  });
+
+  test("every default form Defold's build reads registers, infinity as 1e999", () => {
+    const source = scriptWith(
+      "const enum Speed { Fast = 3 }",
+      "n: -1",
+      "h: 0x10",
+      "i: 1e400",
+      "j: -1e400",
+      "b: true",
+      's: "s"',
+      "t: `t`",
+      "e: Speed.Fast",
+      'k: hash("k")',
+      "u0: msg.url()",
+      'u3: msg.url("a", "b", "c")',
+      "v0: vmath.vector3()",
+      "v1: vmath.vector3(1)",
+      "v4: vmath.vector4(1, -2, 3, 4)",
+      "q: vmath.quat(0, 0, 0, 1)",
+    );
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      go.property("n", -1)
+      go.property("h", 16)
+      go.property("i", 1e999)
+      go.property("j", -1e999)
+      go.property("b", true)
+      go.property("s", "s")
+      go.property("t", "t")
+      go.property("e", 3)
+      go.property(
+          "k",
+          hash("k")
+      )
+      go.property(
+          "u0",
+          msg.url()
+      )
+      go.property(
+          "u3",
+          msg.url("a", "b", "c")
+      )
+      go.property(
+          "v0",
+          vmath.vector3()
+      )
+      go.property(
+          "v1",
+          vmath.vector3(1)
+      )
+      go.property(
+          "v4",
+          vmath.vector4(1, -2, 3, 4)
+      )
+      go.property(
+          "q",
+          vmath.quat(0, 0, 0, 1)
+      )
+      return ____exports
+      "
+    `);
   });
 });
 
@@ -748,7 +960,7 @@ describe("resource property markers", () => {
     expect(diagnostic?.message).toContain("properties");
   });
 
-  test("a module const used as a properties default fails on the const", () => {
+  test("a module const used as a properties default fails on the const and the default", () => {
     const source = [
       IMPORT,
       "",
@@ -760,9 +972,12 @@ describe("resource property markers", () => {
       "",
     ].join("\n");
     const result = transpileProject({ files: { "main.ts": source } });
-    expect(result.diagnostics).toHaveLength(1);
-    expect(result.diagnostics[0]?.line).toBe(lineOf(source, "const A"));
-    expect(result.diagnostics[0]?.category).toBeUndefined();
+    expect(result.diagnostics).toHaveLength(2);
+    const marker = result.diagnostics.find((d) => d.line === lineOf(source, "const A"));
+    const unreadable = result.diagnostics.find((d) => d.line === lineOf(source, "properties:"));
+    expect(marker?.message).toContain("resource.texture");
+    expect(unreadable?.message).toContain("`A`");
+    expect(result.diagnostics.every((diagnostic) => diagnostic.category === undefined)).toBe(true);
   });
 
   test("a reference to a marker fails the build", () => {
