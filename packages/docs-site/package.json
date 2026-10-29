@@ -10,7 +10,8 @@
     "build-font-fallbacks": "bun scripts/build-font-fallbacks.ts",
     "build-llms": "bun scripts/build-llms.ts",
     "dev": "bun run build-indexes && vite",
-    "build": "bun run build-indexes && vite build --mode client && vite build",
+    "build": "bun run build-indexes",
+    "build:site": "bun run build-indexes && vite build --mode client && vite build",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:e2e": "playwright test"

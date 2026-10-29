@@ -41,7 +41,7 @@ jobs:
           bun-version: "1.4"
       - run: bun install --frozen-lockfile
       - name: Build docs site for the project Pages subpath
-        run: bun run --filter '@defold-typescript/docs-site' build
+        run: bun run --filter '@defold-typescript/docs-site' build:site
         env:
           DOCS_BASE: /${{ github.event.repository.name }}/
       # Served straight by deploy-pages (no Jekyll pass), but the marker keeps a
