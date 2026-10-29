@@ -76,22 +76,28 @@ export function archiveGameProjectEntry(entries: readonly string[]): string | un
   );
 }
 
+// Twin of `libraryIncludeDirs` in `packages/library-types/scripts/sync-defold-extensions.ts`.
 function readLibraryIncludeDirs(gameProjectText: string): string[] {
   let inLibrary = false;
-  for (const line of gameProjectText.split("\n")) {
+  for (const raw of gameProjectText.split(/\r?\n/)) {
+    const line = raw.trim();
     if (isSectionHeader(line)) {
-      inLibrary = line.trim() === "[library]";
+      inLibrary = line === "[library]";
       continue;
     }
     if (!inLibrary) {
       continue;
     }
     const match = line.match(/^include_dirs\s*=\s*(.*)$/);
-    if (match?.[1] !== undefined) {
-      return match[1]
-        .split(",")
-        .map((dir) => dir.trim())
-        .filter((dir) => dir.length > 0);
+    if (match?.[1] === undefined) {
+      continue;
+    }
+    const dirs = match[1]
+      .split(/[\s,]+/)
+      .map((dir) => dir.replace(/^\/+|\/+$/g, ""))
+      .filter((dir) => dir.length > 0);
+    if (dirs.length > 0) {
+      return dirs;
     }
   }
   return [];
@@ -130,14 +136,14 @@ function includeDirMembers(
   includeDirs: ReadonlySet<string>,
 ): LibrarySharedEntry[] {
   const wrapper = archiveWrapperOf(entries);
+  const prefixes = [...includeDirs].map((dir) => `${dir}/`);
   const members: LibrarySharedEntry[] = [];
   for (const entry of entries) {
     if (entry.endsWith("/")) {
       continue;
     }
     const path = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
-    const slash = path.indexOf("/");
-    if (slash > 0 && includeDirs.has(path.slice(0, slash))) {
+    if (prefixes.some((prefix) => path.startsWith(prefix))) {
       members.push({ entry, path });
     }
   }
