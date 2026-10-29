@@ -13,8 +13,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
+> - **[Dependency types](./resolve.md#cache-location)** follow the archives Defold fetched, and their **[pins](./resolve.md#pinning-extension-versions)** name a commit; a plain `resolve` replaces an old `sha256:` pin.
 > - **[Script properties](./script-lifecycle.md#script-properties-on-self)** compute their defaults at build time and register in the key order the source shows.
 > - **[The docs site](./README.md)** documents the npm version.
+
+### Breaking
+
+- **Dependency pins name a commit:** `resolve` pins each dependency as `commit:<sha>`, read from a GitHub archive's zip comment, or else as `files-sha256:<hex>` over the files its `include_dirs` share, so a pin moves only when the code a game uses does. A plain `resolve` replaces a `sha256:` zip-byte pin in `package.json`, and `resolve --frozen` fails on one until it has; see [Pinning extension versions](./resolve.md#pinning-extension-versions).
 
 ### Improved
 
@@ -22,6 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
+- **Dependency types stayed at the first download:** `resolve` served the copy it first cached of a moving archive such as `master.zip`, even after Defold's *Fetch Libraries* moved the game to newer code, and `watch` re-resolved only on a `game.project` save. It now reads the archive Defold fetched into `.internal/lib/` when its commit matches, else revalidates its own cache by ETag and uses it offline with a warning, and `watch` re-resolves after each *Fetch Libraries*; see [Cache location](./resolve.md#cache-location).
 - **The docs site described unreleased changes:** it was published on every push to `main`, so a guide or API reference page could document behavior the version on npm lacks. It is now published once per release and documents that release.
 - **Script properties dropped silently:** a spread, shorthand, method, accessor or variable-keyed member of `defineScript` `properties`, or a whole object wrapped in `as` or `satisfies`, registered no `go.property` while `self` still typed it, and a default Defold's build cannot read, such as a module const, failed only in Defold's build. Each member now registers or fails the build, a literal key such as `["a-b"]` or `0x10` registers under its JavaScript name, and an infinite number registers as `1e999`.
 

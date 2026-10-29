@@ -43,7 +43,7 @@ import {
 import { loadTranslations } from "./example-store-io";
 import { synthesizeProseConstants } from "./prose-constants";
 import { restoreSharedHandleMethods } from "./shared-handle-methods";
-import { groupDocsByNamespace, mergeApiDocs, type readZip } from "./sync-api-docs";
+import { groupDocsByNamespace, mergeApiDocs, type ZipAccessor } from "./sync-api-docs";
 import { compareVersions, versionOf } from "./target-version";
 
 export interface ApiTargetModule {
@@ -184,7 +184,7 @@ export interface ModuleManifestEntry {
 export interface ResolveTargetOptions {
   readonly cacheDir?: string;
   readonly download?: DownloadRefDoc;
-  readonly readZip?: typeof readZip;
+  readonly readZip?: (path: string) => ZipAccessor;
   readonly packageRoot?: string;
   readonly channel?: RefDocChannel;
   readonly fetchChannelInfo?: FetchChannelInfo;

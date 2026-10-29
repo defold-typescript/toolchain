@@ -160,8 +160,8 @@ itself already failed, you get its own exit code, not the drift code. On a
 command outside that loop — `bob status`, `resolve`, `init` — the flag is inert
 rather than an error, exactly as `--frozen` and `--force` are off their own
 commands. Do not confuse it with `resolve --frozen`, which is a different
-mechanism entirely: `--frozen` fails when a *native-extension* download would be
-needed because the cache missed, while `--fail-on-drift` fails when the
+mechanism entirely: `--frozen` fails when a *dependency's* resolved pin differs
+from the one `package.json` records, while `--fail-on-drift` fails when the
 *detected editor* has drifted from the version pin. Neither implies the other,
 and `--fail-on-drift` never appears on `resolve`.
 

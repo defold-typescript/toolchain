@@ -46,9 +46,11 @@ export type {
   LibrarySharedEntry,
 } from "./library-dependencies";
 export {
+  archiveGameProjectEntry,
   archiveWrapperOf,
   isContainedResourcePath,
   LIBRARY_DEPENDENCY_ROOT,
+  libraryIncludeDirFiles,
   libraryIncludedEntries,
   readGameProjectDependencies,
   readLibrarySceneDocuments,

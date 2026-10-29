@@ -67,6 +67,15 @@ export function archiveWrapperOf(entries: readonly string[]): string | undefined
   return wrapper;
 }
 
+// The archive's own `game.project`, found through the wrapper strip so a library
+// packed under `<repo>-<ref>/` is found the same way a bare one is.
+export function archiveGameProjectEntry(entries: readonly string[]): string | undefined {
+  const wrapper = archiveWrapperOf(entries);
+  return entries.find(
+    (entry) => (wrapper === undefined ? entry : entry.slice(wrapper.length + 1)) === "game.project",
+  );
+}
+
 function readLibraryIncludeDirs(gameProjectText: string): string[] {
   let inLibrary = false;
   for (const line of gameProjectText.split("\n")) {
@@ -116,6 +125,39 @@ export function isContainedResourcePath(path: string): boolean {
     .every((segment) => segment.length > 0 && segment !== "." && segment !== "..");
 }
 
+function includeDirMembers(
+  entries: readonly string[],
+  includeDirs: ReadonlySet<string>,
+): LibrarySharedEntry[] {
+  const wrapper = archiveWrapperOf(entries);
+  const members: LibrarySharedEntry[] = [];
+  for (const entry of entries) {
+    if (entry.endsWith("/")) {
+      continue;
+    }
+    const path = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
+    const slash = path.indexOf("/");
+    if (slash > 0 && includeDirs.has(path.slice(0, slash))) {
+      members.push({ entry, path });
+    }
+  }
+  return members;
+}
+
+// Every file under the directories a library's own `game.project` names, of any
+// kind, at the resource path Defold addresses it by; empty when it names none.
+// The scene reader below narrows this to scene sources, while a dependency pin
+// hashes all of it, since a changed script changes the game as much as a scene.
+export function libraryIncludeDirFiles(
+  entries: readonly string[],
+  gameProjectText: string | undefined,
+): LibrarySharedEntry[] {
+  if (gameProjectText === undefined) {
+    return [];
+  }
+  return includeDirMembers(entries, new Set(readLibraryIncludeDirs(gameProjectText)));
+}
+
 // The scene sources a library actually shares: the entries under the directories
 // its own `game.project` names, at the resource path Defold itself would address
 // them by (wrapper stripped, include dir kept — a library's `druid/druid.gui` is
@@ -141,15 +183,9 @@ export function libraryIncludedEntries(
     };
   }
 
-  const wrapper = archiveWrapperOf(entries);
   const shared: LibrarySharedEntry[] = [];
   const refused: string[] = [];
-  for (const entry of entries) {
-    const path = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
-    const [head] = path.split("/");
-    if (head === undefined || !includeDirs.has(head)) {
-      continue;
-    }
+  for (const { entry, path } of includeDirMembers(entries, includeDirs)) {
     const dot = path.lastIndexOf(".");
     if (dot === -1 || !LIBRARY_SCENE_EXTENSIONS.includes(path.slice(dot).toLowerCase())) {
       continue;

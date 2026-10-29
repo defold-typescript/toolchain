@@ -1017,6 +1017,26 @@ describe("readZip over a written archive", () => {
     expect(zip.read("defold-pixels-master/api/pixels.script_api")).toBe(SCRIPT_API);
   });
 
+  test("comment() returns the archive comment, and an empty string without one", () => {
+    const commit = "a7786103a6c9aaf33a39704ff3089522d22c5a0a";
+    expect(readZip(writtenArchive(PIXELS_ENTRIES, { comment: commit })).comment()).toBe(commit);
+    expect(readZip(writtenArchive(PIXELS_ENTRIES)).comment()).toBe("");
+  });
+
+  // 0xff and a lone 0x80 are not UTF-8, so a reader that decodes and
+  // re-encodes an entry cannot return these bytes.
+  test("bytes() returns an entry's exact bytes, stored and deflated", () => {
+    const image = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff, 0x80, 0xfe, 0x0a]);
+    const zip = readZip(
+      writtenArchive([
+        { name: "pixels/stored.png", bytes: image, stored: true },
+        { name: "pixels/deflated.png", bytes: image },
+      ]),
+    );
+    expect([...zip.bytes("pixels/stored.png")]).toEqual([...image]);
+    expect([...zip.bytes("pixels/deflated.png")]).toEqual([...image]);
+  });
+
   test("a file whose only signature has no valid comment length is not a zip archive", () => {
     const dir = mkdtempSync(join(tmpdir(), "readzip-written-"));
     const zipPath = join(dir, "notes.zip");
