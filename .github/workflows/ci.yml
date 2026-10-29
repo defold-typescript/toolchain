@@ -12,8 +12,8 @@ on:
 jobs:
   lint-typecheck:
     runs-on: ubuntu-latest
-    # The slowest of 20 green runs through 2026-10-21 took 15 min, and the build has
-    # grown since. 45 min keeps about 2x headroom and still ends a hung run long
+    # Lint, typecheck and the workspace builds; the docs site's page build runs in
+    # the docs-site job. 45 min is ample headroom and still ends a hung run long
     # before GitHub's 6h default.
     timeout-minutes: 45
     steps:
@@ -39,9 +39,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    # The slowest of 20 green runs through 2026-10-21 took 38 min (windows), and the
-    # suite has grown since. 90 min keeps about 2x headroom and still ends a hung
-    # run long before GitHub's 6h default.
+    # `bun test` took 12-19 min per OS in run 40777186291 (windows slowest), and the
+    # build before it skips the docs site's page build, which the docs-site job
+    # runs. 90 min keeps wide headroom and still ends a hung run long before
+    # GitHub's 6h default.
     timeout-minutes: 90
     steps:
       # fetch-depth/fetch-tags: bun run build runs build-changelog-dates.ts, which
@@ -59,3 +60,23 @@ jobs:
       # checkout has no dist, so test-without-build cannot resolve it.
       - run: bun run build
       - run: bun test --timeout 60000
+
+  docs-site:
+    runs-on: ubuntu-latest
+    # The docs site's page build took 21-25 min in CI run 40777186291 and deploy-docs
+    # run 40795838216. 60 min keeps over 2x headroom and still ends a hung run long
+    # before GitHub's 6h default.
+    timeout-minutes: 60
+    steps:
+      # fetch-depth/fetch-tags: build-indexes runs build-changelog-dates.ts, which
+      # fails loud on a tagless checkout (the /changelog date map is git-tag-sourced).
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - run: bun install --frozen-lockfile
+      # The script the docs deploy runs, so a site that would fail to deploy reds CI.
+      - run: bun run --filter '@defold-typescript/docs-site' build:site
