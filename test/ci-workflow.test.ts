@@ -131,10 +131,17 @@ function expandScript(
   );
 }
 
+function workflowTriggers(file: string): string[] {
+  const raw = readFileSync(join(repoRoot, ".github", "workflows", file), "utf8");
+  const wf = parse(raw) as Record<string, unknown>;
+  // YAML parses the bare `on:` key as boolean true, so read it back tolerantly.
+  return Object.keys((wf.on ?? wf[true as unknown as string]) as Record<string, unknown>);
+}
+
 const SITE_BUILD = /bun run --filter '([^']+)' build:site\b/;
 
 describe("docs site page build", () => {
-  test("bun run build, and the CI jobs that test and typecheck, never build the pages", () => {
+  test("bun run build and CI never build the pages", () => {
     expect(readManifest("package.json").scripts?.build).toBe("bun run --filter '*' build");
     const manifests = workspaceManifests();
     expect(manifests.map((m) => m.name)).toContain("@defold-typescript/docs-site");
@@ -143,27 +150,21 @@ describe("docs site page build", () => {
       .map((m) => m.name);
     expect(pageBuilds).toEqual([]);
 
-    const checkJobs = Object.entries(workflowJobs("ci.yml")).filter(([, job]) =>
-      jobRuns(job).some((cmd) => /\bbun test\b|bun run typecheck\b/.test(cmd)),
+    const ciSiteRuns = Object.values(workflowJobs("ci.yml")).flatMap((job) =>
+      jobRuns(job).filter((cmd) => /build:site|vite build/.test(cmd)),
     );
-    expect(checkJobs.length).toBeGreaterThan(0);
-    for (const [, job] of checkJobs) {
-      expect(jobRuns(job).filter((cmd) => cmd.includes("build:site"))).toEqual([]);
-    }
+    expect(ciSiteRuns).toEqual([]);
   });
 
-  test("one CI job builds the pages with the script the docs deploy publishes", () => {
-    const ciSiteRuns = Object.values(workflowJobs("ci.yml")).flatMap((job) =>
-      jobRuns(job).filter((cmd) => cmd.includes("build:site")),
-    );
-    expect(ciSiteRuns).toHaveLength(1);
+  test("the docs deploy builds the pages and runs only when dispatched", () => {
+    expect(workflowTriggers("deploy-docs.yml")).toEqual(["workflow_dispatch"]);
     const deploySiteRuns = Object.values(workflowJobs("deploy-docs.yml")).flatMap((job) =>
       jobRuns(job).filter((cmd) => cmd.includes("build:site")),
     );
-    expect(deploySiteRuns).toEqual(ciSiteRuns);
+    expect(deploySiteRuns).toHaveLength(1);
 
     const docsSite = readManifest("packages/docs-site/package.json");
-    expect(ciSiteRuns[0]?.match(SITE_BUILD)?.[1]).toBe(docsSite.name);
+    expect(deploySiteRuns[0]?.match(SITE_BUILD)?.[1]).toBe(docsSite.name);
     const siteBuild = expandScript(docsSite.scripts ?? {}, "build:site");
     expect(siteBuild).toContain("bun run build-indexes");
     expect(siteBuild).toContain("vite build --mode client");

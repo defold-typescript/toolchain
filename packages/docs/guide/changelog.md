@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.54.1
+
+> Summary:
+>
+> - **[The docs site](./README.md)** documents the version on npm.
+
+### Fixed
+
+- **The docs site described unreleased changes:** it was published on every push to `main`, so a guide or API reference page could document behavior the version on npm lacks. It is now published once per release and documents that release.
+
 ## v0.54.0
 
 > Summary:

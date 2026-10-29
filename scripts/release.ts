@@ -281,21 +281,10 @@ function main(): void {
     die(`created ${tag} locally but the push failed; push it manually: git push origin ${tag}`);
   }
 
-  // Flip the live /changelog: build-changelog-dates.ts re-renders the just-tagged
-  // `## vX.Y.Z` section from `- Unreleased` to its tag date, but only a build that
-  // SEES the tag re-renders it. The tag ref cannot deploy to the github-pages
-  // environment (its policy allows only the default branch), so dispatch deploy-docs
-  // on the default branch — the tag now exists, so that build renders the date and
-  // deploys from an allowed ref. Advisory: the release is already pushed, so a failed
-  // dispatch only delays the refresh to the next default-branch push.
-  const deployRef = remoteRef.replace(/^origin\//, "");
-  if (run(["gh", "workflow", "run", "deploy-docs.yml", "--ref", deployRef]).code !== 0) {
-    process.stderr.write(
-      `release: could not dispatch deploy-docs on ${deployRef}; the /changelog will refresh on the ` +
-        `next ${deployRef} push, or dispatch it manually: gh workflow run deploy-docs.yml --ref ${deployRef}\n`,
-    );
-  }
-
+  // The docs site deploys once per release, from the Release workflow's docs job
+  // after npm publish succeeds: that build sees the tag, so /changelog renders the
+  // just-tagged `## vX.Y.Z` section with its date. Dispatching deploy-docs here too
+  // would start a second site build that the workflow's dispatch then cancels.
   process.stdout.write(
     `\npushed ${tag} — the Release workflow publishes ${target} via OIDC ` +
       "(if trusted publishers + ENABLE_NPM_PUBLISH are configured).\n" +

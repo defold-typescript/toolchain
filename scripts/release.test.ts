@@ -258,14 +258,16 @@ describe("sleepSync", () => {
 });
 
 describe("changelog flip on release", () => {
-  test("release dispatches deploy-docs after tagging so the /changelog re-renders", () => {
+  // The Release workflow's docs job deploys the site once npm publish succeeds; a
+  // second dispatch from here would start a site build that one then cancels.
+  test("release leaves the docs deploy to the Release workflow", () => {
     const src = readFileSync(new URL("./release.ts", import.meta.url), "utf8");
-    expect(src.includes('"deploy-docs.yml"')).toBe(true);
+    expect(src.includes('"deploy-docs.yml"')).toBe(false);
   });
 
   // The github-pages environment allows only the default branch to deploy, so a
   // tag-triggered build renders the date but its deploy is rejected. The flip is
-  // driven from release.ts (default-branch dispatch) instead; the workflow must
+  // driven from the Release workflow's docs job (default-branch dispatch) instead; the workflow must
   // not re-add the always-rejected tag trigger.
   test("deploy-docs no longer triggers on the release tag", () => {
     const yml = readFileSync(
