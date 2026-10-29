@@ -925,6 +925,59 @@ describe("runResolve library matching", () => {
     expect(tsconfig.compilerOptions.types).not.toContain(LIBRARIES_DIR);
   });
 
+  // Resolves the verified `mylib` project with library data, runs `between` on
+  // the project, then resolves it again with no library data to read.
+  async function resolveWithoutLibraryData(between: (cwd: string) => void = () => {}) {
+    const cwd = tmp();
+    const cacheDir = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const readZip = makeReadZip(verifiedMylibArchive(url));
+
+    await runResolve({
+      cwd,
+      cacheDir,
+      download: someBytes,
+      readZip,
+      libraryRegistry: registry,
+      libraryTypesRoot: seedLibraryData(),
+    });
+    between(cwd);
+    const result = await runResolve({
+      cwd,
+      cacheDir,
+      download: someBytes,
+      readZip,
+      libraryTypesRoot: null,
+    });
+
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    return { cwd, result, types: tsconfig.compilerOptions.types };
+  }
+
+  test("missing library data keeps an intact library surface and its tsconfig entry", async () => {
+    const { cwd, result, types } = await resolveWithoutLibraryData();
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"), "utf8")).toBe(
+      MYLIB,
+    );
+    expect(types).toContain(LIBRARIES_DIR);
+  });
+
+  test("missing library data drops the tsconfig entry of a surface stamped by another toolchain", async () => {
+    const { result, types } = await resolveWithoutLibraryData((cwd) => {
+      const stampPath = join(cwd, ".defold-types", LIBRARIES_DIR, "package.json");
+      const stamp = JSON.parse(readFileSync(stampPath, "utf8")) as Record<string, unknown>;
+      writeFileSync(stampPath, JSON.stringify({ ...stamp, version: "999.0.0" }));
+    });
+
+    expect(result.ok).toBe(true);
+    expect(types).not.toContain(LIBRARIES_DIR);
+  });
+
   test("a confirmed module no library data prints is returned as a warning, not thrown", async () => {
     const cwd = tmp();
     const url = "https://github.com/owner/mylib/archive/main.zip";

@@ -74,6 +74,9 @@
   "files": [
     "generated",
     "api-doc",
+    "fixtures/authored",
+    "fixtures/luals",
+    "fixtures/script-api",
     "library-targets.json",
     "library-classification.json",
     "luals-targets.json",
