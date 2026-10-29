@@ -255,7 +255,7 @@ export async function buildOpenApiFidelity(
   packageRoot: string,
   target: OpenApiTarget,
 ): Promise<FidelityReport> {
-  const resolver = await loadTypeResolver(packageRoot);
+  const resolver = await loadTypeResolver();
   const doc = retargetedFixtureDoc(packageRoot, target);
   return computeOpenApiFidelity(target.namespace, doc, resolver);
 }

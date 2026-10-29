@@ -18,7 +18,10 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
+import { LIBRARY_TYPES_ROOT } from "./library/package-root";
+import { printLibraryModules } from "./library/print-library";
 import { readNativeExpectations } from "./library/target-expectations";
+import { writeAuthoredLibraryData } from "./library-data-fixture";
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
@@ -647,10 +650,8 @@ describe("runResolve shared namespace", () => {
 describe("runResolve library matching", () => {
   const MYLIB = "declare module 'mylib.core' { export const version: string; }\n";
 
-  function seedGenerated(): string {
-    const dir = tmp();
-    writeFileSync(join(dir, "mylib.core.d.ts"), MYLIB);
-    return dir;
+  function seedLibraryData(): string {
+    return writeAuthoredLibraryData({ "mylib.core": MYLIB });
   }
 
   const registry = [{ sourceId: "mylib", modules: ["mylib.core"] }];
@@ -683,7 +684,7 @@ describe("runResolve library matching", () => {
       download: someBytes,
       readZip: makeReadZip(verifiedMylibArchive(url)),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -717,12 +718,10 @@ describe("runResolve library matching", () => {
       },
     };
 
-    // No libraryRegistry/libraryGeneratedDir override: this exercises the real
-    // merged corpus, where all three modules now come from the authored lane
-    // under the `nakama-defold` sourceId and must fold into one matched entry.
-    // `nakama.nakama` severed onto the bare namespace, so its golden is
-    // `generated/nakama.d.ts` while it still materializes under the module id
-    // `nakama.nakama.d.ts` — the stem is what makes that mapping happen.
+    // No libraryRegistry/libraryTypesRoot override: this exercises the real
+    // merged corpus, where all three modules come from the authored lane under
+    // the `nakama-defold` sourceId and must fold into one matched entry, each
+    // printed under its module id.
     const result = await runResolve({
       cwd,
       cacheDir: tmp(),
@@ -770,7 +769,7 @@ describe("runResolve library matching", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -793,7 +792,7 @@ describe("runResolve library matching", () => {
       download: someBytes,
       readZip: makeReadZip(assetArchive(url)),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -822,7 +821,7 @@ describe("runResolve library matching", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -844,7 +843,7 @@ describe("runResolve library matching", () => {
       download: someBytes,
       readZip: makeReadZip(assetArchive(url)),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -855,7 +854,7 @@ describe("runResolve library matching", () => {
   test("re-running after the matched dependency stops matching prunes the surface and derefs tsconfig", async () => {
     const cwd = tmp();
     const cacheDir = tmp();
-    const generatedDir = seedGenerated();
+    const libraryData = seedLibraryData();
     const matchUrl = "https://github.com/owner/mylib/archive/main.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${matchUrl}\n`);
 
@@ -865,7 +864,7 @@ describe("runResolve library matching", () => {
       download: someBytes,
       readZip: makeReadZip(verifiedMylibArchive(matchUrl)),
       libraryRegistry: registry,
-      libraryGeneratedDir: generatedDir,
+      libraryTypesRoot: libraryData,
     });
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
 
@@ -877,7 +876,7 @@ describe("runResolve library matching", () => {
       download: someBytes,
       readZip: makeReadZip(assetArchive(otherUrl)),
       libraryRegistry: registry,
-      libraryGeneratedDir: generatedDir,
+      libraryTypesRoot: libraryData,
     });
 
     expect(result.ok).toBe(true);
@@ -892,7 +891,7 @@ describe("runResolve library matching", () => {
   test("removing every [dependencies] entry prunes a previously-materialized surface and derefs tsconfig", async () => {
     const cwd = tmp();
     const cacheDir = tmp();
-    const generatedDir = seedGenerated();
+    const libraryData = seedLibraryData();
     const matchUrl = "https://github.com/owner/mylib/archive/main.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${matchUrl}\n`);
 
@@ -902,7 +901,7 @@ describe("runResolve library matching", () => {
       download: someBytes,
       readZip: makeReadZip(verifiedMylibArchive(matchUrl)),
       libraryRegistry: registry,
-      libraryGeneratedDir: generatedDir,
+      libraryTypesRoot: libraryData,
     });
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
 
@@ -915,7 +914,7 @@ describe("runResolve library matching", () => {
         throw new Error("readZip should not be called");
       },
       libraryRegistry: registry,
-      libraryGeneratedDir: generatedDir,
+      libraryTypesRoot: libraryData,
     });
 
     expect(result.ok).toBe(true);
@@ -926,11 +925,11 @@ describe("runResolve library matching", () => {
     expect(tsconfig.compilerOptions.types).not.toContain(LIBRARIES_DIR);
   });
 
-  test("a matched library whose generated file is missing is returned as a warning, not thrown", async () => {
+  test("a confirmed module no library data prints is returned as a warning, not thrown", async () => {
     const cwd = tmp();
     const url = "https://github.com/owner/mylib/archive/main.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const emptyGeneratedDir = tmp();
+    const emptyLibraryData = writeAuthoredLibraryData({});
 
     const warnings: string[] = [];
     const originalWarn = console.warn;
@@ -945,7 +944,7 @@ describe("runResolve library matching", () => {
         download: someBytes,
         readZip: makeReadZip(verifiedMylibArchive(url)),
         libraryRegistry: registry,
-        libraryGeneratedDir: emptyGeneratedDir,
+        libraryTypesRoot: emptyLibraryData,
       });
     } finally {
       console.warn = originalWarn;
@@ -954,7 +953,7 @@ describe("runResolve library matching", () => {
     expect(result.ok).toBe(true);
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.warnings).toContain(
-      "skipping library module mylib.core: no generated .d.ts in the vendored corpus",
+      "skipping library module mylib.core: no library data prints it",
     );
     expect(warnings).toEqual([]);
   });
@@ -963,10 +962,8 @@ describe("runResolve library matching", () => {
 describe("runResolve corpus match precedes .script_api", () => {
   const MYLIB = "declare module 'mylib.core' { export const version: string; }\n";
 
-  function seedGenerated(): string {
-    const dir = tmp();
-    writeFileSync(join(dir, "mylib.core.d.ts"), MYLIB);
-    return dir;
+  function seedLibraryData(): string {
+    return writeAuthoredLibraryData({ "mylib.core": MYLIB });
   }
 
   const registry = [{ sourceId: "mylib", modules: ["mylib.core"] }];
@@ -994,7 +991,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(selfDocumentingMylib(url)),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1036,7 +1033,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1064,7 +1061,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1092,7 +1089,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1125,7 +1122,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1166,7 +1163,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(selfDocumentingMylib(url)),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1198,7 +1195,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1212,7 +1209,7 @@ describe("runResolve corpus match precedes .script_api", () => {
   test("removing every [dependencies] entry reconciles the extension surface too", async () => {
     const cwd = tmp();
     const cacheDir = tmp();
-    const generatedDir = seedGenerated();
+    const libraryData = seedLibraryData();
     const url = "https://example.com/alpha.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
     const byKey: Record<string, FakeArchive> = {
@@ -1228,7 +1225,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: generatedDir,
+      libraryTypesRoot: libraryData,
     });
     expect(existsSync(join(cwd, ".defold-types", "extensions", "alpha.d.ts"))).toBe(true);
 
@@ -1241,7 +1238,7 @@ describe("runResolve corpus match precedes .script_api", () => {
         throw new Error("readZip should not be called");
       },
       libraryRegistry: registry,
-      libraryGeneratedDir: generatedDir,
+      libraryTypesRoot: libraryData,
     });
 
     expect(result.ok).toBe(true);
@@ -1269,7 +1266,7 @@ describe("runResolve corpus match precedes .script_api", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: registry,
-      libraryGeneratedDir: seedGenerated(),
+      libraryTypesRoot: seedLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1331,7 +1328,7 @@ describe("runResolve curated native extension", () => {
       download: someBytes,
       readZip: makeReadZip(daabbccArchive()),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
       nativeRegistry: nativeRegistry(),
     });
 
@@ -1366,7 +1363,7 @@ describe("runResolve curated native extension", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
       nativeRegistry: nativeRegistry(),
     });
 
@@ -1389,7 +1386,7 @@ describe("runResolve curated native extension", () => {
         daabbccArchive({ entries: [docPath], contents: { [docPath]: DOC_DAABBCC } }),
       ),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
       nativeRegistry: nativeRegistry(),
     });
 
@@ -1458,7 +1455,7 @@ declare module "pixels" {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
       nativeRegistry: [],
       ...extra,
     });
@@ -1591,7 +1588,7 @@ declare module "pixels" {
         },
       }),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
       nativeRegistry,
     });
 
@@ -1612,11 +1609,9 @@ declare module "pixels" {
     const url = "https://github.com/owner/mylib/archive/main.zip";
     const shippedPath = "mylib-main/types/mylib.core.d.ts";
     const shipped = 'declare module "mylib.core" {\n  export const shipped: string;\n}\n';
-    const generatedDir = tmp();
-    writeFileSync(
-      join(generatedDir, "mylib.core.d.ts"),
-      "declare module 'mylib.core' { export const version: string; }\n",
-    );
+    const libraryData = writeAuthoredLibraryData({
+      "mylib.core": "declare module 'mylib.core' { export const version: string; }\n",
+    });
     const cwd = tmp();
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
 
@@ -1631,7 +1626,7 @@ declare module "pixels" {
         },
       }),
       libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
-      libraryGeneratedDir: generatedDir,
+      libraryTypesRoot: libraryData,
       nativeRegistry: [],
     });
 
@@ -1746,7 +1741,7 @@ declare module "pixels" {
       download: someBytes,
       readZip: makeReadZip(TYPES_ONLY_ARCHIVES),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
       nativeRegistry: [],
     });
   }
@@ -1860,7 +1855,7 @@ describe("runResolve each curated native target through the shipped native regis
         [extensionArchiveKey(url)]: { entries: [manifest], contents: {} },
       }),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
       nativeRegistry,
     });
     return { cwd, result };
@@ -1905,12 +1900,8 @@ describe("runResolve each curated native target through the shipped native regis
 describe("runResolve druid LuaLS library", () => {
   const DRUID = "declare module 'druid.druid' { export const version: string; }\n";
 
-  // druid's committed types live in `generated/druid.d.ts` (named for its
-  // namespace), so the generated stem is `druid`, not the `druid.druid` module.
-  function seedDruidGenerated(): string {
-    const dir = tmp();
-    writeFileSync(join(dir, "druid.d.ts"), DRUID);
-    return dir;
+  function seedDruidLibraryData(): string {
+    return writeAuthoredLibraryData({ "druid.druid": DRUID });
   }
 
   const druidRegistry = [
@@ -1928,7 +1919,7 @@ describe("runResolve druid LuaLS library", () => {
     };
   }
 
-  test("materializes druid's committed types from the generated stem and reports it verified", async () => {
+  test("materializes druid.druid under its module id and reports it verified", async () => {
     const cwd = tmp();
     const url = "https://github.com/Insality/druid/archive/1.2.5.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
@@ -1939,7 +1930,7 @@ describe("runResolve druid LuaLS library", () => {
       download: someBytes,
       readZip: makeReadZip(verifiedDruidArchive(url)),
       libraryRegistry: druidRegistry,
-      libraryGeneratedDir: seedDruidGenerated(),
+      libraryTypesRoot: seedDruidLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -1972,13 +1963,95 @@ describe("runResolve druid LuaLS library", () => {
       download: someBytes,
       readZip: makeReadZip(byKey),
       libraryRegistry: druidRegistry,
-      libraryGeneratedDir: seedDruidGenerated(),
+      libraryTypesRoot: seedDruidLibraryData(),
     });
 
     expect(result.ok).toBe(true);
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.libraries).toEqual([
       { url, source: "druid", modules: [], provenance: "vendored", verified: false },
+    ]);
+  });
+});
+
+describe("runResolve prints a LuaLS library from the dependency's archive", () => {
+  const url = "https://github.com/paweljarosz/lua-immutable/archive/v1.1.zip";
+  const wrapper = "lua-immutable-1.1";
+  const own = "immutable/immutable.lua";
+  const pinnedSource = readFileSync(
+    join(LIBRARY_TYPES_ROOT, "fixtures", "luals", "immutable", own),
+    "utf8",
+  );
+  const insertBefore = "-- Metatable for the Immutable module";
+
+  function withFunction(lines: readonly string[]): string {
+    const source = pinnedSource.replace(insertBefore, `${lines.join("\n")}\n\n${insertBefore}`);
+    if (source === pinnedSource) throw new Error(`insertion point missing from ${own}`);
+    return source;
+  }
+
+  async function resolveWith(moduleSource: string) {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const entry = `${wrapper}/${own}`;
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip({
+        [extensionArchiveKey(url)]: {
+          entries: [`${wrapper}/`, entry, `${wrapper}/README.md`],
+          contents: { [entry]: moduleSource },
+        },
+      }),
+    });
+    const printed = readFileSync(
+      join(cwd, ".defold-types", LIBRARIES_DIR, "immutable.immutable.d.ts"),
+      "utf8",
+    );
+    return { result, printed };
+  }
+
+  test("the materialized module declares a function only the archive has", async () => {
+    const { result, printed } = await resolveWith(
+      withFunction([
+        "---Probes that resolve prints the archive",
+        "---@param\tvalue\tnumber\t\t@value to probe",
+        "---@return\t\t\t\t\tboolean\t\t\t\t@true always",
+        "function Immutable.print_probe(value)",
+        "\treturn true",
+        "end",
+      ]),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(printed).toContain("export function print_probe(this: void, value: number): boolean;");
+    expect(result.libraries).toEqual([
+      {
+        url,
+        source: "lua-immutable",
+        modules: ["immutable.immutable"],
+        provenance: "vendored",
+        verified: true,
+      },
+    ]);
+    expect(result.warnings.filter((warning) => warning.startsWith("printed "))).toEqual([]);
+  });
+
+  test("an archive the printer cannot read prints the pinned sources and says why", async () => {
+    const { result, printed } = await resolveWith(
+      withFunction([
+        "---@param\tvalue\tvmath.print_probe\t\t@a type no printer maps",
+        "function Immutable.print_probe(value)",
+        "end",
+      ]),
+    );
+    const pinned = await printLibraryModules(LIBRARY_TYPES_ROOT, ["immutable.immutable"], null);
+
+    expect(result.ok).toBe(true);
+    expect(printed).toBe(pinned.printed[0]?.contents as string);
+    expect(result.warnings.filter((warning) => warning.startsWith("printed "))).toEqual([
+      `printed immutable.immutable from the v1.1 sources pinned in library data, not from ${url}: luals type mapper: unmapped Defold core token "vmath.print_probe" - extend CORE_TYPE_RENAMES or the target's typeRenames.`,
     ]);
   });
 });
@@ -2004,11 +2077,8 @@ describe("runResolve a multi-module same-repo LuaLS library", () => {
     ],
   });
 
-  function seedSaverGenerated(): string {
-    const dir = tmp();
-    writeFileSync(join(dir, "saver.saver.d.ts"), SAVER);
-    writeFileSync(join(dir, "saver.storage.d.ts"), STORAGE);
-    return dir;
+  function seedSaverLibraryData(): string {
+    return writeAuthoredLibraryData({ "saver.saver": SAVER, "saver.storage": STORAGE });
   }
 
   // An asset-only archive shipping both saver Lua modules under the GitHub
@@ -2037,7 +2107,7 @@ describe("runResolve a multi-module same-repo LuaLS library", () => {
       download: someBytes,
       readZip: makeReadZip(verifiedSaverArchive(url)),
       libraryRegistry: saverRegistry,
-      libraryGeneratedDir: seedSaverGenerated(),
+      libraryTypesRoot: seedSaverLibraryData(),
     });
 
     expect(result.ok).toBe(true);
@@ -2130,7 +2200,7 @@ instances {
       download: someBytes,
       readZip: makeReadZip(druidArchive(url)),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
     });
 
     expect(result.ok).toBe(true);
@@ -2166,7 +2236,7 @@ instances {
       download: someBytes,
       readZip: makeReadZip(druidArchive(url)),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
     });
     expect(resolved.ok).toBe(true);
 
@@ -2197,7 +2267,7 @@ instances {
       download: someBytes,
       readZip: makeReadZip(druidArchive(url)),
       libraryRegistry: [],
-      libraryGeneratedDir: null,
+      libraryTypesRoot: null,
     });
     expect(existsSync(join(cwd, ".defold-types", "dependencies"))).toBe(true);
 
@@ -2232,7 +2302,7 @@ instances {
         download: someBytes,
         readZip: makeReadZip(byKey),
         libraryRegistry: [],
-        libraryGeneratedDir: null,
+        libraryTypesRoot: null,
       });
     } finally {
       console.warn = originalWarn;
@@ -2280,7 +2350,7 @@ instances {
         download: someBytes,
         readZip: makeReadZip(byKey),
         libraryRegistry: [],
-        libraryGeneratedDir: null,
+        libraryTypesRoot: null,
       });
     } finally {
       console.warn = originalWarn;

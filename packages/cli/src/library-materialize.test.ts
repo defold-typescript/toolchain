@@ -1,9 +1,17 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { readCliVersion } from "./cli-version";
-import type { VendoredLibrary } from "./library-match";
 import {
   ensureLibraryTypesReference,
   librariesDirName,
@@ -19,49 +27,38 @@ function surfaceDir(surfaceId: string): string {
 }
 
 let cwd: string;
-let generatedDir: string;
 
 beforeEach(() => {
   cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-lib-materialize-"));
-  generatedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-lib-generated-"));
 });
 
 afterEach(() => {
   rmSync(cwd, { recursive: true, force: true });
-  rmSync(generatedDir, { recursive: true, force: true });
 });
 
-function seedGenerated(module: string, contents: string): void {
-  writeFileSync(path.join(generatedDir, `${module}.d.ts`), contents);
-}
-
-function library(sourceId: string, modules: string[]): VendoredLibrary {
-  return { sourceId, modules };
+function printed(module: string, contents = `declare module '${module}' {}\n`) {
+  return { module, contents };
 }
 
 const librariesDir = (cliVersion: string = readCliVersion()): string =>
   path.join(cwd, ".defold-types", librariesDirName(cliVersion));
 
 describe("materializeVendoredLibraries", () => {
-  test("copies each module byte-identical, including dotted names", () => {
+  test("writes each printed module byte-identical, including dotted names", () => {
     const dicebag = "declare module 'dicebag.dicebag' { export const x: number; }\n";
     const monarchGui = "declare module 'monarch.transitions.gui' { export const y: Hash; }\n";
-    seedGenerated("dicebag.dicebag", dicebag);
-    seedGenerated("monarch.transitions.gui", monarchGui);
 
     const result = materializeVendoredLibraries({
       cwd,
-      matched: [
-        library("dicebag", ["dicebag.dicebag"]),
-        library("monarch", ["monarch.transitions.gui"]),
+      printed: [
+        printed("monarch.transitions.gui", monarchGui),
+        printed("dicebag.dicebag", dicebag),
       ],
-      generatedDir,
     });
 
     expect(result).toEqual({
       materializedDir: `.defold-types/${librariesDirName(readCliVersion())}`,
       modules: ["dicebag.dicebag", "monarch.transitions.gui"],
-      skipped: [],
     });
     const dir = librariesDir();
     expect(readFileSync(path.join(dir, "dicebag.dicebag.d.ts"), "utf8")).toBe(dicebag);
@@ -69,13 +66,9 @@ describe("materializeVendoredLibraries", () => {
   });
 
   test("emits a sorted barrel and a faux package.json", () => {
-    seedGenerated("zeta.zeta", "declare module 'zeta.zeta' {}\n");
-    seedGenerated("alpha.alpha", "declare module 'alpha.alpha' {}\n");
-
     materializeVendoredLibraries({
       cwd,
-      matched: [library("zeta", ["zeta.zeta"]), library("alpha", ["alpha.alpha"])],
-      generatedDir,
+      printed: [printed("zeta.zeta"), printed("alpha.alpha")],
     });
 
     const dir = librariesDir();
@@ -90,20 +83,10 @@ describe("materializeVendoredLibraries", () => {
     expect(pkg.types).toBe("index.d.ts");
   });
 
-  test("re-running with a smaller match set prunes the now-unwanted module but keeps index.d.ts", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
-    seedGenerated("gone.gone", "declare module 'gone.gone' {}\n");
-    materializeVendoredLibraries({
-      cwd,
-      matched: [library("keep", ["keep.keep"]), library("gone", ["gone.gone"])],
-      generatedDir,
-    });
+  test("re-running with fewer printed modules prunes the now-unwanted module but keeps index.d.ts", () => {
+    materializeVendoredLibraries({ cwd, printed: [printed("keep.keep"), printed("gone.gone")] });
 
-    const result = materializeVendoredLibraries({
-      cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
-    });
+    const result = materializeVendoredLibraries({ cwd, printed: [printed("keep.keep")] });
 
     const dir = librariesDir();
     expect(result.modules).toEqual(["keep.keep"]);
@@ -115,108 +98,38 @@ describe("materializeVendoredLibraries", () => {
     );
   });
 
-  test("no matches (or a null generatedDir) writes no dir and returns nulls", () => {
-    expect(materializeVendoredLibraries({ cwd, matched: [], generatedDir })).toEqual({
+  test("no printed modules (or a null print) writes no dir and returns nulls", () => {
+    expect(materializeVendoredLibraries({ cwd, printed: [] })).toEqual({
       materializedDir: null,
       modules: [],
-      skipped: [],
     });
     expect(existsSync(librariesDir())).toBe(false);
 
-    expect(
-      materializeVendoredLibraries({
-        cwd,
-        matched: [library("keep", ["keep.keep"])],
-        generatedDir: null,
-      }),
-    ).toEqual({ materializedDir: null, modules: [], skipped: [] });
-    expect(existsSync(librariesDir())).toBe(false);
-  });
-
-  test("an empty match set removes a previously-materialized surface (reconcile to zero)", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
-    materializeVendoredLibraries({ cwd, matched: [library("keep", ["keep.keep"])], generatedDir });
-    expect(existsSync(librariesDir())).toBe(true);
-
-    const result = materializeVendoredLibraries({ cwd, matched: [], generatedDir });
-
-    expect(result).toEqual({ materializedDir: null, modules: [], skipped: [] });
-    expect(existsSync(librariesDir())).toBe(false);
-  });
-
-  test("a null generatedDir leaves an existing surface intact (corpus unavailable, not a removal)", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
-    materializeVendoredLibraries({ cwd, matched: [library("keep", ["keep.keep"])], generatedDir });
-    expect(existsSync(librariesDir())).toBe(true);
-
-    const result = materializeVendoredLibraries({
-      cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir: null,
+    expect(materializeVendoredLibraries({ cwd, printed: null })).toEqual({
+      materializedDir: null,
+      modules: [],
     });
+    expect(existsSync(librariesDir())).toBe(false);
+  });
 
-    expect(result).toEqual({ materializedDir: null, modules: [], skipped: [] });
+  test("an empty print removes a previously-materialized surface (reconcile to zero)", () => {
+    materializeVendoredLibraries({ cwd, printed: [printed("keep.keep")] });
+    expect(existsSync(librariesDir())).toBe(true);
+
+    const result = materializeVendoredLibraries({ cwd, printed: [] });
+
+    expect(result).toEqual({ materializedDir: null, modules: [] });
+    expect(existsSync(librariesDir())).toBe(false);
+  });
+
+  test("a null print leaves an existing surface intact (library data unavailable, not a removal)", () => {
+    materializeVendoredLibraries({ cwd, printed: [printed("keep.keep")] });
+    expect(existsSync(librariesDir())).toBe(true);
+
+    const result = materializeVendoredLibraries({ cwd, printed: null });
+
+    expect(result).toEqual({ materializedDir: null, modules: [] });
     expect(existsSync(path.join(librariesDir(), "keep.keep.d.ts"))).toBe(true);
-  });
-
-  test("a LuaLS entry sources by generated stem but names the surface by module id", () => {
-    const druid = "declare module 'druid.druid' { export const version: string; }\n";
-    seedGenerated("druid", druid);
-
-    const result = materializeVendoredLibraries({
-      cwd,
-      matched: [
-        { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
-      ],
-      generatedDir,
-    });
-
-    expect(result).toEqual({
-      materializedDir: `.defold-types/${librariesDirName(readCliVersion())}`,
-      modules: ["druid.druid"],
-      skipped: [],
-    });
-    const dir = librariesDir();
-    expect(readFileSync(path.join(dir, "druid.druid.d.ts"), "utf8")).toBe(druid);
-    expect(existsSync(path.join(dir, "druid.d.ts"))).toBe(false);
-    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
-      'import "./druid.druid";\n\nexport {};\n',
-    );
-  });
-
-  test("a LuaLS entry whose generated stem file is absent is skipped, not thrown", () => {
-    const result = materializeVendoredLibraries({
-      cwd,
-      matched: [
-        { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
-      ],
-      generatedDir,
-    });
-
-    expect(result).toEqual({ materializedDir: null, modules: [], skipped: ["druid.druid"] });
-    expect(existsSync(librariesDir())).toBe(false);
-  });
-
-  test("a matched module whose generated file is absent is skipped; present siblings materialize", () => {
-    seedGenerated("present.present", "declare module 'present.present' {}\n");
-
-    const result = materializeVendoredLibraries({
-      cwd,
-      matched: [library("present", ["present.present"]), library("missing", ["missing.missing"])],
-      generatedDir,
-    });
-
-    expect(result).toEqual({
-      materializedDir: `.defold-types/${librariesDirName(readCliVersion())}`,
-      modules: ["present.present"],
-      skipped: ["missing.missing"],
-    });
-    const dir = librariesDir();
-    expect(existsSync(path.join(dir, "present.present.d.ts"))).toBe(true);
-    expect(existsSync(path.join(dir, "missing.missing.d.ts"))).toBe(false);
-    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
-      'import "./present.present";\n\nexport {};\n',
-    );
   });
 });
 
@@ -385,13 +298,11 @@ describe("library surface identity and reuse", () => {
   }
 
   test("the library directory and the tsconfig entry both name the generating toolchain", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
     writeBareTsconfig();
 
     const { materializedDir } = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
       cliVersion: "0.26.0",
     });
     ensureLibraryTypesReference(cwd, materializedDir);
@@ -407,23 +318,18 @@ describe("library surface identity and reuse", () => {
   });
 
   test("an uninjected version falls back to the running toolchain", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
-
     const { materializedDir } = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
     });
 
     expect(materializedDir).toBe(`.defold-types/libraries@${readCliVersion()}`);
   });
 
   test("a toolchain upgrade leaves the earlier library surface intact", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
     const first = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
       cliVersion: "0.26.0",
     });
     const firstDir = path.join(cwd, first.materializedDir as string);
@@ -431,8 +337,7 @@ describe("library surface identity and reuse", () => {
 
     const second = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
       cliVersion: "0.27.0",
     });
 
@@ -446,11 +351,9 @@ describe("library surface identity and reuse", () => {
   });
 
   test("a repeat materialization of a stamped surface reuses it instead of rewriting", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
     const first = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
       cliVersion: "0.26.0",
     });
     const dir = path.join(cwd, first.materializedDir as string);
@@ -461,8 +364,7 @@ describe("library surface identity and reuse", () => {
 
     const second = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
       cliVersion: "0.26.0",
     });
 
@@ -472,11 +374,9 @@ describe("library surface identity and reuse", () => {
   });
 
   test("a library surface missing its stamp is rewritten, not reused", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
     const first = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
       cliVersion: "0.26.0",
     });
     const dir = path.join(cwd, first.materializedDir as string);
@@ -485,8 +385,7 @@ describe("library surface identity and reuse", () => {
 
     materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
       cliVersion: "0.26.0",
     });
 
@@ -495,26 +394,56 @@ describe("library surface identity and reuse", () => {
   });
 
   test("a changed match set is not mistaken for a reusable surface", () => {
-    seedGenerated("keep.keep", "declare module 'keep.keep' {}\n");
-    seedGenerated("extra.extra", "declare module 'extra.extra' {}\n");
     const first = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"])],
-      generatedDir,
+      printed: [printed("keep.keep")],
       cliVersion: "0.26.0",
     });
     const dir = path.join(cwd, first.materializedDir as string);
 
     const second = materializeVendoredLibraries({
       cwd,
-      matched: [library("keep", ["keep.keep"]), library("extra", ["extra.extra"])],
-      generatedDir,
+      printed: [printed("keep.keep"), printed("extra.extra")],
       cliVersion: "0.26.0",
     });
 
     expect(second.modules).toEqual(["extra.extra", "keep.keep"]);
     expect(existsSync(path.join(dir, "extra.extra.d.ts"))).toBe(true);
     expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toContain('import "./extra.extra";');
+  });
+
+  test("the same modules printed with different contents rewrite the surface", () => {
+    const first = materializeVendoredLibraries({
+      cwd,
+      printed: [printed("keep.keep", "declare module 'keep.keep' { export const a: number; }\n")],
+      cliVersion: "0.26.0",
+    });
+    const file = path.join(cwd, first.materializedDir as string, "keep.keep.d.ts");
+
+    materializeVendoredLibraries({
+      cwd,
+      printed: [printed("keep.keep", "declare module 'keep.keep' { export const b: number; }\n")],
+      cliVersion: "0.26.0",
+    });
+
+    expect(readFileSync(file, "utf8")).toBe(
+      "declare module 'keep.keep' { export const b: number; }\n",
+    );
+  });
+
+  test("the same modules printed with the same contents leave the file untouched", () => {
+    const first = materializeVendoredLibraries({
+      cwd,
+      printed: [printed("keep.keep")],
+      cliVersion: "0.26.0",
+    });
+    const file = path.join(cwd, first.materializedDir as string, "keep.keep.d.ts");
+    const past = new Date("2020-01-01T00:00:00Z");
+    utimesSync(file, past, past);
+
+    materializeVendoredLibraries({ cwd, printed: [printed("keep.keep")], cliVersion: "0.26.0" });
+
+    expect(statSync(file).mtime.getTime()).toBe(past.getTime());
   });
 
   test("a null materializedDir removes a versioned libraries entry", () => {

@@ -30,6 +30,9 @@ export interface ExtensionDeclarations {
   readonly provenance: ExtensionArchiveProvenance;
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
+  // The archive the bundle was read from, which `resolve` reopens to print the
+  // library modules it confirms.
+  readonly archivePath: string;
   // Why a cached copy was served without being revalidated, when it was.
   readonly warning?: string;
   readonly declarations: EmittedExtension[];
@@ -141,6 +144,7 @@ export async function resolveExtensionDeclarations(
         provenance: archive.provenance,
         assetOnly: true,
         resolvedVersion: archive.resolvedVersion,
+        archivePath: archive.archivePath,
         ...warning,
         declarations: [],
         luaModules,
@@ -164,6 +168,7 @@ export async function resolveExtensionDeclarations(
       provenance: archive.provenance,
       assetOnly: false,
       resolvedVersion: archive.resolvedVersion,
+      archivePath: archive.archivePath,
       ...warning,
       declarations,
       luaModules,

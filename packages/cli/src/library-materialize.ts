@@ -1,17 +1,17 @@
-// Materialization slice of `library-type-resolution`: copy the matched vendored
-// libraries' committed `generated/<module>.d.ts` files verbatim into the
-// gitignored sibling surface `.defold-types/libraries@<cliVersion>/`, then point tsconfig at
-// it. Mirrors `extension-materialize.ts`; the two surfaces coexist under one
+// Materialization slice of `library-type-resolution`: write the declarations
+// `resolve` printed for the matched libraries into the gitignored sibling surface
+// `.defold-types/libraries@<cliVersion>/`, then point tsconfig at it. Mirrors
+// `extension-materialize.ts`; the two surfaces coexist under one
 // `typeRoots: [".defold-types"]` alongside the engine `<surfaceId>/` surface.
-// Unlike extension namespaces, the generated library files are self-contained
+// Unlike extension namespaces, the printed library modules are self-contained
 // ambient `declare module` blocks that reference only global engine types, so
-// they copy byte-for-byte with no import rewriting.
+// they land byte-for-byte with no import rewriting.
 
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { readCliVersion } from "./cli-version";
 import { formatJsonLikeBiome } from "./format-json";
-import type { VendoredLibrary } from "./library-match";
 import {
   ensureGitignoreLine,
   MATERIALIZED_ROOT,
@@ -25,7 +25,8 @@ const LIBRARIES_BASE = "libraries";
 // The surface contents are a function of *(dependency set x toolchain version)*.
 // Only the toolchain axis can ride the directory name — the dependency set is a
 // set, and it changes for reasons unrelated to the toolchain — so the name
-// carries the version and the stamp carries the modules.
+// carries the version and the stamp carries the modules and a digest of what was
+// printed for them, which changes whenever a dependency's archive does.
 export function librariesDirName(cliVersion: string): string {
   return surfaceDirName(LIBRARIES_BASE, cliVersion);
 }
@@ -35,21 +36,40 @@ function isLibrariesEntry(entry: unknown): boolean {
   return namesSurfaceAxis(LIBRARIES_BASE, entry);
 }
 
-// Reuse only a surface whose stamp vouches for it *and* whose recorded module
-// set is the one being asked for: a matching stamp alone proves the toolchain
-// axis, never the dependency axis.
-function isReusableLibrarySurface(absDir: string, present: readonly string[]): boolean {
+export interface PrintedLibrary {
+  readonly module: string;
+  readonly contents: string;
+}
+
+function printedDigest(printed: readonly PrintedLibrary[]): string {
+  const hash = createHash("sha256");
+  for (const { module, contents } of printed) {
+    hash.update(`${module}\0${contents}\0`);
+  }
+  return hash.digest("hex");
+}
+
+// Reuse only a surface whose stamp vouches for it *and* whose recorded modules
+// and digest are the ones being asked for: a matching stamp alone proves the
+// toolchain axis, never the dependency axis.
+function isReusableLibrarySurface(
+  absDir: string,
+  modules: readonly string[],
+  digest: string,
+): boolean {
   if (surfaceStampStatus(absDir) !== "match") {
     return false;
   }
   try {
     const stamp = JSON.parse(readFileSync(path.join(absDir, "package.json"), "utf8")) as {
       modules?: unknown;
+      digest?: unknown;
     };
     return (
+      stamp.digest === digest &&
       Array.isArray(stamp.modules) &&
-      stamp.modules.length === present.length &&
-      stamp.modules.every((module, index) => module === present[index])
+      stamp.modules.length === modules.length &&
+      stamp.modules.every((module, index) => module === modules[index])
     );
   } catch {
     return false;
@@ -58,8 +78,8 @@ function isReusableLibrarySurface(absDir: string, present: readonly string[]): b
 
 export interface MaterializeVendoredLibrariesOptions {
   readonly cwd: string;
-  readonly matched: readonly VendoredLibrary[];
-  readonly generatedDir: string | null;
+  // `null` when library data is unavailable, which keeps a surface already there.
+  readonly printed: readonly PrintedLibrary[] | null;
   // Defaults to the running package's version, so a consumer's directory always
   // names the toolchain that actually wrote it. Injected by tests.
   readonly cliVersion?: string;
@@ -68,54 +88,37 @@ export interface MaterializeVendoredLibrariesOptions {
 export interface MaterializeVendoredLibrariesResult {
   readonly materializedDir: string | null;
   readonly modules: string[];
-  readonly skipped: string[];
 }
 
 export function materializeVendoredLibraries(
   opts: MaterializeVendoredLibrariesOptions,
 ): MaterializeVendoredLibrariesResult {
-  const { cwd, matched, generatedDir } = opts;
+  const { cwd } = opts;
 
   const cliVersion = opts.cliVersion ?? readCliVersion();
   const dirName = librariesDirName(cliVersion);
   const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
 
-  const modules = [...new Set(matched.flatMap((library) => library.modules))].sort();
-
-  // The committed source file stem differs from the module id for LuaLS and
-  // script_api libraries (druid ships `druid.druid` but its types live in
-  // `generated/druid.d.ts`; bridge ships `bridge.bridge` from
-  // `generated/bridge.d.ts`); pure-Lua modules map to themselves.
-  const stemOf = new Map<string, string>();
-  for (const library of matched) {
-    for (const module of library.modules) {
-      stemOf.set(module, library.generatedStems?.[module] ?? module);
-    }
+  // library-data-unavailable: keep a good surface rather than nuke it.
+  if (opts.printed === null) {
+    return { materializedDir: null, modules: [] };
   }
-  const sourceStem = (module: string): string => stemOf.get(module) ?? module;
+  const printed = [...opts.printed].sort((a, b) =>
+    a.module < b.module ? -1 : a.module > b.module ? 1 : 0,
+  );
+  const modules = printed.map(({ module }) => module);
 
-  // reconcile-to-zero: an empty match set means the declared set no longer wants
+  // reconcile-to-zero: nothing printed means the declared set no longer wants
   // any library surface, so remove a previously-materialized one.
   if (modules.length === 0) {
     rmSync(absDir, { recursive: true, force: true });
-    return { materializedDir: null, modules: [], skipped: [] };
-  }
-  // corpus-unavailable: keep a good surface rather than nuke it on a null source.
-  if (generatedDir === null) {
-    return { materializedDir: null, modules: [], skipped: [] };
+    return { materializedDir: null, modules: [] };
   }
 
-  const present = modules.filter((module) =>
-    existsSync(path.join(generatedDir, `${sourceStem(module)}.d.ts`)),
-  );
-  const skipped = modules.filter((module) => !present.includes(module));
-  if (present.length === 0) {
-    return { materializedDir: null, modules: [], skipped };
-  }
-
-  if (isReusableLibrarySurface(absDir, present)) {
-    return { materializedDir: relDir, modules: present, skipped };
+  const digest = printedDigest(printed);
+  if (isReusableLibrarySurface(absDir, modules, digest)) {
+    return { materializedDir: relDir, modules };
   }
 
   mkdirSync(absDir, { recursive: true });
@@ -124,35 +127,35 @@ export function materializeVendoredLibraries(
   // matches, so writing it last is not enough on its own.
   rmSync(path.join(absDir, "package.json"), { force: true });
 
-  const wanted = new Set(present.map((module) => `${module}.d.ts`));
+  const wanted = new Set(modules.map((module) => `${module}.d.ts`));
   for (const existing of readdirSync(absDir)) {
     if (existing.endsWith(".d.ts") && existing !== "index.d.ts" && !wanted.has(existing)) {
       rmSync(path.join(absDir, existing));
     }
   }
 
-  for (const module of present) {
-    const source = readFileSync(path.join(generatedDir, `${sourceStem(module)}.d.ts`), "utf8");
-    writeFileSync(path.join(absDir, `${module}.d.ts`), source);
+  for (const { module, contents } of printed) {
+    writeFileSync(path.join(absDir, `${module}.d.ts`), contents);
   }
 
-  const imports = present.map((module) => `import "./${module}";`).join("\n");
+  const imports = modules.map((module) => `import "./${module}";`).join("\n");
   writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
 
   // Last write of the function: the stamp only ever vouches for a surface whose
-  // every other file has already landed. `modules` records the dependency axis
-  // the directory name cannot carry.
+  // every other file has already landed. `modules` and `digest` record the
+  // dependency axis the directory name cannot carry.
   writeFileSync(
     path.join(absDir, "package.json"),
     `${formatJsonLikeBiome({
       name: "@defold-typescript/materialized-libraries",
       version: cliVersion,
       types: "index.d.ts",
-      modules: present,
+      modules,
+      digest,
     })}\n`,
   );
 
-  return { materializedDir: relDir, modules: present, skipped };
+  return { materializedDir: relDir, modules };
 }
 
 export function ensureLibraryTypesReference(cwd: string, materializedDir: string | null): void {
