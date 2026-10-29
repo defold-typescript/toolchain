@@ -138,7 +138,7 @@ export async function resolveRefDoc(opts: {
   channel?: RefDocChannel;
   download?: DownloadRefDoc;
   locate?: LocateLocalRefDoc;
-  readZip?: typeof readZip;
+  readZip?: (path: string) => ZipAccessor;
   fetchChannelInfo?: FetchChannelInfo;
 }): Promise<ResolvedRefDoc> {
   const open = opts.readZip ?? readZip;

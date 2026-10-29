@@ -29,7 +29,11 @@ import { describeDetectedPinMismatch } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
 import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./editor-attach";
-import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import {
+  type DownloadExtensionArchive,
+  type ExtensionZip,
+  extensionArchiveKey,
+} from "./extension-archive";
 import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
 import { loadVendoredNativeRegistry } from "./library-registry";
@@ -3111,13 +3115,15 @@ describe("dispatch", () => {
       detectEditorVersion: () => null,
       resolveInternals: {
         cacheDir,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== extensionArchiveKey(url)) {
             throw new Error(`no fake archive for ${zipPath}`);
           }
           return {
             entries: () => ["ext/api/alpha.script_api"],
+            comment: () => "",
+            bytes: () => new Uint8Array(0),
             read: () => ALPHA,
           };
         },
@@ -3182,9 +3188,11 @@ describe("dispatch", () => {
       sourceGeneratedDir,
       resolveInternals: {
         cacheDir,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (): ExtensionZip => ({
           entries: () => [],
+          comment: () => "",
+          bytes: () => new Uint8Array(0),
           read: () => "",
         }),
       },
@@ -4634,7 +4642,7 @@ describe("dispatch resolve", () => {
 
   function resolveInternals(url: string): {
     resolveInternals: {
-      download: () => Promise<Uint8Array>;
+      download: DownloadExtensionArchive;
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
     };
@@ -4644,13 +4652,15 @@ describe("dispatch resolve", () => {
     return {
       resolveInternals: {
         cacheDir,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
           }
           return {
             entries: () => ["ext/api/alpha.script_api"],
+            comment: () => "",
+            bytes: () => new Uint8Array(0),
             read: () => ALPHA,
           };
         },
@@ -4709,7 +4719,7 @@ describe("dispatch resolve", () => {
         scriptApiCount: 1,
         sceneSources: 0,
         assetOnly: false,
-        resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
+        resolvedVersion: expect.stringMatching(/^files-sha256:[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
       },
     ] as unknown as typeof parsed.extensions);
@@ -4728,7 +4738,7 @@ describe("dispatch resolve", () => {
 
     function sharedInternals(): {
       resolveInternals: {
-        download: () => Promise<Uint8Array>;
+        download: DownloadExtensionArchive;
         readZip: (zipPath: string) => ExtensionZip;
         cacheDir: string;
       };
@@ -4736,13 +4746,18 @@ describe("dispatch resolve", () => {
       return {
         resolveInternals: {
           cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
-          download: async () => new TextEncoder().encode("z"),
+          download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
           readZip: (zipPath: string) => {
             const doc = docs[path.basename(path.dirname(zipPath))];
             if (doc === undefined) {
               throw new Error(`no fake archive for ${zipPath}`);
             }
-            return { entries: () => ["ext/api/firebase.script_api"], read: () => doc };
+            return {
+              entries: () => ["ext/api/firebase.script_api"],
+              read: () => doc,
+              comment: () => "",
+              bytes: () => new Uint8Array(0),
+            };
           },
         },
       };
@@ -4813,7 +4828,7 @@ describe("dispatch resolve", () => {
     writeFileSync(
       path.join(cwd, "package.json"),
       `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: "sha256:pinned" } } },
+        { "defold-typescript": { extensions: { [url]: "commit:pinned" } } },
         null,
         2,
       )}\n`,
@@ -4826,13 +4841,13 @@ describe("dispatch resolve", () => {
       extensions: { resolvedVersion: string; pinnedVersion?: string }[];
     };
     expect(parsed.extensions).toHaveLength(1);
-    expect(parsed.extensions[0]?.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
-    expect(parsed.extensions[0]?.pinnedVersion).toBe("sha256:pinned");
+    expect(parsed.extensions[0]?.resolvedVersion).toMatch(/^files-sha256:[0-9a-f]{64}$/);
+    expect(parsed.extensions[0]?.pinnedVersion).toBe("commit:pinned");
   });
 
   function libraryResolveInternals(url: string): {
     resolveInternals: {
-      download: () => Promise<Uint8Array>;
+      download: DownloadExtensionArchive;
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
@@ -4848,13 +4863,15 @@ describe("dispatch resolve", () => {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
         libraryGeneratedDir: generatedDir,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
           }
           return {
             entries: () => ["mylib-main/mylib/core.lua", "mylib-main/asset/foo.png"],
+            comment: () => "",
+            bytes: () => new Uint8Array(0),
             read: () => "",
           };
         },
@@ -4866,7 +4883,7 @@ describe("dispatch resolve", () => {
   // folder, so the match cannot be verified against `mylib.core`.
   function unverifiedLibraryResolveInternals(url: string): {
     resolveInternals: {
-      download: () => Promise<Uint8Array>;
+      download: DownloadExtensionArchive;
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
@@ -4882,12 +4899,17 @@ describe("dispatch resolve", () => {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
         libraryGeneratedDir: generatedDir,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
           }
-          return { entries: () => ["mylib-main/somethingelse/init.lua"], read: () => "" };
+          return {
+            entries: () => ["mylib-main/somethingelse/init.lua"],
+            read: () => "",
+            comment: () => "",
+            bytes: () => new Uint8Array(0),
+          };
         },
       },
     };
@@ -4938,7 +4960,7 @@ describe("dispatch resolve", () => {
         cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
         libraryRegistry: [],
         libraryGeneratedDir: null,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
@@ -4949,6 +4971,8 @@ describe("dispatch resolve", () => {
               "defold-daabbcc-3.0.8/daabbcc/annotation.lua",
             ],
             read: () => "",
+            comment: () => "",
+            bytes: () => new Uint8Array(0),
           };
         },
       },
@@ -4976,7 +5000,7 @@ describe("dispatch resolve", () => {
         cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
         libraryRegistry: [],
         libraryGeneratedDir: null,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
@@ -4987,6 +5011,8 @@ describe("dispatch resolve", () => {
               ...Object.keys(contents),
             ],
             read: (entry: string) => contents[entry] ?? "",
+            comment: () => "",
+            bytes: () => new Uint8Array(0),
           };
         },
       },
@@ -5035,7 +5061,7 @@ describe("dispatch resolve", () => {
   // `.script_api`, so the confirmed corpus match decides its type surface.
   function selfDocumentingResolveInternals(url: string): {
     resolveInternals: {
-      download: () => Promise<Uint8Array>;
+      download: DownloadExtensionArchive;
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
@@ -5051,13 +5077,15 @@ describe("dispatch resolve", () => {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
         libraryGeneratedDir: generatedDir,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
           }
           return {
             entries: () => ["mylib-main/mylib/core.lua", "mylib-main/ext/api/alpha.script_api"],
+            comment: () => "",
+            bytes: () => new Uint8Array(0),
             read: () => ALPHA,
           };
         },
@@ -5105,7 +5133,7 @@ describe("dispatch resolve", () => {
     expect(entry?.namespaces).toEqual([]);
     // The archive really does carry one `.script_api`; only the surface changed.
     expect(entry?.scriptApiCount).toBe(1);
-    expect(entry?.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(entry?.resolvedVersion).toMatch(/^files-sha256:[0-9a-f]{64}$/);
     expect(entry?.pinStatus).toBe("unpinned");
     // Summing the two arrays yields each module exactly once.
     expect([
@@ -5141,12 +5169,17 @@ describe("dispatch resolve", () => {
         cacheDir,
         libraryRegistry: [],
         libraryGeneratedDir: null,
-        download: async () => new TextEncoder().encode("z"),
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
           }
-          return { entries: () => ["asset/foo.png"], read: () => "" };
+          return {
+            entries: () => ["asset/foo.png"],
+            read: () => "",
+            comment: () => "",
+            bytes: () => new Uint8Array(0),
+          };
         },
       },
     });
@@ -5184,7 +5217,7 @@ describe("dispatch resolve", () => {
     writeFileSync(
       path.join(cwd, "package.json"),
       `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: "sha256:pinned" } } },
+        { "defold-typescript": { extensions: { [url]: "commit:pinned" } } },
         null,
         2,
       )}\n`,
@@ -5194,7 +5227,7 @@ describe("dispatch resolve", () => {
 
     expect(code).toBe(0);
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: warning: pin drift for ${url}: sha256:pinned -> sha256:<digest>\n`,
+      `${noSceneSource(url)}defold-typescript resolve: warning: pin drift for ${url}: commit:pinned -> files-sha256:<digest>\n`,
     );
   });
 
@@ -5207,7 +5240,7 @@ describe("dispatch resolve", () => {
     writeFileSync(
       pkgPath,
       `${JSON.stringify(
-        { "defold-typescript": { extensions: { [driftedUrl]: "sha256:stale" } } },
+        { "defold-typescript": { extensions: { [driftedUrl]: "commit:stale" } } },
         null,
         2,
       )}\n`,
@@ -5230,7 +5263,12 @@ describe("dispatch resolve", () => {
               return base.resolveInternals.readZip(zipPath);
             }
             if (key === freshKey) {
-              return { entries: () => ["asset/foo.png"], read: () => "" };
+              return {
+                entries: () => ["asset/foo.png"],
+                read: () => "",
+                comment: () => "",
+                bytes: () => new Uint8Array(0),
+              };
             }
             throw new Error(`unexpected readZip for ${zipPath}`);
           },
@@ -5242,10 +5280,60 @@ describe("dispatch resolve", () => {
 
     expect(code).toBe(1);
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(driftedUrl)}${noSceneSource(freshUrl)}defold-typescript resolve: error: pin drift for ${driftedUrl}: sha256:stale -> sha256:<digest>\n`,
+      `${noSceneSource(driftedUrl)}${noSceneSource(freshUrl)}defold-typescript resolve: error: pin drift for ${driftedUrl}: commit:stale -> files-sha256:<digest>\n`,
     );
     // package.json byte-unchanged: no drift clobber, no absent-pinned seed
     expect(readFileSync(pkgPath, "utf8")).toBe(originalPkg);
+  });
+
+  test("--frozen fails on a retired zip-byte pin and asks for a plain resolve", async () => {
+    const { io, err } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = path.join(cwd, "package.json");
+    writeFileSync(
+      pkgPath,
+      `${JSON.stringify(
+        { "defold-typescript": { extensions: { [url]: `sha256:${"a".repeat(64)}` } } },
+        null,
+        2,
+      )}\n`,
+    );
+    const originalPkg = readFileSync(pkgPath, "utf8");
+
+    const code = await dispatch(["resolve", cwd, "--frozen"], io, resolveInternals(url));
+
+    expect(code).toBe(1);
+    expect(withoutDigests(err())).toBe(
+      `${noSceneSource(url)}defold-typescript resolve: error: retired pin for ${url}: sha256:<digest> hashes the zip bytes; run \`defold-typescript resolve\` without --frozen to replace it\n`,
+    );
+    expect(readFileSync(pkgPath, "utf8")).toBe(originalPkg);
+  });
+
+  test("a plain resolve replaces a retired zip-byte pin and notes it", async () => {
+    const { io, err } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const pkgPath = path.join(cwd, "package.json");
+    writeFileSync(
+      pkgPath,
+      `${JSON.stringify(
+        { "defold-typescript": { extensions: { [url]: `sha256:${"a".repeat(64)}` } } },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const code = await dispatch(["resolve", cwd], io, resolveInternals(url));
+
+    expect(code).toBe(0);
+    expect(withoutDigests(err())).toBe(
+      `${noSceneSource(url)}defold-typescript resolve: replaced retired pin for ${url}: sha256:<digest> -> files-sha256:<digest>\n`,
+    );
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+      "defold-typescript": { extensions: Record<string, string> };
+    };
+    expect(pkg["defold-typescript"].extensions[url]).toMatch(/^files-sha256:[0-9a-f]{64}$/);
   });
 
   test("--frozen passes when all pins match", async () => {
@@ -5257,12 +5345,12 @@ describe("dispatch resolve", () => {
     const first = await runResolve({
       cwd,
       cacheDir: mkdtempSync(path.join(os.tmpdir(), "frozen-precache-")),
-      download: async () => new TextEncoder().encode("z"),
+      download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
       readZip: resolveInternals(url).resolveInternals.readZip,
     });
     expect(first.ok).toBe(true);
     const matchingDigest = first.extensions[0]?.resolvedVersion as string;
-    expect(matchingDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(matchingDigest).toMatch(/^files-sha256:[0-9a-f]{64}$/);
     writeFileSync(
       path.join(cwd, "package.json"),
       `${JSON.stringify(
@@ -5303,7 +5391,7 @@ describe("dispatch resolve", () => {
     writeFileSync(
       path.join(cwd, "package.json"),
       `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: "sha256:stale" } } },
+        { "defold-typescript": { extensions: { [url]: "commit:stale" } } },
         null,
         2,
       )}\n`,
@@ -5323,7 +5411,7 @@ describe("dispatch resolve", () => {
     expect(parsed.extensions[0]?.url).toBe(url);
     expect(parsed.extensions[0]?.pinStatus).toBe("drift");
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: error: 1 extension pin(s) drifted:\n  ${url}: sha256:stale -> sha256:<digest>\n`,
+      `${noSceneSource(url)}defold-typescript resolve: error: 1 extension pin(s) drifted:\n  ${url}: commit:stale -> files-sha256:<digest>\n`,
     );
   });
 

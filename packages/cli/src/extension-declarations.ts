@@ -7,7 +7,11 @@
 // an empty `declarations` list and are reported, not failed. Writing into
 // `.defold-types/` and the CLI `resolve` verb stay later slices.
 
-import { archiveWrapperOf, libraryIncludedEntries } from "@defold-typescript/transpiler";
+import {
+  archiveGameProjectEntry,
+  archiveWrapperOf,
+  libraryIncludedEntries,
+} from "@defold-typescript/transpiler";
 import {
   defaultReadZip,
   type ExtensionArchiveProvenance,
@@ -26,6 +30,8 @@ export interface ExtensionDeclarations {
   readonly provenance: ExtensionArchiveProvenance;
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
+  // Why a cached copy was served without being revalidated, when it was.
+  readonly warning?: string;
   readonly declarations: EmittedExtension[];
   // Dotted Lua require paths the archive actually ships (`a/b/c.lua` -> `a.b.c`,
   // leading GitHub archive-wrapper dir stripped). Downstream library matching
@@ -52,18 +58,9 @@ export interface ExtensionDeclarations {
   readonly shipped: { entry: string; contents: string }[];
 }
 
-// The archive's own `game.project`, read through the wrapper strip so a library
-// packed under `<repo>-<ref>/` is found the same way a bare one is.
-function archiveGameProject(zip: ExtensionZip): string | undefined {
-  const entries = zip.entries();
-  const wrapper = archiveWrapperOf(entries);
-  for (const entry of entries) {
-    const path = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
-    if (path === "game.project") {
-      return zip.read(entry);
-    }
-  }
-  return undefined;
+function readArchiveGameProject(zip: ExtensionZip): string | undefined {
+  const entry = archiveGameProjectEntry(zip.entries());
+  return entry === undefined ? undefined : zip.read(entry);
 }
 
 function archiveSceneSources(zip: ExtensionZip): {
@@ -73,7 +70,7 @@ function archiveSceneSources(zip: ExtensionZip): {
 } {
   const { shared, reasons, refused } = libraryIncludedEntries(
     zip.entries(),
-    archiveGameProject(zip),
+    readArchiveGameProject(zip),
   );
   return {
     sceneSources: shared.map(({ entry, path }) => ({ path, text: zip.read(entry) })),
@@ -137,12 +134,14 @@ export async function resolveExtensionDeclarations(
         contents: zip.read(entry),
       })),
     );
+    const warning = archive.warning === undefined ? {} : { warning: archive.warning };
     if (archive.assetOnly) {
       bundles.push({
         url: archive.url,
         provenance: archive.provenance,
         assetOnly: true,
         resolvedVersion: archive.resolvedVersion,
+        ...warning,
         declarations: [],
         luaModules,
         manifestDirs,
@@ -165,6 +164,7 @@ export async function resolveExtensionDeclarations(
       provenance: archive.provenance,
       assetOnly: false,
       resolvedVersion: archive.resolvedVersion,
+      ...warning,
       declarations,
       luaModules,
       manifestDirs,

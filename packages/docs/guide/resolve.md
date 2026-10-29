@@ -299,15 +299,18 @@ normally.
 ## Keeping types in sync with `watch`
 
 > [!TIP] A running [`watch`](./watch.md) re-resolves on every `game.project`
-> save, so editing `[dependencies]` while `watch` is up refreshes
-> `.defold-types/` with no extra command. `watch` only reconciles on save — it
-> does not bootstrap the surface — so run `resolve` once first to materialize
-> the initial types.
+> save and every time the Defold editor fetches libraries (it rewrites
+> `.internal/lib/dependencies.json`), so editing `[dependencies]` or running
+> *Project -> Fetch Libraries* while `watch` is up refreshes `.defold-types/`
+> with no extra command. `watch` only reconciles on those events — it does not
+> bootstrap the surface — so run `resolve` once first to materialize the
+> initial types.
 
 ## Flags
 
 - `--frozen` — treat the committed pin set as a lockfile: exit non-zero on drift
-  (so CI gates the upgrade) and write nothing. See [Pinning extension versions](#pinning-extension-versions).
+  or on a pin in the retired `sha256:` form (so CI gates the upgrade) and write
+  nothing. See [Pinning extension versions](#pinning-extension-versions).
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
@@ -319,41 +322,68 @@ normally.
 ## Pinning extension versions
 
 A `dependencies#N` URL is often a **moving** ref (`.../archive/master.zip`) — the
-same URL can yield different bytes over time. So the reproducible identity of
-*what was actually resolved* is the **sha256 digest of the resolved archive
-bytes**, not a URL segment. `resolve` records that digest as the dependency's
-version and seeds it into the project's `package.json` when absent, never
-clobbering an existing pin:
+same URL can yield a different commit over time. So the reproducible identity of
+*what was actually resolved* is pinned in one of two forms, never a URL segment:
+
+- **`commit:<sha>`** — the commit the archive was packed from. A GitHub archive
+  of a branch, a tag or a commit names it in its zip comment.
+- **`files-sha256:<hex>`** — for an archive without a commit in its comment, a
+  sha256 over the files under its `game.project` `[library] include_dirs` (every
+  file when it declares none), each by its path inside the library. A change
+  elsewhere in the repository leaves the pin as it is.
+
+`resolve` records that pin as the dependency's version and seeds it into the
+project's `package.json` when absent, never clobbering an existing pin:
 
 ```jsonc
 "defold-typescript": {
   "extensions": {
-    "https://github.com/defold/extension-iap/archive/main.zip": "sha256:ab12…"
+    "https://github.com/defold/extension-iap/archive/main.zip": "commit:5c33c398…"
   }
 }
 ```
 
-A committed pin is human-owned intent. When the URL later yields different bytes,
-the fresh digest no longer matches the pin and `resolve` reports **drift**, gated
-by two knobs:
+A committed pin is human-owned intent. When the URL later yields another commit
+or other files, the fresh pin no longer matches and `resolve` reports **drift**,
+gated by two knobs:
 
 - **Default (no flag)** — warns on drift, writing one `stderr` line per drifted
-  URL (e.g. `pin drift for https://...: sha256:pinned -> sha256:fresh`) but exits
-  `0`, so drift surfaces on a developer's machine without breaking scripted runs.
-  Absent pins are seeded; existing pins are never clobbered; and a pin whose URL
-  is no longer declared in `[dependencies]` is pruned, so the pin map tracks the
-  URLs that actually resolve.
+  URL (e.g. `pin drift for https://...: commit:5c33c398… -> commit:9f1e0a27…`) but
+  exits `0`, so drift surfaces on a developer's machine without breaking scripted
+  runs. Absent pins are seeded; existing pins are never clobbered; and a pin whose
+  URL is no longer declared in `[dependencies]` is pruned, so the pin map tracks
+  the URLs that actually resolve.
 - **`--frozen`** — treats the pin set as a lockfile: exits non-zero on drift and
   writes nothing (no seeding, no clobbering, no pruning). An unpinned extension
   passes and stays unseeded.
 
+A pin in the retired `sha256:` form hashed the zip bytes, so no current pin can
+match it. A plain `resolve` replaces it with the current form and notes each
+replacement on `stderr`; `resolve --frozen` fails on it and asks for a plain
+`resolve`.
+
 Either way `resolve` still materializes the surface for the drifted dependencies;
 only the `package.json` write and the exit code are gated. `--json` reports
-`pinStatus` per extension (`unpinned` / `match` / `drift`).
+`pinStatus` per extension (`unpinned` / `match` / `drift` / `retired`).
 
 ## Cache location
 
-Downloaded archives are cached so repeated runs stay offline, at
-`$XDG_CACHE_HOME/defold-typescript/extensions` (default
+`resolve` takes each dependency's archive from the first of these that has it:
+
+1. **Defold's own copy.** Once the editor has fetched libraries, the project's
+   `.internal/lib/` holds `dependencies.json`, which lists the commit each URL
+   resolved to, and one zip per URL. `resolve` reads that zip in place, and
+   only when its zip comment carries the listed commit, so the types match the
+   code the game builds with. It never writes under `.internal/`. `--json`
+   reports `provenance: "defold"`.
+2. **Its own cache**, revalidated on every run: `resolve` asks the server
+   whether the archive changed since the copy it stored (by `ETag`), keeps the
+   copy when it did not (`provenance: "cache"`), and replaces it when it did
+   (`provenance: "download"`), so a `master.zip` dependency follows its branch.
+   When the request fails, as it does offline, `resolve` uses the stored copy
+   and warns on `stderr`.
+3. **A fresh download** when nothing is stored yet; with no network that fails.
+
+The cache lives at `$XDG_CACHE_HOME/defold-typescript/extensions` (default
 `~/.cache/defold-typescript/extensions`). Set `DEFOLD_TYPESCRIPT_CACHE` to
 override the root; archives then land under `$DEFOLD_TYPESCRIPT_CACHE/extensions`.

@@ -273,6 +273,17 @@ export interface ZipAccessor {
   entries(): string[];
 }
 
+// What `readZip` returns beyond the ref-doc seam, for the extension-archive
+// resolver, which pins a dependency by what this exposes.
+export interface ZipArchive extends ZipAccessor {
+  // An entry's bytes as stored, for a file that is not UTF-8 text or whose
+  // exact content is hashed.
+  bytes(entry: string): Uint8Array;
+  // The archive comment, `""` when there is none. A GitHub archive carries the
+  // commit it was packed from here, as `git archive` writes it.
+  comment(): string;
+}
+
 const ZIP_LOCAL_HEADER_SIGNATURE = 0x04034b50;
 const ZIP_CENTRAL_HEADER_SIGNATURE = 0x02014b50;
 const ZIP_END_RECORD_SIGNATURE = 0x06054b50;
@@ -349,8 +360,12 @@ function readCentralDirectory(
 // A comment may itself contain an end record, so a candidate counts only when
 // its own comment length reaches exactly to the end of the archive and it
 // describes a central directory ending at it. When no candidate does, the
-// nearest one's own defect is reported.
-function readZipDirectory(bytes: Buffer, path: string): Map<string, ZipDirectoryEntry> {
+// nearest one's own defect is reported. The comment is everything after the
+// record that counted.
+function readZipDirectory(
+  bytes: Buffer,
+  path: string,
+): { entries: Map<string, ZipDirectoryEntry>; comment: string } {
   const earliest = Math.max(0, bytes.length - ZIP_END_RECORD_SIZE - ZIP_MAX_COMMENT_SIZE);
   let nearestDefect: Error | undefined;
   for (let at = bytes.length - ZIP_END_RECORD_SIZE; at >= earliest; at--) {
@@ -360,7 +375,10 @@ function readZipDirectory(bytes: Buffer, path: string): Map<string, ZipDirectory
     ) {
       const directory = readCentralDirectory(bytes, at, path);
       if (!(directory instanceof Error)) {
-        return directory;
+        return {
+          entries: directory,
+          comment: bytes.toString("utf8", at + ZIP_END_RECORD_SIZE, bytes.length),
+        };
       }
       nearestDefect ??= directory;
     }
@@ -374,33 +392,36 @@ function readZipDirectory(bytes: Buffer, path: string): Map<string, ZipDirectory
 // Parses the archive itself rather than shelling out to `unzip`, which a stock
 // Windows machine does not have: the CLI opens extension archives through this
 // under Node and Bun on every OS.
-export function readZip(path: string): ZipAccessor {
+export function readZip(path: string): ZipArchive {
   const bytes = readFileSync(path);
-  const entries = readZipDirectory(bytes, path);
+  const { entries, comment } = readZipDirectory(bytes, path);
+  const entryBytes = (name: string): Buffer => {
+    const entry = entries.get(name);
+    if (entry === undefined) {
+      throw new Error(`no entry ${name} in ${path}`);
+    }
+    const { localHeaderOffset, compressedSize, method } = entry;
+    if (bytes.readUInt32LE(localHeaderOffset) !== ZIP_LOCAL_HEADER_SIGNATURE) {
+      throw new Error(`${path}: local header of ${name} has no signature`);
+    }
+    const nameLength = bytes.readUInt16LE(localHeaderOffset + 26);
+    const extraLength = bytes.readUInt16LE(localHeaderOffset + 28);
+    const start = localHeaderOffset + 30 + nameLength + extraLength;
+    const data = bytes.subarray(start, start + compressedSize);
+    if (method === ZIP_METHOD_STORED) {
+      return data;
+    }
+    if (method === ZIP_METHOD_DEFLATE) {
+      return inflateRawSync(data);
+    }
+    throw new Error(`${path}: entry ${name} uses unsupported compression method ${method}`);
+  };
   return {
     has: (name) => entries.has(name),
     entries: () => [...entries.keys()],
-    read: (name) => {
-      const entry = entries.get(name);
-      if (entry === undefined) {
-        throw new Error(`no entry ${name} in ${path}`);
-      }
-      const { localHeaderOffset, compressedSize, method } = entry;
-      if (bytes.readUInt32LE(localHeaderOffset) !== ZIP_LOCAL_HEADER_SIGNATURE) {
-        throw new Error(`${path}: local header of ${name} has no signature`);
-      }
-      const nameLength = bytes.readUInt16LE(localHeaderOffset + 26);
-      const extraLength = bytes.readUInt16LE(localHeaderOffset + 28);
-      const start = localHeaderOffset + 30 + nameLength + extraLength;
-      const data = bytes.subarray(start, start + compressedSize);
-      if (method === ZIP_METHOD_STORED) {
-        return data.toString("utf8");
-      }
-      if (method === ZIP_METHOD_DEFLATE) {
-        return inflateRawSync(data).toString("utf8");
-      }
-      throw new Error(`${path}: entry ${name} uses unsupported compression method ${method}`);
-    },
+    read: (name) => entryBytes(name).toString("utf8"),
+    bytes: (name) => new Uint8Array(entryBytes(name)),
+    comment: () => comment,
   };
 }
 

@@ -117,7 +117,8 @@ and so is the `sceneTypes` event that follows it: both run before or as part of
 the scene walk, so the check starts from the first `rebuild` or the first
 `sceneTypes` a scene save produces.
 
-A `resolve` event is emitted whenever a `game.project` save re-resolves the
+A `resolve` event is emitted whenever a `game.project` save or a Defold library
+fetch (a rewritten `.internal/lib/dependencies.json`) re-resolves the
 extension surface (re-materializing `.defold-types/extensions/` from the declared
 `[dependencies]` URLs). An `editorVersion` event — `editor`, `target`, and
 `targetSource` (`pin`, `detected`, or `default`) — is emitted when an editor
@@ -137,11 +138,12 @@ stderr.
 
 [`resolve --json`](./resolve.md) reports `materializedSurface` (the written
 directory, or `null` when nothing was materialized) and, per extension, the `url`,
-generated `namespaces`, `typeSurface`, `scriptApiCount`, `provenance` (`cache` or `download`),
+generated `namespaces`, `typeSurface`, `scriptApiCount`, `provenance` (`defold`, `cache` or
+`download`; see [Cache location](./resolve.md#cache-location)),
 whether it was `assetOnly`, `sceneSources` (how many [shared scene
 files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
-(sha256 digest of the resolved archive bytes), — when the project pins that url —
-the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
+(`commit:<sha>` or `files-sha256:<hex>`), — when the project pins that url —
+the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift` / `retired`). A separate `libraries` array reports
 a dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
@@ -186,8 +188,8 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
       "provenance": "download",
       "assetOnly": false,
       "sceneSources": 0,
-      "resolvedVersion": "sha256:ab12…",
-      "pinnedVersion": "sha256:ab12…",
+      "resolvedVersion": "commit:5c33c398…",
+      "pinnedVersion": "commit:5c33c398…",
       "pinStatus": "match"
     },
     {
@@ -198,7 +200,7 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
       "provenance": "download",
       "assetOnly": true,
       "sceneSources": 0,
-      "resolvedVersion": "sha256:cd34…",
+      "resolvedVersion": "commit:9f1e0a27…",
       "pinStatus": "unpinned"
     }
   ],
@@ -650,14 +652,14 @@ its index and `package.json` to exactly the declared set.
   "extensions": [
     {
       "url": "<archive url>",
-      "provenance": "<cache | download>",
+      "provenance": "<defold | cache | download>",
       "namespaces": ["<namespace>"],
       "typeSurface": "<none | extension | vendored-library | vendored-native | shipped>",
       "scriptApiCount": 1,
       "assetOnly": false,
       "sceneSources": 0,
       "resolvedVersion": "<version>",
-      "pinStatus": "<unpinned | match | drift>"
+      "pinStatus": "<unpinned | match | drift | retired>"
     }
   ]
 }
