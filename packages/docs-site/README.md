@@ -22,13 +22,16 @@ bun --filter @defold-typescript/docs-site run dev
 ## Build
 
 ```sh
-bun --filter @defold-typescript/docs-site run build
+bun --filter @defold-typescript/docs-site run build:site
 ```
 
-`bun run build` first calls `scripts/build-font-fallbacks.ts` to regenerate the
-metric-matched fallback faces, then `scripts/build-search-index.ts` to materialise the prose
-search index, then `scripts/build-symbol-index.ts`, and finally the two-pass Vite build
-(`--mode client` + SSG). The static site is prerendered to `dist/`, one HTML file per
+`bun run build:site` first runs `build-indexes`, which calls
+`scripts/build-font-fallbacks.ts` to regenerate the metric-matched fallback faces, then
+`scripts/build-search-index.ts` to materialise the prose search index, then
+`scripts/build-symbol-index.ts`, and finally the two-pass Vite build (`--mode client` +
+SSG). The package's `build` script, which the root `bun run build` runs, stops after
+`build-indexes`: typecheck and the tests need its generated sources, not the pages. The
+static site is prerendered to `dist/`, one HTML file per
 guide page (`dist/getting-started.html`, `dist/index.html` from the guide `README.md`,
 ...), the API index (`dist/api.html`), the Guides landing (`dist/guides.html`), and one
 per API namespace under `dist/api/`.

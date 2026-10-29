@@ -89,15 +89,19 @@ jobs:
       # Refuse to publish unless ci.yml already finished green on THIS commit.
       # The release never re-runs the checks; it reads CI's result from the
       # Checks API (keyed by SHA) and aborts if CI is absent, still running, or
-      # red. ci.yml runs lint-typecheck + a 3-OS `test` matrix, so the names are
-      # `lint-typecheck` and `test (<os>)`.
+      # red. ci.yml runs lint-typecheck, a 3-OS `test` matrix and the docs site's
+      # page build, so the names are `lint-typecheck`, `test (<os>)` and
+      # `docs-site`. A commit pushed on a branch and then
+      # on main carries one CI run per push, and the Checks API returns them all,
+      # so only the newest check of each name (the highest id) counts: an earlier
+      # cancelled run cannot veto a later green one, and a later red one still blocks.
       - name: Require CI green on this commit
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           sha="${{ github.sha }}"
           runs=$(gh api "repos/${{ github.repository }}/commits/$sha/check-runs?per_page=100" \
-                   --jq '[.check_runs[] | select(.name | test("^lint-typecheck$|^test "))]')
+                   --jq '[.check_runs[] | select(.name | test("^lint-typecheck$|^test |^docs-site$"))] | group_by(.name) | map(max_by(.id))')
           total=$(jq 'length' <<<"$runs")
           completed=$(jq '[.[] | select(.status=="completed")] | length' <<<"$runs")
           green=$(jq '[.[] | select(.status=="completed" and .conclusion=="success")] | length' <<<"$runs")
@@ -194,9 +198,10 @@ jobs:
   docs:
     needs: publish
     runs-on: ubuntu-latest
-    # Observed deploy-docs duration is 106-142s; this is generous headroom, with
-    # the job timeout as the backstop if the dispatch never lands.
-    timeout-minutes: 30
+    # deploy-docs runs 40795838216 and 40784420472 took 21 and 26 min; 60 min keeps
+    # over 2x headroom, with the job timeout as the backstop if the dispatch never
+    # lands.
+    timeout-minutes: 60
     permissions:
       actions: write
     steps:
