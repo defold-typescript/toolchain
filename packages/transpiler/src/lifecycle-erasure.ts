@@ -13,8 +13,17 @@ import {
   createReturnStatement,
   createStringLiteral,
   createTableIndexExpression,
+  createUnaryExpression,
   createVariableDeclarationStatement,
+  type Expression,
   type Identifier,
+  isBooleanLiteral,
+  isCallExpression,
+  isIdentifier,
+  isNumericLiteral,
+  isStringLiteral,
+  isTableIndexExpression,
+  isUnaryExpression,
   NodeFlags,
   type Plugin,
   type Statement,
@@ -234,23 +243,70 @@ export interface PropertyMember {
   readonly initializer: ts.Expression;
 }
 
-// The `key: default` members of a factory's `properties` field that register as
-// script properties: a property assignment keyed by an identifier or a string
-// literal. Shared by the emitter and every analysis of what it registers.
-export function propertyMembers(property: ts.ObjectLiteralElementLike): PropertyMember[] {
-  if (!ts.isPropertyAssignment(property) || !ts.isObjectLiteralExpression(property.initializer)) {
-    return [];
+export interface UnemittedPropertyMember {
+  readonly node: ts.ObjectLiteralElementLike;
+  readonly text: string;
+}
+
+// The object literal a `properties` field holds once its parentheses and
+// type-only wrappers are stripped, or `undefined` for any other value.
+function propertiesObject(
+  property: ts.ObjectLiteralElementLike,
+): ts.ObjectLiteralExpression | undefined {
+  if (!ts.isPropertyAssignment(property)) {
+    return undefined;
   }
+  const value = innermostExpression(property.initializer);
+  return ts.isObjectLiteralExpression(value) ? value : undefined;
+}
+
+// The property name JavaScript gives a key written as a literal, so `0x10`
+// names `"16"`, or `undefined` for a key computed from anything else.
+function propertyName(member: ts.PropertyAssignment): string | undefined {
+  const key = member.name;
+  if (ts.isIdentifier(key)) {
+    return key.text;
+  }
+  const literal = ts.isComputedPropertyName(key) ? innermostExpression(key.expression) : key;
+  if (ts.isStringLiteral(literal) || ts.isNoSubstitutionTemplateLiteral(literal)) {
+    return literal.text;
+  }
+  if (ts.isNumericLiteral(literal)) {
+    return String(Number(literal.text));
+  }
+  return undefined;
+}
+
+// The `key: default` members of a factory's `properties` field that register as
+// script properties: a property assignment keyed by an identifier or a literal.
+// Shared by the emitter and every analysis of what it registers.
+export function propertyMembers(property: ts.ObjectLiteralElementLike): PropertyMember[] {
   const members: PropertyMember[] = [];
-  for (const member of property.initializer.properties) {
+  for (const member of propertiesObject(property)?.properties ?? []) {
     if (!ts.isPropertyAssignment(member)) {
       continue;
     }
-    const key = member.name;
-    if (!ts.isIdentifier(key) && !ts.isStringLiteral(key)) {
+    const name = propertyName(member);
+    if (name !== undefined) {
+      members.push({ name, initializer: member.initializer });
+    }
+  }
+  return members;
+}
+
+// Every other member of a `properties` object: a spread, a shorthand, a method,
+// an accessor or a key computed from a non-literal. None has a `go.property`
+// form, so each is reported rather than dropped.
+export function unemittedPropertyMembers(
+  property: ts.ObjectLiteralElementLike,
+): UnemittedPropertyMember[] {
+  const members: UnemittedPropertyMember[] = [];
+  for (const member of propertiesObject(property)?.properties ?? []) {
+    if (ts.isPropertyAssignment(member) && propertyName(member) !== undefined) {
       continue;
     }
-    members.push({ name: key.text, initializer: member.initializer });
+    const text = member.name === undefined ? member.getText() : member.name.getText();
+    members.push({ node: member, text });
   }
   return members;
 }
@@ -279,9 +335,10 @@ export function isPropertiesHook(property: ts.ObjectLiteralElementLike): boolean
 }
 
 // The value-keyed `properties` field maps each `key: default` to a chunk-scope
-// `go.property("key", default)` the editor reads. Emitted before the hook
-// assignments and after the source's `local` consts, so a default referencing a
-// module const resolves.
+// `go.property("key", default)` the editor reads. Defold's build reads the
+// default from the Lua text alone and strips the call, so a default that names a
+// module const never reaches the engine; each default is checked against what
+// the build reads instead.
 function emitPropertyRegistrations(
   property: ts.ObjectLiteralElementLike,
   context: TransformationContext,
@@ -290,8 +347,173 @@ function emitPropertyRegistrations(
     createExpressionStatement(
       createCallExpression(
         createTableIndexExpression(createIdentifier("go"), createStringLiteral("property")),
-        [createStringLiteral(name), context.transformExpression(initializer)],
+        [createStringLiteral(name), propertyDefault(initializer, context)],
       ),
+    ),
+  );
+}
+
+function propertyDefault(initializer: ts.Expression, context: TransformationContext): Expression {
+  const infinite = infiniteDefault(initializer);
+  if (infinite !== undefined) {
+    return infinite;
+  }
+  const value = context.transformExpression(initializer);
+  if (!isMarkerDefault(initializer, context.checker) && !readsAsDefault(value)) {
+    context.diagnostics.push(
+      fatalAt(
+        initializer,
+        `\`${initializer.getText()}\` is not a default Defold's build reads: write a number, boolean, string, \`hash("...")\`, \`msg.url(...)\`, \`vmath.vector3\`/\`vector4\`/\`quat\` with numbers, or \`resource.<kind>("...")\`.`,
+      ),
+    );
+  }
+  return value;
+}
+
+// TSTL emits an infinite number as `math.huge`, a name the build rejects. The
+// build reads `1e999` as an infinite float, and only a raw token prints it.
+function infiniteDefault(initializer: ts.Expression): Expression | undefined {
+  const value = innermostExpression(initializer);
+  const negated = ts.isPrefixUnaryExpression(value) && value.operator === ts.SyntaxKind.MinusToken;
+  const literal = negated ? innermostExpression(value.operand) : value;
+  if (!ts.isNumericLiteral(literal) || Number.isFinite(Number(literal.text))) {
+    return undefined;
+  }
+  const token = createIdentifier("1e999");
+  return negated ? createUnaryExpression(token, SyntaxKind.NegationOperator) : token;
+}
+
+// A marker default reports through the marker checks, which name its one
+// readable form.
+function isMarkerDefault(initializer: ts.Expression, checker: ts.TypeChecker): boolean {
+  const value = innermostExpression(initializer);
+  return (
+    ts.isCallExpression(value) && RESOURCE_PROPERTY_MARKERS.has(calledGlobal(value, checker) ?? "")
+  );
+}
+
+const VMATH_DEFAULT_ARITY: ReadonlyMap<string, number> = new Map([
+  ["vector3", 3],
+  ["vector4", 4],
+  ["quat", 4],
+]);
+
+const RESOURCE_KINDS: ReadonlySet<string> = new Set(
+  [...RESOURCE_PROPERTY_MARKERS].map((marker) => marker.slice("resource.".length)),
+);
+
+function isLuaNumber(value: Expression): boolean {
+  const operand =
+    isUnaryExpression(value) && value.operator === SyntaxKind.NegationOperator
+      ? value.operand
+      : value;
+  return isNumericLiteral(operand) && Number.isFinite(operand.value);
+}
+
+// The defaults bob reads (`parsePropertyValue`, `LuaScanner.java:842-968` at
+// defold `a81dbb04`): a number with an optional leading minus, a boolean, a
+// string without NUL, `vmath.vector3`/`vector4`/`quat` with no argument, one
+// number or every component, `hash` of a string, `msg.url` of none, one or
+// three strings, and `resource.<kind>` of a string or nothing.
+function readsAsDefault(value: Expression): boolean {
+  if (isLuaNumber(value) || isBooleanLiteral(value)) {
+    return true;
+  }
+  if (isStringLiteral(value)) {
+    return !value.value.includes("\0");
+  }
+  if (!isCallExpression(value)) {
+    return false;
+  }
+  const callee = value.expression;
+  const args = value.params;
+  if (isIdentifier(callee)) {
+    return callee.text === "hash" && args[0] !== undefined && isStringLiteral(args[0]);
+  }
+  if (
+    !isTableIndexExpression(callee) ||
+    !isIdentifier(callee.table) ||
+    !isStringLiteral(callee.index)
+  ) {
+    return false;
+  }
+  const field = callee.index.value;
+  switch (callee.table.text) {
+    case "vmath": {
+      const arity = VMATH_DEFAULT_ARITY.get(field);
+      return (
+        arity !== undefined &&
+        (args.length <= 1 || args.length === arity) &&
+        args.every(isLuaNumber)
+      );
+    }
+    case "msg":
+      return field === "url" && [0, 1, 3].includes(args.length) && args.every(isStringLiteral);
+    case "resource":
+      return RESOURCE_KINDS.has(field) && (args[0] === undefined || isStringLiteral(args[0]));
+    default:
+      return false;
+  }
+}
+
+function fatalAt(node: ts.Node, messageText: string): ts.Diagnostic {
+  const file = node.getSourceFile();
+  const start = node.getStart(file);
+  return {
+    file,
+    start,
+    length: node.getEnd() - start,
+    category: ts.DiagnosticCategory.Error,
+    code: 0,
+    messageText,
+  };
+}
+
+// A value the type checker reads as `undefined` declares no properties, which
+// is the only value the GUI and render factories accept.
+function declaresNoProperties(
+  property: ts.ObjectLiteralElementLike,
+  checker: ts.TypeChecker,
+): boolean {
+  const value = ts.isPropertyAssignment(property)
+    ? property.initializer
+    : ts.isShorthandPropertyAssignment(property)
+      ? property.name
+      : undefined;
+  return (
+    value !== undefined && (checker.getTypeAtLocation(value).flags & ts.TypeFlags.Undefined) !== 0
+  );
+}
+
+// A member of any kind, or any value but `undefined`.
+function holdsProperties(property: ts.ObjectLiteralElementLike, checker: ts.TypeChecker): boolean {
+  const object = propertiesObject(property);
+  return object === undefined
+    ? !declaresNoProperties(property, checker)
+    : object.properties.length > 0;
+}
+
+function unemittedPropertiesValue(property: ts.ObjectLiteralElementLike): ts.Diagnostic {
+  const value = ts.isPropertyAssignment(property) ? property.initializer : property;
+  return fatalAt(
+    value,
+    `\`properties\` must be an object literal: Defold's build reads one \`go.property\` per property, written as \`name: value\`, and \`${value.getText()}\` registers none.`,
+  );
+}
+
+// Every `properties` member and value with no `go.property` form, reported so
+// none is dropped while `self` still types it.
+function unemittedPropertyDiagnostics(
+  property: ts.ObjectLiteralElementLike,
+  checker: ts.TypeChecker,
+): ts.Diagnostic[] {
+  if (propertiesObject(property) === undefined) {
+    return declaresNoProperties(property, checker) ? [] : [unemittedPropertiesValue(property)];
+  }
+  return unemittedPropertyMembers(property).map(({ node, text }) =>
+    fatalAt(
+      node,
+      `\`${text}\` in \`properties\` registers no script property: Defold's build reads one \`go.property\` per property, written as \`name: value\`.`,
     ),
   );
 }
@@ -302,16 +524,10 @@ function scriptOnlyProperties(
   property: ts.ObjectLiteralElementLike,
   factory: string,
 ): ts.Diagnostic {
-  const file = property.getSourceFile();
-  const start = property.getStart(file);
-  return {
-    file,
-    start,
-    length: property.getEnd() - start,
-    category: ts.DiagnosticCategory.Error,
-    code: 0,
-    messageText: `\`${factory}\` cannot declare \`properties\`: Defold builds \`go.property\` only in \`.script\` files. Declare the property in a \`defineScript\` and send its value with \`msg.post\`.`,
-  };
+  return fatalAt(
+    property,
+    `\`${factory}\` cannot declare \`properties\`: Defold builds \`go.property\` only in \`.script\` files. Declare the property in a \`defineScript\` and send its value with \`msg.post\`.`,
+  );
 }
 
 // The outermost expression that only wraps `node` in parentheses or a type-only
@@ -377,12 +593,11 @@ function isPropertyDefault(call: ts.CallExpression, checker: ts.TypeChecker): bo
   if (ts.isCallExpression(parent)) {
     return parent.arguments[1] === value && calledGlobal(parent, checker) === "go.property";
   }
-  const properties = parent?.parent?.parent;
-  if (
-    properties === undefined ||
-    !ts.isPropertyAssignment(properties) ||
-    !isPropertiesHook(properties)
-  ) {
+  if (!ts.isPropertyAssignment(parent) || !ts.isObjectLiteralExpression(parent.parent)) {
+    return false;
+  }
+  const properties = outermostWrapper(parent.parent).parent;
+  if (!ts.isPropertyAssignment(properties) || !isPropertiesHook(properties)) {
     return false;
   }
   const hooks = properties.parent;
@@ -394,16 +609,10 @@ function isPropertyDefault(call: ts.CallExpression, checker: ts.TypeChecker): bo
 }
 
 function misplacedMarker(node: ts.Expression, marker: string): ts.Diagnostic {
-  const file = node.getSourceFile();
-  const start = node.getStart(file);
-  return {
-    file,
-    start,
-    length: node.getEnd() - start,
-    category: ts.DiagnosticCategory.Error,
-    code: 0,
-    messageText: `\`${marker}\` is a build-time marker: Defold's build reads it only in a \`go.property\` default, and the engine binds no such function. Use it as a \`defineScript\` \`properties\` default.`,
-  };
+  return fatalAt(
+    node,
+    `\`${marker}\` is a build-time marker: Defold's build reads it only in a \`go.property\` default, and the engine binds no such function. Use it as a \`defineScript\` \`properties\` default.`,
+  );
 }
 
 // Bob reads a default as a marker only when the emitted text is
@@ -435,16 +644,10 @@ function readsAsMarker(call: ts.CallExpression): boolean {
 }
 
 function unreadableMarker(node: ts.CallExpression, marker: string): ts.Diagnostic {
-  const file = node.getSourceFile();
-  const start = node.getStart(file);
-  return {
-    file,
-    start,
-    length: node.getEnd() - start,
-    category: ts.DiagnosticCategory.Error,
-    code: 0,
-    messageText: `\`${marker}\` in a property default must be written \`${marker}("<path>")\`, with a string literal path: Defold's build reads no other form.`,
-  };
+  return fatalAt(
+    node,
+    `\`${marker}\` in a property default must be written \`${marker}("<path>")\`, with a string literal path: Defold's build reads no other form.`,
+  );
 }
 
 function isCallee(node: ts.Expression): boolean {
@@ -471,7 +674,8 @@ function eraseFactoryCall(
     if (name === "properties") {
       if (factory === "defineScript") {
         registrations.push(...emitPropertyRegistrations(property, context));
-      } else if (factory !== undefined && propertyMembers(property).length > 0) {
+        context.diagnostics.push(...unemittedPropertyDiagnostics(property, context.checker));
+      } else if (factory !== undefined && holdsProperties(property, context.checker)) {
         context.diagnostics.push(scriptOnlyProperties(property, factory));
       }
       continue;
