@@ -16,7 +16,6 @@ const URL_B = "https://github.com/defold/extension-push/archive/main.zip";
 
 describe("archivePin", () => {
   const COMMIT = "5c33c398e3c1d3ab3c0ee0d5f8f45c4c7c4e0b21";
-  const GAME_PROJECT = "[project]\ntitle = monarch\n\n[library]\ninclude_dirs = monarch\n";
 
   function pinOf(entries: readonly ZipFixtureEntry[], comment?: string): string {
     const zipPath = join(mkdtempSync(join(tmpdir(), "archive-pin-")), "archive.zip");
@@ -25,15 +24,28 @@ describe("archivePin", () => {
   }
 
   function library(
-    overrides: { lua?: string; example?: string; wrapper?: string } = {},
+    overrides: {
+      lua?: string;
+      example?: string;
+      transition?: string;
+      readme?: string;
+      wrapper?: string;
+      includeDirs?: string;
+    } = {},
   ): ZipFixtureEntry[] {
     const wrapper = overrides.wrapper ?? "monarch-master";
+    const gameProject = `[project]\ntitle = monarch\n\n[library]\ninclude_dirs = ${overrides.includeDirs ?? "monarch"}\n`;
     return [
       { name: `${wrapper}/`, text: "" },
-      { name: `${wrapper}/game.project`, text: GAME_PROJECT },
+      { name: `${wrapper}/game.project`, text: gameProject },
       { name: `${wrapper}/monarch/monarch.lua`, text: overrides.lua ?? "return {}\n" },
       { name: `${wrapper}/monarch/monarch.gui`, text: "script: ''\n" },
+      {
+        name: `${wrapper}/monarch/transitions/fade.lua`,
+        text: overrides.transition ?? "return {}\n",
+      },
       { name: `${wrapper}/example/example.script`, text: overrides.example ?? "-- example\n" },
+      { name: `${wrapper}/README.md`, text: overrides.readme ?? "# monarch\n" },
     ];
   }
 
@@ -55,6 +67,24 @@ describe("archivePin", () => {
 
   test("a files pin changes with any file inside include_dirs, a script as well as a scene", () => {
     expect(pinOf(library({ lua: "return { edited = true }\n" }))).not.toBe(pinOf(library()));
+  });
+
+  test("a files pin over a slash-wrapped nested dir moves only with a file beneath it", () => {
+    const nested = (overrides: Parameters<typeof library>[0] = {}) =>
+      pinOf(library({ includeDirs: "/monarch/transitions/", ...overrides }));
+    const unedited = nested();
+    expect(nested({ lua: "return { edited = true }\n" })).toBe(unedited);
+    expect(nested({ example: "-- edited\n" })).toBe(unedited);
+    expect(nested({ readme: "# edited\n" })).toBe(unedited);
+    expect(nested({ transition: "return { edited = true }\n" })).not.toBe(unedited);
+  });
+
+  test("a files pin over whitespace-separated dirs moves only with a file beneath one", () => {
+    const spaced = (overrides: Parameters<typeof library>[0] = {}) =>
+      pinOf(library({ includeDirs: "monarch example", ...overrides }));
+    const unedited = spaced();
+    expect(spaced({ readme: "# edited\n" })).toBe(unedited);
+    expect(spaced({ example: "-- edited\n" })).not.toBe(unedited);
   });
 
   test("a files pin does not depend on the archive wrapper's name", () => {

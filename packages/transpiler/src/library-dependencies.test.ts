@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   archiveWrapperOf,
   isContainedResourcePath,
+  libraryIncludeDirFiles,
   libraryIncludedEntries,
   readGameProjectDependencies,
 } from "./library-dependencies";
@@ -146,6 +147,38 @@ describe("libraryIncludedEntries", () => {
     expect(reasons[0]).not.toEqual(
       libraryIncludedEntries(LIBRARY_ENTRIES, "[project]\ntitle = Druid\n").reasons[0],
     );
+  });
+});
+
+describe("libraryIncludeDirFiles", () => {
+  const ENTRIES = [
+    "lib-main/",
+    "lib-main/game.project",
+    "lib-main/monarch/",
+    "lib-main/monarch/monarch.lua",
+    "lib-main/monarch/transitions/",
+    "lib-main/monarch/transitions/fade.lua",
+    "lib-main/example/",
+    "lib-main/example/example.script",
+    "lib-main/README.md",
+  ];
+  const sharedPaths = (gameProjectText: string) =>
+    libraryIncludeDirFiles(ENTRIES, gameProjectText)
+      .map(({ path }) => path)
+      .sort();
+
+  test("reads a slash-wrapped nested dir and a whitespace-separated one from a CRLF game.project", () => {
+    expect(sharedPaths("[library]\r\ninclude_dirs = /monarch/transitions/   example\r\n")).toEqual([
+      "example/example.script",
+      "monarch/transitions/fade.lua",
+    ]);
+  });
+
+  test("names a file under two declared dirs once", () => {
+    expect(sharedPaths("[library]\ninclude_dirs = monarch, /monarch/transitions/\n")).toEqual([
+      "monarch/monarch.lua",
+      "monarch/transitions/fade.lua",
+    ]);
   });
 });
 
