@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/Insality/decore",
+  "license": "MIT",
+  "indexSlots": {
+    "decore/system:field:index": {
+      "class": "native-1",
+      "evidence": "internal/ecs.lua:tiny_manageSystems sets systems[j].index = j"
+    }
+  }
+}

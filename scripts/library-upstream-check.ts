@@ -1,12 +1,13 @@
 import { join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { libraryFolderName } from "../packages/cli/src/library/library-data.ts";
 import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
 import { readOpenApiTargets } from "../packages/cli/src/library/sync-openapi-types.ts";
 import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
 
-// Checks every library-types lane registry for an upstream that has moved past
+// Checks every library-types lane's targets for an upstream that has moved past
 // the pin. `upstream:release-check` is the same idea for the engine itself; the
 // library corpus had no equivalent, so a stale pin was only ever noticed by hand.
 //
@@ -86,9 +87,6 @@ export interface LibraryCheckIo {
 
 const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
 
-/** The authored lane records its snapshots repo-locally under this prefix. */
-const AUTHORED_FIXTURE_PREFIX = "fixtures/upstream-lua";
-
 const SHA_REF = /^[0-9a-f]{40}$/;
 
 /** `https://github.com/owner/repo` -> `owner/repo`. */
@@ -101,18 +99,18 @@ export function repoSlug(repo: string): string {
 }
 
 // The authored lane's `upstreamLua` entries name the vendored snapshot, not the
-// upstream file: `fixtures/upstream-lua/library-defold-rendy/rendy/rendy.lua` is
+// upstream file: `library-defold-rendy/source/upstream/rendy/rendy.lua` is
 // `rendy/rendy.lua` upstream. Comparing the vendored form against a compare API
 // would match nothing and silence the whole SHA arm.
 function upstreamPathFromFixture(repo: string, fixturePath: string): string {
-  const prefix = `${AUTHORED_FIXTURE_PREFIX}/${repoSlug(repo).split("/")[1] ?? ""}/`;
+  const prefix = `${libraryFolderName(repo)}/source/upstream/`;
   return fixturePath.startsWith(prefix) ? fixturePath.slice(prefix.length) : fixturePath;
 }
 
 /**
- * Every registry entry across the five lanes, flattened and path-normalized. The
- * served lanes read from the library data folder, the markdown and openapi lanes
- * from the package root.
+ * Every target across the five lanes, flattened and path-normalized. The served
+ * lanes read from the library data folder, the markdown and openapi lanes from
+ * the package root.
  */
 export function readPinnedTargets(
   packageRoot: string = PACKAGE_ROOT,

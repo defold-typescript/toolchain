@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readNativeExpectations } from "./library/target-expectations";
+import { writeLibraryTargets } from "./library-data-fixture";
 import { matchVendoredLibrary } from "./library-match";
 import {
   loadLibraryIndexSlotClassifications,
@@ -24,7 +25,7 @@ describe("resolveLibraryDataDir", () => {
   test("selects the installed package's data folder for the CLI version", () => {
     const dir = resolveLibraryDataDir("0.0.0");
     expect(dir).not.toBeNull();
-    expect(existsSync(join(dir as string, "luals-targets.json"))).toBe(true);
+    expect(existsSync(join(dir as string, "druid", "recipe.json"))).toBe(true);
   });
 
   test("selects no data folder for a CLI older than every folder", () => {
@@ -47,21 +48,26 @@ describe("loadVendoredLibraryRegistry", () => {
     expect(loadVendoredLibraryRegistry(null)).toEqual([]);
   });
 
-  test("returns the empty fallback when the registry JSONs are absent under the given root", () => {
+  test("returns the empty fallback when the given data folder does not exist", () => {
     expect(loadVendoredLibraryRegistry("/nonexistent/library-types-root")).toEqual([]);
   });
 
-  test("reads a data folder that holds no ts-defold registry", () => {
+  test("reads a data folder that holds only a forked library", () => {
     const dir = mkdtempSync(join(tmpdir(), "library-data-folder-"));
     try {
-      const targets = [
-        {
-          repo: "https://github.com/owner/dicebag",
-          moduleId: "dicebag.dicebag",
-          namespace: "dicebag",
-        },
-      ];
-      writeFileSync(join(dir, "authored-targets.json"), JSON.stringify({ targets }));
+      writeLibraryTargets(dir, {
+        forks: [
+          {
+            repo: "https://github.com/owner/dicebag",
+            ref: "1.0.0",
+            authored: "fork/dicebag.dicebag.d.ts",
+            moduleId: "dicebag.dicebag",
+            namespace: "dicebag",
+            apiDoc: "api-doc/dicebag.json",
+            upstreamLua: ["source/upstream/dicebag.lua"],
+          },
+        ],
+      });
       expect(loadVendoredLibraryRegistry(dir)).toEqual([
         {
           sourceId: "dicebag",
@@ -178,76 +184,59 @@ describe("loadVendoredLibraryRegistry", () => {
 });
 
 describe("loadVendoredNativeRegistry", () => {
-  function withRoot(nativeTargets: string | null, run: (root: string) => void): void {
+  function withRoot(write: (root: string) => void, run: (root: string) => void): void {
     const root = mkdtempSync(join(tmpdir(), "native-registry-"));
     try {
-      if (nativeTargets !== null) {
-        writeFileSync(join(root, "native-targets.json"), nativeTargets);
-      }
+      write(root);
       run(root);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   }
 
-  test("projects each native-targets.json entry to its source id, namespace, manifest dir and declaration", () => {
-    const targets = {
-      targets: [
-        {
-          repo: "https://github.com/selimanac/defold-daabbcc",
-          ref: "v3.0.8",
-          license: "MIT",
-          namespace: "daabbcc",
-          manifestDir: "daabbcc",
-          declaration: "native/daabbcc.d.ts",
-        },
-      ],
-    };
-    withRoot(JSON.stringify(targets), (root) => {
+  test("projects each native extension to its source id, namespace, manifest dir and declaration", () => {
+    const write = (root: string) =>
+      writeLibraryTargets(root, {
+        native: [
+          {
+            repo: "https://github.com/selimanac/defold-daabbcc",
+            ref: "v3.0.8",
+            license: "MIT",
+            namespace: "daabbcc",
+            manifestDir: "daabbcc",
+            declaration: "fork/daabbcc.d.ts",
+            upstreamSource: "source/upstream/daabbcc/src/extension.cpp",
+          },
+        ],
+      });
+    withRoot(write, (root) => {
       expect(loadVendoredNativeRegistry(root)).toEqual([
         {
           sourceId: "defold-daabbcc",
           namespace: "daabbcc",
           manifestDir: "daabbcc",
-          declarationPath: join(root, "native/daabbcc.d.ts"),
+          declarationPath: join(root, "defold-daabbcc/fork/daabbcc.d.ts"),
         },
       ]);
     });
   });
 
-  test("an entry carrying fields the CLI does not read is still projected", () => {
-    const targets = {
-      targets: [
-        {
-          repo: "https://github.com/britzl/defold-sharing",
-          ref: "4.7.0",
-          license: "MIT",
-          namespace: "share",
-          manifestDir: "share",
-          declaration: "native/share.d.ts",
-          upstreamSource: "fixtures/upstream-native/defold-sharing/share/src/share.cpp",
-        },
-      ],
-    };
-    withRoot(JSON.stringify(targets), (root) => {
-      expect(loadVendoredNativeRegistry(root)).toEqual([
-        {
-          sourceId: "defold-sharing",
-          namespace: "share",
-          manifestDir: "share",
-          declarationPath: join(root, "native/share.d.ts"),
-        },
-      ]);
-    });
-  });
-
-  test("returns an empty registry for a missing or unparseable native-targets.json", () => {
-    withRoot(null, (root) => {
-      expect(loadVendoredNativeRegistry(root)).toEqual([]);
-    });
-    withRoot("{ not json", (root) => {
-      expect(loadVendoredNativeRegistry(root)).toEqual([]);
-    });
+  test("returns an empty registry for no library data or an unparseable library.json", () => {
+    withRoot(
+      () => {},
+      (root) => {
+        expect(loadVendoredNativeRegistry(root)).toEqual([]);
+      },
+    );
+    withRoot(
+      (root) => {
+        mkdirSync(join(root, "defold-sharing"));
+        writeFileSync(join(root, "defold-sharing", "library.json"), "{ not json");
+      },
+      (root) => {
+        expect(loadVendoredNativeRegistry(root)).toEqual([]);
+      },
+    );
     expect(loadVendoredNativeRegistry(null)).toEqual([]);
   });
 
@@ -268,13 +257,13 @@ describe("loadVendoredNativeRegistry", () => {
 });
 
 describe("loadLibraryIndexSlotClassifications", () => {
-  test("reads the shipped classifications from the package root", () => {
+  test("reads the shipped classifications from library data", () => {
     expect(loadLibraryIndexSlotClassifications().get("gooey/set_focus:param:index")?.class).toBe(
       "native-1",
     );
   });
 
-  test("returns an empty map for a null root or a root without the file", () => {
+  test("returns an empty map for a null root or a root without library data", () => {
     expect(loadLibraryIndexSlotClassifications(null).size).toBe(0);
     const root = mkdtempSync(join(tmpdir(), "index-slot-classifications-"));
     try {

@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
 import { type ApiDocElement, importUpstreamDocs } from "./import-upstream-docs";
+import { type ParityVerdict, readLibraryData } from "./library-data";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 
 /**
@@ -11,7 +12,7 @@ import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
  * primary source and generate a declaration; this one is for a library whose
  * upstream has no usable structured source, so its `.d.ts` is hand-authored or
  * forked from the retired ts-defold declarations and vendored under
- * `fixtures/authored/<moduleId>.d.ts`.
+ * `<library>/fork/<moduleId>.d.ts`.
  *
  * A vendored authored `.d.ts` is already target-form — a `declare module
  * '<moduleId>'` ambient — so the lane is light: it prints the vendored source
@@ -29,38 +30,11 @@ import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
  * Beyond that, a corrected fork's accuracy rests on its manual audit against
  * upstream plus the per-library shape assertions in the sibling test.
  */
-/**
- * Why a target's surface cannot be measured against upstream. A closed set: the
- * alternative to `upstreamLua` has to be a *chosen* category, because free prose
- * would let "nobody looked yet" and "looked, and it is genuinely unmeasurable"
- * read the same in the config.
- *
- * - `unresolved-path` — the `moduleId`-derived path does not resolve at the
- *   pinned `ref` (including a repository that no longer exists there).
- * - `no-module-file` — the upstream resolves but declares no single module file
- *   this target could be measured against.
- * - `unparseable-shape` — the module file exists but closes in a way
- *   `parseLuaSurface` refuses, such as a metatable that could delegate members
- *   no column-0 scan would find.
- */
-export const PARITY_VERDICT_REASONS = [
-  "no-module-file",
-  "unresolved-path",
-  "unparseable-shape",
-] as const;
-
-export type ParityVerdictReason = (typeof PARITY_VERDICT_REASONS)[number];
-
-export interface ParityVerdict {
-  reason: ParityVerdictReason;
-  note: string;
-}
-
 export interface AuthoredTarget {
   repo: string;
   ref: string;
-  // Package-relative path of the vendored authored/forked `.d.ts`
-  // (`fixtures/authored/<moduleId>.d.ts`).
+  // Data-folder-relative path of the vendored authored/forked `.d.ts`
+  // (`<library>/fork/<moduleId>.d.ts`).
   authored: string;
   moduleId: string;
   namespace: string;
@@ -73,10 +47,10 @@ export interface AuthoredTarget {
   // SPDX-style license id, surfaced by the docs-site provenance block. Optional
   // in the config; defaults to "".
   license: string;
-  // Package-relative paths of the vendored upstream `.lua` sources this target's
+  // Data-folder-relative paths of the vendored upstream `.lua` sources this target's
   // surface is measured against (`authored-parity.ts`). Optional and defaulted to
   // `[]`: a target with no vendored upstream is simply unmeasured, which is why it
-  // must not join `REQUIRED_FIELDS`.
+  // must not join `FORK_REQUIRED` (`library-data.ts`).
   upstreamLua: string[];
   // The fork's interface for the instances upstream's `function M:name(...)` methods
   // serve, read from api-doc as the `TYPEDEF` of that name. Required by
@@ -89,96 +63,15 @@ export interface AuthoredTarget {
   parityVerdict?: ParityVerdict;
 }
 
-export interface AuthoredTargets {
-  targets: AuthoredTarget[];
-}
-
-const REQUIRED_FIELDS = ["repo", "ref", "authored", "moduleId", "namespace", "apiDoc"] as const;
-
-/** Validate the parity declaration: exactly one of a non-empty `upstreamLua` and
- * a well-formed `parityVerdict`. Enforced here rather than through
- * `REQUIRED_FIELDS` because neither field is required on its own — the bijection
- * between them is the gate. */
-function validateParityDeclaration(
-  label: string,
-  upstreamLua: string[],
-  verdict: ParityVerdict | undefined,
-): void {
-  if (upstreamLua.length > 0 && verdict !== undefined) {
-    throw new Error(
-      `authored-targets.json: entry ${label} declares both upstreamLua and parityVerdict — a measured target carries no verdict.`,
-    );
-  }
-  if (upstreamLua.length === 0 && verdict === undefined) {
-    throw new Error(
-      `authored-targets.json: entry ${label} declares neither upstreamLua nor parityVerdict — vendor its upstream .lua, or record a parityVerdict saying why it cannot be measured.`,
-    );
-  }
-  if (verdict === undefined) return;
-  if (!(PARITY_VERDICT_REASONS as readonly string[]).includes(verdict.reason)) {
-    throw new Error(
-      `authored-targets.json: entry ${label} has parityVerdict reason "${verdict.reason}", which is not one of ${PARITY_VERDICT_REASONS.join(", ")}.`,
-    );
-  }
-  if (typeof verdict.note !== "string" || verdict.note.trim() === "") {
-    throw new Error(
-      `authored-targets.json: entry ${label} has a parityVerdict with an empty note — say what was looked at and why it could not be measured.`,
-    );
-  }
-}
-
 /**
- * Read `authored-targets.json`, validate every required field per entry, and fill
- * optional defaults (`fidelity` → `fidelity/<namespace>.json`, `license` → "",
- * `upstreamLua` → []).
- * Throws on the first missing field naming both the field and the offending entry
- * (its `moduleId`, or its index when `moduleId` itself is absent) — the loud-fail
- * discipline `readMarkdownTargets`/`readScriptApiTargets`/`readLualsTargets` use.
- * Also throws when an entry's parity declaration is missing, doubled, or
- * malformed (see `validateParityDeclaration`).
+ * Every library's forks, in library-folder order, read from its `library.json`
+ * with the repo, ref and license it holds once; `fidelity` defaults to
+ * `fidelity/<namespace>.json`, `license` to "" and `upstreamLua` to []. Throws on
+ * the first missing field naming both the field and the offending entry, and when
+ * an entry's parity declaration is missing, doubled, or malformed.
  */
-export function readAuthoredTargets(packageRoot: string): AuthoredTarget[] {
-  const parsed = JSON.parse(readFileSync(join(packageRoot, "authored-targets.json"), "utf8")) as {
-    targets: Partial<AuthoredTarget>[];
-  };
-  return parsed.targets.map((entry, index) => {
-    const label = typeof entry.moduleId === "string" ? entry.moduleId : `index ${index}`;
-    for (const field of REQUIRED_FIELDS) {
-      if (entry[field] === undefined) {
-        throw new Error(
-          `authored-targets.json: entry ${label} is missing required field "${field}".`,
-        );
-      }
-    }
-    const upstreamLua = entry.upstreamLua ?? [];
-    validateParityDeclaration(label, upstreamLua, entry.parityVerdict);
-    if (
-      entry.instanceType !== undefined &&
-      (typeof entry.instanceType !== "string" || !/^[A-Za-z_$][\w$]*$/.test(entry.instanceType))
-    ) {
-      throw new Error(
-        `authored-targets.json: entry ${label} has instanceType ${JSON.stringify(entry.instanceType)}, which is not a type name.`,
-      );
-    }
-    if (entry.instanceType !== undefined && upstreamLua.length === 0) {
-      throw new Error(
-        `authored-targets.json: entry ${label} declares instanceType but vendors no upstreamLua, so no method is measured against it.`,
-      );
-    }
-    return {
-      repo: entry.repo as string,
-      ref: entry.ref as string,
-      authored: entry.authored as string,
-      moduleId: entry.moduleId as string,
-      namespace: entry.namespace as string,
-      apiDoc: entry.apiDoc as string,
-      fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
-      license: entry.license ?? "",
-      upstreamLua,
-      ...(entry.instanceType === undefined ? {} : { instanceType: entry.instanceType }),
-      ...(entry.parityVerdict === undefined ? {} : { parityVerdict: entry.parityVerdict }),
-    };
-  });
+export function readAuthoredTargets(dataDir: string): AuthoredTarget[] {
+  return readLibraryData(dataDir).flatMap((library) => library.authored);
 }
 
 function readAuthoredSource(packageRoot: string, target: AuthoredTarget): string {

@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/Insality/defold-event",
+  "license": "MIT",
+  "indexSlots": {
+    "event/is_subscribed:return:": {
+      "class": "not-a-position",
+      "evidence": "both unnamed returns share this key: a boolean, then the 1-based callback index (event.lua:is_subscribed); no note fits both"
+    }
+  }
+}

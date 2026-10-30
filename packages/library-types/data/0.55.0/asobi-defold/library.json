@@ -1,0 +1,140 @@
+{
+  "repo": "https://github.com/widgrensit/asobi-defold",
+  "license": "Apache-2.0",
+  "forks": [
+    {
+      "authored": "fork/asobi.client.d.ts",
+      "moduleId": "asobi.client",
+      "namespace": "asobi.client",
+      "apiDoc": "api-doc/asobi.client.json",
+      "upstreamLua": ["source/upstream/asobi/client.lua"]
+    },
+    {
+      "authored": "fork/asobi.realtime.d.ts",
+      "moduleId": "asobi.realtime",
+      "namespace": "asobi.realtime",
+      "apiDoc": "api-doc/asobi.realtime.json",
+      "upstreamLua": ["source/upstream/asobi/realtime.lua"],
+      "instanceType": "Realtime"
+    },
+    {
+      "authored": "fork/asobi.device.d.ts",
+      "moduleId": "asobi.device",
+      "namespace": "asobi.device",
+      "apiDoc": "api-doc/asobi.device.json",
+      "upstreamLua": ["source/upstream/asobi/device.lua"]
+    },
+    {
+      "authored": "fork/asobi.http.d.ts",
+      "moduleId": "asobi.http",
+      "namespace": "asobi.http",
+      "apiDoc": "api-doc/asobi.http.json",
+      "upstreamLua": ["source/upstream/asobi/http.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.auth.d.ts",
+      "moduleId": "asobi.api.auth",
+      "namespace": "asobi.api.auth",
+      "apiDoc": "api-doc/asobi.api.auth.json",
+      "upstreamLua": ["source/upstream/asobi/api/auth.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.dm.d.ts",
+      "moduleId": "asobi.api.dm",
+      "namespace": "asobi.api.dm",
+      "apiDoc": "api-doc/asobi.api.dm.json",
+      "upstreamLua": ["source/upstream/asobi/api/dm.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.economy.d.ts",
+      "moduleId": "asobi.api.economy",
+      "namespace": "asobi.api.economy",
+      "apiDoc": "api-doc/asobi.api.economy.json",
+      "upstreamLua": ["source/upstream/asobi/api/economy.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.iap.d.ts",
+      "moduleId": "asobi.api.iap",
+      "namespace": "asobi.api.iap",
+      "apiDoc": "api-doc/asobi.api.iap.json",
+      "upstreamLua": ["source/upstream/asobi/api/iap.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.inventory.d.ts",
+      "moduleId": "asobi.api.inventory",
+      "namespace": "asobi.api.inventory",
+      "apiDoc": "api-doc/asobi.api.inventory.json",
+      "upstreamLua": ["source/upstream/asobi/api/inventory.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.leaderboards.d.ts",
+      "moduleId": "asobi.api.leaderboards",
+      "namespace": "asobi.api.leaderboards",
+      "apiDoc": "api-doc/asobi.api.leaderboards.json",
+      "upstreamLua": ["source/upstream/asobi/api/leaderboards.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.matches.d.ts",
+      "moduleId": "asobi.api.matches",
+      "namespace": "asobi.api.matches",
+      "apiDoc": "api-doc/asobi.api.matches.json",
+      "upstreamLua": ["source/upstream/asobi/api/matches.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.matchmaker.d.ts",
+      "moduleId": "asobi.api.matchmaker",
+      "namespace": "asobi.api.matchmaker",
+      "apiDoc": "api-doc/asobi.api.matchmaker.json",
+      "upstreamLua": ["source/upstream/asobi/api/matchmaker.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.notifications.d.ts",
+      "moduleId": "asobi.api.notifications",
+      "namespace": "asobi.api.notifications",
+      "apiDoc": "api-doc/asobi.api.notifications.json",
+      "upstreamLua": ["source/upstream/asobi/api/notifications.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.players.d.ts",
+      "moduleId": "asobi.api.players",
+      "namespace": "asobi.api.players",
+      "apiDoc": "api-doc/asobi.api.players.json",
+      "upstreamLua": ["source/upstream/asobi/api/players.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.social.d.ts",
+      "moduleId": "asobi.api.social",
+      "namespace": "asobi.api.social",
+      "apiDoc": "api-doc/asobi.api.social.json",
+      "upstreamLua": ["source/upstream/asobi/api/social.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.storage.d.ts",
+      "moduleId": "asobi.api.storage",
+      "namespace": "asobi.api.storage",
+      "apiDoc": "api-doc/asobi.api.storage.json",
+      "upstreamLua": ["source/upstream/asobi/api/storage.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.tournaments.d.ts",
+      "moduleId": "asobi.api.tournaments",
+      "namespace": "asobi.api.tournaments",
+      "apiDoc": "api-doc/asobi.api.tournaments.json",
+      "upstreamLua": ["source/upstream/asobi/api/tournaments.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.votes.d.ts",
+      "moduleId": "asobi.api.votes",
+      "namespace": "asobi.api.votes",
+      "apiDoc": "api-doc/asobi.api.votes.json",
+      "upstreamLua": ["source/upstream/asobi/api/votes.lua"]
+    },
+    {
+      "authored": "fork/asobi.api.worlds.d.ts",
+      "moduleId": "asobi.api.worlds",
+      "namespace": "asobi.api.worlds",
+      "apiDoc": "api-doc/asobi.api.worlds.json",
+      "upstreamLua": ["source/upstream/asobi/api/worlds.lua"]
+    }
+  ]
+}

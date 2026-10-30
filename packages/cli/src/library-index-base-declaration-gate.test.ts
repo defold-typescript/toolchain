@@ -4,12 +4,13 @@ import { basename, join } from "node:path";
 import { libraryIndexBaseNotes } from "@defold-typescript/types";
 import * as ts from "typescript";
 import { emitExtensionDeclarationFromDoc } from "./extension-emit";
+import { readLibraryData } from "./library/library-data";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printCorpus } from "./library/print-corpus";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 
 const LIBRARY_TYPES_DIR = join(import.meta.dir, "../../library-types");
-const MAP_FILE = "packages/library-types/data/0.55.0/index-slot-classifications.json";
+const MAP_FILE = "the library data folder's index slots";
 const CLASSIFICATIONS = loadLibraryIndexSlotClassifications(LIBRARY_DATA_DIR);
 
 type Lane = "script-api" | "extension" | "luals" | "authored" | "native" | "portal";
@@ -20,11 +21,6 @@ type Lane = "script-api" | "extension" | "luals" | "authored" | "native" | "port
 // `defold-extensions.json` only, so an Asset Portal extension's declaration
 // names no page.
 const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>(["portal"]);
-
-function readTargets<T>(file: string): T[] {
-  return (JSON.parse(readFileSync(join(LIBRARY_DATA_DIR, file), "utf8")) as { targets: T[] })
-    .targets;
-}
 
 interface ExtensionManifest {
   libraries: { docs: { page: string }[] }[];
@@ -42,13 +38,10 @@ const portalPages = (
   ) as ExtensionManifest
 ).libraries.flatMap((library) => library.docs.map((doc) => doc.page));
 
-const scriptApiTargets = readTargets<{ apiDoc: string; moduleId: string }>(
-  "script-api-targets.json",
-);
-
-const authoredTargets = readTargets<{ apiDoc: string; moduleId: string }>("authored-targets.json");
-
-const lualsTargets = readTargets<{ namespace: string; moduleId: string }>("luals-targets.json");
+const LIBRARIES = readLibraryData(LIBRARY_DATA_DIR);
+const scriptApiTargets = LIBRARIES.flatMap((library) => library.scriptApi);
+const authoredTargets = LIBRARIES.flatMap((library) => library.authored);
+const lualsTargets = LIBRARIES.flatMap((library) => library.luals);
 
 const CORPUS = await printCorpus(LIBRARY_DATA_DIR);
 
@@ -58,9 +51,7 @@ function printed(moduleId: string): string {
   return contents;
 }
 
-const nativeTargets = readTargets<{ namespace: string; declaration: string }>(
-  "native-targets.json",
-);
+const nativeTargets = LIBRARIES.flatMap((library) => library.native);
 
 // The page key each lane gives its libraries, the same key the API reference
 // and the classification map use.

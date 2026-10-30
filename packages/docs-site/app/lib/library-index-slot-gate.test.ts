@@ -10,11 +10,12 @@ import {
   scanTypedefMemberSlots,
   tupleComponentKeys,
 } from "../../../types/scripts/index-slot-scan";
-import { LIBRARY_INDEX_SLOT_CLASSIFICATIONS } from "./api-surface";
-import { loadLibraryPageSources } from "./api-surface-loader";
+import { loadLibraryIndexSlots, loadLibraryPageSources } from "./api-surface-loader";
 
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
-const MAP_FILE = "packages/library-types/data/0.55.0/index-slot-classifications.json";
+const LIBRARY_INDEX_SLOT_CLASSIFICATIONS = loadLibraryIndexSlots(REAL_LIBRARY_TYPES_DIR);
+const MAP_FILE =
+  "the library's indexSlots in packages/library-types/data/0.55.0/<library>/library.json, or data/0.55.0/index-slot-classifications.json for an extension no library folder holds";
 
 const sources = loadLibraryPageSources(REAL_LIBRARY_TYPES_DIR);
 

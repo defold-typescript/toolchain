@@ -1,13 +1,14 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
+import { readLibraryData } from "./library-data";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { RefKind } from "./sync-defold-extensions";
 
 /**
  * The curated native-extension lane. A native extension ships C++ and no
  * `.script_api`, so its declaration is hand-authored at
- * `native/<namespace>.d.ts` as a `@globalTable` `declare module "<ns>"`
+ * `<library>/fork/<namespace>.d.ts` as a `@globalTable` `declare module "<ns>"`
  * a project imports, and `resolve` copies it into a project verbatim. The only
  * artifact derived here is the `api-doc/native/<namespace>.json` the docs-site
  * renders.
@@ -30,14 +31,14 @@ export interface NativeTarget {
   namespace: string;
   manifestDir: string;
   declaration: string;
-  /** The vendored C++ file that registers the module, under `fixtures/upstream-native/`. */
+  /** The vendored C++ file that registers the module, under the library's `source/`. */
   upstreamSource: string;
-  /** Vendored headers, under `fixtures/upstream-native/`, whose `#define`s the
+  /** Vendored headers, under the library's `source/`, whose `#define`s the
    * registration in `upstreamSource` resolves its module name through. Their text is
    * prepended to the source text before parsing, so calls are still found only in the
    * source. Absent where the source names its module itself. */
   upstreamHeaders?: string[];
-  /** Vendored C++ files, under `fixtures/upstream-native/`, whose nameless
+  /** Vendored C++ files, under the library's `source/`, whose nameless
    * `luaL_register` calls fill the metatables of the userdata the module returns.
    * Absent where every metatable is filled in `upstreamSource`. */
   upstreamMethodSources?: string[];
@@ -46,7 +47,7 @@ export interface NativeTarget {
    * interfaces, so every registered metatable and every declared type with methods
    * must appear here. */
   methodTables?: Record<string, string[]>;
-  /** The vendored LuaLS annotation upstream ships, under `fixtures/upstream-native/`.
+  /** The vendored LuaLS annotation upstream ships, under the library's `source/`.
    * The registration table carries names only, so parameter lists come from here.
    * Absent where upstream ships no annotation, or ships one in a form this reader does
    * not accept — in which case the target's arity axis reads as unmeasured rather than
@@ -58,11 +59,8 @@ export interface NativeTarget {
   annotationArityExceptions?: NativeArityExceptionEntry[];
 }
 
-export function readNativeTargets(packageRoot: string): NativeTarget[] {
-  const { targets } = JSON.parse(
-    readFileSync(join(packageRoot, "native-targets.json"), "utf8"),
-  ) as { targets: NativeTarget[] };
-  return targets;
+export function readNativeTargets(dataDir: string): NativeTarget[] {
+  return readLibraryData(dataDir).flatMap((library) => library.native);
 }
 
 export function nativeApiDocPath(target: NativeTarget): string {

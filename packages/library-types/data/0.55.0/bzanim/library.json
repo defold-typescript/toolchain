@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/jbp4444/bzAnim",
+  "license": "Apache-2.0",
+  "forks": [
+    {
+      "authored": "fork/bzAnim.bzLibrary.d.ts",
+      "moduleId": "bzAnim.bzLibrary",
+      "namespace": "bzAnim",
+      "apiDoc": "api-doc/bzAnim.json",
+      "upstreamLua": ["source/upstream/bzAnim/bzLibrary.lua"]
+    }
+  ]
+}

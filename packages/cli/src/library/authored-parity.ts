@@ -53,6 +53,7 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { libraryFile } from "./library-data";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
@@ -150,7 +151,7 @@ export function authoredParityPath(target: AuthoredTarget): string {
   return `${AUTHORED_PARITY_DIR}/${target.namespace}.json`;
 }
 
-/** The opted-in targets, in `authored-targets.json` order. A target that vendors
+/** The opted-in targets, in library-data order. A target that vendors
  * no upstream Lua is measured by nothing and emits nothing. */
 export function authoredParityTargets(dataDir: string): AuthoredTarget[] {
   return readAuthoredTargets(dataDir).filter((target) => target.upstreamLua.length > 0);
@@ -191,7 +192,7 @@ function upstreamSurface(dataDir: string, target: AuthoredTarget): UpstreamSurfa
       if (member.method === true) {
         if (target.instanceType === undefined) {
           throw new Error(
-            `${relative}: \`${member.name}\` is a \`:\` method, but authored-targets.json gives ${target.namespace} no instanceType to measure it against — name the interface its instances are declared with.`,
+            `${relative}: \`${member.name}\` is a \`:\` method, but ${libraryFile(target.repo)} gives ${target.namespace} no instanceType to measure it against — name the interface its instances are declared with.`,
           );
         }
         name = methodKey(target.instanceType, member.name);
@@ -275,7 +276,7 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
     );
     if (typedef === undefined) {
       throw new Error(
-        `${target.apiDoc}: authored-targets.json names \`${instanceType}\` as ${target.namespace}'s instanceType, but the api-doc holds no TYPEDEF of that name — export the interface, or correct the name.`,
+        `${target.apiDoc}: ${libraryFile(target.repo)} names \`${instanceType}\` as ${target.namespace}'s instanceType, but the api-doc holds no TYPEDEF of that name — export the interface, or correct the name.`,
       );
     }
     for (const method of typedef.functions ?? []) {

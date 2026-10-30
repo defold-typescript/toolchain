@@ -1,0 +1,12 @@
+{
+  "repo": "https://github.com/elefant-ai/player2-ai-npc-defold",
+  "license": "GPL-2.0",
+  "refKind": "commit",
+  "native": {
+    "namespace": "ainpc",
+    "manifestDir": "player2-ai-npc",
+    "declaration": "fork/ainpc.d.ts",
+    "upstreamSource": "source/upstream/player2-ai-npc/src/Player2AINPC.cpp",
+    "upstreamHeaders": ["source/upstream/player2-ai-npc/include/Player2AINPC.hpp"]
+  }
+}

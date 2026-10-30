@@ -1,8 +1,9 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { writeLibraryTargets } from "../packages/cli/src/library-data-fixture.ts";
 import { normalizeSourceId } from "../packages/cli/src/library-match.ts";
 import {
   loadVendoredLibraryRegistry,
@@ -43,49 +44,49 @@ const BAD_MODULE = `declare module "widget.widget" {
 // Repo A backs two lanes, so the sweep must still read it once.
 const root = mkdtempSync(join(tmpdir(), "shipped-types-check-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
-const write = (file: string, targets: unknown[]) =>
-  writeFileSync(join(root, file), JSON.stringify({ targets }));
-write("authored-targets.json", [
-  {
-    repo: GADGET,
-    ref: "3",
-    authored: "fixtures/authored/gadget.gadget.d.ts",
-    moduleId: "gadget.gadget",
-    namespace: "gadget",
-    apiDoc: "api-doc/gadget.json",
-    parityVerdict: { reason: "no-module-file", note: "fixture" },
-  },
-]);
-write("luals-targets.json", [
-  {
-    repo: WIDGET,
-    ref: "1.0.0",
-    sourceGlobs: ["widget/*.lua"],
-    moduleId: "widget.widget",
-    namespace: "widget",
-  },
-]);
-write("script-api-targets.json", [
-  {
-    repo: GIZMO,
-    ref: "v1",
-    scriptApi: "gizmo/gizmo.script_api",
-    moduleId: "gizmo",
-    namespace: "gizmo",
-    apiDoc: "api-doc/gizmo.json",
-  },
-]);
-write("native-targets.json", [
-  {
-    repo: WIDGET,
-    ref: "1.0.0",
-    license: "MIT",
-    namespace: "widgetnative",
-    manifestDir: "widgetnative",
-    declaration: "native/widgetnative.d.ts",
-    upstreamSource: "fixtures/upstream-native/widget/widget.cpp",
-  },
-]);
+writeLibraryTargets(root, {
+  forks: [
+    {
+      repo: GADGET,
+      ref: "3",
+      authored: "fork/gadget.gadget.d.ts",
+      moduleId: "gadget.gadget",
+      namespace: "gadget",
+      apiDoc: "api-doc/gadget.json",
+      parityVerdict: { reason: "no-module-file", note: "fixture" },
+    },
+  ],
+  luals: [
+    {
+      repo: WIDGET,
+      ref: "1.0.0",
+      sourceGlobs: ["widget/*.lua"],
+      moduleId: "widget.widget",
+      namespace: "widget",
+    },
+  ],
+  scriptApi: [
+    {
+      repo: GIZMO,
+      ref: "v1",
+      scriptApi: "gizmo/gizmo.script_api",
+      moduleId: "gizmo",
+      namespace: "gizmo",
+      apiDoc: "api-doc/gizmo.json",
+    },
+  ],
+  native: [
+    {
+      repo: WIDGET,
+      ref: "1.0.0",
+      license: "MIT",
+      namespace: "widgetnative",
+      manifestDir: "widgetnative",
+      declaration: "fork/widgetnative.d.ts",
+      upstreamSource: "source/upstream/widget.cpp",
+    },
+  ],
+});
 
 interface FakeRepo {
   readonly tags?: ReadonlyArray<{ name: string; sha: string; date: string }>;
@@ -167,8 +168,8 @@ describe("runShippedTypesCheck verdicts", () => {
       ref: "2.0.0",
       files: ["a.d.ts"],
       retire: [
-        { lane: "luals", id: "widget.widget", source: "fixtures/luals/widget/" },
-        { lane: "native", id: "widgetnative", source: "native/widgetnative.d.ts" },
+        { lane: "luals", id: "widget.widget", source: "widget/source/widget/" },
+        { lane: "native", id: "widgetnative", source: "widget/fork/widgetnative.d.ts" },
       ],
     });
     expect(run.actionable).toBe(true);
@@ -184,9 +185,9 @@ describe("runShippedTypesCheck verdicts", () => {
     expect(widget.issueTitle).toBe("retire curated types for acme/widget: 2.0.0 ships types");
     for (const fragment of [
       "widget.widget",
-      "fixtures/luals/widget/",
+      "widget/source/widget/",
       "widgetnative",
-      "native/widgetnative.d.ts",
+      "widget/fork/widgetnative.d.ts",
       "a.d.ts",
     ]) {
       expect(widget.issueBody).toContain(fragment);

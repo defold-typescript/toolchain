@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/Insality/detiled",
+  "license": "MIT",
+  "indexSlots": {
+    "detiled/detiled_map_params_scene:field:stagger_index": {
+      "class": "not-a-position",
+      "evidence": "the string \"odd\" or \"even\"; grid/isometric_staggered.lua:stagger_offset compares it to \"even\""
+    }
+  }
+}

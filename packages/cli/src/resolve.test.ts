@@ -20,6 +20,7 @@ import {
 } from "./extension-archive";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printLibraryModules } from "./library/print-library";
+import { readNativeTargets } from "./library/sync-native-types";
 import { readNativeExpectations } from "./library/target-expectations";
 import { writeAuthoredLibraryData } from "./library-data-fixture";
 import { buildLualsRegistryEntries } from "./library-match";
@@ -1914,6 +1915,9 @@ describe("runResolve each curated native target through the shipped native regis
     return { cwd, result };
   }
 
+  const declarations = new Map(
+    readNativeTargets(LIBRARY_DATA_DIR).map((target) => [target.namespace, target.declaration]),
+  );
   for (const [namespace, { resolve }] of readNativeExpectations()) {
     const written = join(".defold-types", "extensions", `${namespace}.d.ts`);
 
@@ -1922,7 +1926,7 @@ describe("runResolve each curated native target through the shipped native regis
 
       expect(result.ok).toBe(true);
       expect(readFileSync(join(cwd, written), "utf8")).toBe(
-        readFileSync(join(LIBRARY_DATA_DIR, "native", `${namespace}.d.ts`), "utf8"),
+        readFileSync(join(LIBRARY_DATA_DIR, declarations.get(namespace) as string), "utf8"),
       );
       expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
       expect(result.extensions[0]?.namespaces).toEqual([namespace]);
@@ -2021,7 +2025,7 @@ describe("runResolve prints a LuaLS library from the dependency's archive", () =
   const wrapper = "lua-immutable-1.1";
   const own = "immutable/immutable.lua";
   const pinnedSource = readFileSync(
-    join(LIBRARY_DATA_DIR, "fixtures", "luals", "immutable", own),
+    join(LIBRARY_DATA_DIR, "lua-immutable", "source", "immutable", own),
     "utf8",
   );
   const insertBefore = "-- Metatable for the Immutable module";

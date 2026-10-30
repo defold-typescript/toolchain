@@ -1,0 +1,21 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["fake_real_glass/**/*.lua"],
+      "moduleId": "fake_real_glass.fake_real_glass",
+      "namespace": "fake_real_glass",
+      "typeRenames": {
+        "matrix4": "Matrix4",
+        "vector3": "Vector3",
+        "vector4": "Vector4"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleObject": {
+          "interface": "FakeRealGlassModule",
+          "fields": {}
+        }
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { writeLibraryTargets } from "../library-data-fixture";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { AssetPortalManifest, PortalEntry } from "./sync-asset-portal";
 import { readAuthoredTargets } from "./sync-authored-types";
@@ -980,22 +981,6 @@ describe("writeClassification", () => {
         })),
       });
     writeFileSync(
-      join(root, "luals-targets.json"),
-      JSON.stringify({
-        targets: (opts.lualsNamespaces ?? []).map((namespace) => ({
-          repo: "https://github.com/example/example",
-          ref: "1",
-          sourceGlobs: ["**/*.lua"],
-          moduleId: namespace,
-          namespace,
-        })),
-      }),
-    );
-    writeFileSync(
-      join(root, "script-api-targets.json"),
-      lane(opts.scriptApiNamespaces, { scriptApi: "api.script_api" }),
-    );
-    writeFileSync(
       join(root, "openapi-targets.json"),
       lane(opts.openApiNamespaces, { swagger: "api.swagger.json", proto: "api.proto" }),
     );
@@ -1014,28 +999,38 @@ describe("writeClassification", () => {
         })),
       }),
     );
-    writeFileSync(
-      join(root, "authored-targets.json"),
-      JSON.stringify({
-        targets: opts.authoredModuleIds.map((moduleId) => {
-          const namespace = moduleId.split(".")[0] as string;
-          return {
-            repo: "https://github.com/example/example",
-            ref: "1",
-            authored: `fixtures/authored/${moduleId}.d.ts`,
-            moduleId,
-            namespace,
-            apiDoc: `api-doc/${namespace}.json`,
-            // A synthetic target has no upstream to vendor, and the parity
-            // declaration is mandatory for any config `readAuthoredTargets` accepts.
-            parityVerdict: {
-              reason: "no-module-file",
-              note: "synthetic classification fixture — no upstream repository exists.",
-            },
-          };
-        }),
+    const pin = { repo: "https://github.com/example/example", ref: "1" };
+    writeLibraryTargets(root, {
+      luals: (opts.lualsNamespaces ?? []).map((namespace) => ({
+        ...pin,
+        sourceGlobs: ["**/*.lua"],
+        moduleId: namespace,
+        namespace,
+      })),
+      scriptApi: (opts.scriptApiNamespaces ?? []).map((namespace) => ({
+        ...pin,
+        scriptApi: "api.script_api",
+        moduleId: namespace,
+        namespace,
+        apiDoc: `api-doc/${namespace}.json`,
+      })),
+      forks: opts.authoredModuleIds.map((moduleId) => {
+        const namespace = moduleId.split(".")[0] as string;
+        return {
+          ...pin,
+          authored: `fork/${moduleId}.d.ts`,
+          moduleId,
+          namespace,
+          apiDoc: `api-doc/${namespace}.json`,
+          // A synthetic target has no upstream to vendor, and the parity
+          // declaration is mandatory for any fork `readAuthoredTargets` accepts.
+          parityVerdict: {
+            reason: "no-module-file",
+            note: "synthetic classification fixture — no upstream repository exists.",
+          },
+        };
       }),
-    );
+    });
     return root;
   }
 

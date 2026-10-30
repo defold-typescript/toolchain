@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { type FlatLibraryTargets, writeLibraryTargets } from "../library-data-fixture";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus } from "./print-corpus";
 import {
@@ -37,11 +38,18 @@ const BRIDGE: ScriptApiTarget = {
   namespace: "bridge",
   apiDoc: "api-doc/bridge.json",
   fidelity: "fidelity/bridge.json",
+  sourceFile: "bridge-defold/source/bridge.bridge.script_api",
 };
 
-function writeConfig(config: unknown): string {
+// Entries as written, a malformed omittable slot included.
+function writeConfig(targets: Record<string, unknown>[]): string {
   const root = mkdtempSync(join(tmpdir(), "script-api-targets-config-"));
-  writeFileSync(join(root, "script-api-targets.json"), JSON.stringify(config));
+  writeLibraryTargets(root, {
+    scriptApi: targets.map(({ sourceFile: _sourceFile, ...target }) => ({
+      repo: BRIDGE.repo,
+      ...target,
+    })) as NonNullable<FlatLibraryTargets["scriptApi"]>,
+  });
   return root;
 }
 
@@ -59,14 +67,14 @@ describe("readScriptApiTargets", () => {
 
   test("throws naming the missing field and the offending entry", () => {
     const { scriptApi: _drop, ...missingScriptApi } = BRIDGE;
-    const root = writeConfig({ targets: [missingScriptApi] });
+    const root = writeConfig([missingScriptApi]);
     expect(() => readScriptApiTargets(root)).toThrow(/scriptApi/);
     expect(() => readScriptApiTargets(root)).toThrow(/bridge\.bridge/);
   });
 
   test("names the entry index when moduleId itself is the missing field", () => {
     const { moduleId: _drop, ...missingModuleId } = BRIDGE;
-    const root = writeConfig({ targets: [missingModuleId] });
+    const root = writeConfig([missingModuleId]);
     expect(() => readScriptApiTargets(root)).toThrow(/moduleId/);
     expect(() => readScriptApiTargets(root)).toThrow(/0/);
   });
@@ -75,18 +83,16 @@ describe("readScriptApiTargets", () => {
     const complete = { element: "bridge.social.create_post", slot: "payload", evidence: "e" };
     for (const field of ["element", "slot", "evidence"] as const) {
       const { [field]: _drop, ...partial } = complete;
-      const root = writeConfig({ targets: [{ ...BRIDGE, omittableSlots: [partial] }] });
+      const root = writeConfig([{ ...BRIDGE, omittableSlots: [partial] }]);
       expect(() => readScriptApiTargets(root)).toThrow(new RegExp(field));
     }
-    const blank = writeConfig({
-      targets: [{ ...BRIDGE, omittableSlots: [{ ...complete, evidence: "  " }] }],
-    });
+    const blank = writeConfig([{ ...BRIDGE, omittableSlots: [{ ...complete, evidence: "  " }] }]);
     expect(() => readScriptApiTargets(blank)).toThrow(/evidence/);
   });
 
   test("defaults fidelity to fidelity/<namespace>.json and license to '' when omitted", () => {
     const { fidelity: _f, license: _l, ...bare } = BRIDGE;
-    const root = writeConfig({ targets: [bare] });
+    const root = writeConfig([bare]);
     const [target] = readScriptApiTargets(root);
     expect(target?.fidelity).toBe("fidelity/bridge.json");
     expect(target?.license).toBe("");
@@ -119,7 +125,7 @@ describe("bridge migrated off the ts-defold corpus", () => {
 });
 
 describe("fetchScriptApiFixture", () => {
-  test("snapshots the pinned .script_api under fixtures/script-api/<moduleId>.script_api, offline", async () => {
+  test("snapshots the pinned .script_api at the target's sourceFile, offline", async () => {
     const root = mkdtempSync(join(tmpdir(), "script-api-fetch-"));
     const fetched: string[] = [];
     const fetchText: FetchText = async (url) => {
@@ -132,7 +138,7 @@ describe("fetchScriptApiFixture", () => {
     expect(fetched).toEqual([
       "https://raw.githubusercontent.com/Playgama/bridge-defold/v2.0.0/bridge/api/bridge.script_api",
     ]);
-    const dest = join(root, "fixtures/script-api/bridge.bridge.script_api");
+    const dest = join(root, "bridge-defold/source/bridge.bridge.script_api");
     expect(existsSync(dest)).toBe(true);
     expect(readFileSync(dest, "utf8")).toBe(
       "# https://raw.githubusercontent.com/Playgama/bridge-defold/v2.0.0/bridge/api/bridge.script_api\n",

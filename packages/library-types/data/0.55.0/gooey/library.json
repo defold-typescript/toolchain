@@ -1,0 +1,19 @@
+{
+  "repo": "https://github.com/britzl/gooey",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/gooey.gooey.d.ts",
+      "moduleId": "gooey.gooey",
+      "namespace": "gooey",
+      "apiDoc": "api-doc/gooey.json",
+      "upstreamLua": ["source/upstream/gooey/gooey.lua"]
+    }
+  ],
+  "indexSlots": {
+    "gooey/set_focus:param:index": {
+      "class": "native-1",
+      "evidence": "gooey.lua:set_focus reads group.components[index]; focus moves over 1 .. #components"
+    }
+  }
+}

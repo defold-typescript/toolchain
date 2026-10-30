@@ -96,10 +96,10 @@ export function readCuratedRepos(dataDir: string = newestDataFolder(PACKAGE_ROOT
     add(t.repo, "authored", t.moduleId, t.authored);
   }
   for (const t of readLualsTargets(dataDir)) {
-    add(t.repo, "luals", t.moduleId, `fixtures/luals/${t.namespace}/`);
+    add(t.repo, "luals", t.moduleId, `${t.sourceDir}/`);
   }
   for (const t of readScriptApiTargets(dataDir)) {
-    add(t.repo, "scriptApi", t.moduleId, `fixtures/script-api/${t.moduleId}.script_api`);
+    add(t.repo, "scriptApi", t.moduleId, t.sourceFile);
   }
   for (const t of readNativeTargets(dataDir)) {
     add(t.repo, "native", t.namespace, t.declaration);

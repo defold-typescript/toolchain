@@ -1,0 +1,77 @@
+{
+  "repo": "https://github.com/d954mas/defold-box2d",
+  "license": "MIT",
+  "native": {
+    "namespace": "box2d",
+    "manifestDir": "box2d/native",
+    "declaration": "fork/box2d.d.ts",
+    "upstreamSource": "source/upstream/box2d/native/src/extension.cpp",
+    "upstreamMethodSources": [
+      "source/upstream/box2d/native/src/world.cpp",
+      "source/upstream/box2d/native/src/body.cpp",
+      "source/upstream/box2d/native/src/fixture.cpp",
+      "source/upstream/box2d/native/src/joint.cpp",
+      "source/upstream/box2d/native/src/draw.cpp",
+      "source/upstream/box2d/native/src/contact.cpp",
+      "source/upstream/box2d/native/src/shape/circle_shape.cpp",
+      "source/upstream/box2d/native/src/shape/polygon_shape.cpp",
+      "source/upstream/box2d/native/src/shape/edge_shape.cpp",
+      "source/upstream/box2d/native/src/shape/chain_shape.cpp"
+    ],
+    "upstreamAnnotation": "source/upstream/box2d_header.lua",
+    "methodTables": {
+      "Box2d::WorldClass": ["World"],
+      "Box2d::BodyClass": ["Body"],
+      "Box2d::FixtureClass": ["Fixture"],
+      "Box2d::ContactClass": ["Contact"],
+      "Box2d::DrawClass": ["DebugDraw"],
+      "Box2d::JointClass": [
+        "Joint",
+        "RevoluteJoint",
+        "PrismaticJoint",
+        "DistanceJoint",
+        "PulleyJoint",
+        "MouseJoint",
+        "GearJoint",
+        "WheelJoint",
+        "WeldJoint",
+        "FrictionJoint",
+        "MotorJoint"
+      ],
+      "Box2d::CircleShapeClass": ["Shape", "CircleShape"],
+      "Box2d::PolygonShapeClass": ["Shape", "PolygonShape"],
+      "Box2d::EdgeShapeClass": ["Shape", "EdgeShape"],
+      "Box2d::ChainShapeClass": ["Shape", "ChainShape"]
+    }
+  },
+  "indexSlots": {
+    "box2d/ComputeAABB:param:childIndex": {
+      "class": "native-0",
+      "evidence": "shape/chain_shape.cpp:96 passes it to b2ChainShape::ComputeAABB unchanged; the circle, polygon and edge shapes pass 0"
+    },
+    "box2d/Dump:param:bodyIndex": {
+      "class": "native-0",
+      "evidence": "fixture.cpp:238 passes it to b2Fixture::Dump unchanged, which logs it as the fixture's slot in the 0-based bodies array b2World::Dump writes"
+    },
+    "box2d/GetAABB:param:childIndex": {
+      "class": "native-0",
+      "evidence": "fixture.cpp:229 passes it to b2Fixture::GetAABB unchanged"
+    },
+    "box2d/GetChildEdge:param:index": {
+      "class": "native-0",
+      "evidence": "shape/chain_shape.cpp:149 passes it to b2ChainShape::GetChildEdge unchanged"
+    },
+    "box2d/GetChildIndexA:return:": {
+      "class": "native-0",
+      "evidence": "contact.cpp:103 pushes b2Contact::GetChildIndexA unchanged"
+    },
+    "box2d/GetChildIndexB:return:": {
+      "class": "native-0",
+      "evidence": "contact.cpp:117 pushes b2Contact::GetChildIndexB unchanged"
+    },
+    "box2d/RayCast:param:childIndex": {
+      "class": "native-0",
+      "evidence": "fixture.cpp:149 and shape/chain_shape.cpp:81 pass it to Box2D's RayCast unchanged; the circle, polygon and edge shapes pass 0"
+    }
+  }
+}

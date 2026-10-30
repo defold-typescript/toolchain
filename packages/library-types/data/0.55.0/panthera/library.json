@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/Insality/panthera",
+  "license": "MIT",
+  "indexSlots": {
+    "panthera/panthera_animation:field:animation_keys_index": {
+      "class": "native-1",
+      "evidence": "panthera.lua:update_animation walks keys from animation_keys_index to #keys"
+    }
+  }
+}

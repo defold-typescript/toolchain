@@ -1,0 +1,22 @@
+{
+  "repo": "https://github.com/selimanac/defold-wave",
+  "license": "MIT",
+  "refKind": "commit",
+  "native": {
+    "namespace": "wave",
+    "manifestDir": "wave",
+    "declaration": "fork/wave.d.ts",
+    "upstreamSource": "source/upstream/wave/src/wave.cpp",
+    "upstreamAnnotation": "source/upstream/wave/annotations.lua",
+    "annotationArityExceptions": [
+      {
+        "name": "get_wave1_height",
+        "reason": "src/wave.cpp:177 reads a third `time` argument with `luaL_checknumber(L, 3)`, so the runtime raises without it; the two-parameter stub at annotations.lua:78 omits it, and the declaration follows the C++."
+      },
+      {
+        "name": "get_wave2_height",
+        "reason": "src/wave.cpp:191 reads a third `time` argument with `luaL_checknumber(L, 3)`, so the runtime raises without it; the two-parameter stub at annotations.lua:84 omits it, and the declaration follows the C++."
+      }
+    ]
+  }
+}
