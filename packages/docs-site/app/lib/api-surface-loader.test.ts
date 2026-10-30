@@ -12,6 +12,7 @@ import { apiModuleSymbols, type LibraryMeta } from "./api-surface";
 import {
   defoldListingsFromManifest,
   githubOwner,
+  libraryDataDir,
   libraryDisplayName,
   libraryModuleDirs,
   libraryOriginByNamespace,
@@ -29,6 +30,7 @@ import { type LibraryListing, libraryOwnerGroups } from "./nav";
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+const REAL_LIBRARY_DATA_DIR = libraryDataDir(REAL_LIBRARY_TYPES_DIR) as string;
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 describe("githubOwner", () => {
@@ -209,7 +211,7 @@ describe("loadLibraryProvenance — vendored libraries", () => {
 
 describe("loadLibraryProvenance — curated native extensions", () => {
   const { targets } = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "native-targets.json"), "utf8"),
+    readFileSync(join(REAL_LIBRARY_DATA_DIR, "native-targets.json"), "utf8"),
   ) as { targets: { repo: string; ref: string; license: string; namespace: string }[] };
   const nativeExpectations = readNativeExpectations();
 
@@ -233,7 +235,7 @@ describe("loadLibraryProvenance — curated native extensions", () => {
     const dir = mkdtempSync(join(tmpdir(), "native-pin-kind-"));
     cpSync(LIBRARY_FIXTURE_DIR, dir, { recursive: true });
     writeFileSync(
-      join(dir, "native-targets.json"),
+      join(libraryDataDir(dir) as string, "native-targets.json"),
       JSON.stringify({
         targets: [
           {
@@ -996,8 +998,10 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       for (const namespace of options.nativeNamespaces) {
         writeFileSync(join(dir, "api-doc", "native", `${namespace}.json`), emptyDoc(namespace));
       }
+      const dataDir = join(dir, "data", "0.55.0");
+      mkdirSync(dataDir, { recursive: true });
       writeFileSync(
-        join(dir, "native-targets.json"),
+        join(dataDir, "native-targets.json"),
         JSON.stringify({
           targets: options.nativeNamespaces.map((namespace) => ({
             repo: `https://github.com/someone/native-${namespace}`,

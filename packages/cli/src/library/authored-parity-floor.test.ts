@@ -19,10 +19,11 @@ import {
   parseAuthoredFloors,
 } from "./authored-parity";
 import { NATIVE_PARITY_DIR, nativeParityPath } from "./native-parity";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { readNativeTargets } from "./sync-native-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 const PARITY_DIR = "fidelity/authored";
 const FLOOR_MANIFEST = AUTHORED_FLOOR_MANIFEST_FILE;
 const UPSTREAM_DIR = "fixtures/upstream-lua";
@@ -43,8 +44,8 @@ describe("the authored-lane surface-parity ratchet", () => {
     expect(Object.keys(ARTIFACTS).length).toBeGreaterThan(0);
     expect(Object.keys(ARTIFACTS)).toEqual(
       [
-        ...authoredParityTargets(PACKAGE_ROOT).map((target) => authoredParityPath(target)),
-        ...readNativeTargets(PACKAGE_ROOT).map((target) => nativeParityPath(target)),
+        ...authoredParityTargets(DATA_DIR).map((target) => authoredParityPath(target)),
+        ...readNativeTargets(DATA_DIR).map((target) => nativeParityPath(target)),
       ].sort(),
     );
   });
@@ -203,7 +204,7 @@ describe("the committed native artifacts carry the module-name verdict", () => {
     const native = Object.entries(ARTIFACTS).filter(([path]) =>
       path.startsWith(`${NATIVE_PARITY_DIR}/`),
     );
-    expect(native.length).toBe(readNativeTargets(PACKAGE_ROOT).length);
+    expect(native.length).toBe(readNativeTargets(DATA_DIR).length);
     for (const [, artifact] of native) expect(typeof artifact.moduleNameMatches).toBe("boolean");
   });
 });
@@ -334,9 +335,7 @@ function upstreamFiles(dir: string, prefix: string, out: string[]): string[] {
 }
 
 function fixtureDigest(path: string): string {
-  return new Bun.CryptoHasher("sha256")
-    .update(readFileSync(join(PACKAGE_ROOT, path)))
-    .digest("hex");
+  return new Bun.CryptoHasher("sha256").update(readFileSync(join(DATA_DIR, path))).digest("hex");
 }
 
 /** An upstream copy the repo does not own. A drift here means the snapshot moved
@@ -601,7 +600,7 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
 describe("the vendored upstream Lua the parity reports were measured against", () => {
   test("every pinned copy still hashes to its recorded digest", () => {
     const drifted = Object.entries(UPSTREAM_LUA_HASHES)
-      .filter(([path]) => existsSync(join(PACKAGE_ROOT, path)))
+      .filter(([path]) => existsSync(join(DATA_DIR, path)))
       .filter(([path, digest]) => fixtureDigest(path) !== digest)
       .map(([path]) => driftRemedy(path));
     expect(drifted).toEqual([]);
@@ -610,17 +609,17 @@ describe("the vendored upstream Lua the parity reports were measured against", (
   test("every pinned path still exists, so a rename reds", () => {
     expect(Object.keys(UPSTREAM_LUA_HASHES).length).toBeGreaterThan(0);
     expect(
-      Object.keys(UPSTREAM_LUA_HASHES).filter((path) => !existsSync(join(PACKAGE_ROOT, path))),
+      Object.keys(UPSTREAM_LUA_HASHES).filter((path) => !existsSync(join(DATA_DIR, path))),
     ).toEqual([]);
   });
 
   test("the pin covers every vendored upstream file, so none arrives unpinned", () => {
-    const vendored = upstreamFiles(join(PACKAGE_ROOT, UPSTREAM_DIR), UPSTREAM_DIR, []);
+    const vendored = upstreamFiles(join(DATA_DIR, UPSTREAM_DIR), UPSTREAM_DIR, []);
     expect(vendored.filter((path) => !(path in UPSTREAM_LUA_HASHES))).toEqual([]);
   });
 
   test("the pin covers every path a measured target reads", () => {
-    const read = authoredParityTargets(PACKAGE_ROOT).flatMap((target) => target.upstreamLua);
+    const read = authoredParityTargets(DATA_DIR).flatMap((target) => target.upstreamLua);
     expect(read.length).toBeGreaterThan(0);
     expect(read.filter((path) => !(path in UPSTREAM_LUA_HASHES))).toEqual([]);
   });
@@ -714,7 +713,7 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
 describe("the vendored native C++ the registration surface is read from", () => {
   test("every pinned copy still hashes to its recorded digest", () => {
     const drifted = Object.entries(UPSTREAM_NATIVE_HASHES)
-      .filter(([path]) => existsSync(join(PACKAGE_ROOT, path)))
+      .filter(([path]) => existsSync(join(DATA_DIR, path)))
       .filter(([path, digest]) => fixtureDigest(path) !== digest)
       .map(([path]) => driftRemedy(path));
     expect(drifted).toEqual([]);
@@ -723,21 +722,17 @@ describe("the vendored native C++ the registration surface is read from", () => 
   test("every pinned path still exists, so a rename reds", () => {
     expect(Object.keys(UPSTREAM_NATIVE_HASHES).length).toBeGreaterThan(0);
     expect(
-      Object.keys(UPSTREAM_NATIVE_HASHES).filter((path) => !existsSync(join(PACKAGE_ROOT, path))),
+      Object.keys(UPSTREAM_NATIVE_HASHES).filter((path) => !existsSync(join(DATA_DIR, path))),
     ).toEqual([]);
   });
 
   test("the pin covers every vendored native file, so none arrives unpinned", () => {
-    const vendored = upstreamFiles(
-      join(PACKAGE_ROOT, UPSTREAM_NATIVE_DIR),
-      UPSTREAM_NATIVE_DIR,
-      [],
-    );
+    const vendored = upstreamFiles(join(DATA_DIR, UPSTREAM_NATIVE_DIR), UPSTREAM_NATIVE_DIR, []);
     expect(vendored.filter((path) => !(path in UPSTREAM_NATIVE_HASHES))).toEqual([]);
   });
 
   test("the pin covers every annotation a target reads parameter lists from", () => {
-    const annotated = readNativeTargets(PACKAGE_ROOT).filter(
+    const annotated = readNativeTargets(DATA_DIR).filter(
       (entry) => entry.upstreamAnnotation !== undefined,
     );
     expect(annotated.length).toBeGreaterThan(0);
@@ -749,7 +744,7 @@ describe("the vendored native C++ the registration surface is read from", () => 
   });
 
   test("the pin covers every native target's upstreamSource, upstreamHeaders and upstreamMethodSources", () => {
-    const targets = readNativeTargets(PACKAGE_ROOT);
+    const targets = readNativeTargets(DATA_DIR);
     expect(targets.length).toBeGreaterThan(0);
     expect(
       targets.flatMap((target) =>

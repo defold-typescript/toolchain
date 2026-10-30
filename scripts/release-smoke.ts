@@ -20,6 +20,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { selectDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { PACKAGES } from "./release-pack-proof";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
@@ -222,18 +223,16 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
     });
     const extensionsDir = path.join(app, ".defold-types", "extensions");
     const extensionTypes = path.join(extensionsDir, "daabbcc.d.ts");
-    const curated = path.join(
-      proj,
-      "node_modules",
-      "@defold-typescript",
-      "library-types",
-      "native",
-      "daabbcc.d.ts",
+    const dataDir = selectDataFolder(
+      path.join(proj, "node_modules", "@defold-typescript", "library-types", "data"),
+      "0.0.0",
     );
+    const curated = path.join(dataDir ?? "", "native", "daabbcc.d.ts");
     record(
       `${runtime} resolve types a native extension`,
       resolve.code === 0 &&
         existsSync(extensionTypes) &&
+        dataDir !== null &&
         existsSync(curated) &&
         readFileSync(extensionTypes, "utf8") === readFileSync(curated, "utf8"),
       resolve.code === 0 ? "" : resolve.output.slice(-300),

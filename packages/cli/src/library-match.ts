@@ -2,37 +2,15 @@
 // `game.project` `[dependencies]` URL into the vendored pure-Lua library it
 // corresponds to, or `null` when none match. Later slices add the archive read,
 // `.defold-types/` materialization, and the `resolve` wiring that calls this for
-// each `assetOnly` dependency. This slice consumes the already-shipped
-// `library-classification.json` / `library-targets.json` registries as parsed
-// data passed in, staying free of IO.
+// each `assetOnly` dependency. This module consumes the library data registries
+// as parsed data passed in, staying free of IO.
 //
 // A declared dependency URL is a moving/forked ref (`.../archive/main.zip`, a
 // fork, a pinned tag), so the match keys on a normalized source identity, not
-// string equality. The pure-Lua/vendored registry pins one canonical package
-// dir per vendored module, and those dir names mirror the upstream repo name, so
-// the identity is the normalized repo name (host, owner, `/archive/<ref>.zip`,
-// and query stripped) rather than a full `owner/repo` — the registries carry no
-// per-library owner to key on. The LuaLS and script_api arms key on the upstream
-// `repo` directly rather than a vendored dir.
-
-export interface LibraryClassificationDir {
-  readonly dir: string;
-  readonly classification: string;
-  readonly modules: readonly string[];
-}
-
-export interface LibraryClassification {
-  readonly dirs: readonly LibraryClassificationDir[];
-}
-
-export interface LibraryTarget {
-  readonly module: string;
-  readonly path: string;
-}
-
-export interface LibraryTargets {
-  readonly targets: readonly LibraryTarget[];
-}
+// string equality. The identity is the normalized repo name (host, owner,
+// `/archive/<ref>.zip`, and query stripped) rather than a full `owner/repo`, so a
+// fork of a vendored library still matches it. Every lane keys on the upstream
+// `repo` its registry entry pins.
 
 export interface VendoredLibrary {
   readonly sourceId: string;
@@ -44,7 +22,7 @@ export interface VendoredLibrary {
   readonly namespaces?: Readonly<Record<string, string>>;
 }
 
-// A single library entry in `packages/library-types/luals-targets.json`: the
+// A single library entry in a library data folder's `luals-targets.json`: the
 // upstream repo, the require module the archive ships (`moduleId`, used to
 // verify a match against the downloaded archive), and the `namespace` the
 // library is published under.
@@ -56,51 +34,6 @@ export interface LualsTarget {
 
 export interface LualsTargets {
   readonly targets: readonly LualsTarget[];
-}
-
-// pure-Lua and already-vendored dirs materialize into `.defold-types/`; native
-// (bare-global) and covered-by-goal dirs are handled elsewhere and excluded here.
-const MATCHABLE_CLASSIFICATIONS = new Set(["pure-lua", "already-vendored"]);
-
-// The canonical source identity of a vendored module is its ts-defold/library
-// package dir — the `<dir>` in `packages/<dir>/<module>.d.ts`.
-function targetSourceDir(path: string): string | undefined {
-  return path.split("/")[1];
-}
-
-export function buildLibraryRegistry(
-  classification: LibraryClassification,
-  targets: LibraryTargets,
-): VendoredLibrary[] {
-  const moduleSource = new Map<string, string>();
-  for (const target of targets.targets) {
-    const dir = targetSourceDir(target.path);
-    if (dir !== undefined && dir.length > 0) {
-      moduleSource.set(target.module, dir);
-    }
-  }
-
-  const registry: VendoredLibrary[] = [];
-  for (const dir of classification.dirs) {
-    if (!MATCHABLE_CLASSIFICATIONS.has(dir.classification)) {
-      continue;
-    }
-    const bySource = new Map<string, string[]>();
-    for (const module of dir.modules) {
-      const source = moduleSource.get(module);
-      if (source === undefined) {
-        continue;
-      }
-      const sourceId = source.toLowerCase();
-      const modules = bySource.get(sourceId) ?? [];
-      modules.push(module);
-      bySource.set(sourceId, modules);
-    }
-    for (const [sourceId, modules] of bySource) {
-      registry.push({ sourceId, modules: modules.slice().sort() });
-    }
-  }
-  return registry;
 }
 
 // Group registry targets by normalized source id so a repository shipping more
@@ -140,7 +73,7 @@ export function buildLualsRegistryEntries(targets: LualsTargets): VendoredLibrar
   return groupTargetsBySourceId(targets.targets);
 }
 
-// A single library entry in `packages/library-types/script-api-targets.json`,
+// A single library entry in a library data folder's `script-api-targets.json`,
 // projected to what registry matching needs: the upstream `repo` (source id) and
 // the require `moduleId` shipped by the archive, plus the single-segment
 // `namespace` it is published under.
@@ -164,7 +97,7 @@ export function buildScriptApiRegistryEntries(
   return groupTargetsBySourceId(targets.targets);
 }
 
-// A single library entry in `packages/library-types/authored-targets.json`,
+// A single library entry in a library data folder's `authored-targets.json`,
 // projected to what registry matching needs: the upstream `repo` (source id),
 // the require `moduleId` shipped by the archive, and the single-segment
 // `namespace` it is published under. An

@@ -53,7 +53,7 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
 
@@ -152,8 +152,8 @@ export function authoredParityPath(target: AuthoredTarget): string {
 
 /** The opted-in targets, in `authored-targets.json` order. A target that vendors
  * no upstream Lua is measured by nothing and emits nothing. */
-export function authoredParityTargets(packageRoot: string): AuthoredTarget[] {
-  return readAuthoredTargets(packageRoot).filter((target) => target.upstreamLua.length > 0);
+export function authoredParityTargets(dataDir: string): AuthoredTarget[] {
+  return readAuthoredTargets(dataDir).filter((target) => target.upstreamLua.length > 0);
 }
 
 // Four places is what the near-zero end of this lane needs: `nakama` sits at
@@ -180,12 +180,12 @@ function methodKey(instanceType: string, name: string): string {
   return `${instanceType}:${name}`;
 }
 
-function upstreamSurface(packageRoot: string, target: AuthoredTarget): UpstreamSurface {
+function upstreamSurface(dataDir: string, target: AuthoredTarget): UpstreamSurface {
   const callable = new Map<string, LuaMember>();
   const fields = new Set<string>();
   const refusedDocs = new Set<string>();
   for (const relative of target.upstreamLua) {
-    const surface = parseLuaSurface(readFileSync(join(packageRoot, relative), "utf8"));
+    const surface = parseLuaSurface(readFileSync(join(dataDir, relative), "utf8"));
     for (const member of surface.members) {
       let name = member.name;
       if (member.method === true) {
@@ -503,10 +503,12 @@ export function readAuthoredExceptions(
 
 /**
  * The parity report for one opted-in target, recomputed from the vendored upstream
- * Lua and the committed api-doc. Pure with respect to the working tree: it reads,
- * never writes, so the committed artifact and this return value can be compared.
+ * Lua in the library data folder and the committed api-doc under the package
+ * root. Pure with respect to the working tree: it reads, never writes, so the
+ * committed artifact and this return value can be compared.
  */
 export function buildAuthoredParity(
+  dataDir: string,
   packageRoot: string,
   target: AuthoredTarget,
   exceptions: Record<string, AuthoredParityException[]> = readAuthoredExceptions(packageRoot),
@@ -515,7 +517,7 @@ export function buildAuthoredParity(
     callable: upstream,
     fields: upstreamVariables,
     refusedDocs: refused,
-  } = upstreamSurface(packageRoot, target);
+  } = upstreamSurface(dataDir, target);
   const {
     callable: declared,
     fields: declaredVariables,
@@ -811,8 +813,8 @@ export function authoredFloorRegressions(
 
 if (import.meta.main) {
   const root = LIBRARY_TYPES_ROOT;
-  for (const target of authoredParityTargets(root)) {
-    const report = buildAuthoredParity(root, target);
+  for (const target of authoredParityTargets(LIBRARY_DATA_DIR)) {
+    const report = buildAuthoredParity(LIBRARY_DATA_DIR, root, target);
     const dest = join(root, authoredParityPath(target));
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, renderAuthoredParity(report));

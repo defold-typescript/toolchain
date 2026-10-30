@@ -2,18 +2,15 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import ts from "typescript";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { printedModule } from "./print-corpus";
 
 // `on` raises for a name the Lua does not register, and each handler receives what the Lua
 // passes to `fire`. Both sides are read at test time: the printed declaration and the vendored
 // `realtime.lua`, whose digest `authored-parity-floor.test.ts` pins.
 
-const DECLARATION = await printedModule(LIBRARY_TYPES_ROOT, "asobi.realtime");
-const UPSTREAM = resolve(
-  LIBRARY_TYPES_ROOT,
-  "fixtures/upstream-lua/asobi-defold/asobi/realtime.lua",
-);
+const DECLARATION = await printedModule(LIBRARY_DATA_DIR, "asobi.realtime");
+const UPSTREAM = resolve(LIBRARY_DATA_DIR, "fixtures/upstream-lua/asobi-defold/asobi/realtime.lua");
 
 function declaredEvents(): Record<string, number> {
   const sf = ts.createSourceFile("asobi.realtime.d.ts", DECLARATION, ts.ScriptTarget.Latest, true);

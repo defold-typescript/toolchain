@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
 import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
@@ -35,7 +36,7 @@ export interface RetireEntry {
   readonly lane: CuratedLane;
   /** The Lua `moduleId`, or the native namespace. */
   readonly id: string;
-  /** The curated input the lane prints from, relative to the library-types package. */
+  /** The curated input the lane prints from, relative to the library data folder. */
   readonly source: string;
 }
 
@@ -87,20 +88,20 @@ const ARCHIVE_WRAPPER = "archive";
 const SHIPPED_DIR = "types/";
 
 /** The four lanes `resolve` installs curated declarations from, grouped by repo. */
-export function readCuratedRepos(packageRoot: string = PACKAGE_ROOT): CuratedRepo[] {
+export function readCuratedRepos(dataDir: string = newestDataFolder(PACKAGE_ROOT)): CuratedRepo[] {
   const entries: Array<{ repo: string; entry: RetireEntry }> = [];
   const add = (repo: string, lane: CuratedLane, id: string, source: string) =>
     entries.push({ repo, entry: { lane, id, source } });
-  for (const t of readAuthoredTargets(packageRoot)) {
+  for (const t of readAuthoredTargets(dataDir)) {
     add(t.repo, "authored", t.moduleId, t.authored);
   }
-  for (const t of readLualsTargets(packageRoot)) {
+  for (const t of readLualsTargets(dataDir)) {
     add(t.repo, "luals", t.moduleId, `fixtures/luals/${t.namespace}/`);
   }
-  for (const t of readScriptApiTargets(packageRoot)) {
+  for (const t of readScriptApiTargets(dataDir)) {
     add(t.repo, "scriptApi", t.moduleId, `fixtures/script-api/${t.moduleId}.script_api`);
   }
-  for (const t of readNativeTargets(packageRoot)) {
+  for (const t of readNativeTargets(dataDir)) {
     add(t.repo, "native", t.namespace, t.declaration);
   }
 
@@ -126,7 +127,7 @@ function issueBodyFor(report: ShippedTypesReport & { ref: string }): string {
     "Shipped files:",
     ...(report.files ?? []).map((file) => `- \`${SHIPPED_DIR}${file}\``),
     "",
-    "Curated entries to retire (paths under `packages/library-types/`):",
+    "Curated entries to retire (paths under the newest `packages/library-types/data/` folder):",
     ...report.retire.map((entry) => `- \`${entry.lane}:${entry.id}\` — \`${entry.source}\``),
     "",
     "A project on an earlier release has no `types/` folder to fall back on once the curated copy is gone, so weigh that before retiring.",

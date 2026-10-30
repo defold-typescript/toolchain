@@ -1,9 +1,10 @@
 // IO shell around the pure `library-match` core: locate the installed
-// `@defold-typescript/library-types` package, read its committed registry
-// JSONs, and hand `buildLibraryRegistry` the parsed data. `resolve` calls this
-// once per run to match each `assetOnly` `[dependencies]` entry against the
-// vendored pure-Lua corpus. Mirrors `api-registry.ts`'s empty-fallback shape so
-// a workspace without the corpus degrades to "no libraries" rather than throwing.
+// `@defold-typescript/library-types` package, select the library data folder its
+// CLI version reads, and hand each lane's registry JSON to its builder. `resolve`
+// calls this once per run to match each `assetOnly` `[dependencies]` entry
+// against the vendored pure-Lua corpus. Mirrors `api-registry.ts`'s
+// empty-fallback shape so a workspace without the corpus degrades to "no
+// libraries" rather than throwing.
 
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -12,14 +13,13 @@ import type {
   IndexSlotClassification,
   LibraryIndexSlotClassifications,
 } from "@defold-typescript/types";
+import { readCliVersion } from "./cli-version";
+import { selectDataFolder } from "./library/data-folder";
 import {
   type AuthoredRegistryTargets,
   buildAuthoredRegistryEntries,
-  buildLibraryRegistry,
   buildLualsRegistryEntries,
   buildScriptApiRegistryEntries,
-  type LibraryClassification,
-  type LibraryTargets,
   type LualsTargets,
   mergeVendoredLibrariesBySourceId,
   normalizeSourceId,
@@ -40,41 +40,33 @@ export function resolveLibraryTypesPackageRoot(): string | null {
   }
 }
 
+// The data folder under the installed package that `cliVersion` reads, or `null`
+// when the package or a folder for that version is missing.
+export function resolveLibraryDataDir(cliVersion: string = readCliVersion()): string | null {
+  const root = resolveLibraryTypesPackageRoot();
+  return root === null ? null : selectDataFolder(path.join(root, "data"), cliVersion);
+}
+
 export function loadVendoredLibraryRegistry(
-  root: string | null = resolveLibraryTypesPackageRoot(),
+  dataDir: string | null = resolveLibraryDataDir(),
 ): VendoredLibrary[] {
-  if (root === null) {
+  if (dataDir === null) {
     return [];
   }
-  const classificationPath = path.join(root, "library-classification.json");
-  const targetsPath = path.join(root, "library-targets.json");
-  if (!existsSync(classificationPath) || !existsSync(targetsPath)) {
-    return [];
-  }
-  try {
-    const classification = JSON.parse(
-      readFileSync(classificationPath, "utf8"),
-    ) as LibraryClassification;
-    const targets = JSON.parse(readFileSync(targetsPath, "utf8")) as LibraryTargets;
-    // Merge across lanes so one upstream repo split across lanes (the ts-defold
-    // `nakama.nakama` + the authored `nakama.engine.defold`/`nakama.util.log`)
-    // holds a single `sourceId` entry; without it, `matchVendoredLibrary`'s
-    // first-match `find` drops every later lane's modules for that source.
-    return mergeVendoredLibrariesBySourceId([
-      ...buildLibraryRegistry(classification, targets),
-      ...readLualsRegistryEntries(root),
-      ...readScriptApiRegistryEntries(root),
-      ...readAuthoredRegistryEntries(root),
-    ]);
-  } catch {
-    return [];
-  }
+  // Merge across lanes so one upstream repo split across lanes holds a single
+  // `sourceId` entry; without it, `matchVendoredLibrary`'s first-match `find`
+  // drops every later lane's modules for that source.
+  return mergeVendoredLibrariesBySourceId([
+    ...readLualsRegistryEntries(dataDir),
+    ...readScriptApiRegistryEntries(dataDir),
+    ...readAuthoredRegistryEntries(dataDir),
+  ]);
 }
 
 // LuaLS libraries are recognized straight from `luals-targets.json`, the single
-// per-library entry point. A missing or unparseable file degrades to the
-// pure-Lua-only registry rather than throwing, so a corpus without it still
-// resolves the vendored libraries.
+// per-library entry point. A missing or unparseable file degrades to the other
+// lanes rather than throwing, so a data folder without it still resolves the
+// rest.
 function readLualsRegistryEntries(root: string): VendoredLibrary[] {
   const lualsTargetsPath = path.join(root, "luals-targets.json");
   if (!existsSync(lualsTargetsPath)) {
@@ -143,12 +135,12 @@ export interface VendoredNativeExtension {
 // Read from `native-targets.json`; a missing or unparseable file degrades to no
 // native targets, mirroring the other lanes.
 export function loadVendoredNativeRegistry(
-  root: string | null = resolveLibraryTypesPackageRoot(),
+  dataDir: string | null = resolveLibraryDataDir(),
 ): VendoredNativeExtension[] {
-  if (root === null) {
+  if (dataDir === null) {
     return [];
   }
-  const nativeTargetsPath = path.join(root, "native-targets.json");
+  const nativeTargetsPath = path.join(dataDir, "native-targets.json");
   if (!existsSync(nativeTargetsPath)) {
     return [];
   }
@@ -160,7 +152,7 @@ export function loadVendoredNativeRegistry(
       sourceId: normalizeSourceId(repo),
       namespace,
       manifestDir,
-      declarationPath: path.join(root, declaration),
+      declarationPath: path.join(dataDir, declaration),
     }));
   } catch {
     return [];
@@ -172,12 +164,12 @@ export function loadVendoredNativeRegistry(
 // Node; the library-types gates parse the same file before it ships. A missing
 // or unparseable file degrades to no notes, mirroring the other lanes.
 export function loadLibraryIndexSlotClassifications(
-  root: string | null = resolveLibraryTypesPackageRoot(),
+  dataDir: string | null = resolveLibraryDataDir(),
 ): LibraryIndexSlotClassifications {
-  if (root === null) {
+  if (dataDir === null) {
     return new Map();
   }
-  const classificationsPath = path.join(root, "index-slot-classifications.json");
+  const classificationsPath = path.join(dataDir, "index-slot-classifications.json");
   if (!existsSync(classificationsPath)) {
     return new Map();
   }

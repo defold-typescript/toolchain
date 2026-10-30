@@ -4,12 +4,13 @@ import { basename, join } from "node:path";
 import { libraryIndexBaseNotes } from "@defold-typescript/types";
 import * as ts from "typescript";
 import { emitExtensionDeclarationFromDoc } from "./extension-emit";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printCorpus } from "./library/print-corpus";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 
 const LIBRARY_TYPES_DIR = join(import.meta.dir, "../../library-types");
-const MAP_FILE = "packages/library-types/index-slot-classifications.json";
-const CLASSIFICATIONS = loadLibraryIndexSlotClassifications(LIBRARY_TYPES_DIR);
+const MAP_FILE = "packages/library-types/data/0.55.0/index-slot-classifications.json";
+const CLASSIFICATIONS = loadLibraryIndexSlotClassifications(LIBRARY_DATA_DIR);
 
 type Lane = "script-api" | "extension" | "luals" | "authored" | "native" | "portal";
 
@@ -21,7 +22,7 @@ type Lane = "script-api" | "extension" | "luals" | "authored" | "native" | "port
 const PENDING_LANES: ReadonlySet<Lane> = new Set<Lane>(["portal"]);
 
 function readTargets<T>(file: string): T[] {
-  return (JSON.parse(readFileSync(join(LIBRARY_TYPES_DIR, file), "utf8")) as { targets: T[] })
+  return (JSON.parse(readFileSync(join(LIBRARY_DATA_DIR, file), "utf8")) as { targets: T[] })
     .targets;
 }
 
@@ -49,7 +50,7 @@ const authoredTargets = readTargets<{ apiDoc: string; moduleId: string }>("autho
 
 const lualsTargets = readTargets<{ namespace: string; moduleId: string }>("luals-targets.json");
 
-const CORPUS = await printCorpus(LIBRARY_TYPES_DIR);
+const CORPUS = await printCorpus(LIBRARY_DATA_DIR);
 
 function printed(moduleId: string): string {
   const contents = CORPUS.get(moduleId);
@@ -224,7 +225,7 @@ async function emitLaneDeclaration(page: string, lane: Lane): Promise<string> {
   if (lane === "native") {
     const target = nativeTargets.find((t) => t.namespace === page);
     if (target === undefined) throw new Error(`no native target for page ${page}`);
-    return readFileSync(join(LIBRARY_TYPES_DIR, target.declaration), "utf8");
+    return readFileSync(join(LIBRARY_DATA_DIR, target.declaration), "utf8");
   }
   const docDir = lane === "portal" ? "asset-portal-script-api" : "defold-extensions";
   const doc = JSON.parse(

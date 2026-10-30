@@ -2,11 +2,8 @@ import { describe, expect, test } from "bun:test";
 import {
   type AuthoredRegistryTargets,
   buildAuthoredRegistryEntries,
-  buildLibraryRegistry,
   buildLualsRegistryEntries,
   buildScriptApiRegistryEntries,
-  type LibraryClassification,
-  type LibraryTargets,
   type LualsTargets,
   matchVendoredLibrary,
   mergeVendoredLibrariesBySourceId,
@@ -19,26 +16,13 @@ import {
 // every registry below is synthetic. The one assertion that needed the real
 // committed corpus lives in `library-registry.test.ts`, where the composed
 // multi-lane registry it depends on is already loaded.
-const classification: LibraryClassification = {
-  dirs: [
-    { dir: "boom", classification: "already-vendored", modules: ["boom.boom"] },
-    { dir: "gooey", classification: "pure-lua", modules: ["gooey.gooey"] },
-    { dir: "AppLovin-MAX-Defold", classification: "native", modules: ["applovin"] },
-    { dir: "future-lib", classification: "covered-by-goal", modules: ["future.future"] },
-  ],
-};
-const targets: LibraryTargets = {
-  targets: [
-    { module: "boom.boom", path: "packages/boom/boom.boom.d.ts" },
-    { module: "gooey.gooey", path: "packages/gooey/gooey.gooey.d.ts" },
-    { module: "applovin", path: "packages/AppLovin-MAX-Defold/applovin.d.ts" },
-    { module: "future.future", path: "packages/future-lib/future.future.d.ts" },
-  ],
-};
+const registry: VendoredLibrary[] = [
+  { sourceId: "boom", modules: ["boom.boom"] },
+  { sourceId: "gooey", modules: ["gooey.gooey"] },
+];
 
 describe("matchVendoredLibrary", () => {
   test("matches a declared archive URL to its vendored module list", () => {
-    const registry = buildLibraryRegistry(classification, targets);
     const match = matchVendoredLibrary(
       "https://github.com/whiteboxdev/boom/archive/main.zip",
       registry,
@@ -47,7 +31,6 @@ describe("matchVendoredLibrary", () => {
   });
 
   test("returns null for a native or unknown library without throwing", () => {
-    const registry = buildLibraryRegistry(classification, targets);
     // `applovin` is a native (bare-global) extension, not a vendored pure-Lua lib.
     expect(matchVendoredLibrary("https://github.com/AppLovin/AppLovin-MAX-Defold", registry)).toBe(
       null,
@@ -61,7 +44,6 @@ describe("matchVendoredLibrary", () => {
   });
 
   test("normalizes across archive-ref variants and query strings of one repo", () => {
-    const registry = buildLibraryRegistry(classification, targets);
     const variants = [
       "https://github.com/whiteboxdev/boom/archive/main.zip",
       "https://github.com/whiteboxdev/boom/archive/v1.2.3.zip",
@@ -86,24 +68,6 @@ describe("normalizeSourceId", () => {
     expect(normalizeSourceId("https://github.com/owner/repo/archive/main.zip?token=x")).toBe(
       "repo",
     );
-  });
-});
-
-describe("buildLibraryRegistry", () => {
-  test("includes pure-lua and already-vendored dirs, excludes native and covered-by-goal", () => {
-    const registry = buildLibraryRegistry(classification, targets);
-    expect(registry).toEqual([
-      { sourceId: "boom", modules: ["boom.boom"] },
-      { sourceId: "gooey", modules: ["gooey.gooey"] },
-    ]);
-  });
-
-  test("skips modules with no pinned vendored target", () => {
-    const registry = buildLibraryRegistry(
-      { dirs: [{ dir: "bzAnim", classification: "already-vendored", modules: ["bzAnim.bzAnim"] }] },
-      { targets: [] },
-    );
-    expect(registry).toEqual([]);
   });
 });
 

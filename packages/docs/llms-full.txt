@@ -11053,7 +11053,9 @@ the declaration into the consumer's project from the library version it depends
 on, or from the sources pinned in `@defold-typescript/library-types`.
 
 Adding such a library is **data, not code**: you add one entry to
-`packages/library-types/luals-targets.json`, run the three generation commands,
+`luals-targets.json` in the library data folder (the newest version-named folder
+under `packages/library-types/data/`, which also holds the fetched
+`fixtures/luals/`), run the three generation commands,
 check the emitted API-doc description, and commit the entry and its artifacts. There is no
 pipeline source to touch — the same front-end that produces the druid types
 produces yours.
@@ -11421,7 +11423,7 @@ materializes into a consuming project as `druid.druid`.
 A native or hybrid library that ships an extension `.script_api` (the same YAML
 format every Defold extension ships) has a **third** ingestion mode, distinct
 from the LuaLS front-end above: `packages/cli/src/library/sync-script-api-types.ts`,
-driven by `packages/library-types/script-api-targets.json`. Instead of parsing
+driven by `script-api-targets.json` in the library data folder. Instead of parsing
 `---@` annotations, it routes the committed `.script_api` snapshot through the
 **shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
 the exact path resolve-time extension typing uses — so
@@ -11487,8 +11489,11 @@ vendored declaration into the consumer's project, the way it prints the
 generated lanes' declarations.
 
 Like the other lanes, adding such a library is **data, not code**: you add one
-entry to `packages/library-types/authored-targets.json`, vendor the `.d.ts`, run
-the generation command, and commit the entry, the `.d.ts` and its api-doc. The authored front-end
+entry to `authored-targets.json` in the library data folder (the newest
+version-named folder under `packages/library-types/data/`), vendor the `.d.ts`,
+run the generation command, and commit the entry, the `.d.ts` and its api-doc.
+Every path an entry names is relative to that data folder, except `apiDoc` and
+`fidelity`, which are relative to `packages/library-types/`. The authored front-end
 (`packages/cli/src/library/sync-authored-types.ts`) is the reusable
 machinery; you touch config and fixtures, not the pipeline.
 
@@ -11556,7 +11561,7 @@ library is the sole maintainer of its namespace, so it carries its own
 | ----- | -------- | ---------- |
 | `repo` | yes | The GitHub or Codeberg repository URL, e.g. `https://github.com/britzl/defcon`. `upstream:library-check` reads no other host. |
 | `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
-| `authored` | yes | Package-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
+| `authored` | yes | Data-folder-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `defcon.console`). This is the `declare module` name inside the vendored `.d.ts`. |
 | `namespace` | yes | The artifact stem — the emitted file is `api-doc/<namespace>.json`. Either a bare stem (`defcon`) or the dotted `moduleId` (`orthographic.camera`): fork onto the retired module name when it already equals the publish namespace, and reach for a bare stem only when nothing else owns it. The `orthographic.camera` worked example below settles the choice. |
 | `apiDoc` | yes | The docs-site model output path (`api-doc/<namespace>.json`). |
@@ -11649,7 +11654,7 @@ dropped a trailing parameter, is measurable without any type information at all.
 The upstream path is derived from `moduleId`: replace the dots with slashes and
 append `.lua`, so `in.button` is `in/button.lua` and `richtext.richtext` is
 `richtext/richtext.lua`. Fetch that path at the entry's pinned `ref` and vendor it
-under `packages/library-types/fixtures/upstream-lua/`, at
+under `fixtures/upstream-lua/` in the library data folder, at
 `<repo-name>/<upstream-path>` within it, where `<repo-name>` is the last segment
 of the entry's `repo` URL — so
 `britzl/defold-input` at `in/button.lua` lands at
@@ -12169,7 +12174,10 @@ still the surface loss that drove it.
 ### Refreshing library pins
 
 Every library whose types this repo ships is pinned to one upstream `ref` in one
-of five lane registries under `packages/library-types/`. Upstream keeps moving;
+of five lane registries under `packages/library-types/`: the LuaLS, script_api and
+authored registries, with the fixtures their entries name, sit in the newest
+library data folder (`data/<version>/`), and the markdown and OpenAPI registries
+at the package root. Upstream keeps moving;
 the pins do not. This page is what to do when one of them has fallen behind.
 
 [Authoring LuaLS library types](./authoring-luals-library-types.md) and

@@ -3,10 +3,11 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import * as ts from "typescript";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { writePrintedCorpus } from "./print-corpus";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 const REPO_ROOT = resolve(import.meta.dir, "../../../..");
 const PRINTED_DIR = mkdtempSync(join(tmpdir(), "printed-corpus-"));
 
@@ -15,10 +16,10 @@ afterAll(() => rmSync(PRINTED_DIR, { recursive: true, force: true }));
 // Every curated native-extension declaration, read from native-targets.json. It
 // is hand-authored and shipped as-is, so this compile is its only validity check.
 const NATIVE_DECLARATIONS = (
-  JSON.parse(readFileSync(resolve(PACKAGE_ROOT, "native-targets.json"), "utf8")) as {
+  JSON.parse(readFileSync(resolve(DATA_DIR, "native-targets.json"), "utf8")) as {
     targets: { declaration: string }[];
   }
-).targets.map((t) => resolve(PACKAGE_ROOT, t.declaration));
+).targets.map((t) => resolve(DATA_DIR, t.declaration));
 
 const USAGE_PROOFS = readdirSync(resolve(PACKAGE_ROOT, "test-d"), { recursive: true })
   .map(String)
@@ -54,7 +55,7 @@ function where(diagnostic: ts.Diagnostic): string {
 // the repo-wide `skipLibCheck: true`. Only diagnostics in these inputs gate:
 // conflicts inside `node_modules` type packages are not the corpus's to fix.
 test("every printed declaration, native declaration and usage proof compiles under skipLibCheck: false", async () => {
-  const printed = await writePrintedCorpus(PACKAGE_ROOT, PRINTED_DIR);
+  const printed = await writePrintedCorpus(DATA_DIR, PRINTED_DIR);
   const inputs = [...printed, ...NATIVE_DECLARATIONS, ...USAGE_PROOFS];
   expect(printed.length).toBeGreaterThan(0);
   expect(USAGE_PROOFS.length).toBeGreaterThan(0);

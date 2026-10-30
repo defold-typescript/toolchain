@@ -235,11 +235,11 @@ export function lowerAuthoredApiDoc(packageRoot: string, target: AuthoredTarget)
 }
 
 if (import.meta.main) {
-  const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
+  const { LIBRARY_DATA_DIR: data, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   const argv = process.argv.slice(2);
   if (argv.includes("--api-doc")) {
-    for (const target of readAuthoredTargets(root)) {
-      const json = lowerAuthoredApiDoc(root, target);
+    for (const target of readAuthoredTargets(data)) {
+      const json = lowerAuthoredApiDoc(data, target);
       const dest = join(root, target.apiDoc);
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, json);

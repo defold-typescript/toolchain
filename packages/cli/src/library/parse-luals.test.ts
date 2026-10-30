@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { applyAnnotationOverrides } from "./apply-luals-overrides";
 import { emitLibraryDeclarations } from "./emit-library-dts";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import {
   type LibraryField,
   type LibraryInterface,
@@ -13,7 +13,7 @@ import {
   parseLualsSource,
 } from "./parse-luals";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 // Build sources line-by-line so annotations and declarations sit at column 0 —
 // the scanner only recognizes column-0 lines, mirroring how LuaLS libraries
@@ -1282,7 +1282,7 @@ describe("parseLualsSource @deprecated", () => {
 });
 
 describe("druid parse snapshot", () => {
-  const druidRoot = join(PACKAGE_ROOT, "fixtures/luals/druid");
+  const druidRoot = join(DATA_DIR, "fixtures/luals/druid");
   const files = readdirSync(druidRoot, { recursive: true })
     .map((entry) => String(entry))
     .filter((entry) => entry.endsWith(".lua"))

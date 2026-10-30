@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { copyFileSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import type {
   AssetPortalManifest,
   PortalAsset,
@@ -155,6 +156,7 @@ describe("portalCoverage — lane join", () => {
 
 describe("readCoverageRegistries — the portal lane", () => {
   const REAL_PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
+  const REAL_DATA_DIR = newestDataFolder(REAL_PACKAGE_ROOT);
 
   function packageRootCopy(): string {
     const root = mkdtempSync(join(tmpdir(), "coverage-registries-"));
@@ -167,7 +169,7 @@ describe("readCoverageRegistries — the portal lane", () => {
   }
 
   test("a package root without asset-portal-script-api.json pins nothing on the portal lane", () => {
-    expect(readCoverageRegistries(packageRootCopy()).portal).toEqual([]);
+    expect(readCoverageRegistries(packageRootCopy(), REAL_DATA_DIR).portal).toEqual([]);
   });
 
   test("each library asset-portal-script-api.json lists is pinned on the portal lane", () => {
@@ -176,9 +178,9 @@ describe("readCoverageRegistries — the portal lane", () => {
       join(root, "asset-portal-script-api.json"),
       JSON.stringify({ libraries: [{ id: "defos", repo: "https://github.com/subsoap/defos" }] }),
     );
-    expect(readCoverageRegistries(root).portal.map((library) => library.repo)).toEqual([
-      "https://github.com/subsoap/defos",
-    ]);
+    expect(
+      readCoverageRegistries(root, REAL_DATA_DIR).portal.map((library) => library.repo),
+    ).toEqual(["https://github.com/subsoap/defos"]);
   });
 });
 

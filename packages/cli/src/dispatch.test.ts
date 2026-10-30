@@ -4852,7 +4852,7 @@ describe("dispatch resolve", () => {
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
-      libraryTypesRoot: string;
+      libraryDataDir: string;
     };
   } {
     const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
@@ -4864,7 +4864,7 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
-        libraryTypesRoot: libraryData,
+        libraryDataDir: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -4889,7 +4889,7 @@ describe("dispatch resolve", () => {
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
-      libraryTypesRoot: string;
+      libraryDataDir: string;
     };
   } {
     const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
@@ -4901,7 +4901,7 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
-        libraryTypesRoot: libraryData,
+        libraryDataDir: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -4962,7 +4962,6 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
         libraryRegistry: [],
-        libraryTypesRoot: null,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -5002,7 +5001,7 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
         libraryRegistry: [],
-        libraryTypesRoot: null,
+        libraryDataDir: null,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -5068,7 +5067,7 @@ describe("dispatch resolve", () => {
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
       libraryRegistry: { sourceId: string; modules: string[] }[];
-      libraryTypesRoot: string;
+      libraryDataDir: string;
     };
   } {
     const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
@@ -5080,7 +5079,7 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir,
         libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
-        libraryTypesRoot: libraryData,
+        libraryDataDir: libraryData,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {
@@ -5172,7 +5171,7 @@ describe("dispatch resolve", () => {
       resolveInternals: {
         cacheDir,
         libraryRegistry: [],
-        libraryTypesRoot: null,
+        libraryDataDir: null,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
           if (path.basename(path.dirname(zipPath)) !== key) {

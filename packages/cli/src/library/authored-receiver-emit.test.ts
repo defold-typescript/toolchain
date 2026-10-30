@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { transpileProject } from "@defold-typescript/transpiler";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus } from "./print-corpus";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
 import { readLibraryExpectations } from "./target-expectations";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const CORPUS = await printCorpus(PACKAGE_ROOT);
+const DATA_DIR = LIBRARY_DATA_DIR;
+const CORPUS = await printCorpus(DATA_DIR);
 
 const IMPORT_SPECIFIER = /^\s*import\s[^;]*?\bfrom\s+['"]([^'"]+)['"]/gm;
 
@@ -35,7 +36,7 @@ function declarationWithSiblings(
 }
 
 describe("each shipped authored declaration emits the receiver form its expectation records", () => {
-  const authored = readAuthoredTargets(PACKAGE_ROOT);
+  const authored = readAuthoredTargets(DATA_DIR);
   const targets = new Map(authored.map((target) => [target.namespace, target]));
   const byModule = new Map(authored.map((target) => [target.moduleId, target]));
 

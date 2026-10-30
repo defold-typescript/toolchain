@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..", "..");
@@ -10,7 +10,11 @@ const FORKED_GUIDE = resolve(
   "guide",
   "authoring-forked-library-types.md",
 );
-const AUTHORED_TARGETS = resolve(REPO_ROOT, "packages", "library-types", "authored-targets.json");
+const LIBRARY_DATA = resolve(REPO_ROOT, "packages", "library-types", "data");
+const [NEWEST_DATA_FOLDER = ""] = readdirSync(LIBRARY_DATA).sort((a, b) =>
+  b.localeCompare(a, "en", { numeric: true }),
+);
+const AUTHORED_TARGETS = resolve(LIBRARY_DATA, NEWEST_DATA_FOLDER, "authored-targets.json");
 const ENTRY_HEADING = "## 1. Add an `authored-targets.json` entry";
 
 function dottedNamespaces(): string[] {

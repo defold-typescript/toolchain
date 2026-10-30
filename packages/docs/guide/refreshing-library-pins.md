@@ -4,7 +4,10 @@ toc-title: Refreshing library pins
 # Refreshing library pins
 
 Every library whose types this repo ships is pinned to one upstream `ref` in one
-of five lane registries under `packages/library-types/`. Upstream keeps moving;
+of five lane registries under `packages/library-types/`: the LuaLS, script_api and
+authored registries, with the fixtures their entries name, sit in the newest
+library data folder (`data/<version>/`), and the markdown and OpenAPI registries
+at the package root. Upstream keeps moving;
 the pins do not. This page is what to do when one of them has fallen behind.
 
 [Authoring LuaLS library types](./authoring-luals-library-types.md) and

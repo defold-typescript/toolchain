@@ -16,8 +16,11 @@ vendored declaration into the consumer's project, the way it prints the
 generated lanes' declarations.
 
 Like the other lanes, adding such a library is **data, not code**: you add one
-entry to `packages/library-types/authored-targets.json`, vendor the `.d.ts`, run
-the generation command, and commit the entry, the `.d.ts` and its api-doc. The authored front-end
+entry to `authored-targets.json` in the library data folder (the newest
+version-named folder under `packages/library-types/data/`), vendor the `.d.ts`,
+run the generation command, and commit the entry, the `.d.ts` and its api-doc.
+Every path an entry names is relative to that data folder, except `apiDoc` and
+`fidelity`, which are relative to `packages/library-types/`. The authored front-end
 (`packages/cli/src/library/sync-authored-types.ts`) is the reusable
 machinery; you touch config and fixtures, not the pipeline.
 
@@ -85,7 +88,7 @@ library is the sole maintainer of its namespace, so it carries its own
 | ----- | -------- | ---------- |
 | `repo` | yes | The GitHub or Codeberg repository URL, e.g. `https://github.com/britzl/defcon`. `upstream:library-check` reads no other host. |
 | `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
-| `authored` | yes | Package-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
+| `authored` | yes | Data-folder-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `defcon.console`). This is the `declare module` name inside the vendored `.d.ts`. |
 | `namespace` | yes | The artifact stem — the emitted file is `api-doc/<namespace>.json`. Either a bare stem (`defcon`) or the dotted `moduleId` (`orthographic.camera`): fork onto the retired module name when it already equals the publish namespace, and reach for a bare stem only when nothing else owns it. The `orthographic.camera` worked example below settles the choice. |
 | `apiDoc` | yes | The docs-site model output path (`api-doc/<namespace>.json`). |
@@ -178,7 +181,7 @@ dropped a trailing parameter, is measurable without any type information at all.
 The upstream path is derived from `moduleId`: replace the dots with slashes and
 append `.lua`, so `in.button` is `in/button.lua` and `richtext.richtext` is
 `richtext/richtext.lua`. Fetch that path at the entry's pinned `ref` and vendor it
-under `packages/library-types/fixtures/upstream-lua/`, at
+under `fixtures/upstream-lua/` in the library data folder, at
 `<repo-name>/<upstream-path>` within it, where `<repo-name>` is the last segment
 of the entry's `repo` URL — so
 `britzl/defold-input` at `in/button.lua` lands at

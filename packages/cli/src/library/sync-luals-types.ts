@@ -321,12 +321,12 @@ const defaultFetchText: FetchText = async (url) => {
 };
 
 if (import.meta.main) {
-  const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
+  const { LIBRARY_DATA_DIR: data, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   const argv = process.argv.slice(2);
   if (argv.includes("--fetch")) {
-    const targets = readLualsTargets(root);
+    const targets = readLualsTargets(data);
     for (const target of targets) {
-      await fetchLualsFixtures(root, target, {
+      await fetchLualsFixtures(data, target, {
         listTree: defaultListTree,
         fetchText: defaultFetchText,
       });
@@ -334,9 +334,9 @@ if (import.meta.main) {
     }
   }
   if (argv.includes("--fidelity")) {
-    const targets = readLualsTargets(root);
+    const targets = readLualsTargets(data);
     for (const target of targets) {
-      const report = buildTargetFidelity(root, target);
+      const report = buildTargetFidelity(data, target);
       const dest = join(root, "fidelity", `${target.namespace}.json`);
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, `${JSON.stringify(report, null, 2)}\n`);
@@ -346,9 +346,9 @@ if (import.meta.main) {
     }
   }
   if (argv.includes("--api-doc")) {
-    const targets = readLualsTargets(root);
+    const targets = readLualsTargets(data);
     for (const target of targets) {
-      const model = buildTargetModel(root, target);
+      const model = buildTargetModel(data, target);
       const lowered = lowerLibraryModel(model, {
         namespace: target.namespace,
         typeRenames: target.typeRenames,

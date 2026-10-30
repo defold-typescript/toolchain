@@ -14,7 +14,7 @@ import { LIBRARY_INDEX_SLOT_CLASSIFICATIONS } from "./api-surface";
 import { loadLibraryPageSources } from "./api-surface-loader";
 
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
-const MAP_FILE = "packages/library-types/index-slot-classifications.json";
+const MAP_FILE = "packages/library-types/data/0.55.0/index-slot-classifications.json";
 
 const sources = loadLibraryPageSources(REAL_LIBRARY_TYPES_DIR);
 

@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import {
   type AssetPortalManifest,
   livePortalHead,
@@ -135,7 +136,10 @@ export function readPortalVerdicts(packageRoot: string = PACKAGE_ROOT): PortalVe
   return (JSON.parse(readFileSync(file, "utf8")) as { verdicts: PortalVerdicts }).verdicts;
 }
 
-export function readCoverageRegistries(packageRoot: string = PACKAGE_ROOT): CoverageRegistries {
+export function readCoverageRegistries(
+  packageRoot: string = PACKAGE_ROOT,
+  dataDir: string = newestDataFolder(packageRoot),
+): CoverageRegistries {
   const defold = JSON.parse(
     readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
   ) as DefoldExtensionsManifest;
@@ -144,8 +148,8 @@ export function readCoverageRegistries(packageRoot: string = PACKAGE_ROOT): Cove
     ? (JSON.parse(readFileSync(portalPath, "utf8")) as { libraries: { repo: string }[] }).libraries
     : [];
   return {
-    pinned: readPinnedTargets(packageRoot),
-    native: readNativeTargets(packageRoot),
+    pinned: readPinnedTargets(packageRoot, dataDir),
+    native: readNativeTargets(dataDir),
     defold: defold.libraries,
     portal,
   };

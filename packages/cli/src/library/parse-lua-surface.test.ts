@@ -1,18 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 const UPSTREAM_DIR = "fixtures/upstream-lua/nakama-defold/nakama";
 
 function vendored(relative: string): string {
-  return readFileSync(join(PACKAGE_ROOT, UPSTREAM_DIR, relative), "utf8");
+  return readFileSync(join(DATA_DIR, UPSTREAM_DIR, relative), "utf8");
 }
 
 function upstream(relative: string): string {
-  return readFileSync(join(PACKAGE_ROOT, "fixtures/upstream-lua", relative), "utf8");
+  return readFileSync(join(DATA_DIR, "fixtures/upstream-lua", relative), "utf8");
 }
 
 function byName(members: LuaMember[]): Map<string, LuaMember> {
@@ -395,7 +395,7 @@ describe("a metatable that could delegate members is refused, never parsed short
 
 describe("an annotation stub file, whose module table the source never returns", () => {
   const annotation = readFileSync(
-    join(PACKAGE_ROOT, "fixtures/upstream-native/DAABBCC/daabbcc/annotation.lua"),
+    join(DATA_DIR, "fixtures/upstream-native/DAABBCC/daabbcc/annotation.lua"),
     "utf8",
   );
 
@@ -428,7 +428,7 @@ describe("an annotation stub file, whose module table the source never returns",
   test("the sharing annotation reads too, its stubs sitting under `share`", () => {
     const share = parseLuaSurface(
       readFileSync(
-        join(PACKAGE_ROOT, "fixtures/upstream-native/defold-sharing/share/api/share.lua"),
+        join(DATA_DIR, "fixtures/upstream-native/defold-sharing/share/api/share.lua"),
         "utf8",
       ),
       { moduleLocal: "share" },
@@ -664,7 +664,7 @@ describe("a column-0 colon method of the returned table is a method member", () 
   test("an annotation file's class stubs stay out, its module table named by the caller", () => {
     const box2d = parseLuaSurface(
       readFileSync(
-        join(PACKAGE_ROOT, "fixtures/upstream-native/defold-box2d/box2d_header.lua"),
+        join(DATA_DIR, "fixtures/upstream-native/defold-box2d/box2d_header.lua"),
         "utf8",
       ),
       { moduleLocal: "box2d" },
