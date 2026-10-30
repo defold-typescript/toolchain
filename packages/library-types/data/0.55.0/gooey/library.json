@@ -15,5 +15,11 @@
       "class": "native-1",
       "evidence": "gooey.lua:set_focus reads group.components[index]; focus moves over 1 .. #components"
     }
+  },
+  "floors": {
+    "gooey.gooey": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

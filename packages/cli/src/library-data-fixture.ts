@@ -32,6 +32,8 @@ export interface FlatLibraryTargets {
   forks?: Flat<ForkEntry>[];
   native?: Flat<NativeEntry>[];
   indexSlots?: Record<string, IndexSlotEntry>;
+  // Each library's floors, by the folder its repo names.
+  floors?: Record<string, LibraryJson["floors"]>;
 }
 
 // Writes each target into the folder its repo names: the repo, license and
@@ -85,7 +87,8 @@ export function writeLibraryTargets(dataDir: string, targets: FlatLibraryTargets
     first.library.indexSlots = targets.indexSlots;
   }
   for (const [folder, { library, ref, recipe }] of libraries) {
-    writeLibraryJson(dataDir, library);
+    const floors = targets.floors?.[folder];
+    writeLibraryJson(dataDir, floors === undefined ? library : { ...library, floors });
     if (ref !== undefined) writeReviewedJson(dataDir, folder, { ref });
     if (recipe.luals !== undefined || recipe.scriptApi !== undefined) {
       writeRecipeJson(dataDir, folder, recipe);

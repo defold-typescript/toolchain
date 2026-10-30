@@ -26,5 +26,15 @@
       "class": "native-1",
       "evidence": "The 1-based index of the frame shown next"
     }
+  },
+  "floors": {
+    "node_repeat.node_repeat": {
+      "callable": 1,
+      "field": 1
+    },
+    "sprite_repeat.sprite_repeat": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

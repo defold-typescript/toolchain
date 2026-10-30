@@ -1,4 +1,7 @@
 {
   "repo": "https://github.com/paweljarosz/defold-fake-real-glass",
-  "license": "MIT"
+  "license": "MIT",
+  "floors": {
+    "fake_real_glass.fake_real_glass": 1
+  }
 }

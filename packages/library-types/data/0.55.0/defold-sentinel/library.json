@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/sentinel.json",
       "upstreamLua": ["source/upstream/sentinel/sentry.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "sentinel.sentry": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

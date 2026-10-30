@@ -37,5 +37,27 @@
       "class": "native-1",
       "evidence": "flex.lua:Node:insert_child passes index to table.insert(self.children, index or (#self.children + 1), child)"
     }
+  },
+  "floors": {
+    "flow.bottom_sheet": {
+      "callable": 1,
+      "field": 1
+    },
+    "flow.color": {
+      "callable": 1,
+      "field": 1
+    },
+    "flow.flex": 1,
+    "flow.flow": {
+      "callable": 1,
+      "field": 1
+    },
+    "flow.layout": 1,
+    "flow.navigation.gui": 1,
+    "flow.navigation.messages": 1,
+    "flow.navigation.proxy": 1,
+    "flow.navigation.runtime": 1,
+    "flow.types": 1,
+    "flow.ui": 1
   }
 }

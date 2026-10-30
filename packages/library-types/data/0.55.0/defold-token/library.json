@@ -1,4 +1,7 @@
 {
   "repo": "https://github.com/Insality/defold-token",
-  "license": "MIT"
+  "license": "MIT",
+  "floors": {
+    "token.token": 1
+  }
 }

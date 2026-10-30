@@ -6,5 +6,11 @@
     "manifestDir": "taptic_engine",
     "declaration": "fork/taptic_engine.d.ts",
     "upstreamSource": "source/upstream/taptic_engine/src/tapticengine.cpp"
+  },
+  "floors": {
+    "taptic_engine": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

@@ -9,5 +9,60 @@
       "apiDoc": "api-doc/orthographic.camera.json",
       "upstreamLua": ["source/upstream/orthographic/camera.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "orthographic.camera": {
+      "callable": 1,
+      "field": 1
+    }
+  },
+  "parityExceptions": {
+    "orthographic.camera": [
+      {
+        "name": "add_projector",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"add_projector() is deprecated\")` (camera.lua:71)"
+      },
+      {
+        "name": "final",
+        "kind": "script-lifecycle",
+        "reason": "upstream's LuaDoc says \"This is called automatically from the final() function of the camera.script\" (camera.lua:411)"
+      },
+      {
+        "name": "get_projection_id",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"get_projection_id() is deprecated\")` (camera.lua:77)"
+      },
+      {
+        "name": "init",
+        "kind": "script-lifecycle",
+        "reason": "upstream's LuaDoc says \"This is called automatically from the init() function of the camera.script\" (camera.lua:374)"
+      },
+      {
+        "name": "send_view_projection",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"send_view_projection() is deprecated\")` (camera.lua:80)"
+      },
+      {
+        "name": "set_dpi_ratio",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"set_dpi_ratio() is deprecated\")` (camera.lua:86)"
+      },
+      {
+        "name": "update",
+        "kind": "script-lifecycle",
+        "reason": "upstream's LuaDoc says \"This is called automatically from the camera.script\" (camera.lua:431)"
+      },
+      {
+        "name": "use_projector",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"use_projector() is deprecated\")` (camera.lua:74)"
+      },
+      {
+        "name": "world_to_window",
+        "kind": "deprecated-stub",
+        "reason": "upstream's whole body is `error(\"world_to_window() is deprecated\")` (camera.lua:95)"
+      }
+    ]
+  }
 }

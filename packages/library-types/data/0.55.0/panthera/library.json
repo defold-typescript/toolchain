@@ -6,5 +6,8 @@
       "class": "native-1",
       "evidence": "panthera.lua:update_animation walks keys from animation_keys_index to #keys"
     }
+  },
+  "floors": {
+    "panthera.panthera": 1
   }
 }

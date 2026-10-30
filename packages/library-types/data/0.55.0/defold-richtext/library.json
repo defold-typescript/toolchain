@@ -23,5 +23,19 @@
       "apiDoc": "api-doc/richtext.tags.json",
       "upstreamLua": ["source/upstream/richtext/tags.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "richtext.color": {
+      "callable": 1,
+      "field": 1
+    },
+    "richtext.richtext": {
+      "callable": 1,
+      "field": 1
+    },
+    "richtext.tags": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

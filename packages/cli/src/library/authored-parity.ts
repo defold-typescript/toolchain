@@ -5,9 +5,9 @@
  * The lane's own gate is an identity diff between the vendored `.d.ts` and the
  * emitted golden, which proves the emit is lossless and says nothing about whether
  * the fork is right. `parse-lua-surface.ts` reads the upstream side; this module
- * compares it with `api-doc/<namespace>.json` — the artifact the docs-site renders,
- * so the report measures the surface a user actually sees rather than an
- * intermediate the reader alone knows about.
+ * compares it with the fork's API model, lowered from the library data — the artifact
+ * the docs-site renders, so the report measures the surface a user actually sees rather
+ * than an intermediate the reader alone knows about.
  *
  * The declared side is the module's *own* api-doc members. An element marked
  * `global: true` is a file-scope declaration the library installs into the environment,
@@ -53,10 +53,19 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { libraryFile } from "./library-data";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
+import {
+  type AuthoredFloor,
+  type AuthoredParityException,
+  describeValue,
+  libraryFile,
+  readLibraryExceptions,
+} from "./library-data";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
-import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
+import {
+  type AuthoredTarget,
+  lowerAuthoredApiDoc,
+  readAuthoredTargets,
+} from "./sync-authored-types";
 
 export const AUTHORED_PARITY_DIR = "fidelity/authored";
 
@@ -229,8 +238,8 @@ interface ApiDocFunction {
   parameters?: unknown[];
 }
 
-function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredSurface {
-  const doc = JSON.parse(readFileSync(join(packageRoot, target.apiDoc), "utf8")) as {
+function declaredSurface(apiDoc: string, target: AuthoredTarget): DeclaredSurface {
+  const doc = JSON.parse(apiDoc) as {
     elements: (ApiDocFunction & {
       type: string;
       global?: boolean;
@@ -415,104 +424,20 @@ export function classifyArity(input: ArityInput): ArityVerdict {
   };
 }
 
-export const AUTHORED_EXCEPTIONS_MANIFEST_FILE = "authored-parity-exceptions.json";
-
 /**
- * Why the fork is right not to declare an upstream member. Closed, and both members
- * were introduced by a real case rather than anticipated: a speculative kind would
- * read as a licence to except anything.
- *
- * `script-lifecycle` — upstream exports it for the library's own bundled `.script`,
- * saying so in its own comment; a consumer never calls it, and declaring it would
- * widen the published surface with functions no consumer should reach.
- * `deprecated-stub` — upstream's body is nothing but `error("… is deprecated")`, so
- * declaring the member offers a call that cannot succeed.
- *
- * An arity or phantom exception is deliberately not expressible here. `nakama`'s 26
- * phantoms are the case that will ask for one, and it states its own shape.
- */
-export const AUTHORED_EXCEPTION_KINDS = ["deprecated-stub", "script-lifecycle"] as const;
-
-export type AuthoredExceptionKind = (typeof AUTHORED_EXCEPTION_KINDS)[number];
-
-/** One justified divergence. `reason` cites upstream's own file and line, so the
- * entry can be re-checked against the pin rather than taken on trust. */
-export interface AuthoredParityException {
-  name: string;
-  kind: AuthoredExceptionKind;
-  reason: string;
-}
-
-function exceptionField(entry: Record<string, unknown>, field: string, path: string, at: string) {
-  const value = entry[field];
-  if (typeof value !== "string" || value === "") {
-    throw new Error(`${path}: ${at} needs a non-empty string "${field}", got ${describe(value)}`);
-  }
-  return value;
-}
-
-/**
- * The exceptions manifest's parse-time contract: a plain object mapping each namespace
- * to an array of `{ name, kind, reason }` entries. Modelled on `parseAuthoredFloors` —
- * pure over `raw`, so the caller owns the read — and on the `parityVerdict` closed set,
- * whose unknown-reason throw this mirrors.
- */
-export function parseAuthoredExceptions(
-  raw: unknown,
-  path: string,
-): Record<string, AuthoredParityException[]> {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
-    throw new Error(`${path}: expected a JSON object of exceptions, got ${describe(raw)}`);
-  }
-  const manifest: Record<string, AuthoredParityException[]> = {};
-  for (const [namespace, entries] of Object.entries(raw)) {
-    if (!Array.isArray(entries)) {
-      throw new Error(
-        `${path}: "${namespace}" must be an array of entries, got ${describe(entries)}`,
-      );
-    }
-    manifest[namespace] = entries.map((entry) => {
-      if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
-        throw new Error(`${path}: "${namespace}" holds a non-object entry ${describe(entry)}`);
-      }
-      const record = entry as Record<string, unknown>;
-      const name = exceptionField(record, "name", path, `an entry of "${namespace}"`);
-      const at = `"${namespace}.${name}"`;
-      const kind = record.kind;
-      if (!AUTHORED_EXCEPTION_KINDS.includes(kind as AuthoredExceptionKind)) {
-        throw new Error(
-          `${path}: ${at} has unknown kind ${describe(kind)} — expected one of ${AUTHORED_EXCEPTION_KINDS.join(", ")}`,
-        );
-      }
-      return {
-        name,
-        kind: kind as AuthoredExceptionKind,
-        reason: exceptionField(record, "reason", path, at),
-      };
-    });
-  }
-  return manifest;
-}
-
-/** The committed ledger, read from the package root the parity pass measures. */
-export function readAuthoredExceptions(
-  packageRoot: string,
-): Record<string, AuthoredParityException[]> {
-  const path = AUTHORED_EXCEPTIONS_MANIFEST_FILE;
-  return parseAuthoredExceptions(JSON.parse(readFileSync(join(packageRoot, path), "utf8")), path);
-}
-
-/**
- * The parity report for one opted-in target, recomputed from the vendored upstream
- * Lua in the library data folder and the committed api-doc under the package
- * root. Pure with respect to the working tree: it reads, never writes, so the
- * committed artifact and this return value can be compared.
+ * The parity report for one opted-in target, recomputed from the library data folder
+ * alone: the vendored upstream Lua, the API model lowered from the fork, and its
+ * library's parity exceptions. Pure with respect to the working tree: it reads, never
+ * writes, so the committed artifact and this return value can be compared.
  */
 export function buildAuthoredParity(
   dataDir: string,
-  packageRoot: string,
   target: AuthoredTarget,
-  exceptions: Record<string, AuthoredParityException[]> = readAuthoredExceptions(packageRoot),
+  exceptions: Record<string, AuthoredParityException[]> = readLibraryExceptions(
+    dataDir,
+    target.repo,
+  ),
+  apiDoc: string = lowerAuthoredApiDoc(dataDir, target),
 ): AuthoredParityReport {
   const {
     callable: upstream,
@@ -525,7 +450,7 @@ export function buildAuthoredParity(
     globals: declaredGlobals,
     imported: importedDocs,
     documented: declaredDocumented,
-  } = declaredSurface(packageRoot, target);
+  } = declaredSurface(apiDoc, target);
   const { upstreamFields, declaredFields, missingFields, phantomFields } = classifyFieldAxis({
     upstreamCallable: new Set(upstream.keys()),
     upstreamNonCallable: upstreamVariables,
@@ -541,12 +466,12 @@ export function buildAuthoredParity(
     const at = `${target.namespace}.${exception.name}`;
     if (!upstream.has(exception.name)) {
       throw new Error(
-        `${AUTHORED_EXCEPTIONS_MANIFEST_FILE}: "${at}" excepts a member upstream does not define — delete the entry`,
+        `${libraryFile(target.repo)}: "${at}" excepts a member upstream does not define — delete the entry`,
       );
     }
     if (declared.has(exception.name)) {
       throw new Error(
-        `${AUTHORED_EXCEPTIONS_MANIFEST_FILE}: "${at}" is unnecessary, the fork declares it — delete the entry`,
+        `${libraryFile(target.repo)}: "${at}" is unnecessary, the fork declares it — delete the entry`,
       );
     }
     excepted.set(exception.name, exception);
@@ -630,16 +555,6 @@ export function renderAuthoredParity(report: AuthoredParityReport): string {
   return `${JSON.stringify(report, null, 2)}\n`;
 }
 
-export const AUTHORED_FLOOR_MANIFEST_FILE = "authored-parity-floor.json";
-
-/** One artifact's floor, one entry per reported axis. Both are required: an entry
- * naming a single axis would leave the other unratcheted while every surrounding
- * assertion stayed green, which is the failure this shape exists to make impossible. */
-export interface AuthoredFloor {
-  callable: number;
-  field: number;
-}
-
 /** The coverage pair a floor entry is compared against. */
 export interface AuthoredCoverage {
   namespace: string;
@@ -658,54 +573,10 @@ export interface AuthoredCoverage {
   arityMismatches?: { name: string }[];
 }
 
-const AUTHORED_FLOOR_AXES = ["callable", "field"] as const;
-
-// `JSON.stringify` renders NaN and Infinity as `null` and returns `undefined` for
-// `undefined`, either of which would misreport the value the manifest actually holds.
-function describe(value: unknown): string {
-  if (typeof value === "number") return String(value);
-  return JSON.stringify(value) ?? String(value);
-}
-
-/**
- * The authored floor manifest's parse-time contract: a plain object mapping each
- * artifact path to a `{ callable, field }` pair of finite ratios in `[0, 1]`.
- *
- * Separate from `fidelity-floor.ts`'s `parseFloors`, which validates the token lane's
- * flat ratios — this manifest ratchets two axes per key, so the bare number that
- * lane accepts is precisely the pre-migration shape rejected here.
- */
-export function parseAuthoredFloors(raw: unknown, path: string): Record<string, AuthoredFloor> {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
-    throw new Error(`${path}: expected a JSON object of floors, got ${describe(raw)}`);
-  }
-  const floors: Record<string, AuthoredFloor> = {};
-  for (const [key, entry] of Object.entries(raw)) {
-    if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
-      throw new Error(
-        `${path}: floor "${key}" must be an object of "callable" and "field" ratios, got ${describe(entry)}`,
-      );
-    }
-    for (const axis of AUTHORED_FLOOR_AXES) {
-      if (!(axis in entry)) {
-        throw new Error(`${path}: floor "${key}" is missing its "${axis}" axis`);
-      }
-      const value = (entry as Record<string, unknown>)[axis];
-      if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
-        throw new Error(
-          `${path}: floor "${key}" axis "${axis}" must be a finite number in [0, 1], got ${describe(value)}`,
-        );
-      }
-    }
-    floors[key] = entry as unknown as AuthoredFloor;
-  }
-  return floors;
-}
-
 function coverageField(raw: Record<string, unknown>, field: string, path: string): number {
   const value = raw[field];
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`${path}: expected a finite numeric "${field}", got ${describe(value)}`);
+    throw new Error(`${path}: expected a finite numeric "${field}", got ${describeValue(value)}`);
   }
   return value;
 }
@@ -738,7 +609,7 @@ export function collectAuthoredParity(
     if ("moduleNameMatches" in raw) {
       if (typeof raw.moduleNameMatches !== "boolean") {
         throw new Error(
-          `${key}: expected a boolean "moduleNameMatches", got ${describe(raw.moduleNameMatches)}`,
+          `${key}: expected a boolean "moduleNameMatches", got ${describeValue(raw.moduleNameMatches)}`,
         );
       }
       artifact.moduleNameMatches = raw.moduleNameMatches;
@@ -746,13 +617,13 @@ export function collectAuthoredParity(
     if ("arityMeasured" in raw) {
       if (typeof raw.arityMeasured !== "boolean") {
         throw new Error(
-          `${key}: expected a boolean "arityMeasured", got ${describe(raw.arityMeasured)}`,
+          `${key}: expected a boolean "arityMeasured", got ${describeValue(raw.arityMeasured)}`,
         );
       }
       if (raw.arityMeasured) {
         if (!Array.isArray(raw.arityMismatches)) {
           throw new Error(
-            `${key}: a measured arity axis must carry an "arityMismatches" array, got ${describe(raw.arityMismatches)}`,
+            `${key}: a measured arity axis must carry an "arityMismatches" array, got ${describeValue(raw.arityMismatches)}`,
           );
         }
         artifact.arityMismatches = raw.arityMismatches.map((entry) => {
@@ -763,7 +634,7 @@ export function collectAuthoredParity(
             (entry as Record<string, unknown>).name === ""
           ) {
             throw new Error(
-              `${key}: every "arityMismatches" entry must name a member, got ${describe(entry)}`,
+              `${key}: every "arityMismatches" entry must name a member, got ${describeValue(entry)}`,
             );
           }
           return { name: (entry as Record<string, unknown>).name as string };
@@ -801,7 +672,7 @@ export function authoredFloorRegressions(
     const floor = floors[path];
     if (floor === undefined) continue;
     const measured = { callable: artifact.callableCoverage, field: artifact.fieldCoverage };
-    for (const axis of AUTHORED_FLOOR_AXES) {
+    for (const axis of ["callable", "field"] as const) {
       if (measured[axis] < floor[axis]) {
         regressions.push(
           `${artifact.namespace}: ${axis} coverage ${measured[axis]} is below its floor ${floor[axis]} — correct the fork, do not lower the floor`,
@@ -813,9 +684,9 @@ export function authoredFloorRegressions(
 }
 
 if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
+  const { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   for (const target of authoredParityTargets(LIBRARY_DATA_DIR)) {
-    const report = buildAuthoredParity(LIBRARY_DATA_DIR, root, target);
+    const report = buildAuthoredParity(LIBRARY_DATA_DIR, target);
     const dest = join(root, authoredParityPath(target));
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, renderAuthoredParity(report));

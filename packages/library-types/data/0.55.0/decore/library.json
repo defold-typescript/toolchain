@@ -6,5 +6,8 @@
       "class": "native-1",
       "evidence": "internal/ecs.lua:tiny_manageSystems sets systems[j].index = j"
     }
+  },
+  "floors": {
+    "decore.decore": 0.995
   }
 }

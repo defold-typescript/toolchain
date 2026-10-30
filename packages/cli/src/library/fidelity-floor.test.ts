@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { writeLibraryTargets } from "../library-data-fixture";
 import {
   AUTHORED_PARITY_DIRNAME,
   collectFidelityReports,
@@ -10,8 +11,10 @@ import {
   FLOOR_RAISE_COMMAND,
   NATIVE_PARITY_DIRNAME,
   parseFloors,
+  raiseCommittedFloors,
   raiseFloors,
   readFloors,
+  tokenFloors,
 } from "./fidelity-floor";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
 
@@ -19,7 +22,7 @@ const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 
 describe("fidelity floor gate", () => {
   const reports = collectFidelityReports(PACKAGE_ROOT);
-  const floors = readFloors(PACKAGE_ROOT);
+  const floors = tokenFloors(PACKAGE_ROOT);
 
   test("the walk reaches every lane, including the nested openapi one", () => {
     // Without this the whole gate passes vacuously on a walk that descends nowhere.
@@ -29,7 +32,7 @@ describe("fidelity floor gate", () => {
 
   test("the surface-parity lane is carved out, so the two denominators stay apart", () => {
     // `fidelity/authored/` coverage is upstream members declared at the right
-    // arity, not type tokens — `authored-parity-floor.json` ratchets it.
+    // arity, not type tokens — the parity floors in `library.json` ratchet it.
     expect(existsSync(join(PACKAGE_ROOT, "fidelity", AUTHORED_PARITY_DIRNAME))).toBe(true);
     expect(Object.keys(reports).filter((path) => path.startsWith("fidelity/authored/"))).toEqual(
       [],
@@ -52,7 +55,7 @@ describe("fidelity floor gate", () => {
     const stale = Object.keys(floors)
       .filter((path) => reports[path] === undefined)
       .map(
-        (path) => `${path}: floor entry has no such report — drop the key from fidelity-floor.json`,
+        (path) => `${path}: floor entry has no such report — drop the key from where it is kept`,
       );
     expect(stale).toEqual([]);
   });
@@ -80,7 +83,17 @@ describe("fidelity floor gate", () => {
     expect(empty).toEqual([]);
   });
 
-  test("the manifest's keys are sorted and its values are ratios", () => {
+  test("the manifest holds only the lanes with no library folder", () => {
+    const evaluated = ["markdown-targets.json", "openapi-targets.json"].flatMap((file) => {
+      const { targets } = JSON.parse(readFileSync(join(PACKAGE_ROOT, file), "utf8")) as {
+        targets: { fidelity: string }[];
+      };
+      return targets.map(({ fidelity }) => fidelity);
+    });
+    expect(Object.keys(readFloors(PACKAGE_ROOT))).toEqual(evaluated.sort());
+  });
+
+  test("the floors' keys are sorted and their values are ratios", () => {
     const keys = Object.keys(floors);
     expect(keys).toEqual([...keys].sort());
     const outOfRange = Object.entries(floors)
@@ -231,5 +244,77 @@ describe("raiseFloors", () => {
       "fidelity/openapi/m.json",
       "fidelity/z.json",
     ]);
+  });
+});
+
+describe("raiseCommittedFloors", () => {
+  function writeRoot(): string {
+    const root = mkdtempSync(join(tmpdir(), "fidelity-floor-"));
+    writeLibraryTargets(join(root, "data", "0.1.0"), {
+      luals: [
+        {
+          repo: "https://github.com/owner/lib",
+          ref: "v1",
+          sourceGlobs: ["lib/**/*.lua"],
+          moduleId: "lib.main",
+          namespace: "lib",
+        },
+      ],
+      forks: [
+        {
+          repo: "https://github.com/owner/lib",
+          ref: "v1",
+          authored: "fork/lib.fork.d.ts",
+          moduleId: "lib.fork",
+          namespace: "lib.fork",
+          apiDoc: "api-doc/lib.fork.json",
+          upstreamLua: ["source/upstream/fork.lua"],
+        },
+      ],
+      floors: { lib: { "lib.fork": { callable: 0.5, field: 1 }, "lib.main": 0.5 } },
+    });
+    mkdirSync(join(root, "fidelity", "openapi"), { recursive: true });
+    const report = (coverage: number) =>
+      JSON.stringify({ coverage, totalMembers: 1, totalTypeTokens: 1 });
+    writeFileSync(join(root, "fidelity", "lib.json"), report(0.75));
+    writeFileSync(join(root, "fidelity", "openapi", "lib.json"), report(0.25));
+    return root;
+  }
+
+  test("a served module's floor rises in its library.json and the rest stay in the manifest", () => {
+    const root = writeRoot();
+    try {
+      const log = raiseCommittedFloors(root);
+
+      const library = JSON.parse(
+        readFileSync(join(root, "data", "0.1.0", "lib", "library.json"), "utf8"),
+      );
+      expect(library.repo).toBe("https://github.com/owner/lib");
+      expect(library.forks).toHaveLength(1);
+      expect(library.floors).toEqual({
+        "lib.fork": { callable: 0.5, field: 1 },
+        "lib.main": 0.75,
+      });
+      expect(readFloors(root)).toEqual({ "fidelity/openapi/lib.json": 0.25 });
+      expect(log).toContain("fidelity/lib.json: 0.5 -> 0.75");
+      expect(log).toContain("fidelity/openapi/lib.json: (new) -> 0.25");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a regressed report leaves its floor where it is", () => {
+    const root = writeRoot();
+    try {
+      writeFileSync(
+        join(root, "fidelity", "lib.json"),
+        JSON.stringify({ coverage: 0.25, totalMembers: 1, totalTypeTokens: 1 }),
+      );
+      raiseCommittedFloors(root);
+
+      expect(tokenFloors(root)["fidelity/lib.json"]).toBe(0.5);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

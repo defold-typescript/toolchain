@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/defmath.json",
       "upstreamLua": ["source/upstream/defmath/defmath.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "defmath.defmath": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

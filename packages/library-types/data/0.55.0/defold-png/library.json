@@ -6,5 +6,11 @@
     "manifestDir": "png",
     "declaration": "fork/png.d.ts",
     "upstreamSource": "source/upstream/png/src/png.cpp"
+  },
+  "floors": {
+    "png": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

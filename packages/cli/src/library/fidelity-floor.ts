@@ -4,10 +4,12 @@
  * Each emitting lane already round-trips its committed report against a freshly
  * built one, which proves the report matches what the pipeline builds *today* —
  * but a regeneration that lowers coverage rewrites the report too, so the drop
- * lands silently. `fidelity-floor.json` pins each report's coverage from the
- * outside: `regen` never touches it, so the only way a floor moves is the
- * explicit, monotone `--raise` below — which also makes it the one hand-editable
- * input here, so it is parsed under a validating contract (`parseFloors`).
+ * lands silently. A floor pins each report's coverage from the outside: `regen` never
+ * touches it, so the only way a floor moves is the explicit, monotone `--raise`
+ * below. A served module's floor sits in its `library.json`, where the reader
+ * validates it. `fidelity-floor.json` holds the floors of the lanes that have no
+ * library folder, the openapi and markdown evaluations, under a validating contract
+ * of its own (`parseFloors`).
  *
  * Reports are keyed by package-root-relative POSIX path, not by namespace:
  * `fidelity/openapi/nakama.nakama.json` reports `namespace: "nakama"`, and two
@@ -18,21 +20,28 @@
  * the native-extension lane's report from `native-parity.ts`. Those reports have no
  * `totalTypeTokens` to be a fraction of, and their coverage means something else —
  * upstream members declared at the right arity, from `authored-parity.ts`. They get
- * their own ratchet in `authored-parity-floor.json`, so folding them in here would
- * only mean two incompatible denominators under one floor manifest. That manifest
- * also ratchets *two* axes per key (`callableCoverage` and `fieldCoverage`, never
- * averaged), which a flat one-ratio-per-key manifest cannot express — a second,
- * independent reason the two do not merge. Its entries are parsed by
- * `parseAuthoredFloors`, not by `parseFloors` below.
+ * their own parity floors in `library.json`, so folding them in here would only mean
+ * two incompatible denominators under one ratchet. A parity floor also ratchets *two*
+ * axes (`callableCoverage` and `fieldCoverage`, never averaged), which one ratio per
+ * key cannot express — a second, independent reason the two do not merge.
  */
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { newestDataFolder } from "./data-folder";
+import {
+  describeValue,
+  LIBRARY_FILE,
+  type LibraryFloor,
+  readLibraryData,
+  readLibraryJson,
+  requireRatio,
+} from "./library-data";
+import { sortedByKey, tokenFloorsByReport, tokenReportPaths } from "./library-floors";
 
 export const FIDELITY_DIR = "fidelity";
 /** Directory names under `fidelity/` the token-coverage walk skips — see the
- * module note; ratcheted by `authored-parity-floor.json` instead. */
+ * module note; ratcheted by the parity floors in `library.json` instead. */
 export const AUTHORED_PARITY_DIRNAME = "authored";
 export const NATIVE_PARITY_DIRNAME = "native";
 const SURFACE_PARITY_DIRNAMES = new Set([AUTHORED_PARITY_DIRNAME, NATIVE_PARITY_DIRNAME]);
@@ -87,13 +96,6 @@ export function collectFidelityReports(root: string): Record<string, FidelityFlo
   return reports;
 }
 
-// `JSON.stringify` renders NaN and Infinity as `null` and returns `undefined` for
-// `undefined`, both of which would misreport the value the manifest actually holds.
-function describeFloor(value: unknown): string {
-  if (typeof value === "number") return String(value);
-  return JSON.stringify(value) ?? String(value);
-}
-
 /**
  * The floor manifest's parse-time contract: a plain object of finite numbers in
  * `[0, 1]`. Every consuming assertion compares coercively, so an unvalidated
@@ -103,16 +105,11 @@ function describeFloor(value: unknown): string {
  */
 export function parseFloors(raw: unknown, path: string): Record<string, number> {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
-    throw new Error(`${path}: expected a JSON object of floors, got ${describeFloor(raw)}`);
+    throw new Error(`${path}: expected a JSON object of floors, got ${describeValue(raw)}`);
   }
   const floors: Record<string, number> = {};
   for (const [key, value] of Object.entries(raw)) {
-    if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
-      throw new Error(
-        `${path}: floor "${key}" must be a finite number in [0, 1], got ${describeFloor(value)}`,
-      );
-    }
-    floors[key] = value;
+    floors[key] = requireRatio(path, `floor "${key}"`, value);
   }
   return floors;
 }
@@ -124,8 +121,18 @@ export function readFloors(root: string): Record<string, number> {
   return parseFloors(JSON.parse(readFileSync(path, "utf8")), FLOOR_MANIFEST_FILE);
 }
 
+/** Every token floor, from `library.json` and the manifest, by the report it judges. */
+export function tokenFloors(root: string): Record<string, number> {
+  return sortedByKey(
+    Object.entries({
+      ...readFloors(root),
+      ...tokenFloorsByReport(readLibraryData(newestDataFolder(root))),
+    }),
+  );
+}
+
 /**
- * The next floor manifest: each report's floor rises to its current coverage and
+ * The next floors: each report's floor rises to its current coverage and
  * never falls, a report with no floor gains one, and a floor whose report is gone
  * is dropped. Monotone by construction — no code path here writes a smaller
  * number, so a regression can only ever be reported by the gate, never absorbed.
@@ -143,40 +150,70 @@ export function raiseFloors(
   return next;
 }
 
-// `fidelity-floor.json` sits at the package root, so unlike the reports under
-// `fidelity/` it is not biome-excluded and must match Biome's formatting.
-function biomeFormatJson(raw: string): string {
-  const out = Bun.spawnSync(
-    ["bunx", "biome", "format", `--stdin-file-path=${FLOOR_MANIFEST_FILE}`],
-    {
-      stdin: Buffer.from(raw),
-    },
-  );
+// Both files a raise writes are Biome-checked, unlike the reports under `fidelity/`.
+function biomeFormatJson(raw: string, file: string): string {
+  const out = Bun.spawnSync(["bunx", "biome", "format", `--stdin-file-path=${file}`], {
+    stdin: Buffer.from(raw),
+  });
   if (out.exitCode !== 0) {
     throw new Error(`biome format failed: ${out.stderr.toString()}`);
   }
   return out.stdout.toString();
 }
 
-if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
-  const reports = collectFidelityReports(root);
-  const current = readFloors(root);
-  const next = raiseFloors(current, reports);
+/**
+ * Raises every token floor to its committed report's coverage, each in the file that
+ * holds it: a served module's in its `library.json`, leaving its parity floors alone, and
+ * the rest in `fidelity-floor.json`. Returns one line per change and per file written.
+ */
+export function raiseCommittedFloors(root: string): string[] {
+  const dataDir = newestDataFolder(root);
+  const current = tokenFloors(root);
+  const next = raiseFloors(current, collectFidelityReports(root));
+  const log: string[] = [];
+  for (const key of Object.keys(next)) {
+    const before = current[key];
+    if (before === undefined) log.push(`${key}: (new) -> ${next[key]}`);
+    else if (before !== next[key]) log.push(`${key}: ${before} -> ${next[key]}`);
+  }
+  for (const key of Object.keys(current)) {
+    if (next[key] === undefined) log.push(`${key}: dropped (no such report)`);
+  }
 
+  const manifest = { ...next };
+  for (const library of readLibraryData(dataDir)) {
+    const reports = tokenReportPaths(library);
+    const tokenModules = new Set(reports.map(([, moduleId]) => moduleId));
+    const floors: [string, LibraryFloor][] = Object.entries(library.floors).filter(
+      ([key]) => !tokenModules.has(key),
+    );
+    for (const [path, moduleId] of reports) {
+      const floor = manifest[path];
+      delete manifest[path];
+      if (floor !== undefined) floors.push([moduleId, floor]);
+    }
+    const sorted = sortedByKey(floors);
+    const raw = readLibraryJson(dataDir, library.dir);
+    if (JSON.stringify(sorted) === JSON.stringify(raw.floors ?? {})) continue;
+    const { floors: _floors, ...rest } = raw;
+    const updated = floors.length === 0 ? rest : { ...rest, floors: sorted };
+    const path = join(dataDir, library.dir, LIBRARY_FILE);
+    writeFileSync(path, biomeFormatJson(JSON.stringify(updated), LIBRARY_FILE));
+    log.push(`wrote ${path}`);
+  }
+  const path = join(root, FLOOR_MANIFEST_FILE);
+  writeFileSync(path, biomeFormatJson(JSON.stringify(manifest), FLOOR_MANIFEST_FILE));
+  log.push(`wrote ${path}`);
+  return log;
+}
+
+if (import.meta.main) {
+  const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   if (process.argv.includes("--raise")) {
-    for (const key of Object.keys(next)) {
-      const before = current[key];
-      if (before === undefined) console.log(`${key}: (new) -> ${next[key]}`);
-      else if (before !== next[key]) console.log(`${key}: ${before} -> ${next[key]}`);
-    }
-    for (const key of Object.keys(current)) {
-      if (next[key] === undefined) console.log(`${key}: dropped (no such report)`);
-    }
-    const path = join(root, FLOOR_MANIFEST_FILE);
-    writeFileSync(path, biomeFormatJson(JSON.stringify(next)));
-    console.log(`wrote ${path}`);
+    for (const line of raiseCommittedFloors(root)) console.log(line);
   } else {
-    console.log(JSON.stringify(next, null, 2));
+    console.log(
+      JSON.stringify(raiseFloors(tokenFloors(root), collectFidelityReports(root)), null, 2),
+    );
   }
 }
