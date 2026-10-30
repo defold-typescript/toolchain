@@ -1,5 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
 import { type ApiDocElement, importUpstreamDocs } from "./import-upstream-docs";
 import { type ParityVerdict, readLibraryData } from "./library-data";
@@ -125,18 +125,4 @@ export function lowerAuthoredApiDoc(packageRoot: string, target: AuthoredTarget)
   > & { elements: ApiDocElement[] };
   const elements = importUpstreamDocs(doc.elements, upstreamMembers(packageRoot, target));
   return `${JSON.stringify({ ...doc, elements }, null, 2)}\n`;
-}
-
-if (import.meta.main) {
-  const { LIBRARY_DATA_DIR: data, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
-  const argv = process.argv.slice(2);
-  if (argv.includes("--api-doc")) {
-    for (const target of readAuthoredTargets(data)) {
-      const json = lowerAuthoredApiDoc(data, target);
-      const dest = join(root, target.apiDoc);
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, json);
-      console.log(`lowered ${target.moduleId} -> ${target.apiDoc}`);
-    }
-  }
 }

@@ -142,13 +142,13 @@ Then run this command from `packages/library-types`:
 ```sh
 cd packages/library-types
 
-bun ../cli/src/library/sync-authored-types.ts --api-doc     # lower api-doc/<namespace>.json — the docs-site model
+bun run api-doc     # check library data, then lower api-doc/<namespace>.json — the docs-site model
 ```
 
 - `resolve` serves the vendored `.d.ts` verbatim. There is no parse or transform:
   an authored source is already target-form, so the served surface *is* the
   vendored surface.
-- **`--api-doc`** runs `extractApiDoc` over the vendored `.d.ts` under the pinned
+- **`api-doc`** runs [`library check`](./library.md), then `extractApiDoc` over the vendored `.d.ts` under the pinned
   publish `namespace`, producing the `api-doc/<namespace>.json` the docs-site `/api`
   page renders. A member's `@deprecated` tag carries through to the page as a
   `Deprecated` line, with the tag's own text when it has any — so mark a

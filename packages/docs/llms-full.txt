@@ -7418,9 +7418,10 @@ It runs three checks in order, and a check that fails stops the ones after it:
 1. **Data** — the reader that `resolve` uses accepts the data folder: each
    library folder is named for its repo, has a `reviewed.json`, and lists
    complete entries; every module id and native namespace is a plain name
-   (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`); every
-   path an entry names stays inside its library folder; and no module is
-   named by two libraries.
+   (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`), as is
+   every LuaLS `namespace`; every path an entry names stays inside its library
+   folder, and every `apiDoc` stays under `api-doc/`; and no module is named by
+   two libraries.
 2. **Print** — every module the data serves prints, as `resolve` prints it
    when a project's dependency archive is not at hand.
 3. **Compile** — one TypeScript program compiles every printed declaration,
@@ -7444,6 +7445,21 @@ printed declarations declare.
 as [`resolve --library-data`](./resolve.md#flags): the highest folder at or
 below the CLI version. A relative `<dir>` resolves against the working
 directory. A `<dir>` with no folder for this CLI version is an error.
+
+#### `--api-doc-out`
+
+`--api-doc-out <dir>` writes the API model of every library in the data folder
+to `<dir>`, the JSON files the docs site renders:
+
+```sh
+bunx @defold-typescript/cli library check --data path/to/library-data --api-doc-out path/to/api-doc
+```
+
+It writes only after every check passes, so a failing run leaves `<dir>` as it
+was. A relative `<dir>` resolves against the working directory, and `<dir>` is
+created if it is missing. Files already in `<dir>` that the run does not write
+stay in place. Each model reads only the data folder, and two entries naming
+the same output file is an error.
 
 #### Problems and the exit code
 
@@ -7486,8 +7502,9 @@ With `--json`, `library check` writes one object:
 }
 ```
 
-A clean run has `"ok": true`, an empty `problems` array and `libraryCount`, the
-number of libraries the folder holds.
+A clean run has `"ok": true`, an empty `problems` array, `libraryCount`, the
+number of libraries the folder holds, and `written`, the absolute path of each
+file `--api-doc-out` wrote.
 
 ### Live transpile diagnostics
 
@@ -11406,7 +11423,7 @@ cd packages/library-types
 
 bun run luals:fetch      # snapshot the pinned sources into <library>/source/<namespace>/
 bun run luals:fidelity   # build fidelity/<namespace>.json — the coverage report
-bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site model
+bun run api-doc          # check library data, then lower api-doc/<namespace>.json — the docs-site model
 ```
 
 - **`luals:fetch`** reads the pinned tree, applies `sourceGlobs` minus `ignore`,
@@ -11418,8 +11435,8 @@ bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site mode
 - `resolve` prints the `.d.ts` a consumer sees from these fixtures, or from the
   dependency's own archive. Interfaces and aliases come from the whole snapshot;
   the module's own functions come only from the `moduleId` file.
-- **`luals:api-doc`** lowers the same model to the JSON the docs-site `/api` page
-  renders.
+- **`api-doc`** runs [`library check`](./library.md), then lowers the same model to
+  the JSON the docs-site `/api` page renders.
 
 A `---@deprecated` before a `---@class`, `---@alias`, or a function declaration
 carries into both artifacts — as a JSDoc `@deprecated` in the `.d.ts` and as a
@@ -11459,7 +11476,7 @@ therefore always a real regression to fix at the source, never a floor to edit d
 
 #### 4. Check the API-doc description
 
-After `luals:api-doc`, open `api-doc/<namespace>.json` and inspect
+After `api-doc`, open `api-doc/<namespace>.json` and inspect
 `info.description`. It carries the description line on the library's main
 `---@class`. When that class has no description line the value is empty (`""`),
 and the docs-site `/api` page renders with no description — the "every library
@@ -11556,8 +11573,8 @@ ones:
 cd packages/library-types
 
 bun ../cli/src/library/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into <library>/source/<moduleId>.script_api
-bun ../cli/src/library/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 bun ../cli/src/library/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
+bun run api-doc                                               # check library data, then lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 ```
 
 The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.3.0`),
@@ -11730,13 +11747,13 @@ Then run this command from `packages/library-types`:
 ```sh
 cd packages/library-types
 
-bun ../cli/src/library/sync-authored-types.ts --api-doc     # lower api-doc/<namespace>.json — the docs-site model
+bun run api-doc     # check library data, then lower api-doc/<namespace>.json — the docs-site model
 ```
 
 - `resolve` serves the vendored `.d.ts` verbatim. There is no parse or transform:
   an authored source is already target-form, so the served surface *is* the
   vendored surface.
-- **`--api-doc`** runs `extractApiDoc` over the vendored `.d.ts` under the pinned
+- **`api-doc`** runs [`library check`](./library.md), then `extractApiDoc` over the vendored `.d.ts` under the pinned
   publish `namespace`, producing the `api-doc/<namespace>.json` the docs-site `/api`
   page renders. A member's `@deprecated` tag carries through to the page as a
   `Deprecated` line, with the tag's own text when it has any — so mark a
@@ -12469,10 +12486,10 @@ Four lanes fetch and regenerate. Run their commands from
 
 | Lane | Pin | Commands |
 | ---- | --- | -------- |
-| LuaLS | the library folder's `reviewed.json` | `bun run luals:fetch`, then `luals:fidelity`, `luals:api-doc` |
+| LuaLS | the library folder's `reviewed.json` | `bun run luals:fetch`, then `luals:fidelity`, `api-doc` |
 | Markdown | `markdown-targets.json` | `bun ../cli/src/library/sync-markdown-types.ts --fetch --fidelity --api-doc` |
 | OpenAPI | `openapi-targets.json` | `bun ../cli/src/library/sync-openapi-types.ts --fetch --fidelity --api-doc` |
-| script_api | the library folder's `reviewed.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity --api-doc` |
+| script_api | the library folder's `reviewed.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity`, then `bun run api-doc` |
 
 A library folder sits in the newest version-named folder under
 `packages/library-types/data/`, named for its repository: the URL's last path
@@ -12498,14 +12515,14 @@ GITHUB_TOKEN="$(gh auth token)" bun run luals:fetch
 **The authored lane is the exception, and it is the one that surprises people.**
 A library's forks have **no `--fetch`** and no fidelity pass. Their
 `source/upstream/` snapshots are vendored by hand and their `.d.ts` is
-hand-written, so `sync-authored-types.ts` accepts only `--api-doc`.
+hand-written, so `bun run api-doc` is the only command they take.
 Refreshing an authored pin means:
 
 1. edit the `ref` in the library folder's `reviewed.json`;
 2. copy the upstream files named by `upstreamLua` into the library folder's
    `source/upstream/…` by hand (the path under it mirrors the upstream path);
 3. update the hand-written `.d.ts` for whatever the new upstream added or changed;
-4. re-run `bun run parity` and `bun ../cli/src/library/sync-authored-types.ts --api-doc`.
+4. re-run `bun run parity` and `bun run api-doc`.
 
 #### The couplings a re-pin moves with it
 

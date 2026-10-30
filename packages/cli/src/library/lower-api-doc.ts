@@ -3,8 +3,8 @@
  * ref-doc JSON shape that `@defold-typescript/types`' `parseDefoldApiDoc`
  * accepts, so the docs-site renders a LuaLS-sourced library through the exact
  * `/api` path a ts-defold `.d.ts` takes. Mirrors `extract-api-doc.ts`: pure and
- * node-free (model in, object out) so it is unit-testable and reused by the
- * `--api-doc` orchestrator arm.
+ * node-free (model in, object out) so it is unit-testable and reused by
+ * `lowerLualsApiDoc`.
  *
  * We lower from the model rather than re-running `extractApiDoc` on the printed
  * declaration: a druid-style library's surface is almost entirely
