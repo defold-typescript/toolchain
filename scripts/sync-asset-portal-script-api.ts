@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import {
   includedScriptApiPaths,
   livePortalSource,
@@ -60,8 +61,12 @@ export type ScriptApiSource = Pick<PortalSource, "repo" | "tree" | "fetchText">;
  */
 export async function loadPortalReservedNamespaces(
   packageRoot: string,
+  dataDir: string = newestDataFolder(packageRoot),
 ): Promise<ReservedNamespaces> {
-  const { engineNamespaces, libraryNamespaces } = await loadReservedNamespaces(packageRoot);
+  const { engineNamespaces, libraryNamespaces } = await loadReservedNamespaces(
+    dataDir,
+    packageRoot,
+  );
   const defold = JSON.parse(
     readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
   ) as DefoldExtensionsManifest;
@@ -70,7 +75,7 @@ export async function loadPortalReservedNamespaces(
     libraryNamespaces: new Set([
       ...libraryNamespaces,
       ...defold.libraries.flatMap((library) => library.docs.map((doc) => doc.page)),
-      ...readNativeTargets(packageRoot).map((target) => target.namespace),
+      ...readNativeTargets(dataDir).map((target) => target.namespace),
     ]),
   };
 }
@@ -91,18 +96,19 @@ function docKey(id: string, path: string, namespace: string): string {
 export async function syncAssetPortalScriptApi(
   packageRoot: string,
   source: ScriptApiSource,
+  dataDir: string = newestDataFolder(packageRoot),
 ): Promise<AssetPortalScriptApiManifest> {
   const manifest = readAssetPortalManifest(packageRoot);
   const coverage = portalCoverage(
     manifest,
-    { ...readCoverageRegistries(packageRoot), portal: [] },
+    { ...readCoverageRegistries(packageRoot, dataDir), portal: [] },
     readPortalAliases(packageRoot),
     readPortalVerdicts(packageRoot),
   );
   const paged = new Set(
     coverage.filter((entry) => entry.candidate && entry.kind === "script-api").map((e) => e.id),
   );
-  const reserved = await loadPortalReservedNamespaces(packageRoot);
+  const reserved = await loadPortalReservedNamespaces(packageRoot, dataDir);
 
   const surveyed: (Omit<AssetPortalScriptApiLibrary, "docs"> & {
     docs: { path: string; namespace: string }[];

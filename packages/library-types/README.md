@@ -30,16 +30,23 @@ matches what Fetch Libraries installs at runtime.
 This package holds the inputs the CLI prints declarations from, and no printed
 declarations.
 
-- `luals-targets.json`, `script-api-targets.json`, `authored-targets.json` — one
-  entry per library module: its upstream repository, pinned ref, license, and
-  the `namespace` it is published under.
-- `fixtures/luals/`, `fixtures/script-api/`, `fixtures/authored/` — the pinned
-  upstream sources, or the hand-written declaration fork, each module prints from.
-- `native/<namespace>.d.ts` and `native-targets.json` — the hand-written
-  declarations of native extensions that ship no `.script_api`, which `resolve`
-  installs as written.
+- `data/<version>/` — library data, in folders named by the first CLI version
+  that reads them. A CLI reads the highest folder at or below its own version.
+  Each folder holds:
+  - `luals-targets.json`, `script-api-targets.json`, `authored-targets.json` —
+    one entry per library module: its upstream repository, pinned ref, license,
+    and the `namespace` it is published under.
+  - `fixtures/luals/`, `fixtures/script-api/`, `fixtures/authored/` — the pinned
+    upstream sources, or the hand-written declaration fork, each module prints
+    from; `fixtures/upstream-lua/` and `fixtures/upstream-native/` hold the
+    upstream files the parity checks measure against.
+  - `native/<namespace>.d.ts` and `native-targets.json` — the hand-written
+    declarations of native extensions that ship no `.script_api`, which
+    `resolve` installs as written.
+  - `index-slot-classifications.json` — the base each library index slot counts
+    from.
 - `library-classification.json`, `library-targets.json` — the ts-defold/library
-  registries the CLI reads to drive matching.
+  registries the classification tooling keeps.
 - `api-doc/<module>.json` — ref-doc JSON extracted from each declaration, consumed
   by the documentation site to render per-library API pages.
 - `NOTICE` — upstream attribution for every vendored library.

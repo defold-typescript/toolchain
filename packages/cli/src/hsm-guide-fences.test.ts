@@ -27,7 +27,7 @@ import {
   lessonProjects,
   tsFences,
 } from "./hsm-guide-steps";
-import { LIBRARY_TYPES_ROOT } from "./library/package-root";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printCorpus } from "./library/print-corpus";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
@@ -59,7 +59,7 @@ const ENV_DTS = 'import "@defold-typescript/types/script";\n';
 // The library modules a fence imports, printed as `resolve` writes them into a
 // project's `.defold-types/`; each becomes a project file next to the fences.
 const LIBRARY_MODULES = ["monarch.monarch"];
-const LIBRARY_CORPUS = await printCorpus(LIBRARY_TYPES_ROOT);
+const LIBRARY_CORPUS = await printCorpus(LIBRARY_DATA_DIR);
 
 const SLOW = 120_000;
 

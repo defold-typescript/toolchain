@@ -15,20 +15,12 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "native",
+    "data",
     "api-doc",
-    "fixtures/authored",
-    "fixtures/luals",
-    "fixtures/script-api",
     "library-targets.json",
     "library-classification.json",
-    "luals-targets.json",
-    "script-api-targets.json",
-    "authored-targets.json",
     "openapi-targets.json",
-    "native-targets.json",
     "defold-extensions.json",
-    "index-slot-classifications.json",
     "NOTICE"
   ],
   "scripts": {

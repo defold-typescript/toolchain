@@ -15,7 +15,7 @@ import { printCorpus } from "./library/print-corpus";
 import {
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
-  resolveLibraryTypesPackageRoot,
+  resolveLibraryDataDir,
 } from "./library-registry";
 import {
   checkShippedDeclarations,
@@ -67,9 +67,9 @@ async function firstMultiFileLibrary(): Promise<{
   sourceId: string;
   files: Map<string, string>;
 }> {
-  const root = resolveLibraryTypesPackageRoot();
+  const root = resolveLibraryDataDir();
   if (root === null) {
-    throw new Error("@defold-typescript/library-types is not resolvable from the CLI package");
+    throw new Error("the CLI selects no library data folder");
   }
   const corpus = await printCorpus(root);
   for (const library of loadVendoredLibraryRegistry(root)) {
@@ -242,7 +242,7 @@ describe("runExportTypes refusals", () => {
     const cwd = tmp();
 
     const message = await thrownMessage(() =>
-      runExportTypes({ library: "defold-bad", cwd, libraryTypesRoot: badCorpus(BAD_ONE) }),
+      runExportTypes({ library: "defold-bad", cwd, libraryDataDir: badCorpus(BAD_ONE) }),
     );
     expect(message).toStartWith(`${CHECK_FAILURE}types/bad.d.ts(2,`);
     expect(message).toContain("'hash'");
@@ -254,7 +254,7 @@ describe("runExportTypes refusals", () => {
     const cwd = tmp();
 
     const message = await thrownMessage(() =>
-      runExportTypes({ library: "defold-bad", cwd, libraryTypesRoot: badCorpus(BAD_TWO) }),
+      runExportTypes({ library: "defold-bad", cwd, libraryDataDir: badCorpus(BAD_TWO) }),
     );
     expect(message).toStartWith(`${CHECK_FAILURE}types/bad.d.ts(2,`);
     expect(message).toEndWith(" (+1 more)");
@@ -263,7 +263,7 @@ describe("runExportTypes refusals", () => {
 
   test("a module-form file beside a global file throws naming the file resolve skips", async () => {
     const cwd = tmp();
-    const libraryTypesRoot = writeCorpus({
+    const libraryDataDir = writeCorpus({
       authored: [
         {
           repo: "https://github.com/owner/pair",
@@ -281,7 +281,7 @@ describe("runExportTypes refusals", () => {
     });
 
     const message = await thrownMessage(() =>
-      runExportTypes({ library: "pair", cwd, libraryTypesRoot }),
+      runExportTypes({ library: "pair", cwd, libraryDataDir }),
     );
     expect(message).toContain("types/pair.glob.d.ts");
     expect(message).not.toContain("types/pair.mod.d.ts");
@@ -290,7 +290,7 @@ describe("runExportTypes refusals", () => {
 
   test("two curated files with one name throw and write nothing", async () => {
     const cwd = tmp();
-    const libraryTypesRoot = writeCorpus({
+    const libraryDataDir = writeCorpus({
       native: [
         {
           repo: "https://github.com/owner/dup",
@@ -309,7 +309,7 @@ describe("runExportTypes refusals", () => {
       ],
     });
 
-    await expect(runExportTypes({ library: "dup", cwd, libraryTypesRoot })).rejects.toThrow(
+    await expect(runExportTypes({ library: "dup", cwd, libraryDataDir })).rejects.toThrow(
       "two curated files for dup are both named dup.d.ts",
     );
     expect(readdirSync(cwd)).toEqual([]);
@@ -389,13 +389,13 @@ describe("runExportTypes over an existing types folder", () => {
 
   // A curated global `glob.d.ts` against a folder holding a module-form
   // `GLOB.d.ts` and a global `other.d.ts`.
-  function caseAliasFixture(): { cwd: string; libraryTypesRoot: string } {
+  function caseAliasFixture(): { cwd: string; libraryDataDir: string } {
     return {
       cwd: folderWith({
         "types/GLOB.d.ts": 'declare module "glob" {\n  export const x: number;\n}\n',
         "types/other.d.ts": OTHER,
       }),
-      libraryTypesRoot: writeCorpus({
+      libraryDataDir: writeCorpus({
         native: [
           {
             repo: "https://github.com/owner/defold-glob",
@@ -413,7 +413,7 @@ describe("runExportTypes over an existing types folder", () => {
       "types/existing.d.ts": 'declare module "existing" {\n  export const x: number;\n}\n',
     });
     const before = snapshot(cwd);
-    const libraryTypesRoot = writeCorpus({
+    const libraryDataDir = writeCorpus({
       native: [
         {
           repo: "https://github.com/owner/defold-glob",
@@ -425,7 +425,7 @@ describe("runExportTypes over an existing types folder", () => {
     });
 
     const message = await thrownMessage(() =>
-      runExportTypes({ library: "defold-glob", cwd, libraryTypesRoot }),
+      runExportTypes({ library: "defold-glob", cwd, libraryDataDir }),
     );
     expect(message).toContain("types/glob.d.ts");
     expect(message).not.toContain("types/existing.d.ts");
@@ -434,7 +434,7 @@ describe("runExportTypes over an existing types folder", () => {
 
   test("an existing global file that does not compile refuses the export", async () => {
     const cwd = folderWith({ "types/broken.d.ts": BROKEN, "types/glob.d.ts": "stale\n" });
-    const libraryTypesRoot = writeCorpus({
+    const libraryDataDir = writeCorpus({
       native: [
         {
           repo: "https://github.com/owner/defold-glob",
@@ -447,7 +447,7 @@ describe("runExportTypes over an existing types folder", () => {
     const before = snapshot(cwd);
 
     const message = await thrownMessage(() =>
-      runExportTypes({ library: "defold-glob", cwd, libraryTypesRoot }),
+      runExportTypes({ library: "defold-glob", cwd, libraryDataDir }),
     );
     expect(message).toStartWith(
       "curated types for defold-glob were not exported: types/ would not compile against @defold-typescript/types: types/broken.d.ts(2,",
@@ -457,7 +457,7 @@ describe("runExportTypes over an existing types folder", () => {
 
   test("an existing file the selection drops is not checked", async () => {
     const cwd = folderWith({ "types/broken.d.ts": BROKEN });
-    const libraryTypesRoot = writeCorpus({
+    const libraryDataDir = writeCorpus({
       authored: [
         {
           repo: "https://github.com/owner/modlib",
@@ -468,7 +468,7 @@ describe("runExportTypes over an existing types folder", () => {
       ],
     });
 
-    const result = await runExportTypes({ library: "modlib", cwd, libraryTypesRoot });
+    const result = await runExportTypes({ library: "modlib", cwd, libraryDataDir });
 
     expect(result).toEqual({ sourceId: "modlib", written: ["types/modlib.d.ts"] });
     expect(readFileSync(join(cwd, "types", "broken.d.ts"), "utf8")).toBe(BROKEN);
@@ -512,9 +512,9 @@ describe("runExportTypes over an existing types folder", () => {
   test.skipIf(!TMP_FOLDS_CASE)(
     "an existing file whose name differs only in case is the file the export replaces",
     async () => {
-      const { cwd, libraryTypesRoot } = caseAliasFixture();
+      const { cwd, libraryDataDir } = caseAliasFixture();
 
-      const result = await runExportTypes({ library: "defold-glob", cwd, libraryTypesRoot });
+      const result = await runExportTypes({ library: "defold-glob", cwd, libraryDataDir });
 
       expect(result).toEqual({ sourceId: "defold-glob", written: ["types/GLOB.d.ts"] });
       expect(filesUnder(cwd)).toEqual(["types/GLOB.d.ts", "types/other.d.ts"]);
@@ -527,11 +527,11 @@ describe("runExportTypes over an existing types folder", () => {
   test.skipIf(TMP_FOLDS_CASE)(
     "an existing file whose name differs only in case stays a separate file",
     async () => {
-      const { cwd, libraryTypesRoot } = caseAliasFixture();
+      const { cwd, libraryDataDir } = caseAliasFixture();
       const before = snapshot(cwd);
 
       const message = await thrownMessage(() =>
-        runExportTypes({ library: "defold-glob", cwd, libraryTypesRoot }),
+        runExportTypes({ library: "defold-glob", cwd, libraryDataDir }),
       );
       expect(message).toContain("resolve skips types/glob.d.ts");
       expect(snapshot(cwd)).toEqual(before);

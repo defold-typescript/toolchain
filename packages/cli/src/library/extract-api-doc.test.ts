@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { extractApiDoc } from "./extract-api-doc";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus } from "./print-corpus";
 import { lowerAuthoredApiDoc, readAuthoredTargets } from "./sync-authored-types";
 import { readLualsTargets } from "./sync-luals-types";
@@ -11,6 +11,7 @@ import { readMarkdownTargets } from "./sync-markdown-types";
 import { readScriptApiTargets } from "./sync-script-api-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 // The api-doc drift guard covers only the ts-defold front-end, whose generated
 // `<moduleId>.d.ts` each round-trips to an `api-doc/<moduleId>.json` fixture via
@@ -21,13 +22,13 @@ const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 // all three are excluded here and guarded by their own front-end tests.
 function externalFrontEndNamespaces(): Set<string> {
   return new Set([
-    ...readLualsTargets(PACKAGE_ROOT).map((t) => t.namespace),
-    ...readScriptApiTargets(PACKAGE_ROOT).map((t) => t.namespace),
+    ...readLualsTargets(DATA_DIR).map((t) => t.namespace),
+    ...readScriptApiTargets(DATA_DIR).map((t) => t.namespace),
     ...readMarkdownTargets(PACKAGE_ROOT).map((t) => t.namespace),
   ]);
 }
 
-const CORPUS = await printCorpus(PACKAGE_ROOT);
+const CORPUS = await printCorpus(DATA_DIR);
 
 // The page each printed module publishes under, keyed to its module, for every
 // module whose api-doc no external front-end lowers.
@@ -35,9 +36,9 @@ function printedPages(): Map<string, string> {
   const excluded = externalFrontEndNamespaces();
   const pages = new Map<string, string>();
   for (const { namespace, moduleId } of [
-    ...readLualsTargets(PACKAGE_ROOT),
-    ...readScriptApiTargets(PACKAGE_ROOT),
-    ...readAuthoredTargets(PACKAGE_ROOT),
+    ...readLualsTargets(DATA_DIR),
+    ...readScriptApiTargets(DATA_DIR),
+    ...readAuthoredTargets(DATA_DIR),
   ]) {
     if (CORPUS.has(moduleId) && !excluded.has(namespace)) pages.set(namespace, moduleId);
   }
@@ -983,7 +984,7 @@ declare module 'stub.stub' {
   // what `resolve` serves.
   describe("committed api-doc fixtures match what their lane lowers", () => {
     const authored = new Map(
-      readAuthoredTargets(PACKAGE_ROOT).map((target) => [target.namespace, target]),
+      readAuthoredTargets(DATA_DIR).map((target) => [target.namespace, target]),
     );
     for (const [moduleName, moduleId] of printedPages()) {
       test(moduleName, () => {
@@ -992,7 +993,7 @@ declare module 'stub.stub' {
         );
         const target = authored.get(moduleName);
         if (target) {
-          expect(JSON.parse(lowerAuthoredApiDoc(PACKAGE_ROOT, target))).toEqual(committed);
+          expect(JSON.parse(lowerAuthoredApiDoc(DATA_DIR, target))).toEqual(committed);
           return;
         }
         expect(extractApiDoc(CORPUS.get(moduleId) as string, moduleName)).toEqual(committed);

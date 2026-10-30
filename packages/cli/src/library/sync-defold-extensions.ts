@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 
 /**
  * The Defold-org extension survey: every library the `defold` GitHub org
@@ -265,9 +265,11 @@ async function loadSyncApiDocs(packageRoot: string): Promise<SyncApiDocsModule> 
 
 // The api-doc paths a library target names: a LuaLS target publishes
 // `api-doc/<namespace>.json`, and every other lane names its file in `apiDoc`.
-function targetApiDocs(packageRoot: string): Set<string> {
-  const targets = (file: string): { namespace: string; apiDoc?: string }[] => {
-    const path = join(packageRoot, file);
+// The served lanes' registries sit in the library data folder, the markdown and
+// openapi registries at the package root.
+function targetApiDocs(dataDir: string, packageRoot: string): Set<string> {
+  const targets = (dir: string, file: string): { namespace: string; apiDoc?: string }[] => {
+    const path = join(dir, file);
     if (!existsSync(path)) return [];
     return (
       JSON.parse(readFileSync(path, "utf8")) as {
@@ -276,24 +278,27 @@ function targetApiDocs(packageRoot: string): Set<string> {
     ).targets;
   };
   const apiDocs = new Set(
-    targets("luals-targets.json").map(({ namespace }) => `api-doc/${namespace}.json`),
+    targets(dataDir, "luals-targets.json").map(({ namespace }) => `api-doc/${namespace}.json`),
   );
-  for (const file of [
-    "script-api-targets.json",
-    "authored-targets.json",
-    "openapi-targets.json",
-    "markdown-targets.json",
-  ]) {
-    for (const { apiDoc } of targets(file)) if (apiDoc !== undefined) apiDocs.add(apiDoc);
+  for (const [dir, file] of [
+    [dataDir, "script-api-targets.json"],
+    [dataDir, "authored-targets.json"],
+    [packageRoot, "openapi-targets.json"],
+    [packageRoot, "markdown-targets.json"],
+  ] as const) {
+    for (const { apiDoc } of targets(dir, file)) if (apiDoc !== undefined) apiDocs.add(apiDoc);
   }
   return apiDocs;
 }
 
-export async function loadReservedNamespaces(packageRoot: string): Promise<ReservedNamespaces> {
+export async function loadReservedNamespaces(
+  dataDir: string,
+  packageRoot: string,
+): Promise<ReservedNamespaces> {
   const { targets } = JSON.parse(
     readFileSync(join(packageRoot, "..", "types", "api-targets.json"), "utf8"),
   ) as { targets: { modules: { namespace: string }[] }[] };
-  const named = targetApiDocs(packageRoot);
+  const named = targetApiDocs(dataDir, packageRoot);
   const libraryNamespaces = readdirSync(join(packageRoot, "api-doc"))
     .filter((file) => file.endsWith(".json"))
     .map((file) => file.replace(/\.json$/, ""))
@@ -684,7 +689,7 @@ if (import.meta.main) {
     const manifest = await fetchDefoldExtensions(
       root,
       liveGitHub,
-      await loadReservedNamespaces(root),
+      await loadReservedNamespaces(LIBRARY_DATA_DIR, root),
     );
     const docs = manifest.libraries.reduce((sum, entry) => sum + entry.docs.length, 0);
     console.log(`surveyed ${manifest.libraries.length} Defold libraries, ${docs} docs`);

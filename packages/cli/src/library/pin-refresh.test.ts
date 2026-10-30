@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseOpenApi } from "./parse-openapi-api";
 import { readAuthoredTargets } from "./sync-authored-types";
 import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
@@ -9,6 +9,7 @@ import { readOpenApiTargets } from "./sync-openapi-types";
 import { committedScriptApiDoc, readScriptApiTargets } from "./sync-script-api-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 const RECORD_FILE = "pin-refresh.json";
 
 /** Lanes whose surface a parser can recover from committed fixtures. An
@@ -47,12 +48,12 @@ function readRecord(): { refreshes: PinRefreshEntry[]; deliberatelyUnmoved: Unmo
 function pinnedRefs(lane: PinLane): Map<string, string> {
   const targets =
     lane === "luals"
-      ? readLualsTargets(PACKAGE_ROOT)
+      ? readLualsTargets(DATA_DIR)
       : lane === "script-api"
-        ? readScriptApiTargets(PACKAGE_ROOT)
+        ? readScriptApiTargets(DATA_DIR)
         : lane === "openapi"
           ? readOpenApiTargets(PACKAGE_ROOT)
-          : readAuthoredTargets(PACKAGE_ROOT);
+          : readAuthoredTargets(DATA_DIR);
   return new Map(targets.map((target) => [target.moduleId, target.ref]));
 }
 
@@ -73,14 +74,14 @@ async function committedMembers(lane: RefreshLane, moduleId: string): Promise<Se
     return new Set(doc.elements.map((element) => element.name));
   }
   if (lane === "script-api") {
-    const target = readScriptApiTargets(PACKAGE_ROOT).find((t) => t.moduleId === moduleId);
+    const target = readScriptApiTargets(DATA_DIR).find((t) => t.moduleId === moduleId);
     if (target === undefined) throw new Error(`no script-api target for ${moduleId}`);
-    const doc = await committedScriptApiDoc(PACKAGE_ROOT, target);
+    const doc = await committedScriptApiDoc(DATA_DIR, target);
     return new Set(doc.elements.map((element) => element.name));
   }
-  const target = readLualsTargets(PACKAGE_ROOT).find((t) => t.moduleId === moduleId);
+  const target = readLualsTargets(DATA_DIR).find((t) => t.moduleId === moduleId);
   if (target === undefined) throw new Error(`no luals target for ${moduleId}`);
-  const model = buildTargetModel(PACKAGE_ROOT, target);
+  const model = buildTargetModel(DATA_DIR, target);
   const names = new Set<string>();
   for (const iface of model.interfaces) {
     for (const method of iface.methods) names.add(`${iface.name}.${method.name}`);

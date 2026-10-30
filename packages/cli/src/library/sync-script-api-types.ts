@@ -424,17 +424,17 @@ const defaultFetchText: FetchText = async (url) => {
 };
 
 if (import.meta.main) {
-  const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
+  const { LIBRARY_DATA_DIR: data, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   const argv = process.argv.slice(2);
   if (argv.includes("--fetch")) {
-    for (const target of readScriptApiTargets(root)) {
-      await fetchScriptApiFixture(root, target, { fetchText: defaultFetchText });
+    for (const target of readScriptApiTargets(data)) {
+      await fetchScriptApiFixture(data, target, { fetchText: defaultFetchText });
       console.log(`snapshotted ${target.moduleId} from ${repoSlug(target.repo)}@${target.ref}`);
     }
   }
   if (argv.includes("--api-doc")) {
-    for (const target of readScriptApiTargets(root)) {
-      const json = await lowerScriptApiApiDoc(root, target);
+    for (const target of readScriptApiTargets(data)) {
+      const json = await lowerScriptApiApiDoc(data, target);
       const dest = join(root, target.apiDoc);
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, json);
@@ -442,8 +442,8 @@ if (import.meta.main) {
     }
   }
   if (argv.includes("--fidelity")) {
-    for (const target of readScriptApiTargets(root)) {
-      const report = await buildScriptApiFidelity(root, target);
+    for (const target of readScriptApiTargets(data)) {
+      const report = await buildScriptApiFidelity(data, target);
       const dest = join(root, target.fidelity);
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, `${JSON.stringify(report, null, 2)}\n`);

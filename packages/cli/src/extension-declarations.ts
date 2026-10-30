@@ -118,12 +118,19 @@ function archiveManifestDirs(entries: readonly string[]): string[] {
 
 export async function resolveExtensionDeclarations(
   deps: readonly ExtensionDependency[],
-  opts: ResolveExtensionArchiveOptions,
+  opts: ResolveExtensionArchiveOptions & {
+    // The library data folder index-slot notes are read from; defaults to the
+    // one the installed CLI selects.
+    readonly libraryDataDir?: string | null;
+  },
 ): Promise<ExtensionDeclarations[]> {
   const open = opts.readZip ?? defaultReadZip;
   const resolved = await resolveExtensions(deps, opts);
   const curated = loadCuratedExtensionManifest();
-  const classifications = loadLibraryIndexSlotClassifications();
+  const classifications =
+    opts.libraryDataDir !== undefined
+      ? loadLibraryIndexSlotClassifications(opts.libraryDataDir)
+      : loadLibraryIndexSlotClassifications();
 
   const bundles: ExtensionDeclarations[] = [];
   for (const archive of resolved) {

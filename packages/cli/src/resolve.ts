@@ -42,7 +42,7 @@ import {
 import {
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
-  resolveLibraryTypesPackageRoot,
+  resolveLibraryDataDir,
   type VendoredNativeExtension,
 } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
@@ -101,13 +101,14 @@ export interface RunResolveOptions {
   // `--frozen` to verify the committed pin set without mutating it.
   readonly freeze?: boolean;
   // The library data dependencies are matched against and printed from. Both
-  // default to the installed `@defold-typescript/library-types`; tests inject a
-  // synthetic registry and root to stay hermetic, and a `null` root prints
-  // nothing and keeps a surface already there.
+  // default to the data folder the installed CLI selects in
+  // `@defold-typescript/library-types`; tests inject a synthetic registry and
+  // data folder to stay hermetic, and a `null` folder prints nothing and keeps a
+  // surface already there.
   readonly libraryRegistry?: readonly VendoredLibrary[];
-  readonly libraryTypesRoot?: string | null;
-  // The curated native-extension targets. Defaults to the installed
-  // `@defold-typescript/library-types` `native-targets.json`.
+  readonly libraryDataDir?: string | null;
+  // The curated native-extension targets. Defaults to the library data folder's
+  // `native-targets.json`.
   readonly nativeRegistry?: readonly VendoredNativeExtension[];
   // The `@defold-typescript/types` root shipped declarations are checked
   // against. Defaults to the installed package; `null` installs them unchecked.
@@ -278,9 +279,12 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     };
   }
 
+  const libraryDataDir =
+    opts.libraryDataDir !== undefined ? opts.libraryDataDir : resolveLibraryDataDir();
   const resolvedBundles = await resolveExtensionDeclarations(deps, {
     cacheDir: opts.cacheDir ?? extensionCacheDir(),
     projectDir: cwd,
+    libraryDataDir,
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
   });
@@ -303,9 +307,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // is then filtered to the modules the archive actually ships — so a library
   // that documents itself keeps its curated types. The registry is loaded at
   // most once, only when a default is needed.
-  const libraryTypesRoot =
-    opts.libraryTypesRoot !== undefined ? opts.libraryTypesRoot : resolveLibraryTypesPackageRoot();
-  const libraryRegistry = opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryTypesRoot);
+  const libraryRegistry = opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryDataDir);
   const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
   const confirmedLibraryUrls = new Set<string>();
   for (const bundle of resolvedBundles) {
@@ -334,7 +336,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // it is not a native candidate.
   const { bundles, confirmedUrls: confirmedNativeUrls } = applyNativeTargets(
     shippedBundles,
-    opts.nativeRegistry ?? loadVendoredNativeRegistry(),
+    opts.nativeRegistry ?? loadVendoredNativeRegistry(libraryDataDir),
     new Set([...confirmedLibraryUrls, ...shippedUrls]),
   );
   // `scriptApiCount` reports the archive's own docs, which a curated or shipped
@@ -369,7 +371,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // Each confirmed library prints from the archive the project depends on, so its
   // types follow the version the game ships rather than the one library data pins.
   let printedLibraries: PrintedLibrary[] | null = null;
-  if (libraryTypesRoot !== null) {
+  if (libraryDataDir !== null) {
     printedLibraries = [];
     const archivePaths = new Map(resolvedBundles.map((b) => [b.url, b.archivePath]));
     const open = opts.readZip ?? defaultReadZip;
@@ -381,11 +383,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
         continue;
       }
       const archive = archiveSourceTree(await open(archivePath));
-      const { printed, unprintable } = await printLibraryModules(
-        libraryTypesRoot,
-        modules,
-        archive,
-      );
+      const { printed, unprintable } = await printLibraryModules(libraryDataDir, modules, archive);
       for (const { module, contents, ref, reason } of printed) {
         seen.add(module);
         printedLibraries.push({ module, contents });

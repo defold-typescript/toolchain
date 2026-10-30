@@ -15,11 +15,12 @@ import {
   readAuthoredExceptions,
   renderAuthoredParity,
 } from "./authored-parity";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const TARGETS = readAuthoredTargets(PACKAGE_ROOT);
+const DATA_DIR = LIBRARY_DATA_DIR;
+const TARGETS = readAuthoredTargets(DATA_DIR);
 
 function target(namespace: string): AuthoredTarget {
   const found = TARGETS.find((entry) => entry.namespace === namespace);
@@ -59,7 +60,7 @@ describe("the measured corpus is exactly the corpus without a verdict", () => {
   // `upstreamLua` side. The bijection makes the two agree only when the pass
   // selects correctly, so a widened or narrowed filter reds here.
   test("the parity pass covers every target that recorded no verdict", () => {
-    const measured = authoredParityTargets(PACKAGE_ROOT)
+    const measured = authoredParityTargets(DATA_DIR)
       .map((entry) => entry.namespace)
       .sort();
     const expected = TARGETS.filter((entry) => entry.parityVerdict === undefined)
@@ -70,7 +71,7 @@ describe("the measured corpus is exactly the corpus without a verdict", () => {
   });
 
   test("the rollout reaches past the nakama repository it started from", () => {
-    const repos = new Set(authoredParityTargets(PACKAGE_ROOT).map((entry) => entry.repo));
+    const repos = new Set(authoredParityTargets(DATA_DIR).map((entry) => entry.repo));
     expect(repos.size).toBeGreaterThan(1);
     expect([...repos]).toContain("https://github.com/britzl/defold-input");
   });
@@ -84,9 +85,9 @@ describe("the measured corpus is exactly the corpus without a verdict", () => {
 });
 
 describe("every committed parity artifact is what the pass recomputes", () => {
-  for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+  for (const entry of authoredParityTargets(DATA_DIR)) {
     test(`${entry.namespace} round-trips byte-for-byte`, () => {
-      const rebuilt = renderAuthoredParity(buildAuthoredParity(PACKAGE_ROOT, entry));
+      const rebuilt = renderAuthoredParity(buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry));
       const committed = readFileSync(join(PACKAGE_ROOT, authoredParityPath(entry)), "utf8");
       expect(rebuilt).toBe(committed);
     });
@@ -94,7 +95,7 @@ describe("every committed parity artifact is what the pass recomputes", () => {
 });
 
 describe("the nakama.engine.defold parity findings", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama.engine.defold"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("nakama.engine.defold"));
 
   test("every upstream member is declared, and the surface is still five wide", () => {
     expect(report.upstreamMembers).toBe(5);
@@ -110,7 +111,7 @@ describe("the nakama.engine.defold parity findings", () => {
 });
 
 describe("the nakama.util.log parity findings", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama.util.log"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("nakama.util.log"));
 
   test("all four upstream members are declared, at upstream arity", () => {
     expect(report.upstreamMembers).toBe(4);
@@ -136,7 +137,7 @@ describe("the nakama.util.log parity findings", () => {
 // constant at all, which is why the field axis reads 1 over an empty denominator — the
 // `nakama.util.log` artifact is the precedent for that reading.
 describe("the nakama.session parity findings", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama.session"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("nakama.session"));
 
   test("all seven upstream members are declared, at upstream arity", () => {
     expect(report.upstreamMembers).toBe(7);
@@ -165,7 +166,7 @@ describe("the nakama.session parity findings", () => {
 // Built live from the vendored `nakama/socket.lua` and the committed api-doc for the
 // same reason as the session report above.
 describe("the nakama.socket parity findings", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama.socket"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("nakama.socket"));
 
   test("all forty-five upstream members are declared, at upstream arity", () => {
     expect(report.upstreamMembers).toBe(45);
@@ -189,7 +190,7 @@ describe("the nakama.socket parity findings", () => {
 });
 
 describe("the richtext.color parity findings", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("richtext.color"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("richtext.color"));
 
   test("all four upstream members are declared, at upstream arity", () => {
     expect(report.upstreamMembers).toBe(4);
@@ -209,7 +210,11 @@ describe("the richtext.color parity findings", () => {
 
 describe("the two forks exporting a name their pinned upstream does not define", () => {
   test("monarch.transitions.easings no longer exports upstream's private `create`", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.easings"));
+    const report = buildAuthoredParity(
+      DATA_DIR,
+      PACKAGE_ROOT,
+      target("monarch.transitions.easings"),
+    );
     expect(report.phantomMembers).toEqual([]);
     expect(report.declaredMembers).toBe(10);
     expect(report.missingMembers).toEqual([]);
@@ -220,7 +225,7 @@ describe("the two forks exporting a name their pinned upstream does not define",
   // and a declaration that reached the callable side instead would show up as a
   // phantom member here rather than as a field shortfall.
   test("rendy drops the two go.animate replacements and declares its five variables", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("rendy"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("rendy"));
     expect(report.phantomMembers).toEqual([]);
     expect(report.declaredMembers).toBe(11);
     expect(report.callableCoverage).toBe(1);
@@ -234,7 +239,7 @@ describe("the two forks exporting a name their pinned upstream does not define",
 
 describe("the three forks that were missing members their pinned upstream defines", () => {
   test("persist declares the sixth function upstream exports", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("persist"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("persist"));
     expect(report.upstreamMembers).toBe(6);
     expect(report.declaredMembers).toBe(6);
     expect(report.missingMembers).toEqual([]);
@@ -246,7 +251,7 @@ describe("the three forks that were missing members their pinned upstream define
   // The three constants stay phantom fields: only the callable axis is corrected
   // here, so a declaration that reached the field side would show up as movement.
   test("bzAnim declares the three controller functions, and its field axis holds still", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("bzAnim"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("bzAnim"));
     expect(report.upstreamMembers).toBe(9);
     expect(report.declaredMembers).toBe(9);
     expect(report.missingMembers).toEqual([]);
@@ -264,7 +269,7 @@ describe("the three forks that were missing members their pinned upstream define
   // `fieldCoverage: 1` alone would pass over the wrong declaration. The count cannot,
   // and `phantomMembers` names it on the axis it wrongly reached.
   test("defcon takes upstream's optional second parameter and closes its three-field gap", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("defcon"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("defcon"));
     expect(report.arityMismatches).toEqual([]);
     expect(report.callableCoverage).toBe(1);
     expect(report.phantomMembers).toEqual([]);
@@ -282,7 +287,7 @@ describe("the three forks that were missing members their pinned upstream define
 // `is_horizontal`, and `vertical_scrollbar` dropping upstream's `config`, which silently
 // shifted every argument after `action`.
 describe("gooey declares the whole callable surface gooey.lua defines", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("gooey"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("gooey"));
 
   test("every upstream member is declared at upstream arity, none of it excepted", () => {
     expect(report.upstreamMembers).toBe(20);
@@ -311,7 +316,7 @@ describe("gooey declares the whole callable surface gooey.lua defines", () => {
 // `payments_get_catalog` with a lone callback where upstream takes `(options, callback)`,
 // and carried four `//* Sitelock` names the pinned `yagames.lua` never exports.
 describe("yagames declares the whole callable surface yagames.lua defines", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("yagames"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("yagames"));
 
   test("every upstream member is declared at upstream arity, none of it excepted", () => {
     expect(report.upstreamMembers).toBe(68);
@@ -342,7 +347,7 @@ describe("yagames declares the whole callable surface yagames.lua defines", () =
 // and left 16 upstream members undeclared. Every one of the three is now a correction
 // rather than a figure, so the assertions state what the fork reaches instead.
 describe("the nakama core parity findings", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("nakama"));
 
   test("the fork declares exactly the callable surface the pinned module exports", () => {
     expect(report.upstreamMembers).toBe(156);
@@ -373,23 +378,23 @@ describe("the nakama core parity findings", () => {
 
 describe("a callable coverage figure cannot be read as completeness", () => {
   test("every report records the upstream fields the callable axis does not examine", () => {
-    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+    for (const entry of authoredParityTargets(DATA_DIR)) {
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       expect(report.upstreamFields).toBeGreaterThanOrEqual(0);
       expect(Number.isInteger(report.upstreamFields)).toBe(true);
     }
   });
 
   test("platypus pairs a perfect callable coverage with a far larger field surface", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("platypus"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("platypus"));
     expect(report.upstreamMembers).toBe(1);
     expect(report.callableCoverage).toBe(1);
     expect(report.upstreamFields).toBe(14);
   });
 
   test("the corpus contains a thin measurement, so the second axis is load-bearing", () => {
-    const thin = authoredParityTargets(PACKAGE_ROOT)
-      .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
+    const thin = authoredParityTargets(DATA_DIR)
+      .map((entry) => buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry))
       .filter((report) => report.callableCoverage === 1 && report.upstreamFields > 0)
       .map((report) => report.namespace);
     expect(thin).toContain("platypus");
@@ -399,7 +404,7 @@ describe("a callable coverage figure cannot be read as completeness", () => {
   // the field slice closed the second half without moving either callable term, which
   // is the scope line the two axes exist to keep visible.
   test("nakama reaches both axes: twelve declared constants beside its 156 members", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("nakama"));
     expect(report.upstreamFields).toBe(12);
     expect(report.declaredFields).toBe(12);
     expect(report.upstreamMembers).toBe(156);
@@ -414,7 +419,7 @@ describe("the field axis compares the non-callable surface", () => {
   // `FUNCTION` also empties `missingFields` and also reads `fieldCoverage: 1`, while
   // leaving the count short and pushing the name onto the callable axis.
   test("nakama declares each of the twelve constants upstream defines", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("nakama"));
     expect(report.upstreamFields).toBe(12);
     expect(report.declaredFields).toBe(12);
     expect(report.missingFields).toEqual([]);
@@ -426,7 +431,7 @@ describe("the field axis compares the non-callable surface", () => {
   // `create`, so a module can be almost entirely non-callable and still be measured
   // on both axes rather than read through the one member the callable axis sees.
   test("platypus declares both separation modes beside its single callable member", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("platypus"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("platypus"));
     expect(report.upstreamFields).toBe(14);
     expect(report.declaredFields).toBe(14);
     expect(report.missingFields).toEqual([]);
@@ -437,7 +442,7 @@ describe("the field axis compares the non-callable surface", () => {
   });
 
   test("in.triggers agrees on all 168 fields, so a large surface can still score 1", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("in.triggers"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("in.triggers"));
     expect(report.upstreamFields).toBe(168);
     expect(report.declaredFields).toBe(168);
     expect(report.missingFields).toEqual([]);
@@ -451,7 +456,7 @@ describe("the field axis compares the non-callable surface", () => {
   // empty `phantomFields` alone cannot tell a deleted declaration from a name the
   // reader stopped seeing.
   test("orthographic.camera declares upstream's nineteen constants and invents none", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("orthographic.camera"));
     expect(report.upstreamFields).toBe(19);
     expect(report.declaredFields).toBe(19);
     expect(report.missingFields).toEqual([]);
@@ -466,7 +471,7 @@ describe("the field axis compares the non-callable surface", () => {
   // omission: the seven live names are declared and the grouping stays, upstream
   // still defining it.
   test("monarch.monarch declares the live transition and focus hashes it inverted", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.monarch"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("monarch.monarch"));
     expect(report.upstreamFields).toBe(15);
     expect(report.declaredFields).toBe(15);
     expect(report.missingFields).toEqual([]);
@@ -484,7 +489,7 @@ describe("the field axis compares the non-callable surface", () => {
   // `declaredFields` at 14 and pushing the name onto the callable axis as a phantom
   // member. All three terms come from one pass over the real artifact.
   test("monarch's register alias is declared on the field axis, not the callable one", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.monarch"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("monarch.monarch"));
     expect(report.declaredFields).toBe(15);
     expect(report.declaredMembers).toBe(36);
     expect(report.upstreamMembers).toBe(36);
@@ -495,7 +500,7 @@ describe("the field axis compares the non-callable surface", () => {
   });
 
   test("an empty upstream field surface scores 1, as the callable axis already does", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("monarch.transitions.gui"));
     expect(report.upstreamFields).toBe(0);
     expect(report.fieldCoverage).toBe(1);
   });
@@ -515,7 +520,7 @@ describe("the constants the metrics and dicebag forks left undeclared", () => {
     "metrics.fps",
     "metrics.mem",
   ])("%s declares upstream's three drawing defaults", (namespace) => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(namespace));
     expect(report.upstreamFields).toBe(3);
     expect(report.declaredFields).toBe(3);
     expect(report.missingFields).toEqual([]);
@@ -524,7 +529,7 @@ describe("the constants the metrics and dicebag forks left undeclared", () => {
   });
 
   test("dicebag declares the two tables upstream keeps its bag and roll state in", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("dicebag"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("dicebag"));
     expect(report.upstreamFields).toBe(2);
     expect(report.declaredFields).toBe(2);
     expect(report.missingFields).toEqual([]);
@@ -541,7 +546,7 @@ describe("the constants the metrics and dicebag forks left undeclared", () => {
     ["metrics.mem", 4],
     ["dicebag", 11],
   ])("the callable axis of %s is unmoved at %i members", (namespace, members) => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace as string));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(namespace as string));
     expect(report.upstreamMembers).toBe(members);
     expect(report.declaredMembers).toBe(members);
     expect(report.missingMembers).toEqual([]);
@@ -558,8 +563,8 @@ describe("the constants the metrics and dicebag forks left undeclared", () => {
 // happens to measure, so a library added tomorrow with an unexplained field gap would
 // pass every figure above while this reds and names it.
 describe("no measured target sits below 1 on the field axis", () => {
-  const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
-    buildAuthoredParity(PACKAGE_ROOT, entry),
+  const reports = authoredParityTargets(DATA_DIR).map((entry) =>
+    buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry),
   );
 
   test("the corpus is non-empty, so the invariant cannot hold vacuously", () => {
@@ -619,6 +624,7 @@ describe("a phantom field enters neither side of the coverage figure", () => {
     );
     return buildAuthoredParity(
       root,
+      root,
       {
         repo: "",
         ref: "",
@@ -663,8 +669,8 @@ describe("a phantom field enters neither side of the coverage figure", () => {
 
 describe("a name callable on either side is compared, never counted as a field", () => {
   test("no report charges the same name to both axes", () => {
-    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+    for (const entry of authoredParityTargets(DATA_DIR)) {
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       const callable = new Set([...report.missingMembers, ...report.phantomMembers]);
       const overlap = [...report.missingFields, ...report.phantomFields].filter((name) =>
         callable.has(name),
@@ -1013,7 +1019,7 @@ describe("a fork offering several call shapes is measured against the set", () =
   });
 
   test("monarch.transitions.gui declares upstream's twenty members and agrees on every one", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("monarch.transitions.gui"));
     expect(report.upstreamMembers).toBe(20);
     expect(report.declaredMembers).toBe(20);
     expect(report.missingMembers).toEqual([]);
@@ -1027,7 +1033,7 @@ describe("a fork offering several call shapes is measured against the set", () =
   // to be seen not to have gained anything on the way past: upstream defines no
   // constant in this module at all.
   test("the transitions left the field axis rather than being counted on both", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("monarch.transitions.gui"));
     expect(report.declaredFields).toBe(0);
     expect(report.upstreamFields).toBe(0);
     expect(report.phantomFields).toEqual([]);
@@ -1050,8 +1056,8 @@ describe("a fork offering several call shapes is measured against the set", () =
   // then the callback, and `asobi.api.auth`'s `guest_device` the callback or device
   // options then the callback.
   test("the term is 0 on every target whose api-doc names each function once", () => {
-    const overloaded = authoredParityTargets(PACKAGE_ROOT)
-      .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
+    const overloaded = authoredParityTargets(DATA_DIR)
+      .map((entry) => buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry))
       .filter((report) => report.overloadedMembers > 0)
       .map((report) => `${report.namespace}: ${report.overloadedMembers}`);
     expect(overloaded).toEqual([
@@ -1165,7 +1171,7 @@ describe("a generated trailing discard is dropped before the counts are compared
   // `overloadedMembers` beside it do, so it read 59 while seven discard-carrying
   // constructors were still among the sixteen the fork left undeclared.
   test("nakama's generated discards are the whole softening the corpus carries", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("nakama"));
     expect(report.placeholderMembers).toBe(66);
     expect(report.arityMismatches).toEqual([]);
     expect(report.callableCoverage).toBe(1);
@@ -1184,8 +1190,8 @@ describe("a generated trailing discard is dropped before the counts are compared
   });
 
   test("no other measured target carries the generated shape", () => {
-    const softened = authoredParityTargets(PACKAGE_ROOT)
-      .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
+    const softened = authoredParityTargets(DATA_DIR)
+      .map((entry) => buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry))
       .filter((report) => report.placeholderMembers > 0)
       .map((report) => `${report.namespace}: ${report.placeholderMembers}`);
     expect(softened).toEqual(["nakama: 66"]);
@@ -1194,19 +1200,19 @@ describe("a generated trailing discard is dropped before the counts are compared
 
 describe("the six variadic members the corpus was charging as arity gaps", () => {
   test("deftest and zzfx reach a full callable coverage once the floor rule applies", () => {
-    const deftest = buildAuthoredParity(PACKAGE_ROOT, target("deftest"));
+    const deftest = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("deftest"));
     expect(deftest.callableCoverage).toBe(1);
     expect(deftest.variadicMembers).toBe(1);
     expect(deftest.arityMismatches).toEqual([]);
 
-    const zzfx = buildAuthoredParity(PACKAGE_ROOT, target("zzfx"));
+    const zzfx = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("zzfx"));
     expect(zzfx.callableCoverage).toBe(1);
     expect(zzfx.variadicMembers).toBe(2);
     expect(zzfx.arityMismatches).toEqual([]);
   });
 
   test("defmath's three variadic members reach a full coverage against their floor", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("defmath"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("defmath"));
     expect(report.variadicMembers).toBe(3);
     expect(report.arityMismatches).toEqual([]);
     expect(report.callableCoverage).toBe(1);
@@ -1215,7 +1221,7 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
   // `logger` forwards its `...` straight to the SDK, so each of its four members is
   // variadic upstream and declared with a rest parameter.
   test("GamePush's four logger members meet their floor", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("gamepush.core.logger"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("gamepush.core.logger"));
     expect(report.variadicMembers).toBe(4);
     expect(report.arityMismatches).toEqual([]);
     expect(report.callableCoverage).toBe(1);
@@ -1223,12 +1229,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
 
   test("the other hundred and eighteen targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
-    const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
+    const untouched = authoredParityTargets(DATA_DIR).filter(
       (entry) => !moved.has(entry.namespace),
     );
     expect(untouched.length).toBe(118);
     for (const entry of untouched) {
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
     }
   });
@@ -1247,7 +1253,7 @@ describe("a justified divergence is counted correct and stays named", () => {
   const BOOM = "boom";
 
   function excepting(entries: AuthoredParityException[]) {
-    return buildAuthoredParity(PACKAGE_ROOT, target(BOOM), { [BOOM]: entries });
+    return buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(BOOM), { [BOOM]: entries });
   }
 
   const SYNTHETIC: AuthoredParityException = {
@@ -1259,7 +1265,7 @@ describe("a justified divergence is counted correct and stays named", () => {
   test("an excepted member the fork omits is counted correct instead of missing", () => {
     // The committed ledger already excepts all five, so the un-excepted baseline is
     // the empty override rather than the measured artifact.
-    const bare = buildAuthoredParity(PACKAGE_ROOT, target(BOOM), {});
+    const bare = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(BOOM), {});
     expect(bare.missingMembers).toContain("init");
     expect(bare.callableCoverage).toBe(0.1667);
 
@@ -1285,12 +1291,10 @@ describe("a justified divergence is counted correct and stays named", () => {
 
   test("a target with no ledger entry reports an empty list", () => {
     const excepted = new Set(Object.keys(readAuthoredExceptions(PACKAGE_ROOT)));
-    const plain = authoredParityTargets(PACKAGE_ROOT).filter(
-      (entry) => !excepted.has(entry.namespace),
-    );
+    const plain = authoredParityTargets(DATA_DIR).filter((entry) => !excepted.has(entry.namespace));
     expect(plain.length).toBeGreaterThan(0);
     for (const entry of plain) {
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.parityExceptions.length}`).toBe(`${entry.namespace}: 0`);
     }
   });
@@ -1304,7 +1308,7 @@ describe("the ledger cannot outlive the defect it justifies", () => {
 
   test("an entry naming a member upstream does not export throws, naming it", () => {
     expect(() =>
-      buildAuthoredParity(PACKAGE_ROOT, target(BOOM), {
+      buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(BOOM), {
         [BOOM]: [{ name: "on_reload", kind: "script-lifecycle", reason: "stale" }],
       }),
     ).toThrow(/boom\.on_reload.*upstream/s);
@@ -1312,7 +1316,7 @@ describe("the ledger cannot outlive the defect it justifies", () => {
 
   test("an entry for a member the fork does declare throws, naming it", () => {
     expect(() =>
-      buildAuthoredParity(PACKAGE_ROOT, target(BOOM), {
+      buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(BOOM), {
         [BOOM]: [{ name: "boom", kind: "script-lifecycle", reason: "unnecessary" }],
       }),
     ).toThrow(/boom\.boom.*declares/s);
@@ -1348,7 +1352,7 @@ describe("the ledger cannot outlive the defect it justifies", () => {
 // whose whole body is `error("… is deprecated")`. Declaring a member that throws on
 // every call is worse than not declaring it, so all six are absent from the fork.
 describe("orthographic.camera declares upstream's live surface and none of its dead one", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("orthographic.camera"));
 
   test("every upstream member is now declared or justified", () => {
     expect(report.upstreamMembers).toBe(35);
@@ -1415,7 +1419,7 @@ describe("the declared field side reads only api-doc VARIABLE elements", () => {
     const entry = target(name);
     const typedefs = declaredTypes(entry, "TYPEDEF");
     expect(typedefs.length).toBeGreaterThan(0);
-    const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
     expect(report.declaredGlobals).toBe(0);
     expect(report.declaredFields).toBe(declaredTypes(entry, "VARIABLE").length);
     expect(report.phantomFields.filter((field) => typedefs.includes(field))).toEqual([]);
@@ -1425,9 +1429,9 @@ describe("the declared field side reads only api-doc VARIABLE elements", () => {
   // this filters an empty set. It guards the corpus as it grows; the clause itself is
   // pinned by the synthetic corner above.
   test("a name the fork declares as a FUNCTION never reads as a missing field", () => {
-    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+    for (const entry of authoredParityTargets(DATA_DIR)) {
       const functions = new Set(declaredTypes(entry, "FUNCTION"));
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       expect(report.missingFields.filter((name) => functions.has(name))).toEqual([]);
     }
   });
@@ -1464,6 +1468,7 @@ describe("an upstream colon method is measured against the instance type's metho
       }),
     );
     return buildAuthoredParity(
+      root,
       root,
       {
         repo: "",
@@ -1505,7 +1510,7 @@ describe("an upstream colon method is measured against the instance type's metho
 
 describe("the two callable-module targets the setmetatable reader lifted", () => {
   test("in.accelerometer declares all ten upstream members at upstream arity", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("in.accelerometer"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("in.accelerometer"));
     expect(report.upstreamMembers).toBe(10);
     expect(report.declaredMembers).toBe(10);
     expect(report.missingMembers).toEqual([]);
@@ -1519,7 +1524,7 @@ describe("the two callable-module targets the setmetatable reader lifted", () =>
   // `-- called from boom.script`. The target reaches a full callable coverage with no
   // edit to its fork at all, which is the clearest statement of what an entry means.
   test("boom declares one of six, the five lifecycle hooks its script calls being absent", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("boom"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("boom"));
     expect(report.upstreamMembers).toBe(6);
     expect(report.declaredMembers).toBe(1);
     expect(report.missingMembers).toEqual([]);
@@ -1541,7 +1546,7 @@ describe("the two callable-module targets the setmetatable reader lifted", () =>
   // charges none of them, the fork declaring no element to hang a brief on. Both terms
   // are recomputed here, so a ledger that quietly declared members would move them.
   test("boom's ambient globals are counted, not charged to it as invented members", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("boom"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("boom"));
     expect(report.phantomMembers).toEqual([]);
     expect(report.declaredGlobals).toBe(87);
     expect(report.refusedDocBlocksTotal).toBe(5);
@@ -1551,30 +1556,30 @@ describe("the two callable-module targets the setmetatable reader lifted", () =>
 
 describe("an ambient global is not a member of the module", () => {
   test("deftest's thirty telescope assertions are globals, so none is a phantom member", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("deftest"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("deftest"));
     expect(apiDocElements(target("deftest")).length).toBe(32);
     expect(report.declaredMembers).toBe(2);
     expect(report.phantomMembers).toEqual([]);
   });
 
   test("excluding them moves neither ratcheted figure", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("deftest"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("deftest"));
     expect(report.callableCoverage).toBe(1);
     expect(report.fieldCoverage).toBe(1);
   });
 
   test("what was excluded stays visible: deftest counts thirty declared globals", () => {
-    expect(buildAuthoredParity(PACKAGE_ROOT, target("deftest")).declaredGlobals).toBe(30);
+    expect(buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("deftest")).declaredGlobals).toBe(30);
   });
 
   test("every report counts the global FUNCTION and VARIABLE elements of its api-doc", () => {
-    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+    for (const entry of authoredParityTargets(DATA_DIR)) {
       const globals = apiDocElements(entry).filter(
         (element) =>
           element.global === true && (element.type === "FUNCTION" || element.type === "VARIABLE"),
       );
       expect(
-        `${entry.namespace}: ${buildAuthoredParity(PACKAGE_ROOT, entry).declaredGlobals}`,
+        `${entry.namespace}: ${buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry).declaredGlobals}`,
       ).toBe(`${entry.namespace}: ${globals.length}`);
     }
   });
@@ -1583,7 +1588,7 @@ describe("an ambient global is not a member of the module", () => {
   // as overloads, which are one member of the surface rather than two. A target naming an
   // `instanceType` adds that interface's methods, the one `TYPEDEF` the axis reads.
   test("the declared callable side is the non-global functions and the instance methods", () => {
-    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+    for (const entry of authoredParityTargets(DATA_DIR)) {
       const elements = apiDocElements(entry);
       const instance = elements.find(
         (element) => element.type === "TYPEDEF" && element.name === entry.instanceType,
@@ -1595,19 +1600,19 @@ describe("an ambient global is not a member of the module", () => {
         ...(instance?.functions ?? []).map((method) => `${entry.instanceType}:${method.name}`),
       ]);
       expect(
-        `${entry.namespace}: ${buildAuthoredParity(PACKAGE_ROOT, entry).declaredMembers}`,
+        `${entry.namespace}: ${buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry).declaredMembers}`,
       ).toBe(`${entry.namespace}: ${members.size}`);
     }
   });
 
   test("no target reports a name its api-doc marks global as one the fork invented", () => {
-    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+    for (const entry of authoredParityTargets(DATA_DIR)) {
       const globals = new Set(
         apiDocElements(entry)
           .filter((element) => element.global === true)
           .map((element) => element.name),
       );
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       const compared = [...report.phantomMembers, ...report.phantomFields].filter((name) =>
         globals.has(name),
       );
@@ -1621,8 +1626,8 @@ describe("an ambient global is not a member of the module", () => {
 // where it went, so a target the import silently skipped shows up as a non-zero
 // `undocumentedMembers` rather than as an unexplained drop.
 describe("the shortfall the import absorbed is accounted for, not merely absent", () => {
-  const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
-    buildAuthoredParity(PACKAGE_ROOT, entry),
+  const reports = authoredParityTargets(DATA_DIR).map((entry) =>
+    buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry),
   );
 
   // The nine are nakama's `create_api_validate_purchase_*` and
@@ -1653,8 +1658,8 @@ describe("the shortfall the import absorbed is accounted for, not merely absent"
 // distinguishable from one upstream never documented even once every block is answered
 // and the narrowed `refusedDocBlocks` reads 0.
 describe("upstream prose the reader declined is reported, not absent", () => {
-  const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
-    buildAuthoredParity(PACKAGE_ROOT, entry),
+  const reports = authoredParityTargets(DATA_DIR).map((entry) =>
+    buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry),
   );
 
   test("nakama.util.log records `format`'s `--`-only block rather than reading clean", () => {
@@ -1742,8 +1747,8 @@ describe("upstream prose the reader declined is reported, not absent", () => {
 // `refusedDocBlocksTotal` keeps the raw refusal count so a 0 cannot be misread as
 // upstream writing no `--`-only blocks.
 describe("only a refusal the fork left unanswered is charged", () => {
-  const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
-    buildAuthoredParity(PACKAGE_ROOT, entry),
+  const reports = authoredParityTargets(DATA_DIR).map((entry) =>
+    buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry),
   );
 
   // Four refused blocks over four dispositions the term has to tell apart: answered by
@@ -1791,6 +1796,7 @@ describe("only a refusal the fork left unanswered is charged", () => {
       }),
     );
     return buildAuthoredParity(
+      root,
       root,
       {
         repo: "",
@@ -1909,7 +1915,7 @@ describe("only a refusal the fork left unanswered is charged", () => {
 // library is new to the corpus and has no ts-defold binding behind it, which makes the
 // measured agreement with upstream the only thing standing behind the declarations.
 describe("shutter.shutter declares the whole of its upstream module", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("shutter"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("shutter"));
 
   test("both axes close, with nothing missing and nothing invented", () => {
     expect(report.missingMembers).toEqual([]);
@@ -1962,7 +1968,7 @@ describe("shutter.shutter declares the whole of its upstream module", () => {
 // it arrives with no ts-defold binding behind it, so the measured agreement with
 // upstream is the only thing standing behind the declarations.
 describe("checkpoint.checkpoint declares the whole of its upstream module", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("checkpoint"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("checkpoint"));
 
   test("both axes close, with nothing missing and nothing invented", () => {
     expect(report.missingMembers).toEqual([]);
@@ -2019,7 +2025,7 @@ describe("the defold-sprite-repeat modules declare the whole of their upstream m
     ["node_repeat", 2, 2, ["create", "get_screen_aspect_ratio"]],
   ] as const) {
     describe(namespace, () => {
-      const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(namespace));
 
       test("both axes close, with nothing missing and nothing invented", () => {
         expect(report.missingMembers).toEqual([]);
@@ -2053,7 +2059,7 @@ describe("the defold-sprite-repeat modules declare the whole of their upstream m
   // node_repeat's `-- @param` block above `create` is declined by the reader; the fork
   // answers it with its own brief, so the narrowed term reads 0.
   test("node_repeat's one declined block is answered by the fork rather than charged", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("node_repeat"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("node_repeat"));
     expect(report.refusedDocBlocksTotal).toBe(1);
     expect(report.refusedDocBlocks).toBe(0);
     expect(report.undocumentedMembers).toBe(0);
@@ -2066,7 +2072,7 @@ describe("the defold-sprite-repeat modules declare the whole of their upstream m
 // the module only inside `init` and the capture calls, so declaring any of them would
 // read as a phantom field here.
 describe("sentinel.sentry declares the whole of its upstream module", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("sentinel"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("sentinel"));
 
   test("both axes close, with nothing missing and nothing invented", () => {
     expect(report.missingMembers).toEqual([]);
@@ -2178,7 +2184,7 @@ for (const slice of GAMEPUSH_SLICES) {
     const reports = Object.entries(slice.upstream).map(([namespace, expected]) => ({
       namespace,
       expected,
-      report: buildAuthoredParity(PACKAGE_ROOT, target(namespace)),
+      report: buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(namespace)),
     }));
 
     test("both axes close on every module, with nothing missing and nothing invented", () => {
@@ -2234,7 +2240,7 @@ for (const slice of GAMEPUSH_SLICES) {
 // `gamepush.lua` assigns each typed module to a field with `M.x = require(...)`, so the
 // field axis is what holds the entry module to reaching every one of them.
 describe("the GamePush entry module declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("gamepush"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("gamepush"));
 
   test("both axes close, with nothing missing and nothing invented", () => {
     expect(report.missingMembers).toEqual([]);
@@ -2264,7 +2270,7 @@ describe("the GamePush entry module declares the whole of its upstream", () => {
 // method is reached through those values, so it is declared on interfaces and measured
 // by neither axis.
 describe("colyseus.sdk declares the three values its module table exports", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("colyseus"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("colyseus"));
 
   test("the field axis closes on the three constructor entries, nothing invented", () => {
     expect(report.upstreamMembers).toBe(0);
@@ -2291,7 +2297,11 @@ describe("colyseus.sdk declares the three values its module table exports", () =
 // `admob.lua` has no prose, so `undocumentedMembers` cannot charge a blank member here,
 // and the description check reads the api-doc the docs site loads instead.
 describe("ads_wrapper.ads_networks.admob declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("ads_wrapper.ads_networks.admob"));
+  const report = buildAuthoredParity(
+    DATA_DIR,
+    PACKAGE_ROOT,
+    target("ads_wrapper.ads_networks.admob"),
+  );
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(24);
@@ -2325,7 +2335,7 @@ describe("ads_wrapper.ads_networks.admob declares the whole of its upstream", ()
 // except `play_sound` and the three style registrars. It has no member prose either, so
 // the description check reads the api-doc, as for admob.
 describe("printer.printer declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("printer"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("printer"));
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(11);
@@ -2358,7 +2368,7 @@ describe("printer.printer declares the whole of its upstream", () => {
 // members are assigned inside `create`, so the parity scan sees only `create`, and the
 // README is the only member prose, so the description check reads the api-doc.
 describe("ink.story declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("ink"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("ink"));
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(1);
@@ -2399,7 +2409,7 @@ describe("the defold-light-and-shadows modules declare the whole of their upstre
   ];
 
   for (const { namespace, members, fields } of cases) {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(namespace));
 
     test(`${namespace}: both axes close, with nothing missing, invented or short`, () => {
       expect(report.upstreamMembers).toBe(members);
@@ -2435,7 +2445,7 @@ describe("the authored Flow modules declare their complete upstream surfaces", (
   ];
 
   for (const { namespace, members, fields } of cases) {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(namespace));
 
     test(`${namespace}: both axes close, with nothing missing, invented or short`, () => {
       expect(report.upstreamMembers).toBe(members);
@@ -2456,7 +2466,7 @@ describe("the authored Flow modules declare their complete upstream surfaces", (
 // a `---` block, and writes the notes above `cursor_visible` and `cursor_render_order`
 // with a plain `--`, so the description check reads the api-doc.
 describe("pointer_lock.pointer declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("pointer_lock"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("pointer_lock"));
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(3);
@@ -2498,7 +2508,7 @@ describe("the defold-operator modules declare the whole of their upstream module
   ];
 
   for (const { namespace, members, fields, lifecycle } of cases) {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target(namespace));
 
     test(`${namespace}: both axes close, with nothing missing, invented or short`, () => {
       expect(report.upstreamMembers).toBe(members);
@@ -2529,7 +2539,7 @@ describe("the defold-operator modules declare the whole of their upstream module
   }
 
   test("operator.operator's exceptions are exactly the six registry hooks", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("operator.operator"));
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("operator.operator"));
     expect(report.parityExceptions.map((entry) => entry.name)).toEqual([
       "did_activate_operator",
       "did_deactivate_operator",
@@ -2548,7 +2558,7 @@ describe("the defold-operator modules declare the whole of their upstream module
 // definitions under LDoc `--- @param name (type) text` blocks, and its one field is the
 // `M.PATTERN` table of six hashes.
 describe("defarmy.defarmy declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("defarmy"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("defarmy"));
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(15);
@@ -2581,7 +2591,7 @@ describe("defarmy.defarmy declares the whole of its upstream", () => {
 // `function M.x` definitions under LDoc `---- summary` / `-- @param name (type) text`
 // blocks, and its one field is the `M.ROUTETYPE` table of three hashes.
 describe("defgraph.defgraph declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("defgraph"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("defgraph"));
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(12);
@@ -2617,7 +2627,7 @@ describe("defgraph.defgraph declares the whole of its upstream", () => {
 // of it, so every description is the fork's own.
 describe("def_behavior_tree declares the whole of its upstream", () => {
   const entry = target("def_behavior_tree");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, the tree methods included, with nothing missing or short", () => {
     expect(report.upstreamMembers).toBe(8);
@@ -2653,7 +2663,7 @@ describe("def_behavior_tree declares the whole of its upstream", () => {
 // `dissolve_fx.lua` carries no annotations. Its two functions are bare `function M.x`
 // definitions on `local M = {}`, and the module has no fields.
 describe("dissolve_fx.dissolve_fx declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("dissolve_fx"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("dissolve_fx"));
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(2);
@@ -2685,7 +2695,7 @@ describe("dissolve_fx.dissolve_fx declares the whole of its upstream", () => {
 // `post_update_data_texture` sit under its `-- Internal functions` heading and only the
 // bundled `illumination.script` calls them, so the fork leaves both undeclared.
 describe("illumination.illumination declares the whole of its public upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("illumination"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("illumination"));
 
   test("both axes close with the two internals excepted, nothing missing or short", () => {
     expect(report.upstreamMembers).toBe(6);
@@ -2722,7 +2732,7 @@ describe("illumination.illumination declares the whole of its public upstream", 
 // fields. Upstream documents the setters and getters with `---` blocks but not the setup
 // functions or the two render-script hooks, so their descriptions are the fork's own.
 describe("water.water declares the whole of its upstream", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("water"));
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, target("water"));
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(50);
@@ -2756,7 +2766,7 @@ describe("water.water declares the whole of its upstream", () => {
 // them, so every description is the fork's own.
 describe("wrap.node declares the whole of its upstream", () => {
   const entry = target("wrap.node");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, the node methods included, with nothing missing or short", () => {
     expect(report.upstreamMembers).toBe(160);
@@ -2794,7 +2804,7 @@ describe("wrap.node declares the whole of its upstream", () => {
 // it is given, so they have no upstream definition to measure.
 describe("wrap.node_list declares the whole of its upstream", () => {
   const entry = target("wrap.node_list");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(1);
@@ -2828,7 +2838,7 @@ describe("wrap.node_list declares the whole of its upstream", () => {
 // Upstream defines `Go:set_position` twice with the same body, and it counts once.
 describe("wrap.go declares the whole of its upstream", () => {
   const entry = target("wrap.go");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, the game object methods included, with nothing missing or short", () => {
     expect(report.upstreamMembers).toBe(52);
@@ -2866,7 +2876,7 @@ describe("wrap.go declares the whole of its upstream", () => {
 // it is given, so they have no upstream definition to measure.
 describe("wrap.go_list declares the whole of its upstream", () => {
   const entry = target("wrap.go_list");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(1);
@@ -2907,7 +2917,7 @@ for (const { namespace, members } of [
 ]) {
   describe(`${namespace} declares the whole of its upstream`, () => {
     const entry = target(namespace);
-    const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+    const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
     test("both axes close, the methods and `__name` included, with nothing missing or short", () => {
       expect(report.upstreamMembers).toBe(members);
@@ -2946,7 +2956,7 @@ for (const { namespace, members } of [
 // forwarding to the module that wraps one value or a list of them.
 describe("wrap.wrap declares the whole of its upstream", () => {
   const entry = target("wrap.wrap");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(3);
@@ -2979,7 +2989,7 @@ describe("wrap.wrap declares the whole of its upstream", () => {
 // blocks and no fields. `get_config_value` takes `default` as its second parameter.
 describe("minit.minit declares the whole of its upstream", () => {
   const entry = target("minit");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(7);
@@ -3013,7 +3023,7 @@ describe("minit.minit declares the whole of its upstream", () => {
 // object calls on itself, each declared on `Realtime` with an `Internal.` brief.
 describe("asobi.realtime declares the whole of its upstream", () => {
   const entry = target("asobi.realtime");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, the realtime methods included, with nothing missing or short", () => {
     expect(report.upstreamMembers).toBe(46);
@@ -3051,7 +3061,7 @@ describe("asobi.realtime declares the whole of its upstream", () => {
 // carries `set_tokens` and `clear_tokens` as closures, which no `M.` definition names.
 describe("asobi.client declares the whole of its upstream", () => {
   const entry = target("asobi.client");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(2);
@@ -3084,7 +3094,7 @@ describe("asobi.client declares the whole of its upstream", () => {
 // encoder to `M._base64` for upstream's golden-vector test, which reads as a field.
 describe("asobi.device declares the whole of its upstream", () => {
   const entry = target("asobi.device");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(3);
@@ -3118,7 +3128,7 @@ describe("asobi.device declares the whole of its upstream", () => {
 // shaping and the url, header and response handling.
 describe("asobi.http declares the whole of its upstream", () => {
   const entry = target("asobi.http");
-  const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+  const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
 
   test("both axes close, with nothing missing, invented or short", () => {
     expect(report.upstreamMembers).toBe(12);
@@ -3178,7 +3188,7 @@ describe("each asobi.api module declares the whole of its upstream", () => {
   for (const [namespace, count] of Object.entries(members)) {
     test(`${namespace}: both axes close and every member carries a description`, () => {
       const entry = target(namespace);
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       expect(report.upstreamMembers).toBe(count);
       expect(report.upstreamFields).toBe(0);
       expect(report.missingMembers).toEqual([]);
@@ -3204,8 +3214,8 @@ describe("each asobi.api module declares the whole of its upstream", () => {
 
 describe("the artifact shape is diff-stable", () => {
   test("every list is sorted by name", () => {
-    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+    for (const entry of authoredParityTargets(DATA_DIR)) {
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       expect(report.missingMembers).toEqual([...report.missingMembers].sort());
       expect(report.phantomMembers).toEqual([...report.phantomMembers].sort());
       expect(report.missingFields).toEqual([...report.missingFields].sort());
@@ -3218,8 +3228,8 @@ describe("the artifact shape is diff-stable", () => {
   });
 
   test("a field score of 1 means nothing is missing, on every target", () => {
-    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
-      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+    for (const entry of authoredParityTargets(DATA_DIR)) {
+      const report = buildAuthoredParity(DATA_DIR, PACKAGE_ROOT, entry);
       expect(report.fieldCoverage).toBeGreaterThanOrEqual(0);
       expect(report.fieldCoverage).toBeLessThanOrEqual(1);
       expect(report.fieldCoverage === 1).toBe(report.missingFields.length === 0);

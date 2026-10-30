@@ -7,7 +7,7 @@ import {
   sanitizeTypeName,
 } from "./emit-library-dts";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { type LibraryModel, type LibraryParam, parseLualsSource } from "./parse-luals";
 import { printedModule } from "./print-corpus";
 import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
@@ -854,7 +854,7 @@ test("renders @deprecated on a tagged interface, alias, method and module functi
   expect(out.match(/@deprecated/g)).toHaveLength(4);
 });
 
-const EMIT_TARGETS = readLualsTargets(LIBRARY_TYPES_ROOT).map(
+const EMIT_TARGETS = readLualsTargets(LIBRARY_DATA_DIR).map(
   (target) => [target.namespace, target] as const,
 );
 
@@ -867,7 +867,7 @@ test("the luals corpus carries more than one target, proving the pipeline genera
 // Names the contract, so a print that silently drops parameters reports as an
 // arity regression rather than as an opaque declaration diff.
 test("the printed druid declaration carries drag's full six-parameter callback signature", async () => {
-  const golden = await printedModule(LIBRARY_TYPES_ROOT, "druid.druid");
+  const golden = await printedModule(LIBRARY_DATA_DIR, "druid.druid");
 
   expect(golden).toContain(
     "on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void",
@@ -1004,8 +1004,7 @@ test("module constants emit as documented export consts after the module object'
 test.each(
   EMIT_TARGETS,
 )("emit drops no public modeled surface for the real %s model", (_namespace, target) => {
-  const packageRoot = LIBRARY_TYPES_ROOT;
-  const model = buildTargetModel(packageRoot, target);
+  const model = buildTargetModel(LIBRARY_DATA_DIR, target);
   const out = emitLibraryDeclarations(model, {
     moduleId: target.moduleId,
     typeRenames: target.typeRenames,
@@ -1267,7 +1266,7 @@ function docAbove(out: string, memberLine: string): string {
 }
 
 test("a library page notes each classified param, return and class field under the API reference's keys", () => {
-  const classifications = readLibraryIndexSlotClassifications(LIBRARY_TYPES_ROOT);
+  const classifications = readLibraryIndexSlotClassifications(LIBRARY_DATA_DIR);
   const paramNotes = libraryIndexBaseNotes(classifications, "druid", "get_pos", "param", "index");
   const returnNotes = libraryIndexBaseNotes(classifications, "druid", "get_index", "return", "");
   const fieldNotes = libraryIndexBaseNotes(

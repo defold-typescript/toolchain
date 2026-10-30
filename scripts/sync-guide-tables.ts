@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import {
   type NativeTarget,
   readNativeTargets,
@@ -12,7 +13,6 @@ import {
 const REPO_ROOT = join(import.meta.dir, "..");
 
 export const RESOLVE_GUIDE = join(REPO_ROOT, "packages/docs/guide/resolve.md");
-export const LIBRARY_TYPES_ROOT = join(REPO_ROOT, "packages/library-types");
 
 export const CURATED_NATIVE_START = "<!-- curated-native-extensions:start -->";
 export const CURATED_NATIVE_END = "<!-- curated-native-extensions:end -->";
@@ -62,7 +62,7 @@ export function syncGuideTables(text: string, targets: readonly CuratedNativeRow
 if (import.meta.main) {
   const write = process.argv.includes("--write");
   const committed = readFileSync(RESOLVE_GUIDE, "utf8");
-  const fresh = syncGuideTables(committed, readNativeTargets(LIBRARY_TYPES_ROOT));
+  const fresh = syncGuideTables(committed, readNativeTargets(LIBRARY_DATA_DIR));
 
   if (write) {
     if (fresh !== committed) writeFileSync(RESOLVE_GUIDE, fresh);
