@@ -106,6 +106,7 @@ describe("readLibraryData projects each library folder into lane targets", () =>
         ],
         native: [],
         indexSlots: {},
+        usage: [],
       });
       expect(box2d).toEqual({
         dir: "box2d",
@@ -134,7 +135,24 @@ describe("readLibraryData projects each library folder into lane targets", () =>
             evidence: "fixture.cpp:229 passes it on unchanged",
           },
         },
+        usage: [],
       });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a library's usage examples are every .ts file under its usage folder, sorted", () => {
+    const root = writeDataFolder();
+    try {
+      write(root, "flow/usage/nested/b.test-d.ts", "export {};\n");
+      write(root, "flow/usage/a.test-d.ts", "export {};\n");
+      write(root, "flow/usage/notes.md", "# notes\n");
+
+      const [box2d, flow] = readLibraryData(root);
+
+      expect(flow?.usage).toEqual(["flow/usage/a.test-d.ts", "flow/usage/nested/b.test-d.ts"]);
+      expect(box2d?.usage).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

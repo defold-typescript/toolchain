@@ -164,6 +164,10 @@ const COMMANDS: readonly HelpCommand[] = [
         flag: "--frozen",
         desc: "fail on a drifted or retired extension pin and write no pins",
       },
+      {
+        flag: "--library-data <dir>",
+        desc: "read library data from a local directory of version-named data folders",
+      },
     ],
   },
   {

@@ -1,12 +1,13 @@
 // A library data folder holds one folder per library, named for its repo:
 // `library.json` (the repo, its forks, its native extension, its index slots),
 // `reviewed.json` (the ref the data was reviewed at), a `recipe.json` when the
-// library generates modules, `fork/` for the hand-kept declarations and `source/`
-// for the pinned upstream files. This is the one reader of that layout; every lane,
-// registry and tool projects its targets from it.
+// library generates modules, `fork/` for the hand-kept declarations, `source/`
+// for the pinned upstream files and `usage/` for the examples that compile against
+// its declarations. This is the one reader of that layout; every lane, registry
+// and tool projects its targets from it.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import type { IndexSlotClassification } from "@defold-typescript/types";
 import type { AuthoredTarget } from "./sync-authored-types";
 import type { RefKind } from "./sync-defold-extensions";
@@ -89,11 +90,13 @@ export interface LibraryData {
   authored: AuthoredTarget[];
   native: NativeTarget[];
   indexSlots: Record<string, IndexSlotEntry>;
+  usage: string[];
 }
 
 export const LIBRARY_FILE = "library.json";
 export const REVIEWED_FILE = "reviewed.json";
 export const RECIPE_FILE = "recipe.json";
+export const USAGE_DIR = "usage";
 // Index slots of library pages no library folder owns: the extensions `resolve`
 // types from a project's own archive.
 export const EXTENSION_INDEX_SLOTS_FILE = "index-slot-classifications.json";
@@ -297,6 +300,16 @@ function nativeTarget(
   };
 }
 
+function usageFiles(dataDir: string, dir: string): string[] {
+  const usageDir = join(dataDir, dir, USAGE_DIR);
+  if (!existsSync(usageDir)) return [];
+  return readdirSync(usageDir, { recursive: true })
+    .map((file) => String(file).split(sep).join("/"))
+    .filter((file) => file.endsWith(".ts"))
+    .map((file) => `${dir}/${USAGE_DIR}/${file}`)
+    .sort();
+}
+
 function readLibrary(dataDir: string, dir: string): LibraryData {
   const library = readJson<Partial<LibraryJson>>(dataDir, `${dir}/${LIBRARY_FILE}`);
   if (typeof library.repo !== "string") {
@@ -328,6 +341,7 @@ function readLibrary(dataDir: string, dir: string): LibraryData {
     native:
       library.native === undefined ? [] : [nativeTarget(dir, pin, library.refKind, library.native)],
     indexSlots: library.indexSlots ?? {},
+    usage: usageFiles(dataDir, dir),
   };
 }
 

@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -5416,6 +5417,69 @@ describe("dispatch resolve", () => {
     expect(withoutDigests(err())).toBe(
       `${noSceneSource(url)}defold-typescript resolve: error: 1 extension pin(s) drifted:\n  ${url}: commit:stale -> files-sha256:<digest>\n`,
     );
+  });
+
+  test("--library-data reads library data from the data folder its directory holds for this CLI", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const { resolveInternals: seams } = libraryResolveInternals(url);
+    const localData = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-local-data-"));
+    renameSync(seams.libraryDataDir, path.join(localData, "0.1.0"));
+
+    const code = await dispatch(["resolve", cwd, "--json", "--library-data", localData], io, {
+      cliVersion: "0.1.5",
+      resolveInternals: {
+        cacheDir: seams.cacheDir,
+        download: seams.download,
+        readZip: seams.readZip,
+      },
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as { libraries: { source: string; modules: string[] }[] };
+    expect(parsed.libraries.map(({ source, modules }) => ({ source, modules }))).toEqual([
+      { source: "mylib", modules: ["mylib.core"] },
+    ]);
+  });
+
+  test("--library-data with no data folder for this CLI fails before any download", async () => {
+    const { io, err } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const empty = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-empty-data-"));
+    let downloads = 0;
+    const { resolveInternals: seams } = resolveInternals(url);
+
+    const code = await dispatch(["resolve", cwd, "--library-data", empty], io, {
+      cliVersion: "0.1.5",
+      resolveInternals: {
+        ...seams,
+        download: async (...args) => {
+          downloads++;
+          return seams.download(...args);
+        },
+      },
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toContain(empty);
+    expect(err()).toContain("0.1.5");
+    expect(downloads).toBe(0);
+    expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
+  });
+
+  test("--library-data without a directory is a usage error", async () => {
+    const { io, err } = captureStreams();
+    writeProject("[project]\n");
+
+    const code = await dispatch(["resolve", cwd, "--library-data"], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("--library-data <dir>");
+    expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
   });
 
   function writePin(pkg: Record<string, unknown>): void {
