@@ -1,8 +1,9 @@
 // `library check` checks a library data folder the way the running CLI reads it:
 // the reader's own checks, the print of every module the folder serves, then one
 // compile of every printed declaration, native declaration and usage example
-// against the engine types this CLI ships. The engine types and the language
-// extensions come from this CLI's install, never from beside the data folder.
+// against the engine types this CLI ships. A declared file TypeScript cannot load
+// is a problem of its library. The engine types and the language extensions come
+// from this CLI's install, never from beside the data folder.
 
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -226,9 +227,16 @@ function compileProblems(inputs: Map<string, CheckInput>, dataDir: string): Libr
     host: compileHost(inputs, dataDir),
   });
   const problems: LibraryProblem[] = [];
-  for (const sourceFile of program.getSourceFiles()) {
-    const input = inputs.get(path.resolve(sourceFile.fileName));
-    if (input === undefined) continue;
+  for (const [fileName, input] of inputs) {
+    const sourceFile = program.getSourceFile(fileName);
+    if (sourceFile === undefined) {
+      problems.push({
+        library: input.library,
+        check: "compile",
+        message: `${input.shown} cannot be loaded: it is missing or is not a TypeScript file`,
+      });
+      continue;
+    }
     const diagnostics = [
       ...program.getSyntacticDiagnostics(sourceFile),
       ...program.getSemanticDiagnostics(sourceFile),
@@ -251,7 +259,8 @@ function compileProblems(inputs: Map<string, CheckInput>, dataDir: string): Libr
  * Every problem in the data folder at `dataDir`, in library order: one `data`
  * problem when the reader refuses it, else a `print` problem per module that does
  * not print, else every compile error in the printed declarations, the native
- * declarations and the usage examples. Empty when the folder is clean.
+ * declarations and the usage examples, and one compile problem per such file
+ * TypeScript cannot load. Empty when the folder is clean.
  */
 export async function checkLibraryData(dataDir: string): Promise<LibraryProblem[]> {
   let libraries: LibraryData[];
