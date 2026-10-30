@@ -22,7 +22,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { type AuthoredArityMismatch, classifyArity, classifyFieldAxis } from "./authored-parity";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseLuaSurface } from "./parse-lua-surface";
 import { parseNativeMethodTables, parseNativeRegistration } from "./parse-native-registration";
 import { lowerNativeApiDoc, type NativeTarget, readNativeTargets } from "./sync-native-types";
@@ -369,8 +369,8 @@ export function renderNativeParity(report: NativeParityReport): string {
 
 if (import.meta.main) {
   const root = LIBRARY_TYPES_ROOT;
-  for (const target of readNativeTargets(root)) {
-    const report = buildNativeParity(root, target);
+  for (const target of readNativeTargets(LIBRARY_DATA_DIR)) {
+    const report = buildNativeParity(LIBRARY_DATA_DIR, target);
     const dest = join(root, nativeParityPath(target));
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, renderNativeParity(report));

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import {
   compareFidelityToTsDefold,
   emitOpenApiDeclaration,
@@ -10,6 +10,7 @@ import {
 } from "./sync-openapi-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 function nakamaTarget(): OpenApiTarget {
   const target = readOpenApiTargets(PACKAGE_ROOT).find((t) => t.moduleId === "nakama.nakama");
@@ -31,7 +32,7 @@ async function comparison() {
   const target = nakamaTarget();
   const emitted = await emitOpenApiDeclaration(PACKAGE_ROOT, target);
   const snapshot = readFileSync(
-    join(PACKAGE_ROOT, "fixtures/authored", `${target.moduleId}.d.ts`),
+    join(DATA_DIR, "fixtures/authored", `${target.moduleId}.d.ts`),
     "utf8",
   );
   return { target, ...compareFidelityToTsDefold(emitted, snapshot) };

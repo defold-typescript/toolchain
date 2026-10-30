@@ -3,7 +3,7 @@ import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { emitLibraryDeclarations, isPublicMethod } from "./emit-library-dts";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { LibraryInterface, LibraryModel } from "./parse-luals";
 import { printCorpus } from "./print-corpus";
 import {
@@ -22,6 +22,7 @@ import {
 } from "./sync-luals-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 // A per-entry druid target as it appears in a validated config — the LuaLS
 // front-end pins `repo`/`ref` on each target instead of one shared `source`.
@@ -77,7 +78,7 @@ describe("readLualsTargets", () => {
   });
 
   test("reads the committed druid seed", () => {
-    const targets = readLualsTargets(PACKAGE_ROOT);
+    const targets = readLualsTargets(DATA_DIR);
     const druid = targets.find((t) => t.moduleId === "druid.druid");
     expect(druid).toBeDefined();
     expect(druid?.namespace).toBe("druid");
@@ -94,10 +95,10 @@ describe("readLualsTargets", () => {
   });
 
   test("every committed entry reads back with the fields its config declares", () => {
-    const raw = JSON.parse(readFileSync(join(PACKAGE_ROOT, "luals-targets.json"), "utf8")) as {
+    const raw = JSON.parse(readFileSync(join(DATA_DIR, "luals-targets.json"), "utf8")) as {
       targets: Record<string, unknown>[];
     };
-    const targets = readLualsTargets(PACKAGE_ROOT);
+    const targets = readLualsTargets(DATA_DIR);
     expect(targets).toHaveLength(raw.targets.length);
     for (const [index, entry] of raw.targets.entries()) {
       const target = targets[index] as unknown as Record<string, unknown>;
@@ -106,7 +107,7 @@ describe("readLualsTargets", () => {
   });
 
   test("reads the committed second luals target (decore) — the generality proof", () => {
-    const targets = readLualsTargets(PACKAGE_ROOT);
+    const targets = readLualsTargets(DATA_DIR);
     const decore = targets.find((t) => t.moduleId === "decore.decore");
     expect(decore).toBeDefined();
     expect(decore?.namespace).toBe("decore");
@@ -115,7 +116,7 @@ describe("readLualsTargets", () => {
 });
 
 describe("druid's external event dependency", () => {
-  const targets = readLualsTargets(PACKAGE_ROOT);
+  const targets = readLualsTargets(DATA_DIR);
 
   test("the druid target resolves `event` to the committed event target's own moduleId", () => {
     const druid = targets.find((t) => t.moduleId === "druid.druid");
@@ -186,7 +187,7 @@ describe("fetchLualsFixtures", () => {
 
 describe("lualsCorpusTargets", () => {
   test("tags the druid entry as a LuaLS-sourced pure-Lua corpus member", () => {
-    const entries = lualsCorpusTargets(PACKAGE_ROOT);
+    const entries = lualsCorpusTargets(DATA_DIR);
     const druid = entries.find((e) => e.moduleId === "druid.druid");
     expect(druid).toEqual({
       moduleId: "druid.druid",
@@ -197,7 +198,7 @@ describe("lualsCorpusTargets", () => {
   });
 
   test("tags the decore entry as a LuaLS-sourced pure-Lua corpus member", () => {
-    const entries = lualsCorpusTargets(PACKAGE_ROOT);
+    const entries = lualsCorpusTargets(DATA_DIR);
     const decore = entries.find((e) => e.moduleId === "decore.decore");
     expect(decore).toEqual({
       moduleId: "decore.decore",
@@ -226,11 +227,11 @@ describe("buildTargetModel module ownership", () => {
     "get_logger",
   ];
 
-  const druidTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.moduleId === "druid.druid");
+  const druidTarget = readLualsTargets(DATA_DIR).find((t) => t.moduleId === "druid.druid");
 
   test("scopes moduleFunctions to druid/druid.lua's own publics, dropping other files and locals", () => {
     if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
-    const names = buildTargetModel(PACKAGE_ROOT, druidTarget).moduleFunctions.map((f) => f.name);
+    const names = buildTargetModel(DATA_DIR, druidTarget).moduleFunctions.map((f) => f.name);
     expect([...names].sort()).toEqual([...DRUID_PUBLICS].sort());
     expect(names).not.toContain("wrap_widget"); // druid.lua's `local function` helper
     expect(names).not.toContain("get_color"); // color.lua
@@ -238,9 +239,9 @@ describe("buildTargetModel module ownership", () => {
   });
 
   test("the second target (decore) yields a non-empty moduleFunctions surface — not hollow", () => {
-    const decoreTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.moduleId === "decore.decore");
+    const decoreTarget = readLualsTargets(DATA_DIR).find((t) => t.moduleId === "decore.decore");
     if (!decoreTarget) throw new Error("decore target missing from luals-targets.json");
-    const names = buildTargetModel(PACKAGE_ROOT, decoreTarget).moduleFunctions.map((f) => f.name);
+    const names = buildTargetModel(DATA_DIR, decoreTarget).moduleFunctions.map((f) => f.name);
     expect(names.length).toBeGreaterThan(0);
     expect(names).toContain("create");
     expect(names).toContain("register_component");
@@ -249,7 +250,7 @@ describe("buildTargetModel module ownership", () => {
 
   test("the set_text_function callback maps through emit to (text_id: string) => string", () => {
     if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
-    const emitted = emitLibraryDeclarations(buildTargetModel(PACKAGE_ROOT, druidTarget), {
+    const emitted = emitLibraryDeclarations(buildTargetModel(DATA_DIR, druidTarget), {
       moduleId: druidTarget.moduleId,
       typeRenames: druidTarget.typeRenames,
     });
@@ -260,7 +261,7 @@ describe("buildTargetModel module ownership", () => {
 
   test("a target whose moduleId has no matching .lua fixture throws, naming the expected path", () => {
     const bogus: LualsTarget = { ...DRUID, moduleId: "druid.nonexistent" };
-    expect(() => buildTargetModel(PACKAGE_ROOT, bogus)).toThrow(/druid\/nonexistent\.lua/);
+    expect(() => buildTargetModel(DATA_DIR, bogus)).toThrow(/druid\/nonexistent\.lua/);
   });
 
   test("a Windows-style backslash readdir resolves druid.druid to the same moduleFunctions", () => {
@@ -268,13 +269,11 @@ describe("buildTargetModel module ownership", () => {
     const backslashReadDir: ReadFixtureDir = (root) =>
       readdirSync(root, { recursive: true }).map((entry) => String(entry).replace(/\//g, "\\"));
     const backslashNames = buildTargetModel(
-      PACKAGE_ROOT,
+      DATA_DIR,
       druidTarget,
-      lualsFixtureTree(PACKAGE_ROOT, druidTarget, { readDir: backslashReadDir }),
+      lualsFixtureTree(DATA_DIR, druidTarget, { readDir: backslashReadDir }),
     ).moduleFunctions.map((f) => f.name);
-    const posixNames = buildTargetModel(PACKAGE_ROOT, druidTarget).moduleFunctions.map(
-      (f) => f.name,
-    );
+    const posixNames = buildTargetModel(DATA_DIR, druidTarget).moduleFunctions.map((f) => f.name);
     expect([...backslashNames].sort()).toEqual([...posixNames].sort());
     expect([...backslashNames].sort()).toEqual([...DRUID_PUBLICS].sort());
   });
@@ -282,7 +281,7 @@ describe("buildTargetModel module ownership", () => {
 
 describe("tweener migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("tweener is a luals namespace and no longer a ts-defold target or classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "tweener")).toBe(true);
 
     const targets = JSON.parse(
@@ -303,7 +302,7 @@ describe("tweener migrated off the ts-defold corpus onto the LuaLS front-end", (
 
 describe("event migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("event is a luals namespace and no longer a ts-defold target or classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "event")).toBe(true);
 
     const targets = JSON.parse(
@@ -325,7 +324,7 @@ describe("event migrated off the ts-defold corpus onto the LuaLS front-end", () 
 
 describe("lang migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("lang is a luals namespace and no longer a ts-defold target or classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "lang")).toBe(true);
 
     const targets = JSON.parse(
@@ -347,7 +346,7 @@ describe("lang migrated off the ts-defold corpus onto the LuaLS front-end", () =
 
 describe("log migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("log is a luals namespace and no longer a ts-defold target or classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "log")).toBe(true);
 
     const targets = JSON.parse(
@@ -369,7 +368,7 @@ describe("log migrated off the ts-defold corpus onto the LuaLS front-end", () =>
 
 describe("proto migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("proto is a luals namespace and no longer a ts-defold target or classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "proto")).toBe(true);
 
     const targets = JSON.parse(
@@ -391,7 +390,7 @@ describe("proto migrated off the ts-defold corpus onto the LuaLS front-end", () 
 
 describe("immutable migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("immutable is a luals namespace and no longer a ts-defold target or classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "immutable")).toBe(true);
 
     const targets = JSON.parse(
@@ -415,7 +414,7 @@ describe("immutable migrated off the ts-defold corpus onto the LuaLS front-end",
 
 describe("squid migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("squid is a luals namespace and no longer a ts-defold target or classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "squid")).toBe(true);
 
     const targets = JSON.parse(
@@ -437,7 +436,7 @@ describe("squid migrated off the ts-defold corpus onto the LuaLS front-end", () 
 
 describe("narrator migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("narrator is a luals namespace and no longer a ts-defold target or classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "narrator")).toBe(true);
 
     const targets = JSON.parse(
@@ -459,7 +458,7 @@ describe("narrator migrated off the ts-defold corpus onto the LuaLS front-end", 
 
 describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () => {
   test("saver.saver and saver.storage are luals namespaces, no longer ts-defold targets or a classified dir", () => {
-    const luals = readLualsTargets(PACKAGE_ROOT);
+    const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "saver.saver")).toBe(true);
     expect(luals.some((t) => t.namespace === "saver.storage")).toBe(true);
 
@@ -478,7 +477,7 @@ describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () 
   test("only the retired ts-defold saver fixtures are gone; the printed modules and api-docs persist in place", async () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/saver.saver.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/saver.storage.d.ts"))).toBe(false);
-    const corpus = await printCorpus(PACKAGE_ROOT);
+    const corpus = await printCorpus(DATA_DIR);
     expect(corpus.has("saver.saver")).toBe(true);
     expect(corpus.has("saver.storage")).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/saver.saver.json"))).toBe(true);
@@ -497,7 +496,7 @@ describe("narrator ingestion restricted to its public surface", () => {
     "Narrator.Story",
   ];
 
-  const narratorTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "narrator");
+  const narratorTarget = readLualsTargets(DATA_DIR).find((t) => t.namespace === "narrator");
 
   test("sourceGlobs pin only the three type-bearing fixtures", () => {
     expect(narratorTarget?.sourceGlobs).toEqual([
@@ -509,7 +508,7 @@ describe("narrator ingestion restricted to its public surface", () => {
 
   test("the model carries the public interfaces and drops the internal Object/constructor tables", () => {
     if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
-    const names = buildTargetModel(PACKAGE_ROOT, narratorTarget).interfaces.map((i) => i.name);
+    const names = buildTargetModel(DATA_DIR, narratorTarget).interfaces.map((i) => i.name);
     for (const name of NARRATOR_PUBLIC_INTERFACES) expect(names).toContain(name);
     expect(names).not.toContain("Object");
     expect(names).not.toContain("constructor");
@@ -526,7 +525,7 @@ describe("narrator ingestion restricted to its public surface", () => {
 });
 
 describe("narrator annotation overrides make the surface runtime-faithful", () => {
-  const narratorTarget = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "narrator");
+  const narratorTarget = readLualsTargets(DATA_DIR).find((t) => t.namespace === "narrator");
 
   // Naive comma split: safe because no parameter type in this token carries a comma.
   function splitObserverParams(token: string): { name: string; type: string }[] {
@@ -582,7 +581,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
 
   test("parse_content's trailing inclusions param is optional", () => {
     if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
-    const parseContent = buildTargetModel(PACKAGE_ROOT, narratorTarget).moduleFunctions.find(
+    const parseContent = buildTargetModel(DATA_DIR, narratorTarget).moduleFunctions.find(
       (f) => f.name === "parse_content",
     );
     expect(parseContent?.params.find((p) => p.name === "inclusions")?.isOptional).toBe(true);
@@ -590,7 +589,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
 
   test("Narrator.Story.continue returns the array-or-paragraph union", () => {
     if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
-    const story = buildTargetModel(PACKAGE_ROOT, narratorTarget).interfaces.find(
+    const story = buildTargetModel(DATA_DIR, narratorTarget).interfaces.find(
       (i) => i.name === "Narrator.Story",
     );
     const cont = story?.methods.find((m) => m.name === "continue");
@@ -600,7 +599,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
 
   test("its callback's argument type equals the variable store's declared value type", () => {
     if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
-    const model = buildTargetModel(PACKAGE_ROOT, narratorTarget);
+    const model = buildTargetModel(DATA_DIR, narratorTarget);
     expect(observerParams(model).map((p) => p.type)).toEqual([expectedObserverParamType(model)]);
   });
 
@@ -608,7 +607,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
     if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
     const root = mkdtempSync(join(tmpdir(), "luals-types-narrator-store-"));
     const fixtureRoot = join(root, "fixtures/luals/narrator");
-    cpSync(join(PACKAGE_ROOT, "fixtures/luals/narrator"), fixtureRoot, { recursive: true });
+    cpSync(join(DATA_DIR, "fixtures/luals/narrator"), fixtureRoot, { recursive: true });
 
     const storyPath = join(fixtureRoot, "narrator/story.lua");
     const original = readFileSync(storyPath, "utf8");
@@ -624,7 +623,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
     expect(expectedObserverParamType(mutatedModel)).toBe("string");
     expect(observerParams(mutatedModel).map((p) => p.type)).not.toEqual(["string"]);
 
-    const pristine = buildTargetModel(PACKAGE_ROOT, narratorTarget);
+    const pristine = buildTargetModel(DATA_DIR, narratorTarget);
     expect(expectedObserverParamType(pristine)).toBe("any");
   });
 
@@ -646,7 +645,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
     if (!token) throw new Error("Narrator.Story.observe observer override missing");
 
     const fixture = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/luals/narrator/narrator/story.lua"),
+      join(DATA_DIR, "fixtures/luals/narrator/narrator/story.lua"),
       "utf8",
     );
     const invoked = /^\s*observer\(([^)]*)\)/m.exec(fixture);
@@ -675,7 +674,7 @@ describe("druid.drag's on_drag_callback override matches the runtime arity", () 
   }
 
   function overrideToken(): string {
-    const druid = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "druid");
+    const druid = readLualsTargets(DATA_DIR).find((t) => t.namespace === "druid");
     if (!druid) throw new Error("druid target missing from luals-targets.json");
     const token =
       druid.annotationOverrides?.interfaces?.["druid.drag"]?.methods?.init?.params?.on_drag_callback
@@ -691,7 +690,7 @@ describe("druid.drag's on_drag_callback override matches the runtime arity", () 
 
   test("its parameter names equal the fixture's own on_drag_callback declaration", () => {
     const fixture = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/luals/druid/druid/custom/rich_input/rich_input.lua"),
+      join(DATA_DIR, "fixtures/luals/druid/druid/custom/rich_input/rich_input.lua"),
       "utf8",
     );
     const declared = /^local function on_drag_callback\(([^)]*)\)/m.exec(fixture);
@@ -717,13 +716,13 @@ describe("panthera ingestion spans the subtree and hides its private module func
   const PANTHERA_MODULE_FUNCTIONS = ["create_go", "create_gui", "create", "play", "play_tweener"];
 
   function pantheraTarget(): LualsTarget {
-    const target = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "panthera");
+    const target = readLualsTargets(DATA_DIR).find((t) => t.namespace === "panthera");
     if (!target) throw new Error("panthera target missing from luals-targets.json");
     return target;
   }
 
   test("the public module surface carries the constructors and both playback entry points", () => {
-    const names = buildTargetModel(PACKAGE_ROOT, pantheraTarget())
+    const names = buildTargetModel(DATA_DIR, pantheraTarget())
       .moduleFunctions.filter(isPublicMethod)
       .map((f) => f.name);
     for (const name of PANTHERA_MODULE_FUNCTIONS) expect(names).toContain(name);
@@ -733,7 +732,7 @@ describe("panthera ingestion spans the subtree and hides its private module func
   // `---@private`, so it must survive parsing and be dropped by the public
   // projection every emit surface shares.
   test("update_animation is parsed private and excluded from the public projection", () => {
-    const moduleFunctions = buildTargetModel(PACKAGE_ROOT, pantheraTarget()).moduleFunctions;
+    const moduleFunctions = buildTargetModel(DATA_DIR, pantheraTarget()).moduleFunctions;
     expect(moduleFunctions.find((f) => f.name === "update_animation")?.visibility).toBe("private");
     expect(moduleFunctions.filter(isPublicMethod).map((f) => f.name)).not.toContain(
       "update_animation",
@@ -752,7 +751,7 @@ describe("panthera ingestion spans the subtree and hides its private module func
   // `panthera.adapter` is declared in `panthera_internal.lua`, not in the module
   // file — so a `sourceGlobs` narrowed to `panthera/panthera.lua` would strand it.
   test("the merged model declares the interfaces that live outside the module file", () => {
-    const names = buildTargetModel(PACKAGE_ROOT, pantheraTarget()).interfaces.map((i) => i.name);
+    const names = buildTargetModel(DATA_DIR, pantheraTarget()).interfaces.map((i) => i.name);
     expect(names).toContain("panthera.adapter");
     expect(names).toContain("panthera.logger");
     expect(names).toContain("panthera.animation.data");
@@ -761,7 +760,7 @@ describe("panthera ingestion spans the subtree and hides its private module func
   // Built live rather than read off `fidelity/panthera.json`: dropping the
   // `vector` rename must red here on the config alone, without a regen first.
   test("every LuaLS token panthera writes resolves — no unknown fallback", () => {
-    const report = buildTargetFidelity(PACKAGE_ROOT, pantheraTarget());
+    const report = buildTargetFidelity(DATA_DIR, pantheraTarget());
     expect(report.unknownTokens).toEqual([]);
     expect(report.unknownFallbacks).toBe(0);
   });
@@ -781,7 +780,7 @@ describe("panthera ingestion spans the subtree and hides its private module func
 
 describe("detiled, token and quest ingest their module surfaces and inherit their event members", () => {
   function target(namespace: string): LualsTarget {
-    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+    const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === namespace);
     if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
     return found;
   }
@@ -791,7 +790,7 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
     ["token", ["container", "init", "delete_container"]],
     ["quest", ["event", "start_quest", "complete_quest"]],
   ])("%s's public module surface carries its documented entry points", (namespace, expected) => {
-    const names = buildTargetModel(PACKAGE_ROOT, target(namespace))
+    const names = buildTargetModel(DATA_DIR, target(namespace))
       .moduleFunctions.filter(isPublicMethod)
       .map((f) => f.name);
     for (const name of expected) expect(names).toContain(name);
@@ -812,7 +811,7 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
     ["quest", "quest.event.is_can_event", "event"],
     ["quest", "quest.queue.quest_event", "queue"],
   ])("%s's %s extends %s without restating trigger or subscribe", (namespace, name, parent) => {
-    const iface = buildTargetModel(PACKAGE_ROOT, target(namespace)).interfaces.find(
+    const iface = buildTargetModel(DATA_DIR, target(namespace)).interfaces.find(
       (i) => i.name === name,
     );
     expect(iface?.extends).toBe(parent);
@@ -833,7 +832,7 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
     ["quest", "is_can_complete", "quest.event.is_can_complete"],
     ["quest", "is_can_event", "quest.event.is_can_event"],
   ])("%s exports its module value %s typed %s", (namespace, name, type) => {
-    const model = buildTargetModel(PACKAGE_ROOT, target(namespace));
+    const model = buildTargetModel(DATA_DIR, target(namespace));
     expect(model.moduleObject).toBe(namespace);
     const field = model.interfaces
       .find((i) => i.name === namespace)
@@ -851,7 +850,7 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
   // The runtime's `container:get` is `return token:get()`, so it returns exactly what
   // `token.value`'s `get` does.
   test("token.container's get returns what its token.value delegate's get returns", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, target("token"));
+    const model = buildTargetModel(DATA_DIR, target("token"));
     const delegate = getReturnTypes(model, "token.value");
     expect(delegate).toHaveLength(1);
     expect(getReturnTypes(model, "token.container")).toEqual(delegate);
@@ -859,7 +858,7 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
 
   test("upstream still annotates token.container's get as number|any", () => {
     const { annotationOverrides: _, ...upstream } = target("token");
-    const model = buildTargetModel(PACKAGE_ROOT, upstream);
+    const model = buildTargetModel(DATA_DIR, upstream);
     expect(getReturnTypes(model, "token.container")).toEqual([["number|any"]]);
   });
 
@@ -870,7 +869,7 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
     "token",
     "quest",
   ])("every LuaLS token %s writes resolves — no unknown fallback", (namespace) => {
-    const report = buildTargetFidelity(PACKAGE_ROOT, target(namespace));
+    const report = buildTargetFidelity(DATA_DIR, target(namespace));
     expect(report.unknownTokens).toEqual([]);
     expect(report.unknownFallbacks).toBe(0);
   });
@@ -878,13 +877,13 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
 
 describe("pigeon ingests its message API and drops the base letter's restated data", () => {
   function pigeonTarget(): LualsTarget {
-    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "pigeon");
+    const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === "pigeon");
     if (!found) throw new Error("pigeon target missing from luals-targets.json");
     return found;
   }
 
   test("pigeon's public module surface carries its message entry points", () => {
-    const names = buildTargetModel(PACKAGE_ROOT, pigeonTarget())
+    const names = buildTargetModel(DATA_DIR, pigeonTarget())
       .moduleFunctions.filter(isPublicMethod)
       .map((f) => f.name);
     for (const name of ["define", "subscribe", "send", "send_to"]) expect(names).toContain(name);
@@ -894,7 +893,7 @@ describe("pigeon ingests its message API and drops the base letter's restated da
   // which the base's required `data` rejects under `extends`; dropping the base field
   // leaves each subclass its own.
   test("BaseLetterDefinition carries no data field while a letter subclass keeps its own", () => {
-    const interfaces = buildTargetModel(PACKAGE_ROOT, pigeonTarget()).interfaces;
+    const interfaces = buildTargetModel(DATA_DIR, pigeonTarget()).interfaces;
     const fieldNames = (name: string): string[] => {
       const iface = interfaces.find((i) => i.name === name);
       if (!iface) throw new Error(`${name} missing from the pigeon model`);
@@ -906,26 +905,26 @@ describe("pigeon ingests its message API and drops the base letter's restated da
 
   // Built live, so dropping the `vector*` renames reds here on the config alone.
   test("every LuaLS token pigeon writes resolves — no unknown fallback", () => {
-    const report = buildTargetFidelity(PACKAGE_ROOT, pigeonTarget());
+    const report = buildTargetFidelity(DATA_DIR, pigeonTarget());
     expect(report.unknownTokens).toEqual([]);
     expect(report.unknownFallbacks).toBe(0);
   });
 
   test("pigeon's sourceGlobs keep every fixture its model reads and the ignore drops upstream's test file", () => {
-    const fixtures = listTargetFixtures(PACKAGE_ROOT, pigeonTarget());
+    const fixtures = listTargetFixtures(DATA_DIR, pigeonTarget());
     expect(selectLualsSources([...fixtures, "pigeon/test.lua"], pigeonTarget())).toEqual(fixtures);
   });
 });
 
 describe("live_unbundler ingests its module file and types its unannotated constants", () => {
   function liveUnbundlerTarget(): LualsTarget {
-    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "live_unbundler");
+    const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === "live_unbundler");
     if (!found) throw new Error("live_unbundler target missing from luals-targets.json");
     return found;
   }
 
   test("the module file feeds the 17 module functions and the 14 constants", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, liveUnbundlerTarget());
+    const model = buildTargetModel(DATA_DIR, liveUnbundlerTarget());
     const names = model.moduleFunctions.filter(isPublicMethod).map((f) => f.name);
     expect(names).toHaveLength(17);
     for (const name of ["init", "request_module_load", "get_download_progress"]) {
@@ -950,7 +949,7 @@ describe("live_unbundler ingests its module file and types its unannotated const
   });
 
   test("every LuaLS token live_unbundler writes, constants included, resolves", () => {
-    const report = buildTargetFidelity(PACKAGE_ROOT, liveUnbundlerTarget());
+    const report = buildTargetFidelity(DATA_DIR, liveUnbundlerTarget());
     expect(report.unknownTokens).toEqual([]);
     expect(report.unknownFallbacks).toBe(0);
   });
@@ -958,11 +957,9 @@ describe("live_unbundler ingests its module file and types its unannotated const
 
 describe("ads_wrapper's meta network class reaches the model as dot-called methods", () => {
   test("ads_network carries the 18 functions of ads_network.lua, each without self", () => {
-    const target = readLualsTargets(PACKAGE_ROOT).find(
-      (t) => t.moduleId === "ads_wrapper.ads_wrapper",
-    );
+    const target = readLualsTargets(DATA_DIR).find((t) => t.moduleId === "ads_wrapper.ads_wrapper");
     if (!target) throw new Error("ads_wrapper.ads_wrapper target missing from luals-targets.json");
-    const network = buildTargetModel(PACKAGE_ROOT, target).interfaces.find(
+    const network = buildTargetModel(DATA_DIR, target).interfaces.find(
       (i) => i.name === "ads_network",
     );
     expect(network?.methods.map((m) => m.name)).toEqual([
@@ -991,22 +988,20 @@ describe("ads_wrapper's meta network class reaches the model as dot-called metho
 
 describe("ads_wrapper.queue.add takes the queue function run calls", () => {
   test("add's fn param carries exactly the configured override token", () => {
-    const target = readLualsTargets(PACKAGE_ROOT).find((t) => t.moduleId === "ads_wrapper.queue");
+    const target = readLualsTargets(DATA_DIR).find((t) => t.moduleId === "ads_wrapper.queue");
     if (!target) throw new Error("ads_wrapper.queue target missing from luals-targets.json");
     const token = target.annotationOverrides?.moduleFunctions?.add?.params?.fn?.type;
     if (token === undefined) {
       throw new Error("ads_wrapper.queue carries no annotationOverrides type for add's fn param");
     }
-    const add = buildTargetModel(PACKAGE_ROOT, target).moduleFunctions.find(
-      (f) => f.name === "add",
-    );
+    const add = buildTargetModel(DATA_DIR, target).moduleFunctions.find((f) => f.name === "add");
     expect(add?.params.find((p) => p.name === "fn")?.types).toEqual([token]);
   });
 });
 
 describe("log's dropped call signature matches the runtime's non-callable logger", () => {
   function logTarget(): LualsTarget {
-    const log = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "log");
+    const log = readLualsTargets(DATA_DIR).find((t) => t.namespace === "log");
     if (!log) throw new Error("log target missing from luals-targets.json");
     return log;
   }
@@ -1016,7 +1011,7 @@ describe("log's dropped call signature matches the runtime's non-callable logger
   });
 
   test("the metatable get_logger stamps on every logger declares no __call", () => {
-    const fixture = readFileSync(join(PACKAGE_ROOT, "fixtures/luals/log/log/log.lua"), "utf8");
+    const fixture = readFileSync(join(DATA_DIR, "fixtures/luals/log/log/log.lua"), "utf8");
 
     const metatable = /^local METATABLE = (\{[^}]*\})/m.exec(fixture);
     if (!metatable?.[1]) {
@@ -1037,13 +1032,13 @@ describe("log's dropped call signature matches the runtime's non-callable logger
 
 describe("the glass, hyper trails, pixel-art and outline targets", () => {
   function target(namespace: string): LualsTarget {
-    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+    const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === namespace);
     if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
     return found;
   }
 
   test("glass binds its module object and lowers the probe-mode alias to its variants", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, target("fake_real_glass"));
+    const model = buildTargetModel(DATA_DIR, target("fake_real_glass"));
     expect(model.moduleObject).toBe("FakeRealGlassModule");
     expect(model.aliases.find((a) => a.name === "FakeRealGlassProbeMode")?.types).toEqual([
       "0",
@@ -1053,7 +1048,7 @@ describe("the glass, hyper trails, pixel-art and outline targets", () => {
   });
 
   test("every hyper_trails self param is retyped to an open options table", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, target("hyper_trails"));
+    const model = buildTargetModel(DATA_DIR, target("hyper_trails"));
     const selfParams = model.moduleFunctions.flatMap((f) =>
       f.params.filter((p) => p.name === "self"),
     );
@@ -1063,7 +1058,7 @@ describe("the glass, hyper trails, pixel-art and outline targets", () => {
 
   test("pixelart's module functions include init and set_light", () => {
     const names = buildTargetModel(
-      PACKAGE_ROOT,
+      DATA_DIR,
       target("pixelart.scripts.pixelart"),
     ).moduleFunctions.map((f) => f.name);
     expect(names).toContain("init");
@@ -1071,7 +1066,7 @@ describe("the glass, hyper trails, pixel-art and outline targets", () => {
   });
 
   test("outline's update takes its four signature params, the unused clear_buffer optional", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, target("outline"));
+    const model = buildTargetModel(DATA_DIR, target("outline"));
     const update = model.moduleFunctions.find((f) => f.name === "update");
     expect(update?.params.map((p) => [p.name, p.isOptional])).toEqual([
       ["self", false],
@@ -1083,7 +1078,7 @@ describe("the glass, hyper trails, pixel-art and outline targets", () => {
   });
 
   test("pixelart_render's update takes all seven signature params, each required", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, target("pixelart.scripts.pixelart_render"));
+    const model = buildTargetModel(DATA_DIR, target("pixelart.scripts.pixelart_render"));
     const update = model.moduleFunctions.find((f) => f.name === "update");
     expect(update?.params.map((p) => [p.name, p.isOptional])).toEqual([
       ["self", false],
@@ -1103,13 +1098,13 @@ describe("the glass, hyper trails, pixel-art and outline targets", () => {
     "outline",
     "pixelart.scripts.pixelart_render",
   ])("%s resolves every type token", (namespace) => {
-    expect(buildTargetFidelity(PACKAGE_ROOT, target(namespace)).unknownFallbacks).toBe(0);
+    expect(buildTargetFidelity(DATA_DIR, target(namespace)).unknownFallbacks).toBe(0);
   });
 });
 
 describe("the flow targets", () => {
   function target(namespace: string): LualsTarget {
-    const found = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+    const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === namespace);
     if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
     return found;
   }
@@ -1123,7 +1118,7 @@ describe("the flow targets", () => {
   }
 
   test("flow.types is the whole class vocabulary with no module functions", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, target("flow.types"));
+    const model = buildTargetModel(DATA_DIR, target("flow.types"));
     expect(model.moduleFunctions).toHaveLength(0);
     expect(model.interfaces).toHaveLength(32);
     expect(model.aliases.map((a) => a.name).sort()).toEqual([
@@ -1135,7 +1130,7 @@ describe("the flow targets", () => {
   });
 
   test("flow.types retypes the screen registry and navigation params a project passes as literals", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, target("flow.types"));
+    const model = buildTargetModel(DATA_DIR, target("flow.types"));
     expect(field(model, "Flow.InitConfig", "screens")).toBe("flow_screen_registry");
     expect(field(model, "Flow.RuntimeConfig", "screens")).toBe("flow_screen_registry");
     expect(field(model, "Flow.InitConfig", "initial_params")).toBe("flow_params");
@@ -1147,13 +1142,13 @@ describe("the flow targets", () => {
 
   test("flow.ui and flow.navigation.runtime export the gui_script and .script lifecycle", () => {
     const names = (namespace: string) =>
-      buildTargetModel(PACKAGE_ROOT, target(namespace)).moduleFunctions.map((f) => f.name);
+      buildTargetModel(DATA_DIR, target(namespace)).moduleFunctions.map((f) => f.name);
     expect(names("flow.ui")).toEqual(expect.arrayContaining(["mount", "render", "hit_test"]));
     expect(names("flow.navigation.runtime")).toEqual(["init", "final", "on_message"]);
   });
 
   test("flow.flex exports its Node constructor table and a chainable Node instance", () => {
-    const model = buildTargetModel(PACKAGE_ROOT, target("flow.flex"));
+    const model = buildTargetModel(DATA_DIR, target("flow.flex"));
     const node = model.interfaces.find((i) => i.name === "Node");
     const returns = (name: string) =>
       node?.methods.find((m) => m.name === name)?.returns.flatMap((r) => r.types);
@@ -1176,8 +1171,8 @@ describe("the flow targets", () => {
     "flow.navigation.runtime",
     "flow.navigation.proxy",
   ])("every %s self param is retyped to an open table", (namespace) => {
-    const selfParams = buildTargetModel(PACKAGE_ROOT, target(namespace)).moduleFunctions.flatMap(
-      (f) => f.params.filter((p) => p.name === "self"),
+    const selfParams = buildTargetModel(DATA_DIR, target(namespace)).moduleFunctions.flatMap((f) =>
+      f.params.filter((p) => p.name === "self"),
     );
     expect(selfParams.length).toBeGreaterThan(0);
     expect(selfParams.every((p) => p.types.join() === "table<string, any>")).toBe(true);
@@ -1193,6 +1188,6 @@ describe("the flow targets", () => {
     "flow.navigation.proxy",
     "flow.navigation.gui",
   ])("%s resolves every type token", (namespace) => {
-    expect(buildTargetFidelity(PACKAGE_ROOT, target(namespace)).unknownFallbacks).toBe(0);
+    expect(buildTargetFidelity(DATA_DIR, target(namespace)).unknownFallbacks).toBe(0);
   });
 });

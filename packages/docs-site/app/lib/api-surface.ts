@@ -28,7 +28,10 @@ import {
   withIndexBaseNotes,
   withLibraryIndexBaseNotes,
 } from "@defold-typescript/types";
-import libraryIndexSlotClassificationsJson from "../../../library-types/index-slot-classifications.json" with {
+// A static import keeps this module free of `node:fs` for the client bundle, so
+// it names the newest library data folder; `api-surface.test.ts` reds when a
+// newer folder lands without moving it.
+import libraryIndexSlotClassificationsJson from "../../../library-types/data/0.55.0/index-slot-classifications.json" with {
   type: "json",
 };
 import { slugify } from "./headings";

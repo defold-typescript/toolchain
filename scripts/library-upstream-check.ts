@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
@@ -108,10 +109,17 @@ function upstreamPathFromFixture(repo: string, fixturePath: string): string {
   return fixturePath.startsWith(prefix) ? fixturePath.slice(prefix.length) : fixturePath;
 }
 
-/** Every registry entry across the five lanes, flattened and path-normalized. */
-export function readPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedTarget[] {
+/**
+ * Every registry entry across the five lanes, flattened and path-normalized. The
+ * served lanes read from the library data folder, the markdown and openapi lanes
+ * from the package root.
+ */
+export function readPinnedTargets(
+  packageRoot: string = PACKAGE_ROOT,
+  dataDir: string = newestDataFolder(packageRoot),
+): PinnedTarget[] {
   const targets: PinnedTarget[] = [];
-  for (const t of readAuthoredTargets(packageRoot)) {
+  for (const t of readAuthoredTargets(dataDir)) {
     targets.push({
       lane: "authored",
       repo: t.repo,
@@ -121,7 +129,7 @@ export function readPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedTar
       internal: false,
     });
   }
-  for (const t of readLualsTargets(packageRoot)) {
+  for (const t of readLualsTargets(dataDir)) {
     targets.push({
       lane: "luals",
       repo: t.repo,
@@ -151,7 +159,7 @@ export function readPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedTar
       internal: t.decision !== "go",
     });
   }
-  for (const t of readScriptApiTargets(packageRoot)) {
+  for (const t of readScriptApiTargets(dataDir)) {
     targets.push({
       lane: "scriptApi",
       repo: t.repo,

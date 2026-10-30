@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { MarkdownDoc } from "./parse-markdown-api";
 import { printCorpus, printedModule } from "./print-corpus";
 import {
@@ -21,6 +21,7 @@ import {
 import { type FetchText, loadTypeResolver } from "./sync-script-api-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 // The orthographic.camera target as it appears in a validated config. A markdown
 // target pins one README/`.md` path plus the publish namespace the README's own
@@ -91,16 +92,16 @@ describe("orthographic severed to the authored lane without disturbing the markd
   });
 
   test("the vendored authored fork replaced the retired ts-defold fixture", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/authored/orthographic.camera.d.ts"))).toBe(true);
+    expect(existsSync(join(DATA_DIR, "fixtures/authored/orthographic.camera.d.ts"))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/orthographic.camera.d.ts"))).toBe(
       false,
     );
   });
 
   test("resolve serves the authored fork, not the markdown emit (no cutover)", async () => {
-    const served = await printedModule(PACKAGE_ROOT, "orthographic.camera");
+    const served = await printedModule(DATA_DIR, "orthographic.camera");
     expect(served).toBe(
-      readFileSync(join(PACKAGE_ROOT, "fixtures/authored/orthographic.camera.d.ts"), "utf8"),
+      readFileSync(join(DATA_DIR, "fixtures/authored/orthographic.camera.d.ts"), "utf8"),
     );
     expect(served).not.toBe(await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC));
   });
@@ -131,7 +132,7 @@ describe("defold-input registers no markdown target on the all-no-go outcome", (
   // the namespace-keyed `decision != "go"` skip would drop the module's docs page
   // outright. The decisions live in `markdown-fidelity-gate.test.ts` instead.
   test("the live ts-defold in.* goldens are the ones the docs site still enumerates", async () => {
-    const corpus = await printCorpus(PACKAGE_ROOT);
+    const corpus = await printCorpus(DATA_DIR);
     for (const mod of ["cursor", "state"]) {
       expect(corpus.has(`in.${mod}`)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `in.${mod}.json`))).toBe(true);
@@ -170,7 +171,7 @@ describe("evaluateMarkdownCandidate", () => {
 
   // monarch severed into the authored lane, so its retired ts-defold snapshot is
   // gone and the comparison resolves against the fork it was taken from.
-  const MONARCH_SNAPSHOT = "fixtures/authored/monarch.monarch.d.ts";
+  const MONARCH_SNAPSHOT = join(DATA_DIR, "fixtures/authored/monarch.monarch.d.ts");
 
   test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
     const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH, MONARCH_SNAPSHOT);

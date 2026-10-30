@@ -2,7 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { newestDataFolder } from "./data-folder";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type PrintedLibraryModule, printLibraryModules } from "./print-library";
 import type { LibrarySourceTree } from "./source-tree";
 import { readAuthoredTargets } from "./sync-authored-types";
@@ -10,6 +11,7 @@ import { readLualsTargets } from "./sync-luals-types";
 import { readScriptApiTargets } from "./sync-script-api-types";
 
 const PKG_DIR = LIBRARY_TYPES_ROOT;
+const DATA = path.relative(PKG_DIR, LIBRARY_DATA_DIR).split(path.sep).join("/");
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..", "..");
 
 // Packing and printing every served module twice outruns Bun's 5s default.
@@ -35,23 +37,23 @@ describe("@defold-typescript/library-types publish surface", () => {
   const paths = packedPaths(PKG_DIR);
 
   test("ships the per-library resolve manifest the CLI reads to recognize libraries", () => {
-    expect(paths).toContain("luals-targets.json");
-    expect(paths).toContain("fixtures/luals/druid/druid/druid.lua");
+    expect(paths).toContain(`${DATA}/luals-targets.json`);
+    expect(paths).toContain(`${DATA}/fixtures/luals/druid/druid/druid.lua`);
   });
 
   test("ships the script_api resolve manifest so installed packages can resolve bridge", () => {
-    expect(paths).toContain("script-api-targets.json");
-    expect(paths).toContain("fixtures/script-api/bridge.bridge.script_api");
+    expect(paths).toContain(`${DATA}/script-api-targets.json`);
+    expect(paths).toContain(`${DATA}/fixtures/script-api/bridge.bridge.script_api`);
   });
 
   test("ships the authored resolve manifest so installed packages can resolve defcon", () => {
-    expect(paths).toContain("authored-targets.json");
-    expect(paths).toContain("fixtures/authored/defcon.console.d.ts");
+    expect(paths).toContain(`${DATA}/authored-targets.json`);
+    expect(paths).toContain(`${DATA}/fixtures/authored/defcon.console.d.ts`);
   });
 
   test("ships the curated native declarations resolve installs", () => {
-    expect(paths).toContain("native-targets.json");
-    expect(paths).toContain("native/daabbcc.d.ts");
+    expect(paths).toContain(`${DATA}/native-targets.json`);
+    expect(paths).toContain(`${DATA}/native/daabbcc.d.ts`);
   });
 
   test("ships the curated extension manifest resolve reads to note extension index bases", () => {
@@ -82,9 +84,9 @@ interface PackProof {
 
 describe("an installed @defold-typescript/library-types prints every served module", () => {
   const moduleIds = [
-    ...readLualsTargets(PKG_DIR),
-    ...readScriptApiTargets(PKG_DIR),
-    ...readAuthoredTargets(PKG_DIR),
+    ...readLualsTargets(LIBRARY_DATA_DIR),
+    ...readScriptApiTargets(LIBRARY_DATA_DIR),
+    ...readAuthoredTargets(LIBRARY_DATA_DIR),
   ].map(({ moduleId }) => moduleId);
   let work = "";
   let installDir = "";
@@ -98,7 +100,7 @@ describe("an installed @defold-typescript/library-types prints every served modu
       path.join(REPO_ROOT, "scripts", "release-pack-proof.ts")
     )) as PackProof;
     extractPackage(packPackage("library-types", work), installDir);
-    repoPrinted = (await printLibraryModules(PKG_DIR, moduleIds, null)).printed;
+    repoPrinted = (await printLibraryModules(LIBRARY_DATA_DIR, moduleIds, null)).printed;
   }, PACKED_PRINT_TIMEOUT_MS);
 
   afterAll(() => {
@@ -108,7 +110,7 @@ describe("an installed @defold-typescript/library-types prints every served modu
   test(
     "prints from library data alone what the repo prints",
     async () => {
-      const installed = await printLibraryModules(installDir, moduleIds, null);
+      const installed = await printLibraryModules(newestDataFolder(installDir), moduleIds, null);
 
       expect(installed.unprintable).toEqual([]);
       expect(installed.printed).toEqual(repoPrinted);
@@ -117,7 +119,7 @@ describe("an installed @defold-typescript/library-types prints every served modu
   );
 
   test("prints the pinned sources, with the reason, when the archive holds no files", async () => {
-    const [target] = readLualsTargets(PKG_DIR);
+    const [target] = readLualsTargets(LIBRARY_DATA_DIR);
     if (target === undefined) throw new Error("luals-targets.json lists no target");
     const empty: LibrarySourceTree = {
       list: () => [],
@@ -127,7 +129,7 @@ describe("an installed @defold-typescript/library-types prints every served modu
     };
 
     const { printed, unprintable } = await printLibraryModules(
-      installDir,
+      newestDataFolder(installDir),
       [target.moduleId],
       empty,
     );

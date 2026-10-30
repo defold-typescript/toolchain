@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus, printedModule } from "./print-corpus";
 import {
   type AuthoredTarget,
@@ -13,6 +13,7 @@ import {
 } from "./sync-authored-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 // The defcon.console target as it appears in a validated config. An authored
 // target vendors a first-party/forked `.d.ts` and pins the publish namespace it
@@ -50,7 +51,7 @@ interface ImportedElement {
 }
 
 function authoredTarget(namespace: string): AuthoredTarget {
-  const found = readAuthoredTargets(PACKAGE_ROOT).find((entry) => entry.namespace === namespace);
+  const found = readAuthoredTargets(DATA_DIR).find((entry) => entry.namespace === namespace);
   if (!found) throw new Error(`authored-targets.json declares no ${namespace}`);
   return found;
 }
@@ -63,7 +64,7 @@ function writeConfig(config: unknown): string {
 
 describe("readAuthoredTargets", () => {
   test("parses the committed defcon entry into a typed target", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const defcon = targets.find((t) => t.moduleId === "defcon.console");
     expect(defcon).toBeDefined();
     expect(defcon?.namespace).toBe("defcon");
@@ -99,7 +100,7 @@ describe("readAuthoredTargets", () => {
 
 describe("emitAuthoredDeclaration", () => {
   test("prints the vendored authored .d.ts verbatim", () => {
-    const contents = emitAuthoredDeclaration(PACKAGE_ROOT, DEFCON);
+    const contents = emitAuthoredDeclaration(DATA_DIR, DEFCON);
     // The forked ambient module keyed by moduleId, exported symbols intact
     // (assert on symbols, never the whole blob).
     expect(contents).toContain("declare module 'defcon.console' {");
@@ -110,7 +111,7 @@ describe("emitAuthoredDeclaration", () => {
 
 describe("lowerAuthoredApiDoc", () => {
   test("extractApiDoc lowers the fork under the publish namespace", () => {
-    const json = lowerAuthoredApiDoc(PACKAGE_ROOT, DEFCON);
+    const json = lowerAuthoredApiDoc(DATA_DIR, DEFCON);
     const doc = JSON.parse(json) as { info: { namespace: string }; elements: { name: string }[] };
     expect(doc.info.namespace).toBe("defcon");
     const names = doc.elements.map((e) => e.name);
@@ -125,7 +126,7 @@ describe("lowerAuthoredApiDoc", () => {
 // feeds.
 describe("upstream LuaDoc import at api-doc lowering", () => {
   function loweredElements(target: AuthoredTarget): ImportedElement[] {
-    const { elements } = JSON.parse(lowerAuthoredApiDoc(PACKAGE_ROOT, target)) as {
+    const { elements } = JSON.parse(lowerAuthoredApiDoc(DATA_DIR, target)) as {
       elements: ImportedElement[];
     };
     return elements;
@@ -163,7 +164,7 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
   });
 
   test("a target with no vendored upstream imports nothing", () => {
-    for (const target of readAuthoredTargets(PACKAGE_ROOT)) {
+    for (const target of readAuthoredTargets(DATA_DIR)) {
       if (target.upstreamLua.length > 0) continue;
       const imported = loweredElements(target).filter((e) => e.docSource !== undefined);
       expect({ namespace: target.namespace, imported: imported.map((e) => e.name) }).toEqual({
@@ -197,7 +198,7 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
   });
 
   test("the whole corpus imports 254 briefs across 14 targets", () => {
-    const counts = readAuthoredTargets(PACKAGE_ROOT)
+    const counts = readAuthoredTargets(DATA_DIR)
       .map((target) => ({
         namespace: target.namespace,
         imported: loweredElements(target).filter((e) => e.docSource === "upstream").length,
@@ -213,8 +214,8 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
 // only the api-doc lowering is compared against a committed golden.
 describe("authored api-docs regenerate byte-for-byte", () => {
   test("each target's lowered api-doc matches its committed api-doc golden", () => {
-    for (const target of readAuthoredTargets(PACKAGE_ROOT)) {
-      const regenerated = lowerAuthoredApiDoc(PACKAGE_ROOT, target);
+    for (const target of readAuthoredTargets(DATA_DIR)) {
+      const regenerated = lowerAuthoredApiDoc(DATA_DIR, target);
       const committed = readFileSync(join(PACKAGE_ROOT, target.apiDoc), "utf8");
       expect(regenerated).toBe(committed);
     }
@@ -223,7 +224,7 @@ describe("authored api-docs regenerate byte-for-byte", () => {
 
 describe("defcon.console migration integrity", () => {
   test("defcon is registered in authored-targets.json", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "defcon")).toBe(true);
   });
 
@@ -248,7 +249,7 @@ describe("defcon.console migration integrity", () => {
 
 describe("deftest.deftest migration integrity", () => {
   test("deftest is registered in authored-targets.json", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "deftest")).toBe(true);
   });
 
@@ -285,7 +286,7 @@ describe("deftest.deftest migration integrity", () => {
 
 describe("defmath.defmath migration integrity", () => {
   test("defmath is registered in authored-targets.json", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "defmath")).toBe(true);
   });
 
@@ -308,20 +309,20 @@ describe("defmath.defmath migration integrity", () => {
   });
 
   test("the golden carries the core-type-renamed ambient engine types", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "defmath.defmath");
+    const golden = await printedModule(DATA_DIR, "defmath.defmath");
     expect(golden).toContain("Vector3 | Vector4");
     expect(golden).toContain(": Quaternion");
   });
 
   test("the golden references no dotted vmath engine types", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "defmath.defmath");
+    const golden = await printedModule(DATA_DIR, "defmath.defmath");
     expect(golden).not.toContain("vmath.");
   });
 });
 
 describe("zzfx.api migration integrity", () => {
   test("zzfx is registered in authored-targets.json", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "zzfx")).toBe(true);
   });
 
@@ -344,7 +345,7 @@ describe("zzfx.api migration integrity", () => {
   });
 
   test("the golden carries the module-external opaque handle declaration", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "zzfx.api");
+    const golden = await printedModule(DATA_DIR, "zzfx.api");
     expect(golden).toContain("type ZzFXSample = LuaUserdata");
     expect(golden).toContain("declare module 'zzfx.api' {");
   });
@@ -352,7 +353,7 @@ describe("zzfx.api migration integrity", () => {
 
 describe("nakama helpers migration integrity", () => {
   test("both hand-written helpers are registered in authored-targets.json", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "nakama.engine.defold")).toBe(true);
     expect(targets.some((t) => t.namespace === "nakama.util.log")).toBe(true);
   });
@@ -390,7 +391,7 @@ describe("nakama helpers migration integrity", () => {
 
 describe("boom.boom migration integrity", () => {
   test("boom is registered in authored-targets.json", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "boom")).toBe(true);
   });
 
@@ -414,7 +415,7 @@ describe("boom.boom migration integrity", () => {
   });
 
   test("the golden carries the core-type-renamed Hash/Url at every site ts-defold spelled lowercase", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "boom.boom");
+    const golden = await printedModule(DATA_DIR, "boom.boom");
     expect(golden).toContain("readonly __url?: Url;");
     expect(golden).toContain("readonly id: Hash;");
     expect(golden).toContain("readonly ids: LuaMap<Hash, Hash>;");
@@ -454,7 +455,7 @@ describe("boom.boom migration integrity", () => {
 
 describe("defsave.defsave migration integrity", () => {
   test("defsave is registered in authored-targets.json", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "defsave")).toBe(true);
   });
 
@@ -478,7 +479,7 @@ describe("defsave.defsave migration integrity", () => {
   });
 
   test("the golden declares the members ts-defold omitted and corrects the wrong returns", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "defsave.defsave");
+    const golden = await printedModule(DATA_DIR, "defsave.defsave");
     for (const added of [
       "function obfuscate(",
       "function get_file_path(",
@@ -506,7 +507,7 @@ describe("defsave.defsave migration integrity", () => {
 // the generic regen-drift and fork-identity loops above already cover fidelity.
 describe("persist.persist migration integrity", () => {
   test("persist is registered in authored-targets.json", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const persist = targets.find((t) => t.namespace === "persist");
     expect(persist).toBeDefined();
     expect(persist?.moduleId).toBe("persist.persist");
@@ -544,7 +545,7 @@ describe("persist.persist migration integrity", () => {
 // byte-identical.
 describe("orthographic.camera migration integrity", () => {
   test("orthographic is registered in authored-targets.json under its dotted namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const orthographic = targets.find((t) => t.namespace === "orthographic.camera");
     expect(orthographic).toBeDefined();
     expect(orthographic?.moduleId).toBe("orthographic.camera");
@@ -576,7 +577,7 @@ describe("orthographic.camera migration integrity", () => {
   });
 
   test("the golden widens follow to accept one target or an array of targets", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "orthographic.camera");
+    const golden = await printedModule(DATA_DIR, "orthographic.camera");
     expect(golden).toContain("targets: Hash | Url | (Hash | Url)[],");
     expect(golden).not.toContain("target: Hash | Url,");
   });
@@ -594,7 +595,7 @@ describe("orthographic.camera migration integrity", () => {
 // golden assertions below gate a correction rather than a copy.
 describe("yagames.yagames migration integrity", () => {
   test("yagames is registered in authored-targets.json under its bare namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const yagames = targets.find((t) => t.namespace === "yagames");
     expect(yagames).toBeDefined();
     expect(yagames?.moduleId).toBe("yagames.yagames");
@@ -625,7 +626,7 @@ describe("yagames.yagames migration integrity", () => {
   });
 
   test("the sticky-banner API replaced the banner_* family in the golden", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "yagames.yagames");
+    const golden = await printedModule(DATA_DIR, "yagames.yagames");
     for (const fn of ["adv_show_banner_adv", "adv_hide_banner_adv", "adv_get_banner_adv_status"]) {
       expect(golden).toContain(`export function ${fn}(`);
     }
@@ -644,7 +645,7 @@ describe("yagames.yagames migration integrity", () => {
   // misspelling in the existing tag — asserting only that the text names the
   // replacement would pass with `unqiue` still sitting beside it.
   test("player_get_id survives with a correctly spelled deprecation", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "yagames.yagames");
+    const golden = await printedModule(DATA_DIR, "yagames.yagames");
     expect(golden).toContain("export function player_get_id(): string;");
     expect(golden).toContain("Use `player_get_unique_id` instead.");
     expect(golden).not.toContain("unqiue");
@@ -654,7 +655,7 @@ describe("yagames.yagames migration integrity", () => {
   // 0.19.0 `M.leaderboards_init` still exists and prints its own deprecation
   // notice. The README simply stopped documenting it.
   test("leaderboards_init survives, marked deprecated as upstream marks it", async () => {
-    const golden = await printedModule(PACKAGE_ROOT, "yagames.yagames");
+    const golden = await printedModule(DATA_DIR, "yagames.yagames");
     expect(golden).toContain("export function leaderboards_init(");
     // Anchored on the declaration so the tag cannot drift onto a neighbour.
     expect(golden).toMatch(/@deprecated[\s\S]{0,200}?\*\/\s*export function leaderboards_init\(/);
@@ -704,7 +705,7 @@ describe("defold-input migration integrity", () => {
   ];
 
   test("all ten modules are registered in authored-targets.json under their dotted namespaces", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     for (const mod of MODULES) {
       const moduleId = `in.${mod}`;
       const target = targets.find((t) => t.moduleId === moduleId);
@@ -738,7 +739,7 @@ describe("defold-input migration integrity", () => {
     for (const mod of MODULES) {
       const moduleId = `in.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
+      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
     }
   });
@@ -747,12 +748,12 @@ describe("defold-input migration integrity", () => {
   // *golden*, so the mapped spelling ships. Asserting the mapped names alone would
   // also pass on the raw ts-defold snapshot, so the unmapped ones are excluded too.
   test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const triggers = readFileSync(join(PACKAGE_ROOT, "fixtures/authored/in.triggers.d.ts"), "utf8");
+    const triggers = readFileSync(join(DATA_DIR, "fixtures/authored/in.triggers.d.ts"), "utf8");
     expect(triggers).toContain("KEY_SPACE: Hash;");
     expect(triggers).not.toContain(": hash;");
 
     const accelerometer = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/authored/in.accelerometer.d.ts"),
+      join(DATA_DIR, "fixtures/authored/in.accelerometer.d.ts"),
       "utf8",
     );
     expect(accelerometer).toContain("Vector3");
@@ -774,7 +775,7 @@ describe("monarch migration integrity", () => {
   const MODULES = ["monarch", "transitions.easings", "transitions.gui"];
 
   test("all three modules are registered in authored-targets.json under their dotted namespaces", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     for (const mod of MODULES) {
       const moduleId = `monarch.${mod}`;
       const target = targets.find((t) => t.moduleId === moduleId);
@@ -809,7 +810,7 @@ describe("monarch migration integrity", () => {
     for (const mod of MODULES) {
       const moduleId = `monarch.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
+      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
     }
   });
@@ -817,17 +818,14 @@ describe("monarch migration integrity", () => {
   // Asserting the mapped names alone would also pass on the raw ts-defold
   // snapshot, so each check excludes the unmapped spelling too.
   test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const monarch = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/authored/monarch.monarch.d.ts"),
-      "utf8",
-    );
+    const monarch = readFileSync(join(DATA_DIR, "fixtures/authored/monarch.monarch.d.ts"), "utf8");
     expect(monarch).toContain("DONE: Hash");
     expect(monarch).toContain("add_listener(url?: Url)");
     expect(monarch).not.toContain(": hash;");
     expect(monarch).not.toContain(": url,");
 
     const gui = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/authored/monarch.transitions.gui.d.ts"),
+      join(DATA_DIR, "fixtures/authored/monarch.transitions.gui.d.ts"),
       "utf8",
     );
     expect(gui).toContain('Opaque<"node">');
@@ -841,10 +839,7 @@ describe("monarch migration integrity", () => {
   // defines `M.on_focus_changed` and nothing else, so the fork stays verbatim and
   // the README heading is recorded as the defect instead.
   test("the fork is verbatim where the goal proposed changing it", () => {
-    const monarch = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/authored/monarch.monarch.d.ts"),
-      "utf8",
-    );
+    const monarch = readFileSync(join(DATA_DIR, "fixtures/authored/monarch.monarch.d.ts"), "utf8");
     expect(monarch).toContain("on_focus_changed");
     expect(monarch).not.toContain("on_focus_change(");
   });
@@ -863,7 +858,7 @@ describe("richtext migration integrity", () => {
   const MODULES = ["color", "richtext", "tags"];
 
   test("all three modules are registered in authored-targets.json under their dotted namespaces", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     for (const mod of MODULES) {
       const moduleId = `richtext.${mod}`;
       const target = targets.find((t) => t.moduleId === moduleId);
@@ -896,7 +891,7 @@ describe("richtext migration integrity", () => {
     for (const mod of MODULES) {
       const moduleId = `richtext.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
+      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
     }
   });
@@ -904,12 +899,12 @@ describe("richtext migration integrity", () => {
   // Asserting the mapped names alone would also pass on the raw ts-defold
   // snapshot, so each check excludes the unmapped spelling too.
   test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const color = readFileSync(join(PACKAGE_ROOT, "fixtures/authored/richtext.color.d.ts"), "utf8");
+    const color = readFileSync(join(DATA_DIR, "fixtures/authored/richtext.color.d.ts"), "utf8");
     expect(color).toContain("Vector4");
     expect(color).not.toContain("vmath.vector4");
 
     const richtext = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/authored/richtext.richtext.d.ts"),
+      join(DATA_DIR, "fixtures/authored/richtext.richtext.d.ts"),
       "utf8",
     );
     expect(richtext).toContain('Opaque<"node">');
@@ -925,7 +920,7 @@ describe("richtext migration integrity", () => {
   // is a judgment about.
   test("the fork keeps the constants and named types the markdown emit loses", () => {
     const richtext = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/authored/richtext.richtext.d.ts"),
+      join(DATA_DIR, "fixtures/authored/richtext.richtext.d.ts"),
       "utf8",
     );
     for (const constant of [
@@ -963,7 +958,7 @@ describe("metrics migration integrity", () => {
   const MODULES = ["fps", "mem"];
 
   test("both modules are registered in authored-targets.json under their dotted namespaces", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     for (const mod of MODULES) {
       const moduleId = `metrics.${mod}`;
       const target = targets.find((t) => t.moduleId === moduleId);
@@ -994,7 +989,7 @@ describe("metrics migration integrity", () => {
     for (const mod of MODULES) {
       const moduleId = `metrics.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
+      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
     }
   });
@@ -1004,10 +999,7 @@ describe("metrics migration integrity", () => {
   // pasted into both.
   test("the correction landed on both forks and left the factory intact", () => {
     for (const mod of MODULES) {
-      const fork = readFileSync(
-        join(PACKAGE_ROOT, "fixtures/authored", `metrics.${mod}.d.ts`),
-        "utf8",
-      );
+      const fork = readFileSync(join(DATA_DIR, "fixtures/authored", `metrics.${mod}.d.ts`), "utf8");
       expect(fork).toContain("export function update(): void;");
       expect(fork).toContain("export function draw(): void;");
       expect(fork).toContain(`export function ${mod}(): number;`);
@@ -1045,7 +1037,7 @@ describe("gooey.gooey migration integrity", () => {
   ];
 
   test("gooey is registered in authored-targets.json under its bare namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const gooey = targets.find((t) => t.namespace === "gooey");
     expect(gooey).toBeDefined();
     expect(gooey?.moduleId).toBe("gooey.gooey");
@@ -1073,7 +1065,7 @@ describe("gooey.gooey migration integrity", () => {
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const authored = readFileSync(join(PACKAGE_ROOT, "fixtures/authored/gooey.gooey.d.ts"), "utf8");
+    const authored = readFileSync(join(DATA_DIR, "fixtures/authored/gooey.gooey.d.ts"), "utf8");
     expect(authored).toContain('node: Opaque<"node">;');
     expect(authored).toContain("node_id: Hash;");
     expect(authored).toContain('LuaMap<Hash, Opaque<"node">>');
@@ -1083,7 +1075,7 @@ describe("gooey.gooey migration integrity", () => {
   });
 
   test("the group correction landed on the vendored fork, leaving the other declarations intact", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, "fixtures/authored/gooey.gooey.d.ts"), "utf8");
+    const fork = readFileSync(join(DATA_DIR, "fixtures/authored/gooey.gooey.d.ts"), "utf8");
     expect(fork).toMatch(
       /export function group\(\s*group_id: Hash \| string,\s*action_id: Hash,\s*action: table,\s*group_fn: \(\) => void,\s*\): table;/,
     );
@@ -1105,7 +1097,7 @@ describe("bzAnim.bzLibrary migration integrity", () => {
   const FUNCTIONS = ["animate", "animateSequence", "cancel", "info", "isReady", "setDebugLevel"];
 
   test("bzAnim is registered in authored-targets.json under its bare namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const bzAnim = targets.find((t) => t.namespace === "bzAnim");
     expect(bzAnim).toBeDefined();
     expect(bzAnim?.moduleId).toBe("bzAnim.bzLibrary");
@@ -1134,13 +1126,13 @@ describe("bzAnim.bzLibrary migration integrity", () => {
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const authored = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const authored = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     expect(authored.match(/obj: Hash \| string \| undefined;/g)?.length).toBe(2);
     expect(authored).not.toContain("obj: hash");
   });
 
   test("the fork keeps the two options tables the severance exists to preserve", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     expect(fork).toMatch(
       /type AnimateArgs = \{\s*obj: Hash \| string \| undefined;\s*easing: EASING_TYPES;\s*duration\?: number;\s*delay\?: number;\s*path\?: Array<Path>;\s*\};/,
     );
@@ -1241,7 +1233,7 @@ describe("platypus.platypus migration integrity", () => {
   const SEPARATION_MODES = ["SEPARATION_RAYS", "SEPARATION_SHAPES"];
 
   test("platypus is registered in authored-targets.json under its bare namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const platypus = targets.find((t) => t.namespace === "platypus");
     expect(platypus).toBeDefined();
     expect(platypus?.moduleId).toBe("platypus.platypus");
@@ -1269,7 +1261,7 @@ describe("platypus.platypus migration integrity", () => {
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     expect(fork).toContain("LuaMap<Hash, Direction>");
     expect(fork).toContain("velocity: Vector3;");
     expect(fork).toContain("move(velocity: Vector3): void;");
@@ -1283,7 +1275,7 @@ describe("platypus.platypus migration integrity", () => {
   });
 
   test("the fork keeps the config and instance interfaces the severance exists to preserve", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     // The required nested shape: four numeric bounds plus the group map, and the
     // one optional inside it.
     expect(fork).toMatch(
@@ -1363,7 +1355,7 @@ describe("dicebag.dicebag migration integrity", () => {
   ];
 
   test("dicebag is registered in authored-targets.json under its bare namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const dicebag = targets.find((t) => t.namespace === "dicebag");
     expect(dicebag).toBeDefined();
     expect(dicebag?.moduleId).toBe("dicebag.dicebag");
@@ -1391,7 +1383,7 @@ describe("dicebag.dicebag migration integrity", () => {
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     for (const fn of ID_BEARING) {
       expect(fork).toMatch(new RegExp(`function ${fn}\\(id: string \\| number \\| Hash\\b`));
     }
@@ -1399,7 +1391,7 @@ describe("dicebag.dicebag migration integrity", () => {
   });
 
   test("the fork keeps the three types the recorded downgrades are about", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     expect(fork).toContain("sides: Array<[number, number]>");
     expect(fork).toContain("rollable_table: Array<[number, any, boolean?]>");
     expect(fork).toContain("function set_up_rng(seed?: number): number;");
@@ -1445,7 +1437,7 @@ describe("rendy.rendy migration integrity", () => {
   ];
 
   test("rendy is registered in authored-targets.json under its bare namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const rendy = targets.find((t) => t.namespace === "rendy");
     expect(rendy).toBeDefined();
     expect(rendy?.moduleId).toBe("rendy.rendy");
@@ -1473,7 +1465,7 @@ describe("rendy.rendy migration integrity", () => {
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     expect(fork).toContain("type CameraId = Hash | string;");
     expect(fork).toContain("function get_display_size(): Vector3;");
     expect(fork).not.toContain("| hash");
@@ -1483,7 +1475,7 @@ describe("rendy.rendy migration integrity", () => {
   });
 
   test("the fork keeps the five signatures a zero-arity markdown emit would have discarded", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     expect(fork).toContain("function get_stack(screen_x: number, screen_y: number): CameraId[];");
     expect(fork).toMatch(
       /function screen_to_world\(\s*camera_id: CameraId,\s*screen_position: Vector3,\s*\): Vector3;/,
@@ -1548,7 +1540,7 @@ describe("nakama.nakama migration integrity", () => {
   ];
 
   test("nakama is registered in authored-targets.json under its bare namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     const nakama = targets.find((t) => t.namespace === "nakama");
     expect(nakama).toBeDefined();
     expect(nakama?.moduleId).toBe("nakama.nakama");
@@ -1587,7 +1579,7 @@ describe("nakama.nakama migration integrity", () => {
   });
 
   test("the fork keeps every member the recorded openapi no-go counts as missing", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     for (const member of VERDICT_MEMBERS) {
       expect(fork).toMatch(new RegExp(`\\bfunction ${member}\\(`));
     }
@@ -1601,7 +1593,7 @@ describe("nakama.nakama migration integrity", () => {
   });
 
   test("the fork declares the client brands and the config and session shapes", () => {
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED), "utf8");
+    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
     // The `symbol` brands are what make `set_bearer_token` reject a bare string;
     // widening either to `unknown` would keep every signature above compiling.
     expect(fork).toContain("export type Client = symbol;");
@@ -1692,7 +1684,7 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
   }
 
   test("shutter is registered under its bare namespace and measures rather than asserts", () => {
-    const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === "shutter");
+    const entry = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === "shutter");
     expect(entry).toBeDefined();
     expect(entry?.moduleId).toBe("shutter.shutter");
     expect(entry?.repo).toBe("https://codeberg.org/Klaleus/defold-shutter");
@@ -1813,7 +1805,7 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
   }
 
   test("checkpoint is registered under its bare namespace and measures rather than asserts", () => {
-    const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === "checkpoint");
+    const entry = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === "checkpoint");
     expect(entry).toBeDefined();
     expect(entry?.moduleId).toBe("checkpoint.checkpoint");
     expect(entry?.repo).toBe("https://codeberg.org/Klaleus/defold-checkpoint");
@@ -1921,7 +1913,7 @@ describe("defold-sprite-repeat type claims upstream states only in its body", ()
 
   test("both modules register under their bare folder names at the v0.3 pin", () => {
     for (const namespace of ["sprite_repeat", "node_repeat"]) {
-      const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+      const entry = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === namespace);
       expect(entry?.moduleId).toBe(`${namespace}.${namespace}`);
       expect(entry?.repo).toBe("https://github.com/Dragosha/defold-sprite-repeat");
       expect(entry?.ref).toBe("v0.3");
@@ -2012,7 +2004,7 @@ describe("sentinel.sentry type claims upstream states only in its body", () => {
   }
 
   test("the module registers as sentinel.sentry at the 1.3.1 pin", () => {
-    const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === "sentinel");
+    const entry = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === "sentinel");
     expect(entry?.moduleId).toBe("sentinel.sentry");
     expect(entry?.repo).toBe("https://github.com/indiesoftby/defold-sentinel");
     expect(entry?.ref).toBe("1.3.1");
@@ -2112,7 +2104,7 @@ describe("GamePush account and commerce type claims upstream states only in its 
   }
 
   test("each module registers under its own module id at the v1.4.1 pin", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     for (const moduleId of MODULES) {
       const entry = targets.find((t) => t.moduleId === moduleId);
       expect(entry).toMatchObject({
@@ -2211,7 +2203,7 @@ describe("GamePush social and live-ops type claims upstream states only in its b
   }
 
   test("each module registers under its own module id at the v1.4.1 pin", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     for (const moduleId of MODULES) {
       const entry = targets.find((t) => t.moduleId === moduleId);
       expect(entry).toMatchObject({
@@ -2291,7 +2283,7 @@ describe("GamePush platform type claims upstream states only in its body", () =>
   }
 
   test("each module registers under its own module id at the v1.4.1 pin", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
+    const targets = readAuthoredTargets(DATA_DIR);
     for (const moduleId of MODULES) {
       const entry = targets.find((t) => t.moduleId === moduleId);
       expect(entry).toMatchObject({

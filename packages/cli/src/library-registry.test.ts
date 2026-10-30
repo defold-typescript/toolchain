@@ -8,6 +8,7 @@ import {
   loadLibraryIndexSlotClassifications,
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
+  resolveLibraryDataDir,
   resolveLibraryTypesPackageRoot,
 } from "./library-registry";
 
@@ -16,7 +17,18 @@ describe("resolveLibraryTypesPackageRoot", () => {
     const root = resolveLibraryTypesPackageRoot();
     expect(root).not.toBeNull();
     expect(existsSync(join(root as string, "package.json"))).toBe(true);
-    expect(existsSync(join(root as string, "luals-targets.json"))).toBe(true);
+  });
+});
+
+describe("resolveLibraryDataDir", () => {
+  test("selects the installed package's data folder for the CLI version", () => {
+    const dir = resolveLibraryDataDir("0.0.0");
+    expect(dir).not.toBeNull();
+    expect(existsSync(join(dir as string, "luals-targets.json"))).toBe(true);
+  });
+
+  test("selects no data folder for a CLI older than every folder", () => {
+    expect(resolveLibraryDataDir("0.0.1")).toBeNull();
   });
 });
 
@@ -37,6 +49,29 @@ describe("loadVendoredLibraryRegistry", () => {
 
   test("returns the empty fallback when the registry JSONs are absent under the given root", () => {
     expect(loadVendoredLibraryRegistry("/nonexistent/library-types-root")).toEqual([]);
+  });
+
+  test("reads a data folder that holds no ts-defold registry", () => {
+    const dir = mkdtempSync(join(tmpdir(), "library-data-folder-"));
+    try {
+      const targets = [
+        {
+          repo: "https://github.com/owner/dicebag",
+          moduleId: "dicebag.dicebag",
+          namespace: "dicebag",
+        },
+      ];
+      writeFileSync(join(dir, "authored-targets.json"), JSON.stringify({ targets }));
+      expect(loadVendoredLibraryRegistry(dir)).toEqual([
+        {
+          sourceId: "dicebag",
+          modules: ["dicebag.dicebag"],
+          namespaces: { "dicebag.dicebag": "dicebag" },
+        },
+      ]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   test("includes the druid LuaLS target alongside the pure-Lua entries", () => {

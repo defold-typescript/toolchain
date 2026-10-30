@@ -3,11 +3,12 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { emitLibraryDeclarations } from "./emit-library-dts";
 import { buildFidelityReport } from "./luals-fidelity";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LibraryModel, parseLualsSource } from "./parse-luals";
 import { buildTargetFidelity, readLualsTargets } from "./sync-luals-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 const tinyModel: LibraryModel = {
   interfaces: [
@@ -426,7 +427,7 @@ describe("buildFidelityReport", () => {
 });
 
 describe("fidelity round-trip", () => {
-  const targets = readLualsTargets(PACKAGE_ROOT);
+  const targets = readLualsTargets(DATA_DIR);
   if (!targets.some((t) => t.namespace === "druid")) {
     throw new Error("druid target missing from luals-targets.json");
   }
@@ -434,7 +435,7 @@ describe("fidelity round-trip", () => {
   test.each(
     targets.map((t) => [t.namespace, t] as const),
   )("%s: the committed report matches a freshly built one (offline)", (namespace, target) => {
-    const built = buildTargetFidelity(PACKAGE_ROOT, target);
+    const built = buildTargetFidelity(DATA_DIR, target);
     const committed = JSON.parse(
       readFileSync(join(PACKAGE_ROOT, "fidelity", `${namespace}.json`), "utf8"),
     );

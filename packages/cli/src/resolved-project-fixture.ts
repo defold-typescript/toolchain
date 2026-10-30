@@ -9,7 +9,7 @@ import {
 } from "./extension-materialize";
 import { emitAuthoredDeclaration, readAuthoredTargets } from "./library/sync-authored-types";
 import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
-import { loadVendoredNativeRegistry, resolveLibraryTypesPackageRoot } from "./library-registry";
+import { loadVendoredNativeRegistry, resolveLibraryDataDir } from "./library-registry";
 import {
   ensureMaterializedReference,
   materializeApiSurface,
@@ -117,14 +117,14 @@ export function installResolvedDeclarations(cwd: string): void {
   });
   ensureExtensionTypesReference(cwd, extensionsDir);
 
-  const libraryTypesRoot = resolveLibraryTypesPackageRoot();
+  const libraryDataDir = resolveLibraryDataDir();
   const checkpoint =
-    libraryTypesRoot === null
+    libraryDataDir === null
       ? undefined
-      : readAuthoredTargets(libraryTypesRoot).find(
+      : readAuthoredTargets(libraryDataDir).find(
           (target) => target.moduleId === "checkpoint.checkpoint",
         );
-  if (libraryTypesRoot === null || checkpoint === undefined) {
+  if (libraryDataDir === null || checkpoint === undefined) {
     throw new Error("library data carries no checkpoint.checkpoint target");
   }
   const { materializedDir: librariesDir } = materializeVendoredLibraries({
@@ -132,7 +132,7 @@ export function installResolvedDeclarations(cwd: string): void {
     printed: [
       {
         module: checkpoint.moduleId,
-        contents: emitAuthoredDeclaration(libraryTypesRoot, checkpoint),
+        contents: emitAuthoredDeclaration(libraryDataDir, checkpoint),
       },
     ],
   });

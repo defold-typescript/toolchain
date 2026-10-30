@@ -204,13 +204,32 @@ interface NativeTarget {
   namespace: string;
 }
 
+// Library data sits in folders named by the first CLI version that reads them,
+// and the site documents the newest. The lane registries and the files their
+// entries name live there; `api-doc/` and every other package file stay at the
+// package root.
+export function libraryDataDir(libraryTypesDir: string): string | undefined {
+  const base = join(libraryTypesDir, "data");
+  if (!existsSync(base)) return undefined;
+  const [newest] = readdirSync(base, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && /^\d+\.\d+\.\d+$/.test(entry.name))
+    .map((entry) => entry.name)
+    .sort((a, b) => b.localeCompare(a, "en", { numeric: true }));
+  return newest === undefined ? undefined : join(base, newest);
+}
+
+function libraryDataFile(libraryTypesDir: string, file: string): string | undefined {
+  const dir = libraryDataDir(libraryTypesDir);
+  return dir === undefined ? undefined : join(dir, file);
+}
+
 // Curated native extensions from `native-targets.json`: C++ extensions that ship
 // no `.script_api`, typed by a hand-authored `@globalTable` module a project
 // imports and rendered from the `api-doc/native/<namespace>.json` lowered from
 // it. An absent file degrades to no native pages.
 function loadNativeTargets(libraryTypesDir: string): Map<string, NativeTarget> {
-  const path = join(libraryTypesDir, "native-targets.json");
-  if (!existsSync(path)) return new Map();
+  const path = libraryDataFile(libraryTypesDir, "native-targets.json");
+  if (path === undefined || !existsSync(path)) return new Map();
   const { targets } = JSON.parse(readFileSync(path, "utf8")) as { targets: NativeTarget[] };
   return new Map(targets.map((t) => [t.namespace, t]));
 }
@@ -560,8 +579,8 @@ interface LualsProvenance {
 }
 
 function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
-  const path = join(libraryTypesDir, "luals-targets.json");
-  if (!existsSync(path)) return new Map();
+  const path = libraryDataFile(libraryTypesDir, "luals-targets.json");
+  if (path === undefined || !existsSync(path)) return new Map();
   const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
     targets: { namespace: string; repo: string; ref: string; license?: string }[];
   };
@@ -577,8 +596,8 @@ function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenan
 // the shared vendored commit. Keyed by the entry's `namespace`, which is also
 // the `api-doc/<namespace>.json` stem and thus the page key.
 function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
-  const path = join(libraryTypesDir, "script-api-targets.json");
-  if (!existsSync(path)) return new Map();
+  const path = libraryDataFile(libraryTypesDir, "script-api-targets.json");
+  if (path === undefined || !existsSync(path)) return new Map();
   const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
     targets: { namespace: string; repo: string; ref: string; license?: string }[];
   };
@@ -595,8 +614,8 @@ function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProv
 // `namespace`, bare or dotted, which is also the `api-doc/<namespace>.json`
 // stem and thus the page key either way.
 function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
-  const path = join(libraryTypesDir, "authored-targets.json");
-  if (!existsSync(path)) return new Map();
+  const path = libraryDataFile(libraryTypesDir, "authored-targets.json");
+  if (path === undefined || !existsSync(path)) return new Map();
   const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
     targets: {
       namespace: string;
@@ -645,9 +664,8 @@ function loadMarkdownDeferredNamespaces(libraryTypesDir: string): Set<string> {
 // `resolve` prints each target's declaration from library data, so a target is
 // what makes an api-doc a library page.
 function loadTargetApiDocs(libraryTypesDir: string): Set<string> {
-  const targets = (file: string): { namespace: string; apiDoc?: string }[] => {
-    const path = join(libraryTypesDir, file);
-    if (!existsSync(path)) return [];
+  const targets = (path: string | undefined): { namespace: string; apiDoc?: string }[] => {
+    if (path === undefined || !existsSync(path)) return [];
     return (
       JSON.parse(readFileSync(path, "utf8")) as {
         targets: { namespace: string; apiDoc?: string }[];
@@ -655,15 +673,17 @@ function loadTargetApiDocs(libraryTypesDir: string): Set<string> {
     ).targets;
   };
   const apiDocs = new Set(
-    targets("luals-targets.json").map(({ namespace }) => `api-doc/${namespace}.json`),
+    targets(libraryDataFile(libraryTypesDir, "luals-targets.json")).map(
+      ({ namespace }) => `api-doc/${namespace}.json`,
+    ),
   );
-  for (const file of [
-    "script-api-targets.json",
-    "authored-targets.json",
-    "openapi-targets.json",
-    "markdown-targets.json",
+  for (const path of [
+    libraryDataFile(libraryTypesDir, "script-api-targets.json"),
+    libraryDataFile(libraryTypesDir, "authored-targets.json"),
+    join(libraryTypesDir, "openapi-targets.json"),
+    join(libraryTypesDir, "markdown-targets.json"),
   ]) {
-    for (const { apiDoc } of targets(file)) if (apiDoc !== undefined) apiDocs.add(apiDoc);
+    for (const { apiDoc } of targets(path)) if (apiDoc !== undefined) apiDocs.add(apiDoc);
   }
   return apiDocs;
 }

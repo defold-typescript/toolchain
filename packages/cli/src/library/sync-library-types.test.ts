@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { AssetPortalManifest, PortalEntry } from "./sync-asset-portal";
 import { readAuthoredTargets } from "./sync-authored-types";
 import type { DefoldExtensionDoc, DefoldExtensionEntry } from "./sync-defold-extensions";
@@ -36,6 +36,7 @@ import {
 import { readNativeTargets } from "./sync-native-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 const REGISTRY = JSON.parse(
   readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
 ) as LibraryTargets;
@@ -255,7 +256,7 @@ describe("NOTICE", () => {
     );
     const mismatched: string[] = [];
     let compared = 0;
-    for (const entry of readAuthoredTargets(PACKAGE_ROOT)) {
+    for (const entry of readAuthoredTargets(DATA_DIR)) {
       const basename = entry.repo.split("/").pop() ?? "";
       const credit = credited.get(basename);
       if (credit === undefined) continue;
@@ -688,7 +689,7 @@ describe("nativeSweepRemainder", () => {
     expect(
       nativeSweepRemainder(
         manifest.dirs,
-        readNativeTargets(PACKAGE_ROOT),
+        readNativeTargets(DATA_DIR),
         readNativeSweepVerdicts(PACKAGE_ROOT),
       ),
     ).toEqual([]);
@@ -826,7 +827,7 @@ describe("library-classification.json coverage", () => {
     const liveModules = new Set(REGISTRY.targets.map((t) => t.module));
     // The assembly is shared with production so a lane added there widens this
     // guard at the same time; only the predicate below stays restated.
-    const registry = readMaintainedHereRegistry(PACKAGE_ROOT);
+    const registry = readMaintainedHereRegistry(DATA_DIR, PACKAGE_ROOT);
     // Restated here rather than routed through `maintainedHereModules`, so a bug
     // in the predicate cannot blind the guard at the moment the manifest is wrong.
     const scanned = manifest.dirs.flatMap((e) => e.modules);
@@ -1088,7 +1089,7 @@ describe("writeClassification", () => {
       throw new Error(`both joins cover every native dir, yet ${dir} was looked up`);
     };
 
-    await writeClassification(root, { listTree, lookupUpstream });
+    await writeClassification(root, root, { listTree, lookupUpstream });
 
     const written = JSON.parse(
       readFileSync(join(root, "library-classification.json"), "utf8"),
@@ -1190,7 +1191,7 @@ describe("writeClassification", () => {
       return result;
     };
 
-    await writeClassification(root, { listTree, lookupUpstream });
+    await writeClassification(root, root, { listTree, lookupUpstream });
 
     expect(calls.sort()).toEqual(["def-setv", "defold-prng", "defold-skippy", "jstodef"]);
     const written = JSON.parse(
@@ -1235,7 +1236,7 @@ describe("writeClassification", () => {
       throw new Error("rate limited");
     };
 
-    await expect(writeClassification(root, { listTree, lookupUpstream })).rejects.toThrow(
+    await expect(writeClassification(root, root, { listTree, lookupUpstream })).rejects.toThrow(
       "rate limited",
     );
     expect(readFileSync(join(root, "library-classification.json"), "utf8")).toBe(existing);
@@ -1258,7 +1259,7 @@ describe("writeClassification", () => {
       "packages/nakama-defold/nakama.util.log.d.ts",
     ];
 
-    await writeClassification(root, { listTree });
+    await writeClassification(root, root, { listTree });
 
     const written = JSON.parse(
       readFileSync(join(root, "library-classification.json"), "utf8"),
@@ -1285,7 +1286,7 @@ describe("writeClassification", () => {
       "packages/defold-orthographic/orthographic.orthographic.d.ts",
     ];
 
-    await writeClassification(root, { listTree });
+    await writeClassification(root, root, { listTree });
 
     const written = JSON.parse(
       readFileSync(join(root, "library-classification.json"), "utf8"),

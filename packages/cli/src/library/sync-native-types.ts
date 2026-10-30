@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { RefKind } from "./sync-defold-extensions";
 
 /**
@@ -85,10 +85,10 @@ export function lowerNativeApiDoc(
 if (import.meta.main) {
   const root = LIBRARY_TYPES_ROOT;
   if (process.argv.slice(2).includes("--api-doc")) {
-    for (const target of readNativeTargets(root)) {
+    for (const target of readNativeTargets(LIBRARY_DATA_DIR)) {
       const dest = join(root, nativeApiDocPath(target));
       mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, lowerNativeApiDoc(root, target));
+      writeFileSync(dest, lowerNativeApiDoc(LIBRARY_DATA_DIR, target));
       console.log(`lowered ${target.namespace} -> ${nativeApiDocPath(target)}`);
     }
   }

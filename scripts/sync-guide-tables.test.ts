@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
 import {
   CURATED_NATIVE_END,
   CURATED_NATIVE_START,
   curatedNativeTable,
-  LIBRARY_TYPES_ROOT,
   RESOLVE_GUIDE,
   syncGuideTables,
 } from "./sync-guide-tables.ts";
@@ -106,7 +106,7 @@ describe("syncGuideTables", () => {
 describe("resolve guide drift guard", () => {
   test("the committed resolve guide lists exactly the shipped native targets", () => {
     const committed = readFileSync(RESOLVE_GUIDE, "utf8");
-    const fresh = syncGuideTables(committed, readNativeTargets(LIBRARY_TYPES_ROOT));
+    const fresh = syncGuideTables(committed, readNativeTargets(LIBRARY_DATA_DIR));
     if (committed !== fresh) {
       throw new Error(
         "packages/docs/guide/resolve.md is stale — run `bun scripts/sync-guide-tables.ts --write`",

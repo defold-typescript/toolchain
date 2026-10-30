@@ -2,16 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { readNativeTargets } from "./sync-native-types";
 import { readNativeExpectations } from "./target-expectations";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 describe("each shipped native declaration emits the receiver form its expectation records", () => {
-  const targets = new Map(
-    readNativeTargets(PACKAGE_ROOT).map((target) => [target.namespace, target]),
-  );
+  const targets = new Map(readNativeTargets(DATA_DIR).map((target) => [target.namespace, target]));
 
   for (const [namespace, { receiverEmit }] of readNativeExpectations()) {
     if (receiverEmit === undefined) continue;
@@ -19,7 +17,7 @@ describe("each shipped native declaration emits the receiver form its expectatio
     test(`${namespace}: a consumer transpiles with the call forms the declaration produces`, () => {
       const target = targets.get(namespace);
       expect(target).toBeDefined();
-      const declaration = readFileSync(join(PACKAGE_ROOT, target?.declaration ?? ""), "utf8");
+      const declaration = readFileSync(join(DATA_DIR, target?.declaration ?? ""), "utf8");
 
       const project = transpileProject({
         files: { [`${namespace}.d.ts`]: declaration, "main.ts": receiverEmit.consumer.join("\n") },

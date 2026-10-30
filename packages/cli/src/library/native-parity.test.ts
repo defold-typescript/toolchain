@@ -3,11 +3,12 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { buildNativeParity, nativeParityPath, renderNativeParity } from "./native-parity";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type NativeTarget, readNativeTargets } from "./sync-native-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const TARGETS = readNativeTargets(PACKAGE_ROOT);
+const DATA_DIR = LIBRARY_DATA_DIR;
+const TARGETS = readNativeTargets(DATA_DIR);
 
 function target(namespace: string): NativeTarget {
   const found = TARGETS.find((entry) => entry.namespace === namespace);
@@ -35,7 +36,7 @@ function tempRoot(entry: NativeTarget, declaration: string): string {
   ]) {
     if (relative === undefined) continue;
     mkdirSync(dirname(join(root, relative)), { recursive: true });
-    cpSync(join(PACKAGE_ROOT, relative), join(root, relative));
+    cpSync(join(DATA_DIR, relative), join(root, relative));
   }
   mkdirSync(dirname(join(root, entry.declaration)), { recursive: true });
   writeFileSync(join(root, entry.declaration), declaration);
@@ -44,7 +45,7 @@ function tempRoot(entry: NativeTarget, declaration: string): string {
 
 /** The shipped declaration of `namespace`, the starting point for a drift. */
 function shippedDeclaration(entry: NativeTarget): string {
-  return readFileSync(join(PACKAGE_ROOT, entry.declaration), "utf8");
+  return readFileSync(join(DATA_DIR, entry.declaration), "utf8");
 }
 
 describe("buildNativeParity over the shipped declarations", () => {
@@ -77,7 +78,7 @@ describe("buildNativeParity over the shipped declarations", () => {
 
   for (const [namespace, [functions, constants, methods]] of Object.entries(UPSTREAM_COUNTS)) {
     test(`${namespace}: names exactly what its C++ registers, on both axes`, () => {
-      const report = buildNativeParity(PACKAGE_ROOT, target(namespace));
+      const report = buildNativeParity(DATA_DIR, target(namespace));
       expect(report.namespace).toBe(namespace);
       expect(report.moduleName).toBe(namespace);
       expect(report.moduleNameMatches).toBe(true);
@@ -185,7 +186,7 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
       namespace: "uuid",
       declaration: "native/uuid.d.ts",
     };
-    const source = readFileSync(join(PACKAGE_ROOT, shipped.declaration), "utf8");
+    const source = readFileSync(join(DATA_DIR, shipped.declaration), "utf8");
     const renamed = source
       .replaceAll('"uuid4"', '"uuid"')
       .replace("declare const uuid4:", "declare const uuid:");
@@ -319,7 +320,7 @@ describe("the committed native parity reports", () => {
   test("every committed report equals a fresh build", () => {
     const drifted = TARGETS.filter((entry) => {
       const committed = readFileSync(join(PACKAGE_ROOT, nativeParityPath(entry)), "utf8");
-      return committed !== renderNativeParity(buildNativeParity(PACKAGE_ROOT, entry));
+      return committed !== renderNativeParity(buildNativeParity(DATA_DIR, entry));
     }).map(
       (entry) =>
         `${nativeParityPath(entry)} is stale — run \`bun run --cwd packages/library-types parity\``,
@@ -343,7 +344,7 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
       "openal",
       "ainpc",
     ]) {
-      const report = buildNativeParity(PACKAGE_ROOT, target(namespace));
+      const report = buildNativeParity(DATA_DIR, target(namespace));
       expect(report.arityMeasured).toBe(false);
       expect(report.arityMismatches).toBeUndefined();
       expect(report.arityExceptions).toBeUndefined();
@@ -352,7 +353,7 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
   });
 
   test("share agrees with its annotation on every shared name", () => {
-    const report = buildNativeParity(PACKAGE_ROOT, target("share"));
+    const report = buildNativeParity(DATA_DIR, target("share"));
     expect(report.arityMeasured).toBe(true);
     expect(report.arityMismatches).toEqual([]);
     expect(report.arityExceptions).toEqual([]);
@@ -360,7 +361,7 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
   });
 
   test("box2d agrees with its annotation on all eighteen module functions", () => {
-    const report = buildNativeParity(PACKAGE_ROOT, target("box2d"));
+    const report = buildNativeParity(DATA_DIR, target("box2d"));
     expect(report.arityMeasured).toBe(true);
     expect(report.arityMismatches).toEqual([]);
     expect(report.arityExceptions).toEqual([]);
@@ -368,7 +369,7 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
   });
 
   test("daabbcc charges nothing beyond its one recorded exception", () => {
-    const report = buildNativeParity(PACKAGE_ROOT, target("daabbcc"));
+    const report = buildNativeParity(DATA_DIR, target("daabbcc"));
     expect(report.arityMeasured).toBe(true);
     expect(report.arityMismatches).toEqual([]);
     expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: [] });
@@ -383,7 +384,7 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
   });
 
   test("daabbcc3d charges nothing beyond its one recorded exception", () => {
-    const report = buildNativeParity(PACKAGE_ROOT, target("daabbcc3d"));
+    const report = buildNativeParity(DATA_DIR, target("daabbcc3d"));
     expect(report.arityMeasured).toBe(true);
     expect(report.arityMismatches).toEqual([]);
     expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: [] });
@@ -399,7 +400,7 @@ describe("the arity axis, read from the shipped LuaLS annotation", () => {
 
   test("wave excuses its two height samplers and reports the stubs nothing registers", () => {
     const entry = target("wave");
-    const report = buildNativeParity(PACKAGE_ROOT, entry);
+    const report = buildNativeParity(DATA_DIR, entry);
     const reason = (name: string): string =>
       (entry.annotationArityExceptions ?? []).find((exception) => exception.name === name)
         ?.reason as string;

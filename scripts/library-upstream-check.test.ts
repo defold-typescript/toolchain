@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
@@ -23,6 +24,7 @@ import {
 } from "./library-upstream-check.ts";
 
 const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
+const DATA_DIR = newestDataFolder(PACKAGE_ROOT);
 
 function group(overrides: Partial<PinnedGroup> = {}): PinnedGroup {
   return {
@@ -368,7 +370,7 @@ describe("readPinnedTargets — internal flag", () => {
   for (const lane of ["markdown", "openapi"] as const) {
     test(`${lane}: only a go decision is user-facing; no-go and a missing decision are internal`, () => {
       const flags = Object.fromEntries(
-        readPinnedTargets(root)
+        readPinnedTargets(root, root)
           .filter((t) => t.lane === lane)
           .map((t) => [t.moduleId, t.internal]),
       );
@@ -465,11 +467,11 @@ describe("collectPinnedTargets over the committed registries", () => {
   // composes, so adding a target cannot red this — only dropping a lane from the
   // composition, or regrouping, can.
   const lanes = [
-    ["authored", readAuthoredTargets(PACKAGE_ROOT)],
-    ["luals", readLualsTargets(PACKAGE_ROOT)],
+    ["authored", readAuthoredTargets(DATA_DIR)],
+    ["luals", readLualsTargets(DATA_DIR)],
     ["markdown", readMarkdownTargets(PACKAGE_ROOT)],
     ["openapi", readOpenApiTargets(PACKAGE_ROOT)],
-    ["scriptApi", readScriptApiTargets(PACKAGE_ROOT)],
+    ["scriptApi", readScriptApiTargets(DATA_DIR)],
   ] as const;
   const expected = new Map<string, string[]>();
   for (const [lane, targets] of lanes) {
