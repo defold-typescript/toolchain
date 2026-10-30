@@ -150,16 +150,35 @@ describe("materializeVendoredLibraries", () => {
       (dir: string) =>
         writeFileSync(path.join(dir, "keep.keep.d.ts"), "declare module 'keep.keep' { x }\n"),
     ],
-  ])("a null print does not vouch for %s and deletes nothing", (_label, damage) => {
-    materializeVendoredLibraries({ cwd, printed: [printed("keep.keep")] });
+    ["a deleted index.d.ts", (dir: string) => rmSync(path.join(dir, "index.d.ts"))],
+    [
+      "an index.d.ts that imports no module",
+      (dir: string) => writeFileSync(path.join(dir, "index.d.ts"), "export {};\n"),
+    ],
+    [
+      "a stamp whose types names one module file",
+      (dir: string) => {
+        const stampPath = path.join(dir, "package.json");
+        const stamp = JSON.parse(readFileSync(stampPath, "utf8")) as Record<string, unknown>;
+        writeFileSync(stampPath, JSON.stringify({ ...stamp, types: "keep.keep.d.ts" }));
+      },
+    ],
+  ])("a null print does not vouch for %s and changes no file", (_label, damage) => {
+    materializeVendoredLibraries({ cwd, printed: [printed("keep.keep"), printed("other.other")] });
     const dir = librariesDir();
     damage(dir);
-    const before = readdirSync(dir).sort();
+    const files = () =>
+      Object.fromEntries(
+        readdirSync(dir)
+          .sort()
+          .map((name) => [name, readFileSync(path.join(dir, name), "utf8")]),
+      );
+    const before = files();
 
     const result = materializeVendoredLibraries({ cwd, printed: null });
 
     expect(result).toEqual({ materializedDir: null, modules: [] });
-    expect(readdirSync(dir).sort()).toEqual(before);
+    expect(files()).toEqual(before);
   });
 });
 
