@@ -1,0 +1,77 @@
+{
+  "repo": "https://github.com/baochungit/defold-wrap",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/wrap.node.d.ts",
+      "moduleId": "wrap.node",
+      "namespace": "wrap.node",
+      "apiDoc": "api-doc/wrap.node.json",
+      "upstreamLua": ["source/upstream/wrap/node.lua"],
+      "instanceType": "Node"
+    },
+    {
+      "authored": "fork/wrap.node_list.d.ts",
+      "moduleId": "wrap.node_list",
+      "namespace": "wrap.node_list",
+      "apiDoc": "api-doc/wrap.node_list.json",
+      "upstreamLua": ["source/upstream/wrap/node_list.lua"]
+    },
+    {
+      "authored": "fork/wrap.go.d.ts",
+      "moduleId": "wrap.go",
+      "namespace": "wrap.go",
+      "apiDoc": "api-doc/wrap.go.json",
+      "upstreamLua": ["source/upstream/wrap/go.lua"],
+      "instanceType": "Go"
+    },
+    {
+      "authored": "fork/wrap.go_list.d.ts",
+      "moduleId": "wrap.go_list",
+      "namespace": "wrap.go_list",
+      "apiDoc": "api-doc/wrap.go_list.json",
+      "upstreamLua": ["source/upstream/wrap/go_list.lua"]
+    },
+    {
+      "authored": "fork/wrap.gui_object.d.ts",
+      "moduleId": "wrap.gui_object",
+      "namespace": "wrap.gui_object",
+      "apiDoc": "api-doc/wrap.gui_object.json",
+      "upstreamLua": ["source/upstream/wrap/gui_object.lua"],
+      "instanceType": "GuiObject"
+    },
+    {
+      "authored": "fork/wrap.gui_scene.d.ts",
+      "moduleId": "wrap.gui_scene",
+      "namespace": "wrap.gui_scene",
+      "apiDoc": "api-doc/wrap.gui_scene.json",
+      "upstreamLua": ["source/upstream/wrap/gui_scene.lua"],
+      "instanceType": "GuiScene"
+    },
+    {
+      "authored": "fork/wrap.gui_applet.d.ts",
+      "moduleId": "wrap.gui_applet",
+      "namespace": "wrap.gui_applet",
+      "apiDoc": "api-doc/wrap.gui_applet.json",
+      "upstreamLua": ["source/upstream/wrap/gui_applet.lua"],
+      "instanceType": "GuiApplet"
+    },
+    {
+      "authored": "fork/wrap.wrap.d.ts",
+      "moduleId": "wrap.wrap",
+      "namespace": "wrap.wrap",
+      "apiDoc": "api-doc/wrap.wrap.json",
+      "upstreamLua": ["source/upstream/wrap/wrap.lua"]
+    }
+  ],
+  "indexSlots": {
+    "wrap.go/animate:param:to": {
+      "class": "not-a-position",
+      "evidence": "an array of targets: `pairs` walks `property`, and each property animates to the entry of `to` at its own key, so no value in it addresses anything"
+    },
+    "wrap.node/animate:param:to": {
+      "class": "not-a-position",
+      "evidence": "an array of targets: `pairs` walks `property`, and each property animates to the entry of `to` at its own key, so no value in it addresses anything"
+    }
+  }
+}

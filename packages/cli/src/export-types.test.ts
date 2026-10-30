@@ -8,10 +8,12 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, relative, sep } from "node:path";
+import { basename, dirname, join, relative, sep } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { runExportTypes } from "./export-types";
+import { libraryFolderName } from "./library/library-data";
 import { printCorpus } from "./library/print-corpus";
+import { writeLibraryTargets } from "./library-data-fixture";
 import {
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
@@ -101,51 +103,43 @@ interface FixtureAuthored {
   readonly contents: string;
 }
 
-// A corpus root in the committed registries' shape, read by the production
-// loaders.
+// A library data folder in the committed layout, read by the production loaders.
 function writeCorpus(corpus: {
   readonly native?: readonly FixtureNative[];
   readonly authored?: readonly FixtureAuthored[];
 }): string {
   const root = tmp();
-  mkdirSync(join(root, "native"), { recursive: true });
   writeFileSync(join(root, "library-classification.json"), JSON.stringify({ dirs: [] }));
   writeFileSync(join(root, "library-targets.json"), JSON.stringify({ targets: [] }));
   const native = corpus.native ?? [];
-  writeFileSync(
-    join(root, "native-targets.json"),
-    JSON.stringify({
-      targets: native.map(({ repo, namespace, declaration }) => ({
-        repo,
-        namespace,
-        manifestDir: namespace,
-        declaration,
-      })),
-    }),
-  );
-  for (const { declaration, contents } of native) {
-    writeFileSync(join(root, declaration), contents);
-  }
-  writeFileSync(join(root, "luals-targets.json"), JSON.stringify({ targets: [] }));
-  writeFileSync(join(root, "script-api-targets.json"), JSON.stringify({ targets: [] }));
   const authored = corpus.authored ?? [];
-  mkdirSync(join(root, "fixtures", "authored"), { recursive: true });
-  writeFileSync(
-    join(root, "authored-targets.json"),
-    JSON.stringify({
-      targets: authored.map(({ repo, moduleId, namespace }) => ({
-        repo,
-        ref: "1.0.0",
-        authored: `fixtures/authored/${moduleId}.d.ts`,
-        moduleId,
-        namespace,
-        apiDoc: `api-doc/${namespace}.json`,
-        upstreamLua: [`fixtures/upstream-lua/${moduleId}.lua`],
-      })),
-    }),
-  );
-  for (const { moduleId, contents } of authored) {
-    writeFileSync(join(root, "fixtures", "authored", `${moduleId}.d.ts`), contents);
+  writeLibraryTargets(root, {
+    native: native.map(({ repo, namespace, declaration }) => ({
+      repo,
+      ref: "1.0.0",
+      namespace,
+      manifestDir: namespace,
+      declaration,
+      upstreamSource: "source/upstream/src/extension.cpp",
+    })),
+    forks: authored.map(({ repo, moduleId, namespace }) => ({
+      repo,
+      ref: "1.0.0",
+      authored: `fork/${moduleId}.d.ts`,
+      moduleId,
+      namespace,
+      apiDoc: `api-doc/${namespace}.json`,
+      upstreamLua: [`source/upstream/${moduleId}.lua`],
+    })),
+  });
+  const write = (repo: string, path: string, contents: string) => {
+    const file = join(root, libraryFolderName(repo), path);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, contents);
+  };
+  for (const { repo, declaration, contents } of native) write(repo, declaration, contents);
+  for (const { repo, moduleId, contents } of authored) {
+    write(repo, `fork/${moduleId}.d.ts`, contents);
   }
   return root;
 }
@@ -231,7 +225,7 @@ describe("runExportTypes refusals", () => {
         {
           repo: "https://github.com/owner/defold-bad",
           namespace: "bad",
-          declaration: "native/bad.d.ts",
+          declaration: "fork/bad.d.ts",
           contents,
         },
       ],
@@ -295,7 +289,7 @@ describe("runExportTypes refusals", () => {
         {
           repo: "https://github.com/owner/dup",
           namespace: "dup",
-          declaration: "native/dup.d.ts",
+          declaration: "fork/dup.d.ts",
           contents: "declare namespace dup {\n  const a: number;\n}\n",
         },
       ],
@@ -400,7 +394,7 @@ describe("runExportTypes over an existing types folder", () => {
           {
             repo: "https://github.com/owner/defold-glob",
             namespace: "glob",
-            declaration: "native/glob.d.ts",
+            declaration: "fork/glob.d.ts",
             contents: GLOB_CURATED,
           },
         ],
@@ -418,7 +412,7 @@ describe("runExportTypes over an existing types folder", () => {
         {
           repo: "https://github.com/owner/defold-glob",
           namespace: "glob",
-          declaration: "native/glob.d.ts",
+          declaration: "fork/glob.d.ts",
           contents: "declare namespace glob {\n  const a: number;\n}\n",
         },
       ],
@@ -439,7 +433,7 @@ describe("runExportTypes over an existing types folder", () => {
         {
           repo: "https://github.com/owner/defold-glob",
           namespace: "glob",
-          declaration: "native/glob.d.ts",
+          declaration: "fork/glob.d.ts",
           contents: "declare namespace glob {\n  const a: number;\n}\n",
         },
       ],

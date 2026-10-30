@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/britzl/defold-imp",
+  "license": "MIT",
+  "native": {
+    "namespace": "imp",
+    "manifestDir": "imp",
+    "declaration": "fork/imp.d.ts",
+    "upstreamSource": "source/upstream/imp/src/imp.cpp"
+  }
+}

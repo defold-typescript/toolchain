@@ -1,0 +1,30 @@
+{
+  "repo": "https://github.com/Dragosha/defold-sprite-repeat",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/sprite_repeat.sprite_repeat.d.ts",
+      "moduleId": "sprite_repeat.sprite_repeat",
+      "namespace": "sprite_repeat",
+      "apiDoc": "api-doc/sprite_repeat.json",
+      "upstreamLua": ["source/upstream/sprite_repeat/sprite_repeat.lua"]
+    },
+    {
+      "authored": "fork/node_repeat.node_repeat.d.ts",
+      "moduleId": "node_repeat.node_repeat",
+      "namespace": "node_repeat",
+      "apiDoc": "api-doc/node_repeat.json",
+      "upstreamLua": ["source/upstream/node_repeat/node_repeat.lua"]
+    }
+  ],
+  "indexSlots": {
+    "node_repeat/NodeRepeatAnimation:field:current_frame": {
+      "class": "native-1",
+      "evidence": "The 1-based index of the frame shown next"
+    },
+    "sprite_repeat/SpriteRepeatAnimation:field:current_frame": {
+      "class": "native-1",
+      "evidence": "The 1-based index of the frame shown next"
+    }
+  }
+}

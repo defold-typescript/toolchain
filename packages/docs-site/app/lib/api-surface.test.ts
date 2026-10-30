@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiAvailability,
@@ -45,7 +45,6 @@ import {
   groupFunctionSymbols,
   groupOverloadForms,
   groupTypeSymbols,
-  LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
   mapDocType,
   outerCallArity,
   outerCallParams,
@@ -64,6 +63,7 @@ import {
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
+  loadLibraryIndexSlots,
   loadLibraryPageSources,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
@@ -97,6 +97,7 @@ const MISSING_VERSION_FIXTURE_DIR = join(
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 const REAL_LIBRARY_DATA_DIR = libraryDataDir(REAL_LIBRARY_TYPES_DIR) as string;
+const LIBRARY_INDEX_SLOTS = loadLibraryIndexSlots(REAL_LIBRARY_TYPES_DIR);
 
 // The ten `britzl/defold-input` modules, severed together into the authored lane.
 const DEFOLD_INPUT_MODULES = [
@@ -157,11 +158,17 @@ function defoldExtensionPages(): string[] {
   return libraries.flatMap((library) => library.docs.map((doc) => doc.page));
 }
 
+// Each library.json in the newest data folder, read straight off disk.
+function libraryJsons(): { native?: { namespace: string }; indexSlots?: object }[] {
+  return readdirSync(REAL_LIBRARY_DATA_DIR)
+    .sort()
+    .map((dir) => join(REAL_LIBRARY_DATA_DIR, dir, "library.json"))
+    .filter((file) => existsSync(file))
+    .map((file) => JSON.parse(readFileSync(file, "utf8")));
+}
+
 function nativeExtensionPages(): string[] {
-  const { targets } = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_DATA_DIR, "native-targets.json"), "utf8"),
-  ) as { targets: { namespace: string }[] };
-  return targets.map((target) => target.namespace);
+  return libraryJsons().flatMap(({ native }) => (native === undefined ? [] : [native.namespace]));
 }
 
 function portalScriptApiPages(): string[] {
@@ -172,13 +179,14 @@ function portalScriptApiPages(): string[] {
 }
 
 test("library pages read the index-slot notes of the newest library data folder", () => {
-  expect(LIBRARY_INDEX_SLOT_CLASSIFICATIONS).toEqual(
-    parseLibraryIndexSlotClassifications(
-      JSON.parse(
-        readFileSync(join(REAL_LIBRARY_DATA_DIR, "index-slot-classifications.json"), "utf8"),
-      ),
-    ),
-  );
+  const recorded = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_DATA_DIR, "index-slot-classifications.json"), "utf8"),
+  ) as Record<string, unknown>;
+  for (const { indexSlots } of libraryJsons()) Object.assign(recorded, indexSlots);
+  const expected = parseLibraryIndexSlotClassifications(recorded);
+  const pages = loadLibraryPageSources(REAL_LIBRARY_TYPES_DIR).map(({ page }) => page);
+  expect(pages.length).toBeGreaterThan(0);
+  for (const page of pages) expect(page.indexSlots).toEqual(expected);
 });
 
 describe("loadApiSurface", () => {
@@ -2679,7 +2687,7 @@ describe("index-base notes on library pages", () => {
   test("a hand-written declaration that carries its notes renders each once", () => {
     const gooey = page("gooey");
     const [focusNote = ""] = libraryIndexBaseNotes(
-      LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+      LIBRARY_INDEX_SLOTS,
       "gooey",
       "set_focus",
       "param",
@@ -2693,7 +2701,7 @@ describe("index-base notes on library pages", () => {
     ] as const) {
       const p = page(namespace);
       const [frameNote = ""] = libraryIndexBaseNotes(
-        LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
+        LIBRARY_INDEX_SLOTS,
         namespace,
         element,
         "field",

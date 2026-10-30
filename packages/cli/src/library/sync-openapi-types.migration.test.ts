@@ -42,7 +42,7 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
 
   test("the ts-defold fixture gave way to the authored fork", async () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.nakama.d.ts"))).toBe(false);
-    expect(existsSync(join(DATA_DIR, "fixtures/authored/nakama.nakama.d.ts"))).toBe(true);
+    expect(existsSync(join(DATA_DIR, "nakama-defold/fork/nakama.nakama.d.ts"))).toBe(true);
     expect((await printCorpus(DATA_DIR)).has("nakama.nakama")).toBe(true);
   });
 

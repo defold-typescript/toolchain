@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/astrochili/defold-illumination",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/illumination.illumination.d.ts",
+      "moduleId": "illumination.illumination",
+      "namespace": "illumination",
+      "apiDoc": "api-doc/illumination.json",
+      "upstreamLua": ["source/upstream/illumination/illumination.lua"]
+    }
+  ]
+}

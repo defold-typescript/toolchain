@@ -5,14 +5,14 @@ import { LIBRARY_DATA_DIR } from "./package-root";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 
 const DATA_DIR = LIBRARY_DATA_DIR;
-const UPSTREAM_DIR = "fixtures/upstream-lua/nakama-defold/nakama";
+const UPSTREAM_DIR = "nakama-defold/source/upstream/nakama";
 
 function vendored(relative: string): string {
   return readFileSync(join(DATA_DIR, UPSTREAM_DIR, relative), "utf8");
 }
 
-function upstream(relative: string): string {
-  return readFileSync(join(DATA_DIR, "fixtures/upstream-lua", relative), "utf8");
+function upstream(path: string): string {
+  return readFileSync(join(DATA_DIR, path), "utf8");
 }
 
 function byName(members: LuaMember[]): Map<string, LuaMember> {
@@ -323,7 +323,7 @@ describe("a refused comment block is distinguishable from no comment at all", ()
 });
 
 describe("a module closing with `return setmetatable(<name>, {…})` is the same surface", () => {
-  const surface = parseLuaSurface(upstream("defold-input/in/accelerometer.lua"));
+  const surface = parseLuaSurface(upstream("defold-input/source/upstream/in/accelerometer.lua"));
 
   test("the vendored accelerometer resolves M, not the instance its inner return closes over", () => {
     expect(surface.moduleLocal).toBe("M");
@@ -395,7 +395,7 @@ describe("a metatable that could delegate members is refused, never parsed short
 
 describe("an annotation stub file, whose module table the source never returns", () => {
   const annotation = readFileSync(
-    join(DATA_DIR, "fixtures/upstream-native/DAABBCC/daabbcc/annotation.lua"),
+    join(DATA_DIR, "defold-daabbcc/source/upstream/daabbcc/annotation.lua"),
     "utf8",
   );
 
@@ -427,10 +427,7 @@ describe("an annotation stub file, whose module table the source never returns",
 
   test("the sharing annotation reads too, its stubs sitting under `share`", () => {
     const share = parseLuaSurface(
-      readFileSync(
-        join(DATA_DIR, "fixtures/upstream-native/defold-sharing/share/api/share.lua"),
-        "utf8",
-      ),
+      readFileSync(join(DATA_DIR, "defold-sharing/source/upstream/share/api/share.lua"), "utf8"),
       { moduleLocal: "share" },
     );
     expect(share.members.map((member) => member.name)).toEqual(["text", "image", "file"]);
@@ -552,7 +549,7 @@ describe("a returned table's constructor entries are members", () => {
   });
 
   test("the vendored yagames module reads its four readiness flags", () => {
-    const flags = parseLuaSurface(upstream("defold-yagames/yagames/yagames.lua"))
+    const flags = parseLuaSurface(upstream("defold-yagames/source/upstream/yagames/yagames.lua"))
       .members.slice(0, 4)
       .map((member) => [member.name, member.params]);
     expect(flags).toEqual([
@@ -663,10 +660,7 @@ describe("a column-0 colon method of the returned table is a method member", () 
 
   test("an annotation file's class stubs stay out, its module table named by the caller", () => {
     const box2d = parseLuaSurface(
-      readFileSync(
-        join(DATA_DIR, "fixtures/upstream-native/defold-box2d/box2d_header.lua"),
-        "utf8",
-      ),
+      readFileSync(join(DATA_DIR, "defold-box2d/source/upstream/box2d_header.lua"), "utf8"),
       { moduleLocal: "box2d" },
     );
     expect(box2d.members.some((member) => member.method === true)).toBe(false);

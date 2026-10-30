@@ -1,0 +1,14 @@
+{
+  "repo": "https://github.com/s-kania/def-behavior-tree",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/def_behavior_tree.behavior_tree.d.ts",
+      "moduleId": "def_behavior_tree.behavior_tree",
+      "namespace": "def_behavior_tree",
+      "apiDoc": "api-doc/def_behavior_tree.json",
+      "upstreamLua": ["source/upstream/def_behavior_tree/behavior_tree.lua"],
+      "instanceType": "BehaviorTree"
+    }
+  ]
+}

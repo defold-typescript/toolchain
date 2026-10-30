@@ -1,0 +1,44 @@
+{
+  "repo": "https://github.com/selimanac/defold-tile-raycast",
+  "license": "MIT",
+  "native": {
+    "namespace": "tile_raycast",
+    "manifestDir": "tile-raycast",
+    "declaration": "fork/tile_raycast.d.ts",
+    "upstreamSource": "source/upstream/tile-raycast/src/tileraycast.cpp"
+  },
+  "indexSlots": {
+    "tile_raycast/cast:return:": {
+      "class": "not-a-position",
+      "evidence": "a tuple: `hit`, `tile_id`, `intersection_x`, `intersection_y` and `side` address nothing by position; `tile_x`, `tile_y` and `array_id` are keyed on their own"
+    },
+    "tile_raycast/cast:return::tile_x": {
+      "class": "native-1",
+      "evidence": "Tile coordinates and array indices are 1-based; set_at/get_at subtract 1 from them (tileraycast.cpp)"
+    },
+    "tile_raycast/cast:return::tile_y": {
+      "class": "native-1",
+      "evidence": "Tile coordinates and array indices are 1-based; set_at/get_at subtract 1 from them (tileraycast.cpp)"
+    },
+    "tile_raycast/cast:return::array_id": {
+      "class": "native-1",
+      "evidence": "Tile coordinates and array indices are 1-based"
+    },
+    "tile_raycast/set_at:param:tile_x": {
+      "class": "native-1",
+      "evidence": "tileraycast.cpp subtracts 1 from the checked coordinate"
+    },
+    "tile_raycast/set_at:param:tile_y": {
+      "class": "native-1",
+      "evidence": "tileraycast.cpp subtracts 1 from the checked coordinate"
+    },
+    "tile_raycast/get_at:param:tile_x": {
+      "class": "native-1",
+      "evidence": "tileraycast.cpp subtracts 1 from the checked coordinate"
+    },
+    "tile_raycast/get_at:param:tile_y": {
+      "class": "native-1",
+      "evidence": "tileraycast.cpp subtracts 1 from the checked coordinate"
+    }
+  }
+}

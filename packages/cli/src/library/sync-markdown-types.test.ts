@@ -92,7 +92,9 @@ describe("orthographic severed to the authored lane without disturbing the markd
   });
 
   test("the vendored authored fork replaced the retired ts-defold fixture", () => {
-    expect(existsSync(join(DATA_DIR, "fixtures/authored/orthographic.camera.d.ts"))).toBe(true);
+    expect(existsSync(join(DATA_DIR, "defold-orthographic/fork/orthographic.camera.d.ts"))).toBe(
+      true,
+    );
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/orthographic.camera.d.ts"))).toBe(
       false,
     );
@@ -101,7 +103,7 @@ describe("orthographic severed to the authored lane without disturbing the markd
   test("resolve serves the authored fork, not the markdown emit (no cutover)", async () => {
     const served = await printedModule(DATA_DIR, "orthographic.camera");
     expect(served).toBe(
-      readFileSync(join(DATA_DIR, "fixtures/authored/orthographic.camera.d.ts"), "utf8"),
+      readFileSync(join(DATA_DIR, "defold-orthographic/fork/orthographic.camera.d.ts"), "utf8"),
     );
     expect(served).not.toBe(await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC));
   });
@@ -171,7 +173,7 @@ describe("evaluateMarkdownCandidate", () => {
 
   // monarch severed into the authored lane, so its retired ts-defold snapshot is
   // gone and the comparison resolves against the fork it was taken from.
-  const MONARCH_SNAPSHOT = join(DATA_DIR, "fixtures/authored/monarch.monarch.d.ts");
+  const MONARCH_SNAPSHOT = join(DATA_DIR, "monarch/fork/monarch.monarch.d.ts");
 
   test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
     const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH, MONARCH_SNAPSHOT);

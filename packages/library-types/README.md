@@ -32,19 +32,23 @@ declarations.
 
 - `data/<version>/` — library data, in folders named by the first CLI version
   that reads them. A CLI reads the highest folder at or below its own version.
-  Each folder holds:
-  - `luals-targets.json`, `script-api-targets.json`, `authored-targets.json` —
-    one entry per library module: its upstream repository, pinned ref, license,
-    and the `namespace` it is published under.
-  - `fixtures/luals/`, `fixtures/script-api/`, `fixtures/authored/` — the pinned
-    upstream sources, or the hand-written declaration fork, each module prints
-    from; `fixtures/upstream-lua/` and `fixtures/upstream-native/` hold the
-    upstream files the parity checks measure against.
-  - `native/<namespace>.d.ts` and `native-targets.json` — the hand-written
-    declarations of native extensions that ship no `.script_api`, which
-    `resolve` installs as written.
-  - `index-slot-classifications.json` — the base each library index slot counts
-    from.
+  Each folder holds one folder per library, named for its repository (the URL's
+  last path segment, lowercased, without `.git`):
+  - `library.json` — the upstream repository and license, the hand-written
+    declaration forks, the native extension, and the base each of the
+    library's index slots counts from.
+  - `reviewed.json` — the upstream ref the library data was reviewed at.
+  - `recipe.json` — the modules generated from the library's LuaLS annotations
+    or `.script_api`, when it has any.
+  - `fork/` — the hand-written declarations: forked modules, and the
+    `@globalTable` declaration of a native extension that ships no
+    `.script_api`, which `resolve` installs as written.
+  - `source/` — the pinned upstream sources each generated module prints from;
+    `source/upstream/` holds the upstream files the parity checks measure
+    against.
+
+  Beside the library folders, `index-slot-classifications.json` holds the base
+  each index slot counts from for the extension pages no library folder holds.
 - `library-classification.json`, `library-targets.json` — the ts-defold/library
   registries the classification tooling keeps.
 - `api-doc/<module>.json` — ref-doc JSON extracted from each declaration, consumed

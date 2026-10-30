@@ -1,0 +1,19 @@
+{
+  "repo": "https://github.com/britzl/boom",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/boom.boom.d.ts",
+      "moduleId": "boom.boom",
+      "namespace": "boom",
+      "apiDoc": "api-doc/boom.json",
+      "upstreamLua": ["source/upstream/boom/boom.lua"]
+    }
+  ],
+  "indexSlots": {
+    "boom/z:param:index": {
+      "class": "not-a-position",
+      "evidence": "a draw order: a bigger z draws on top"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["pixelart/scripts/pixelart.lua"],
+      "moduleId": "pixelart.scripts.pixelart",
+      "namespace": "pixelart.scripts.pixelart",
+      "typeRenames": {
+        "vector3": "Vector3"
+      },
+      "ignore": []
+    },
+    {
+      "sourceGlobs": ["pixelart/scripts/pixelart_render.lua"],
+      "moduleId": "pixelart.scripts.pixelart_render",
+      "namespace": "pixelart.scripts.pixelart_render",
+      "typeRenames": {
+        "matrix4": "Matrix4",
+        "render_clear_buffers": "LuaMap<render.ClearBufferKey, number | Vector4>"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "init": {
+            "params": {
+              "self": {
+                "type": "table<string, any>",
+                "optional": false
+              }
+            }
+          },
+          "update": {
+            "params": {
+              "self": {
+                "type": "table<string, any>",
+                "optional": false
+              },
+              "camera_frustum": {
+                "type": "matrix4",
+                "optional": false
+              },
+              "view": {
+                "type": "matrix4",
+                "optional": false
+              },
+              "proj": {
+                "type": "matrix4",
+                "optional": false
+              },
+              "window_width": {
+                "type": "number",
+                "optional": false
+              },
+              "window_height": {
+                "type": "number",
+                "optional": false
+              },
+              "clear_buffers": {
+                "type": "render_clear_buffers",
+                "optional": false
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

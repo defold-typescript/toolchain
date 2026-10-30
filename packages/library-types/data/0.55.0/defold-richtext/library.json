@@ -1,0 +1,27 @@
+{
+  "repo": "https://github.com/britzl/defold-richtext",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/richtext.color.d.ts",
+      "moduleId": "richtext.color",
+      "namespace": "richtext.color",
+      "apiDoc": "api-doc/richtext.color.json",
+      "upstreamLua": ["source/upstream/richtext/color.lua"]
+    },
+    {
+      "authored": "fork/richtext.richtext.d.ts",
+      "moduleId": "richtext.richtext",
+      "namespace": "richtext.richtext",
+      "apiDoc": "api-doc/richtext.richtext.json",
+      "upstreamLua": ["source/upstream/richtext/richtext.lua"]
+    },
+    {
+      "authored": "fork/richtext.tags.d.ts",
+      "moduleId": "richtext.tags",
+      "namespace": "richtext.tags",
+      "apiDoc": "api-doc/richtext.tags.json",
+      "upstreamLua": ["source/upstream/richtext/tags.lua"]
+    }
+  ]
+}

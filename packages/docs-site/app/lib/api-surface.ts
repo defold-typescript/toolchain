@@ -11,11 +11,11 @@ import {
   examplesHtmlToMarkdown,
   firstSlotAlternativeOf,
   htmlToDocText,
+  type LibraryIndexSlotClassifications,
   lookupExampleSegments,
   lookupSignature,
   luaMultiReturn,
   normalizedFunctionSignature,
-  parseLibraryIndexSlotClassifications,
   type SignatureStore,
   type SlotTypes,
   segmentExampleRegions,
@@ -28,12 +28,6 @@ import {
   withIndexBaseNotes,
   withLibraryIndexBaseNotes,
 } from "@defold-typescript/types";
-// A static import keeps this module free of `node:fs` for the client bundle, so
-// it names the newest library data folder; `api-surface.test.ts` reds when a
-// newer folder lands without moving it.
-import libraryIndexSlotClassificationsJson from "../../../library-types/data/0.55.0/index-slot-classifications.json" with {
-  type: "json",
-};
 import { slugify } from "./headings";
 import { platformDocText } from "./platform-icons";
 
@@ -425,8 +419,8 @@ export interface LibraryMeta {
   /** SPDX-style license id from the classification `source`. */
   license: string;
   /**
-   * `true` for a library this repo maintains via `luals-targets.json` (LuaLS
-   * lane) or `script-api-targets.json` (script_api lane, e.g. bridge)
+   * `true` for a library this repo maintains through a LuaLS or script_api
+   * recipe in library data (e.g. druid, bridge)
    * (namespace absent from `moduleDir`), or a Defold extension page read from
    * its own `.script_api`; `false` for a vendored library.
    */
@@ -481,6 +475,11 @@ export interface ApiPage {
    * falls back to the token-derived `functionSignature`.
    */
   authoritativeSignatures?: ReadonlyMap<string, string>;
+  /**
+   * A library page's index-slot classifications from library data, keyed
+   * `<page>/<slot>`; absent on every other page.
+   */
+  indexSlots?: LibraryIndexSlotClassifications;
   /**
    * The per-slot companion to {@link authoritativeSignatures}, keyed by name
    * identity (`<ns>\0FUNCTION\0<fqn>`) rather than by overload signature: the
@@ -1069,14 +1068,18 @@ function typeList(types: string[], mapType: MapType = mapDocType): string {
   return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
-export const LIBRARY_INDEX_SLOT_CLASSIFICATIONS = parseLibraryIndexSlotClassifications(
-  libraryIndexSlotClassificationsJson,
-);
+// A library page's key and the index slots library data classifies under it.
+interface LibraryPageSlots {
+  readonly key: string;
+  readonly classifications: LibraryIndexSlotClassifications;
+}
+
+const NO_LIBRARY_INDEX_SLOTS: LibraryIndexSlotClassifications = new Map();
 
 // A library page reads its own classifications under its page key and names the
 // library; every other page reads the engine map and names Defold.
 function withSlotBaseNotes(
-  libraryPage: string | undefined,
+  libraryPage: LibraryPageSlots | undefined,
   elementName: string,
   kind: "param" | "return",
   slotName: string,
@@ -1085,8 +1088,8 @@ function withSlotBaseNotes(
   return libraryPage === undefined
     ? withIndexBaseNotes(elementName, kind, slotName, doc)
     : withLibraryIndexBaseNotes(
-        LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
-        libraryPage,
+        libraryPage.classifications,
+        libraryPage.key,
         elementName,
         kind,
         slotName,
@@ -1094,14 +1097,19 @@ function withSlotBaseNotes(
       );
 }
 
-// The page key a library page's notes read, absent on every other page.
-function libraryPageKey(page: Pick<ApiPage, "namespace" | "category">): string | undefined {
-  return page.category === "library" ? page.namespace : undefined;
+// The page key and classifications a library page's notes read, absent on every
+// other page.
+function libraryPageKey(
+  page: Pick<ApiPage, "namespace" | "category" | "indexSlots">,
+): LibraryPageSlots | undefined {
+  return page.category === "library"
+    ? { key: page.namespace, classifications: page.indexSlots ?? NO_LIBRARY_INDEX_SLOTS }
+    : undefined;
 }
 
 // A class field's doc with its base note, which only a library page records.
 function withFieldBaseNotes(
-  libraryPage: string | undefined,
+  libraryPage: LibraryPageSlots | undefined,
   typeName: string,
   fieldName: string,
   doc: string,
@@ -1109,8 +1117,8 @@ function withFieldBaseNotes(
   return libraryPage === undefined
     ? doc
     : withLibraryIndexBaseNotes(
-        LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
-        libraryPage,
+        libraryPage.classifications,
+        libraryPage.key,
         typeName,
         "field",
         fieldName,
@@ -1135,7 +1143,7 @@ function projectParams(
   kind: "param" | "return" = "param",
   elementName?: string,
   translations: TranslationStore = {},
-  libraryPage?: string,
+  libraryPage?: LibraryPageSlots,
 ): ApiSymbolParam[] {
   return list.map((p, index) => {
     const emitted = slots?.[`${kind}:${index}:${p.name}`];
@@ -1748,8 +1756,8 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
             libraryPage === undefined
               ? htmlToDocText(p.doc)
               : withLibraryIndexBaseNotes(
-                  LIBRARY_INDEX_SLOT_CLASSIFICATIONS,
-                  libraryPage,
+                  libraryPage.classifications,
+                  libraryPage.key,
                   fn.name,
                   kind,
                   p.name,

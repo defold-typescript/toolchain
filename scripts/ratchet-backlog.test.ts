@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { AUTHORED_FLOOR_MANIFEST_FILE } from "../packages/cli/src/library/authored-parity.ts";
@@ -50,18 +58,13 @@ const MANIFEST_DIR = join("packages", "library-types");
 
 // The lane registries the portal probe joins its manifest against, copied from
 // the committed package so a temp root resolves the same pins the repo does. The
-// served lanes' registries sit in the library data folder.
+// served lanes' targets sit in the library data folder's library folders.
 const COVERAGE_REGISTRY_FILES = [
   "markdown-targets.json",
   "openapi-targets.json",
   "defold-extensions.json",
 ];
-const DATA_REGISTRY_FILES = [
-  "authored-targets.json",
-  "luals-targets.json",
-  "script-api-targets.json",
-  "native-targets.json",
-];
+const LIBRARY_DATA_FILES = ["library.json", "reviewed.json", "recipe.json"];
 
 const PORTAL_SYNCED_AT = "2026-10-21T00:00:00.000Z";
 
@@ -119,8 +122,12 @@ function tempRoot(
   const committedData = newestDataFolder(join(REPO_ROOT, MANIFEST_DIR));
   const data = join(dir, relative(join(REPO_ROOT, MANIFEST_DIR), committedData));
   mkdirSync(data, { recursive: true });
-  for (const file of DATA_REGISTRY_FILES) {
-    copyFileSync(join(committedData, file), join(data, file));
+  for (const folder of readdirSync(committedData)) {
+    for (const file of LIBRARY_DATA_FILES) {
+      if (!existsSync(join(committedData, folder, file))) continue;
+      mkdirSync(join(data, folder), { recursive: true });
+      copyFileSync(join(committedData, folder, file), join(data, folder, file));
+    }
   }
   writeFileSync(join(dir, "asset-portal.json"), `${JSON.stringify(portal, null, 2)}\n`);
   writeFileSync(

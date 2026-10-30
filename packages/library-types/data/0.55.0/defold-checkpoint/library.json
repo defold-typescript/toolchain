@@ -1,0 +1,14 @@
+{
+  "repo": "https://codeberg.org/Klaleus/defold-checkpoint",
+  "license": "Zlib",
+  "refKind": "commit",
+  "forks": [
+    {
+      "authored": "fork/checkpoint.checkpoint.d.ts",
+      "moduleId": "checkpoint.checkpoint",
+      "namespace": "checkpoint",
+      "apiDoc": "api-doc/checkpoint.json",
+      "upstreamLua": ["source/upstream/checkpoint/checkpoint.lua"]
+    }
+  ]
+}

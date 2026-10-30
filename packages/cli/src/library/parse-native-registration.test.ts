@@ -6,14 +6,13 @@ import { parseNativeMethodTables, parseNativeRegistration } from "./parse-native
 
 const DATA_DIR = LIBRARY_DATA_DIR;
 
-function vendored(relative: string) {
-  const path = `fixtures/upstream-native/${relative}`;
+function vendored(path: string) {
   return parseNativeRegistration(readFileSync(join(DATA_DIR, path), "utf8"), path);
 }
 
 describe("parseNativeRegistration over the vendored registering files", () => {
   test("daabbcc: 18 registered functions, the commented-out init skipped, three constants", () => {
-    const surface = vendored("DAABBCC/daabbcc/src/extension.cpp");
+    const surface = vendored("defold-daabbcc/source/upstream/daabbcc/src/extension.cpp");
     expect(surface.moduleName).toBe("daabbcc");
     expect(surface.functions).toHaveLength(18);
     expect(surface.functions).toContain("query_aabb_sort");
@@ -28,7 +27,9 @@ describe("parseNativeRegistration over the vendored registering files", () => {
   });
 
   test("tile_raycast: five functions and the four direction constants", () => {
-    const surface = vendored("defold-tile-raycast/tile-raycast/src/tileraycast.cpp");
+    const surface = vendored(
+      "defold-tile-raycast/source/upstream/tile-raycast/src/tileraycast.cpp",
+    );
     expect(surface.moduleName).toBe("tile_raycast");
     expect(surface.functions).toEqual(["cast", "get_at", "reset", "set_at", "setup"]);
     expect(surface.methods).toEqual({});
@@ -36,7 +37,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
   });
 
   test("share: file, image and text with no constants", () => {
-    const surface = vendored("defold-sharing/share/src/share.cpp");
+    const surface = vendored("defold-sharing/source/upstream/share/src/share.cpp");
     expect(surface.moduleName).toBe("share");
     expect(surface.functions).toEqual(["file", "image", "text"]);
     expect(surface.methods).toEqual({});
@@ -44,7 +45,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
   });
 
   test("uuid4: a single generate function", () => {
-    const surface = vendored("defold-uuid4/uuid4/src/extension.cpp");
+    const surface = vendored("defold-uuid4/source/upstream/uuid4/src/extension.cpp");
     expect(surface.moduleName).toBe("uuid4");
     expect(surface.functions).toEqual(["generate"]);
     expect(surface.methods).toEqual({});
@@ -52,7 +53,9 @@ describe("parseNativeRegistration over the vendored registering files", () => {
   });
 
   test("def_windward_jps: the Grid methods keyed by the metatable its const char* names", () => {
-    const surface = vendored("def-windward-jps/def_windward_jps/src/def_windward_jps.cpp");
+    const surface = vendored(
+      "def-windward-jps/source/upstream/def_windward_jps/src/def_windward_jps.cpp",
+    );
     expect(surface.moduleName).toBe("def_windward_jps");
     expect(surface.functions).toEqual(["create_grid"]);
     expect(surface.methods).toEqual({ "def_windward_jps.Grid": ["find_path", "is_walkable"] });
@@ -60,7 +63,7 @@ describe("parseNativeRegistration over the vendored registering files", () => {
   });
 
   test("detour: init, and the NavMesh and Crowd tables keyed by the functions that build them", () => {
-    const surface = vendored("defold-detour/detour/src/detour.cpp");
+    const surface = vendored("defold-detour/source/upstream/detour/src/detour.cpp");
     expect(surface.moduleName).toBe("detour");
     expect(surface.functions).toEqual(["init"]);
     expect(surface.methods).toEqual({

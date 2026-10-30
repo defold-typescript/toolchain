@@ -1,0 +1,20 @@
+{
+  "repo": "https://github.com/britzl/defold-metrics",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/metrics.fps.d.ts",
+      "moduleId": "metrics.fps",
+      "namespace": "metrics.fps",
+      "apiDoc": "api-doc/metrics.fps.json",
+      "upstreamLua": ["source/upstream/metrics/fps.lua"]
+    },
+    {
+      "authored": "fork/metrics.mem.d.ts",
+      "moduleId": "metrics.mem",
+      "namespace": "metrics.mem",
+      "apiDoc": "api-doc/metrics.mem.json",
+      "upstreamLua": ["source/upstream/metrics/mem.lua"]
+    }
+  ]
+}

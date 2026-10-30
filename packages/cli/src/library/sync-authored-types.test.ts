@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { writeLibraryTargets } from "../library-data-fixture";
 import { extractApiDoc } from "./extract-api-doc";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus, printedModule } from "./print-corpus";
@@ -24,12 +25,12 @@ const DEFCON: AuthoredTarget = {
   repo: "https://github.com/britzl/defcon",
   ref: "2.6.0",
   license: "MIT",
-  authored: "fixtures/authored/defcon.console.d.ts",
+  authored: "defcon/fork/defcon.console.d.ts",
   moduleId: "defcon.console",
   namespace: "defcon",
   apiDoc: "api-doc/defcon.json",
   fidelity: "fidelity/defcon.json",
-  upstreamLua: ["fixtures/upstream-lua/defcon/defcon/console.lua"],
+  upstreamLua: ["defcon/source/upstream/defcon/console.lua"],
 };
 
 // The committed api-doc JSON's element list — what the docs-site consumes for a
@@ -52,13 +53,16 @@ interface ImportedElement {
 
 function authoredTarget(namespace: string): AuthoredTarget {
   const found = readAuthoredTargets(DATA_DIR).find((entry) => entry.namespace === namespace);
-  if (!found) throw new Error(`authored-targets.json declares no ${namespace}`);
+  if (!found) throw new Error(`library data forks no ${namespace}`);
   return found;
 }
 
-function writeConfig(config: unknown): string {
+// Paths in a written fork stay as given, relative to its library folder.
+function writeConfig(targets: Partial<AuthoredTarget>[]): string {
   const root = mkdtempSync(join(tmpdir(), "authored-targets-config-"));
-  writeFileSync(join(root, "authored-targets.json"), JSON.stringify(config));
+  writeLibraryTargets(root, {
+    forks: targets.map((target) => ({ repo: DEFCON.repo, ...target })),
+  });
   return root;
 }
 
@@ -70,28 +74,28 @@ describe("readAuthoredTargets", () => {
     expect(defcon?.namespace).toBe("defcon");
     expect(defcon?.repo).toBe("https://github.com/britzl/defcon");
     expect(defcon?.ref).toBe("2.6.0");
-    expect(defcon?.authored).toBe("fixtures/authored/defcon.console.d.ts");
+    expect(defcon?.authored).toBe("defcon/fork/defcon.console.d.ts");
     expect(defcon?.apiDoc).toBe("api-doc/defcon.json");
     expect(defcon?.license).toBe("MIT");
   });
 
   test("throws naming the missing field and the offending entry", () => {
     const { authored: _drop, ...missingAuthored } = DEFCON;
-    const root = writeConfig({ targets: [missingAuthored] });
+    const root = writeConfig([missingAuthored]);
     expect(() => readAuthoredTargets(root)).toThrow(/authored/);
     expect(() => readAuthoredTargets(root)).toThrow(/defcon\.console/);
   });
 
   test("names the entry index when moduleId itself is the missing field", () => {
     const { moduleId: _drop, ...missingModuleId } = DEFCON;
-    const root = writeConfig({ targets: [missingModuleId] });
+    const root = writeConfig([missingModuleId]);
     expect(() => readAuthoredTargets(root)).toThrow(/moduleId/);
     expect(() => readAuthoredTargets(root)).toThrow(/0/);
   });
 
   test("defaults fidelity to fidelity/<namespace>.json and license to '' when omitted", () => {
     const { fidelity: _f, license: _l, ...bare } = DEFCON;
-    const root = writeConfig({ targets: [bare] });
+    const root = writeConfig([bare]);
     const [target] = readAuthoredTargets(root);
     expect(target?.fidelity).toBe("fidelity/defcon.json");
     expect(target?.license).toBe("");
@@ -223,7 +227,7 @@ describe("authored api-docs regenerate byte-for-byte", () => {
 });
 
 describe("defcon.console migration integrity", () => {
-  test("defcon is registered in authored-targets.json", () => {
+  test("defcon is registered in library data", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "defcon")).toBe(true);
   });
@@ -248,7 +252,7 @@ describe("defcon.console migration integrity", () => {
 });
 
 describe("deftest.deftest migration integrity", () => {
-  test("deftest is registered in authored-targets.json", () => {
+  test("deftest is registered in library data", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "deftest")).toBe(true);
   });
@@ -285,7 +289,7 @@ describe("deftest.deftest migration integrity", () => {
 });
 
 describe("defmath.defmath migration integrity", () => {
-  test("defmath is registered in authored-targets.json", () => {
+  test("defmath is registered in library data", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "defmath")).toBe(true);
   });
@@ -321,7 +325,7 @@ describe("defmath.defmath migration integrity", () => {
 });
 
 describe("zzfx.api migration integrity", () => {
-  test("zzfx is registered in authored-targets.json", () => {
+  test("zzfx is registered in library data", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "zzfx")).toBe(true);
   });
@@ -352,7 +356,7 @@ describe("zzfx.api migration integrity", () => {
 });
 
 describe("nakama helpers migration integrity", () => {
-  test("both hand-written helpers are registered in authored-targets.json", () => {
+  test("both hand-written helpers are registered in library data", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "nakama.engine.defold")).toBe(true);
     expect(targets.some((t) => t.namespace === "nakama.util.log")).toBe(true);
@@ -390,7 +394,7 @@ describe("nakama helpers migration integrity", () => {
 });
 
 describe("boom.boom migration integrity", () => {
-  test("boom is registered in authored-targets.json", () => {
+  test("boom is registered in library data", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "boom")).toBe(true);
   });
@@ -454,7 +458,7 @@ describe("boom.boom migration integrity", () => {
 });
 
 describe("defsave.defsave migration integrity", () => {
-  test("defsave is registered in authored-targets.json", () => {
+  test("defsave is registered in library data", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     expect(targets.some((t) => t.namespace === "defsave")).toBe(true);
   });
@@ -506,7 +510,7 @@ describe("defsave.defsave migration integrity", () => {
 // and the authored lane answers that second question. The fork is verbatim, so
 // the generic regen-drift and fork-identity loops above already cover fidelity.
 describe("persist.persist migration integrity", () => {
-  test("persist is registered in authored-targets.json", () => {
+  test("persist is registered in library data", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const persist = targets.find((t) => t.namespace === "persist");
     expect(persist).toBeDefined();
@@ -544,7 +548,7 @@ describe("persist.persist migration integrity", () => {
 // the retired ts-defold golden in place instead, keeping route and import string
 // byte-identical.
 describe("orthographic.camera migration integrity", () => {
-  test("orthographic is registered in authored-targets.json under its dotted namespace", () => {
+  test("orthographic is registered in library data under its dotted namespace", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const orthographic = targets.find((t) => t.namespace === "orthographic.camera");
     expect(orthographic).toBeDefined();
@@ -552,7 +556,7 @@ describe("orthographic.camera migration integrity", () => {
     expect(orthographic?.repo).toBe("https://github.com/britzl/defold-orthographic");
     expect(orthographic?.ref).toBe("3.6.3");
     expect(orthographic?.license).toBe("MIT");
-    expect(orthographic?.authored).toBe("fixtures/authored/orthographic.camera.d.ts");
+    expect(orthographic?.authored).toBe("defold-orthographic/fork/orthographic.camera.d.ts");
     expect(orthographic?.apiDoc).toBe("api-doc/orthographic.camera.json");
   });
 
@@ -594,7 +598,7 @@ describe("orthographic.camera migration integrity", () => {
 // 0.19.0 replaced the whole `banner_*` family with the sticky-banner API, so the
 // golden assertions below gate a correction rather than a copy.
 describe("yagames.yagames migration integrity", () => {
-  test("yagames is registered in authored-targets.json under its bare namespace", () => {
+  test("yagames is registered in library data under its bare namespace", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const yagames = targets.find((t) => t.namespace === "yagames");
     expect(yagames).toBeDefined();
@@ -602,7 +606,7 @@ describe("yagames.yagames migration integrity", () => {
     expect(yagames?.repo).toBe("https://github.com/indiesoftby/defold-yagames");
     expect(yagames?.ref).toBe("0.19.0");
     expect(yagames?.license).toBe("MIT");
-    expect(yagames?.authored).toBe("fixtures/authored/yagames.yagames.d.ts");
+    expect(yagames?.authored).toBe("defold-yagames/fork/yagames.yagames.d.ts");
     expect(yagames?.apiDoc).toBe("api-doc/yagames.json");
   });
 
@@ -704,7 +708,7 @@ describe("defold-input migration integrity", () => {
     "triggers",
   ];
 
-  test("all ten modules are registered in authored-targets.json under their dotted namespaces", () => {
+  test("all ten modules are registered in library data under their dotted namespaces", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     for (const mod of MODULES) {
       const moduleId = `in.${mod}`;
@@ -714,7 +718,7 @@ describe("defold-input migration integrity", () => {
       expect(target?.repo).toBe("https://github.com/britzl/defold-input");
       expect(target?.ref).toBe("4.8.0");
       expect(target?.license).toBe("MIT");
-      expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(target?.authored).toBe(`defold-input/fork/${moduleId}.d.ts`);
       expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
     }
   });
@@ -748,12 +752,12 @@ describe("defold-input migration integrity", () => {
   // *golden*, so the mapped spelling ships. Asserting the mapped names alone would
   // also pass on the raw ts-defold snapshot, so the unmapped ones are excluded too.
   test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const triggers = readFileSync(join(DATA_DIR, "fixtures/authored/in.triggers.d.ts"), "utf8");
+    const triggers = readFileSync(join(DATA_DIR, "defold-input/fork/in.triggers.d.ts"), "utf8");
     expect(triggers).toContain("KEY_SPACE: Hash;");
     expect(triggers).not.toContain(": hash;");
 
     const accelerometer = readFileSync(
-      join(DATA_DIR, "fixtures/authored/in.accelerometer.d.ts"),
+      join(DATA_DIR, "defold-input/fork/in.accelerometer.d.ts"),
       "utf8",
     );
     expect(accelerometer).toContain("Vector3");
@@ -774,7 +778,7 @@ describe("defold-input migration integrity", () => {
 describe("monarch migration integrity", () => {
   const MODULES = ["monarch", "transitions.easings", "transitions.gui"];
 
-  test("all three modules are registered in authored-targets.json under their dotted namespaces", () => {
+  test("all three modules are registered in library data under their dotted namespaces", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     for (const mod of MODULES) {
       const moduleId = `monarch.${mod}`;
@@ -784,7 +788,7 @@ describe("monarch migration integrity", () => {
       expect(target?.repo).toBe("https://github.com/britzl/monarch");
       expect(target?.ref).toBe("6.0.3");
       expect(target?.license).toBe("MIT");
-      expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(target?.authored).toBe(`monarch/fork/${moduleId}.d.ts`);
       expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
     }
   });
@@ -818,16 +822,13 @@ describe("monarch migration integrity", () => {
   // Asserting the mapped names alone would also pass on the raw ts-defold
   // snapshot, so each check excludes the unmapped spelling too.
   test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const monarch = readFileSync(join(DATA_DIR, "fixtures/authored/monarch.monarch.d.ts"), "utf8");
+    const monarch = readFileSync(join(DATA_DIR, "monarch/fork/monarch.monarch.d.ts"), "utf8");
     expect(monarch).toContain("DONE: Hash");
     expect(monarch).toContain("add_listener(url?: Url)");
     expect(monarch).not.toContain(": hash;");
     expect(monarch).not.toContain(": url,");
 
-    const gui = readFileSync(
-      join(DATA_DIR, "fixtures/authored/monarch.transitions.gui.d.ts"),
-      "utf8",
-    );
+    const gui = readFileSync(join(DATA_DIR, "monarch/fork/monarch.transitions.gui.d.ts"), "utf8");
     expect(gui).toContain('Opaque<"node">');
     expect(gui).toContain("Vector3");
     expect(gui).not.toContain("node: node");
@@ -839,7 +840,7 @@ describe("monarch migration integrity", () => {
   // defines `M.on_focus_changed` and nothing else, so the fork stays verbatim and
   // the README heading is recorded as the defect instead.
   test("the fork is verbatim where the goal proposed changing it", () => {
-    const monarch = readFileSync(join(DATA_DIR, "fixtures/authored/monarch.monarch.d.ts"), "utf8");
+    const monarch = readFileSync(join(DATA_DIR, "monarch/fork/monarch.monarch.d.ts"), "utf8");
     expect(monarch).toContain("on_focus_changed");
     expect(monarch).not.toContain("on_focus_change(");
   });
@@ -857,7 +858,7 @@ describe("monarch migration integrity", () => {
 describe("richtext migration integrity", () => {
   const MODULES = ["color", "richtext", "tags"];
 
-  test("all three modules are registered in authored-targets.json under their dotted namespaces", () => {
+  test("all three modules are registered in library data under their dotted namespaces", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     for (const mod of MODULES) {
       const moduleId = `richtext.${mod}`;
@@ -867,7 +868,7 @@ describe("richtext migration integrity", () => {
       expect(target?.repo).toBe("https://github.com/britzl/defold-richtext");
       expect(target?.ref).toBe("5.22.1");
       expect(target?.license).toBe("MIT");
-      expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(target?.authored).toBe(`defold-richtext/fork/${moduleId}.d.ts`);
       expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
     }
   });
@@ -899,12 +900,12 @@ describe("richtext migration integrity", () => {
   // Asserting the mapped names alone would also pass on the raw ts-defold
   // snapshot, so each check excludes the unmapped spelling too.
   test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const color = readFileSync(join(DATA_DIR, "fixtures/authored/richtext.color.d.ts"), "utf8");
+    const color = readFileSync(join(DATA_DIR, "defold-richtext/fork/richtext.color.d.ts"), "utf8");
     expect(color).toContain("Vector4");
     expect(color).not.toContain("vmath.vector4");
 
     const richtext = readFileSync(
-      join(DATA_DIR, "fixtures/authored/richtext.richtext.d.ts"),
+      join(DATA_DIR, "defold-richtext/fork/richtext.richtext.d.ts"),
       "utf8",
     );
     expect(richtext).toContain('Opaque<"node">');
@@ -920,7 +921,7 @@ describe("richtext migration integrity", () => {
   // is a judgment about.
   test("the fork keeps the constants and named types the markdown emit loses", () => {
     const richtext = readFileSync(
-      join(DATA_DIR, "fixtures/authored/richtext.richtext.d.ts"),
+      join(DATA_DIR, "defold-richtext/fork/richtext.richtext.d.ts"),
       "utf8",
     );
     for (const constant of [
@@ -957,7 +958,7 @@ describe("richtext migration integrity", () => {
 describe("metrics migration integrity", () => {
   const MODULES = ["fps", "mem"];
 
-  test("both modules are registered in authored-targets.json under their dotted namespaces", () => {
+  test("both modules are registered in library data under their dotted namespaces", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     for (const mod of MODULES) {
       const moduleId = `metrics.${mod}`;
@@ -967,7 +968,7 @@ describe("metrics migration integrity", () => {
       expect(target?.repo).toBe("https://github.com/britzl/defold-metrics");
       expect(target?.ref).toBe("1.2.1");
       expect(target?.license).toBe("MIT");
-      expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(target?.authored).toBe(`defold-metrics/fork/${moduleId}.d.ts`);
       expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
     }
   });
@@ -999,7 +1000,10 @@ describe("metrics migration integrity", () => {
   // pasted into both.
   test("the correction landed on both forks and left the factory intact", () => {
     for (const mod of MODULES) {
-      const fork = readFileSync(join(DATA_DIR, "fixtures/authored", `metrics.${mod}.d.ts`), "utf8");
+      const fork = readFileSync(
+        join(DATA_DIR, "defold-metrics/fork", `metrics.${mod}.d.ts`),
+        "utf8",
+      );
       expect(fork).toContain("export function update(): void;");
       expect(fork).toContain("export function draw(): void;");
       expect(fork).toContain(`export function ${mod}(): number;`);
@@ -1036,7 +1040,7 @@ describe("gooey.gooey migration integrity", () => {
     "input",
   ];
 
-  test("gooey is registered in authored-targets.json under its bare namespace", () => {
+  test("gooey is registered in library data under its bare namespace", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const gooey = targets.find((t) => t.namespace === "gooey");
     expect(gooey).toBeDefined();
@@ -1044,7 +1048,7 @@ describe("gooey.gooey migration integrity", () => {
     expect(gooey?.repo).toBe("https://github.com/britzl/gooey");
     expect(gooey?.ref).toBe("10.5.3");
     expect(gooey?.license).toBe("MIT");
-    expect(gooey?.authored).toBe("fixtures/authored/gooey.gooey.d.ts");
+    expect(gooey?.authored).toBe("gooey/fork/gooey.gooey.d.ts");
     expect(gooey?.apiDoc).toBe("api-doc/gooey.json");
   });
 
@@ -1065,7 +1069,7 @@ describe("gooey.gooey migration integrity", () => {
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const authored = readFileSync(join(DATA_DIR, "fixtures/authored/gooey.gooey.d.ts"), "utf8");
+    const authored = readFileSync(join(DATA_DIR, "gooey/fork/gooey.gooey.d.ts"), "utf8");
     expect(authored).toContain('node: Opaque<"node">;');
     expect(authored).toContain("node_id: Hash;");
     expect(authored).toContain('LuaMap<Hash, Opaque<"node">>');
@@ -1075,7 +1079,7 @@ describe("gooey.gooey migration integrity", () => {
   });
 
   test("the group correction landed on the vendored fork, leaving the other declarations intact", () => {
-    const fork = readFileSync(join(DATA_DIR, "fixtures/authored/gooey.gooey.d.ts"), "utf8");
+    const fork = readFileSync(join(DATA_DIR, "gooey/fork/gooey.gooey.d.ts"), "utf8");
     expect(fork).toMatch(
       /export function group\(\s*group_id: Hash \| string,\s*action_id: Hash,\s*action: table,\s*group_fn: \(\) => void,\s*\): table;/,
     );
@@ -1093,10 +1097,10 @@ describe("gooey.gooey migration integrity", () => {
 // description of this library anywhere. `keep` would strand that surface in a
 // lane no generation path can maintain.
 describe("bzAnim.bzLibrary migration integrity", () => {
-  const AUTHORED = "fixtures/authored/bzAnim.bzLibrary.d.ts";
+  const AUTHORED = "bzanim/fork/bzAnim.bzLibrary.d.ts";
   const FUNCTIONS = ["animate", "animateSequence", "cancel", "info", "isReady", "setDebugLevel"];
 
-  test("bzAnim is registered in authored-targets.json under its bare namespace", () => {
+  test("bzAnim is registered in library data under its bare namespace", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const bzAnim = targets.find((t) => t.namespace === "bzAnim");
     expect(bzAnim).toBeDefined();
@@ -1183,7 +1187,7 @@ describe("bzAnim.bzLibrary migration integrity", () => {
 // interface, so `keep` would freeze that structure in a lane nothing here
 // maintains.
 describe("platypus.platypus migration integrity", () => {
-  const AUTHORED = "fixtures/authored/platypus.platypus.d.ts";
+  const AUTHORED = "platypus/fork/platypus.platypus.d.ts";
   const CONFIG_FIELDS = [
     "debug",
     "reparent",
@@ -1232,7 +1236,7 @@ describe("platypus.platypus migration integrity", () => {
   // severance, so the exhaustive count below is over both runs.
   const SEPARATION_MODES = ["SEPARATION_RAYS", "SEPARATION_SHAPES"];
 
-  test("platypus is registered in authored-targets.json under its bare namespace", () => {
+  test("platypus is registered in library data under its bare namespace", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const platypus = targets.find((t) => t.namespace === "platypus");
     expect(platypus).toBeDefined();
@@ -1329,7 +1333,7 @@ describe("platypus.platypus migration integrity", () => {
 // keep exactly those three, and the assertions below name them rather than a
 // structural shape no lane can express (platypus's case).
 describe("dicebag.dicebag migration integrity", () => {
-  const AUTHORED = "fixtures/authored/dicebag.dicebag.d.ts";
+  const AUTHORED = "dicebag/fork/dicebag.dicebag.d.ts";
   const FUNCTIONS = [
     "bag_create",
     "bag_draw",
@@ -1354,7 +1358,7 @@ describe("dicebag.dicebag migration integrity", () => {
     "table_reset",
   ];
 
-  test("dicebag is registered in authored-targets.json under its bare namespace", () => {
+  test("dicebag is registered in library data under its bare namespace", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const dicebag = targets.find((t) => t.namespace === "dicebag");
     expect(dicebag).toBeDefined();
@@ -1421,7 +1425,7 @@ describe("dicebag.dicebag migration integrity", () => {
 // assertions below name the five signatures that emit would have erased rather
 // than a type the README merely underspecified (dicebag's case).
 describe("rendy.rendy migration integrity", () => {
-  const AUTHORED = "fixtures/authored/rendy.rendy.d.ts";
+  const AUTHORED = "library-defold-rendy/fork/rendy.rendy.d.ts";
   const FUNCTIONS = [
     "cancel_shake",
     "create_camera",
@@ -1436,7 +1440,7 @@ describe("rendy.rendy migration integrity", () => {
     "world_to_screen",
   ];
 
-  test("rendy is registered in authored-targets.json under its bare namespace", () => {
+  test("rendy is registered in library data under its bare namespace", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const rendy = targets.find((t) => t.namespace === "rendy");
     expect(rendy).toBeDefined();
@@ -1517,7 +1521,7 @@ describe("rendy.rendy migration integrity", () => {
 // assertions below name the members the verdict counts as missing rather than a
 // spelling the codemod moved.
 describe("nakama.nakama migration integrity", () => {
-  const AUTHORED = "fixtures/authored/nakama.nakama.d.ts";
+  const AUTHORED = "nakama-defold/fork/nakama.nakama.d.ts";
   // Every member `compareFidelityToTsDefold` reports missing from the openapi
   // emit. `openapi-fidelity-gate.test.ts` re-derives the set from the real
   // emitter; this list is what the fork must still carry for that verdict to keep
@@ -1539,7 +1543,7 @@ describe("nakama.nakama migration integrity", () => {
     "sync",
   ];
 
-  test("nakama is registered in authored-targets.json under its bare namespace", () => {
+  test("nakama is registered in library data under its bare namespace", () => {
     const targets = readAuthoredTargets(DATA_DIR);
     const nakama = targets.find((t) => t.namespace === "nakama");
     expect(nakama).toBeDefined();
@@ -1647,7 +1651,7 @@ describe("nakama.nakama migration integrity", () => {
 // api-doc model the golden and the docs-site are both built from rather than against
 // the fork's text, so the emit path is exercised rather than restated.
 describe("shutter.shutter type claims upstream states only in its body", () => {
-  const AUTHORED = "fixtures/authored/shutter.shutter.d.ts";
+  const AUTHORED = "defold-shutter/fork/shutter.shutter.d.ts";
   const FUNCTIONS = [
     "activate",
     "cancel_shake",
@@ -1693,9 +1697,7 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
     expect(entry?.authored).toBe(AUTHORED);
     expect(entry?.apiDoc).toBe("api-doc/shutter.json");
     expect(entry?.parityVerdict).toBeUndefined();
-    expect(entry?.upstreamLua).toEqual([
-      "fixtures/upstream-lua/defold-shutter/shutter/shutter.lua",
-    ]);
+    expect(entry?.upstreamLua).toEqual(["defold-shutter/source/upstream/shutter/shutter.lua"]);
   });
 
   // `return viewport_x, viewport_y, viewport_width, viewport_height` — four values, not
@@ -1791,7 +1793,7 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
 // the lowered api-doc model the golden and the docs-site are both built from rather
 // than against the fork's text, so the emit path is exercised rather than restated.
 describe("checkpoint.checkpoint type claims upstream states only in its body", () => {
-  const AUTHORED = "fixtures/authored/checkpoint.checkpoint.d.ts";
+  const AUTHORED = "defold-checkpoint/fork/checkpoint.checkpoint.d.ts";
 
   function element(name: string): Record<string, unknown> {
     const found = apiDocElements("checkpoint").find((entry) => entry.name === name);
@@ -1815,7 +1817,7 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
     expect(entry?.apiDoc).toBe("api-doc/checkpoint.json");
     expect(entry?.parityVerdict).toBeUndefined();
     expect(entry?.upstreamLua).toEqual([
-      "fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua",
+      "defold-checkpoint/source/upstream/checkpoint/checkpoint.lua",
     ]);
   });
 
@@ -1920,7 +1922,7 @@ describe("defold-sprite-repeat type claims upstream states only in its body", ()
       expect(entry?.license).toBe("MIT");
       expect(entry?.parityVerdict).toBeUndefined();
       expect(entry?.upstreamLua).toEqual([
-        `fixtures/upstream-lua/defold-sprite-repeat/${namespace}/${namespace}.lua`,
+        `defold-sprite-repeat/source/upstream/${namespace}/${namespace}.lua`,
       ]);
     }
   });
@@ -2010,9 +2012,7 @@ describe("sentinel.sentry type claims upstream states only in its body", () => {
     expect(entry?.ref).toBe("1.3.1");
     expect(entry?.license).toBe("MIT");
     expect(entry?.parityVerdict).toBeUndefined();
-    expect(entry?.upstreamLua).toEqual([
-      "fixtures/upstream-lua/defold-sentinel/sentinel/sentry.lua",
-    ]);
+    expect(entry?.upstreamLua).toEqual(["defold-sentinel/source/upstream/sentinel/sentry.lua"]);
   });
 
   // `assert(type(M.config.dsn) == "string", ...)` is the only config field `init` demands.
@@ -2115,7 +2115,7 @@ describe("GamePush account and commerce type claims upstream states only in its 
       });
       expect(entry?.parityVerdict).toBeUndefined();
       expect(entry?.upstreamLua).toEqual([
-        `fixtures/upstream-lua/defold-gamepush/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
+        `defold-gamepush/source/upstream/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
       ]);
     }
   });
@@ -2214,7 +2214,7 @@ describe("GamePush social and live-ops type claims upstream states only in its b
       });
       expect(entry?.parityVerdict).toBeUndefined();
       expect(entry?.upstreamLua).toEqual([
-        `fixtures/upstream-lua/defold-gamepush/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
+        `defold-gamepush/source/upstream/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
       ]);
     }
   });
@@ -2294,7 +2294,7 @@ describe("GamePush platform type claims upstream states only in its body", () =>
       });
       expect(entry?.parityVerdict).toBeUndefined();
       expect(entry?.upstreamLua).toEqual([
-        `fixtures/upstream-lua/defold-gamepush/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
+        `defold-gamepush/source/upstream/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
       ]);
     }
   });
@@ -2342,7 +2342,7 @@ describe("Flow authored module type claims", () => {
         repo: "https://github.com/Pause-Games/flow",
         ref: "1.0.0",
         license: "MIT",
-        upstreamLua: [`fixtures/upstream-lua/flow/${source}`],
+        upstreamLua: [`flow/source/upstream/${source}`],
       });
     }
   });
@@ -2468,10 +2468,10 @@ describe("nakama.session type claims upstream states only in its body", () => {
     expect(entry.repo).toBe("https://github.com/heroiclabs/nakama-defold");
     expect(entry.ref).toBe("v3.4.0");
     expect(entry.license).toBe("Apache-2.0");
-    expect(entry.authored).toBe("fixtures/authored/nakama.session.d.ts");
+    expect(entry.authored).toBe("nakama-defold/fork/nakama.session.d.ts");
     expect(entry.apiDoc).toBe("api-doc/nakama.session.json");
     expect(entry.parityVerdict).toBeUndefined();
-    expect(entry.upstreamLua).toEqual(["fixtures/upstream-lua/nakama-defold/nakama/session.lua"]);
+    expect(entry.upstreamLua).toEqual(["nakama-defold/source/upstream/nakama/session.lua"]);
   });
 
   // `if not session.token then return nil end` — the stored file can be missing or hold
@@ -2556,10 +2556,10 @@ describe("nakama.socket type claims upstream states only in its body", () => {
     expect(entry.repo).toBe("https://github.com/heroiclabs/nakama-defold");
     expect(entry.ref).toBe("v3.4.0");
     expect(entry.license).toBe("Apache-2.0");
-    expect(entry.authored).toBe("fixtures/authored/nakama.socket.d.ts");
+    expect(entry.authored).toBe("nakama-defold/fork/nakama.socket.d.ts");
     expect(entry.apiDoc).toBe("api-doc/nakama.socket.json");
     expect(entry.parityVerdict).toBeUndefined();
-    expect(entry.upstreamLua).toEqual(["fixtures/upstream-lua/nakama-defold/nakama/socket.lua"]);
+    expect(entry.upstreamLua).toEqual(["nakama-defold/source/upstream/nakama/socket.lua"]);
   });
 
   // `for name,fn in pairs(M) do ... socket[name] = function(...) return fn(socket, ...) end`

@@ -1,0 +1,11 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["immutable/**/*.lua"],
+      "moduleId": "immutable.immutable",
+      "namespace": "immutable",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    }
+  ]
+}

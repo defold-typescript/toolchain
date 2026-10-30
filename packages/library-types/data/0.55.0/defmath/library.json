@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/subsoap/defmath",
+  "license": "CC0-1.0",
+  "forks": [
+    {
+      "authored": "fork/defmath.defmath.d.ts",
+      "moduleId": "defmath.defmath",
+      "namespace": "defmath",
+      "apiDoc": "api-doc/defmath.json",
+      "upstreamLua": ["source/upstream/defmath/defmath.lua"]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/abadonna/defold-ink",
+  "license": "Unlicense",
+  "forks": [
+    {
+      "authored": "fork/ink.story.d.ts",
+      "moduleId": "ink.story",
+      "namespace": "ink",
+      "apiDoc": "api-doc/ink.json",
+      "upstreamLua": ["source/upstream/ink/story.lua"]
+    }
+  ]
+}

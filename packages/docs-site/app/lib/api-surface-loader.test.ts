@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
@@ -31,6 +39,25 @@ const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 const REAL_LIBRARY_DATA_DIR = libraryDataDir(REAL_LIBRARY_TYPES_DIR) as string;
+
+// A native extension's library folder, named for its repo as library data names it.
+function writeNativeLibrary(
+  dataDir: string,
+  native: { repo: string; ref: string; refKind?: string; namespace: string },
+): void {
+  const folder = join(dataDir, native.repo.split("/").pop() as string);
+  mkdirSync(folder, { recursive: true });
+  writeFileSync(
+    join(folder, "library.json"),
+    JSON.stringify({
+      repo: native.repo,
+      license: "MIT",
+      ...(native.refKind === undefined ? {} : { refKind: native.refKind }),
+      native: { namespace: native.namespace },
+    }),
+  );
+  writeFileSync(join(folder, "reviewed.json"), JSON.stringify({ ref: native.ref }));
+}
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 describe("githubOwner", () => {
@@ -210,9 +237,20 @@ describe("loadLibraryProvenance — vendored libraries", () => {
 });
 
 describe("loadLibraryProvenance — curated native extensions", () => {
-  const { targets } = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_DATA_DIR, "native-targets.json"), "utf8"),
-  ) as { targets: { repo: string; ref: string; license: string; namespace: string }[] };
+  const targets = readdirSync(REAL_LIBRARY_DATA_DIR)
+    .sort()
+    .map((dir) => join(REAL_LIBRARY_DATA_DIR, dir))
+    .filter((dir) => existsSync(join(dir, "library.json")))
+    .flatMap((dir) => {
+      const { repo, license, native } = JSON.parse(
+        readFileSync(join(dir, "library.json"), "utf8"),
+      ) as { repo: string; license: string; native?: { namespace: string } };
+      if (native === undefined) return [];
+      const { ref } = JSON.parse(readFileSync(join(dir, "reviewed.json"), "utf8")) as {
+        ref: string;
+      };
+      return [{ repo, ref, license, namespace: native.namespace }];
+    });
   const nativeExpectations = readNativeExpectations();
 
   test("attributes each native namespace to its upstream repo at the pin, as an import", () => {
@@ -234,26 +272,18 @@ describe("loadLibraryProvenance — curated native extensions", () => {
   test("carries a commit pin as the page's pin kind, and no pin kind for a release", () => {
     const dir = mkdtempSync(join(tmpdir(), "native-pin-kind-"));
     cpSync(LIBRARY_FIXTURE_DIR, dir, { recursive: true });
-    writeFileSync(
-      join(libraryDataDir(dir) as string, "native-targets.json"),
-      JSON.stringify({
-        targets: [
-          {
-            repo: "https://github.com/someone/native-pinned",
-            ref: "0123456789abcdef0123456789abcdef01234567",
-            refKind: "commit",
-            license: "MIT",
-            namespace: "pinned",
-          },
-          {
-            repo: "https://github.com/someone/native-released",
-            ref: "v1.0.0",
-            license: "MIT",
-            namespace: "released",
-          },
-        ],
-      }),
-    );
+    const dataDir = libraryDataDir(dir) as string;
+    writeNativeLibrary(dataDir, {
+      repo: "https://github.com/someone/native-pinned",
+      ref: "0123456789abcdef0123456789abcdef01234567",
+      refKind: "commit",
+      namespace: "pinned",
+    });
+    writeNativeLibrary(dataDir, {
+      repo: "https://github.com/someone/native-released",
+      ref: "v1.0.0",
+      namespace: "released",
+    });
     const fixtureMeta = loadLibraryProvenance(dir);
     expect(fixtureMeta("pinned").pinKind).toBe("commit");
     expect(fixtureMeta("released").pinKind).toBeUndefined();
@@ -999,18 +1029,13 @@ describe("Asset Portal script_api libraries under Libraries", () => {
         writeFileSync(join(dir, "api-doc", "native", `${namespace}.json`), emptyDoc(namespace));
       }
       const dataDir = join(dir, "data", "0.55.0");
-      mkdirSync(dataDir, { recursive: true });
-      writeFileSync(
-        join(dataDir, "native-targets.json"),
-        JSON.stringify({
-          targets: options.nativeNamespaces.map((namespace) => ({
-            repo: `https://github.com/someone/native-${namespace}`,
-            ref: "1.0.0",
-            license: "MIT",
-            namespace,
-          })),
-        }),
-      );
+      for (const namespace of options.nativeNamespaces) {
+        writeNativeLibrary(dataDir, {
+          repo: `https://github.com/someone/native-${namespace}`,
+          ref: "1.0.0",
+          namespace,
+        });
+      }
     }
     return dir;
   }

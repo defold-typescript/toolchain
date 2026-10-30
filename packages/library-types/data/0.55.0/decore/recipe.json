@@ -1,0 +1,11 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["decore/**/*.lua"],
+      "moduleId": "decore.decore",
+      "namespace": "decore",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**"]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "repo": "https://github.com/Dragosha/defold-light-and-shadows",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/light_and_shadows.light_and_shadows.d.ts",
+      "moduleId": "light_and_shadows.light_and_shadows",
+      "namespace": "light_and_shadows.light_and_shadows",
+      "apiDoc": "api-doc/light_and_shadows.light_and_shadows.json",
+      "upstreamLua": ["source/upstream/light_and_shadows/light_and_shadows.lua"]
+    },
+    {
+      "authored": "fork/light_and_shadows.light.d.ts",
+      "moduleId": "light_and_shadows.light",
+      "namespace": "light_and_shadows.light",
+      "apiDoc": "api-doc/light_and_shadows.light.json",
+      "upstreamLua": ["source/upstream/light_and_shadows/light.lua"]
+    },
+    {
+      "authored": "fork/light_and_shadows.constants.d.ts",
+      "moduleId": "light_and_shadows.constants",
+      "namespace": "light_and_shadows.constants",
+      "apiDoc": "api-doc/light_and_shadows.constants.json",
+      "upstreamLua": ["source/upstream/light_and_shadows/constants.lua"]
+    }
+  ]
+}

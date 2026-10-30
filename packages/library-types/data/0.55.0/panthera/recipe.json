@@ -1,0 +1,13 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["panthera/**/*.lua"],
+      "moduleId": "panthera.panthera",
+      "namespace": "panthera",
+      "typeRenames": {
+        "vector": "Vector"
+      },
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    }
+  ]
+}

@@ -19,7 +19,7 @@ import { runResolve } from "./resolve";
 const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 const libraryDataDir = LIBRARY_DATA_DIR;
-const vendoredDruid = join(libraryDataDir, "fixtures", "luals", "druid");
+const vendoredDruid = join(libraryDataDir, "druid", "source", "druid");
 
 const druidRegistry = [
   { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },

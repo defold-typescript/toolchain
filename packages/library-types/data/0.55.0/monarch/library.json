@@ -1,0 +1,27 @@
+{
+  "repo": "https://github.com/britzl/monarch",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/monarch.monarch.d.ts",
+      "moduleId": "monarch.monarch",
+      "namespace": "monarch.monarch",
+      "apiDoc": "api-doc/monarch.monarch.json",
+      "upstreamLua": ["source/upstream/monarch/monarch.lua"]
+    },
+    {
+      "authored": "fork/monarch.transitions.easings.d.ts",
+      "moduleId": "monarch.transitions.easings",
+      "namespace": "monarch.transitions.easings",
+      "apiDoc": "api-doc/monarch.transitions.easings.json",
+      "upstreamLua": ["source/upstream/monarch/transitions/easings.lua"]
+    },
+    {
+      "authored": "fork/monarch.transitions.gui.d.ts",
+      "moduleId": "monarch.transitions.gui",
+      "namespace": "monarch.transitions.gui",
+      "apiDoc": "api-doc/monarch.transitions.gui.json",
+      "upstreamLua": ["source/upstream/monarch/transitions/gui.lua"]
+    }
+  ]
+}

@@ -24,8 +24,7 @@
       "!**/asset-portal.json",
       "!**/test/fixtures",
       "!**/fixtures/ts-defold",
-      "!**/fixtures/authored",
-      "!packages/library-types/data/*/native",
+      "!packages/library-types/data/*/*/fork",
       "!**/*.lua"
     ]
   },

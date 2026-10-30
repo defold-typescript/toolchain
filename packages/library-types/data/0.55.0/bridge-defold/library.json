@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/Playgama/bridge-defold",
+  "license": "MIT",
+  "indexSlots": {
+    "bridge/bridge.daily_rewards.get_current_day:param:on_success:day": {
+      "class": "native-0",
+      "evidence": "Returns the 0-based index of the reward the player is currently on"
+    }
+  }
+}

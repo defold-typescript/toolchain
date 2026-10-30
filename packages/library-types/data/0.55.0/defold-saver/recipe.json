@@ -1,0 +1,18 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["saver/**/*.lua"],
+      "moduleId": "saver.saver",
+      "namespace": "saver.saver",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    },
+    {
+      "sourceGlobs": ["saver/**/*.lua"],
+      "moduleId": "saver.storage",
+      "namespace": "saver.storage",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    }
+  ]
+}

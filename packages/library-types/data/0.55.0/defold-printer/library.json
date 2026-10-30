@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/Insality/defold-printer",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/printer.printer.d.ts",
+      "moduleId": "printer.printer",
+      "namespace": "printer",
+      "apiDoc": "api-doc/printer.json",
+      "upstreamLua": ["source/upstream/printer/printer.lua"]
+    }
+  ]
+}

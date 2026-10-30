@@ -10,7 +10,7 @@ import { printedModule } from "./print-corpus";
 // `realtime.lua`, whose digest `authored-parity-floor.test.ts` pins.
 
 const DECLARATION = await printedModule(LIBRARY_DATA_DIR, "asobi.realtime");
-const UPSTREAM = resolve(LIBRARY_DATA_DIR, "fixtures/upstream-lua/asobi-defold/asobi/realtime.lua");
+const UPSTREAM = resolve(LIBRARY_DATA_DIR, "asobi-defold/source/upstream/asobi/realtime.lua");
 
 function declaredEvents(): Record<string, number> {
   const sf = ts.createSourceFile("asobi.realtime.d.ts", DECLARATION, ts.ScriptTarget.Latest, true);

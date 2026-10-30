@@ -223,22 +223,22 @@ the named directory, so a repo-name collision alone writes nothing.
 
 | Extension | Pinned at | Namespace | Confirmed by        |
 | --------- | --------- | --------- | ------------------- |
-| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | [`daabbcc`](/api/daabbcc) | `daabbcc/ext.manifest` |
-| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | [`share`](/api/share) | `share/ext.manifest` |
-| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | [`uuid4`](/api/uuid4) | `uuid4/ext.manifest` |
-| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](/api/tile_raycast) | `tile-raycast/ext.manifest` |
 | [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | `v1.1.0` | [`def_windward_jps`](/api/def_windward_jps) | `def_windward_jps/ext.manifest` |
-| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | `1.0.3` | [`box2d`](/api/box2d) | `box2d/native/ext.manifest` |
-| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | `v1.0.6` | [`daabbcc3d`](/api/daabbcc3d) | `daabbcc3d/ext.manifest` |
-| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | `76ff0c9` | [`wave`](/api/wave) | `wave/ext.manifest` |
-| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | `95ce965` | [`detour`](/api/detour) | `detour/ext.manifest` |
 | [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | `v1.2` | [`taptic_engine`](/api/taptic_engine) | `taptic_engine/ext.manifest` |
-| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | `1.1.1` | [`gyro`](/api/gyro) | `gyro/ext.manifest` |
-| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | `v0.1.0` | [`fontscale`](/api/fontscale) | `fontscale/ext.manifest` |
-| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | `2023870` | [`directories`](/api/directories) | `directories/ext.manifest` |
+| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | `1.0.3` | [`box2d`](/api/box2d) | `box2d/native/ext.manifest` |
+| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | [`daabbcc`](/api/daabbcc) | `daabbcc/ext.manifest` |
+| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | `v1.0.6` | [`daabbcc3d`](/api/daabbcc3d) | `daabbcc3d/ext.manifest` |
+| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | `95ce965` | [`detour`](/api/detour) | `detour/ext.manifest` |
 | [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | `1.2.0` | [`uptime`](/api/uptime) | `uptime/ext.manifest` |
-| [britzl/defold-png](https://github.com/britzl/defold-png) | `1.2.2` | [`png`](/api/png) | `png/ext.manifest` |
+| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | `v0.1.0` | [`fontscale`](/api/fontscale) | `fontscale/ext.manifest` |
+| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | `1.1.1` | [`gyro`](/api/gyro) | `gyro/ext.manifest` |
 | [britzl/defold-imp](https://github.com/britzl/defold-imp) | `1.1.0` | [`imp`](/api/imp) | `imp/ext.manifest` |
+| [britzl/defold-png](https://github.com/britzl/defold-png) | `1.2.2` | [`png`](/api/png) | `png/ext.manifest` |
+| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | [`share`](/api/share) | `share/ext.manifest` |
+| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](/api/tile_raycast) | `tile-raycast/ext.manifest` |
+| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | [`uuid4`](/api/uuid4) | `uuid4/ext.manifest` |
+| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | `76ff0c9` | [`wave`](/api/wave) | `wave/ext.manifest` |
+| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | `2023870` | [`directories`](/api/directories) | `directories/ext.manifest` |
 | [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | `618292f` | [`openal`](/api/openal) | `openal/ext.manifest` |
 | [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | `ecda39f` | [`ainpc`](/api/ainpc) | `player2-ai-npc/ext.manifest` |
 

@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/8bitskull/dicebag",
+  "license": "CC0-1.0",
+  "forks": [
+    {
+      "authored": "fork/dicebag.dicebag.d.ts",
+      "moduleId": "dicebag.dicebag",
+      "namespace": "dicebag",
+      "apiDoc": "api-doc/dicebag.json",
+      "upstreamLua": ["source/upstream/dicebag/dicebag.lua"]
+    }
+  ]
+}
