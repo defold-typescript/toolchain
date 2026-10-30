@@ -321,7 +321,7 @@ async function seedLualsLibraryProject(): Promise<{
     path.join(TYPES_DIR, "test", "zip-fixture.ts")
   )) as ZipFixture;
   const vendored = readFileSync(
-    path.join(LIBRARY_DATA_DIR, "fixtures", "luals", "immutable", IMMUTABLE_MODULE_FILE),
+    path.join(LIBRARY_DATA_DIR, "lua-immutable", "source", "immutable", IMMUTABLE_MODULE_FILE),
     "utf8",
   );
   const marker = "-- Metatable for the Immutable module";

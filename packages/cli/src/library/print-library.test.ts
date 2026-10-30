@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { ExtensionZip } from "../extension-archive";
+import { writeLibraryTargets } from "../library-data-fixture";
 import { LIBRARY_DATA_DIR } from "./package-root";
 import { printLibraryModules } from "./print-library";
 import { archiveSourceTree } from "./source-tree";
@@ -52,7 +53,7 @@ function githubArchive(wrapper: string, files: Record<string, string>): Extensio
 }
 
 function vendoredLuals(target: LualsTarget): Record<string, string> {
-  const dir = join(DATA_DIR, "fixtures/luals", target.namespace);
+  const dir = join(DATA_DIR, target.sourceDir);
   const files: Record<string, string> = {};
   for (const entry of readdirSync(dir, { recursive: true }).map(String)) {
     const path = entry.replace(/\\/g, "/");
@@ -63,7 +64,7 @@ function vendoredLuals(target: LualsTarget): Record<string, string> {
 
 function lualsTarget(moduleId: string): LualsTarget {
   const target = readLualsTargets(DATA_DIR).find((candidate) => candidate.moduleId === moduleId);
-  if (target === undefined) throw new Error(`${moduleId} missing from luals-targets.json`);
+  if (target === undefined) throw new Error(`library data has no LuaLS target ${moduleId}`);
   return target;
 }
 
@@ -150,11 +151,9 @@ describe("the archive, not the vendored copy, decides a LuaLS print", () => {
 describe("printLibraryModules dispatches each module to its lane", () => {
   test("bridge prints a function its archive's .script_api adds", async () => {
     const target = readScriptApiTargets(DATA_DIR).find((t) => t.moduleId === "bridge.bridge");
-    if (target === undefined) throw new Error("bridge.bridge missing from script-api-targets.json");
-    const doc = readFileSync(
-      join(DATA_DIR, "fixtures/script-api/bridge.bridge.script_api"),
-      "utf8",
-    );
+    if (target === undefined)
+      throw new Error("library data has no script_api target bridge.bridge");
+    const doc = readFileSync(join(DATA_DIR, target.sourceFile), "utf8");
     const probed = doc.replace(
       "  members:\n",
       "  members:\n  - name: print_probe\n    type: function\n    desc: Probes that the print reads the archive.\n\n",
@@ -177,7 +176,7 @@ describe("printLibraryModules dispatches each module to its lane", () => {
 
   test("an authored module prints its fork whatever the archive holds, and an unnamed module is unprintable", async () => {
     const [target] = readAuthoredTargets(DATA_DIR);
-    if (target === undefined) throw new Error("authored-targets.json holds no target");
+    if (target === undefined) throw new Error("library data holds no fork");
     const archive = archiveSourceTree(
       githubArchive("anything-1.0", {
         [`${target.moduleId.replace(/\./g, "/")}.lua`]: "return {}\n",
@@ -205,23 +204,15 @@ describe("printLibraryModules dispatches each module to its lane", () => {
       moduleId,
       namespace: "mylib",
       apiDoc: "api-doc/mylib.json",
-      upstreamLua: ["fixtures/upstream-lua/mylib/core.lua"],
+      upstreamLua: ["source/upstream/core.lua"],
     });
-    for (const file of ["fixtures/authored/a.d.ts", "fixtures/authored/b.d.ts"]) {
-      mkdirSync(dirname(join(root, file)), { recursive: true });
-      writeFileSync(join(root, file), "declare module 'mylib.core' {}\n");
+    for (const file of ["fork/a.d.ts", "fork/b.d.ts"]) {
+      mkdirSync(dirname(join(root, "mylib", file)), { recursive: true });
+      writeFileSync(join(root, "mylib", file), "declare module 'mylib.core' {}\n");
     }
-    writeFileSync(
-      join(root, "authored-targets.json"),
-      JSON.stringify({
-        targets: [
-          fork("mylib.core", "fixtures/authored/a.d.ts"),
-          fork("mylib.core", "fixtures/authored/b.d.ts"),
-        ],
-      }),
-    );
-    writeFileSync(join(root, "luals-targets.json"), JSON.stringify({ targets: [] }));
-    writeFileSync(join(root, "script-api-targets.json"), JSON.stringify({ targets: [] }));
+    writeLibraryTargets(root, {
+      forks: [fork("mylib.core", "fork/a.d.ts"), fork("mylib.core", "fork/b.d.ts")],
+    });
 
     await expect(printLibraryModules(root, ["mylib.core"], null)).rejects.toThrow(/mylib\.core/);
   });

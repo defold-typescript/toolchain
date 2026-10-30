@@ -1,13 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { type FlatLibraryTargets, writeLibraryTargets } from "../library-data-fixture";
+import { PARITY_VERDICT_REASONS } from "./library-data";
 import { LIBRARY_DATA_DIR } from "./package-root";
-import {
-  type AuthoredTarget,
-  PARITY_VERDICT_REASONS,
-  readAuthoredTargets,
-} from "./sync-authored-types";
+import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
 
 const DATA_DIR = LIBRARY_DATA_DIR;
 const TARGETS = readAuthoredTargets(DATA_DIR);
@@ -16,17 +14,18 @@ const DEFCON: AuthoredTarget = {
   repo: "https://github.com/britzl/defcon",
   ref: "2.6.0",
   license: "MIT",
-  authored: "fixtures/authored/defcon.console.d.ts",
+  authored: "defcon/fork/defcon.console.d.ts",
   moduleId: "defcon.console",
   namespace: "defcon",
   apiDoc: "api-doc/defcon.json",
   fidelity: "fidelity/defcon.json",
-  upstreamLua: ["fixtures/upstream-lua/defcon/defcon/console.lua"],
+  upstreamLua: ["defcon/source/upstream/defcon/console.lua"],
 };
 
-function writeConfig(config: unknown): string {
+// Entries as written, a malformed verdict included.
+function writeConfig(forks: unknown[]): string {
   const root = mkdtempSync(join(tmpdir(), "authored-parity-coverage-"));
-  writeFileSync(join(root, "authored-targets.json"), JSON.stringify(config));
+  writeLibraryTargets(root, { forks: forks as NonNullable<FlatLibraryTargets["forks"]> });
   return root;
 }
 
@@ -60,15 +59,15 @@ describe("every authored target declares a parity decision", () => {
   });
 
   test("readAuthoredTargets rejects an entry declaring neither, naming it", () => {
-    const root = writeConfig({ targets: [{ ...DEFCON, upstreamLua: [] }] });
+    const root = writeConfig([{ ...DEFCON, upstreamLua: [] }]);
     expect(() => readAuthoredTargets(root)).toThrow(/defcon\.console/);
     expect(() => readAuthoredTargets(root)).toThrow(/parityVerdict/);
   });
 
   test("readAuthoredTargets rejects an entry declaring both, naming it", () => {
-    const root = writeConfig({
-      targets: [{ ...DEFCON, parityVerdict: { reason: "no-module-file", note: "n/a" } }],
-    });
+    const root = writeConfig([
+      { ...DEFCON, parityVerdict: { reason: "no-module-file", note: "n/a" } },
+    ]);
     expect(() => readAuthoredTargets(root)).toThrow(/defcon\.console/);
     expect(() => readAuthoredTargets(root)).toThrow(/both/);
   });
@@ -95,21 +94,17 @@ describe("a parity verdict is a chosen category, not free prose", () => {
   });
 
   test("an unknown reason throws, naming the entry and the reason", () => {
-    const root = writeConfig({
-      targets: [
-        { ...DEFCON, upstreamLua: [], parityVerdict: { reason: "too-hard", note: "later" } },
-      ],
-    });
+    const root = writeConfig([
+      { ...DEFCON, upstreamLua: [], parityVerdict: { reason: "too-hard", note: "later" } },
+    ]);
     expect(() => readAuthoredTargets(root)).toThrow(/defcon\.console/);
     expect(() => readAuthoredTargets(root)).toThrow(/too-hard/);
   });
 
   test("an empty note throws, so the escape hatch cannot be silent", () => {
-    const root = writeConfig({
-      targets: [
-        { ...DEFCON, upstreamLua: [], parityVerdict: { reason: "no-module-file", note: "  " } },
-      ],
-    });
+    const root = writeConfig([
+      { ...DEFCON, upstreamLua: [], parityVerdict: { reason: "no-module-file", note: "  " } },
+    ]);
     expect(() => readAuthoredTargets(root)).toThrow(/defcon\.console/);
     expect(() => readAuthoredTargets(root)).toThrow(/note/);
   });
@@ -126,14 +121,14 @@ describe("a parity verdict is a chosen category, not free prose", () => {
 describe("the concrete targets whose excuses the survey retired", () => {
   function verdict(moduleId: string) {
     const found = TARGETS.find((entry) => entry.moduleId === moduleId);
-    if (!found) throw new Error(`authored-targets.json declares no ${moduleId}`);
+    if (!found) throw new Error(`library data forks no ${moduleId}`);
     return found;
   }
 
   test("the callable-module sources are measured now, their excuse having been retired", () => {
     for (const [moduleId, upstream] of [
-      ["boom.boom", "fixtures/upstream-lua/boom/boom/boom.lua"],
-      ["in.accelerometer", "fixtures/upstream-lua/defold-input/in/accelerometer.lua"],
+      ["boom.boom", "boom/source/upstream/boom/boom.lua"],
+      ["in.accelerometer", "defold-input/source/upstream/in/accelerometer.lua"],
     ] as const) {
       const entry = verdict(moduleId);
       expect(entry.parityVerdict).toBeUndefined();

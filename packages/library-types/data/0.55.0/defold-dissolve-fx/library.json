@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/indiesoftby/defold-dissolve-fx",
+  "license": "CC0-1.0",
+  "forks": [
+    {
+      "authored": "fork/dissolve_fx.dissolve_fx.d.ts",
+      "moduleId": "dissolve_fx.dissolve_fx",
+      "namespace": "dissolve_fx",
+      "apiDoc": "api-doc/dissolve_fx.json",
+      "upstreamLua": ["source/upstream/dissolve_fx/dissolve_fx.lua"]
+    }
+  ]
+}

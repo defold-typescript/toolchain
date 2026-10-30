@@ -1,0 +1,20 @@
+{
+  "repo": "https://github.com/astrochili/defold-operator",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/operator.operator.d.ts",
+      "moduleId": "operator.operator",
+      "namespace": "operator.operator",
+      "apiDoc": "api-doc/operator.operator.json",
+      "upstreamLua": ["source/upstream/operator/operator.lua"]
+    },
+    {
+      "authored": "fork/operator.bezier.d.ts",
+      "moduleId": "operator.bezier",
+      "namespace": "operator.bezier",
+      "apiDoc": "api-doc/operator.bezier.json",
+      "upstreamLua": ["source/upstream/operator/bezier.lua"]
+    }
+  ]
+}

@@ -21,7 +21,7 @@ const DATA_DIR = LIBRARY_DATA_DIR;
 // The authored forks a severed verdict compares against sit in the library data
 // folder; the markdown snapshots and ts-defold paths stay at the package root.
 function fixtureFile(path: string): string {
-  return join(path.startsWith("fixtures/authored/") ? DATA_DIR : PACKAGE_ROOT, path);
+  return join(path.startsWith("fixtures/") ? PACKAGE_ROOT : DATA_DIR, path);
 }
 
 function orthographicTarget(): MarkdownTarget {
@@ -41,7 +41,7 @@ function orthographicTarget(): MarkdownTarget {
 // ts-defold-lane golden, so the comparison it feeds is the same one the no-go was
 // recorded from — the `follow` correction that landed on top of it renames a
 // parameter and widens a union, neither of which the gate scores.
-const AUTHORED_SNAPSHOT = "fixtures/authored/orthographic.camera.d.ts";
+const AUTHORED_SNAPSHOT = "defold-orthographic/fork/orthographic.camera.d.ts";
 
 async function comparison() {
   const target = orthographicTarget();
@@ -469,7 +469,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       });
 
       // The two recorded fields carry identity at different strengths. The
-      // `fixture` is always `fixtures/authored/<moduleId>.d.ts`, so it is held to
+      // `fixture` is always `<library>/fork/<moduleId>.d.ts`, so it is held to
       // strict identity — that is what catches a `severedSource` copy-pasted from
       // a sibling module. The `path` is the retired ts-defold row verbatim, whose
       // basename is the *upstream filename* and coincides with the moduleId only
@@ -571,7 +571,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/accelerometer.md",
       severedSource: {
         path: "packages/defold-input/in.accelerometer.d.ts",
-        fixture: "fixtures/authored/in.accelerometer.d.ts",
+        fixture: "defold-input/fork/in.accelerometer.d.ts",
       },
     },
     {
@@ -581,7 +581,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/button.md",
       severedSource: {
         path: "packages/defold-input/in.button.d.ts",
-        fixture: "fixtures/authored/in.button.d.ts",
+        fixture: "defold-input/fork/in.button.d.ts",
       },
     },
     {
@@ -591,7 +591,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/cursor.md",
       severedSource: {
         path: "packages/defold-input/in.cursor.d.ts",
-        fixture: "fixtures/authored/in.cursor.d.ts",
+        fixture: "defold-input/fork/in.cursor.d.ts",
       },
     },
     {
@@ -601,7 +601,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/gesture.md",
       severedSource: {
         path: "packages/defold-input/in.gesture.d.ts",
-        fixture: "fixtures/authored/in.gesture.d.ts",
+        fixture: "defold-input/fork/in.gesture.d.ts",
       },
     },
     {
@@ -610,7 +610,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/defold-input/in.keyboard.d.ts",
-        fixture: "fixtures/authored/in.keyboard.d.ts",
+        fixture: "defold-input/fork/in.keyboard.d.ts",
       },
     },
     {
@@ -620,7 +620,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/mapper.md",
       severedSource: {
         path: "packages/defold-input/in.mapper.d.ts",
-        fixture: "fixtures/authored/in.mapper.d.ts",
+        fixture: "defold-input/fork/in.mapper.d.ts",
       },
     },
     {
@@ -630,7 +630,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/onscreen.md",
       severedSource: {
         path: "packages/defold-input/in.onscreen.d.ts",
-        fixture: "fixtures/authored/in.onscreen.d.ts",
+        fixture: "defold-input/fork/in.onscreen.d.ts",
       },
     },
     {
@@ -640,7 +640,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/state.md",
       severedSource: {
         path: "packages/defold-input/in.state.d.ts",
-        fixture: "fixtures/authored/in.state.d.ts",
+        fixture: "defold-input/fork/in.state.d.ts",
       },
     },
     {
@@ -650,7 +650,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       markdown: "in/textbox.md",
       severedSource: {
         path: "packages/defold-input/in.textbox.d.ts",
-        fixture: "fixtures/authored/in.textbox.d.ts",
+        fixture: "defold-input/fork/in.textbox.d.ts",
       },
     },
     {
@@ -659,7 +659,7 @@ const DEFOLD_INPUT: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/defold-input/in.triggers.d.ts",
-        fixture: "fixtures/authored/in.triggers.d.ts",
+        fixture: "defold-input/fork/in.triggers.d.ts",
       },
     },
   ],
@@ -702,7 +702,7 @@ const MONARCH: LibraryRecord = {
       markdown: "README_API.md",
       severedSource: {
         path: "packages/monarch/monarch.monarch.d.ts",
-        fixture: "fixtures/authored/monarch.monarch.d.ts",
+        fixture: "monarch/fork/monarch.monarch.d.ts",
       },
     },
     {
@@ -711,7 +711,7 @@ const MONARCH: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/monarch/monarch.transitions.easings.d.ts",
-        fixture: "fixtures/authored/monarch.transitions.easings.d.ts",
+        fixture: "monarch/fork/monarch.transitions.easings.d.ts",
       },
     },
     {
@@ -721,7 +721,7 @@ const MONARCH: LibraryRecord = {
       markdown: "README_TRANSITIONS.md",
       severedSource: {
         path: "packages/monarch/monarch.transitions.gui.d.ts",
-        fixture: "fixtures/authored/monarch.transitions.gui.d.ts",
+        fixture: "monarch/fork/monarch.transitions.gui.d.ts",
       },
     },
   ],
@@ -768,7 +768,7 @@ const RICHTEXT: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/defold-richtext/richtext.color.d.ts",
-        fixture: "fixtures/authored/richtext.color.d.ts",
+        fixture: "defold-richtext/fork/richtext.color.d.ts",
       },
     },
     {
@@ -778,7 +778,7 @@ const RICHTEXT: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/defold-richtext/richtext.richtext.d.ts",
-        fixture: "fixtures/authored/richtext.richtext.d.ts",
+        fixture: "defold-richtext/fork/richtext.richtext.d.ts",
       },
     },
     {
@@ -787,7 +787,7 @@ const RICHTEXT: LibraryRecord = {
       reason: "no-markdown",
       severedSource: {
         path: "packages/defold-richtext/richtext.tags.d.ts",
-        fixture: "fixtures/authored/richtext.tags.d.ts",
+        fixture: "defold-richtext/fork/richtext.tags.d.ts",
       },
     },
   ],
@@ -833,7 +833,7 @@ const PERSIST: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/library-defold-persist/persist.persist.d.ts",
-        fixture: "fixtures/authored/persist.persist.d.ts",
+        fixture: "library-defold-persist/fork/persist.persist.d.ts",
       },
     },
   ],
@@ -893,7 +893,7 @@ const YAGAMES: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/defold-yagames/yagames.yagames.d.ts",
-        fixture: "fixtures/authored/yagames.yagames.d.ts",
+        fixture: "defold-yagames/fork/yagames.yagames.d.ts",
       },
     },
   ],
@@ -981,7 +981,7 @@ const GOOEY: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/gooey/gooey.gooey.d.ts",
-        fixture: "fixtures/authored/gooey.gooey.d.ts",
+        fixture: "gooey/fork/gooey.gooey.d.ts",
       },
     },
   ],
@@ -1071,7 +1071,7 @@ const METRICS: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/defold-metrics/metrics.fps.d.ts",
-        fixture: "fixtures/authored/metrics.fps.d.ts",
+        fixture: "defold-metrics/fork/metrics.fps.d.ts",
       },
     },
     {
@@ -1081,7 +1081,7 @@ const METRICS: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/defold-metrics/metrics.mem.d.ts",
-        fixture: "fixtures/authored/metrics.mem.d.ts",
+        fixture: "defold-metrics/fork/metrics.mem.d.ts",
       },
     },
   ],
@@ -1143,7 +1143,7 @@ const RENDY: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/library-defold-rendy/rendy.rendy.d.ts",
-        fixture: "fixtures/authored/rendy.rendy.d.ts",
+        fixture: "library-defold-rendy/fork/rendy.rendy.d.ts",
       },
     },
   ],
@@ -1218,7 +1218,7 @@ const PLATYPUS: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/platypus/platypus.platypus.d.ts",
-        fixture: "fixtures/authored/platypus.platypus.d.ts",
+        fixture: "platypus/fork/platypus.platypus.d.ts",
       },
     },
   ],
@@ -1302,7 +1302,7 @@ const DICEBAG: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/dicebag/dicebag.dicebag.d.ts",
-        fixture: "fixtures/authored/dicebag.dicebag.d.ts",
+        fixture: "dicebag/fork/dicebag.dicebag.d.ts",
       },
     },
   ],
@@ -1372,7 +1372,7 @@ const BZANIM: LibraryRecord = {
       markdown: "README.md",
       severedSource: {
         path: "packages/bzAnim/bzAnim.bzAnim.d.ts",
-        fixture: "fixtures/authored/bzAnim.bzLibrary.d.ts",
+        fixture: "bzanim/fork/bzAnim.bzLibrary.d.ts",
       },
     },
   ],
@@ -1442,7 +1442,7 @@ function fixtureDigest(path: string): string {
   return new Bun.CryptoHasher("sha256").update(readFileSync(fixtureFile(path))).digest("hex");
 }
 
-/** Paths `authored-targets.json` declares as this repo's own forked or
+/** Paths library data declares as this repo's own forked or
  * hand-authored `.d.ts`. Read from the production config rather than matched on
  * a directory prefix, so a target re-vendored elsewhere keeps its lane. */
 const AUTHORED_LANE = new Set(readAuthoredTargets(DATA_DIR).map((target) => target.authored));
@@ -1473,33 +1473,33 @@ function driftRemedy(path: string): { digestMayBeUpdated: boolean; message: stri
  * verdicts. The lanes drift for different reasons, so `driftRemedy` reports
  * them differently. */
 const VENDORED_FIXTURE_HASHES: Record<string, string> = {
-  "fixtures/authored/in.accelerometer.d.ts":
+  "defold-input/fork/in.accelerometer.d.ts":
     "d69fcfebd4a5d2bb98c7d0b7dc6ec73cc95e6f72d4239c78271ae78d8933622e",
-  "fixtures/authored/in.button.d.ts":
+  "defold-input/fork/in.button.d.ts":
     "24c49e22b6170ce45af0056db1e3e60ed51896539579ee8e2fb14f019d007d61",
-  "fixtures/authored/in.cursor.d.ts":
+  "defold-input/fork/in.cursor.d.ts":
     "84e1be7786a0b147bb434fdb92254190d5de38cb961be3ca27c9bb2d0adb31fe",
-  "fixtures/authored/in.gesture.d.ts":
+  "defold-input/fork/in.gesture.d.ts":
     "1b433bb9d8823cbccc9edb80613e28842b370b5d84830432cfde6dc0bef3a038",
-  "fixtures/authored/in.keyboard.d.ts":
+  "defold-input/fork/in.keyboard.d.ts":
     "e18b39a30caf3432e54d7808a74a30e7537776eb3cec8fed1eb24015b5d0e59b",
-  "fixtures/authored/in.mapper.d.ts":
+  "defold-input/fork/in.mapper.d.ts":
     "d52500f818de9d3b5c36ea878ee2b853ab26e4478eea4039948bb808529c93a8",
   // Re-pinned with the doc-comment the fork now owes `create`, whose upstream block
   // the `---` reader declines. A doc-comment declares no member and renames none, and
   // this module's `no-signature-section` verdict is a parser refusal on `in/onscreen.md`
   // that builds no comparison against the fork at all — so there was no term to move.
   // Re-derived against the edited fork first regardless: it held.
-  "fixtures/authored/in.onscreen.d.ts":
+  "defold-input/fork/in.onscreen.d.ts":
     "899e19927d012feb909c20b923be00605b0fa59954c043939bc04ecaaa27a899",
-  "fixtures/authored/in.state.d.ts":
+  "defold-input/fork/in.state.d.ts":
     "23764519e7e88f8bd4bbc0ecfc6f06eba54e5e58c490ee29fa10a0e120330a8f",
   // Re-pinned on the same terms as `in.onscreen` above, for the doc-comment the fork
   // now owes `text`: `no-signature-section` is a refusal on `in/textbox.md`, so no
   // comparison against the fork exists to move. Re-derived first; it held.
-  "fixtures/authored/in.textbox.d.ts":
+  "defold-input/fork/in.textbox.d.ts":
     "490e845229a3185febc37e802ede17e0fa17a93858cdfc5a63ecea92bb84f089",
-  "fixtures/authored/in.triggers.d.ts":
+  "defold-input/fork/in.triggers.d.ts":
     "277cc01d2ddcfdc47878f47ced9fadcaacc2a449d9830b72d8edc346c3cb32de",
   // Re-pinned with the field correction that declared upstream's seven live
   // transition/focus hashes and its `register` alias, and carried upstream's own
@@ -1511,39 +1511,38 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   // declines. `surface-loss` turns on the member *names* either side declares, and a
   // doc-comment adds none — re-derived first all the same: the decision held and the
   // missing set is unchanged.
-  "fixtures/authored/monarch.monarch.d.ts":
+  "monarch/fork/monarch.monarch.d.ts":
     "2c2d2000c4cc654f334632028d726be6240abcc1896c3f481bc55e5dab872246",
-  "fixtures/authored/monarch.transitions.easings.d.ts":
+  "monarch/fork/monarch.transitions.easings.d.ts":
     "5ceaab6e08ef808a91a7a23052d638a407e9b5fe2042bd20a5b4de7919836b77",
-  "fixtures/authored/monarch.transitions.gui.d.ts":
+  "monarch/fork/monarch.transitions.gui.d.ts":
     "95baa41fc59bb2495d47c4207089ad12dbf5b968cb947143b1391bedc82f5ca8",
   // Re-pinned with the field correction that declared `MSG_SET_AUTOMATIC_ZOOM` and
   // deleted `MSG_USE_PROJECTION` and `ORTHOGRAPHIC_RENDER_SCRIPT_USED`, neither of
   // which the pinned `camera.lua` defines anywhere. The `no-go` was re-derived
   // against the edited fork first: it held, the README still adds nothing, and the
   // missing set traded the two invented names for the declared one.
-  "fixtures/authored/orthographic.camera.d.ts":
+  "defold-orthographic/fork/orthographic.camera.d.ts":
     "8e2714a0f506d073c7b9044f6d439c53ba9653892f288ee67d483ef3d1195f05",
-  "fixtures/authored/metrics.fps.d.ts":
+  "defold-metrics/fork/metrics.fps.d.ts":
     "20e3d51b21591de2adf9c65432eb3ea7afa9efccc1b1d8e85f60e51dd276a4a9",
-  "fixtures/authored/metrics.mem.d.ts":
+  "defold-metrics/fork/metrics.mem.d.ts":
     "ccd0b76336aef4130b7f2a43c3ea071b14f30dd57a6c94a3a38710359ef39c91",
-  "fixtures/authored/persist.persist.d.ts":
+  "library-defold-persist/fork/persist.persist.d.ts":
     "4ede94326945884649966cd0496316ba51bf243d06be2fbfc868789207df4be8",
-  "fixtures/authored/gooey.gooey.d.ts":
-    "729f68b046ce1e2757acce4d9956b3452961143012024c4f2ead685499ad67c7",
-  "fixtures/authored/bzAnim.bzLibrary.d.ts":
+  "gooey/fork/gooey.gooey.d.ts": "729f68b046ce1e2757acce4d9956b3452961143012024c4f2ead685499ad67c7",
+  "bzanim/fork/bzAnim.bzLibrary.d.ts":
     "5ac9ea3a79428383dca86b3dbd85beff6a55413e2a52867b88079f97a21fbc69",
-  "fixtures/authored/dicebag.dicebag.d.ts":
+  "dicebag/fork/dicebag.dicebag.d.ts":
     "51649de912a91815fd2bd8aeeda3390689c114ff3d7702d11dc201b29d6a44a8",
   // Re-pinned with the field correction that declared the two `SEPARATION_*` modes
   // from `platypus.lua:27-28`. The `shared-document` verdict was re-derived against
   // the edited fork first: both documented readings held their `no-go`, `create` is
   // still the only downgrade, and the two names joined the constants the flat
   // signature parse cannot see.
-  "fixtures/authored/platypus.platypus.d.ts":
+  "platypus/fork/platypus.platypus.d.ts":
     "896068c523d89641edcd8a7684e957adb94605537d36c1259b616ff06848918d",
-  "fixtures/authored/rendy.rendy.d.ts":
+  "library-defold-rendy/fork/rendy.rendy.d.ts":
     "838b7d62ec4fe12bde657bdb76c7444faa3da5cecaff56e0966d83b8bd3b8e0f",
   // The one entry whose verdict comes from the openapi lane rather than
   // markdown: `openapi-fidelity-gate.test.ts` scores this fork against the
@@ -1558,15 +1557,15 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   // `cancellation_token` and `sync`, whose upstream blocks the reader declines. Same
   // terms as before: the gate was re-derived first, the decision held, and the missing
   // set is unchanged — a doc-comment declares no member for the swagger to match.
-  "fixtures/authored/nakama.nakama.d.ts":
+  "nakama-defold/fork/nakama.nakama.d.ts":
     "2306ada7aeb519b17fadee53aa6592bfe8463048f4893e3d05817e8d298b39c5",
-  "fixtures/authored/richtext.color.d.ts":
+  "defold-richtext/fork/richtext.color.d.ts":
     "fdacac61ee40f105f63c7a15745520630818b9d14ee0ffa077912f899b2f1999",
-  "fixtures/authored/richtext.richtext.d.ts":
+  "defold-richtext/fork/richtext.richtext.d.ts":
     "35b06ed582b027ae84e395856afd015ba74bc76c05460e63c4f0adfd3da6457b",
-  "fixtures/authored/richtext.tags.d.ts":
+  "defold-richtext/fork/richtext.tags.d.ts":
     "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
-  "fixtures/authored/yagames.yagames.d.ts":
+  "defold-yagames/fork/yagames.yagames.d.ts":
     "6764a3932fc288ac39c60fdd542c5849a34ca036101bac5893fd886f1f58aad0",
   "fixtures/markdown/bzAnim.bzLibrary.md":
     "ffc299add5db0e4348fcdf59fa432b4606071c7188aaa51fae4206f7fa04d8b1",
@@ -1635,12 +1634,14 @@ describe("the vendored snapshots the recorded verdicts were derived from", () =>
   });
 
   test("an authored-lane snapshot's drift remedy permits updating the digest", () => {
-    expect(driftRemedy("fixtures/authored/persist.persist.d.ts").digestMayBeUpdated).toBe(true);
+    expect(driftRemedy("library-defold-persist/fork/persist.persist.d.ts").digestMayBeUpdated).toBe(
+      true,
+    );
     expect(driftRemedy("fixtures/markdown/persist.persist.md").digestMayBeUpdated).toBe(false);
   });
 
   test("the two lanes do not share a remedy", () => {
-    expect(driftRemedy("fixtures/authored/persist.persist.d.ts").message).not.toBe(
+    expect(driftRemedy("library-defold-persist/fork/persist.persist.d.ts").message).not.toBe(
       driftRemedy("fixtures/markdown/persist.persist.md").message,
     );
   });
@@ -1649,7 +1650,7 @@ describe("the vendored snapshots the recorded verdicts were derived from", () =>
     const declared = new Set(readAuthoredTargets(DATA_DIR).map((target) => target.authored));
     expect(
       Object.keys(VENDORED_FIXTURE_HASHES).filter(
-        (path) => path.startsWith("fixtures/authored/") && !declared.has(path),
+        (path) => !path.startsWith("fixtures/") && !declared.has(path),
       ),
     ).toEqual([]);
   });
@@ -1815,7 +1816,7 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
       const severed = severedFor(MONARCH, mod);
       expect(severed).toBeDefined();
       const { fixture } = targetFor(moduleId, severed);
-      expect(fixture).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(fixture).toBe(`monarch/fork/${moduleId}.d.ts`);
       expect(existsSync(fixtureFile(fixture))).toBe(true);
       expect(classificationModule(moduleId, severed)).toBe(moduleId);
       return fixture;
@@ -1891,7 +1892,7 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
       const severed = severedFor(RICHTEXT, mod);
       expect(severed).toBeDefined();
       const { fixture } = targetFor(moduleId, severed);
-      expect(fixture).toBe(`fixtures/authored/${moduleId}.d.ts`);
+      expect(fixture).toBe(`defold-richtext/fork/${moduleId}.d.ts`);
       expect(existsSync(fixtureFile(fixture))).toBe(true);
       expect(classificationModule(moduleId, severed)).toBe(moduleId);
       return fixture;
@@ -2087,7 +2088,7 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
   // only resolvable because `severedSource` supplies both fields it used to read.
   test("the verdict still resolves once the ts-defold row is gone", () => {
     expect(targetFor("yagames.yagames", severedFor(YAGAMES, "yagames")).fixture).toBe(
-      "fixtures/authored/yagames.yagames.d.ts",
+      "defold-yagames/fork/yagames.yagames.d.ts",
     );
     expect(classificationModule("yagames.yagames", severedFor(YAGAMES, "yagames"))).toBe(
       "yagames.yagames",
@@ -2260,7 +2261,7 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
   // namespace-conditional golden assertion takes its absence arm.
   test("the verdict still resolves once the ts-defold row is gone", () => {
     const severed = severedFor(GOOEY, "gooey");
-    expect(targetFor("gooey.gooey", severed).fixture).toBe("fixtures/authored/gooey.gooey.d.ts");
+    expect(targetFor("gooey.gooey", severed).fixture).toBe("gooey/fork/gooey.gooey.d.ts");
     expect(existsSync(fixtureFile(targetFor("gooey.gooey", severed).fixture))).toBe(true);
     expect(classificationModule("gooey.gooey", severed)).toBe("gooey.gooey");
   });
@@ -2610,7 +2611,7 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
   // namespace-conditional golden assertion takes its absence arm.
   test("the verdict still resolves once the ts-defold row is gone", () => {
     expect(targetFor("platypus.platypus", severed).fixture).toBe(
-      "fixtures/authored/platypus.platypus.d.ts",
+      "platypus/fork/platypus.platypus.d.ts",
     );
     expect(existsSync(fixtureFile(targetFor("platypus.platypus", severed).fixture))).toBe(true);
     expect(classificationModule("platypus.platypus", severed)).toBe("platypus.platypus");
@@ -2881,7 +2882,7 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
   // namespace-conditional golden assertion takes its absence arm.
   test("the verdict still resolves once the ts-defold row is gone", () => {
     expect(targetFor("bzAnim.bzLibrary", severed).fixture).toBe(
-      "fixtures/authored/bzAnim.bzLibrary.d.ts",
+      "bzanim/fork/bzAnim.bzLibrary.d.ts",
     );
     expect(existsSync(fixtureFile(targetFor("bzAnim.bzLibrary", severed).fixture))).toBe(true);
   });

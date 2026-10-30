@@ -1,0 +1,41 @@
+{
+  "repo": "https://github.com/Pause-Games/flow",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/flow.color.d.ts",
+      "moduleId": "flow.color",
+      "namespace": "flow.color",
+      "apiDoc": "api-doc/flow.color.json",
+      "upstreamLua": ["source/upstream/color.lua"]
+    },
+    {
+      "authored": "fork/flow.bottom_sheet.d.ts",
+      "moduleId": "flow.bottom_sheet",
+      "namespace": "flow.bottom_sheet",
+      "apiDoc": "api-doc/flow.bottom_sheet.json",
+      "upstreamLua": ["source/upstream/bottom_sheet/init.lua"]
+    },
+    {
+      "authored": "fork/flow.flow.d.ts",
+      "moduleId": "flow.flow",
+      "namespace": "flow.flow",
+      "apiDoc": "api-doc/flow.flow.json",
+      "upstreamLua": ["source/upstream/flow.lua"]
+    }
+  ],
+  "indexSlots": {
+    "flow.flex/get_child:param:index": {
+      "class": "native-0",
+      "evidence": "flex.lua:Node:get_child returns self.children[index + 1]"
+    },
+    "flow.flex/get_child:return:": {
+      "class": "not-a-position",
+      "evidence": "flex.lua:Node:get_child returns the child node itself, not its index"
+    },
+    "flow.flex/insert_child:param:index": {
+      "class": "native-1",
+      "evidence": "flex.lua:Node:insert_child passes index to table.insert(self.children, index or (#self.children + 1), child)"
+    }
+  }
+}

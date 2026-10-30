@@ -1,0 +1,15 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["tweener/**/*.lua"],
+      "moduleId": "tweener.tweener",
+      "namespace": "tweener",
+      "typeRenames": {
+        "vector": "Vector",
+        "vector3": "Vector3",
+        "vector4": "Vector4"
+      },
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    }
+  ]
+}

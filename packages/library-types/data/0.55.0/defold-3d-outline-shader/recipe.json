@@ -1,0 +1,51 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["outline-shader/**/*.lua"],
+      "moduleId": "outline-shader.outline",
+      "namespace": "outline",
+      "typeRenames": {
+        "matrix4": "Matrix4",
+        "vector4": "Vector4",
+        "render_clear_buffers": "LuaMap<render.ClearBufferKey, number | Vector4>"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "init": {
+            "params": {
+              "self": {
+                "type": "table<string, any>",
+                "optional": false
+              }
+            }
+          },
+          "update": {
+            "params": {
+              "self": {
+                "type": "table<string, any>",
+                "optional": false
+              },
+              "predicates": {
+                "type": "table<string, any>",
+                "optional": false
+              },
+              "frustum": {
+                "type": "{ frustum: matrix4 }",
+                "optional": false
+              },
+              "clear_buffer": {
+                "type": "render_clear_buffers"
+              }
+            }
+          }
+        },
+        "moduleConstants": {
+          "type": {
+            "type": "{ OUTLINE_STENCIL: integer, OUTLINE_INVERTED_HULL: integer }"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/MaratGilyazov/def_taptic_engine",
+  "license": "MIT",
+  "native": {
+    "namespace": "taptic_engine",
+    "manifestDir": "taptic_engine",
+    "declaration": "fork/taptic_engine.d.ts",
+    "upstreamSource": "source/upstream/taptic_engine/src/tapticengine.cpp"
+  }
+}

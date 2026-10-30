@@ -11,11 +11,12 @@ no hand-written `.d.ts`. [`resolve`](./resolve.md#vendored-library-types) prints
 the declaration into the consumer's project from the library version it depends
 on, or from the sources pinned in `@defold-typescript/library-types`.
 
-Adding such a library is **data, not code**: you add one entry to
-`luals-targets.json` in the library data folder (the newest version-named folder
-under `packages/library-types/data/`, which also holds the fetched
-`fixtures/luals/`), run the three generation commands,
-check the emitted API-doc description, and commit the entry and its artifacts. There is no
+Adding such a library is **data, not code**: you add one entry to the `luals`
+list of the library's `recipe.json`, in its folder under the library data folder
+(the newest version-named folder under `packages/library-types/data/`; the
+library folder also holds the fetched sources under `source/`), run the three
+generation commands, check the emitted API-doc description, and commit the
+library's files and its artifacts. There is no
 pipeline source to touch — the same front-end that produces the druid types
 produces yours.
 
@@ -41,25 +42,33 @@ The library's runtime `require` path (its `moduleId`) must not already be claime
 by another entry in `library-types` — two front-ends emitting the same module
 would collide.
 
-## 1. Add a `luals-targets.json` entry
+## 1. Add a `recipe.json` entry
 
-Each entry pins its own repository and tag — a LuaLS library ships no `.d.ts`, only
-annotations, and each lives in its own repo at its own release. The fields:
+Each library pins its own repository and tag — a LuaLS library ships no `.d.ts`,
+only annotations, and each lives in its own repo at its own release. Its folder
+is named for the repository: the URL's last path segment, lowercased, without
+`.git` (`https://github.com/Insality/druid` is `druid/`). The folder pins the
+library once:
+
+| File | Field | Required | What it is |
+| ---- | ----- | -------- | ---------- |
+| `library.json` | `repo` | yes | The GitHub repository URL, e.g. `https://github.com/Insality/druid`. |
+| `library.json` | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
+| `reviewed.json` | `ref` | yes | The exact release tag to pin. Resolve the newest stable tag (`git ls-remote --tags <repo>`) — never invent one. |
+
+Each generated module is one entry in `recipe.json`'s `luals` list:
 
 | Field | Required | What it is |
 | ----- | -------- | ---------- |
-| `repo` | yes | The GitHub repository URL, e.g. `https://github.com/Insality/druid`. |
-| `ref` | yes | The exact release tag to pin. Resolve the newest stable tag (`git ls-remote --tags <repo>`) — never invent one. |
 | `sourceGlobs` | yes | Globs selecting the `.lua` files to snapshot, relative to the repo root (e.g. `["druid/**/*.lua"]`). |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `druid.druid`). This names the emitted `declare module` and scopes the module-function surface to `<moduleId-as-path>.lua`. |
-| `namespace` | yes | The artifact stem — the emitted files are `fidelity/<namespace>.json` and `api-doc/<namespace>.json`. |
-| `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
+| `namespace` | yes | The artifact stem — the emitted files are `fidelity/<namespace>.json` and `api-doc/<namespace>.json`. The fetched sources sit under the library folder's `source/<namespace>/`. |
 | `typeRenames` | no | Map from a LuaLS type name to the TypeScript type *text* to emit (e.g. `{ "vector3": "Vector3" }`). The value is emitted verbatim and may name an ambient global, including a dotted one like `debug.FunctionInfo` — it never contributes an import. Omit or `{}` when the library references no renamed types. |
 | `ignore` | no | Globs excluded from `sourceGlobs` — tests, examples, editor widgets. Defaults to `[]`. |
 | `externalTypes` | no | Map from a type name another target owns to `{ "module": "<its moduleId>", "name": "<its export>" }` — see below. Omit when the library references no other library's types. |
 
-A missing required field fails loudly, naming both the field and the offending
-entry.
+A missing required field fails loudly, naming the field, the offending entry and
+its `recipe.json`.
 
 ### Types another library owns
 
@@ -247,19 +256,19 @@ the call with `if network.request_idfa then`, so the `ads_wrapper` targets mark
 ## 2. Generate the artifacts
 
 Run the three commands from `packages/library-types`, in order. Each iterates every
-target in `luals-targets.json`, so an unchanged entry re-emits byte-for-byte and
+LuaLS target in library data, so an unchanged entry re-emits byte-for-byte and
 only your new entry produces new files.
 
 ```sh
 cd packages/library-types
 
-bun run luals:fetch      # snapshot the pinned sources into fixtures/luals/<namespace>/
+bun run luals:fetch      # snapshot the pinned sources into <library>/source/<namespace>/
 bun run luals:fidelity   # build fidelity/<namespace>.json — the coverage report
 bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site model
 ```
 
 - **`luals:fetch`** reads the pinned tree, applies `sourceGlobs` minus `ignore`,
-  and writes each selected `.lua` under `fixtures/luals/<namespace>/`, preserving
+  and writes each selected `.lua` under `<library>/source/<namespace>/`, preserving
   tree shape. This is the only command that touches the network; everything after
   it reads those committed fixtures, so the pipeline is reproducible offline.
 - **`luals:fidelity`** parses the fixtures and reports how much of the surface
@@ -329,7 +338,7 @@ the page description.
 
 The `dts-declaration-validity` gate type-checks every module `resolve` prints under
 `skipLibCheck: false`, together with the `test-d/` usage proofs, so a new target is
-compiled as soon as `luals-targets.json` lists it. Fidelity parity is gated per
+compiled as soon as its `recipe.json` lists it. Fidelity parity is gated per
 namespace. Run the library tests:
 
 ```sh
@@ -341,7 +350,8 @@ bun run --cwd packages/library-types fidelity:floor  # from the repo root
 A brand-new library has no floor entry yet, and the floor gate fails until it gets
 one — `fidelity:floor` seeds it at the coverage you just measured.
 
-Commit the new entry, the snapshotted `fixtures/luals/<namespace>/`, both
+Commit the library's `library.json`, `reviewed.json` and `recipe.json`, the
+snapshotted `source/<namespace>/`, both
 emitted artifacts (`fidelity/`, `api-doc/`), and the updated
 `fidelity-floor.json` together. Every commit
 must also add a [changelog](./changelog.md) bullet — a pre-commit gate enforces it.
@@ -382,7 +392,7 @@ materializes into a consuming project as `druid.druid`.
 A native or hybrid library that ships an extension `.script_api` (the same YAML
 format every Defold extension ships) has a **third** ingestion mode, distinct
 from the LuaLS front-end above: `packages/cli/src/library/sync-script-api-types.ts`,
-driven by `script-api-targets.json` in the library data folder. Instead of parsing
+driven by the `scriptApi` list of a library's `recipe.json`. Instead of parsing
 `---@` annotations, it routes the committed `.script_api` snapshot through the
 **shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
 the exact path resolve-time extension typing uses — so
@@ -392,14 +402,15 @@ into nested `namespace` blocks. The output is an importable module keyed by
 so the library imports under its pinned specifier; the `declare global` form
 stays the resolve emitter's, for extensions a project declares.
 
-Each entry pins `repo`, `ref`, `scriptApi` (the path to the `.script_api` in the
-repo), `moduleId`, `namespace`, and the exact `apiDoc` / `fidelity`
-output paths. The generate arms mirror the LuaLS ones:
+Each entry names `scriptApi` (the path to the `.script_api` in the repo),
+`moduleId`, `namespace`, and the exact `apiDoc` / `fidelity` output paths; the
+library folder pins `repo` and `ref` as above. The generate arms mirror the LuaLS
+ones:
 
 ```sh
 cd packages/library-types
 
-bun ../cli/src/library/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into fixtures/script-api/<moduleId>.script_api
+bun ../cli/src/library/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into <library>/source/<moduleId>.script_api
 bun ../cli/src/library/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 bun ../cli/src/library/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```

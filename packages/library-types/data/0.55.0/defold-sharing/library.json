@@ -1,0 +1,11 @@
+{
+  "repo": "https://github.com/britzl/defold-sharing",
+  "license": "MIT",
+  "native": {
+    "namespace": "share",
+    "manifestDir": "share",
+    "declaration": "fork/share.d.ts",
+    "upstreamSource": "source/upstream/share/src/share.cpp",
+    "upstreamAnnotation": "source/upstream/share/api/share.lua"
+  }
+}

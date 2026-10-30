@@ -32,7 +32,7 @@ async function comparison() {
   const target = nakamaTarget();
   const emitted = await emitOpenApiDeclaration(PACKAGE_ROOT, target);
   const snapshot = readFileSync(
-    join(DATA_DIR, "fixtures/authored", `${target.moduleId}.d.ts`),
+    join(DATA_DIR, "nakama-defold/fork", `${target.moduleId}.d.ts`),
     "utf8",
   );
   return { target, ...compareFidelityToTsDefold(emitted, snapshot) };

@@ -111,8 +111,8 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Upgrading Defold versions](./upgrading-defold-versions.md) — move a project between pinned surfaces, with a section per release.
 - [Native extensions](./extensions.md) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](./resolve.md) to generate a `@globalTable` module per `.script_api` into a gitignored `.defold-types/extensions/` surface, and import it by its namespace.
 - [Shipping types with a library](./shipping-library-types.md) — for library authors: put `.d.ts` files in a root `types/` folder, use `@defold-typescript/types` names, choose the module or global form, check the result with [`resolve`](./resolve.md#types-a-library-ships), which installs them ahead of every other surface, and start from the curated types with [`export-types`](./shipping-library-types.md#starting-from-the-curated-types).
-- [Authoring LuaLS library types](./authoring-luals-library-types.md) — add a pure-Lua library whose types are generated from its inline LuaLS (`---@`) annotations: the `luals-targets.json` entry, the fetch/fidelity/api-doc commands, and how [`resolve`](./resolve.md) prints the `.d.ts` a consumer gets.
-- [Authoring forked library types](./authoring-forked-library-types.md) — add a library with no structured upstream source by vendoring a forked or hand-authored `.d.ts`: the fork/hand-author/keep cost model, the `authored-targets.json` entry, the api-doc command, and why a fork's emission fidelity is by construction while its accuracy against upstream is not.
+- [Authoring LuaLS library types](./authoring-luals-library-types.md) — add a pure-Lua library whose types are generated from its inline LuaLS (`---@`) annotations: the library folder and its `recipe.json` entry, the fetch/fidelity/api-doc commands, and how [`resolve`](./resolve.md) prints the `.d.ts` a consumer gets.
+- [Authoring forked library types](./authoring-forked-library-types.md) — add a library with no structured upstream source by vendoring a forked or hand-authored `.d.ts`: the fork/hand-author/keep cost model, the library folder and its `library.json` fork entry, the api-doc command, and why a fork's emission fidelity is by construction while its accuracy against upstream is not.
 - [Refreshing library pins](./refreshing-library-pins.md) — move a library already in the corpus to a newer upstream `ref`: how `upstream:library-check` and its weekly workflow surface a stale pin, the per-lane regeneration commands (and why the authored lane has no `--fetch`), the floor, provenance and generated-artifact couplings that move with the pin, and the consumer-side fixtures a bump must leave alone.
 
 ##### Migration
@@ -6851,22 +6851,22 @@ the named directory, so a repo-name collision alone writes nothing.
 
 | Extension | Pinned at | Namespace | Confirmed by        |
 | --------- | --------- | --------- | ------------------- |
-| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | [`daabbcc`](/api/daabbcc) | `daabbcc/ext.manifest` |
-| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | [`share`](/api/share) | `share/ext.manifest` |
-| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | [`uuid4`](/api/uuid4) | `uuid4/ext.manifest` |
-| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](/api/tile_raycast) | `tile-raycast/ext.manifest` |
 | [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | `v1.1.0` | [`def_windward_jps`](/api/def_windward_jps) | `def_windward_jps/ext.manifest` |
-| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | `1.0.3` | [`box2d`](/api/box2d) | `box2d/native/ext.manifest` |
-| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | `v1.0.6` | [`daabbcc3d`](/api/daabbcc3d) | `daabbcc3d/ext.manifest` |
-| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | `76ff0c9` | [`wave`](/api/wave) | `wave/ext.manifest` |
-| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | `95ce965` | [`detour`](/api/detour) | `detour/ext.manifest` |
 | [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | `v1.2` | [`taptic_engine`](/api/taptic_engine) | `taptic_engine/ext.manifest` |
-| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | `1.1.1` | [`gyro`](/api/gyro) | `gyro/ext.manifest` |
-| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | `v0.1.0` | [`fontscale`](/api/fontscale) | `fontscale/ext.manifest` |
-| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | `2023870` | [`directories`](/api/directories) | `directories/ext.manifest` |
+| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | `1.0.3` | [`box2d`](/api/box2d) | `box2d/native/ext.manifest` |
+| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | [`daabbcc`](/api/daabbcc) | `daabbcc/ext.manifest` |
+| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | `v1.0.6` | [`daabbcc3d`](/api/daabbcc3d) | `daabbcc3d/ext.manifest` |
+| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | `95ce965` | [`detour`](/api/detour) | `detour/ext.manifest` |
 | [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | `1.2.0` | [`uptime`](/api/uptime) | `uptime/ext.manifest` |
-| [britzl/defold-png](https://github.com/britzl/defold-png) | `1.2.2` | [`png`](/api/png) | `png/ext.manifest` |
+| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | `v0.1.0` | [`fontscale`](/api/fontscale) | `fontscale/ext.manifest` |
+| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | `1.1.1` | [`gyro`](/api/gyro) | `gyro/ext.manifest` |
 | [britzl/defold-imp](https://github.com/britzl/defold-imp) | `1.1.0` | [`imp`](/api/imp) | `imp/ext.manifest` |
+| [britzl/defold-png](https://github.com/britzl/defold-png) | `1.2.2` | [`png`](/api/png) | `png/ext.manifest` |
+| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | [`share`](/api/share) | `share/ext.manifest` |
+| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](/api/tile_raycast) | `tile-raycast/ext.manifest` |
+| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | [`uuid4`](/api/uuid4) | `uuid4/ext.manifest` |
+| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | `76ff0c9` | [`wave`](/api/wave) | `wave/ext.manifest` |
+| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | `2023870` | [`directories`](/api/directories) | `directories/ext.manifest` |
 | [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | `618292f` | [`openal`](/api/openal) | `openal/ext.manifest` |
 | [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | `ecda39f` | [`ainpc`](/api/ainpc) | `player2-ai-npc/ext.manifest` |
 
@@ -11052,11 +11052,12 @@ no hand-written `.d.ts`. [`resolve`](./resolve.md#vendored-library-types) prints
 the declaration into the consumer's project from the library version it depends
 on, or from the sources pinned in `@defold-typescript/library-types`.
 
-Adding such a library is **data, not code**: you add one entry to
-`luals-targets.json` in the library data folder (the newest version-named folder
-under `packages/library-types/data/`, which also holds the fetched
-`fixtures/luals/`), run the three generation commands,
-check the emitted API-doc description, and commit the entry and its artifacts. There is no
+Adding such a library is **data, not code**: you add one entry to the `luals`
+list of the library's `recipe.json`, in its folder under the library data folder
+(the newest version-named folder under `packages/library-types/data/`; the
+library folder also holds the fetched sources under `source/`), run the three
+generation commands, check the emitted API-doc description, and commit the
+library's files and its artifacts. There is no
 pipeline source to touch — the same front-end that produces the druid types
 produces yours.
 
@@ -11082,25 +11083,33 @@ The library's runtime `require` path (its `moduleId`) must not already be claime
 by another entry in `library-types` — two front-ends emitting the same module
 would collide.
 
-#### 1. Add a `luals-targets.json` entry
+#### 1. Add a `recipe.json` entry
 
-Each entry pins its own repository and tag — a LuaLS library ships no `.d.ts`, only
-annotations, and each lives in its own repo at its own release. The fields:
+Each library pins its own repository and tag — a LuaLS library ships no `.d.ts`,
+only annotations, and each lives in its own repo at its own release. Its folder
+is named for the repository: the URL's last path segment, lowercased, without
+`.git` (`https://github.com/Insality/druid` is `druid/`). The folder pins the
+library once:
+
+| File | Field | Required | What it is |
+| ---- | ----- | -------- | ---------- |
+| `library.json` | `repo` | yes | The GitHub repository URL, e.g. `https://github.com/Insality/druid`. |
+| `library.json` | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
+| `reviewed.json` | `ref` | yes | The exact release tag to pin. Resolve the newest stable tag (`git ls-remote --tags <repo>`) — never invent one. |
+
+Each generated module is one entry in `recipe.json`'s `luals` list:
 
 | Field | Required | What it is |
 | ----- | -------- | ---------- |
-| `repo` | yes | The GitHub repository URL, e.g. `https://github.com/Insality/druid`. |
-| `ref` | yes | The exact release tag to pin. Resolve the newest stable tag (`git ls-remote --tags <repo>`) — never invent one. |
 | `sourceGlobs` | yes | Globs selecting the `.lua` files to snapshot, relative to the repo root (e.g. `["druid/**/*.lua"]`). |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `druid.druid`). This names the emitted `declare module` and scopes the module-function surface to `<moduleId-as-path>.lua`. |
-| `namespace` | yes | The artifact stem — the emitted files are `fidelity/<namespace>.json` and `api-doc/<namespace>.json`. |
-| `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
+| `namespace` | yes | The artifact stem — the emitted files are `fidelity/<namespace>.json` and `api-doc/<namespace>.json`. The fetched sources sit under the library folder's `source/<namespace>/`. |
 | `typeRenames` | no | Map from a LuaLS type name to the TypeScript type *text* to emit (e.g. `{ "vector3": "Vector3" }`). The value is emitted verbatim and may name an ambient global, including a dotted one like `debug.FunctionInfo` — it never contributes an import. Omit or `{}` when the library references no renamed types. |
 | `ignore` | no | Globs excluded from `sourceGlobs` — tests, examples, editor widgets. Defaults to `[]`. |
 | `externalTypes` | no | Map from a type name another target owns to `{ "module": "<its moduleId>", "name": "<its export>" }` — see below. Omit when the library references no other library's types. |
 
-A missing required field fails loudly, naming both the field and the offending
-entry.
+A missing required field fails loudly, naming the field, the offending entry and
+its `recipe.json`.
 
 ##### Types another library owns
 
@@ -11288,19 +11297,19 @@ the call with `if network.request_idfa then`, so the `ads_wrapper` targets mark
 #### 2. Generate the artifacts
 
 Run the three commands from `packages/library-types`, in order. Each iterates every
-target in `luals-targets.json`, so an unchanged entry re-emits byte-for-byte and
+LuaLS target in library data, so an unchanged entry re-emits byte-for-byte and
 only your new entry produces new files.
 
 ```sh
 cd packages/library-types
 
-bun run luals:fetch      # snapshot the pinned sources into fixtures/luals/<namespace>/
+bun run luals:fetch      # snapshot the pinned sources into <library>/source/<namespace>/
 bun run luals:fidelity   # build fidelity/<namespace>.json — the coverage report
 bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site model
 ```
 
 - **`luals:fetch`** reads the pinned tree, applies `sourceGlobs` minus `ignore`,
-  and writes each selected `.lua` under `fixtures/luals/<namespace>/`, preserving
+  and writes each selected `.lua` under `<library>/source/<namespace>/`, preserving
   tree shape. This is the only command that touches the network; everything after
   it reads those committed fixtures, so the pipeline is reproducible offline.
 - **`luals:fidelity`** parses the fixtures and reports how much of the surface
@@ -11370,7 +11379,7 @@ the page description.
 
 The `dts-declaration-validity` gate type-checks every module `resolve` prints under
 `skipLibCheck: false`, together with the `test-d/` usage proofs, so a new target is
-compiled as soon as `luals-targets.json` lists it. Fidelity parity is gated per
+compiled as soon as its `recipe.json` lists it. Fidelity parity is gated per
 namespace. Run the library tests:
 
 ```sh
@@ -11382,7 +11391,8 @@ bun run --cwd packages/library-types fidelity:floor  # from the repo root
 A brand-new library has no floor entry yet, and the floor gate fails until it gets
 one — `fidelity:floor` seeds it at the coverage you just measured.
 
-Commit the new entry, the snapshotted `fixtures/luals/<namespace>/`, both
+Commit the library's `library.json`, `reviewed.json` and `recipe.json`, the
+snapshotted `source/<namespace>/`, both
 emitted artifacts (`fidelity/`, `api-doc/`), and the updated
 `fidelity-floor.json` together. Every commit
 must also add a [changelog](./changelog.md) bullet — a pre-commit gate enforces it.
@@ -11423,7 +11433,7 @@ materializes into a consuming project as `druid.druid`.
 A native or hybrid library that ships an extension `.script_api` (the same YAML
 format every Defold extension ships) has a **third** ingestion mode, distinct
 from the LuaLS front-end above: `packages/cli/src/library/sync-script-api-types.ts`,
-driven by `script-api-targets.json` in the library data folder. Instead of parsing
+driven by the `scriptApi` list of a library's `recipe.json`. Instead of parsing
 `---@` annotations, it routes the committed `.script_api` snapshot through the
 **shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
 the exact path resolve-time extension typing uses — so
@@ -11433,14 +11443,15 @@ into nested `namespace` blocks. The output is an importable module keyed by
 so the library imports under its pinned specifier; the `declare global` form
 stays the resolve emitter's, for extensions a project declares.
 
-Each entry pins `repo`, `ref`, `scriptApi` (the path to the `.script_api` in the
-repo), `moduleId`, `namespace`, and the exact `apiDoc` / `fidelity`
-output paths. The generate arms mirror the LuaLS ones:
+Each entry names `scriptApi` (the path to the `.script_api` in the repo),
+`moduleId`, `namespace`, and the exact `apiDoc` / `fidelity` output paths; the
+library folder pins `repo` and `ref` as above. The generate arms mirror the LuaLS
+ones:
 
 ```sh
 cd packages/library-types
 
-bun ../cli/src/library/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into fixtures/script-api/<moduleId>.script_api
+bun ../cli/src/library/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into <library>/source/<moduleId>.script_api
 bun ../cli/src/library/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 bun ../cli/src/library/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```
@@ -11489,11 +11500,12 @@ vendored declaration into the consumer's project, the way it prints the
 generated lanes' declarations.
 
 Like the other lanes, adding such a library is **data, not code**: you add one
-entry to `authored-targets.json` in the library data folder (the newest
-version-named folder under `packages/library-types/data/`), vendor the `.d.ts`,
-run the generation command, and commit the entry, the `.d.ts` and its api-doc.
-Every path an entry names is relative to that data folder, except `apiDoc` and
-`fidelity`, which are relative to `packages/library-types/`. The authored front-end
+fork to the library's `library.json` in its folder under the library data folder
+(the newest version-named folder under `packages/library-types/data/`), vendor
+the `.d.ts` into the folder's `fork/`, run the generation command, and commit the
+library's files and its api-doc. Every path a fork names is relative to the
+library folder, except `apiDoc` and `fidelity`, which are relative to
+`packages/library-types/`. The authored front-end
 (`packages/cli/src/library/sync-authored-types.ts`) is the reusable
 machinery; you touch config and fixtures, not the pipeline.
 
@@ -11551,29 +11563,38 @@ own cadence rather than inherited from a third-party vendoring.
   decision today has no ts-defold binding to keep — the real choice is fork
   versus hand-author.
 
-#### 1. Add an `authored-targets.json` entry
+#### 1. Add a fork to the library's `library.json`
 
-Each entry pins the library's own upstream repository and tag — an authored
-library is the sole maintainer of its namespace, so it carries its own
-`repo`/`ref` rather than the shared vendored commit. The fields:
+Each library sits in its own folder under the data folder, named for its
+repository: the URL's last path segment, lowercased, without `.git`
+(`https://github.com/britzl/defcon` is `defcon/`). The folder pins the library's
+own upstream repository and ref once — an authored library is the sole maintainer
+of its namespace, so it carries its own `repo`/`ref` rather than the shared
+vendored commit:
+
+| File | Field | Required | What it is |
+| ---- | ----- | -------- | ---------- |
+| `library.json` | `repo` | yes | The GitHub or Codeberg repository URL, e.g. `https://github.com/britzl/defcon`. `upstream:library-check` reads no other host. |
+| `library.json` | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
+| `library.json` | `refKind` | no | `"commit"` or `"tag"` when upstream publishes no releases, so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
+| `reviewed.json` | `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
+
+Each forked module is one entry in `library.json`'s `forks` list:
 
 | Field | Required | What it is |
 | ----- | -------- | ---------- |
-| `repo` | yes | The GitHub or Codeberg repository URL, e.g. `https://github.com/britzl/defcon`. `upstream:library-check` reads no other host. |
-| `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
-| `authored` | yes | Data-folder-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
+| `authored` | yes | Path of the vendored authored/forked `.d.ts`, relative to the library folder — `fork/<moduleId>.d.ts`. |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `defcon.console`). This is the `declare module` name inside the vendored `.d.ts`. |
 | `namespace` | yes | The artifact stem — the emitted file is `api-doc/<namespace>.json`. Either a bare stem (`defcon`) or the dotted `moduleId` (`orthographic.camera`): fork onto the retired module name when it already equals the publish namespace, and reach for a bare stem only when nothing else owns it. The `orthographic.camera` worked example below settles the choice. |
 | `apiDoc` | yes | The docs-site model output path (`api-doc/<namespace>.json`). |
-| `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
-| `refKind` | no | `"commit"` or `"tag"` when upstream publishes no releases, so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
 | `fidelity` | no | Defaults to `fidelity/<namespace>.json`. A fork records no fidelity artifact (see below); the field mirrors the sibling lanes for a future hand-authored target that wants one. |
-| `upstreamLua` | one of two | Package-relative paths of the vendored upstream `.lua` this target's surface is measured against. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
+| `upstreamLua` | one of two | Library-folder-relative paths of the vendored upstream `.lua` this target's surface is measured against. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
 | `parityVerdict` | one of two | Why this target vendors no upstream `.lua`: `{ "reason": ..., "note": ... }`. Mutually exclusive with `upstreamLua`. |
 | `instanceType` | when upstream has methods | The exported interface the fork declares the module's instances with, e.g. `BehaviorTree`. Required once the vendored upstream defines a `function M:name(…)` method, which parity measures against that interface's methods; it needs `upstreamLua`. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
 
-A missing required field fails loudly, naming both the field and the offending
-entry.
+A missing required field fails loudly, naming the field, the offending entry and
+its `library.json`. So does a folder named other than its repository, a folder
+without `reviewed.json`, and a module another library folder already names.
 
 `upstreamLua` and `parityVerdict` are individually optional but jointly
 **mandatory**: every entry declares exactly one. Neither field is in the required
@@ -11627,7 +11648,7 @@ The generated lanes report a coverage number because a parse can lose type
 information the original had. An authored `.d.ts` cannot: the printed declaration
 is the vendored source, so the go/no-go gate is a **forked-vs-printed identity
 diff** — what `resolve` prints is byte-identical to the vendored
-`fixtures/authored/<moduleId>.d.ts`. `print-library.test.ts` asserts exactly this
+`fork/<moduleId>.d.ts`. `print-library.test.ts` asserts exactly this
 through the lane dispatch. No `fidelity/` artifact is written.
 
 Read that gate narrowly. It proves **emission** fidelity — both sides of the diff
@@ -11653,12 +11674,10 @@ dropped a trailing parameter, is measurable without any type information at all.
 
 The upstream path is derived from `moduleId`: replace the dots with slashes and
 append `.lua`, so `in.button` is `in/button.lua` and `richtext.richtext` is
-`richtext/richtext.lua`. Fetch that path at the entry's pinned `ref` and vendor it
-under `fixtures/upstream-lua/` in the library data folder, at
-`<repo-name>/<upstream-path>` within it, where `<repo-name>` is the last segment
-of the entry's `repo` URL — so
-`britzl/defold-input` at `in/button.lua` lands at
-`fixtures/upstream-lua/defold-input/in/button.lua`. Vendor only the module file
+`richtext/richtext.lua`. Fetch that path at the library's pinned `ref` and vendor
+it under the library folder's `source/upstream/`, at the same path it has
+upstream — so `britzl/defold-input` at `in/button.lua` lands at
+`defold-input/source/upstream/in/button.lua`. Vendor only the module file
 the target names, never the whole repository: the digest map is per-file, and an
 unused copy is dead weight the pin still has to defend.
 
@@ -11891,7 +11910,7 @@ Five rules bound it:
   doc-comment in the fork is therefore how you opt it out; there is no exclusion
   list, because the only thing one would add is "show no prose at all", which is
   worse than writing the correct brief.
-- **The import is the api-doc's alone.** `fixtures/authored/<moduleId>.d.ts` and
+- **The import is the api-doc's alone.** `fork/<moduleId>.d.ts` and
   the declaration `resolve` prints from it are untouched, so the forked-vs-printed
   identity diff still proves the emit is lossless and imported prose stays
   distinguishable from the fork's forever after.
@@ -11977,7 +11996,7 @@ so `library-targets.json` holds `"targets": []`. The file stays committed anyway
 all" and would drop the LuaLS, script_api and authored lanes with it, and
 `library-classification.json` pins its commit against that `source` block.
 
-The docs-site fourth `maintainedHere` loader reads `authored-targets.json`, so the
+The docs-site fourth `maintainedHere` loader reads each library's forks, so the
 namespace becomes **authored-here** — absent from the ts-defold classification and
 present in a first-party corpus — and its `/api` page carries the upstream pin
 automatically. Then run the gates:
@@ -11987,7 +12006,8 @@ bun test packages/cli/src/library  # from the repo root
 bun run typecheck                  # from the repo root
 ```
 
-Commit the new entry, the vendored `fixtures/authored/<moduleId>.d.ts`, and the
+Commit the library's `library.json` and `reviewed.json`, the vendored
+`fork/<moduleId>.d.ts`, and the
 emitted `api-doc/` artifact together, along with the config and
 manifest deletions. Every commit must also add a [changelog](./changelog.md)
 bullet — a pre-commit gate enforces it.
@@ -12001,19 +12021,25 @@ was a correct 24-line single-module surface, and the surface is small and stable
 ts-defold-sourced would forgo the provenance gain for no real saving; a fresh
 hand-author would be redundant work when the existing binding is already right.
 So the decision is **fork**: copy the retired `.d.ts` verbatim, sever ts-defold,
-and pin to the real upstream. The reference entry:
+and pin to the real upstream. The reference `defcon/library.json`:
 
 ```json
 {
   "repo": "https://github.com/britzl/defcon",
-  "ref": "2.6.0",
   "license": "MIT",
-  "authored": "fixtures/authored/defcon.console.d.ts",
-  "moduleId": "defcon.console",
-  "namespace": "defcon",
-  "apiDoc": "api-doc/defcon.json"
+  "forks": [
+    {
+      "authored": "fork/defcon.console.d.ts",
+      "moduleId": "defcon.console",
+      "namespace": "defcon",
+      "apiDoc": "api-doc/defcon.json",
+      "upstreamLua": ["source/upstream/defcon/console.lua"]
+    }
+  ]
 }
 ```
+
+and `defcon/reviewed.json` pins `{ "ref": "2.6.0" }`.
 
 `authored` vendors the fork; `moduleId` `defcon.console` names the `declare
 module` a consumer imports; `namespace` `defcon` is the single-segment artifact
@@ -12333,14 +12359,18 @@ is not reported, because the portal rewrites release metadata every six hours.
 #### Refresh the lane
 
 Four lanes fetch and regenerate. Run their commands from
-`packages/library-types`, in order, after editing the `ref` in the registry:
+`packages/library-types`, in order, after editing the pinned `ref`:
 
-| Lane | Registry | Commands |
-| ---- | -------- | -------- |
-| LuaLS | `luals-targets.json` | `bun run luals:fetch`, then `luals:fidelity`, `luals:api-doc` |
+| Lane | Pin | Commands |
+| ---- | --- | -------- |
+| LuaLS | the library folder's `reviewed.json` | `bun run luals:fetch`, then `luals:fidelity`, `luals:api-doc` |
 | Markdown | `markdown-targets.json` | `bun ../cli/src/library/sync-markdown-types.ts --fetch --fidelity --api-doc` |
 | OpenAPI | `openapi-targets.json` | `bun ../cli/src/library/sync-openapi-types.ts --fetch --fidelity --api-doc` |
-| script_api | `script-api-targets.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity --api-doc` |
+| script_api | the library folder's `reviewed.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity --api-doc` |
+
+A library folder sits in the newest version-named folder under
+`packages/library-types/data/`, named for its repository: the URL's last path
+segment, lowercased, without `.git`.
 
 `--fetch` is the only step that touches the network; everything after it reads
 the committed fixtures, so a regeneration is reproducible offline. No lane
@@ -12360,15 +12390,14 @@ GITHUB_TOKEN="$(gh auth token)" bun run luals:fetch
 ```
 
 **The authored lane is the exception, and it is the one that surprises people.**
-`authored-targets.json` has **no `--fetch`** and no fidelity pass. Its
-`fixtures/upstream-lua/` snapshots are vendored by hand and its `.d.ts` is
+A library's forks have **no `--fetch`** and no fidelity pass. Their
+`source/upstream/` snapshots are vendored by hand and their `.d.ts` is
 hand-written, so `sync-authored-types.ts` accepts only `--api-doc`.
 Refreshing an authored pin means:
 
-1. edit the entry's `ref`;
-2. copy the upstream files named by `upstreamLua` into
-   `fixtures/upstream-lua/<repo-name>/…` by hand (the fixture path mirrors the
-   upstream path under a repo-name directory);
+1. edit the `ref` in the library folder's `reviewed.json`;
+2. copy the upstream files named by `upstreamLua` into the library folder's
+   `source/upstream/…` by hand (the path under it mirrors the upstream path);
 3. update the hand-written `.d.ts` for whatever the new upstream added or changed;
 4. re-run `bun run parity` and `bun ../cli/src/library/sync-authored-types.ts --api-doc`.
 
@@ -12383,7 +12412,7 @@ skip it.
   entry moves with the pin — raise it with `bun run fidelity:floor` rather than
   hand-editing.
 - **The vendored-snapshot digest.** `authored-parity-floor.test.ts` pins the
-  SHA-256 of every file under `fixtures/upstream-lua/`, because the committed
+  SHA-256 of every file under each forked library's `source/upstream/`, because the committed
   parity numbers were measured against exactly those bytes. Re-vendoring changes
   the digest; re-pin it **in the same commit**, after re-running the parity
   report and reviewing the coverage change. Never re-baseline a digest to make a
@@ -12391,9 +12420,9 @@ skip it.
   changing what it is about.
 - **The docs-site provenance assertions.** `api-surface-loader.test.ts` reads the
   pin back out of the emitted API-doc metadata and asserts it exactly — for
-  druid, `meta.commit` is the `ref` of its `luals-targets.json` entry and
+  druid, `meta.commit` is the `ref` in `druid/reviewed.json` and
   `meta.sourceUrl` is `https://github.com/Insality/druid/tree/<ref>`. A bump
-  moves both, and they are in a different package from the registry you edited.
+  moves both, and they are in a different package from the pin you edited.
 - **The pin-refresh record.** `packages/library-types/pin-refresh.json` states which
   members a bump added and removed, one entry per refresh, each tagged with the
   `lane` it belongs to (`luals`, `script-api`, or `openapi`).

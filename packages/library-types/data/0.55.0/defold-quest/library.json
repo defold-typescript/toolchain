@@ -1,0 +1,18 @@
+{
+  "repo": "https://github.com/Insality/defold-quest",
+  "license": "MIT",
+  "indexSlots": {
+    "quest/add_task_progress:param:task_index": {
+      "class": "native-1",
+      "evidence": "quest.lua:add_task_progress reads quest_config.tasks[task_index], the array quest_progress.lua walks from 1 to #tasks"
+    },
+    "quest/get_task_progress:param:task_index": {
+      "class": "native-1",
+      "evidence": "quest.lua:get_task_progress reads quest_config.tasks[task_index] and progress[task_index], both walked from 1 to #tasks"
+    },
+    "quest/quest_event_data:field:task_index": {
+      "class": "native-1",
+      "evidence": "quest_progress.lua:apply_event passes the loop variable of for task_index = 1, #quest_config.tasks"
+    }
+  }
+}

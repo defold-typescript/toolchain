@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/AGulev/defold-extension-uptime",
+  "license": "MIT",
+  "native": {
+    "namespace": "uptime",
+    "manifestDir": "uptime",
+    "declaration": "fork/uptime.d.ts",
+    "upstreamSource": "source/upstream/uptime/src/UpTime.cpp"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "repo": "https://github.com/s-kania/def-windward-jps",
+  "license": "MIT",
+  "native": {
+    "namespace": "def_windward_jps",
+    "manifestDir": "def_windward_jps",
+    "declaration": "fork/def_windward_jps.d.ts",
+    "upstreamSource": "source/upstream/def_windward_jps/src/def_windward_jps.cpp",
+    "methodTables": {
+      "def_windward_jps.Grid": ["Grid"]
+    }
+  },
+  "indexSlots": {
+    "def_windward_jps/create_grid:param:walls": {
+      "class": "native-1",
+      "evidence": "def_windward_jps.cpp:ReadLocation subtracts 1 from both components of each point"
+    },
+    "def_windward_jps/find_path:param:start": {
+      "class": "native-1",
+      "evidence": "def_windward_jps.cpp:ReadLocation subtracts 1 from both components of each point"
+    },
+    "def_windward_jps/find_path:param:goal": {
+      "class": "native-1",
+      "evidence": "def_windward_jps.cpp:ReadLocation subtracts 1 from both components of each point"
+    },
+    "def_windward_jps/is_walkable:param:point": {
+      "class": "native-1",
+      "evidence": "def_windward_jps.cpp:ReadLocation subtracts 1 from both components of each point"
+    },
+    "def_windward_jps/find_path:return:": {
+      "class": "not-a-position",
+      "evidence": "a pair: `path` and `nil`, or `nil` and `message`; `path` is keyed on its own and `message` addresses nothing"
+    },
+    "def_windward_jps/find_path:return::path": {
+      "class": "native-1",
+      "evidence": "def_windward_jps.cpp:PushLocation adds 1 to both components of each point"
+    }
+  }
+}

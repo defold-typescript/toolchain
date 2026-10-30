@@ -1,10 +1,11 @@
 import { afterAll, expect, test } from "bun:test";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import * as ts from "typescript";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { writePrintedCorpus } from "./print-corpus";
+import { readNativeTargets } from "./sync-native-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
@@ -13,13 +14,11 @@ const PRINTED_DIR = mkdtempSync(join(tmpdir(), "printed-corpus-"));
 
 afterAll(() => rmSync(PRINTED_DIR, { recursive: true, force: true }));
 
-// Every curated native-extension declaration, read from native-targets.json. It
-// is hand-authored and shipped as-is, so this compile is its only validity check.
-const NATIVE_DECLARATIONS = (
-  JSON.parse(readFileSync(resolve(DATA_DIR, "native-targets.json"), "utf8")) as {
-    targets: { declaration: string }[];
-  }
-).targets.map((t) => resolve(DATA_DIR, t.declaration));
+// Every curated native-extension declaration library data holds. It is
+// hand-authored and shipped as-is, so this compile is its only validity check.
+const NATIVE_DECLARATIONS = readNativeTargets(DATA_DIR).map((t) =>
+  resolve(DATA_DIR, t.declaration),
+);
 
 const USAGE_PROOFS = readdirSync(resolve(PACKAGE_ROOT, "test-d"), { recursive: true })
   .map(String)

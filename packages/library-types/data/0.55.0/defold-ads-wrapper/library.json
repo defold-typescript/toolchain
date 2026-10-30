@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/potatojam/defold-ads-wrapper",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/ads_wrapper.ads_networks.admob.d.ts",
+      "moduleId": "ads_wrapper.ads_networks.admob",
+      "namespace": "ads_wrapper.ads_networks.admob",
+      "apiDoc": "api-doc/ads_wrapper.ads_networks.admob.json",
+      "upstreamLua": ["source/upstream/ads_wrapper/ads_networks/admob.lua"]
+    }
+  ]
+}

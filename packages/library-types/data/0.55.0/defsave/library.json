@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/subsoap/defsave",
+  "license": "CC0-1.0",
+  "forks": [
+    {
+      "authored": "fork/defsave.defsave.d.ts",
+      "moduleId": "defsave.defsave",
+      "namespace": "defsave",
+      "apiDoc": "api-doc/defsave.json",
+      "upstreamLua": ["source/upstream/defsave/defsave.lua"]
+    }
+  ]
+}

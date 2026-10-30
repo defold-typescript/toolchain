@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/britzl/defold-gyro",
+  "license": "MIT",
+  "native": {
+    "namespace": "gyro",
+    "manifestDir": "gyro",
+    "declaration": "fork/gyro.d.ts",
+    "upstreamSource": "source/upstream/gyro/src/gyro.cpp"
+  }
+}

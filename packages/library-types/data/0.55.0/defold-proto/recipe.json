@@ -1,0 +1,11 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["proto/**/*.lua"],
+      "moduleId": "proto.proto",
+      "namespace": "proto",
+      "typeRenames": {},
+      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+    }
+  ]
+}

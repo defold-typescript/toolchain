@@ -101,24 +101,38 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
   }
   const data = join(root, relative(REAL_PACKAGE_ROOT, REAL_DATA_DIR));
   mkdirSync(data, { recursive: true });
-  for (const file of readdirSync(REAL_DATA_DIR)) {
-    if (file.endsWith(".json")) copyFileSync(join(REAL_DATA_DIR, file), join(data, file));
+  for (const entry of readdirSync(REAL_DATA_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      if (entry.name.endsWith(".json")) {
+        copyFileSync(join(REAL_DATA_DIR, entry.name), join(data, entry.name));
+      }
+      continue;
+    }
+    const library = JSON.parse(
+      readFileSync(join(REAL_DATA_DIR, entry.name, "library.json"), "utf8"),
+    ) as Record<string, unknown>;
+    if (library.native !== undefined) continue;
+    mkdirSync(join(data, entry.name));
+    for (const file of ["library.json", "reviewed.json", "recipe.json"]) {
+      const from = join(REAL_DATA_DIR, entry.name, file);
+      if (existsSync(from)) copyFileSync(from, join(data, entry.name, file));
+    }
   }
   writeFileSync(
     join(base, "types", "api-targets.json"),
     JSON.stringify({ targets: [{ modules: [{ namespace: "gui" }] }] }),
   );
   writeFileSync(join(root, "api-doc", "monarch.json"), "{}");
-  const authored = JSON.parse(readFileSync(join(data, "authored-targets.json"), "utf8")) as {
-    targets: Record<string, unknown>[];
+  const defcon = JSON.parse(readFileSync(join(data, "defcon", "library.json"), "utf8")) as {
+    forks: Record<string, unknown>[];
   };
-  authored.targets.push({
-    ...authored.targets[0],
+  defcon.forks.push({
+    ...defcon.forks[0],
     moduleId: "monarch.vendored",
     namespace: "monarch",
     apiDoc: "api-doc/monarch.json",
   });
-  writeFileSync(join(data, "authored-targets.json"), JSON.stringify(authored));
+  writeFileSync(join(data, "defcon", "library.json"), JSON.stringify(defcon));
   writeFileSync(
     join(root, "defold-extensions.json"),
     JSON.stringify({
@@ -134,12 +148,15 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
       ],
     }),
   );
+  mkdirSync(join(data, "native-share"));
   writeFileSync(
-    join(data, "native-targets.json"),
+    join(data, "native-share", "library.json"),
     JSON.stringify({
-      targets: [{ repo: "https://github.com/acme/native-share", ref: "1", namespace: "share" }],
+      repo: "https://github.com/acme/native-share",
+      native: { namespace: "share" },
     }),
   );
+  writeFileSync(join(data, "native-share", "reviewed.json"), JSON.stringify({ ref: "1" }));
   writeFileSync(join(root, "asset-portal-aliases.json"), JSON.stringify({ aliases: {} }));
   writeFileSync(join(root, "asset-portal-verdicts.json"), JSON.stringify({ verdicts }));
   const manifest: AssetPortalManifest = {

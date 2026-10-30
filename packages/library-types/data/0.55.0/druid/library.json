@@ -1,0 +1,78 @@
+{
+  "repo": "https://github.com/Insality/druid",
+  "license": "MIT",
+  "indexSlots": {
+    "druid/scroll_to_index:param:index": {
+      "class": "native-1",
+      "evidence": "scroll.lua:scroll_to_index clamps to 1 .. #points; data_list.lua:scroll_to_index hands it to grid:get_pos"
+    },
+    "druid/get_pos:param:index": {
+      "class": "native-1",
+      "evidence": "static_grid.lua:get_pos places index 1 at row 0, column 0"
+    },
+    "druid/get_index_xy:return:": {
+      "class": "native-1",
+      "evidence": "static_grid.lua:get_index_xy returns (col + 1) + row * in_row"
+    },
+    "druid/get_index:return:": {
+      "class": "native-1",
+      "evidence": "static_grid.lua:get_index returns get_index_xy's index"
+    },
+    "druid/get_index_by_node:return:": {
+      "class": "native-1",
+      "evidence": "static_grid.lua:get_index_by_node returns the node's key in the nodes array"
+    },
+    "druid/add:param:index": {
+      "class": "native-1",
+      "evidence": "static_grid.lua:add and data_list.lua:add insert with helper.insert_with_shift, defaulting to the count + 1"
+    },
+    "druid/remove:param:index": {
+      "class": "native-1",
+      "evidence": "static_grid.lua:remove and data_list.lua:remove call helper.remove_with_shift at index"
+    },
+    "druid/init:param:create_function": {
+      "class": "not-a-position",
+      "evidence": "a callback; data_list.lua passes it the 1-based data index"
+    },
+    "druid/new_data_list:param:create_function": {
+      "class": "not-a-position",
+      "evidence": "a callback; data_list.lua passes it the 1-based data index"
+    },
+    "druid/select_cursor:param:cursor_index": {
+      "class": "native-0",
+      "evidence": "input.lua:select_cursor clamps to 0 .. utf8.len(value); 0 is before the first character"
+    },
+    "druid/select_cursor:param:start_index": {
+      "class": "native-0",
+      "evidence": "input.lua:select_cursor clamps to 0 .. utf8.len(value); 0 is before the first character"
+    },
+    "druid/select_cursor:param:end_index": {
+      "class": "native-0",
+      "evidence": "input.lua:select_cursor clamps to 0 .. utf8.len(value); 0 is before the first character"
+    },
+    "druid/druid_grid:field:first_index": {
+      "class": "native-1",
+      "evidence": "static_grid.lua:_update_indexes takes the least and greatest key of the nodes array"
+    },
+    "druid/druid_grid:field:last_index": {
+      "class": "native-1",
+      "evidence": "static_grid.lua:_update_indexes takes the least and greatest key of the nodes array"
+    },
+    "druid/druid_data_list:field:top_index": {
+      "class": "native-1",
+      "evidence": "data_list.lua:init starts both at 1, the first data index"
+    },
+    "druid/druid_data_list:field:last_index": {
+      "class": "native-1",
+      "evidence": "data_list.lua:init starts both at 1, the first data index"
+    },
+    "druid/set_node_index:param:node": {
+      "class": "not-a-position",
+      "evidence": "the node to move; its prose reads `the index of`"
+    },
+    "druid/set_node_index:param:index": {
+      "class": "native-1",
+      "evidence": "layout.lua:set_node_index calls table.insert(self.entities, index, node)"
+    }
+  }
+}
