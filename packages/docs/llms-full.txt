@@ -7427,7 +7427,9 @@ It runs three checks in order, and a check that fails stops the ones after it:
    every native-extension declaration and every `usage/` example together,
    against the engine types this CLI ships. It runs with `skipLibCheck: false`,
    `strict`, `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`, so a
-   declaration that passes also compiles in a scaffolded project.
+   declaration that passes also compiles in a scaffolded project. A declared
+   file TypeScript cannot load, because it is missing or is not a TypeScript
+   file, is a problem of its library.
 
 The engine types (`@defold-typescript/types`) and the language extensions
 (`@typescript-to-lua/language-extensions`) that a usage example references come

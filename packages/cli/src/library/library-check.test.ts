@@ -49,8 +49,15 @@ function write(dataDir: string, path: string, contents: string): void {
 // type packages each declare one global, so a check that resolved them from there
 // would leave a usage `@ts-expect-error` unused.
 function writeFixture(
-  options: { fork?: string; usage?: string[]; native?: string; forkModuleId?: string } = {},
+  options: {
+    fork?: string;
+    usage?: string[];
+    native?: string;
+    forkModuleId?: string;
+    nativeDeclaration?: string;
+  } = {},
 ): string {
+  const nativeDeclaration = options.nativeDeclaration ?? "fork/box2d.d.ts";
   const root = mkdtempSync(join(tmpdir(), "library-check-"));
   roots.push(root);
   for (const [name, global] of Object.entries(BESIDE_DATA)) {
@@ -76,7 +83,7 @@ function writeFixture(
         ref: "v2.0",
         namespace: "box2d",
         manifestDir: "box2d",
-        declaration: "fork/box2d.d.ts",
+        declaration: nativeDeclaration,
         upstreamSource: "source/upstream/box2d.cpp",
       },
     ],
@@ -87,7 +94,7 @@ function writeFixture(
     "flow/usage/flow-usage.test-d.ts",
     `${(options.usage ?? USAGE_LINES).join("\n")}\n`,
   );
-  write(dataDir, "box2d/fork/box2d.d.ts", options.native ?? NATIVE);
+  write(dataDir, `box2d/${nativeDeclaration}`, options.native ?? NATIVE);
   return dataDir;
 }
 
@@ -130,6 +137,49 @@ describe("checkLibraryData compiles a data folder against the CLI's engine types
         library: "box2d",
         check: "compile",
         message: expect.stringMatching(/^fork\/box2d\.d\.ts:2 .*'Seconds'/),
+      },
+    ]);
+  });
+
+  test("a missing native declaration no usage imports is a problem of its library", async () => {
+    const dataDir = writeFixture();
+    rmSync(join(dataDir, "box2d/fork/box2d.d.ts"));
+
+    expect(await checkLibraryData(dataDir)).toEqual([
+      {
+        library: "box2d",
+        check: "compile",
+        message: expect.stringMatching(/^fork\/box2d\.d\.ts /),
+      },
+    ]);
+  });
+
+  test("a native declaration present on disk that TypeScript does not compile is a problem of its library", async () => {
+    expect(await checkLibraryData(writeFixture({ nativeDeclaration: "fork/box2d.txt" }))).toEqual([
+      {
+        library: "box2d",
+        check: "compile",
+        message: expect.stringMatching(/^fork\/box2d\.txt /),
+      },
+    ]);
+  });
+
+  test("a declaration that cannot be loaded keeps the other compile problems, in library order", async () => {
+    const usage = [...USAGE_LINES];
+    usage[5] = "ui.erase();";
+    const dataDir = writeFixture({ usage });
+    rmSync(join(dataDir, "box2d/fork/box2d.d.ts"));
+
+    expect(await checkLibraryData(dataDir)).toEqual([
+      {
+        library: "box2d",
+        check: "compile",
+        message: expect.stringMatching(/^fork\/box2d\.d\.ts /),
+      },
+      {
+        library: "flow",
+        check: "compile",
+        message: expect.stringMatching(/^usage\/flow-usage\.test-d\.ts:6 .*'erase'/),
       },
     ]);
   });
