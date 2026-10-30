@@ -9455,9 +9455,57 @@ describe("dispatch library check", () => {
     });
   });
 
+  test("--api-doc-out writes the API model of a clean data folder", async () => {
+    writeData("start");
+    const outDir = path.join(base, "out");
+    const { io, err } = captureStreams();
+
+    const code = await run(["check", "--data", base, "--api-doc-out", outDir], io);
+
+    expect(err()).toBe("");
+    expect(code).toBe(0);
+    expect(readdirSync(outDir)).toEqual(["mylib.core.json"]);
+    expect(JSON.parse(readFileSync(path.join(outDir, "mylib.core.json"), "utf8")).elements).toEqual(
+      [expect.objectContaining({ name: "start" })],
+    );
+  });
+
+  test("--api-doc-out with --json lists the files it wrote", async () => {
+    writeData("start");
+    const outDir = path.join(base, "out");
+    const { io, out } = captureStreams();
+
+    const code = await run(["check", "--data", base, "--api-doc-out", outDir, "--json"], io);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out()).written).toEqual([path.join(outDir, "mylib.core.json")]);
+  });
+
+  test("--api-doc-out writes nothing when a check fails", async () => {
+    writeData("stop");
+    const outDir = path.join(base, "out");
+    mkdirSync(outDir);
+    const { io } = captureStreams();
+
+    const code = await run(["check", "--data", base, "--api-doc-out", outDir], io);
+
+    expect(code).toBe(1);
+    expect(readdirSync(outDir)).toEqual([]);
+  });
+
   for (const [what, args, expected] of [
     ["no --data", ["check"], "library check: error: --data needs a directory"],
     ["--data with no value", ["check", "--data"], "library check: error: --data needs a directory"],
+    [
+      "--api-doc-out with no value",
+      ["check", "--data", ".", "--api-doc-out"],
+      "library check: error: --api-doc-out needs a directory",
+    ],
+    [
+      "--api-doc-out followed by another flag",
+      ["check", "--api-doc-out", "--no-color", "--data", "."],
+      "library check: error: --api-doc-out needs a directory",
+    ],
     [
       "an unknown sub-verb",
       ["frob", "--data", "."],

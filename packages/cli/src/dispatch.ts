@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import type { SceneComponentIndex, SceneObjectComponents } from "@defold-typescript/transpiler";
 import { type RegistryTarget, resolvableTargetVersions } from "./api-registry";
@@ -376,9 +376,14 @@ function dispatchCommand(
   const { value: libraryDataFlag, rest: afterLibraryDataArgs } = libraryDataGiven
     ? parseValueFlag(afterTemplateArgs, "library-data")
     : { value: undefined, rest: afterTemplateArgs };
-  const { value: dataFlag, rest: nonFlagArgs } = isLibrary
+  const { value: dataFlag, rest: afterDataArgs } = isLibrary
     ? parseValueFlag(afterLibraryDataArgs, "data")
     : { value: undefined, rest: afterLibraryDataArgs };
+  const apiDocOutGiven =
+    isLibrary && head.some((a) => a === "--api-doc-out" || a.startsWith("--api-doc-out="));
+  const { value: apiDocOutFlag, rest: nonFlagArgs } = apiDocOutGiven
+    ? parseValueFlag(afterDataArgs, "api-doc-out")
+    : { value: undefined, rest: afterDataArgs };
   const positional = nonFlagArgs.filter(
     (a) =>
       a !== "--json" &&
@@ -660,6 +665,14 @@ function dispatchCommand(
         }
         return 1;
       };
+      if (
+        apiDocOutGiven &&
+        (apiDocOutFlag === undefined || apiDocOutFlag === "" || apiDocOutFlag.startsWith("-"))
+      ) {
+        return fail(
+          "defold-typescript library check: --api-doc-out needs a directory; use: defold-typescript library check --data <dir> --api-doc-out <dir>",
+        );
+      }
       const selected =
         dataFlag === undefined || dataFlag === "" || dataFlag.startsWith("-")
           ? {
@@ -698,6 +711,24 @@ function dispatchCommand(
         }
         return 1;
       }
+      const written: string[] = [];
+      if (apiDocOutFlag !== undefined) {
+        const { libraryApiDocs } = await import("./library/library-api-doc");
+        const outDir = path.resolve(process.cwd(), apiDocOutFlag);
+        try {
+          for (const [file, contents] of await libraryApiDocs(dataFolder)) {
+            const dest = path.join(outDir, file);
+            mkdirSync(path.dirname(dest), { recursive: true });
+            writeFileSync(dest, contents);
+            written.push(dest);
+          }
+        } catch (err) {
+          return fail(
+            `defold-typescript library check: ${err instanceof Error ? err.message : String(err)}`,
+            { dataFolder },
+          );
+        }
+      }
       const { readLibraryData } = await import("./library/library-data");
       const libraryCount = readLibraryData(dataFolder).length;
       if (json) {
@@ -708,12 +739,18 @@ function dispatchCommand(
             dataFolder,
             libraryCount,
             problems,
+            written,
           }),
         );
       } else {
         io.stdout.write(
           `defold-typescript library check: ${dataFolder}: ${libraryCount} ${libraryCount === 1 ? "library" : "libraries"}, no problems\n`,
         );
+        if (apiDocOutFlag !== undefined) {
+          io.stdout.write(
+            `defold-typescript library check: wrote ${written.length} API ${written.length === 1 ? "model" : "models"} to ${apiDocOutFlag}\n`,
+          );
+        }
       }
       return 0;
     })();

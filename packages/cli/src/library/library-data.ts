@@ -174,6 +174,23 @@ function underLibrary(file: string, dir: string, label: string, path: string): s
   return joined;
 }
 
+export const API_DOC_DIR = "api-doc";
+
+// An API model path is written under the directory `--api-doc-out` names, so it
+// must stay below `api-doc/`.
+function requireApiDoc(file: string, label: string, path: unknown): string {
+  if (
+    typeof path !== "string" ||
+    isAbsolutePath(path) ||
+    !posix.normalize(path.replaceAll("\\", "/")).startsWith(`${API_DOC_DIR}/`)
+  ) {
+    throw new Error(
+      `${file}: entry ${label} has apiDoc ${JSON.stringify(path)}, which is outside ${API_DOC_DIR}/.`,
+    );
+  }
+  return path;
+}
+
 // A source glob is matched against the upstream tree, whose paths are relative
 // and never step up, so a glob that is absolute or steps up selects nothing.
 function requireSourceGlob(file: string, dir: string, label: string, glob: string): string {
@@ -231,7 +248,9 @@ function lualsTargets(dir: string, pin: Pin, entries: Partial<LualsEntry>[]): Lu
   return entries.map((entry, index) => {
     const label = entryLabel(entry, index);
     requireFields(file, entry, label, LUALS_REQUIRED);
-    const sourceDir = underLibrary(file, dir, label, `source/${entry.namespace as string}`);
+    // Names the target's source folder and its API model file.
+    const namespace = requireModuleId(file, label, "namespace", entry.namespace);
+    const sourceDir = underLibrary(file, dir, label, `source/${namespace}`);
     return {
       repo: pin.repo,
       ref: pin.ref,
@@ -239,7 +258,7 @@ function lualsTargets(dir: string, pin: Pin, entries: Partial<LualsEntry>[]): Lu
         requireSourceGlob(file, dir, label, glob),
       ),
       moduleId: requireModuleId(file, label, "moduleId", entry.moduleId),
-      namespace: entry.namespace as string,
+      namespace,
       typeRenames: entry.typeRenames ?? {},
       ignore: entry.ignore ?? [],
       ...(pin.license !== undefined ? { license: pin.license } : {}),
@@ -279,7 +298,7 @@ function scriptApiTargets(
       scriptApi: entry.scriptApi as string,
       moduleId,
       namespace: entry.namespace as string,
-      apiDoc: entry.apiDoc as string,
+      apiDoc: requireApiDoc(file, label, entry.apiDoc),
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: pin.license ?? "",
       ...(omittableSlots.length > 0 ? { omittableSlots } : {}),
@@ -314,7 +333,7 @@ function authoredTargets(dir: string, pin: Pin, entries: Partial<ForkEntry>[]): 
       authored: underLibrary(file, dir, label, entry.authored as string),
       moduleId: requireModuleId(file, label, "moduleId", entry.moduleId),
       namespace: entry.namespace as string,
-      apiDoc: entry.apiDoc as string,
+      apiDoc: requireApiDoc(file, label, entry.apiDoc),
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: pin.license ?? "",
       upstreamLua: upstreamLua.map((path) => underLibrary(file, dir, label, path)),
