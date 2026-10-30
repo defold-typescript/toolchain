@@ -95,6 +95,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [resolve](./resolve.md) — generate importable TypeScript modules from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
 - [scene-types](./scene-types.md) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; how `build` and `watch` keep it current, how `init` and `upgrade` wire it into your program, and why it can never reject an address.
 - [hsm-view](./hsm-view.md) — open a state-machine file in a local browser viewer that runs it from source: active states highlighted in the code, events, Play and Step, an editable ctx, a log, and live reload on every save.
+- [library](./library.md) — check a directory of library data the way this CLI reads it: the reader, the print of every module, and one compile of the printed declarations, native declarations and usage examples against this CLI's engine types, with one `<library>: <check>: <message>` line per problem and a non-zero exit.
 
 ##### Toolchain & workflow
 
@@ -7399,6 +7400,93 @@ With `--json` the command prints one line once the viewer is serving:
 
 A failure prints `{"command":"hsm-view","ok":false,"error":"..."}` and exits 1.
 
+### library
+
+`library` works on library data: the per-library folders `resolve` prints its
+library declarations from. `library check` checks a directory of that data the
+way the running CLI reads it, so you can validate library data you are editing
+without a toolchain checkout.
+
+```sh
+bunx @defold-typescript/cli library check --data path/to/library-data
+```
+
+#### What `library check` runs
+
+It runs three checks in order, and a check that fails stops the ones after it:
+
+1. **Data** — the reader that `resolve` uses accepts the data folder: each
+   library folder is named for its repo, has a `reviewed.json`, and lists
+   complete entries; every module id and native namespace is a plain name
+   (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`); every
+   path an entry names stays inside its library folder; and no module is
+   named by two libraries.
+2. **Print** — every module the data serves prints, as `resolve` prints it
+   when a project's dependency archive is not at hand.
+3. **Compile** — one TypeScript program compiles every printed declaration,
+   every native-extension declaration and every `usage/` example together,
+   against the engine types this CLI ships. It runs with `skipLibCheck: false`,
+   `strict`, `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`, so a
+   declaration that passes also compiles in a scaffolded project.
+
+The engine types (`@defold-typescript/types`) and the language extensions
+(`@typescript-to-lua/language-extensions`) that a usage example references come
+from this CLI's own install. `library check` never reads a `node_modules` beside
+the data, and any other bare import in the data resolves only to a module the
+printed declarations declare.
+
+#### `--data`
+
+`--data <dir>` names a directory of version-named data folders (`0.55.0/`,
+`0.56.0/`, ...). `library check` reads the one this CLI reads, by the same rule
+as [`resolve --library-data`](./resolve.md#flags): the highest folder at or
+below the CLI version. A relative `<dir>` resolves against the working
+directory. A `<dir>` with no folder for this CLI version is an error.
+
+#### Problems and the exit code
+
+A clean data folder prints one line and exits `0`:
+
+```text
+defold-typescript library check: /path/to/library-data/0.55.0: 81 libraries, no problems
+```
+
+Otherwise each problem prints on its own line as
+`<library>: <check>: <message>`, followed by a summary error, and the command
+exits `1`:
+
+```text
+flow: compile: usage/flow-usage.test-d.ts:12 Property 'erase' does not exist on type 'typeof import("flow.ui")'.
+defold-typescript library check: error: 1 problem in /path/to/library-data/0.55.0
+```
+
+`<library>` is the library folder. `<check>` is `data`, `print` or `compile`.
+A `compile` message starts with the file and line, relative to the library
+folder: a fork or a native declaration names its own file, a usage example its
+`usage/` path, and a module printed from upstream sources
+`printed/<module>.d.ts`. A `print` message starts with the module that did not
+print.
+
+#### JSON output
+
+With `--json`, `library check` writes one object:
+
+```json
+{
+  "command": "library",
+  "ok": false,
+  "error": "library check: 1 problem in /path/to/library-data/0.55.0",
+  "subcommand": "check",
+  "dataFolder": "/path/to/library-data/0.55.0",
+  "problems": [
+    { "library": "flow", "check": "compile", "message": "usage/flow-usage.test-d.ts:12 ..." }
+  ]
+}
+```
+
+A clean run has `"ok": true`, an empty `problems` array and `libraryCount`, the
+number of libraries the folder holds.
+
 ### Live transpile diagnostics
 
 `bunx @defold-typescript/cli@latest init .` scaffolds a TypeScript language-service plugin, `@defold-typescript/tstl-plugin`, into the generated `tsconfig.json`:
@@ -11388,12 +11476,15 @@ the page description.
 
 #### 5. Validate, then commit
 
-The `dts-declaration-validity` gate type-checks every module `resolve` prints under
-`skipLibCheck: false`, together with each library folder's `usage/` examples, so a new target is
-compiled as soon as its `recipe.json` lists it. Fidelity parity is gated per
-namespace. Run the library tests:
+Run [`library check`](./library.md) over the library data. It runs the reader's
+checks, prints every module, and type-checks every module `resolve` prints under
+`skipLibCheck: false`, together with each library folder's `usage/` examples, so
+a new target is compiled as soon as its `recipe.json` lists it; the
+`dts-declaration-validity` test runs the same check. Fidelity parity is gated per
+namespace. Then run the library tests:
 
 ```sh
+bun packages/cli/src/bin.ts library check --data packages/library-types/data  # from the repo root
 bun test packages/cli/src/library  # from the repo root
 bun run typecheck  # from the repo root
 bun run --cwd packages/library-types fidelity:floor  # from the repo root
@@ -11997,8 +12088,8 @@ generated lanes use:
   above. The namespace now resolves to
   your authored artifacts.
 - Add a `usage/<library>-usage.test-d.ts` compile proof in the library folder,
-  moving any hand-written block for the old dotted specifier into it. The
-  `dts-declaration-validity` gate type-checks every `.ts` file under a library's
+  moving any hand-written block for the old dotted specifier into it.
+  [`library check`](./library.md) type-checks every `.ts` file under a library's
   `usage/` under `skipLibCheck: false` together with every module `resolve`
   prints, the fork among them.
 
@@ -12014,6 +12105,7 @@ present in a first-party corpus — and its `/api` page carries the upstream pin
 automatically. Then run the gates:
 
 ```sh
+bun packages/cli/src/bin.ts library check --data packages/library-types/data  # from the repo root
 bun test packages/cli/src/library  # from the repo root
 bun run typecheck                  # from the repo root
 ```
@@ -12092,9 +12184,9 @@ git tags, so `ref` pins the default-branch commit SHA
 engine types: upstream writes them as `vmath.vector3 | vmath.vector4` /
 `vmath.quaternion`, but the fork — like every vendored declaration in this
 package — carries the core-type-renamed ambient `Vector3 | Vector4` /
-`Quaternion`. These resolve in the `dts-declaration-validity` gate via the
-`@defold-typescript/types` reference that `test-d/dts-check-ambient.ts` pulls
-in, so a fork consuming engine types needs no special wiring.
+`Quaternion`. These resolve in [`library check`](./library.md), which compiles
+every fork against the engine types the CLI ships, so a fork consuming engine
+types needs no special wiring.
 
 #### Worked example — `defsave.defsave`
 

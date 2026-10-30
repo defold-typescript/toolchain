@@ -79,6 +79,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [resolve](https://defold-typescript.github.io/toolchain/resolve) — generate importable TypeScript modules from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
 - [scene-types](https://defold-typescript.github.io/toolchain/scene-types) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; how `build` and `watch` keep it current, how `init` and `upgrade` wire it into your program, and why it can never reject an address.
 - [hsm-view](https://defold-typescript.github.io/toolchain/hsm-view) — open a state-machine file in a local browser viewer that runs it from source: active states highlighted in the code, events, Play and Step, an editable ctx, a log, and live reload on every save.
+- [library](https://defold-typescript.github.io/toolchain/library) — check a directory of library data the way this CLI reads it: the reader, the print of every module, and one compile of the printed declarations, native declarations and usage examples against this CLI's engine types, with one `<library>: <check>: <message>` line per problem and a non-zero exit.
 
 ### Toolchain & workflow
 

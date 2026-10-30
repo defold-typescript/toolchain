@@ -46,6 +46,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [resolve](guide/resolve.md)
 - [scene-types](guide/scene-types.md)
 - [hsm-view](guide/hsm-view.md)
+- [library](guide/library.md)
 - [Transpile diagnostics](guide/transpile-diagnostics.md)
 - [Debugging](guide/debugging.md)
 - [Agent runbooks](guide/agent-runbooks.md)

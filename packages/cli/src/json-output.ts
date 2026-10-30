@@ -1,6 +1,7 @@
 import type { CompileOutcome, EditorIssue, RunOutcome } from "./editor-attach";
 import type { CompileIssue } from "./editor-compile";
 import type { InitOperation } from "./init";
+import type { LibraryProblem } from "./library/library-check";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { WallCheckResult } from "./wall-check";
 
@@ -18,7 +19,8 @@ export type CliCommand =
   | "upgrade"
   | "set-target"
   | "hsm-view"
-  | "export-types";
+  | "export-types"
+  | "library";
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;
@@ -78,6 +80,11 @@ export interface RenderResultInput {
   readonly removedFrom?: readonly string[];
   readonly bootPath?: readonly string[];
   readonly subcommand?: string;
+  // `library check` only: the data folder it read, how many libraries that folder
+  // holds once the reader accepts it, and every problem found.
+  readonly dataFolder?: string;
+  readonly libraryCount?: number;
+  readonly problems?: readonly LibraryProblem[];
   readonly exitCode?: number;
   readonly output?: string;
   readonly bobJar?: { readonly path: string | null; readonly cached: boolean };
@@ -200,7 +207,16 @@ export function renderResult(input: RenderResultInput): string {
     "removedFrom" in input ? { ...withAdded, removedFrom: input.removedFrom } : withAdded;
   const withBoot = "bootPath" in input ? { ...withRemoved, bootPath: input.bootPath } : withRemoved;
   const withSub = "subcommand" in input ? { ...withBoot, subcommand: input.subcommand } : withBoot;
-  const withExit = "exitCode" in input ? { ...withSub, exitCode: input.exitCode } : withSub;
+  const withDataFolder =
+    "dataFolder" in input ? { ...withSub, dataFolder: input.dataFolder } : withSub;
+  const withLibraryCount =
+    "libraryCount" in input
+      ? { ...withDataFolder, libraryCount: input.libraryCount }
+      : withDataFolder;
+  const withProblems =
+    "problems" in input ? { ...withLibraryCount, problems: input.problems } : withLibraryCount;
+  const withExit =
+    "exitCode" in input ? { ...withProblems, exitCode: input.exitCode } : withProblems;
   const withOutput = "output" in input ? { ...withExit, output: input.output } : withExit;
   const withBobJar = "bobJar" in input ? { ...withOutput, bobJar: input.bobJar } : withOutput;
   const withJava = "java" in input ? { ...withBobJar, java: input.java } : withBobJar;

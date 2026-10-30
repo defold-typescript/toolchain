@@ -229,6 +229,18 @@ const COMMANDS: readonly HelpCommand[] = [
     usage: "bunx @defold-typescript/cli export-types <library> [path]",
     flags: [],
   },
+  {
+    name: "library",
+    summary:
+      "Check library data: check runs the reader, the print and the compile against this CLI's engine types, and exits 1 on any problem.",
+    usage: "bunx @defold-typescript/cli library check --data <dir>",
+    flags: [
+      {
+        flag: "--data <dir>",
+        desc: "a directory of version-named data folders; reads the one this CLI reads",
+      },
+    ],
+  },
 ];
 
 const GLOBAL_FLAGS: readonly HelpFlag[] = [
