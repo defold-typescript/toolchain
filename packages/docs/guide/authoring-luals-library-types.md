@@ -336,12 +336,15 @@ the page description.
 
 ## 5. Validate, then commit
 
-The `dts-declaration-validity` gate type-checks every module `resolve` prints under
-`skipLibCheck: false`, together with each library folder's `usage/` examples, so a new target is
-compiled as soon as its `recipe.json` lists it. Fidelity parity is gated per
-namespace. Run the library tests:
+Run [`library check`](./library.md) over the library data. It runs the reader's
+checks, prints every module, and type-checks every module `resolve` prints under
+`skipLibCheck: false`, together with each library folder's `usage/` examples, so
+a new target is compiled as soon as its `recipe.json` lists it; the
+`dts-declaration-validity` test runs the same check. Fidelity parity is gated per
+namespace. Then run the library tests:
 
 ```sh
+bun packages/cli/src/bin.ts library check --data packages/library-types/data  # from the repo root
 bun test packages/cli/src/library  # from the repo root
 bun run typecheck  # from the repo root
 bun run --cwd packages/library-types fidelity:floor  # from the repo root

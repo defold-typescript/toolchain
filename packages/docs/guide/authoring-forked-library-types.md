@@ -502,8 +502,8 @@ generated lanes use:
   above. The namespace now resolves to
   your authored artifacts.
 - Add a `usage/<library>-usage.test-d.ts` compile proof in the library folder,
-  moving any hand-written block for the old dotted specifier into it. The
-  `dts-declaration-validity` gate type-checks every `.ts` file under a library's
+  moving any hand-written block for the old dotted specifier into it.
+  [`library check`](./library.md) type-checks every `.ts` file under a library's
   `usage/` under `skipLibCheck: false` together with every module `resolve`
   prints, the fork among them.
 
@@ -519,6 +519,7 @@ present in a first-party corpus — and its `/api` page carries the upstream pin
 automatically. Then run the gates:
 
 ```sh
+bun packages/cli/src/bin.ts library check --data packages/library-types/data  # from the repo root
 bun test packages/cli/src/library  # from the repo root
 bun run typecheck                  # from the repo root
 ```
@@ -597,9 +598,9 @@ git tags, so `ref` pins the default-branch commit SHA
 engine types: upstream writes them as `vmath.vector3 | vmath.vector4` /
 `vmath.quaternion`, but the fork — like every vendored declaration in this
 package — carries the core-type-renamed ambient `Vector3 | Vector4` /
-`Quaternion`. These resolve in the `dts-declaration-validity` gate via the
-`@defold-typescript/types` reference that `test-d/dts-check-ambient.ts` pulls
-in, so a fork consuming engine types needs no special wiring.
+`Quaternion`. These resolve in [`library check`](./library.md), which compiles
+every fork against the engine types the CLI ships, so a fork consuming engine
+types needs no special wiring.
 
 ## Worked example — `defsave.defsave`
 

@@ -54,6 +54,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
       "resolve",
       "scene-types",
       "hsm-view",
+      "library",
     ],
   },
   {

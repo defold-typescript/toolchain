@@ -37,7 +37,7 @@ import {
 } from "./extension-archive";
 import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
-import { writeAuthoredLibraryData } from "./library-data-fixture";
+import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fixture";
 import { loadVendoredNativeRegistry } from "./library-registry";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import {
@@ -473,7 +473,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types|library> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -486,7 +486,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types|library> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -4630,7 +4630,7 @@ describe("dispatch bob", () => {
 
     expect(code).toBe(1);
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types|library> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -6146,7 +6146,7 @@ describe("dispatch init --template", () => {
 
 describe("dispatch upgrade", () => {
   const USAGE =
-    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types> [path]\n" +
+    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types|library> [path]\n" +
     "Run `defold-typescript --help` for per-command usage and flags.\n";
 
   function upgradeHarness(opts?: {
@@ -9338,5 +9338,152 @@ describe("export-types", () => {
       ok: false,
       error: 'no curated types for "not-a-library"',
     });
+  });
+});
+
+describe("dispatch library check", () => {
+  const FORK = "declare module 'mylib.core' {\n  export function start(): void;\n}\n";
+  const usage = (call: string): string =>
+    [
+      '/// <reference types="@typescript-to-lua/language-extensions" />',
+      '/// <reference types="@defold-typescript/types" />',
+      "",
+      'import * as core from "mylib.core";',
+      "",
+      `core.${call}();`,
+      "",
+    ].join("\n");
+
+  let base: string;
+
+  beforeEach(() => {
+    base = mkdtempSync(path.join(os.tmpdir(), "dispatch-library-check-"));
+  });
+
+  afterEach(() => {
+    rmSync(base, { recursive: true, force: true });
+  });
+
+  // `0.1.0` is the data folder a 0.1.5 CLI reads. `0.2.0` beside it is newer and
+  // fails every check, so reading it instead shows up as problems.
+  function writeData(call: string): string {
+    const dataDir = path.join(base, "0.1.0");
+    writeLibraryTargets(dataDir, {
+      forks: [
+        {
+          repo: "https://github.com/owner/mylib",
+          ref: "1.0.0",
+          authored: "fork/mylib.core.d.ts",
+          moduleId: "mylib.core",
+          namespace: "mylib.core",
+          apiDoc: "api-doc/mylib.core.json",
+          parityVerdict: { reason: "no-module-file", note: "a fixture with no upstream" },
+        },
+      ],
+    });
+    mkdirSync(path.join(dataDir, "mylib", "fork"), { recursive: true });
+    writeFileSync(path.join(dataDir, "mylib", "fork", "mylib.core.d.ts"), FORK);
+    mkdirSync(path.join(dataDir, "mylib", "usage"), { recursive: true });
+    writeFileSync(path.join(dataDir, "mylib", "usage", "core.test-d.ts"), usage(call));
+    mkdirSync(path.join(base, "0.2.0", "broken"), { recursive: true });
+    writeFileSync(path.join(base, "0.2.0", "broken", "library.json"), "{}");
+    return dataDir;
+  }
+
+  const run = (args: string[], io: ReturnType<typeof captureStreams>["io"]) =>
+    dispatch(["library", ...args], io, { cliVersion: "0.1.5" });
+
+  test("a clean data folder exits 0 and names the folder and its library count", async () => {
+    const dataDir = writeData("start");
+    const { io, out, err } = captureStreams();
+
+    const code = await run(["check", "--data", base], io);
+
+    expect(err()).toBe("");
+    expect(out()).toBe(`defold-typescript library check: ${dataDir}: 1 library, no problems\n`);
+    expect(code).toBe(0);
+  });
+
+  test("a compile problem exits 1 and prints it as library, check and message", async () => {
+    writeData("stop");
+    const { io, out } = captureStreams();
+
+    const code = await run(["check", "--data", base], io);
+
+    expect(code).toBe(1);
+    expect(out()).toMatch(/^mylib: compile: usage\/core\.test-d\.ts:6 .*'stop'.*\n$/);
+  });
+
+  test("--json reports the subcommand and the problems", async () => {
+    const dataDir = writeData("stop");
+    const { io, out } = captureStreams();
+
+    const code = await run(["check", "--data", base, "--json"], io);
+
+    expect(code).toBe(1);
+    expect(JSON.parse(out())).toEqual({
+      command: "library",
+      ok: false,
+      error: `library check: 1 problem in ${dataDir}`,
+      subcommand: "check",
+      dataFolder: dataDir,
+      problems: [
+        {
+          library: "mylib",
+          check: "compile",
+          message: expect.stringMatching(/^usage\/core\.test-d\.ts:6 .*'stop'/),
+        },
+      ],
+    });
+  });
+
+  test("--json on a clean data folder reports no problems and the library count", async () => {
+    const dataDir = writeData("start");
+    const { io, out } = captureStreams();
+
+    const code = await run(["check", "--data", base, "--json"], io);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out())).toEqual({
+      command: "library",
+      ok: true,
+      written: [],
+      subcommand: "check",
+      dataFolder: dataDir,
+      libraryCount: 1,
+      problems: [],
+    });
+  });
+
+  for (const [what, args, expected] of [
+    ["no --data", ["check"], "library check: error: --data needs a directory"],
+    ["--data with no value", ["check", "--data"], "library check: error: --data needs a directory"],
+    [
+      "an unknown sub-verb",
+      ["frob", "--data", "."],
+      "Usage: defold-typescript library <check> --data <dir>",
+    ],
+    ["no sub-verb", [], "Usage: defold-typescript library <check> --data <dir>"],
+  ] as const) {
+    test(`${what} exits 1 with a usage error`, async () => {
+      const { io, out, err } = captureStreams();
+
+      const code = await run([...args], io);
+
+      expect(code).toBe(1);
+      expect(out()).toBe("");
+      expect(err()).toContain(expected);
+    });
+  }
+
+  test("a --data that holds no data folder for this CLI exits 1, naming the flag", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await run(["check", "--data", base], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain(
+      `defold-typescript library check: error: --data ${base} holds no data folder`,
+    );
   });
 });
