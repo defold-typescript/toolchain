@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/water.json",
       "upstreamLua": ["source/upstream/water/water.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "water.water": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

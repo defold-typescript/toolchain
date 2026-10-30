@@ -40,5 +40,11 @@
       "class": "native-1",
       "evidence": "tileraycast.cpp subtracts 1 from the checked coordinate"
     }
+  },
+  "floors": {
+    "tile_raycast": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

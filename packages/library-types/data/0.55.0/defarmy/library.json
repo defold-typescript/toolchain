@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/defarmy.json",
       "upstreamLua": ["source/upstream/defarmy/defarmy.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "defarmy.defarmy": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

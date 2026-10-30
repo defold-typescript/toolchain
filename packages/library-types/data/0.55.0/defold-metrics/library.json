@@ -16,5 +16,15 @@
       "apiDoc": "api-doc/metrics.mem.json",
       "upstreamLua": ["source/upstream/metrics/mem.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "metrics.fps": {
+      "callable": 1,
+      "field": 1
+    },
+    "metrics.mem": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

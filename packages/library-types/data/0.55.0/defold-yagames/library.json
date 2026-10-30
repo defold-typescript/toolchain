@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/yagames.json",
       "upstreamLua": ["source/upstream/yagames/yagames.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "yagames.yagames": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

@@ -233,5 +233,139 @@
       "apiDoc": "api-doc/gamepush.json",
       "upstreamLua": ["source/upstream/gamepush/gamepush.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "gamepush.core.achievements": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.ads": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.analytics": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.app": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.channels": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.documents": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.events": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.experiments": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.feedbacks": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.files": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.fullscreen": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.games_collections": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.images": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.leaderboard": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.logger": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.multiplayer": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.payments": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.platform": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.player": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.player_stats": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.players": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.reactions": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.rewards": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.schedulers": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.segments": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.socials": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.sounds": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.storage": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.triggers": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.uniques": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.variables": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.core.windows": {
+      "callable": 1,
+      "field": 1
+    },
+    "gamepush.gamepush": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

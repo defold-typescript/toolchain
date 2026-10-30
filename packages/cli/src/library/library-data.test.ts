@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { libraryFolderName, readLibraryData } from "./library-data";
+import { LibraryDataError, libraryFolderName, readLibraryData } from "./library-data";
 import { printLibraryModules } from "./print-library";
 
 const FLOW_FORK = "declare module 'flow.ui' {\n  export function draw(): void;\n}\n";
@@ -106,6 +106,8 @@ describe("readLibraryData projects each library folder into lane targets", () =>
         ],
         native: [],
         indexSlots: {},
+        floors: {},
+        parityExceptions: {},
         usage: [],
       });
       expect(box2d).toEqual({
@@ -135,6 +137,8 @@ describe("readLibraryData projects each library folder into lane targets", () =>
             evidence: "fixture.cpp:229 passes it on unchanged",
           },
         },
+        floors: {},
+        parityExceptions: {},
         usage: [],
       });
     } finally {
@@ -388,5 +392,175 @@ describe("libraryFolderName", () => {
     expect(libraryFolderName("https://codeberg.org/Klaleus/defold-shutter/")).toBe(
       "defold-shutter",
     );
+  });
+});
+
+describe("readLibraryData reads a library's coverage floors and parity exceptions", () => {
+  // `flow` measures `flow.ui` and `flow.layout`, `box2d` measures its namespace.
+  function writeFloors(
+    floors: unknown,
+    parityExceptions?: unknown,
+    folder: "flow" | "box2d" = "flow",
+  ): string {
+    const root = writeDataFolder();
+    const library =
+      folder === "flow"
+        ? {
+            repo: "https://github.com/Pause-Games/flow",
+            forks: [
+              {
+                authored: "fork/flow.ui.d.ts",
+                moduleId: "flow.ui",
+                namespace: "flow.ui",
+                apiDoc: "api-doc/flow.ui.json",
+                upstreamLua: ["source/upstream/flow/ui.lua"],
+              },
+            ],
+          }
+        : {
+            repo: "https://github.com/owner/box2d",
+            native: {
+              namespace: "box2d",
+              manifestDir: "box2d",
+              declaration: "fork/box2d.d.ts",
+              upstreamSource: "source/upstream/box2d/src/box2d.cpp",
+            },
+          };
+    write(root, `${folder}/library.json`, {
+      ...library,
+      floors,
+      ...(parityExceptions === undefined ? {} : { parityExceptions }),
+    });
+    return root;
+  }
+
+  function refusal(root: string): LibraryDataError {
+    try {
+      readLibraryData(root);
+    } catch (error) {
+      rmSync(root, { recursive: true, force: true });
+      if (error instanceof LibraryDataError) return error;
+      throw error;
+    }
+    rmSync(root, { recursive: true, force: true });
+    throw new Error("readLibraryData accepted the folder");
+  }
+
+  test("floors and parity exceptions read back as fields of their library", () => {
+    const exception = {
+      name: "init",
+      kind: "script-lifecycle" as const,
+      reason: "ui.lua:1 says so",
+    };
+    const root = writeFloors(
+      { "flow.layout": 0.75, "flow.ui": { callable: 1, field: 0.5 } },
+      { "flow.ui": [exception] },
+    );
+    try {
+      const [, flow] = readLibraryData(root);
+      expect(flow?.floors).toEqual({ "flow.layout": 0.75, "flow.ui": { callable: 1, field: 0.5 } });
+      expect(flow?.parityExceptions).toEqual({ "flow.ui": [exception] });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a library with neither field reads back empty", () => {
+    const root = writeDataFolder();
+    try {
+      const [box2d, flow] = readLibraryData(root);
+      expect(flow?.floors).toEqual({});
+      expect(flow?.parityExceptions).toEqual({});
+      expect(box2d?.floors).toEqual({});
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a native library's floor is keyed by its namespace", () => {
+    const root = writeFloors({ box2d: { callable: 1, field: 1 } }, undefined, "box2d");
+    try {
+      expect(readLibraryData(root)[0]?.floors).toEqual({ box2d: { callable: 1, field: 1 } });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a floor for a module the library does not serve is refused, naming the library and the key", () => {
+    const error = refusal(writeFloors({ "flow.gone": 1 }));
+    expect(error.library).toBe("flow");
+    expect(error.message).toContain('"flow.gone"');
+  });
+
+  test("a floor for a fork that records a parity verdict is refused, since nothing measures it", () => {
+    const root = writeDataFolder();
+    write(root, "flow/library.json", {
+      repo: "https://github.com/Pause-Games/flow",
+      floors: { "flow.ui": { callable: 1, field: 1 } },
+      forks: [
+        {
+          authored: "fork/flow.ui.d.ts",
+          moduleId: "flow.ui",
+          namespace: "flow.ui",
+          apiDoc: "api-doc/flow.ui.json",
+          parityVerdict: { reason: "no-module-file", note: "nothing to read" },
+        },
+      ],
+    });
+    const error = refusal(root);
+    expect(error.library).toBe("flow");
+    expect(error.message).toContain('"flow.ui"');
+  });
+
+  test("a token module's floor must be a ratio", () => {
+    for (const bad of [null, false, "0.9", -0.1, 1.1, { callable: 1, field: 1 }]) {
+      const error = refusal(writeFloors({ "flow.layout": bad }));
+      expect(error.message).toContain('floor "flow.layout" must be a finite number in [0, 1]');
+    }
+  });
+
+  test("a measured fork's floor must carry both axes, each a ratio", () => {
+    expect(refusal(writeFloors({ "flow.ui": 0.35 })).message).toMatch(
+      /"flow\.ui".*"callable".*"field"/,
+    );
+    expect(refusal(writeFloors({ "flow.ui": { callable: 0.35 } })).message).toMatch(
+      /"flow\.ui".*missing its "field" axis/,
+    );
+    expect(refusal(writeFloors({ "flow.ui": { field: 1 } })).message).toMatch(
+      /"flow\.ui".*missing its "callable" axis/,
+    );
+    for (const bad of [-0.1, 1.1, null, "1"]) {
+      expect(refusal(writeFloors({ "flow.ui": { callable: 0.35, field: bad } })).message).toMatch(
+        /"flow\.ui" axis "field"/,
+      );
+    }
+  });
+
+  test("floors that are not an object of entries are refused", () => {
+    for (const bad of [null, [], 1]) {
+      expect(refusal(writeFloors(bad)).message).toContain("floors");
+    }
+  });
+
+  test("parity exceptions for a fork the library does not measure are refused, naming the key", () => {
+    const entry = { name: "init", kind: "script-lifecycle", reason: "ui.lua:1 says so" };
+    const error = refusal(writeFloors({}, { "flow.gone": [entry] }));
+    expect(error.library).toBe("flow");
+    expect(error.message).toContain('"flow.gone"');
+  });
+
+  test("a malformed parity exception is refused, naming the library", () => {
+    const malformed: [unknown, RegExp][] = [
+      [[], /expected a JSON object/],
+      [{ "flow.ui": { name: "init" } }, /must be an array/],
+      [{ "flow.ui": [{ kind: "script-lifecycle", reason: "x" }] }, /"name"/],
+      [{ "flow.ui": [{ name: "init", kind: "script-lifecycle" }] }, /"reason"/],
+      [{ "flow.ui": [{ name: "init", kind: "inconvenient", reason: "x" }] }, /inconvenient/],
+    ];
+    for (const [raw, message] of malformed) {
+      const error = refusal(writeFloors({}, raw));
+      expect(error.library).toBe("flow");
+      expect(error.message).toMatch(message);
+    }
   });
 });

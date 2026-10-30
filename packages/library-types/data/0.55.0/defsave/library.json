@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/defsave.json",
       "upstreamLua": ["source/upstream/defsave/defsave.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "defsave.defsave": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

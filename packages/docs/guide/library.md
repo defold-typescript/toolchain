@@ -14,15 +14,16 @@ bunx @defold-typescript/cli library check --data path/to/library-data
 
 ## What `library check` runs
 
-It runs three checks in order, and a check that fails stops the ones after it:
+It runs four checks in order, and a check that fails stops the ones after it:
 
 1. **Data** — the reader that `resolve` uses accepts the data folder: each
    library folder is named for its repo, has a `reviewed.json`, and lists
    complete entries; every module id and native namespace is a plain name
    (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`), as is
    every LuaLS `namespace`; every path an entry names stays inside its library
-   folder, and every `apiDoc` stays under `api-doc/`; and no module is named by
-   two libraries.
+   folder, and every `apiDoc` stays under `api-doc/`; every `floors` and
+   `parityExceptions` key names a module its library measures; and no module is
+   named by two libraries.
 2. **Print** — every module the data serves prints, as `resolve` prints it
    when a project's dependency archive is not at hand.
 3. **Compile** — one TypeScript program compiles every printed declaration,
@@ -32,12 +33,42 @@ It runs three checks in order, and a check that fails stops the ones after it:
    declaration that passes also compiles in a scaffolded project. A declared
    file TypeScript cannot load, because it is missing or is not a TypeScript
    file, is a problem of its library.
+4. **Floor** — every module's coverage, measured from the library's own files,
+   meets its floor in the library's `library.json`. See
+   [Coverage floors](#coverage-floors).
 
 The engine types (`@defold-typescript/types`) and the language extensions
 (`@typescript-to-lua/language-extensions`) that a usage example references come
 from this CLI's own install. `library check` never reads a `node_modules` beside
 the data, and any other bare import in the data resolves only to a module the
 printed declarations declare.
+
+## Coverage floors
+
+Each library's `library.json` holds its floors in `floors`, keyed by module id,
+and by namespace for a native extension:
+
+```json
+{
+  "repo": "https://github.com/owner/mylib",
+  "floors": {
+    "mylib.generated": 0.98,
+    "mylib.fork": { "callable": 1, "field": 1 }
+  }
+}
+```
+
+| Module | Floor | What is measured |
+| ------ | ----- | ---------------- |
+| Generated from LuaLS annotations or a `.script_api` file | a ratio | The share of its type tokens that map to a known type. |
+| A fork that lists `upstreamLua` | `{ "callable", "field" }` | Its upstream members declared at the right parameter count, and its upstream fields declared. The library's `parityExceptions` count as declared. See [Surface parity](./authoring-forked-library-types.md#4-surface-parity-against-the-upstream-lua). |
+| A native extension | `{ "callable", "field" }` | The functions, methods and constants its C++ registers that its declaration names. A wrong module name or parameter count is a problem at any coverage. |
+
+A module below its floor is a problem, and so is a module with no floor or one
+that cannot be measured. A fork that records a `parityVerdict` vendors no
+upstream to measure against, so it takes no floor. `library check` measures
+every module afresh, so it reads no committed report and nothing outside
+`--data`.
 
 ## `--data`
 
@@ -80,12 +111,13 @@ flow: compile: usage/flow-usage.test-d.ts:12 Property 'erase' does not exist on 
 defold-typescript library check: error: 1 problem in /path/to/library-data/0.55.0
 ```
 
-`<library>` is the library folder. `<check>` is `data`, `print` or `compile`.
+`<library>` is the library folder. `<check>` is `data`, `print`, `compile` or
+`floor`.
 A `compile` message starts with the file and line, relative to the library
 folder: a fork or a native declaration names its own file, a usage example its
 `usage/` path, and a module printed from upstream sources
 `printed/<module>.d.ts`. A `print` message starts with the module that did not
-print.
+print, and a `floor` message with the module it measured.
 
 ## JSON output
 

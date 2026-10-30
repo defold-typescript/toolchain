@@ -15,5 +15,11 @@
       "LuaSource::push()": ["Source"],
       "LuaListener::push()": ["Listener"]
     }
+  },
+  "floors": {
+    "openal": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

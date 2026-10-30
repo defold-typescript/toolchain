@@ -8,5 +8,11 @@
     "declaration": "fork/ainpc.d.ts",
     "upstreamSource": "source/upstream/player2-ai-npc/src/Player2AINPC.cpp",
     "upstreamHeaders": ["source/upstream/player2-ai-npc/include/Player2AINPC.hpp"]
+  },
+  "floors": {
+    "ainpc": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

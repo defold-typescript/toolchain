@@ -1,6 +1,6 @@
 // A library data folder holds one folder per library, named for its repo:
-// `library.json` (the repo, its forks, its native extension, its index slots),
-// `reviewed.json` (the ref the data was reviewed at), a `recipe.json` when the
+// `library.json` (the repo, its forks, its native extension, its index slots, its
+// coverage floors and parity exceptions), `reviewed.json` (the ref the data was reviewed at), a `recipe.json` when the
 // library generates modules, `fork/` for the hand-kept declarations, `source/`
 // for the pinned upstream files and `usage/` for the examples that compile against
 // its declarations. This is the one reader of that layout; every lane, registry
@@ -44,6 +44,44 @@ export interface ParityVerdict {
 
 export type IndexSlotEntry = Pick<IndexSlotClassification, "class" | "evidence">;
 
+/**
+ * Why the fork is right not to declare an upstream member. Closed, and both members
+ * were introduced by a real case rather than anticipated: a speculative kind would
+ * read as a licence to except anything.
+ *
+ * `script-lifecycle` — upstream exports it for the library's own bundled `.script`,
+ * saying so in its own comment; a consumer never calls it, and declaring it would
+ * widen the published surface with functions no consumer should reach.
+ * `deprecated-stub` — upstream's body is nothing but `error("… is deprecated")`, so
+ * declaring the member offers a call that cannot succeed.
+ *
+ * An arity or phantom exception is deliberately not expressible here. `nakama`'s 26
+ * phantoms are the case that will ask for one, and it states its own shape.
+ */
+export const AUTHORED_EXCEPTION_KINDS = ["deprecated-stub", "script-lifecycle"] as const;
+
+export type AuthoredExceptionKind = (typeof AUTHORED_EXCEPTION_KINDS)[number];
+
+/** One justified divergence. `reason` cites upstream's own file and line, so the
+ * entry can be re-checked against the pin rather than taken on trust. */
+export interface AuthoredParityException {
+  name: string;
+  kind: AuthoredExceptionKind;
+  reason: string;
+}
+
+/** A parity floor, one entry per reported axis. Both are required: an entry naming a
+ * single axis would leave the other unratcheted while every surrounding assertion stayed
+ * green, which is the failure this shape exists to make impossible. */
+export interface AuthoredFloor {
+  callable: number;
+  field: number;
+}
+
+/** A module's coverage floor: a token ratio for a generated module, a parity pair for a
+ * measured fork or a native extension. */
+export type LibraryFloor = number | AuthoredFloor;
+
 type PerLibrary = "repo" | "ref" | "license";
 
 // Each entry is the lane's target without the fields the library holds once, and
@@ -68,6 +106,10 @@ export interface LibraryJson {
   forks?: ForkEntry[];
   native?: NativeEntry;
   indexSlots?: Record<string, IndexSlotEntry>;
+  // Keyed by module id, and by namespace for the native extension.
+  floors?: Record<string, LibraryFloor>;
+  // Keyed by the fork's namespace.
+  parityExceptions?: Record<string, AuthoredParityException[]>;
 }
 
 export interface ReviewedJson {
@@ -90,6 +132,8 @@ export interface LibraryData {
   authored: AuthoredTarget[];
   native: NativeTarget[];
   indexSlots: Record<string, IndexSlotEntry>;
+  floors: Record<string, LibraryFloor>;
+  parityExceptions: Record<string, AuthoredParityException[]>;
   usage: string[];
 }
 
@@ -377,6 +421,136 @@ function nativeTarget(
   };
 }
 
+// `JSON.stringify` renders NaN and Infinity as `null` and returns `undefined` for
+// `undefined`, either of which would misreport the value a file actually holds.
+export function describeValue(value: unknown): string {
+  if (typeof value === "number") return String(value);
+  return JSON.stringify(value) ?? String(value);
+}
+
+/**
+ * A floor's parse-time contract: a finite number in `[0, 1]`. The gates compare
+ * coercively, so an unvalidated `null` or `false` floor would fail every `coverage < floor`
+ * comparison and switch that module's ratchet off silently.
+ */
+export function requireRatio(file: string, label: string, value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(
+      `${file}: ${label} must be a finite number in [0, 1], got ${describeValue(value)}`,
+    );
+  }
+  return value;
+}
+
+const AUTHORED_FLOOR_AXES = ["callable", "field"] as const;
+
+function requireParityFloor(file: string, key: string, entry: unknown): AuthoredFloor {
+  if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+    throw new Error(
+      `${file}: floor "${key}" must be an object of "callable" and "field" ratios, got ${describeValue(entry)}`,
+    );
+  }
+  for (const axis of AUTHORED_FLOOR_AXES) {
+    if (!(axis in entry)) {
+      throw new Error(`${file}: floor "${key}" is missing its "${axis}" axis`);
+    }
+    requireRatio(file, `floor "${key}" axis "${axis}"`, (entry as Record<string, unknown>)[axis]);
+  }
+  return entry as AuthoredFloor;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+// A floor no measurement reads would hide that its module was removed, so every key
+// must name a module the library measures, in the shape that module's measure has.
+function readFloors(
+  file: string,
+  raw: unknown,
+  tokenModules: ReadonlySet<string>,
+  parityModules: ReadonlySet<string>,
+): Record<string, LibraryFloor> {
+  if (raw === undefined) return {};
+  if (!isPlainObject(raw)) {
+    throw new Error(`${file}: expected a JSON object of floors, got ${describeValue(raw)}`);
+  }
+  const floors: Record<string, LibraryFloor> = {};
+  for (const [key, entry] of Object.entries(raw)) {
+    if (tokenModules.has(key)) floors[key] = requireRatio(file, `floor "${key}"`, entry);
+    else if (parityModules.has(key)) floors[key] = requireParityFloor(file, key, entry);
+    else throw new Error(`${file}: floor "${key}" names no module this library measures.`);
+  }
+  return floors;
+}
+
+function exceptionField(entry: Record<string, unknown>, field: string, file: string, at: string) {
+  const value = entry[field];
+  if (typeof value !== "string" || value === "") {
+    throw new Error(
+      `${file}: ${at} needs a non-empty string "${field}", got ${describeValue(value)}`,
+    );
+  }
+  return value;
+}
+
+/**
+ * The parity exceptions' parse-time contract: a plain object mapping each namespace to
+ * an array of `{ name, kind, reason }` entries, with `kind` from the closed set.
+ */
+export function parseAuthoredExceptions(
+  raw: unknown,
+  file: string,
+): Record<string, AuthoredParityException[]> {
+  if (!isPlainObject(raw)) {
+    throw new Error(`${file}: expected a JSON object of exceptions, got ${describeValue(raw)}`);
+  }
+  const exceptions: Record<string, AuthoredParityException[]> = {};
+  for (const [namespace, entries] of Object.entries(raw)) {
+    if (!Array.isArray(entries)) {
+      throw new Error(
+        `${file}: "${namespace}" must be an array of entries, got ${describeValue(entries)}`,
+      );
+    }
+    exceptions[namespace] = entries.map((entry) => {
+      if (!isPlainObject(entry)) {
+        throw new Error(`${file}: "${namespace}" holds a non-object entry ${describeValue(entry)}`);
+      }
+      const name = exceptionField(entry, "name", file, `an entry of "${namespace}"`);
+      const at = `"${namespace}.${name}"`;
+      const kind = entry.kind;
+      if (!AUTHORED_EXCEPTION_KINDS.includes(kind as AuthoredExceptionKind)) {
+        throw new Error(
+          `${file}: ${at} has unknown kind ${describeValue(kind)} — expected one of ${AUTHORED_EXCEPTION_KINDS.join(", ")}`,
+        );
+      }
+      return {
+        name,
+        kind: kind as AuthoredExceptionKind,
+        reason: exceptionField(entry, "reason", file, at),
+      };
+    });
+  }
+  return exceptions;
+}
+
+function readExceptions(
+  file: string,
+  raw: unknown,
+  measuredForks: readonly AuthoredTarget[],
+): Record<string, AuthoredParityException[]> {
+  if (raw === undefined) return {};
+  const exceptions = parseAuthoredExceptions(raw, file);
+  for (const namespace of Object.keys(exceptions)) {
+    if (!measuredForks.some((fork) => fork.namespace === namespace)) {
+      throw new Error(
+        `${file}: parityExceptions "${namespace}" names no fork this library measures.`,
+      );
+    }
+  }
+  return exceptions;
+}
+
 function usageFiles(dataDir: string, dir: string): string[] {
   const usageDir = join(dataDir, dir, USAGE_DIR);
   if (!existsSync(usageDir)) return [];
@@ -406,18 +580,34 @@ function readLibrary(dataDir: string, dir: string): LibraryData {
     ? readJson<RecipeJson>(dataDir, `${dir}/${RECIPE_FILE}`)
     : {};
   const pin: Pin = { repo: library.repo, ref, license: library.license };
+  const file = `${dir}/${LIBRARY_FILE}`;
+  const luals = lualsTargets(dir, pin, recipe.luals ?? []);
+  const scriptApi = scriptApiTargets(dir, pin, recipe.scriptApi ?? []);
+  const authored = authoredTargets(dir, pin, library.forks ?? []);
+  const native =
+    library.native === undefined ? [] : [nativeTarget(dir, pin, library.refKind, library.native)];
+  const measuredForks = authored.filter((target) => target.upstreamLua.length > 0);
   return {
     dir,
     repo: library.repo,
     ref,
     license: library.license ?? "",
     ...(library.refKind === undefined ? {} : { refKind: library.refKind }),
-    luals: lualsTargets(dir, pin, recipe.luals ?? []),
-    scriptApi: scriptApiTargets(dir, pin, recipe.scriptApi ?? []),
-    authored: authoredTargets(dir, pin, library.forks ?? []),
-    native:
-      library.native === undefined ? [] : [nativeTarget(dir, pin, library.refKind, library.native)],
+    luals,
+    scriptApi,
+    authored,
+    native,
     indexSlots: library.indexSlots ?? {},
+    floors: readFloors(
+      file,
+      library.floors,
+      new Set([...luals, ...scriptApi].map(({ moduleId }) => moduleId)),
+      new Set([
+        ...measuredForks.map(({ moduleId }) => moduleId),
+        ...native.map(({ namespace }) => namespace),
+      ]),
+    ),
+    parityExceptions: readExceptions(file, library.parityExceptions, measuredForks),
     usage: usageFiles(dataDir, dir),
   };
 }
@@ -439,7 +629,8 @@ export class LibraryDataError extends Error {
  * `fidelity` stay relative to the library-types package root, where the toolchain
  * writes them. Throws a `LibraryDataError` on a folder whose name is not its
  * repo's, on a missing `reviewed.json`, on a malformed entry, on a module id or
- * path that leaves its folder, and on a module two folders name.
+ * path that leaves its folder, on a floor or parity exception for a module its
+ * library does not measure, and on a module two folders name.
  */
 export function readLibraryData(dataDir: string): LibraryData[] {
   const dirs = readdirSync(dataDir, { withFileTypes: true })
@@ -484,6 +675,21 @@ export function readIndexSlots(dataDir: string): Record<string, IndexSlotEntry> 
     }
   }
   return merged;
+}
+
+/** One library's parity exceptions, for a measurement that holds only the fork's target. */
+export function readLibraryExceptions(
+  dataDir: string,
+  repo: string,
+): Record<string, AuthoredParityException[]> {
+  const file = libraryFile(repo);
+  const { parityExceptions } = readJson<LibraryJson>(dataDir, file);
+  return parityExceptions === undefined ? {} : parseAuthoredExceptions(parityExceptions, file);
+}
+
+/** A library's `library.json` as it sits on disk, for a tool that rewrites one field. */
+export function readLibraryJson(dataDir: string, folder: string): LibraryJson {
+  return readJson<LibraryJson>(dataDir, `${folder}/${LIBRARY_FILE}`);
 }
 
 function writeJson(dataDir: string, folder: string, file: string, value: unknown): void {

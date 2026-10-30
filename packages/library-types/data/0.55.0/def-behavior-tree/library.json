@@ -10,5 +10,11 @@
       "upstreamLua": ["source/upstream/def_behavior_tree/behavior_tree.lua"],
       "instanceType": "BehaviorTree"
     }
-  ]
+  ],
+  "floors": {
+    "def_behavior_tree.behavior_tree": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

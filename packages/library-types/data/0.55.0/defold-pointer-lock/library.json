@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/pointer_lock.json",
       "upstreamLua": ["source/upstream/pointer_lock/pointer.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "pointer_lock.pointer": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

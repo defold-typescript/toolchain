@@ -72,5 +72,47 @@
       "apiDoc": "api-doc/in.triggers.json",
       "upstreamLua": ["source/upstream/in/triggers.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "in.accelerometer": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.button": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.cursor": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.gesture": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.keyboard": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.mapper": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.onscreen": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.state": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.textbox": {
+      "callable": 1,
+      "field": 1
+    },
+    "in.triggers": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

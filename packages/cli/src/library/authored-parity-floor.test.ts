@@ -11,13 +11,13 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  AUTHORED_FLOOR_MANIFEST_FILE,
   authoredFloorRegressions,
   authoredParityPath,
   authoredParityTargets,
   collectAuthoredParity,
-  parseAuthoredFloors,
 } from "./authored-parity";
+import { readLibraryData } from "./library-data";
+import { parityFloorsByReport } from "./library-floors";
 import { NATIVE_PARITY_DIR, nativeParityPath } from "./native-parity";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { readAuthoredTargets } from "./sync-authored-types";
@@ -26,17 +26,13 @@ import { readNativeTargets } from "./sync-native-types";
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 const PARITY_DIR = "fidelity/authored";
-const FLOOR_MANIFEST = AUTHORED_FLOOR_MANIFEST_FILE;
 const REGENERATE = "bun run --cwd packages/library-types parity";
 
 const ARTIFACTS = {
   ...collectAuthoredParity(PACKAGE_ROOT),
   ...collectAuthoredParity(PACKAGE_ROOT, NATIVE_PARITY_DIR),
 };
-const FLOORS = parseAuthoredFloors(
-  JSON.parse(readFileSync(join(PACKAGE_ROOT, FLOOR_MANIFEST), "utf8")),
-  FLOOR_MANIFEST,
-);
+const FLOORS = parityFloorsByReport(readLibraryData(DATA_DIR));
 
 describe("the authored-lane surface-parity ratchet", () => {
   test("the walk finds the committed artifacts, so the gate cannot pass vacuously", () => {
@@ -59,9 +55,7 @@ describe("the authored-lane surface-parity ratchet", () => {
   test("every floor entry names an artifact that exists", () => {
     const stale = Object.keys(FLOORS)
       .filter((path) => ARTIFACTS[path] === undefined)
-      .map(
-        (path) => `${path}: floor entry has no such artifact — drop the key from ${FLOOR_MANIFEST}`,
-      );
+      .map((path) => `${path}: floor entry has no such artifact — drop the key from its library`);
     expect(stale).toEqual([]);
   });
 
@@ -69,18 +63,14 @@ describe("the authored-lane surface-parity ratchet", () => {
     expect(authoredFloorRegressions(ARTIFACTS, FLOORS)).toEqual([]);
   });
 
-  test("the manifest's keys are sorted", () => {
+  test("the floors read back sorted by artifact", () => {
     const keys = Object.keys(FLOORS);
     expect(keys).toEqual([...keys].sort());
   });
 });
 
-describe("a floor entry cannot silently cover one axis", () => {
-  function parse(raw: unknown): () => unknown {
-    return () => parseAuthoredFloors(raw, FLOOR_MANIFEST);
-  }
-
-  test("the committed manifest parses into two axes per artifact", () => {
+describe("every committed floor covers both axes", () => {
+  test("each artifact's floor parses into two axes", () => {
     for (const [key, floor] of Object.entries(FLOORS)) {
       expect(typeof floor.callable).toBe("number");
       expect(typeof floor.field).toBe("number");
@@ -88,35 +78,6 @@ describe("a floor entry cannot silently cover one axis", () => {
         true,
       );
     }
-  });
-
-  test("the pre-migration bare-number shape is rejected, naming both axes", () => {
-    const thrown = parse({ "fidelity/authored/gooey.json": 0.35 });
-    expect(thrown).toThrow(/fidelity\/authored\/gooey\.json/);
-    expect(thrown).toThrow(/callable/);
-    expect(thrown).toThrow(/field/);
-  });
-
-  test("an entry covering only one axis is rejected, naming the absent one", () => {
-    expect(parse({ "fidelity/authored/gooey.json": { callable: 0.35 } })).toThrow(
-      /"fidelity\/authored\/gooey\.json".*"field"/s,
-    );
-    expect(parse({ "fidelity/authored/gooey.json": { field: 1 } })).toThrow(
-      /"fidelity\/authored\/gooey\.json".*"callable"/s,
-    );
-  });
-
-  test("a non-finite or out-of-range axis value is rejected, naming the key", () => {
-    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, -0.1, 1.1, null, "1"]) {
-      expect(parse({ "fidelity/authored/gooey.json": { callable: 0.35, field: bad } })).toThrow(
-        /fidelity\/authored\/gooey\.json/,
-      );
-    }
-  });
-
-  test("a manifest that is not an object of entries is rejected", () => {
-    expect(parse(null)).toThrow(new RegExp(FLOOR_MANIFEST.replace(".", "\\.")));
-    expect(parse([])).toThrow(new RegExp(FLOOR_MANIFEST.replace(".", "\\.")));
   });
 });
 

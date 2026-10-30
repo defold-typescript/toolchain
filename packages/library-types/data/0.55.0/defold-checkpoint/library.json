@@ -10,5 +10,11 @@
       "apiDoc": "api-doc/checkpoint.json",
       "upstreamLua": ["source/upstream/checkpoint/checkpoint.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "checkpoint.checkpoint": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

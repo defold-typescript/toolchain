@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/ink.json",
       "upstreamLua": ["source/upstream/ink/story.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "ink.story": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/dissolve_fx.json",
       "upstreamLua": ["source/upstream/dissolve_fx/dissolve_fx.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "dissolve_fx.dissolve_fx": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

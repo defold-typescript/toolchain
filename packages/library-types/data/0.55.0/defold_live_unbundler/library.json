@@ -1,4 +1,7 @@
 {
   "repo": "https://github.com/HGPoint/defold_live_unbundler",
-  "license": "MIT"
+  "license": "MIT",
+  "floors": {
+    "live_unbundler.live_unbundler": 1
+  }
 }

@@ -37,5 +37,27 @@
       "apiDoc": "api-doc/nakama.json",
       "upstreamLua": ["source/upstream/nakama/nakama.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "nakama.engine.defold": {
+      "callable": 1,
+      "field": 1
+    },
+    "nakama.nakama": {
+      "callable": 1,
+      "field": 1
+    },
+    "nakama.session": {
+      "callable": 1,
+      "field": 1
+    },
+    "nakama.socket": {
+      "callable": 1,
+      "field": 1
+    },
+    "nakama.util.log": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

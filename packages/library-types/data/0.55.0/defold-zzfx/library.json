@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/zzfx.json",
       "upstreamLua": ["source/upstream/zzfx/api.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "zzfx.api": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

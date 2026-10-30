@@ -23,5 +23,19 @@
       "apiDoc": "api-doc/monarch.transitions.gui.json",
       "upstreamLua": ["source/upstream/monarch/transitions/gui.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "monarch.monarch": {
+      "callable": 1,
+      "field": 1
+    },
+    "monarch.transitions.easings": {
+      "callable": 1,
+      "field": 1
+    },
+    "monarch.transitions.gui": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

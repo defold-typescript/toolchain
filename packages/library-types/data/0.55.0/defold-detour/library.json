@@ -37,5 +37,11 @@
       "class": "native-0",
       "evidence": "detour.cpp:282 keys each active agent by its crowd slot with lua_pushnumber(L, i) from i = 0"
     }
+  },
+  "floors": {
+    "detour": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }
