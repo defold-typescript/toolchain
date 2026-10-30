@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { FidelityReport } from "./luals-fidelity";
 import { LIBRARY_TYPES_ROOT } from "./package-root";
 import { type MarkdownDoc, parseMarkdownApi } from "./parse-markdown-api";
@@ -683,12 +683,12 @@ export function compareFidelityToTsDefold(
  * to obtain its comparison would overwrite them in place; passing an unregistered
  * in-memory target here computes the same decision and leaves them untouched.
  *
- * `snapshot` overrides the compared-against surface, package-root-relative. A
- * library that severed its ts-defold dependency (forking its surface into the
- * authored lane) has no `fixtures/ts-defold/` entry left, but its recorded
- * markdown verdict is still owed a comparison: a verbatim fork is byte-identical
- * to the retired snapshot, so pointing this at the vendored copy reproduces the
- * decision exactly.
+ * `snapshot` overrides the compared-against surface, resolved against the
+ * package root. A library that severed its ts-defold dependency (forking its
+ * surface into the authored lane) has no `fixtures/ts-defold/` entry left, but
+ * its recorded markdown verdict is still owed a comparison: a verbatim fork is
+ * byte-identical to the retired snapshot, so pointing this at the fork in the
+ * library data folder reproduces the decision exactly.
  */
 export async function evaluateMarkdownCandidate(
   packageRoot: string,
@@ -697,7 +697,7 @@ export async function evaluateMarkdownCandidate(
 ): Promise<FidelityComparison & { emitted: string }> {
   const emitted = await emitMarkdownDeclaration(packageRoot, target);
   const tsDefold = readFileSync(
-    join(packageRoot, snapshot ?? join("fixtures/ts-defold", `${target.moduleId}.d.ts`)),
+    resolve(packageRoot, snapshot ?? join("fixtures/ts-defold", `${target.moduleId}.d.ts`)),
     "utf8",
   );
   return { emitted, ...compareFidelityToTsDefold(emitted, tsDefold) };

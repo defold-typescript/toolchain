@@ -10,7 +10,8 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import type {
   AssetPortalManifest,
   PortalEntry,
@@ -27,6 +28,7 @@ import {
 } from "./sync-asset-portal-script-api.ts";
 
 const REAL_PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
+const REAL_DATA_DIR = newestDataFolder(REAL_PACKAGE_ROOT);
 const SYNCED_AT = "2026-10-21T00:00:00.000Z";
 
 const ASTAR_SCRIPT_API = `- name: astar
@@ -97,12 +99,17 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
       copyFileSync(join(REAL_PACKAGE_ROOT, file), join(root, file));
     }
   }
+  const data = join(root, relative(REAL_PACKAGE_ROOT, REAL_DATA_DIR));
+  mkdirSync(data, { recursive: true });
+  for (const file of readdirSync(REAL_DATA_DIR)) {
+    if (file.endsWith(".json")) copyFileSync(join(REAL_DATA_DIR, file), join(data, file));
+  }
   writeFileSync(
     join(base, "types", "api-targets.json"),
     JSON.stringify({ targets: [{ modules: [{ namespace: "gui" }] }] }),
   );
   writeFileSync(join(root, "api-doc", "monarch.json"), "{}");
-  const authored = JSON.parse(readFileSync(join(root, "authored-targets.json"), "utf8")) as {
+  const authored = JSON.parse(readFileSync(join(data, "authored-targets.json"), "utf8")) as {
     targets: Record<string, unknown>[];
   };
   authored.targets.push({
@@ -111,7 +118,7 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
     namespace: "monarch",
     apiDoc: "api-doc/monarch.json",
   });
-  writeFileSync(join(root, "authored-targets.json"), JSON.stringify(authored));
+  writeFileSync(join(data, "authored-targets.json"), JSON.stringify(authored));
   writeFileSync(
     join(root, "defold-extensions.json"),
     JSON.stringify({
@@ -128,7 +135,7 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
     }),
   );
   writeFileSync(
-    join(root, "native-targets.json"),
+    join(data, "native-targets.json"),
     JSON.stringify({
       targets: [{ repo: "https://github.com/acme/native-share", ref: "1", namespace: "share" }],
     }),

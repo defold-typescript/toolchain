@@ -100,7 +100,7 @@ export interface DispatchInternals {
     readonly readZip?: ReadExtensionZip;
     readonly cacheDir?: string;
     readonly libraryRegistry?: readonly VendoredLibrary[];
-    readonly libraryTypesRoot?: string | null;
+    readonly libraryDataDir?: string | null;
   };
   // Reads the detected Defold editor's `config` and returns its `version` key,
   // or null when no editor is detected. The default is the live
@@ -1295,8 +1295,8 @@ function dispatchCommand(
               ...(resolveSeams?.libraryRegistry
                 ? { libraryRegistry: resolveSeams.libraryRegistry }
                 : {}),
-              ...(resolveSeams?.libraryTypesRoot !== undefined
-                ? { libraryTypesRoot: resolveSeams.libraryTypesRoot }
+              ...(resolveSeams?.libraryDataDir !== undefined
+                ? { libraryDataDir: resolveSeams.libraryDataDir }
                 : {}),
             });
             for (const warning of result.warnings) {
@@ -1570,9 +1570,7 @@ function dispatchCommand(
           ...(seams?.download ? { download: seams.download } : {}),
           ...(seams?.readZip ? { readZip: seams.readZip } : {}),
           ...(seams?.libraryRegistry ? { libraryRegistry: seams.libraryRegistry } : {}),
-          ...(seams?.libraryTypesRoot !== undefined
-            ? { libraryTypesRoot: seams.libraryTypesRoot }
-            : {}),
+          ...(seams?.libraryDataDir !== undefined ? { libraryDataDir: seams.libraryDataDir } : {}),
           ...(frozen ? { freeze: true } : {}),
         });
         for (const warning of result.warnings) {

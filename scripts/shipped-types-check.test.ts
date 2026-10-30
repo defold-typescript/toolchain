@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { normalizeSourceId } from "../packages/cli/src/library-match.ts";
 import {
   loadVendoredLibraryRegistry,
@@ -427,8 +428,10 @@ describe("readCuratedRepos over the committed corpus", () => {
   test("sweeps exactly the sources `resolve` can install curated types for, each once", () => {
     const swept = readCuratedRepos().map(({ repo }) => normalizeSourceId(repo));
     const installable = new Set([
-      ...loadVendoredLibraryRegistry(PACKAGE_ROOT).map(({ sourceId }) => sourceId),
-      ...loadVendoredNativeRegistry(PACKAGE_ROOT).map(({ sourceId }) => sourceId),
+      ...loadVendoredLibraryRegistry(newestDataFolder(PACKAGE_ROOT)).map(
+        ({ sourceId }) => sourceId,
+      ),
+      ...loadVendoredNativeRegistry(newestDataFolder(PACKAGE_ROOT)).map(({ sourceId }) => sourceId),
     ]);
     expect(installable.size).toBeGreaterThan(0);
     expect(swept.length).toBe(new Set(swept).size);

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus } from "./print-corpus";
 import {
   applyOmittableSlots,
@@ -20,6 +20,7 @@ import {
 } from "./sync-script-api-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 // The bridge target as it appears in a validated config. Unlike the LuaLS
 // front-end (which pins source globs), a script_api target pins one `.script_api`
@@ -46,7 +47,7 @@ function writeConfig(config: unknown): string {
 
 describe("readScriptApiTargets", () => {
   test("parses the committed bridge entry into a typed target", () => {
-    const targets = readScriptApiTargets(PACKAGE_ROOT);
+    const targets = readScriptApiTargets(DATA_DIR);
     const bridge = targets.find((t) => t.moduleId === "bridge.bridge");
     expect(bridge).toBeDefined();
     expect(bridge?.namespace).toBe("bridge");
@@ -110,7 +111,7 @@ describe("bridge migrated off the ts-defold corpus", () => {
   });
 
   test("the script_api goldens are named for the namespace, not the dotted module or a subtree", async () => {
-    expect((await printCorpus(PACKAGE_ROOT)).has("bridge.bridge")).toBe(true);
+    expect((await printCorpus(DATA_DIR)).has("bridge.bridge")).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/bridge.json"))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "fidelity/bridge.json"))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/script-api/bridge.bridge.json"))).toBe(false);
@@ -141,7 +142,7 @@ describe("fetchScriptApiFixture", () => {
 
 describe("emitScriptApiDeclaration", () => {
   test("routes the vendored .script_api through scriptApiToFixtureJson -> generateModuleDeclaration", async () => {
-    const contents = await emitScriptApiDeclaration(PACKAGE_ROOT, BRIDGE);
+    const contents = await emitScriptApiDeclaration(DATA_DIR, BRIDGE);
     // The output is an importable module keyed by moduleId, not a global namespace.
     expect(contents).toContain("declare module 'bridge.bridge' {");
     expect(contents).toContain("export namespace bridge {");
@@ -152,7 +153,7 @@ describe("emitScriptApiDeclaration", () => {
   });
 
   test("notes a classified callback argument naming the library, under its api-doc page", async () => {
-    const contents = await emitScriptApiDeclaration(PACKAGE_ROOT, BRIDGE);
+    const contents = await emitScriptApiDeclaration(DATA_DIR, BRIDGE);
     expect(contents).toContain(
       "@param on_success - function(_, day). **0️⃣ `day` is 0-based; passed to `bridge` unchanged.**",
     );
@@ -208,8 +209,8 @@ describe("applyOmittableSlots", () => {
 
 describe("script_api api-docs regenerate byte-for-byte", () => {
   test("each target's lowered api-doc matches its committed api-doc golden", async () => {
-    for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
-      const regenerated = await lowerScriptApiApiDoc(PACKAGE_ROOT, target);
+    for (const target of readScriptApiTargets(DATA_DIR)) {
+      const regenerated = await lowerScriptApiApiDoc(DATA_DIR, target);
       const committed = readFileSync(join(PACKAGE_ROOT, target.apiDoc), "utf8");
       expect(regenerated).toBe(committed);
     }
@@ -218,8 +219,8 @@ describe("script_api api-docs regenerate byte-for-byte", () => {
 
 describe("script_api fidelity", () => {
   test("each target's report matches its committed fidelity golden", async () => {
-    for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
-      const report = await buildScriptApiFidelity(PACKAGE_ROOT, target);
+    for (const target of readScriptApiTargets(DATA_DIR)) {
+      const report = await buildScriptApiFidelity(DATA_DIR, target);
       const committed = readFileSync(join(PACKAGE_ROOT, target.fidelity), "utf8");
       expect(`${JSON.stringify(report, null, 2)}\n`).toBe(committed);
     }
@@ -229,7 +230,7 @@ describe("script_api fidelity", () => {
   // `string | nil` returns count one resolved token per alternative rather than
   // one unmapped union or none at all.
   test("bridge fidelity reflects the real emitter: coverage 1, no unmapped tokens", async () => {
-    const report = await buildScriptApiFidelity(PACKAGE_ROOT, BRIDGE);
+    const report = await buildScriptApiFidelity(DATA_DIR, BRIDGE);
     expect(report.namespace).toBe("bridge");
     expect(report.totalMembers).toBe(90);
     expect(report.totalTypeTokens).toBe(152);

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import ts from "typescript";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import {
   lowerNativeApiDoc,
   type NativeTarget,
@@ -11,6 +11,7 @@ import {
 } from "./sync-native-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 interface Element {
   type: string;
@@ -24,13 +25,13 @@ interface Element {
 }
 
 function target(namespace: string): NativeTarget {
-  const found = readNativeTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+  const found = readNativeTargets(DATA_DIR).find((t) => t.namespace === namespace);
   if (!found) throw new Error(`native-targets.json has no ${namespace} entry`);
   return found;
 }
 
 function lowered(namespace: string): { info: { namespace: string }; elements: Element[] } {
-  return JSON.parse(lowerNativeApiDoc(PACKAGE_ROOT, target(namespace)));
+  return JSON.parse(lowerNativeApiDoc(DATA_DIR, target(namespace)));
 }
 
 describe("lowerNativeApiDoc", () => {
@@ -48,7 +49,7 @@ describe("lowerNativeApiDoc", () => {
   // The page already says the namespace is a global called with no import, so a
   // per-member ambient-global badge would repeat it on every row.
   test("carries no per-member global marker", () => {
-    for (const { namespace } of readNativeTargets(PACKAGE_ROOT)) {
+    for (const { namespace } of readNativeTargets(DATA_DIR)) {
       expect(lowered(namespace).elements.filter((e) => e.global)).toEqual([]);
     }
   });
@@ -268,12 +269,12 @@ describe("lowerNativeApiDoc", () => {
 
 describe("committed native api-docs", () => {
   test("every native target has a committed api-doc equal to a fresh lowering", () => {
-    const targets = readNativeTargets(PACKAGE_ROOT);
+    const targets = readNativeTargets(DATA_DIR);
     expect(targets.length).toBeGreaterThan(0);
     for (const t of targets) {
       const path = join(PACKAGE_ROOT, nativeApiDocPath(t));
       expect(existsSync(path)).toBe(true);
-      expect(readFileSync(path, "utf8")).toBe(lowerNativeApiDoc(PACKAGE_ROOT, t));
+      expect(readFileSync(path, "utf8")).toBe(lowerNativeApiDoc(DATA_DIR, t));
     }
   });
 });
@@ -332,12 +333,12 @@ function declarationForm(source: string): DeclarationForm {
 
 describe("curated native declaration form", () => {
   test("each is a bare @globalTable module with no global alias", () => {
-    const targets = readNativeTargets(PACKAGE_ROOT);
+    const targets = readNativeTargets(DATA_DIR);
 
     const actual = Object.fromEntries(
       targets.map((t) => [
         t.namespace,
-        declarationForm(readFileSync(join(PACKAGE_ROOT, t.declaration), "utf8")),
+        declarationForm(readFileSync(join(DATA_DIR, t.declaration), "utf8")),
       ]),
     );
     const expected = Object.fromEntries(

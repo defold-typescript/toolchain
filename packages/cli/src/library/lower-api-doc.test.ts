@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { lowerLibraryModel } from "./lower-api-doc";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LibraryModel, parseLualsSource } from "./parse-luals";
 import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
 
@@ -634,11 +634,11 @@ test("with no moduleObject, the namespace-named class still sources the descript
 });
 
 const packageRoot = LIBRARY_TYPES_ROOT;
-const targets = readLualsTargets(packageRoot);
+const targets = readLualsTargets(LIBRARY_DATA_DIR);
 
 for (const target of targets) {
   test(`regenerating ${target.namespace} from the committed fixtures matches its committed api-doc golden byte-for-byte`, () => {
-    const model = buildTargetModel(packageRoot, target);
+    const model = buildTargetModel(LIBRARY_DATA_DIR, target);
     const lowered = lowerLibraryModel(model, {
       namespace: target.namespace,
       typeRenames: target.typeRenames,

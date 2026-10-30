@@ -16,7 +16,7 @@ import { normalizeSourceId } from "./library-match";
 import {
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
-  resolveLibraryTypesPackageRoot,
+  resolveLibraryDataDir,
 } from "./library-registry";
 import {
   checkShippedDeclarations,
@@ -28,9 +28,9 @@ import {
 export interface RunExportTypesOptions {
   readonly library: string;
   readonly cwd: string;
-  // The curated corpus to export from. Defaults to the installed
-  // `@defold-typescript/library-types`.
-  readonly libraryTypesRoot?: string | null;
+  // The library data folder to export from. Defaults to the one the installed CLI
+  // selects in `@defold-typescript/library-types`.
+  readonly libraryDataDir?: string | null;
   // The `@defold-typescript/types` root the files are checked against. Defaults
   // to the installed package; `null` means it could not be found.
   readonly typesRoot?: string | null;
@@ -110,8 +110,7 @@ function existingShippedFiles(
 
 export async function runExportTypes(opts: RunExportTypesOptions): Promise<RunExportTypesResult> {
   const sourceId = normalizeSourceId(opts.library);
-  const root =
-    opts.libraryTypesRoot !== undefined ? opts.libraryTypesRoot : resolveLibraryTypesPackageRoot();
+  const root = opts.libraryDataDir !== undefined ? opts.libraryDataDir : resolveLibraryDataDir();
   const sources = sourceId === "" ? [] : await curatedFiles(sourceId, root);
   if (sources.length === 0) {
     throw new Error(`no curated types for "${opts.library}"`);

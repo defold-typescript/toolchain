@@ -12,7 +12,9 @@ the declaration into the consumer's project from the library version it depends
 on, or from the sources pinned in `@defold-typescript/library-types`.
 
 Adding such a library is **data, not code**: you add one entry to
-`packages/library-types/luals-targets.json`, run the three generation commands,
+`luals-targets.json` in the library data folder (the newest version-named folder
+under `packages/library-types/data/`, which also holds the fetched
+`fixtures/luals/`), run the three generation commands,
 check the emitted API-doc description, and commit the entry and its artifacts. There is no
 pipeline source to touch — the same front-end that produces the druid types
 produces yours.
@@ -380,7 +382,7 @@ materializes into a consuming project as `druid.druid`.
 A native or hybrid library that ships an extension `.script_api` (the same YAML
 format every Defold extension ships) has a **third** ingestion mode, distinct
 from the LuaLS front-end above: `packages/cli/src/library/sync-script-api-types.ts`,
-driven by `packages/library-types/script-api-targets.json`. Instead of parsing
+driven by `script-api-targets.json` in the library data folder. Instead of parsing
 `---@` annotations, it routes the committed `.script_api` snapshot through the
 **shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
 the exact path resolve-time extension typing uses — so

@@ -10,6 +10,7 @@ import {
   lookupExampleTranslations,
   normalizedFunctionSignature,
   parseDefoldApiDoc,
+  parseLibraryIndexSlotClassifications,
   type SignatureStore,
   signatureTransitionNames,
   splitExampleSources,
@@ -55,6 +56,7 @@ import {
   windowedBadgeCategory,
 } from "./api-surface";
 import {
+  libraryDataDir,
   libraryModuleDirs,
   libraryOriginByNamespace,
   libraryRouteSlug,
@@ -94,6 +96,7 @@ const MISSING_VERSION_FIXTURE_DIR = join(
 );
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+const REAL_LIBRARY_DATA_DIR = libraryDataDir(REAL_LIBRARY_TYPES_DIR) as string;
 
 // The ten `britzl/defold-input` modules, severed together into the authored lane.
 const DEFOLD_INPUT_MODULES = [
@@ -133,12 +136,12 @@ function markdownDeferredNamespaces(): Set<string> {
 }
 
 async function vendoredLibraryModules(): Promise<string[]> {
-  const corpus = await printCorpus(REAL_LIBRARY_TYPES_DIR);
+  const corpus = await printCorpus(REAL_LIBRARY_DATA_DIR);
   const deferred = markdownDeferredNamespaces();
   return [
-    ...readLualsTargets(REAL_LIBRARY_TYPES_DIR),
-    ...readScriptApiTargets(REAL_LIBRARY_TYPES_DIR),
-    ...readAuthoredTargets(REAL_LIBRARY_TYPES_DIR),
+    ...readLualsTargets(REAL_LIBRARY_DATA_DIR),
+    ...readScriptApiTargets(REAL_LIBRARY_DATA_DIR),
+    ...readAuthoredTargets(REAL_LIBRARY_DATA_DIR),
   ]
     .filter((target) => corpus.has(target.moduleId))
     .map((target) => target.namespace)
@@ -156,7 +159,7 @@ function defoldExtensionPages(): string[] {
 
 function nativeExtensionPages(): string[] {
   const { targets } = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "native-targets.json"), "utf8"),
+    readFileSync(join(REAL_LIBRARY_DATA_DIR, "native-targets.json"), "utf8"),
   ) as { targets: { namespace: string }[] };
   return targets.map((target) => target.namespace);
 }
@@ -167,6 +170,16 @@ function portalScriptApiPages(): string[] {
   ) as { libraries: { docs: { page: string }[] }[] };
   return libraries.flatMap((library) => library.docs.map((doc) => doc.page));
 }
+
+test("library pages read the index-slot notes of the newest library data folder", () => {
+  expect(LIBRARY_INDEX_SLOT_CLASSIFICATIONS).toEqual(
+    parseLibraryIndexSlotClassifications(
+      JSON.parse(
+        readFileSync(join(REAL_LIBRARY_DATA_DIR, "index-slot-classifications.json"), "utf8"),
+      ),
+    ),
+  );
+});
 
 describe("loadApiSurface", () => {
   test("returns one ApiPage per module of the default target (engine then lua-stdlib), globals first then alphabetical", () => {

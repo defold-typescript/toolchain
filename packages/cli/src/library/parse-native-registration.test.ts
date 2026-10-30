@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { parseNativeMethodTables, parseNativeRegistration } from "./parse-native-registration";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 function vendored(relative: string) {
   const path = `fixtures/upstream-native/${relative}`;
-  return parseNativeRegistration(readFileSync(join(PACKAGE_ROOT, path), "utf8"), path);
+  return parseNativeRegistration(readFileSync(join(DATA_DIR, path), "utf8"), path);
 }
 
 describe("parseNativeRegistration over the vendored registering files", () => {

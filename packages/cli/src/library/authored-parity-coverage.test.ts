@@ -2,15 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import {
   type AuthoredTarget,
   PARITY_VERDICT_REASONS,
   readAuthoredTargets,
 } from "./sync-authored-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const TARGETS = readAuthoredTargets(PACKAGE_ROOT);
+const DATA_DIR = LIBRARY_DATA_DIR;
+const TARGETS = readAuthoredTargets(DATA_DIR);
 
 const DEFCON: AuthoredTarget = {
   repo: "https://github.com/britzl/defcon",
@@ -138,7 +138,7 @@ describe("the concrete targets whose excuses the survey retired", () => {
       const entry = verdict(moduleId);
       expect(entry.parityVerdict).toBeUndefined();
       expect(entry.upstreamLua).toEqual([upstream]);
-      expect(existsSync(join(PACKAGE_ROOT, upstream))).toBe(true);
+      expect(existsSync(join(DATA_DIR, upstream))).toBe(true);
     }
   });
 

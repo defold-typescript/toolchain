@@ -25,7 +25,7 @@
       "!**/test/fixtures",
       "!**/fixtures/ts-defold",
       "!**/fixtures/authored",
-      "!packages/library-types/native",
+      "!packages/library-types/data/*/native",
       "!**/*.lua"
     ]
   },

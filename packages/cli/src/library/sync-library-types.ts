@@ -3,7 +3,7 @@ import { join } from "node:path";
 import ts from "typescript";
 import { CORE_TYPE_RENAMES } from "./core-type-renames";
 import { extractApiDoc } from "./extract-api-doc";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import {
   type AssetPortalManifest,
   type PortalAliases,
@@ -626,17 +626,21 @@ async function upstreamScriptApiEligibility(
 }
 
 /**
- * Read every maintained-here registry off the package root and union them.
+ * Read every maintained-here registry and union them: the served lanes from the
+ * library data folder, the markdown and openapi lanes off the package root.
  * Each reader `readFileSync`s unconditionally and throws on a missing required
  * field — deliberately no absent-file fallback, so a lane added without its
  * fixture fails loudly rather than silently un-severing that lane's dirs.
  */
-export function readMaintainedHereRegistry(packageRoot: string): MaintainedHereRegistry {
+export function readMaintainedHereRegistry(
+  dataDir: string,
+  packageRoot: string,
+): MaintainedHereRegistry {
   return {
-    moduleIds: new Set(readAuthoredTargets(packageRoot).map((t) => t.moduleId)),
+    moduleIds: new Set(readAuthoredTargets(dataDir).map((t) => t.moduleId)),
     namespaces: new Set([
-      ...readLualsTargets(packageRoot).map((t) => t.namespace),
-      ...readScriptApiTargets(packageRoot).map((t) => t.namespace),
+      ...readLualsTargets(dataDir).map((t) => t.namespace),
+      ...readScriptApiTargets(dataDir).map((t) => t.namespace),
       ...readOpenApiTargets(packageRoot).map((t) => t.namespace),
       ...readMarkdownTargets(packageRoot).map((t) => t.namespace),
     ]),
@@ -656,6 +660,7 @@ export function readMaintainedHereRegistry(packageRoot: string): MaintainedHereR
  * `source` as `library-targets.json`.
  */
 export async function writeClassification(
+  dataDir: string,
   packageRoot: string,
   seams: { listTree?: ListTree; lookupUpstream?: LookupUpstream } = {},
 ): Promise<void> {
@@ -668,7 +673,7 @@ export async function writeClassification(
   const coveredByGoalDirs = new Set(["defold-lldebugger", "defold-xmath"]);
   const liveModules = new Set(targets.map((t) => t.module));
 
-  const registry = readMaintainedHereRegistry(packageRoot);
+  const registry = readMaintainedHereRegistry(dataDir, packageRoot);
 
   const modulesByDir = libraryModulesFromTree(await listTree(source));
   const severedDirs = severedDirsFromModules(modulesByDir, registry, liveModules);
@@ -792,7 +797,7 @@ if (import.meta.main) {
   const root = LIBRARY_TYPES_ROOT;
   const argv = process.argv.slice(2);
   if (argv.includes("--classify")) {
-    await writeClassification(root);
+    await writeClassification(LIBRARY_DATA_DIR, root);
     const { dirs } = JSON.parse(
       readFileSync(join(root, "library-classification.json"), "utf8"),
     ) as { dirs: ClassificationEntry[] };

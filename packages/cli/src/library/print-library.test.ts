@@ -10,14 +10,14 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { ExtensionZip } from "../extension-archive";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { printLibraryModules } from "./print-library";
 import { archiveSourceTree } from "./source-tree";
 import { readAuthoredTargets } from "./sync-authored-types";
 import { type LualsTarget, readLualsTargets } from "./sync-luals-types";
 import { readScriptApiTargets } from "./sync-script-api-types";
 
-const ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 // A `.lua` file the target's globs must not select: were it parsed, its class
 // would join the merged model and change the print.
@@ -52,7 +52,7 @@ function githubArchive(wrapper: string, files: Record<string, string>): Extensio
 }
 
 function vendoredLuals(target: LualsTarget): Record<string, string> {
-  const dir = join(ROOT, "fixtures/luals", target.namespace);
+  const dir = join(DATA_DIR, "fixtures/luals", target.namespace);
   const files: Record<string, string> = {};
   for (const entry of readdirSync(dir, { recursive: true }).map(String)) {
     const path = entry.replace(/\\/g, "/");
@@ -62,13 +62,13 @@ function vendoredLuals(target: LualsTarget): Record<string, string> {
 }
 
 function lualsTarget(moduleId: string): LualsTarget {
-  const target = readLualsTargets(ROOT).find((candidate) => candidate.moduleId === moduleId);
+  const target = readLualsTargets(DATA_DIR).find((candidate) => candidate.moduleId === moduleId);
   if (target === undefined) throw new Error(`${moduleId} missing from luals-targets.json`);
   return target;
 }
 
 describe("printLibraryModules prints every LuaLS target from its pinned-ref archive", () => {
-  for (const target of readLualsTargets(ROOT)) {
+  for (const target of readLualsTargets(DATA_DIR)) {
     test(`${target.moduleId} prints what its vendored sources print`, async () => {
       const archive = githubArchive(`${target.namespace}-${target.ref}`, {
         ...vendoredLuals(target),
@@ -77,11 +77,11 @@ describe("printLibraryModules prints every LuaLS target from its pinned-ref arch
       });
 
       const fromArchive = await printLibraryModules(
-        ROOT,
+        DATA_DIR,
         [target.moduleId],
         archiveSourceTree(archive),
       );
-      const pinned = await printLibraryModules(ROOT, [target.moduleId], null);
+      const pinned = await printLibraryModules(DATA_DIR, [target.moduleId], null);
 
       expect(fromArchive.unprintable).toEqual([]);
       expect(
@@ -118,11 +118,11 @@ describe("the archive, not the vendored copy, decides a LuaLS print", () => {
     if (probed === original) throw new Error(`insertion point missing from ${own}`);
 
     const fromArchive = await printLibraryModules(
-      ROOT,
+      DATA_DIR,
       [target.moduleId],
       archiveSourceTree(githubArchive(wrapper, { ...files, [own]: probed })),
     );
-    const pinned = await printLibraryModules(ROOT, [target.moduleId], null);
+    const pinned = await printLibraryModules(DATA_DIR, [target.moduleId], null);
 
     expect(fromArchive.printed[0]?.from).toBe("archive");
     expect(fromArchive.printed[0]?.contents).toContain(
@@ -134,11 +134,11 @@ describe("the archive, not the vendored copy, decides a LuaLS print", () => {
   test("an archive without the module's own file prints the pinned sources and names the file", async () => {
     const { [own]: _dropped, ...rest } = vendoredLuals(target);
     const fromArchive = await printLibraryModules(
-      ROOT,
+      DATA_DIR,
       [target.moduleId],
       archiveSourceTree(githubArchive(wrapper, { ...rest, "immutable/other.lua": "return {}\n" })),
     );
-    const pinned = await printLibraryModules(ROOT, [target.moduleId], null);
+    const pinned = await printLibraryModules(DATA_DIR, [target.moduleId], null);
 
     const [print] = fromArchive.printed;
     expect(print?.from).toBe("pinned");
@@ -149,9 +149,12 @@ describe("the archive, not the vendored copy, decides a LuaLS print", () => {
 
 describe("printLibraryModules dispatches each module to its lane", () => {
   test("bridge prints a function its archive's .script_api adds", async () => {
-    const target = readScriptApiTargets(ROOT).find((t) => t.moduleId === "bridge.bridge");
+    const target = readScriptApiTargets(DATA_DIR).find((t) => t.moduleId === "bridge.bridge");
     if (target === undefined) throw new Error("bridge.bridge missing from script-api-targets.json");
-    const doc = readFileSync(join(ROOT, "fixtures/script-api/bridge.bridge.script_api"), "utf8");
+    const doc = readFileSync(
+      join(DATA_DIR, "fixtures/script-api/bridge.bridge.script_api"),
+      "utf8",
+    );
     const probed = doc.replace(
       "  members:\n",
       "  members:\n  - name: print_probe\n    type: function\n    desc: Probes that the print reads the archive.\n\n",
@@ -159,13 +162,13 @@ describe("printLibraryModules dispatches each module to its lane", () => {
     if (probed === doc) throw new Error("bridge.script_api has no members list");
 
     const fromArchive = await printLibraryModules(
-      ROOT,
+      DATA_DIR,
       [target.moduleId],
       archiveSourceTree(
         githubArchive(`bridge-defold-${target.ref}`, { [target.scriptApi]: probed }),
       ),
     );
-    const pinned = await printLibraryModules(ROOT, [target.moduleId], null);
+    const pinned = await printLibraryModules(DATA_DIR, [target.moduleId], null);
 
     expect(fromArchive.printed[0]?.from).toBe("archive");
     expect(fromArchive.printed[0]?.contents).toContain("print_probe");
@@ -173,7 +176,7 @@ describe("printLibraryModules dispatches each module to its lane", () => {
   });
 
   test("an authored module prints its fork whatever the archive holds, and an unnamed module is unprintable", async () => {
-    const [target] = readAuthoredTargets(ROOT);
+    const [target] = readAuthoredTargets(DATA_DIR);
     if (target === undefined) throw new Error("authored-targets.json holds no target");
     const archive = archiveSourceTree(
       githubArchive("anything-1.0", {
@@ -181,10 +184,14 @@ describe("printLibraryModules dispatches each module to its lane", () => {
       }),
     );
 
-    const print = await printLibraryModules(ROOT, [target.moduleId, "nobody.prints.this"], archive);
+    const print = await printLibraryModules(
+      DATA_DIR,
+      [target.moduleId, "nobody.prints.this"],
+      archive,
+    );
 
     expect(print.printed.map(({ module, contents }) => ({ module, contents }))).toEqual([
-      { module: target.moduleId, contents: readFileSync(join(ROOT, target.authored), "utf8") },
+      { module: target.moduleId, contents: readFileSync(join(DATA_DIR, target.authored), "utf8") },
     ]);
     expect(print.unprintable).toEqual(["nobody.prints.this"]);
   });

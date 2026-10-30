@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseMarkdownApi } from "./parse-markdown-api";
 import { printCorpus } from "./print-corpus";
 import { readAuthoredTargets } from "./sync-authored-types";
@@ -16,6 +16,13 @@ import {
 } from "./sync-markdown-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
+
+// The authored forks a severed verdict compares against sit in the library data
+// folder; the markdown snapshots and ts-defold paths stay at the package root.
+function fixtureFile(path: string): string {
+  return join(path.startsWith("fixtures/authored/") ? DATA_DIR : PACKAGE_ROOT, path);
+}
 
 function orthographicTarget(): MarkdownTarget {
   const target = readMarkdownTargets(PACKAGE_ROOT).find(
@@ -39,7 +46,7 @@ const AUTHORED_SNAPSHOT = "fixtures/authored/orthographic.camera.d.ts";
 async function comparison() {
   const target = orthographicTarget();
   const markdownEmittedDts = await emitMarkdownDeclaration(PACKAGE_ROOT, target);
-  const tsDefold = readFileSync(join(PACKAGE_ROOT, AUTHORED_SNAPSHOT), "utf8");
+  const tsDefold = readFileSync(fixtureFile(AUTHORED_SNAPSHOT), "utf8");
   return { target, ...compareFidelityToTsDefold(markdownEmittedDts, tsDefold) };
 }
 
@@ -49,7 +56,7 @@ describe("tsDefoldMembers sees bare export-less declarations", () => {
     // its fork exhibits that identically. Read through `targetFor` so the lane
     // the surface lives in follows the severance instead of being hard-coded.
     const rendy = readFileSync(
-      join(PACKAGE_ROOT, targetFor("rendy.rendy", severedFor(RENDY, "rendy")).fixture),
+      fixtureFile(targetFor("rendy.rendy", severedFor(RENDY, "rendy")).fixture),
       "utf8",
     );
     const members = tsDefoldMembers(rendy);
@@ -92,7 +99,7 @@ describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
   // name the reader stopped seeing, so the fork text is re-read here.
   test("the two invented constants are gone from the fork and from every comparison term", async () => {
     const { missingMembers, addedMembers, decision } = await comparison();
-    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED_SNAPSHOT), "utf8");
+    const fork = readFileSync(fixtureFile(AUTHORED_SNAPSHOT), "utf8");
     for (const invented of ["MSG_USE_PROJECTION", "ORTHOGRAPHIC_RENDER_SCRIPT_USED"]) {
       expect(fork).not.toContain(invented);
       expect(missingMembers).not.toContain(invented);
@@ -289,7 +296,7 @@ async function comparisonForMarkdown(markdown: string, moduleId: string, severed
     importsFrom: "../src/core-types",
     moduleId,
   });
-  const tsDefold = readFileSync(join(PACKAGE_ROOT, targetFor(moduleId, severed).fixture), "utf8");
+  const tsDefold = readFileSync(fixtureFile(targetFor(moduleId, severed).fixture), "utf8");
   return { doc, emitted: contents, ...compareFidelityToTsDefold(contents, tsDefold) };
 }
 
@@ -400,8 +407,8 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       )(`${record.prefix}$module keeps its ts-defold row and fixture and stays out of the printed corpus`, async (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
         expect(shippedModules).toContain(moduleId);
-        expect(existsSync(join(PACKAGE_ROOT, targetFor(moduleId).fixture))).toBe(true);
-        expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(false);
+        expect(existsSync(fixtureFile(targetFor(moduleId).fixture))).toBe(true);
+        expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(false);
       });
 
       test("no no-go module is registered as a markdown target", () => {
@@ -431,7 +438,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
           targets: { module: string }[];
         }
       ).targets.map((t) => t.module);
-      const authoredTargets = readAuthoredTargets(PACKAGE_ROOT);
+      const authoredTargets = readAuthoredTargets(DATA_DIR);
 
       // The fork prints under its `moduleId` whichever namespace it publishes
       // under: a library that collapses to a bare namespace (yagames'
@@ -444,7 +451,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
         const moduleId = `${record.prefix}${decision.module}`;
         expect(shippedModules).not.toContain(moduleId);
         expect(authoredTargets.some((t) => t.moduleId === moduleId)).toBe(true);
-        expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
+        expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
       });
 
       test("no no-go module is registered as a markdown target", () => {
@@ -475,7 +482,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
         const severed = severedFor(record, decision.module);
         expect(severed).toBeDefined();
         const target = targetFor(moduleId, severed);
-        expect(existsSync(join(PACKAGE_ROOT, target.fixture))).toBe(true);
+        expect(existsSync(fixtureFile(target.fixture))).toBe(true);
         expect(basename(target.fixture, ".d.ts")).toBe(moduleId);
         expect(classificationModule(moduleId, severed)).toStartWith(record.prefix);
       });
@@ -1380,11 +1387,14 @@ function decisionFor(record: LibraryRecord, module: string): ModuleDecision {
 // A severed record compares against its `severedSource` snapshot rather than the
 // `fixtures/ts-defold/` entry it no longer has; the two are byte-identical for a
 // verbatim fork, so the recorded evidence reproduces unchanged.
+const severedSnapshot = (decision: ModuleDecision): string | undefined =>
+  decision.severedSource === undefined ? undefined : fixtureFile(decision.severedSource.fixture);
+
 const comparisonFor = (record: LibraryRecord, module: string) =>
   evaluateMarkdownCandidate(
     PACKAGE_ROOT,
     candidateTarget(record, decisionFor(record, module)),
-    decisionFor(record, module).severedSource?.fixture,
+    severedSnapshot(decisionFor(record, module)),
   );
 
 const inputComparison = (mod: string) => comparisonFor(DEFOLD_INPUT, mod);
@@ -1429,15 +1439,13 @@ function verdictFixturePaths(): string[] {
 }
 
 function fixtureDigest(path: string): string {
-  return new Bun.CryptoHasher("sha256")
-    .update(readFileSync(join(PACKAGE_ROOT, path)))
-    .digest("hex");
+  return new Bun.CryptoHasher("sha256").update(readFileSync(fixtureFile(path))).digest("hex");
 }
 
 /** Paths `authored-targets.json` declares as this repo's own forked or
  * hand-authored `.d.ts`. Read from the production config rather than matched on
  * a directory prefix, so a target re-vendored elsewhere keeps its lane. */
-const AUTHORED_LANE = new Set(readAuthoredTargets(PACKAGE_ROOT).map((target) => target.authored));
+const AUTHORED_LANE = new Set(readAuthoredTargets(DATA_DIR).map((target) => target.authored));
 
 /** What a drifted pin means, and whether re-pinning is the correct response.
  * The two lanes drift for opposite reasons, so they cannot share a remedy: an
@@ -1609,7 +1617,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
 describe("the vendored snapshots the recorded verdicts were derived from", () => {
   test("every pinned snapshot still hashes to its recorded digest", () => {
     const drifted = Object.entries(VENDORED_FIXTURE_HASHES)
-      .filter(([path]) => existsSync(join(PACKAGE_ROOT, path)))
+      .filter(([path]) => existsSync(fixtureFile(path)))
       .filter(([path, digest]) => fixtureDigest(path) !== digest)
       .map(([path]) => driftRemedy(path).message);
     expect(drifted).toEqual([]);
@@ -1618,7 +1626,7 @@ describe("the vendored snapshots the recorded verdicts were derived from", () =>
   test("every pinned path still exists, so a renamed snapshot reds", () => {
     expect(Object.keys(VENDORED_FIXTURE_HASHES).length).toBeGreaterThan(0);
     expect(
-      Object.keys(VENDORED_FIXTURE_HASHES).filter((path) => !existsSync(join(PACKAGE_ROOT, path))),
+      Object.keys(VENDORED_FIXTURE_HASHES).filter((path) => !existsSync(fixtureFile(path))),
     ).toEqual([]);
   });
 
@@ -1638,7 +1646,7 @@ describe("the vendored snapshots the recorded verdicts were derived from", () =>
   });
 
   test("every pinned authored-lane path is a target the repo declares as its own", () => {
-    const declared = new Set(readAuthoredTargets(PACKAGE_ROOT).map((target) => target.authored));
+    const declared = new Set(readAuthoredTargets(DATA_DIR).map((target) => target.authored));
     expect(
       Object.keys(VENDORED_FIXTURE_HASHES).filter(
         (path) => path.startsWith("fixtures/authored/") && !declared.has(path),
@@ -1772,7 +1780,7 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
     // Pinned together with the terms above: a later "fix" to the README spelling,
     // or a rename of the export to match it, reds this in one edit.
     const fork = readFileSync(
-      join(PACKAGE_ROOT, targetFor("monarch.monarch", severedFor(MONARCH, "monarch")).fixture),
+      fixtureFile(targetFor("monarch.monarch", severedFor(MONARCH, "monarch")).fixture),
       "utf8",
     );
     expect(fork).toContain("on_focus_changed");
@@ -1808,7 +1816,7 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
       expect(severed).toBeDefined();
       const { fixture } = targetFor(moduleId, severed);
       expect(fixture).toBe(`fixtures/authored/${moduleId}.d.ts`);
-      expect(existsSync(join(PACKAGE_ROOT, fixture))).toBe(true);
+      expect(existsSync(fixtureFile(fixture))).toBe(true);
       expect(classificationModule(moduleId, severed)).toBe(moduleId);
       return fixture;
     });
@@ -1884,7 +1892,7 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
       expect(severed).toBeDefined();
       const { fixture } = targetFor(moduleId, severed);
       expect(fixture).toBe(`fixtures/authored/${moduleId}.d.ts`);
-      expect(existsSync(join(PACKAGE_ROOT, fixture))).toBe(true);
+      expect(existsSync(fixtureFile(fixture))).toBe(true);
       expect(classificationModule(moduleId, severed)).toBe(moduleId);
       return fixture;
     });
@@ -1896,9 +1904,9 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
   test("each fork registers and prints under the dotted name it published before", async () => {
     for (const mod of ["color", "richtext", "tags"]) {
       const moduleId = `richtext.${mod}`;
-      const target = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.moduleId === moduleId);
+      const target = readAuthoredTargets(DATA_DIR).find((t) => t.moduleId === moduleId);
       expect(target?.namespace).toBe(moduleId);
-      expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
+      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
     }
   });
 
@@ -1910,7 +1918,7 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
   // it would red here alongside the `addedMembers` term it invalidates.
   test("the fork still declares every name the markdown emit loses", () => {
     const fork = readFileSync(
-      join(PACKAGE_ROOT, targetFor("richtext.richtext", severedFor(RICHTEXT, "richtext")).fixture),
+      fixtureFile(targetFor("richtext.richtext", severedFor(RICHTEXT, "richtext")).fixture),
       "utf8",
     );
     for (const constant of [
@@ -1998,7 +2006,7 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
   const tsSurface = () =>
     tsDefoldMembers(
       readFileSync(
-        join(PACKAGE_ROOT, targetFor("yagames.yagames", severedFor(YAGAMES, "yagames")).fixture),
+        fixtureFile(targetFor("yagames.yagames", severedFor(YAGAMES, "yagames")).fixture),
         "utf8",
       ),
     );
@@ -2205,7 +2213,7 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
   test("the surface the comparison runs against is the fork's 20 functions", () => {
     const surface = tsDefoldMembers(
       readFileSync(
-        join(PACKAGE_ROOT, targetFor("gooey.gooey", severedFor(GOOEY, "gooey")).fixture),
+        fixtureFile(targetFor("gooey.gooey", severedFor(GOOEY, "gooey")).fixture),
         "utf8",
       ),
     );
@@ -2253,7 +2261,7 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
   test("the verdict still resolves once the ts-defold row is gone", () => {
     const severed = severedFor(GOOEY, "gooey");
     expect(targetFor("gooey.gooey", severed).fixture).toBe("fixtures/authored/gooey.gooey.d.ts");
-    expect(existsSync(join(PACKAGE_ROOT, targetFor("gooey.gooey", severed).fixture))).toBe(true);
+    expect(existsSync(fixtureFile(targetFor("gooey.gooey", severed).fixture))).toBe(true);
     expect(classificationModule("gooey.gooey", severed)).toBe("gooey.gooey");
   });
 });
@@ -2323,7 +2331,7 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
     ["mem", ["COLOR", "FORMAT", "POSITION", "create", "draw", "mem", "update"]],
   ])("the severed surface of metrics.%s is the factory plus the corrected members", (module, members) => {
     const fixture = targetFor(`metrics.${module}`, severedFor(METRICS, module as string)).fixture;
-    expect(tsDefoldMembers(readFileSync(join(PACKAGE_ROOT, fixture), "utf8"))).toEqual(
+    expect(tsDefoldMembers(readFileSync(fixtureFile(fixture), "utf8"))).toEqual(
       members as string[],
     );
   });
@@ -2581,7 +2589,7 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
 
   test("the comparator never sees the config and instance interfaces, so the recorded loss is a floor", () => {
     const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, targetFor("platypus.platypus", severed).fixture),
+      fixtureFile(targetFor("platypus.platypus", severed).fixture),
       "utf8",
     );
     // `MEMBER_DECL` reads top-level `function`/`const` only, so the 12-field
@@ -2604,9 +2612,7 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
     expect(targetFor("platypus.platypus", severed).fixture).toBe(
       "fixtures/authored/platypus.platypus.d.ts",
     );
-    expect(existsSync(join(PACKAGE_ROOT, targetFor("platypus.platypus", severed).fixture))).toBe(
-      true,
-    );
+    expect(existsSync(fixtureFile(targetFor("platypus.platypus", severed).fixture))).toBe(true);
     expect(classificationModule("platypus.platypus", severed)).toBe("platypus.platypus");
   });
 
@@ -2725,7 +2731,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
     // keys `downgradedMembers` on the literal `unknown` token alone, never on a
     // core-type spelling.
     const snapshot = readFileSync(
-      join(PACKAGE_ROOT, targetFor("dicebag.dicebag", severed).fixture),
+      fixtureFile(targetFor("dicebag.dicebag", severed).fixture),
       "utf8",
     );
     expect(snapshot).toContain("sides: Array<[number, number]>");
@@ -2805,7 +2811,7 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
 
   test("the retained surface is 12 members and its entry points take an options table", () => {
     const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, targetFor("bzAnim.bzLibrary", severed).fixture),
+      fixtureFile(targetFor("bzAnim.bzLibrary", severed).fixture),
       "utf8",
     );
     expect(tsDefoldMembers(tsDefold)).toEqual(TS_DEFOLD_MEMBERS);
@@ -2877,9 +2883,7 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
     expect(targetFor("bzAnim.bzLibrary", severed).fixture).toBe(
       "fixtures/authored/bzAnim.bzLibrary.d.ts",
     );
-    expect(existsSync(join(PACKAGE_ROOT, targetFor("bzAnim.bzLibrary", severed).fixture))).toBe(
-      true,
-    );
+    expect(existsSync(fixtureFile(targetFor("bzAnim.bzLibrary", severed).fixture))).toBe(true);
   });
 
   // The one target in the corpus whose classification name is not its moduleId,

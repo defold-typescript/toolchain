@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import {
   assignPageKeys,
   type DefoldGitHub,
@@ -20,10 +20,11 @@ import {
 } from "./sync-defold-extensions";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 let reserved: ReservedNamespaces;
 beforeAll(async () => {
-  reserved = await loadReservedNamespaces(PACKAGE_ROOT);
+  reserved = await loadReservedNamespaces(DATA_DIR, PACKAGE_ROOT);
 });
 
 function repo(name: string, overrides: Partial<GitHubRepo> = {}): GitHubRepo {

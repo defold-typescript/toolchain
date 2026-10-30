@@ -9,6 +9,7 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printedModule } from "./library/print-corpus";
 import { librariesDirName } from "./library-materialize";
 import { runResolve } from "./resolve";
@@ -17,8 +18,8 @@ import { runResolve } from "./resolve";
 // these tests defend other behavior, so they derive the name from production.
 const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
-const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
-const vendoredDruid = join(libraryTypesRoot, "fixtures", "luals", "druid");
+const libraryDataDir = LIBRARY_DATA_DIR;
+const vendoredDruid = join(libraryDataDir, "fixtures", "luals", "druid");
 
 const druidRegistry = [
   { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
@@ -77,7 +78,7 @@ async function resolveDruid(cwd: string): Promise<void> {
     download: someBytes,
     readZip: druidArchiveReadZip(url),
     libraryRegistry: druidRegistry,
-    libraryTypesRoot,
+    libraryDataDir,
   });
   expect(result.ok).toBe(true);
   expect(result.libraries).toEqual([
@@ -99,7 +100,7 @@ describe("druid resolves and its materialized types are usable end to end", () =
 
     const materialized = join(cwd, ".defold-types", LIBRARIES_DIR, "druid.druid.d.ts");
     expect(readFileSync(materialized, "utf8")).toBe(
-      await printedModule(libraryTypesRoot, "druid.druid"),
+      await printedModule(libraryDataDir, "druid.druid"),
     );
   });
 
