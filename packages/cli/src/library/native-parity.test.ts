@@ -183,7 +183,7 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
     const entry: NativeTarget = {
       ...shipped,
       namespace: "uuid",
-      declaration: "generated/native/uuid.d.ts",
+      declaration: "native/uuid.d.ts",
     };
     const source = readFileSync(join(PACKAGE_ROOT, shipped.declaration), "utf8");
     const renamed = source

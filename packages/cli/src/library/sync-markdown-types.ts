@@ -22,8 +22,8 @@ import {
  * `camera.` for defold-orthographic); each target pins the `namespace` this repo
  * publishes it under, so the parsed doc is *retargeted* onto that namespace
  * before emitting — the goldens are named for the target's `namespace` verbatim
- * (`generated/<namespace>.d.ts` — so `orthographic` lands at
- * `generated/orthographic.d.ts`), keeping the file layout uniform with druid.
+ * (`api-doc/<namespace>.json` — so `orthographic` lands at
+ * `api-doc/orthographic.json`), keeping the file layout uniform with druid.
  *
  * A markdown parse is likely **lower fidelity** than the hand-written ts-defold
  * `.d.ts` it would replace (a README rarely documents constants or every
@@ -38,7 +38,6 @@ export interface MarkdownTarget {
   markdown: string;
   moduleId: string;
   namespace: string;
-  generated: string;
   apiDoc: string;
   // Defaults to `fidelity/<namespace>.json` when omitted.
   fidelity: string;
@@ -54,15 +53,7 @@ export interface MarkdownTargets {
   targets: MarkdownTarget[];
 }
 
-const REQUIRED_FIELDS = [
-  "repo",
-  "ref",
-  "markdown",
-  "moduleId",
-  "namespace",
-  "generated",
-  "apiDoc",
-] as const;
+const REQUIRED_FIELDS = ["repo", "ref", "markdown", "moduleId", "namespace", "apiDoc"] as const;
 
 /**
  * Read `markdown-targets.json`, validate every required field per entry, and fill
@@ -90,7 +81,6 @@ export function readMarkdownTargets(packageRoot: string): MarkdownTarget[] {
       markdown: entry.markdown as string,
       moduleId: entry.moduleId as string,
       namespace: entry.namespace as string,
-      generated: entry.generated as string,
       apiDoc: entry.apiDoc as string,
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",
@@ -688,7 +678,7 @@ export function compareFidelityToTsDefold(
  *
  * This is the entry point for a library whose markdown `namespace` *equals* its
  * live `moduleId` (defold-input, monarch), where the canonical
- * `generated`/`api-doc`/`fidelity` paths a registered target would write are the
+ * `api-doc`/`fidelity` paths a registered target would write are the
  * very files the live ts-defold module already owns. Registering a no-go target
  * to obtain its comparison would overwrite them in place; passing an unregistered
  * in-memory target here computes the same decision and leaves them untouched.

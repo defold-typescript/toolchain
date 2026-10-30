@@ -7,7 +7,7 @@ import type { RefKind } from "./sync-defold-extensions";
 /**
  * The curated native-extension lane. A native extension ships C++ and no
  * `.script_api`, so its declaration is hand-authored at
- * `generated/native/<namespace>.d.ts` as a `@globalTable` `declare module "<ns>"`
+ * `native/<namespace>.d.ts` as a `@globalTable` `declare module "<ns>"`
  * a project imports, and `resolve` copies it into a project verbatim. The only
  * artifact derived here is the `api-doc/native/<namespace>.json` the docs-site
  * renders.

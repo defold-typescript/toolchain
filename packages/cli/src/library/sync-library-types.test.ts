@@ -41,9 +41,9 @@ const REGISTRY = JSON.parse(
 ) as LibraryTargets;
 
 // A minimal package root with a single vendored target, used by the drift tests
-// that need the committed generated file to be deliberately in or out of sync —
-// something the real `generated/` (always regenerated) cannot express.
-function writeTempTarget(fixture: string, generated: string): string {
+// that need the committed fixture to be deliberately in or out of sync with
+// upstream — something the real, empty registry cannot express.
+function writeTempTarget(fixture: string): string {
   const root = mkdtempSync(join(tmpdir(), "library-types-drift-"));
   const source: LibrarySource = {
     repo: "https://github.com/ts-defold/library",
@@ -54,12 +54,9 @@ function writeTempTarget(fixture: string, generated: string): string {
     module: "sample.sample",
     path: "packages/sample/sample.sample.d.ts",
     fixture: "fixtures/ts-defold/sample.sample.d.ts",
-    generated: "generated/sample.sample.d.ts",
   };
   mkdirSync(join(root, "fixtures/ts-defold"), { recursive: true });
-  mkdirSync(join(root, "generated"), { recursive: true });
   writeFileSync(join(root, target.fixture), fixture);
-  writeFileSync(join(root, target.generated), generated);
   writeFileSync(join(root, "library-targets.json"), JSON.stringify({ source, targets: [target] }));
   return root;
 }
@@ -158,11 +155,10 @@ describe("the dormant ts-defold lane", () => {
     // `libraryModuleDirs` guards on `existsSync`, and `library-classification.json`
     // asserts its commit pin against this `source` block.
     //
-    // Stated explicitly because the two data-driven describes below (the
-    // transform-drift guard and `checkDrift`'s ok-case) now iterate nothing and
-    // pass vacuously. They are not coverage of an empty registry; the codemod
-    // and drift machinery keep their real coverage through the `writeTempTarget`
-    // synthetic roots.
+    // Stated explicitly because the data-driven `checkDrift` ok-case below now
+    // iterates nothing and passes vacuously. It is not coverage of an empty
+    // registry; the drift machinery keeps its real coverage through the
+    // `writeTempTarget` synthetic roots.
     expect(existsSync(join(PACKAGE_ROOT, "library-targets.json"))).toBe(true);
     expect(REGISTRY.targets).toEqual([]);
     expect(REGISTRY.source.repo).toBe("https://github.com/ts-defold/library");
@@ -181,26 +177,11 @@ describe("rawUrl", () => {
       module: "sample.sample",
       path: "packages/sample-dir/sample.sample.d.ts",
       fixture: "fixtures/ts-defold/sample.sample.d.ts",
-      generated: "generated/sample.sample.d.ts",
     };
     expect(rawUrl(REGISTRY.source, target)).toBe(
       `https://raw.githubusercontent.com/ts-defold/library/${REGISTRY.source.commit}/packages/sample-dir/sample.sample.d.ts`,
     );
   });
-});
-
-// The CI-wired gate: the committed generated files must be exactly what the
-// codemod produces from the committed fixtures. Data-driven over the registry,
-// so a newly added target is covered without editing this test. Fails loudly if
-// a fixture or the codemod changed without a `bun regen`.
-describe("transform-drift guard: committed generated matches codemod(fixture)", () => {
-  for (const target of REGISTRY.targets) {
-    test(target.module, () => {
-      const fixture = readFileSync(join(PACKAGE_ROOT, target.fixture), "utf8");
-      const generated = readFileSync(join(PACKAGE_ROOT, target.generated), "utf8");
-      expect(codemodDeclaration(fixture).output).toBe(generated);
-    });
-  }
 });
 
 describe("checkDrift", () => {
@@ -215,19 +196,18 @@ describe("checkDrift", () => {
     expect(results.every((r) => r.status === "ok")).toBe(true);
   });
 
-  test("reports upstream-drift when fetched bytes differ from the committed fixture", async () => {
+  test("reports ok when fetched bytes equal the committed fixture", async () => {
     const fixture = "declare module 'sample.sample' {\n  export const A: hash;\n}\n";
-    const root = writeTempTarget(fixture, codemodDeclaration(fixture).output);
-    const results = await checkDrift(root, async () => `${fixture}// upstream moved\n`);
-    expect(results).toEqual([{ module: "sample.sample", status: "upstream-drift" }]);
+    const root = writeTempTarget(fixture);
+    const results = await checkDrift(root, async () => fixture);
+    expect(results).toEqual([{ module: "sample.sample", status: "ok" }]);
   });
 
-  test("reports transform-drift when the committed generated file is stale", async () => {
+  test("reports upstream-drift when fetched bytes differ from the committed fixture", async () => {
     const fixture = "declare module 'sample.sample' {\n  export const A: hash;\n}\n";
-    const stale = "declare module 'sample.sample' {\n  export const A: NotRenamed;\n}\n";
-    const root = writeTempTarget(fixture, stale);
-    const results = await checkDrift(root, async () => fixture);
-    expect(results).toEqual([{ module: "sample.sample", status: "transform-drift" }]);
+    const root = writeTempTarget(fixture);
+    const results = await checkDrift(root, async () => `${fixture}// upstream moved\n`);
+    expect(results).toEqual([{ module: "sample.sample", status: "upstream-drift" }]);
   });
 });
 
@@ -994,7 +974,6 @@ describe("writeClassification", () => {
           ref: "1",
           moduleId: namespace,
           namespace,
-          generated: `generated/${namespace}.d.ts`,
           apiDoc: `api-doc/${namespace}.json`,
           ...extra,
         })),
@@ -1031,7 +1010,6 @@ describe("writeClassification", () => {
           module: path.split("/")[2]?.replace(/\.d\.ts$/, ""),
           path,
           fixture: "f",
-          generated: "g",
         })),
       }),
     );
@@ -1046,7 +1024,6 @@ describe("writeClassification", () => {
             authored: `fixtures/authored/${moduleId}.d.ts`,
             moduleId,
             namespace,
-            generated: `generated/${namespace}.d.ts`,
             apiDoc: `api-doc/${namespace}.json`,
             // A synthetic target has no upstream to vendor, and the parity
             // declaration is mandatory for any config `readAuthoredTargets` accepts.

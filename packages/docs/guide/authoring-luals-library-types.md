@@ -5,15 +5,15 @@ toc-title: Authoring LuaLS library types
 
 Some pure-Lua Defold libraries ship their own type information as inline
 [LuaLS](https://luals.github.io/) (`---@`) annotations rather than a `.script_api`.
-This toolchain generates TypeScript declarations for them from those annotations
-and commits the result into `@defold-typescript/library-types`, so a consumer that
-declares the library gets autocomplete and `tsc` coverage with no hand-written
-`.d.ts`. [`resolve`](./resolve.md#vendored-library-types) then materializes the
-committed declaration into the consumer's project.
+This toolchain prints TypeScript declarations for them from those annotations,
+so a consumer that declares the library gets autocomplete and `tsc` coverage with
+no hand-written `.d.ts`. [`resolve`](./resolve.md#vendored-library-types) prints
+the declaration into the consumer's project from the library version it depends
+on, or from the sources pinned in `@defold-typescript/library-types`.
 
 Adding such a library is **data, not code**: you add one entry to
-`packages/library-types/luals-targets.json`, run the four generation commands,
-check the emitted API-doc description, and commit the artifacts. There is no
+`packages/library-types/luals-targets.json`, run the three generation commands,
+check the emitted API-doc description, and commit the entry and its artifacts. There is no
 pipeline source to touch — the same front-end that produces the druid types
 produces yours.
 
@@ -50,7 +50,7 @@ annotations, and each lives in its own repo at its own release. The fields:
 | `ref` | yes | The exact release tag to pin. Resolve the newest stable tag (`git ls-remote --tags <repo>`) — never invent one. |
 | `sourceGlobs` | yes | Globs selecting the `.lua` files to snapshot, relative to the repo root (e.g. `["druid/**/*.lua"]`). |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `druid.druid`). This names the emitted `declare module` and scopes the module-function surface to `<moduleId-as-path>.lua`. |
-| `namespace` | yes | The artifact stem — the emitted files are `generated/<namespace>.d.ts`, `fidelity/<namespace>.json`, `api-doc/<namespace>.json`. |
+| `namespace` | yes | The artifact stem — the emitted files are `fidelity/<namespace>.json` and `api-doc/<namespace>.json`. |
 | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
 | `typeRenames` | no | Map from a LuaLS type name to the TypeScript type *text* to emit (e.g. `{ "vector3": "Vector3" }`). The value is emitted verbatim and may name an ambient global, including a dotted one like `debug.FunctionInfo` — it never contributes an import. Omit or `{}` when the library references no renamed types. |
 | `ignore` | no | Globs excluded from `sourceGlobs` — tests, examples, editor widgets. Defaults to `[]`. |
@@ -81,8 +81,8 @@ whose local name would collide with one the library declares itself fails loudly
 rather than silently shadowing it.
 
 The consuming project must declare that upstream library too. `resolve` builds no
-inter-library dependency graph, so a project that lists druid alone materializes
-`generated/druid.d.ts` without `generated/event.d.ts` — the import then degrades
+inter-library dependency graph, so a project that lists druid alone gets
+`druid.druid` without `event.event` — the import then degrades
 to an error-`any` under the repo-wide `skipLibCheck`. Declare both; druid does not
 run without `event.event` at runtime either. quest and token import `event` from
 `event.event` the same way (quest also imports `queue`), so a project that lists
@@ -391,7 +391,7 @@ so the library imports under its pinned specifier; the `declare global` form
 stays the resolve emitter's, for extensions a project declares.
 
 Each entry pins `repo`, `ref`, `scriptApi` (the path to the `.script_api` in the
-repo), `moduleId`, `namespace`, and the exact `generated` / `apiDoc` / `fidelity`
+repo), `moduleId`, `namespace`, and the exact `apiDoc` / `fidelity`
 output paths. The generate arms mirror the LuaLS ones:
 
 ```sh
@@ -408,11 +408,11 @@ gone. Three things are specific to a script_api target and worth knowing:
 
 - **Output paths are pinned explicitly and named for the single-segment
   `namespace`.** Like the LuaLS libraries, a migrated script_api library is the
-  sole maintainer of its namespace, so its goldens are `generated/bridge.d.ts`,
-  `api-doc/bridge.json`, and `fidelity/bridge.json` — not the dotted `moduleId` —
-  which keeps the docs Libraries tree and the file layout uniform with druid. The
-  require specifier is still the `moduleId` (`declare module 'bridge.bridge'`), so
-  `resolve` materializes it unchanged via the registry's module→stem mapping.
+  sole maintainer of its namespace, so its goldens are `api-doc/bridge.json` and
+  `fidelity/bridge.json` — not the dotted `moduleId` — which keeps the docs
+  Libraries tree and the file layout uniform with druid. The require specifier is
+  still the `moduleId` (`declare module 'bridge.bridge'`), so `resolve` prints it
+  under that specifier.
 - **Fidelity mirrors the emitter, so an unmapped token counts against coverage.**
   The report is computed over the ref-doc doc with the emitter's own type map: a
   token the emitter renders as `unknown` is counted in `unknownFallbacks` and

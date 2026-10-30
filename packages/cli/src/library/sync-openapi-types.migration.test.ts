@@ -39,9 +39,8 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
     expect(dirs.flatMap((d) => d.modules)).not.toContain("nakama.nakama");
   });
 
-  test("the ts-defold fixture and dotted golden gave way to the authored fork", async () => {
+  test("the ts-defold fixture gave way to the authored fork", async () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.nakama.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/nakama.nakama.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/authored/nakama.nakama.d.ts"))).toBe(true);
     expect((await printCorpus(PACKAGE_ROOT)).has("nakama.nakama")).toBe(true);
   });
@@ -50,9 +49,9 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
     expect(existsSync(join(PACKAGE_ROOT, target.apiDoc))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, target.fidelity))).toBe(true);
     // The proof lives under an `openapi/` subdir so it never shadows the
-    // authored `generated/nakama.d.ts` docs-site page, which is what the
+    // authored `api-doc/nakama.json` docs-site page, which is what the
     // canonical path holds now that the bare namespace is the module's own.
-    expect(target.generated).toBe("generated/openapi/nakama.nakama.d.ts");
+    expect(target.apiDoc).toBe("api-doc/openapi/nakama.nakama.json");
   });
 
   test("the pinned swagger + proto snapshots are committed", () => {

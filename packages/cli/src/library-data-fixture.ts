@@ -17,7 +17,6 @@ export function writeAuthoredLibraryData(forks: Readonly<Record<string, string>>
       authored,
       moduleId,
       namespace: moduleId,
-      generated: `generated/${moduleId}.d.ts`,
       apiDoc: `api-doc/${moduleId}.json`,
       upstreamLua: [`fixtures/upstream-lua/${moduleId}.lua`],
     };

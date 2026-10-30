@@ -19,32 +19,42 @@ package ships hand-vetted, ready-to-use TypeScript declarations.
 
 When `resolve` encounters a declared dependency with no `.script_api`, it matches
 it against this corpus by source identity, verifies the match against the
-downloaded archive's Lua require paths, and materializes the corresponding
-declaration into the project's `.defold-types/libraries/`. The import specifier is
+downloaded archive's Lua require paths, and prints the corresponding
+declarations into the project's `.defold-types/libraries/` from the archive the
+project depends on, or from the sources pinned here. The import specifier is
 the Lua `require` path — e.g. `import * as dicebag from 'dicebag.dicebag'` — so it
 matches what Fetch Libraries installs at runtime.
 
 ## What's inside
 
-- `generated/<module>.d.ts` — one ambient `declare module '<require-path>'` per
-  vendored module, core-type-renamed to the `@defold-typescript/types` surface.
-- `library-classification.json`, `library-targets.json` — the registries mapping
-  each module to its upstream source and generated path. The CLI reads these to
-  drive matching and materialization.
+This package holds the inputs the CLI prints declarations from, and no printed
+declarations.
+
+- `luals-targets.json`, `script-api-targets.json`, `authored-targets.json` — one
+  entry per library module: its upstream repository, pinned ref, license, and
+  the `namespace` it is published under.
+- `fixtures/luals/`, `fixtures/script-api/`, `fixtures/authored/` — the pinned
+  upstream sources, or the hand-written declaration fork, each module prints from.
+- `native/<namespace>.d.ts` and `native-targets.json` — the hand-written
+  declarations of native extensions that ship no `.script_api`, which `resolve`
+  installs as written.
+- `library-classification.json`, `library-targets.json` — the ts-defold/library
+  registries the CLI reads to drive matching.
 - `api-doc/<module>.json` — ref-doc JSON extracted from each declaration, consumed
   by the documentation site to render per-library API pages.
 - `NOTICE` — upstream attribution for every vendored library.
 
 ## Provenance
 
-Declarations are adapted from
-[`ts-defold/library`](https://github.com/ts-defold/library) (MIT) at a pinned
-commit, recorded per module in `library-targets.json`. ts-defold's hand-written
-`declare module` files already model these libraries faithfully; the only surface
-that differs is core-type naming. A codemod (`packages/cli/src/library/sync-library-types.ts`)
-walks the TypeScript AST and rewrites **type references only** — property names,
-JSDoc, `declare module`, and passthrough extensions (`LuaMultiReturn`, `LuaMap`)
-stay byte-identical:
+The CLI prints each module through the lane its target file names: LuaLS
+annotations, a `.script_api`, or a hand-written declaration fork. Many forks
+descend from [`ts-defold/library`](https://github.com/ts-defold/library) (MIT)
+at the commit pinned in `library-targets.json`. ts-defold's hand-written
+`declare module` files already model these libraries faithfully; the only
+surface that differs is core-type naming. A codemod
+(`packages/cli/src/library/sync-library-types.ts`) walks the TypeScript AST and
+rewrites **type references only** — property names, JSDoc, `declare module`, and
+passthrough extensions (`LuaMultiReturn`, `LuaMap`) stay byte-identical:
 
 | ts-defold | `@defold-typescript/types` |
 | --------- | -------------------------- |
@@ -54,23 +64,20 @@ stay byte-identical:
 
 The renamed names resolve against the ambient globals in `@defold-typescript/types`,
 so no import injection is needed. Any `vmath.*` reference with no mapping is a hard
-error at regeneration time, so a missing rename fails loud rather than degrading to
-`any`. Nothing is authored by hand beyond the source pins, and the committed output
-is guarded against drift in CI.
+error, so a missing rename fails loud rather than degrading to `any`.
 
-Regenerate after changing the rename table or re-pinning a source:
+Check every target's printed declarations after changing a lane or re-pinning a
+source:
 
 ```sh
-bun run --filter @defold-typescript/library-types regen
+bun test packages/cli/src/library
 ```
 
 ## Direct use
 
-The `exports` map exposes each module under a type-only subpath if you want a
-single library's declarations without the CLI. These are ambient type declarations
-only — there is no runtime code in this package. For the normal workflow, prefer
-letting `@defold-typescript/cli resolve` materialize them for you; see the
-[toolchain docs](https://github.com/defold-typescript/toolchain).
+This package exposes no declarations of its own: the CLI prints them from the
+inputs here. Let `@defold-typescript/cli resolve` write them into your project;
+see the [toolchain docs](https://github.com/defold-typescript/toolchain).
 
 ## License
 

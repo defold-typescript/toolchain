@@ -21,7 +21,7 @@ const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
 const vendoredDruid = join(libraryTypesRoot, "fixtures", "luals", "druid");
 
 const druidRegistry = [
-  { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+  { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
 ];
 
 function tmp(): string {

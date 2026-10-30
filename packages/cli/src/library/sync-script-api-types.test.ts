@@ -25,7 +25,7 @@ const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 // front-end (which pins source globs), a script_api target pins one `.script_api`
 // path and the exact canonical golden paths it owns. bridge is now the sole type
 // maintainer for its namespace, so — like the LuaLS libraries — its goldens are
-// named for the single-segment `namespace` (`generated/bridge.d.ts`), not the
+// named for the single-segment `namespace` (`api-doc/bridge.json`), not the
 // dotted `moduleId`, keeping the docs tree and file layout clean.
 const BRIDGE: ScriptApiTarget = {
   repo: "https://github.com/Playgama/bridge-defold",
@@ -34,7 +34,6 @@ const BRIDGE: ScriptApiTarget = {
   scriptApi: "bridge/api/bridge.script_api",
   moduleId: "bridge.bridge",
   namespace: "bridge",
-  generated: "generated/bridge.d.ts",
   apiDoc: "api-doc/bridge.json",
   fidelity: "fidelity/bridge.json",
 };
@@ -54,7 +53,6 @@ describe("readScriptApiTargets", () => {
     expect(bridge?.repo).toBe("https://github.com/Playgama/bridge-defold");
     expect(bridge?.ref).toBe("v2.3.0");
     expect(bridge?.scriptApi).toBe("bridge/api/bridge.script_api");
-    expect(bridge?.generated).toBe("generated/bridge.d.ts");
     expect(bridge?.apiDoc).toBe("api-doc/bridge.json");
   });
 
@@ -115,8 +113,6 @@ describe("bridge migrated off the ts-defold corpus", () => {
     expect((await printCorpus(PACKAGE_ROOT)).has("bridge.bridge")).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/bridge.json"))).toBe(true);
     expect(existsSync(join(PACKAGE_ROOT, "fidelity/bridge.json"))).toBe(true);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/bridge.bridge.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/script-api/bridge.bridge.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/script-api/bridge.bridge.json"))).toBe(false);
   });
 });

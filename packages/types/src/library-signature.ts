@@ -1,9 +1,9 @@
 /**
  * Pure string helpers for rendering variadic parameters and multi-value returns
  * the way the library `.d.ts` emitter does. Shared by the emitter
- * (`packages/library-types`) and the docs-site renderer (`packages/docs-site`),
+ * (`packages/cli/src/library`) and the docs-site renderer (`packages/docs-site`),
  * which both depend on `@defold-typescript/types`, so a library `/api` signature
- * cannot drift from the shipped `generated/<ns>.d.ts` for these two shapes — the
+ * cannot drift from the printed library declaration for these two shapes — the
  * same anti-drift move the type/name/generic primitives already use.
  */
 
