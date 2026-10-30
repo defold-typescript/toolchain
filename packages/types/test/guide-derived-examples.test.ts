@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..", "..");
@@ -14,14 +14,20 @@ const LIBRARY_DATA = resolve(REPO_ROOT, "packages", "library-types", "data");
 const [NEWEST_DATA_FOLDER = ""] = readdirSync(LIBRARY_DATA).sort((a, b) =>
   b.localeCompare(a, "en", { numeric: true }),
 );
-const AUTHORED_TARGETS = resolve(LIBRARY_DATA, NEWEST_DATA_FOLDER, "authored-targets.json");
-const ENTRY_HEADING = "## 1. Add an `authored-targets.json` entry";
+const DATA_FOLDER = resolve(LIBRARY_DATA, NEWEST_DATA_FOLDER);
+const ENTRY_HEADING = "## 1. Add a fork to the library's `library.json`";
 
 function dottedNamespaces(): string[] {
-  const raw = JSON.parse(readFileSync(AUTHORED_TARGETS, "utf8")) as {
-    targets: { namespace: string }[];
-  };
-  return raw.targets.map((t) => t.namespace).filter((ns) => ns.includes("."));
+  return readdirSync(DATA_FOLDER)
+    .map((dir) => resolve(DATA_FOLDER, dir, "library.json"))
+    .filter((file) => existsSync(file))
+    .flatMap((file) => {
+      const { forks = [] } = JSON.parse(readFileSync(file, "utf8")) as {
+        forks?: { namespace: string }[];
+      };
+      return forks.map((fork) => fork.namespace);
+    })
+    .filter((ns) => ns.includes("."));
 }
 
 function entrySection(): string {
@@ -33,7 +39,7 @@ function entrySection(): string {
 }
 
 describe("docs/guide worked values against production data", () => {
-  test("the dotted-namespace rule names a namespace authored-targets.json really ships", () => {
+  test("the dotted-namespace rule names a namespace a library's forks really ship", () => {
     const dotted = dottedNamespaces();
     expect(dotted.length).toBeGreaterThan(0);
     const section = entrySection();

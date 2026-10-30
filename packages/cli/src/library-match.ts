@@ -2,8 +2,8 @@
 // `game.project` `[dependencies]` URL into the vendored pure-Lua library it
 // corresponds to, or `null` when none match. Later slices add the archive read,
 // `.defold-types/` materialization, and the `resolve` wiring that calls this for
-// each `assetOnly` dependency. This module consumes the library data registries
-// as parsed data passed in, staying free of IO.
+// each `assetOnly` dependency. This module consumes library data targets as
+// parsed data passed in, staying free of IO.
 //
 // A declared dependency URL is a moving/forked ref (`.../archive/main.zip`, a
 // fork, a pinned tag), so the match keys on a normalized source identity, not
@@ -22,7 +22,7 @@ export interface VendoredLibrary {
   readonly namespaces?: Readonly<Record<string, string>>;
 }
 
-// A single library entry in a library data folder's `luals-targets.json`: the
+// A single LuaLS target from a library's `recipe.json`: the
 // upstream repo, the require module the archive ships (`moduleId`, used to
 // verify a match against the downloaded archive), and the `namespace` the
 // library is published under.
@@ -73,7 +73,7 @@ export function buildLualsRegistryEntries(targets: LualsTargets): VendoredLibrar
   return groupTargetsBySourceId(targets.targets);
 }
 
-// A single library entry in a library data folder's `script-api-targets.json`,
+// A single script_api target from a library's `recipe.json`,
 // projected to what registry matching needs: the upstream `repo` (source id) and
 // the require `moduleId` shipped by the archive, plus the single-segment
 // `namespace` it is published under.
@@ -97,7 +97,7 @@ export function buildScriptApiRegistryEntries(
   return groupTargetsBySourceId(targets.targets);
 }
 
-// A single library entry in a library data folder's `authored-targets.json`,
+// A single fork from a library's `library.json`,
 // projected to what registry matching needs: the upstream `repo` (source id),
 // the require `moduleId` shipped by the archive, and the single-segment
 // `namespace` it is published under. An

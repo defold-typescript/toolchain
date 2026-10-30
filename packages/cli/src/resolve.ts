@@ -107,8 +107,8 @@ export interface RunResolveOptions {
   // surface already there.
   readonly libraryRegistry?: readonly VendoredLibrary[];
   readonly libraryDataDir?: string | null;
-  // The curated native-extension targets. Defaults to the library data folder's
-  // `native-targets.json`.
+  // The curated native-extension targets. Defaults to the native extensions the
+  // library data folder holds.
   readonly nativeRegistry?: readonly VendoredNativeExtension[];
   // The `@defold-typescript/types` root shipped declarations are checked
   // against. Defaults to the installed package; `null` installs them unchecked.

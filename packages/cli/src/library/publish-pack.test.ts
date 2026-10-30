@@ -37,23 +37,25 @@ describe("@defold-typescript/library-types publish surface", () => {
   const paths = packedPaths(PKG_DIR);
 
   test("ships the per-library resolve manifest the CLI reads to recognize libraries", () => {
-    expect(paths).toContain(`${DATA}/luals-targets.json`);
-    expect(paths).toContain(`${DATA}/fixtures/luals/druid/druid/druid.lua`);
+    expect(paths).toContain(`${DATA}/druid/library.json`);
+    expect(paths).toContain(`${DATA}/druid/reviewed.json`);
+    expect(paths).toContain(`${DATA}/druid/recipe.json`);
+    expect(paths).toContain(`${DATA}/druid/source/druid/druid/druid.lua`);
   });
 
   test("ships the script_api resolve manifest so installed packages can resolve bridge", () => {
-    expect(paths).toContain(`${DATA}/script-api-targets.json`);
-    expect(paths).toContain(`${DATA}/fixtures/script-api/bridge.bridge.script_api`);
+    expect(paths).toContain(`${DATA}/bridge-defold/recipe.json`);
+    expect(paths).toContain(`${DATA}/bridge-defold/source/bridge.bridge.script_api`);
   });
 
   test("ships the authored resolve manifest so installed packages can resolve defcon", () => {
-    expect(paths).toContain(`${DATA}/authored-targets.json`);
-    expect(paths).toContain(`${DATA}/fixtures/authored/defcon.console.d.ts`);
+    expect(paths).toContain(`${DATA}/defcon/library.json`);
+    expect(paths).toContain(`${DATA}/defcon/fork/defcon.console.d.ts`);
   });
 
   test("ships the curated native declarations resolve installs", () => {
-    expect(paths).toContain(`${DATA}/native-targets.json`);
-    expect(paths).toContain(`${DATA}/native/daabbcc.d.ts`);
+    expect(paths).toContain(`${DATA}/defold-daabbcc/library.json`);
+    expect(paths).toContain(`${DATA}/defold-daabbcc/fork/daabbcc.d.ts`);
   });
 
   test("ships the curated extension manifest resolve reads to note extension index bases", () => {
@@ -120,7 +122,7 @@ describe("an installed @defold-typescript/library-types prints every served modu
 
   test("prints the pinned sources, with the reason, when the archive holds no files", async () => {
     const [target] = readLualsTargets(LIBRARY_DATA_DIR);
-    if (target === undefined) throw new Error("luals-targets.json lists no target");
+    if (target === undefined) throw new Error("library data holds no LuaLS target");
     const empty: LibrarySourceTree = {
       list: () => [],
       read: (file) => {

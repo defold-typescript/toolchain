@@ -6,7 +6,7 @@
  * `authored-parity.ts` already counts how many of them the fork drops, so the text
  * exists on one side of the pipeline and was thrown away before the docs-site saw
  * it. This module is the merge, and it runs at api-doc lowering rather than in the
- * vendored `.d.ts`: writing upstream prose into `fixtures/authored/*.d.ts` would
+ * vendored `.d.ts`: writing upstream prose into a library's `fork/*.d.ts` would
  * still pass the forked-vs-generated identity diff while destroying what that diff
  * exists to prove — that the emitted surface *is* the vendored fork — and imported
  * prose would be indistinguishable from fork prose forever after.

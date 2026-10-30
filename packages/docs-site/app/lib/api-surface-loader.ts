@@ -2,7 +2,9 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiAvailability,
+  type LibraryIndexSlotClassifications,
   parseDefoldApiDoc,
+  parseLibraryIndexSlotClassifications,
   routeTypeDeclarations,
   type SignatureStore,
   type SkipOverloadRule,
@@ -26,6 +28,7 @@ import {
 import { repoTreeUrl } from "./forge";
 import { parseFrontmatter } from "./frontmatter";
 import { parseGlobalTypes } from "./global-types";
+import { readSiteIndexSlots, readSiteLibraries, type SiteLibrary } from "./library-data";
 import { type LibraryListing, type LibraryOrigin, libraryLineage } from "./nav";
 
 interface ApiTarget {
@@ -205,9 +208,8 @@ interface NativeTarget {
 }
 
 // Library data sits in folders named by the first CLI version that reads them,
-// and the site documents the newest. The lane registries and the files their
-// entries name live there; `api-doc/` and every other package file stay at the
-// package root.
+// and the site documents the newest. One folder per library lives there;
+// `api-doc/` and every other package file stay at the package root.
 export function libraryDataDir(libraryTypesDir: string): string | undefined {
   const base = join(libraryTypesDir, "data");
   if (!existsSync(base)) return undefined;
@@ -218,20 +220,39 @@ export function libraryDataDir(libraryTypesDir: string): string | undefined {
   return newest === undefined ? undefined : join(base, newest);
 }
 
-function libraryDataFile(libraryTypesDir: string, file: string): string | undefined {
-  const dir = libraryDataDir(libraryTypesDir);
-  return dir === undefined ? undefined : join(dir, file);
+function siteLibraries(libraryTypesDir: string): SiteLibrary[] {
+  return readSiteLibraries(libraryDataDir(libraryTypesDir));
 }
 
-// Curated native extensions from `native-targets.json`: C++ extensions that ship
-// no `.script_api`, typed by a hand-authored `@globalTable` module a project
-// imports and rendered from the `api-doc/native/<namespace>.json` lowered from
-// it. An absent file degrades to no native pages.
+// The index slots every library page's notes read: each library folder's own,
+// and those of the extension pages no library folder holds.
+export function loadLibraryIndexSlots(libraryTypesDir: string): LibraryIndexSlotClassifications {
+  return parseLibraryIndexSlotClassifications(readSiteIndexSlots(libraryDataDir(libraryTypesDir)));
+}
+
+// Curated native extensions from library data: C++ extensions that ship no
+// `.script_api`, typed by a hand-authored `@globalTable` module a project imports
+// and rendered from the `api-doc/native/<namespace>.json` lowered from it. No
+// library data degrades to no native pages.
 function loadNativeTargets(libraryTypesDir: string): Map<string, NativeTarget> {
-  const path = libraryDataFile(libraryTypesDir, "native-targets.json");
-  if (path === undefined || !existsSync(path)) return new Map();
-  const { targets } = JSON.parse(readFileSync(path, "utf8")) as { targets: NativeTarget[] };
-  return new Map(targets.map((t) => [t.namespace, t]));
+  return new Map(
+    siteLibraries(libraryTypesDir).flatMap(({ repo, ref, refKind, license, native }) =>
+      native === undefined
+        ? []
+        : [
+            [
+              native.namespace,
+              {
+                repo,
+                ref,
+                ...(refKind === undefined ? {} : { refKind }),
+                license,
+                namespace: native.namespace,
+              },
+            ] as const,
+          ],
+    ),
+  );
 }
 
 // The engine loaders take only the types dir; the Defold manifest lives in the
@@ -341,10 +362,9 @@ export function libraryModuleDirs(libraryTypesDir: string): Map<string, string> 
   return moduleDir;
 }
 
-// Namespace -> GitHub origin, joined from the per-library manifests every
-// maintained library carries: `luals-targets.json` (druid, decore),
-// `script-api-targets.json` (bridge), and `authored-targets.json` (defcon, the
-// severed forks). Lineage is the origin URL and nothing else — the NOTICE credit
+// Namespace -> GitHub origin, joined from the library data every maintained
+// library carries: its LuaLS recipe (druid, decore), its script_api recipe
+// (bridge), and its forks (defcon, the severed forks). Lineage is the origin URL and nothing else — the NOTICE credit
 // column is free-text attribution whose casing and org renames drift from the
 // handle a repo actually lives under, so it never feeds the Libraries tree.
 export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, LibraryOrigin> {
@@ -560,7 +580,7 @@ export function portalListingsFromManifest(libraryTypesDir: string): LibraryList
   });
 }
 
-// A LuaLS-sourced library's own pin, read from `luals-targets.json`. Unlike the
+// A LuaLS-sourced library's own pin, read from its library data. Unlike the
 // ts-defold libraries — vendored en masse from one `ts-defold/library` commit —
 // each druid-style library lives in its own repo at its own tag, so it carries
 // its own `repo`/`ref` and cannot be attributed from the shared classification.
@@ -579,34 +599,28 @@ interface LualsProvenance {
 }
 
 function loadLualsProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
-  const path = libraryDataFile(libraryTypesDir, "luals-targets.json");
-  if (path === undefined || !existsSync(path)) return new Map();
-  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
-    targets: { namespace: string; repo: string; ref: string; license?: string }[];
-  };
   return new Map(
-    targets.map((t) => [t.namespace, { repo: t.repo, ref: t.ref, license: t.license ?? "" }]),
+    siteLibraries(libraryTypesDir).flatMap(({ repo, ref, license, luals }) =>
+      luals.map(({ namespace }) => [namespace, { repo, ref, license }] as const),
+    ),
   );
 }
 
-// A script_api-sourced library's own pin, read from `script-api-targets.json`.
+// A script_api-sourced library's own pin, read from its library data.
 // Same shape and role as `loadLualsProvenance`: a library this repo maintains
 // from a primary source (here the upstream's own `.script_api`) that is absent
 // from the ts-defold classification, so it carries its own repo/ref rather than
 // the shared vendored commit. Keyed by the entry's `namespace`, which is also
 // the `api-doc/<namespace>.json` stem and thus the page key.
 function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
-  const path = libraryDataFile(libraryTypesDir, "script-api-targets.json");
-  if (path === undefined || !existsSync(path)) return new Map();
-  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
-    targets: { namespace: string; repo: string; ref: string; license?: string }[];
-  };
   return new Map(
-    targets.map((t) => [t.namespace, { repo: t.repo, ref: t.ref, license: t.license ?? "" }]),
+    siteLibraries(libraryTypesDir).flatMap(({ repo, ref, license, scriptApi }) =>
+      scriptApi.map(({ namespace }) => [namespace, { repo, ref, license }] as const),
+    ),
   );
 }
 
-// An authored/forked library's own pin, read from `authored-targets.json`. Same
+// An authored/forked library's own pin, read from its library data. Same
 // shape and role as the LuaLS/script_api loaders: a library this repo maintains
 // as a first-party hand-authored or forked `.d.ts` (its upstream has no usable
 // structured source), absent from the ts-defold classification, so it carries
@@ -614,29 +628,22 @@ function loadScriptApiProvenance(libraryTypesDir: string): Map<string, LualsProv
 // `namespace`, bare or dotted, which is also the `api-doc/<namespace>.json`
 // stem and thus the page key either way.
 function loadAuthoredProvenance(libraryTypesDir: string): Map<string, LualsProvenance> {
-  const path = libraryDataFile(libraryTypesDir, "authored-targets.json");
-  if (path === undefined || !existsSync(path)) return new Map();
-  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
-    targets: {
-      namespace: string;
-      repo: string;
-      ref: string;
-      license?: string;
-      moduleId?: string;
-      refKind?: LualsProvenance["refKind"];
-    }[];
-  };
   return new Map(
-    targets.map((t) => [
-      t.namespace,
-      {
-        repo: t.repo,
-        ref: t.ref,
-        license: t.license ?? "",
-        ...(t.moduleId !== undefined ? { moduleId: t.moduleId } : {}),
-        ...(t.refKind !== undefined ? { refKind: t.refKind } : {}),
-      },
-    ]),
+    siteLibraries(libraryTypesDir).flatMap(({ repo, ref, license, refKind, forks }) =>
+      forks.map(
+        ({ namespace, moduleId }) =>
+          [
+            namespace,
+            {
+              repo,
+              ref,
+              license,
+              moduleId,
+              ...(refKind === undefined ? {} : { refKind }),
+            },
+          ] as const,
+      ),
+    ),
   );
 }
 
@@ -664,26 +671,18 @@ function loadMarkdownDeferredNamespaces(libraryTypesDir: string): Set<string> {
 // `resolve` prints each target's declaration from library data, so a target is
 // what makes an api-doc a library page.
 function loadTargetApiDocs(libraryTypesDir: string): Set<string> {
-  const targets = (path: string | undefined): { namespace: string; apiDoc?: string }[] => {
-    if (path === undefined || !existsSync(path)) return [];
-    return (
-      JSON.parse(readFileSync(path, "utf8")) as {
-        targets: { namespace: string; apiDoc?: string }[];
-      }
-    ).targets;
-  };
-  const apiDocs = new Set(
-    targets(libraryDataFile(libraryTypesDir, "luals-targets.json")).map(
-      ({ namespace }) => `api-doc/${namespace}.json`,
-    ),
-  );
-  for (const path of [
-    libraryDataFile(libraryTypesDir, "script-api-targets.json"),
-    libraryDataFile(libraryTypesDir, "authored-targets.json"),
-    join(libraryTypesDir, "openapi-targets.json"),
-    join(libraryTypesDir, "markdown-targets.json"),
-  ]) {
-    for (const { apiDoc } of targets(path)) if (apiDoc !== undefined) apiDocs.add(apiDoc);
+  const apiDocs = new Set<string>();
+  for (const { luals, scriptApi, forks } of siteLibraries(libraryTypesDir)) {
+    for (const { namespace } of luals) apiDocs.add(`api-doc/${namespace}.json`);
+    for (const { apiDoc } of [...scriptApi, ...forks]) apiDocs.add(apiDoc);
+  }
+  for (const file of ["openapi-targets.json", "markdown-targets.json"]) {
+    const path = join(libraryTypesDir, file);
+    if (!existsSync(path)) continue;
+    const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
+      targets: { apiDoc?: string }[];
+    };
+    for (const { apiDoc } of targets) if (apiDoc !== undefined) apiDocs.add(apiDoc);
   }
   return apiDocs;
 }
@@ -694,8 +693,8 @@ function loadTargetApiDocs(libraryTypesDir: string): Set<string> {
 // render layer turns into the uniform Author / GitHub / Commit pin / Import /
 // License block; the module description is left clean.
 //
-// A module absent from the ts-defold classification but present in
-// `luals-targets.json` is a LuaLS-sourced library (druid): it is attributed to
+// A module absent from the ts-defold classification but present in a library's
+// LuaLS recipe is a LuaLS-sourced library (druid): it is attributed to
 // its own repo at its own ref, not pinned to the shared ts-defold/library
 // commit the classification would otherwise default it to.
 export function loadLibraryProvenance(libraryTypesDir: string): (namespace: string) => LibraryMeta {
@@ -879,7 +878,7 @@ export function loadLibraryPageSources(libraryTypesDir: string): { page: ApiPage
   for (const [namespace, target] of nativeTargets) {
     if (namespaces.includes(namespace)) {
       throw new Error(
-        `native-targets.json: namespace "${namespace}" from ${target.repo} collides with another library page`,
+        `library data: native namespace "${namespace}" from ${target.repo} collides with another library page`,
       );
     }
     namespaces.push(namespace);
@@ -905,6 +904,7 @@ export function loadLibraryPageSources(libraryTypesDir: string): { page: ApiPage
   // Libraries tree collapses a one-module repo on, resolved from the same
   // `owner/repo` origin, so label and tree depth cannot disagree.
   const origins = libraryOriginByNamespace(libraryTypesDir);
+  const indexSlots = loadLibraryIndexSlots(libraryTypesDir);
   const repoCounts = new Map<string, number>();
   for (const namespace of namespaces) {
     const { repo } = libraryLineage(namespace, origins);
@@ -951,6 +951,7 @@ export function loadLibraryPageSources(libraryTypesDir: string): { page: ApiPage
         category: "library",
         libraryMeta: meta,
         displayName,
+        indexSlots,
       },
       doc,
     });

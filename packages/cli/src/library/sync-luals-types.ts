@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { type AnnotationOverrides, applyAnnotationOverrides } from "./apply-luals-overrides";
 import { type ExternalTypeRef, emitLibraryDeclarations } from "./emit-library-dts";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
+import { readLibraryData } from "./library-data";
 import { lowerLibraryModel } from "./lower-api-doc";
 import { buildFidelityReport, type FidelityReport } from "./luals-fidelity";
 import { type LibraryModel, mergeLibraryModels, parseLualsSource } from "./parse-luals";
@@ -38,47 +39,19 @@ export interface LualsTarget {
   // library must declare the named upstream dependency too — `resolve` materializes no
   // inter-library graph. See `emit-library-dts.ts`.
   externalTypes?: Record<string, ExternalTypeRef>;
+  // The data-folder-relative folder that holds the pinned sources the globs select.
+  sourceDir: string;
 }
-
-export interface LualsTargets {
-  targets: LualsTarget[];
-}
-
-const REQUIRED_FIELDS = ["repo", "ref", "sourceGlobs", "moduleId", "namespace"] as const;
 
 /**
- * Read `luals-targets.json`, validate every required field per entry, and fill
- * optional defaults (`typeRenames` → `{}`, `ignore` → `[]`). Throws on the first
- * missing field naming both the field and the offending entry (its `moduleId`,
- * or its index when `moduleId` itself is absent) — the loud-fail discipline the
- * ts-defold `regenerate` uses for unmapped references. No network.
+ * Every library's LuaLS targets, in library-folder order, read from its
+ * `recipe.json` with the repo, ref and license its library holds once. Throws on
+ * the first missing field naming both the field and the offending entry (its
+ * `moduleId`, or its index when `moduleId` itself is absent) — the loud-fail
+ * discipline the ts-defold `regenerate` uses for unmapped references. No network.
  */
-export function readLualsTargets(packageRoot: string): LualsTarget[] {
-  const parsed = JSON.parse(readFileSync(join(packageRoot, "luals-targets.json"), "utf8")) as {
-    targets: Partial<LualsTarget>[];
-  };
-  return parsed.targets.map((entry, index) => {
-    const label = typeof entry.moduleId === "string" ? entry.moduleId : `index ${index}`;
-    for (const field of REQUIRED_FIELDS) {
-      if (entry[field] === undefined) {
-        throw new Error(`luals-targets.json: entry ${label} is missing required field "${field}".`);
-      }
-    }
-    return {
-      repo: entry.repo as string,
-      ref: entry.ref as string,
-      sourceGlobs: entry.sourceGlobs as string[],
-      moduleId: entry.moduleId as string,
-      namespace: entry.namespace as string,
-      typeRenames: entry.typeRenames ?? {},
-      ignore: entry.ignore ?? [],
-      ...(entry.license !== undefined ? { license: entry.license } : {}),
-      ...(entry.annotationOverrides !== undefined
-        ? { annotationOverrides: entry.annotationOverrides }
-        : {}),
-      ...(entry.externalTypes !== undefined ? { externalTypes: entry.externalTypes } : {}),
-    };
-  });
+export function readLualsTargets(dataDir: string): LualsTarget[] {
+  return readLibraryData(dataDir).flatMap((library) => library.luals);
 }
 
 /**
@@ -155,7 +128,7 @@ function rawUrl(target: LualsTarget, path: string): string {
 
 /**
  * List the pinned tree, select the matching sources, fetch each via raw-content
- * URL, and write it under `fixtures/luals/<namespace>/<relpath>` preserving tree
+ * URL, and write it under the target's `sourceDir` preserving tree
  * shape. Snapshot only — no codemod. The `listTree`/`fetchText` seams keep the
  * pass offline-testable; only the CLI `--fetch` arm wires the real network.
  */
@@ -167,7 +140,7 @@ export async function fetchLualsFixtures(
   const paths = selectLualsSources(await seams.listTree(target.repo, target.ref), target);
   for (const path of paths) {
     const text = await seams.fetchText(rawUrl(target, path));
-    const dest = join(packageRoot, "fixtures/luals", target.namespace, path);
+    const dest = join(packageRoot, target.sourceDir, path);
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, text);
   }
@@ -184,19 +157,19 @@ export function listTargetFixtures(
   seams: { readDir?: ReadFixtureDir } = {},
 ): string[] {
   const readDir = seams.readDir ?? ((r) => readdirSync(r, { recursive: true }).map(String));
-  return readDir(join(packageRoot, "fixtures/luals", target.namespace))
+  return readDir(join(packageRoot, target.sourceDir))
     .map((entry) => entry.replace(/\\/g, "/"))
     .filter((entry) => entry.endsWith(".lua"))
     .sort();
 }
 
-/** The target's vendored `fixtures/luals/<namespace>/` copy as a source tree. */
+/** The target's vendored `sourceDir` copy as a source tree. */
 export function lualsFixtureTree(
   packageRoot: string,
   target: LualsTarget,
   seams: { readDir?: ReadFixtureDir } = {},
 ): LibrarySourceTree {
-  const root = join(packageRoot, "fixtures/luals", target.namespace);
+  const root = join(packageRoot, target.sourceDir);
   return {
     list: () => listTargetFixtures(packageRoot, target, seams),
     read: (path) => readFileSync(join(root, path), "utf8"),

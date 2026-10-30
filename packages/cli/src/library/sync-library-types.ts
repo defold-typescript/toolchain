@@ -626,9 +626,9 @@ async function upstreamScriptApiEligibility(
 }
 
 /**
- * Read every maintained-here registry and union them: the served lanes from the
+ * Read every maintained-here lane and union them: the served lanes from the
  * library data folder, the markdown and openapi lanes off the package root.
- * Each reader `readFileSync`s unconditionally and throws on a missing required
+ * Each reader throws on a missing folder or registry and on a missing required
  * field — deliberately no absent-file fallback, so a lane added without its
  * fixture fails loudly rather than silently un-severing that lane's dirs.
  */

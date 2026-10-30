@@ -3,6 +3,7 @@ import { basename, dirname, join } from "node:path";
 import type { LibraryIndexSlotClassifications } from "@defold-typescript/types";
 import { isKnownDefoldTypeToken } from "@defold-typescript/types/library-runtime";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
+import { readLibraryData } from "./library-data";
 import type { FidelityReport } from "./luals-fidelity";
 import type { LibrarySourceTree } from "./source-tree";
 
@@ -36,6 +37,8 @@ export interface ScriptApiTarget {
   license?: string;
   // Slots upstream documents as omittable in prose only, emitted as a second overload.
   omittableSlots?: OmittableSlot[];
+  // The data-folder-relative path of the vendored `.script_api` snapshot.
+  sourceFile: string;
 }
 
 /**
@@ -53,56 +56,15 @@ export interface OmittableSlot {
   evidence: string;
 }
 
-export interface ScriptApiTargets {
-  targets: ScriptApiTarget[];
-}
-
-const REQUIRED_FIELDS = ["repo", "ref", "scriptApi", "moduleId", "namespace", "apiDoc"] as const;
-
 /**
- * Read `script-api-targets.json`, validate every required field per entry, and
- * fill optional defaults (`fidelity` → `fidelity/<namespace>.json`,
- * `license` → ""). Throws on the first missing field naming both the field and
- * the offending entry (its `moduleId`, or its index when `moduleId` itself is
- * absent) — the loud-fail discipline `readLualsTargets` uses. No network.
+ * Every library's script_api targets, in library-folder order, read from its
+ * `recipe.json` with the repo, ref and license its library holds once; `fidelity`
+ * defaults to `fidelity/<namespace>.json` and `license` to "". Throws on the
+ * first missing field naming both the field and the offending entry (its
+ * `moduleId`, or its index when `moduleId` itself is absent). No network.
  */
-export function readScriptApiTargets(packageRoot: string): ScriptApiTarget[] {
-  const parsed = JSON.parse(readFileSync(join(packageRoot, "script-api-targets.json"), "utf8")) as {
-    targets: Partial<ScriptApiTarget>[];
-  };
-  return parsed.targets.map((entry, index) => {
-    const label = typeof entry.moduleId === "string" ? entry.moduleId : `index ${index}`;
-    for (const field of REQUIRED_FIELDS) {
-      if (entry[field] === undefined) {
-        throw new Error(
-          `script-api-targets.json: entry ${label} is missing required field "${field}".`,
-        );
-      }
-    }
-    const moduleId = entry.moduleId as string;
-    const omittableSlots = (entry.omittableSlots ?? []).map((slot, slotIndex) => {
-      for (const field of ["element", "slot", "evidence"] as const) {
-        const value = (slot as Partial<OmittableSlot>)[field];
-        if (typeof value !== "string" || value.trim() === "") {
-          throw new Error(
-            `script-api-targets.json: entry ${label} omittableSlots[${slotIndex}] needs a non-empty "${field}".`,
-          );
-        }
-      }
-      return slot;
-    });
-    return {
-      repo: entry.repo as string,
-      ref: entry.ref as string,
-      scriptApi: entry.scriptApi as string,
-      moduleId,
-      namespace: entry.namespace as string,
-      apiDoc: entry.apiDoc as string,
-      fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
-      license: entry.license ?? "",
-      ...(omittableSlots.length > 0 ? { omittableSlots } : {}),
-    };
-  });
+export function readScriptApiTargets(dataDir: string): ScriptApiTarget[] {
+  return readLibraryData(dataDir).flatMap((library) => library.scriptApi);
 }
 
 /** Fetch the raw text at a URL. Network seam — mirrors `sync-luals-types.ts`. */
@@ -124,11 +86,11 @@ function rawUrl(target: ScriptApiTarget): string {
 }
 
 function fixturePath(packageRoot: string, target: ScriptApiTarget): string {
-  return join(packageRoot, "fixtures/script-api", `${target.moduleId}.script_api`);
+  return join(packageRoot, target.sourceFile);
 }
 
 /**
- * Snapshot the pinned `.script_api` into `fixtures/script-api/<moduleId>.script_api`
+ * Snapshot the pinned `.script_api` into the target's `sourceFile`
  * via the raw-content URL. Snapshot only — no codemod. The `fetchText` seam keeps
  * the pass offline-testable; only the CLI `--fetch` arm wires the real network.
  */
@@ -228,7 +190,7 @@ export async function loadTypeResolver(): Promise<TypeResolver> {
   return (await loadTypesModules()).resolver;
 }
 
-/** The target's vendored `fixtures/script-api/<moduleId>.script_api`, at the path its archive ships it. */
+/** The target's vendored `sourceFile`, at the path its archive ships it. */
 export function scriptApiFixtureTree(
   packageRoot: string,
   target: ScriptApiTarget,

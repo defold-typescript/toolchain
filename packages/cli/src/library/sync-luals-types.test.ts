@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { writeLibraryTargets } from "../library-data-fixture";
 import { emitLibraryDeclarations, isPublicMethod } from "./emit-library-dts";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { LibraryInterface, LibraryModel } from "./parse-luals";
@@ -34,17 +35,23 @@ const DRUID: LualsTarget = {
   namespace: "druid",
   typeRenames: {},
   ignore: ["**/test/**", "**/example/**", "**/example_*/**"],
+  sourceDir: "druid/source/druid",
 };
 
-function writeConfig(config: unknown): string {
+function writeConfig(targets: Partial<LualsTarget>[]): string {
   const root = mkdtempSync(join(tmpdir(), "luals-types-config-"));
-  writeFileSync(join(root, "luals-targets.json"), JSON.stringify(config));
+  writeLibraryTargets(root, {
+    luals: targets.map(({ sourceDir: _sourceDir, ...target }) => ({
+      repo: DRUID.repo,
+      ...target,
+    })),
+  });
   return root;
 }
 
 describe("readLualsTargets", () => {
   test("parses a druid entry into a typed target with expected moduleId/namespace", () => {
-    const root = writeConfig({ targets: [DRUID] });
+    const root = writeConfig([DRUID]);
     const targets = readLualsTargets(root);
     expect(targets).toHaveLength(1);
     const [target] = targets;
@@ -56,22 +63,29 @@ describe("readLualsTargets", () => {
   });
 
   test("throws naming the missing field and the offending entry", () => {
-    const { ref: _drop, ...missingRef } = DRUID;
-    const root = writeConfig({ targets: [missingRef] });
-    expect(() => readLualsTargets(root)).toThrow(/ref/);
+    const { sourceGlobs: _drop, ...missingGlobs } = DRUID;
+    const root = writeConfig([missingGlobs]);
+    expect(() => readLualsTargets(root)).toThrow(/sourceGlobs/);
     expect(() => readLualsTargets(root)).toThrow(/druid\.druid/);
+    expect(() => readLualsTargets(root)).toThrow("druid/recipe.json");
+  });
+
+  test("throws naming the library's reviewed.json when it pins no ref", () => {
+    const { ref: _drop, ...missingRef } = DRUID;
+    const root = writeConfig([missingRef]);
+    expect(() => readLualsTargets(root)).toThrow("druid/reviewed.json");
   });
 
   test("names the entry index when moduleId itself is the missing field", () => {
     const { moduleId: _drop, ...missingModuleId } = DRUID;
-    const root = writeConfig({ targets: [missingModuleId] });
+    const root = writeConfig([missingModuleId]);
     expect(() => readLualsTargets(root)).toThrow(/moduleId/);
     expect(() => readLualsTargets(root)).toThrow(/0/);
   });
 
   test("defaults typeRenames to {} and ignore to [] when omitted", () => {
     const { typeRenames: _tr, ignore: _ig, ...bare } = DRUID;
-    const root = writeConfig({ targets: [bare] });
+    const root = writeConfig([bare]);
     const [target] = readLualsTargets(root);
     expect(target?.typeRenames).toEqual({});
     expect(target?.ignore).toEqual([]);
@@ -87,20 +101,27 @@ describe("readLualsTargets", () => {
 
   test("passes externalTypes through when present and leaves it undefined when absent", () => {
     const externalTypes = { ext: { module: "other.mod", name: "ext" } };
-    const withExternal = writeConfig({ targets: [{ ...DRUID, externalTypes }] });
+    const withExternal = writeConfig([{ ...DRUID, externalTypes }]);
     expect(readLualsTargets(withExternal)[0]?.externalTypes).toEqual(externalTypes);
 
-    const without = writeConfig({ targets: [DRUID] });
+    const without = writeConfig([DRUID]);
     expect(readLualsTargets(without)[0]?.externalTypes).toBeUndefined();
   });
 
-  test("every committed entry reads back with the fields its config declares", () => {
-    const raw = JSON.parse(readFileSync(join(DATA_DIR, "luals-targets.json"), "utf8")) as {
-      targets: Record<string, unknown>[];
-    };
+  test("every committed entry reads back with the fields its recipe declares", () => {
+    const entries = readdirSync(DATA_DIR)
+      .sort()
+      .flatMap((dir) => {
+        const recipe = join(DATA_DIR, dir, "recipe.json");
+        if (!existsSync(recipe)) return [];
+        const { luals = [] } = JSON.parse(readFileSync(recipe, "utf8")) as {
+          luals?: Record<string, unknown>[];
+        };
+        return luals;
+      });
     const targets = readLualsTargets(DATA_DIR);
-    expect(targets).toHaveLength(raw.targets.length);
-    for (const [index, entry] of raw.targets.entries()) {
+    expect(targets).toHaveLength(entries.length);
+    for (const [index, entry] of entries.entries()) {
       const target = targets[index] as unknown as Record<string, unknown>;
       for (const [key, value] of Object.entries(entry)) expect(target[key]).toEqual(value);
     }
@@ -152,7 +173,7 @@ describe("selectLualsSources", () => {
 });
 
 describe("fetchLualsFixtures", () => {
-  test("writes only selected sources under fixtures/luals/<namespace>, fetching offline", async () => {
+  test("writes only selected sources under the target's sourceDir, fetching offline", async () => {
     const root = mkdtempSync(join(tmpdir(), "luals-types-fetch-"));
     const tree = ["druid/druid.lua", "druid/widget/button.lua", "druid/test/x.lua", "readme.md"];
     const fetched: string[] = [];
@@ -170,9 +191,9 @@ describe("fetchLualsFixtures", () => {
       "https://raw.githubusercontent.com/Insality/druid/1.2.5/druid/widget/button.lua",
     ]);
 
-    // Selected files land under fixtures/luals/<namespace>/<relpath>, tree shape preserved.
-    const druidLua = join(root, "fixtures/luals/druid/druid/druid.lua");
-    const buttonLua = join(root, "fixtures/luals/druid/druid/widget/button.lua");
+    // Selected files land under <sourceDir>/<relpath>, tree shape preserved.
+    const druidLua = join(root, "druid/source/druid/druid/druid.lua");
+    const buttonLua = join(root, "druid/source/druid/druid/widget/button.lua");
     expect(existsSync(druidLua)).toBe(true);
     expect(existsSync(buttonLua)).toBe(true);
     expect(readFileSync(druidLua, "utf8")).toBe(
@@ -180,8 +201,8 @@ describe("fetchLualsFixtures", () => {
     );
 
     // Ignored and non-matching paths are never written.
-    expect(existsSync(join(root, "fixtures/luals/druid/druid/test/x.lua"))).toBe(false);
-    expect(existsSync(join(root, "fixtures/luals/druid/readme.md"))).toBe(false);
+    expect(existsSync(join(root, "druid/source/druid/druid/test/x.lua"))).toBe(false);
+    expect(existsSync(join(root, "druid/source/druid/readme.md"))).toBe(false);
   });
 });
 
@@ -230,7 +251,7 @@ describe("buildTargetModel module ownership", () => {
   const druidTarget = readLualsTargets(DATA_DIR).find((t) => t.moduleId === "druid.druid");
 
   test("scopes moduleFunctions to druid/druid.lua's own publics, dropping other files and locals", () => {
-    if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
+    if (!druidTarget) throw new Error("druid target missing from library data");
     const names = buildTargetModel(DATA_DIR, druidTarget).moduleFunctions.map((f) => f.name);
     expect([...names].sort()).toEqual([...DRUID_PUBLICS].sort());
     expect(names).not.toContain("wrap_widget"); // druid.lua's `local function` helper
@@ -240,7 +261,7 @@ describe("buildTargetModel module ownership", () => {
 
   test("the second target (decore) yields a non-empty moduleFunctions surface — not hollow", () => {
     const decoreTarget = readLualsTargets(DATA_DIR).find((t) => t.moduleId === "decore.decore");
-    if (!decoreTarget) throw new Error("decore target missing from luals-targets.json");
+    if (!decoreTarget) throw new Error("decore target missing from library data");
     const names = buildTargetModel(DATA_DIR, decoreTarget).moduleFunctions.map((f) => f.name);
     expect(names.length).toBeGreaterThan(0);
     expect(names).toContain("create");
@@ -249,7 +270,7 @@ describe("buildTargetModel module ownership", () => {
   });
 
   test("the set_text_function callback maps through emit to (text_id: string) => string", () => {
-    if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
+    if (!druidTarget) throw new Error("druid target missing from library data");
     const emitted = emitLibraryDeclarations(buildTargetModel(DATA_DIR, druidTarget), {
       moduleId: druidTarget.moduleId,
       typeRenames: druidTarget.typeRenames,
@@ -265,7 +286,7 @@ describe("buildTargetModel module ownership", () => {
   });
 
   test("a Windows-style backslash readdir resolves druid.druid to the same moduleFunctions", () => {
-    if (!druidTarget) throw new Error("druid target missing from luals-targets.json");
+    if (!druidTarget) throw new Error("druid target missing from library data");
     const backslashReadDir: ReadFixtureDir = (root) =>
       readdirSync(root, { recursive: true }).map((entry) => String(entry).replace(/\//g, "\\"));
     const backslashNames = buildTargetModel(
@@ -507,7 +528,7 @@ describe("narrator ingestion restricted to its public surface", () => {
   });
 
   test("the model carries the public interfaces and drops the internal Object/constructor tables", () => {
-    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    if (!narratorTarget) throw new Error("narrator target missing from library data");
     const names = buildTargetModel(DATA_DIR, narratorTarget).interfaces.map((i) => i.name);
     for (const name of NARRATOR_PUBLIC_INTERFACES) expect(names).toContain(name);
     expect(names).not.toContain("Object");
@@ -580,7 +601,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
   }
 
   test("parse_content's trailing inclusions param is optional", () => {
-    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    if (!narratorTarget) throw new Error("narrator target missing from library data");
     const parseContent = buildTargetModel(DATA_DIR, narratorTarget).moduleFunctions.find(
       (f) => f.name === "parse_content",
     );
@@ -588,7 +609,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
   });
 
   test("Narrator.Story.continue returns the array-or-paragraph union", () => {
-    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    if (!narratorTarget) throw new Error("narrator target missing from library data");
     const story = buildTargetModel(DATA_DIR, narratorTarget).interfaces.find(
       (i) => i.name === "Narrator.Story",
     );
@@ -598,16 +619,16 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
   });
 
   test("its callback's argument type equals the variable store's declared value type", () => {
-    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    if (!narratorTarget) throw new Error("narrator target missing from library data");
     const model = buildTargetModel(DATA_DIR, narratorTarget);
     expect(observerParams(model).map((p) => p.type)).toEqual([expectedObserverParamType(model)]);
   });
 
   test("a retyped variable store reds that comparison, proving the derivation is live", () => {
-    if (!narratorTarget) throw new Error("narrator target missing from luals-targets.json");
+    if (!narratorTarget) throw new Error("narrator target missing from library data");
     const root = mkdtempSync(join(tmpdir(), "luals-types-narrator-store-"));
-    const fixtureRoot = join(root, "fixtures/luals/narrator");
-    cpSync(join(DATA_DIR, "fixtures/luals/narrator"), fixtureRoot, { recursive: true });
+    const fixtureRoot = join(root, narratorTarget.sourceDir);
+    cpSync(join(DATA_DIR, narratorTarget.sourceDir), fixtureRoot, { recursive: true });
 
     const storyPath = join(fixtureRoot, "narrator/story.lua");
     const original = readFileSync(storyPath, "utf8");
@@ -645,7 +666,7 @@ describe("narrator annotation overrides make the surface runtime-faithful", () =
     if (!token) throw new Error("Narrator.Story.observe observer override missing");
 
     const fixture = readFileSync(
-      join(DATA_DIR, "fixtures/luals/narrator/narrator/story.lua"),
+      join(DATA_DIR, "narrator/source/narrator/narrator/story.lua"),
       "utf8",
     );
     const invoked = /^\s*observer\(([^)]*)\)/m.exec(fixture);
@@ -675,7 +696,7 @@ describe("druid.drag's on_drag_callback override matches the runtime arity", () 
 
   function overrideToken(): string {
     const druid = readLualsTargets(DATA_DIR).find((t) => t.namespace === "druid");
-    if (!druid) throw new Error("druid target missing from luals-targets.json");
+    if (!druid) throw new Error("druid target missing from library data");
     const token =
       druid.annotationOverrides?.interfaces?.["druid.drag"]?.methods?.init?.params?.on_drag_callback
         ?.type;
@@ -690,7 +711,7 @@ describe("druid.drag's on_drag_callback override matches the runtime arity", () 
 
   test("its parameter names equal the fixture's own on_drag_callback declaration", () => {
     const fixture = readFileSync(
-      join(DATA_DIR, "fixtures/luals/druid/druid/custom/rich_input/rich_input.lua"),
+      join(DATA_DIR, "druid/source/druid/druid/custom/rich_input/rich_input.lua"),
       "utf8",
     );
     const declared = /^local function on_drag_callback\(([^)]*)\)/m.exec(fixture);
@@ -717,7 +738,7 @@ describe("panthera ingestion spans the subtree and hides its private module func
 
   function pantheraTarget(): LualsTarget {
     const target = readLualsTargets(DATA_DIR).find((t) => t.namespace === "panthera");
-    if (!target) throw new Error("panthera target missing from luals-targets.json");
+    if (!target) throw new Error("panthera target missing from library data");
     return target;
   }
 
@@ -781,7 +802,7 @@ describe("panthera ingestion spans the subtree and hides its private module func
 describe("detiled, token and quest ingest their module surfaces and inherit their event members", () => {
   function target(namespace: string): LualsTarget {
     const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === namespace);
-    if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
+    if (!found) throw new Error(`${namespace} target missing from library data`);
     return found;
   }
 
@@ -878,7 +899,7 @@ describe("detiled, token and quest ingest their module surfaces and inherit thei
 describe("pigeon ingests its message API and drops the base letter's restated data", () => {
   function pigeonTarget(): LualsTarget {
     const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === "pigeon");
-    if (!found) throw new Error("pigeon target missing from luals-targets.json");
+    if (!found) throw new Error("pigeon target missing from library data");
     return found;
   }
 
@@ -919,7 +940,7 @@ describe("pigeon ingests its message API and drops the base letter's restated da
 describe("live_unbundler ingests its module file and types its unannotated constants", () => {
   function liveUnbundlerTarget(): LualsTarget {
     const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === "live_unbundler");
-    if (!found) throw new Error("live_unbundler target missing from luals-targets.json");
+    if (!found) throw new Error("live_unbundler target missing from library data");
     return found;
   }
 
@@ -958,7 +979,7 @@ describe("live_unbundler ingests its module file and types its unannotated const
 describe("ads_wrapper's meta network class reaches the model as dot-called methods", () => {
   test("ads_network carries the 18 functions of ads_network.lua, each without self", () => {
     const target = readLualsTargets(DATA_DIR).find((t) => t.moduleId === "ads_wrapper.ads_wrapper");
-    if (!target) throw new Error("ads_wrapper.ads_wrapper target missing from luals-targets.json");
+    if (!target) throw new Error("ads_wrapper.ads_wrapper target missing from library data");
     const network = buildTargetModel(DATA_DIR, target).interfaces.find(
       (i) => i.name === "ads_network",
     );
@@ -989,7 +1010,7 @@ describe("ads_wrapper's meta network class reaches the model as dot-called metho
 describe("ads_wrapper.queue.add takes the queue function run calls", () => {
   test("add's fn param carries exactly the configured override token", () => {
     const target = readLualsTargets(DATA_DIR).find((t) => t.moduleId === "ads_wrapper.queue");
-    if (!target) throw new Error("ads_wrapper.queue target missing from luals-targets.json");
+    if (!target) throw new Error("ads_wrapper.queue target missing from library data");
     const token = target.annotationOverrides?.moduleFunctions?.add?.params?.fn?.type;
     if (token === undefined) {
       throw new Error("ads_wrapper.queue carries no annotationOverrides type for add's fn param");
@@ -1002,7 +1023,7 @@ describe("ads_wrapper.queue.add takes the queue function run calls", () => {
 describe("log's dropped call signature matches the runtime's non-callable logger", () => {
   function logTarget(): LualsTarget {
     const log = readLualsTargets(DATA_DIR).find((t) => t.namespace === "log");
-    if (!log) throw new Error("log target missing from luals-targets.json");
+    if (!log) throw new Error("log target missing from library data");
     return log;
   }
 
@@ -1011,7 +1032,7 @@ describe("log's dropped call signature matches the runtime's non-callable logger
   });
 
   test("the metatable get_logger stamps on every logger declares no __call", () => {
-    const fixture = readFileSync(join(DATA_DIR, "fixtures/luals/log/log/log.lua"), "utf8");
+    const fixture = readFileSync(join(DATA_DIR, logTarget().sourceDir, "log/log.lua"), "utf8");
 
     const metatable = /^local METATABLE = (\{[^}]*\})/m.exec(fixture);
     if (!metatable?.[1]) {
@@ -1033,7 +1054,7 @@ describe("log's dropped call signature matches the runtime's non-callable logger
 describe("the glass, hyper trails, pixel-art and outline targets", () => {
   function target(namespace: string): LualsTarget {
     const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === namespace);
-    if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
+    if (!found) throw new Error(`${namespace} target missing from library data`);
     return found;
   }
 
@@ -1105,7 +1126,7 @@ describe("the glass, hyper trails, pixel-art and outline targets", () => {
 describe("the flow targets", () => {
   function target(namespace: string): LualsTarget {
     const found = readLualsTargets(DATA_DIR).find((t) => t.namespace === namespace);
-    if (!found) throw new Error(`${namespace} target missing from luals-targets.json`);
+    if (!found) throw new Error(`${namespace} target missing from library data`);
     return found;
   }
 

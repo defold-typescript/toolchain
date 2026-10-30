@@ -16,11 +16,12 @@ vendored declaration into the consumer's project, the way it prints the
 generated lanes' declarations.
 
 Like the other lanes, adding such a library is **data, not code**: you add one
-entry to `authored-targets.json` in the library data folder (the newest
-version-named folder under `packages/library-types/data/`), vendor the `.d.ts`,
-run the generation command, and commit the entry, the `.d.ts` and its api-doc.
-Every path an entry names is relative to that data folder, except `apiDoc` and
-`fidelity`, which are relative to `packages/library-types/`. The authored front-end
+fork to the library's `library.json` in its folder under the library data folder
+(the newest version-named folder under `packages/library-types/data/`), vendor
+the `.d.ts` into the folder's `fork/`, run the generation command, and commit the
+library's files and its api-doc. Every path a fork names is relative to the
+library folder, except `apiDoc` and `fidelity`, which are relative to
+`packages/library-types/`. The authored front-end
 (`packages/cli/src/library/sync-authored-types.ts`) is the reusable
 machinery; you touch config and fixtures, not the pipeline.
 
@@ -78,29 +79,38 @@ own cadence rather than inherited from a third-party vendoring.
   decision today has no ts-defold binding to keep — the real choice is fork
   versus hand-author.
 
-## 1. Add an `authored-targets.json` entry
+## 1. Add a fork to the library's `library.json`
 
-Each entry pins the library's own upstream repository and tag — an authored
-library is the sole maintainer of its namespace, so it carries its own
-`repo`/`ref` rather than the shared vendored commit. The fields:
+Each library sits in its own folder under the data folder, named for its
+repository: the URL's last path segment, lowercased, without `.git`
+(`https://github.com/britzl/defcon` is `defcon/`). The folder pins the library's
+own upstream repository and ref once — an authored library is the sole maintainer
+of its namespace, so it carries its own `repo`/`ref` rather than the shared
+vendored commit:
+
+| File | Field | Required | What it is |
+| ---- | ----- | -------- | ---------- |
+| `library.json` | `repo` | yes | The GitHub or Codeberg repository URL, e.g. `https://github.com/britzl/defcon`. `upstream:library-check` reads no other host. |
+| `library.json` | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
+| `library.json` | `refKind` | no | `"commit"` or `"tag"` when upstream publishes no releases, so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
+| `reviewed.json` | `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
+
+Each forked module is one entry in `library.json`'s `forks` list:
 
 | Field | Required | What it is |
 | ----- | -------- | ---------- |
-| `repo` | yes | The GitHub or Codeberg repository URL, e.g. `https://github.com/britzl/defcon`. `upstream:library-check` reads no other host. |
-| `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
-| `authored` | yes | Data-folder-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
+| `authored` | yes | Path of the vendored authored/forked `.d.ts`, relative to the library folder — `fork/<moduleId>.d.ts`. |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `defcon.console`). This is the `declare module` name inside the vendored `.d.ts`. |
 | `namespace` | yes | The artifact stem — the emitted file is `api-doc/<namespace>.json`. Either a bare stem (`defcon`) or the dotted `moduleId` (`orthographic.camera`): fork onto the retired module name when it already equals the publish namespace, and reach for a bare stem only when nothing else owns it. The `orthographic.camera` worked example below settles the choice. |
 | `apiDoc` | yes | The docs-site model output path (`api-doc/<namespace>.json`). |
-| `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
-| `refKind` | no | `"commit"` or `"tag"` when upstream publishes no releases, so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
 | `fidelity` | no | Defaults to `fidelity/<namespace>.json`. A fork records no fidelity artifact (see below); the field mirrors the sibling lanes for a future hand-authored target that wants one. |
-| `upstreamLua` | one of two | Package-relative paths of the vendored upstream `.lua` this target's surface is measured against. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
+| `upstreamLua` | one of two | Library-folder-relative paths of the vendored upstream `.lua` this target's surface is measured against. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
 | `parityVerdict` | one of two | Why this target vendors no upstream `.lua`: `{ "reason": ..., "note": ... }`. Mutually exclusive with `upstreamLua`. |
 | `instanceType` | when upstream has methods | The exported interface the fork declares the module's instances with, e.g. `BehaviorTree`. Required once the vendored upstream defines a `function M:name(…)` method, which parity measures against that interface's methods; it needs `upstreamLua`. See [surface parity](#4-surface-parity-against-the-upstream-lua). |
 
-A missing required field fails loudly, naming both the field and the offending
-entry.
+A missing required field fails loudly, naming the field, the offending entry and
+its `library.json`. So does a folder named other than its repository, a folder
+without `reviewed.json`, and a module another library folder already names.
 
 `upstreamLua` and `parityVerdict` are individually optional but jointly
 **mandatory**: every entry declares exactly one. Neither field is in the required
@@ -154,7 +164,7 @@ The generated lanes report a coverage number because a parse can lose type
 information the original had. An authored `.d.ts` cannot: the printed declaration
 is the vendored source, so the go/no-go gate is a **forked-vs-printed identity
 diff** — what `resolve` prints is byte-identical to the vendored
-`fixtures/authored/<moduleId>.d.ts`. `print-library.test.ts` asserts exactly this
+`fork/<moduleId>.d.ts`. `print-library.test.ts` asserts exactly this
 through the lane dispatch. No `fidelity/` artifact is written.
 
 Read that gate narrowly. It proves **emission** fidelity — both sides of the diff
@@ -180,12 +190,10 @@ dropped a trailing parameter, is measurable without any type information at all.
 
 The upstream path is derived from `moduleId`: replace the dots with slashes and
 append `.lua`, so `in.button` is `in/button.lua` and `richtext.richtext` is
-`richtext/richtext.lua`. Fetch that path at the entry's pinned `ref` and vendor it
-under `fixtures/upstream-lua/` in the library data folder, at
-`<repo-name>/<upstream-path>` within it, where `<repo-name>` is the last segment
-of the entry's `repo` URL — so
-`britzl/defold-input` at `in/button.lua` lands at
-`fixtures/upstream-lua/defold-input/in/button.lua`. Vendor only the module file
+`richtext/richtext.lua`. Fetch that path at the library's pinned `ref` and vendor
+it under the library folder's `source/upstream/`, at the same path it has
+upstream — so `britzl/defold-input` at `in/button.lua` lands at
+`defold-input/source/upstream/in/button.lua`. Vendor only the module file
 the target names, never the whole repository: the digest map is per-file, and an
 unused copy is dead weight the pin still has to defend.
 
@@ -418,7 +426,7 @@ Five rules bound it:
   doc-comment in the fork is therefore how you opt it out; there is no exclusion
   list, because the only thing one would add is "show no prose at all", which is
   worse than writing the correct brief.
-- **The import is the api-doc's alone.** `fixtures/authored/<moduleId>.d.ts` and
+- **The import is the api-doc's alone.** `fork/<moduleId>.d.ts` and
   the declaration `resolve` prints from it are untouched, so the forked-vs-printed
   identity diff still proves the emit is lossless and imported prose stays
   distinguishable from the fork's forever after.
@@ -504,7 +512,7 @@ so `library-targets.json` holds `"targets": []`. The file stays committed anyway
 all" and would drop the LuaLS, script_api and authored lanes with it, and
 `library-classification.json` pins its commit against that `source` block.
 
-The docs-site fourth `maintainedHere` loader reads `authored-targets.json`, so the
+The docs-site fourth `maintainedHere` loader reads each library's forks, so the
 namespace becomes **authored-here** — absent from the ts-defold classification and
 present in a first-party corpus — and its `/api` page carries the upstream pin
 automatically. Then run the gates:
@@ -514,7 +522,8 @@ bun test packages/cli/src/library  # from the repo root
 bun run typecheck                  # from the repo root
 ```
 
-Commit the new entry, the vendored `fixtures/authored/<moduleId>.d.ts`, and the
+Commit the library's `library.json` and `reviewed.json`, the vendored
+`fork/<moduleId>.d.ts`, and the
 emitted `api-doc/` artifact together, along with the config and
 manifest deletions. Every commit must also add a [changelog](./changelog.md)
 bullet — a pre-commit gate enforces it.
@@ -528,19 +537,25 @@ was a correct 24-line single-module surface, and the surface is small and stable
 ts-defold-sourced would forgo the provenance gain for no real saving; a fresh
 hand-author would be redundant work when the existing binding is already right.
 So the decision is **fork**: copy the retired `.d.ts` verbatim, sever ts-defold,
-and pin to the real upstream. The reference entry:
+and pin to the real upstream. The reference `defcon/library.json`:
 
 ```json
 {
   "repo": "https://github.com/britzl/defcon",
-  "ref": "2.6.0",
   "license": "MIT",
-  "authored": "fixtures/authored/defcon.console.d.ts",
-  "moduleId": "defcon.console",
-  "namespace": "defcon",
-  "apiDoc": "api-doc/defcon.json"
+  "forks": [
+    {
+      "authored": "fork/defcon.console.d.ts",
+      "moduleId": "defcon.console",
+      "namespace": "defcon",
+      "apiDoc": "api-doc/defcon.json",
+      "upstreamLua": ["source/upstream/defcon/console.lua"]
+    }
+  ]
 }
 ```
+
+and `defcon/reviewed.json` pins `{ "ref": "2.6.0" }`.
 
 `authored` vendors the fork; `moduleId` `defcon.console` names the `declare
 module` a consumer imports; `namespace` `defcon` is the single-segment artifact

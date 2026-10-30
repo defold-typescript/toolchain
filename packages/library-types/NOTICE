@@ -8,7 +8,7 @@ definitions published by the ts-defold/library project:
     License: MIT
     Pinned commit: 2fe3aed3352a913d2859e6e85d34a8b23d821368
 
-The declaration forks under `fixtures/authored/` that descend from these
+The declaration forks under each library folder's `fork/` that descend from these
 definitions were produced by codemodding the upstream declarations — Defold
 core types (`vmath.*`, `hash`, `url`, engine handles) are renamed to the
 `@defold-typescript/types` surface; all other content is left byte-identical.
@@ -47,12 +47,10 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - bzAnim              — jbp4444, https://github.com/jbp4444/bzAnim
     - library-defold-rendy — whiteboxdev, https://github.com/whiteboxdev/library-defold-rendy
 
-The `fixtures/authored/`, `fixtures/luals/` and `fixtures/script-api/` folders
-hold, for each library the CLI prints declarations for, either the upstream
-sources pinned to one ref or a hand-written declaration fork. The library's
-entry in `authored-targets.json`, `luals-targets.json` or
-`script-api-targets.json` names its upstream repository, the pinned ref and its
-license.
+Each library folder under `data/<version>/` holds, for a library the CLI prints
+declarations for, the upstream sources pinned to one ref under `source/` or a
+hand-written declaration fork under `fork/`. Its `library.json` names its
+upstream repository and its license, and its `reviewed.json` the pinned ref.
 
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition

@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/selimanac/defold-uuid4",
+  "license": "MIT",
+  "native": {
+    "namespace": "uuid4",
+    "manifestDir": "uuid4",
+    "declaration": "fork/uuid4.d.ts",
+    "upstreamSource": "source/upstream/uuid4/src/extension.cpp"
+  }
+}

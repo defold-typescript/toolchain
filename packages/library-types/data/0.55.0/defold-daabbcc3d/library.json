@@ -1,0 +1,17 @@
+{
+  "repo": "https://github.com/selimanac/defold-daabbcc3d",
+  "license": "MIT",
+  "native": {
+    "namespace": "daabbcc3d",
+    "manifestDir": "daabbcc3d",
+    "declaration": "fork/daabbcc3d.d.ts",
+    "upstreamSource": "source/upstream/daabbcc3d/src/extension.cpp",
+    "upstreamAnnotation": "source/upstream/daabbcc3d/annotation.lua",
+    "annotationArityExceptions": [
+      {
+        "name": "rebuild_all",
+        "reason": "src/extension.cpp:779 reads the flag as `lua_toboolean(L, 2)`, so the runtime takes it as the second argument; the one-parameter stub at annotation.lua:149 would put it first, and the declaration follows the C++."
+      }
+    ]
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "repo": "https://github.com/megalanthus/defold-gamepush",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/gamepush.core.player.d.ts",
+      "moduleId": "gamepush.core.player",
+      "namespace": "gamepush.core.player",
+      "apiDoc": "api-doc/gamepush.core.player.json",
+      "upstreamLua": ["source/upstream/gamepush/core/player.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.player_stats.d.ts",
+      "moduleId": "gamepush.core.player_stats",
+      "namespace": "gamepush.core.player_stats",
+      "apiDoc": "api-doc/gamepush.core.player_stats.json",
+      "upstreamLua": ["source/upstream/gamepush/core/player_stats.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.players.d.ts",
+      "moduleId": "gamepush.core.players",
+      "namespace": "gamepush.core.players",
+      "apiDoc": "api-doc/gamepush.core.players.json",
+      "upstreamLua": ["source/upstream/gamepush/core/players.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.payments.d.ts",
+      "moduleId": "gamepush.core.payments",
+      "namespace": "gamepush.core.payments",
+      "apiDoc": "api-doc/gamepush.core.payments.json",
+      "upstreamLua": ["source/upstream/gamepush/core/payments.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.ads.d.ts",
+      "moduleId": "gamepush.core.ads",
+      "namespace": "gamepush.core.ads",
+      "apiDoc": "api-doc/gamepush.core.ads.json",
+      "upstreamLua": ["source/upstream/gamepush/core/ads.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.achievements.d.ts",
+      "moduleId": "gamepush.core.achievements",
+      "namespace": "gamepush.core.achievements",
+      "apiDoc": "api-doc/gamepush.core.achievements.json",
+      "upstreamLua": ["source/upstream/gamepush/core/achievements.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.leaderboard.d.ts",
+      "moduleId": "gamepush.core.leaderboard",
+      "namespace": "gamepush.core.leaderboard",
+      "apiDoc": "api-doc/gamepush.core.leaderboard.json",
+      "upstreamLua": ["source/upstream/gamepush/core/leaderboard.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.rewards.d.ts",
+      "moduleId": "gamepush.core.rewards",
+      "namespace": "gamepush.core.rewards",
+      "apiDoc": "api-doc/gamepush.core.rewards.json",
+      "upstreamLua": ["source/upstream/gamepush/core/rewards.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.uniques.d.ts",
+      "moduleId": "gamepush.core.uniques",
+      "namespace": "gamepush.core.uniques",
+      "apiDoc": "api-doc/gamepush.core.uniques.json",
+      "upstreamLua": ["source/upstream/gamepush/core/uniques.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.variables.d.ts",
+      "moduleId": "gamepush.core.variables",
+      "namespace": "gamepush.core.variables",
+      "apiDoc": "api-doc/gamepush.core.variables.json",
+      "upstreamLua": ["source/upstream/gamepush/core/variables.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.storage.d.ts",
+      "moduleId": "gamepush.core.storage",
+      "namespace": "gamepush.core.storage",
+      "apiDoc": "api-doc/gamepush.core.storage.json",
+      "upstreamLua": ["source/upstream/gamepush/core/storage.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.channels.d.ts",
+      "moduleId": "gamepush.core.channels",
+      "namespace": "gamepush.core.channels",
+      "apiDoc": "api-doc/gamepush.core.channels.json",
+      "upstreamLua": ["source/upstream/gamepush/core/channels.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.socials.d.ts",
+      "moduleId": "gamepush.core.socials",
+      "namespace": "gamepush.core.socials",
+      "apiDoc": "api-doc/gamepush.core.socials.json",
+      "upstreamLua": ["source/upstream/gamepush/core/socials.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.multiplayer.d.ts",
+      "moduleId": "gamepush.core.multiplayer",
+      "namespace": "gamepush.core.multiplayer",
+      "apiDoc": "api-doc/gamepush.core.multiplayer.json",
+      "upstreamLua": ["source/upstream/gamepush/core/multiplayer.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.events.d.ts",
+      "moduleId": "gamepush.core.events",
+      "namespace": "gamepush.core.events",
+      "apiDoc": "api-doc/gamepush.core.events.json",
+      "upstreamLua": ["source/upstream/gamepush/core/events.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.triggers.d.ts",
+      "moduleId": "gamepush.core.triggers",
+      "namespace": "gamepush.core.triggers",
+      "apiDoc": "api-doc/gamepush.core.triggers.json",
+      "upstreamLua": ["source/upstream/gamepush/core/triggers.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.schedulers.d.ts",
+      "moduleId": "gamepush.core.schedulers",
+      "namespace": "gamepush.core.schedulers",
+      "apiDoc": "api-doc/gamepush.core.schedulers.json",
+      "upstreamLua": ["source/upstream/gamepush/core/schedulers.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.feedbacks.d.ts",
+      "moduleId": "gamepush.core.feedbacks",
+      "namespace": "gamepush.core.feedbacks",
+      "apiDoc": "api-doc/gamepush.core.feedbacks.json",
+      "upstreamLua": ["source/upstream/gamepush/core/feedbacks.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.reactions.d.ts",
+      "moduleId": "gamepush.core.reactions",
+      "namespace": "gamepush.core.reactions",
+      "apiDoc": "api-doc/gamepush.core.reactions.json",
+      "upstreamLua": ["source/upstream/gamepush/core/reactions.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.app.d.ts",
+      "moduleId": "gamepush.core.app",
+      "namespace": "gamepush.core.app",
+      "apiDoc": "api-doc/gamepush.core.app.json",
+      "upstreamLua": ["source/upstream/gamepush/core/app.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.platform.d.ts",
+      "moduleId": "gamepush.core.platform",
+      "namespace": "gamepush.core.platform",
+      "apiDoc": "api-doc/gamepush.core.platform.json",
+      "upstreamLua": ["source/upstream/gamepush/core/platform.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.analytics.d.ts",
+      "moduleId": "gamepush.core.analytics",
+      "namespace": "gamepush.core.analytics",
+      "apiDoc": "api-doc/gamepush.core.analytics.json",
+      "upstreamLua": ["source/upstream/gamepush/core/analytics.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.documents.d.ts",
+      "moduleId": "gamepush.core.documents",
+      "namespace": "gamepush.core.documents",
+      "apiDoc": "api-doc/gamepush.core.documents.json",
+      "upstreamLua": ["source/upstream/gamepush/core/documents.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.experiments.d.ts",
+      "moduleId": "gamepush.core.experiments",
+      "namespace": "gamepush.core.experiments",
+      "apiDoc": "api-doc/gamepush.core.experiments.json",
+      "upstreamLua": ["source/upstream/gamepush/core/experiments.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.files.d.ts",
+      "moduleId": "gamepush.core.files",
+      "namespace": "gamepush.core.files",
+      "apiDoc": "api-doc/gamepush.core.files.json",
+      "upstreamLua": ["source/upstream/gamepush/core/files.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.fullscreen.d.ts",
+      "moduleId": "gamepush.core.fullscreen",
+      "namespace": "gamepush.core.fullscreen",
+      "apiDoc": "api-doc/gamepush.core.fullscreen.json",
+      "upstreamLua": ["source/upstream/gamepush/core/fullscreen.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.games_collections.d.ts",
+      "moduleId": "gamepush.core.games_collections",
+      "namespace": "gamepush.core.games_collections",
+      "apiDoc": "api-doc/gamepush.core.games_collections.json",
+      "upstreamLua": ["source/upstream/gamepush/core/games_collections.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.images.d.ts",
+      "moduleId": "gamepush.core.images",
+      "namespace": "gamepush.core.images",
+      "apiDoc": "api-doc/gamepush.core.images.json",
+      "upstreamLua": ["source/upstream/gamepush/core/images.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.logger.d.ts",
+      "moduleId": "gamepush.core.logger",
+      "namespace": "gamepush.core.logger",
+      "apiDoc": "api-doc/gamepush.core.logger.json",
+      "upstreamLua": ["source/upstream/gamepush/core/logger.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.segments.d.ts",
+      "moduleId": "gamepush.core.segments",
+      "namespace": "gamepush.core.segments",
+      "apiDoc": "api-doc/gamepush.core.segments.json",
+      "upstreamLua": ["source/upstream/gamepush/core/segments.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.sounds.d.ts",
+      "moduleId": "gamepush.core.sounds",
+      "namespace": "gamepush.core.sounds",
+      "apiDoc": "api-doc/gamepush.core.sounds.json",
+      "upstreamLua": ["source/upstream/gamepush/core/sounds.lua"]
+    },
+    {
+      "authored": "fork/gamepush.core.windows.d.ts",
+      "moduleId": "gamepush.core.windows",
+      "namespace": "gamepush.core.windows",
+      "apiDoc": "api-doc/gamepush.core.windows.json",
+      "upstreamLua": ["source/upstream/gamepush/core/windows.lua"]
+    },
+    {
+      "authored": "fork/gamepush.gamepush.d.ts",
+      "moduleId": "gamepush.gamepush",
+      "namespace": "gamepush",
+      "apiDoc": "api-doc/gamepush.json",
+      "upstreamLua": ["source/upstream/gamepush/gamepush.lua"]
+    }
+  ]
+}

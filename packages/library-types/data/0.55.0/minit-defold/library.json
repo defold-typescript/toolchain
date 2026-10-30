@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/Minit-Games/minit-defold",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/minit.minit.d.ts",
+      "moduleId": "minit.minit",
+      "namespace": "minit",
+      "apiDoc": "api-doc/minit.json",
+      "upstreamLua": ["source/upstream/minit/minit.lua"]
+    }
+  ]
+}

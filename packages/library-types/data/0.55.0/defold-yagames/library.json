@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/indiesoftby/defold-yagames",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/yagames.yagames.d.ts",
+      "moduleId": "yagames.yagames",
+      "namespace": "yagames",
+      "apiDoc": "api-doc/yagames.json",
+      "upstreamLua": ["source/upstream/yagames/yagames.lua"]
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "repo": "https://github.com/britzl/defold-input",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/in.accelerometer.d.ts",
+      "moduleId": "in.accelerometer",
+      "namespace": "in.accelerometer",
+      "apiDoc": "api-doc/in.accelerometer.json",
+      "upstreamLua": ["source/upstream/in/accelerometer.lua"]
+    },
+    {
+      "authored": "fork/in.button.d.ts",
+      "moduleId": "in.button",
+      "namespace": "in.button",
+      "apiDoc": "api-doc/in.button.json",
+      "upstreamLua": ["source/upstream/in/button.lua"]
+    },
+    {
+      "authored": "fork/in.cursor.d.ts",
+      "moduleId": "in.cursor",
+      "namespace": "in.cursor",
+      "apiDoc": "api-doc/in.cursor.json",
+      "upstreamLua": ["source/upstream/in/cursor.lua"]
+    },
+    {
+      "authored": "fork/in.gesture.d.ts",
+      "moduleId": "in.gesture",
+      "namespace": "in.gesture",
+      "apiDoc": "api-doc/in.gesture.json",
+      "upstreamLua": ["source/upstream/in/gesture.lua"]
+    },
+    {
+      "authored": "fork/in.keyboard.d.ts",
+      "moduleId": "in.keyboard",
+      "namespace": "in.keyboard",
+      "apiDoc": "api-doc/in.keyboard.json",
+      "upstreamLua": ["source/upstream/in/keyboard.lua"]
+    },
+    {
+      "authored": "fork/in.mapper.d.ts",
+      "moduleId": "in.mapper",
+      "namespace": "in.mapper",
+      "apiDoc": "api-doc/in.mapper.json",
+      "upstreamLua": ["source/upstream/in/mapper.lua"]
+    },
+    {
+      "authored": "fork/in.onscreen.d.ts",
+      "moduleId": "in.onscreen",
+      "namespace": "in.onscreen",
+      "apiDoc": "api-doc/in.onscreen.json",
+      "upstreamLua": ["source/upstream/in/onscreen.lua"]
+    },
+    {
+      "authored": "fork/in.state.d.ts",
+      "moduleId": "in.state",
+      "namespace": "in.state",
+      "apiDoc": "api-doc/in.state.json",
+      "upstreamLua": ["source/upstream/in/state.lua"]
+    },
+    {
+      "authored": "fork/in.textbox.d.ts",
+      "moduleId": "in.textbox",
+      "namespace": "in.textbox",
+      "apiDoc": "api-doc/in.textbox.json",
+      "upstreamLua": ["source/upstream/in/textbox.lua"]
+    },
+    {
+      "authored": "fork/in.triggers.d.ts",
+      "moduleId": "in.triggers",
+      "namespace": "in.triggers",
+      "apiDoc": "api-doc/in.triggers.json",
+      "upstreamLua": ["source/upstream/in/triggers.lua"]
+    }
+  ]
+}

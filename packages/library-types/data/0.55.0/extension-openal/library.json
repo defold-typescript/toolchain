@@ -1,0 +1,19 @@
+{
+  "repo": "https://github.com/Lerg/extension-openal",
+  "license": "MIT",
+  "refKind": "commit",
+  "native": {
+    "namespace": "openal",
+    "manifestDir": "openal",
+    "declaration": "fork/openal.d.ts",
+    "upstreamSource": "source/upstream/openal/src/extension.cpp",
+    "upstreamMethodSources": [
+      "source/upstream/openal/src/LuaSource.cpp",
+      "source/upstream/openal/src/LuaListener.cpp"
+    ],
+    "methodTables": {
+      "LuaSource::push()": ["Source"],
+      "LuaListener::push()": ["Listener"]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "repo": "https://github.com/indiesoftby/defold-sentinel",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/sentinel.sentry.d.ts",
+      "moduleId": "sentinel.sentry",
+      "namespace": "sentinel",
+      "apiDoc": "api-doc/sentinel.json",
+      "upstreamLua": ["source/upstream/sentinel/sentry.lua"]
+    }
+  ]
+}

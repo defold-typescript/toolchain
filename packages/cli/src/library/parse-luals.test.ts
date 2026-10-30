@@ -1282,7 +1282,7 @@ describe("parseLualsSource @deprecated", () => {
 });
 
 describe("druid parse snapshot", () => {
-  const druidRoot = join(DATA_DIR, "fixtures/luals/druid");
+  const druidRoot = join(DATA_DIR, "druid/source/druid");
   const files = readdirSync(druidRoot, { recursive: true })
     .map((entry) => String(entry))
     .filter((entry) => entry.endsWith(".lua"))

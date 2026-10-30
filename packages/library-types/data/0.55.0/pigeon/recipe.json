@@ -1,0 +1,26 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["pigeon/**/*.lua"],
+      "moduleId": "pigeon.pigeon",
+      "namespace": "pigeon",
+      "typeRenames": {
+        "vector": "Vector",
+        "vector3": "Vector3",
+        "vector4": "Vector4"
+      },
+      "ignore": ["**/test/**", "pigeon/test.lua"],
+      "annotationOverrides": {
+        "interfaces": {
+          "BaseLetterDefinition": {
+            "fields": {
+              "data": {
+                "drop": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

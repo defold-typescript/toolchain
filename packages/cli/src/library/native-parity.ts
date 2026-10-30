@@ -22,6 +22,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { type AuthoredArityMismatch, classifyArity, classifyFieldAxis } from "./authored-parity";
+import { libraryFile } from "./library-data";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseLuaSurface } from "./parse-lua-surface";
 import { parseNativeMethodTables, parseNativeRegistration } from "./parse-native-registration";
@@ -132,11 +133,11 @@ function measureArity(
     const at = `${target.namespace}.${entry.name}`;
     if (!stubs.has(entry.name) || !registered.has(entry.name)) {
       throw new Error(
-        `native-targets.json: "${at}" excepts a member the annotation and the C++ do not share — delete the entry`,
+        `${libraryFile(target.repo)}: "${at}" excepts a member the annotation and the C++ do not share — delete the entry`,
       );
     }
     if (excepted.has(entry.name)) {
-      throw new Error(`native-targets.json: "${at}" is excepted twice — keep one entry`);
+      throw new Error(`${libraryFile(target.repo)}: "${at}" is excepted twice — keep one entry`);
     }
     excepted.set(entry.name, entry.reason);
   }
@@ -157,7 +158,7 @@ function measureArity(
     if (verdict.agrees) {
       if (reason === undefined) continue;
       throw new Error(
-        `native-targets.json: "${target.namespace}.${name}" records an annotation-arity exception, but the declaration agrees with the annotation — delete the entry`,
+        `${libraryFile(target.repo)}: "${target.namespace}.${name}" records an annotation-arity exception, but the declaration agrees with the annotation — delete the entry`,
       );
     }
     const mismatch = { name, upstream: params.length, declared: verdict.declaredWidest };
@@ -202,7 +203,7 @@ function measureMethods(
   ownTables: Record<string, string[]>,
   typedefs: ReadonlyMap<string, ReadonlySet<string>>,
 ): MethodAxis {
-  const at = `native-targets.json: "${target.namespace}"`;
+  const at = `${libraryFile(target.repo)}: "${target.namespace}"`;
   const sources: [file: string, tables: Record<string, string[]>][] = [
     [target.upstreamSource, ownTables],
     ...(target.upstreamMethodSources ?? []).map(

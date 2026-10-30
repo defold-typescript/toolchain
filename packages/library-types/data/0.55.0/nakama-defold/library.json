@@ -1,0 +1,41 @@
+{
+  "repo": "https://github.com/heroiclabs/nakama-defold",
+  "license": "Apache-2.0",
+  "forks": [
+    {
+      "authored": "fork/nakama.engine.defold.d.ts",
+      "moduleId": "nakama.engine.defold",
+      "namespace": "nakama.engine.defold",
+      "apiDoc": "api-doc/nakama.engine.defold.json",
+      "upstreamLua": ["source/upstream/nakama/engine/defold.lua"]
+    },
+    {
+      "authored": "fork/nakama.util.log.d.ts",
+      "moduleId": "nakama.util.log",
+      "namespace": "nakama.util.log",
+      "apiDoc": "api-doc/nakama.util.log.json",
+      "upstreamLua": ["source/upstream/nakama/util/log.lua"]
+    },
+    {
+      "authored": "fork/nakama.session.d.ts",
+      "moduleId": "nakama.session",
+      "namespace": "nakama.session",
+      "apiDoc": "api-doc/nakama.session.json",
+      "upstreamLua": ["source/upstream/nakama/session.lua"]
+    },
+    {
+      "authored": "fork/nakama.socket.d.ts",
+      "moduleId": "nakama.socket",
+      "namespace": "nakama.socket",
+      "apiDoc": "api-doc/nakama.socket.json",
+      "upstreamLua": ["source/upstream/nakama/socket.lua"]
+    },
+    {
+      "authored": "fork/nakama.nakama.d.ts",
+      "moduleId": "nakama.nakama",
+      "namespace": "nakama",
+      "apiDoc": "api-doc/nakama.json",
+      "upstreamLua": ["source/upstream/nakama/nakama.lua"]
+    }
+  ]
+}

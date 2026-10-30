@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { readLibraryData } from "./library-data";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 
 /**
@@ -7,8 +8,7 @@ import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
  * publishes, pinned to a release, tag, or commit, with each `.script_api` doc it
  * ships lowered to ref-doc JSON. The output is read by the docs site only — a
  * native extension is an ambient global `resolve` already types from the
- * archive, so this manifest never feeds `script-api-targets.json` or the
- * library registry.
+ * archive, so this manifest never feeds library data or the library registry.
  */
 
 const ORG = "defold";
@@ -265,28 +265,23 @@ async function loadSyncApiDocs(packageRoot: string): Promise<SyncApiDocsModule> 
 
 // The api-doc paths a library target names: a LuaLS target publishes
 // `api-doc/<namespace>.json`, and every other lane names its file in `apiDoc`.
-// The served lanes' registries sit in the library data folder, the markdown and
+// The served lanes' targets sit in the library data folder, the markdown and
 // openapi registries at the package root.
 function targetApiDocs(dataDir: string, packageRoot: string): Set<string> {
-  const targets = (dir: string, file: string): { namespace: string; apiDoc?: string }[] => {
-    const path = join(dir, file);
-    if (!existsSync(path)) return [];
-    return (
-      JSON.parse(readFileSync(path, "utf8")) as {
-        targets: { namespace: string; apiDoc?: string }[];
-      }
-    ).targets;
-  };
+  const libraries = existsSync(dataDir) ? readLibraryData(dataDir) : [];
   const apiDocs = new Set(
-    targets(dataDir, "luals-targets.json").map(({ namespace }) => `api-doc/${namespace}.json`),
+    libraries.flatMap(({ luals }) => luals.map(({ namespace }) => `api-doc/${namespace}.json`)),
   );
-  for (const [dir, file] of [
-    [dataDir, "script-api-targets.json"],
-    [dataDir, "authored-targets.json"],
-    [packageRoot, "openapi-targets.json"],
-    [packageRoot, "markdown-targets.json"],
-  ] as const) {
-    for (const { apiDoc } of targets(dir, file)) if (apiDoc !== undefined) apiDocs.add(apiDoc);
+  for (const { scriptApi, authored } of libraries) {
+    for (const { apiDoc } of [...scriptApi, ...authored]) apiDocs.add(apiDoc);
+  }
+  for (const file of ["openapi-targets.json", "markdown-targets.json"]) {
+    const path = join(packageRoot, file);
+    if (!existsSync(path)) continue;
+    const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
+      targets: { apiDoc?: string }[];
+    };
+    for (const { apiDoc } of targets) if (apiDoc !== undefined) apiDocs.add(apiDoc);
   }
   return apiDocs;
 }
