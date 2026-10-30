@@ -3,6 +3,7 @@ import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import * as ts from "typescript";
+import { readLibraryData } from "./library-data";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { writePrintedCorpus } from "./print-corpus";
 import { readNativeTargets } from "./sync-native-types";
@@ -20,10 +21,16 @@ const NATIVE_DECLARATIONS = readNativeTargets(DATA_DIR).map((t) =>
   resolve(DATA_DIR, t.declaration),
 );
 
-const USAGE_PROOFS = readdirSync(resolve(PACKAGE_ROOT, "test-d"), { recursive: true })
+// Each library's usage examples, as `library check` reads them, then the
+// toolchain proofs that type no single library.
+const LIBRARY_USAGE_PROOFS = readLibraryData(DATA_DIR).flatMap((library) =>
+  library.usage.map((file) => resolve(DATA_DIR, file)),
+);
+const TOOLCHAIN_PROOFS = readdirSync(resolve(PACKAGE_ROOT, "test-d"), { recursive: true })
   .map(String)
   .filter((file) => file.endsWith(".ts"))
   .map((file) => resolve(PACKAGE_ROOT, "test-d", file));
+const USAGE_PROOFS = [...LIBRARY_USAGE_PROOFS, ...TOOLCHAIN_PROOFS];
 
 function compilerOptions(): ts.CompilerOptions {
   const configFile = join(REPO_ROOT, "tsconfig.json");
@@ -58,6 +65,7 @@ test("every printed declaration, native declaration and usage proof compiles und
   const inputs = [...printed, ...NATIVE_DECLARATIONS, ...USAGE_PROOFS];
   expect(printed.length).toBeGreaterThan(0);
   expect(USAGE_PROOFS.length).toBeGreaterThan(0);
+  expect(LIBRARY_USAGE_PROOFS.length).toBeGreaterThan(0);
 
   const program = ts.createProgram(inputs, compilerOptions());
   const gated = new Set(inputs);

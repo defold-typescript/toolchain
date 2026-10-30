@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Dependency types](./resolve.md#cache-location)** follow the archives Defold fetched, and their **[pins](./resolve.md#pinning-extension-versions)** name a commit; a plain `resolve` replaces an old `sha256:` pin.
-> - **[Library types](./resolve.md#vendored-library-types)** are printed from the library version the game depends on.
+> - **[Library types](./resolve.md#vendored-library-types)** are printed from the library version the game depends on, and `resolve --library-data` reads library data from a local directory.
 > - **[Script properties](./script-lifecycle.md#script-properties-on-self)** compute their defaults at build time and register in the key order the source shows.
 > - **[The docs site](./README.md)** documents the npm version.
 
@@ -25,6 +25,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **Library types follow the library version the game uses:** `resolve` prints a matched library's declarations from the archive the project depends on, and prints the version library data pins with a warning when that archive cannot be printed; a library typed by a hand-written fork keeps its fork. See [Vendored library types](./resolve.md#vendored-library-types).
+- **Library data from a local directory:** `resolve --library-data <dir>` reads library data from `<dir>` instead of the installed package. Library data sits in folders named by the first CLI version that reads them, and a CLI reads the highest one at or below its own version; see [Flags](./resolve.md#flags).
 - **Script properties are computed at build time:** a `defineScript` `properties` default Defold's build cannot read as written, a spread, shorthand or const-keyed member, and a `properties` value that is not an object literal are evaluated in a sandbox and register one literal `go.property` per name, in JavaScript's key order as read through `const`s and their spreads, imported ones included. A default that needs an engine API, randomness or a file, whose value is not a property type, or whose key order the source does not show, such as two names from a function result, fails the build with a diagnostic naming the cause, and the text-property version gate covers the strings a spread brings in.
 
 ### Fixed

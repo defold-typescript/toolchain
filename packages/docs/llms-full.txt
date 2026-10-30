@@ -6807,6 +6807,12 @@ pins instead and warns:
 printed <module> from the <ref> sources pinned in library data, not from <url>: <reason>
 ```
 
+Library data sits in folders named by the first CLI version that reads them,
+and a CLI reads the highest one at or below its own version, so it keeps reading
+the layout it was built for after newer data lands beside it. To try library
+data you are editing, point `resolve` at a local directory of such folders with
+[`--library-data <dir>`](#flags).
+
 When library data itself cannot be read, `resolve` keeps the library
 declarations it printed earlier, and their tsconfig entry, as long as the same
 toolchain version wrote them and none of their files has changed.
@@ -6959,6 +6965,11 @@ normally.
 - `--frozen` — treat the committed pin set as a lockfile: exit non-zero on drift
   or on a pin in the retired `sha256:` form (so CI gates the upgrade) and write
   nothing. See [Pinning extension versions](#pinning-extension-versions).
+- `--library-data <dir>` — read library data from `<dir>` instead of the
+  installed `@defold-typescript/library-types`. `<dir>` holds version-named data
+  folders and is chosen from by the same rule, and a relative `<dir>` resolves
+  against the working directory. `resolve` exits non-zero when `<dir>` holds no
+  folder for this CLI version.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
@@ -11378,7 +11389,7 @@ the page description.
 #### 5. Validate, then commit
 
 The `dts-declaration-validity` gate type-checks every module `resolve` prints under
-`skipLibCheck: false`, together with the `test-d/` usage proofs, so a new target is
+`skipLibCheck: false`, together with each library folder's `usage/` examples, so a new target is
 compiled as soon as its `recipe.json` lists it. Fidelity parity is gated per
 namespace. Run the library tests:
 
@@ -11985,9 +11996,10 @@ generated lanes use:
   `namespace` === `moduleId` it is instead overwritten in place by the command
   above. The namespace now resolves to
   your authored artifacts.
-- Add a `test-d/<library>-usage.test-d.ts` compile proof, moving any hand-written
-  block for the old dotted specifier into it. The `dts-declaration-validity` gate
-  type-checks it under `skipLibCheck: false` together with every module `resolve`
+- Add a `usage/<library>-usage.test-d.ts` compile proof in the library folder,
+  moving any hand-written block for the old dotted specifier into it. The
+  `dts-declaration-validity` gate type-checks every `.ts` file under a library's
+  `usage/` under `skipLibCheck: false` together with every module `resolve`
   prints, the fork among them.
 
 The ts-defold registry is now empty: every library it once carried has severed,
@@ -12007,7 +12019,7 @@ bun run typecheck                  # from the repo root
 ```
 
 Commit the library's `library.json` and `reviewed.json`, the vendored
-`fork/<moduleId>.d.ts`, and the
+`fork/<moduleId>.d.ts`, its `usage/` examples, and the
 emitted `api-doc/` artifact together, along with the config and
 manifest deletions. Every commit must also add a [changelog](./changelog.md)
 bullet — a pre-commit gate enforces it.
@@ -12436,8 +12448,8 @@ skip it.
   standing after that pin later moves also reds. The guard deliberately does not
   check that the record is *complete*, nor its `changedMembers` and `notes`,
   which are prose.
-- **The compile-only surface proofs.** The `.test-d.ts` files under
-  `packages/library-types/test-d` assert the emitted `.d.ts` by assigning from it, and pin the *absence* of
+- **The compile-only surface proofs.** The `.test-d.ts` files under each
+  library folder's `usage/` assert the emitted `.d.ts` by assigning from it, and pin the *absence* of
   non-public members with `@ts-expect-error`. A bump breaks them in both
   directions: a member that left the public surface fails the assignment, and a
   member upstream stopped marking `@field private` or `@local` makes its
