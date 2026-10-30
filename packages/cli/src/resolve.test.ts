@@ -1923,15 +1923,7 @@ describe("runResolve each curated native target through the shipped native regis
       expect(result.ok).toBe(true);
       expect(readFileSync(join(cwd, written), "utf8")).toBe(
         readFileSync(
-          join(
-            import.meta.dir,
-            "..",
-            "..",
-            "library-types",
-            "generated",
-            "native",
-            `${namespace}.d.ts`,
-          ),
+          join(import.meta.dir, "..", "..", "library-types", "native", `${namespace}.d.ts`),
           "utf8",
         ),
       );
@@ -1958,7 +1950,7 @@ describe("runResolve druid LuaLS library", () => {
   }
 
   const druidRegistry = [
-    { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+    { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
   ];
 
   // An asset-only archive that ships `druid/druid.lua` under the GitHub wrapper

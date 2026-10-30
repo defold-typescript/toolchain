@@ -10,19 +10,19 @@ import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
  * markdown (`sync-markdown-types.ts`) lanes. The other three ingest a *non-*`.d.ts`
  * primary source and generate a declaration; this one is for a library whose
  * upstream has no usable structured source, so its `.d.ts` is hand-authored or
- * forked from the retired ts-defold `generated/` golden and vendored under
+ * forked from the retired ts-defold declarations and vendored under
  * `fixtures/authored/<moduleId>.d.ts`.
  *
  * A vendored authored `.d.ts` is already target-form — a `declare module
- * '<moduleId>'` ambient — so the lane is light: it emits the vendored source
- * verbatim as the `generated/<namespace>.d.ts` golden and runs
+ * '<moduleId>'` ambient — so the lane is light: it prints the vendored source
+ * verbatim as the module's declaration and runs
  * `extractApiDoc` for the `api-doc/<namespace>.json` the docs-site consumes. The
  * api-doc alone carries one thing the fork does not: where a target vendors its
  * upstream `.lua` and the fork documents a member nowhere, upstream's own LuaDoc
  * summary is lowered in, marked `docSource: "upstream"` (see
  * `import-upstream-docs.ts`). The *emitted* surface is still the vendored authored
  * source untouched, so the go/no-go gate is a
- * forked-vs-generated identity diff (see the golden loop) — emission fidelity.
+ * forked-vs-printed identity diff (see the golden loop) — emission fidelity.
  * There is no *type* coverage comparison because upstream declares no types; the
  * *surface* is another matter, and a target that vendors its upstream `.lua` under
  * `upstreamLua` is measured on member names and arity by `authored-parity.ts`.
@@ -64,7 +64,6 @@ export interface AuthoredTarget {
   authored: string;
   moduleId: string;
   namespace: string;
-  generated: string;
   apiDoc: string;
   // Defaults to `fidelity/<namespace>.json` when omitted. A fork carries no
   // fidelity artifact — there is no primary source to measure against, and the
@@ -94,15 +93,7 @@ export interface AuthoredTargets {
   targets: AuthoredTarget[];
 }
 
-const REQUIRED_FIELDS = [
-  "repo",
-  "ref",
-  "authored",
-  "moduleId",
-  "namespace",
-  "generated",
-  "apiDoc",
-] as const;
+const REQUIRED_FIELDS = ["repo", "ref", "authored", "moduleId", "namespace", "apiDoc"] as const;
 
 /** Validate the parity declaration: exactly one of a non-empty `upstreamLua` and
  * a well-formed `parityVerdict`. Enforced here rather than through
@@ -180,7 +171,6 @@ export function readAuthoredTargets(packageRoot: string): AuthoredTarget[] {
       authored: entry.authored as string,
       moduleId: entry.moduleId as string,
       namespace: entry.namespace as string,
-      generated: entry.generated as string,
       apiDoc: entry.apiDoc as string,
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",
@@ -196,8 +186,7 @@ function readAuthoredSource(packageRoot: string, target: AuthoredTarget): string
 }
 
 /**
- * The `generated/<namespace>.d.ts` golden, under whatever stem the entry pins —
- * a bare segment or the dotted `moduleId`. The vendored authored
+ * The printed declaration of the target's `moduleId`. The vendored authored
  * `.d.ts` is already a `declare module '<moduleId>'` ambient, so the emit is the
  * source verbatim — the vendored surface passes through unchanged, which is what
  * makes the emission lossless. It says nothing about how that vendored surface
@@ -227,7 +216,7 @@ function upstreamMembers(packageRoot: string, target: AuthoredTarget): Map<strin
  * as the `api-doc/<namespace>.json` golden.
  *
  * The api-doc is therefore the fork *plus* imported upstream prose, and it is the
- * only artifact that is: the emitted `generated/<namespace>.d.ts` stays the vendored
+ * only artifact that is: the printed declaration stays the vendored
  * source verbatim, so the identity diff still proves the emit is lossless. An
  * imported element carries `docSource: "upstream"` through to the docs-site, which
  * marks it rather than presenting it as first-party. See `import-upstream-docs.ts`

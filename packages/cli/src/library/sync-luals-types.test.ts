@@ -297,7 +297,6 @@ describe("tweener migrated off the ts-defold corpus onto the LuaLS front-end", (
   });
 
   test("the retired ts-defold tweener artifacts are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/tweener.tweener.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/tweener.tweener.d.ts"))).toBe(false);
   });
 });
@@ -319,7 +318,6 @@ describe("event migrated off the ts-defold corpus onto the LuaLS front-end", () 
   });
 
   test("the retired ts-defold event artifacts are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/event.event.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/event.event.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/event.event.json"))).toBe(false);
   });
@@ -342,7 +340,6 @@ describe("lang migrated off the ts-defold corpus onto the LuaLS front-end", () =
   });
 
   test("the retired ts-defold lang artifacts are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/lang.lang.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/lang.lang.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/lang.lang.json"))).toBe(false);
   });
@@ -365,7 +362,6 @@ describe("log migrated off the ts-defold corpus onto the LuaLS front-end", () =>
   });
 
   test("the retired ts-defold log artifacts are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/log.log.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/log.log.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/log.log.json"))).toBe(false);
   });
@@ -388,7 +384,6 @@ describe("proto migrated off the ts-defold corpus onto the LuaLS front-end", () 
   });
 
   test("the retired ts-defold proto artifacts are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/proto.proto.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/proto.proto.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/proto.proto.json"))).toBe(false);
   });
@@ -411,7 +406,6 @@ describe("immutable migrated off the ts-defold corpus onto the LuaLS front-end",
   });
 
   test("the retired ts-defold immutable artifacts are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/immutable.immutable.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/immutable.immutable.d.ts"))).toBe(
       false,
     );
@@ -436,7 +430,6 @@ describe("squid migrated off the ts-defold corpus onto the LuaLS front-end", () 
   });
 
   test("the retired ts-defold squid artifacts are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/squid.squid.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/squid.squid.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/squid.squid.json"))).toBe(false);
   });
@@ -459,7 +452,6 @@ describe("narrator migrated off the ts-defold corpus onto the LuaLS front-end", 
   });
 
   test("the retired ts-defold narrator artifacts are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "generated/narrator.narrator.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/narrator.narrator.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/narrator.narrator.json"))).toBe(false);
   });

@@ -44,7 +44,7 @@ describe("loadVendoredLibraryRegistry", () => {
     const druid = registry.find((library) => library.sourceId === "druid");
     expect(druid).toBeDefined();
     expect(druid?.modules).toEqual(["druid.druid"]);
-    expect(druid?.generatedStems?.["druid.druid"]).toBe("druid");
+    expect(druid?.namespaces?.["druid.druid"]).toBe("druid");
     // the pure-Lua corpus is still present, so the LuaLS append is additive.
     expect(registry.length).toBeGreaterThan(1);
   });
@@ -54,7 +54,7 @@ describe("loadVendoredLibraryRegistry", () => {
     const bridge = registry.find((library) => library.sourceId === "bridge-defold");
     expect(bridge).toBeDefined();
     expect(bridge?.modules).toEqual(["bridge.bridge"]);
-    expect(bridge?.generatedStems?.["bridge.bridge"]).toBe("bridge");
+    expect(bridge?.namespaces?.["bridge.bridge"]).toBe("bridge");
   });
 
   test("includes the defcon authored target so resolve materializes its dotted module", () => {
@@ -62,7 +62,7 @@ describe("loadVendoredLibraryRegistry", () => {
     const defcon = registry.find((library) => library.sourceId === "defcon");
     expect(defcon).toBeDefined();
     expect(defcon?.modules).toEqual(["defcon.console"]);
-    expect(defcon?.generatedStems?.["defcon.console"]).toBe("defcon");
+    expect(defcon?.namespaces?.["defcon.console"]).toBe("defcon");
   });
 
   test("groups defold-saver's two modules into a single entry with both generated stems", () => {
@@ -70,8 +70,8 @@ describe("loadVendoredLibraryRegistry", () => {
     const saver = registry.filter((library) => library.sourceId === "defold-saver");
     expect(saver).toHaveLength(1);
     expect(saver[0]?.modules).toEqual(["saver.saver", "saver.storage"]);
-    expect(saver[0]?.generatedStems?.["saver.saver"]).toBe("saver.saver");
-    expect(saver[0]?.generatedStems?.["saver.storage"]).toBe("saver.storage");
+    expect(saver[0]?.namespaces?.["saver.saver"]).toBe("saver.saver");
+    expect(saver[0]?.namespaces?.["saver.storage"]).toBe("saver.storage");
   });
 
   test("keeps nakama-defold's five modules in one entry now that all come from the authored lane", () => {
@@ -85,14 +85,14 @@ describe("loadVendoredLibraryRegistry", () => {
       "nakama.socket",
       "nakama.util.log",
     ]);
-    expect(nakama[0]?.generatedStems?.["nakama.engine.defold"]).toBe("nakama.engine.defold");
-    expect(nakama[0]?.generatedStems?.["nakama.session"]).toBe("nakama.session");
-    expect(nakama[0]?.generatedStems?.["nakama.socket"]).toBe("nakama.socket");
-    expect(nakama[0]?.generatedStems?.["nakama.util.log"]).toBe("nakama.util.log");
+    expect(nakama[0]?.namespaces?.["nakama.engine.defold"]).toBe("nakama.engine.defold");
+    expect(nakama[0]?.namespaces?.["nakama.session"]).toBe("nakama.session");
+    expect(nakama[0]?.namespaces?.["nakama.socket"]).toBe("nakama.socket");
+    expect(nakama[0]?.namespaces?.["nakama.util.log"]).toBe("nakama.util.log");
     // The core module severed onto the bare namespace, so its golden stem is
     // `nakama` while its module id stays dotted — the one entry in the corpus
     // where the two differ.
-    expect(nakama[0]?.generatedStems?.["nakama.nakama"]).toBe("nakama");
+    expect(nakama[0]?.namespaces?.["nakama.nakama"]).toBe("nakama");
   });
 
   // The entry module's fields are `typeof import` of the 32 module ids, so `resolve`
@@ -137,8 +137,8 @@ describe("loadVendoredLibraryRegistry", () => {
     ].map((name) => `gamepush.core.${name}`);
     expect(core).toHaveLength(32);
     expect([...(gamepush[0]?.modules ?? [])].sort()).toEqual([...core, "gamepush.gamepush"].sort());
-    expect(gamepush[0]?.generatedStems?.["gamepush.gamepush"]).toBe("gamepush");
-    expect(gamepush[0]?.generatedStems?.["gamepush.core.player"]).toBe("gamepush.core.player");
+    expect(gamepush[0]?.namespaces?.["gamepush.gamepush"]).toBe("gamepush");
+    expect(gamepush[0]?.namespaces?.["gamepush.core.player"]).toBe("gamepush.core.player");
   });
 });
 
@@ -164,7 +164,7 @@ describe("loadVendoredNativeRegistry", () => {
           license: "MIT",
           namespace: "daabbcc",
           manifestDir: "daabbcc",
-          declaration: "generated/native/daabbcc.d.ts",
+          declaration: "native/daabbcc.d.ts",
         },
       ],
     };
@@ -174,7 +174,7 @@ describe("loadVendoredNativeRegistry", () => {
           sourceId: "defold-daabbcc",
           namespace: "daabbcc",
           manifestDir: "daabbcc",
-          declarationPath: join(root, "generated/native/daabbcc.d.ts"),
+          declarationPath: join(root, "native/daabbcc.d.ts"),
         },
       ]);
     });
@@ -189,7 +189,7 @@ describe("loadVendoredNativeRegistry", () => {
           license: "MIT",
           namespace: "share",
           manifestDir: "share",
-          declaration: "generated/native/share.d.ts",
+          declaration: "native/share.d.ts",
           upstreamSource: "fixtures/upstream-native/defold-sharing/share/src/share.cpp",
         },
       ],
@@ -200,7 +200,7 @@ describe("loadVendoredNativeRegistry", () => {
           sourceId: "defold-sharing",
           namespace: "share",
           manifestDir: "share",
-          declarationPath: join(root, "generated/native/share.d.ts"),
+          declarationPath: join(root, "native/share.d.ts"),
         },
       ]);
     });
@@ -269,7 +269,7 @@ describe("matchVendoredLibrary over the composed real registry", () => {
     expect(match?.modules).toEqual(["dicebag.dicebag"]);
     // The authored entry is keyed on `8bitskull/dicebag` and the declared URL is
     // a fork, so a match here also proves the identity is owner-independent.
-    expect(match?.generatedStems?.["dicebag.dicebag"]).toBe("dicebag");
+    expect(match?.namespaces?.["dicebag.dicebag"]).toBe("dicebag");
   });
 
   test("normalizes across archive-ref variants and query strings of one repo", () => {

@@ -227,7 +227,6 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
       "node_modules",
       "@defold-typescript",
       "library-types",
-      "generated",
       "native",
       "daabbcc.d.ts",
     );

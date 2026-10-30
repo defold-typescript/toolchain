@@ -35,8 +35,8 @@ export interface RetireEntry {
   readonly lane: CuratedLane;
   /** The Lua `moduleId`, or the native namespace. */
   readonly id: string;
-  /** The curated declaration, relative to the library-types package. */
-  readonly declaration: string;
+  /** The curated input the lane prints from, relative to the library-types package. */
+  readonly source: string;
 }
 
 /** Every curated entry one upstream repo backs, so the repo is read once. */
@@ -89,16 +89,16 @@ const SHIPPED_DIR = "types/";
 /** The four lanes `resolve` installs curated declarations from, grouped by repo. */
 export function readCuratedRepos(packageRoot: string = PACKAGE_ROOT): CuratedRepo[] {
   const entries: Array<{ repo: string; entry: RetireEntry }> = [];
-  const add = (repo: string, lane: CuratedLane, id: string, declaration: string) =>
-    entries.push({ repo, entry: { lane, id, declaration } });
+  const add = (repo: string, lane: CuratedLane, id: string, source: string) =>
+    entries.push({ repo, entry: { lane, id, source } });
   for (const t of readAuthoredTargets(packageRoot)) {
-    add(t.repo, "authored", t.moduleId, t.generated);
+    add(t.repo, "authored", t.moduleId, t.authored);
   }
   for (const t of readLualsTargets(packageRoot)) {
-    add(t.repo, "luals", t.moduleId, `generated/${t.namespace}.d.ts`);
+    add(t.repo, "luals", t.moduleId, `fixtures/luals/${t.namespace}/`);
   }
   for (const t of readScriptApiTargets(packageRoot)) {
-    add(t.repo, "scriptApi", t.moduleId, t.generated);
+    add(t.repo, "scriptApi", t.moduleId, `fixtures/script-api/${t.moduleId}.script_api`);
   }
   for (const t of readNativeTargets(packageRoot)) {
     add(t.repo, "native", t.namespace, t.declaration);
@@ -127,7 +127,7 @@ function issueBodyFor(report: ShippedTypesReport & { ref: string }): string {
     ...(report.files ?? []).map((file) => `- \`${SHIPPED_DIR}${file}\``),
     "",
     "Curated entries to retire (paths under `packages/library-types/`):",
-    ...report.retire.map((entry) => `- \`${entry.lane}:${entry.id}\` — \`${entry.declaration}\``),
+    ...report.retire.map((entry) => `- \`${entry.lane}:${entry.id}\` — \`${entry.source}\``),
     "",
     "A project on an earlier release has no `types/` folder to fall back on once the curated copy is gone, so weigh that before retiring.",
     "Retiring is a reviewed change, as `pixels` was: follow *Retiring a curated target* in",
