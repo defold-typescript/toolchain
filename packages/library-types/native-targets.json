@@ -6,7 +6,7 @@
       "license": "MIT",
       "namespace": "daabbcc",
       "manifestDir": "daabbcc",
-      "declaration": "generated/native/daabbcc.d.ts",
+      "declaration": "native/daabbcc.d.ts",
       "upstreamSource": "fixtures/upstream-native/DAABBCC/daabbcc/src/extension.cpp",
       "upstreamAnnotation": "fixtures/upstream-native/DAABBCC/daabbcc/annotation.lua",
       "annotationArityExceptions": [
@@ -22,7 +22,7 @@
       "license": "MIT",
       "namespace": "share",
       "manifestDir": "share",
-      "declaration": "generated/native/share.d.ts",
+      "declaration": "native/share.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-sharing/share/src/share.cpp",
       "upstreamAnnotation": "fixtures/upstream-native/defold-sharing/share/api/share.lua"
     },
@@ -32,7 +32,7 @@
       "license": "MIT",
       "namespace": "uuid4",
       "manifestDir": "uuid4",
-      "declaration": "generated/native/uuid4.d.ts",
+      "declaration": "native/uuid4.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-uuid4/uuid4/src/extension.cpp"
     },
     {
@@ -41,7 +41,7 @@
       "license": "MIT",
       "namespace": "tile_raycast",
       "manifestDir": "tile-raycast",
-      "declaration": "generated/native/tile_raycast.d.ts",
+      "declaration": "native/tile_raycast.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-tile-raycast/tile-raycast/src/tileraycast.cpp"
     },
     {
@@ -50,7 +50,7 @@
       "license": "MIT",
       "namespace": "def_windward_jps",
       "manifestDir": "def_windward_jps",
-      "declaration": "generated/native/def_windward_jps.d.ts",
+      "declaration": "native/def_windward_jps.d.ts",
       "upstreamSource": "fixtures/upstream-native/def-windward-jps/def_windward_jps/src/def_windward_jps.cpp",
       "methodTables": { "def_windward_jps.Grid": ["Grid"] }
     },
@@ -60,7 +60,7 @@
       "license": "MIT",
       "namespace": "box2d",
       "manifestDir": "box2d/native",
-      "declaration": "generated/native/box2d.d.ts",
+      "declaration": "native/box2d.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-box2d/box2d/native/src/extension.cpp",
       "upstreamMethodSources": [
         "fixtures/upstream-native/defold-box2d/box2d/native/src/world.cpp",
@@ -106,7 +106,7 @@
       "license": "MIT",
       "namespace": "daabbcc3d",
       "manifestDir": "daabbcc3d",
-      "declaration": "generated/native/daabbcc3d.d.ts",
+      "declaration": "native/daabbcc3d.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-daabbcc3d/daabbcc3d/src/extension.cpp",
       "upstreamAnnotation": "fixtures/upstream-native/defold-daabbcc3d/daabbcc3d/annotation.lua",
       "annotationArityExceptions": [
@@ -123,7 +123,7 @@
       "license": "MIT",
       "namespace": "wave",
       "manifestDir": "wave",
-      "declaration": "generated/native/wave.d.ts",
+      "declaration": "native/wave.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-wave/wave/src/wave.cpp",
       "upstreamAnnotation": "fixtures/upstream-native/defold-wave/wave/annotations.lua",
       "annotationArityExceptions": [
@@ -144,7 +144,7 @@
       "license": "MIT",
       "namespace": "detour",
       "manifestDir": "detour",
-      "declaration": "generated/native/detour.d.ts",
+      "declaration": "native/detour.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-detour/detour/src/detour.cpp",
       "methodTables": { "Init()": ["NavMesh"], "CreateCrowd()": ["Crowd"] }
     },
@@ -154,7 +154,7 @@
       "license": "MIT",
       "namespace": "taptic_engine",
       "manifestDir": "taptic_engine",
-      "declaration": "generated/native/taptic_engine.d.ts",
+      "declaration": "native/taptic_engine.d.ts",
       "upstreamSource": "fixtures/upstream-native/def_taptic_engine/taptic_engine/src/tapticengine.cpp"
     },
     {
@@ -163,7 +163,7 @@
       "license": "MIT",
       "namespace": "gyro",
       "manifestDir": "gyro",
-      "declaration": "generated/native/gyro.d.ts",
+      "declaration": "native/gyro.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-gyro/gyro/src/gyro.cpp"
     },
     {
@@ -172,7 +172,7 @@
       "license": "MIT",
       "namespace": "fontscale",
       "manifestDir": "fontscale",
-      "declaration": "generated/native/fontscale.d.ts",
+      "declaration": "native/fontscale.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-fontscale/fontscale/src/fontscale.cpp"
     },
     {
@@ -182,7 +182,7 @@
       "license": "MIT",
       "namespace": "directories",
       "manifestDir": "directories",
-      "declaration": "generated/native/directories.d.ts",
+      "declaration": "native/directories.d.ts",
       "upstreamSource": "fixtures/upstream-native/extension-directories/directories/src/extension_linux.cpp",
       "upstreamHeaders": [
         "fixtures/upstream-native/extension-directories/directories/src/extension.h"
@@ -194,7 +194,7 @@
       "license": "MIT",
       "namespace": "uptime",
       "manifestDir": "uptime",
-      "declaration": "generated/native/uptime.d.ts",
+      "declaration": "native/uptime.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-extension-uptime/uptime/src/UpTime.cpp"
     },
     {
@@ -203,7 +203,7 @@
       "license": "MIT",
       "namespace": "png",
       "manifestDir": "png",
-      "declaration": "generated/native/png.d.ts",
+      "declaration": "native/png.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-png/png/src/png.cpp"
     },
     {
@@ -212,7 +212,7 @@
       "license": "MIT",
       "namespace": "imp",
       "manifestDir": "imp",
-      "declaration": "generated/native/imp.d.ts",
+      "declaration": "native/imp.d.ts",
       "upstreamSource": "fixtures/upstream-native/defold-imp/imp/src/imp.cpp"
     },
     {
@@ -222,7 +222,7 @@
       "license": "MIT",
       "namespace": "openal",
       "manifestDir": "openal",
-      "declaration": "generated/native/openal.d.ts",
+      "declaration": "native/openal.d.ts",
       "upstreamSource": "fixtures/upstream-native/extension-openal/openal/src/extension.cpp",
       "upstreamMethodSources": [
         "fixtures/upstream-native/extension-openal/openal/src/LuaSource.cpp",
@@ -237,7 +237,7 @@
       "license": "GPL-2.0",
       "namespace": "ainpc",
       "manifestDir": "player2-ai-npc",
-      "declaration": "generated/native/ainpc.d.ts",
+      "declaration": "native/ainpc.d.ts",
       "upstreamSource": "fixtures/upstream-native/player2-ai-npc-defold/player2-ai-npc/src/Player2AINPC.cpp",
       "upstreamHeaders": [
         "fixtures/upstream-native/player2-ai-npc-defold/player2-ai-npc/include/Player2AINPC.hpp"

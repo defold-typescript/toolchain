@@ -37,17 +37,17 @@ export interface LibraryTargets {
 export interface VendoredLibrary {
   readonly sourceId: string;
   readonly modules: string[];
-  // LuaLS-only: maps a verify module id to the committed `generated/<stem>.d.ts`
-  // file stem when the two differ (druid verifies on `druid.druid` but ships its
-  // types in `generated/druid.d.ts`). Absent for pure-Lua libraries, where the
-  // stem is the module id and materialize behaves unchanged.
-  readonly generatedStems?: Readonly<Record<string, string>>;
+  // Maps a verify module id to the `namespace` its target is published under
+  // when the two differ (druid verifies on `druid.druid` but is published as
+  // `druid`), which names the file `export-types` writes for it. Absent for
+  // pure-Lua libraries, where the namespace is the module id.
+  readonly namespaces?: Readonly<Record<string, string>>;
 }
 
 // A single library entry in `packages/library-types/luals-targets.json`: the
 // upstream repo, the require module the archive ships (`moduleId`, used to
 // verify a match against the downloaded archive), and the `namespace` the
-// committed `.d.ts` file is named for (the generated stem).
+// library is published under.
 export interface LualsTarget {
   readonly repo: string;
   readonly moduleId: string;
@@ -105,7 +105,7 @@ export function buildLibraryRegistry(
 
 // Group registry targets by normalized source id so a repository shipping more
 // than one module yields a single entry carrying every module and a merged
-// `generatedStems`. Both the LuaLS and script_api lanes feed the same
+// `namespaces`. Both the LuaLS and script_api lanes feed the same
 // `{ repo, moduleId, namespace }` shape here; `matchVendoredLibrary`'s `find`
 // returns one entry per repo, and `resolve`'s per-module `confirmed` filter then
 // verifies each module against the archive independently.
@@ -120,12 +120,12 @@ function groupTargetsBySourceId(
       bySource.set(sourceId, {
         sourceId,
         modules: [target.moduleId],
-        generatedStems: { [target.moduleId]: target.namespace },
+        namespaces: { [target.moduleId]: target.namespace },
       });
       continue;
     }
     existing.modules.push(target.moduleId);
-    (existing.generatedStems as Record<string, string>)[target.moduleId] = target.namespace;
+    (existing.namespaces as Record<string, string>)[target.moduleId] = target.namespace;
   }
   return [...bySource.values()].map((entry) => ({
     ...entry,
@@ -134,8 +134,8 @@ function groupTargetsBySourceId(
 }
 
 // Turn the LuaLS target list into `VendoredLibrary` entries. Each target
-// verifies against the archive's shipped `moduleId` but sources its committed
-// types from `generated/<namespace>.d.ts`, so the stem is recorded separately.
+// verifies against the archive's shipped `moduleId` but is published under its
+// `namespace`, so the namespace is recorded separately.
 export function buildLualsRegistryEntries(targets: LualsTargets): VendoredLibrary[] {
   return groupTargetsBySourceId(targets.targets);
 }
@@ -143,7 +143,7 @@ export function buildLualsRegistryEntries(targets: LualsTargets): VendoredLibrar
 // A single library entry in `packages/library-types/script-api-targets.json`,
 // projected to what registry matching needs: the upstream `repo` (source id) and
 // the require `moduleId` shipped by the archive, plus the single-segment
-// `namespace` the committed `generated/<namespace>.d.ts` is named for.
+// `namespace` it is published under.
 export interface ScriptApiRegistryTarget {
   readonly repo: string;
   readonly moduleId: string;
@@ -155,9 +155,9 @@ export interface ScriptApiRegistryTargets {
 }
 
 // Turn the script_api target list into `VendoredLibrary` entries. Like the LuaLS
-// libraries, a script_api target verifies against its shipped `moduleId` but
-// sources its types from `generated/<namespace>.d.ts`, so the stem is recorded
-// separately (`bridge.bridge` -> `bridge`).
+// libraries, a script_api target verifies against its shipped `moduleId` but is
+// published under its `namespace`, so the namespace is recorded separately
+// (`bridge.bridge` -> `bridge`).
 export function buildScriptApiRegistryEntries(
   targets: ScriptApiRegistryTargets,
 ): VendoredLibrary[] {
@@ -167,7 +167,7 @@ export function buildScriptApiRegistryEntries(
 // A single library entry in `packages/library-types/authored-targets.json`,
 // projected to what registry matching needs: the upstream `repo` (source id),
 // the require `moduleId` shipped by the archive, and the single-segment
-// `namespace` the committed `generated/<namespace>.d.ts` is named for. An
+// `namespace` it is published under. An
 // authored/forked library is one this repo maintains as a first-party
 // hand-authored or forked `.d.ts` (its upstream has no usable structured source).
 export interface AuthoredRegistryTarget {
@@ -182,8 +182,8 @@ export interface AuthoredRegistryTargets {
 
 // Turn the authored target list into `VendoredLibrary` entries. Like the LuaLS
 // and script_api libraries, an authored target verifies against its shipped
-// `moduleId` but sources its types from `generated/<namespace>.d.ts`, so the
-// stem is recorded separately (`defcon.console` -> `defcon`).
+// `moduleId` but is published under its `namespace`, so the namespace is
+// recorded separately (`defcon.console` -> `defcon`).
 export function buildAuthoredRegistryEntries(targets: AuthoredRegistryTargets): VendoredLibrary[] {
   return groupTargetsBySourceId(targets.targets);
 }
@@ -195,33 +195,36 @@ export function buildAuthoredRegistryEntries(targets: AuthoredRegistryTargets): 
 // `matchVendoredLibrary` matches on `sourceId` with a first-match `find`, so the
 // concatenated lanes must merge to one entry per source or the later lanes'
 // modules are silently dropped. Union `modules` (dedupe + sort), merge every
-// contributor's `generatedStems`, and attach `generatedStems` only when the
-// merged record is non-empty so a wholly stemless source keeps the pure-Lua
+// contributor's `namespaces`, and attach `namespaces` only when the
+// merged record is non-empty so a source with none keeps the pure-Lua
 // entry shape. Pure and IO-free.
 export function mergeVendoredLibrariesBySourceId(
   entries: readonly VendoredLibrary[],
 ): VendoredLibrary[] {
-  const bySource = new Map<string, { modules: Set<string>; stems: Record<string, string> }>();
+  const bySource = new Map<string, { modules: Set<string>; namespaces: Record<string, string> }>();
   const order: string[] = [];
   for (const entry of entries) {
     let acc = bySource.get(entry.sourceId);
     if (acc === undefined) {
-      acc = { modules: new Set<string>(), stems: {} };
+      acc = { modules: new Set<string>(), namespaces: {} };
       bySource.set(entry.sourceId, acc);
       order.push(entry.sourceId);
     }
     for (const module of entry.modules) {
       acc.modules.add(module);
     }
-    if (entry.generatedStems !== undefined) {
-      Object.assign(acc.stems, entry.generatedStems);
+    if (entry.namespaces !== undefined) {
+      Object.assign(acc.namespaces, entry.namespaces);
     }
   }
   return order.map((sourceId) => {
-    const acc = bySource.get(sourceId) as { modules: Set<string>; stems: Record<string, string> };
+    const acc = bySource.get(sourceId) as {
+      modules: Set<string>;
+      namespaces: Record<string, string>;
+    };
     const modules = [...acc.modules].sort();
-    return Object.keys(acc.stems).length > 0
-      ? { sourceId, modules, generatedStems: acc.stems }
+    return Object.keys(acc.namespaces).length > 0
+      ? { sourceId, modules, namespaces: acc.namespaces }
       : { sourceId, modules };
   });
 }

@@ -349,7 +349,6 @@ describe("readPinnedTargets — internal flag", () => {
     ref: "1",
     moduleId,
     namespace: moduleId,
-    generated: `${moduleId}.d.ts`,
     apiDoc: `${moduleId}.md`,
   });
   const entries = (extra: Record<string, string>) =>

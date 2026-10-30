@@ -116,7 +116,7 @@ describe("buildLualsRegistryEntries", () => {
 
   test("maps a LuaLS target to an entry keyed by normalized repo, verifying on moduleId with a generated stem", () => {
     expect(buildLualsRegistryEntries(druidTargets)).toEqual([
-      { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+      { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
     ]);
   });
 
@@ -137,7 +137,7 @@ describe("buildLualsRegistryEntries", () => {
     expect(buildLualsRegistryEntries({ targets: [] })).toEqual([]);
   });
 
-  test("groups two same-repo targets into one entry with every module and a merged generatedStems", () => {
+  test("groups two same-repo targets into one entry with every module and merged namespaces", () => {
     const saverTargets: LualsTargets = {
       targets: [
         {
@@ -156,7 +156,7 @@ describe("buildLualsRegistryEntries", () => {
       {
         sourceId: "defold-saver",
         modules: ["saver.saver", "saver.storage"],
-        generatedStems: { "saver.saver": "saver.saver", "saver.storage": "saver.storage" },
+        namespaces: { "saver.saver": "saver.saver", "saver.storage": "saver.storage" },
       },
     ]);
   });
@@ -173,11 +173,11 @@ describe("buildLualsRegistryEntries", () => {
       ],
     };
     expect(buildLualsRegistryEntries(twoRepos)).toEqual([
-      { sourceId: "druid", modules: ["druid.druid"], generatedStems: { "druid.druid": "druid" } },
+      { sourceId: "druid", modules: ["druid.druid"], namespaces: { "druid.druid": "druid" } },
       {
         sourceId: "defold-saver",
         modules: ["saver.saver"],
-        generatedStems: { "saver.saver": "saver.saver" },
+        namespaces: { "saver.saver": "saver.saver" },
       },
     ]);
   });
@@ -199,7 +199,7 @@ describe("buildScriptApiRegistryEntries", () => {
       {
         sourceId: "bridge-defold",
         modules: ["bridge.bridge"],
-        generatedStems: { "bridge.bridge": "bridge" },
+        namespaces: { "bridge.bridge": "bridge" },
       },
     ]);
   });
@@ -219,7 +219,7 @@ describe("buildScriptApiRegistryEntries", () => {
       {
         sourceId: "thing",
         modules: ["thing.a", "thing.b"],
-        generatedStems: { "thing.a": "thing.a", "thing.b": "thing.b" },
+        namespaces: { "thing.a": "thing.a", "thing.b": "thing.b" },
       },
     ]);
   });
@@ -241,7 +241,7 @@ describe("buildAuthoredRegistryEntries", () => {
       {
         sourceId: "defcon",
         modules: ["defcon.console"],
-        generatedStems: { "defcon.console": "defcon" },
+        namespaces: { "defcon.console": "defcon" },
       },
     ]);
   });
@@ -255,7 +255,7 @@ describe("matchVendoredLibrary against a LuaLS entry", () => {
   const druidEntry: VendoredLibrary = {
     sourceId: "druid",
     modules: ["druid.druid"],
-    generatedStems: { "druid.druid": "druid" },
+    namespaces: { "druid.druid": "druid" },
   };
 
   test("matches druid's declared archive URL and its moving/forked refs", () => {
@@ -275,10 +275,10 @@ describe("matchVendoredLibrary against a LuaLS entry", () => {
   });
 });
 
-describe("VendoredLibrary generatedStems is optional", () => {
-  test("a pure-Lua entry round-trips unchanged without generatedStems", () => {
+describe("VendoredLibrary namespaces is optional", () => {
+  test("a pure-Lua entry round-trips unchanged without namespaces", () => {
     const pureLua: VendoredLibrary = { sourceId: "dicebag", modules: ["dicebag.dicebag"] };
-    expect(pureLua.generatedStems).toBeUndefined();
+    expect(pureLua.namespaces).toBeUndefined();
     expect(
       matchVendoredLibrary("https://github.com/paulomrpp/dicebag/archive/main.zip", [pureLua]),
     ).toEqual(pureLua);
@@ -289,29 +289,29 @@ describe("mergeVendoredLibrariesBySourceId", () => {
   test("folds a stemless and a stemmed entry sharing a sourceId into one, stems only for the stemmed module", () => {
     const merged = mergeVendoredLibrariesBySourceId([
       { sourceId: "r", modules: ["a"] },
-      { sourceId: "r", modules: ["b"], generatedStems: { b: "ns" } },
+      { sourceId: "r", modules: ["b"], namespaces: { b: "ns" } },
     ]);
-    expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b"], generatedStems: { b: "ns" } }]);
+    expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b"], namespaces: { b: "ns" } }]);
   });
 
   test("passes disjoint sourceIds through unchanged in first-seen order", () => {
     const entries: VendoredLibrary[] = [
-      { sourceId: "second", modules: ["b.b"], generatedStems: { "b.b": "b" } },
+      { sourceId: "second", modules: ["b.b"], namespaces: { "b.b": "b" } },
       { sourceId: "first", modules: ["a.a"] },
     ];
     expect(mergeVendoredLibrariesBySourceId(entries)).toEqual([
-      { sourceId: "second", modules: ["b.b"], generatedStems: { "b.b": "b" } },
+      { sourceId: "second", modules: ["b.b"], namespaces: { "b.b": "b" } },
       { sourceId: "first", modules: ["a.a"] },
     ]);
   });
 
-  test("merges two stemless entries with no generatedStems key on the result", () => {
+  test("merges two entries without namespaces into one with no namespaces key on the result", () => {
     const merged = mergeVendoredLibrariesBySourceId([
       { sourceId: "r", modules: ["a"] },
       { sourceId: "r", modules: ["b"] },
     ]);
     expect(merged).toEqual([{ sourceId: "r", modules: ["a", "b"] }]);
-    expect(merged[0]?.generatedStems).toBeUndefined();
+    expect(merged[0]?.namespaces).toBeUndefined();
   });
 
   test("dedupes a module id shared across the two entries and sorts the merged modules", () => {

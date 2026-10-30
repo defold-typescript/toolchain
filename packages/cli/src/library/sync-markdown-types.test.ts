@@ -32,7 +32,6 @@ const ORTHOGRAPHIC: MarkdownTarget = {
   markdown: "README.md",
   moduleId: "orthographic.camera",
   namespace: "orthographic",
-  generated: "generated/orthographic.d.ts",
   apiDoc: "api-doc/orthographic.json",
   fidelity: "fidelity/orthographic.json",
   decision: "no-go",
@@ -53,7 +52,6 @@ describe("readMarkdownTargets", () => {
     expect(ortho?.repo).toBe("https://github.com/britzl/defold-orthographic");
     expect(ortho?.ref).toBe("3.6.3");
     expect(ortho?.markdown).toBe("README.md");
-    expect(ortho?.generated).toBe("generated/orthographic.d.ts");
     expect(ortho?.apiDoc).toBe("api-doc/orthographic.json");
   });
 
@@ -113,7 +111,6 @@ describe("orthographic severed to the authored lane without disturbing the markd
     );
     expect(target).toBeDefined();
     expect(target?.namespace).toBe("orthographic");
-    expect(target?.generated).toBe("generated/orthographic.d.ts");
     expect(target?.apiDoc).toBe("api-doc/orthographic.json");
     expect(target?.decision).toBe("no-go");
     expect(existsSync(join(PACKAGE_ROOT, "fidelity/orthographic.json"))).toBe(true);
@@ -126,8 +123,8 @@ describe("defold-input registers no markdown target on the all-no-go outcome", (
     expect(targets.filter((t) => t.moduleId.startsWith("in."))).toEqual([]);
   });
 
-  // A markdown target's goldens are the canonical `generated/<ns>.d.ts` +
-  // `api-doc/<ns>.json`, and for defold-input the markdown namespace `in.<mod>`
+  // A markdown target's golden is the canonical `api-doc/<ns>.json`, and for
+  // defold-input the markdown namespace `in.<mod>`
   // is the *same* key the live ts-defold module already publishes under (unlike
   // orthographic, whose `orthographic` namespace differs from `orthographic.camera`).
   // Registering a no-go target would therefore overwrite the live artifacts, and
@@ -151,8 +148,8 @@ describe("evaluateMarkdownCandidate", () => {
   // `evaluateMarkdownCandidate` never reads that file; it resolves the compared
   // surface from its optional `snapshot` argument, falling back to
   // `fixtures/ts-defold/<moduleId>.d.ts`. The real preconditions are a committed
-  // markdown fixture, a resolvable snapshot, and live goldens at the candidate's
-  // `generated`/`apiDoc` paths with no `fidelity/` occupant. That misreading is
+  // markdown fixture, a resolvable snapshot, and a live golden at the candidate's
+  // `apiDoc` path with no `fidelity/` occupant. That misreading is
   // why this subject churned through `monarch.monarch` -> `gooey.gooey` ->
   // `dicebag.dicebag` -> `rendy.rendy`, one move per Bucket-C severance.
   //
@@ -166,7 +163,6 @@ describe("evaluateMarkdownCandidate", () => {
     markdown: "README_API.md",
     moduleId: "monarch.monarch",
     namespace: "monarch.monarch",
-    generated: "generated/monarch.monarch.d.ts",
     apiDoc: "api-doc/monarch.monarch.json",
     fidelity: "fidelity/monarch.monarch.json",
     decision: "no-go",
@@ -185,16 +181,14 @@ describe("evaluateMarkdownCandidate", () => {
     expect(result.decision).toBe("no-go");
   });
 
-  test("writes nothing — the live in-place goldens survive byte-identical", async () => {
+  test("writes nothing — the live in-place golden survives byte-identical", async () => {
     const contents = (rel: string): string | null =>
       existsSync(join(PACKAGE_ROOT, rel)) ? readFileSync(join(PACKAGE_ROOT, rel), "utf8") : null;
-    const live = [MONARCH.generated, MONARCH.apiDoc].map((rel) => ({ rel, before: contents(rel) }));
+    const before = contents(MONARCH.apiDoc);
 
     await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH, MONARCH_SNAPSHOT);
 
-    for (const { rel, before } of live) {
-      expect(contents(rel)).toBe(before);
-    }
+    expect(contents(MONARCH.apiDoc)).toBe(before);
     // The fidelity path has no live occupant, so it must simply never appear.
     expect(existsSync(join(PACKAGE_ROOT, MONARCH.fidelity))).toBe(false);
   });

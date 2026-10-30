@@ -16,9 +16,9 @@ import type { LibrarySourceTree } from "./source-tree";
  *
  * Each target pins its exact output paths. Like the LuaLS libraries, a migrated
  * script_api library is the sole maintainer of its namespace, so its goldens are
- * named for the target's `namespace` verbatim (`generated/<namespace>.d.ts`,
- * `api-doc/<namespace>.json`, `fidelity/<namespace>.json` — so `bridge` lands at
- * `generated/bridge.d.ts` and `api-doc/bridge.json`) at the canonical roots,
+ * named for the target's `namespace` verbatim (`api-doc/<namespace>.json`,
+ * `fidelity/<namespace>.json` — so `bridge` lands at
+ * `api-doc/bridge.json`) at the canonical roots,
  * rather than the require `moduleId`, keeping the docs tree and file layout
  * uniform with druid.
  */
@@ -28,7 +28,6 @@ export interface ScriptApiTarget {
   scriptApi: string;
   moduleId: string;
   namespace: string;
-  generated: string;
   apiDoc: string;
   // Defaults to `fidelity/<namespace>.json` when omitted.
   fidelity: string;
@@ -58,15 +57,7 @@ export interface ScriptApiTargets {
   targets: ScriptApiTarget[];
 }
 
-const REQUIRED_FIELDS = [
-  "repo",
-  "ref",
-  "scriptApi",
-  "moduleId",
-  "namespace",
-  "generated",
-  "apiDoc",
-] as const;
+const REQUIRED_FIELDS = ["repo", "ref", "scriptApi", "moduleId", "namespace", "apiDoc"] as const;
 
 /**
  * Read `script-api-targets.json`, validate every required field per entry, and
@@ -106,7 +97,6 @@ export function readScriptApiTargets(packageRoot: string): ScriptApiTarget[] {
       scriptApi: entry.scriptApi as string,
       moduleId,
       namespace: entry.namespace as string,
-      generated: entry.generated as string,
       apiDoc: entry.apiDoc as string,
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",

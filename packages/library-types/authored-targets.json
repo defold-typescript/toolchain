@@ -7,7 +7,6 @@
       "authored": "fixtures/authored/defcon.console.d.ts",
       "moduleId": "defcon.console",
       "namespace": "defcon",
-      "generated": "generated/defcon.d.ts",
       "apiDoc": "api-doc/defcon.json",
       "upstreamLua": ["fixtures/upstream-lua/defcon/defcon/console.lua"]
     },
@@ -18,7 +17,6 @@
       "authored": "fixtures/authored/deftest.deftest.d.ts",
       "moduleId": "deftest.deftest",
       "namespace": "deftest",
-      "generated": "generated/deftest.d.ts",
       "apiDoc": "api-doc/deftest.json",
       "upstreamLua": ["fixtures/upstream-lua/deftest/deftest/deftest.lua"]
     },
@@ -29,7 +27,6 @@
       "authored": "fixtures/authored/defmath.defmath.d.ts",
       "moduleId": "defmath.defmath",
       "namespace": "defmath",
-      "generated": "generated/defmath.d.ts",
       "apiDoc": "api-doc/defmath.json",
       "upstreamLua": ["fixtures/upstream-lua/defmath/defmath/defmath.lua"]
     },
@@ -40,7 +37,6 @@
       "authored": "fixtures/authored/defsave.defsave.d.ts",
       "moduleId": "defsave.defsave",
       "namespace": "defsave",
-      "generated": "generated/defsave.d.ts",
       "apiDoc": "api-doc/defsave.json",
       "upstreamLua": ["fixtures/upstream-lua/defsave/defsave/defsave.lua"]
     },
@@ -51,7 +47,6 @@
       "authored": "fixtures/authored/zzfx.api.d.ts",
       "moduleId": "zzfx.api",
       "namespace": "zzfx",
-      "generated": "generated/zzfx.d.ts",
       "apiDoc": "api-doc/zzfx.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-zzfx/zzfx/api.lua"]
     },
@@ -62,7 +57,6 @@
       "authored": "fixtures/authored/boom.boom.d.ts",
       "moduleId": "boom.boom",
       "namespace": "boom",
-      "generated": "generated/boom.d.ts",
       "apiDoc": "api-doc/boom.json",
       "upstreamLua": ["fixtures/upstream-lua/boom/boom/boom.lua"]
     },
@@ -73,7 +67,6 @@
       "authored": "fixtures/authored/persist.persist.d.ts",
       "moduleId": "persist.persist",
       "namespace": "persist",
-      "generated": "generated/persist.d.ts",
       "apiDoc": "api-doc/persist.json",
       "upstreamLua": ["fixtures/upstream-lua/library-defold-persist/persist/persist.lua"]
     },
@@ -84,7 +77,6 @@
       "authored": "fixtures/authored/orthographic.camera.d.ts",
       "moduleId": "orthographic.camera",
       "namespace": "orthographic.camera",
-      "generated": "generated/orthographic.camera.d.ts",
       "apiDoc": "api-doc/orthographic.camera.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-orthographic/orthographic/camera.lua"]
     },
@@ -95,7 +87,6 @@
       "authored": "fixtures/authored/nakama.engine.defold.d.ts",
       "moduleId": "nakama.engine.defold",
       "namespace": "nakama.engine.defold",
-      "generated": "generated/nakama.engine.defold.d.ts",
       "apiDoc": "api-doc/nakama.engine.defold.json",
       "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/engine/defold.lua"]
     },
@@ -106,7 +97,6 @@
       "authored": "fixtures/authored/nakama.util.log.d.ts",
       "moduleId": "nakama.util.log",
       "namespace": "nakama.util.log",
-      "generated": "generated/nakama.util.log.d.ts",
       "apiDoc": "api-doc/nakama.util.log.json",
       "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/util/log.lua"]
     },
@@ -117,7 +107,6 @@
       "authored": "fixtures/authored/nakama.session.d.ts",
       "moduleId": "nakama.session",
       "namespace": "nakama.session",
-      "generated": "generated/nakama.session.d.ts",
       "apiDoc": "api-doc/nakama.session.json",
       "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/session.lua"]
     },
@@ -128,7 +117,6 @@
       "authored": "fixtures/authored/nakama.socket.d.ts",
       "moduleId": "nakama.socket",
       "namespace": "nakama.socket",
-      "generated": "generated/nakama.socket.d.ts",
       "apiDoc": "api-doc/nakama.socket.json",
       "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/socket.lua"]
     },
@@ -139,7 +127,6 @@
       "authored": "fixtures/authored/yagames.yagames.d.ts",
       "moduleId": "yagames.yagames",
       "namespace": "yagames",
-      "generated": "generated/yagames.d.ts",
       "apiDoc": "api-doc/yagames.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-yagames/yagames/yagames.lua"]
     },
@@ -150,7 +137,6 @@
       "authored": "fixtures/authored/in.accelerometer.d.ts",
       "moduleId": "in.accelerometer",
       "namespace": "in.accelerometer",
-      "generated": "generated/in.accelerometer.d.ts",
       "apiDoc": "api-doc/in.accelerometer.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/accelerometer.lua"]
     },
@@ -161,7 +147,6 @@
       "authored": "fixtures/authored/in.button.d.ts",
       "moduleId": "in.button",
       "namespace": "in.button",
-      "generated": "generated/in.button.d.ts",
       "apiDoc": "api-doc/in.button.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/button.lua"]
     },
@@ -172,7 +157,6 @@
       "authored": "fixtures/authored/in.cursor.d.ts",
       "moduleId": "in.cursor",
       "namespace": "in.cursor",
-      "generated": "generated/in.cursor.d.ts",
       "apiDoc": "api-doc/in.cursor.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/cursor.lua"]
     },
@@ -183,7 +167,6 @@
       "authored": "fixtures/authored/in.gesture.d.ts",
       "moduleId": "in.gesture",
       "namespace": "in.gesture",
-      "generated": "generated/in.gesture.d.ts",
       "apiDoc": "api-doc/in.gesture.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/gesture.lua"]
     },
@@ -194,7 +177,6 @@
       "authored": "fixtures/authored/in.keyboard.d.ts",
       "moduleId": "in.keyboard",
       "namespace": "in.keyboard",
-      "generated": "generated/in.keyboard.d.ts",
       "apiDoc": "api-doc/in.keyboard.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/keyboard.lua"]
     },
@@ -205,7 +187,6 @@
       "authored": "fixtures/authored/in.mapper.d.ts",
       "moduleId": "in.mapper",
       "namespace": "in.mapper",
-      "generated": "generated/in.mapper.d.ts",
       "apiDoc": "api-doc/in.mapper.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/mapper.lua"]
     },
@@ -216,7 +197,6 @@
       "authored": "fixtures/authored/in.onscreen.d.ts",
       "moduleId": "in.onscreen",
       "namespace": "in.onscreen",
-      "generated": "generated/in.onscreen.d.ts",
       "apiDoc": "api-doc/in.onscreen.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/onscreen.lua"]
     },
@@ -227,7 +207,6 @@
       "authored": "fixtures/authored/in.state.d.ts",
       "moduleId": "in.state",
       "namespace": "in.state",
-      "generated": "generated/in.state.d.ts",
       "apiDoc": "api-doc/in.state.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/state.lua"]
     },
@@ -238,7 +217,6 @@
       "authored": "fixtures/authored/in.textbox.d.ts",
       "moduleId": "in.textbox",
       "namespace": "in.textbox",
-      "generated": "generated/in.textbox.d.ts",
       "apiDoc": "api-doc/in.textbox.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/textbox.lua"]
     },
@@ -249,7 +227,6 @@
       "authored": "fixtures/authored/in.triggers.d.ts",
       "moduleId": "in.triggers",
       "namespace": "in.triggers",
-      "generated": "generated/in.triggers.d.ts",
       "apiDoc": "api-doc/in.triggers.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-input/in/triggers.lua"]
     },
@@ -260,7 +237,6 @@
       "authored": "fixtures/authored/monarch.monarch.d.ts",
       "moduleId": "monarch.monarch",
       "namespace": "monarch.monarch",
-      "generated": "generated/monarch.monarch.d.ts",
       "apiDoc": "api-doc/monarch.monarch.json",
       "upstreamLua": ["fixtures/upstream-lua/monarch/monarch/monarch.lua"]
     },
@@ -271,7 +247,6 @@
       "authored": "fixtures/authored/monarch.transitions.easings.d.ts",
       "moduleId": "monarch.transitions.easings",
       "namespace": "monarch.transitions.easings",
-      "generated": "generated/monarch.transitions.easings.d.ts",
       "apiDoc": "api-doc/monarch.transitions.easings.json",
       "upstreamLua": ["fixtures/upstream-lua/monarch/monarch/transitions/easings.lua"]
     },
@@ -282,7 +257,6 @@
       "authored": "fixtures/authored/monarch.transitions.gui.d.ts",
       "moduleId": "monarch.transitions.gui",
       "namespace": "monarch.transitions.gui",
-      "generated": "generated/monarch.transitions.gui.d.ts",
       "apiDoc": "api-doc/monarch.transitions.gui.json",
       "upstreamLua": ["fixtures/upstream-lua/monarch/monarch/transitions/gui.lua"]
     },
@@ -293,7 +267,6 @@
       "authored": "fixtures/authored/richtext.color.d.ts",
       "moduleId": "richtext.color",
       "namespace": "richtext.color",
-      "generated": "generated/richtext.color.d.ts",
       "apiDoc": "api-doc/richtext.color.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-richtext/richtext/color.lua"]
     },
@@ -304,7 +277,6 @@
       "authored": "fixtures/authored/richtext.richtext.d.ts",
       "moduleId": "richtext.richtext",
       "namespace": "richtext.richtext",
-      "generated": "generated/richtext.richtext.d.ts",
       "apiDoc": "api-doc/richtext.richtext.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-richtext/richtext/richtext.lua"]
     },
@@ -315,7 +287,6 @@
       "authored": "fixtures/authored/richtext.tags.d.ts",
       "moduleId": "richtext.tags",
       "namespace": "richtext.tags",
-      "generated": "generated/richtext.tags.d.ts",
       "apiDoc": "api-doc/richtext.tags.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-richtext/richtext/tags.lua"]
     },
@@ -326,7 +297,6 @@
       "authored": "fixtures/authored/metrics.fps.d.ts",
       "moduleId": "metrics.fps",
       "namespace": "metrics.fps",
-      "generated": "generated/metrics.fps.d.ts",
       "apiDoc": "api-doc/metrics.fps.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-metrics/metrics/fps.lua"]
     },
@@ -337,7 +307,6 @@
       "authored": "fixtures/authored/metrics.mem.d.ts",
       "moduleId": "metrics.mem",
       "namespace": "metrics.mem",
-      "generated": "generated/metrics.mem.d.ts",
       "apiDoc": "api-doc/metrics.mem.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-metrics/metrics/mem.lua"]
     },
@@ -348,7 +317,6 @@
       "authored": "fixtures/authored/gooey.gooey.d.ts",
       "moduleId": "gooey.gooey",
       "namespace": "gooey",
-      "generated": "generated/gooey.d.ts",
       "apiDoc": "api-doc/gooey.json",
       "upstreamLua": ["fixtures/upstream-lua/gooey/gooey/gooey.lua"]
     },
@@ -359,7 +327,6 @@
       "authored": "fixtures/authored/bzAnim.bzLibrary.d.ts",
       "moduleId": "bzAnim.bzLibrary",
       "namespace": "bzAnim",
-      "generated": "generated/bzAnim.d.ts",
       "apiDoc": "api-doc/bzAnim.json",
       "upstreamLua": ["fixtures/upstream-lua/bzAnim/bzAnim/bzLibrary.lua"]
     },
@@ -370,7 +337,6 @@
       "authored": "fixtures/authored/platypus.platypus.d.ts",
       "moduleId": "platypus.platypus",
       "namespace": "platypus",
-      "generated": "generated/platypus.d.ts",
       "apiDoc": "api-doc/platypus.json",
       "upstreamLua": ["fixtures/upstream-lua/platypus/platypus/platypus.lua"]
     },
@@ -381,7 +347,6 @@
       "authored": "fixtures/authored/dicebag.dicebag.d.ts",
       "moduleId": "dicebag.dicebag",
       "namespace": "dicebag",
-      "generated": "generated/dicebag.d.ts",
       "apiDoc": "api-doc/dicebag.json",
       "upstreamLua": ["fixtures/upstream-lua/dicebag/dicebag/dicebag.lua"]
     },
@@ -392,7 +357,6 @@
       "authored": "fixtures/authored/rendy.rendy.d.ts",
       "moduleId": "rendy.rendy",
       "namespace": "rendy",
-      "generated": "generated/rendy.d.ts",
       "apiDoc": "api-doc/rendy.json",
       "upstreamLua": ["fixtures/upstream-lua/library-defold-rendy/rendy/rendy.lua"]
     },
@@ -403,7 +367,6 @@
       "authored": "fixtures/authored/nakama.nakama.d.ts",
       "moduleId": "nakama.nakama",
       "namespace": "nakama",
-      "generated": "generated/nakama.d.ts",
       "apiDoc": "api-doc/nakama.json",
       "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/nakama.lua"]
     },
@@ -415,7 +378,6 @@
       "authored": "fixtures/authored/shutter.shutter.d.ts",
       "moduleId": "shutter.shutter",
       "namespace": "shutter",
-      "generated": "generated/shutter.d.ts",
       "apiDoc": "api-doc/shutter.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-shutter/shutter/shutter.lua"]
     },
@@ -427,7 +389,6 @@
       "authored": "fixtures/authored/checkpoint.checkpoint.d.ts",
       "moduleId": "checkpoint.checkpoint",
       "namespace": "checkpoint",
-      "generated": "generated/checkpoint.d.ts",
       "apiDoc": "api-doc/checkpoint.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua"]
     },
@@ -438,7 +399,6 @@
       "authored": "fixtures/authored/sprite_repeat.sprite_repeat.d.ts",
       "moduleId": "sprite_repeat.sprite_repeat",
       "namespace": "sprite_repeat",
-      "generated": "generated/sprite_repeat.d.ts",
       "apiDoc": "api-doc/sprite_repeat.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-sprite-repeat/sprite_repeat/sprite_repeat.lua"]
     },
@@ -449,7 +409,6 @@
       "authored": "fixtures/authored/node_repeat.node_repeat.d.ts",
       "moduleId": "node_repeat.node_repeat",
       "namespace": "node_repeat",
-      "generated": "generated/node_repeat.d.ts",
       "apiDoc": "api-doc/node_repeat.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-sprite-repeat/node_repeat/node_repeat.lua"]
     },
@@ -460,7 +419,6 @@
       "authored": "fixtures/authored/sentinel.sentry.d.ts",
       "moduleId": "sentinel.sentry",
       "namespace": "sentinel",
-      "generated": "generated/sentinel.d.ts",
       "apiDoc": "api-doc/sentinel.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-sentinel/sentinel/sentry.lua"]
     },
@@ -471,7 +429,6 @@
       "authored": "fixtures/authored/gamepush.core.player.d.ts",
       "moduleId": "gamepush.core.player",
       "namespace": "gamepush.core.player",
-      "generated": "generated/gamepush.core.player.d.ts",
       "apiDoc": "api-doc/gamepush.core.player.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/player.lua"]
     },
@@ -482,7 +439,6 @@
       "authored": "fixtures/authored/gamepush.core.player_stats.d.ts",
       "moduleId": "gamepush.core.player_stats",
       "namespace": "gamepush.core.player_stats",
-      "generated": "generated/gamepush.core.player_stats.d.ts",
       "apiDoc": "api-doc/gamepush.core.player_stats.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/player_stats.lua"]
     },
@@ -493,7 +449,6 @@
       "authored": "fixtures/authored/gamepush.core.players.d.ts",
       "moduleId": "gamepush.core.players",
       "namespace": "gamepush.core.players",
-      "generated": "generated/gamepush.core.players.d.ts",
       "apiDoc": "api-doc/gamepush.core.players.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/players.lua"]
     },
@@ -504,7 +459,6 @@
       "authored": "fixtures/authored/gamepush.core.payments.d.ts",
       "moduleId": "gamepush.core.payments",
       "namespace": "gamepush.core.payments",
-      "generated": "generated/gamepush.core.payments.d.ts",
       "apiDoc": "api-doc/gamepush.core.payments.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/payments.lua"]
     },
@@ -515,7 +469,6 @@
       "authored": "fixtures/authored/gamepush.core.ads.d.ts",
       "moduleId": "gamepush.core.ads",
       "namespace": "gamepush.core.ads",
-      "generated": "generated/gamepush.core.ads.d.ts",
       "apiDoc": "api-doc/gamepush.core.ads.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/ads.lua"]
     },
@@ -526,7 +479,6 @@
       "authored": "fixtures/authored/gamepush.core.achievements.d.ts",
       "moduleId": "gamepush.core.achievements",
       "namespace": "gamepush.core.achievements",
-      "generated": "generated/gamepush.core.achievements.d.ts",
       "apiDoc": "api-doc/gamepush.core.achievements.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/achievements.lua"]
     },
@@ -537,7 +489,6 @@
       "authored": "fixtures/authored/gamepush.core.leaderboard.d.ts",
       "moduleId": "gamepush.core.leaderboard",
       "namespace": "gamepush.core.leaderboard",
-      "generated": "generated/gamepush.core.leaderboard.d.ts",
       "apiDoc": "api-doc/gamepush.core.leaderboard.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/leaderboard.lua"]
     },
@@ -548,7 +499,6 @@
       "authored": "fixtures/authored/gamepush.core.rewards.d.ts",
       "moduleId": "gamepush.core.rewards",
       "namespace": "gamepush.core.rewards",
-      "generated": "generated/gamepush.core.rewards.d.ts",
       "apiDoc": "api-doc/gamepush.core.rewards.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/rewards.lua"]
     },
@@ -559,7 +509,6 @@
       "authored": "fixtures/authored/gamepush.core.uniques.d.ts",
       "moduleId": "gamepush.core.uniques",
       "namespace": "gamepush.core.uniques",
-      "generated": "generated/gamepush.core.uniques.d.ts",
       "apiDoc": "api-doc/gamepush.core.uniques.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/uniques.lua"]
     },
@@ -570,7 +519,6 @@
       "authored": "fixtures/authored/gamepush.core.variables.d.ts",
       "moduleId": "gamepush.core.variables",
       "namespace": "gamepush.core.variables",
-      "generated": "generated/gamepush.core.variables.d.ts",
       "apiDoc": "api-doc/gamepush.core.variables.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/variables.lua"]
     },
@@ -581,7 +529,6 @@
       "authored": "fixtures/authored/gamepush.core.storage.d.ts",
       "moduleId": "gamepush.core.storage",
       "namespace": "gamepush.core.storage",
-      "generated": "generated/gamepush.core.storage.d.ts",
       "apiDoc": "api-doc/gamepush.core.storage.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/storage.lua"]
     },
@@ -592,7 +539,6 @@
       "authored": "fixtures/authored/gamepush.core.channels.d.ts",
       "moduleId": "gamepush.core.channels",
       "namespace": "gamepush.core.channels",
-      "generated": "generated/gamepush.core.channels.d.ts",
       "apiDoc": "api-doc/gamepush.core.channels.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/channels.lua"]
     },
@@ -603,7 +549,6 @@
       "authored": "fixtures/authored/gamepush.core.socials.d.ts",
       "moduleId": "gamepush.core.socials",
       "namespace": "gamepush.core.socials",
-      "generated": "generated/gamepush.core.socials.d.ts",
       "apiDoc": "api-doc/gamepush.core.socials.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/socials.lua"]
     },
@@ -614,7 +559,6 @@
       "authored": "fixtures/authored/gamepush.core.multiplayer.d.ts",
       "moduleId": "gamepush.core.multiplayer",
       "namespace": "gamepush.core.multiplayer",
-      "generated": "generated/gamepush.core.multiplayer.d.ts",
       "apiDoc": "api-doc/gamepush.core.multiplayer.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/multiplayer.lua"]
     },
@@ -625,7 +569,6 @@
       "authored": "fixtures/authored/gamepush.core.events.d.ts",
       "moduleId": "gamepush.core.events",
       "namespace": "gamepush.core.events",
-      "generated": "generated/gamepush.core.events.d.ts",
       "apiDoc": "api-doc/gamepush.core.events.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/events.lua"]
     },
@@ -636,7 +579,6 @@
       "authored": "fixtures/authored/gamepush.core.triggers.d.ts",
       "moduleId": "gamepush.core.triggers",
       "namespace": "gamepush.core.triggers",
-      "generated": "generated/gamepush.core.triggers.d.ts",
       "apiDoc": "api-doc/gamepush.core.triggers.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/triggers.lua"]
     },
@@ -647,7 +589,6 @@
       "authored": "fixtures/authored/gamepush.core.schedulers.d.ts",
       "moduleId": "gamepush.core.schedulers",
       "namespace": "gamepush.core.schedulers",
-      "generated": "generated/gamepush.core.schedulers.d.ts",
       "apiDoc": "api-doc/gamepush.core.schedulers.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/schedulers.lua"]
     },
@@ -658,7 +599,6 @@
       "authored": "fixtures/authored/gamepush.core.feedbacks.d.ts",
       "moduleId": "gamepush.core.feedbacks",
       "namespace": "gamepush.core.feedbacks",
-      "generated": "generated/gamepush.core.feedbacks.d.ts",
       "apiDoc": "api-doc/gamepush.core.feedbacks.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/feedbacks.lua"]
     },
@@ -669,7 +609,6 @@
       "authored": "fixtures/authored/gamepush.core.reactions.d.ts",
       "moduleId": "gamepush.core.reactions",
       "namespace": "gamepush.core.reactions",
-      "generated": "generated/gamepush.core.reactions.d.ts",
       "apiDoc": "api-doc/gamepush.core.reactions.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/reactions.lua"]
     },
@@ -680,7 +619,6 @@
       "authored": "fixtures/authored/gamepush.core.app.d.ts",
       "moduleId": "gamepush.core.app",
       "namespace": "gamepush.core.app",
-      "generated": "generated/gamepush.core.app.d.ts",
       "apiDoc": "api-doc/gamepush.core.app.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/app.lua"]
     },
@@ -691,7 +629,6 @@
       "authored": "fixtures/authored/gamepush.core.platform.d.ts",
       "moduleId": "gamepush.core.platform",
       "namespace": "gamepush.core.platform",
-      "generated": "generated/gamepush.core.platform.d.ts",
       "apiDoc": "api-doc/gamepush.core.platform.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/platform.lua"]
     },
@@ -702,7 +639,6 @@
       "authored": "fixtures/authored/gamepush.core.analytics.d.ts",
       "moduleId": "gamepush.core.analytics",
       "namespace": "gamepush.core.analytics",
-      "generated": "generated/gamepush.core.analytics.d.ts",
       "apiDoc": "api-doc/gamepush.core.analytics.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/analytics.lua"]
     },
@@ -713,7 +649,6 @@
       "authored": "fixtures/authored/gamepush.core.documents.d.ts",
       "moduleId": "gamepush.core.documents",
       "namespace": "gamepush.core.documents",
-      "generated": "generated/gamepush.core.documents.d.ts",
       "apiDoc": "api-doc/gamepush.core.documents.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/documents.lua"]
     },
@@ -724,7 +659,6 @@
       "authored": "fixtures/authored/gamepush.core.experiments.d.ts",
       "moduleId": "gamepush.core.experiments",
       "namespace": "gamepush.core.experiments",
-      "generated": "generated/gamepush.core.experiments.d.ts",
       "apiDoc": "api-doc/gamepush.core.experiments.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/experiments.lua"]
     },
@@ -735,7 +669,6 @@
       "authored": "fixtures/authored/gamepush.core.files.d.ts",
       "moduleId": "gamepush.core.files",
       "namespace": "gamepush.core.files",
-      "generated": "generated/gamepush.core.files.d.ts",
       "apiDoc": "api-doc/gamepush.core.files.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/files.lua"]
     },
@@ -746,7 +679,6 @@
       "authored": "fixtures/authored/gamepush.core.fullscreen.d.ts",
       "moduleId": "gamepush.core.fullscreen",
       "namespace": "gamepush.core.fullscreen",
-      "generated": "generated/gamepush.core.fullscreen.d.ts",
       "apiDoc": "api-doc/gamepush.core.fullscreen.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/fullscreen.lua"]
     },
@@ -757,7 +689,6 @@
       "authored": "fixtures/authored/gamepush.core.games_collections.d.ts",
       "moduleId": "gamepush.core.games_collections",
       "namespace": "gamepush.core.games_collections",
-      "generated": "generated/gamepush.core.games_collections.d.ts",
       "apiDoc": "api-doc/gamepush.core.games_collections.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/games_collections.lua"]
     },
@@ -768,7 +699,6 @@
       "authored": "fixtures/authored/gamepush.core.images.d.ts",
       "moduleId": "gamepush.core.images",
       "namespace": "gamepush.core.images",
-      "generated": "generated/gamepush.core.images.d.ts",
       "apiDoc": "api-doc/gamepush.core.images.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/images.lua"]
     },
@@ -779,7 +709,6 @@
       "authored": "fixtures/authored/gamepush.core.logger.d.ts",
       "moduleId": "gamepush.core.logger",
       "namespace": "gamepush.core.logger",
-      "generated": "generated/gamepush.core.logger.d.ts",
       "apiDoc": "api-doc/gamepush.core.logger.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/logger.lua"]
     },
@@ -790,7 +719,6 @@
       "authored": "fixtures/authored/gamepush.core.segments.d.ts",
       "moduleId": "gamepush.core.segments",
       "namespace": "gamepush.core.segments",
-      "generated": "generated/gamepush.core.segments.d.ts",
       "apiDoc": "api-doc/gamepush.core.segments.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/segments.lua"]
     },
@@ -801,7 +729,6 @@
       "authored": "fixtures/authored/gamepush.core.sounds.d.ts",
       "moduleId": "gamepush.core.sounds",
       "namespace": "gamepush.core.sounds",
-      "generated": "generated/gamepush.core.sounds.d.ts",
       "apiDoc": "api-doc/gamepush.core.sounds.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/sounds.lua"]
     },
@@ -812,7 +739,6 @@
       "authored": "fixtures/authored/gamepush.core.windows.d.ts",
       "moduleId": "gamepush.core.windows",
       "namespace": "gamepush.core.windows",
-      "generated": "generated/gamepush.core.windows.d.ts",
       "apiDoc": "api-doc/gamepush.core.windows.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/core/windows.lua"]
     },
@@ -823,7 +749,6 @@
       "authored": "fixtures/authored/gamepush.gamepush.d.ts",
       "moduleId": "gamepush.gamepush",
       "namespace": "gamepush",
-      "generated": "generated/gamepush.d.ts",
       "apiDoc": "api-doc/gamepush.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-gamepush/gamepush/gamepush.lua"]
     },
@@ -834,7 +759,6 @@
       "authored": "fixtures/authored/colyseus.sdk.d.ts",
       "moduleId": "colyseus.sdk",
       "namespace": "colyseus",
-      "generated": "generated/colyseus.d.ts",
       "apiDoc": "api-doc/colyseus.json",
       "upstreamLua": ["fixtures/upstream-lua/colyseus-defold/colyseus/sdk.lua"]
     },
@@ -845,7 +769,6 @@
       "authored": "fixtures/authored/ads_wrapper.ads_networks.admob.d.ts",
       "moduleId": "ads_wrapper.ads_networks.admob",
       "namespace": "ads_wrapper.ads_networks.admob",
-      "generated": "generated/ads_wrapper.ads_networks.admob.d.ts",
       "apiDoc": "api-doc/ads_wrapper.ads_networks.admob.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-ads-wrapper/ads_wrapper/ads_networks/admob.lua"]
     },
@@ -856,7 +779,6 @@
       "authored": "fixtures/authored/printer.printer.d.ts",
       "moduleId": "printer.printer",
       "namespace": "printer",
-      "generated": "generated/printer.d.ts",
       "apiDoc": "api-doc/printer.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-printer/printer/printer.lua"]
     },
@@ -867,7 +789,6 @@
       "authored": "fixtures/authored/ink.story.d.ts",
       "moduleId": "ink.story",
       "namespace": "ink",
-      "generated": "generated/ink.d.ts",
       "apiDoc": "api-doc/ink.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-ink/ink/story.lua"]
     },
@@ -878,7 +799,6 @@
       "authored": "fixtures/authored/light_and_shadows.light_and_shadows.d.ts",
       "moduleId": "light_and_shadows.light_and_shadows",
       "namespace": "light_and_shadows.light_and_shadows",
-      "generated": "generated/light_and_shadows.light_and_shadows.d.ts",
       "apiDoc": "api-doc/light_and_shadows.light_and_shadows.json",
       "upstreamLua": [
         "fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/light_and_shadows.lua"
@@ -891,7 +811,6 @@
       "authored": "fixtures/authored/light_and_shadows.light.d.ts",
       "moduleId": "light_and_shadows.light",
       "namespace": "light_and_shadows.light",
-      "generated": "generated/light_and_shadows.light.d.ts",
       "apiDoc": "api-doc/light_and_shadows.light.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/light.lua"]
     },
@@ -902,7 +821,6 @@
       "authored": "fixtures/authored/light_and_shadows.constants.d.ts",
       "moduleId": "light_and_shadows.constants",
       "namespace": "light_and_shadows.constants",
-      "generated": "generated/light_and_shadows.constants.d.ts",
       "apiDoc": "api-doc/light_and_shadows.constants.json",
       "upstreamLua": [
         "fixtures/upstream-lua/defold-light-and-shadows/light_and_shadows/constants.lua"
@@ -915,7 +833,6 @@
       "authored": "fixtures/authored/flow.color.d.ts",
       "moduleId": "flow.color",
       "namespace": "flow.color",
-      "generated": "generated/flow.color.d.ts",
       "apiDoc": "api-doc/flow.color.json",
       "upstreamLua": ["fixtures/upstream-lua/flow/color.lua"]
     },
@@ -926,7 +843,6 @@
       "authored": "fixtures/authored/flow.bottom_sheet.d.ts",
       "moduleId": "flow.bottom_sheet",
       "namespace": "flow.bottom_sheet",
-      "generated": "generated/flow.bottom_sheet.d.ts",
       "apiDoc": "api-doc/flow.bottom_sheet.json",
       "upstreamLua": ["fixtures/upstream-lua/flow/bottom_sheet/init.lua"]
     },
@@ -937,7 +853,6 @@
       "authored": "fixtures/authored/flow.flow.d.ts",
       "moduleId": "flow.flow",
       "namespace": "flow.flow",
-      "generated": "generated/flow.flow.d.ts",
       "apiDoc": "api-doc/flow.flow.json",
       "upstreamLua": ["fixtures/upstream-lua/flow/flow.lua"]
     },
@@ -948,7 +863,6 @@
       "authored": "fixtures/authored/pointer_lock.pointer.d.ts",
       "moduleId": "pointer_lock.pointer",
       "namespace": "pointer_lock",
-      "generated": "generated/pointer_lock.d.ts",
       "apiDoc": "api-doc/pointer_lock.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-pointer-lock/pointer_lock/pointer.lua"]
     },
@@ -959,7 +873,6 @@
       "authored": "fixtures/authored/operator.operator.d.ts",
       "moduleId": "operator.operator",
       "namespace": "operator.operator",
-      "generated": "generated/operator.operator.d.ts",
       "apiDoc": "api-doc/operator.operator.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-operator/operator/operator.lua"]
     },
@@ -970,7 +883,6 @@
       "authored": "fixtures/authored/operator.bezier.d.ts",
       "moduleId": "operator.bezier",
       "namespace": "operator.bezier",
-      "generated": "generated/operator.bezier.d.ts",
       "apiDoc": "api-doc/operator.bezier.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-operator/operator/bezier.lua"]
     },
@@ -981,7 +893,6 @@
       "authored": "fixtures/authored/defarmy.defarmy.d.ts",
       "moduleId": "defarmy.defarmy",
       "namespace": "defarmy",
-      "generated": "generated/defarmy.d.ts",
       "apiDoc": "api-doc/defarmy.json",
       "upstreamLua": ["fixtures/upstream-lua/defarmy/defarmy/defarmy.lua"]
     },
@@ -992,7 +903,6 @@
       "authored": "fixtures/authored/defgraph.defgraph.d.ts",
       "moduleId": "defgraph.defgraph",
       "namespace": "defgraph",
-      "generated": "generated/defgraph.d.ts",
       "apiDoc": "api-doc/defgraph.json",
       "upstreamLua": ["fixtures/upstream-lua/defgraph/defgraph/defgraph.lua"]
     },
@@ -1003,7 +913,6 @@
       "authored": "fixtures/authored/def_behavior_tree.behavior_tree.d.ts",
       "moduleId": "def_behavior_tree.behavior_tree",
       "namespace": "def_behavior_tree",
-      "generated": "generated/def_behavior_tree.d.ts",
       "apiDoc": "api-doc/def_behavior_tree.json",
       "upstreamLua": [
         "fixtures/upstream-lua/def-behavior-tree/def_behavior_tree/behavior_tree.lua"
@@ -1017,7 +926,6 @@
       "authored": "fixtures/authored/dissolve_fx.dissolve_fx.d.ts",
       "moduleId": "dissolve_fx.dissolve_fx",
       "namespace": "dissolve_fx",
-      "generated": "generated/dissolve_fx.d.ts",
       "apiDoc": "api-doc/dissolve_fx.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-dissolve-fx/dissolve_fx/dissolve_fx.lua"]
     },
@@ -1028,7 +936,6 @@
       "authored": "fixtures/authored/illumination.illumination.d.ts",
       "moduleId": "illumination.illumination",
       "namespace": "illumination",
-      "generated": "generated/illumination.d.ts",
       "apiDoc": "api-doc/illumination.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-illumination/illumination/illumination.lua"]
     },
@@ -1039,7 +946,6 @@
       "authored": "fixtures/authored/water.water.d.ts",
       "moduleId": "water.water",
       "namespace": "water",
-      "generated": "generated/water.d.ts",
       "apiDoc": "api-doc/water.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-stylized-water-shader/water/water.lua"]
     },
@@ -1050,7 +956,6 @@
       "authored": "fixtures/authored/wrap.node.d.ts",
       "moduleId": "wrap.node",
       "namespace": "wrap.node",
-      "generated": "generated/wrap.node.d.ts",
       "apiDoc": "api-doc/wrap.node.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/node.lua"],
       "instanceType": "Node"
@@ -1062,7 +967,6 @@
       "authored": "fixtures/authored/wrap.node_list.d.ts",
       "moduleId": "wrap.node_list",
       "namespace": "wrap.node_list",
-      "generated": "generated/wrap.node_list.d.ts",
       "apiDoc": "api-doc/wrap.node_list.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/node_list.lua"]
     },
@@ -1073,7 +977,6 @@
       "authored": "fixtures/authored/wrap.go.d.ts",
       "moduleId": "wrap.go",
       "namespace": "wrap.go",
-      "generated": "generated/wrap.go.d.ts",
       "apiDoc": "api-doc/wrap.go.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/go.lua"],
       "instanceType": "Go"
@@ -1085,7 +988,6 @@
       "authored": "fixtures/authored/wrap.go_list.d.ts",
       "moduleId": "wrap.go_list",
       "namespace": "wrap.go_list",
-      "generated": "generated/wrap.go_list.d.ts",
       "apiDoc": "api-doc/wrap.go_list.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/go_list.lua"]
     },
@@ -1096,7 +998,6 @@
       "authored": "fixtures/authored/wrap.gui_object.d.ts",
       "moduleId": "wrap.gui_object",
       "namespace": "wrap.gui_object",
-      "generated": "generated/wrap.gui_object.d.ts",
       "apiDoc": "api-doc/wrap.gui_object.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/gui_object.lua"],
       "instanceType": "GuiObject"
@@ -1108,7 +1009,6 @@
       "authored": "fixtures/authored/wrap.gui_scene.d.ts",
       "moduleId": "wrap.gui_scene",
       "namespace": "wrap.gui_scene",
-      "generated": "generated/wrap.gui_scene.d.ts",
       "apiDoc": "api-doc/wrap.gui_scene.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/gui_scene.lua"],
       "instanceType": "GuiScene"
@@ -1120,7 +1020,6 @@
       "authored": "fixtures/authored/wrap.gui_applet.d.ts",
       "moduleId": "wrap.gui_applet",
       "namespace": "wrap.gui_applet",
-      "generated": "generated/wrap.gui_applet.d.ts",
       "apiDoc": "api-doc/wrap.gui_applet.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/gui_applet.lua"],
       "instanceType": "GuiApplet"
@@ -1132,7 +1031,6 @@
       "authored": "fixtures/authored/wrap.wrap.d.ts",
       "moduleId": "wrap.wrap",
       "namespace": "wrap.wrap",
-      "generated": "generated/wrap.wrap.d.ts",
       "apiDoc": "api-doc/wrap.wrap.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-wrap/wrap/wrap.lua"]
     },
@@ -1143,7 +1041,6 @@
       "authored": "fixtures/authored/minit.minit.d.ts",
       "moduleId": "minit.minit",
       "namespace": "minit",
-      "generated": "generated/minit.d.ts",
       "apiDoc": "api-doc/minit.json",
       "upstreamLua": ["fixtures/upstream-lua/minit-defold/minit/minit.lua"]
     },
@@ -1154,7 +1051,6 @@
       "authored": "fixtures/authored/asobi.client.d.ts",
       "moduleId": "asobi.client",
       "namespace": "asobi.client",
-      "generated": "generated/asobi.client.d.ts",
       "apiDoc": "api-doc/asobi.client.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/client.lua"]
     },
@@ -1165,7 +1061,6 @@
       "authored": "fixtures/authored/asobi.realtime.d.ts",
       "moduleId": "asobi.realtime",
       "namespace": "asobi.realtime",
-      "generated": "generated/asobi.realtime.d.ts",
       "apiDoc": "api-doc/asobi.realtime.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/realtime.lua"],
       "instanceType": "Realtime"
@@ -1177,7 +1072,6 @@
       "authored": "fixtures/authored/asobi.device.d.ts",
       "moduleId": "asobi.device",
       "namespace": "asobi.device",
-      "generated": "generated/asobi.device.d.ts",
       "apiDoc": "api-doc/asobi.device.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/device.lua"]
     },
@@ -1188,7 +1082,6 @@
       "authored": "fixtures/authored/asobi.http.d.ts",
       "moduleId": "asobi.http",
       "namespace": "asobi.http",
-      "generated": "generated/asobi.http.d.ts",
       "apiDoc": "api-doc/asobi.http.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/http.lua"]
     },
@@ -1199,7 +1092,6 @@
       "authored": "fixtures/authored/asobi.api.auth.d.ts",
       "moduleId": "asobi.api.auth",
       "namespace": "asobi.api.auth",
-      "generated": "generated/asobi.api.auth.d.ts",
       "apiDoc": "api-doc/asobi.api.auth.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/auth.lua"]
     },
@@ -1210,7 +1102,6 @@
       "authored": "fixtures/authored/asobi.api.dm.d.ts",
       "moduleId": "asobi.api.dm",
       "namespace": "asobi.api.dm",
-      "generated": "generated/asobi.api.dm.d.ts",
       "apiDoc": "api-doc/asobi.api.dm.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/dm.lua"]
     },
@@ -1221,7 +1112,6 @@
       "authored": "fixtures/authored/asobi.api.economy.d.ts",
       "moduleId": "asobi.api.economy",
       "namespace": "asobi.api.economy",
-      "generated": "generated/asobi.api.economy.d.ts",
       "apiDoc": "api-doc/asobi.api.economy.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/economy.lua"]
     },
@@ -1232,7 +1122,6 @@
       "authored": "fixtures/authored/asobi.api.iap.d.ts",
       "moduleId": "asobi.api.iap",
       "namespace": "asobi.api.iap",
-      "generated": "generated/asobi.api.iap.d.ts",
       "apiDoc": "api-doc/asobi.api.iap.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/iap.lua"]
     },
@@ -1243,7 +1132,6 @@
       "authored": "fixtures/authored/asobi.api.inventory.d.ts",
       "moduleId": "asobi.api.inventory",
       "namespace": "asobi.api.inventory",
-      "generated": "generated/asobi.api.inventory.d.ts",
       "apiDoc": "api-doc/asobi.api.inventory.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/inventory.lua"]
     },
@@ -1254,7 +1142,6 @@
       "authored": "fixtures/authored/asobi.api.leaderboards.d.ts",
       "moduleId": "asobi.api.leaderboards",
       "namespace": "asobi.api.leaderboards",
-      "generated": "generated/asobi.api.leaderboards.d.ts",
       "apiDoc": "api-doc/asobi.api.leaderboards.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/leaderboards.lua"]
     },
@@ -1265,7 +1152,6 @@
       "authored": "fixtures/authored/asobi.api.matches.d.ts",
       "moduleId": "asobi.api.matches",
       "namespace": "asobi.api.matches",
-      "generated": "generated/asobi.api.matches.d.ts",
       "apiDoc": "api-doc/asobi.api.matches.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/matches.lua"]
     },
@@ -1276,7 +1162,6 @@
       "authored": "fixtures/authored/asobi.api.matchmaker.d.ts",
       "moduleId": "asobi.api.matchmaker",
       "namespace": "asobi.api.matchmaker",
-      "generated": "generated/asobi.api.matchmaker.d.ts",
       "apiDoc": "api-doc/asobi.api.matchmaker.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/matchmaker.lua"]
     },
@@ -1287,7 +1172,6 @@
       "authored": "fixtures/authored/asobi.api.notifications.d.ts",
       "moduleId": "asobi.api.notifications",
       "namespace": "asobi.api.notifications",
-      "generated": "generated/asobi.api.notifications.d.ts",
       "apiDoc": "api-doc/asobi.api.notifications.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/notifications.lua"]
     },
@@ -1298,7 +1182,6 @@
       "authored": "fixtures/authored/asobi.api.players.d.ts",
       "moduleId": "asobi.api.players",
       "namespace": "asobi.api.players",
-      "generated": "generated/asobi.api.players.d.ts",
       "apiDoc": "api-doc/asobi.api.players.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/players.lua"]
     },
@@ -1309,7 +1192,6 @@
       "authored": "fixtures/authored/asobi.api.social.d.ts",
       "moduleId": "asobi.api.social",
       "namespace": "asobi.api.social",
-      "generated": "generated/asobi.api.social.d.ts",
       "apiDoc": "api-doc/asobi.api.social.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/social.lua"]
     },
@@ -1320,7 +1202,6 @@
       "authored": "fixtures/authored/asobi.api.storage.d.ts",
       "moduleId": "asobi.api.storage",
       "namespace": "asobi.api.storage",
-      "generated": "generated/asobi.api.storage.d.ts",
       "apiDoc": "api-doc/asobi.api.storage.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/storage.lua"]
     },
@@ -1331,7 +1212,6 @@
       "authored": "fixtures/authored/asobi.api.tournaments.d.ts",
       "moduleId": "asobi.api.tournaments",
       "namespace": "asobi.api.tournaments",
-      "generated": "generated/asobi.api.tournaments.d.ts",
       "apiDoc": "api-doc/asobi.api.tournaments.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/tournaments.lua"]
     },
@@ -1342,7 +1222,6 @@
       "authored": "fixtures/authored/asobi.api.votes.d.ts",
       "moduleId": "asobi.api.votes",
       "namespace": "asobi.api.votes",
-      "generated": "generated/asobi.api.votes.d.ts",
       "apiDoc": "api-doc/asobi.api.votes.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/votes.lua"]
     },
@@ -1353,7 +1232,6 @@
       "authored": "fixtures/authored/asobi.api.worlds.d.ts",
       "moduleId": "asobi.api.worlds",
       "namespace": "asobi.api.worlds",
-      "generated": "generated/asobi.api.worlds.d.ts",
       "apiDoc": "api-doc/asobi.api.worlds.json",
       "upstreamLua": ["fixtures/upstream-lua/asobi-defold/asobi/api/worlds.lua"]
     }

@@ -170,7 +170,6 @@ interface LibraryTargetRow {
   module: string;
   path: string;
   fixture: string;
-  generated: string;
 }
 
 /** The two `library-targets.json` fields a severed library's record supplies
@@ -214,7 +213,7 @@ function targetFor(moduleId: string, severed?: SeveredSource): LibraryTargetRow 
   const row = targets.find((t) => t.module === moduleId);
   if (row !== undefined) return row;
   if (severed !== undefined) {
-    return { module: moduleId, ...severed, generated: `generated/${moduleId}.d.ts` };
+    return { module: moduleId, ...severed };
   }
   throw new Error(`no library-targets row for ${moduleId}`);
 }
@@ -232,7 +231,6 @@ function candidateTarget(record: LibraryRecord, decision: ModuleDecision): Markd
     markdown: decision.markdown ?? "",
     moduleId,
     namespace: moduleId,
-    generated: `generated/${moduleId}.d.ts`,
     apiDoc: `api-doc/${moduleId}.json`,
     fidelity: `fidelity/${moduleId}.json`,
     decision: decision.decision,
@@ -435,26 +433,18 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       ).targets.map((t) => t.module);
       const authoredTargets = readAuthoredTargets(PACKAGE_ROOT);
 
-      // Whether the ts-defold golden dies with the row depends on the namespace
-      // the fork publishes under, so the assertion cannot be unconditional. A
-      // library that collapses to a bare namespace (yagames' `yagames.yagames` ->
-      // `yagames`) leaves `generated/<moduleId>.d.ts` behind as a dead path; a
-      // dotted severance that keeps `namespace === moduleId` (defold-input's ten)
-      // overwrites that exact golden in place, so requiring its absence would
-      // demand deleting the file the fork still emits.
+      // The fork prints under its `moduleId` whichever namespace it publishes
+      // under: a library that collapses to a bare namespace (yagames'
+      // `yagames.yagames` -> `yagames`) and a dotted severance that keeps
+      // `namespace === moduleId` (defold-input's ten) both reach the corpus
+      // through the authored lane alone.
       test.each(
         noGo,
-      )(`${record.prefix}$module dropped its ts-defold row, and its dotted golden per its registered namespace`, async (decision) => {
+      )(`${record.prefix}$module dropped its ts-defold row, and the authored lane prints it`, async (decision) => {
         const moduleId = `${record.prefix}${decision.module}`;
         expect(shippedModules).not.toContain(moduleId);
-        const target = authoredTargets.find((t) => t.moduleId === moduleId);
-        const dottedGolden = `generated/${moduleId}.d.ts`;
-        if (target?.namespace === moduleId) {
-          expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
-          expect(target.generated).toBe(dottedGolden);
-        } else {
-          expect(existsSync(join(PACKAGE_ROOT, dottedGolden))).toBe(false);
-        }
+        expect(authoredTargets.some((t) => t.moduleId === moduleId)).toBe(true);
+        expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       });
 
       test("no no-go module is registered as a markdown target", () => {
@@ -1901,15 +1891,13 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
     expect(new Set(fixtures).size).toBe(3);
   });
 
-  // `namespace === moduleId` for all three, so the dotted golden the fork emits is
-  // the one the ts-defold row already published — the arm of the severance
-  // assertion that requires the file to survive rather than die with its row.
-  test("each fork registers and re-emits the dotted golden it published before", async () => {
+  // `namespace === moduleId` for all three, so the fork publishes under the
+  // dotted name the ts-defold row already published.
+  test("each fork registers and prints under the dotted name it published before", async () => {
     for (const mod of ["color", "richtext", "tags"]) {
       const moduleId = `richtext.${mod}`;
       const target = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.moduleId === moduleId);
       expect(target?.namespace).toBe(moduleId);
-      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
       expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
     }
   });
@@ -2267,7 +2255,6 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     expect(targetFor("gooey.gooey", severed).fixture).toBe("fixtures/authored/gooey.gooey.d.ts");
     expect(existsSync(join(PACKAGE_ROOT, targetFor("gooey.gooey", severed).fixture))).toBe(true);
     expect(classificationModule("gooey.gooey", severed)).toBe("gooey.gooey");
-    expect(existsSync(join(PACKAGE_ROOT, "generated/gooey.gooey.d.ts"))).toBe(false);
   });
 });
 
@@ -2621,7 +2608,6 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
       true,
     );
     expect(classificationModule("platypus.platypus", severed)).toBe("platypus.platypus");
-    expect(existsSync(join(PACKAGE_ROOT, "generated/platypus.platypus.d.ts"))).toBe(false);
   });
 
   // The PRD's standing rule for the forked instance surface: upstream's 19
@@ -2894,7 +2880,6 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
     expect(existsSync(join(PACKAGE_ROOT, targetFor("bzAnim.bzLibrary", severed).fixture))).toBe(
       true,
     );
-    expect(existsSync(join(PACKAGE_ROOT, "generated/bzAnim.bzLibrary.d.ts"))).toBe(false);
   });
 
   // The one target in the corpus whose classification name is not its moduleId,
