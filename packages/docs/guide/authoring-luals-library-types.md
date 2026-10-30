@@ -337,7 +337,7 @@ the page description.
 ## 5. Validate, then commit
 
 The `dts-declaration-validity` gate type-checks every module `resolve` prints under
-`skipLibCheck: false`, together with the `test-d/` usage proofs, so a new target is
+`skipLibCheck: false`, together with each library folder's `usage/` examples, so a new target is
 compiled as soon as its `recipe.json` lists it. Fidelity parity is gated per
 namespace. Run the library tests:
 

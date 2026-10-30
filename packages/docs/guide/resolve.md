@@ -179,6 +179,12 @@ pins instead and warns:
 printed <module> from the <ref> sources pinned in library data, not from <url>: <reason>
 ```
 
+Library data sits in folders named by the first CLI version that reads them,
+and a CLI reads the highest one at or below its own version, so it keeps reading
+the layout it was built for after newer data lands beside it. To try library
+data you are editing, point `resolve` at a local directory of such folders with
+[`--library-data <dir>`](#flags).
+
 When library data itself cannot be read, `resolve` keeps the library
 declarations it printed earlier, and their tsconfig entry, as long as the same
 toolchain version wrote them and none of their files has changed.
@@ -331,6 +337,11 @@ normally.
 - `--frozen` — treat the committed pin set as a lockfile: exit non-zero on drift
   or on a pin in the retired `sha256:` form (so CI gates the upgrade) and write
   nothing. See [Pinning extension versions](#pinning-extension-versions).
+- `--library-data <dir>` — read library data from `<dir>` instead of the
+  installed `@defold-typescript/library-types`. `<dir>` holds version-named data
+  folders and is chosen from by the same rule, and a relative `<dir>` resolves
+  against the working directory. `resolve` exits non-zero when `<dir>` holds no
+  folder for this CLI version.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,

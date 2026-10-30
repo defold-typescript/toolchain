@@ -240,8 +240,8 @@ skip it.
   standing after that pin later moves also reds. The guard deliberately does not
   check that the record is *complete*, nor its `changedMembers` and `notes`,
   which are prose.
-- **The compile-only surface proofs.** The `.test-d.ts` files under
-  `packages/library-types/test-d` assert the emitted `.d.ts` by assigning from it, and pin the *absence* of
+- **The compile-only surface proofs.** The `.test-d.ts` files under each
+  library folder's `usage/` assert the emitted `.d.ts` by assigning from it, and pin the *absence* of
   non-public members with `@ts-expect-error`. A bump breaks them in both
   directions: a member that left the public surface fails the assignment, and a
   member upstream stopped marking `@field private` or `@local` makes its
