@@ -41,6 +41,13 @@ export interface PrintedLibrary {
   readonly contents: string;
 }
 
+const LIBRARY_ENTRYPOINT = "index.d.ts";
+
+function libraryEntrypoint(modules: readonly string[]): string {
+  const imports = modules.map((module) => `import "./${module}";`).join("\n");
+  return `${imports}\n\nexport {};\n`;
+}
+
 function printedDigest(printed: readonly PrintedLibrary[]): string {
   const hash = createHash("sha256");
   for (const { module, contents } of printed) {
@@ -76,18 +83,27 @@ function isReusableLibrarySurface(
   }
 }
 
-// The surface a previous run materialized, re-read from disk: its stamp's modules
-// and their files must still hash to the digest it recorded.
+// The surface a previous run materialized, re-read from disk: its stamp's `types`
+// must name the entrypoint, that entrypoint must still be the barrel the writer
+// emits for the stamp's modules, and their files must still hash to the digest it
+// recorded.
 function retainedLibrarySurface(
   absDir: string,
   relDir: string,
 ): MaterializeVendoredLibrariesResult {
   try {
     const stamp = JSON.parse(readFileSync(path.join(absDir, "package.json"), "utf8")) as {
+      types?: unknown;
       modules?: unknown;
     };
-    const { modules } = stamp;
+    const { types, modules } = stamp;
     if (!Array.isArray(modules) || !modules.every((module) => typeof module === "string")) {
+      return { materializedDir: null, modules: [] };
+    }
+    if (
+      types !== LIBRARY_ENTRYPOINT ||
+      readFileSync(path.join(absDir, LIBRARY_ENTRYPOINT), "utf8") !== libraryEntrypoint(modules)
+    ) {
       return { materializedDir: null, modules: [] };
     }
     const printed = modules.map((module) => ({
@@ -157,7 +173,7 @@ export function materializeVendoredLibraries(
 
   const wanted = new Set(modules.map((module) => `${module}.d.ts`));
   for (const existing of readdirSync(absDir)) {
-    if (existing.endsWith(".d.ts") && existing !== "index.d.ts" && !wanted.has(existing)) {
+    if (existing.endsWith(".d.ts") && existing !== LIBRARY_ENTRYPOINT && !wanted.has(existing)) {
       rmSync(path.join(absDir, existing));
     }
   }
@@ -166,8 +182,7 @@ export function materializeVendoredLibraries(
     writeFileSync(path.join(absDir, `${module}.d.ts`), contents);
   }
 
-  const imports = modules.map((module) => `import "./${module}";`).join("\n");
-  writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
+  writeFileSync(path.join(absDir, LIBRARY_ENTRYPOINT), libraryEntrypoint(modules));
 
   // Last write of the function: the stamp only ever vouches for a surface whose
   // every other file has already landed. `modules` and `digest` record the
@@ -177,7 +192,7 @@ export function materializeVendoredLibraries(
     `${formatJsonLikeBiome({
       name: "@defold-typescript/materialized-libraries",
       version: cliVersion,
-      types: "index.d.ts",
+      types: LIBRARY_ENTRYPOINT,
       modules,
       digest,
     })}\n`,
