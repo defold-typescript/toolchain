@@ -210,11 +210,11 @@ Refreshing an authored pin means:
 None of these are visible from the sync scripts, and each of them reds `ci` if you
 skip it.
 
-- **The committed floor.** `fidelity-floor.json` (fetch-lane targets) and
-  `authored-parity-floor.json` (authored targets) hold a per-slot measurement the
-  gates assert against. New upstream surface changes the measurement, so the floor
-  entry moves with the pin — raise it with `bun run fidelity:floor` rather than
-  hand-editing.
+- **The committed floor.** `floors` in the library's `library.json` holds a
+  per-module measurement the gates and `library check` assert against. New upstream
+  surface changes the measurement, so the floor entry moves with the pin — raise a
+  generated module's ratio with `bun run fidelity:floor`, and edit a fork's or native
+  extension's `{ callable, field }` pair by hand.
 - **The vendored-snapshot digest.** `authored-parity-floor.test.ts` pins the
   SHA-256 of every file under each forked library's `source/upstream/`, because the committed
   parity numbers were measured against exactly those bytes. Re-vendoring changes

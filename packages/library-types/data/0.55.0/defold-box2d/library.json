@@ -73,5 +73,11 @@
       "class": "native-0",
       "evidence": "fixture.cpp:149 and shape/chain_shape.cpp:81 pass it to Box2D's RayCast unchanged; the circle, polygon and edge shapes pass 0"
     }
+  },
+  "floors": {
+    "box2d": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

@@ -322,10 +322,12 @@ and the second charge would describe an upstream name as invented. No measured
 target produces the shape today, the one that did having since been corrected, so
 the rule stands on the classifier rather than on any corpus case.
 
-`authored-parity-floor.json` ratchets **both** axes per artifact, each against its
-own floor: either may rise, neither may fall. A regeneration that lowers either
-number reds the gate, and a floor entry that names only one axis is rejected at
-parse time rather than leaving the other unratcheted.
+`floors` in the library's `library.json` ratchets **both** axes per module, keyed
+by `moduleId` as `{ "callable": 1, "field": 1 }`, each against its own floor: either
+may rise, neither may fall. A regeneration that lowers either number reds the gate, a
+floor entry that names only one axis is rejected when the library is read rather than
+leaving the other unratcheted, and [`library check`](./library.md#coverage-floors)
+measures the fork against the same floors.
 
 **A non-empty `missingMembers`, `phantomMembers`, `arityMismatches`,
 `missingFields`, or `phantomFields` is a correction to make in the fork — never a
@@ -369,8 +371,8 @@ for consumers, declaring it would widen the published surface with a function
 nobody should call — so the fork is right to omit it, and the report should say so
 rather than charge it as a gap.
 
-`authored-parity-exceptions.json` is where that is recorded. It maps each namespace
-to an array of `{ name, kind, reason }` entries sorted by `name`. An excepted member
+`parityExceptions` in the library's `library.json` is where that is recorded. It maps
+each fork's `namespace` to an array of `{ name, kind, reason }` entries sorted by `name`. An excepted member
 counts as **correct**, is absent from `missingMembers`, and appears in the artifact's
 `parityExceptions` carrying its reason — so a target that reached `1` by
 justification reads differently from one that reached `1` by declaring everything.

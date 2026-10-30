@@ -8,5 +8,11 @@
     "declaration": "fork/directories.d.ts",
     "upstreamSource": "source/upstream/directories/src/extension_linux.cpp",
     "upstreamHeaders": ["source/upstream/directories/src/extension.h"]
+  },
+  "floors": {
+    "directories": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

@@ -7413,15 +7413,16 @@ bunx @defold-typescript/cli library check --data path/to/library-data
 
 #### What `library check` runs
 
-It runs three checks in order, and a check that fails stops the ones after it:
+It runs four checks in order, and a check that fails stops the ones after it:
 
 1. **Data** — the reader that `resolve` uses accepts the data folder: each
    library folder is named for its repo, has a `reviewed.json`, and lists
    complete entries; every module id and native namespace is a plain name
    (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`), as is
    every LuaLS `namespace`; every path an entry names stays inside its library
-   folder, and every `apiDoc` stays under `api-doc/`; and no module is named by
-   two libraries.
+   folder, and every `apiDoc` stays under `api-doc/`; every `floors` and
+   `parityExceptions` key names a module its library measures; and no module is
+   named by two libraries.
 2. **Print** — every module the data serves prints, as `resolve` prints it
    when a project's dependency archive is not at hand.
 3. **Compile** — one TypeScript program compiles every printed declaration,
@@ -7431,12 +7432,42 @@ It runs three checks in order, and a check that fails stops the ones after it:
    declaration that passes also compiles in a scaffolded project. A declared
    file TypeScript cannot load, because it is missing or is not a TypeScript
    file, is a problem of its library.
+4. **Floor** — every module's coverage, measured from the library's own files,
+   meets its floor in the library's `library.json`. See
+   [Coverage floors](#coverage-floors).
 
 The engine types (`@defold-typescript/types`) and the language extensions
 (`@typescript-to-lua/language-extensions`) that a usage example references come
 from this CLI's own install. `library check` never reads a `node_modules` beside
 the data, and any other bare import in the data resolves only to a module the
 printed declarations declare.
+
+#### Coverage floors
+
+Each library's `library.json` holds its floors in `floors`, keyed by module id,
+and by namespace for a native extension:
+
+```json
+{
+  "repo": "https://github.com/owner/mylib",
+  "floors": {
+    "mylib.generated": 0.98,
+    "mylib.fork": { "callable": 1, "field": 1 }
+  }
+}
+```
+
+| Module | Floor | What is measured |
+| ------ | ----- | ---------------- |
+| Generated from LuaLS annotations or a `.script_api` file | a ratio | The share of its type tokens that map to a known type. |
+| A fork that lists `upstreamLua` | `{ "callable", "field" }` | Its upstream members declared at the right parameter count, and its upstream fields declared. The library's `parityExceptions` count as declared. See [Surface parity](./authoring-forked-library-types.md#4-surface-parity-against-the-upstream-lua). |
+| A native extension | `{ "callable", "field" }` | The functions, methods and constants its C++ registers that its declaration names. A wrong module name or parameter count is a problem at any coverage. |
+
+A module below its floor is a problem, and so is a module with no floor or one
+that cannot be measured. A fork that records a `parityVerdict` vendors no
+upstream to measure against, so it takes no floor. `library check` measures
+every module afresh, so it reads no committed report and nothing outside
+`--data`.
 
 #### `--data`
 
@@ -7479,12 +7510,13 @@ flow: compile: usage/flow-usage.test-d.ts:12 Property 'erase' does not exist on 
 defold-typescript library check: error: 1 problem in /path/to/library-data/0.55.0
 ```
 
-`<library>` is the library folder. `<check>` is `data`, `print` or `compile`.
+`<library>` is the library folder. `<check>` is `data`, `print`, `compile` or
+`floor`.
 A `compile` message starts with the file and line, relative to the library
 folder: a fork or a native declaration names its own file, a usage example its
 `usage/` path, and a module printed from upstream sources
 `printed/<module>.d.ts`. A `print` message starts with the module that did not
-print.
+print, and a `floor` message with the module it measured.
 
 #### JSON output
 
@@ -8074,9 +8106,9 @@ copy-pasteable config.
 `bun scripts/ratchet-backlog.ts <source>` lists every library-types coverage
 floor still sitting below its `1.0` target, one slot per line, for either
 `fidelity-floor` or `authored-parity-floor`. A line reads
-`<manifest>.json: <key> <axis> <value> (target 1)` — the manifest it came from,
+`<source>.json: <key> <axis> <value> (target 1)` — the floor source it came from,
 the artifact whose floor is short, which axis is short, and by how much. No
-output means that manifest is entirely at target.
+output means that source is entirely at target.
 
 A below-target floor is **backlog, not a gate failure**. Both floor gates assert
 `coverage >= floor`, so a floor parked under `1.0` keeps passing by
@@ -8087,7 +8119,7 @@ Coverage dropping below its floor still reds the gate immediately, as before.
 Run the probe as part of any planning pass that asks "what is left to do?".
 Because the gates stay green, an agent that consults only CI concludes there is
 nothing outstanding; the probe is the signal that says otherwise. Treat a
-printed line as work to schedule, and no output as that manifest being done.
+printed line as work to schedule, and no output as that source being done.
 
 #### Verify against the real API surface
 
@@ -11462,11 +11494,13 @@ spaced `--- @deprecated` is treated as prose, as it is for every other tag.
   have applied shows up as an unexpected entry — fix `typeRenames` and re-emit.
 - **`undocumentedMembers`** — members with no annotation at all; informational.
 
-Each report's `coverage` is pinned by a committed floor in
-`packages/library-types/fidelity-floor.json`, so a regeneration that lowers it fails
-the suite instead of quietly rewriting the report. The floor covers every emitting
-lane — LuaLS, markdown, script_api, and openapi — not just this one. Regenerating
-never touches the floors; when you genuinely improve coverage, lock the win in with
+Each report's `coverage` is pinned by a committed floor, the module's entry in `floors`
+in the library's `library.json`, so a regeneration that lowers it fails the suite
+instead of quietly rewriting the report, and
+[`library check`](./library.md#coverage-floors) measures the module against the same
+floor. The markdown and openapi evaluation lanes, which have no library folder, keep
+theirs in `packages/library-types/fidelity-floor.json`. Regenerating never touches the
+floors; when you genuinely improve coverage, lock the win in with
 
 ```sh
 bun run --cwd packages/library-types fidelity:floor
@@ -11513,10 +11547,9 @@ bun run --cwd packages/library-types fidelity:floor  # from the repo root
 A brand-new library has no floor entry yet, and the floor gate fails until it gets
 one — `fidelity:floor` seeds it at the coverage you just measured.
 
-Commit the library's `library.json`, `reviewed.json` and `recipe.json`, the
-snapshotted `source/<namespace>/`, both
-emitted artifacts (`fidelity/`, `api-doc/`), and the updated
-`fidelity-floor.json` together. Every commit
+Commit the library's `library.json` with its floor, `reviewed.json` and
+`recipe.json`, the snapshotted `source/<namespace>/`, and both
+emitted artifacts (`fidelity/`, `api-doc/`) together. Every commit
 must also add a [changelog](./changelog.md) bullet — a pre-commit gate enforces it.
 
 #### Worked example — druid
@@ -11928,10 +11961,12 @@ and the second charge would describe an upstream name as invented. No measured
 target produces the shape today, the one that did having since been corrected, so
 the rule stands on the classifier rather than on any corpus case.
 
-`authored-parity-floor.json` ratchets **both** axes per artifact, each against its
-own floor: either may rise, neither may fall. A regeneration that lowers either
-number reds the gate, and a floor entry that names only one axis is rejected at
-parse time rather than leaving the other unratcheted.
+`floors` in the library's `library.json` ratchets **both** axes per module, keyed
+by `moduleId` as `{ "callable": 1, "field": 1 }`, each against its own floor: either
+may rise, neither may fall. A regeneration that lowers either number reds the gate, a
+floor entry that names only one axis is rejected when the library is read rather than
+leaving the other unratcheted, and [`library check`](./library.md#coverage-floors)
+measures the fork against the same floors.
 
 **A non-empty `missingMembers`, `phantomMembers`, `arityMismatches`,
 `missingFields`, or `phantomFields` is a correction to make in the fork — never a
@@ -11975,8 +12010,8 @@ for consumers, declaring it would widen the published surface with a function
 nobody should call — so the fork is right to omit it, and the report should say so
 rather than charge it as a gap.
 
-`authored-parity-exceptions.json` is where that is recorded. It maps each namespace
-to an array of `{ name, kind, reason }` entries sorted by `name`. An excepted member
+`parityExceptions` in the library's `library.json` is where that is recorded. It maps
+each fork's `namespace` to an array of `{ name, kind, reason }` entries sorted by `name`. An excepted member
 counts as **correct**, is absent from `missingMembers`, and appears in the artifact's
 `parityExceptions` carrying its reason — so a target that reached `1` by
 justification reads differently from one that reached `1` by declaring everything.
@@ -12530,11 +12565,11 @@ Refreshing an authored pin means:
 None of these are visible from the sync scripts, and each of them reds `ci` if you
 skip it.
 
-- **The committed floor.** `fidelity-floor.json` (fetch-lane targets) and
-  `authored-parity-floor.json` (authored targets) hold a per-slot measurement the
-  gates assert against. New upstream surface changes the measurement, so the floor
-  entry moves with the pin — raise it with `bun run fidelity:floor` rather than
-  hand-editing.
+- **The committed floor.** `floors` in the library's `library.json` holds a
+  per-module measurement the gates and `library check` assert against. New upstream
+  surface changes the measurement, so the floor entry moves with the pin — raise a
+  generated module's ratio with `bun run fidelity:floor`, and edit a fork's or native
+  extension's `{ callable, field }` pair by hand.
 - **The vendored-snapshot digest.** `authored-parity-floor.test.ts` pins the
   SHA-256 of every file under each forked library's `source/upstream/`, because the committed
   parity numbers were measured against exactly those bytes. Re-vendoring changes

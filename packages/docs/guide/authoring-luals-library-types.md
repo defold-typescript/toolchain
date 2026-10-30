@@ -302,11 +302,13 @@ spaced `--- @deprecated` is treated as prose, as it is for every other tag.
   have applied shows up as an unexpected entry — fix `typeRenames` and re-emit.
 - **`undocumentedMembers`** — members with no annotation at all; informational.
 
-Each report's `coverage` is pinned by a committed floor in
-`packages/library-types/fidelity-floor.json`, so a regeneration that lowers it fails
-the suite instead of quietly rewriting the report. The floor covers every emitting
-lane — LuaLS, markdown, script_api, and openapi — not just this one. Regenerating
-never touches the floors; when you genuinely improve coverage, lock the win in with
+Each report's `coverage` is pinned by a committed floor, the module's entry in `floors`
+in the library's `library.json`, so a regeneration that lowers it fails the suite
+instead of quietly rewriting the report, and
+[`library check`](./library.md#coverage-floors) measures the module against the same
+floor. The markdown and openapi evaluation lanes, which have no library folder, keep
+theirs in `packages/library-types/fidelity-floor.json`. Regenerating never touches the
+floors; when you genuinely improve coverage, lock the win in with
 
 ```sh
 bun run --cwd packages/library-types fidelity:floor
@@ -353,10 +355,9 @@ bun run --cwd packages/library-types fidelity:floor  # from the repo root
 A brand-new library has no floor entry yet, and the floor gate fails until it gets
 one — `fidelity:floor` seeds it at the coverage you just measured.
 
-Commit the library's `library.json`, `reviewed.json` and `recipe.json`, the
-snapshotted `source/<namespace>/`, both
-emitted artifacts (`fidelity/`, `api-doc/`), and the updated
-`fidelity-floor.json` together. Every commit
+Commit the library's `library.json` with its floor, `reviewed.json` and
+`recipe.json`, the snapshotted `source/<namespace>/`, and both
+emitted artifacts (`fidelity/`, `api-doc/`) together. Every commit
 must also add a [changelog](./changelog.md) bullet — a pre-commit gate enforces it.
 
 ## Worked example — druid

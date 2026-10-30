@@ -73,5 +73,39 @@
       "class": "not-a-position",
       "evidence": "an array of targets: `pairs` walks `property`, and each property animates to the entry of `to` at its own key, so no value in it addresses anything"
     }
+  },
+  "floors": {
+    "wrap.go": {
+      "callable": 1,
+      "field": 1
+    },
+    "wrap.go_list": {
+      "callable": 1,
+      "field": 1
+    },
+    "wrap.gui_applet": {
+      "callable": 1,
+      "field": 1
+    },
+    "wrap.gui_object": {
+      "callable": 1,
+      "field": 1
+    },
+    "wrap.gui_scene": {
+      "callable": 1,
+      "field": 1
+    },
+    "wrap.node": {
+      "callable": 1,
+      "field": 1
+    },
+    "wrap.node_list": {
+      "callable": 1,
+      "field": 1
+    },
+    "wrap.wrap": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

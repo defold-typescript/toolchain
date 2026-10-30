@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/persist.json",
       "upstreamLua": ["source/upstream/persist/persist.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "persist.persist": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

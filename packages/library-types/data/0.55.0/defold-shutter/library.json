@@ -10,5 +10,11 @@
       "apiDoc": "api-doc/shutter.json",
       "upstreamLua": ["source/upstream/shutter/shutter.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "shutter.shutter": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

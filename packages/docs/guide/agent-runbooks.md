@@ -275,9 +275,9 @@ copy-pasteable config.
 `bun scripts/ratchet-backlog.ts <source>` lists every library-types coverage
 floor still sitting below its `1.0` target, one slot per line, for either
 `fidelity-floor` or `authored-parity-floor`. A line reads
-`<manifest>.json: <key> <axis> <value> (target 1)` — the manifest it came from,
+`<source>.json: <key> <axis> <value> (target 1)` — the floor source it came from,
 the artifact whose floor is short, which axis is short, and by how much. No
-output means that manifest is entirely at target.
+output means that source is entirely at target.
 
 A below-target floor is **backlog, not a gate failure**. Both floor gates assert
 `coverage >= floor`, so a floor parked under `1.0` keeps passing by
@@ -288,7 +288,7 @@ Coverage dropping below its floor still reds the gate immediately, as before.
 Run the probe as part of any planning pass that asks "what is left to do?".
 Because the gates stay green, an agent that consults only CI concludes there is
 nothing outstanding; the probe is the signal that says otherwise. Treat a
-printed line as work to schedule, and no output as that manifest being done.
+printed line as work to schedule, and no output as that source being done.
 
 ## Verify against the real API surface
 

@@ -6,5 +6,8 @@
       "class": "native-1",
       "evidence": "story.lua:choose asserts index within 1 .. #choices"
     }
+  },
+  "floors": {
+    "narrator.narrator": 1
   }
 }

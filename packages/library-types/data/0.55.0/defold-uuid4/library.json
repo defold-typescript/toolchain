@@ -6,5 +6,11 @@
     "manifestDir": "uuid4",
     "declaration": "fork/uuid4.d.ts",
     "upstreamSource": "source/upstream/uuid4/src/extension.cpp"
+  },
+  "floors": {
+    "uuid4": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

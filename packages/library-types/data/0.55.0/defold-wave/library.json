@@ -18,5 +18,11 @@
         "reason": "src/wave.cpp:191 reads a third `time` argument with `luaL_checknumber(L, 3)`, so the runtime raises without it; the two-parameter stub at annotations.lua:84 omits it, and the declaration follows the C++."
       }
     ]
+  },
+  "floors": {
+    "wave": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

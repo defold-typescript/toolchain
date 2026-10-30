@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/minit.json",
       "upstreamLua": ["source/upstream/minit/minit.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "minit.minit": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

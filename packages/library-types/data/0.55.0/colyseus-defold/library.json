@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/colyseus.json",
       "upstreamLua": ["source/upstream/colyseus/sdk.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "colyseus.sdk": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

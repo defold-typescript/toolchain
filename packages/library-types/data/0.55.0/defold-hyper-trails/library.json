@@ -18,5 +18,8 @@
       "class": "native-1",
       "evidence": "trail_maker.lua:shrink_width reads data_arr[i] for i = data_from up to the trail's point count"
     }
+  },
+  "floors": {
+    "hyper_trails.trail_maker": 1
   }
 }

@@ -6,5 +6,11 @@
     "manifestDir": "uptime",
     "declaration": "fork/uptime.d.ts",
     "upstreamSource": "source/upstream/uptime/src/UpTime.cpp"
+  },
+  "floors": {
+    "uptime": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

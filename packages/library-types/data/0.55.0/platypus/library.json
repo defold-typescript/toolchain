@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/platypus.json",
       "upstreamLua": ["source/upstream/platypus/platypus.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "platypus.platypus": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

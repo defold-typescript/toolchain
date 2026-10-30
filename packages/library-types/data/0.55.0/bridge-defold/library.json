@@ -6,5 +6,8 @@
       "class": "native-0",
       "evidence": "Returns the 0-based index of the reward the player is currently on"
     }
+  },
+  "floors": {
+    "bridge.bridge": 1
   }
 }

@@ -9,5 +9,27 @@
       "apiDoc": "api-doc/ads_wrapper.ads_networks.admob.json",
       "upstreamLua": ["source/upstream/ads_wrapper/ads_networks/admob.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "ads_wrapper.ads_networks.admob": {
+      "callable": 1,
+      "field": 1
+    },
+    "ads_wrapper.ads_networks.admob_legacy": 1,
+    "ads_wrapper.ads_networks.applovin_max": 1,
+    "ads_wrapper.ads_networks.game_distribution": 1,
+    "ads_wrapper.ads_networks.ironsource": 1,
+    "ads_wrapper.ads_networks.poki": 1,
+    "ads_wrapper.ads_networks.poki_legacy": 1,
+    "ads_wrapper.ads_networks.portalsdk": 1,
+    "ads_wrapper.ads_networks.test": 1,
+    "ads_wrapper.ads_networks.unity": 1,
+    "ads_wrapper.ads_networks.vk": 1,
+    "ads_wrapper.ads_networks.yandex": 1,
+    "ads_wrapper.ads_networks.yandex_mobile": 1,
+    "ads_wrapper.ads_wrapper": 1,
+    "ads_wrapper.events": 1,
+    "ads_wrapper.platform": 1,
+    "ads_wrapper.queue": 1
+  }
 }

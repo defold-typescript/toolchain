@@ -19,5 +19,11 @@
       "class": "native-1",
       "evidence": "defgraph.lua:move_internal_initialize sets it to 1, the path's first point, or to 0 while the game object stands still, and move_player reads path[path_index]"
     }
+  },
+  "floors": {
+    "defgraph.defgraph": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

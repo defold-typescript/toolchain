@@ -136,5 +136,83 @@
       "apiDoc": "api-doc/asobi.api.worlds.json",
       "upstreamLua": ["source/upstream/asobi/api/worlds.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "asobi.api.auth": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.dm": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.economy": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.iap": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.inventory": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.leaderboards": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.matches": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.matchmaker": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.notifications": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.players": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.social": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.storage": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.tournaments": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.votes": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.api.worlds": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.client": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.device": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.http": {
+      "callable": 1,
+      "field": 1
+    },
+    "asobi.realtime": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

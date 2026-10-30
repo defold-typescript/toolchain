@@ -1,4 +1,7 @@
 {
   "repo": "https://github.com/paweljarosz/pigeon",
-  "license": "MIT"
+  "license": "MIT",
+  "floors": {
+    "pigeon.pigeon": 1
+  }
 }

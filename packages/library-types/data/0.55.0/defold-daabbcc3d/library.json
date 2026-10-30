@@ -13,5 +13,11 @@
         "reason": "src/extension.cpp:779 reads the flag as `lua_toboolean(L, 2)`, so the runtime takes it as the second argument; the one-parameter stub at annotation.lua:149 would put it first, and the declaration follows the C++."
       }
     ]
+  },
+  "floors": {
+    "daabbcc3d": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

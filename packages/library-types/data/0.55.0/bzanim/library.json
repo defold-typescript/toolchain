@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/bzAnim.json",
       "upstreamLua": ["source/upstream/bzAnim/bzLibrary.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "bzAnim.bzLibrary": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

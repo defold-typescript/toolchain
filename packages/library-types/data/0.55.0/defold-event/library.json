@@ -6,5 +6,8 @@
       "class": "not-a-position",
       "evidence": "both unnamed returns share this key: a boolean, then the 1-based callback index (event.lua:is_subscribed); no note fits both"
     }
+  },
+  "floors": {
+    "event.event": 1
   }
 }
