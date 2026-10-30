@@ -163,6 +163,7 @@ const USAGE = `Usage: defold-typescript <${[...COMMAND_NAMES].join("|")}> [path]
 Run \`defold-typescript --help\` for per-command usage and flags.
 `;
 const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle|status|run> [path]\n";
+const LIBRARY_USAGE = "Usage: defold-typescript library <check> --data <dir>\n";
 
 /** How long `build` waits for an editor to identify itself before giving up on it. */
 const EDITOR_PROBE_TIMEOUT_MS = 2000;
@@ -337,6 +338,7 @@ function dispatchCommand(
   const commandToken = head.find((a) => COMMAND_NAMES.has(a) || a === "update");
   const isReload = commandToken === "reload";
   const isResolve = commandToken === "resolve";
+  const isLibrary = commandToken === "library";
 
   const force = head.includes("--force");
   const suppressInstallReminder = head.includes("--suppress-install-reminder");
@@ -371,9 +373,12 @@ function dispatchCommand(
   );
   const libraryDataGiven =
     isResolve && head.some((a) => a === "--library-data" || a.startsWith("--library-data="));
-  const { value: libraryDataFlag, rest: nonFlagArgs } = libraryDataGiven
+  const { value: libraryDataFlag, rest: afterLibraryDataArgs } = libraryDataGiven
     ? parseValueFlag(afterTemplateArgs, "library-data")
     : { value: undefined, rest: afterTemplateArgs };
+  const { value: dataFlag, rest: nonFlagArgs } = isLibrary
+    ? parseValueFlag(afterLibraryDataArgs, "data")
+    : { value: undefined, rest: afterLibraryDataArgs };
   const positional = nonFlagArgs.filter(
     (a) =>
       a !== "--json" &&
@@ -470,6 +475,7 @@ function dispatchCommand(
               "defold-typescript resolve: --library-data needs a directory; use: defold-typescript resolve [path] --library-data <dir>",
           }
         : libraryDataFromFlag(
+            "resolve: --library-data",
             libraryDataFlag,
             process.cwd(),
             internals?.cliVersion ?? readCliVersion(),
@@ -628,6 +634,88 @@ function dispatchCommand(
       } catch (err) {
         return fail(err instanceof Error ? err.message : String(err));
       }
+    })();
+  }
+
+  if (command === "library") {
+    // Runs on a directory of library data, not a Defold project: no target resolution.
+    const subcommand = rest[0];
+    if (subcommand !== "check") {
+      io.stderr.write(LIBRARY_USAGE);
+      return 1;
+    }
+    return (async () => {
+      const fail = (message: string, fields: { dataFolder?: string } = {}): number => {
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "library",
+              error: message.replace(/^defold-typescript /, ""),
+              subcommand,
+              ...fields,
+            }),
+          );
+        } else {
+          writeError(message);
+        }
+        return 1;
+      };
+      const selected =
+        dataFlag === undefined || dataFlag === "" || dataFlag.startsWith("-")
+          ? {
+              error:
+                "defold-typescript library check: --data needs a directory; use: defold-typescript library check --data <dir>",
+            }
+          : libraryDataFromFlag(
+              "library check: --data",
+              dataFlag,
+              process.cwd(),
+              internals?.cliVersion ?? readCliVersion(),
+            );
+      if ("error" in selected) return fail(selected.error);
+      const dataFolder = selected.dir;
+      const { checkLibraryData } = await import("./library/library-check");
+      let problems: Awaited<ReturnType<typeof checkLibraryData>>;
+      try {
+        problems = await checkLibraryData(dataFolder);
+      } catch (err) {
+        return fail(
+          `defold-typescript library check: ${err instanceof Error ? err.message : String(err)}`,
+          { dataFolder },
+        );
+      }
+      if (problems.length > 0) {
+        const summary = `library check: ${problems.length} problem${problems.length === 1 ? "" : "s"} in ${dataFolder}`;
+        if (json) {
+          io.stdout.write(
+            renderResult({ command: "library", error: summary, subcommand, dataFolder, problems }),
+          );
+        } else {
+          for (const { library, check, message } of problems) {
+            io.stdout.write(`${library}: ${check}: ${message}\n`);
+          }
+          writeError(`defold-typescript ${summary}`);
+        }
+        return 1;
+      }
+      const { readLibraryData } = await import("./library/library-data");
+      const libraryCount = readLibraryData(dataFolder).length;
+      if (json) {
+        io.stdout.write(
+          renderResult({
+            command: "library",
+            subcommand,
+            dataFolder,
+            libraryCount,
+            problems,
+          }),
+        );
+      } else {
+        io.stdout.write(
+          `defold-typescript library check: ${dataFolder}: ${libraryCount} ${libraryCount === 1 ? "library" : "libraries"}, no problems\n`,
+        );
+      }
+      return 0;
     })();
   }
 

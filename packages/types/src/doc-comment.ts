@@ -479,6 +479,7 @@ export function renderDocComment(parts: DocCommentParts): string[] {
     lines.push(" * ```");
   }
 
-  lines.push(" */");
-  return lines;
+  // Doc text holding `*/` would end the comment and leak the rest into the
+  // declaration.
+  return [...lines.map((line) => line.replaceAll("*/", "*\\/")), " */"];
 }

@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { libraryDataFromFlag } from "./data-folder-flag";
 
+const RESOLVE = "resolve: --library-data";
+
 describe("libraryDataFromFlag", () => {
   let base: string;
   let empty: string;
@@ -22,25 +24,38 @@ describe("libraryDataFromFlag", () => {
   });
 
   test("reads the highest data folder at or below the CLI version", () => {
-    expect(libraryDataFromFlag(base, "/unused", "0.1.5")).toEqual({ dir: join(base, "0.1.0") });
+    expect(libraryDataFromFlag(RESOLVE, base, "/unused", "0.1.5")).toEqual({
+      dir: join(base, "0.1.0"),
+    });
   });
 
   test("an unversioned CLI reads the newest data folder", () => {
-    expect(libraryDataFromFlag(base, "/unused", "0.0.0")).toEqual({ dir: join(base, "0.2.0") });
+    expect(libraryDataFromFlag(RESOLVE, base, "/unused", "0.0.0")).toEqual({
+      dir: join(base, "0.2.0"),
+    });
   });
 
   test("a relative directory resolves against cwd", () => {
-    expect(libraryDataFromFlag(basename(base), dirname(base), "0.1.5")).toEqual({
+    expect(libraryDataFromFlag(RESOLVE, basename(base), dirname(base), "0.1.5")).toEqual({
       dir: join(base, "0.1.0"),
     });
   });
 
   test("a directory with no data folder for the version is an error naming both", () => {
-    const result = libraryDataFromFlag(empty, "/unused", "0.1.5");
+    const result = libraryDataFromFlag(RESOLVE, empty, "/unused", "0.1.5");
 
     expect("error" in result).toBe(true);
     const { error } = result as { error: string };
     expect(error).toContain(empty);
     expect(error).toContain("0.1.5");
+  });
+
+  test("the error names the flag it is given", () => {
+    expect(libraryDataFromFlag(RESOLVE, empty, "/unused", "0.1.5")).toEqual({
+      error: `defold-typescript resolve: --library-data ${empty} holds no data folder for CLI version 0.1.5`,
+    });
+    expect(libraryDataFromFlag("library check: --data", empty, "/unused", "0.1.5")).toEqual({
+      error: `defold-typescript library check: --data ${empty} holds no data folder for CLI version 0.1.5`,
+    });
   });
 });
