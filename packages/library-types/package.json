@@ -16,6 +16,7 @@
   },
   "files": [
     "data",
+    "!data/*/*/usage",
     "api-doc",
     "library-targets.json",
     "library-classification.json",

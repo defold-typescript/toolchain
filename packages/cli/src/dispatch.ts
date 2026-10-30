@@ -12,6 +12,7 @@ import {
   runBobCommand,
 } from "./bob-command";
 import { readCliVersion } from "./cli-version";
+import { libraryDataFromFlag } from "./data-folder-flag";
 import {
   type DefoldChannel,
   type DefoldTargetSource,
@@ -335,6 +336,7 @@ function dispatchCommand(
   // and has no help entry, so it is not in `COMMAND_NAMES`.
   const commandToken = head.find((a) => COMMAND_NAMES.has(a) || a === "update");
   const isReload = commandToken === "reload";
+  const isResolve = commandToken === "resolve";
 
   const force = head.includes("--force");
   const suppressInstallReminder = head.includes("--suppress-install-reminder");
@@ -363,10 +365,15 @@ function dispatchCommand(
     afterJavaArgs,
     "build-server",
   );
-  const { value: templateFlag, rest: nonFlagArgs } = parseValueFlag(
+  const { value: templateFlag, rest: afterTemplateArgs } = parseValueFlag(
     afterBuildServerArgs,
     "template",
   );
+  const libraryDataGiven =
+    isResolve && head.some((a) => a === "--library-data" || a.startsWith("--library-data="));
+  const { value: libraryDataFlag, rest: nonFlagArgs } = libraryDataGiven
+    ? parseValueFlag(afterTemplateArgs, "library-data")
+    : { value: undefined, rest: afterTemplateArgs };
   const positional = nonFlagArgs.filter(
     (a) =>
       a !== "--json" &&
@@ -450,6 +457,32 @@ function dispatchCommand(
       writeError(message);
     }
     return 1;
+  }
+
+  // Settled before the target resolves, so a directory with no usable data
+  // folder fails before anything is fetched.
+  let libraryDataDir: string | undefined;
+  if (libraryDataGiven) {
+    const selected =
+      libraryDataFlag === undefined || libraryDataFlag === "" || libraryDataFlag.startsWith("-")
+        ? {
+            error:
+              "defold-typescript resolve: --library-data needs a directory; use: defold-typescript resolve [path] --library-data <dir>",
+          }
+        : libraryDataFromFlag(
+            libraryDataFlag,
+            process.cwd(),
+            internals?.cliVersion ?? readCliVersion(),
+          );
+    if ("error" in selected) {
+      if (json) {
+        io.stdout.write(renderResult({ command: "resolve", error: selected.error }));
+      } else {
+        writeError(selected.error);
+      }
+      return 1;
+    }
+    libraryDataDir = selected.dir;
   }
 
   // Every lane that asks the running editor waits under one deadline, so the
@@ -1570,7 +1603,11 @@ function dispatchCommand(
           ...(seams?.download ? { download: seams.download } : {}),
           ...(seams?.readZip ? { readZip: seams.readZip } : {}),
           ...(seams?.libraryRegistry ? { libraryRegistry: seams.libraryRegistry } : {}),
-          ...(seams?.libraryDataDir !== undefined ? { libraryDataDir: seams.libraryDataDir } : {}),
+          ...(libraryDataDir !== undefined
+            ? { libraryDataDir }
+            : seams?.libraryDataDir !== undefined
+              ? { libraryDataDir: seams.libraryDataDir }
+              : {}),
           ...(frozen ? { freeze: true } : {}),
         });
         for (const warning of result.warnings) {

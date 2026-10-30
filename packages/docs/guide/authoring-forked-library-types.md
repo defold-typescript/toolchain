@@ -501,9 +501,10 @@ generated lanes use:
   `namespace` === `moduleId` it is instead overwritten in place by the command
   above. The namespace now resolves to
   your authored artifacts.
-- Add a `test-d/<library>-usage.test-d.ts` compile proof, moving any hand-written
-  block for the old dotted specifier into it. The `dts-declaration-validity` gate
-  type-checks it under `skipLibCheck: false` together with every module `resolve`
+- Add a `usage/<library>-usage.test-d.ts` compile proof in the library folder,
+  moving any hand-written block for the old dotted specifier into it. The
+  `dts-declaration-validity` gate type-checks every `.ts` file under a library's
+  `usage/` under `skipLibCheck: false` together with every module `resolve`
   prints, the fork among them.
 
 The ts-defold registry is now empty: every library it once carried has severed,
@@ -523,7 +524,7 @@ bun run typecheck                  # from the repo root
 ```
 
 Commit the library's `library.json` and `reviewed.json`, the vendored
-`fork/<moduleId>.d.ts`, and the
+`fork/<moduleId>.d.ts`, its `usage/` examples, and the
 emitted `api-doc/` artifact together, along with the config and
 manifest deletions. Every commit must also add a [changelog](./changelog.md)
 bullet — a pre-commit gate enforces it.
