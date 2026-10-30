@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import * as ts from "typescript";
 import {
   examplesHtmlToMarkdown,
   htmlToCodeText,
@@ -407,6 +408,34 @@ describe("renderDocComment", () => {
     });
     expect(lua).toContain(" * ```lua");
     expect(lua).not.toContain(" * ```ts");
+  });
+
+  test("doc text holding */ stays inside the comment on every line", () => {
+    const lines = renderDocComment({
+      summary: "Matches flow/**/*.lua.\nCloses */ early",
+      deprecated: "use b */ instead",
+      params: [{ name: "glob", doc: "a glob like a/**/b" }],
+      returns: "a */ result",
+      examples: [{ text: "-- x */ y", lang: "lua", prose: "Note */ this." }],
+    });
+    const text = `${lines.join("\n")}\ndeclare const x: number;\n`;
+    const source = ts.createSourceFile("doc.d.ts", text, ts.ScriptTarget.ESNext, true);
+
+    expect(source.statements.map((statement) => ts.isVariableStatement(statement))).toEqual([true]);
+    const comments = ts.getLeadingCommentRanges(text, 0) ?? [];
+    expect(comments.length).toBe(1);
+    const comment = text.slice(comments[0]?.pos, comments[0]?.end);
+    for (const fragment of [
+      "flow/**\\/*.lua",
+      "Closes *\\/ early",
+      "use b *\\/ instead",
+      "a/**\\/b",
+      "a *\\/ result",
+      "-- x *\\/ y",
+      "Note *\\/ this.",
+    ]) {
+      expect(comment).toContain(fragment);
+    }
   });
 
   test("an empty examples list renders no @example block", () => {

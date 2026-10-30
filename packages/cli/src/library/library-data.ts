@@ -7,7 +7,7 @@
 // and tool projects its targets from it.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, sep } from "node:path";
+import { join, posix, sep, win32 } from "node:path";
 import type { IndexSlotClassification } from "@defold-typescript/types";
 import type { AuthoredTarget } from "./sync-authored-types";
 import type { RefKind } from "./sync-defold-extensions";
@@ -115,7 +115,11 @@ export function libraryFile(repo: string): string {
 function readJson<T>(dataDir: string, path: string): T {
   const file = join(dataDir, path);
   if (!existsSync(file)) throw new Error(`library data holds no ${path}`);
-  return JSON.parse(readFileSync(file, "utf8")) as T;
+  try {
+    return JSON.parse(readFileSync(file, "utf8")) as T;
+  } catch (error) {
+    throw new Error(`${path}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 function requireFields(
@@ -132,7 +136,51 @@ function requireFields(
 }
 
 function entryLabel(entry: { moduleId?: unknown }, index: number): string {
-  return typeof entry.moduleId === "string" ? entry.moduleId : `index ${index}`;
+  return typeof entry.moduleId === "string" && entry.moduleId !== ""
+    ? entry.moduleId
+    : `index ${index}`;
+}
+
+// A module id names the `.d.ts` written into `.defold-types/`, so it must stay a
+// single file name there.
+const MODULE_ID = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/;
+
+function requireModuleId(file: string, label: string, field: string, value: unknown): string {
+  if (typeof value !== "string" || !MODULE_ID.test(value)) {
+    throw new Error(
+      `${file}: entry ${label} has ${field} ${JSON.stringify(value)}, which is not a module id.`,
+    );
+  }
+  return value;
+}
+
+function isAbsolutePath(path: string): boolean {
+  return posix.isAbsolute(path) || win32.isAbsolute(path);
+}
+
+// A path the library folder holds, joined to the folder the way every reader
+// joins it.
+function underLibrary(file: string, dir: string, label: string, path: string): string {
+  const joined = `${dir}/${path}`;
+  // A path the entry leaves out is a missing field, not one outside the folder;
+  // the lane that reads it reports it.
+  if (typeof path !== "string") return joined;
+  if (
+    isAbsolutePath(path) ||
+    !posix.normalize(joined.replaceAll("\\", "/")).startsWith(`${dir}/`)
+  ) {
+    throw new Error(`${file}: entry ${label} names ${path}, which is outside ${dir}/.`);
+  }
+  return joined;
+}
+
+// A source glob is matched against the upstream tree, whose paths are relative
+// and never step up, so a glob that is absolute or steps up selects nothing.
+function requireSourceGlob(file: string, dir: string, label: string, glob: string): string {
+  if (isAbsolutePath(glob) || glob.replaceAll("\\", "/").split("/").includes("..")) {
+    throw new Error(`${file}: entry ${label} has source glob ${glob}, which is outside ${dir}/.`);
+  }
+  return glob;
 }
 
 const LUALS_REQUIRED = ["sourceGlobs", "moduleId", "namespace"] as const;
@@ -183,11 +231,14 @@ function lualsTargets(dir: string, pin: Pin, entries: Partial<LualsEntry>[]): Lu
   return entries.map((entry, index) => {
     const label = entryLabel(entry, index);
     requireFields(file, entry, label, LUALS_REQUIRED);
+    const sourceDir = underLibrary(file, dir, label, `source/${entry.namespace as string}`);
     return {
       repo: pin.repo,
       ref: pin.ref,
-      sourceGlobs: entry.sourceGlobs as string[],
-      moduleId: entry.moduleId as string,
+      sourceGlobs: (entry.sourceGlobs as string[]).map((glob) =>
+        requireSourceGlob(file, dir, label, glob),
+      ),
+      moduleId: requireModuleId(file, label, "moduleId", entry.moduleId),
       namespace: entry.namespace as string,
       typeRenames: entry.typeRenames ?? {},
       ignore: entry.ignore ?? [],
@@ -196,7 +247,7 @@ function lualsTargets(dir: string, pin: Pin, entries: Partial<LualsEntry>[]): Lu
         ? { annotationOverrides: entry.annotationOverrides }
         : {}),
       ...(entry.externalTypes !== undefined ? { externalTypes: entry.externalTypes } : {}),
-      sourceDir: `${dir}/source/${entry.namespace as string}`,
+      sourceDir,
     };
   });
 }
@@ -221,7 +272,7 @@ function scriptApiTargets(
       }
       return slot;
     });
-    const moduleId = entry.moduleId as string;
+    const moduleId = requireModuleId(file, label, "moduleId", entry.moduleId);
     return {
       repo: pin.repo,
       ref: pin.ref,
@@ -260,13 +311,13 @@ function authoredTargets(dir: string, pin: Pin, entries: Partial<ForkEntry>[]): 
     return {
       repo: pin.repo,
       ref: pin.ref,
-      authored: `${dir}/${entry.authored as string}`,
-      moduleId: entry.moduleId as string,
+      authored: underLibrary(file, dir, label, entry.authored as string),
+      moduleId: requireModuleId(file, label, "moduleId", entry.moduleId),
       namespace: entry.namespace as string,
       apiDoc: entry.apiDoc as string,
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: pin.license ?? "",
-      upstreamLua: upstreamLua.map((path) => `${dir}/${path}`),
+      upstreamLua: upstreamLua.map((path) => underLibrary(file, dir, label, path)),
       ...(entry.instanceType === undefined ? {} : { instanceType: entry.instanceType }),
       ...(entry.parityVerdict === undefined ? {} : { parityVerdict: entry.parityVerdict }),
     };
@@ -279,13 +330,15 @@ function nativeTarget(
   refKind: RefKind | undefined,
   entry: NativeEntry,
 ): NativeTarget {
-  const under = (path: string): string => `${dir}/${path}`;
+  const file = `${dir}/${LIBRARY_FILE}`;
+  const under = (path: string): string => underLibrary(file, dir, "native", path);
   return {
     repo: pin.repo,
     ref: pin.ref,
     ...(refKind === undefined ? {} : { refKind }),
     license: pin.license ?? "",
     ...entry,
+    namespace: requireModuleId(file, "native", "namespace", entry.namespace),
     declaration: under(entry.declaration),
     upstreamSource: under(entry.upstreamSource),
     ...(entry.upstreamHeaders === undefined
@@ -345,25 +398,46 @@ function readLibrary(dataDir: string, dir: string): LibraryData {
   };
 }
 
+/** A refusal of library data, naming the library folder at fault. */
+export class LibraryDataError extends Error {
+  readonly library: string;
+
+  constructor(library: string, message: string) {
+    super(message);
+    this.name = "LibraryDataError";
+    this.library = library;
+  }
+}
+
 /**
  * Every library folder under `dataDir` in folder-name order. Paths the targets
  * name are relative to `dataDir` (`flow/fork/flow.ui.d.ts`); `apiDoc` and
  * `fidelity` stay relative to the library-types package root, where the toolchain
- * writes them. Throws on a folder whose name is not its repo's, on a missing
- * `reviewed.json`, on a malformed entry, and on a module two folders name.
+ * writes them. Throws a `LibraryDataError` on a folder whose name is not its
+ * repo's, on a missing `reviewed.json`, on a malformed entry, on a module id or
+ * path that leaves its folder, and on a module two folders name.
  */
 export function readLibraryData(dataDir: string): LibraryData[] {
   const dirs = readdirSync(dataDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && existsSync(join(dataDir, entry.name, LIBRARY_FILE)))
     .map((entry) => entry.name)
     .sort();
-  const libraries = dirs.map((dir) => readLibrary(dataDir, dir));
+  const libraries = dirs.map((dir) => {
+    try {
+      return readLibrary(dataDir, dir);
+    } catch (error) {
+      throw new LibraryDataError(dir, error instanceof Error ? error.message : String(error));
+    }
+  });
   const owner = new Map<string, string>();
   for (const library of libraries) {
     for (const { moduleId } of [...library.luals, ...library.scriptApi, ...library.authored]) {
       const other = owner.get(moduleId);
       if (other !== undefined && other !== library.dir) {
-        throw new Error(`module ${moduleId} is named by both ${other} and ${library.dir}`);
+        throw new LibraryDataError(
+          library.dir,
+          `module ${moduleId} is named by both ${other} and ${library.dir}`,
+        );
       }
       owner.set(moduleId, library.dir);
     }
