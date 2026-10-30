@@ -177,18 +177,23 @@ function underLibrary(file: string, dir: string, label: string, path: string): s
 export const API_DOC_DIR = "api-doc";
 
 // An API model path is written under the directory `--api-doc-out` names, so it
-// must stay below `api-doc/`.
+// must name a file below `api-doc/`. Returns its one spelling, so each path under
+// `api-doc/` is the path written.
 function requireApiDoc(file: string, label: string, path: unknown): string {
+  const canonical =
+    typeof path === "string" && !isAbsolutePath(path)
+      ? posix.normalize(path.replaceAll("\\", "/"))
+      : undefined;
   if (
-    typeof path !== "string" ||
-    isAbsolutePath(path) ||
-    !posix.normalize(path.replaceAll("\\", "/")).startsWith(`${API_DOC_DIR}/`)
+    canonical === undefined ||
+    !canonical.startsWith(`${API_DOC_DIR}/`) ||
+    canonical.endsWith("/")
   ) {
     throw new Error(
-      `${file}: entry ${label} has apiDoc ${JSON.stringify(path)}, which is outside ${API_DOC_DIR}/.`,
+      `${file}: entry ${label} has apiDoc ${JSON.stringify(path)}, which is not a file under ${API_DOC_DIR}/.`,
     );
   }
-  return path;
+  return canonical;
 }
 
 // A source glob is matched against the upstream tree, whose paths are relative
