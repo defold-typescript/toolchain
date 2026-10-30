@@ -9390,6 +9390,31 @@ describe("dispatch library check", () => {
     return dataDir;
   }
 
+  // One clean fork library per `apiDoc` in `0.1.0`, with the broken `0.2.0` beside it.
+  function writeForkData(apiDocs: string[]): void {
+    const dataDir = path.join(base, "0.1.0");
+    writeLibraryTargets(dataDir, {
+      forks: apiDocs.map((apiDoc, index) => ({
+        repo: `https://github.com/owner/lib${index}`,
+        ref: "1.0.0",
+        authored: "fork/main.d.ts",
+        moduleId: `lib${index}.main`,
+        namespace: `lib${index}.main`,
+        apiDoc,
+        parityVerdict: { reason: "no-module-file", note: "a fixture with no upstream" },
+      })),
+    });
+    apiDocs.forEach((_, index) => {
+      mkdirSync(path.join(dataDir, `lib${index}`, "fork"), { recursive: true });
+      writeFileSync(
+        path.join(dataDir, `lib${index}`, "fork", "main.d.ts"),
+        `declare module 'lib${index}.main' {\n  export function start(): void;\n}\n`,
+      );
+    });
+    mkdirSync(path.join(base, "0.2.0", "broken"), { recursive: true });
+    writeFileSync(path.join(base, "0.2.0", "broken", "library.json"), "{}");
+  }
+
   const run = (args: string[], io: ReturnType<typeof captureStreams>["io"]) =>
     dispatch(["library", ...args], io, { cliVersion: "0.1.5" });
 
@@ -9491,6 +9516,44 @@ describe("dispatch library check", () => {
 
     expect(code).toBe(1);
     expect(readdirSync(outDir)).toEqual([]);
+  });
+
+  test("--api-doc-out keeps a model that steps out and back in under its directory", async () => {
+    writeForkData(["api-doc/../api-doc/page.json"]);
+    const outDir = path.join(base, "out");
+    const { io, out, err } = captureStreams();
+
+    const code = await run(["check", "--data", base, "--api-doc-out", outDir, "--json"], io);
+
+    expect(err()).toBe("");
+    expect(code).toBe(0);
+    expect(readdirSync(outDir)).toEqual(["page.json"]);
+    expect(readdirSync(base).sort()).toEqual(["0.1.0", "0.2.0", "out"]);
+    expect(JSON.parse(out()).written).toEqual([path.join(outDir, "page.json")]);
+  });
+
+  test("--api-doc-out writes nothing when two spellings name one file", async () => {
+    writeForkData(["api-doc/nested/../page.json", "api-doc/page.json"]);
+    const outDir = path.join(base, "out");
+    const { io, err } = captureStreams();
+
+    const code = await run(["check", "--data", base, "--api-doc-out", outDir], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("api-doc path page.json twice");
+    expect(existsSync(outDir)).toBe(false);
+  });
+
+  test("--api-doc-out writes nothing when a file is also a folder", async () => {
+    writeForkData(["api-doc/a.json", "api-doc/a.json/b.json"]);
+    const outDir = path.join(base, "out");
+    const { io, err } = captureStreams();
+
+    const code = await run(["check", "--data", base, "--api-doc-out", outDir], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("a.json as both a file and a folder");
+    expect(existsSync(outDir)).toBe(false);
   });
 
   for (const [what, args, expected] of [

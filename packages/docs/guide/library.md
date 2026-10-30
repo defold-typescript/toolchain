@@ -59,8 +59,9 @@ bunx @defold-typescript/cli library check --data path/to/library-data --api-doc-
 It writes only after every check passes, so a failing run leaves `<dir>` as it
 was. A relative `<dir>` resolves against the working directory, and `<dir>` is
 created if it is missing. Files already in `<dir>` that the run does not write
-stay in place. Each model reads only the data folder, and two entries naming
-the same output file is an error.
+stay in place. Each model reads only the data folder and stays under `<dir>`.
+Entries that name one output file, including paths that differ only by case or a
+file also used as a folder, fail before anything is written.
 
 ## Problems and the exit code
 
