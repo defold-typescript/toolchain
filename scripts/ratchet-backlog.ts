@@ -1,20 +1,18 @@
 /**
  * Lists every library-types floor slot still sitting below its 1.0 target.
  *
- * Both floor manifests are one-sided ratchets — the gates assert
- * `coverage >= floor`, so a floor parked under target is green by construction
- * and its remaining work is invisible. This probe is the other side: it reads
- * the committed manifests (not the coverage reports, which the gates already
- * police loudly) and prints one line per open slot, for an automated planning
- * pass to surface as outstanding work.
+ * Coverage floors are one-sided ratchets — the gates assert `coverage >= floor`,
+ * so a floor parked under target is green by construction and its remaining work
+ * is invisible. This probe is the other side: it reads the committed floors (not
+ * the coverage reports, which the gates already police loudly) and prints one line
+ * per open slot, for an automated planning pass to surface as outstanding work.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  AUTHORED_FLOOR_MANIFEST_FILE,
-  parseAuthoredFloors,
-} from "../packages/cli/src/library/authored-parity.ts";
-import { FLOOR_MANIFEST_FILE, parseFloors } from "../packages/cli/src/library/fidelity-floor.ts";
+import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { FLOOR_MANIFEST_FILE, tokenFloors } from "../packages/cli/src/library/fidelity-floor.ts";
+import { readLibraryData } from "../packages/cli/src/library/library-data.ts";
+import { parityFloorsByReport } from "../packages/cli/src/library/library-floors.ts";
 import {
   openVerdictSlots,
   parseVerdicts,
@@ -47,14 +45,17 @@ export const FLOOR_TARGET = 1;
 
 const MANIFEST_DIR = join("packages", "library-types");
 
-export interface RatchetSource {
+/** What every line of the parity floors starts with; they sit in each `library.json`. */
+export const PARITY_FLOORS_LABEL = "authored-parity-floor.json";
+
+export type RatchetSource = {
   /** The id the planning intake names and the CLI takes as its argument. */
   id: string;
   /** Repo-root-relative directory holding the manifest. */
   dir: string;
-  /** Manifest filename, which also prefixes every line so one line names its source. */
+  /** Manifest filename, or a label for floors kept elsewhere, which prefixes every line
+   * so one line names its source. */
   file: string;
-  parse: (raw: unknown, path: string) => Record<string, unknown>;
   /**
    * How this manifest's open slots are read, defaulting to `openSlots`. A
    * one-sided *numeric* floor is what `openSlots` understands — it reports a
@@ -69,20 +70,24 @@ export interface RatchetSource {
     parsed: Record<string, unknown>,
     manifestDir: string,
   ) => string[];
-}
+} & (
+  | { parse: (raw: unknown, path: string) => Record<string, unknown> }
+  /** For floors kept across files; `dir` is the absolute directory they sit under. */
+  | { read: (dir: string) => Record<string, unknown> }
+);
 
 export const RATCHET_SOURCES: readonly RatchetSource[] = [
   {
     id: "authored-parity-floor",
     dir: MANIFEST_DIR,
-    file: AUTHORED_FLOOR_MANIFEST_FILE,
-    parse: parseAuthoredFloors,
+    file: PARITY_FLOORS_LABEL,
+    read: (dir) => ({ ...parityFloorsByReport(readLibraryData(newestDataFolder(dir))) }),
   },
   {
     id: "fidelity-floor",
     dir: MANIFEST_DIR,
     file: FLOOR_MANIFEST_FILE,
-    parse: parseFloors,
+    read: tokenFloors,
   },
   {
     id: "authored-example-typecheck",
@@ -130,7 +135,7 @@ function slotLine(manifestFile: string, key: string, axis: string, value: number
 /**
  * The below-target slots in one parsed manifest. A numeric floor is the token
  * lane's single `coverage` axis; an object floor is walked over **its own**
- * entries, so an axis added to the authored manifest later is reported without
+ * entries, so an axis added to the parity floors later is reported without
  * touching this file. Key order is the manifest writer's contract — never
  * sorted, never deduped.
  */
@@ -166,9 +171,11 @@ export function collectOpenSlots(root: string, id?: string): string[] {
   const sources = id === undefined ? RATCHET_SOURCES : [resolveSource(id)];
   return sources.flatMap((source) => {
     const dir = join(root, source.dir);
-    const path = join(dir, source.file);
     const collect = source.collect ?? openSlots;
-    const parsed = source.parse(JSON.parse(readFileSync(path, "utf8")), source.file);
+    const parsed =
+      "read" in source
+        ? source.read(dir)
+        : source.parse(JSON.parse(readFileSync(join(dir, source.file), "utf8")), source.file);
     return collect(source.file, parsed, dir);
   });
 }

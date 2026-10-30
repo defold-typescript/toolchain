@@ -6,5 +6,11 @@
     "manifestDir": "fontscale",
     "declaration": "fork/fontscale.d.ts",
     "upstreamSource": "source/upstream/fontscale/src/fontscale.cpp"
+  },
+  "floors": {
+    "fontscale": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

@@ -5,12 +5,12 @@ import {
   mkdirSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
-import { AUTHORED_FLOOR_MANIFEST_FILE } from "../packages/cli/src/library/authored-parity.ts";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { FLOOR_MANIFEST_FILE } from "../packages/cli/src/library/fidelity-floor.ts";
 import type {
@@ -32,7 +32,12 @@ import {
   ANNOTATION_VERDICTS_FILE_NAME,
 } from "../packages/types/scripts/lua-annotation-verdicts.ts";
 import { readCoverageRegistries } from "./asset-portal-check.ts";
-import { collectOpenSlots, openSlots, RATCHET_SOURCES } from "./ratchet-backlog.ts";
+import {
+  collectOpenSlots,
+  openSlots,
+  PARITY_FLOORS_LABEL,
+  RATCHET_SOURCES,
+} from "./ratchet-backlog.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..");
 
@@ -103,9 +108,11 @@ function portalManifest(entries: PortalEntry[]): AssetPortalManifest {
   };
 }
 
+// `parity` holds the floors of one fork, `b`, in a library folder of its own. The
+// committed libraries are copied without theirs, so only the case's floors are open.
 function tempRoot(
   fidelity: unknown,
-  authored: unknown,
+  parity: unknown,
   pins: unknown = {},
   bindingVerdicts: unknown = {},
   annotationVerdicts: unknown = {},
@@ -126,7 +133,14 @@ function tempRoot(
     for (const file of LIBRARY_DATA_FILES) {
       if (!existsSync(join(committedData, folder, file))) continue;
       mkdirSync(join(data, folder), { recursive: true });
-      copyFileSync(join(committedData, folder, file), join(data, folder, file));
+      if (file === "library.json") {
+        const { floors: _floors, ...library } = JSON.parse(
+          readFileSync(join(committedData, folder, file), "utf8"),
+        );
+        writeFileSync(join(data, folder, file), JSON.stringify(library));
+      } else {
+        copyFileSync(join(committedData, folder, file), join(data, folder, file));
+      }
     }
   }
   writeFileSync(join(dir, "asset-portal.json"), `${JSON.stringify(portal, null, 2)}\n`);
@@ -139,7 +153,24 @@ function tempRoot(
     `${JSON.stringify({ verdicts }, null, 2)}\n`,
   );
   writeFileSync(join(dir, FLOOR_MANIFEST_FILE), `${JSON.stringify(fidelity, null, 2)}\n`);
-  writeFileSync(join(dir, AUTHORED_FLOOR_MANIFEST_FILE), `${JSON.stringify(authored, null, 2)}\n`);
+  mkdirSync(join(data, "b"), { recursive: true });
+  writeFileSync(join(data, "b", "reviewed.json"), JSON.stringify({ ref: "v1" }));
+  writeFileSync(
+    join(data, "b", "library.json"),
+    JSON.stringify({
+      repo: "https://github.com/owner/b",
+      forks: [
+        {
+          authored: "fork/b.d.ts",
+          moduleId: "b",
+          namespace: "b",
+          apiDoc: "api-doc/b.json",
+          upstreamLua: ["source/upstream/b.lua"],
+        },
+      ],
+      floors: parity,
+    }),
+  );
   const pinsDir = join(root, PINS_DIR);
   mkdirSync(pinsDir, { recursive: true });
   writeFileSync(join(pinsDir, PINS_FILE), `${JSON.stringify(pins, null, 2)}\n`);
@@ -195,15 +226,12 @@ describe("openSlots — below-target classification", () => {
   });
 });
 
-describe("collectOpenSlots — both manifests through the production parsers", () => {
+describe("collectOpenSlots — both floor sources through the production readers", () => {
   test("a below-target slot in each manifest is reported, each line naming its manifest", () => {
-    const root = tempRoot(
-      { "fidelity/a.json": 0.75 },
-      { "fidelity/authored/b.json": { callable: 1, field: 0.5 } },
-    );
+    const root = tempRoot({ "fidelity/a.json": 0.75 }, { b: { callable: 1, field: 0.5 } });
     try {
       expect(collectOpenSlots(root)).toEqual([
-        `${AUTHORED_FLOOR_MANIFEST_FILE}: fidelity/authored/b.json field 0.5 (target 1)`,
+        `${PARITY_FLOORS_LABEL}: fidelity/authored/b.json field 0.5 (target 1)`,
         `${FLOOR_MANIFEST_FILE}: fidelity/a.json coverage 0.75 (target 1)`,
       ]);
     } finally {
@@ -212,10 +240,7 @@ describe("collectOpenSlots — both manifests through the production parsers", (
   });
 
   test("manifests entirely at target yield no lines", () => {
-    const root = tempRoot(
-      { "fidelity/a.json": 1 },
-      { "fidelity/authored/b.json": { callable: 1, field: 1 } },
-    );
+    const root = tempRoot({ "fidelity/a.json": 1 }, { b: { callable: 1, field: 1 } });
     try {
       expect(collectOpenSlots(root)).toEqual([]);
     } finally {
@@ -224,10 +249,7 @@ describe("collectOpenSlots — both manifests through the production parsers", (
   });
 
   test("a malformed manifest propagates the parser's error instead of reading as satisfied", () => {
-    const root = tempRoot(
-      { "fidelity/a.json": 1 },
-      { "fidelity/authored/b.json": { callable: 1 } },
-    );
+    const root = tempRoot({ "fidelity/a.json": 1 }, { b: { callable: 1 } });
     try {
       expect(() => collectOpenSlots(root)).toThrow(/missing its "field" axis/);
     } finally {
@@ -238,7 +260,7 @@ describe("collectOpenSlots — both manifests through the production parsers", (
   test("the pin manifest joins the same walk, through its own collector", () => {
     const root = tempRoot(
       { "fidelity/a.json": 1 },
-      { "fidelity/authored/b.json": { callable: 1, field: 1 } },
+      { b: { callable: 1, field: 1 } },
       {
         "defold-1.13.1:go.get:0123456789abcdef": [{ code: 2304, text: "x" }],
       },
@@ -254,10 +276,7 @@ describe("collectOpenSlots — both manifests through the production parsers", (
   });
 
   test("a single source id restricts the walk to that manifest", () => {
-    const root = tempRoot(
-      { "fidelity/a.json": 0.75 },
-      { "fidelity/authored/b.json": { callable: 1, field: 0.5 } },
-    );
+    const root = tempRoot({ "fidelity/a.json": 0.75 }, { b: { callable: 1, field: 0.5 } });
     try {
       expect(collectOpenSlots(root, "fidelity-floor")).toEqual([
         `${FLOOR_MANIFEST_FILE}: fidelity/a.json coverage 0.75 (target 1)`,
@@ -269,11 +288,7 @@ describe("collectOpenSlots — both manifests through the production parsers", (
 });
 
 describe("engine-binding-open — open verdicts as backlog", () => {
-  const atTarget = [
-    { "fidelity/a.json": 1 },
-    { "fidelity/authored/b.json": { callable: 1, field: 1 } },
-    {},
-  ] as const;
+  const atTarget = [{ "fidelity/a.json": 1 }, { b: { callable: 1, field: 1 } }, {}] as const;
 
   test("one line per open verdict, none for accepted or manual ones", () => {
     const root = tempRoot(...atTarget, {
@@ -316,12 +331,7 @@ describe("engine-binding-open — open verdicts as backlog", () => {
 });
 
 describe("lua-annotation-open — open annotation mismatches as backlog", () => {
-  const atTarget = [
-    { "fidelity/a.json": 1 },
-    { "fidelity/authored/b.json": { callable: 1, field: 1 } },
-    {},
-    {},
-  ] as const;
+  const atTarget = [{ "fidelity/a.json": 1 }, { b: { callable: 1, field: 1 } }, {}, {}] as const;
 
   test("one line per open verdict, none for accepted or corrected ones", () => {
     const root = tempRoot(...atTarget, {
@@ -375,7 +385,7 @@ describe("lua-annotation-open — open annotation mismatches as backlog", () => 
 describe("asset-portal-candidates — untracked portal entries as backlog", () => {
   const atTarget = [
     { "fidelity/a.json": 1 },
-    { "fidelity/authored/b.json": { callable: 1, field: 1 } },
+    { b: { callable: 1, field: 1 } },
     {},
     {},
     {},

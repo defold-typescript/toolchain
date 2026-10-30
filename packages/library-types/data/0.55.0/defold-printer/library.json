@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/printer.json",
       "upstreamLua": ["source/upstream/printer/printer.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "printer.printer": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

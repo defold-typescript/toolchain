@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/dicebag.json",
       "upstreamLua": ["source/upstream/dicebag/dicebag.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "dicebag.dicebag": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

@@ -7,5 +7,11 @@
     "declaration": "fork/share.d.ts",
     "upstreamSource": "source/upstream/share/src/share.cpp",
     "upstreamAnnotation": "source/upstream/share/api/share.lua"
+  },
+  "floors": {
+    "share": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

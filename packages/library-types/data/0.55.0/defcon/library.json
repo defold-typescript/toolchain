@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/defcon.json",
       "upstreamLua": ["source/upstream/defcon/console.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "defcon.console": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

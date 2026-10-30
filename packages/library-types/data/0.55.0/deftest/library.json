@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/deftest.json",
       "upstreamLua": ["source/upstream/deftest/deftest.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "deftest.deftest": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

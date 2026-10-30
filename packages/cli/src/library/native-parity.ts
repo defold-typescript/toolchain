@@ -11,7 +11,7 @@
  * interfaces the target's `methodTables` maps it to, and count on the callable
  * axis. The two axes are reported separately and never averaged, under
  * the authored lane's either-side rule (`classifyFieldAxis`), and ratcheted by the
- * same `authored-parity-floor.json`.
+ * same parity floors in its `library.json`.
  *
  * A native module has one more way to be wrong than a Lua one: its declaration can
  * sit under a namespace other than the name the C++ registers, which leaves every
@@ -23,7 +23,6 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { type AuthoredArityMismatch, classifyArity, classifyFieldAxis } from "./authored-parity";
 import { libraryFile } from "./library-data";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseLuaSurface } from "./parse-lua-surface";
 import { parseNativeMethodTables, parseNativeRegistration } from "./parse-native-registration";
 import { lowerNativeApiDoc, type NativeTarget, readNativeTargets } from "./sync-native-types";
@@ -112,14 +111,14 @@ const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompar
  * cannot outlive the disagreement it excuses.
  */
 function measureArity(
-  packageRoot: string,
+  dataDir: string,
   target: NativeTarget,
   registered: ReadonlySet<string>,
   declaredArity: ReadonlyMap<string, number[]>,
 ): ArityAxis {
   if (target.upstreamAnnotation === undefined) return { arityMeasured: false };
   const annotation = parseLuaSurface(
-    readFileSync(join(packageRoot, target.upstreamAnnotation), "utf8"),
+    readFileSync(join(dataDir, target.upstreamAnnotation), "utf8"),
     { moduleLocal: target.namespace },
   );
   const stubs = new Map(
@@ -198,7 +197,7 @@ interface MethodAxis {
  * all throw.
  */
 function measureMethods(
-  packageRoot: string,
+  dataDir: string,
   target: NativeTarget,
   ownTables: Record<string, string[]>,
   typedefs: ReadonlyMap<string, ReadonlySet<string>>,
@@ -208,7 +207,7 @@ function measureMethods(
     [target.upstreamSource, ownTables],
     ...(target.upstreamMethodSources ?? []).map(
       (file) =>
-        [file, parseNativeMethodTables(readFileSync(join(packageRoot, file), "utf8"), file)] as [
+        [file, parseNativeMethodTables(readFileSync(join(dataDir, file), "utf8"), file)] as [
           string,
           Record<string, string[]>,
         ],
@@ -286,8 +285,8 @@ function measureMethods(
   };
 }
 
-export function buildNativeParity(packageRoot: string, target: NativeTarget): NativeParityReport {
-  const { elements } = JSON.parse(lowerNativeApiDoc(packageRoot, target)) as {
+export function buildNativeParity(dataDir: string, target: NativeTarget): NativeParityReport {
+  const { elements } = JSON.parse(lowerNativeApiDoc(dataDir, target)) as {
     elements: {
       type: string;
       name: string;
@@ -325,7 +324,7 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
 
   const registration = parseNativeRegistration(
     [...(target.upstreamHeaders ?? []), target.upstreamSource]
-      .map((file) => readFileSync(join(packageRoot, file), "utf8"))
+      .map((file) => readFileSync(join(dataDir, file), "utf8"))
       .join("\n"),
     target.upstreamSource,
   );
@@ -333,7 +332,7 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
 
   const missingFunctions = [...upstreamCallable].filter((name) => !declaredCallable.has(name));
   const phantomFunctions = [...declaredCallable].filter((name) => !upstreamCallable.has(name));
-  const methods = measureMethods(packageRoot, target, registration.methods, typedefs);
+  const methods = measureMethods(dataDir, target, registration.methods, typedefs);
   const fields = classifyFieldAxis({
     upstreamCallable,
     upstreamNonCallable: new Set(registration.constants),
@@ -359,7 +358,7 @@ export function buildNativeParity(packageRoot: string, target: NativeTarget): Na
     missingConstants: fields.missingFields,
     phantomConstants: fields.phantomFields,
     fieldCoverage: coverage(fields.upstreamFields.size, fields.missingFields.length),
-    ...measureArity(packageRoot, target, upstreamCallable, declaredArity),
+    ...measureArity(dataDir, target, upstreamCallable, declaredArity),
   };
 }
 
@@ -369,7 +368,7 @@ export function renderNativeParity(report: NativeParityReport): string {
 }
 
 if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
+  const { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
   for (const target of readNativeTargets(LIBRARY_DATA_DIR)) {
     const report = buildNativeParity(LIBRARY_DATA_DIR, target);
     const dest = join(root, nativeParityPath(target));

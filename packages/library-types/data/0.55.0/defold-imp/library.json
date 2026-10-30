@@ -6,5 +6,11 @@
     "manifestDir": "imp",
     "declaration": "fork/imp.d.ts",
     "upstreamSource": "source/upstream/imp/src/imp.cpp"
+  },
+  "floors": {
+    "imp": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

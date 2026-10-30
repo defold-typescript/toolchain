@@ -220,6 +220,11 @@ export function buildTargetModel(
     : model;
 }
 
+/** Package-root-relative POSIX path of a target's committed fidelity report. */
+export function lualsFidelityPath(target: LualsTarget): string {
+  return `fidelity/${target.namespace}.json`;
+}
+
 export function buildTargetFidelity(packageRoot: string, target: LualsTarget): FidelityReport {
   return buildFidelityReport(
     target.namespace,
@@ -320,7 +325,7 @@ if (import.meta.main) {
     const targets = readLualsTargets(data);
     for (const target of targets) {
       const report = buildTargetFidelity(data, target);
-      const dest = join(root, "fidelity", `${target.namespace}.json`);
+      const dest = join(root, lualsFidelityPath(target));
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, `${JSON.stringify(report, null, 2)}\n`);
       console.log(

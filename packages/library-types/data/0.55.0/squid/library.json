@@ -1,4 +1,7 @@
 {
   "repo": "https://github.com/paweljarosz/squid",
-  "license": "MIT"
+  "license": "MIT",
+  "floors": {
+    "squid.squid": 1
+  }
 }

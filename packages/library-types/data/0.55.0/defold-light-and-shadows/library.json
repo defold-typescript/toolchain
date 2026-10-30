@@ -23,5 +23,19 @@
       "apiDoc": "api-doc/light_and_shadows.constants.json",
       "upstreamLua": ["source/upstream/light_and_shadows/constants.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "light_and_shadows.constants": {
+      "callable": 1,
+      "field": 1
+    },
+    "light_and_shadows.light": {
+      "callable": 1,
+      "field": 1
+    },
+    "light_and_shadows.light_and_shadows": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

@@ -9,5 +9,11 @@
       "apiDoc": "api-doc/rendy.json",
       "upstreamLua": ["source/upstream/rendy/rendy.lua"]
     }
-  ]
+  ],
+  "floors": {
+    "rendy.rendy": {
+      "callable": 1,
+      "field": 1
+    }
+  }
 }

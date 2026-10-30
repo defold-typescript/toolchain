@@ -6,5 +6,11 @@
     "manifestDir": "gyro",
     "declaration": "fork/gyro.d.ts",
     "upstreamSource": "source/upstream/gyro/src/gyro.cpp"
+  },
+  "floors": {
+    "gyro": {
+      "callable": 1,
+      "field": 1
+    }
   }
 }

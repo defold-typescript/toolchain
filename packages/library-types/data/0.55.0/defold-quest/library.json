@@ -14,5 +14,8 @@
       "class": "native-1",
       "evidence": "quest_progress.lua:apply_event passes the loop variable of for task_index = 1, #quest_config.tasks"
     }
+  },
+  "floors": {
+    "quest.quest": 1
   }
 }

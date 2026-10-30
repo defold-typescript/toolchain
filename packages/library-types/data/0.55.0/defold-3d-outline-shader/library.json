@@ -1,4 +1,7 @@
 {
   "repo": "https://github.com/selimanac/defold-3D-outline-shader",
-  "license": "MIT"
+  "license": "MIT",
+  "floors": {
+    "outline-shader.outline": 1
+  }
 }

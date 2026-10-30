@@ -1,4 +1,7 @@
 {
   "repo": "https://github.com/Insality/defold-tweener",
-  "license": "MIT"
+  "license": "MIT",
+  "floors": {
+    "tweener.tweener": 1
+  }
 }

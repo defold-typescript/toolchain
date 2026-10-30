@@ -1,20 +1,22 @@
 // `library check` checks a library data folder the way the running CLI reads it:
-// the reader's own checks, the print of every module the folder serves, then one
+// the reader's own checks, the print of every module the folder serves, one
 // compile of every printed declaration, native declaration and usage example
-// against the engine types this CLI ships. A declared file TypeScript cannot load
-// is a problem of its library. The engine types and the language extensions come
-// from this CLI's install, never from beside the data folder.
+// against the engine types this CLI ships, then each module's coverage against its
+// floor. A declared file TypeScript cannot load is a problem of its library. The
+// engine types and the language extensions come from this CLI's install, never from
+// beside the data folder.
 
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
 import { type LibraryData, LibraryDataError, readLibraryData } from "./library-data";
+import { floorProblems, measureLibraryCoverage } from "./library-floors";
 import { printCorpus } from "./print-corpus";
 import { printLibraryModules } from "./print-library";
 
 export interface LibraryProblem {
   library: string;
-  check: "data" | "print" | "compile";
+  check: "data" | "print" | "compile" | "floor";
   message: string;
 }
 
@@ -260,7 +262,8 @@ function compileProblems(inputs: Map<string, CheckInput>, dataDir: string): Libr
  * problem when the reader refuses it, else a `print` problem per module that does
  * not print, else every compile error in the printed declarations, the native
  * declarations and the usage examples, and one compile problem per such file
- * TypeScript cannot load. Empty when the folder is clean.
+ * TypeScript cannot load, else a floor problem per module below its coverage floor,
+ * with no floor, or that cannot be measured. Empty when the folder is clean.
  */
 export async function checkLibraryData(dataDir: string): Promise<LibraryProblem[]> {
   let libraries: LibraryData[];
@@ -278,5 +281,10 @@ export async function checkLibraryData(dataDir: string): Promise<LibraryProblem[
     if (problems.length === 0) throw error;
     return problems;
   }
-  return compileProblems(checkInputs(dataDir, libraries, corpus), dataDir);
+  const problems = compileProblems(checkInputs(dataDir, libraries, corpus), dataDir);
+  if (problems.length > 0) return problems;
+  for (const library of libraries) {
+    problems.push(...floorProblems(library, await measureLibraryCoverage(dataDir, library)));
+  }
+  return problems;
 }
