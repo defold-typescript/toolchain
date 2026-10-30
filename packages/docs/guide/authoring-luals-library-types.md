@@ -264,7 +264,7 @@ cd packages/library-types
 
 bun run luals:fetch      # snapshot the pinned sources into <library>/source/<namespace>/
 bun run luals:fidelity   # build fidelity/<namespace>.json — the coverage report
-bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site model
+bun run api-doc          # check library data, then lower api-doc/<namespace>.json — the docs-site model
 ```
 
 - **`luals:fetch`** reads the pinned tree, applies `sourceGlobs` minus `ignore`,
@@ -276,8 +276,8 @@ bun run luals:api-doc    # lower api-doc/<namespace>.json — the docs-site mode
 - `resolve` prints the `.d.ts` a consumer sees from these fixtures, or from the
   dependency's own archive. Interfaces and aliases come from the whole snapshot;
   the module's own functions come only from the `moduleId` file.
-- **`luals:api-doc`** lowers the same model to the JSON the docs-site `/api` page
-  renders.
+- **`api-doc`** runs [`library check`](./library.md), then lowers the same model to
+  the JSON the docs-site `/api` page renders.
 
 A `---@deprecated` before a `---@class`, `---@alias`, or a function declaration
 carries into both artifacts — as a JSDoc `@deprecated` in the `.d.ts` and as a
@@ -317,7 +317,7 @@ therefore always a real regression to fix at the source, never a floor to edit d
 
 ## 4. Check the API-doc description
 
-After `luals:api-doc`, open `api-doc/<namespace>.json` and inspect
+After `api-doc`, open `api-doc/<namespace>.json` and inspect
 `info.description`. It carries the description line on the library's main
 `---@class`. When that class has no description line the value is empty (`""`),
 and the docs-site `/api` page renders with no description — the "every library
@@ -414,8 +414,8 @@ ones:
 cd packages/library-types
 
 bun ../cli/src/library/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into <library>/source/<moduleId>.script_api
-bun ../cli/src/library/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 bun ../cli/src/library/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
+bun run api-doc                                               # check library data, then lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 ```
 
 The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.3.0`),

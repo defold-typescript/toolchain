@@ -245,6 +245,16 @@ export function emitLualsTargetDeclarations(
   });
 }
 
+/** The target's model lowered to the `api-doc/<namespace>.json` the docs-site consumes. */
+export function lowerLualsApiDoc(packageRoot: string, target: LualsTarget): string {
+  const lowered = lowerLibraryModel(buildTargetModel(packageRoot, target), {
+    namespace: target.namespace,
+    typeRenames: target.typeRenames,
+    externalTypes: target.externalTypes,
+  });
+  return `${JSON.stringify(lowered, null, 2)}\n`;
+}
+
 /**
  * A druid-style corpus member: a LuaLS-sourced pure-Lua library, distinct from
  * the ts-defold hand-written modules. Standalone registry — the docs-site and
@@ -316,21 +326,6 @@ if (import.meta.main) {
       console.log(
         `${target.moduleId}: coverage ${(report.coverage * 100).toFixed(1)}% (${report.unknownFallbacks} unknown, ${report.undocumentedMembers} undocumented)`,
       );
-    }
-  }
-  if (argv.includes("--api-doc")) {
-    const targets = readLualsTargets(data);
-    for (const target of targets) {
-      const model = buildTargetModel(data, target);
-      const lowered = lowerLibraryModel(model, {
-        namespace: target.namespace,
-        typeRenames: target.typeRenames,
-        externalTypes: target.externalTypes,
-      });
-      const dest = join(root, "api-doc", `${target.namespace}.json`);
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, `${JSON.stringify(lowered, null, 2)}\n`);
-      console.log(`lowered ${target.moduleId} -> api-doc/${target.namespace}.json`);
     }
   }
 }

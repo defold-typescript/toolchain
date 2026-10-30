@@ -394,15 +394,6 @@ if (import.meta.main) {
       console.log(`snapshotted ${target.moduleId} from ${repoSlug(target.repo)}@${target.ref}`);
     }
   }
-  if (argv.includes("--api-doc")) {
-    for (const target of readScriptApiTargets(data)) {
-      const json = await lowerScriptApiApiDoc(data, target);
-      const dest = join(root, target.apiDoc);
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, json);
-      console.log(`lowered ${target.moduleId} -> ${target.apiDoc}`);
-    }
-  }
   if (argv.includes("--fidelity")) {
     for (const target of readScriptApiTargets(data)) {
       const report = await buildScriptApiFidelity(data, target);

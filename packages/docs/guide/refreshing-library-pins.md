@@ -167,10 +167,10 @@ Four lanes fetch and regenerate. Run their commands from
 
 | Lane | Pin | Commands |
 | ---- | --- | -------- |
-| LuaLS | the library folder's `reviewed.json` | `bun run luals:fetch`, then `luals:fidelity`, `luals:api-doc` |
+| LuaLS | the library folder's `reviewed.json` | `bun run luals:fetch`, then `luals:fidelity`, `api-doc` |
 | Markdown | `markdown-targets.json` | `bun ../cli/src/library/sync-markdown-types.ts --fetch --fidelity --api-doc` |
 | OpenAPI | `openapi-targets.json` | `bun ../cli/src/library/sync-openapi-types.ts --fetch --fidelity --api-doc` |
-| script_api | the library folder's `reviewed.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity --api-doc` |
+| script_api | the library folder's `reviewed.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity`, then `bun run api-doc` |
 
 A library folder sits in the newest version-named folder under
 `packages/library-types/data/`, named for its repository: the URL's last path
@@ -196,14 +196,14 @@ GITHUB_TOKEN="$(gh auth token)" bun run luals:fetch
 **The authored lane is the exception, and it is the one that surprises people.**
 A library's forks have **no `--fetch`** and no fidelity pass. Their
 `source/upstream/` snapshots are vendored by hand and their `.d.ts` is
-hand-written, so `sync-authored-types.ts` accepts only `--api-doc`.
+hand-written, so `bun run api-doc` is the only command they take.
 Refreshing an authored pin means:
 
 1. edit the `ref` in the library folder's `reviewed.json`;
 2. copy the upstream files named by `upstreamLua` into the library folder's
    `source/upstream/…` by hand (the path under it mirrors the upstream path);
 3. update the hand-written `.d.ts` for whatever the new upstream added or changed;
-4. re-run `bun run parity` and `bun ../cli/src/library/sync-authored-types.ts --api-doc`.
+4. re-run `bun run parity` and `bun run api-doc`.
 
 ## The couplings a re-pin moves with it
 
