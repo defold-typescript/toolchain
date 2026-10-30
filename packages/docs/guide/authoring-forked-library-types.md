@@ -11,13 +11,13 @@ front-ends all ingest a *primary* source and generate a declaration; a library
 with none of those has nothing to generate *from*. Its `.d.ts` must be **written
 by hand** — either forked from an existing hand-authored declaration or authored
 fresh — and vendored into `@defold-typescript/library-types` as first-party
-source. [`resolve`](./resolve.md#vendored-library-types) then materializes the
-committed declaration into the consumer's project exactly as it does for the
-generated lanes.
+source. [`resolve`](./resolve.md#vendored-library-types) then prints the
+vendored declaration into the consumer's project, the way it prints the
+generated lanes' declarations.
 
 Like the other lanes, adding such a library is **data, not code**: you add one
 entry to `packages/library-types/authored-targets.json`, vendor the `.d.ts`, run
-the two generation commands, and commit the artifacts. The authored front-end
+the generation command, and commit the entry, the `.d.ts` and its api-doc. The authored front-end
 (`packages/cli/src/library/sync-authored-types.ts`) is the reusable
 machinery; you touch config and fixtures, not the pipeline.
 
@@ -87,8 +87,7 @@ library is the sole maintainer of its namespace, so it carries its own
 | `ref` | yes | The immutable upstream ref to pin. Prefer the newest stable release tag (`git ls-remote --tags <repo>`) — never invent one. When upstream publishes no tags, pin the current default-branch commit SHA instead; the docs page renders the full SHA as the source ref. |
 | `authored` | yes | Package-relative path of the vendored authored/forked `.d.ts` — `fixtures/authored/<moduleId>.d.ts`. |
 | `moduleId` | yes | The library's runtime `require` path, dotted (e.g. `defcon.console`). This is the `declare module` name inside the vendored `.d.ts`. |
-| `namespace` | yes | The artifact stem — the emitted files are `generated/<namespace>.d.ts` and `api-doc/<namespace>.json`. Either a bare stem (`defcon`) or the dotted `moduleId` (`orthographic.camera`): fork onto the retired module name when it already equals the publish namespace, and reach for a bare stem only when nothing else owns it. The `orthographic.camera` worked example below settles the choice. |
-| `generated` | yes | The committed `.d.ts` output path (`generated/<namespace>.d.ts`). |
+| `namespace` | yes | The artifact stem — the emitted file is `api-doc/<namespace>.json`. Either a bare stem (`defcon`) or the dotted `moduleId` (`orthographic.camera`): fork onto the retired module name when it already equals the publish namespace, and reach for a bare stem only when nothing else owns it. The `orthographic.camera` worked example below settles the choice. |
 | `apiDoc` | yes | The docs-site model output path (`api-doc/<namespace>.json`). |
 | `license` | no | SPDX-style license id, surfaced by the docs-site provenance block. Defaults to `""`. |
 | `refKind` | no | `"commit"` or `"tag"` when upstream publishes no releases, so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
@@ -110,9 +109,10 @@ why you cannot.
 
 ## 2. Vendor the `.d.ts` and generate the artifacts
 
-Put the authored/forked declaration at the `authored` path. For a fork, that is a
-verbatim copy of the retired library's shipped `generated/<moduleId>.d.ts`
-golden — not the raw ts-defold fixture, which the ts-defold lane type-maps on the
+Put the authored/forked declaration at the `authored` path. For a fork of a
+ts-defold binding, that is the ts-defold lane's codemodded output
+(`codemodDeclaration` in `packages/cli/src/library/sync-library-types.ts`) — not
+the raw ts-defold fixture, which the ts-defold lane type-maps on the
 way out (`hash`/`url`/`vmath.vector3` → `Hash`/`Url`/`Vector3`) while the authored
 lane emits its input verbatim, so forking the fixture would ship upstream's Lua
 type names and fail the `dts-declaration-validity` gate. The two forms coincide
@@ -148,15 +148,14 @@ compare against, and the emit is lossless by construction (see below).
 ## 3. Emission fidelity is by construction
 
 The generated lanes report a coverage number because a parse can lose type
-information the original had. An authored `.d.ts` cannot: the emitted golden is
-the vendored source, so the go/no-go gate is a **forked-vs-generated identity
-diff** — `generated/<namespace>.d.ts` is byte-identical to the vendored
-`fixtures/authored/<moduleId>.d.ts`. The package tests assert exactly this parity,
-so a stray edit to one file but not the other fails loudly. No `fidelity/` artifact
-is written.
+information the original had. An authored `.d.ts` cannot: the printed declaration
+is the vendored source, so the go/no-go gate is a **forked-vs-printed identity
+diff** — what `resolve` prints is byte-identical to the vendored
+`fixtures/authored/<moduleId>.d.ts`. `print-library.test.ts` asserts exactly this
+through the lane dispatch. No `fidelity/` artifact is written.
 
 Read that gate narrowly. It proves **emission** fidelity — both sides of the diff
-are this repo's own files, so all it certifies is that the golden loses nothing
+are this repo's own files, so all it certifies is that the print loses nothing
 relative to the vendored `.d.ts`. It says nothing about whether the vendored
 surface matches upstream, and there is no primary source to measure it against —
 that is what "no structured type source" means. A *verbatim* fork inherits
@@ -417,7 +416,7 @@ Five rules bound it:
   list, because the only thing one would add is "show no prose at all", which is
   worse than writing the correct brief.
 - **The import is the api-doc's alone.** `fixtures/authored/<moduleId>.d.ts` and
-  the `generated/<namespace>.d.ts` golden are untouched, so the forked-vs-generated
+  the declaration `resolve` prints from it are untouched, so the forked-vs-printed
   identity diff still proves the emit is lossless and imported prose stays
   distinguishable from the fork's forever after.
 
@@ -486,13 +485,11 @@ generated lanes use:
 
 - Drop the library's row from `library-targets.json` and its dir from
   `library-classification.json`, and delete the retired
-  `fixtures/ts-defold/<moduleId>.d.ts`. Its `generated/<moduleId>.d.ts` and
-  `api-doc/<moduleId>.json` goldens are deleted only when the fork publishes under
-  a *different* namespace; when `namespace` === `moduleId` they are instead
-  overwritten in place by the command above. The namespace now resolves to
+  `fixtures/ts-defold/<moduleId>.d.ts`. Its `api-doc/<moduleId>.json` golden is
+  deleted only when the fork publishes under a *different* namespace; when
+  `namespace` === `moduleId` it is instead overwritten in place by the command
+  above. The namespace now resolves to
   your authored artifacts.
-- Remove the `./<moduleId>` subpath from `package.json` `exports` if present —
-  authored libraries carry none, matching the LuaLS libraries.
 - Add a `test-d/<library>-usage.test-d.ts` compile proof, moving any hand-written
   block for the old dotted specifier into it. The `dts-declaration-validity` gate
   type-checks it under `skipLibCheck: false` together with every module `resolve`
@@ -538,14 +535,13 @@ and pin to the real upstream. The reference entry:
   "authored": "fixtures/authored/defcon.console.d.ts",
   "moduleId": "defcon.console",
   "namespace": "defcon",
-  "generated": "generated/defcon.d.ts",
   "apiDoc": "api-doc/defcon.json"
 }
 ```
 
 `authored` vendors the fork; `moduleId` `defcon.console` names the `declare
 module` a consumer imports; `namespace` `defcon` is the single-segment artifact
-stem, so the goldens are `generated/defcon.d.ts` and `api-doc/defcon.json` — not
+stem, so the golden is `api-doc/defcon.json` — not
 the dotted `moduleId` — keeping the docs Libraries tree and file layout uniform
 with the other bare-stem severed libraries. Nothing else owned `defcon`, so it was
 free to take; `orthographic.camera` below is the case where it is not. The `defcon` page then attributes to
@@ -557,7 +553,7 @@ free to take; `orthographic.camera` below is the case where it is not. The `defc
 same reference-entry shape as `defcon.console`. It illustrates one wrinkle: its
 `.d.ts` declares ambient top-level globals (`describe`, `before`, `after`,
 `test`, `assert_*`) alongside `declare module 'deftest.deftest'`. A fork copies
-the surface **verbatim**, so those globals carry into `generated/deftest.d.ts`
+the surface **verbatim**, so those globals carry into the printed declaration
 and therefore into the `dts-declaration-validity` gate's compilation. That is
 fine — they raise no duplicate-identifier clash — and the api-doc lowering
 publishes them alongside the module's exports (`add`, `run`), each marked as an
@@ -598,10 +594,10 @@ and a *fork* alone would knowingly re-home a half-missing surface, while a full
 correct functions plus `appname`). So fork first, then hand-correct against the
 pin: copy the retired `.d.ts`, add the missing members, and fix the wrong
 signatures reading upstream's Lua as the authority. Extending a fork is
-gate-safe: the identity diff compares the golden to the vendored fixture, not to
-the retired ts-defold surface. But that diff proves **emission** fidelity only —
-the golden loses nothing relative to the vendored `.d.ts`; it does not check the
-vendored surface against upstream. That accuracy rests on the manual audit
+gate-safe: the identity diff compares the printed declaration to the vendored
+fixture, not to the retired ts-defold surface. But that diff proves **emission**
+fidelity only — the print loses nothing relative to the vendored `.d.ts`; it does
+not check the vendored surface against upstream. That accuracy rests on the manual audit
 against `defsave.lua` at the pin plus the per-library shape assertions in
 `packages/cli/src/library/sync-authored-types.test.ts`, so correcting a
 fork moves the accuracy burden onto the author, not onto a gate. Narrowing a wrong return is a breaking change
@@ -653,23 +649,23 @@ surface never raised.
 
 **Which namespace does the fork publish under?** persist took the bare
 `persist`. orthographic cannot: it is the markdown lane's one registered target,
-so `generated/orthographic.d.ts` and `api-doc/orthographic.json` are already
-committed regeneration proofs owned by that lane, and the `no-go` hides the bare
+so `api-doc/orthographic.json` is already a committed regeneration proof owned by
+that lane, and the `no-go` hides the bare
 `orthographic` namespace from page enumeration. Forking under it would overwrite
 the proofs *and* render no page. So the authored target keeps the **dotted**
-`orthographic.camera` — the `nakama.engine.defold` shape — which overwrites the
-retired ts-defold golden in place and leaves the route and import string
+`orthographic.camera` — the `nakama.engine.defold` shape — which takes over the
+retired ts-defold module name and leaves the route and import string
 byte-identical. The rule generalizes: when the retired module name already equals
 the publish namespace, fork onto it; only reach for a bare namespace when nothing
 else owns it.
 
 **Which file do you copy?** The ts-defold lane runs a type-mapping pass, so
 `fixtures/ts-defold/orthographic.camera.d.ts` says `hash`/`url`/`vmath.vector3`
-while the shipped `generated/` golden says `Hash`/`Url`/`Vector3`. persist's two
-forms were identical, so the template never had to choose. Copy the **`generated/`
-golden** — the authored lane emits its input verbatim, so forking the raw fixture
+while the codemodded output says `Hash`/`Url`/`Vector3`. persist's two
+forms were identical, so the template never had to choose. Copy the **codemodded
+output** — the authored lane emits its input verbatim, so forking the raw fixture
 would ship ts-defold's upstream type names and fail the declaration-validity
-gate. Forking the golden makes the cutover a byte-for-byte no-op, which is what
+gate. Forking the codemodded output makes the cutover a byte-for-byte no-op, which is what
 lets you prove the severance and any type correction as two separate diffs.
 
 orthographic then took that second diff: upstream documents `follow` as accepting

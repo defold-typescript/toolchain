@@ -6,8 +6,8 @@
  * node-free (model in, object out) so it is unit-testable and reused by the
  * `--api-doc` orchestrator arm.
  *
- * We lower from the model rather than re-running `extractApiDoc` on the emitted
- * `generated/<ns>.d.ts`: a druid-style library's surface is almost entirely
+ * We lower from the model rather than re-running `extractApiDoc` on the printed
+ * declaration: a druid-style library's surface is almost entirely
  * `interface` declarations, and `extractApiDoc` only emits interfaces reachable
  * from an emitted function/variable or an `export =`, so the emitted `.d.ts`
  * yields near-empty elements. The model carries the interfaces explicitly.

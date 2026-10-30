@@ -86,7 +86,6 @@ export interface LibraryTarget {
   module: string;
   path: string;
   fixture: string;
-  generated: string;
 }
 
 export interface LibraryTargets {
@@ -101,21 +100,20 @@ function readTargets(packageRoot: string): LibraryTargets {
 }
 
 /**
- * Read every pinned fixture, codemod it, and write the renamed `declare module`
- * to its `generated/` path. Throws on the first unmapped reference so a stale
- * rename table never ships a silently-broken type.
+ * Codemod every pinned fixture and write the api-doc each renamed `declare
+ * module` extracts to. Throws on the first unmapped reference so a stale rename
+ * table never ships a silently-broken type.
  */
 export function regenerate(packageRoot: string): void {
   const targets = readTargets(packageRoot);
   for (const target of targets.targets) {
     const source = readFileSync(join(packageRoot, target.fixture), "utf8");
-    const { output, unmapped } = codemodDeclaration(source);
+    const { unmapped } = codemodDeclaration(source);
     if (unmapped.length > 0) {
       throw new Error(
         `${target.module}: unmapped core-type references ${unmapped.join(", ")} — extend CORE_TYPE_RENAMES.`,
       );
     }
-    writeFileSync(join(packageRoot, target.generated), output);
   }
   writeApiDocs(packageRoot);
 }
@@ -203,7 +201,7 @@ export function rawUrl(source: LibrarySource, target: LibraryTarget): string {
   return `https://raw.githubusercontent.com/${repoSlug(source.repo)}/${source.commit}/${target.path}`;
 }
 
-export type DriftStatus = "ok" | "upstream-drift" | "transform-drift";
+export type DriftStatus = "ok" | "upstream-drift";
 
 export interface DriftResult {
   module: string;
@@ -222,11 +220,9 @@ const defaultFetch: FetchText = async (url) => {
 
 /**
  * Live-fetch each pinned upstream `.d.ts` and classify it against the committed
- * files: `upstream-drift` when the fetched bytes no longer match the committed
- * fixture (upstream moved off the pin), `transform-drift` when the fixture is
- * unchanged but the committed generated file differs from a fresh codemod (the
- * codemod or fixture changed without a `bun regen`). The `fetchText` seam keeps
- * the classifier offline-testable; only the CLI wires the real network.
+ * fixture: `upstream-drift` when the fetched bytes no longer match it (upstream
+ * moved off the pin). The `fetchText` seam keeps the classifier offline-testable;
+ * only the CLI wires the real network.
  */
 export async function checkDrift(
   packageRoot: string,
@@ -237,14 +233,7 @@ export async function checkDrift(
   for (const target of targets) {
     const fetched = await fetchText(rawUrl(source, target));
     const fixture = readFileSync(join(packageRoot, target.fixture), "utf8");
-    let status: DriftStatus;
-    if (fetched !== fixture) {
-      status = "upstream-drift";
-    } else {
-      const generated = readFileSync(join(packageRoot, target.generated), "utf8");
-      status = codemodDeclaration(fetched).output === generated ? "ok" : "transform-drift";
-    }
-    results.push({ module: target.module, status });
+    results.push({ module: target.module, status: fetched === fixture ? "ok" : "upstream-drift" });
   }
   return results;
 }

@@ -46,7 +46,6 @@ export interface OpenApiTarget {
   proto: string;
   moduleId: string;
   namespace: string;
-  generated: string;
   apiDoc: string;
   // Defaults to `fidelity/<namespace>.json` when omitted.
   fidelity: string;
@@ -69,7 +68,6 @@ const REQUIRED_FIELDS = [
   "proto",
   "moduleId",
   "namespace",
-  "generated",
   "apiDoc",
 ] as const;
 
@@ -99,7 +97,6 @@ export function readOpenApiTargets(packageRoot: string, rawOverride?: string): O
       proto: entry.proto as string,
       moduleId: entry.moduleId as string,
       namespace: entry.namespace as string,
-      generated: entry.generated as string,
       apiDoc: entry.apiDoc as string,
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",

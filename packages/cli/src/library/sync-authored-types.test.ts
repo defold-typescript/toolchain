@@ -26,7 +26,6 @@ const DEFCON: AuthoredTarget = {
   authored: "fixtures/authored/defcon.console.d.ts",
   moduleId: "defcon.console",
   namespace: "defcon",
-  generated: "generated/defcon.d.ts",
   apiDoc: "api-doc/defcon.json",
   fidelity: "fidelity/defcon.json",
   upstreamLua: ["fixtures/upstream-lua/defcon/defcon/console.lua"],
@@ -71,7 +70,6 @@ describe("readAuthoredTargets", () => {
     expect(defcon?.repo).toBe("https://github.com/britzl/defcon");
     expect(defcon?.ref).toBe("2.6.0");
     expect(defcon?.authored).toBe("fixtures/authored/defcon.console.d.ts");
-    expect(defcon?.generated).toBe("generated/defcon.d.ts");
     expect(defcon?.apiDoc).toBe("api-doc/defcon.json");
     expect(defcon?.license).toBe("MIT");
   });
@@ -100,7 +98,7 @@ describe("readAuthoredTargets", () => {
 });
 
 describe("emitAuthoredDeclaration", () => {
-  test("emits the vendored authored .d.ts as the bare-namespace generated golden", () => {
+  test("prints the vendored authored .d.ts verbatim", () => {
     const contents = emitAuthoredDeclaration(PACKAGE_ROOT, DEFCON);
     // The forked ambient module keyed by moduleId, exported symbols intact
     // (assert on symbols, never the whole blob).
@@ -243,9 +241,8 @@ describe("defcon.console migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defcon")).toBe(false);
   });
 
-  test("the retired ts-defold fixture and dotted generated golden are deleted", () => {
+  test("the retired ts-defold fixture is deleted", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defcon.console.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/defcon.console.d.ts"))).toBe(false);
   });
 });
 
@@ -269,9 +266,8 @@ describe("deftest.deftest migration integrity", () => {
     expect(dirs.some((c) => c.dir === "deftest")).toBe(false);
   });
 
-  test("the retired ts-defold fixture and dotted generated golden are deleted", () => {
+  test("the retired ts-defold fixture is deleted", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/deftest.deftest.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/deftest.deftest.d.ts"))).toBe(false);
   });
 
   test("the lowered api-doc publishes the ambient test DSL alongside the unmarked module members", () => {
@@ -307,9 +303,8 @@ describe("defmath.defmath migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defmath")).toBe(false);
   });
 
-  test("the retired ts-defold fixture and dotted generated golden are deleted", () => {
+  test("the retired ts-defold fixture is deleted", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defmath.defmath.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/defmath.defmath.d.ts"))).toBe(false);
   });
 
   test("the golden carries the core-type-renamed ambient engine types", async () => {
@@ -344,9 +339,8 @@ describe("zzfx.api migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defold-zzfx")).toBe(false);
   });
 
-  test("the retired ts-defold fixture and dotted generated golden are deleted", () => {
+  test("the retired ts-defold fixture is deleted", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/zzfx.api.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/zzfx.api.d.ts"))).toBe(false);
   });
 
   test("the golden carries the module-external opaque handle declaration", async () => {
@@ -414,9 +408,8 @@ describe("boom.boom migration integrity", () => {
     expect(dirs.some((c) => c.dir === "boom")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, and dotted api-doc are deleted", () => {
+  test("the retired ts-defold fixture and dotted api-doc are deleted", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/boom.boom.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/boom.boom.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/boom.boom.json"))).toBe(false);
   });
 
@@ -479,9 +472,8 @@ describe("defsave.defsave migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defsave")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, and dotted api-doc are deleted", () => {
+  test("the retired ts-defold fixture and dotted api-doc are deleted", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defsave.defsave.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/defsave.defsave.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/defsave.defsave.json"))).toBe(false);
   });
 
@@ -537,16 +529,15 @@ describe("persist.persist migration integrity", () => {
     expect(dirs.some((c) => c.dir === "library-defold-persist")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, and dotted api-doc are deleted", () => {
+  test("the retired ts-defold fixture and dotted api-doc are deleted", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/persist.persist.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/persist.persist.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/persist.persist.json"))).toBe(false);
   });
 });
 
 // The second Bucket-C severance, and the first whose publish namespace must stay
 // dotted: the markdown lane's `no-go` proof already owns the bare `orthographic`
-// namespace (`generated/orthographic.d.ts`, `api-doc/orthographic.json`) and is
+// namespace (`api-doc/orthographic.json`) and is
 // hidden from page enumeration, so forking under `orthographic` would collide
 // with the proof artifacts and render no page. The dotted namespace overwrites
 // the retired ts-defold golden in place instead, keeping route and import string
@@ -561,7 +552,6 @@ describe("orthographic.camera migration integrity", () => {
     expect(orthographic?.ref).toBe("3.6.3");
     expect(orthographic?.license).toBe("MIT");
     expect(orthographic?.authored).toBe("fixtures/authored/orthographic.camera.d.ts");
-    expect(orthographic?.generated).toBe("generated/orthographic.camera.d.ts");
     expect(orthographic?.apiDoc).toBe("api-doc/orthographic.camera.json");
   });
 
@@ -579,14 +569,10 @@ describe("orthographic.camera migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defold-orthographic")).toBe(false);
   });
 
-  test("the retired ts-defold fixture and package subpath are gone", () => {
+  test("the retired ts-defold fixture is gone", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/orthographic.camera.d.ts"))).toBe(
       false,
     );
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./orthographic.camera" in exports).toBe(false);
   });
 
   test("the golden widens follow to accept one target or an array of targets", async () => {
@@ -597,10 +583,8 @@ describe("orthographic.camera migration integrity", () => {
 });
 
 // The third Bucket-C severance, and the second to take the bare namespace. The
-// bare `yagames` is both free and required: nothing owns `generated/yagames.d.ts`
-// or `api-doc/yagames.json` and yagames is not a markdown target, while the
-// shared severed branch asserts a no-go module has no `generated/<moduleId>.d.ts`
-// — the dotted overwrite-in-place shape orthographic used would fail it. The
+// bare `yagames` is free: nothing owns `api-doc/yagames.json` and yagames is
+// not a markdown target. The
 // import string survives byte-identical (the alias comes from the namespace's
 // trailing segment, the path from `moduleId`); only the route and the dropped
 // export subpath move.
@@ -618,7 +602,6 @@ describe("yagames.yagames migration integrity", () => {
     expect(yagames?.ref).toBe("0.19.0");
     expect(yagames?.license).toBe("MIT");
     expect(yagames?.authored).toBe("fixtures/authored/yagames.yagames.d.ts");
-    expect(yagames?.generated).toBe("generated/yagames.d.ts");
     expect(yagames?.apiDoc).toBe("api-doc/yagames.json");
   });
 
@@ -636,14 +619,9 @@ describe("yagames.yagames migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defold-yagames")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/yagames.yagames.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/yagames.yagames.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/yagames.yagames.json"))).toBe(false);
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./yagames.yagames" in exports).toBe(false);
   });
 
   test("the sticky-banner API replaced the banner_* family in the golden", async () => {
@@ -736,7 +714,6 @@ describe("defold-input migration integrity", () => {
       expect(target?.ref).toBe("4.8.0");
       expect(target?.license).toBe("MIT");
       expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
-      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
       expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
     }
   });
@@ -755,18 +732,14 @@ describe("defold-input migration integrity", () => {
   });
 
   // `namespace === moduleId`, so unlike every prior severance nothing is renamed:
-  // only the ts-defold snapshots die, and the goldens, api-docs and the subpaths
-  // consumers import stay exactly where they were.
-  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", async () => {
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
+  // only the ts-defold snapshots die, and the goldens and api-docs stay exactly
+  // where they were.
+  test("the ts-defold fixtures are gone while the goldens and api-docs are untouched", async () => {
     for (const mod of MODULES) {
       const moduleId = `in.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
       expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
-      expect(`./${moduleId}` in exports).toBe(true);
     }
   });
 
@@ -811,7 +784,6 @@ describe("monarch migration integrity", () => {
       expect(target?.ref).toBe("6.0.3");
       expect(target?.license).toBe("MIT");
       expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
-      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
       expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
     }
   });
@@ -833,16 +805,12 @@ describe("monarch migration integrity", () => {
     expect(dirs.some((c) => c.dir === "monarch")).toBe(false);
   });
 
-  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", async () => {
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
+  test("the ts-defold fixtures are gone while the goldens and api-docs are untouched", async () => {
     for (const mod of MODULES) {
       const moduleId = `monarch.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
       expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
-      expect(`./${moduleId}` in exports).toBe(true);
     }
   });
 
@@ -905,7 +873,6 @@ describe("richtext migration integrity", () => {
       expect(target?.ref).toBe("5.22.1");
       expect(target?.license).toBe("MIT");
       expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
-      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
       expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
     }
   });
@@ -925,16 +892,12 @@ describe("richtext migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defold-richtext")).toBe(false);
   });
 
-  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths are untouched", async () => {
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
+  test("the ts-defold fixtures are gone while the goldens and api-docs are untouched", async () => {
     for (const mod of MODULES) {
       const moduleId = `richtext.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
       expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
-      expect(`./${moduleId}` in exports).toBe(true);
     }
   });
 
@@ -994,8 +957,8 @@ describe("richtext migration integrity", () => {
 // move: both ts-defold fixtures are byte-identical to their goldens, so nothing
 // was at stake in *which* copy was forked, but each module really exports three
 // module-level members upstream that ts-defold never hand-wrote. The fork is
-// where they land, so the assertions below read the vendored copy — a correction
-// applied to `generated/` alone would survive here and die at the next regen.
+// where they land, so the assertions below read the vendored copy the lane
+// prints.
 describe("metrics migration integrity", () => {
   const MODULES = ["fps", "mem"];
 
@@ -1010,7 +973,6 @@ describe("metrics migration integrity", () => {
       expect(target?.ref).toBe("1.2.1");
       expect(target?.license).toBe("MIT");
       expect(target?.authored).toBe(`fixtures/authored/${moduleId}.d.ts`);
-      expect(target?.generated).toBe(`generated/${moduleId}.d.ts`);
       expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
     }
   });
@@ -1028,16 +990,12 @@ describe("metrics migration integrity", () => {
     expect(dirs.some((c) => c.dir === "defold-metrics")).toBe(false);
   });
 
-  test("the ts-defold fixtures are gone while the goldens, api-docs and subpaths survive", async () => {
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
+  test("the ts-defold fixtures are gone while the goldens and api-docs survive", async () => {
     for (const mod of MODULES) {
       const moduleId = `metrics.${mod}`;
       expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
       expect((await printCorpus(PACKAGE_ROOT)).has(moduleId)).toBe(true);
       expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
-      expect(`./${moduleId}` in exports).toBe(true);
     }
   });
 
@@ -1070,8 +1028,7 @@ describe("metrics migration integrity", () => {
 // the two parameters its LDoc block lists instead, so the three-argument call
 // every README example writes does not type-check. Unlike yagames the correction
 // moves no recorded comparison term, so the fork's own content is what proves it
-// landed — assert on the vendored fork, not only the emitted golden, because a
-// correction applied to `generated/` alone is erased by the next regen.
+// landed — assert on the vendored fork, which is what the lane prints.
 describe("gooey.gooey migration integrity", () => {
   const OTHER_FUNCTIONS = [
     "button",
@@ -1096,7 +1053,6 @@ describe("gooey.gooey migration integrity", () => {
     expect(gooey?.ref).toBe("10.5.3");
     expect(gooey?.license).toBe("MIT");
     expect(gooey?.authored).toBe("fixtures/authored/gooey.gooey.d.ts");
-    expect(gooey?.generated).toBe("generated/gooey.d.ts");
     expect(gooey?.apiDoc).toBe("api-doc/gooey.json");
   });
 
@@ -1111,14 +1067,9 @@ describe("gooey.gooey migration integrity", () => {
     expect(dirs.some((c) => c.dir === "gooey")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/gooey.gooey.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/gooey.gooey.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/gooey.gooey.json"))).toBe(false);
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./gooey.gooey" in exports).toBe(false);
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
@@ -1162,7 +1113,6 @@ describe("bzAnim.bzLibrary migration integrity", () => {
     expect(bzAnim?.ref).toBe("v.1.2");
     expect(bzAnim?.license).toBe("Apache-2.0");
     expect(bzAnim?.authored).toBe(AUTHORED);
-    expect(bzAnim?.generated).toBe("generated/bzAnim.d.ts");
     expect(bzAnim?.apiDoc).toBe("api-doc/bzAnim.json");
   });
 
@@ -1177,15 +1127,10 @@ describe("bzAnim.bzLibrary migration integrity", () => {
     expect(dirs.some((c) => c.dir === "bzAnim")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
     // The retired fixture is named for the *upstream filename*, not the module.
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/bzAnim.bzAnim.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/bzAnim.bzLibrary.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/bzAnim.bzLibrary.json"))).toBe(false);
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./bzAnim.bzLibrary" in exports).toBe(false);
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
@@ -1304,7 +1249,6 @@ describe("platypus.platypus migration integrity", () => {
     expect(platypus?.ref).toBe("4.3.1");
     expect(platypus?.license).toBe("MIT");
     expect(platypus?.authored).toBe(AUTHORED);
-    expect(platypus?.generated).toBe("generated/platypus.d.ts");
     expect(platypus?.apiDoc).toBe("api-doc/platypus.json");
   });
 
@@ -1319,14 +1263,9 @@ describe("platypus.platypus migration integrity", () => {
     expect(dirs.some((c) => c.dir === "platypus")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/platypus.platypus.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/platypus.platypus.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/platypus.platypus.json"))).toBe(false);
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./platypus.platypus" in exports).toBe(false);
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
@@ -1432,7 +1371,6 @@ describe("dicebag.dicebag migration integrity", () => {
     expect(dicebag?.ref).toBe("0.3");
     expect(dicebag?.license).toBe("CC0-1.0");
     expect(dicebag?.authored).toBe(AUTHORED);
-    expect(dicebag?.generated).toBe("generated/dicebag.d.ts");
     expect(dicebag?.apiDoc).toBe("api-doc/dicebag.json");
   });
 
@@ -1447,14 +1385,9 @@ describe("dicebag.dicebag migration integrity", () => {
     expect(dirs.some((c) => c.dir === "dicebag")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/dicebag.dicebag.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/dicebag.dicebag.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/dicebag.dicebag.json"))).toBe(false);
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./dicebag.dicebag" in exports).toBe(false);
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
@@ -1520,7 +1453,6 @@ describe("rendy.rendy migration integrity", () => {
     expect(rendy?.ref).toBe("b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3");
     expect(rendy?.license).toBe("Zlib");
     expect(rendy?.authored).toBe(AUTHORED);
-    expect(rendy?.generated).toBe("generated/rendy.d.ts");
     expect(rendy?.apiDoc).toBe("api-doc/rendy.json");
   });
 
@@ -1535,14 +1467,9 @@ describe("rendy.rendy migration integrity", () => {
     expect(dirs.some((c) => c.dir === "library-defold-rendy")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/rendy.rendy.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/rendy.rendy.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/rendy.rendy.json"))).toBe(false);
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./rendy.rendy" in exports).toBe(false);
   });
 
   test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
@@ -1631,7 +1558,6 @@ describe("nakama.nakama migration integrity", () => {
     expect(nakama?.ref).toBe("v3.4.0");
     expect(nakama?.license).toBe("Apache-2.0");
     expect(nakama?.authored).toBe(AUTHORED);
-    expect(nakama?.generated).toBe("generated/nakama.d.ts");
     expect(nakama?.apiDoc).toBe("api-doc/nakama.json");
     for (const sibling of ["nakama.engine.defold", "nakama.util.log"]) {
       const helper = targets.find((t) => t.moduleId === sibling);
@@ -1655,14 +1581,9 @@ describe("nakama.nakama migration integrity", () => {
     expect(dirs.some((c) => c.dir === "nakama-defold")).toBe(false);
   });
 
-  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
+  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
     expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.nakama.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/nakama.nakama.d.ts"))).toBe(false);
     expect(existsSync(join(PACKAGE_ROOT, "api-doc/nakama.nakama.json"))).toBe(false);
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./nakama.nakama" in exports).toBe(false);
   });
 
   test("the fork keeps every member the recorded openapi no-go counts as missing", () => {
@@ -1778,7 +1699,6 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
     expect(entry?.ref).toBe("fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1");
     expect(entry?.license).toBe("Zlib");
     expect(entry?.authored).toBe(AUTHORED);
-    expect(entry?.generated).toBe("generated/shutter.d.ts");
     expect(entry?.apiDoc).toBe("api-doc/shutter.json");
     expect(entry?.parityVerdict).toBeUndefined();
     expect(entry?.upstreamLua).toEqual([
@@ -1900,7 +1820,6 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
     expect(entry?.ref).toBe("a5cf87e1dce8d8980f641301e33843747986ff81");
     expect(entry?.license).toBe("Zlib");
     expect(entry?.authored).toBe(AUTHORED);
-    expect(entry?.generated).toBe("generated/checkpoint.d.ts");
     expect(entry?.apiDoc).toBe("api-doc/checkpoint.json");
     expect(entry?.parityVerdict).toBeUndefined();
     expect(entry?.upstreamLua).toEqual([
@@ -2558,7 +2477,6 @@ describe("nakama.session type claims upstream states only in its body", () => {
     expect(entry.ref).toBe("v3.4.0");
     expect(entry.license).toBe("Apache-2.0");
     expect(entry.authored).toBe("fixtures/authored/nakama.session.d.ts");
-    expect(entry.generated).toBe("generated/nakama.session.d.ts");
     expect(entry.apiDoc).toBe("api-doc/nakama.session.json");
     expect(entry.parityVerdict).toBeUndefined();
     expect(entry.upstreamLua).toEqual(["fixtures/upstream-lua/nakama-defold/nakama/session.lua"]);
@@ -2647,7 +2565,6 @@ describe("nakama.socket type claims upstream states only in its body", () => {
     expect(entry.ref).toBe("v3.4.0");
     expect(entry.license).toBe("Apache-2.0");
     expect(entry.authored).toBe("fixtures/authored/nakama.socket.d.ts");
-    expect(entry.generated).toBe("generated/nakama.socket.d.ts");
     expect(entry.apiDoc).toBe("api-doc/nakama.socket.json");
     expect(entry.parityVerdict).toBeUndefined();
     expect(entry.upstreamLua).toEqual(["fixtures/upstream-lua/nakama-defold/nakama/socket.lua"]);

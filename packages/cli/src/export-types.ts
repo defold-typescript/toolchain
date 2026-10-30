@@ -60,7 +60,7 @@ async function curatedFiles(sourceId: string, root: string | null): Promise<Cura
       if (library.sourceId !== sourceId) continue;
       for (const { module, contents } of (await printLibraryModules(root, library.modules, null))
         .printed) {
-        printed.set(`${library.generatedStems?.[module] ?? module}.d.ts`, contents);
+        printed.set(`${library.namespaces?.[module] ?? module}.d.ts`, contents);
       }
     }
     for (const [name, contents] of printed) files.push({ name, contents });

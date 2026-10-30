@@ -19,7 +19,6 @@ const DEFCON: AuthoredTarget = {
   authored: "fixtures/authored/defcon.console.d.ts",
   moduleId: "defcon.console",
   namespace: "defcon",
-  generated: "generated/defcon.d.ts",
   apiDoc: "api-doc/defcon.json",
   fidelity: "fidelity/defcon.json",
   upstreamLua: ["fixtures/upstream-lua/defcon/defcon/console.lua"],

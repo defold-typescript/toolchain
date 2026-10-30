@@ -197,7 +197,6 @@ describe("printLibraryModules dispatches each module to its lane", () => {
       authored: file,
       moduleId,
       namespace: "mylib",
-      generated: "generated/mylib.d.ts",
       apiDoc: "api-doc/mylib.json",
       upstreamLua: ["fixtures/upstream-lua/mylib/core.lua"],
     });

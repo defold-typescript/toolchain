@@ -36,17 +36,22 @@ describe("@defold-typescript/library-types publish surface", () => {
 
   test("ships the per-library resolve manifest the CLI reads to recognize libraries", () => {
     expect(paths).toContain("luals-targets.json");
-    expect(paths).toContain("generated/druid.d.ts");
+    expect(paths).toContain("fixtures/luals/druid/druid/druid.lua");
   });
 
   test("ships the script_api resolve manifest so installed packages can resolve bridge", () => {
     expect(paths).toContain("script-api-targets.json");
-    expect(paths).toContain("generated/bridge.d.ts");
+    expect(paths).toContain("fixtures/script-api/bridge.bridge.script_api");
   });
 
   test("ships the authored resolve manifest so installed packages can resolve defcon", () => {
     expect(paths).toContain("authored-targets.json");
-    expect(paths).toContain("generated/defcon.d.ts");
+    expect(paths).toContain("fixtures/authored/defcon.console.d.ts");
+  });
+
+  test("ships the curated native declarations resolve installs", () => {
+    expect(paths).toContain("native-targets.json");
+    expect(paths).toContain("native/daabbcc.d.ts");
   });
 
   test("ships the curated extension manifest resolve reads to note extension index bases", () => {

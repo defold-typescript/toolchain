@@ -62,7 +62,7 @@ function firstNativeTarget() {
 }
 
 // The declarations a Lua-module source installs, as `resolve` prints them, each
-// under `<generatedStems[module] ?? module>.d.ts`.
+// under `<namespaces[module] ?? module>.d.ts`.
 async function firstMultiFileLibrary(): Promise<{
   sourceId: string;
   files: Map<string, string>;
@@ -77,7 +77,7 @@ async function firstMultiFileLibrary(): Promise<{
     for (const module of library.modules) {
       const contents = corpus.get(module);
       if (contents !== undefined) {
-        files.set(`${library.generatedStems?.[module] ?? module}.d.ts`, contents);
+        files.set(`${library.namespaces?.[module] ?? module}.d.ts`, contents);
       }
     }
     if (files.size > 1) {
@@ -108,7 +108,7 @@ function writeCorpus(corpus: {
   readonly authored?: readonly FixtureAuthored[];
 }): string {
   const root = tmp();
-  mkdirSync(join(root, "generated", "native"), { recursive: true });
+  mkdirSync(join(root, "native"), { recursive: true });
   writeFileSync(join(root, "library-classification.json"), JSON.stringify({ dirs: [] }));
   writeFileSync(join(root, "library-targets.json"), JSON.stringify({ targets: [] }));
   const native = corpus.native ?? [];
@@ -139,7 +139,6 @@ function writeCorpus(corpus: {
         authored: `fixtures/authored/${moduleId}.d.ts`,
         moduleId,
         namespace,
-        generated: `generated/${namespace}.d.ts`,
         apiDoc: `api-doc/${namespace}.json`,
         upstreamLua: [`fixtures/upstream-lua/${moduleId}.lua`],
       })),
@@ -232,7 +231,7 @@ describe("runExportTypes refusals", () => {
         {
           repo: "https://github.com/owner/defold-bad",
           namespace: "bad",
-          declaration: "generated/native/bad.d.ts",
+          declaration: "native/bad.d.ts",
           contents,
         },
       ],
@@ -296,7 +295,7 @@ describe("runExportTypes refusals", () => {
         {
           repo: "https://github.com/owner/dup",
           namespace: "dup",
-          declaration: "generated/native/dup.d.ts",
+          declaration: "native/dup.d.ts",
           contents: "declare namespace dup {\n  const a: number;\n}\n",
         },
       ],
@@ -401,7 +400,7 @@ describe("runExportTypes over an existing types folder", () => {
           {
             repo: "https://github.com/owner/defold-glob",
             namespace: "glob",
-            declaration: "generated/native/glob.d.ts",
+            declaration: "native/glob.d.ts",
             contents: GLOB_CURATED,
           },
         ],
@@ -419,7 +418,7 @@ describe("runExportTypes over an existing types folder", () => {
         {
           repo: "https://github.com/owner/defold-glob",
           namespace: "glob",
-          declaration: "generated/native/glob.d.ts",
+          declaration: "native/glob.d.ts",
           contents: "declare namespace glob {\n  const a: number;\n}\n",
         },
       ],
@@ -440,7 +439,7 @@ describe("runExportTypes over an existing types folder", () => {
         {
           repo: "https://github.com/owner/defold-glob",
           namespace: "glob",
-          declaration: "generated/native/glob.d.ts",
+          declaration: "native/glob.d.ts",
           contents: "declare namespace glob {\n  const a: number;\n}\n",
         },
       ],

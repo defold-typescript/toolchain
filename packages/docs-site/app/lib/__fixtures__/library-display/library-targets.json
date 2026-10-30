@@ -8,8 +8,7 @@
     {
       "module": "alias.actual",
       "path": "packages/aliased/alias.source.d.ts",
-      "fixture": "fixtures/ts-defold/alias.source.d.ts",
-      "generated": "generated/alias.actual.d.ts"
+      "fixture": "fixtures/ts-defold/alias.source.d.ts"
     }
   ]
 }

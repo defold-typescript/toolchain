@@ -1296,7 +1296,7 @@ function unpairedTableRow(entry: ApiFunction, rowSignatures: readonly string[]):
 
 // `isLibrary` gates the emitter-equivalent variadic (`...args: T[]`) and multi-return
 // (`LuaMultiReturn<[...]>`) forms so a LuaLS- or script_api-sourced library `/api`
-// page matches its `generated/<ns>.d.ts`; engine pages keep `...: T` and comma-joined returns.
+// page matches its printed declaration; engine pages keep `...: T` and comma-joined returns.
 function functionSignature(
   fn: ApiFunction,
   mapType: MapType = mapDocType,
@@ -1572,7 +1572,7 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
   const m = page.module;
   const authoritative = page.authoritativeSignatures;
   // `library` JSON tokens are already TypeScript, so re-mapping them through the
-  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
+  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the printed library declarations.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const isLibrary = page.category === "library";
   const libraryPage = libraryPageKey(page);
@@ -1818,7 +1818,7 @@ export function apiModuleSymbols(
 ): ApiSymbol[] {
   const m = page.module;
   // `library` JSON tokens are already TypeScript, so re-mapping them through the
-  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the shipped `generated/*.d.ts`.
+  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the printed library declarations.
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const isLibrary = page.category === "library";
   const libraryPage = libraryPageKey(page);

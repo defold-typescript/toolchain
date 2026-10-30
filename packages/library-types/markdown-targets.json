@@ -7,7 +7,6 @@
       "markdown": "README.md",
       "moduleId": "orthographic.camera",
       "namespace": "orthographic",
-      "generated": "generated/orthographic.d.ts",
       "apiDoc": "api-doc/orthographic.json",
       "fidelity": "fidelity/orthographic.json",
       "decision": "no-go"

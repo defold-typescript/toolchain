@@ -475,7 +475,7 @@ export interface ModelContext extends MapContext {
  * -> `druid_button`), layered over the caller's `typeRenames`. Shared by the emitter
  * (declaration text) and the api-doc lowering so both resolve model references
  * identically — the invariant that keeps `api-doc/<ns>.json` byte-equivalent to
- * `generated/<ns>.d.ts`.
+ * the printed declaration.
  *
  * A declaration whose sanitized name is a core or target rename's value is declared
  * as `<name>_`, so a local `---@alias Url url|string` never hides the engine `Url`

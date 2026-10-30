@@ -51,7 +51,6 @@ write("authored-targets.json", [
     authored: "fixtures/authored/gadget.gadget.d.ts",
     moduleId: "gadget.gadget",
     namespace: "gadget",
-    generated: "generated/gadget.d.ts",
     apiDoc: "api-doc/gadget.json",
     parityVerdict: { reason: "no-module-file", note: "fixture" },
   },
@@ -72,7 +71,6 @@ write("script-api-targets.json", [
     scriptApi: "gizmo/gizmo.script_api",
     moduleId: "gizmo",
     namespace: "gizmo",
-    generated: "generated/gizmo.d.ts",
     apiDoc: "api-doc/gizmo.json",
   },
 ]);
@@ -168,8 +166,8 @@ describe("runShippedTypesCheck verdicts", () => {
       ref: "2.0.0",
       files: ["a.d.ts"],
       retire: [
-        { lane: "luals", id: "widget.widget", declaration: "generated/widget.d.ts" },
-        { lane: "native", id: "widgetnative", declaration: "native/widgetnative.d.ts" },
+        { lane: "luals", id: "widget.widget", source: "fixtures/luals/widget/" },
+        { lane: "native", id: "widgetnative", source: "native/widgetnative.d.ts" },
       ],
     });
     expect(run.actionable).toBe(true);
@@ -185,7 +183,7 @@ describe("runShippedTypesCheck verdicts", () => {
     expect(widget.issueTitle).toBe("retire curated types for acme/widget: 2.0.0 ships types");
     for (const fragment of [
       "widget.widget",
-      "generated/widget.d.ts",
+      "fixtures/luals/widget/",
       "widgetnative",
       "native/widgetnative.d.ts",
       "a.d.ts",

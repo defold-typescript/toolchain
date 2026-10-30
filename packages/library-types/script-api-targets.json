@@ -7,7 +7,6 @@
       "scriptApi": "bridge/api/bridge.script_api",
       "moduleId": "bridge.bridge",
       "namespace": "bridge",
-      "generated": "generated/bridge.d.ts",
       "apiDoc": "api-doc/bridge.json",
       "fidelity": "fidelity/bridge.json",
       "omittableSlots": [

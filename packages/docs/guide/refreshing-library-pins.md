@@ -170,7 +170,10 @@ Four lanes fetch and regenerate. Run their commands from
 | script_api | `script-api-targets.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity --api-doc` |
 
 `--fetch` is the only step that touches the network; everything after it reads
-the committed fixtures, so a regeneration is reproducible offline.
+the committed fixtures, so a regeneration is reproducible offline. No lane
+writes a declaration: `resolve` prints each target's types from its fixtures, so
+check them by printing them with `bun test packages/cli/src/library` from the
+repo root.
 
 Set `GITHUB_TOKEN` before fetching. The fetchers read it (`sync-luals-types.ts`
 and `sync-library-types.ts` both send it as a bearer token) and GitHub degrades
@@ -311,9 +314,9 @@ one issue per accepted repo, titled
 shipped files and every curated entry the repo backs.
 
 The issue retires nothing. Retirement is a reviewed change, as `pixels` was
-(`git show a32a1972`), that removes each listed entry's registry entry,
-committed declaration, `/api` page, vendored upstream source and parity floor,
-along with the tests that named it. Before making it, weigh the projects left
+(`git show a32a1972`), that removes each listed entry's registry entry, the
+input the issue lists for it, its `/api` page, vendored upstream source and
+parity floor, along with the tests that named it. Before making it, weigh the projects left
 behind: a project still on a release before the one that ships types has no
 `types/` folder to fall back on once the curated copy is gone.
 

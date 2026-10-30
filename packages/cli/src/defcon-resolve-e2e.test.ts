@@ -23,7 +23,7 @@ const defconRegistry = [
   {
     sourceId: "defcon",
     modules: ["defcon.console"],
-    generatedStems: { "defcon.console": "defcon" },
+    namespaces: { "defcon.console": "defcon" },
   },
 ];
 
