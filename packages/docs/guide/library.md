@@ -4,13 +4,51 @@ toc-title: library
 # library
 
 `library` works on library data: the per-library folders `resolve` prints its
-library declarations from. `library check` checks a directory of that data the
-way the running CLI reads it, so you can validate library data you are editing
-without a toolchain checkout.
+library declarations from. `library add` starts a library's folder from the URL a
+game would depend on, and `library check` checks a directory of that data the way
+the running CLI reads it, so you can write and validate library data without a
+toolchain checkout.
 
 ```sh
+bunx @defold-typescript/cli library add https://github.com/owner/mylib/archive/refs/tags/1.2.3.zip --data path/to/library-data
 bunx @defold-typescript/cli library check --data path/to/library-data
 ```
+
+## What `library add` writes
+
+`library add <url> --data <dir>` downloads the archive and writes one folder,
+named for the repository, into the data folder `library check` reads:
+
+| File | When | What it holds |
+| ---- | ---- | ------------- |
+| `library.json` | always | `repo`, and `license` when the first line of the archive's `LICENSE` names MIT, Apache-2.0, BSD 2- or 3-Clause or Zlib. |
+| `reviewed.json` | always | `ref`: the tag the URL names, or the commit a branch URL's archive was packed from. |
+| `recipe.json` | when the library can generate a module | A starting entry, chosen below. |
+| `source/` | with `recipe.json` | The upstream files that entry reads, at the paths a later re-pin writes. |
+
+`<url>` is a `<repo>/archive/<ref>.zip` URL. A `refs/heads/` name, `master` and
+`main` are branches and pin the commit; any other name is read as a tag. A branch
+archive that names no commit is an error, so use a tag URL for it.
+
+What the archive shares under its `[library] include_dirs` picks the recipe,
+leaving out example, test, demo and sample directories:
+
+| The archive holds | `library add` writes |
+| ------------------ | -------------------- |
+| A `.script_api` file with a Lua module at `<include_dir>/<name>.lua` | A `scriptApi` entry, `moduleId` `<include_dir>.<name>`, per file. |
+| A `.script_api` file with no such module | No entry: it documents a native global, and [`resolve` types it](./extensions.md) from the dependency's own archive. |
+| Lua with `---@` annotations | One `luals` entry for `<include_dir>/<include_dir>.lua`, else the first annotated file. See [Authoring LuaLS library types](./authoring-luals-library-types.md). |
+| An `ext.manifest`, or Lua with no annotations | No recipe. See [Authoring forked library types](./authoring-forked-library-types.md). |
+
+The command prints the folder it wrote, anything left to do by hand, and the
+`library check` command to run next. That first check reports each generated
+module's missing coverage floor and the value it measured; see
+[Coverage floors](#coverage-floors).
+
+An existing folder, an archive that declares no `include_dirs`, an entry that
+steps out of its folder and a module another library already names are errors,
+and leave the data folder as it was. With `--json`, `library` names the folder,
+`written` holds its absolute path and `warnings` holds the notes.
 
 ## What `library check` runs
 
@@ -73,10 +111,10 @@ every module afresh, so it reads no committed report and nothing outside
 ## `--data`
 
 `--data <dir>` names a directory of version-named data folders (`0.55.0/`,
-`0.56.0/`, ...). `library check` reads the one this CLI reads, by the same rule
-as [`resolve --library-data`](./resolve.md#flags): the highest folder at or
-below the CLI version. A relative `<dir>` resolves against the working
-directory. A `<dir>` with no folder for this CLI version is an error.
+`0.56.0/`, ...). `library check` and `library add` use the one this CLI reads, by
+the same rule as [`resolve --library-data`](./resolve.md#flags): the highest
+folder at or below the CLI version. A relative `<dir>` resolves against the
+working directory. A `<dir>` with no folder for this CLI version is an error.
 
 ## `--api-doc-out`
 

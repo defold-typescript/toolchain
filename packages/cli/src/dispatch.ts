@@ -163,7 +163,8 @@ const USAGE = `Usage: defold-typescript <${[...COMMAND_NAMES].join("|")}> [path]
 Run \`defold-typescript --help\` for per-command usage and flags.
 `;
 const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle|status|run> [path]\n";
-const LIBRARY_USAGE = "Usage: defold-typescript library <check> --data <dir>\n";
+const LIBRARY_USAGE =
+  "Usage: defold-typescript library check --data <dir> [--api-doc-out <dir>]\n       defold-typescript library add <url> --data <dir>\n";
 
 /** How long `build` waits for an editor to identify itself before giving up on it. */
 const EDITOR_PROBE_TIMEOUT_MS = 2000;
@@ -645,7 +646,7 @@ function dispatchCommand(
   if (command === "library") {
     // Runs on a directory of library data, not a Defold project: no target resolution.
     const subcommand = rest[0];
-    if (subcommand !== "check") {
+    if (subcommand !== "check" && subcommand !== "add") {
       io.stderr.write(LIBRARY_USAGE);
       return 1;
     }
@@ -676,17 +677,56 @@ function dispatchCommand(
       const selected =
         dataFlag === undefined || dataFlag === "" || dataFlag.startsWith("-")
           ? {
-              error:
-                "defold-typescript library check: --data needs a directory; use: defold-typescript library check --data <dir>",
+              error: `defold-typescript library ${subcommand}: --data needs a directory; use: defold-typescript library ${subcommand}${subcommand === "add" ? " <url>" : ""} --data <dir>`,
             }
           : libraryDataFromFlag(
-              "library check: --data",
+              `library ${subcommand}: --data`,
               dataFlag,
               process.cwd(),
               internals?.cliVersion ?? readCliVersion(),
             );
       if ("error" in selected) return fail(selected.error);
       const dataFolder = selected.dir;
+      if (subcommand === "add") {
+        const url = rest[1];
+        if (url === undefined) {
+          return fail(
+            "defold-typescript library add: needs a URL; use: defold-typescript library add <url> --data <dir>",
+          );
+        }
+        const { addLibrary } = await import("./library/library-add");
+        const seams = internals?.resolveInternals;
+        let added: Awaited<ReturnType<typeof addLibrary>>;
+        try {
+          added = await addLibrary(url, dataFolder, {
+            ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
+            ...(seams?.download ? { download: seams.download } : {}),
+          });
+        } catch (err) {
+          return fail(
+            `defold-typescript library add: ${err instanceof Error ? err.message : String(err)}`,
+            { dataFolder },
+          );
+        }
+        const folder = path.join(dataFolder, added.folder);
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "library",
+              subcommand,
+              library: added.folder,
+              dataFolder,
+              written: [folder],
+              warnings: added.notes,
+            }),
+          );
+        } else {
+          io.stdout.write(`defold-typescript library add: wrote ${folder}\n`);
+          for (const note of added.notes) io.stdout.write(`${note}\n`);
+          io.stdout.write(`next: defold-typescript library check --data ${dataFlag}\n`);
+        }
+        return 0;
+      }
       const { checkLibraryData } = await import("./library/library-check");
       let problems: Awaited<ReturnType<typeof checkLibraryData>>;
       try {

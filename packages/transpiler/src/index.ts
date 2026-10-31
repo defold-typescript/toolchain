@@ -53,6 +53,7 @@ export {
   libraryIncludeDirFiles,
   libraryIncludedEntries,
   readGameProjectDependencies,
+  readLibraryIncludeDirs,
   readLibrarySceneDocuments,
 } from "./library-dependencies";
 export { scanEmittedRequires } from "./lua-require-scan";

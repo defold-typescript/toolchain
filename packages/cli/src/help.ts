@@ -232,8 +232,9 @@ const COMMANDS: readonly HelpCommand[] = [
   {
     name: "library",
     summary:
-      "Check library data: check runs the reader, the print and the compile against this CLI's engine types, and exits 1 on any problem.",
-    usage: "bunx @defold-typescript/cli library check --data <dir> [--api-doc-out <dir>]",
+      "Work on library data: add starts a library's folder from its dependency URL; check runs the reader, the print and the compile against this CLI's engine types, and exits 1 on any problem.",
+    usage:
+      "bunx @defold-typescript/cli library check --data <dir> [--api-doc-out <dir>]\n       bunx @defold-typescript/cli library add <url> --data <dir>",
     flags: [
       {
         flag: "--data <dir>",

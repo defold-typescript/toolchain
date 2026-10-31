@@ -2,15 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { includedEvidence, portalEntryKind } from "./library-evidence";
 import {
   type AssetPortalManifest,
   fetchAssetPortal,
-  includedEvidence,
   type PortalAsset,
   type PortalEntry,
   type PortalRepo,
   type PortalSource,
-  portalEntryKind,
   syncAssetPortal,
   syncAssetPortalDates,
 } from "./sync-asset-portal";
