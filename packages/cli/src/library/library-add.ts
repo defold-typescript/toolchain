@@ -170,12 +170,31 @@ function scriptApiRecipe(paths: readonly string[], includeDirs: readonly string[
   return { recipe: { scriptApi: [...entries.values()] }, copies, notes };
 }
 
+function folderExistsError(folder: string, dataDir: string): Error {
+  return new Error(`library folder ${folder} already exists in ${dataDir}`);
+}
+
+// Exclusive, because the check before the download holds nothing across it: a folder
+// made in that wait belongs to someone else, so this run must neither write to it
+// nor remove it.
+function claimLibraryFolder(root: string, folder: string, dataDir: string): void {
+  try {
+    mkdirSync(root);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+      throw folderExistsError(folder, dataDir);
+    }
+    throw error;
+  }
+}
+
 /**
  * Write the folder of the library `url` archives into the data folder `dataDir`,
  * and return its name with what is left to do by hand. Throws, leaving `dataDir` as
- * it was, on a URL that names no repository archive, an existing folder, a branch
- * whose archive names no commit, an archive that declares no `include_dirs`, an
- * entry that leaves its folder, and a result the reader refuses.
+ * it was, on a URL that names no repository archive, an existing folder, including
+ * one created during the download, a branch whose archive names no commit, an
+ * archive that declares no `include_dirs`, an entry that leaves its folder, and a
+ * result the reader refuses.
  */
 export async function addLibrary(
   url: string,
@@ -186,7 +205,7 @@ export async function addLibrary(
   const folder = libraryFolderName(repo);
   const root = join(dataDir, folder);
   if (existsSync(root)) {
-    throw new Error(`library folder ${folder} already exists in ${dataDir}`);
+    throw folderExistsError(folder, dataDir);
   }
 
   const archive = await resolveExtensionArchive(
@@ -254,6 +273,7 @@ export async function addLibrary(
   }
 
   const license = archiveLicense(zip);
+  claimLibraryFolder(root, folder, dataDir);
   try {
     writeLibraryJson(dataDir, { repo, ...(license === undefined ? {} : { license }) });
     writeReviewedJson(dataDir, folder, { ref });
