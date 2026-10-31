@@ -7,7 +7,8 @@ toc-title: library
 library declarations from. `library add` starts a library's folder from the URL a
 game would depend on, and `library check` checks a directory of that data the way
 the running CLI reads it, so you can write and validate library data without a
-toolchain checkout.
+toolchain checkout. Library data is added by a PR to
+[`defold-typescript/library-data`](https://github.com/defold-typescript/library-data).
 
 ```sh
 bunx @defold-typescript/cli library add https://github.com/owner/mylib/archive/refs/tags/1.2.3.zip --data path/to/library-data

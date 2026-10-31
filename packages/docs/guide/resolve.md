@@ -29,7 +29,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/shipped/<repo>/`, checked apart from every other dependency, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
-| **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
+| **Vendored pure-Lua library** | the repo name matches [library data](#library-data), confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one `@globalTable` module per doc, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
 | **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped                                                                                                     |
@@ -161,10 +161,11 @@ To ship types from a library you maintain, see
 ## Vendored library types
 
 Many popular Defold libraries are plain Lua — installed via **Fetch Libraries**,
-and most carry no `.script_api`. This toolchain ships library data for a curated
-set of them in `@defold-typescript/library-types`: each library's upstream sources
-pinned at one version with the corrections that type them, or a hand-written
-fork. When a declared dependency matches one, `resolve` prints its declarations
+and most carry no `.script_api`. The
+[library data repo](https://github.com/defold-typescript/library-data) holds
+[library data](#library-data) for a curated set of them: each library's upstream
+sources pinned at one version with the corrections that type them, or a
+hand-written fork. When a declared dependency matches one, `resolve` prints its declarations
 from the dependency's own archive, so the types follow the library version the
 game depends on; a library typed by a hand-written fork gets that fork as
 written. The import specifier is the Lua `require` path —
@@ -213,6 +214,31 @@ archive ships none of the vendored library's module paths — it
 keeps its own namespace from its `.script_api`, is not reported as a library at
 all, and raises no warning. Its types came from the archive itself, so nothing
 is missing and a warning would be noise.
+
+## Library data
+
+`resolve` fetches the library data repo's `main` on its own schedule, with no CLI
+release involved, and asks the server whether it changed since the copy it stored
+(by `ETag`). It records the commit it read in `package.json`, under
+`"defold-typescript"`:
+
+```json
+{
+  "defold-typescript": {
+    "libraryData": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f"
+  }
+}
+```
+
+- **A plain `resolve`** moves `libraryData` to the newest commit.
+- **`resolve --frozen`** holds to the recorded commit and fails when none is
+  recorded; run a plain `resolve` first and commit the result.
+- **Offline**, a plain `resolve` uses the copy it stored and warns on `stderr`.
+  With nothing stored it warns and prints no library declarations.
+
+A project with no dependencies fetches nothing and records nothing. Data lands in
+the `library-data` folder beside the archive cache described in
+[Cache location](#cache-location).
 
 ## Curated native extensions
 
@@ -338,10 +364,10 @@ normally.
   or on a pin in the retired `sha256:` form (so CI gates the upgrade) and write
   nothing. See [Pinning extension versions](#pinning-extension-versions).
 - `--library-data <dir>` — read library data from `<dir>` instead of the
-  installed `@defold-typescript/library-types`. `<dir>` holds version-named data
-  folders and is chosen from by the same rule, and a relative `<dir>` resolves
-  against the working directory. `resolve` exits non-zero when `<dir>` holds no
-  folder for this CLI version.
+  [library data repo](#library-data), with no request for it and no commit
+  recorded. `<dir>` holds version-named data folders and is chosen from by the
+  same rule, and a relative `<dir>` resolves against the working directory.
+  `resolve` exits non-zero when `<dir>` holds no folder for this CLI version.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,

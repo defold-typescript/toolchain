@@ -9,16 +9,15 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, relative, sep } from "node:path";
+import { writeZipArchive } from "../../types/test/zip-fixture";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { runExportTypes } from "./export-types";
 import { libraryFolderName } from "./library/library-data";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printCorpus } from "./library/print-corpus";
-import { writeLibraryTargets } from "./library-data-fixture";
-import {
-  loadVendoredLibraryRegistry,
-  loadVendoredNativeRegistry,
-  resolveLibraryDataDir,
-} from "./library-registry";
+import { LIBRARY_DATA_MAIN_URL } from "./library-data-archive";
+import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fixture";
+import { loadVendoredLibraryRegistry, loadVendoredNativeRegistry } from "./library-registry";
 import {
   checkShippedDeclarations,
   locateShippedDeclarations,
@@ -56,7 +55,7 @@ async function thrownMessage(run: () => Promise<unknown>): Promise<string> {
 }
 
 function firstNativeTarget() {
-  const target = loadVendoredNativeRegistry()[0];
+  const target = loadVendoredNativeRegistry(LIBRARY_DATA_DIR)[0];
   if (target === undefined) {
     throw new Error("the committed corpus has no native target");
   }
@@ -69,12 +68,8 @@ async function firstMultiFileLibrary(): Promise<{
   sourceId: string;
   files: Map<string, string>;
 }> {
-  const root = resolveLibraryDataDir();
-  if (root === null) {
-    throw new Error("the CLI selects no library data folder");
-  }
-  const corpus = await printCorpus(root);
-  for (const library of loadVendoredLibraryRegistry(root)) {
+  const corpus = await printCorpus(LIBRARY_DATA_DIR);
+  for (const library of loadVendoredLibraryRegistry(LIBRARY_DATA_DIR)) {
     const files = new Map<string, string>();
     for (const module of library.modules) {
       const contents = corpus.get(module);
@@ -149,7 +144,11 @@ describe("runExportTypes over the committed corpus", () => {
     const target = firstNativeTarget();
     const cwd = tmp();
 
-    const result = await runExportTypes({ library: target.sourceId, cwd });
+    const result = await runExportTypes({
+      libraryDataDir: LIBRARY_DATA_DIR,
+      library: target.sourceId,
+      cwd,
+    });
 
     const name = basename(target.declarationPath);
     expect(result).toEqual({ sourceId: target.sourceId, written: [`types/${name}`] });
@@ -163,7 +162,11 @@ describe("runExportTypes over the committed corpus", () => {
     const { sourceId, files } = await firstMultiFileLibrary();
     const cwd = tmp();
 
-    const result = await runExportTypes({ library: sourceId, cwd });
+    const result = await runExportTypes({
+      libraryDataDir: LIBRARY_DATA_DIR,
+      library: sourceId,
+      cwd,
+    });
 
     const expected = [...files.keys()].map((name) => `types/${name}`).sort();
     expect(result.sourceId).toBe(sourceId);
@@ -179,8 +182,13 @@ describe("runExportTypes over the committed corpus", () => {
     const byName = tmp();
     const byUrl = tmp();
 
-    await runExportTypes({ library: target.sourceId, cwd: byName });
     await runExportTypes({
+      libraryDataDir: LIBRARY_DATA_DIR,
+      library: target.sourceId,
+      cwd: byName,
+    });
+    await runExportTypes({
+      libraryDataDir: LIBRARY_DATA_DIR,
       library: `https://github.com/owner/${target.sourceId}/archive/refs/tags/v1.0.0.zip`,
       cwd: byUrl,
     });
@@ -197,7 +205,7 @@ describe("runExportTypes over the committed corpus", () => {
     const sourceIds = [firstNativeTarget().sourceId, (await firstMultiFileLibrary()).sourceId];
     for (const sourceId of sourceIds) {
       const cwd = tmp();
-      await runExportTypes({ library: sourceId, cwd });
+      await runExportTypes({ libraryDataDir: LIBRARY_DATA_DIR, library: sourceId, cwd });
 
       const entries = filesUnder(cwd).map((file) => `${sourceId}-main/${file}`);
       const located = locateShippedDeclarations(entries);
@@ -314,7 +322,12 @@ describe("runExportTypes refusals", () => {
     const cwd = tmp();
 
     await expect(
-      runExportTypes({ library: target.sourceId, cwd, typesRoot: null }),
+      runExportTypes({
+        libraryDataDir: LIBRARY_DATA_DIR,
+        library: target.sourceId,
+        cwd,
+        typesRoot: null,
+      }),
     ).rejects.toThrow(
       `curated types for ${target.sourceId} were not exported: @defold-typescript/types could not be found to check them`,
     );
@@ -324,9 +337,9 @@ describe("runExportTypes refusals", () => {
   test("an unknown library throws and writes nothing", async () => {
     const cwd = tmp();
 
-    await expect(runExportTypes({ library: "Not-A-Library", cwd })).rejects.toThrow(
-      'no curated types for "Not-A-Library"',
-    );
+    await expect(
+      runExportTypes({ libraryDataDir: LIBRARY_DATA_DIR, library: "Not-A-Library", cwd }),
+    ).rejects.toThrow('no curated types for "Not-A-Library"');
     expect(readdirSync(cwd)).toEqual([]);
   });
 });
@@ -477,7 +490,7 @@ describe("runExportTypes over an existing types folder", () => {
     };
     const cwd = folderWith(outside);
 
-    await runExportTypes({ library: target.sourceId, cwd });
+    await runExportTypes({ libraryDataDir: LIBRARY_DATA_DIR, library: target.sourceId, cwd });
 
     for (const [file, contents] of Object.entries(outside)) {
       expect(readFileSync(join(cwd, file), "utf8")).toBe(contents);
@@ -492,7 +505,11 @@ describe("runExportTypes over an existing types folder", () => {
     writeFileSync(join(cwd, "types", name), "stale\n");
     writeFileSync(join(cwd, "types", "other.d.ts"), "declare const other: number;\n");
 
-    const { written } = await runExportTypes({ library: target.sourceId, cwd });
+    const { written } = await runExportTypes({
+      libraryDataDir: LIBRARY_DATA_DIR,
+      library: target.sourceId,
+      cwd,
+    });
 
     expect(readFileSync(join(cwd, "types", name), "utf8")).toBe(
       readFileSync(target.declarationPath, "utf8"),
@@ -531,4 +548,61 @@ describe("runExportTypes over an existing types folder", () => {
       expect(snapshot(cwd)).toEqual(before);
     },
   );
+});
+
+describe("runExportTypes library data source", () => {
+  const COMMIT = "1111111111111111111111111111111111111111";
+  const REPO = "https://github.com/owner/mylib";
+  const DECLARATION = 'declare module "mylib.core" {\n  export const version: "archive";\n}\n';
+
+  // A real data folder, packed the way GitHub packs the data repo's root.
+  function dataArchive(): Uint8Array {
+    const folder = writeAuthoredLibraryData({ "mylib.core": DECLARATION });
+    return writeZipArchive(
+      filesUnder(folder).map((file) => ({
+        name: `library-data-${COMMIT}/0.0.1/${file}`,
+        text: readFileSync(join(folder, file), "utf8"),
+      })),
+      { comment: COMMIT },
+    );
+  }
+
+  test("exports a curated library from the data repo's archive", async () => {
+    const cwd = tmp();
+    const requests: string[] = [];
+    const archive = dataArchive();
+
+    const { written } = await runExportTypes({
+      library: REPO,
+      cwd,
+      cacheDir: tmp(),
+      download: async (url) => {
+        requests.push(url);
+        return { status: "ok", bytes: archive };
+      },
+    });
+
+    expect(requests).toEqual([LIBRARY_DATA_MAIN_URL]);
+    expect(written).toEqual(["types/mylib.core.d.ts"]);
+    expect(readFileSync(join(cwd, "types", "mylib.core.d.ts"), "utf8")).toBe(DECLARATION);
+  });
+
+  test("fails with no curated types, naming why, when the archive is unreachable and nothing is cached", async () => {
+    const cwd = tmp();
+
+    const message = await thrownMessage(() =>
+      runExportTypes({
+        library: REPO,
+        cwd,
+        cacheDir: tmp(),
+        download: async () => {
+          throw new Error("network down");
+        },
+      }),
+    );
+
+    expect(message).toContain(`no curated types for "${REPO}"`);
+    expect(message).toContain("network down");
+    expect(existsSync(join(cwd, "types"))).toBe(false);
+  });
 });
