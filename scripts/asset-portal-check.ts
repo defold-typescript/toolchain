@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import type { PortalKind } from "../packages/cli/src/library/library-evidence.ts";
 import {
   type AssetPortalManifest,
   livePortalHead,
   type PortalAliases,
   type PortalEntry,
   type PortalHead,
-  type PortalKind,
   portalEntryId,
   readAssetPortalManifest,
   readPortalAliases,

@@ -13,6 +13,7 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
+import { writeZipArchive } from "../../types/test/zip-fixture";
 import {
   EVAL_AUTH_SCHEME,
   EVAL_REQUEST_MEDIA_TYPE,
@@ -9572,9 +9573,9 @@ describe("dispatch library check", () => {
     [
       "an unknown sub-verb",
       ["frob", "--data", "."],
-      "Usage: defold-typescript library <check> --data <dir>",
+      "defold-typescript library add <url> --data <dir>",
     ],
-    ["no sub-verb", [], "Usage: defold-typescript library <check> --data <dir>"],
+    ["no sub-verb", [], "defold-typescript library check --data <dir>"],
   ] as const) {
     test(`${what} exits 1 with a usage error`, async () => {
       const { io, out, err } = captureStreams();
@@ -9596,5 +9597,132 @@ describe("dispatch library check", () => {
     expect(err()).toContain(
       `defold-typescript library check: error: --data ${base} holds no data folder`,
     );
+  });
+});
+
+describe("dispatch library add", () => {
+  const TAG_URL = "https://github.com/owner/MyLib/archive/refs/tags/1.2.3.zip";
+  const ANNOTATED = "---@class mylib.options\nlocal M = {}\nfunction M.start() end\nreturn M\n";
+
+  let base: string;
+  let dataDir: string;
+
+  beforeEach(() => {
+    base = mkdtempSync(path.join(os.tmpdir(), "dispatch-library-add-"));
+    dataDir = path.join(base, "data", "0.1.0");
+    mkdirSync(dataDir, { recursive: true });
+    // Newer than this CLI, so landing here shows the flag was not read as `check` reads it.
+    mkdirSync(path.join(base, "data", "0.2.0"));
+  });
+
+  afterEach(() => {
+    rmSync(base, { recursive: true, force: true });
+  });
+
+  const download: DownloadExtensionArchive = async () => ({
+    status: "ok",
+    bytes: writeZipArchive(
+      Object.entries({
+        "game.project": "[library]\ninclude_dirs = mylib\n",
+        "mylib/mylib.lua": ANNOTATED,
+      }).map(([name, text]) => ({ name: `MyLib-1.2.3/${name}`, text })),
+    ),
+  });
+
+  const run = (args: string[], io: ReturnType<typeof captureStreams>["io"]) =>
+    dispatch(["library", "add", ...args], io, {
+      cliVersion: "0.1.5",
+      resolveInternals: { download, cacheDir: path.join(base, "cache") },
+    });
+
+  const dataFlag = (): string => path.join(base, "data");
+
+  test("writes the folder, then prints it and the next command", async () => {
+    const { io, out, err } = captureStreams();
+    const code = await run([TAG_URL, "--data", dataFlag()], io);
+
+    expect(err()).toBe("");
+    expect(code).toBe(0);
+    expect(out()).toBe(
+      [
+        `defold-typescript library add: wrote ${path.join(dataDir, "mylib")}`,
+        `next: defold-typescript library check --data ${dataFlag()}`,
+        "",
+      ].join("\n"),
+    );
+    expect(JSON.parse(readFileSync(path.join(dataDir, "mylib", "reviewed.json"), "utf8"))).toEqual({
+      ref: "1.2.3",
+    });
+    expect(existsSync(path.join(dataDir, "mylib", "source/mylib/mylib/mylib.lua"))).toBe(true);
+    expect(readdirSync(path.join(base, "data", "0.2.0"))).toEqual([]);
+  });
+
+  test("prints what is left to do by hand", async () => {
+    const { io, out } = captureStreams();
+    const native: DownloadExtensionArchive = async () => ({
+      status: "ok",
+      bytes: writeZipArchive(
+        Object.entries({
+          "game.project": "[library]\ninclude_dirs = mylib\n",
+          "mylib/ext.manifest": "name: mylib\n",
+        }).map(([name, text]) => ({ name: `MyLib-1.2.3/${name}`, text })),
+      ),
+    });
+
+    const code = await dispatch(["library", "add", TAG_URL, "--data", dataFlag()], io, {
+      cliVersion: "0.1.5",
+      resolveInternals: { download: native, cacheDir: path.join(base, "cache") },
+    });
+
+    expect(code).toBe(0);
+    expect(out()).toContain("authoring-forked-library-types.md");
+  });
+
+  test("--json reports the library, the folder written and the notes", async () => {
+    const { io, out } = captureStreams();
+
+    const code = await run([TAG_URL, "--data", dataFlag(), "--json"], io);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out())).toEqual({
+      command: "library",
+      ok: true,
+      subcommand: "add",
+      library: "mylib",
+      dataFolder: dataDir,
+      written: [path.join(dataDir, "mylib")],
+      warnings: [],
+    });
+  });
+
+  test("no URL exits 1 with the usage error", async () => {
+    const { io, out, err } = captureStreams();
+
+    const code = await run(["--data", dataFlag()], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain("defold-typescript library add: error: needs a URL");
+    expect(readdirSync(dataDir)).toEqual([]);
+  });
+
+  test("no --data exits 1 naming the add verb", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await run([TAG_URL], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("library add: error: --data needs a directory");
+  });
+
+  test("a library that already exists exits 1 with the addLibrary error", async () => {
+    mkdirSync(path.join(dataDir, "mylib"));
+    const { io, out, err } = captureStreams();
+
+    const code = await run([TAG_URL, "--data", dataFlag()], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain("library folder mylib already exists");
   });
 });

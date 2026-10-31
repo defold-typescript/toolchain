@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { includedScriptApiPaths } from "../packages/cli/src/library/library-evidence.ts";
 import {
-  includedScriptApiPaths,
   livePortalSource,
   type PortalSource,
   rawUrl,
