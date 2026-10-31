@@ -11,6 +11,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
+import { readCliVersion } from "./cli-version";
 import {
   type DownloadExtensionArchive,
   defaultReadZip,
@@ -27,12 +28,19 @@ import {
 } from "./extension-materialize";
 import {
   isRetiredPin,
+  mergeLibraryDataCommit,
   mergeResolvedVersionPins,
   readExtensionVersionPins,
+  readLibraryDataCommit,
 } from "./extension-version";
 import { formatJsonLikeBiome } from "./format-json";
 import { printLibraryModules } from "./library/print-library";
 import { archiveSourceTree } from "./library/source-tree";
+import {
+  type LibraryDataArchive,
+  libraryDataCacheDir,
+  resolveLibraryDataArchive,
+} from "./library-data-archive";
 import { matchVendoredLibrary, normalizeSourceId, type VendoredLibrary } from "./library-match";
 import {
   ensureLibraryTypesReference,
@@ -107,6 +115,9 @@ export interface RunResolveOptions {
   // surface already there.
   readonly libraryRegistry?: readonly VendoredLibrary[];
   readonly libraryDataDir?: string | null;
+  // A data repo's `main.zip`, fetched for the library data when `libraryDataDir`
+  // is unset, with the commit it resolves to recorded in `package.json`.
+  readonly libraryDataUrl?: string;
   // The curated native-extension targets. Defaults to the native extensions the
   // library data folder holds.
   readonly nativeRegistry?: readonly VendoredNativeExtension[];
@@ -228,6 +239,25 @@ function seedExtensionPins(
   writeFileSync(join(cwd, "package.json"), `${formatJsonLikeBiome(merged)}\n`);
 }
 
+async function selectLibraryData(opts: RunResolveOptions): Promise<LibraryDataArchive> {
+  if (opts.libraryDataDir !== undefined) {
+    return { dir: opts.libraryDataDir, commit: null };
+  }
+  if (opts.libraryDataUrl === undefined) {
+    return { dir: resolveLibraryDataDir(), commit: null };
+  }
+  return resolveLibraryDataArchive({
+    mainUrl: opts.libraryDataUrl,
+    cacheDir:
+      opts.cacheDir === undefined ? libraryDataCacheDir() : join(opts.cacheDir, "library-data"),
+    recorded: readLibraryDataCommit(readExistingPackageJson(opts.cwd).value),
+    frozen: opts.freeze === true,
+    cliVersion: readCliVersion(),
+    ...(opts.download ? { download: opts.download } : {}),
+    ...(opts.readZip ? { readZip: opts.readZip } : {}),
+  });
+}
+
 export async function runResolve(opts: RunResolveOptions): Promise<RunResolveResult> {
   const { cwd } = opts;
   const gameProjectPath = join(cwd, "game.project");
@@ -279,8 +309,19 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     };
   }
 
-  const libraryDataDir =
-    opts.libraryDataDir !== undefined ? opts.libraryDataDir : resolveLibraryDataDir();
+  const libraryData = await selectLibraryData(opts);
+  if (libraryData.error !== undefined) {
+    return {
+      ok: false,
+      error: libraryData.error,
+      materializedSurface: null,
+      extensions: [],
+      libraries: [],
+      sharedNamespaces: [],
+      warnings: [],
+    };
+  }
+  const libraryDataDir = libraryData.dir;
   const resolvedBundles = await resolveExtensionDeclarations(deps, {
     cacheDir: opts.cacheDir ?? extensionCacheDir(),
     projectDir: cwd,
@@ -355,7 +396,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // The dependency scene surface the editor plugin, `scene-types` and `build`
   // all read: unpacked here because the archive seam cannot run inside tsserver.
   const { counts: sceneSourceCounts } = materializeLibrarySceneSources({ cwd, bundles });
-  const warnings: string[] = [...shippedWarnings];
+  const warnings: string[] = [
+    ...(libraryData.warning === undefined ? [] : [libraryData.warning]),
+    ...shippedWarnings,
+  ];
   for (const bundle of bundles) {
     if (bundle.warning !== undefined) {
       warnings.push(bundle.warning);
@@ -435,6 +479,15 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     (Object.keys(resolvedForSeed).length > 0 || orphaned)
   ) {
     seedExtensionPins(cwd, existingPkg.value, resolvedForSeed, liveUrls, retiredUrls);
+  }
+  if (!opts.freeze && libraryData.commit !== null) {
+    const latestPkg = readExistingPackageJson(cwd);
+    if (latestPkg.writable && readLibraryDataCommit(latestPkg.value) !== libraryData.commit) {
+      writeFileSync(
+        join(cwd, "package.json"),
+        `${formatJsonLikeBiome(mergeLibraryDataCommit(latestPkg.value, libraryData.commit))}\n`,
+      );
+    }
   }
 
   const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {

@@ -17,7 +17,7 @@ import {
 } from "@defold-typescript/transpiler";
 import type { ExtensionZip } from "./extension-archive";
 
-const COMMIT_COMMENT = /^[0-9a-f]{40}$/;
+export const COMMIT_COMMENT = /^[0-9a-f]{40}$/;
 
 function archiveFiles(entries: readonly string[]): LibrarySharedEntry[] {
   const wrapper = archiveWrapperOf(entries);
@@ -124,5 +124,34 @@ export function mergeResolvedVersionPins(
   }
   existingNamespace.extensions = existingExtensions;
   base["defold-typescript"] = existingNamespace;
+  return base;
+}
+
+// The library data commit a project last resolved against, unchecked: it comes
+// from a file the user edits.
+export function readLibraryDataCommit(pkg: unknown): string | null {
+  if (typeof pkg !== "object" || pkg === null) {
+    return null;
+  }
+  const namespace = (pkg as Record<string, unknown>)["defold-typescript"];
+  if (typeof namespace !== "object" || namespace === null) {
+    return null;
+  }
+  const commit = (namespace as Record<string, unknown>).libraryData;
+  return typeof commit === "string" ? commit : null;
+}
+
+export function mergeLibraryDataCommit(pkg: unknown, commit: string): Record<string, unknown> {
+  const base: Record<string, unknown> =
+    typeof pkg === "object" && pkg !== null && !Array.isArray(pkg)
+      ? { ...(pkg as Record<string, unknown>) }
+      : {};
+  const namespace = base["defold-typescript"];
+  base["defold-typescript"] = {
+    ...(typeof namespace === "object" && namespace !== null && !Array.isArray(namespace)
+      ? namespace
+      : {}),
+    libraryData: commit,
+  };
   return base;
 }
