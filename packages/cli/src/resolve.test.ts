@@ -5,11 +5,13 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import * as ts from "typescript";
+import { writeZipArchive } from "../../types/test/zip-fixture";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
 import { runExportTypes } from "./export-types";
@@ -2415,5 +2417,222 @@ instances {
       `refusing unsafe scene path from ${url}: ${escaping}`,
     ]);
     expect(warnings).toEqual([]);
+  });
+});
+
+describe("runResolve with a library data archive", () => {
+  const DATA_URL = "https://example.test/library-data/archive/refs/heads/main.zip";
+  const DEP_URL = "https://github.com/owner/mylib/archive/main.zip";
+  const ONE = "1111111111111111111111111111111111111111";
+  const TWO = "2222222222222222222222222222222222222222";
+  const declares = (version: string) =>
+    `declare module "mylib.core" {\n  export const version: "${version}";\n}\n`;
+  const DEPENDENCY = writeZipArchive(
+    [
+      { name: "mylib-main/mylib/core.lua", text: "return {}\n" },
+      { name: "mylib-main/asset/foo.png", text: "png" },
+    ],
+    { comment: "3333333333333333333333333333333333333333" },
+  );
+
+  // A real data folder, packed the way GitHub packs the data repo's root.
+  function dataArchive(commit: string, contents: string): Uint8Array {
+    const folder = writeAuthoredLibraryData({ "mylib.core": contents });
+    const files = (readdirSync(folder, { recursive: true }) as string[]).filter((path) =>
+      statSync(join(folder, path)).isFile(),
+    );
+    return writeZipArchive(
+      files.map((path) => ({
+        name: `library-data-${commit}/0.0.1/${path}`,
+        text: readFileSync(join(folder, path), "utf8"),
+      })),
+      { comment: commit },
+    );
+  }
+
+  function serving(data: Uint8Array | null): {
+    download: DownloadExtensionArchive;
+    requests: string[];
+  } {
+    const requests: string[] = [];
+    return {
+      requests,
+      download: async (url) => {
+        requests.push(url);
+        if (url === DEP_URL) {
+          return { status: "ok", bytes: DEPENDENCY };
+        }
+        if (data === null) {
+          throw new Error("network down");
+        }
+        return { status: "ok", bytes: data };
+      },
+    };
+  }
+
+  function project(): string {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${DEP_URL}\n`);
+    return cwd;
+  }
+
+  const surface = (cwd: string) => join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts");
+  const namespaceOf = (cwd: string) =>
+    (
+      JSON.parse(readFileSync(join(cwd, "package.json"), "utf8")) as {
+        "defold-typescript": { libraryData?: string; extensions?: Record<string, string> };
+      }
+    )["defold-typescript"];
+
+  test("a plain run prints from the fetched data and records its commit beside the pins", async () => {
+    const cwd = project();
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      download: serving(dataArchive(ONE, declares("one"))).download,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
+    expect(namespaceOf(cwd).libraryData).toBe(ONE);
+    expect(namespaceOf(cwd).extensions?.[DEP_URL]).toStartWith("commit:");
+  });
+
+  test("a second run against a newer archive moves the commit and prints from it", async () => {
+    const cwd = project();
+    const cacheDir = tmp();
+    await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      download: serving(dataArchive(ONE, declares("one"))).download,
+    });
+
+    await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      download: serving(dataArchive(TWO, declares("two"))).download,
+    });
+
+    expect(namespaceOf(cwd).libraryData).toBe(TWO);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
+  });
+
+  test("a run at the recorded commit leaves package.json byte-identical", async () => {
+    const cwd = project();
+    const cacheDir = tmp();
+    const { download } = serving(dataArchive(ONE, declares("one")));
+    await runResolve({ cwd, cacheDir, libraryDataUrl: DATA_URL, download });
+    const pkgPath = join(cwd, "package.json");
+    const compact = JSON.stringify(JSON.parse(readFileSync(pkgPath, "utf8")));
+    writeFileSync(pkgPath, compact);
+
+    await runResolve({ cwd, cacheDir, libraryDataUrl: DATA_URL, download });
+
+    expect(readFileSync(pkgPath, "utf8")).toBe(compact);
+  });
+
+  test("a frozen run holds to the recorded commit with no request for main", async () => {
+    const cwd = project();
+    const cacheDir = tmp();
+    await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      download: serving(dataArchive(ONE, declares("one"))).download,
+    });
+    const before = readFileSync(join(cwd, "package.json"), "utf8");
+    const newer = serving(dataArchive(TWO, declares("two")));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      freeze: true,
+      download: newer.download,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(newer.requests).not.toContain(DATA_URL);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
+    expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+  });
+
+  test("a frozen run with nothing recorded fails and asks for a plain resolve", async () => {
+    const cwd = project();
+    const { download, requests } = serving(dataArchive(ONE, declares("one")));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      freeze: true,
+      download,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("plain");
+    expect(requests).toEqual([]);
+    expect(existsSync(surface(cwd))).toBe(false);
+  });
+
+  test("an unreachable archive warns, keeps the surface and leaves the commit", async () => {
+    const cwd = project();
+    await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      download: serving(dataArchive(ONE, declares("one"))).download,
+    });
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      download: serving(null).download,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.warnings.filter((line) => line.includes(DATA_URL))).toHaveLength(1);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
+    expect(namespaceOf(cwd).libraryData).toBe(ONE);
+  });
+
+  test("a project with no dependencies fetches nothing and records nothing", async () => {
+    const cwd = tmp();
+    writeProject(cwd, "[project]\ntitle = Test\n");
+    const { download, requests } = serving(dataArchive(ONE, declares("one")));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      download,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(requests).toEqual([]);
+    expect(existsSync(join(cwd, "package.json"))).toBe(false);
+  });
+
+  test("a set libraryDataDir wins over the archive and records nothing", async () => {
+    const cwd = project();
+    const { download, requests } = serving(dataArchive(ONE, declares("one")));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      libraryDataDir: writeAuthoredLibraryData({ "mylib.core": declares("local") }),
+      download,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(requests).not.toContain(DATA_URL);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(declares("local"));
+    expect(namespaceOf(cwd).libraryData).toBeUndefined();
   });
 });
