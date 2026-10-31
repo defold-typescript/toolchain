@@ -14,13 +14,14 @@ const API_DOC_ROOT = join(LIBRARY_TYPES_ROOT, "api-doc");
 function committedApiDocs(): Map<string, string> {
   const notData = new Set(
     [...readMarkdownTargets(LIBRARY_TYPES_ROOT), ...readOpenApiTargets(LIBRARY_TYPES_ROOT)].map(
-      ({ apiDoc }) => relative(API_DOC_ROOT, join(LIBRARY_TYPES_ROOT, apiDoc)),
+      ({ apiDoc }) => relative(API_DOC_ROOT, join(LIBRARY_TYPES_ROOT, apiDoc)).replace(/\\/g, "/"),
     ),
   );
   const committed = new Map<string, string>();
   for (const entry of readdirSync(API_DOC_ROOT, { recursive: true }).map(String)) {
-    if (!entry.endsWith(".json") || notData.has(entry)) continue;
-    committed.set(entry, readFileSync(join(API_DOC_ROOT, entry), "utf8"));
+    const file = entry.replace(/\\/g, "/");
+    if (!file.endsWith(".json") || notData.has(file)) continue;
+    committed.set(file, readFileSync(join(API_DOC_ROOT, entry), "utf8"));
   }
   return committed;
 }

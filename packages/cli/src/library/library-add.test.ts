@@ -85,7 +85,7 @@ function snapshot(dir: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const name of readdirSync(dir, { recursive: true }) as string[]) {
     const path = join(dir, name);
-    if (!statSync(path).isDirectory()) out[name] = readFileSync(path, "utf8");
+    if (!statSync(path).isDirectory()) out[name.replace(/\\/g, "/")] = readFileSync(path, "utf8");
   }
   return out;
 }

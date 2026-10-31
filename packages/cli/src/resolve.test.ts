@@ -2443,7 +2443,7 @@ describe("runResolve with a library data archive", () => {
     );
     return writeZipArchive(
       files.map((path) => ({
-        name: `library-data-${commit}/0.0.1/${path}`,
+        name: `library-data-${commit}/0.0.1/${path.replace(/\\/g, "/")}`,
         text: readFileSync(join(folder, path), "utf8"),
       })),
       { comment: commit },
