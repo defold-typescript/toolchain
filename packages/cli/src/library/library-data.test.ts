@@ -486,6 +486,68 @@ describe("readLibraryData reads a library's coverage floors and parity exception
     }
   });
 
+  // One module named after an `Object.prototype` member. `JSON.parse` makes `__proto__` an
+  // own key, where a `{ __proto__: 1 }` literal sets a prototype and writes no key.
+  function writeProtoFloor(lane: "luals" | "fork", floor: unknown): string {
+    const root = mkdtempSync(join(tmpdir(), "library-data-"));
+    write(root, "lib/library.json", {
+      repo: "https://github.com/owner/lib",
+      ...(lane === "fork"
+        ? {
+            forks: [
+              {
+                authored: "fork/lib.d.ts",
+                moduleId: "__proto__",
+                namespace: "lib.main",
+                apiDoc: "api-doc/lib.json",
+                upstreamLua: ["source/upstream/main.lua"],
+              },
+            ],
+          }
+        : {}),
+      floors: JSON.parse(`{"__proto__": ${JSON.stringify(floor)}}`),
+    });
+    write(root, "lib/reviewed.json", { ref: "v1.0.0" });
+    if (lane === "luals") {
+      write(root, "lib/recipe.json", {
+        luals: [{ sourceGlobs: ["**/*.lua"], moduleId: "__proto__", namespace: "lib" }],
+      });
+    }
+    return root;
+  }
+
+  test("a LuaLS module named __proto__ keeps its floor as an own entry", () => {
+    const root = writeProtoFloor("luals", 0.5);
+    try {
+      const floors = readLibraryData(root)[0]?.floors ?? {};
+      expect(Object.entries(floors)).toEqual([["__proto__", 0.5]]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a fork module named __proto__ keeps its floor as an own entry, not as the prototype", () => {
+    const floor = { callable: 1, field: 0.5 };
+    const root = writeProtoFloor("fork", floor);
+    try {
+      const floors = readLibraryData(root)[0]?.floors ?? {};
+      expect(Object.entries(floors)).toEqual([["__proto__", floor]]);
+      expect(floors.callable).toBeUndefined();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a library with no floors inherits none", () => {
+    const root = writeDataFolder();
+    try {
+      const floors = readLibraryData(root)[1]?.floors ?? {};
+      for (const name of ["constructor", "__proto__"]) expect(floors[name]).toBeUndefined();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("a floor for a module the library does not serve is refused, naming the library and the key", () => {
     const error = refusal(writeFloors({ "flow.gone": 1 }));
     expect(error.library).toBe("flow");
