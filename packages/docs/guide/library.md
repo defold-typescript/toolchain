@@ -30,6 +30,9 @@ named for the repository, into the data folder `library check` reads:
 `main` are branches and pin the commit; any other name is read as a tag. A branch
 archive that names no commit is an error, so use a tag URL for it.
 
+A folder that already exists, including one created during the download, is an
+error and stays as it was.
+
 What the archive shares under its `[library] include_dirs` picks the recipe,
 leaving out example, test, demo and sample directories:
 
@@ -45,10 +48,10 @@ The command prints the folder it wrote, anything left to do by hand, and the
 module's missing coverage floor and the value it measured; see
 [Coverage floors](#coverage-floors).
 
-An existing folder, an archive that declares no `include_dirs`, an entry that
-steps out of its folder and a module another library already names are errors,
-and leave the data folder as it was. With `--json`, `library` names the folder,
-`written` holds its absolute path and `warnings` holds the notes.
+An archive that declares no `include_dirs`, an entry that steps out of its folder
+and a module another library already names are errors, and leave the data folder
+as it was. With `--json`, `library` names the folder, `written` holds its absolute
+path and `warnings` holds the notes.
 
 ## What `library check` runs
 

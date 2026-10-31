@@ -311,6 +311,31 @@ describe("addLibrary", () => {
     expect(snapshot(dataDir)).toEqual(before);
   });
 
+  test("a folder created during the download throws and stays as that run left it", async () => {
+    const bytes = archive({ files: { "mylib/mylib.lua": ANNOTATED } });
+    let during: Record<string, string> = {};
+    const download: DownloadExtensionArchive = async () => {
+      const root = join(dataDir, "mylib");
+      mkdirSync(root);
+      writeFileSync(join(root, "library.json"), "sentinel library");
+      writeFileSync(join(root, "reviewed.json"), "sentinel reviewed");
+      writeFileSync(join(root, "keep.txt"), "kept");
+      during = snapshot(dataDir);
+      return { status: "ok", bytes };
+    };
+
+    await expect(addLibrary(TAG_URL, dataDir, { cacheDir, download })).rejects.toThrow(
+      "library folder mylib already exists",
+    );
+
+    expect(Object.keys(during).sort()).toEqual([
+      "mylib/keep.txt",
+      "mylib/library.json",
+      "mylib/reviewed.json",
+    ]);
+    expect(snapshot(dataDir)).toEqual(during);
+  });
+
   test("a master.zip URL takes its ref from the archive's commit pin", async () => {
     await add(archive({ files: { "mylib/mylib.lua": ANNOTATED }, comment: COMMIT }), MASTER_URL);
 
