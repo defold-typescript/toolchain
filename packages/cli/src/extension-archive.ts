@@ -74,7 +74,7 @@ export function extensionArchiveKey(url: string): string {
   return createHash("sha256").update(url).digest("hex");
 }
 
-const fetchExtensionArchive: DownloadExtensionArchive = async (url, etag) => {
+export const fetchExtensionArchive: DownloadExtensionArchive = async (url, etag) => {
   const res = await fetch(url, etag === undefined ? {} : { headers: { "If-None-Match": etag } });
   if (res.status === 304) {
     return { status: "not-modified" };
@@ -94,7 +94,7 @@ const fetchExtensionArchive: DownloadExtensionArchive = async (url, etag) => {
 // branch; when the request fails, the cached copy is served with a warning so
 // an offline run still resolves. The archive lands by rename, so a concurrent
 // run reads the old copy or the new one, never half of one.
-async function cachedOrDownloaded(
+export async function cachedOrDownloaded(
   url: string,
   cacheDir: string,
   download: DownloadExtensionArchive,
