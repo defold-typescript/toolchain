@@ -1,18 +1,28 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { curatedIndexPages, loadCuratedExtensionManifest } from "./extension-index-pages";
-
-const manifest = loadCuratedExtensionManifest();
+import { CURATED_EXTENSION_MANIFEST, curatedIndexPages } from "./extension-index-pages";
+import { LIBRARY_TYPES_ROOT } from "./library/package-root";
 
 function pagesOf(url: string, entry: string, siblings: readonly string[] = []): string[] {
-  return curatedIndexPages(url, entry, [entry, ...siblings], manifest);
+  return curatedIndexPages(url, entry, [entry, ...siblings]);
 }
 
 describe("curatedIndexPages", () => {
-  test("reads the shipped defold-extensions manifest", () => {
-    expect(manifest.libraries.length).toBeGreaterThan(0);
+  test("holds every doc page defold-extensions.json declares", () => {
+    const source = JSON.parse(
+      readFileSync(join(LIBRARY_TYPES_ROOT, "defold-extensions.json"), "utf8"),
+    ) as {
+      libraries: { repo: string; docs: { path: string; page: string }[] }[];
+    };
+    expect(CURATED_EXTENSION_MANIFEST).toEqual({
+      libraries: source.libraries
+        .filter((library) => library.docs.length > 0)
+        .map(({ repo, docs }) => ({
+          repo,
+          docs: docs.map(({ path, page }) => ({ path, page })),
+        })),
+    });
   });
 
   test("matches a curated doc by repo and wrapper-stripped archive path", () => {
@@ -50,7 +60,6 @@ describe("curatedIndexPages", () => {
         "https://github.com/defold/extension-steam/archive/main.zip",
         "steam/api/steam.script_api",
         ["steam/api/steam.script_api", "game.project"],
-        manifest,
       ),
     ).toEqual(["steam"]);
   });
@@ -70,15 +79,13 @@ describe("curatedIndexPages", () => {
     ).toEqual([]);
   });
 
-  test("a missing manifest gives no pages", () => {
-    const empty = loadCuratedExtensionManifest(mkdtempSync(join(tmpdir(), "no-manifest-")));
-    expect(empty.libraries).toEqual([]);
+  test("an empty manifest gives no pages", () => {
     expect(
       curatedIndexPages(
         "https://github.com/defold/extension-steam/archive/main.zip",
         "steam/api/steam.script_api",
         ["steam/api/steam.script_api"],
-        empty,
+        { libraries: [] },
       ),
     ).toEqual([]);
   });

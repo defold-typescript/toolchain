@@ -1,0 +1,385 @@
+{
+  "libraries": [
+    {
+      "repo": "https://github.com/defold/extension-adinfo",
+      "docs": [
+        {
+          "path": "extension-adinfo/api/extension-adinfo.script_api",
+          "page": "adinfo"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-admob",
+      "docs": [
+        {
+          "path": "extension-admob/api/admob.script_api",
+          "page": "admob"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-adpf",
+      "docs": [
+        {
+          "path": "adpf/api/adpf.script_api",
+          "page": "adpf"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-camera",
+      "docs": [
+        {
+          "path": "camera/api/extension-camera.script_api",
+          "page": "extension-camera"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-crazygames",
+      "docs": [
+        {
+          "path": "crazygames/api/crazygames.script_api",
+          "page": "crazygames"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-crypt",
+      "docs": [
+        {
+          "path": "crypt/api/crypt.script_api",
+          "page": "crypt"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-facebook",
+      "docs": [
+        {
+          "path": "facebook/api/facebook.script_api",
+          "page": "facebook"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-firebase",
+      "docs": [
+        {
+          "path": "firebase/api/firebase.script_api",
+          "page": "firebase"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-firebase-analytics",
+      "docs": [
+        {
+          "path": "firebase_analytics/api/firebase.script_api",
+          "page": "firebase-analytics"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-firebase-crashlytics",
+      "docs": [
+        {
+          "path": "firebase_crashlytics/api/firebase.script_api",
+          "page": "firebase-crashlytics"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-firebase-remoteconfig",
+      "docs": [
+        {
+          "path": "firebase_remoteconfig/api/firebase.script_api",
+          "page": "firebase-remoteconfig"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-fontgen",
+      "docs": [
+        {
+          "path": "fontgen/api/fontgen.script_api",
+          "page": "fontgen"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-gpgs",
+      "docs": [
+        {
+          "path": "gpgs/api/gpgs.script_api",
+          "page": "gpgs"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-iac",
+      "docs": [
+        {
+          "path": "extension-iac/api/iac.script_api",
+          "page": "iac"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-iap",
+      "docs": [
+        {
+          "path": "extension-iap/api/iap.script_api",
+          "page": "iap"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-imgui",
+      "docs": [
+        {
+          "path": "imgui/api/imgui.script_api",
+          "page": "imgui"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-kaiads",
+      "docs": [
+        {
+          "path": "kaiads/api/kaiads.script_api",
+          "page": "kaiads"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-levelplay",
+      "docs": [
+        {
+          "path": "extension-levelplay/api/levelplay.script_api",
+          "page": "levelplay"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-network-info",
+      "docs": [
+        {
+          "path": "extension-network-info/api/extension-network-info.script_api",
+          "page": "networkinfo"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-odin",
+      "docs": [
+        {
+          "path": "odin/api/odin.script_api",
+          "page": "odin"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-onion-runtime",
+      "docs": [
+        {
+          "path": "agl-onion/api/onion.script_api",
+          "page": "onion"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-pad",
+      "docs": [
+        {
+          "path": "pad/api/pad.script_api",
+          "page": "pad"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-permissions",
+      "docs": [
+        {
+          "path": "extension-permissions/api/permissions.script_api",
+          "page": "permissions"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-photon-fusion",
+      "docs": [
+        {
+          "path": "fusion/api/fusion.script_api",
+          "page": "fusion"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-photon-realtime",
+      "docs": [
+        {
+          "path": "realtime/api/realtime.script_api",
+          "page": "realtime"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-playables",
+      "docs": [
+        {
+          "path": "playables/api/playables.script_api",
+          "page": "playables"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-poki-sdk",
+      "docs": [
+        {
+          "path": "poki-sdk/api/poki-sdk.script_api",
+          "page": "poki_sdk"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-proto",
+      "docs": [
+        {
+          "path": "extension-proto/api/extension-proto.script_api",
+          "page": "extension-proto"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-push",
+      "docs": [
+        {
+          "path": "extension-push/api/push.script_api",
+          "page": "push"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-review",
+      "docs": [
+        {
+          "path": "review/api/api.script_api",
+          "page": "review"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-rive",
+      "docs": [
+        {
+          "path": "defold-rive/api/rive.script_api",
+          "page": "rive"
+        },
+        {
+          "path": "defold-rive/api/rive.script_api",
+          "page": "rive.cmd"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-safearea",
+      "docs": [
+        {
+          "path": "safearea/api/safearea.script_api",
+          "page": "safearea"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-siwa",
+      "docs": [
+        {
+          "path": "siwa/api/siwa.script_api",
+          "page": "siwa"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-spine",
+      "docs": [
+        {
+          "path": "defold-spine/api/spine.script_api",
+          "page": "spine"
+        },
+        {
+          "path": "defold-spine/api/spine_gui.script_api",
+          "page": "spine.gui"
+        },
+        {
+          "path": "defold-spine/api/spine_resource.script_api",
+          "page": "spine.resource"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-steam",
+      "docs": [
+        {
+          "path": "steam/api/steam.script_api",
+          "page": "steam"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-videoplayer-mpeg",
+      "docs": [
+        {
+          "path": "mpeg/api/mpeg.script_api",
+          "page": "mpeg"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-videoplayer-native",
+      "docs": [
+        {
+          "path": "videoplayer/api/videoplayer.script_api",
+          "page": "videoplayer"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-websocket",
+      "docs": [
+        {
+          "path": "websocket/api/api.script_api",
+          "page": "websocket"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-webview",
+      "docs": [
+        {
+          "path": "webview/api/webview.script_api",
+          "page": "webview"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-xsolla",
+      "docs": [
+        {
+          "path": "xsolla/api/shop.script_api",
+          "page": "shop"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-zendesk",
+      "docs": [
+        {
+          "path": "zendesk/api/zendesk.script_api",
+          "page": "zendesk"
+        }
+      ]
+    }
+  ]
+}
