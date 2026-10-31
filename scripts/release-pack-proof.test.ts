@@ -192,6 +192,25 @@ describe("pack-proof covers the coordinated release set", () => {
     expect(publishable).toEqual([...PACKAGES].sort());
   });
 
+  test("omits library-types, which the data repo replaces", () => {
+    expect(PACKAGES as readonly string[]).not.toContain("library-types");
+    expect(readManifest("library-types").private).toBe(true);
+  });
+
+  test("the packed cli manifest declares no library-types dependency", () => {
+    const dest = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-cli-manifest-"));
+    try {
+      const manifest = JSON.parse(
+        readTarEntry(packPackage("cli", dest), "package/package.json") ?? "{}",
+      ) as Manifest;
+      expect(Object.keys(manifest.dependencies ?? {})).not.toContain(
+        "@defold-typescript/library-types",
+      );
+    } finally {
+      rmSync(dest, { recursive: true, force: true });
+    }
+  });
+
   test("each PACKAGES dir maps to its @defold-typescript/<dir> package name", () => {
     for (const dir of PACKAGES) {
       expect(readManifest(dir).name).toBe(`@defold-typescript/${dir}`);

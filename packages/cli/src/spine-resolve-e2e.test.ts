@@ -8,6 +8,7 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { runResolve } from "./resolve";
 
 // The three `.script_api` docs are vendored unmodified from
@@ -66,6 +67,7 @@ async function resolveSpine(): Promise<ResolvedSpine> {
   );
 
   const result = await runResolve({
+    libraryDataDir: LIBRARY_DATA_DIR,
     cwd,
     cacheDir: tmp(),
     download: someBytes,
@@ -101,6 +103,7 @@ describe("extension-spine resolves and its materialized types are usable end to 
     );
 
     const result = await runResolve({
+      libraryDataDir: LIBRARY_DATA_DIR,
       cwd,
       cacheDir: tmp(),
       download: someBytes,

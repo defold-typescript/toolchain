@@ -306,6 +306,9 @@ async function seedNativeExtensionProject(): Promise<{
   return { root, project, cache };
 }
 
+// The data repo holds the same folders; a smoke run must not reach it.
+const DATA_BASE = path.dirname(LIBRARY_DATA_DIR);
+
 const IMMUTABLE_URL = "https://example.invalid/paweljarosz/lua-immutable/archive/v1.1.zip";
 const IMMUTABLE_MODULE_FILE = "immutable/immutable.lua";
 
@@ -372,12 +375,15 @@ describe("built bin resolves dependencies from the cache", () => {
       async () => {
         const { root, project, cache } = await seedNativeExtensionProject();
         try {
-          const proc = Bun.spawnSync([runtime, BIN, "resolve", project, "--json"], {
-            cwd: project,
-            env: { ...process.env, DEFOLD_TYPESCRIPT_CACHE: cache },
-            stdout: "pipe",
-            stderr: "pipe",
-          });
+          const proc = Bun.spawnSync(
+            [runtime, BIN, "resolve", project, "--json", "--library-data", DATA_BASE],
+            {
+              cwd: project,
+              env: { ...process.env, DEFOLD_TYPESCRIPT_CACHE: cache },
+              stdout: "pipe",
+              stderr: "pipe",
+            },
+          );
           const stdout = proc.stdout.toString();
           if (proc.exitCode !== 0) {
             throw new Error(`resolve exited ${proc.exitCode}:\n${stdout}${proc.stderr.toString()}`);
@@ -407,12 +413,15 @@ describe("built bin resolves dependencies from the cache", () => {
       async () => {
         const { root, project, cache } = await seedLualsLibraryProject();
         try {
-          const proc = Bun.spawnSync([runtime, BIN, "resolve", project, "--json"], {
-            cwd: project,
-            env: { ...process.env, DEFOLD_TYPESCRIPT_CACHE: cache },
-            stdout: "pipe",
-            stderr: "pipe",
-          });
+          const proc = Bun.spawnSync(
+            [runtime, BIN, "resolve", project, "--json", "--library-data", DATA_BASE],
+            {
+              cwd: project,
+              env: { ...process.env, DEFOLD_TYPESCRIPT_CACHE: cache },
+              stdout: "pipe",
+              stderr: "pipe",
+            },
+          );
           const stdout = proc.stdout.toString();
           if (proc.exitCode !== 0) {
             throw new Error(`resolve exited ${proc.exitCode}:\n${stdout}${proc.stderr.toString()}`);

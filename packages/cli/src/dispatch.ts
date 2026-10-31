@@ -627,8 +627,16 @@ function dispatchCommand(
         );
       }
       const { runExportTypes } = await import("./export-types");
+      const seams = internals?.resolveInternals;
       try {
-        const { sourceId, written } = await runExportTypes({ library, cwd });
+        const { sourceId, written } = await runExportTypes({
+          library,
+          cwd,
+          ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
+          ...(seams?.download ? { download: seams.download } : {}),
+          ...(seams?.readZip ? { readZip: seams.readZip } : {}),
+          ...(seams?.libraryDataDir !== undefined ? { libraryDataDir: seams.libraryDataDir } : {}),
+        });
         if (json) {
           io.stdout.write(renderResult({ command: "export-types", library: sourceId, written }));
         } else {

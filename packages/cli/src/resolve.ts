@@ -37,6 +37,7 @@ import { formatJsonLikeBiome } from "./format-json";
 import { printLibraryModules } from "./library/print-library";
 import { archiveSourceTree } from "./library/source-tree";
 import {
+  LIBRARY_DATA_MAIN_URL,
   type LibraryDataArchive,
   libraryDataCacheDir,
   resolveLibraryDataArchive,
@@ -50,7 +51,6 @@ import {
 import {
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
-  resolveLibraryDataDir,
   type VendoredNativeExtension,
 } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
@@ -109,14 +109,14 @@ export interface RunResolveOptions {
   // `--frozen` to verify the committed pin set without mutating it.
   readonly freeze?: boolean;
   // The library data dependencies are matched against and printed from. Both
-  // default to the data folder the installed CLI selects in
-  // `@defold-typescript/library-types`; tests inject a synthetic registry and
+  // default to the data repo's archive; tests inject a synthetic registry and
   // data folder to stay hermetic, and a `null` folder prints nothing and keeps a
   // surface already there.
   readonly libraryRegistry?: readonly VendoredLibrary[];
   readonly libraryDataDir?: string | null;
-  // A data repo's `main.zip`, fetched for the library data when `libraryDataDir`
-  // is unset, with the commit it resolves to recorded in `package.json`.
+  // The data repo's `main.zip`, fetched for the library data when `libraryDataDir`
+  // is unset, with the commit it resolves to recorded in `package.json`. Defaults
+  // to `LIBRARY_DATA_MAIN_URL`.
   readonly libraryDataUrl?: string;
   // The curated native-extension targets. Defaults to the native extensions the
   // library data folder holds.
@@ -243,11 +243,8 @@ async function selectLibraryData(opts: RunResolveOptions): Promise<LibraryDataAr
   if (opts.libraryDataDir !== undefined) {
     return { dir: opts.libraryDataDir, commit: null };
   }
-  if (opts.libraryDataUrl === undefined) {
-    return { dir: resolveLibraryDataDir(), commit: null };
-  }
   return resolveLibraryDataArchive({
-    mainUrl: opts.libraryDataUrl,
+    mainUrl: opts.libraryDataUrl ?? LIBRARY_DATA_MAIN_URL,
     cacheDir:
       opts.cacheDir === undefined ? libraryDataCacheDir() : join(opts.cacheDir, "library-data"),
     recorded: readLibraryDataCommit(readExistingPackageJson(opts.cwd).value),

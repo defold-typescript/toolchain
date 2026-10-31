@@ -11,13 +11,16 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
+import { readCliVersion } from "./cli-version";
+import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { printLibraryModules } from "./library/print-library";
-import { normalizeSourceId } from "./library-match";
 import {
-  loadVendoredLibraryRegistry,
-  loadVendoredNativeRegistry,
-  resolveLibraryDataDir,
-} from "./library-registry";
+  LIBRARY_DATA_MAIN_URL,
+  libraryDataCacheDir,
+  resolveLibraryDataArchive,
+} from "./library-data-archive";
+import { normalizeSourceId } from "./library-match";
+import { loadVendoredLibraryRegistry, loadVendoredNativeRegistry } from "./library-registry";
 import {
   checkShippedDeclarations,
   isShippedDeclarationPath,
@@ -28,9 +31,11 @@ import {
 export interface RunExportTypesOptions {
   readonly library: string;
   readonly cwd: string;
-  // The library data folder to export from. Defaults to the one the installed CLI
-  // selects in `@defold-typescript/library-types`.
+  // The library data folder to export from. Defaults to the data repo's archive.
   readonly libraryDataDir?: string | null;
+  readonly cacheDir?: string;
+  readonly download?: DownloadExtensionArchive;
+  readonly readZip?: ReadExtensionZip;
   // The `@defold-typescript/types` root the files are checked against. Defaults
   // to the installed package; `null` means it could not be found.
   readonly typesRoot?: string | null;
@@ -108,12 +113,34 @@ function existingShippedFiles(
     });
 }
 
+// An export holds to no project's recorded commit, so it reads the newest data.
+function selectLibraryData(
+  opts: RunExportTypesOptions,
+): Promise<{ readonly dir: string | null; readonly warning?: string }> {
+  if (opts.libraryDataDir !== undefined) {
+    return Promise.resolve({ dir: opts.libraryDataDir });
+  }
+  return resolveLibraryDataArchive({
+    mainUrl: LIBRARY_DATA_MAIN_URL,
+    cacheDir:
+      opts.cacheDir === undefined
+        ? libraryDataCacheDir()
+        : path.join(opts.cacheDir, "library-data"),
+    recorded: null,
+    frozen: false,
+    cliVersion: readCliVersion(),
+    ...(opts.download ? { download: opts.download } : {}),
+    ...(opts.readZip ? { readZip: opts.readZip } : {}),
+  });
+}
+
 export async function runExportTypes(opts: RunExportTypesOptions): Promise<RunExportTypesResult> {
   const sourceId = normalizeSourceId(opts.library);
-  const root = opts.libraryDataDir !== undefined ? opts.libraryDataDir : resolveLibraryDataDir();
+  const { dir: root, warning } = await selectLibraryData(opts);
   const sources = sourceId === "" ? [] : await curatedFiles(sourceId, root);
   if (sources.length === 0) {
-    throw new Error(`no curated types for "${opts.library}"`);
+    const why = root === null && warning !== undefined ? `: ${warning}` : "";
+    throw new Error(`no curated types for "${opts.library}"${why}`);
   }
 
   const byEntry = new Map<string, string>();

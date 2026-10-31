@@ -38,7 +38,10 @@ import {
 } from "./extension-archive";
 import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
+import { LIBRARY_DATA_MAIN_URL } from "./library-data-archive";
 import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fixture";
+import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import {
@@ -3117,6 +3120,7 @@ describe("dispatch", () => {
       sourceGeneratedDir,
       detectEditorVersion: () => null,
       resolveInternals: {
+        libraryDataDir: null,
         cacheDir,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
@@ -3190,6 +3194,7 @@ describe("dispatch", () => {
       componentWatcherFactory: component,
       sourceGeneratedDir,
       resolveInternals: {
+        libraryDataDir: null,
         cacheDir,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (): ExtensionZip => ({
@@ -4645,6 +4650,7 @@ describe("dispatch resolve", () => {
 
   function resolveInternals(url: string): {
     resolveInternals: {
+      libraryDataDir: null;
       download: DownloadExtensionArchive;
       readZip: (zipPath: string) => ExtensionZip;
       cacheDir: string;
@@ -4654,6 +4660,7 @@ describe("dispatch resolve", () => {
     const key = extensionArchiveKey(url);
     return {
       resolveInternals: {
+        libraryDataDir: null,
         cacheDir,
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
         readZip: (zipPath: string) => {
@@ -4741,6 +4748,7 @@ describe("dispatch resolve", () => {
 
     function sharedInternals(): {
       resolveInternals: {
+        libraryDataDir: null;
         download: DownloadExtensionArchive;
         readZip: (zipPath: string) => ExtensionZip;
         cacheDir: string;
@@ -4748,6 +4756,7 @@ describe("dispatch resolve", () => {
     } {
       return {
         resolveInternals: {
+          libraryDataDir: null,
           cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
           download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
           readZip: (zipPath: string) => {
@@ -4962,6 +4971,7 @@ describe("dispatch resolve", () => {
 
     const code = await dispatch(["resolve", cwd], io, {
       resolveInternals: {
+        libraryDataDir: LIBRARY_DATA_DIR,
         cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
         libraryRegistry: [],
         download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
@@ -5260,6 +5270,7 @@ describe("dispatch resolve", () => {
       const freshKey = extensionArchiveKey(freshUrl);
       return {
         resolveInternals: {
+          libraryDataDir: null,
           cacheDir,
           download: base.resolveInternals.download,
           readZip: (zipPath: string) => {
@@ -5431,6 +5442,7 @@ describe("dispatch resolve", () => {
     const code = await dispatch(["resolve", cwd, "--json", "--library-data", localData], io, {
       cliVersion: "0.1.5",
       resolveInternals: {
+        libraryDataDir: null,
         cacheDir: seams.cacheDir,
         download: seams.download,
         readZip: seams.readZip,
@@ -8444,6 +8456,7 @@ describe("watch scene-address surface wiring", () => {
       componentWatcherFactory: component,
       detectEditorVersion: () => null,
       resolveInternals: {
+        libraryDataDir: null,
         cacheDir,
         download: async () => {
           throw new Error("this project declares no dependencies");
@@ -8490,6 +8503,7 @@ describe("watch scene-address surface wiring", () => {
       componentWatcherFactory: component,
       sourceGeneratedDir,
       detectEditorVersion: () => null,
+      resolveInternals: { libraryDataDir: null },
       onWatchStart,
     });
 
@@ -8528,6 +8542,7 @@ describe("watch scene-address surface wiring", () => {
       componentWatcherFactory: component,
       detectEditorVersion: () => null,
       resolveInternals: {
+        libraryDataDir: null,
         cacheDir,
         download: async () => {
           throw new Error("this project declares no dependencies");
@@ -9222,8 +9237,10 @@ export const lamp = defineMachine("lamp")({
 });
 
 describe("export-types", () => {
+  const withData = { resolveInternals: { libraryDataDir: LIBRARY_DATA_DIR } };
+
   function firstNativeTarget() {
-    const target = loadVendoredNativeRegistry()[0];
+    const target = loadVendoredNativeRegistry(LIBRARY_DATA_DIR)[0];
     if (target === undefined) {
       throw new Error("the committed corpus has no native target");
     }
@@ -9255,7 +9272,7 @@ describe("export-types", () => {
     const name = path.basename(declarationPath);
     const { io, out, err } = captureStreams();
 
-    const code = await dispatch(["export-types", sourceId, dir], io);
+    const code = await dispatch(["export-types", sourceId, dir], io, withData);
 
     expect(code).toBe(0);
     expect(err()).toBe("");
@@ -9271,7 +9288,7 @@ describe("export-types", () => {
     const name = path.basename(declarationPath);
     const { io } = captureStreams();
 
-    const code = await inDir(() => dispatch(["export-types", sourceId], io));
+    const code = await inDir(() => dispatch(["export-types", sourceId], io, withData));
 
     expect(code).toBe(0);
     expect(readdirSync(path.join(dir, "types"))).toEqual([name]);
@@ -9284,6 +9301,7 @@ describe("export-types", () => {
     const code = await dispatch(
       ["export-types", `https://github.com/owner/${sourceId}/archive/main.zip`, dir, "--json"],
       io,
+      withData,
     );
 
     expect(code).toBe(0);
@@ -9320,7 +9338,7 @@ describe("export-types", () => {
   test("an export error exits 1 with its message and writes nothing", async () => {
     const { io, out, err } = captureStreams();
 
-    const code = await dispatch(["export-types", "not-a-library", dir], io);
+    const code = await dispatch(["export-types", "not-a-library", dir], io, withData);
 
     expect(code).toBe(1);
     expect(out()).toBe("");
@@ -9331,7 +9349,7 @@ describe("export-types", () => {
   test("an export error under --json reports the message", async () => {
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["export-types", "not-a-library", dir, "--json"], io);
+    const code = await dispatch(["export-types", "not-a-library", dir, "--json"], io, withData);
 
     expect(code).toBe(1);
     expect(JSON.parse(out())).toEqual({
@@ -9632,7 +9650,7 @@ describe("dispatch library add", () => {
   const run = (args: string[], io: ReturnType<typeof captureStreams>["io"]) =>
     dispatch(["library", "add", ...args], io, {
       cliVersion: "0.1.5",
-      resolveInternals: { download, cacheDir: path.join(base, "cache") },
+      resolveInternals: { libraryDataDir: null, download, cacheDir: path.join(base, "cache") },
     });
 
   const dataFlag = (): string => path.join(base, "data");
@@ -9671,7 +9689,11 @@ describe("dispatch library add", () => {
 
     const code = await dispatch(["library", "add", TAG_URL, "--data", dataFlag()], io, {
       cliVersion: "0.1.5",
-      resolveInternals: { download: native, cacheDir: path.join(base, "cache") },
+      resolveInternals: {
+        libraryDataDir: null,
+        download: native,
+        cacheDir: path.join(base, "cache"),
+      },
     });
 
     expect(code).toBe(0);
@@ -9724,5 +9746,176 @@ describe("dispatch library add", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toContain("library folder mylib already exists");
+  });
+});
+
+describe("library data from the data repo", () => {
+  const DEP_URL = "https://github.com/owner/mylib/archive/main.zip";
+  const COMMIT = "1111111111111111111111111111111111111111";
+  const DECLARATION = 'declare module "mylib.core" {\n  export const version: "archive";\n}\n';
+  const DEPENDENCY = writeZipArchive(
+    [
+      { name: "mylib-main/mylib/core.lua", text: "return {}\n" },
+      { name: "mylib-main/asset/foo.png", text: "png" },
+    ],
+    { comment: "3333333333333333333333333333333333333333" },
+  );
+
+  // A real data folder, packed the way GitHub packs the data repo's root.
+  function dataArchive(): Uint8Array {
+    const folder = writeAuthoredLibraryData({ "mylib.core": DECLARATION });
+    return writeZipArchive(
+      readdirSync(folder, { recursive: true, withFileTypes: true })
+        .filter((entry) => entry.isFile())
+        .map((entry) => {
+          const file = path.join(entry.parentPath, entry.name);
+          const rel = path.relative(folder, file).split(path.sep).join("/");
+          return {
+            name: `library-data-${COMMIT}/0.0.1/${rel}`,
+            text: readFileSync(file, "utf8"),
+          };
+        }),
+      { comment: COMMIT },
+    );
+  }
+
+  function seams(): {
+    resolveInternals: { cacheDir: string; download: DownloadExtensionArchive };
+    requests: string[];
+  } {
+    const requests: string[] = [];
+    const archive = dataArchive();
+    return {
+      requests,
+      resolveInternals: {
+        cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-data-cache-")),
+        download: async (url) => {
+          requests.push(url);
+          return { status: "ok", bytes: url === DEP_URL ? DEPENDENCY : archive };
+        },
+      },
+    };
+  }
+
+  function writeDependentProject(): void {
+    writeFileSync(path.join(cwd, "game.project"), `[project]\ndependencies#0 = ${DEP_URL}\n`);
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions: { types: ["@defold-typescript/types"] } }, null, 2)}\n`,
+    );
+  }
+
+  const surface = () =>
+    path.join(cwd, ".defold-types", librariesDirName(readCliVersion()), "mylib.core.d.ts");
+  const recordedCommit = () =>
+    (
+      JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+        "defold-typescript"?: { libraryData?: string };
+      }
+    )["defold-typescript"]?.libraryData;
+
+  test("resolve prints a matched library from the data repo and records its commit", async () => {
+    writeDependentProject();
+    const { requests, resolveInternals } = seams();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd], io, { resolveInternals });
+
+    expect(failureOutput(err())).toBe("");
+    expect(code).toBe(0);
+    expect(requests).toContain(LIBRARY_DATA_MAIN_URL);
+    expect(readFileSync(surface(), "utf8")).toBe(DECLARATION);
+    expect(recordedCommit()).toBe(COMMIT);
+  });
+
+  test("resolve --frozen prints from the cached recorded commit with no data repo request", async () => {
+    writeDependentProject();
+    const { requests, resolveInternals } = seams();
+    expect(await dispatch(["resolve", cwd], captureStreams().io, { resolveInternals })).toBe(0);
+    rmSync(path.join(cwd, ".defold-types"), { recursive: true });
+    requests.length = 0;
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd, "--frozen"], io, { resolveInternals });
+
+    expect(failureOutput(err())).toBe("");
+    expect(code).toBe(0);
+    expect(requests).toEqual([DEP_URL]);
+    expect(readFileSync(surface(), "utf8")).toBe(DECLARATION);
+  });
+
+  test("resolve --library-data makes no request for the data repo and records nothing", async () => {
+    writeDependentProject();
+    const { requests, resolveInternals } = seams();
+    const dataBase = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-data-base-"));
+    renameSync(
+      writeAuthoredLibraryData({ "mylib.core": DECLARATION }),
+      path.join(dataBase, "0.0.1"),
+    );
+    const { io } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd, "--library-data", dataBase], io, {
+      resolveInternals,
+    });
+
+    expect(code).toBe(0);
+    expect(requests).not.toContain(LIBRARY_DATA_MAIN_URL);
+    expect(readFileSync(surface(), "utf8")).toBe(DECLARATION);
+    expect(recordedCommit()).toBeUndefined();
+  });
+
+  test("watch requests the data repo once per game.project change and never while idle", async () => {
+    writeFileSync(path.join(cwd, "main.script"), "");
+    writeDependentProject();
+    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+    writeFileSync(path.join(sourceGeneratedDir, "label.d.ts"), "declare const __label: unknown;\n");
+    const { requests, resolveInternals } = seams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const main: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const component: WatcherFactory = (): Watcher => ({ close() {} });
+    const { onWatchStart, ready } = watchHandle();
+
+    const result = dispatch(["watch", cwd], captureStreams().io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      sourceGeneratedDir,
+      detectEditorVersion: () => null,
+      resolveInternals,
+      onWatchStart,
+    });
+    const handle = await ready;
+    await handle?.waitForIdle();
+    const mainRequests = () => requests.filter((url) => url === LIBRARY_DATA_MAIN_URL);
+    expect(mainRequests()).toEqual([]);
+
+    triggerMain?.("change", "game.project");
+    await handle?.waitForIdle();
+    expect(mainRequests()).toEqual([LIBRARY_DATA_MAIN_URL]);
+    expect(readFileSync(surface(), "utf8")).toBe(DECLARATION);
+
+    await handle?.waitForIdle();
+    expect(mainRequests()).toEqual([LIBRARY_DATA_MAIN_URL]);
+
+    handle?.stop();
+    expect(await result).toBe(0);
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
+
+  test("export-types reads the data repo through the same seam", async () => {
+    const { requests, resolveInternals } = seams();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["export-types", "https://github.com/owner/mylib", cwd], io, {
+      resolveInternals,
+    });
+
+    expect(failureOutput(err())).toBe("");
+    expect(code).toBe(0);
+    expect(requests).toEqual([LIBRARY_DATA_MAIN_URL]);
+    expect(readFileSync(path.join(cwd, "types", "mylib.core.d.ts"), "utf8")).toBe(DECLARATION);
   });
 });

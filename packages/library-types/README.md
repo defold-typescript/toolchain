@@ -10,9 +10,8 @@ libraries, core-type-renamed against
 
 This is a support package for the
 [`@defold-typescript`](https://github.com/defold-typescript/toolchain) toolchain.
-You normally do not install it directly — it ships as a dependency of
-[`@defold-typescript/cli`](https://www.npmjs.com/package/@defold-typescript/cli),
-which reads it at runtime.
+It is not published: [`@defold-typescript/cli`](https://www.npmjs.com/package/@defold-typescript/cli)
+fetches library data from the data repo.
 
 ## Why it exists
 

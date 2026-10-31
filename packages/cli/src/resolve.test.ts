@@ -126,6 +126,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -165,6 +166,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -206,6 +208,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -236,6 +239,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -263,6 +267,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -286,6 +291,7 @@ describe("runResolve", () => {
       },
     };
     const first = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -305,6 +311,7 @@ describe("runResolve", () => {
       )}\n`,
     );
     const second = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -328,6 +335,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -360,6 +368,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -383,6 +392,7 @@ describe("runResolve", () => {
     };
 
     await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -410,6 +420,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -444,6 +455,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -484,6 +496,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -522,6 +535,7 @@ describe("runResolve", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -539,6 +553,7 @@ describe("runResolve", () => {
     const before = readFileSync(join(cwd, "tsconfig.json"), "utf8");
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -557,7 +572,7 @@ describe("runResolve", () => {
   test("a missing game.project returns ok:false with an error and writes nothing", async () => {
     const cwd = tmp();
 
-    const result = await runResolve({ cwd, cacheDir: tmp() });
+    const result = await runResolve({ libraryDataDir: null, cwd, cacheDir: tmp() });
 
     expect(result.ok).toBe(false);
     expect(result.error).toBeDefined();
@@ -570,7 +585,7 @@ describe("runResolve", () => {
     const cwd = tmp();
     writeFileSync(join(cwd, "game.project"), "[display]\nwidth = 640\n");
 
-    const result = await runResolve({ cwd, cacheDir: tmp() });
+    const result = await runResolve({ libraryDataDir: null, cwd, cacheDir: tmp() });
 
     expect(result.ok).toBe(false);
     expect(result.error).toBeDefined();
@@ -625,6 +640,7 @@ describe("runResolve shared namespace", () => {
     };
 
     const result = await runResolve({
+      libraryDataDir: null,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -726,6 +742,7 @@ describe("runResolve library matching", () => {
     // the `nakama-defold` sourceId and must fold into one matched entry, each
     // printed under its module id.
     const result = await runResolve({
+      libraryDataDir: LIBRARY_DATA_DIR,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -1618,13 +1635,17 @@ declare module "pixels" {
   });
 
   test("an exported curated native target installs as shipped types with the same bytes", async () => {
-    const nativeRegistry = loadVendoredNativeRegistry();
+    const nativeRegistry = loadVendoredNativeRegistry(LIBRARY_DATA_DIR);
     const target = nativeRegistry[0];
     if (target === undefined) {
       throw new Error("the committed corpus has no native target");
     }
     const exported = tmp();
-    const { written } = await runExportTypes({ library: target.sourceId, cwd: exported });
+    const { written } = await runExportTypes({
+      library: target.sourceId,
+      cwd: exported,
+      libraryDataDir: LIBRARY_DATA_DIR,
+    });
     const url = `https://github.com/owner/${target.sourceId}/archive/refs/heads/main.zip`;
     const wrapper = `${target.sourceId}-main`;
     const contents = Object.fromEntries(
@@ -1895,7 +1916,7 @@ declare module "pixels" {
 });
 
 describe("runResolve each curated native target through the shipped native registry", () => {
-  const nativeRegistry = loadVendoredNativeRegistry();
+  const nativeRegistry = loadVendoredNativeRegistry(LIBRARY_DATA_DIR);
 
   async function resolveNative(
     url: string,
@@ -2043,6 +2064,7 @@ describe("runResolve prints a LuaLS library from the dependency's archive", () =
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
     const entry = `${wrapper}/${own}`;
     const result = await runResolve({
+      libraryDataDir: LIBRARY_DATA_DIR,
       cwd,
       cacheDir: tmp(),
       download: someBytes,
@@ -2320,7 +2342,12 @@ instances {
     expect(existsSync(join(cwd, ".defold-types", "dependencies"))).toBe(true);
 
     writeProject(cwd, `[project]\ntitle = Test\n`);
-    const result = await runResolve({ cwd, cacheDir: tmp(), download: someBytes });
+    const result = await runResolve({
+      libraryDataDir: null,
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+    });
 
     expect(result.ok).toBe(true);
     expect(existsSync(join(cwd, ".defold-types", "dependencies"))).toBe(false);

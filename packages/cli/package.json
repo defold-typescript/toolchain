@@ -40,7 +40,6 @@
   },
   "dependencies": {
     "@defold-typescript/docs": "workspace:*",
-    "@defold-typescript/library-types": "workspace:*",
     "@defold-typescript/transpiler": "workspace:*",
     "@defold-typescript/types": "workspace:*",
     "@hono/node-server": "^2.1.3",
