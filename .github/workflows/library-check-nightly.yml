@@ -1,0 +1,53 @@
+# Checks the library data repo's live `main` with this repo's CLI every night.
+#
+# The data repo moves on its own commits, so no toolchain push or PR notices when
+# its data stops passing `library check`. A failure otherwise surfaces only when a
+# release refuses to publish.
+#
+# A `schedule:` trigger only ever runs on the default branch and is auto-disabled
+# after 60 days without repository activity; `workflow_dispatch` is kept so a
+# maintainer can always run it by hand.
+
+name: Library check nightly
+
+on:
+  schedule:
+    # Daily, 06:41 UTC. The minute is off the hour because GitHub delays schedules
+    # queued at :00 under load.
+    - cron: "41 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - run: bun install --frozen-lockfile
+
+      - name: Library check against live data
+        run: bun run library:check
+
+      - name: Open an issue when the check fails
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title="Library check fails against live library data"
+          # The title is stable, so this finds the issue an earlier night opened and
+          # stays a no-op until a maintainer closes it.
+          existing=$(gh issue list --state open --limit 100 --json number,title \
+            --jq "[.[] | select(.title == \"$title\") | .number] | first // empty")
+          if [ -n "$existing" ]; then
+            echo "already tracked as #$existing"
+            exit 0
+          fi
+          gh issue create --title "$title" --body "\`bun run library:check\` failed: $RUN_URL. A release refuses to publish until this passes."
