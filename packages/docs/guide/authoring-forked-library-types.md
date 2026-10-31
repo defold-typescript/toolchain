@@ -81,6 +81,18 @@ own cadence rather than inherited from a third-party vendoring.
 
 ## 1. Add a fork to the library's `library.json`
 
+Start with [`library add`](./library.md#what-library-add-writes), which writes the
+folder, `library.json` and `reviewed.json` from the archive URL:
+
+```sh
+bunx @defold-typescript/cli library add https://github.com/owner/mylib/archive/refs/tags/1.2.3.zip --data path/to/library-data
+```
+
+Then add the `forks` entry to `library.json` by hand, and vendor the upstream Lua
+it measures against. `library add` writes no fork, and when it wrote a `recipe.json`
+for a generated module, delete that entry and its `source/` files if the fork
+replaces it.
+
 Each library sits in its own folder under the data folder, named for its
 repository: the URL's last path segment, lowercased, without `.git`
 (`https://github.com/britzl/defcon` is `defcon/`). The folder pins the library's
