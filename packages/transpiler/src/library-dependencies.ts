@@ -77,7 +77,7 @@ export function archiveGameProjectEntry(entries: readonly string[]): string | un
 }
 
 // Twin of `libraryIncludeDirs` in `packages/cli/src/library/sync-defold-extensions.ts`.
-function readLibraryIncludeDirs(gameProjectText: string): string[] {
+export function readLibraryIncludeDirs(gameProjectText: string): string[] {
   let inLibrary = false;
   for (const raw of gameProjectText.split(/\r?\n/)) {
     const line = raw.trim();

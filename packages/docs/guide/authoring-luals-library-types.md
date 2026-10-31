@@ -44,6 +44,19 @@ would collide.
 
 ## 1. Add a `recipe.json` entry
 
+Start with [`library add`](./library.md#what-library-add-writes), which writes the
+folder below from the archive URL, with a starting `luals` entry and the sources
+it reads:
+
+```sh
+bunx @defold-typescript/cli library add https://github.com/owner/mylib/archive/refs/tags/1.2.3.zip --data path/to/library-data
+```
+
+Then edit `recipe.json` by hand: add `typeRenames` and `externalTypes` for the
+tokens the library's annotations leave unmapped, narrow `sourceGlobs` and `ignore`,
+and add an entry for each other module the library exposes. The tables below
+describe every field.
+
 Each library pins its own repository and tag — a LuaLS library ships no `.d.ts`,
 only annotations, and each lives in its own repo at its own release. Its folder
 is named for the repository: the URL's last path segment, lowercased, without
