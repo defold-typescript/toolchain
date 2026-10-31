@@ -11,7 +11,7 @@ import {
   buildAuthoredParity,
 } from "./authored-parity";
 import type { LibraryProblem } from "./library-check";
-import type { AuthoredFloor, LibraryData } from "./library-data";
+import type { AuthoredFloor, LibraryData, LibraryFloor } from "./library-data";
 import { buildNativeParity, nativeParityPath } from "./native-parity";
 import { buildTargetFidelity, lualsFidelityPath } from "./sync-luals-types";
 import { buildScriptApiFidelity } from "./sync-script-api-types";
@@ -83,6 +83,10 @@ function describeMeasure(measure: { ratio: number } | { parity: AuthoredCoverage
     : `callable ${measure.parity.callableCoverage}, field ${measure.parity.fieldCoverage}`;
 }
 
+function floorOf(library: LibraryData, moduleId: string): LibraryFloor | undefined {
+  return Object.hasOwn(library.floors, moduleId) ? library.floors[moduleId] : undefined;
+}
+
 /** Every measure below its floor, every module with no floor, and every module that
  * could not be measured, as problems of `library`. */
 export function floorProblems(library: LibraryData, measures: ModuleMeasure[]): LibraryProblem[] {
@@ -94,7 +98,7 @@ export function floorProblems(library: LibraryData, measures: ModuleMeasure[]): 
   return measures.flatMap((measure): LibraryProblem[] => {
     const { moduleId } = measure;
     if ("failure" in measure) return [problem(`${moduleId}: ${measure.failure}`)];
-    const floor = library.floors[moduleId];
+    const floor = floorOf(library, moduleId);
     if (floor === undefined) {
       return [
         problem(
@@ -138,7 +142,7 @@ export function tokenFloorsByReport(libraries: LibraryData[]): Record<string, nu
   return sortedByKey(
     libraries.flatMap((library) =>
       tokenReportPaths(library).flatMap(([path, moduleId]): [string, number][] => {
-        const floor = library.floors[moduleId];
+        const floor = floorOf(library, moduleId);
         return floor === undefined ? [] : [[path, floor as number]];
       }),
     ),
@@ -160,7 +164,7 @@ export function parityFloorsByReport(libraries: LibraryData[]): Record<string, A
         ]),
       ];
       return reports.flatMap(([path, key]): [string, AuthoredFloor][] => {
-        const floor = library.floors[key];
+        const floor = floorOf(library, key);
         return floor === undefined ? [] : [[path, floor as AuthoredFloor]];
       });
     }),

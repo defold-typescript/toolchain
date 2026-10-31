@@ -471,11 +471,12 @@ function readFloors(
   tokenModules: ReadonlySet<string>,
   parityModules: ReadonlySet<string>,
 ): Record<string, LibraryFloor> {
-  if (raw === undefined) return {};
+  // A module id may name an `Object.prototype` member, which a plain dictionary inherits.
+  const floors: Record<string, LibraryFloor> = Object.create(null);
+  if (raw === undefined) return floors;
   if (!isPlainObject(raw)) {
     throw new Error(`${file}: expected a JSON object of floors, got ${describeValue(raw)}`);
   }
-  const floors: Record<string, LibraryFloor> = {};
   for (const [key, entry] of Object.entries(raw)) {
     if (tokenModules.has(key)) floors[key] = requireRatio(file, `floor "${key}"`, entry);
     else if (parityModules.has(key)) floors[key] = requireParityFloor(file, key, entry);

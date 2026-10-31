@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { writeLibraryTargets } from "../library-data-fixture";
 import { checkLibraryData } from "./library-check";
+import { type LibraryData, readLibraryData } from "./library-data";
+import { floorProblems, parityFloorsByReport, tokenFloorsByReport } from "./library-floors";
 import { LIBRARY_DATA_DIR } from "./package-root";
 
 const FORK = "declare module 'flow.ui' {\n  export function draw(): void;\n}\n";
@@ -242,7 +244,11 @@ describe("checkLibraryData measures each module against the floor in its library
   ];
 
   // A library with one LuaLS module and nothing outside the data folder to read.
-  function writeLuals(lua: string[], floors?: Record<string, unknown>): string {
+  function writeLuals(
+    lua: string[],
+    floors?: Record<string, unknown>,
+    moduleId = "lib.main",
+  ): string {
     const root = mkdtempSync(join(tmpdir(), "library-check-floor-"));
     roots.push(root);
     const dataDir = join(root, "data");
@@ -259,16 +265,24 @@ describe("checkLibraryData measures each module against the floor in its library
       dataDir,
       "lib/recipe.json",
       JSON.stringify({
-        luals: [{ sourceGlobs: ["lib/**/*.lua"], moduleId: "lib.main", namespace: "lib" }],
+        luals: [{ sourceGlobs: ["**/*.lua"], moduleId, namespace: "lib" }],
       }),
     );
-    write(dataDir, "lib/source/lib/lib/main.lua", `${lua.join("\n")}\nreturn M\n`);
+    write(
+      dataDir,
+      `lib/source/lib/${moduleId.replaceAll(".", "/")}.lua`,
+      `${lua.join("\n")}\nreturn M\n`,
+    );
     return dataDir;
   }
 
   // A fork measured against two upstream functions. It sits in a temp dir with no
   // committed API model and no package root beside it.
-  function writeFork(forkMembers: string[], extra: Record<string, unknown> = {}): string {
+  function writeFork(
+    forkMembers: string[],
+    extra: Record<string, unknown> = {},
+    moduleId = "lib.main",
+  ): string {
     const root = mkdtempSync(join(tmpdir(), "library-check-floor-"));
     roots.push(root);
     const dataDir = join(root, "data");
@@ -280,7 +294,7 @@ describe("checkLibraryData measures each module against the floor in its library
         forks: [
           {
             authored: "fork/lib.main.d.ts",
-            moduleId: "lib.main",
+            moduleId,
             namespace: "lib.main",
             apiDoc: "api-doc/lib.main.json",
             upstreamLua: ["source/upstream/main.lua"],
@@ -293,7 +307,7 @@ describe("checkLibraryData measures each module against the floor in its library
     write(
       dataDir,
       "lib/fork/lib.main.d.ts",
-      `declare module 'lib.main' {\n${forkMembers.map((name) => `  /** Does ${name}. */\n  export function ${name}(): void;`).join("\n")}\n}\n`,
+      `declare module '${moduleId}' {\n${forkMembers.map((name) => `  /** Does ${name}. */\n  export function ${name}(): void;`).join("\n")}\n}\n`,
     );
     write(
       dataDir,
@@ -390,6 +404,109 @@ describe("checkLibraryData measures each module against the floor in its library
         message: expect.stringMatching(/^box2d: callable coverage 0\.5 is below its floor 1 /),
       },
     ]);
+  });
+
+  // `JSON.parse` makes `__proto__` an own key, where a `{ __proto__: 1 }` literal sets a
+  // prototype and writes no key.
+  function floorOf(moduleId: string, floor: unknown): Record<string, unknown> {
+    return JSON.parse(`{${JSON.stringify(moduleId)}: ${JSON.stringify(floor)}}`);
+  }
+
+  for (const moduleId of ["constructor", "__proto__"]) {
+    test(`a LuaLS module named ${moduleId} with no floor is a floor problem`, async () => {
+      const dataDir = writeLuals(ANNOTATED, undefined, moduleId);
+
+      expect(await checkLibraryData(dataDir)).toEqual([
+        {
+          library: "lib",
+          check: "floor",
+          message: expect.stringMatching(new RegExp(`^${moduleId}: no coverage floor`)),
+        },
+      ]);
+    });
+
+    test(`a LuaLS module named ${moduleId} below its floor is a floor problem`, async () => {
+      const dataDir = writeLuals(
+        [...ANNOTATED, "---@param value mystery", "function M.other(value) end", ""],
+        floorOf(moduleId, 1),
+        moduleId,
+      );
+
+      expect(await checkLibraryData(dataDir)).toEqual([
+        {
+          library: "lib",
+          check: "floor",
+          message: expect.stringMatching(
+            new RegExp(`^${moduleId}: coverage 0\\.\\d+ is below its floor 1 `),
+          ),
+        },
+      ]);
+    });
+
+    test(`a LuaLS module named ${moduleId} at its floor is clean`, async () => {
+      const dataDir = writeLuals(ANNOTATED, floorOf(moduleId, 1), moduleId);
+
+      expect(await checkLibraryData(dataDir)).toEqual([]);
+    });
+
+    test(`a fork module named ${moduleId} with no floor is a floor problem`, async () => {
+      const dataDir = writeFork(["first", "second"], {}, moduleId);
+
+      expect(await checkLibraryData(dataDir)).toEqual([
+        {
+          library: "lib",
+          check: "floor",
+          message: expect.stringMatching(new RegExp(`^${moduleId}: no coverage floor`)),
+        },
+      ]);
+    });
+  }
+
+  test("a fork module named __proto__ is held to both axes of its floor", async () => {
+    const floors = floorOf("__proto__", { callable: 1, field: 1 });
+
+    expect(await checkLibraryData(writeFork(["first"], { floors }, "__proto__"))).toEqual([
+      {
+        library: "lib",
+        check: "floor",
+        message: expect.stringMatching(/^__proto__: callable coverage 0\.5 is below its floor 1 /),
+      },
+    ]);
+    expect(await checkLibraryData(writeFork(["first", "second"], { floors }, "__proto__"))).toEqual(
+      [],
+    );
+  });
+
+  // `LibraryData["floors"]` allows a plain dictionary, whose inherited members a
+  // prototype-free one would hide from these lookups.
+  function withPlainFloors(dataDir: string): LibraryData {
+    const [library] = readLibraryData(dataDir);
+    if (library === undefined) throw new Error("the fixture holds no library");
+    return { ...library, floors: {} };
+  }
+
+  test("floorProblems reads a floor by own property", () => {
+    const library = withPlainFloors(writeLuals(ANNOTATED, undefined, "constructor"));
+
+    expect(floorProblems(library, [{ moduleId: "constructor", ratio: 1 }])).toEqual([
+      {
+        library: "lib",
+        check: "floor",
+        message: expect.stringMatching(/^constructor: no coverage floor/),
+      },
+    ]);
+  });
+
+  test("tokenFloorsByReport reads a floor by own property", () => {
+    const library = withPlainFloors(writeLuals(ANNOTATED, undefined, "constructor"));
+
+    expect(tokenFloorsByReport([library])).toEqual({});
+  });
+
+  test("parityFloorsByReport reads a floor by own property", () => {
+    const library = withPlainFloors(writeFork(["first"], {}, "constructor"));
+
+    expect(parityFloorsByReport([library])).toEqual({});
   });
 
   test("a compile problem stops the floor check", async () => {
