@@ -11,10 +11,10 @@
 #
 # Ordering: require CI green (read the Checks API for this exact commit; abort
 # if CI is absent, still running, or red) -> install (frozen) -> build -> jq
-# stamp (version + workspace dep rewrite) -> dry-run -> publish. The publish
-# never re-runs typecheck/lint/test: it trusts the CI run that already validated
-# this commit on the full OS matrix and refuses to publish if that run is not
-# green, so the checks are done exactly once.
+# stamp (version + workspace dep rewrite) -> library check against live data ->
+# dry-run -> publish. The publish never re-runs typecheck/lint/test: it trusts the
+# CI run that already validated this commit on the full OS matrix and refuses to
+# publish if that run is not green, so the checks are done exactly once.
 #   - Build is load-bearing: cli/tstl-plugin resolve
 #     @defold-typescript/transpiler through its built dist/ (its `types`
 #     export). Mirrors ci.yml.
@@ -148,6 +148,12 @@ jobs:
             jq --arg v "$VERSION" "$JQ" "$manifest" > "$manifest.tmp"
             mv "$manifest.tmp" "$manifest"
           done
+
+      # After the stamp, so the check selects the data folder this version reads:
+      # an unstamped 0.0.0 CLI would select the newest folder instead. Live library
+      # data that fails here blocks the release until the data or the CLI is fixed.
+      - name: Library check against live data
+        run: bun run library:check
 
       # Dependency order: deps before dependents (types before library-types;
       # library-types and docs before cli). Idempotent like the real publish

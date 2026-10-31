@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 import { parseTopChangelogVersion } from "./changelog-version.ts";
 import {
   compareVersions,
@@ -12,6 +13,39 @@ import {
   resolveReleaseTarget,
   sleepSync,
 } from "./release.ts";
+
+describe("release workflow library check", () => {
+  interface Step {
+    name?: string;
+    run?: string;
+    if?: string;
+    "continue-on-error"?: unknown;
+  }
+  const workflow = parse(
+    readFileSync(new URL("../.github/workflows/release.yml", import.meta.url), "utf8"),
+  ) as { jobs: { publish: { steps: Step[] } } };
+  const steps = workflow.jobs.publish.steps;
+
+  test("runs unconditionally after the version stamp and before the first publish", () => {
+    const check = steps.findIndex((step) => step.run?.trim() === "bun run library:check");
+    const stamp = steps.findIndex(
+      (step) => step.name === "Stamp version and rewrite workspace deps",
+    );
+    // The stamp step's shell comments mention `npm publish` without running it.
+    const firstPublish = steps.findIndex((step) =>
+      step.run
+        ?.split("\n")
+        .some((line) => !line.trim().startsWith("#") && line.includes("npm publish")),
+    );
+
+    expect(check).toBeGreaterThan(-1);
+    expect(stamp).toBeGreaterThan(-1);
+    expect(check).toBeGreaterThan(stamp);
+    expect(firstPublish).toBeGreaterThan(check);
+    expect(steps[check]?.if).toBeUndefined();
+    expect(steps[check]?.["continue-on-error"]).toBeUndefined();
+  });
+});
 
 describe("parseArgs", () => {
   test("defaults to no bump spec", () => {

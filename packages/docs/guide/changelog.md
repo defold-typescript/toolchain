@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.56.0
+
+> Summary:
+>
+> - **[Library data](./library.md)** is checked at release.
+
+### Improved
+
+- **Releases check the library data they will read:** a release publishes only after [`library check`](./library.md) passes with that release's CLI against the live `main` of the [library data repo](https://github.com/defold-typescript/library-data). A nightly run does the same check, so data that stops passing is reported before a release depends on it.
+
 ## v0.55.0
 
 > Summary:
