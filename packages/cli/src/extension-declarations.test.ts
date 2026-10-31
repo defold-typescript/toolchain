@@ -9,6 +9,7 @@ import {
 } from "./extension-archive";
 import { resolveExtensionDeclarations } from "./extension-declarations";
 import type { ExtensionDependency } from "./extension-deps";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), "extension-declarations-"));
@@ -279,6 +280,7 @@ describe("resolveExtensionDeclarations index notes", () => {
     const entry = `${wrapper}/steam/api/steam.script_api`;
     const bundles = await resolveExtensionDeclarations([dep(url)], {
       cacheDir: tmp(),
+      libraryDataDir: LIBRARY_DATA_DIR,
       download: someBytes,
       readZip: makeReadZip(
         {

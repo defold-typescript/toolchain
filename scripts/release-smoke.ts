@@ -21,13 +21,15 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { selectDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { libraryDataCacheDir } from "../packages/cli/src/library-data-archive.ts";
+import { loadVendoredNativeRegistry } from "../packages/cli/src/library-registry.ts";
 import { PACKAGES } from "./release-pack-proof";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const RUNTIMES = ["node", "bun"] as const;
 export const STARTER_ARTIFACT_REL = "src/main.ts.script";
 // The archive ships `daabbcc/ext.manifest`, which confirms the curated native
-// target, so `resolve` copies the packed library-types declaration.
+// target, so `resolve` copies the curated declaration from the live library data.
 const NATIVE_EXTENSION_URL =
   "https://github.com/selimanac/defold-daabbcc/archive/refs/tags/v3.0.8.zip";
 // The archive ships its own `types/pixels.d.ts` and `types/pixels.global.d.ts`;
@@ -97,6 +99,28 @@ function packAll(dest: string): string[] | null {
     ok ? "" : `expected ${PACKAGES.length} tarballs, got ${tgz.length}`,
   );
   return ok ? tgz : null;
+}
+
+// The curated declaration `resolve` copied for `namespace`, found through the
+// commit the project recorded, in the cache the run used.
+export function curatedDeclarationPath(
+  cache: string,
+  projectManifest: unknown,
+  namespace: string,
+): string | null {
+  const commit = (projectManifest as { "defold-typescript"?: { libraryData?: unknown } })[
+    "defold-typescript"
+  ]?.libraryData;
+  if (typeof commit !== "string") return null;
+  const commitDir = path.join(
+    libraryDataCacheDir({ DEFOLD_TYPESCRIPT_CACHE: cache }),
+    "commits",
+    commit,
+  );
+  const target = loadVendoredNativeRegistry(selectDataFolder(commitDir, "0.0.0")).find(
+    (entry) => entry.namespace === namespace,
+  );
+  return target !== undefined && existsSync(target.declarationPath) ? target.declarationPath : null;
 }
 
 export function internalCliDeps(cliManifest: unknown): string[] {
@@ -223,17 +247,16 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
     });
     const extensionsDir = path.join(app, ".defold-types", "extensions");
     const extensionTypes = path.join(extensionsDir, "daabbcc.d.ts");
-    const dataDir = selectDataFolder(
-      path.join(proj, "node_modules", "@defold-typescript", "library-types", "data"),
-      "0.0.0",
+    const curated = curatedDeclarationPath(
+      path.join(proj, "cache"),
+      JSON.parse(readFileSync(path.join(app, "package.json"), "utf8")),
+      "daabbcc",
     );
-    const curated = path.join(dataDir ?? "", "native", "daabbcc.d.ts");
     record(
       `${runtime} resolve types a native extension`,
       resolve.code === 0 &&
         existsSync(extensionTypes) &&
-        dataDir !== null &&
-        existsSync(curated) &&
+        curated !== null &&
         readFileSync(extensionTypes, "utf8") === readFileSync(curated, "utf8"),
       resolve.code === 0 ? "" : resolve.output.slice(-300),
     );

@@ -9,7 +9,7 @@ This toolchain prints TypeScript declarations for them from those annotations,
 so a consumer that declares the library gets autocomplete and `tsc` coverage with
 no hand-written `.d.ts`. [`resolve`](./resolve.md#vendored-library-types) prints
 the declaration into the consumer's project from the library version it depends
-on, or from the sources pinned in `@defold-typescript/library-types`.
+on, or from the sources pinned in [library data](./resolve.md#library-data).
 
 Adding such a library is **data, not code**: you add one entry to the `luals`
 list of the library's `recipe.json`, in its folder under the library data folder

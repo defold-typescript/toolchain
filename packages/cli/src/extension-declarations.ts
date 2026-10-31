@@ -21,7 +21,7 @@ import {
 } from "./extension-archive";
 import type { ExtensionDependency } from "./extension-deps";
 import { type EmittedExtension, emitExtensionDeclaration } from "./extension-emit";
-import { curatedIndexPages, loadCuratedExtensionManifest } from "./extension-index-pages";
+import { curatedIndexPages } from "./extension-index-pages";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 import { locateShippedDeclarations, selectShippedDeclarations } from "./shipped-declarations";
 
@@ -119,18 +119,14 @@ function archiveManifestDirs(entries: readonly string[]): string[] {
 export async function resolveExtensionDeclarations(
   deps: readonly ExtensionDependency[],
   opts: ResolveExtensionArchiveOptions & {
-    // The library data folder index-slot notes are read from; defaults to the
-    // one the installed CLI selects.
+    // The library data folder index-slot notes are read from; without one, an
+    // extension's declaration carries no such notes.
     readonly libraryDataDir?: string | null;
   },
 ): Promise<ExtensionDeclarations[]> {
   const open = opts.readZip ?? defaultReadZip;
   const resolved = await resolveExtensions(deps, opts);
-  const curated = loadCuratedExtensionManifest();
-  const classifications =
-    opts.libraryDataDir !== undefined
-      ? loadLibraryIndexSlotClassifications(opts.libraryDataDir)
-      : loadLibraryIndexSlotClassifications();
+  const classifications = loadLibraryIndexSlotClassifications(opts.libraryDataDir ?? null);
 
   const bundles: ExtensionDeclarations[] = [];
   for (const archive of resolved) {
@@ -165,7 +161,7 @@ export async function resolveExtensionDeclarations(
     }
     const declarations: EmittedExtension[] = [];
     for (const scriptApi of archive.scriptApis) {
-      const pages = curatedIndexPages(archive.url, scriptApi, zip.entries(), curated);
+      const pages = curatedIndexPages(archive.url, scriptApi, zip.entries());
       declarations.push(
         await emitExtensionDeclaration(zip.read(scriptApi), pages, classifications),
       );

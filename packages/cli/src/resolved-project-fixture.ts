@@ -7,9 +7,10 @@ import {
   ensureExtensionTypesReference,
   materializeExtensionDeclarations,
 } from "./extension-materialize";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { emitAuthoredDeclaration, readAuthoredTargets } from "./library/sync-authored-types";
 import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
-import { loadVendoredNativeRegistry, resolveLibraryDataDir } from "./library-registry";
+import { loadVendoredNativeRegistry } from "./library-registry";
 import {
   ensureMaterializedReference,
   materializeApiSurface,
@@ -61,7 +62,9 @@ export const RESOLVED_PROJECT_MAIN = [
 ].join("\n");
 
 function curatedNative(namespace: string): ExtensionDeclarations["declarations"][number] {
-  const target = loadVendoredNativeRegistry().find((entry) => entry.namespace === namespace);
+  const target = loadVendoredNativeRegistry(LIBRARY_DATA_DIR).find(
+    (entry) => entry.namespace === namespace,
+  );
   if (target === undefined) {
     throw new Error(`the vendored native registry carries no ${namespace} target`);
   }
@@ -117,14 +120,11 @@ export function installResolvedDeclarations(cwd: string): void {
   });
   ensureExtensionTypesReference(cwd, extensionsDir);
 
-  const libraryDataDir = resolveLibraryDataDir();
-  const checkpoint =
-    libraryDataDir === null
-      ? undefined
-      : readAuthoredTargets(libraryDataDir).find(
-          (target) => target.moduleId === "checkpoint.checkpoint",
-        );
-  if (libraryDataDir === null || checkpoint === undefined) {
+  const libraryDataDir = LIBRARY_DATA_DIR;
+  const checkpoint = readAuthoredTargets(libraryDataDir).find(
+    (target) => target.moduleId === "checkpoint.checkpoint",
+  );
+  if (checkpoint === undefined) {
     throw new Error("library data carries no checkpoint.checkpoint target");
   }
   const { materializedDir: librariesDir } = materializeVendoredLibraries({

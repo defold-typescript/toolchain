@@ -1,12 +1,18 @@
-import { resolveLibraryTypesPackageRoot } from "../library-registry";
+import { createRequire } from "node:module";
+import * as path from "node:path";
 import { newestDataFolder } from "./data-folder";
 
+// The library-types package exports only its `package.json`, so resolve that and
+// take the directory as the package root. Nothing the published CLI loads reaches
+// this file: the package stays in the tree for the toolchain's tests and dev
+// scripts, and is not published.
 function requireLibraryTypesRoot(): string {
-  const root = resolveLibraryTypesPackageRoot();
-  if (root === null) {
+  try {
+    const require = createRequire(import.meta.url);
+    return path.dirname(require.resolve("@defold-typescript/library-types/package.json"));
+  } catch {
     throw new Error("@defold-typescript/library-types is not installed");
   }
-  return root;
 }
 
 export const LIBRARY_TYPES_ROOT = requireLibraryTypesRoot();

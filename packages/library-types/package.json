@@ -1,6 +1,7 @@
 {
   "name": "@defold-typescript/library-types",
   "version": "0.0.0",
+  "private": true,
   "description": "Vendored TypeScript types for popular Defold Lua libraries, core-type-renamed against @defold-typescript/types.",
   "license": "MIT",
   "repository": {
@@ -14,16 +15,6 @@
   "exports": {
     "./package.json": "./package.json"
   },
-  "files": [
-    "data",
-    "!data/*/*/usage",
-    "api-doc",
-    "library-targets.json",
-    "library-classification.json",
-    "openapi-targets.json",
-    "defold-extensions.json",
-    "NOTICE"
-  ],
   "scripts": {
     "regen": "bun ../cli/src/library/sync-library-types.ts",
     "check": "bun ../cli/src/library/sync-library-types.ts --check",
