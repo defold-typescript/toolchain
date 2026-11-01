@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   statSync,
   utimesSync,
   writeFileSync,
@@ -3449,6 +3450,30 @@ describe("runResolve moves moving URLs to commits", () => {
   const AT_TWO = `${REPO}/archive/${TWO}.zip`;
   const TAG = "https://github.com/owner/other/archive/refs/tags/v1.zip";
   const OTHER_AT_TWO = `https://github.com/owner/other/archive/${TWO}.zip`;
+  const THIRD = "https://github.com/owner/third/archive/main.zip";
+  const ESCAPE = `${REPO}/archive/../../../attacker/fork/archive/main.zip`;
+
+  // Where a real save lands: while the run is waiting on its first download. A null
+  // text deletes the file instead.
+  function savingDuring(
+    cwd: string,
+    text: string | null,
+    download: DownloadExtensionArchive,
+  ): DownloadExtensionArchive {
+    let saved = false;
+    return async (url) => {
+      if (!saved) {
+        saved = true;
+        const path = join(cwd, "game.project");
+        if (text === null) {
+          rmSync(path);
+        } else {
+          writeFileSync(path, text);
+        }
+      }
+      return download(url);
+    };
+  }
 
   // GitHub names the wrapper after the ref asked for; the files under it are the same.
   const archive = (
@@ -3644,6 +3669,103 @@ describe("runResolve moves moving URLs to commits", () => {
 
       expect(result.notices?.some((line) => line.includes("bob resolve"))).toBe(true);
     });
+
+    test("a URL that climbs out of its repo stays, with a warning, and follows nothing", async () => {
+      const body = `[project]\ndependencies#0 = ${ESCAPE}\n`;
+      const project = setUp(body);
+      const { download } = serving({ [ESCAPE]: archive("fork-main", ONE) });
+
+      const result = await run(project, download, { pinUrls: true });
+
+      expect(gameProject(project.cwd)).toBe(body);
+      expect(
+        result.warnings.filter((line) => line.includes(ESCAPE) && line.includes("--pin-urls left")),
+      ).toHaveLength(1);
+      expect(locked(project.cwd)[ESCAPE]?.follows).toBeUndefined();
+      expect(Object.values(locked(project.cwd)).some(({ follows }) => follows !== undefined)).toBe(
+        false,
+      );
+    });
+
+    describe("a save during the run", () => {
+      const UNRELATED = `https://github.com/owner/unrelated/archive/${ONE}.zip`;
+      const STARTED = `[project]\r\ntitle = T\r\ndependencies#0 = ${BRANCH}\r\ndependencies#1 = ${TAG}\r\n`;
+      const archives = () => ({
+        [BRANCH]: archive("mylib-master", ONE),
+        [TAG]: archive("other-1", TWO, { doc: ALPHA.replaceAll("alpha", "beta") }),
+        [THIRD]: archive("third-main", ONE),
+      });
+
+      const seededLock = (cwd: string) => {
+        const path = join(cwd, PROJECT_LOCK_FILE);
+        writeProjectLock(cwd, { extensions: { [UNRELATED]: { commit: ONE, files: SOME_FILES } } });
+        const past = new Date(1_000_000_000_000);
+        utimesSync(path, past, past);
+        return { path, bytes: readFileSync(path, "utf8"), mtimeMs: statSync(path).mtimeMs };
+      };
+
+      test.each([
+        [
+          "swapping two lines",
+          `[project]\r\ntitle = T\r\ndependencies#0 = ${TAG}\r\ndependencies#1 = ${BRANCH}\r\n`,
+        ],
+        [
+          "replacing a moved line",
+          `[project]\r\ntitle = T\r\ndependencies#0 = ${THIRD}\r\ndependencies#1 = ${TAG}\r\n`,
+        ],
+        ["removing a moved line", `[project]\r\ntitle = T\r\ndependencies#0 = ${BRANCH}\r\n`],
+        [
+          "adding a second line at a moved index",
+          `[project]\r\ntitle = T\r\ndependencies#0 = ${BRANCH}\r\ndependencies#0 = ${THIRD}\r\ndependencies#1 = ${TAG}\r\n`,
+        ],
+      ])("%s stops the run and overwrites nothing", async (_label, saved) => {
+        const project = setUp(STARTED);
+        const lock = seededLock(project.cwd);
+
+        const result = await run(
+          project,
+          savingDuring(project.cwd, saved, serving(archives()).download),
+          { pinUrls: true },
+        );
+
+        expect(result.ok).toBe(false);
+        expect(result.ok ? "" : result.error).toContain("game.project");
+        expect(gameProject(project.cwd)).toBe(saved);
+        expect(readFileSync(lock.path, "utf8")).toBe(lock.bytes);
+        expect(statSync(lock.path).mtimeMs).toBe(lock.mtimeMs);
+      });
+
+      test("deleting game.project stops the run and does not bring it back", async () => {
+        const project = setUp(STARTED);
+        const lock = seededLock(project.cwd);
+
+        const result = await run(
+          project,
+          savingDuring(project.cwd, null, serving(archives()).download),
+          { pinUrls: true },
+        );
+
+        expect(result.ok).toBe(false);
+        expect(existsSync(join(project.cwd, "game.project"))).toBe(false);
+        expect(readFileSync(lock.path, "utf8")).toBe(lock.bytes);
+      });
+
+      test("an edit that leaves the moved lines alone is kept, byte for byte", async () => {
+        const project = setUp(STARTED);
+        const saved = `[project]\r\ntitle = Renamed\r\ndependencies#0 = ${BRANCH}\r\ndependencies#1 = ${TAG}\r\ndependencies#2 = ${THIRD}\r\n`;
+
+        const result = await run(
+          project,
+          savingDuring(project.cwd, saved, serving(archives()).download),
+          { pinUrls: true },
+        );
+
+        expect(result.ok).toBe(true);
+        expect(gameProject(project.cwd)).toBe(
+          `[project]\r\ntitle = Renamed\r\ndependencies#0 = ${AT_ONE}\r\ndependencies#1 = ${OTHER_AT_TWO}\r\ndependencies#2 = ${THIRD}\r\n`,
+        );
+      });
+    });
   });
 
   describe("following a ref", () => {
@@ -3821,6 +3943,49 @@ describe("runResolve moves moving URLs to commits", () => {
       expect(requests).toEqual([AT_ONE]);
       expect(result.extensions[0]?.pinStatus).toBe("match");
       expect(locked(project.cwd)[AT_ONE]?.follows).toBe(BRANCH);
+    });
+
+    test("a lockfile whose ref climbs out of the repo stops ahead of any download", async () => {
+      const project = pinnedProject();
+      const files = archiveIdentityOf(archive(`mylib-${ONE}`, ONE)).files;
+      writeProjectLock(project.cwd, {
+        extensions: { [AT_ONE]: { commit: ONE, files, follows: ESCAPE } },
+      });
+      const lockBefore = readFileSync(join(project.cwd, PROJECT_LOCK_FILE), "utf8");
+      const { download, requests } = serving({
+        [ESCAPE]: archive("fork-main", TWO),
+        [AT_TWO]: archive(`mylib-${TWO}`, TWO),
+      });
+
+      const result = await run(project, download, { update: true });
+
+      expect(result.ok).toBe(false);
+      expect(requests).toEqual([]);
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      expect(readFileSync(join(project.cwd, PROJECT_LOCK_FILE), "utf8")).toBe(lockBefore);
+    });
+
+    test("--update stops when a save replaced the line it would move", async () => {
+      const project = pinnedProject();
+      const lockPath = join(project.cwd, PROJECT_LOCK_FILE);
+      const past = new Date(1_000_000_000_000);
+      utimesSync(lockPath, past, past);
+      const lockBefore = readFileSync(lockPath, "utf8");
+      const saved = `[project]\ndependencies#0 = ${OTHER_AT_TWO}\n`;
+      const { download } = serving({
+        [BRANCH]: archive("mylib-master", TWO),
+        [AT_TWO]: archive(`mylib-${TWO}`, TWO),
+      });
+
+      const result = await run(project, savingDuring(project.cwd, saved, download), {
+        update: true,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.ok ? "" : result.error).toContain("game.project");
+      expect(gameProject(project.cwd)).toBe(saved);
+      expect(readFileSync(lockPath, "utf8")).toBe(lockBefore);
+      expect(statSync(lockPath).mtimeMs).toBe(past.getTime());
     });
   });
 });

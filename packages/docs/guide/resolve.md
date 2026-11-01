@@ -499,7 +499,9 @@ fails `resolve` with or without `--frozen`, and nothing is written. So does a
 over it would accept every drift and move every library. An entry may also carry
 `follows`, the ref [`--pin-urls`](#pin-urls-to-commits) moved it from. The same failure
 applies when `follows` is not a branch or tag of the entry's own repo, or sits on a URL
-that is not a commit, because `--update` rewrites `game.project` from it.
+that is not a commit, because `--update` rewrites `game.project` from it. The repo is
+read as a fetch reads the URL, so a dot segment in any spelling (`..`, `%2e%2e`, `..\`)
+fails too.
 
 ## Dependency safety
 
@@ -563,7 +565,8 @@ once that folder exists `resolve --frozen` fails naming it.
 
 Some URLs stay as they are, each with a warning:
 
-- A release asset, or a URL on any host but `github.com`, which has no commit URL.
+- A release asset, a URL on any host but `github.com`, or a URL with a dot segment in
+  any spelling, none of which has a commit URL.
 - An archive whose zip comment names no commit.
 - A dependency whose pin has [drifted](#pinning-extension-versions), since moving it
   would accept the drift. `resolve --pin-urls --update` accepts and moves it.
@@ -573,6 +576,11 @@ lockfile to its newest commit, with a notice; `--update=<name>` does this for th
 dependency alone. A ref that cannot be reached, or whose archive names no commit, holds
 its dependency with a warning. A commit URL with no `follows` holds with a notice, as
 there is no ref to check. A plain run requests only the commit URL.
+
+A dependency you save during a run is never overwritten. If a line the run would move
+changed, or `game.project` is gone, `resolve` fails with `game.project` and the lockfile
+as they were, and another run picks up the save. A save that leaves those lines alone is
+kept as it is.
 
 The commit comes from the archive the ref served, so a rewrite cannot introduce a
 commit that ref did not name. A commit URL you write by hand gets no such check: GitHub
