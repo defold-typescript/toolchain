@@ -139,7 +139,7 @@ describe("renderHelp", () => {
 
   test("resolve help lists --update with its library data meaning", () => {
     const resolve = JSON.parse(renderHelpJson("resolve"));
-    const update = resolve.flags.find((f: { flag: string }) => f.flag === "--update");
+    const update = resolve.flags.find((f: { flag: string }) => f.flag === "--update[=<name>]");
 
     expect(update.desc).toContain("library data");
     expect(renderHelp("resolve")).toContain("--update");
