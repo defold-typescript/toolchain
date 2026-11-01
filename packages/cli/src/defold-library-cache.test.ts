@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readZip } from "@defold-typescript/types/cli-runtime";
 import { writeZipArchive } from "../../types/test/zip-fixture";
-import { findDefoldLibraryArchive } from "./defold-library-cache";
+import { findDefoldBuildArchive, findDefoldLibraryArchive } from "./defold-library-cache";
 
 // Read off a project Defold fetched: the zip for this URL is named
 // `f7a4a6e5...-<base64 of its ETag>.zip`, and its comment is the commit
@@ -101,5 +101,105 @@ describe("findDefoldLibraryArchive", () => {
     writeFileSync(join(lib, `${URL_SHA1}-${ETAG_A}.zip`), "partial download");
 
     expect(await findDefoldLibraryArchive(dir, URL, readZip)).toBeNull();
+  });
+});
+
+describe("findDefoldBuildArchive", () => {
+  const listedEmpty = [{ ...listed[0], "commit-sha1": "" }];
+
+  test("returns the zip whose comment is the listed commit", async () => {
+    const { dir, lib } = project();
+    writeDependencies(lib, listed);
+    const path = writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, COMMIT);
+
+    expect(await findDefoldBuildArchive(dir, URL, readZip)).toEqual({ path });
+  });
+
+  test("an empty listed commit returns the one zip under the prefix with an empty comment", async () => {
+    const { dir, lib } = project();
+    writeDependencies(lib, listedEmpty);
+    const path = writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, "");
+
+    expect(await findDefoldBuildArchive(dir, URL, readZip)).toEqual({ path });
+  });
+
+  // Bob builds the first zip its directory listing yields under a prefix, whatever
+  // its comment says, so no comment can say which of two the build reads.
+  test.each([
+    ["an empty listed commit and two uncommented zips", listedEmpty, "", ""],
+    ["a listed commit and two zips naming it", listed, COMMIT, COMMIT],
+    ["a listed commit and only one zip naming it", listed, COMMIT, OTHER_COMMIT],
+  ] as const)("%s return a reason", async (_, entries, first, second) => {
+    const { dir, lib } = project();
+    writeDependencies(lib, entries);
+    writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, first);
+    writeArchive(lib, `${URL_SHA1}-${ETAG_B}.zip`, second);
+
+    const found = await findDefoldBuildArchive(dir, URL, readZip);
+
+    expect(found).toEqual({ reason: expect.stringContaining(URL) });
+  });
+
+  type Setup = (dir: { lib: string }) => void;
+  const failures: readonly (readonly [string, Setup])[] = [
+    [
+      "an empty listed commit and a zip with a comment",
+      ({ lib }) => {
+        writeDependencies(lib, listedEmpty);
+        writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, COMMIT);
+      },
+    ],
+    [
+      "an unlisted URL",
+      ({ lib }) => {
+        writeDependencies(lib, [{ ...listed[0], url: `${URL}?other` }]);
+        writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, COMMIT);
+      },
+    ],
+    [
+      "a comment naming another commit",
+      ({ lib }) => {
+        writeDependencies(lib, listed);
+        writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, OTHER_COMMIT);
+      },
+    ],
+    [
+      "an empty comment under a listed commit",
+      ({ lib }) => {
+        writeDependencies(lib, listed);
+        writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, "");
+      },
+    ],
+    [
+      "bytes that are not a zip",
+      ({ lib }) => {
+        writeDependencies(lib, listed);
+        writeFileSync(join(lib, `${URL_SHA1}-${ETAG_A}.zip`), "partial download");
+      },
+    ],
+    ["no zip under the prefix", ({ lib }) => writeDependencies(lib, listed)],
+    [
+      "a manifest that does not parse",
+      ({ lib }) => {
+        writeFileSync(join(lib, "dependencies.json"), "{ not json");
+        writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, COMMIT);
+      },
+    ],
+    [
+      "a listed entry with no commit field",
+      ({ lib }) => {
+        writeDependencies(lib, [{ url: URL }]);
+        writeArchive(lib, `${URL_SHA1}-${ETAG_A}.zip`, "");
+      },
+    ],
+  ];
+
+  test.each(failures)("%s returns a reason naming the URL", async (_, setup) => {
+    const { dir, lib } = project();
+    setup({ lib });
+
+    const found = await findDefoldBuildArchive(dir, URL, readZip);
+
+    expect(found).toEqual({ reason: expect.stringContaining(URL) });
   });
 });

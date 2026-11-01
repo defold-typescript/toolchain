@@ -21,7 +21,9 @@ then `bob build` to compile the Defold project.
 ## Subcommands
 
 - **`resolve`** — fetch the project's Defold library dependencies (the editor's
-  *Fetch Libraries*), so a native-extension or library build has its sources.
+  *Fetch Libraries*), so a native-extension or library build has its sources. To
+  stop a CI build whose libraries differ from your lockfile, see
+  [Dependency safety](./resolve.md#dependency-safety).
 - **`build`** — compile the project. It forces `--variant debug`, so output
   lands in `build/default`, matching the debug engine that [`run`](./run.md) and
   `bob run` launch.

@@ -12,7 +12,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
+import { DEFOLD_DEPENDENCIES_MANIFEST, DEFOLD_LIBRARY_DIR } from "./defold-library-cache";
 import {
+  DefoldCopyRefused,
   type DownloadExtensionArchive,
   defaultReadZip,
   type ExtensionArchiveProvenance,
@@ -107,7 +109,8 @@ export interface RunResolveOptions {
   readonly download?: DownloadExtensionArchive;
   readonly readZip?: ReadExtensionZip;
   // When true, skip writing the lockfile, and fail when it cannot answer for a
-  // declared dependency. Used by `--frozen` to verify the committed records.
+  // declared dependency, or when Defold has fetched libraries and its folder does
+  // not hold what the build reads. Used by `--frozen` to verify the committed records.
   readonly freeze?: boolean;
   // Moves library data pins to newer data and accepts extension drift, which a plain
   // run holds back from: everything for `true`, those dependencies alone for names.
@@ -378,13 +381,25 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     return failedResolve(libraryData.error);
   }
   const libraryDataDir = libraryData.dir;
-  const resolvedBundles = await resolveExtensionDeclarations(deps, {
-    cacheDir: opts.cacheDir ?? extensionCacheDir(),
-    projectDir: cwd,
-    libraryDataDir,
-    ...(opts.download ? { download: opts.download } : {}),
-    ...(opts.readZip ? { readZip: opts.readZip } : {}),
-  });
+  let resolvedBundles: ExtensionDeclarations[];
+  try {
+    resolvedBundles = await resolveExtensionDeclarations(deps, {
+      cacheDir: opts.cacheDir ?? extensionCacheDir(),
+      projectDir: cwd,
+      requireDefoldCopy:
+        opts.freeze === true && existsSync(join(cwd, DEFOLD_DEPENDENCIES_MANIFEST)),
+      libraryDataDir,
+      ...(opts.download ? { download: opts.download } : {}),
+      ...(opts.readZip ? { readZip: opts.readZip } : {}),
+    });
+  } catch (err) {
+    if (err instanceof DefoldCopyRefused) {
+      return failedResolve(
+        `--frozen reads the archives the build will: ${err.message}; delete ${DEFOLD_LIBRARY_DIR} and run \`defold-typescript bob resolve\``,
+      );
+    }
+    throw err;
+  }
 
   // Shipped declarations outrank every curated surface: the library's author
   // keeps them in step with the library, where a curated copy is pinned here.
