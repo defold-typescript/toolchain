@@ -87,6 +87,37 @@ function weldStrandedListMarkers(text: string): string {
   return out.join("\n").trim();
 }
 
+// What counts as markup in upstream prose: the tags the docs use, plus any tag
+// assigning an attribute. Every other `<` is text, as in `Values <= 0` or
+// `<logger_name>.log`. A listed name must close straight away, because a
+// comparison such as `a <b and c> d` reads the same as a tag with bare
+// attributes. `object` stays off the list: `wrap` documents `<object>` as text.
+// `lia` and `super` are upstream typos. The toolchain docs site renders this
+// output with `html: true`, so script-bearing elements go whatever follows their
+// name, and a quoted attribute value may hold a `<` a browser reads as part of
+// the tag.
+const MARKUP_TAG = new RegExp(
+  [
+    "</?(?:a|b|blockquote|br|code|dd|div|dl|dt|em|h[1-6]|hr|i|iframe|img|kbd|li|lia|ol|p|pre|s|script|small|span|strong|style|sub|sup|super|table|tbody|td|tfoot|th|thead|tr|u|ul)\\s*/?>",
+    "</?(?:script|style|iframe)\\b[^<>]*>",
+    "</?[a-z][^<>=]*=(?:[^<>\"']|\"[^\"]*\"|'[^']*')*>",
+    "</?[a-z][^<>=]*=[^<>]*>",
+  ].join("|"),
+  "gi",
+);
+
+// Removing a tag can join the text around it into a new one (`<scr<b>ipt>`), so
+// this repeats until nothing changes.
+function stripMarkup(html: string): string {
+  let text = html;
+  let previous: string;
+  do {
+    previous = text;
+    text = text.replace(MARKUP_TAG, "");
+  } while (text !== previous);
+  return text;
+}
+
 // Upstream Markdown indented one level too deep is highlighted as code while
 // still reading as Markdown: every line opens on a backtick-quoted name, as in
 // the field table `graphics.get_adapter_info` documents under `limits`. That
@@ -156,10 +187,9 @@ export function htmlToDocText(html: string): string {
       return close ? "" : `\n${LIST_INDENT.repeat(Math.max(0, listDepth - 1))}- `;
     })
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]+>/g, "");
+    .replace(/<\/p>/gi, "\n\n");
 
-  text = decodeEntities(text);
+  text = decodeEntities(stripMarkup(text));
 
   // Collapse horizontal whitespace runs, trim around newlines, fold runaway
   // blank runs to one blank line, then trim the whole string — preserving
@@ -195,8 +225,8 @@ export function htmlToDocText(html: string): string {
  * runs of blank lines to one. Returns `""` for empty / whitespace-only input.
  */
 export function htmlToCodeText(html: string): string {
-  let text = html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "");
-  text = decodeEntities(text);
+  const stripped = stripMarkup(html.replace(/<br\s*\/?>/gi, "\n"));
+  const text = decodeEntities(stripped);
 
   const lines = text.split("\n").map((line) => line.replace(/[ \t]+$/g, ""));
   while (lines.length > 0 && lines[0] === "") lines.shift();

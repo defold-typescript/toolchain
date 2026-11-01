@@ -1322,7 +1322,7 @@ declare global {
      * ```ts
      * // How to play a particle fx when a gui node is created.
      * // The callback receives the gui node, the hash of the id
-     * // of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.
+     * // of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_<STATE>.
      * export default defineGuiScript({
      *   init(self) {
      *     gui.play_particlefx(gui.get_node("particlefx"), (self, node, emitter, state) => {

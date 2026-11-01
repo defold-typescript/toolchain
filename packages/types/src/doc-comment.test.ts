@@ -201,9 +201,63 @@ describe("htmlToDocText", () => {
     const out = htmlToDocText("```lua\n-\nlocal x = 1\n```\n<ul><li>after</li></ul>");
     expect(out).toBe("```lua\n-\nlocal x = 1\n```\n\n- after");
   });
+
+  test.each([
+    ["Values <= 0 are always false and values >= 1 are always true."],
+    ["`<logger_name>.log` file"],
+    ["where <device IP> is the IP address"],
+    ["particlefx.EMITTER_STATE_<STATE>."],
+    ["in the format <hash(mesh_id), aabb_info>"],
+    ["in the range of 1 .. <number-of-geometries> in atlas"],
+    ["wrap documents <object> as text"],
+  ])("keeps text that only looks like a tag: %s", (text) => {
+    expect(htmlToDocText(text)).toBe(text);
+  });
+
+  test.each([
+    ["<table><tr><td>a</td></tr></table>", "a"],
+    ["<dl><dt>a</dt><dd>b</dd></dl>", "ab"],
+    ["<small>a</small>", "a"],
+    ["<strong>a</strong>", "a"],
+    ['<span class="x">a</span>', "a"],
+    ["a<sub>2</sub>", "a2"],
+    ["a<hr />b", "ab"],
+    ["<H2>a</H2 >", "a"],
+  ])("strips markup and keeps its text: %s", (html, text) => {
+    expect(htmlToDocText(html)).toBe(text);
+  });
+
+  test("strips the misspelt tags upstream ships", () => {
+    expect(htmlToDocText("<code>q<super>*</super> = [w, -v]</code>")).toBe("`q* = [w, -v]`");
+    expect(htmlToDocText("done</lia>")).toBe("done");
+  });
+
+  test.each([
+    ["<script>alert(1)</script>", "alert(1)"],
+    ["<script defer>alert(1)</script>", "alert(1)"],
+    ["<style media>a{}</style>", "a{}"],
+    ["<iframe srcdoc></iframe>", ""],
+    ["<img src=x onerror=alert(1)>", ""],
+    ["<svg onload=alert(1)>", ""],
+    ["<svg/onload=alert(1)>", ""],
+    ['<img alt="<" src=x onerror=alert(1)>', ""],
+    ["<scr<b>ipt>alert(1)</scr</b>ipt>", "alert(1)"],
+    ["<scr<script>ipt>alert(1)</scr</script>ipt>", "alert(1)"],
+  ])("leaves no script or event handler behind: %s", (html, text) => {
+    expect(htmlToDocText(html)).toBe(text);
+  });
 });
 
 describe("htmlToCodeText", () => {
+  test("keeps a comparison that only looks like a tag and strips real markup", () => {
+    expect(htmlToCodeText("if a <b and c> d then")).toBe("if a <b and c> d then");
+    expect(htmlToCodeText('<span class="n">a</span> <= b')).toBe("a <= b");
+  });
+
+  test("strips a tag the removal of another one forms", () => {
+    expect(htmlToCodeText("<scr<b>ipt>alert(1)</scr</b>ipt>")).toBe("alert(1)");
+  });
+
   test("strips syntax-highlight spans while preserving newlines and indentation", () => {
     const html =
       '<div class="codehilite"><pre><span></span><code><span class="kd">local</span> <span class="n">p</span> <span class="o">=</span> <span class="n">go</span><span class="p">.</span><span class="n">get_position</span><span class="p">()</span>\n    <span class="n">indented</span>\n</code></pre></div>';
