@@ -555,12 +555,12 @@ describe("runExportTypes library data source", () => {
   const REPO = "https://github.com/owner/mylib";
   const DECLARATION = 'declare module "mylib.core" {\n  export const version: "archive";\n}\n';
 
-  // A real data folder, packed the way GitHub packs the data repo's root.
+  // A real data folder under `data/`, packed the way GitHub packs the data repo.
   function dataArchive(): Uint8Array {
     const folder = writeAuthoredLibraryData({ "mylib.core": DECLARATION });
     return writeZipArchive(
       filesUnder(folder).map((file) => ({
-        name: `library-data-${COMMIT}/0.0.1/${file}`,
+        name: `library-data-${COMMIT}/data/0.0.1/${file}`,
         text: readFileSync(join(folder, file), "utf8"),
       })),
       { comment: COMMIT },

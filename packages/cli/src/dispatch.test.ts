@@ -9763,7 +9763,7 @@ describe("library data from the data repo", () => {
     { comment: "3333333333333333333333333333333333333333" },
   );
 
-  // A real data folder, packed the way GitHub packs the data repo's root.
+  // A real data folder under `data/`, packed the way GitHub packs the data repo.
   function dataArchive(commit = COMMIT, declaration = DECLARATION): Uint8Array {
     const folder = writeAuthoredLibraryData({ "mylib.core": declaration });
     return writeZipArchive(
@@ -9773,7 +9773,7 @@ describe("library data from the data repo", () => {
           const file = path.join(entry.parentPath, entry.name);
           const rel = path.relative(folder, file).split(path.sep).join("/");
           return {
-            name: `library-data-${commit}/0.0.1/${rel}`,
+            name: `library-data-${commit}/data/0.0.1/${rel}`,
             text: readFileSync(file, "utf8"),
           };
         }),
