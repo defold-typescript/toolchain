@@ -164,7 +164,7 @@ Run \`defold-typescript --help\` for per-command usage and flags.
 `;
 const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle|status|run> [path]\n";
 const LIBRARY_USAGE =
-  "Usage: defold-typescript library check --data <dir> [--api-doc-out <dir>]\n       defold-typescript library add <url> --data <dir>\n";
+  "Usage: defold-typescript library check --data <dir> [--api-doc-out <dir>]\n       defold-typescript library add <url> --data <dir>\n       defold-typescript library review [<name>] --data <dir>\n";
 
 /** How long `build` waits for an editor to identify itself before giving up on it. */
 const EDITOR_PROBE_TIMEOUT_MS = 2000;
@@ -699,7 +699,7 @@ function dispatchCommand(
   if (command === "library") {
     // Runs on a directory of library data, not a Defold project: no target resolution.
     const subcommand = rest[0];
-    if (subcommand !== "check" && subcommand !== "add") {
+    if (subcommand !== "check" && subcommand !== "add" && subcommand !== "review") {
       io.stderr.write(LIBRARY_USAGE);
       return 1;
     }
@@ -730,7 +730,7 @@ function dispatchCommand(
       const selected =
         dataFlag === undefined || dataFlag === "" || dataFlag.startsWith("-")
           ? {
-              error: `defold-typescript library ${subcommand}: --data needs a directory; use: defold-typescript library ${subcommand}${subcommand === "add" ? " <url>" : ""} --data <dir>`,
+              error: `defold-typescript library ${subcommand}: --data needs a directory; use: defold-typescript library ${subcommand}${subcommand === "add" ? " <url>" : subcommand === "review" ? " [<name>]" : ""} --data <dir>`,
             }
           : libraryDataFromFlag(
               `library ${subcommand}: --data`,
@@ -779,6 +779,53 @@ function dispatchCommand(
           io.stdout.write(`next: defold-typescript library check --data ${dataFlag}\n`);
         }
         return 0;
+      }
+      if (subcommand === "review") {
+        const { reviewLibraries } = await import("./library/library-review");
+        const seams = internals?.resolveInternals;
+        let result: Awaited<ReturnType<typeof reviewLibraries>>;
+        try {
+          result = await reviewLibraries(dataFolder, rest[1] === undefined ? [] : [rest[1]], {
+            ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
+            ...(seams?.download ? { download: seams.download } : {}),
+          });
+        } catch (err) {
+          return fail(
+            `defold-typescript library review: ${err instanceof Error ? err.message : String(err)}`,
+            { dataFolder },
+          );
+        }
+        const { reviewed, failed } = result;
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "library",
+              ...(failed.length > 0
+                ? { error: `library review: ${failed.length} failed in ${dataFolder}` }
+                : {}),
+              subcommand,
+              dataFolder,
+              written: reviewed
+                .filter(({ added }) => added)
+                .map(({ library }) => path.join(dataFolder, library, "reviewed.json")),
+              reviewed,
+              failed,
+            }),
+          );
+        } else {
+          for (const { library, commit, added } of reviewed) {
+            io.stdout.write(
+              `${library}: ${added ? `recorded ${commit ?? "an archive with no commit"}` : "already recorded"}\n`,
+            );
+          }
+          for (const { library, message } of failed) {
+            writeError(`defold-typescript library review: ${library}: ${message}`);
+          }
+          io.stdout.write(
+            `defold-typescript library review: ${dataFolder}: ${reviewed.length} reviewed, ${failed.length} failed\n`,
+          );
+        }
+        return failed.length > 0 ? 1 : 0;
       }
       const { checkLibraryData } = await import("./library/library-check");
       let problems: Awaited<ReturnType<typeof checkLibraryData>>;

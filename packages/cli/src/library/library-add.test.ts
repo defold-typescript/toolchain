@@ -11,11 +11,13 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { readZip } from "@defold-typescript/types/cli-runtime";
 import { writeZipArchive } from "../../../types/test/zip-fixture";
 import type { DownloadExtensionArchive } from "../extension-archive";
 import { addLibrary } from "./library-add";
 import { checkLibraryData } from "./library-check";
-import { readLibraryData } from "./library-data";
+import { readLibraryData, readLibraryReviews } from "./library-data";
+import { archiveFingerprint } from "./library-fingerprint";
 import { fetchLualsFixtures } from "./sync-luals-types";
 import { fetchScriptApiFixture } from "./sync-script-api-types";
 
@@ -112,12 +114,41 @@ describe("addLibrary", () => {
   const json = (file: string): unknown =>
     JSON.parse(readFileSync(join(dataDir, "mylib", file), "utf8"));
 
+  function fingerprintOf(bytes: Uint8Array) {
+    const zipPath = join(base, "fingerprint.zip");
+    writeFileSync(zipPath, bytes);
+    return archiveFingerprint(readZip(zipPath));
+  }
+
+  test("records the first review from the archive it read", async () => {
+    const bytes = archive({ files: { "mylib/mylib.lua": ANNOTATED }, comment: COMMIT });
+
+    await add(bytes);
+
+    expect(json("reviewed.json")).toEqual({
+      ref: "1.2.3",
+      reviews: [{ ...fingerprintOf(bytes), commits: [COMMIT] }],
+    });
+    expect(readLibraryReviews(dataDir, "mylib")).toHaveLength(1);
+  });
+
+  test("an archive with no commit records its hashes with no commits", async () => {
+    const bytes = archive({ files: { "mylib/mylib.lua": ANNOTATED } });
+
+    await add(bytes);
+
+    expect(json("reviewed.json")).toEqual({
+      ref: "1.2.3",
+      reviews: [{ ...fingerprintOf(bytes), commits: [] }],
+    });
+  });
+
   test("annotated Lua writes a folder the reader and the check accept", async () => {
     const { folder } = await add(archive({ files: { "mylib/mylib.lua": ANNOTATED } }));
 
     expect(folder).toBe("mylib");
     expect(json("library.json")).toEqual({ repo: "https://github.com/owner/MyLib" });
-    expect(json("reviewed.json")).toEqual({ ref: "1.2.3" });
+    expect(json("reviewed.json")).toMatchObject({ ref: "1.2.3" });
     expect(json("recipe.json")).toEqual({
       luals: [{ sourceGlobs: ["mylib/**/*.lua"], moduleId: "mylib.mylib", namespace: "mylib" }],
     });
@@ -283,7 +314,7 @@ describe("addLibrary", () => {
     );
 
     expect(json("library.json")).toEqual({ repo: "https://github.com/owner/MyLib" });
-    expect(json("reviewed.json")).toEqual({ ref: "1.2.3" });
+    expect(json("reviewed.json")).toMatchObject({ ref: "1.2.3" });
     expect(existsSync(join(dataDir, "mylib/recipe.json"))).toBe(false);
     expect(existsSync(join(dataDir, "mylib/source"))).toBe(false);
     expect(notes.join("\n")).toContain("native extension");
@@ -339,7 +370,7 @@ describe("addLibrary", () => {
   test("a master.zip URL takes its ref from the archive's commit pin", async () => {
     await add(archive({ files: { "mylib/mylib.lua": ANNOTATED }, comment: COMMIT }), MASTER_URL);
 
-    expect(json("reviewed.json")).toEqual({ ref: COMMIT });
+    expect(json("reviewed.json")).toMatchObject({ ref: COMMIT });
   });
 
   test("a refs/heads URL takes its ref from the archive's commit pin", async () => {
@@ -348,7 +379,7 @@ describe("addLibrary", () => {
       "https://github.com/owner/MyLib/archive/refs/heads/release.zip",
     );
 
-    expect(json("reviewed.json")).toEqual({ ref: COMMIT });
+    expect(json("reviewed.json")).toMatchObject({ ref: COMMIT });
   });
 
   test("a bare /archive/<name>.zip URL reads its name as the tag", async () => {
@@ -357,7 +388,7 @@ describe("addLibrary", () => {
       "https://github.com/owner/MyLib/archive/v2.zip",
     );
 
-    expect(json("reviewed.json")).toEqual({ ref: "v2" });
+    expect(json("reviewed.json")).toMatchObject({ ref: "v2" });
   });
 
   test("a branch URL whose archive names no commit throws and writes nothing", async () => {
