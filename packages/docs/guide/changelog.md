@@ -13,15 +13,16 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Library types](./resolve.md#library-data)** update without a CLI release, with each library pinned at its own commit until `resolve --update[=<name>]`.
-> - **[`defold-typescript.lock`](./resolve.md#the-lockfile)** holds what `resolve` records, including a hash of each dependency's files; commit it, since `resolve --frozen` fails without it.
-> - **[Library API pages](https://defold-typescript.github.io/library-data)** moved to their own docs site, with no redirect from the old URLs.
-> - **[API docs](/api/particlefx)** keep text that only looks like a tag.
+> - **[Library types](./resolve.md#library-data)** update without a CLI release, each library pinned until `resolve --update[=<name>]`.
+> - **[`defold-typescript.lock`](./resolve.md#the-lockfile)** holds what `resolve` records; commit it, since `resolve --frozen` needs it.
+> - **[`resolve --frozen`](./resolve.md#dependency-safety)** checks the archives `bob build` will read.
+> - **[Library API pages](https://defold-typescript.github.io/library-data)** moved to their own site, with no redirects.
 
 ### Breaking
 
 - **`resolve` fetches library data itself:** library types come from the [library data repo](https://github.com/defold-typescript/library-data) and update without a CLI release, and `@defold-typescript/library-types` is no longer published. `resolve` and `watch` [pin each library you use at its own commit](./resolve.md#library-data), so adding or moving one leaves the others' types alone, and `resolve --update[=<name>]` moves what you ask for; `export-types` reads the newest data.
 - **Pins moved to `defold-typescript.lock`:** `resolve` keeps its records in [this committed file](./resolve.md#the-lockfile) instead of `package.json`, each dependency's entry holding its commit and [a hash of the files a game can use](./resolve.md#pinning-extension-versions), so changed files under an unchanged commit count as drift, which `resolve --update` accepts. Run `resolve` and commit the file: `resolve --frozen` fails without it and when a declared dependency has no entry, and any `resolve` fails on a lockfile that does not parse.
+- **`resolve --frozen` checks what the build reads:** once `.internal/lib/dependencies.json` exists, it reads only that folder and fails, naming the URL, when the folder does not hold the one archive listed for a dependency, instead of downloading. Run `bob resolve`, `resolve --frozen` and `bob build` in that order to stop a CI build whose libraries differ from your lockfile; see [Dependency safety](./resolve.md#dependency-safety).
 - **Library API pages moved:** library pages and the Libraries index are on the [library docs site](https://defold-typescript.github.io/library-data), with no redirect from their old `/api/<library>` and `/libraries` URLs, and this site's search no longer finds them. The Libraries tab opens there in a new tab, marked as an external link.
 
 ### Improved

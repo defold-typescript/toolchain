@@ -4,13 +4,14 @@
 // real `.script_api` paths plus defold/cache/download provenance. The archive is
 // Defold's own fetched copy when its commit checks out (defold-library-cache.ts),
 // else this pipeline's cached copy revalidated by ETag, else a fresh download,
-// keyed by the arbitrary extension URL instead of a Defold version.
+// keyed by the arbitrary extension URL instead of a Defold version. A run that
+// requires Defold's copy fails instead of taking either of the other two.
 
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { findDefoldLibraryArchive } from "./defold-library-cache";
+import { findDefoldBuildArchive, findDefoldLibraryArchive } from "./defold-library-cache";
 import {
   classifyExtension,
   type ExtensionDependency,
@@ -52,6 +53,9 @@ export interface ResolveExtensionArchiveOptions {
   readonly cacheDir: string;
   // The project Defold fetched libraries into; unset, `.internal/lib/` is not read.
   readonly projectDir?: string;
+  // Reads only the archive Bob will build from `projectDir`, and throws
+  // `DefoldCopyRefused` rather than take any other copy.
+  readonly requireDefoldCopy?: boolean;
   readonly download?: DownloadExtensionArchive;
   readonly readZip?: ReadExtensionZip;
 }
@@ -149,25 +153,51 @@ export const defaultReadZip: ReadExtensionZip = async (zipPath) => {
   return readZip(zipPath);
 };
 
+export class DefoldCopyRefused extends Error {}
+
+async function defoldArchivePath(
+  url: string,
+  opts: ResolveExtensionArchiveOptions,
+  open: ReadExtensionZip,
+): Promise<string | null> {
+  if (opts.projectDir === undefined) {
+    return null;
+  }
+  if (opts.requireDefoldCopy !== true) {
+    return findDefoldLibraryArchive(opts.projectDir, url, open);
+  }
+  const found = await findDefoldBuildArchive(opts.projectDir, url, open);
+  if ("reason" in found) {
+    throw new DefoldCopyRefused(found.reason);
+  }
+  return found.path;
+}
+
 export async function resolveExtensionArchive(
   dep: ExtensionDependency,
   opts: ResolveExtensionArchiveOptions,
 ): Promise<ResolvedExtensionArchive> {
   const open = opts.readZip ?? defaultReadZip;
-  const defoldPath =
-    opts.projectDir === undefined
-      ? null
-      : await findDefoldLibraryArchive(opts.projectDir, dep.url, open);
+  const defoldPath = await defoldArchivePath(dep.url, opts, open);
   const source =
     defoldPath !== null
       ? { provenance: "defold" as const, archivePath: defoldPath }
       : await cachedOrDownloaded(dep.url, opts.cacheDir, opts.download ?? fetchExtensionArchive);
 
   const zip = await open(source.archivePath);
+  let identity: ArchiveIdentity;
+  try {
+    identity = archiveIdentity(zip);
+  } catch (err) {
+    if (opts.requireDefoldCopy !== true) {
+      throw err;
+    }
+    throw new DefoldCopyRefused(`the archive for ${dep.url} holds an unreadable file`);
+  }
   return {
     ...classifyExtension(dep.url, zip.entries()),
     ...source,
-    identity: archiveIdentity(zip),
+    identity,
   };
 }
 
