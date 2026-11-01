@@ -8,27 +8,41 @@
 // download/readZip/cacheDir seams stay injectable so the orchestration is
 // network-free under test.
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
 import { DEFOLD_DEPENDENCIES_MANIFEST, DEFOLD_LIBRARY_DIR } from "./defold-library-cache";
 import {
+  classifyDependencyUrl,
+  commitUrlFor,
+  rewriteGameProjectDependency,
+} from "./dependency-url";
+import {
+  cachedOrDownloaded,
   DefoldCopyRefused,
   type DownloadExtensionArchive,
   defaultReadZip,
   type ExtensionArchiveProvenance,
   extensionCacheDir,
+  fetchExtensionArchive,
   type ReadExtensionZip,
 } from "./extension-archive";
 import { type ExtensionDeclarations, resolveExtensionDeclarations } from "./extension-declarations";
-import { readExtensionDependencies } from "./extension-deps";
+import { type ExtensionDependency, readExtensionDependencies } from "./extension-deps";
 import {
   ensureExtensionTypesReference,
   materializeExtensionDeclarations,
   type SharedExtensionNamespace,
 } from "./extension-materialize";
-import { archiveVersion, mergeResolvedVersionPins, sameArchive } from "./extension-version";
+import {
+  type ArchiveIdentity,
+  archiveVersion,
+  COMMIT_COMMENT,
+  type ExtensionPin,
+  mergeResolvedVersionPins,
+  sameArchive,
+} from "./extension-version";
 import { printLibraryModules } from "./library/print-library";
 import { archiveSourceTree } from "./library/source-tree";
 import { LIBRARY_DATA_MAIN_URL, libraryDataCacheDir } from "./library-data-archive";
@@ -115,6 +129,8 @@ export interface RunResolveOptions {
   // Moves library data pins to newer data and accepts extension drift, which a plain
   // run holds back from: everything for `true`, those dependencies alone for names.
   readonly update?: LibraryDataUpdate;
+  // Rewrites each branch or tag URL in `game.project` to the commit its archive names.
+  readonly pinUrls?: boolean;
   // The library data dependencies are matched against and printed from. Both
   // default to the data repo's archive; tests inject a synthetic registry and
   // data folder to stay hermetic, and a `null` folder prints nothing and keeps a
@@ -143,7 +159,7 @@ export interface RunResolveResult {
   // TypeScript merges them; empty when every namespace has one source.
   readonly sharedNamespaces: SharedExtensionNamespace[];
   readonly warnings: readonly string[];
-  // Advice about the library data pins, which needs no action to stay correct.
+  // Advice about the library data pins, and what moved in `game.project`.
   readonly notices?: readonly string[];
 }
 
@@ -315,6 +331,134 @@ export function describePinDrift({
     : `${pinnedVersion ?? "(none)"} -> ${resolvedVersion}`;
 }
 
+// A dependency line this run moves to a commit URL, and the ref that commit came from.
+interface MovedDependency {
+  readonly index: number;
+  readonly url: string;
+  readonly follows: string;
+}
+
+// The commit a followed ref names now, or null to hold its dependency: a cached copy
+// served because the ref could not be reached says nothing about where the ref is.
+async function commitOfFollowedRef(
+  ref: string,
+  opts: RunResolveOptions,
+  warnings: string[],
+): Promise<string | null> {
+  try {
+    const { archivePath, warning } = await cachedOrDownloaded(
+      ref,
+      opts.cacheDir ?? extensionCacheDir(),
+      opts.download ?? fetchExtensionArchive,
+    );
+    if (warning !== undefined) {
+      warnings.push(`${warning}; the dependency following it stays`);
+      return null;
+    }
+    const comment = (await (opts.readZip ?? defaultReadZip)(archivePath)).comment();
+    if (COMMIT_COMMENT.test(comment)) {
+      return comment;
+    }
+    warnings.push(`the archive of ${ref} names no commit; the dependency following it stays`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    warnings.push(`could not check ${ref}; the dependency following it stays: ${message}`);
+  }
+  return null;
+}
+
+// Ahead of resolving, so a dependency that moves resolves at its new commit.
+async function followRefs(
+  opts: RunResolveOptions,
+  deps: readonly ExtensionDependency[],
+  pins: Readonly<Record<string, ExtensionPin>>,
+) {
+  const followed: ExtensionDependency[] = [];
+  const moved: MovedDependency[] = [];
+  const notices: string[] = [];
+  const warnings: string[] = [];
+  for (const dep of deps) {
+    let url = dep.url;
+    if (
+      classifyDependencyUrl(url) === "commit" &&
+      wantsUpdate(opts.update, normalizeSourceId(url))
+    ) {
+      const follows = pins[url]?.follows;
+      if (follows === undefined) {
+        notices.push(`${url} has no ref to follow, so --update holds it`);
+      } else {
+        const commit = await commitOfFollowedRef(follows, opts, warnings);
+        const next = commit === null ? null : commitUrlFor(follows, commit);
+        if (next !== null && next !== url) {
+          notices.push(`${follows} moved ${url} to ${next}`);
+          moved.push({ index: dep.index, url: next, follows });
+          url = next;
+        }
+      }
+    }
+    followed.push({ index: dep.index, url });
+  }
+  return { deps: followed, moved, notices, warnings };
+}
+
+// `follows` is the URL each dependency was resolved under here. A drifted pin stays
+// put: moving it would accept the drift, which only `--update` does.
+function planUrlPins(
+  deps: readonly ExtensionDependency[],
+  identities: ReadonlyMap<string, ArchiveIdentity>,
+  pins: Readonly<Record<string, ExtensionPin>>,
+  update: LibraryDataUpdate | undefined,
+) {
+  const moved: MovedDependency[] = [];
+  const notices: string[] = [];
+  const warnings: string[] = [];
+  for (const { index, url } of deps) {
+    const identity = identities.get(url);
+    const kind = classifyDependencyUrl(url);
+    if (identity === undefined || kind === "commit") {
+      continue;
+    }
+    if (kind === "release" || kind === "unknown") {
+      warnings.push(`--pin-urls left ${url}: only a GitHub branch or tag URL has a commit URL`);
+      continue;
+    }
+    const next = identity.commit === undefined ? null : commitUrlFor(url, identity.commit);
+    if (next === null) {
+      warnings.push(`--pin-urls left ${url}: its archive names no commit`);
+      continue;
+    }
+    const pin = pins[url];
+    if (
+      pin !== undefined &&
+      !sameArchive(pin, identity) &&
+      !wantsUpdate(update, normalizeSourceId(url))
+    ) {
+      warnings.push(`--pin-urls left ${url}: its pin drifted, which --update accepts`);
+      continue;
+    }
+    notices.push(`pinned ${url} to ${next}`);
+    moved.push({ index, url: next, follows: url });
+  }
+  return { moved, notices, warnings };
+}
+
+// Read again rather than reusing the text the run started from, which a save during
+// the downloads would have outdated.
+function moveGameProjectDependencies(path: string, moved: readonly MovedDependency[]): void {
+  const text = moved.reduce(
+    (current, { index, url }) => rewriteGameProjectDependency(current, index, url),
+    readFileSync(path, "utf8"),
+  );
+  const stage = `${path}.${process.pid}.partial`;
+  writeFileSync(stage, text, { mode: statSync(path).mode });
+  try {
+    renameSync(stage, path);
+  } catch (err) {
+    rmSync(stage, { force: true });
+    throw err;
+  }
+}
+
 export async function runResolve(opts: RunResolveOptions): Promise<RunResolveResult> {
   const { cwd } = opts;
   const gameProjectPath = join(cwd, "game.project");
@@ -372,18 +516,19 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     }
   }
 
+  const followed = await followRefs(opts, deps, pins);
   const libraryData = await selectLibraryData(
     opts,
-    deps.map(({ url }) => url),
+    followed.deps.map(({ url }) => url),
     lock,
   );
   if (libraryData.error !== undefined) {
     return failedResolve(libraryData.error);
   }
   const libraryDataDir = libraryData.dir;
-  let resolvedBundles: ExtensionDeclarations[];
+  let fetchedBundles: ExtensionDeclarations[];
   try {
-    resolvedBundles = await resolveExtensionDeclarations(deps, {
+    fetchedBundles = await resolveExtensionDeclarations(followed.deps, {
       cacheDir: opts.cacheDir ?? extensionCacheDir(),
       projectDir: cwd,
       requireDefoldCopy:
@@ -400,6 +545,25 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     }
     throw err;
   }
+
+  // Everything below reads a bundle's URL, and the scene surface is keyed by it, so a
+  // URL that moves does so here, ahead of the first surface written from it.
+  const urlPins =
+    opts.pinUrls === true
+      ? planUrlPins(
+          followed.deps,
+          new Map(fetchedBundles.map(({ url, identity }) => [url, identity])),
+          pins,
+          opts.update,
+        )
+      : { moved: [], notices: [], warnings: [] };
+  const pinnedUrl = new Map(urlPins.moved.map(({ url, follows }) => [follows, url]));
+  const resolvedBundles = fetchedBundles.map((bundle) => ({
+    ...bundle,
+    url: pinnedUrl.get(bundle.url) ?? bundle.url,
+  }));
+  const moved = [...followed.moved, ...urlPins.moved];
+  const followsOf = new Map(moved.map(({ url, follows }) => [url, follows]));
 
   // Shipped declarations outrank every curated surface: the library's author
   // keeps them in step with the library, where a curated copy is pinned here.
@@ -469,6 +633,8 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   const { counts: sceneSourceCounts } = materializeLibrarySceneSources({ cwd, bundles });
   const warnings: string[] = [
     ...(libraryData.warning === undefined ? [] : [libraryData.warning]),
+    ...followed.warnings,
+    ...urlPins.warnings,
     ...shippedWarnings,
   ];
   for (const bundle of bundles) {
@@ -484,13 +650,19 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   }
 
   // `--update` accepts what it fetched for a dependency it covers, so that pin stops
-  // reporting drift.
-  const acceptedPins = Object.fromEntries(
+  // reporting drift, and a URL that moved here is recorded at what it moved to. Either
+  // way the pin keeps the ref it follows.
+  const acceptedPins: Record<string, ExtensionPin> = Object.fromEntries(
     bundles
       .filter(
-        ({ url }) => pins[url] !== undefined && wantsUpdate(opts.update, normalizeSourceId(url)),
+        ({ url }) =>
+          followsOf.has(url) ||
+          (pins[url] !== undefined && wantsUpdate(opts.update, normalizeSourceId(url))),
       )
-      .map(({ url, identity }) => [url, identity]),
+      .map(({ url, identity }) => {
+        const follows = followsOf.get(url) ?? pins[url]?.follows;
+        return [url, follows === undefined ? identity : { ...identity, follows }];
+      }),
   );
   const heldPins = { ...pins, ...acceptedPins };
 
@@ -540,6 +712,9 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   );
 
   if (opts.freeze !== true) {
+    if (moved.length > 0) {
+      moveGameProjectDependencies(gameProjectPath, moved);
+    }
     writeProjectLock(cwd, {
       extensions: mergeResolvedVersionPins(
         heldPins,
@@ -602,6 +777,16 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     return report;
   });
 
+  const notices = [
+    ...libraryData.notices,
+    ...followed.notices,
+    ...urlPins.notices,
+    ...(moved.length > 0 && existsSync(join(cwd, DEFOLD_DEPENDENCIES_MANIFEST))
+      ? [
+          `${DEFOLD_LIBRARY_DIR} holds nothing for a URL that moved: run \`defold-typescript bob resolve\` or Fetch Libraries`,
+        ]
+      : []),
+  ];
   return {
     ok: true,
     materializedSurface: materializedDir,
@@ -609,6 +794,6 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     libraries,
     sharedNamespaces,
     warnings,
-    ...(libraryData.notices.length > 0 ? { notices: libraryData.notices } : {}),
+    ...(notices.length > 0 ? { notices } : {}),
   };
 }

@@ -166,7 +166,11 @@ const COMMANDS: readonly HelpCommand[] = [
       },
       {
         flag: "--update[=<name>]",
-        desc: "move library data pins to the newest data and accept extension drift, for every dependency or the named ones",
+        desc: "move library data pins to the newest data, accept extension drift and move a pinned URL to its ref's newest commit, for every dependency or the named ones",
+      },
+      {
+        flag: "--pin-urls",
+        desc: "rewrite each GitHub branch or tag URL in game.project to the commit its archive names",
       },
       {
         flag: "--library-data <dir>",

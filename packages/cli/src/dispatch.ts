@@ -366,6 +366,7 @@ function dispatchCommand(
       : updateFlag === "--update"
         ? true
         : updateFlag.slice("--update=".length).split(",");
+  const pinUrls = isResolve && head.includes("--pin-urls");
   const failOnDrift = head.includes("--fail-on-drift");
   const noUpdateCheck =
     head.includes("--no-update-check") || Boolean(process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK);
@@ -416,6 +417,7 @@ function dispatchCommand(
       a !== "--frozen" &&
       a !== "--update" &&
       !a.startsWith("--update=") &&
+      a !== "--pin-urls" &&
       a !== "--fail-on-drift" &&
       a !== "--no-update-check" &&
       a !== "--hot-reload" &&
@@ -494,6 +496,17 @@ function dispatchCommand(
   if (update !== undefined && (frozen || libraryDataGiven)) {
     const other = frozen ? "--frozen" : "--library-data";
     const message = `defold-typescript resolve: --update moves library data pins, which ${other} rules out; use one or the other`;
+    if (json) {
+      io.stdout.write(renderResult({ command: "resolve", error: message }));
+    } else {
+      writeError(message);
+    }
+    return 1;
+  }
+
+  if (pinUrls && frozen) {
+    const message =
+      "defold-typescript resolve: --pin-urls rewrites game.project, which --frozen rules out; use one or the other";
     if (json) {
       io.stdout.write(renderResult({ command: "resolve", error: message }));
     } else {
@@ -1827,6 +1840,7 @@ function dispatchCommand(
               : {}),
           ...(frozen ? { freeze: true } : {}),
           ...(update === undefined ? {} : { update }),
+          ...(pinUrls ? { pinUrls } : {}),
         });
         for (const warning of result.warnings) {
           writeWarning(`defold-typescript resolve: ${warning}`);

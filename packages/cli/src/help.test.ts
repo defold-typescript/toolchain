@@ -144,6 +144,15 @@ describe("renderHelp", () => {
     expect(update.desc).toContain("library data");
     expect(renderHelp("resolve")).toContain("--update");
   });
+
+  test("resolve help lists --pin-urls, and only resolve does", () => {
+    const flagsOf = (command: string): string[] =>
+      JSON.parse(renderHelpJson(command)).flags.map((f: { flag: string }) => f.flag);
+
+    expect(flagsOf("resolve")).toContain("--pin-urls");
+    expect(flagsOf("watch")).not.toContain("--pin-urls");
+    expect(renderHelp("resolve")).toContain("--pin-urls");
+  });
 });
 
 describe("renderHelpJson", () => {

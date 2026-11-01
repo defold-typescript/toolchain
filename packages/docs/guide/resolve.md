@@ -404,9 +404,13 @@ normally.
   also [Pinning extension versions](#pinning-extension-versions).
 - `--update[=<name>]` — move [library data pins](#library-data) to the newest data
   and [accept extension drift](#pinning-extension-versions), for every dependency or
-  only the named ones (`--update=monarch,druid`). The name takes `=`, never a space,
-  and one that names no dependency exits non-zero. It cannot be combined with
+  only the named ones (`--update=monarch,druid`). A dependency moved by `--pin-urls`
+  [moves to its ref's newest commit](#pin-urls-to-commits). The name takes `=`, never
+  a space, and one that names no dependency exits non-zero. It cannot be combined with
   `--frozen` or `--library-data`.
+- `--pin-urls` — [rewrite each GitHub branch or tag URL](#pin-urls-to-commits) in
+  `game.project` to the commit its archive names. It cannot be combined with
+  `--frozen`, and `watch` never rewrites.
 - `--library-data <dir>` — read library data from `<dir>` instead of the
   [library data repo](#library-data), with no request for it and no pin
   recorded. `<dir>` holds version-named data folders, which the data repo keeps in
@@ -492,7 +496,10 @@ A lockfile that does not parse, or that holds an extension entry in any form but
 the two above (a `commit` with `files`, or `files` alone),
 fails `resolve` with or without `--frozen`, and nothing is written. So does a
 `libraryData` in any shape but the one under [Library data](#library-data). Recording
-over it would accept every drift and move every library.
+over it would accept every drift and move every library. An entry may also carry
+`follows`, the ref [`--pin-urls`](#pin-urls-to-commits) moved it from. The same failure
+applies when `follows` is not a branch or tag of the entry's own repo, or sits on a URL
+that is not a commit, because `--update` rewrites `game.project` from it.
 
 ## Dependency safety
 
@@ -530,6 +537,47 @@ its `game.project`, its `.script_api` docs and its Lua annotations, type-checks 
 process to do that. Third-party packages they use, such as the TypeScript compiler,
 are not covered by that statement. The dependency's Lua runs when your game does,
 and its native code is compiled when you build.
+
+### Pin URLs to commits
+
+The lockfile cannot reach the editor's fetch, and `game.project` can. `resolve
+--pin-urls` rewrites each GitHub branch or tag URL there to the commit that ref's own
+archive names, changing only that URL on that line:
+
+```ini
+# before
+dependencies#0 = https://github.com/britzl/monarch/archive/master.zip
+# after
+dependencies#0 = https://github.com/britzl/monarch/archive/5c33c398e3c1d3ab3c0ee0d5f8f45c4c7c4e0b21.zip
+```
+
+The lockfile entry moves to the new URL and remembers the ref as `follows`:
+
+```jsonc
+"https://github.com/britzl/monarch/archive/5c33c398….zip": { "commit": "5c33c398…", "files": "e3b0c442…", "follows": "https://github.com/britzl/monarch/archive/master.zip" }
+```
+
+Then fetch again, because Defold keeps its copy under the URL: run `bob resolve` or
+*Fetch Libraries*. Until you do, `.internal/lib/` holds nothing for the new URL, and
+once that folder exists `resolve --frozen` fails naming it.
+
+Some URLs stay as they are, each with a warning:
+
+- A release asset, or a URL on any host but `github.com`, which has no commit URL.
+- An archive whose zip comment names no commit.
+- A dependency whose pin has [drifted](#pinning-extension-versions), since moving it
+  would accept the drift. `resolve --pin-urls --update` accepts and moves it.
+
+`resolve --update` then checks each `follows` ref and moves `game.project` and the
+lockfile to its newest commit, with a notice; `--update=<name>` does this for that
+dependency alone. A ref that cannot be reached, or whose archive names no commit, holds
+its dependency with a warning. A commit URL with no `follows` holds with a notice, as
+there is no ref to check. A plain run requests only the commit URL.
+
+The commit comes from the archive the ref served, so a rewrite cannot introduce a
+commit that ref did not name. A commit URL you write by hand gets no such check: GitHub
+may serve a fork's commit through the parent repo's URL, so check that it belongs to the
+repo. A pinned commit is fixed code, which says nothing about whether that code is safe.
 
 ## Cache location
 
