@@ -41,24 +41,28 @@ function archiveFiles(entries: readonly string[]): LibrarySharedEntry[] {
     }));
 }
 
-// A GitHub archive of a branch, a tag or a commit names that commit in its zip
-// comment. Every archive is also hashed over the files a game can use: the ones
-// under its `include_dirs`, else every file. Each is hashed under its
-// wrapper-stripped path, so neither a change outside what the library shares
-// nor a renamed `<repo>-<ref>/` wrapper moves the pin.
-export function archiveIdentity(zip: ExtensionZip): ArchiveIdentity {
-  const comment = zip.comment();
+// The files a game can use, by wrapper-stripped path: the ones under the archive's
+// `include_dirs`, else every file.
+export function archiveSharedFiles(zip: ExtensionZip): LibrarySharedEntry[] {
   const entries = zip.entries();
   const gameProject = archiveGameProjectEntry(entries);
   const included = libraryIncludeDirFiles(
     entries,
     gameProject === undefined ? undefined : zip.read(gameProject),
   );
-  const files = (included.length > 0 ? included : archiveFiles(entries)).sort((a, b) =>
+  return (included.length > 0 ? included : archiveFiles(entries)).sort((a, b) =>
     a.path < b.path ? -1 : a.path > b.path ? 1 : 0,
   );
+}
+
+// A GitHub archive of a branch, a tag or a commit names that commit in its zip
+// comment. Every archive is also hashed over the files a game can use. Each is
+// hashed under its wrapper-stripped path, so neither a change outside what the
+// library shares nor a renamed `<repo>-<ref>/` wrapper moves the pin.
+export function archiveIdentity(zip: ExtensionZip): ArchiveIdentity {
+  const comment = zip.comment();
   const hash = createHash("sha256");
-  for (const { entry, path } of files) {
+  for (const { entry, path } of archiveSharedFiles(zip)) {
     const bytes = zip.bytes(entry);
     hash.update(`${path}\0${bytes.length}\0`);
     hash.update(bytes);

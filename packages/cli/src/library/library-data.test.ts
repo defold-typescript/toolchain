@@ -2,7 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { LibraryDataError, libraryFolderName, readLibraryData } from "./library-data";
+import {
+  LibraryDataError,
+  libraryFolderName,
+  readLibraryData,
+  readLibraryReviews,
+  writeReviewedJson,
+} from "./library-data";
 import { printLibraryModules } from "./print-library";
 
 const FLOW_FORK = "declare module 'flow.ui' {\n  export function draw(): void;\n}\n";
@@ -625,4 +631,71 @@ describe("readLibraryData reads a library's coverage floors and parity exception
       expect(error.message).toMatch(message);
     }
   });
+});
+
+describe("a library's recorded reviews", () => {
+  const REVIEW = {
+    version: 1,
+    commits: ["0123456789abcdef0123456789abcdef01234567"],
+    api: "a".repeat(64),
+    doc: "b".repeat(64),
+    source: "c".repeat(64),
+    members: { "flow/ui.lua#draw": "d".repeat(16) },
+  };
+
+  test("a reviewed.json with no reviews stays valid and reads as null", () => {
+    const root = writeDataFolder();
+    try {
+      expect(readLibraryData(root).map(({ dir }) => dir)).toEqual(["box2d", "flow"]);
+      expect(readLibraryReviews(root, "flow")).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a written review reads back through the reader", () => {
+    const root = writeDataFolder();
+    try {
+      writeReviewedJson(root, "flow", { ref: "v1.2.0", reviews: [REVIEW] });
+
+      expect(readLibraryData(root).find(({ dir }) => dir === "flow")?.ref).toBe("v1.2.0");
+      expect(readLibraryReviews(root, "flow")).toEqual([REVIEW]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  for (const [what, reviews, field] of [
+    ["reviews that are not an array", { api: "a" }, '"reviews"'],
+    ["an entry that is not an object", ["a"], "reviews[0]"],
+    ["no version", [{ ...REVIEW, version: "1" }], '"version"'],
+    ["no commits", [{ ...REVIEW, commits: undefined }], '"commits"'],
+    ["a commit that is not a string", [{ ...REVIEW, commits: [1] }], '"commits"'],
+    ["a non-string api hash", [{ ...REVIEW, api: 1 }], '"api"'],
+    ["a non-string doc hash", [{ ...REVIEW, doc: null }], '"doc"'],
+    ["a non-string source hash", [{ ...REVIEW, source: {} }], '"source"'],
+    ["members that are not an object", [{ ...REVIEW, members: ["a"] }], '"members"'],
+    ["a member hash that is not a string", [{ ...REVIEW, members: { a: 1 } }], '"members"'],
+  ] as const) {
+    test(`${what} is refused, naming reviewed.json and the library`, () => {
+      const root = writeDataFolder();
+      try {
+        write(root, "flow/reviewed.json", { ref: "v1.2.0", reviews });
+
+        let refused: unknown;
+        try {
+          readLibraryData(root);
+        } catch (error) {
+          refused = error;
+        }
+
+        expect(refused).toBeInstanceOf(LibraryDataError);
+        expect((refused as LibraryDataError).library).toBe("flow");
+        expect((refused as LibraryDataError).message).toContain("flow/reviewed.json");
+        expect((refused as LibraryDataError).message).toContain(field);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
 });

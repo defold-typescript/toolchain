@@ -3,6 +3,7 @@ import type { CompileOutcome, EditorIssue, RunOutcome } from "./editor-attach";
 import type { CompileIssue } from "./editor-compile";
 import type { InitOperation } from "./init";
 import type { LibraryProblem } from "./library/library-check";
+import type { FailedReview, ReviewedLibrary } from "./library/library-review";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { WallCheckResult } from "./wall-check";
 
@@ -90,6 +91,9 @@ export interface RenderResultInput {
   readonly dataFolder?: string;
   readonly libraryCount?: number;
   readonly problems?: readonly LibraryProblem[];
+  // `library review` only: the libraries it recorded and those whose archive failed.
+  readonly reviewed?: readonly ReviewedLibrary[];
+  readonly failed?: readonly FailedReview[];
   readonly exitCode?: number;
   readonly output?: string;
   readonly bobJar?: { readonly path: string | null; readonly cached: boolean };
@@ -221,8 +225,10 @@ export function renderResult(input: RenderResultInput): string {
       : withDataFolder;
   const withProblems =
     "problems" in input ? { ...withLibraryCount, problems: input.problems } : withLibraryCount;
-  const withExit =
-    "exitCode" in input ? { ...withProblems, exitCode: input.exitCode } : withProblems;
+  const withReviewed =
+    "reviewed" in input ? { ...withProblems, reviewed: input.reviewed } : withProblems;
+  const withFailed = "failed" in input ? { ...withReviewed, failed: input.failed } : withReviewed;
+  const withExit = "exitCode" in input ? { ...withFailed, exitCode: input.exitCode } : withFailed;
   const withOutput = "output" in input ? { ...withExit, output: input.output } : withExit;
   const withBobJar = "bobJar" in input ? { ...withOutput, bobJar: input.bobJar } : withOutput;
   const withJava = "java" in input ? { ...withBobJar, java: input.java } : withBobJar;

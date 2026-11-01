@@ -1,6 +1,6 @@
 // A library data folder holds one folder per library, named for its repo:
 // `library.json` (the repo, its forks, its native extension, its index slots, its
-// coverage floors and parity exceptions), `reviewed.json` (the ref the data was reviewed at), a `recipe.json` when the
+// coverage floors and parity exceptions), `reviewed.json` (the ref the data was reviewed at and the hashes reviewed), a `recipe.json` when the
 // library generates modules, `fork/` for the hand-kept declarations, `source/`
 // for the pinned upstream files and `usage/` for the examples that compile against
 // its declarations. This is the one reader of that layout; every lane, registry
@@ -112,8 +112,20 @@ export interface LibraryJson {
   parityExceptions?: Record<string, AuthoredParityException[]>;
 }
 
+// The hashes of one library archive, and the upstream commits that carry them.
+// `members` holds one short hash per member, so two reviews can name what differs.
+export interface LibraryReview {
+  version: number;
+  commits: string[];
+  api: string;
+  doc: string;
+  source: string;
+  members: Record<string, string>;
+}
+
 export interface ReviewedJson {
   ref: string;
+  reviews?: LibraryReview[];
 }
 
 export interface RecipeJson {
@@ -562,6 +574,54 @@ function usageFiles(dataDir: string, dir: string): string[] {
     .sort();
 }
 
+const REVIEW_HASHES = ["api", "doc", "source"] as const;
+
+function requireReview(file: string, index: number, raw: unknown): LibraryReview {
+  const at = `${file}: reviews[${index}]`;
+  if (!isPlainObject(raw)) {
+    throw new Error(`${at} must be an object, got ${describeValue(raw)}`);
+  }
+  if (typeof raw.version !== "number") {
+    throw new Error(`${at} needs a number "version", got ${describeValue(raw.version)}`);
+  }
+  if (
+    !Array.isArray(raw.commits) ||
+    raw.commits.some((commit: unknown) => typeof commit !== "string")
+  ) {
+    throw new Error(
+      `${at} needs "commits" as an array of strings, got ${describeValue(raw.commits)}`,
+    );
+  }
+  for (const field of REVIEW_HASHES) {
+    if (typeof raw[field] !== "string") {
+      throw new Error(`${at} needs a string "${field}", got ${describeValue(raw[field])}`);
+    }
+  }
+  if (
+    !isPlainObject(raw.members) ||
+    Object.values(raw.members).some((hash) => typeof hash !== "string")
+  ) {
+    throw new Error(
+      `${at} needs "members" as an object of strings, got ${describeValue(raw.members)}`,
+    );
+  }
+  return raw as unknown as LibraryReview;
+}
+
+function requireReviews(file: string, raw: unknown): LibraryReview[] | null {
+  if (raw === undefined) return null;
+  if (!Array.isArray(raw)) {
+    throw new Error(`${file}: "reviews" must be an array, got ${describeValue(raw)}`);
+  }
+  return raw.map((review, index) => requireReview(file, index, review));
+}
+
+/** A library's recorded reviews, or `null` for a `reviewed.json` that holds none. */
+export function readLibraryReviews(dataDir: string, folder: string): LibraryReview[] | null {
+  const file = `${folder}/${REVIEWED_FILE}`;
+  return requireReviews(file, readJson<Partial<ReviewedJson>>(dataDir, file).reviews);
+}
+
 function readLibrary(dataDir: string, dir: string): LibraryData {
   const library = readJson<Partial<LibraryJson>>(dataDir, `${dir}/${LIBRARY_FILE}`);
   if (typeof library.repo !== "string") {
@@ -577,6 +637,7 @@ function readLibrary(dataDir: string, dir: string): LibraryData {
   if (typeof ref !== "string" || ref === "") {
     throw new Error(`${dir}/${REVIEWED_FILE} names no ref`);
   }
+  readLibraryReviews(dataDir, dir);
   const recipe = existsSync(join(dataDir, dir, RECIPE_FILE))
     ? readJson<RecipeJson>(dataDir, `${dir}/${RECIPE_FILE}`)
     : {};
