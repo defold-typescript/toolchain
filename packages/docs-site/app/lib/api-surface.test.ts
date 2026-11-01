@@ -1,16 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiAvailability,
   type ApiFunction,
   hashExampleSource,
   htmlToCodeText,
-  libraryIndexBaseNotes,
   lookupExampleTranslations,
   normalizedFunctionSignature,
   parseDefoldApiDoc,
-  parseLibraryIndexSlotClassifications,
   type SignatureStore,
   signatureTransitionNames,
   splitExampleSources,
@@ -18,16 +16,10 @@ import {
   type TranslationStore,
 } from "@defold-typescript/types";
 import { extractApiDoc } from "../../../cli/src/library/extract-api-doc";
-import { printCorpus } from "../../../cli/src/library/print-corpus";
-import { readAuthoredTargets } from "../../../cli/src/library/sync-authored-types";
-import { readLualsTargets } from "../../../cli/src/library/sync-luals-types";
-import { readScriptApiTargets } from "../../../cli/src/library/sync-script-api-types";
-import { readNativeExpectations } from "../../../cli/src/library/target-expectations";
 import { loadAnnotations } from "../../../types/scripts/lua-annotations";
 import { loadApiTargets } from "../../../types/scripts/regen";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { canonicalApiPages, windowedApiPages } from "./api-content";
-import { apiLinkify, apiPageMarkdown, apiSignatureSymbolLinks } from "./api-page-render";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -55,16 +47,10 @@ import {
   windowedBadgeCategory,
 } from "./api-surface";
 import {
-  libraryDataDir,
-  libraryModuleDirs,
-  libraryOriginByNamespace,
-  libraryRouteSlug,
   listApiVersions,
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
-  loadLibraryIndexSlots,
-  loadLibraryPageSources,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import {
@@ -95,99 +81,6 @@ const MISSING_VERSION_FIXTURE_DIR = join(
   "__fixtures__/api-surface-missing-version",
 );
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
-const REAL_LIBRARY_DATA_DIR = libraryDataDir(REAL_LIBRARY_TYPES_DIR) as string;
-const LIBRARY_INDEX_SLOTS = loadLibraryIndexSlots(REAL_LIBRARY_TYPES_DIR);
-
-// The ten `britzl/defold-input` modules, severed together into the authored lane.
-const DEFOLD_INPUT_MODULES = [
-  "accelerometer",
-  "button",
-  "cursor",
-  "gesture",
-  "keyboard",
-  "mapper",
-  "onscreen",
-  "state",
-  "textbox",
-  "triggers",
-];
-
-// The three `britzl/defold-richtext` modules, severed together into the authored
-// lane. Their classification dir is `defold-richtext` but their top namespace
-// segment is `richtext`, so the severance regroups them.
-const RICHTEXT_MODULES = ["color", "richtext", "tags"];
-
-// The two `britzl/defold-metrics` modules, severed together into the authored
-// lane. Their classification dir is `defold-metrics` against a `metrics` top
-// namespace segment, so the severance regroups them the way richtext's did.
-const METRICS_MODULES = ["fps", "mem"];
-
-// The page of every module `resolve` prints — the exact set the loader is
-// expected to surface as `library` pages. A markdown-front-end target whose recorded fidelity `decision` is not `go`
-// stays ts-defold-sourced; its golden is a regeneration proof, not a published
-// page, so it is excluded here exactly as the loader excludes it.
-function markdownDeferredNamespaces(): Set<string> {
-  const path = join(REAL_LIBRARY_TYPES_DIR, "markdown-targets.json");
-  if (!existsSync(path)) return new Set();
-  const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
-    targets: { namespace: string; decision?: string }[];
-  };
-  return new Set(targets.filter((t) => t.decision !== "go").map((t) => t.namespace));
-}
-
-async function vendoredLibraryModules(): Promise<string[]> {
-  const corpus = await printCorpus(REAL_LIBRARY_DATA_DIR);
-  const deferred = markdownDeferredNamespaces();
-  return [
-    ...readLualsTargets(REAL_LIBRARY_DATA_DIR),
-    ...readScriptApiTargets(REAL_LIBRARY_DATA_DIR),
-    ...readAuthoredTargets(REAL_LIBRARY_DATA_DIR),
-  ]
-    .filter((target) => corpus.has(target.moduleId))
-    .map((target) => target.namespace)
-    .filter((namespace) => !deferred.has(namespace));
-}
-
-// The page keys the committed Defold manifest claims: each is a library page, and
-// an engine namespace among them (`iap`) leaves every version's engine family.
-function defoldExtensionPages(): string[] {
-  const { libraries } = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
-  ) as { libraries: { docs: { page: string }[] }[] };
-  return libraries.flatMap((library) => library.docs.map((doc) => doc.page));
-}
-
-// Each library.json in the newest data folder, read straight off disk.
-function libraryJsons(): { native?: { namespace: string }; indexSlots?: object }[] {
-  return readdirSync(REAL_LIBRARY_DATA_DIR)
-    .sort()
-    .map((dir) => join(REAL_LIBRARY_DATA_DIR, dir, "library.json"))
-    .filter((file) => existsSync(file))
-    .map((file) => JSON.parse(readFileSync(file, "utf8")));
-}
-
-function nativeExtensionPages(): string[] {
-  return libraryJsons().flatMap(({ native }) => (native === undefined ? [] : [native.namespace]));
-}
-
-function portalScriptApiPages(): string[] {
-  const { libraries } = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "asset-portal-script-api.json"), "utf8"),
-  ) as { libraries: { docs: { page: string }[] }[] };
-  return libraries.flatMap((library) => library.docs.map((doc) => doc.page));
-}
-
-test("library pages read the index-slot notes of the newest library data folder", () => {
-  const recorded = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_DATA_DIR, "index-slot-classifications.json"), "utf8"),
-  ) as Record<string, unknown>;
-  for (const { indexSlots } of libraryJsons()) Object.assign(recorded, indexSlots);
-  const expected = parseLibraryIndexSlotClassifications(recorded);
-  const pages = loadLibraryPageSources(REAL_LIBRARY_TYPES_DIR).map(({ page }) => page);
-  expect(pages.length).toBeGreaterThan(0);
-  for (const page of pages) expect(page.indexSlots).toEqual(expected);
-});
 
 describe("loadApiSurface", () => {
   test("returns one ApiPage per module of the default target (engine then lua-stdlib), globals first then alphabetical", () => {
@@ -301,630 +194,6 @@ describe("loadApiSurfaceForVersion", () => {
   });
 });
 
-const VENDORED_LIBRARY_MODULES = await vendoredLibraryModules();
-
-describe("loadApiSurface library pages", () => {
-  const modules = VENDORED_LIBRARY_MODULES;
-  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const libraryPages = pages.filter((p) => p.category === "library");
-
-  test("adds one default-surface `library` page per vendored library fixture, Defold doc, native extension and Asset Portal doc", () => {
-    expect(modules.length).toBeGreaterThan(0);
-    expect(libraryPages.map((p) => p.namespace).sort()).toEqual(
-      [
-        ...modules,
-        ...defoldExtensionPages(),
-        ...nativeExtensionPages(),
-        ...portalScriptApiPages(),
-      ].sort(),
-    );
-    for (const page of libraryPages) {
-      expect(page.route).toBe(`/api/${libraryRouteSlug(page.namespace)}`);
-      expect(page.route.startsWith("/api/")).toBe(true);
-      // default surface only — never under `/api/<version>/…`
-      expect(page.route).not.toMatch(/^\/api\/defold-/);
-    }
-  });
-
-  test("omits library pages entirely when no library-types dir is supplied", () => {
-    const noLib = loadApiSurface(REAL_TYPES_DIR);
-    expect(noLib.some((p) => p.category === "library")).toBe(false);
-  });
-
-  // `library-targets.json` reached zero rows, so nothing shipping is
-  // ts-defold-sourced any more and the still-vendored exemplar this test used to
-  // carry (it was `monarch.monarch`, then `gooey.gooey`, then `nakama.nakama`)
-  // has no subject left. The inverse is the honest real-corpus claim; the
-  // vendored branch keeps a witness against the fixture corpus in
-  // `api-surface-loader.test.ts`.
-  test("no library page is ts-defold-sourced any more", () => {
-    expect(libraryPages.length).toBeGreaterThan(0);
-    for (const page of libraryPages) {
-      const meta = page.libraryMeta;
-      expect(meta).toBeDefined();
-      expect(meta?.authoredHere).toBe(true);
-      expect(meta?.commit).not.toBe("2fe3aed3352a913d2859e6e85d34a8b23d821368");
-      expect(meta?.sourceUrl ?? "").not.toContain("ts-defold/library");
-    }
-  });
-
-  test("builds a structured libraryMeta with author/upstream repo, tag pin, import, and license", () => {
-    const nakama = libraryPages.find((p) => p.namespace === "nakama");
-    expect(nakama).toBeDefined();
-    expect(nakama?.route).toBe("/api/nakama");
-    const meta = nakama?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/heroiclabs/nakama-defold");
-    expect(meta.commit).toBe("v3.4.0");
-    // The bare namespace changes the route but not the import: the alias was
-    // already derived as `nakama` from the dotted namespace.
-    expect(meta.importString).toBe('import * as nakama from "nakama.nakama"');
-    expect(meta.license).toBe("Apache-2.0");
-    expect("commitUrl" in meta).toBe(false);
-    expect("attribution" in meta).toBe(false);
-  });
-
-  test("the nakama page keeps a description once its classification dir is gone", () => {
-    const nakama = libraryPages.find((p) => p.namespace === "nakama");
-    expect(nakama).toBeDefined();
-    // The module JSDoc is `@see` + `@noResolution` only, so the intro comes from
-    // the description fallback. With no `nakama-defold` dir left, the fallback
-    // keys on the namespace and only the override supplies it. The
-    // `nakama.nakama` half is what catches a half-finished cutover that kept the
-    // dotted module mapped to its old dir.
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    expect(dirs.has("nakama.nakama")).toBe(false);
-    expect(dirs.has("nakama")).toBe(false);
-    expect((nakama?.module.description ?? "").length).toBeGreaterThan(0);
-  });
-
-  // orthographic severed to the authored lane under its dotted namespace, so its
-  // pin swings from the shared ts-defold/library commit to the upstream tag while
-  // the route and import string stay byte-identical.
-  test("a severed library's libraryMeta pins upstream and keeps its import string", () => {
-    const camera = libraryPages.find((p) => p.namespace === "orthographic.camera");
-    expect(camera).toBeDefined();
-    const meta = camera?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/britzl/defold-orthographic");
-    expect(meta.commit).toBe("3.6.3");
-    expect(meta.importString).toBe('import * as camera from "orthographic.camera"');
-  });
-
-  // monarch severed all three modules under their dotted namespaces, so nothing
-  // consumer-visible moves: same routes, same import strings, same descriptions
-  // and the same `britzl / monarch · <leaf>` grouping — only the pin banner
-  // flips from the shared ts-defold commit to the upstream tag.
-  test("the three severed monarch pages keep route, import string and display name", () => {
-    const LEAVES: Record<string, string> = {
-      "monarch.monarch": "monarch",
-      "monarch.transitions.easings": "transitions_easings",
-      "monarch.transitions.gui": "transitions_gui",
-    };
-    for (const [namespace, alias] of Object.entries(LEAVES)) {
-      const page = libraryPages.find((p) => p.namespace === namespace);
-      expect(page).toBeDefined();
-      if (!page) continue;
-      expect(page.route).toBe(`/api/${namespace}`);
-      // Every module keeps a description: two carry their own doc comment, and
-      // `transitions.easings` has an empty one, so it reads through the override.
-      expect(page.module.description).not.toBe("");
-      expect(page.displayName).toContain("britzl / monarch");
-      const meta = page.libraryMeta;
-      expect(meta).toBeDefined();
-      if (!meta) continue;
-      expect(meta.authoredHere).toBe(true);
-      expect(meta.authorUrl).toBe("https://github.com/britzl/monarch");
-      expect(meta.commit).toBe("6.0.3");
-      expect(meta.importString).toBe(`import * as ${alias} from "${namespace}"`);
-    }
-  });
-
-  // yagames severed under the *bare* namespace, so unlike orthographic its route
-  // moves (`/api/yagames.yagames` -> `/api/yagames`) while the import string is
-  // still byte-identical: the alias comes from the namespace's trailing segment
-  // and the path from the unchanged `moduleId`.
-  test("a bare-namespace severed library moves its route but keeps its import string", () => {
-    const yagames = libraryPages.find((p) => p.namespace === "yagames");
-    expect(yagames).toBeDefined();
-    expect(yagames?.route).toBe("/api/yagames");
-    const meta = yagames?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/indiesoftby/defold-yagames");
-    expect(meta.commit).toBe("0.19.0");
-    expect(meta.importString).toBe('import * as yagames from "yagames.yagames"');
-  });
-
-  // defold-input severed all ten modules at once under `namespace === moduleId`,
-  // so unlike every prior severance no page moved: the routes and import strings
-  // are the ones the ts-defold rows already published, and only the provenance
-  // flips to maintained-here.
-  test("the ten severed in.* pages keep their routes and import strings as maintained-here", () => {
-    for (const mod of DEFOLD_INPUT_MODULES) {
-      const namespace = `in.${mod}`;
-      const page = libraryPages.find((p) => p.namespace === namespace);
-      expect(page).toBeDefined();
-      expect(page?.route).toBe(`/api/${namespace}`);
-      const meta = page?.libraryMeta;
-      expect(meta).toBeDefined();
-      expect(meta?.authoredHere).toBe(true);
-      expect(meta?.authorUrl).toBe("https://github.com/britzl/defold-input");
-      expect(meta?.commit).toBe("4.8.0");
-      expect(meta?.importString).toBe(`import * as ${mod} from "${namespace}"`);
-    }
-  });
-
-  // The one user-visible movement the severance does cause: dropping the
-  // classification dir moves the group key onto the recorded GitHub origin. The
-  // ten group under `defold-input` — the repo a user installs — not under the
-  // `in` namespace prefix the dir used to stand in for.
-  test("the ten group under the britzl/defold-input origin, with no defold-input dir left", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
-    for (const mod of DEFOLD_INPUT_MODULES) {
-      expect(origins.get(`in.${mod}`)).toEqual({ owner: "britzl", repo: "defold-input" });
-    }
-    for (const page of libraryPages) {
-      expect(dirs.get(page.namespace)).not.toBe("defold-input");
-    }
-  });
-
-  // richtext severed all three modules under `namespace === moduleId` too, so
-  // again no route or import string moves — only the provenance flips.
-  test("the three severed richtext.* pages keep their routes and import strings as maintained-here", () => {
-    for (const mod of RICHTEXT_MODULES) {
-      const namespace = `richtext.${mod}`;
-      const page = libraryPages.find((p) => p.namespace === namespace);
-      expect(page).toBeDefined();
-      expect(page?.route).toBe(`/api/${namespace}`);
-      const meta = page?.libraryMeta;
-      expect(meta).toBeDefined();
-      expect(meta?.authoredHere).toBe(true);
-      expect(meta?.authorUrl).toBe("https://github.com/britzl/defold-richtext");
-      expect(meta?.commit).toBe("5.22.1");
-      expect(meta?.importString).toBe(`import * as ${mod} from "${namespace}"`);
-    }
-  });
-
-  // richtext's repo name and namespace prefix differ, so the origin-keyed group is
-  // `defold-richtext` while the modules still import as `richtext.*`.
-  test("the three group under the britzl/defold-richtext origin, with no defold-richtext dir left", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
-    for (const page of libraryPages) {
-      expect(dirs.get(page.namespace)).not.toBe("defold-richtext");
-    }
-    // Three modules in the group and no leaf repeats the repo name, so every page
-    // keeps the `· <leaf>` distinguisher.
-    for (const mod of RICHTEXT_MODULES) {
-      expect(origins.get(`richtext.${mod}`)).toEqual({ owner: "britzl", repo: "defold-richtext" });
-      const page = libraryPages.find((p) => p.namespace === `richtext.${mod}`);
-      expect(page?.displayName).toBe(`britzl / defold-richtext · ${mod}`);
-    }
-  });
-
-  // metrics severed under `namespace === moduleId` as well, so nothing a user
-  // imports moves here either.
-  test("the two severed metrics.* pages keep their routes and import strings as maintained-here", () => {
-    for (const mod of METRICS_MODULES) {
-      const namespace = `metrics.${mod}`;
-      const page = libraryPages.find((p) => p.namespace === namespace);
-      expect(page).toBeDefined();
-      expect(page?.route).toBe(`/api/${namespace}`);
-      const meta = page?.libraryMeta;
-      expect(meta).toBeDefined();
-      expect(meta?.authoredHere).toBe(true);
-      expect(meta?.authorUrl).toBe("https://github.com/britzl/defold-metrics");
-      expect(meta?.commit).toBe("1.2.1");
-      expect(meta?.importString).toBe(`import * as ${mod} from "${namespace}"`);
-    }
-  });
-
-  // `defold-metrics` differs from the `metrics` namespace segment, so the group key
-  // is the repo exactly as richtext's is. Neither leaf repeats the repo name, so
-  // both pages keep the `· <leaf>` distinguisher.
-  test("the two group under the britzl/defold-metrics origin, with no defold-metrics dir left", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
-    for (const page of libraryPages) {
-      expect(dirs.get(page.namespace)).not.toBe("defold-metrics");
-    }
-    for (const mod of METRICS_MODULES) {
-      expect(origins.get(`metrics.${mod}`)).toEqual({ owner: "britzl", repo: "defold-metrics" });
-      const page = libraryPages.find((p) => p.namespace === `metrics.${mod}`);
-      expect(page?.displayName).toBe(`britzl / defold-metrics · ${mod}`);
-    }
-  });
-
-  // The authored correction is only worth anything if it reaches the page a user
-  // reads, so this asserts the three module-level members upstream defines are
-  // listed alongside the factory — the instance methods stay on the `Metrics`
-  // typedef and are deliberately not part of this list.
-  test("each severed metrics.* page lists the corrected module-level members", () => {
-    for (const mod of METRICS_MODULES) {
-      const page = libraryPages.find((p) => p.namespace === `metrics.${mod}`);
-      expect((page?.module.functions ?? []).map((f) => f.name).sort()).toEqual(
-        ["create", "draw", mod, "update"].sort(),
-      );
-    }
-  });
-
-  // gooey severed under the bare namespace, so its route moves
-  // (`/api/gooey.gooey` -> `/api/gooey`) while the import string stays
-  // byte-identical. The severance also carries an arity correction, and the page
-  // is where a reader would see it, so `group`'s four parameters are asserted on
-  // the rendered surface rather than only in the `.d.ts`.
-  test("the severed gooey page is maintained-here at its tag and lists the corrected group arity", () => {
-    const gooey = libraryPages.find((p) => p.namespace === "gooey");
-    expect(gooey).toBeDefined();
-    expect(gooey?.route).toBe("/api/gooey");
-    const meta = gooey?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/britzl/gooey");
-    expect(meta.commit).toBe("10.5.3");
-    expect(meta.importString).toBe('import * as gooey from "gooey.gooey"');
-
-    const group = (gooey?.module.functions ?? []).find((f) => f.name === "group");
-    expect(group).toBeDefined();
-    expect((group?.parameters ?? []).map((p) => p.name)).toEqual([
-      "group_id",
-      "action_id",
-      "action",
-      "group_fn",
-    ]);
-  });
-
-  // bzAnim severs under the bare namespace too, but unlike gooey its import
-  // *alias* moves: `libraryImportString` derives the alias from the page
-  // namespace, so `bzAnim.bzLibrary` -> `bzAnim` renames the binding while the
-  // module path stays byte-identical. The severance lands no correction, so the
-  // page's proof is the hand-written options tables the fork exists to keep.
-  test("the severed bzAnim page is maintained-here at its tag, keeps its module path, and documents its options tables", () => {
-    const bzAnim = libraryPages.find((p) => p.namespace === "bzAnim");
-    expect(bzAnim).toBeDefined();
-    expect(bzAnim?.route).toBe("/api/bzAnim");
-    const meta = bzAnim?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/jbp4444/bzAnim");
-    expect(meta.commit).toBe("v.1.2");
-    expect(meta.license).toBe("Apache-2.0");
-    expect(meta.importString).toBe('import * as bzAnim from "bzAnim.bzLibrary"');
-
-    const animate = (bzAnim?.module.functions ?? []).find((f) => f.name === "animate");
-    expect(animate).toBeDefined();
-    expect((animate?.parameters ?? []).map((p) => p.types?.join("|"))).toEqual(["AnimateArgs"]);
-
-    const typedefs = bzAnim?.module.typedefs ?? [];
-    for (const name of ["AnimateArgs", "AnimateSequenceArgs"]) {
-      const typedef = typedefs.find((t) => t.name === name);
-      expect(typedef).toBeDefined();
-      expect((typedef?.properties ?? []).map((p) => p.name)).toContain("easing");
-    }
-  });
-
-  // platypus is the first bare-namespace severance that moves neither the import
-  // alias nor the module path: `libraryImportString` already derived the alias
-  // `platypus` from the dotted namespace's second segment, so the documented
-  // binding is byte-identical on both sides of the cutover. The severance lands no
-  // correction, so the page's proof is the config and instance shapes the fork
-  // exists to keep — neither of which any generated source documents.
-  test("the severed platypus page is maintained-here at its tag, keeps its import binding, and documents both interfaces", () => {
-    const platypus = libraryPages.find((p) => p.namespace === "platypus");
-    expect(platypus).toBeDefined();
-    expect(platypus?.route).toBe("/api/platypus");
-    const meta = platypus?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/britzl/platypus");
-    expect(meta.commit).toBe("4.3.1");
-    expect(meta.license).toBe("MIT");
-    expect(meta.importString).toBe('import * as platypus from "platypus.platypus"');
-
-    const create = (platypus?.module.functions ?? []).find((f) => f.name === "create");
-    expect(create).toBeDefined();
-    expect((create?.parameters ?? []).map((p) => p.types?.join("|"))).toEqual(["PlatypusConfig"]);
-    expect((create?.returnValues ?? []).map((r) => r.types?.join("|"))).toEqual([
-      "PlatypusInstance",
-    ]);
-
-    const typedefs = platypus?.module.typedefs ?? [];
-    const config = typedefs.find((t) => t.name === "PlatypusConfig");
-    expect((config?.properties ?? []).map((p) => p.name)).toContain("collisions");
-    const instance = typedefs.find((t) => t.name === "PlatypusInstance");
-    expect((instance?.properties ?? []).map((p) => p.name)).toContain("velocity");
-    expect((instance?.functions ?? []).map((f) => f.name)).toContain("set_collisions");
-  });
-
-  // dicebag is the first severance whose markdown verdict was *about* types
-  // rather than lost members, so the page's proof is the three types the fork
-  // exists to keep — each one a place the markdown lane would have published
-  // `unknown`. Like platypus the alias and module path do not move, so the
-  // import binding is asserted byte-identical across the cutover.
-  test("the severed dicebag page is maintained-here at its tag, keeps its import binding, and documents the surface at full precision", () => {
-    const dicebag = libraryPages.find((p) => p.namespace === "dicebag");
-    expect(dicebag).toBeDefined();
-    expect(dicebag?.route).toBe("/api/dicebag");
-    const meta = dicebag?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/8bitskull/dicebag");
-    expect(meta.commit).toBe("0.3");
-    expect(meta.license).toBe("CC0-1.0");
-    expect(meta.importString).toBe('import * as dicebag from "dicebag.dicebag"');
-
-    const functions = dicebag?.module.functions ?? [];
-    expect(functions).toHaveLength(11);
-
-    const rollCustom = functions.find((f) => f.name === "roll_custom_dice");
-    const sides = (rollCustom?.parameters ?? []).find((p) => p.name === "sides");
-    expect(sides?.types?.join("|")).not.toBe("unknown");
-
-    const bagDraw = functions.find((f) => f.name === "bag_draw");
-    expect(bagDraw?.parameters ?? []).toHaveLength(1);
-    expect((bagDraw?.returnValues ?? []).map((r) => r.types?.join("|"))).toEqual(["boolean"]);
-  });
-
-  // rendy's markdown verdict was `signature-loss` — a prose-only README that
-  // documents names but no parameters or returns — so the page's proof is the
-  // parameter lists themselves, each one a place the markdown lane would have
-  // published a zero-arity stub. This is also where the upstream account rename
-  // reaches a user: nothing inside the fork was edited, but `authored-targets`
-  // carries the current `whiteboxdev` slug, which drives the page's GitHub link.
-  test("the severed rendy page is maintained-here at its pin under the current slug and documents the surface at full precision", () => {
-    const rendy = libraryPages.find((p) => p.namespace === "rendy");
-    expect(rendy).toBeDefined();
-    expect(rendy?.route).toBe("/api/rendy");
-    const meta = rendy?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/whiteboxdev/library-defold-rendy");
-    expect(meta.commit).toBe("b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3");
-    expect(meta.license).toBe("Zlib");
-    expect(meta.importString).toBe('import * as rendy from "rendy.rendy"');
-
-    const functions = rendy?.module.functions ?? [];
-    expect(functions).toHaveLength(11);
-
-    const getStack = functions.find((f) => f.name === "get_stack");
-    expect(getStack?.parameters ?? []).toHaveLength(2);
-    expect((getStack?.returnValues ?? []).map((r) => r.types?.join("|"))).not.toEqual(["unknown"]);
-
-    const shake = functions.find((f) => f.name === "shake");
-    const shakeParams = shake?.parameters ?? [];
-    expect(shakeParams).toHaveLength(5);
-    expect(shakeParams[4]?.name).toBe("scaler");
-    expect(shakeParams[4]?.isOptional).toBe(true);
-  });
-
-  test("no longer prepends the prose provenance note into a library module description", () => {
-    for (const page of libraryPages) {
-      expect(page.module.description ?? "").not.toContain("Vendored from");
-    }
-    // the library's own description survives, unburied by the removed boilerplate
-    const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
-    expect(monarch?.module.description ?? "").toContain("Monarch is a screen manager");
-  });
-
-  test("a non-library page carries no libraryMeta", () => {
-    const engine = pages.find((p) => p.category === "engine");
-    expect(engine).toBeDefined();
-    expect(engine?.libraryMeta).toBeUndefined();
-  });
-
-  test("derives a round-tripping /api slug for a dotted library module", () => {
-    const slug = libraryRouteSlug("monarch.monarch");
-    const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
-    expect(monarch?.route).toBe(`/api/${slug}`);
-    // slug -> page lookup round-trips with the dotted module name preserved
-    const bySlug = pages.find((p) => p.route === `/api/${slug}`);
-    expect(bySlug?.namespace).toBe("monarch.monarch");
-  });
-
-  test("a versioned engine surface yields zero library pages (libraries are canonical-only)", () => {
-    const versioned = loadApiSurfaceForVersion(FIXTURE_DIR, "old");
-    expect(versioned.some((p) => p.category === "library")).toBe(false);
-  });
-});
-
-describe("loadApiSurface library descriptions", () => {
-  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const libraryPages = pages.filter((p) => p.category === "library");
-  const descByDir = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "library-descriptions.json"), "utf8"),
-  ) as Record<string, string>;
-
-  test("every library page has a non-empty module.description", () => {
-    for (const page of libraryPages) {
-      expect(page.module.description.length).toBeGreaterThan(0);
-    }
-  });
-
-  test("each curated native extension is a library page with its members and description", () => {
-    for (const namespace of readNativeExpectations().keys()) {
-      const page = libraryPages.find((p) => p.route === `/api/${namespace}`);
-      expect(page?.namespace).toBe(namespace);
-      expect(page?.module.description).toBe(descByDir[namespace]);
-      expect(page?.module.functions.length ?? 0).toBeGreaterThan(0);
-    }
-    const cast = libraryPages
-      .find((p) => p.namespace === "tile_raycast")
-      ?.module.functions.find((f) => f.name === "cast");
-    expect(cast).toBeDefined();
-  });
-
-  test("the commit-pinned wave page shows its members and the commit archive to depend on", () => {
-    const wave = libraryPages.find((p) => p.route === "/api/wave");
-    if (wave === undefined) throw new Error("no /api/wave page");
-    expect(wave.module.functions.map((f) => f.name)).toContain("add_gameobject");
-    expect(apiPageMarkdown(wave, apiLinkify(pages))).toContain(
-      "This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, `https://github.com/selimanac/defold-wave/archive/76ff0c9780730a7e7cc4f3e0a8752d8c1f426def.zip`",
-    );
-  });
-
-  // orthographic severed into the authored lane, so it has no classification dir
-  // left to key on and resolves through the namespace half of the fallback.
-  test("a description-less api-doc page (orthographic.camera) gets its description from the vendored map", () => {
-    const orthographic = libraryPages.find((p) => p.namespace === "orthographic.camera");
-    expect(orthographic).toBeDefined();
-    expect(orthographic?.module.description).toBe(descByDir["orthographic.camera"]);
-    expect(orthographic?.module.description ?? "").not.toContain("vendored via");
-    expect(orthographic?.module.description ?? "").not.toContain("tree/");
-  });
-
-  // Same fallback, exercised at the bare namespace: deleting the `defold-yagames`
-  // classification dir kills the dir-keyed lookup, so without a namespace-keyed
-  // entry the page would render description-less. The dir map is keyed by *module*
-  // (`yagames.yagames`) and never by the bare namespace, so the dir half cannot be
-  // what resolves this — asserted rather than assumed.
-  test("a description-less api-doc page (yagames) gets its description from the vendored map", () => {
-    const yagames = libraryPages.find((p) => p.namespace === "yagames");
-    expect(yagames).toBeDefined();
-    expect(yagames?.module.description).toBe(descByDir.yagames);
-    expect(yagames?.module.description?.length ?? 0).toBeGreaterThan(0);
-    expect(libraryModuleDirs(REAL_LIBRARY_TYPES_DIR).get("yagames")).toBeUndefined();
-  });
-
-  // Ten pages whose description was keyed on the `defold-input` classification
-  // dir the severance deletes. The dir half of the fallback cannot be what keeps
-  // them non-empty afterwards — `libraryModuleDirs` has no entry for them at all —
-  // so the namespace half carries every one, which is why the override map had to
-  // gain ten `in.<mod>` keys rather than keep its single `defold-input` one.
-  test("the ten severed in.* pages resolve their descriptions through the namespace half alone", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    for (const mod of DEFOLD_INPUT_MODULES) {
-      const namespace = `in.${mod}`;
-      const page = libraryPages.find((p) => p.namespace === namespace);
-      expect(dirs.get(namespace)).toBeUndefined();
-      expect(page?.module.description).toBe(descByDir[namespace]);
-      expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
-    }
-  });
-
-  // The same loss the ten in.* pages faced, and certain rather than incidental
-  // here: all three `api-doc/richtext.*.json` carry an empty `info.description`,
-  // so every page reaches the fallback, whose dir arm dies with the dropped
-  // `defold-richtext` dir. The single dir key had to become three namespace keys.
-  test("the three severed richtext.* pages resolve their descriptions through the namespace half alone", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    for (const mod of RICHTEXT_MODULES) {
-      const namespace = `richtext.${mod}`;
-      const page = libraryPages.find((p) => p.namespace === namespace);
-      expect(dirs.get(namespace)).toBeUndefined();
-      expect(page?.module.description).toBe(descByDir[namespace]);
-      expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
-    }
-  });
-
-  // The sharpest form of that loss so far: metrics had no
-  // `library-description-overrides.json` entry at all, only the merged artifact's
-  // `defold-metrics` dir key, so the severance would have left both pages
-  // description-less had the dir key not become two namespace keys.
-  test("the two severed metrics.* pages resolve their descriptions through the namespace half alone", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    for (const mod of METRICS_MODULES) {
-      const namespace = `metrics.${mod}`;
-      const page = libraryPages.find((p) => p.namespace === namespace);
-      expect(dirs.get(namespace)).toBeUndefined();
-      expect(page?.module.description).toBe(descByDir[namespace]);
-      expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
-    }
-  });
-
-  // gooey is the inverse of the metrics case: its dir and its bare namespace are
-  // the same string, so the fallback hands the *same* key to the namespace arm
-  // once the dir is dropped. The description survives only because the key was
-  // written into `library-description-overrides.json` — without that the merged
-  // artifact loses a key no dir generates any more.
-  test("the severed gooey page resolves its description through the namespace half alone", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    const page = libraryPages.find((p) => p.namespace === "gooey");
-    expect(dirs.get("gooey")).toBeUndefined();
-    expect(page?.module.description).toBe(descByDir.gooey);
-    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
-  });
-
-  // bzAnim is gooey's case again: dir and bare namespace are both `bzAnim`, so
-  // dropping the dir leaves the description resolvable only through the override
-  // written in the same cutover.
-  test("the severed bzAnim page resolves its description through the namespace half alone", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    const page = libraryPages.find((p) => p.namespace === "bzAnim");
-    expect(dirs.get("bzAnim")).toBeUndefined();
-    expect(page?.module.description).toBe(descByDir.bzAnim);
-    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
-  });
-
-  // platypus inverts gooey's and bzAnim's case. Its dir and bare namespace are
-  // the same string too, but the fallback is never reached: the fork's module
-  // JSDoc gives `api-doc/platypus.json` its own `info.description`. Writing an
-  // override key would be a second model of a description the fork already
-  // carries, so the absence of one is asserted rather than left to drift in.
-  test("the severed platypus page keeps its description from its own api-doc, with no override written", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    const overrides = JSON.parse(
-      readFileSync(join(REAL_LIBRARY_TYPES_DIR, "library-description-overrides.json"), "utf8"),
-    ) as Record<string, string>;
-    const page = libraryPages.find((p) => p.namespace === "platypus");
-    expect(dirs.get("platypus")).toBeUndefined();
-    expect("platypus" in overrides).toBe(false);
-    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
-  });
-
-  // dicebag repeats platypus's shape: dir and bare namespace are the same
-  // string, but the fork's module JSDoc gives `api-doc/dicebag.json` its own
-  // `info.description`, so the `descByDir` fallback is never on the path. The
-  // `dicebag.dicebag` half is what catches a partial cutover — a retained row or
-  // dir would leave that module key populated; the bare `dicebag` half was
-  // vacuous before the cutover too and is asserted only for symmetry.
-  test("the severed dicebag page keeps its description from its own api-doc, with no override written", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    const overrides = JSON.parse(
-      readFileSync(join(REAL_LIBRARY_TYPES_DIR, "library-description-overrides.json"), "utf8"),
-    ) as Record<string, string>;
-    const page = libraryPages.find((p) => p.namespace === "dicebag");
-    expect(dirs.get("dicebag.dicebag")).toBeUndefined();
-    expect(dirs.get("dicebag")).toBeUndefined();
-    expect("dicebag" in overrides).toBe(false);
-    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
-  });
-
-  // rendy repeats dicebag's shape, except its classification dir was
-  // `library-defold-rendy` rather than the namespace string. The fork's module
-  // JSDoc gives `api-doc/rendy.json` its own `info.description`, so `descByDir`
-  // is never on the path. The `rendy.rendy` half is what catches a partial
-  // cutover; the bare `rendy` half was vacuous before it too.
-  test("the severed rendy page keeps its description from its own api-doc, with no override written", () => {
-    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
-    const overrides = JSON.parse(
-      readFileSync(join(REAL_LIBRARY_TYPES_DIR, "library-description-overrides.json"), "utf8"),
-    ) as Record<string, string>;
-    const page = libraryPages.find((p) => p.namespace === "rendy");
-    expect(dirs.get("rendy.rendy")).toBeUndefined();
-    expect(dirs.get("rendy")).toBeUndefined();
-    expect("rendy" in overrides).toBe(false);
-    expect(page?.module.description?.length ?? 0).toBeGreaterThan(0);
-  });
-
-  test("a page whose api-doc fixture already carries a description keeps its own richer text", () => {
-    const monarch = libraryPages.find((p) => p.namespace === "monarch.monarch");
-    expect(monarch?.module.description ?? "").toContain("Monarch is a screen manager");
-    expect(monarch?.module.description).not.toBe(descByDir.monarch);
-  });
-});
-
 describe("apiModuleMarkdown", () => {
   test("renders a codehilite examples fragment as a lua fence with no raw HTML", () => {
     const page: ApiPage = {
@@ -963,28 +232,7 @@ describe("apiModuleMarkdown", () => {
     expect(md).not.toContain("<span");
   });
 
-  test("renders displayName as the H1 and keeps the raw namespace visible beneath it", () => {
-    const md = apiModuleMarkdown({
-      namespace: "squid.squid",
-      displayName: "paweljarosz / squid",
-      category: "library",
-      module: {
-        namespace: "squid.squid",
-        brief: "Squid",
-        description: "Squid helpers.",
-        functions: [],
-        variables: [],
-        constants: [],
-        properties: [],
-        typedefs: [],
-      },
-    });
-    expect(md).toContain("# paweljarosz / squid");
-    expect(md).not.toContain("# squid.squid");
-    expect(md).toContain("`squid.squid`");
-  });
-
-  test("a page without displayName renders `# <namespace>` unchanged", () => {
+  test("a page renders `# <namespace>` unchanged", () => {
     const md = apiModuleMarkdown({
       namespace: "camera",
       category: "engine",
@@ -1375,10 +623,9 @@ describe("apiModuleSymbols", () => {
     expect(sym?.exampleMarkdown).toContain("demo.run()");
   });
 
-  test("a library function carrying generics prints `name<...>(...)`; absent generics is unchanged", () => {
-    const libraryPage: ApiPage = {
+  test("a function carrying generics prints `name<...>(...)`; absent generics is unchanged", () => {
+    const genericPage: ApiPage = {
       ...pageWith({}),
-      category: "library",
       module: {
         namespace: "druid",
         brief: "",
@@ -1406,7 +653,7 @@ describe("apiModuleSymbols", () => {
         typedefs: [],
       },
     };
-    const symbols = apiModuleSymbols(libraryPage);
+    const symbols = apiModuleSymbols(genericPage);
     expect(symbols.map((s) => s.signature)).toEqual([
       "get_widget<T extends druid_widget>(widget_class: T): T",
       "new(context: LuaTable): druid_instance",
@@ -1478,124 +725,6 @@ describe("apiModuleSymbols", () => {
     expect(by("demo.NEW")?.deprecated).toBeUndefined();
     expect(by("Handle.close")?.deprecated).toBe("Handles close themselves.");
     expect(by("Handle.tag")?.deprecated).toBe("Read `id`.");
-  });
-
-  test("projects the ambient-global marker onto function, variable, and typedef-member symbols", () => {
-    const symbols = apiModuleSymbols(
-      pageWith({
-        functions: [
-          {
-            name: "describe",
-            brief: "",
-            description: "",
-            global: true,
-            parameters: [],
-            returnValues: [],
-          },
-          { name: "demo.boot", brief: "", description: "", parameters: [], returnValues: [] },
-        ],
-        variables: [
-          { name: "COUNT", brief: "", description: "", types: ["number"], global: true },
-          { name: "demo.SIZE", brief: "", description: "", types: ["number"] },
-        ],
-        typedefs: [
-          {
-            name: "AreaComp",
-            global: true,
-            functions: [
-              { name: "has_point", brief: "", description: "", parameters: [], returnValues: [] },
-            ],
-            properties: [{ name: "tag", brief: "", description: "", types: ["string"] }],
-          },
-          {
-            name: "Options",
-            properties: [{ name: "clear", brief: "", description: "", types: ["boolean"] }],
-          },
-        ],
-      }),
-    );
-    const by = (name: string) => symbols.find((s) => s.name === name);
-
-    expect(by("describe")?.global).toBe(true);
-    expect(by("COUNT")?.global).toBe(true);
-    // A typedef declared at file scope is itself ambient, so each of its members
-    // inherits the marker.
-    expect(by("AreaComp.has_point")?.global).toBe(true);
-    expect(by("AreaComp.tag")?.global).toBe(true);
-
-    for (const name of ["demo.boot", "demo.SIZE", "Options.clear"]) {
-      expect(by(name)).toBeDefined();
-      expect(by(name)?.global).toBeUndefined();
-      expect(Object.keys(by(name) ?? {})).not.toContain("global");
-    }
-  });
-
-  test("projects the upstream-documentation marker onto function and variable symbols", () => {
-    const symbols = apiModuleSymbols(
-      pageWith({
-        functions: [
-          {
-            name: "demo.start",
-            brief: "Start the console",
-            description: "Start the console",
-            docSource: "upstream",
-            parameters: [],
-            returnValues: [],
-          },
-          {
-            name: "demo.forked",
-            brief: "Ours.",
-            description: "",
-            parameters: [],
-            returnValues: [],
-          },
-        ],
-        variables: [
-          {
-            name: "demo.VERSION",
-            brief: "The version",
-            description: "",
-            types: ["string"],
-            docSource: "upstream",
-          },
-          { name: "demo.SIZE", brief: "Ours.", description: "", types: ["number"] },
-        ],
-      }),
-    );
-    const by = (name: string) => symbols.find((s) => s.name === name);
-
-    expect(by("demo.start")?.docSource).toBe("upstream");
-    expect(by("demo.VERSION")?.docSource).toBe("upstream");
-    for (const name of ["demo.forked", "demo.SIZE"]) {
-      expect(by(name)).toBeDefined();
-      expect(by(name)?.docSource).toBeUndefined();
-      expect(Object.keys(by(name) ?? {})).not.toContain("docSource");
-    }
-  });
-
-  test("an upstream-documented authored-override function marks every emitted row, not just the primary", () => {
-    const store: SignatureStore = {
-      "demo.play": { signatures: ["demo.play(a: number): void", "demo.play(a: string): void"] },
-    };
-    const symbols = apiModuleSymbols(
-      pageWith({
-        functions: [
-          {
-            name: "demo.play",
-            brief: "Play it",
-            description: "Play it",
-            docSource: "upstream",
-            parameters: [],
-            returnValues: [],
-          },
-        ],
-      }),
-      {},
-      store,
-    );
-    const rows = symbols.filter((s) => s.name === "demo.play");
-    expect(rows.length).toBe(2);
-    expect(rows.map((s) => s.docSource)).toEqual(["upstream", "upstream"]);
   });
 
   test("a deprecated authored-override function tags every emitted row, not just the primary", () => {
@@ -2376,9 +1505,7 @@ describe("apiModuleSymbols", () => {
   });
 
   function canonicalGoPage(): ApiPage {
-    const page = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
-      (p) => p.module.namespace === "go",
-    );
+    const page = canonicalApiPages(REAL_TYPES_DIR).find((p) => p.module.namespace === "go");
     if (!page) throw new Error("no canonical go page");
     return page;
   }
@@ -2452,7 +1579,7 @@ describe("apiModuleSymbols", () => {
   });
 
   test("an override group whose forms no ref-doc signature singles out keeps one shared span", () => {
-    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const pages = canonicalApiPages(REAL_TYPES_DIR);
     for (const [namespace, name] of [
       ["go", "go.get"],
       ["go", "go.set"],
@@ -2604,7 +1731,7 @@ describe("apiModuleSymbols", () => {
   });
 
   test("no rendered zero-argument row on any real page carries a parameter table", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const pages = loadApiSurface(REAL_TYPES_DIR);
     expect(pages.length).toBeGreaterThan(0);
     const offenders: string[] = [];
     for (const page of pages) {
@@ -2652,21 +1779,11 @@ describe("apiModuleSymbols", () => {
       "demo.ShowOptions.sequential: boolean",
     ]);
   });
-
-  test("a real library options shape reaches /api with its optional field marked", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const monarch = pages.find((p) => p.namespace === "monarch.monarch");
-    expect(monarch).toBeDefined();
-    if (!monarch) return;
-    const symbols = apiModuleSymbols(monarch, monarch.translations, monarch.signatures);
-    const clear = symbols.find((s) => s.kind === "type" && s.name === "ShowOptions.clear");
-    expect(clear?.signature).toBe("ShowOptions.clear?: boolean");
-  });
 });
 
-describe("index-base notes on library pages", () => {
-  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const page = (namespace: string, category: ApiPage["category"] = "library"): ApiPage => {
+describe("index-base notes", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR);
+  const page = (namespace: string, category: ApiPage["category"] = "engine"): ApiPage => {
     const found = pages.find((p) => p.namespace === namespace && p.category === category);
     if (!found) throw new Error(`no ${category} page ${namespace}`);
     return found;
@@ -2677,106 +1794,6 @@ describe("index-base notes on library pages", () => {
       .filter((s) => s.name === name)
       .flatMap((s) => s.parameters)
       .find((row) => row.name === param)?.doc;
-
-  const occurrences = (text: string, note: string): number => text.split(note).length - 1;
-
-  test("a library slot names the library as the receiver", () => {
-    expect(paramDoc(page("gooey"), "set_focus", "index")).toContain("passed to `gooey` unchanged");
-  });
-
-  test("a hand-written declaration that carries its notes renders each once", () => {
-    const gooey = page("gooey");
-    const [focusNote = ""] = libraryIndexBaseNotes(
-      LIBRARY_INDEX_SLOTS,
-      "gooey",
-      "set_focus",
-      "param",
-      "index",
-    );
-    expect(occurrences(paramDoc(gooey, "set_focus", "index") ?? "", focusNote)).toBe(1);
-    expect(occurrences(apiModuleMarkdown(gooey, gooey.translations), focusNote)).toBe(1);
-    for (const [namespace, element] of [
-      ["node_repeat", "NodeRepeatAnimation"],
-      ["sprite_repeat", "SpriteRepeatAnimation"],
-    ] as const) {
-      const p = page(namespace);
-      const [frameNote = ""] = libraryIndexBaseNotes(
-        LIBRARY_INDEX_SLOTS,
-        namespace,
-        element,
-        "field",
-        "current_frame",
-      );
-      const field = symbols(p).find((s) => s.name === `${element}.current_frame`);
-      expect(occurrences(field?.docMarkdown ?? "", frameNote)).toBe(1);
-      expect(occurrences(apiModuleMarkdown(p, p.translations), frameNote)).toBe(1);
-    }
-  });
-
-  test("a library page renders its own classification and never an engine note", () => {
-    expect(paramDoc(page("spine.gui"), "gui.cancel_spine", "options")).toContain(
-      "`track` is 1-based; passed to `spine.gui` unchanged",
-    );
-    const offenders = pages
-      .filter((p) => p.category === "library")
-      .flatMap((p) =>
-        symbols(p)
-          .filter((s) =>
-            [s.docMarkdown, ...[...s.parameters, ...s.returnValues].map((row) => row.doc)].some(
-              (doc) => doc.includes("passed to Defold"),
-            ),
-          )
-          .map((s) => `${p.namespace} ${s.name}`),
-      );
-    expect(offenders).toEqual([]);
-  });
-
-  test("class methods and class fields carry their notes", () => {
-    const druid = page("druid");
-    expect(paramDoc(druid, "druid_grid.get_pos", "index")).toContain("passed to `druid` unchanged");
-    expect(apiModuleMarkdown(druid, druid.translations)).toContain("passed to `druid` unchanged");
-    const decore = page("decore");
-    expect(symbols(decore).find((s) => s.name === "system.index")?.docMarkdown).toContain(
-      "passed to `decore` unchanged",
-    );
-    expect(apiModuleMarkdown(decore, decore.translations)).toContain(
-      "passed to `decore` unchanged",
-    );
-  });
-
-  test("the llms-full text carries a callback argument's note under its function", () => {
-    const markdown = apiModuleMarkdown(page("bridge"), page("bridge").translations);
-    const start = markdown.indexOf("bridge.daily_rewards.get_current_day(");
-    expect(start).toBeGreaterThan(-1);
-    const end = markdown.indexOf("\n### ", start);
-    expect(markdown.slice(start, end === -1 ? undefined : end)).toContain(
-      "**0️⃣ `day` is 0-based; passed to `bridge` unchanged.**",
-    );
-  });
-
-  test("an unnamed multi-value return notes each positional value by name", () => {
-    const tileRaycast = page("tile_raycast");
-    const note = (value: string): string =>
-      `**⚠️ \`${value}\` is 1-based; passed to \`tile_raycast\` unchanged.**`;
-    const notes = ["tile_x", "tile_y", "array_id"].map(note).join(" ");
-    const doc = symbols(tileRaycast).find((s) => s.name === "cast")?.returnValues[0]?.doc ?? "";
-    expect(doc.endsWith(notes)).toBe(true);
-    for (const value of ["tile_x", "tile_y", "array_id"]) {
-      expect(occurrences(doc, note(value))).toBe(1);
-    }
-    expect(doc).not.toContain("**⚠️ 1-based;");
-    for (const value of ["hit", "tile_id", "intersection_x", "intersection_y", "side"]) {
-      expect(doc).not.toContain(`\`${value}\` is `);
-    }
-    const markdown = apiModuleMarkdown(tileRaycast, tileRaycast.translations);
-    const start = markdown.indexOf("### `cast(");
-    expect(start).toBeGreaterThan(-1);
-    const end = markdown.indexOf("\n### ", start + 1);
-    const cast = markdown.slice(start, end === -1 ? undefined : end);
-    expect(cast).toContain(notes);
-    expect(occurrences(cast, notes)).toBe(1);
-    expect(cast).not.toContain("**⚠️ 1-based;");
-  });
 
   test("the engine gui page keeps its Defold note", () => {
     expect(paramDoc(page("gui", "engine"), "gui.set", "options")).toContain(
@@ -3178,28 +2195,6 @@ describe("exampleMarkdownFor", () => {
   });
 });
 
-describe("Defold library page examples", () => {
-  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const functionsOf = (namespace: string) =>
-    pages.find((p) => p.category === "library" && p.namespace === namespace)?.module.functions ??
-    [];
-
-  test("adinfo.get renders its committed Lua example", () => {
-    const fn = functionsOf("adinfo").find((f) => f.name === "adinfo.get");
-    expect(fn).toBeDefined();
-    const md = fn ? exampleMarkdownFor(fn) : undefined;
-    expect(md).toStartWith("```lua\nfunction init(self)");
-  });
-
-  test("admob.show_banner renders its committed Lua example", () => {
-    const fn = functionsOf("admob").find((f) => f.name === "admob.show_banner");
-    expect(fn).toBeDefined();
-    const md = fn ? exampleMarkdownFor(fn) : undefined;
-    expect(md).toStartWith("```lua\nif admob and admob.is_banner_loaded() then");
-    expect(md).toContain("admob.show_banner(admob.POS_TOP_CENTER)");
-  });
-});
-
 describe("loadApiSurface translations and /api rendering", () => {
   const pages = loadApiSurface(REAL_TYPES_DIR);
   const goPage = pages.find((p) => p.namespace === "go");
@@ -3407,99 +2402,8 @@ describe("groupTypeSymbols", () => {
   });
 });
 
-describe("native helper shape definitions", () => {
-  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const page = (namespace: string): ApiPage => {
-    const found = pages.find((p) => p.route === `/api/${namespace}`);
-    if (!found) throw new Error(`no /api/${namespace} page`);
-    return found;
-  };
-  const typeLayout = (namespace: string) =>
-    groupTypeSymbols(
-      apiModuleSymbols(page(namespace), page(namespace).translations).filter(
-        (s) => s.kind === "type",
-      ),
-    );
-  const group = (namespace: string, label: string) =>
-    typeLayout(namespace).shapes.find((g) => g.label === label);
-  const row = (namespace: string, name: string) =>
-    typeLayout(namespace).types.find((s) => s.name === name);
-
-  test("lists a union alias as a row whose definition names its arms", () => {
-    const definition = row("daabbcc", "QueryResult");
-    expect(definition?.name).toBe("QueryResult");
-    expect(definition?.signature).toContain("BitsHit[]");
-    expect(definition?.signature).toContain("ManifoldHit[]");
-  });
-
-  test("heads an interface's group with a definition naming its parent", () => {
-    const definition = group("daabbcc", "ManifoldHit")?.symbols[0];
-    expect(definition?.name).toBe("ManifoldHit");
-    expect(definition?.signature).toContain("SortedHit");
-  });
-
-  test("keeps a helper interface's members as type symbols", () => {
-    const names = group("daabbcc", "BitsHit")?.symbols.map((s) => s.name) ?? [];
-    expect(names).toContain("BitsHit.id");
-  });
-
-  test("links a signature token to the page that defines the shape", () => {
-    const daabbcc = apiSignatureSymbolLinks(pages, page("daabbcc"));
-    for (const alias of ["QueryResult", "SortedQueryResult"]) {
-      expect(daabbcc.get(alias)).toStartWith("/api/daabbcc#");
-    }
-    expect(daabbcc.get("BitsHit")).toMatchObject({ route: "/api/daabbcc" });
-    expect(apiSignatureSymbolLinks(pages, page("share")).get("FileOptions")).toMatchObject({
-      route: "/api/share",
-    });
-  });
-
-  test("defines box2d's chain shape table as a union of its two table shapes", () => {
-    expect(group("box2d", "OpenChainShapeTable")?.symbols.map((s) => s.name)).toContain(
-      "OpenChainShapeTable.chain_prev_vertex",
-    );
-    const chain = row("box2d", "ChainShapeTable");
-    expect(chain?.signature).toContain("LoopChainShapeTable");
-    expect(chain?.signature).toContain("OpenChainShapeTable");
-  });
-
-  test("groups each native expectation's recorded shapes and lists its recorded symbols", () => {
-    let checked = 0;
-    for (const [namespace, { page: recorded }] of readNativeExpectations()) {
-      if (recorded === undefined) continue;
-      checked++;
-      for (const [label, names] of Object.entries(recorded.shapes ?? {})) {
-        const grouped = group(namespace, label)?.symbols.map((s) => s.name) ?? [];
-        expect({ namespace, label, grouped }).toEqual({
-          namespace,
-          label,
-          grouped: expect.arrayContaining(names),
-        });
-      }
-      if (recorded.symbols !== undefined) {
-        const symbols = apiModuleSymbols(page(namespace), page(namespace).translations).map(
-          (s) => s.name,
-        );
-        expect({ namespace, symbols }).toEqual({
-          namespace,
-          symbols: expect.arrayContaining(recorded.symbols),
-        });
-      }
-    }
-    expect(checked).toBeGreaterThan(0);
-  });
-
-  test("leaves a signature whose union is a return type unchanged", () => {
-    const cast = apiModuleSymbols(page("tile_raycast"), page("tile_raycast").translations).find(
-      (s) => s.name === "cast",
-    );
-    expect(cast?.signature).toContain("[ false ]");
-    expect(cast?.signature).toContain("[ true,");
-  });
-});
-
 describe("engine type rows name their qualified path", () => {
-  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const pages = canonicalApiPages(REAL_TYPES_DIR);
   const typeRow = (namespace: string, name: string) => {
     const page = pages.find((p) => p.namespace === namespace);
     if (!page) throw new Error(`no ${namespace} page`);
@@ -3520,10 +2424,6 @@ describe("engine type rows name their qualified path", () => {
     expect(typeRow("socket", "dns.AddressInfo")?.signature).toStartWith(
       "interface socket.dns.AddressInfo {",
     );
-  });
-
-  test("a library row keeps its bare name", () => {
-    expect(typeRow("daabbcc", "QueryResult")?.signature).toStartWith("type QueryResult =");
   });
 
   test("an engine shape's member rows name their namespace", () => {
@@ -3570,8 +2470,8 @@ describe("engine type rows name their qualified path", () => {
   });
 });
 
-describe("library-category token rendering", () => {
-  function libraryPage(module: Partial<ApiPage["module"]>): ApiPage {
+describe("engine token rendering", () => {
+  function eventPage(module: Partial<ApiPage["module"]>): ApiPage {
     return {
       namespace: "event.event",
       route: "/api/event.event",
@@ -3589,58 +2489,11 @@ describe("library-category token rendering", () => {
       },
       translations: {},
       signatures: {},
-      category: "library",
+      category: "engine",
     };
   }
 
-  test("renders a library typedef member's `this: any` verbatim, not remapped to unknown", () => {
-    const module: Partial<ApiPage["module"]> = {
-      typedefs: [
-        {
-          name: "EventInstance",
-          functions: [
-            {
-              name: "trigger",
-              brief: "",
-              description: "Triggers the event.",
-              parameters: [{ name: "this", doc: "", types: ["any"], isOptional: false }],
-              returnValues: [],
-            },
-          ],
-          properties: [],
-        },
-      ],
-    };
-    const md = apiModuleMarkdown(libraryPage(module));
-    expect(md).toContain("trigger(this: any)");
-    expect(md).not.toContain("this: unknown");
-    const sig = apiModuleSymbols(libraryPage(module)).find(
-      (s) => s.name === "EventInstance.trigger",
-    )?.signature;
-    expect(sig).toBe("EventInstance.trigger(this: any)");
-  });
-
-  test("renders DEFOLD_TYPE_MAP-key tokens that are valid TS verbatim for a library module", () => {
-    const sig = apiModuleSymbols(
-      libraryPage({
-        functions: [
-          {
-            name: "event.on",
-            brief: "",
-            description: "Subscribes.",
-            parameters: [
-              { name: "callback", doc: "", types: ["function"], isOptional: false },
-              { name: "context", doc: "", types: ["any"], isOptional: false },
-            ],
-            returnValues: [{ name: "", doc: "", types: ["table"], isOptional: false }],
-          },
-        ],
-      }),
-    )[0]?.signature;
-    expect(sig).toBe("event.on(callback: function, context: any): table");
-  });
-
-  test("a library vararg param renders `...args: T[]`; the same param on an engine page stays `...args: T`", () => {
+  test("a vararg param stays `...args: T`", () => {
     const module: Partial<ApiPage["module"]> = {
       functions: [
         {
@@ -3654,39 +2507,12 @@ describe("library-category token rendering", () => {
         },
       ],
     };
-    const librarySig = apiModuleSymbols(libraryPage(module))[0]?.signature;
-    expect(librarySig).toBe("event.fmt(...args: string[]): number");
-
-    const enginePage: ApiPage = { ...libraryPage(module), category: "engine" };
-    expect(apiModuleSymbols(enginePage)[0]?.signature).toBe("event.fmt(...args: string): number");
-  });
-
-  test("a library vararg param over a union parenthesizes the element type", () => {
-    const module: Partial<ApiPage["module"]> = {
-      functions: [
-        {
-          name: "event.pick",
-          brief: "",
-          description: "Pick.",
-          parameters: [
-            {
-              name: "...args",
-              doc: "",
-              types: ["string", "any"],
-              isOptional: false,
-              isVararg: true,
-            },
-          ],
-          returnValues: [],
-        },
-      ],
-    };
-    expect(apiModuleSymbols(libraryPage(module))[0]?.signature).toBe(
-      "event.pick(...args: (string | any)[])",
+    expect(apiModuleSymbols(eventPage(module))[0]?.signature).toBe(
+      "event.fmt(...args: string): number",
     );
   });
 
-  test("a library >1-return function wraps in LuaMultiReturn; the same on an engine page stays `a, b`", () => {
+  test("a >1-return function stays `a, b`", () => {
     const module: Partial<ApiPage["module"]> = {
       functions: [
         {
@@ -3701,48 +2527,8 @@ describe("library-category token rendering", () => {
         },
       ],
     };
-    expect(apiModuleSymbols(libraryPage(module))[0]?.signature).toBe(
-      "event.measure(): LuaMultiReturn<[number, number]>",
-    );
-
-    const enginePage: ApiPage = { ...libraryPage(module), category: "engine" };
-    expect(apiModuleSymbols(enginePage)[0]?.signature).toBe("event.measure(): number, number");
-  });
-
-  test("a library typedef member renders vararg + multi-return like the emitter", () => {
-    const module: Partial<ApiPage["module"]> = {
-      typedefs: [
-        {
-          name: "druid_text",
-          functions: [
-            {
-              name: "get_text_size",
-              brief: "",
-              description: "Measure.",
-              parameters: [
-                {
-                  name: "text",
-                  doc: "",
-                  types: ["string | undefined"],
-                  isOptional: false,
-                  isVararg: false,
-                },
-              ],
-              returnValues: [
-                { name: "", doc: "", types: ["number"], isOptional: false },
-                { name: "", doc: "", types: ["number"], isOptional: false },
-              ],
-            },
-          ],
-          properties: [],
-        },
-      ],
-    };
-    const sig = apiModuleSymbols(libraryPage(module)).find(
-      (s) => s.name === "druid_text.get_text_size",
-    )?.signature;
-    expect(sig).toBe(
-      "druid_text.get_text_size(text: string | undefined): LuaMultiReturn<[number, number]>",
+    expect(apiModuleSymbols(eventPage(module))[0]?.signature).toBe(
+      "event.measure(): number, number",
     );
   });
 
@@ -3804,7 +2590,7 @@ describe("generic shape definitions", () => {
     module: parseDefoldApiDoc(extractApiDoc(source, "gen.shape")),
     translations: {},
     signatures: {},
-    category: "library",
+    category: "global-type",
   };
   const symbols = apiModuleSymbols(page).filter((s) => s.kind === "type");
   const layout = groupTypeSymbols(symbols);
@@ -4466,10 +3252,7 @@ describe("complete release snapshots", () => {
       // Every version — the default included — now owns an explicit `/api/<id>/…`
       // engine family. Lua stdlib is version-independent and canonical-only, so it
       // is no longer part of any version's exact-route family.
-      const defoldPages = new Set(defoldExtensionPages());
-      const declared = target.modules
-        .map((m) => m.namespace)
-        .filter((namespace) => !defoldPages.has(namespace));
+      const declared = target.modules.map((m) => m.namespace);
       const routeByNamespace = new Map(
         pagesByVersion[version.id]?.map((p) => [p.namespace, p.route]),
       );
@@ -4488,7 +3271,7 @@ describe("complete release snapshots", () => {
   });
 
   test("the canonical unprefixed surface serves Combined engine plus version-independent pages", () => {
-    const canonical = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const canonical = canonicalApiPages(REAL_TYPES_DIR);
     expect(canonical.find((p) => p.namespace === "go")?.route).toBe("/api/go");
     expect(canonical.find((p) => p.namespace === "base")?.route).toBe("/api/base");
   });
@@ -4519,7 +3302,7 @@ describe("rendered /api examples keep fence markers on block boundaries", () => 
   }
 
   test("no example-bearing function renders a fence marker inside a code block", () => {
-    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const pages = canonicalApiPages(REAL_TYPES_DIR);
     const offenders: string[] = [];
     let examined = 0;
     for (const page of pages) {
@@ -4539,9 +3322,7 @@ describe("rendered /api examples keep fence markers on block boundaries", () => 
 });
 
 describe("canonical /api pages render every resolvable authored translation", () => {
-  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).filter(
-    (page) => page.category === "engine",
-  );
+  const pages = canonicalApiPages(REAL_TYPES_DIR).filter((page) => page.category === "engine");
 
   // The partition the resolver itself keys on, rebuilt from the same production
   // hashing primitives: a blob resolves when its segment hashes all resolve. A
@@ -4675,7 +3456,7 @@ describe("rendered /api pages keep every symbol heading outside a code fence", (
   };
 
   const surfaces: { label: string; pages: ApiPage[] }[] = [
-    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR) },
+    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR) },
     ...versionsWithDiskFixtures(REAL_TYPES_DIR).map((version) => ({
       label: version.id,
       pages: loadApiSurfaceForVersion(REAL_TYPES_DIR, version.id),
@@ -4721,7 +3502,7 @@ describe("rendered /api pages keep every list marker beside its value", () => {
   };
 
   const surfaces: { label: string; pages: ApiPage[] }[] = [
-    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR) },
+    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR) },
     ...versionsWithDiskFixtures(REAL_TYPES_DIR).map((version) => ({
       label: version.id,
       pages: loadApiSurfaceForVersion(REAL_TYPES_DIR, version.id),
@@ -4765,7 +3546,7 @@ describe("rendered /api pages print characters, not entity source, inside code",
   };
 
   const surfaces: { label: string; pages: ApiPage[] }[] = [
-    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR) },
+    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR) },
     ...versionsWithDiskFixtures(REAL_TYPES_DIR).map((version) => ({
       label: version.id,
       pages: loadApiSurfaceForVersion(REAL_TYPES_DIR, version.id),
@@ -4876,7 +3657,7 @@ describe("overload grouping (committed artifacts)", () => {
   });
 
   test("splitCallForm round-trips every function signature and keeps a generic head in params", () => {
-    const pages = [...combinedPages, ...loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR)];
+    const pages = [...combinedPages, ...loadApiSurface(REAL_TYPES_DIR)];
     let split = 0;
     let generic = 0;
     for (const page of pages) {
@@ -5236,9 +4017,7 @@ describe("defoldTypeRef", () => {
     const target = loadApiTargets().find((candidate) => candidate.default === true);
     if (target === undefined) throw new Error("api-targets.json has no default target");
     const annotations = loadAnnotations(target);
-    const engine = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).filter(
-      (page) => page.category === "engine",
-    );
+    const engine = canonicalApiPages(REAL_TYPES_DIR).filter((page) => page.category === "engine");
     // Every entry the engine pages give the name: `b2Body` is on both `b2d` and
     // `b2d.body`, while upstream links one.
     const entries = (name: string): string[] =>
@@ -5272,41 +4051,5 @@ describe("defoldTypeRef", () => {
       "hash https://defold.com/ref/builtins-lua#hash",
       "script_instance https://defold.com/ref/builtins-lua#script_instance",
     ]);
-  });
-});
-
-describe("library typedef definitions", () => {
-  const sources = loadLibraryPageSources(join(import.meta.dir, "../../../library-types"));
-  const symbols = (namespace: string): ApiSymbol[] => {
-    const source = sources.find(({ page }) => page.namespace === namespace);
-    if (!source) throw new Error(`no library page ${namespace}`);
-    return apiModuleSymbols(source.page);
-  };
-  const signatureOf = (namespace: string, name: string): string | undefined =>
-    symbols(namespace).find((s) => s.name === name)?.signature;
-
-  test("a generic alias renders its type parameters", () => {
-    expect(signatureOf("wrap.node", "HexColorLiteral")).toStartWith(
-      "type HexColorLiteral<S extends string> = ",
-    );
-    expect(signatureOf("wrap.node", "HexColor")).toBeDefined();
-    expect(signatureOf("wrap.node_list", "NodeList")).toStartWith(
-      "type NodeList<K extends string> = ",
-    );
-  });
-
-  test("an @internal helper alias is not listed", () => {
-    const nodeNames = symbols("wrap.node").map((s) => s.name);
-    expect(nodeNames).not.toContain("HexDigit");
-    expect(nodeNames).not.toContain("HexDigitCount");
-    expect(symbols("wrap.node_list").map((s) => s.name)).not.toContain("OpenKey");
-  });
-
-  test("a generic interface heads its shape with its type parameters", () => {
-    expect(signatureOf("operator.bezier", "Bezier")).toBe("Bezier<P>");
-    expect(signatureOf("def_behavior_tree", "NodeType")).toBe(
-      "NodeType<Name extends string = string>",
-    );
-    expect(signatureOf("colyseus", "Room")).toBe("Room<State = unknown>");
   });
 });

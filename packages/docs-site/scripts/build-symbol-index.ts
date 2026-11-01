@@ -18,7 +18,6 @@ import {
 // the repo root (where the test suite invokes it).
 const SCRIPTS_DIR = import.meta.dir;
 const TYPES_DIR = join(SCRIPTS_DIR, "..", "..", "types");
-const LIBRARY_TYPES_DIR = join(SCRIPTS_DIR, "..", "..", "library-types");
 // Served from public/ at a stable path. The island appends a `?t=` query in
 // dev (see symbol-tooltip.tsx) to defeat Safari's aggressive dev caching — a
 // generated-asset `?url` import 404s in honox's dev server, so plain public/
@@ -31,12 +30,11 @@ export interface SymbolIndexOutput {
 }
 
 // The directory dependencies each build resolves against. Defaults to the
-// committed types/library trees; a caller (a migration test) supplies a synthetic
+// committed types tree; a caller (a migration test) supplies a synthetic
 // set so the same production code path generates real files from a fixture
 // registry, not merely a selected filename.
 export interface SymbolIndexDeps {
   typesDir?: string;
-  libraryTypesDir?: string;
 }
 
 // The full set of symbol-index files a release emits: the shared canonical
@@ -48,8 +46,7 @@ export interface SymbolIndexDeps {
 // `symbol-index-combined.json`: the Combined symbols live in the shared file now.
 export function symbolIndexOutputs(deps: SymbolIndexDeps = {}): SymbolIndexOutput[] {
   const typesDir = deps.typesDir ?? TYPES_DIR;
-  const libraryTypesDir = deps.libraryTypesDir ?? LIBRARY_TYPES_DIR;
-  const sharedPages = loadVersionIndependentPages(typesDir, libraryTypesDir);
+  const sharedPages = loadVersionIndependentPages(typesDir);
   const shared: Record<string, SymbolEntry> = {
     ...buildSymbolIndex(sharedPages),
     ...combinedSymbolIndexRecords(loadCombinedSurface(typesDir)),

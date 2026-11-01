@@ -1,22 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { apiPages, libraryOrigins } from "./api-content";
+import { LIBRARY_DOCS_URL } from "./base";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
-import {
-  activeCategoryId,
-  buildNav,
-  type LibraryListing,
-  type LibraryOrigin,
-  libraryLineage,
-  libraryOwnerGroups,
-  type NavLink,
-} from "./nav";
-import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
+import { activeCategoryId, buildNav, type NavLink } from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
-const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 function realPages(): GuidePage[] {
   return listGuidePages(GUIDE_DIR);
@@ -42,15 +31,32 @@ function fullNav() {
     globalTypes: [],
     luaStdlib: LUA_STDLIB,
     engine: ENGINE,
-    libraries: [],
   });
 }
+
+describe("the Libraries entry", () => {
+  const libraries = () => fullNav().find((c) => c.id === "libraries");
+
+  test("links out to the library docs site and holds no pages", () => {
+    expect(libraries()?.label).toBe("Libraries");
+    expect(libraries()?.route).toBe(LIBRARY_DOCS_URL);
+    expect(libraries()?.links).toEqual([]);
+  });
+
+  test("is never the active category", () => {
+    const nav = fullNav();
+    expect(activeCategoryId("/api/go", nav)).toBe("api");
+    expect(activeCategoryId("/libraries", nav)).toBeUndefined();
+    expect(activeCategoryId(LIBRARY_DOCS_URL, nav)).toBeUndefined();
+    expect(activeCategoryId(`${LIBRARY_DOCS_URL}/api/monarch`, nav)).toBeUndefined();
+  });
+});
 
 describe("buildNav", () => {
   test("returns the top-level categories in declared order with declared labels", () => {
     const nav = fullNav();
-    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "api"]);
-    expect(nav.map((c) => c.label)).toEqual(["Get started", "Guides", "API"]);
+    expect(nav.map((c) => c.id)).toEqual(["get-started", "guides", "api", "libraries"]);
+    expect(nav.map((c) => c.label)).toEqual(["Get started", "Guides", "API", "Libraries"]);
   });
 
   test("has no lua-stdlib category and links the API category to its index", () => {
@@ -79,7 +85,6 @@ describe("buildNav", () => {
       globalTypes: GLOBAL_TYPES,
       luaStdlib: LUA_STDLIB,
       engine: ENGINE,
-      libraries: [],
     });
     const reference = nav.find((c) => c.id === "api");
     expect(reference?.links.map((l) => l.label)).toEqual([
@@ -99,7 +104,6 @@ describe("buildNav", () => {
       globalTypes: [],
       luaStdlib: LUA_STDLIB,
       engine: ENGINE,
-      libraries: [],
     });
     const reference = nav.find((c) => c.id === "api");
     expect(reference?.links.map((l) => l.label)).toEqual(["Lua Standard", "Defold"]);
@@ -130,7 +134,6 @@ describe("buildNav", () => {
         { label: "camera", route: "/api/camera", badgeHtml: "<span>PILL</span>" },
         { label: "go", route: "/api/go" },
       ],
-      libraries: [],
     });
     const defold = nav.find((c) => c.id === "api")?.links.find((l) => l.label === "Defold");
     expect(defold?.children?.find((c) => c.label === "camera")?.badgeHtml).toBe(
@@ -148,186 +151,6 @@ describe("buildNav", () => {
     }
   });
 
-  test("Libraries is a top-level category with owner, repo, and namespace levels", () => {
-    const nav = buildNav(realPages(), {
-      globals: GLOBALS,
-      globalTypes: [],
-      luaStdlib: LUA_STDLIB,
-      engine: ENGINE,
-      libraries: [
-        {
-          owner: "britzl",
-          label: "britzl",
-          libraries: [
-            {
-              repo: "defold-input",
-              label: "defold-input",
-              modules: [
-                { label: "in.button", route: "/api/in.button" },
-                { label: "in.cursor", route: "/api/in.cursor" },
-              ],
-            },
-            {
-              repo: "monarch",
-              label: "monarch",
-              modules: [{ label: "monarch.monarch", route: "/api/monarch.monarch" }],
-            },
-          ],
-        },
-        {
-          owner: "whiteboxdev",
-          label: "whiteboxdev",
-          libraries: [
-            {
-              repo: "library-defold-persist",
-              label: "library-defold-persist",
-              modules: [{ label: "persist", route: "/api/persist" }],
-            },
-          ],
-        },
-      ],
-    });
-    const libraries = nav.find((c) => c.id === "libraries");
-    expect(libraries?.label).toBe("Libraries");
-    expect(libraries?.route).toBe("/libraries");
-    expect(libraries?.links.map((l) => l.label)).toEqual(["britzl", "whiteboxdev"]);
-
-    const britzl = libraries?.links.find((l) => l.label === "britzl");
-    expect(britzl?.route).toBeUndefined();
-    expect(britzl?.children?.map((c) => c.label)).toEqual(["defold-input", "monarch"]);
-
-    // A multi-module repo keeps its expander and lists its namespaces beneath it.
-    const input = britzl?.children?.find((l) => l.label === "defold-input");
-    expect(input?.route).toBeUndefined();
-    expect(input?.children?.map((c) => c.route)).toEqual(["/api/in.button", "/api/in.cursor"]);
-
-    // A single-module repo collapses: the row is the module's link, titled with
-    // the repo it is published from rather than the namespace it imports as.
-    const monarch = britzl?.children?.find((l) => l.label === "monarch");
-    expect(monarch?.children).toBeUndefined();
-    expect(monarch?.route).toBe("/api/monarch.monarch");
-
-    const persist = libraries?.links
-      .find((l) => l.label === "whiteboxdev")
-      ?.children?.find((l) => l.route === "/api/persist");
-    expect(persist?.label).toBe("library-defold-persist");
-    expect(persist?.children).toBeUndefined();
-
-    const labels: string[] = [];
-    const collectLabels = (links: NavLink[] | undefined) => {
-      for (const link of links ?? []) {
-        labels.push(link.label);
-        collectLabels(link.children);
-      }
-    };
-    collectLabels(libraries?.links);
-    expect(labels.every((label) => !label.includes("/"))).toBe(true);
-  });
-
-  test("accents the rows that link to a module and gives each its full-path tooltip", () => {
-    const nav = buildNav(realPages(), {
-      globals: [],
-      globalTypes: [],
-      luaStdlib: [],
-      engine: [],
-      libraries: [
-        {
-          owner: "Insality",
-          label: "Insality",
-          libraries: [
-            {
-              repo: "defold-saver",
-              label: "defold-saver",
-              modules: [
-                { label: "saver.saver", route: "/api/saver.saver" },
-                { label: "saver.storage", route: "/api/saver.storage" },
-              ],
-            },
-            {
-              repo: "druid",
-              label: "druid",
-              modules: [{ label: "druid", route: "/api/druid" }],
-            },
-          ],
-        },
-        {
-          owner: "britzl",
-          label: "britzl",
-          libraries: [
-            {
-              repo: "monarch",
-              label: "monarch",
-              modules: [{ label: "monarch.monarch", route: "/api/monarch.monarch" }],
-            },
-          ],
-        },
-      ],
-    });
-    const libraries = nav.find((c) => c.id === "libraries");
-    const insality = libraries?.links.find((l) => l.label === "Insality");
-    const saverGroup = insality?.children?.find((l) => l.label === "defold-saver");
-    const saverLeaf = saverGroup?.children?.find((l) => l.route === "/api/saver.storage");
-    expect(saverLeaf?.accent).toBe(true);
-    expect(saverLeaf?.tooltip).toBe("Insality/defold-saver/saver.storage");
-    // The repo row of a multi-module library only groups, so it stays unaccented
-    // and keeps the default label-derived tooltip.
-    expect(saverGroup?.accent).toBeUndefined();
-    expect(saverGroup?.tooltip).toBeUndefined();
-
-    // A collapsed single-module repo *is* the module row: accented, and its
-    // tooltip still names the namespace its repo-titled label leaves out.
-    const druidLeaf = insality?.children?.find((l) => l.route === "/api/druid");
-    expect(druidLeaf?.accent).toBe(true);
-    expect(druidLeaf?.tooltip).toBe("Insality/druid");
-
-    const monarchLeaf = libraries?.links
-      .find((l) => l.label === "britzl")
-      ?.children?.find((l) => l.route === "/api/monarch.monarch");
-    expect(monarchLeaf?.labelHtml).toBe("monarch");
-    expect(monarchLeaf?.tooltip).toBe("britzl/monarch/monarch.monarch");
-  });
-
-  test("activeCategoryId resolves the Libraries index and nested namespace leaves", () => {
-    const nav = buildNav(realPages(), {
-      globals: [],
-      globalTypes: [],
-      luaStdlib: [],
-      engine: [],
-      libraries: [
-        {
-          owner: "Insality",
-          label: "Insality",
-          libraries: [
-            {
-              repo: "defold-saver",
-              label: "defold-saver",
-              modules: [
-                { label: "saver.saver", route: "/api/saver.saver" },
-                { label: "saver.storage", route: "/api/saver.storage" },
-              ],
-            },
-          ],
-        },
-      ],
-    });
-    expect(activeCategoryId("/libraries", nav)).toBe("libraries");
-    expect(activeCategoryId("/api/saver.storage", nav)).toBe("libraries");
-  });
-
-  test("emits no Libraries category when the libraries list is empty", () => {
-    const nav = buildNav(realPages(), {
-      globals: [],
-      globalTypes: [],
-      luaStdlib: LUA_STDLIB,
-      engine: ENGINE,
-      libraries: [],
-    });
-    expect(nav.find((c) => c.id === "libraries")).toBeUndefined();
-    const reference = nav.find((c) => c.id === "api");
-    expect(reference?.links.find((l) => l.label === "Libraries")).toBeUndefined();
-    expect(reference?.links.map((l) => l.label)).toEqual(["Lua Standard", "Defold"]);
-  });
-
   test("places every guide page route in exactly one category", () => {
     const pages = realPages();
     const nav = buildNav(pages, {
@@ -335,7 +158,6 @@ describe("buildNav", () => {
       globalTypes: [],
       luaStdlib: [],
       engine: [],
-      libraries: [],
     });
     // Guide leaves are now nested under route-less group headers, so the
     // collector recurses into children instead of reading category.links alone.
@@ -362,7 +184,6 @@ describe("buildNav", () => {
       globalTypes: [],
       luaStdlib: [],
       engine: [],
-      libraries: [],
     });
     const guides = nav.find((c) => c.id === "guides");
     expect(guides?.links.map((l) => l.label)).toEqual([
@@ -483,7 +304,6 @@ describe("buildNav", () => {
       globalTypes: [],
       luaStdlib: [],
       engine: [],
-      libraries: [],
     });
     const guides = nav.find((c) => c.id === "guides");
     const hit = guides?.links.find((l) => l.route === "/brand-new-topic");
@@ -499,7 +319,6 @@ describe("linkFor toc-title rendering", () => {
       globalTypes: [],
       luaStdlib: [],
       engine: [],
-      libraries: [],
     });
     for (const category of nav) {
       const hit = category.links.find((l) => l.route === page.route);
@@ -596,262 +415,5 @@ describe("activeCategoryId", () => {
 
   test("resolves the index route to get-started by exact match", () => {
     expect(activeCategoryId("/", nav)).toBe("get-started");
-  });
-});
-
-describe("libraryOwnerGroups", () => {
-  const origins = new Map<string, LibraryOrigin>([
-    ["squid.squid", { owner: "paweljarosz", repo: "squid" }],
-    ["in.button", { owner: "britzl", repo: "defold-input" }],
-    ["in.cursor", { owner: "britzl", repo: "defold-input" }],
-    ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
-    ["druid", { owner: "Insality", repo: "druid" }],
-  ]);
-
-  test("groups pages into owner, repo, and namespace levels", () => {
-    const groups = libraryOwnerGroups(
-      [
-        { namespace: "squid.squid", route: "/api/squid.squid" },
-        { namespace: "in.cursor", route: "/api/in.cursor" },
-        { namespace: "in.button", route: "/api/in.button" },
-        { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
-      ],
-      origins,
-      [],
-    );
-    expect(groups.map((group) => group.label)).toEqual(["britzl", "paweljarosz"]);
-    expect(groups[0]?.libraries.map((lib) => lib.label)).toEqual(["defold-input", "monarch"]);
-    expect(groups[0]?.libraries[0]?.modules).toEqual([
-      { label: "in.button", route: "/api/in.button" },
-      { label: "in.cursor", route: "/api/in.cursor" },
-    ]);
-    expect(groups[1]?.libraries[0]?.modules).toEqual([
-      { label: "squid.squid", route: "/api/squid.squid" },
-    ]);
-  });
-
-  // The repo name, not the namespace root, is what a multi-module library groups
-  // under — `in.*` belongs to `defold-input`, which is what a user installs.
-  test("groups sibling namespaces under the repo name rather than their shared prefix", () => {
-    const [group] = libraryOwnerGroups(
-      [
-        { namespace: "in.button", route: "/api/in.button" },
-        { namespace: "in.cursor", route: "/api/in.cursor" },
-      ],
-      origins,
-      [],
-    );
-    expect(group?.libraries.map((lib) => lib.repo)).toEqual(["defold-input"]);
-  });
-
-  test("falls back to the top namespace segment for a library with no recorded origin", () => {
-    const [group] = libraryOwnerGroups(
-      [{ namespace: "orphan.module", route: "/api/orphan.module" }],
-      new Map(),
-      [],
-    );
-    expect(group?.owner).toBe("orphan");
-    expect(group?.libraries[0]?.label).toBe("orphan");
-    expect(group?.libraries[0]?.modules[0]?.label).toBe("orphan.module");
-  });
-
-  test("groups two modules published from one repo into one library", () => {
-    const groups = libraryOwnerGroups(
-      [
-        { namespace: "saver.storage", route: "/api/saver.storage" },
-        { namespace: "saver.saver", route: "/api/saver.saver" },
-      ],
-      new Map([
-        ["saver.saver", { owner: "Insality", repo: "defold-saver" }],
-        ["saver.storage", { owner: "Insality", repo: "defold-saver" }],
-      ]),
-      [],
-    );
-    expect(groups.map((group) => group.label)).toEqual(["Insality"]);
-    const libraries = groups[0]?.libraries ?? [];
-    expect(libraries).toHaveLength(1);
-    expect(libraries[0]?.repo).toBe("defold-saver");
-    expect(libraries[0]?.label).toBe("defold-saver");
-    expect(libraries[0]?.modules).toEqual([
-      { label: "saver.saver", route: "/api/saver.saver" },
-      { label: "saver.storage", route: "/api/saver.storage" },
-    ]);
-  });
-
-  test("an owner named defold with no official origin sorts alphabetically and carries no flag", () => {
-    const groups = libraryOwnerGroups(
-      [
-        { namespace: "squid.squid", route: "/api/squid.squid" },
-        { namespace: "fake.fake", route: "/api/fake.fake" },
-        { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
-      ],
-      new Map<string, LibraryOrigin>([
-        ["squid.squid", { owner: "paweljarosz", repo: "squid" }],
-        ["fake.fake", { owner: "defold", repo: "fake" }],
-        ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
-      ]),
-      [],
-    );
-    expect(groups.map((group) => group.owner)).toEqual(["britzl", "defold", "paweljarosz"]);
-    for (const group of groups) expect("official" in group).toBe(false);
-  });
-});
-
-describe("libraryOwnerGroups with untyped library listings", () => {
-  const origins = new Map<string, LibraryOrigin>([
-    ["iap", { owner: "defold", repo: "extension-iap", official: true }],
-    ["webview", { owner: "defold", repo: "extension-webview", official: true }],
-    ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
-  ]);
-  const listing = (repo: string, api: "none" | "untyped"): LibraryListing => ({
-    owner: "defold",
-    repo,
-    url: `https://github.com/defold/${repo}`,
-    ref: "1.0.0",
-    pinKind: "release",
-    description: "",
-    official: true,
-    route: `/libraries/defold/${repo}`,
-    api,
-    adoption: "standard",
-    ships: "Ships content.",
-    steps: ["Use the content."],
-  });
-  const groups = libraryOwnerGroups(
-    [
-      { namespace: "webview", route: "/api/webview" },
-      { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
-      { namespace: "iap", route: "/api/iap" },
-    ],
-    origins,
-    [listing("extension-qrcode", "untyped"), listing("asset-pbr", "none")],
-  );
-  const defold = groups.find((group) => group.owner === "defold");
-
-  test("puts each listing in its owner group as a module-less repo sorted among typed repos", () => {
-    expect(defold?.libraries.map((lib) => lib.repo)).toEqual([
-      "asset-pbr",
-      "extension-iap",
-      "extension-qrcode",
-      "extension-webview",
-    ]);
-    const qrcode = defold?.libraries.find((lib) => lib.repo === "extension-qrcode");
-    expect(qrcode?.modules).toEqual([]);
-    expect(qrcode?.listing).toEqual({
-      route: "/libraries/defold/extension-qrcode",
-      api: "untyped",
-    });
-    const iap = defold?.libraries.find((lib) => lib.repo === "extension-iap");
-    expect(iap?.listing).toBeUndefined();
-  });
-
-  test("a listing whose owner has no typed page starts its official group", () => {
-    const [only] = libraryOwnerGroups([], new Map(), [listing("asset-pbr", "none")]);
-    expect(only?.owner).toBe("defold");
-    expect(only?.official).toBe(true);
-    expect(only?.libraries.map((lib) => lib.repo)).toEqual(["asset-pbr"]);
-  });
-
-  test("buildNav renders a listing as one accent leaf routed to its page and marked with the icon", () => {
-    const libraries = buildNav([], {
-      globals: [],
-      globalTypes: [],
-      luaStdlib: [],
-      engine: [],
-      libraries: groups,
-    }).find((category) => category.id === "libraries");
-    const defoldLink = libraries?.links.find((link) => link.label === "defold");
-    const leaf = defoldLink?.children?.find((link) => link.label === "extension-qrcode");
-    expect(leaf?.route).toBe("/libraries/defold/extension-qrcode");
-    expect(leaf?.children).toBeUndefined();
-    expect(leaf?.accent).toBe(true);
-    expect(leaf?.tooltip).toBe("defold/extension-qrcode");
-    expect(leaf?.labelHtml).toContain("extension-qrcode");
-    expect(leaf?.labelHtml).toContain(NO_TYPED_API_ICON);
-    const typed = defoldLink?.children?.find((link) => link.label === "extension-iap");
-    expect(typed?.labelHtml).not.toContain(NO_TYPED_API_ICON);
-  });
-});
-
-// The owner group built from Defold's own extension manifest is the official one:
-// it leads the Libraries tab, and only its presentation carries the note.
-describe("libraryOwnerGroups over the committed library manifests", () => {
-  const pages = apiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR)
-    .filter((page) => page.category === "library")
-    .map((page) => ({ namespace: page.namespace, route: page.route }));
-  const origins = libraryOrigins(REAL_LIBRARY_TYPES_DIR);
-  const groups = libraryOwnerGroups(pages, origins, []);
-
-  test("puts the official defold group first and orders the rest alphabetically", () => {
-    expect(groups[0]?.owner).toBe("defold");
-    expect(groups[0]?.official).toBe(true);
-    const rest = groups.slice(1);
-    expect(rest.length).toBeGreaterThan(0);
-    for (const group of rest) expect("official" in group).toBe(false);
-    const owners = rest.map((group) => group.owner);
-    expect(owners).toEqual(
-      [...owners].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
-    );
-  });
-
-  test("the sidebar dims an (official) note beside the defold label without renaming it", () => {
-    const libraries = buildNav([], {
-      globals: [],
-      globalTypes: [],
-      luaStdlib: [],
-      engine: [],
-      libraries: groups,
-    }).find((category) => category.id === "libraries");
-    const [first, ...others] = libraries?.links ?? [];
-    expect(first?.label).toBe("defold");
-    expect(first?.labelHtml).toBe(
-      'defold <span class="text-text-faint font-normal">(official)</span>',
-    );
-    for (const other of others) expect(other.labelHtml).not.toContain("(official)");
-
-    const tooltips: string[] = [];
-    const collect = (link: NavLink) => {
-      if (link.tooltip) tooltips.push(link.tooltip);
-      for (const child of link.children ?? []) collect(child);
-    };
-    for (const child of first?.children ?? []) collect(child);
-    expect(tooltips.length).toBeGreaterThan(0);
-    for (const tooltip of tooltips) expect(tooltip.startsWith("defold/")).toBe(true);
-  });
-});
-
-// The library page heading resolves its own `owner/repo` lineage; drifting from
-// the grouping rule made a page title itself `<ns>/<ns>` while its Libraries card
-// read `<repo>/<ns>`.
-describe("libraryLineage", () => {
-  const origins = new Map<string, LibraryOrigin>([
-    ["monarch.transitions.easings", { owner: "britzl", repo: "monarch" }],
-    ["in.button", { owner: "britzl", repo: "defold-input" }],
-    ["persist", { owner: "whiteboxdev", repo: "library-defold-persist" }],
-  ]);
-
-  test("a namespace takes the owner and repo its manifest records", () => {
-    expect(libraryLineage("monarch.transitions.easings", origins)).toEqual({
-      owner: "britzl",
-      repo: "monarch",
-    });
-  });
-
-  test("the repo is the published name, not the namespace root", () => {
-    expect(libraryLineage("in.button", origins)).toEqual({
-      owner: "britzl",
-      repo: "defold-input",
-    });
-    expect(libraryLineage("persist", origins)).toEqual({
-      owner: "whiteboxdev",
-      repo: "library-defold-persist",
-    });
-  });
-
-  test("a namespace with no recorded origin stands in for its own owner and repo", () => {
-    expect(libraryLineage("druid", new Map())).toEqual({
-      owner: "druid",
-      repo: "druid",
-    });
   });
 });

@@ -1,5 +1,0 @@
-{
-  "repo": "https://github.com/alias/aliased",
-  "license": "MIT",
-  "forks": [{ "namespace": "alias.actual", "apiDoc": "api-doc/alias.actual.json" }]
-}

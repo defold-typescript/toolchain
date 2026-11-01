@@ -2,13 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Hono } from "hono";
-import { createLibraryListingRoute } from "../routes/libraries/[owner]/[repo]";
 import {
   apiVersionAxis,
   canonicalApiPages,
   canonicalNamespaces,
-  untypedListings,
   windowedApiPages,
 } from "./api-content";
 import { versionedApiParams } from "./api-page-render";
@@ -18,7 +15,6 @@ import { renderGuidePage } from "./content";
 import { parseFrontmatter } from "./frontmatter";
 import { listGuidePages } from "./guide-loader";
 import { renderMarkdown } from "./markdown";
-import { ssgRoutePaths } from "./ssg-routes";
 import { buildSymbolIndex } from "./symbol-index";
 import { resolveVersionWindow } from "./version-window";
 
@@ -27,7 +23,6 @@ const FIXTURES = join(import.meta.dir, "__fixtures__");
 // `api-content`'s own TYPES_DIR is cwd-relative, which resolves differently under
 // root `bun test` than under the docs-site build, so the dirs are passed in.
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 const REAL_ROUTES_DIR = join(import.meta.dir, "../routes");
 
 // Heading ids are read back out of the rendered page rather than recomputed
@@ -84,9 +79,9 @@ function isExempt(target: string, checkRoutes: boolean): boolean {
 //
 // A new *kind* of API route would have to be added here too; until it is, its
 // links read as unknown, which fails loudly instead of passing silently.
-export function emittedApiRoutes(typesDir: string, libraryTypesDir: string): Set<string> {
+export function emittedApiRoutes(typesDir: string): Set<string> {
   const routes = new Set<string>(["/api", combinedRedirect().from]);
-  for (const namespace of canonicalNamespaces(typesDir, libraryTypesDir)) {
+  for (const namespace of canonicalNamespaces(typesDir)) {
     routes.add(`/api/${namespace}`);
     routes.add(combinedRedirect(namespace).from);
   }
@@ -101,8 +96,8 @@ export function emittedApiRoutes(typesDir: string, libraryTypesDir: string): Set
 // API pages, read from the symbol index those pages' tooltips and cross-links
 // use. Each page is indexed on its own because a canonical page and its versioned
 // copies share symbol keys, and one index would keep only the last route per key.
-export function emittedApiAnchors(typesDir: string, libraryTypesDir: string): Set<string> {
-  const pages = canonicalApiPages(typesDir, libraryTypesDir);
+export function emittedApiAnchors(typesDir: string): Set<string> {
+  const pages = canonicalApiPages(typesDir);
   const axis = apiVersionAxis(typesDir);
   for (const version of versionsWithDiskFixtures(typesDir)) {
     const window = resolveVersionWindow(axis, version.id, null);
@@ -262,18 +257,10 @@ function format(broken: Broken[]): string {
 
 // The production path highlights every fence on every guide page; several tests
 // read the same report, so it is rendered once.
-const API_ROUTES = emittedApiRoutes(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-const listingApp = new Hono();
-listingApp.get(
-  "/libraries/:owner/:repo",
-  ...createLibraryListingRoute({
-    typesDir: REAL_TYPES_DIR,
-    libraryTypesDir: REAL_LIBRARY_TYPES_DIR,
-  }),
-);
-const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR, await ssgRoutePaths(listingApp));
+const API_ROUTES = emittedApiRoutes(REAL_TYPES_DIR);
+const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR);
 const TRACKED_VERSION_IDS = new Set(versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) => v.id));
-const API_ANCHORS = emittedApiAnchors(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+const API_ANCHORS = emittedApiAnchors(REAL_TYPES_DIR);
 const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR), {
   api: API_ROUTES,
   apiAnchors: API_ANCHORS,
@@ -346,9 +333,9 @@ describe("docs/guide link and anchor resolution", () => {
     expect(API_ROUTES.has("/api/combined/go")).toBe(true);
     expect([...API_ROUTES].some((r) => /^\/api\/defold-\d+\.\d+\.\d+$/.test(r))).toBe(true);
     expect([...API_ROUTES].some((r) => /^\/api\/defold-\d+\.\d+\.\d+\/go$/.test(r))).toBe(true);
-    // A library dropped from the corpus takes its route with it, which is what
-    // makes a link to a retired page fail rather than linger.
-    expect(API_ROUTES.has("/api/starly")).toBe(false);
+    // A library's page lives on the library docs site, so a link here to one
+    // fails rather than lingers.
+    expect(API_ROUTES.has("/api/monarch.monarch")).toBe(false);
   });
 
   test("every absolute link target resolves to a route the site really serves", async () => {
@@ -362,16 +349,12 @@ describe("docs/guide link and anchor resolution", () => {
   // route file renamed or deleted without its links being fixed reds the check
   // above rather than shipping a 404.
   test("the static route set spans the route files and the guide pages", () => {
-    expect(STATIC_ROUTES.has("/libraries")).toBe(true);
+    expect(STATIC_ROUTES.has("/libraries")).toBe(false);
     expect(STATIC_ROUTES.has("/get-started")).toBe(true);
     expect(STATIC_ROUTES.has("/guides")).toBe(true);
     expect(STATIC_ROUTES.has("/search")).toBe(true);
     expect(STATIC_ROUTES.has("/")).toBe(true);
     expect(STATIC_ROUTES.has("/resolve")).toBe(true);
-    for (const listing of untypedListings(REAL_LIBRARY_TYPES_DIR)) {
-      expect(STATIC_ROUTES.has(listing.route)).toBe(true);
-    }
-    expect(STATIC_ROUTES.has("/libraries/defold/not-a-repo")).toBe(false);
     // The catch-all and the renderer are not paths anyone can navigate to.
     expect(STATIC_ROUTES.has("/_renderer")).toBe(false);
     expect([...STATIC_ROUTES].some((r) => r.includes("["))).toBe(false);
@@ -381,10 +364,10 @@ describe("docs/guide link and anchor resolution", () => {
     const routesDir = mkdtempSync(join(tmpdir(), "guide-routes-"));
     const guideDir = mkdtempSync(join(tmpdir(), "guide-pages-"));
     try {
-      writeFileSync(join(routesDir, "libraries.tsx"), "");
+      writeFileSync(join(routesDir, "changelog-archive.tsx"), "");
       writeFileSync(join(routesDir, "_renderer.tsx"), "");
       const routes = staticRoutes(routesDir, guideDir);
-      expect(routes.has("/libraries")).toBe(true);
+      expect(routes.has("/changelog-archive")).toBe(true);
       expect(routes.has("/search")).toBe(false);
       expect(routes.has("/_renderer")).toBe(false);
     } finally {

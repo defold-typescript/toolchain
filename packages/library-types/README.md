@@ -1,8 +1,7 @@
 # @defold-typescript/library-types
 
 Library data is edited at https://github.com/defold-typescript/library-data, and
-this folder is the copy the toolchain's tests and docs site read until it is
-removed.
+this folder is the copy the toolchain's tests read until it is removed.
 
 Vendored TypeScript type declarations for a curated set of popular Defold Lua
 libraries, core-type-renamed against

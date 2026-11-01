@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
+import { libraryPageNames } from "./__fixtures__/library-page-names";
 import {
   MIDDLE,
   makeWindowedTypesDir,
@@ -16,8 +17,6 @@ import {
   canonicalApiPages,
   canonicalNamespaces,
   combinedApiPages,
-  libraryNavGroups,
-  untypedListings,
   versionIndependentPages,
   versionIndexPages,
   windowedApiPages,
@@ -27,14 +26,10 @@ import { apiLinkify, apiPageMarkdown } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion } from "./api-surface-loader";
 import { compareSemverDesc } from "./combined-surface";
-import { buildNav, type NavLink } from "./nav";
-import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
 import { resolveVersionWindow } from "./version-window";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
-const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 // A minimal page carrying only the fields the namespace-ownership union reads.
 function page(namespace: string): ApiPage {
@@ -59,13 +54,13 @@ function page(namespace: string): ApiPage {
 }
 
 describe("versionIndependentPages", () => {
-  const pages = () => versionIndependentPages(ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR);
+  const pages = () => versionIndependentPages(ENGINE_FIXTURE_DIR);
 
   test("returns only version-independent categories, each routed /api/<ns>", () => {
     const categories = new Set(pages().map((p) => p.category));
     expect(categories.has("engine")).toBe(false);
     for (const p of pages()) {
-      expect(["global-type", "lua-stdlib", "library"]).toContain(p.category);
+      expect(["global-type", "lua-stdlib"]).toContain(p.category);
       expect(p.route).toBe(`/api/${p.namespace}`);
     }
   });
@@ -78,7 +73,7 @@ describe("versionIndependentPages", () => {
 });
 
 describe("canonicalApiPages", () => {
-  const pages = () => canonicalApiPages(ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR);
+  const pages = () => canonicalApiPages(ENGINE_FIXTURE_DIR);
 
   test("re-routes the Combined engine namespaces to canonical /api/<ns>", () => {
     const camera = pages().find((p) => p.namespace === "camera");
@@ -111,6 +106,15 @@ describe("canonicalApiPages", () => {
   });
 });
 
+describe("canonicalApiPages — the real surface", () => {
+  test("has no page named after a library's data files", () => {
+    const names = libraryPageNames();
+    expect(names.length).toBeGreaterThan(0);
+    const namespaces = new Set(canonicalApiPages(REAL_TYPES_DIR).map((p) => p.namespace));
+    expect(names.filter((name) => namespaces.has(name))).toEqual([]);
+  });
+});
+
 describe("combinedApiPages", () => {
   test("emits canonical /api/<ns> routes directly, never the /api/combined compat prefix", () => {
     const pages = combinedApiPages(ENGINE_FIXTURE_DIR);
@@ -130,7 +134,7 @@ describe("canonicalApiPages — namespace collision guard", () => {
 
 describe("canonicalNamespaces", () => {
   test("lists every canonical namespace", () => {
-    const namespaces = canonicalNamespaces(ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR);
+    const namespaces = canonicalNamespaces(ENGINE_FIXTURE_DIR);
     expect(namespaces).toContain("camera");
     expect(namespaces).toContain("base");
   });
@@ -150,18 +154,12 @@ describe("apiNamespaceOwners — collision guard", () => {
 
 describe("apiNamespaceOwner", () => {
   test("classifies a canonical namespace by its owning surface", () => {
-    expect(apiNamespaceOwner("camera", ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR)).toBe(
-      "combined-engine",
-    );
-    expect(apiNamespaceOwner("base", ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR)).toBe(
-      "version-independent",
-    );
+    expect(apiNamespaceOwner("camera", ENGINE_FIXTURE_DIR)).toBe("combined-engine");
+    expect(apiNamespaceOwner("base", ENGINE_FIXTURE_DIR)).toBe("version-independent");
   });
 
   test("returns undefined for an unknown namespace", () => {
-    expect(
-      apiNamespaceOwner("nonexistent", ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR),
-    ).toBeUndefined();
+    expect(apiNamespaceOwner("nonexistent", ENGINE_FIXTURE_DIR)).toBeUndefined();
   });
 });
 
@@ -260,7 +258,7 @@ describe("versionIndexPages — the index is the window, unioned with the shared
   test("its engine half is exactly the window ending at that version", () => {
     for (const bare of [NEWEST, MIDDLE, OLDEST]) {
       const id = versionId(bare);
-      const pages = versionIndexPages(id, dir, dir);
+      const pages = versionIndexPages(id, dir);
       expect(engineHalf(id, pages).map((p) => p.namespace)).toEqual(
         windowedApiPages({ from: OLDEST, to: bare }, dir).map((p) => p.namespace),
       );
@@ -272,30 +270,26 @@ describe("versionIndexPages — the index is the window, unioned with the shared
     // today; sourcing the index from the version's own surface leaves it
     // unreachable from `/api/defold-3.0.0`.
     const id = versionId(NEWEST);
-    expect(versionIndexPages(id, dir, dir).map((p) => p.namespace)).toContain("gone");
+    expect(versionIndexPages(id, dir).map((p) => p.namespace)).toContain("gone");
     expect(loadApiSurfaceForVersion(dir, id).map((p) => p.namespace)).not.toContain("gone");
   });
 
   test("a version older than the removal still lists it; none is capped out of its own window", () => {
-    expect(versionIndexPages(versionId(OLDEST), dir, dir).map((p) => p.namespace)).toContain(
-      "gone",
-    );
+    expect(versionIndexPages(versionId(OLDEST), dir).map((p) => p.namespace)).toContain("gone");
   });
 
   test("its non-engine half is the version-independent set the canonical index carries", () => {
     const id = versionId(MIDDLE);
-    const pages = versionIndexPages(id, dir, dir);
+    const pages = versionIndexPages(id, dir);
     const shared = pages.filter((p) => !p.route.startsWith(`/api/${id}/`));
     expect(shared.map((p) => p.namespace)).toEqual(
-      versionIndependentPages(dir, dir)
-        .filter((p) => p.category !== "library")
-        .map((p) => p.namespace),
+      versionIndependentPages(dir).map((p) => p.namespace),
     );
     for (const p of shared) expect(p.route).toBe(`/api/${p.namespace}`);
   });
 
   test("an unknown version id yields no pages rather than throwing", () => {
-    expect(versionIndexPages("defold-9.9.9", dir, dir)).toEqual([]);
+    expect(versionIndexPages("defold-9.9.9", dir)).toEqual([]);
   });
 });
 
@@ -331,55 +325,5 @@ describe("withVersionIndependentPages", () => {
     );
     expect(merged.filter((p) => p.namespace === "Hash")).toHaveLength(1);
     expect(merged.map((p) => p.namespace)).toEqual(["go", "Hash", "Vector3"]);
-  });
-});
-
-// The Libraries tab the renderer builds, composed the way `_renderer.tsx` composes
-// it over the committed pages and manifest, so an untyped library that stops
-// reaching the sidebar, or a typed one the composition drops, reds here.
-describe("libraryNavGroups — the sidebar Libraries tab over the committed manifest", () => {
-  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const listings = untypedListings(REAL_LIBRARY_TYPES_DIR);
-  const libraries =
-    buildNav([], {
-      globals: [],
-      globalTypes: [],
-      luaStdlib: [],
-      engine: [],
-      libraries: libraryNavGroups(pages, REAL_LIBRARY_TYPES_DIR),
-    }).find((category) => category.id === "libraries")?.links ?? [];
-
-  const leaves = (links: NavLink[]): NavLink[] =>
-    links.flatMap((link) => (link.children ? leaves(link.children) : [link]));
-
-  test("every untyped listing is an icon-marked leaf under its owner, routed to its own page", () => {
-    expect(listings.length).toBeGreaterThan(0);
-    for (const listing of listings) {
-      const owner = libraries.find((link) => link.label === listing.owner);
-      const leaf = owner?.children?.find((link) => link.label === listing.repo);
-      expect({
-        route: leaf?.route,
-        children: leaf?.children,
-        tooltip: leaf?.tooltip,
-        icon: leaf?.labelHtml.includes(NO_TYPED_API_ICON),
-      }).toEqual({
-        route: listing.route,
-        children: undefined,
-        tooltip: `${listing.owner}/${listing.repo}`,
-        icon: true,
-      });
-    }
-  });
-
-  test("every typed library page stays reachable and the icon marks only the listings", () => {
-    const allLeaves = leaves(libraries);
-    const leafRoutes = new Set(allLeaves.map((leaf) => leaf.route));
-    const libraryRoutes = pages.filter((p) => p.category === "library").map((p) => p.route);
-    expect(libraryRoutes.length).toBeGreaterThan(0);
-    for (const route of libraryRoutes)
-      expect({ route, reachable: leafRoutes.has(route) }).toEqual({ route, reachable: true });
-    expect(allLeaves.filter((leaf) => leaf.labelHtml.includes(NO_TYPED_API_ICON))).toHaveLength(
-      listings.length,
-    );
   });
 });

@@ -37,15 +37,12 @@ describe("stripPlatformMarkers", () => {
 });
 
 describe("platform marker corpus", () => {
-  test("every marker name in the engine fixtures and extension api-docs has a PLATFORM_ICONS entry", () => {
+  test("every marker name in the engine fixtures has a PLATFORM_ICONS entry", () => {
     const names = new Set<string>();
     const engineDirs = readdirSync(join(PACKAGES_DIR, "types/fixtures"))
       .filter((name) => name.startsWith("defold-"))
       .map((name) => join(PACKAGES_DIR, "types/fixtures", name));
-    const files = [
-      ...engineDirs.flatMap(jsonFiles),
-      ...jsonFiles(join(PACKAGES_DIR, "library-types/defold-extensions/api-doc")),
-    ];
+    const files = engineDirs.flatMap(jsonFiles);
     for (const file of files) {
       const text = readFileSync(file, "utf8");
       for (const match of text.matchAll(/\[icon:([\w-]+)\]/g)) names.add(match[1] as string);

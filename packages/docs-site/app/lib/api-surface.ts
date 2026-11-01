@@ -11,10 +11,8 @@ import {
   examplesHtmlToMarkdown,
   firstSlotAlternativeOf,
   htmlToDocText,
-  type LibraryIndexSlotClassifications,
   lookupExampleSegments,
   lookupSignature,
-  luaMultiReturn,
   normalizedFunctionSignature,
   type SignatureStore,
   type SlotTypes,
@@ -24,9 +22,7 @@ import {
   symbolNameKey,
   type TranslationStore,
   translateProseFences,
-  varargElementType,
   withIndexBaseNotes,
-  withLibraryIndexBaseNotes,
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
 import { platformDocText } from "./platform-icons";
@@ -389,73 +385,9 @@ function pushAvailabilityProse(
   if (prose) lines.push(prose, "");
 }
 
-export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type" | "library";
+export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type";
 
 type ApiTypedef = ApiModule["typedefs"][number];
-
-/**
- * Structured provenance for a vendored `library` page, joined from
- * `library-classification.json` (repo, pinned commit, license, the module's
- * upstream `dir`) and `NOTICE` (author credit). Rendered as the uniform
- * Author / GitHub / Commit pin / Import / License block; leads with the real
- * origin (the upstream author and their repo) rather than the ts-defold
- * vendoring plumbing.
- */
-export interface LibraryMeta {
-  /** NOTICE author credit for the upstream dir; `""` when the dir has no credit. */
-  author: string;
-  /** Link to the author's upstream repo (the NOTICE credit URL); `""` when the dir has no credit. */
-  authorUrl: string;
-  /** The pinned commit sha — abbreviated for display, full inside the link. */
-  commit: string;
-  /**
-   * Link to the exact `.d.ts` the types were generated from, at the pinned
-   * commit (`<repo>/blob/<commit>/<path>`); falls back to the repo tree at the
-   * commit (`<repo>/tree/<commit>`) when the upstream file path is unknown.
-   */
-  sourceUrl: string;
-  /** The vendored `import * as <alias> from '<module>'` string. */
-  importString: string;
-  /** SPDX-style license id from the classification `source`. */
-  license: string;
-  /**
-   * `true` for a library this repo maintains through a LuaLS or script_api
-   * recipe in library data (e.g. druid, bridge)
-   * (namespace absent from `moduleDir`), or a Defold extension page read from
-   * its own `.script_api`; `false` for a vendored library.
-   */
-  authoredHere: boolean;
-  /**
-   * `import` for a Lua module a project requires or a native extension a project
-   * imports; `ambient` for a `.script_api` doc adding members to an engine
-   * namespace, which stays that global, so the page tells the reader to call it
-   * with no import.
-   */
-  usage: "import" | "ambient";
-  /** The global an ambient extension is called through: its doc's declared namespace. */
-  globalNamespace?: string;
-  /**
-   * The engine namespace an ambient extension doc adds members to when it
-   * declares one (`extension-spine`'s `spine.gui` page declares `gui`).
-   */
-  extendsNamespace?: string;
-  /**
-   * How a Defold extension page's upstream pin was chosen — its latest release,
-   * else its newest tag, else a commit — so the adopt steps name a dependency
-   * URL that exists at that pin. Set only for Defold extension pages; absent
-   * keeps release selection, because a vendored or authored pin is our
-   * generation source, not the user's dependency.
-   */
-  pinKind?: "release" | "tag" | "commit";
-  /**
-   * The Defold version that was current when a Defold extension's release or
-   * tag pin was cut. A hint about the pin's age, not a compatibility claim;
-   * absent when the pin carries no date.
-   */
-  releaseEra?: string;
-  /** The Asset Portal entry a portal `.script_api` page links; absent on every other page. */
-  portal?: { id: string; url: string };
-}
 
 export interface ApiPage {
   namespace: string;
@@ -475,11 +407,6 @@ export interface ApiPage {
    * falls back to the token-derived `functionSignature`.
    */
   authoritativeSignatures?: ReadonlyMap<string, string>;
-  /**
-   * A library page's index-slot classifications from library data, keyed
-   * `<page>/<slot>`; absent on every other page.
-   */
-  indexSlots?: LibraryIndexSlotClassifications;
   /**
    * The per-slot companion to {@link authoritativeSignatures}, keyed by name
    * identity (`<ns>\0FUNCTION\0<fqn>`) rather than by overload signature: the
@@ -527,10 +454,7 @@ export interface ApiPage {
    * `@defold-typescript/types` generation. `global-type` for the hand-curated
    * core value types (`Vector3`, `Hash`, …) parsed from `core-types.ts` and
    * rendered under the "Global types" reference category — never emitted from
-   * `ref-doc.zip`. `library` for vendored third-party library modules
-   * (`monarch.monarch`, `in.button`, …) sourced from `@defold-typescript/library-types`
-   * fixtures, pinned to an upstream-library commit rather than a Defold version,
-   * and surfaced default-only under the "Libraries" reference category.
+   * `ref-doc.zip`.
    */
   category: ApiPageCategory;
   /**
@@ -539,15 +463,6 @@ export interface ApiPage {
    * renders exactly as before). The same lookup rides on every page of a version.
    */
   availability?: AvailabilityLookup;
-  /** Structured provenance for a `library` page; absent for every other category. */
-  libraryMeta?: LibraryMeta;
-  /**
-   * Presentation-only author-first title for a `library` page
-   * (`paweljarosz / squid`); absent for every other category. The `namespace`
-   * stays the canonical `require()` path — `displayName` never touches the
-   * route, the import example, or the provenance block.
-   */
-  displayName?: string;
 }
 
 export interface ApiSymbolParam {
@@ -591,23 +506,9 @@ export interface ApiSymbol {
    * The source's `@deprecated` text, carried from the api-doc; `""` for a bare
    * tag, absent when the symbol is not deprecated. Independent of
    * {@link ApiAvailability.deprecatedSince}, which is the curated, version-keyed
-   * engine fact — a `library` page carries no availability record at all.
+   * engine fact.
    */
   deprecated?: string;
-  /**
-   * Present when the symbol is an ambient global rather than a member of the
-   * page's imported module, carried from the api-doc. Absent for a module
-   * member, so a page whose symbols are all module members renders exactly as
-   * before.
-   */
-  global?: true;
-  /**
-   * Present when this symbol's prose was imported from the library's upstream
-   * source rather than written in the fork, carried from the api-doc. Absent for
-   * first-party prose, and the render layer marks only what is present — an
-   * imported brief is never presented as the fork's own.
-   */
-  docSource?: "upstream";
   /**
    * The reference's own qualified name for an engine type the declarations
    * rename (`gui.EASING` for `gui.Easing`) and its defold.com entry, so a reader
@@ -1068,64 +969,6 @@ function typeList(types: string[], mapType: MapType = mapDocType): string {
   return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
-// A library page's key and the index slots library data classifies under it.
-interface LibraryPageSlots {
-  readonly key: string;
-  readonly classifications: LibraryIndexSlotClassifications;
-}
-
-const NO_LIBRARY_INDEX_SLOTS: LibraryIndexSlotClassifications = new Map();
-
-// A library page reads its own classifications under its page key and names the
-// library; every other page reads the engine map and names Defold.
-function withSlotBaseNotes(
-  libraryPage: LibraryPageSlots | undefined,
-  elementName: string,
-  kind: "param" | "return",
-  slotName: string,
-  doc: string,
-): string {
-  return libraryPage === undefined
-    ? withIndexBaseNotes(elementName, kind, slotName, doc)
-    : withLibraryIndexBaseNotes(
-        libraryPage.classifications,
-        libraryPage.key,
-        elementName,
-        kind,
-        slotName,
-        doc,
-      );
-}
-
-// The page key and classifications a library page's notes read, absent on every
-// other page.
-function libraryPageKey(
-  page: Pick<ApiPage, "namespace" | "category" | "indexSlots">,
-): LibraryPageSlots | undefined {
-  return page.category === "library"
-    ? { key: page.namespace, classifications: page.indexSlots ?? NO_LIBRARY_INDEX_SLOTS }
-    : undefined;
-}
-
-// A class field's doc with its base note, which only a library page records.
-function withFieldBaseNotes(
-  libraryPage: LibraryPageSlots | undefined,
-  typeName: string,
-  fieldName: string,
-  doc: string,
-): string {
-  return libraryPage === undefined
-    ? doc
-    : withLibraryIndexBaseNotes(
-        libraryPage.classifications,
-        libraryPage.key,
-        typeName,
-        "field",
-        fieldName,
-        doc,
-      );
-}
-
 /**
  * Project one call list into render rows. When `slots` carries an entry for a
  * row's `<kind>:<position>:<name>`, that row shows the type and optionality the
@@ -1143,14 +986,12 @@ function projectParams(
   kind: "param" | "return" = "param",
   elementName?: string,
   translations: TranslationStore = {},
-  libraryPage?: LibraryPageSlots,
 ): ApiSymbolParam[] {
   return list.map((p, index) => {
     const emitted = slots?.[`${kind}:${index}:${p.name}`];
     const doc =
       elementName !== undefined
-        ? withSlotBaseNotes(
-            libraryPage,
+        ? withIndexBaseNotes(
             elementName,
             kind,
             p.name,
@@ -1305,23 +1146,12 @@ function unpairedTableRow(entry: ApiFunction, rowSignatures: readonly string[]):
   return rowSignatures.findIndex((s) => outerCallArity(s) === entry.parameters.length);
 }
 
-// `isLibrary` gates the emitter-equivalent variadic (`...args: T[]`) and multi-return
-// (`LuaMultiReturn<[...]>`) forms so a LuaLS- or script_api-sourced library `/api`
-// page matches its printed declaration; engine pages keep `...: T` and comma-joined returns.
-function functionSignature(
-  fn: ApiFunction,
-  mapType: MapType = mapDocType,
-  isLibrary = false,
-): string {
+// Engine pages keep `...: T` and comma-joined returns.
+function functionSignature(fn: ApiFunction, mapType: MapType = mapDocType): string {
   const params = fn.parameters
-    .map((p) =>
-      isLibrary && p.isVararg
-        ? `${p.name}: ${varargElementType(typeList(p.types, mapType))}`
-        : `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types, mapType)}`,
-    )
+    .map((p) => `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types, mapType)}`)
     .join(", ");
-  const mapped = fn.returnValues.map((r) => typeList(r.types, mapType));
-  const ret = isLibrary && mapped.length > 1 ? luaMultiReturn(mapped) : mapped.join(", ");
+  const ret = fn.returnValues.map((r) => typeList(r.types, mapType)).join(", ");
   return `${fn.name}${fn.generics ?? ""}(${params})${ret ? `: ${ret}` : ""}`;
 }
 
@@ -1431,9 +1261,8 @@ function typeMemberFunctionSignature(
   typeName: string,
   fn: ApiFunction,
   mapType: MapType = mapDocType,
-  isLibrary = false,
 ): string {
-  return `${typeName}.${functionSignature(fn, mapType, isLibrary)}`;
+  return `${typeName}.${functionSignature(fn, mapType)}`;
 }
 
 function typeMemberPropertySignature(
@@ -1510,7 +1339,6 @@ type ApiModuleMarkdownPage = Pick<
   ApiPage,
   | "namespace"
   | "module"
-  | "displayName"
   | "category"
   | "availability"
   | "authoritativeSignatures"
@@ -1582,12 +1410,8 @@ export function apiModuleSections(
 function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore): ModuleLines {
   const m = page.module;
   const authoritative = page.authoritativeSignatures;
-  // `library` JSON tokens are already TypeScript, so re-mapping them through the
-  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the printed library declarations.
-  const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
-  const isLibrary = page.category === "library";
-  const libraryPage = libraryPageKey(page);
-  const head: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
+  const mapType: MapType = mapDocType;
+  const head: string[] = [`# ${m.namespace}`, ""];
   const groups: ModuleLines["groups"] = [];
   let lines = head;
   const section = (kind: ApiSectionKind, name: string): string[] => {
@@ -1595,9 +1419,6 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
     groups.at(-1)?.sections.push({ kind, name, lines: own });
     return own;
   };
-  if (page.displayName && page.displayName !== m.namespace) {
-    lines.push(`\`${m.namespace}\``, "");
-  }
   const intro = translateProseFences(
     htmlToDocText(m.description || m.brief),
     m.namespace,
@@ -1664,8 +1485,7 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
       if (example) lines.push(example, "");
       for (const p of [...fn.parameters, ...fn.returnValues]) {
         const kind = fn.parameters.includes(p) ? "param" : "return";
-        const pdoc = withSlotBaseNotes(
-          libraryPage,
+        const pdoc = withIndexBaseNotes(
           fn.name,
           kind,
           p.name,
@@ -1745,24 +1565,13 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
       if (definition) lines.push(`\`${definition}\``, "");
       for (const fn of td.functions ?? []) {
         lines = section("type", typeMemberName(td.name, fn.name));
-        lines.push(`#### \`${functionSignature(fn, mapType, isLibrary)}\``, "");
+        lines.push(`#### \`${functionSignature(fn, mapType)}\``, "");
         const doc = htmlToDocText(fn.description || fn.brief);
         if (doc) lines.push(doc, "");
         const example = exampleMarkdownFor(fn, translations);
         if (example) lines.push(example, "");
         for (const p of [...fn.parameters, ...fn.returnValues]) {
-          const kind = fn.parameters.includes(p) ? "param" : "return";
-          const pdoc =
-            libraryPage === undefined
-              ? htmlToDocText(p.doc)
-              : withLibraryIndexBaseNotes(
-                  libraryPage.classifications,
-                  libraryPage.key,
-                  fn.name,
-                  kind,
-                  p.name,
-                  htmlToDocText(p.doc),
-                );
+          const pdoc = htmlToDocText(p.doc);
           if (!pdoc) continue;
           lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
         }
@@ -1770,12 +1579,7 @@ function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore
       for (const prop of td.properties ?? []) {
         lines = section("type", typeMemberName(td.name, prop.name));
         lines.push(`#### \`${variableSignature(prop, mapType)}\``, "");
-        const doc = withFieldBaseNotes(
-          libraryPage,
-          td.name,
-          prop.name,
-          htmlToDocText(prop.description || prop.brief),
-        );
+        const doc = htmlToDocText(prop.description || prop.brief);
         if (doc) lines.push(doc, "");
       }
     }
@@ -1828,11 +1632,7 @@ export function apiModuleSymbols(
   signatures: SignatureStore = {},
 ): ApiSymbol[] {
   const m = page.module;
-  // `library` JSON tokens are already TypeScript, so re-mapping them through the
-  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the printed library declarations.
-  const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
-  const isLibrary = page.category === "library";
-  const libraryPage = libraryPageKey(page);
+  const mapType: MapType = mapDocType;
   const authoritative = page.authoritativeSignatures;
   const slotTypes = page.authoritativeSlotTypes;
   const functionIdentity = (fn: ApiFunction): string =>
@@ -1882,8 +1682,8 @@ export function apiModuleSymbols(
     const primarySignature =
       authSig ??
       (ov === null
-        ? functionSignature(fn, mapType, isLibrary)
-        : (ov.signatures[0] ?? functionSignature(fn, mapType, isLibrary)));
+        ? functionSignature(fn, mapType)
+        : (ov.signatures[0] ?? functionSignature(fn, mapType)));
     // The rows this FQN renders, in authored order, against the ref-doc entries
     // the override collapses over. When the call shapes pick an entry out per row
     // (`msg.url`'s 0/1/3 arities) each row reads its own; otherwise every row
@@ -1937,7 +1737,6 @@ export function apiModuleSymbols(
             "param",
             fn.name,
             translations,
-            libraryPage,
           )
         : [],
       returnValues: primaryEntry
@@ -1948,7 +1747,6 @@ export function apiModuleSymbols(
             "return",
             fn.name,
             translations,
-            libraryPage,
           )
         : [],
     };
@@ -1959,10 +1757,8 @@ export function apiModuleSymbols(
     if (fn.deprecated !== undefined) symbol.deprecated = fn.deprecated;
     // Ambient-global-ness is a fact about the declaration, not about one overload
     // identity, so every authored-override row below carries it too.
-    if (fn.global) symbol.global = true;
     // Prose provenance is likewise a fact about the declaration: every row of an
     // authored override renders the same imported text, so every row is marked.
-    if (fn.docSource) symbol.docSource = fn.docSource;
     // The join keys off the raw ref-doc overload signature — the exact value
     // `api-availability.json` was derived with — so a badge lands on the one
     // overload it identifies. Authored-override extra rows below share the raw
@@ -2038,7 +1834,7 @@ export function apiModuleSymbols(
         const armAv = armAvailability(signature) ?? av;
         if (element !== undefined) {
           const project = (list: ApiParameter[], kind: "param" | "return") =>
-            projectParams(list, mapType, primarySlots, kind, fn.name, translations, libraryPage);
+            projectParams(list, mapType, primarySlots, kind, fn.name, translations);
           const example = exampleMarkdownFor(element, translations);
           const arm: ApiSymbol = {
             kind: "function",
@@ -2051,8 +1847,6 @@ export function apiModuleSymbols(
             ...(example ? { exampleMarkdown: example } : {}),
             ...(armAv ? { availability: armAv } : {}),
             ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
-            ...(fn.global ? { global: true } : {}),
-            ...(fn.docSource ? { docSource: fn.docSource } : {}),
           };
           symbols.push(arm);
           if (primarySlots !== undefined) artifactBacked.add(arm);
@@ -2073,7 +1867,6 @@ export function apiModuleSymbols(
                   "param",
                   fn.name,
                   translations,
-                  libraryPage,
                 ),
                 ...symbol.parameters.slice(1),
               ]
@@ -2081,8 +1874,6 @@ export function apiModuleSymbols(
           returnValues: armAlternative ? symbol.returnValues : [],
           ...(armAv ? { availability: armAv } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
-          ...(fn.global ? { global: true } : {}),
-          ...(fn.docSource ? { docSource: fn.docSource } : {}),
         });
       }
     }
@@ -2106,32 +1897,14 @@ export function apiModuleSymbols(
           signature,
           docMarkdown: overloadDoc(k + 1),
           parameters: entry
-            ? projectParams(
-                entry.parameters,
-                mapType,
-                undefined,
-                "param",
-                fn.name,
-                translations,
-                libraryPage,
-              )
+            ? projectParams(entry.parameters, mapType, undefined, "param", fn.name, translations)
             : [],
           returnValues: entry
-            ? projectParams(
-                entry.returnValues,
-                mapType,
-                undefined,
-                "return",
-                fn.name,
-                translations,
-                libraryPage,
-              )
+            ? projectParams(entry.returnValues, mapType, undefined, "return", fn.name, translations)
             : [],
           ...(example ? { exampleMarkdown: example } : {}),
           ...(formAv ? { availability: formAv } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
-          ...(fn.global ? { global: true } : {}),
-          ...(fn.docSource ? { docSource: fn.docSource } : {}),
         });
       }
     }
@@ -2151,8 +1924,6 @@ export function apiModuleSymbols(
     const av = joinAvailability(page.availability, m.namespace, "VARIABLE", v.name, "");
     if (av) symbol.availability = av;
     if (v.deprecated !== undefined) symbol.deprecated = v.deprecated;
-    if (v.global) symbol.global = true;
-    if (v.docSource) symbol.docSource = v.docSource;
     symbols.push(symbol);
   }
 
@@ -2169,7 +1940,6 @@ export function apiModuleSymbols(
     };
     const av = joinAvailability(page.availability, m.namespace, "CONSTANT", cst.name, "");
     if (av) symbol.availability = av;
-    if (cst.global) symbol.global = true;
     symbols.push(symbol);
   }
 
@@ -2215,37 +1985,20 @@ export function apiModuleSymbols(
         docMarkdown: "",
         parameters: [],
         returnValues: [],
-        ...(td.global ? { global: true } : {}),
       });
     }
     for (const fn of td.functions ?? []) {
       const symbol: ApiSymbol = {
         kind: "type",
         name: typeMemberName(td.name, fn.name),
-        signature: typeMemberFunctionSignature(td.name, fn, mapType, isLibrary),
+        signature: typeMemberFunctionSignature(td.name, fn, mapType),
         docMarkdown: platformDocText(fn.description || fn.brief),
-        // Only a library page keys its class methods; they carry no translations.
-        parameters:
-          libraryPage === undefined
-            ? projectParams(fn.parameters, mapType)
-            : projectParams(fn.parameters, mapType, undefined, "param", fn.name, {}, libraryPage),
-        returnValues:
-          libraryPage === undefined
-            ? projectParams(fn.returnValues, mapType)
-            : projectParams(
-                fn.returnValues,
-                mapType,
-                undefined,
-                "return",
-                fn.name,
-                {},
-                libraryPage,
-              ),
+        parameters: projectParams(fn.parameters, mapType),
+        returnValues: projectParams(fn.returnValues, mapType),
       };
       const example = exampleMarkdownFor(fn, translations);
       if (example) symbol.exampleMarkdown = example;
       if (fn.deprecated !== undefined) symbol.deprecated = fn.deprecated;
-      if (td.global) symbol.global = true;
       symbols.push(symbol);
     }
     for (const prop of td.properties ?? []) {
@@ -2253,16 +2006,10 @@ export function apiModuleSymbols(
         kind: "type",
         name: typeMemberName(td.name, prop.name),
         signature: typeMemberPropertySignature(td.name, prop, mapType),
-        docMarkdown: withFieldBaseNotes(
-          libraryPage,
-          td.name,
-          prop.name,
-          platformDocText(prop.description || prop.brief),
-        ),
+        docMarkdown: platformDocText(prop.description || prop.brief),
         parameters: [],
         returnValues: [],
         ...(prop.deprecated !== undefined ? { deprecated: prop.deprecated } : {}),
-        ...(td.global ? { global: true } : {}),
       });
     }
   }

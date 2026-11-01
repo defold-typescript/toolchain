@@ -568,7 +568,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 // multi-value return as a field of that return (`cast:return::tile_x`). A
 // typedef method is keyed by its bare name, so one key covers every class of the
 // page that declares that method.
-// `docs-site/app/lib/library-index-slot-gate.test.ts` reds on a scanned slot
+// The library docs site's `site/app/lib/library-index-slot-gate.test.ts` reds on a scanned slot
 // missing from the library data folder's `index-slot-classifications.json` and on an entry
 // no library page declares.
 export function parseLibraryIndexSlotClassifications(

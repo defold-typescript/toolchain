@@ -23,7 +23,6 @@ import { resolveVersionWindow } from "../app/lib/version-window";
 // the repo root (where the test suite invokes it).
 const SCRIPTS_DIR = import.meta.dir;
 const TYPES_DIR = join(SCRIPTS_DIR, "..", "..", "types");
-const LIBRARY_TYPES_DIR = join(SCRIPTS_DIR, "..", "..", "library-types");
 const GUIDE_DIR = join(SCRIPTS_DIR, "..", "..", "docs", "guide");
 // Served from public/ at a stable path. The search islands append a `?t=`
 // query in dev to defeat Safari's aggressive dev caching — a generated-asset
@@ -44,12 +43,11 @@ export interface SearchIndexOutput {
 }
 
 // The directory dependencies each build resolves against. Defaults to the
-// committed types/library/guide trees; a caller (a migration test) supplies a
+// committed types/guide trees; a caller (a migration test) supplies a
 // synthetic set so the same production code path generates real files from a
 // fixture registry, not merely a selected filename.
 export interface SearchIndexDeps {
   typesDir?: string;
-  libraryTypesDir?: string;
   guideDir?: string;
 }
 
@@ -62,13 +60,12 @@ export interface SearchIndexDeps {
 // `search-index-combined.json`: Combined IS the shared canonical index now.
 export function searchIndexOutputs(deps: SearchIndexDeps = {}): SearchIndexOutput[] {
   const typesDir = deps.typesDir ?? TYPES_DIR;
-  const libraryTypesDir = deps.libraryTypesDir ?? LIBRARY_TYPES_DIR;
   const guideDir = deps.guideDir ?? GUIDE_DIR;
   const guideRecords = buildSearchIndex(
     listGuidePages(guideDir),
     (page) => parseFrontmatter(readFileSync(join(guideDir, page.file), "utf8")).body,
   );
-  const sharedPages = loadVersionIndependentPages(typesDir, libraryTypesDir);
+  const sharedPages = loadVersionIndependentPages(typesDir);
   const shared: SearchRecord[] = [
     ...guideRecords,
     ...combinedSearchRecords(loadCombinedSurface(typesDir)),
