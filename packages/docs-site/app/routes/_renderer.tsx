@@ -1,6 +1,7 @@
 import githubIconRaw from "@phosphor-icons/core/duotone/github-logo-duotone.svg?raw";
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Script } from "honox/server";
+import { CategoryLink } from "../components/category-link";
 import { RangeSelectorControls } from "../components/range-selector";
 import { SidebarItems } from "../components/sidebar";
 import { FONT_TOKENS, PRELOAD_FONT_FILES } from "../generated/fonts";
@@ -39,7 +40,7 @@ import { buildBadgeCountTable } from "../lib/combined-surface";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
 import type { Heading } from "../lib/headings";
-import { activeCategoryId, buildNav, type NavCategory, type NavLink } from "../lib/nav";
+import { activeCategoryId, buildNav, type NavCategory } from "../lib/nav";
 import { buildPager, type Pager as PagerData, type PagerLink } from "../lib/pager";
 import { applySinceFilter } from "../lib/since-filter";
 import { buildRangeSelector } from "../lib/version-switch";
@@ -511,31 +512,6 @@ function InlineToc({ headings }: { headings: Heading[] }) {
         <Toc headings={headings} showHeading={false} showTooltip={false} />
       </div>
     </details>
-  );
-}
-
-function firstRoute(links: NavLink[]): string | undefined {
-  for (const link of links) {
-    if (link.route) return link.route;
-    const childRoute = link.children ? firstRoute(link.children) : undefined;
-    if (childRoute) return childRoute;
-  }
-  return undefined;
-}
-
-function CategoryLink({ category, active }: { category: NavCategory; active: boolean }) {
-  const href = category.route ?? firstRoute(category.links) ?? "/";
-  return (
-    <a
-      href={withBase(href)}
-      aria-current={active ? "page" : undefined}
-      class={
-        "-mb-px inline-flex h-14 shrink-0 items-center whitespace-nowrap border-b-2 px-3 text-text-muted transition hover:text-text " +
-        (active ? "border-accent text-text" : "border-transparent")
-      }
-    >
-      {category.label}
-    </a>
   );
 }
 

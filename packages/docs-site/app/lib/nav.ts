@@ -1,4 +1,4 @@
-import { LIBRARY_DOCS_URL } from "./base";
+import { isExternalUrl, LIBRARY_DOCS_URL } from "./base";
 import { GET_STARTED_SLUGS } from "./get-started";
 import type { GuidePage } from "./guide";
 import { GUIDE_GROUPS } from "./guide-groups";
@@ -183,7 +183,7 @@ export function buildNav(
 export function activeCategoryId(route: string, nav: NavCategory[]): string | undefined {
   let best: { id: string; length: number } | undefined;
   const consider = (id: string, rawCandidate: string | undefined) => {
-    if (!rawCandidate || /^https?:\/\//.test(rawCandidate)) return;
+    if (!rawCandidate || isExternalUrl(rawCandidate)) return;
     // A rewritten API route carries the active window's `?since=`; `route` is the
     // bare pathname, so the query is dropped before matching.
     const candidate = rawCandidate.split("?")[0] as string;
