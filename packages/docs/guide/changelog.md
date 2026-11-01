@@ -13,11 +13,11 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Library types](./resolve.md#library-data)** update without a CLI release, and `resolve --frozen` needs a recorded commit.
+> - **[Library types](./resolve.md#library-data)** update without a CLI release; the recorded commit moves only when data changes, and `resolve --frozen` needs one.
 
 ### Breaking
 
-- **`resolve` fetches library data itself:** library data comes from the [library data repo](https://github.com/defold-typescript/library-data) rather than the CLI's npm package, so library types update without a CLI release, and `@defold-typescript/library-types` is no longer published. `resolve` and `watch` record the commit they read as `"libraryData"` in `package.json`; `resolve --frozen` fails until a plain `resolve` has recorded one, and `export-types` reads the newest data. See [Library data](./resolve.md#library-data).
+- **`resolve` fetches library data itself:** library types come from the [library data repo](https://github.com/defold-typescript/library-data) and update without a CLI release, and `@defold-typescript/library-types` is no longer published. `resolve` and `watch` record the commit as `"libraryData"` in `package.json` and [move it only when the data changes](./resolve.md#library-data), `resolve --frozen` fails until one is recorded, and `export-types` reads the newest data.
 
 ### Improved
 
