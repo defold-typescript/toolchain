@@ -12,10 +12,19 @@ export const PROJECT_LOCK_FILE = "defold-typescript.lock";
 
 const LOCK_VERSION = 1;
 const PIN = /^(commit:[0-9a-f]{40}|files-sha256:[0-9a-f]{64})$/;
+// A library key becomes a folder name under the cache, so it is one path segment.
+const LIBRARY_KEY = /^(?!\.{1,2}$)[A-Za-z0-9._-]+$/;
+
+// `shared` is the commit `index-slot-classifications.json` is read from, the one
+// data file no library owns; `libraries` is the commit each used library is read from.
+export interface LibraryDataPins {
+  readonly shared: string;
+  readonly libraries: Readonly<Record<string, string>>;
+}
 
 export interface ProjectLock {
   readonly extensions: Readonly<Record<string, string>>;
-  readonly libraryData?: string;
+  readonly libraryData?: LibraryDataPins;
 }
 
 export type ProjectLockRead =
@@ -65,26 +74,54 @@ export function readProjectLock(cwd: string): ProjectLockRead {
   if (libraryData === undefined) {
     return { status: "ok", lock: { extensions: extensions as Record<string, string> } };
   }
-  if (typeof libraryData !== "string" || !COMMIT_COMMENT.test(libraryData)) {
-    return invalid('has a "libraryData" value that is not a 40-hex commit');
+  if (!isPlainObject(libraryData)) {
+    return invalid('has a "libraryData" value that is not a map');
+  }
+  const { shared, libraries } = libraryData;
+  if (typeof shared !== "string" || !COMMIT_COMMENT.test(shared)) {
+    return invalid('has a "libraryData.shared" value that is not a 40-hex commit');
+  }
+  if (!isPlainObject(libraries)) {
+    return invalid('has a "libraryData.libraries" value that is not a map');
+  }
+  for (const [name, commit] of Object.entries(libraries)) {
+    if (!LIBRARY_KEY.test(name)) {
+      return invalid(`has a "libraryData.libraries" key ${name} that is not one path segment`);
+    }
+    if (typeof commit !== "string" || !COMMIT_COMMENT.test(commit)) {
+      return invalid(`has "libraryData.libraries" entry ${name} that is not a 40-hex commit`);
+    }
   }
   return {
     status: "ok",
-    lock: { extensions: extensions as Record<string, string>, libraryData },
+    lock: {
+      extensions: extensions as Record<string, string>,
+      libraryData: { shared, libraries: libraries as Record<string, string> },
+    },
   };
 }
 
-function serializeProjectLock(lock: ProjectLock): string {
-  const extensions = Object.fromEntries(
-    Object.keys(lock.extensions)
+function sortedByKey(map: Readonly<Record<string, string>>): Record<string, string> {
+  return Object.fromEntries(
+    Object.keys(map)
       .sort()
-      .map((url) => [url, lock.extensions[url]]),
+      .map((key) => [key, map[key] as string]),
   );
+}
+
+function serializeProjectLock(lock: ProjectLock): string {
   return `${JSON.stringify(
     {
       version: LOCK_VERSION,
-      extensions,
-      ...(lock.libraryData === undefined ? {} : { libraryData: lock.libraryData }),
+      extensions: sortedByKey(lock.extensions),
+      ...(lock.libraryData === undefined
+        ? {}
+        : {
+            libraryData: {
+              shared: lock.libraryData.shared,
+              libraries: sortedByKey(lock.libraryData.libraries),
+            },
+          }),
     },
     null,
     2,

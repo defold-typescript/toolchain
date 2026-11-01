@@ -356,7 +356,16 @@ function dispatchCommand(
   const wallList = head.includes("--list");
   const wallCheck = head.includes("--check");
   const frozen = head.includes("--frozen");
-  const update = isResolve && head.includes("--update");
+  // Takes `=`, never a space: `resolve` has a project path as its positional, so
+  // `--update monarch` could not be told from a directory.
+  const updateFlag = head.find((a) => a === "--update" || a.startsWith("--update="));
+  const update: true | readonly string[] | undefined = !isResolve
+    ? undefined
+    : updateFlag === undefined
+      ? undefined
+      : updateFlag === "--update"
+        ? true
+        : updateFlag.slice("--update=".length).split(",");
   const failOnDrift = head.includes("--fail-on-drift");
   const noUpdateCheck =
     head.includes("--no-update-check") || Boolean(process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK);
@@ -406,6 +415,7 @@ function dispatchCommand(
       a !== "--check" &&
       a !== "--frozen" &&
       a !== "--update" &&
+      !a.startsWith("--update=") &&
       a !== "--fail-on-drift" &&
       a !== "--no-update-check" &&
       a !== "--hot-reload" &&
@@ -481,9 +491,9 @@ function dispatchCommand(
     return 1;
   }
 
-  if (update && (frozen || libraryDataGiven)) {
+  if (update !== undefined && (frozen || libraryDataGiven)) {
     const other = frozen ? "--frozen" : "--library-data";
-    const message = `defold-typescript resolve: --update moves the recorded library data commit, which ${other} rules out; use one or the other`;
+    const message = `defold-typescript resolve: --update moves library data pins, which ${other} rules out; use one or the other`;
     if (json) {
       io.stdout.write(renderResult({ command: "resolve", error: message }));
     } else {
@@ -1781,7 +1791,17 @@ function dispatchCommand(
     if (command === "resolve") {
       const seams = internals?.resolveInternals;
       return (async (): Promise<number> => {
-        const { runResolve } = await import("./resolve");
+        const { runResolve, unknownUpdateNames } = await import("./resolve");
+        // Ahead of the target, so a mistyped name requests nothing.
+        const unknownUpdate = unknownUpdateNames(cwd, update);
+        if (unknownUpdate !== null) {
+          if (json) {
+            io.stdout.write(renderResult({ command: "resolve", error: unknownUpdate }));
+          } else {
+            writeError(unknownUpdate);
+          }
+          return 1;
+        }
         let head: ResolvedTargetHead;
         try {
           head = syncHead ?? (await resolveHead());
@@ -1806,7 +1826,7 @@ function dispatchCommand(
               ? { libraryDataDir: seams.libraryDataDir }
               : {}),
           ...(frozen ? { freeze: true } : {}),
-          ...(update ? { update: true } : {}),
+          ...(update === undefined ? {} : { update }),
         });
         for (const warning of result.warnings) {
           writeWarning(`defold-typescript resolve: ${warning}`);

@@ -9819,7 +9819,7 @@ describe("library data from the data repo", () => {
     path.join(cwd, ".defold-types", librariesDirName(readCliVersion()), "mylib.core.d.ts");
   const recordedCommit = () => {
     const read = readProjectLock(cwd);
-    return read.status === "ok" ? read.lock.libraryData : undefined;
+    return read.status === "ok" ? read.lock.libraryData?.libraries.mylib : undefined;
   };
 
   test("resolve prints a matched library from the data repo and records its commit", async () => {
@@ -9967,7 +9967,10 @@ describe("library data from the data repo", () => {
       expect(err()).not.toContain("resolve --update");
     });
 
-    test("watch holds it and prints the notice, with --update accepted and ignored", async () => {
+    test.each([
+      "--update",
+      "--update=mylib",
+    ])("watch holds it and prints the notice, with %s accepted and ignored", async (flag) => {
       writeFileSync(path.join(cwd, "main.script"), "");
       const { resolveInternals } = await recordedBehindNewer();
       const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
@@ -9984,7 +9987,7 @@ describe("library data from the data repo", () => {
       const { onWatchStart, ready } = watchHandle();
       const { io, err } = captureStreams();
 
-      const result = dispatch(["watch", cwd, "--update"], io, {
+      const result = dispatch(["watch", flag, cwd], io, {
         debounceMs: 5,
         watcherFactory: main,
         componentWatcherFactory: component,
@@ -10007,20 +10010,57 @@ describe("library data from the data repo", () => {
     });
   });
 
-  test.each<[string, string[]]>([
-    ["--frozen", ["--frozen"]],
-    ["--library-data", ["--library-data", "."]],
-  ])("resolve --update with %s fails and names both flags", async (flag, args) => {
+  test.each<[string, string, string[]]>([
+    ["--update", "--frozen", ["--frozen"]],
+    ["--update", "--library-data", ["--library-data", "."]],
+    ["--update=mylib", "--frozen", ["--frozen"]],
+    ["--update=mylib", "--library-data", ["--library-data", "."]],
+  ])("resolve %s with %s fails and names both flags", async (update, flag, args) => {
     writeDependentProject();
     const { requests, resolveInternals } = seams();
     const { io, err } = captureStreams();
 
-    const code = await dispatch(["resolve", cwd, "--update", ...args], io, { resolveInternals });
+    const code = await dispatch(["resolve", cwd, update, ...args], io, { resolveInternals });
 
     expect(code).toBe(1);
     expect(err()).toContain("--update");
     expect(err()).toContain(flag);
     expect(requests).toEqual([]);
+  });
+
+  test("resolve --update=<name> takes the name, not a project path", async () => {
+    writeDependentProject();
+    const { resolveInternals, serve } = seams();
+    expect(await dispatch(["resolve", cwd], captureStreams().io, { resolveInternals })).toBe(0);
+    const NEWER = "2222222222222222222222222222222222222222";
+    serve(dataArchive(NEWER, 'declare module "mylib.core" {\n  export const v: "newer";\n}\n'));
+
+    const code = await dispatch(["resolve", cwd, "--update=mylib"], captureStreams().io, {
+      resolveInternals,
+    });
+
+    expect(code).toBe(0);
+    expect(recordedCommit()).toBe(NEWER);
+  });
+
+  test.each<[string, string[]]>([
+    ["text", []],
+    ["json", ["--json"]],
+  ])("resolve --update=<unknown> exits 1 naming the declared names, requesting and writing nothing: %s", async (_label, extra) => {
+    writeDependentProject();
+    const { requests, resolveInternals } = seams();
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd, "--update=nope", ...extra], io, {
+      resolveInternals,
+    });
+
+    expect(code).toBe(1);
+    expect(`${out()}${err()}`).toContain("nope");
+    expect(`${out()}${err()}`).toContain("mylib");
+    expect(requests).toEqual([]);
+    expect(existsSync(path.join(cwd, PROJECT_LOCK_FILE))).toBe(false);
+    expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
   });
 
   test("export-types reads the data repo through the same seam", async () => {
