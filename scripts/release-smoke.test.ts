@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { resolve } from "node:path";
 import { libraryFolderName } from "../packages/cli/src/library/library-data";
 import { writeLibraryTargets } from "../packages/cli/src/library-data-fixture";
+import { writeProjectLock } from "../packages/cli/src/project-lock";
 import { PACKAGES } from "./release-pack-proof";
 import {
   curatedDeclarationPath,
@@ -69,11 +70,13 @@ describe("release-smoke override derivation", () => {
     mkdirSync(path.join(folder, library, "fork"), { recursive: true });
     const declaration = path.join(folder, library, "fork", "daabbcc.d.ts");
     writeFileSync(declaration, "declare namespace daabbcc {}\n");
-    const manifest = { "defold-typescript": { libraryData: commit } };
+    const recorded = mkdtempSync(path.join(os.tmpdir(), "release-smoke-project-"));
+    writeProjectLock(recorded, { extensions: {}, libraryData: commit });
+    const unrecorded = mkdtempSync(path.join(os.tmpdir(), "release-smoke-project-"));
 
-    expect(curatedDeclarationPath(cache, manifest, "daabbcc")).toBe(declaration);
-    expect(curatedDeclarationPath(cache, manifest, "other")).toBeNull();
-    expect(curatedDeclarationPath(cache, {}, "daabbcc")).toBeNull();
+    expect(curatedDeclarationPath(cache, recorded, "daabbcc")).toBe(declaration);
+    expect(curatedDeclarationPath(cache, recorded, "other")).toBeNull();
+    expect(curatedDeclarationPath(cache, unrecorded, "daabbcc")).toBeNull();
     rmSync(cache, { recursive: true, force: true });
   });
 

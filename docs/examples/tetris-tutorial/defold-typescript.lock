@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "extensions": {
+    "https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip": "files-sha256:f92f6933eea6bfcec7064541145ee3dc18727aa42f874fc8959a745364dd231b"
+  }
+}
