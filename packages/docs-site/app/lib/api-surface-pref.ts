@@ -180,7 +180,7 @@ export function resolveApiSurfaceRedirect(
   const ids = config.versionIds;
   const oldest = ids[ids.length - 1] || config.defaultVersionId;
   if (range.to === config.defaultVersionId && range.from === oldest) return null;
-  // A version-independent page (global type, Lua stdlib, library) is contributed
+  // A version-independent page (global type, Lua stdlib) is contributed
   // by no version, so it has no `/api/<version>/<ns>` route and prefixing it
   // would 404; leave it put. The slice loop is inlined rather than shared with
   // `namespacesInRange` because this function is serialized with `.toString()`
@@ -456,7 +456,7 @@ function rangeHref(namespace: string | undefined, range: ApiSurfaceRange, oldest
 
 // Remap one nav link tree's `/api/<ns>` engine leaves onto the active range,
 // recursing into groups. Only namespaces some version in the window contributes
-// are moved; every other route (guides, libraries, non-engine reference) is
+// are moved; every other route (guides, the library docs site, non-engine reference) is
 // returned as-is. The count pills ride along untouched — every window now renders the
 // availability layer, so no surface is badge-free.
 function rewriteLink(

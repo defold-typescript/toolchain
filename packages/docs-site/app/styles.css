@@ -66,7 +66,6 @@
   --color-badge-changed: #bc4c00;
   --color-badge-deprecated: #cf222e;
   --color-badge-global: #6639ba;
-  --color-badge-upstream: #0969da;
   /* The `N overloads` count an overload block heading and its outline entry carry
    * in place of the call list: a count, not a warning, so a teal that reads apart
    * from the syntax colors and the lifecycle badges. */
@@ -104,7 +103,6 @@
   --color-badge-changed: #db6d28;
   --color-badge-deprecated: #f85149;
   --color-badge-global: #a371f7;
-  --color-badge-upstream: #58a6ff;
   --color-overload-count: #2dd4bf;
 
   --color-warning: #d29922;
@@ -297,9 +295,9 @@
     position: relative;
     font-size: var(--prose-h1-size);
     line-height: 1.2;
-    /* A library heading is a namespace path, not prose: `anywhere` (not
+    /* A heading may be a long namespace, not prose: `anywhere` (not
        `break-word`) so its min-content width stays small and a long name wraps
-       instead of widening the page. Explicit <wbr>s still win the break. */
+       instead of widening the page. */
     overflow-wrap: anywhere;
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -1178,22 +1176,6 @@
     opacity: 0.7;
   }
 
-  /* No-typed-API mark (Phosphor duotone), inlined by no-typed-api-icon.ts after an
-     untyped library's name in the sidebar leaf, its index card title and its page
-     heading. Preflight makes `svg` a block, so flow it inline at the text size. */
-  .no-api-icon {
-    display: inline-block;
-    width: 1em;
-    height: 1em;
-    vertical-align: -0.125em;
-    color: var(--color-text-faint);
-  }
-
-  /* LuaLS-authored library pin (Phosphor duotone), appended by authoredLibraryPin
-     beside authored library names in the sidebar tree and the /api heading. The
-     span wrapper positions the pin against the label baseline; the nested glyph
-     carries the same class (phosphorDuotone needs a class hook), so reset its
-     inherited span styles to avoid a doubled gap and compounded opacity. */
   .search-snippet mark {
     background: var(--color-accent-soft);
     color: inherit;
@@ -1314,14 +1296,6 @@
     margin-right: 0.45em;
     position: relative;
     top: -2px;
-  }
-
-  .api-badge-dot--global {
-    background: var(--color-badge-global);
-  }
-
-  .api-badge-dot--upstream {
-    background: var(--color-badge-upstream);
   }
 
   /* An overload block's `N overloads` count, set inside its colored signature

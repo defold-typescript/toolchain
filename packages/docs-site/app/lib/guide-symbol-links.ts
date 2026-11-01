@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { canonicalApiPages } from "./api-content";
 import { buildSymbolIndex } from "./symbol-index";
 
@@ -13,7 +13,7 @@ const routesByTypesDir = new Map<string, ReadonlyMap<string, string>>();
  * route, and global types (`Hash`) keep their page route, since that page is
  * the type's own entry rather than a namespace of members.
  *
- * The API trees are the guide's sibling packages (`packages/docs/guide` next to
+ * The API tree is the guide's sibling package (`packages/docs/guide` next to
  * `packages/types`), resolved from the guide directory rather than the process
  * cwd so a test rendering the real guide from the repo root reads the same
  * reference the site build does. A guide directory with no sibling types tree
@@ -23,16 +23,14 @@ export function guideSymbolRoutes(guideDir: string): ReadonlyMap<string, string>
   const typesDir = resolve(guideDir, "../../types");
   let routes = routesByTypesDir.get(typesDir);
   if (!routes) {
-    routes = existsSync(typesDir)
-      ? buildRoutes(typesDir, join(typesDir, "../library-types"))
-      : new Map();
+    routes = existsSync(typesDir) ? buildRoutes(typesDir) : new Map();
     routesByTypesDir.set(typesDir, routes);
   }
   return routes;
 }
 
-function buildRoutes(typesDir: string, libraryTypesDir: string): ReadonlyMap<string, string> {
-  const pages = canonicalApiPages(typesDir, libraryTypesDir);
+function buildRoutes(typesDir: string): ReadonlyMap<string, string> {
+  const pages = canonicalApiPages(typesDir);
   const bareNamespaces = new Set(
     pages
       .filter((page) => !page.namespace.includes(".") && page.category !== "global-type")

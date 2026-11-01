@@ -277,7 +277,7 @@ describe("validateReleaseRouteManifest — widened per-version families", () => 
     const trackedVersions = versionsWithDiskFixtures(dir);
     widened = {
       versions: trackedVersions,
-      canonicalPages: canonicalApiPages(dir, dir),
+      canonicalPages: canonicalApiPages(dir),
       pagesByVersion: Object.fromEntries(
         trackedVersions.map((v) => [
           v.id,

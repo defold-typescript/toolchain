@@ -41,9 +41,7 @@ export default function SidebarTooltip() {
         if (event instanceof PointerEvent && event.pointerType !== "mouse") return;
         if (event.type === "focus" && lastWasTouch) return;
         const r = el.getBoundingClientRect();
-        // A row may name itself more fully than its label does — a library row
-        // carries its whole `owner/repo/namespace` path in `data-tooltip`.
-        const text = el.dataset.tooltip || el.textContent || "";
+        const text = el.textContent || "";
         setTip({ text, top: r.top + r.height / 2, left: r.right });
       };
       el.addEventListener("pointerenter", show);

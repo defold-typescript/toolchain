@@ -29,8 +29,8 @@ interface VersionSearchIndexDeps {
   versions: SearchIndexVersion[];
   pagesForVersion: (typesDir: string, versionId: string) => ApiPage[];
   /**
-   * The version-independent reference pages (core value types, Lua stdlib,
-   * vendored libraries) shared across every version, each already at its canonical
+   * The version-independent reference pages (core value types, Lua stdlib)
+   * shared across every version, each already at its canonical
    * `/api/<ns>` route. Composed into every version index so a lookup from a
    * version page still finds shared reference content without a version-prefixed
    * copy. Loaded once by the caller and passed to every version output.

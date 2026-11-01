@@ -37,7 +37,6 @@ const TRACKED_VERSIONS = versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) =>
   v.id.replace(/^defold-/, ""),
 );
 const OLDEST_VERSION = TRACKED_VERSIONS[TRACKED_VERSIONS.length - 1] as string;
-const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 // The oldest release a namespace's surviving-but-not-universal symbols were
 // introduced in, read off the Combined projection production renders from. The lifecycle
@@ -310,18 +309,6 @@ describe("apiSearchRecords", () => {
     const records = apiSearchRecords([...pages].reverse());
     const routes = records.map((r) => r.route);
     expect(routes).toEqual([...routes].sort());
-  });
-
-  test("indexes a library page into the default search index with no bespoke wiring", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const monarch = pages.find((p) => p.namespace === "monarch.monarch");
-    if (!monarch) throw new Error("expected a monarch.monarch library page");
-    expect(monarch.category).toBe("library");
-    const records = apiSearchRecords(pages);
-    const record = records.find((r) => r.route === monarch.route);
-    expect(record).toBeDefined();
-    expect(record?.title).toBe("monarch.monarch API");
-    expect(record?.text).toContain("monarch");
   });
 
   test("indexes parameter and return doc prose into the member's text while preserving the schema", () => {

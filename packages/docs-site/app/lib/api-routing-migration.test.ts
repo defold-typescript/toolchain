@@ -522,7 +522,7 @@ describe("api routing migration — the version index is the family it routes", 
     for (const bare of AXIS) {
       const id = versionId(bare);
       const routed = new Set(params.filter((p) => p.version === id).map((p) => p.namespace));
-      const indexed = new Set(versionIndexPages(id, dir, dir).map((p) => p.namespace));
+      const indexed = new Set(versionIndexPages(id, dir).map((p) => p.namespace));
       expect(routed.size).toBeGreaterThan(0);
       for (const namespace of routed) expect(indexed.has(namespace)).toBe(true);
     }
@@ -533,7 +533,7 @@ describe("api routing migration — the version index is the family it routes", 
     // index read before, and it is the one substitution the real corpus cannot
     // distinguish. `gone` lives in 1.0.0 alone, so it separates them here.
     const id = versionId(NEWEST);
-    expect(versionIndexPages(id, dir, dir).map((p) => p.namespace)).toContain("gone");
+    expect(versionIndexPages(id, dir).map((p) => p.namespace)).toContain("gone");
     expect(loadApiSurfaceForVersion(dir, id).map((p) => p.namespace)).not.toContain("gone");
     expect(versionedApiParams(dir)).toContainEqual({ version: id, namespace: "gone" });
   });
@@ -604,17 +604,10 @@ describe("api routing migration — the per-version namespace atom is the routed
 // dirs the way the sibling drift guards do.
 describe("api routing migration — the canonical claim rests on equal inventories", () => {
   const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-  const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
   const defaultVersion = versionsWithDiskFixtures(REAL_TYPES_DIR).find((v) => v.isDefault)
     ?.id as string;
-  const defaultIndex = () =>
-    versionIndexPages(defaultVersion, REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  // `/api` renders the canonical surface minus libraries, which are reached
-  // through `/libraries`. The version index applies the identical filter.
-  const canonicalIndex = () =>
-    canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).filter(
-      (p) => p.category !== "library",
-    );
+  const defaultIndex = () => versionIndexPages(defaultVersion, REAL_TYPES_DIR);
+  const canonicalIndex = () => canonicalApiPages(REAL_TYPES_DIR);
 
   test("the default version's index carries the same namespaces as /api", () => {
     expect(defaultVersion).toBeDefined();
@@ -639,7 +632,7 @@ describe("api routing migration — the canonical claim rests on equal inventori
   });
 
   test("the Lua standard library is present on both, not on /api alone", () => {
-    const luaStdlib = versionIndependentPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).filter(
+    const luaStdlib = versionIndependentPages(REAL_TYPES_DIR).filter(
       (p) => p.category === "lua-stdlib",
     );
     expect(luaStdlib.length).toBeGreaterThan(0);
@@ -680,7 +673,7 @@ describe("api routing migration — a historical index is genuinely different co
     namespacesByVersion: Object.fromEntries(
       AXIS.map((bare) => [
         versionId(bare),
-        versionIndexPages(versionId(bare), typesDir, typesDir).map((p) => p.namespace),
+        versionIndexPages(versionId(bare), typesDir).map((p) => p.namespace),
       ]),
     ),
     badgeCounts: {},
@@ -691,7 +684,7 @@ describe("api routing migration — a historical index is genuinely different co
     expect(canonicalLinkPath(`/api/${versionId(NEWEST)}`, config, config.defaultVersionId)).toBe(
       "/api",
     );
-    expect(symbolIdentities(versionIndexPages(versionId(NEWEST), dir, dir))).toEqual(
+    expect(symbolIdentities(versionIndexPages(versionId(NEWEST), dir))).toEqual(
       symbolIdentities(combinedApiPages(dir)),
     );
   });
@@ -701,7 +694,7 @@ describe("api routing migration — a historical index is genuinely different co
     expect(canonicalLinkPath(`/api/${versionId(MIDDLE)}`, config, config.defaultVersionId)).toBe(
       null,
     );
-    const historical = symbolIdentities(versionIndexPages(versionId(MIDDLE), dir, dir));
+    const historical = symbolIdentities(versionIndexPages(versionId(MIDDLE), dir));
     const canonical = symbolIdentities(combinedApiPages(dir));
     for (const id of historical) expect(canonical.has(id)).toBe(true);
     // `demo.newest_only` is capped out of the window ending at 2.0.0, which is
@@ -719,7 +712,6 @@ describe("api routing migration — a historical index is genuinely different co
 // both sides of every comparison read from production.
 describe("api routing migration — the rendered version index is the guarded surface", () => {
   const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-  const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
   const indexHrefs = (html: string): Set<string> =>
     new Set([...html.matchAll(/href="([^"]*)"/g)].map((match) => match[1] as string));
@@ -729,7 +721,7 @@ describe("api routing migration — the rendered version index is the guarded su
   // answers. Returns the status alongside the hrefs so a 404 or an empty index
   // cannot satisfy a membership assertion vacuously.
   const renderVersionIndex = async (
-    dirs: { typesDir?: string; libraryTypesDir?: string },
+    dirs: { typesDir?: string },
     versionIdParam: string,
   ): Promise<{ status: number; hrefs: Set<string> }> => {
     const app = new Hono();
@@ -749,10 +741,7 @@ describe("api routing migration — the rendered version index is the guarded su
 
     test("every namespace the default version routes is linked from its rendered index", async () => {
       const defaultId = versionId(NEWEST);
-      const { status, hrefs } = await renderVersionIndex(
-        { typesDir: dir, libraryTypesDir: dir },
-        defaultId,
-      );
+      const { status, hrefs } = await renderVersionIndex({ typesDir: dir }, defaultId);
       expect(status).toBe(200);
       expect(hrefs.size).toBeGreaterThan(0);
       const routed = versionedApiParams(dir).filter((param) => param.version === defaultId);
@@ -771,15 +760,14 @@ describe("api routing migration — the rendered version index is the guarded su
       ?.id as string;
     const corpusDirs = {
       typesDir: REAL_TYPES_DIR,
-      libraryTypesDir: REAL_LIBRARY_TYPES_DIR,
     };
-    const independent = () => versionIndependentPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const independent = () => versionIndependentPages(REAL_TYPES_DIR);
 
-    test("the whole non-library version-independent set is linked at its canonical routes", async () => {
+    test("the whole version-independent set is linked at its canonical routes", async () => {
       const { status, hrefs } = await renderVersionIndex(corpusDirs, defaultVersion);
       expect(status).toBe(200);
       expect(hrefs.size).toBeGreaterThan(0);
-      const shared = independent().filter((page) => page.category !== "library");
+      const shared = independent();
       expect(shared.length).toBeGreaterThan(0);
       for (const page of shared) expect(hrefs.has(page.route)).toBe(true);
       // One named instance per category the set spans, pinned so the derived
@@ -787,18 +775,6 @@ describe("api routing migration — the rendered version index is the guarded su
       // bug-140's Lua-standard `base`, and bug-146's Global-types `Vector3`.
       expect(hrefs.has("/api/base")).toBe(true);
       expect(hrefs.has("/api/Vector3")).toBe(true);
-    });
-
-    // `ApiIndex` renders no library section at all, so this guards the rendered
-    // surface only. `versionIndexPages`' own library filter is guarded where it is
-    // observable, in `api-content.test.ts` ("its non-engine half is the
-    // version-independent set the canonical index carries").
-    test("library pages stay off the version index, reachable through /libraries", async () => {
-      const { status, hrefs } = await renderVersionIndex(corpusDirs, defaultVersion);
-      expect(status).toBe(200);
-      const libraries = independent().filter((page) => page.category === "library");
-      expect(libraries.length).toBeGreaterThan(0);
-      for (const page of libraries) expect(hrefs.has(page.route)).toBe(false);
     });
   });
 });
@@ -809,9 +785,6 @@ describe("api routing migration — the rendered version index is the guarded su
 // loses its shape links. So these mount the real handlers and read the links
 // back off the response, with the expected anchor taken from that same response.
 describe("api routing migration — the rendered namespace page carries its shape links", () => {
-  const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-  const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
-
   // `name -> href` for every signature deep-link in a rendered page.
   const symbolLinks = (html: string): Map<string, string> =>
     new Map(
@@ -825,27 +798,7 @@ describe("api routing migration — the rendered namespace page carries its shap
       .filter((h) => h.text === text)
       .pop()?.id;
 
-  test("the canonical route links a shape token to that shape's heading on its own page", async () => {
-    const app = new Hono();
-    app.get(
-      "/api/:namespace",
-      ...createApiNamespaceRoute({
-        typesDir: REAL_TYPES_DIR,
-        libraryTypesDir: REAL_LIBRARY_TYPES_DIR,
-      }),
-    );
-    const res = await app.request("/api/monarch.monarch");
-    expect(res.status).toBe(200);
-    const html = await res.text();
-
-    const id = headingId(html, "ShowOptions");
-    expect(id).toBeDefined();
-    // Dropping the route's `page` argument leaves `Opaque` alone in the map, so
-    // `ShowOptions` renders as inert text and this membership check reds.
-    expect(symbolLinks(html).get("ShowOptions")).toBe(`/api/monarch.monarch#${id}`);
-  });
-
-  describe("the versioned route, over a fixture surface that carries a shape", () => {
+  describe("both routes, over a fixture surface that carries a shape", () => {
     let dir = "";
     beforeAll(() => {
       dir = makeWindowedTypesDir({ typedefShape: true });
@@ -856,10 +809,7 @@ describe("api routing migration — the rendered namespace page carries its shap
 
     test("links the shape token to the shape heading, not the same-named section heading", async () => {
       const app = new Hono();
-      app.get(
-        "/api/:version/:namespace",
-        ...createVersionedApiNamespaceRoute({ typesDir: dir, libraryTypesDir: dir }),
-      );
+      app.get("/api/:version/:namespace", ...createVersionedApiNamespaceRoute({ typesDir: dir }));
       const res = await app.request(`/api/${versionId(NEWEST)}/demo`);
       expect(res.status).toBe(200);
       const html = await res.text();
@@ -878,6 +828,22 @@ describe("api routing migration — the rendered namespace page carries its shap
       const href = symbolLinks(html).get(TYPEDEF_SHAPE_NAME);
       expect(href).toBe(`/api/${versionId(NEWEST)}/demo#${id}`);
     });
+
+    test("the canonical route links the shape token to that shape's heading on its own page", async () => {
+      const app = new Hono();
+      app.get("/api/:namespace", ...createApiNamespaceRoute({ typesDir: dir }));
+      const res = await app.request("/api/demo");
+      expect(res.status).toBe(200);
+      const html = await res.text();
+
+      const shape = allPageHeadings(html).filter((h) => h.text === `demo.${TYPEDEF_SHAPE_NAME}`);
+      expect(shape.length).toBe(1);
+      // Dropping the route's `page` argument leaves `Opaque` alone in the map, so
+      // the shape renders as inert text and this reds.
+      expect(symbolLinks(html).get(TYPEDEF_SHAPE_NAME)).toBe(
+        `/api/demo#${(shape[0] as (typeof shape)[number]).id}`,
+      );
+    });
   });
 
   // The alias half of the same one-line risk, and the only place it is
@@ -895,10 +861,7 @@ describe("api routing migration — the rendered namespace page carries its shap
     beforeAll(async () => {
       dir = makeWindowedTypesDir({ constantUnionAlias: true });
       const app = new Hono();
-      app.get(
-        "/api/:version/:namespace",
-        ...createVersionedApiNamespaceRoute({ typesDir: dir, libraryTypesDir: dir }),
-      );
+      app.get("/api/:version/:namespace", ...createVersionedApiNamespaceRoute({ typesDir: dir }));
       const res = await app.request(`${prefix}/demo`);
       status = res.status;
       html = await res.text();

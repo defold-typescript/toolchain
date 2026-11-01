@@ -4,14 +4,13 @@
 // hono/jsx; this pragma pins the JSX dialect for this file.
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
-import { ApiIndex, LibraryPath } from "../../components/api-index";
+import { ApiIndex } from "../../components/api-index";
 import {
   apiNamespaceOwner,
   apiVersions,
   canonicalApiPages,
   canonicalNamespaces,
   combinedSurface,
-  libraryOrigins,
   versionIndexPages,
 } from "../../lib/api-content";
 import {
@@ -27,25 +26,6 @@ import { withBase } from "../../lib/base";
 import { namespaceBadgeCounts } from "../../lib/combined-surface";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
-import { libraryLineage } from "../../lib/nav";
-
-// The library page heading: the styled `owner/repo/namespace` path. Exported so
-// the path wiring is unit-testable without the route's cwd-relative surface loaders.
-export function LibraryHeading({
-  owner,
-  repo,
-  namespace,
-}: {
-  owner: string;
-  repo: string;
-  namespace: string;
-}) {
-  return (
-    <h1>
-      <LibraryPath owner={owner} repo={repo} namespace={namespace} />
-    </h1>
-  );
-}
 
 // honox flat routing collapses `api/[version]/index.tsx` to `/api/:version`,
 // which collides with this `/api/:namespace` route (the shallower one wins). So
@@ -54,12 +34,11 @@ export function LibraryHeading({
 // canonical namespace page (a Combined engine page, or a version-independent one).
 // The 3-segment `/api/:version/:namespace` route lives in its own file.
 // What the version-index and canonical-namespace branches need to read a surface
-// that is not the docs-site cwd's: the two dirs their loaders take. Deliberately *not* a page-source callback
+// that is not the docs-site cwd's: the dir their loaders take. Deliberately *not* a page-source callback
 // — injecting `pagesForVersion` would let a test supply `versionIndexPages` while
 // production supplied anything, which is this guard's own bug one layer down.
 export interface ApiSurfaceDirs {
   typesDir?: string;
-  libraryTypesDir?: string;
 }
 
 export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
@@ -89,10 +68,7 @@ export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       // routes; its version-independent entries link back to their canonical routes.
       if (isKnownVersionId(param, apiVersions(dirs.typesDir))) {
         return c.render(
-          <ApiIndex
-            pages={versionIndexPages(param, dirs.typesDir, dirs.libraryTypesDir)}
-            version={param}
-          />,
+          <ApiIndex pages={versionIndexPages(param, dirs.typesDir)} version={param} />,
           {
             title: `API reference (${param})`,
           },
@@ -101,10 +77,10 @@ export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
 
       // Otherwise a canonical namespace: dispatch on its owning surface. An unknown
       // namespace 404s.
-      const owner = apiNamespaceOwner(param, dirs.typesDir, dirs.libraryTypesDir);
+      const owner = apiNamespaceOwner(param, dirs.typesDir);
       if (!owner) return c.notFound();
 
-      const pages = canonicalApiPages(dirs.typesDir, dirs.libraryTypesDir);
+      const pages = canonicalApiPages(dirs.typesDir);
       const page = pages.find((entry) => entry.namespace === param);
       if (!page) return c.notFound();
 
@@ -117,37 +93,17 @@ export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       // headings on it. Both render sites below render this same page.
       const signatureSymbolLinks = apiSignatureSymbolLinks(pages, page);
 
-      // Library pages render their heading as the styled `owner/repo/namespace`
-      // path (matching the /libraries index), so the markdown body omits its H1.
-      if (page.category === "library") {
-        const { owner: repoOwner, repo } = libraryLineage(
-          page.namespace,
-          libraryOrigins(dirs.libraryTypesDir),
-        );
-        const body = await renderMarkdown(
-          apiPageMarkdown(page, linkify, { omitHeading: true, resolveReplacement }),
-          { highlightSignatureHeadings: true, signatureSymbolLinks },
-        );
-        return c.render(
-          <article class="prose">
-            <LibraryHeading owner={repoOwner} repo={repo} namespace={page.namespace} />
-            <div dangerouslySetInnerHTML={{ __html: body }} />
-          </article>,
-          { title: `${page.module.namespace} API`, headings: pageHeadings(body) },
-        );
-      }
-
       // A Combined engine namespace renders with the availability markers and the
       // namespace-title count pills; a version-independent namespace (global type,
       // Lua stdlib) renders plainly.
       const combinedMarkers = owner === "combined-engine";
       const model = combinedMarkers
-        ? combinedSurface().namespaces.find((n) => n.namespace === param)
+        ? combinedSurface(dirs.typesDir).namespaces.find((n) => n.namespace === param)
         : undefined;
       // The canonical route is the full range by definition, so it states that
       // window explicitly rather than leaning on the option's default: the counts
       // and the dots then read from the same declared range.
-      const axis = combinedSurface().versions;
+      const axis = combinedSurface(dirs.typesDir).versions;
       const window = { from: axis[axis.length - 1] ?? "", to: axis[0] ?? "" };
       const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model, window)) : "";
 
