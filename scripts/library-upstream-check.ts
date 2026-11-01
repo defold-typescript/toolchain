@@ -6,6 +6,7 @@ import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.t
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
 import { readOpenApiTargets } from "../packages/cli/src/library/sync-openapi-types.ts";
 import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
 
 // Checks every library-types lane's targets for an upstream that has moved past
 // the pin. `upstream:release-check` is the same idea for the engine itself; the
@@ -255,7 +256,7 @@ function issueBodyFor(
     "Re-pinning is not a find-and-replace: the lanes differ in cost, and a bump",
     "moves a committed fidelity floor, the docs-site provenance assertions, and the",
     "generated docs artifacts with it. Follow *Refreshing library pins* in",
-    "`packages/docs/guide/refreshing-library-pins.md`.",
+    `${LIBRARY_DOCS_URL}/guides/refreshing-library-pins.`,
     "",
     "_Opened automatically by `library-upstream-check`._",
   ].join("\n");

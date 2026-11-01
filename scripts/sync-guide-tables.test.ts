@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
 import {
   CURATED_NATIVE_END,
   CURATED_NATIVE_START,
@@ -19,8 +20,7 @@ const TAGGED = {
   namespace: "x",
   manifestDir: "x",
 };
-const TAGGED_ROW =
-  "| [a/defold-x](https://github.com/a/defold-x) | `v1.2` | [`x`](/api/x) | `x/ext.manifest` |";
+const TAGGED_ROW = `| [a/defold-x](https://github.com/a/defold-x) | \`v1.2\` | [\`x\`](${LIBRARY_DOCS_URL}/api/x) | \`x/ext.manifest\` |`;
 
 const COMMIT = {
   repo: "https://github.com/b/defold-y",
@@ -29,8 +29,7 @@ const COMMIT = {
   namespace: "y",
   manifestDir: "y/native",
 };
-const COMMIT_ROW =
-  "| [b/defold-y](https://github.com/b/defold-y) | `0123456` | [`y`](/api/y) | `y/native/ext.manifest` |";
+const COMMIT_ROW = `| [b/defold-y](https://github.com/b/defold-y) | \`0123456\` | [\`y\`](${LIBRARY_DOCS_URL}/api/y) | \`y/native/ext.manifest\` |`;
 
 describe("curatedNativeTable", () => {
   test("renders the guide's header and separator, then one row per target in input order", () => {
@@ -50,7 +49,7 @@ describe("curatedNativeTable", () => {
   test("the manifest path comes from manifestDir, not the namespace", () => {
     const row = curatedNativeTable([{ ...TAGGED, manifestDir: "x/native" }]).split("\n")[2];
     expect(row).toBe(
-      "| [a/defold-x](https://github.com/a/defold-x) | `v1.2` | [`x`](/api/x) | `x/native/ext.manifest` |",
+      `| [a/defold-x](https://github.com/a/defold-x) | \`v1.2\` | [\`x\`](${LIBRARY_DOCS_URL}/api/x) | \`x/native/ext.manifest\` |`,
     );
   });
 });

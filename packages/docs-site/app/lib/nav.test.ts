@@ -428,9 +428,6 @@ describe("buildNav", () => {
       "/upgrading-defold-versions",
       "/extensions",
       "/shipping-library-types",
-      "/authoring-luals-library-types",
-      "/authoring-forked-library-types",
-      "/refreshing-library-pins",
     ]);
     expect(byLabel("Migration")?.children?.map((c) => c.route)).toEqual([
       "/api-docs-vs-ts-defold",

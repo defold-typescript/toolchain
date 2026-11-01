@@ -49,7 +49,8 @@ export interface AddedLibrary {
   readonly notes: string[];
 }
 
-const FORK_GUIDE = "authoring-forked-library-types.md";
+const FORK_GUIDE =
+  "https://defold-typescript.github.io/library-data/guides/authoring-forked-library-types";
 const EXTENSIONS_GUIDE = "extensions.md";
 const COMMIT_PIN = "commit:";
 const MOVING_REFS: ReadonlySet<string> = new Set(["master", "main"]);
