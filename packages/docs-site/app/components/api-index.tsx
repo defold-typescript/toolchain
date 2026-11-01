@@ -7,21 +7,9 @@ import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import { getStartedPages } from "../lib/get-started";
 import type { GuidePage } from "../lib/guide";
 import { groupGuidePages } from "../lib/guide-groups";
-import {
-  humanize,
-  type LibraryListing,
-  type LibraryOrigin,
-  libraryPathSegments,
-  OFFICIAL_NOTE,
-} from "../lib/nav";
-import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "../lib/no-typed-api-icon";
+import { humanize } from "../lib/nav";
 import { stripPlatformMarkers } from "../lib/platform-icons";
-import {
-  apiCardBadgeHtml,
-  apiPageCardDescription,
-  groupApiIndexPages,
-  groupLibraryIndexByOwner,
-} from "./api-index-sections";
+import { apiCardBadgeHtml, apiPageCardDescription, groupApiIndexPages } from "./api-index-sections";
 import { LandingCard, LandingCardGrid, LandingPage, LandingSection } from "./landing";
 
 // A card grid of API namespaces. Namespace labels render mono; the card summary
@@ -31,7 +19,7 @@ import { LandingCard, LandingCardGrid, LandingPage, LandingSection } from "./lan
 // stays badge-less.
 function ApiCards({
   pages,
-  label = (page) => page.displayName ?? page.namespace,
+  label = (page) => page.namespace,
   badgeHtml,
 }: {
   pages: ApiPage[];
@@ -92,9 +80,7 @@ export function GetStartedIndex({ pages }: { pages: GuidePage[] }) {
 }
 
 // The category-grouped API index body, shared by the default `/api` route and
-// the per-version `/api/<version>` index. Libraries are intentionally excluded
-// here because they have their own top-level `/libraries` index; with `version`
-// set the intro names the version and only the non-empty categories render. A
+// the per-version `/api/<version>` index. With `version` set the intro names the version and only the non-empty categories render. A
 // non-default surface carries engine pages plus the version-independent Global
 // types, which the route re-adds for display (they keep their default routes and
 // stay out of per-version routing/search).
@@ -177,12 +163,12 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
   );
 }
 
-// The canonical `/api` landing: every non-library namespace across the tracked
+// The canonical `/api` landing: every namespace across the tracked
 // Defold versions in one surface. Mirrors `ApiIndex`'s four grouped sections
 // (Globals, Global types, Lua standard, Defold engine) so the index matches the
 // sidebar, but the lead names the versions the union spans and engine cards carry
 // per-namespace change badges from `badgeCounts` (Combined-only, so a symbol
-// present in every version carries no badge). Libraries stay on `/libraries`.
+// present in every version carries no badge).
 export function CombinedIndex({
   pages,
   versions,
@@ -295,163 +281,6 @@ export function GuidesIndex({ pages }: { pages: GuidePage[] }) {
       {groups.map((group) => (
         <LandingSection heading={group.label} subtitle={group.subtitle}>
           <GuideCards pages={group.pages} />
-        </LandingSection>
-      ))}
-    </LandingPage>
-  );
-}
-
-// A library namespace's full lineage as one line: dimmed `creator/dir/` path
-// with the namespace itself emphasised (mono, accent), so a card or page header
-// carries the whole tree the sidebar shows without a separate level per line.
-// The `creator` segment is dropped when it equals the dir (a dir with no owner).
-// Neither a dot between letters nor a path slash is a line-break opportunity
-// under UAX #14, so a long dotted namespace (`monarch.transitions.easings`)
-// would ride off the edge of a heading and widen the page. Emit an explicit
-// `<wbr>` after each dot so the path wraps at its own segment boundaries.
-function dottedSegments(text: string) {
-  const parts = text.split(".");
-  return parts.map((part, index) =>
-    index === parts.length - 1 ? (
-      part
-    ) : (
-      <>
-        {part}.
-        <wbr />
-      </>
-    ),
-  );
-}
-
-export function LibraryPath({
-  owner,
-  repo,
-  namespace,
-}: {
-  owner: string;
-  repo: string;
-  namespace: string;
-}) {
-  const segments = libraryPathSegments(owner, repo, namespace);
-  return (
-    <>
-      {segments.map((segment, index) => (
-        <>
-          {index > 0 ? (
-            <>
-              <span class="font-normal text-text-faint/25">/</span>
-              <wbr />
-            </>
-          ) : null}
-          <span
-            class={
-              index === segments.length - 1
-                ? "font-mono font-semibold text-accent"
-                : "font-normal text-text-muted"
-            }
-          >
-            {dottedSegments(segment)}
-          </span>
-        </>
-      ))}
-    </>
-  );
-}
-
-// The first sentence of an authored summary's lead (`What it ships`) paragraph, as
-// plain text: the card's stand-in for a manifest entry whose upstream description
-// is empty. The lead may still hold a `###` subheading, so headings are skipped.
-function summaryFirstSentence(ships: string): string {
-  const paragraph =
-    ships
-      .split(/\n\s*\n/)
-      .map((block) => block.trim())
-      .find((block) => block !== "" && !block.startsWith("#")) ?? "";
-  const text = paragraph
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/`/g, "")
-    .replace(/\s+/g, " ");
-  return text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? text;
-}
-
-function listingCardDescription(listing: LibraryListing): string {
-  return [
-    listing.description || summaryFirstSentence(listing.ships),
-    LIBRARY_API_KIND_SENTENCE[listing.api].replace(/`/g, ""),
-  ]
-    .filter((part) => part !== "")
-    .join(" ");
-}
-
-export function LibraryIndex({
-  pages,
-  origins,
-  listings = [],
-}: {
-  pages: ApiPage[];
-  origins: Map<string, LibraryOrigin>;
-  listings?: LibraryListing[];
-}) {
-  const groups = groupLibraryIndexByOwner(pages, origins, listings);
-  const listingsByRoute = new Map(listings.map((listing) => [listing.route, listing]));
-  const total = groups.reduce(
-    (sum, group) => sum + group.libraries.reduce((acc, lib) => acc + lib.pages.length, 0),
-    0,
-  );
-  return (
-    <LandingPage
-      title="Libraries"
-      lead={
-        <p>
-          Library API blocks, and libraries that have no typed API.
-          <br />
-          The TypeScript definitions behind each API block are maintained in this repo — generated
-          from the upstream sources that ship machine-readable types, and hand-forked where upstream
-          ships none — and pinned to an upstream commit or tag.
-          <br />A card marked with the no-typed-API icon links to a page describing what the library
-          ships and how to use it, but it has no typed API.
-          <br />
-          <span class="mt-1 block text-sm text-text-faint">
-            {total} namespace{total === 1 ? "" : "s"} documented.
-          </span>
-        </p>
-      }
-    >
-      {groups.map((group) => (
-        // One section per owner (like the API index's topic sections); the owner
-        // heads the block, so each card shows only `repo/namespace`.
-        <LandingSection
-          heading={group.label}
-          {...(group.official ? { headingNote: OFFICIAL_NOTE } : {})}
-        >
-          <LandingCardGrid>
-            {group.libraries.flatMap((lib) => {
-              const listing = lib.listing && listingsByRoute.get(lib.listing.route);
-              if (listing) {
-                return (
-                  <LandingCard
-                    mono
-                    href={listing.route}
-                    title={
-                      <>
-                        <LibraryPath owner="" repo={lib.label} namespace="" />{" "}
-                        <span dangerouslySetInnerHTML={{ __html: NO_TYPED_API_ICON }} />
-                      </>
-                    }
-                    description={listingCardDescription(listing)}
-                  />
-                );
-              }
-              return lib.pages.map((page) => (
-                <LandingCard
-                  mono
-                  href={page.route}
-                  title={<LibraryPath owner="" repo={lib.label} namespace={page.namespace} />}
-                  description={stripPlatformMarkers(apiPageCardDescription(page)) || null}
-                />
-              ));
-            })}
-          </LandingCardGrid>
         </LandingSection>
       ))}
     </LandingPage>

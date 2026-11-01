@@ -21,7 +21,6 @@ import { windowCombinedSurface } from "../app/lib/version-window";
 import { symbolIndexOutputs } from "./build-symbol-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
-const LIBRARY_TYPES_DIR = join(import.meta.dir, "..", "..", "library-types");
 
 describe("symbolIndexOutputs", () => {
   const outputs = symbolIndexOutputs();
@@ -40,9 +39,7 @@ describe("symbolIndexOutputs", () => {
   });
 
   test("keeps the version-independent reference symbols in the shared index", () => {
-    const versionIndependent = buildSymbolIndex(
-      loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR),
-    );
+    const versionIndependent = buildSymbolIndex(loadVersionIndependentPages(TYPES_DIR));
     const keys = Object.keys(versionIndependent);
     expect(keys.length).toBeGreaterThan(0);
     for (const key of keys) {
@@ -61,7 +58,7 @@ describe("symbolIndexOutputs", () => {
   });
 
   test("every version index carries the shared reference symbols at canonical routes", () => {
-    const sharedIndex = buildSymbolIndex(loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR));
+    const sharedIndex = buildSymbolIndex(loadVersionIndependentPages(TYPES_DIR));
     const sharedKeys = Object.keys(sharedIndex);
     expect(sharedKeys.length).toBeGreaterThan(0);
     // Sanity anchors named by the step: a core value type and its member.

@@ -2,14 +2,11 @@ import { join } from "node:path";
 import type { ApiPage } from "./api-surface";
 import {
   type ApiVersion,
-  defoldListingsFromManifest,
-  libraryOriginByNamespace,
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
   loadSignaturesArtifact,
   loadVersionIndependentPages,
-  portalListingsFromManifest,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import {
@@ -18,22 +15,12 @@ import {
   combinedNamespaceToApiPage,
   type SignaturesArtifact,
 } from "./combined-surface";
-import {
-  type LibraryListing,
-  type LibraryOrigin,
-  type LibraryOwnerGroup,
-  libraryOwnerGroups,
-} from "./nav";
 import { resolveVersionWindow, type VersionWindow, windowCombinedSurface } from "./version-window";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
-export const LIBRARY_TYPES_DIR = join(process.cwd(), "../library-types");
 
-export function apiPages(
-  typesDir: string = TYPES_DIR,
-  libraryTypesDir: string = LIBRARY_TYPES_DIR,
-): ApiPage[] {
-  return loadApiSurface(typesDir, libraryTypesDir);
+export function apiPages(typesDir: string = TYPES_DIR): ApiPage[] {
+  return loadApiSurface(typesDir);
 }
 
 // Enumeration for routing and version chrome: a non-default target with no
@@ -55,7 +42,8 @@ export function apiPagesForVersion(versionId: string): ApiPage[] {
 // committed artifacts are fixed for a build; the dev server reloads the module
 // graph on change, so the memo cannot serve stale data across a real edit.
 let combinedSurfaceCache: CombinedSurface | undefined;
-export function combinedSurface(): CombinedSurface {
+export function combinedSurface(typesDir?: string): CombinedSurface {
+  if (typesDir) return loadCombinedSurface(typesDir);
   if (!combinedSurfaceCache) combinedSurfaceCache = loadCombinedSurface(TYPES_DIR);
   return combinedSurfaceCache;
 }
@@ -75,8 +63,7 @@ export function toCombinedApiPage(ns: CombinedNamespace): ApiPage {
 // read directly (no post-projection route rewrite). An explicit `typesDir`
 // bypasses the module cache for deterministic tests.
 export function combinedApiPages(typesDir?: string): ApiPage[] {
-  const surface = typesDir ? loadCombinedSurface(typesDir) : combinedSurface();
-  return surface.namespaces.map(toCombinedApiPage);
+  return combinedSurface(typesDir).namespaces.map(toCombinedApiPage);
 }
 
 // The authoritative signatures artifact, memoized on the same terms as
@@ -93,7 +80,7 @@ function signaturesArtifact(): SignaturesArtifact {
 // bound is validated against, so a route, a selector and a param set can never
 // disagree about which versions exist.
 export function apiVersionAxis(typesDir?: string): readonly string[] {
-  return (typesDir ? loadCombinedSurface(typesDir) : combinedSurface()).versions;
+  return combinedSurface(typesDir).versions;
 }
 
 // The route segment a bare axis version is addressed by (`1.13.1` ->
@@ -161,14 +148,10 @@ export function versionNamespaceAtom(versionId: string, typesDir?: string): stri
 }
 
 // The version-independent reference pages (core value types, Lua standard
-// library, vendored libraries), each canonical at `/api/<ns>` with no version
-// tie. Defaults to the real types/library dirs; an explicit dir pair drives
-// deterministic tests.
-export function versionIndependentPages(
-  typesDir: string = TYPES_DIR,
-  libraryTypesDir: string = LIBRARY_TYPES_DIR,
-): ApiPage[] {
-  return loadVersionIndependentPages(typesDir, libraryTypesDir);
+// library), each canonical at `/api/<ns>` with no version tie. Defaults to the
+// real types dir; an explicit dir drives deterministic tests.
+export function versionIndependentPages(typesDir: string = TYPES_DIR): ApiPage[] {
+  return loadVersionIndependentPages(typesDir);
 }
 
 // Merge the version-independent pages into a version's engine pages, keeping the
@@ -184,30 +167,23 @@ export function withVersionIndependentPages(
 
 // The `/api/<version>` index surface: the engine namespaces of the window
 // `{oldest, to: version}` — exactly the family `/api/<version>/<ns>` routes —
-// unioned with the version-independent pages the canonical `/api` index carries,
-// under the identical library filter. Sourcing the index from the window rather
-// than from the version's own surface is what makes a namespace removed before
+// unioned with the version-independent pages the canonical `/api` index carries.
+// Sourcing the index from the window rather than from the version's own surface is what makes a namespace removed before
 // this version reachable from it; unioning the same set `/api` does is what makes
 // the default version's `rel="canonical"` to `/api` true by construction. An
 // unresolvable version yields no window and no pages — the route's
 // `isKnownVersionId` guard already rejects an unknown param.
-export function versionIndexPages(
-  versionId: string,
-  typesDir?: string,
-  libraryTypesDir: string = LIBRARY_TYPES_DIR,
-): ApiPage[] {
+export function versionIndexPages(versionId: string, typesDir?: string): ApiPage[] {
   const window = resolveVersionWindow(apiVersionAxis(typesDir), versionId, null);
   if (!window) return [];
   return withVersionIndependentPages(
     windowedApiPages(window, typesDir),
-    versionIndependentPages(typesDir ?? TYPES_DIR, libraryTypesDir).filter(
-      (page) => page.category !== "library",
-    ),
+    versionIndependentPages(typesDir ?? TYPES_DIR),
   );
 }
 
 // Which surface owns a canonical namespace: a Combined engine namespace, or a
-// version-independent one (global type, Lua stdlib, library).
+// version-independent one (global type, Lua stdlib).
 export type ApiNamespaceOwner = "combined-engine" | "version-independent";
 
 // Assign each canonical namespace to exactly one owning surface, throwing on a
@@ -234,23 +210,17 @@ export function apiNamespaceOwners(
 // The canonical unprefixed API surface: the Combined engine pages (at `/api/<ns>`)
 // unioned with the version-independent pages, guarded so no namespace is claimed
 // by both. This is what the `/api` route, the sidebar nav, and the renderer read.
-export function canonicalApiPages(
-  typesDir?: string,
-  libraryTypesDir: string = LIBRARY_TYPES_DIR,
-): ApiPage[] {
+export function canonicalApiPages(typesDir?: string): ApiPage[] {
   const engine = combinedApiPages(typesDir);
-  const independent = versionIndependentPages(typesDir ?? TYPES_DIR, libraryTypesDir);
+  const independent = versionIndependentPages(typesDir ?? TYPES_DIR);
   apiNamespaceOwners(engine, independent);
   return [...engine, ...independent];
 }
 
 // The canonical namespaces, in canonical-page order, for the 2-segment
 // `/api/<namespace>` route's static params.
-export function canonicalNamespaces(
-  typesDir?: string,
-  libraryTypesDir: string = LIBRARY_TYPES_DIR,
-): string[] {
-  return canonicalApiPages(typesDir, libraryTypesDir).map((page) => page.namespace);
+export function canonicalNamespaces(typesDir?: string): string[] {
+  return canonicalApiPages(typesDir).map((page) => page.namespace);
 }
 
 // The owning surface for one canonical namespace, or `undefined` for an unknown
@@ -259,10 +229,9 @@ export function canonicalNamespaces(
 export function apiNamespaceOwner(
   namespace: string,
   typesDir?: string,
-  libraryTypesDir: string = LIBRARY_TYPES_DIR,
 ): ApiNamespaceOwner | undefined {
   const engine = combinedApiPages(typesDir);
-  const independent = versionIndependentPages(typesDir ?? TYPES_DIR, libraryTypesDir);
+  const independent = versionIndependentPages(typesDir ?? TYPES_DIR);
   return apiNamespaceOwners(engine, independent).get(namespace);
 }
 
@@ -275,38 +244,4 @@ export function combinedNamespaces(): string[] {
 // SSG params for `/api/combined/<namespace>`: one entry per union namespace.
 export function combinedParams(): { namespace: string }[] {
   return combinedNamespaces().map((namespace) => ({ namespace }));
-}
-
-// Namespace -> GitHub `<owner>/<repo>` origin, the lineage the Libraries tree,
-// the index cards, and each library page heading all group and title themselves by.
-export function libraryOrigins(
-  libraryTypesDir: string = LIBRARY_TYPES_DIR,
-): Map<string, LibraryOrigin> {
-  return libraryOriginByNamespace(libraryTypesDir);
-}
-
-// Libraries with no typed API, listed on the Libraries index as repo cards: Defold's
-// own, then the Asset Portal's. The index, the listing routes, the static build and
-// the sidebar all read this one list, so a listing cannot reach one and miss another.
-export function untypedListings(libraryTypesDir: string = LIBRARY_TYPES_DIR): LibraryListing[] {
-  return [
-    ...defoldListingsFromManifest(libraryTypesDir),
-    ...portalListingsFromManifest(libraryTypesDir),
-  ];
-}
-
-// The Libraries tab's owner groups: typed library pages grouped by their GitHub
-// origin, with the untyped listings among them. The sidebar renders exactly this,
-// so a test over it covers what the renderer ships.
-export function libraryNavGroups(
-  pages: ApiPage[],
-  libraryTypesDir: string = LIBRARY_TYPES_DIR,
-): LibraryOwnerGroup[] {
-  return libraryOwnerGroups(
-    pages
-      .filter((page) => page.category === "library")
-      .map((page) => ({ namespace: page.namespace, route: page.route })),
-    libraryOrigins(libraryTypesDir),
-    untypedListings(libraryTypesDir),
-  );
 }

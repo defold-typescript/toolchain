@@ -67,7 +67,7 @@ export function createVersionedApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       // from the windowed collection and every alias link keeps the reader in the
       // version they opened.
       const signatureSymbolLinks = apiSignatureSymbolLinks(
-        canonicalApiPages(dirs.typesDir, dirs.libraryTypesDir),
+        canonicalApiPages(dirs.typesDir),
         page,
         pages,
       );

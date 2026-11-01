@@ -4,9 +4,9 @@ import type { Child } from "hono/jsx";
 import { withBase } from "../lib/base";
 
 // Reusable building blocks for every category landing ("root node") page —
-// Get started, Guides, API, Libraries. Each landing is an article of the same
+// Get started, Guides, API. Each landing is an article of the same
 // shape: a prose header, then one or more sections of link cards. Centralising
-// the markup here keeps the four pages visually uniform and lets a new category
+// the markup here keeps the three pages visually uniform and lets a new category
 // get a landing for free.
 
 /**

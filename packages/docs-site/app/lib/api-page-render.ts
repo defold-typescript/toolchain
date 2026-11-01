@@ -24,7 +24,6 @@ import {
   groupFunctionRevisions,
   groupFunctionSymbols,
   groupTypeSymbols,
-  type LibraryMeta,
   mergedAvailability,
   outerCallParams,
   outerCallSlots,
@@ -45,9 +44,6 @@ import {
   API_TYPE_CODE_OPEN,
 } from "./api-type-links";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
-import { forgeOf } from "./forge";
-import type { LibraryListing } from "./nav";
-import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
 import { functionTypeEmphasis } from "./signature-emphasis";
 import { buildSymbolIndex, memberAnchors } from "./symbol-index";
@@ -324,24 +320,6 @@ function unionCategory(categories: readonly BadgeCategory[]): BadgeCategory {
   };
 }
 
-// The heading marker for an ambient global, reusing the `api-badge-dot` markup
-// (and so the heading slugger's rule that strips it) rather than a second visual
-// language. Independent of the availability categories above: a `library` page
-// carries no availability record at all, and this marker rides every page.
-function globalDot(symbol: ApiSymbol): string {
-  if (!symbol.global) return "";
-  return '<span class="api-badge-dot api-badge-dot--global" aria-label="Ambient global" title="Ambient global">G</span>';
-}
-
-// The heading marker for a symbol whose prose came from the library's upstream
-// source rather than from the fork, on the same `api-badge-dot` terms as
-// `globalDot`. The page's provenance block already names the repo and ref the text
-// came from, so the marker points at a source the reader can already see.
-function upstreamDot(symbol: ApiSymbol): string {
-  if (!symbol.docSource) return "";
-  return '<span class="api-badge-dot api-badge-dot--upstream" aria-label="Documentation imported from upstream" title="Documentation imported from upstream">U</span>';
-}
-
 // The per-symbol presence span the client-side `?since=` filter reads, riding the
 // heading on the same terms as `api-badge-dot` (an empty decorative `<span>`, so
 // the heading slugger already drops it and the id keeps keying off the bare
@@ -471,138 +449,6 @@ export function defoldRefLine(ref: DefoldRef): string {
   return `[icon:lua] [\`${ref.name}\`](${ref.url})`;
 }
 
-// The `  1.` adopt step naming the dependency URL for a repo at its pin — shared by
-// typed library pages and untyped listing pages so both give one instruction per
-// pin kind. `ref` is the pinned tag or commit; a release pin leaves the choice to
-// the reader, so it goes unused there.
-export function dependencyStep(
-  repoUrl: string,
-  pinKind: LibraryMeta["pinKind"],
-  ref: string,
-): string {
-  const repo = repoUrl ? repoUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "") : "";
-  const forge = forgeOf(repoUrl);
-  const base = repoUrl.replace(/\/$/, "");
-  const dependencies = "to `game.project` under `[project]` `dependencies`";
-  // GitHub and Codeberg serve the same releases, tags and archive routes.
-  const step1 = !forge
-    ? `Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`
-    : pinKind === "tag"
-      ? `This repo publishes no releases. Pick a tag from [${repo} tags](${base}/tags) and add its **Source code (zip)** URL — for the pinned tag, \`${base}/archive/refs/tags/${ref}.zip\` — ${dependencies}`
-      : pinKind === "commit"
-        ? `This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, \`${base}/archive/${ref}.zip\` — ${dependencies}`
-        : `Pick a release from [${repo} releases](${base}/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`;
-  return `  1. ${step1}, then **Fetch Libraries** in the Defold editor.`;
-}
-
-// A 40-hex commit pin reads as its short sha; a tag or release pin reads verbatim.
-function pinLabel(ref: string): string {
-  return /^[0-9a-f]{40}$/.test(ref) ? ref.slice(0, 7) : ref;
-}
-
-// An untyped library's `/libraries/<owner>/<repo>` page body in the typed library
-// page's order: the authored lead, the api-kind sentence, the linked GitHub pin
-// with the setup steps nested under it, then the optional `Engine APIs` section.
-// Only a `standard` adoption opens the steps with the shared dependency step; a
-// `fork` listing's authored steps already start from the fork, and an
-// `unavailable` one has nothing to install, so theirs number from 1. An Asset
-// Portal listing closes the bullets with a link to its portal entry.
-// Appended to a pin bullet: the Defold version current when the pin was cut.
-function releaseEraSuffix(releaseEra: string | undefined): string {
-  return releaseEra ? ` (released while Defold ${releaseEra} was current)` : "";
-}
-
-export function listingPageMarkdown(listing: LibraryListing): string {
-  const repo = `${listing.owner}/${listing.repo}`;
-  const standard = listing.adoption === "standard";
-  const firstNumber = standard ? 2 : 1;
-  const lines = [
-    listing.ships,
-    "",
-    LIBRARY_API_KIND_SENTENCE[listing.api],
-    "",
-    `- GitHub: [${repo}](${listing.url}) — pinned to [\`${pinLabel(listing.ref)}\`](${listing.url}/tree/${listing.ref})${releaseEraSuffix(listing.releaseEra)}`,
-    ...(standard ? [dependencyStep(listing.url, listing.pinKind, listing.ref)] : []),
-    ...listing.steps.map((step, index) => `  ${index + firstNumber}. ${step}`),
-    ...(listing.portal ? [`- Asset Portal: [${listing.repo}](${listing.portal.url})`] : []),
-  ];
-  if (listing.engineApis) lines.push("", "## Engine APIs", "", listing.engineApis);
-  return lines.join("\n");
-}
-
-// The uniform provenance block for a `library` page: the bullets lead with the
-// real origin (author + upstream GitHub repo), followed by the ts-defold
-// commit pin, the import string, and the license. Author and GitHub are
-// omitted when the dir carries no NOTICE credit (both `meta.author` and
-// `meta.authorUrl` are `""`). The commit-pin text is the abbreviated `meta.commit`
-// sha, linking to `meta.sourceUrl` (the exact `.d.ts` at the pin). The import
-// statement is emitted as a `ts` code block nested under an `Import` bullet (not
-// an inline span) so it renders as a `<pre>` and picks up the copy-to-clipboard
-// button; the fence also keeps the prose linkifier off the dotted module name.
-function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
-  // Abbreviated, still-live pin — `2fe3aed` linking to the generating source.
-  const pin = `[\`${meta.commit.slice(0, 7)}\`](${meta.sourceUrl})`;
-  const repo = meta.authorUrl
-    ? meta.authorUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "")
-    : "";
-  // A single provenance bullet — the upstream repo, labelled by its forge (GitHub
-  // or Codeberg), with the commit pin folded in
-  // as `— pinned to <short-sha>` (or the standalone `Commit pin` when the dir
-  // carries no NOTICE credit). Author and License are deliberately omitted: the
-  // reader gets them from the linked repo. The adopt steps nest as a numbered
-  // list directly under this bullet (no `Usage:` label).
-  //
-  // We deliberately do *not* mint a moving archive URL (`master`/`main`/
-  // `HEAD.zip`): version choice is the user's, and a specific release is a
-  // vetted, reproducible pin rather than whatever the default branch holds at
-  // fetch time. So step 1 links the repo's `/releases` page (browsed, hence a
-  // link) so the reader copies a release's Source-code ZIP or a packaged `.zip`
-  // asset — Defold and `resolve` extract zip, never the tar.gz GitHub also
-  // offers. With no NOTICE credit there is no repo to link, so it is named only.
-  // A Defold extension pinned to a tag or commit has no release to pick, so its
-  // step 1 names the pin's own archive instead: a tag or commit archive is
-  // immutable, so this still mints no moving archive URL, and the tag case
-  // links the repo's tags so version choice stays the user's.
-  // Step 3's import stays a fenced block at the ordered-item content column
-  // (5 spaces) so it renders a copyable <pre>.
-  const head = meta.authorUrl
-    ? `- ${forgeOf(meta.authorUrl) ?? "Source"}: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}${releaseEraSuffix(meta.releaseEra)}`
-    : `- Commit pin: ${pin}${releaseEraSuffix(meta.releaseEra)}`;
-  // An extension adding members to an engine namespace has no module of its
-  // own, so step 3 names the engine global instead of an import.
-  const step3 =
-    meta.usage === "ambient"
-      ? [
-          `  3. Call it through the global \`${meta.globalNamespace}\` — no import.${
-            meta.extendsNamespace
-              ? ` It adds members to the engine \`${meta.extendsNamespace}\` namespace.`
-              : ""
-          }`,
-        ]
-      : [
-          "  3. Import it under a namespace alias of your choice:",
-          "     ```ts",
-          `     ${meta.importString}`,
-          "     ```",
-        ];
-  return [
-    head,
-    dependencyStep(meta.authorUrl, meta.pinKind, meta.commit),
-    "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
-    ...step3,
-    // A fork like `boom` or `deftest` publishes most of its surface outside the
-    // `declare module` block, so the import above reaches only the symbols that
-    // carry no marker; without this the page reads as if it reached them all.
-    ...(hasGlobals
-      ? [
-          "     Symbols marked ambient globals are declared globally and need no import — call them directly.",
-        ]
-      : []),
-    // Labelled by repo name, as an Asset Portal listing page labels its entry.
-    ...(meta.portal ? [`- Asset Portal: [${repo.split("/").at(-1)}](${meta.portal.url})`] : []),
-  ];
-}
-
 // Render the module intro, then each kind's symbols stacked in one column. A
 // single combined string keeps Shiki and the heading-id slugger to one pass, so
 // per-symbol headings stay uniquely id'd for the "On this page" TOC. The
@@ -618,29 +464,17 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
 export function apiPageMarkdown(
   page: Pick<
     ApiPage,
-    | "namespace"
-    | "module"
-    | "translations"
-    | "signatures"
-    | "category"
-    | "libraryMeta"
-    | "displayName"
-    | "availability"
-    | "route"
+    "namespace" | "module" | "translations" | "signatures" | "category" | "availability" | "route"
   >,
   linkify: (text: string) => string,
-  // Library pages render their heading as the styled `creator/dir/namespace`
-  // path component in the route, so the markdown starts at the intro.
   // `resolveReplacement` links a symbol's replacement within this surface;
   // it defaults to always-unresolved, which lands the fallback on the API index.
   {
-    omitHeading = false,
     resolveReplacement = () => undefined,
     titleBadges = "",
     combinedMarkers = false,
     window,
   }: {
-    omitHeading?: boolean;
     resolveReplacement?: ReplacementResolver;
     // Namespace-title count pills appended inline on the H1 line (Combined pages
     // pass the `namespaceCountBadges` HTML) so they sit on the heading baseline;
@@ -708,9 +542,8 @@ export function apiPageMarkdown(
     );
   };
   // Only the engine surface is version-tracked, so only it gets a presence
-  // span. A `library` symbol is pinned to an upstream commit and a
-  // `global-type` / `lua-stdlib` symbol to no version at all; stamping a Defold
-  // range on either would state a fact that does not hold for it.
+  // span. A `global-type` / `lua-stdlib` symbol is pinned to no version at all;
+  // stamping a Defold range on it would state a fact that does not hold for it.
   const spanTracked = page.category === "engine" && pageAxis.length > 0;
   const presentIn = (symbol: ApiSymbol): readonly string[] =>
     symbol.availability?.availableIn?.length ? symbol.availability.availableIn : pageAxis;
@@ -734,31 +567,15 @@ export function apiPageMarkdown(
   const indexRoute = apiIndexRoute(page.route);
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
   const lines: string[] = [];
-  if (!omitHeading) {
-    // The title pills ride the H1 line (mirroring the inline `api-badge-dot`
-    // signature-heading markers) so they render on the heading baseline rather
-    // than as a block that wraps below the title.
-    const heading = `# ${page.displayName ?? m.namespace}`;
-    lines.push(titleBadges ? `${heading} ${titleBadges}` : heading, "");
-    if (page.displayName && page.displayName !== m.namespace) {
-      lines.push(`\`${m.namespace}\``, "");
-    }
-  } else if (titleBadges) {
-    lines.push(titleBadges, "");
-  }
+  // The title pills ride the H1 line (mirroring the inline `api-badge-dot`
+  // signature-heading markers) so they render on the heading baseline rather
+  // than as a block that wraps below the title.
+  const heading = `# ${m.namespace}`;
+  lines.push(titleBadges ? `${heading} ${titleBadges}` : heading, "");
   const raw = m.description || m.brief;
   const intro =
     page.category === "global-type" ? raw : proseDocText(raw, m.namespace, page.translations);
   if (intro) lines.push(linkify(intro), "");
-  if (page.category === "library" && page.libraryMeta) {
-    lines.push(
-      ...libraryMetaBlock(
-        page.libraryMeta,
-        symbols.some((s) => s.global),
-      ),
-      "",
-    );
-  }
   const linkifyParam = (p: ApiSymbolParam): ApiSymbolParam => ({
     ...p,
     doc: linkify(p.doc),
@@ -789,8 +606,6 @@ export function apiPageMarkdown(
   const emitSymbol = (symbol: ApiSymbol, depth: SymbolDepth = 3) => {
     const dots =
       (combinedMarkers ? symbolDots(symbol) : "") +
-      globalDot(symbol) +
-      upstreamDot(symbol) +
       (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "");
     lines.push(
       symbolBlock(linkifySymbol(symbol), badgesFor(symbol), dots, noteFor(symbol.name), depth),
@@ -910,11 +725,7 @@ export function apiPageMarkdown(
     depth: SymbolDepth,
   ) => {
     const symbol = chainSymbol(revision);
-    const dots =
-      (combinedMarkers ? groupDots([symbol]) : "") +
-      globalDot(symbol) +
-      upstreamDot(symbol) +
-      groupSpan(chainSymbols(group));
+    const dots = (combinedMarkers ? groupDots([symbol]) : "") + groupSpan(chainSymbols(group));
     const lead = [
       overloadSummary(group),
       badgesFor(symbol),
@@ -992,11 +803,7 @@ export function apiPageMarkdown(
     const codes = overloadFormCodes(forms);
     const sharedReturnTable = sameReturnTables && (tableForm?.returnValues.length ?? 0) > 0;
 
-    const dots =
-      (combinedMarkers ? groupDots(forms) : "") +
-      globalDot(forms.find((s) => s.global) ?? head) +
-      upstreamDot(forms.find((s) => s.docSource) ?? head) +
-      groupSpan(chainSymbols(group));
+    const dots = (combinedMarkers ? groupDots(forms) : "") + groupSpan(chainSymbols(group));
     // The count badge stands where the heading reads `...`; the markdown renderer
     // splices it into the colored signature and keeps it out of the anchor.
     const heading = `${"#".repeat(depth)} \`${overloadHeading(forms)}\` <span class="api-overload-count">${forms.length} overloads</span>`;

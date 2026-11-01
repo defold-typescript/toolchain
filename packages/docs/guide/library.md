@@ -123,7 +123,7 @@ working directory. A `<dir>` with no folder for this CLI version is an error.
 ## `--api-doc-out`
 
 `--api-doc-out <dir>` writes the API model of every library in the data folder
-to `<dir>`, the JSON files the docs site renders:
+to `<dir>`, the JSON files the [library docs site](https://defold-typescript.github.io/library-data) renders:
 
 ```sh
 bunx @defold-typescript/cli library check --data path/to/library-data --api-doc-out path/to/api-doc

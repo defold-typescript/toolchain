@@ -13,7 +13,6 @@ import { SYMBOL_NOTES } from "./symbol-notes";
 // the repo root under root `bun test` and `packages/docs-site` under the build,
 // so every directory this test reads is passed in explicitly.
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
 
 function markdownFor(pages: ApiPage[], namespace: string): string {
@@ -32,7 +31,7 @@ function sectionFor(markdown: string, signaturePrefix: string): string {
 }
 
 describe("authored symbol notes", () => {
-  const canonical = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const canonical = canonicalApiPages(REAL_TYPES_DIR);
 
   test("every noted symbol still exists on the surface it annotates", () => {
     // A note keyed to a symbol the surface no longer renders is invisible, so
