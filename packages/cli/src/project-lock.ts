@@ -7,7 +7,8 @@
 
 import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { type ArchiveIdentity, COMMIT_COMMENT } from "./extension-version";
+import { canFollow } from "./dependency-url";
+import { COMMIT_COMMENT, type ExtensionPin } from "./extension-version";
 
 export const PROJECT_LOCK_FILE = "defold-typescript.lock";
 
@@ -24,7 +25,7 @@ export interface LibraryDataPins {
 }
 
 export interface ProjectLock {
-  readonly extensions: Readonly<Record<string, ArchiveIdentity>>;
+  readonly extensions: Readonly<Record<string, ExtensionPin>>;
   readonly libraryData?: LibraryDataPins;
 }
 
@@ -41,15 +42,16 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isArchiveIdentity(value: unknown): value is ArchiveIdentity {
+function isExtensionPin(value: unknown): value is ExtensionPin {
   if (!isPlainObject(value)) {
     return false;
   }
-  const { commit, files } = value;
+  const { commit, files, follows } = value;
   return (
     typeof files === "string" &&
     FILES_HASH.test(files) &&
-    (commit === undefined || (typeof commit === "string" && COMMIT_COMMENT.test(commit)))
+    (commit === undefined || (typeof commit === "string" && COMMIT_COMMENT.test(commit))) &&
+    (follows === undefined || typeof follows === "string")
   );
 }
 
@@ -77,15 +79,20 @@ export function readProjectLock(cwd: string): ProjectLockRead {
     return invalid('has an "extensions" value that is not a map');
   }
   for (const [url, pin] of Object.entries(extensions)) {
-    if (!isArchiveIdentity(pin)) {
+    if (!isExtensionPin(pin)) {
       return invalid(
         `has "extensions" entry ${url} in neither form: { "commit": "<40 hex>", "files": "<64 hex>" } or { "files": "<64 hex>" }`,
+      );
+    }
+    if (pin.follows !== undefined && !canFollow(url, pin.follows)) {
+      return invalid(
+        `has "extensions" entry ${url} following ${pin.follows}, which is not a branch or tag of the same repo`,
       );
     }
   }
   const { libraryData } = root;
   if (libraryData === undefined) {
-    return { status: "ok", lock: { extensions: extensions as Record<string, ArchiveIdentity> } };
+    return { status: "ok", lock: { extensions: extensions as Record<string, ExtensionPin> } };
   }
   if (!isPlainObject(libraryData)) {
     return invalid('has a "libraryData" value that is not a map');
@@ -108,7 +115,7 @@ export function readProjectLock(cwd: string): ProjectLockRead {
   return {
     status: "ok",
     lock: {
-      extensions: extensions as Record<string, ArchiveIdentity>,
+      extensions: extensions as Record<string, ExtensionPin>,
       libraryData: { shared, libraries: libraries as Record<string, string> },
     },
   };
@@ -122,18 +129,16 @@ function sortedByKey(map: Readonly<Record<string, string>>): Record<string, stri
   );
 }
 
-function serializeIdentity({ commit, files }: ArchiveIdentity): string {
+function serializePin({ commit, files, follows }: ExtensionPin): string {
   const commitField = commit === undefined ? "" : `"commit": ${JSON.stringify(commit)}, `;
-  return `{ ${commitField}"files": ${JSON.stringify(files)} }`;
+  const followsField = follows === undefined ? "" : `, "follows": ${JSON.stringify(follows)}`;
+  return `{ ${commitField}"files": ${JSON.stringify(files)}${followsField} }`;
 }
 
 function serializeExtensions(extensions: ProjectLock["extensions"]): string {
   const lines = Object.keys(extensions)
     .sort()
-    .map(
-      (url) =>
-        `    ${JSON.stringify(url)}: ${serializeIdentity(extensions[url] as ArchiveIdentity)}`,
-    );
+    .map((url) => `    ${JSON.stringify(url)}: ${serializePin(extensions[url] as ExtensionPin)}`);
   return lines.length === 0 ? "{}" : `{\n${lines.join(",\n")}\n  }`;
 }
 

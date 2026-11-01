@@ -25,6 +25,12 @@ export interface ArchiveIdentity {
   readonly files: string;
 }
 
+// `follows` is the ref a commit URL was moved from, since the URL alone gives
+// `--update` nothing to check.
+export interface ExtensionPin extends ArchiveIdentity {
+  readonly follows?: string;
+}
+
 function archiveFiles(entries: readonly string[]): LibrarySharedEntry[] {
   const wrapper = archiveWrapperOf(entries);
   return entries
@@ -73,9 +79,9 @@ export function sameArchive(a: ArchiveIdentity, b: ArchiveIdentity): boolean {
 // One pin per resolved URL, keeping a recorded one so drift stays visible until the
 // user acts on it. A pin for a URL no longer resolved is dropped.
 export function mergeResolvedVersionPins(
-  pins: Readonly<Record<string, ArchiveIdentity>>,
+  pins: Readonly<Record<string, ExtensionPin>>,
   resolved: Readonly<Record<string, ArchiveIdentity>>,
-): Record<string, ArchiveIdentity> {
+): Record<string, ExtensionPin> {
   return Object.fromEntries(
     Object.entries(resolved).map(([url, version]) => [url, pins[url] ?? version]),
   );

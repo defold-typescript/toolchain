@@ -55,6 +55,7 @@ export {
   readGameProjectDependencies,
   readLibraryIncludeDirs,
   readLibrarySceneDocuments,
+  rewriteGameProjectDependency,
 } from "./library-dependencies";
 export { scanEmittedRequires } from "./lua-require-scan";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
