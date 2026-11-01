@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -33,6 +34,7 @@ import { dispatch } from "./dispatch";
 import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./editor-attach";
 import {
   type DownloadExtensionArchive,
+  defaultReadZip,
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
@@ -5357,6 +5359,103 @@ describe("dispatch resolve", () => {
     );
     // lockfile byte-unchanged: no drift clobber
     expect(readFileSync(lockPath, "utf8")).toBe(originalLock);
+  });
+
+  describe("--frozen over Defold's library folder", () => {
+    const url = "https://github.com/owner/lib/archive/refs/heads/main.zip";
+    const commit = "5c33c398e3c1d3ab3c0ee0d5f8f45c4c7c4e0b21";
+    const zipBytes = (lua: string) =>
+      writeZipArchive(
+        [
+          { name: "lib-main/game.project", text: "[library]\ninclude_dirs = lib\n" },
+          { name: "lib-main/lib/core.lua", text: lua },
+        ],
+        { comment: commit },
+      );
+
+    // The real zip reader, so a run reads the bytes the folder holds.
+    function realZipInternals(): {
+      resolveInternals: {
+        libraryDataDir: null;
+        cacheDir: string;
+        download: DownloadExtensionArchive;
+      };
+    } {
+      return {
+        resolveInternals: {
+          libraryDataDir: null,
+          cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
+          download: async (requested) => {
+            throw new Error(`no request expected: ${requested}`);
+          },
+        },
+      };
+    }
+
+    function seedFolder(lua: string): void {
+      const lib = path.join(cwd, ".internal", "lib");
+      mkdirSync(lib, { recursive: true });
+      writeFileSync(
+        path.join(lib, "dependencies.json"),
+        JSON.stringify([{ url, "commit-sha1": commit }]),
+      );
+      const prefix = createHash("sha1").update(url).digest("hex");
+      writeFileSync(path.join(lib, `${prefix}-ZXRhZw.zip`), zipBytes(lua));
+    }
+
+    async function seedPin(): Promise<void> {
+      const pinned = path.join(mkdtempSync(path.join(os.tmpdir(), "pin-")), "pin.zip");
+      writeFileSync(pinned, zipBytes("return 1\n"));
+      writeProjectLock(cwd, {
+        extensions: { [url]: archiveIdentity(await defaultReadZip(pinned)) },
+      });
+    }
+
+    test("--json reports each URL it read as coming from Defold", async () => {
+      const { io, out } = captureStreams();
+      writeProject(`[project]\ndependencies#0 = ${url}\n`);
+      seedFolder("return 1\n");
+      await seedPin();
+
+      const code = await dispatch(["resolve", cwd, "--frozen", "--json"], io, realZipInternals());
+
+      expect(code).toBe(0);
+      expect(JSON.parse(out()).extensions[0]).toMatchObject({
+        url,
+        provenance: "defold",
+        pinStatus: "match",
+      });
+    });
+
+    test("exits 1 on drift when included files changed under an unchanged comment", async () => {
+      const { io, err } = captureStreams();
+      writeProject(`[project]\ndependencies#0 = ${url}\n`);
+      seedFolder("return 2\n");
+      await seedPin();
+
+      const code = await dispatch(["resolve", cwd, "--frozen"], io, realZipInternals());
+
+      expect(code).toBe(1);
+      expect(err()).toContain(`pin drift for ${url}: files changed under commit:${commit}`);
+    });
+
+    test("exits 1 naming the URL when the folder holds no archive for it", async () => {
+      const { io, err } = captureStreams();
+      writeProject(`[project]\ndependencies#0 = ${url}\n`);
+      seedFolder("return 1\n");
+      await seedPin();
+      for (const name of readdirSync(path.join(cwd, ".internal", "lib"))) {
+        if (name.endsWith(".zip")) {
+          rmSync(path.join(cwd, ".internal", "lib", name));
+        }
+      }
+
+      const code = await dispatch(["resolve", cwd, "--frozen"], io, realZipInternals());
+
+      expect(code).toBe(1);
+      expect(err()).toContain(url);
+      expect(err()).toContain("bob resolve");
+    });
   });
 
   test("--frozen passes when all pins match", async () => {

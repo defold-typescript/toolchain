@@ -6334,7 +6334,9 @@ then `bob build` to compile the Defold project.
 #### Subcommands
 
 - **`resolve`** — fetch the project's Defold library dependencies (the editor's
-  *Fetch Libraries*), so a native-extension or library build has its sources.
+  *Fetch Libraries*), so a native-extension or library build has its sources. To
+  stop a CI build whose libraries differ from your lockfile, see
+  [Dependency safety](./resolve.md#dependency-safety).
 - **`build`** — compile the project. It forces `--variant debug`, so output
   lands in `build/default`, matching the debug engine that [`run`](./run.md) and
   `bob run` launch.
@@ -7000,7 +7002,7 @@ a leading or trailing `/` on a directory is ignored. A nested directory such as
 `monarch/transitions` shares every file beneath it and nothing beside it.
 
 `resolve` does the unpacking (rather than the editor plugin reading archives
-itself) because opening a zip needs a subprocess, which cannot run inside the
+itself) because opening a zip here is asynchronous, which cannot run inside the
 editor's synchronous TypeScript server. `/.defold-types` is listed in the
 scaffolded `.defignore`, so bob never sees these copies and cannot double-load a
 library scene.
@@ -7027,8 +7029,9 @@ normally.
 
 - `--frozen` — hold to the committed [lockfile](#the-lockfile): exit non-zero on
   drift, when the file is missing, or when a declared dependency has no pin (so CI
-  gates the upgrade), and write nothing. See
-  [Pinning extension versions](#pinning-extension-versions).
+  gates the upgrade), and write nothing. Once `.internal/lib/dependencies.json`
+  exists it reads only that folder; see [Dependency safety](#dependency-safety). See
+  also [Pinning extension versions](#pinning-extension-versions).
 - `--update[=<name>]` — move [library data pins](#library-data) to the newest data
   and [accept extension drift](#pinning-extension-versions), for every dependency or
   only the named ones (`--update=monarch,druid`). The name takes `=`, never a space,
@@ -7121,6 +7124,43 @@ fails `resolve` with or without `--frozen`, and nothing is written. So does a
 `libraryData` in any shape but the one under [Library data](#library-data). Recording
 over it would accept every drift and move every library.
 
+#### Dependency safety
+
+Defold fetches each dependency URL itself: the editor on *Fetch Libraries*, and
+[`bob resolve`](./bob.md#subcommands) in a script. A branch URL such as
+`.../archive/master.zip` runs whatever the branch holds when it is fetched, and
+only a commit URL names fixed code. `bob build` never fetches: it builds what
+`.internal/lib/` holds, and refuses to start when that folder is missing.
+
+The lockfile detects a change. It does not prevent one: neither the editor nor Bob
+reads it, so a fetch installs what the URL serves, and a matching pin says nothing
+about whether the code is safe. To stop a build whose libraries differ from what
+you committed, run these three in order in CI:
+
+```sh
+bunx @defold-typescript/cli bob resolve
+bunx @defold-typescript/cli resolve --frozen
+bunx @defold-typescript/cli bob build
+```
+
+Once `.internal/lib/dependencies.json` exists, `resolve --frozen` reads only that
+folder and requests no dependency, so it checks the archives the build will read.
+It exits non-zero, naming the URL, when `dependencies.json` does not list the URL,
+when the folder holds no zip for it or more than one, when a zip cannot be read,
+and when a zip's comment is not the commit listed for it. A release asset lists an
+empty commit and its zip carries an empty comment, which match. Bob picks among
+several zips for one URL by directory order, so no comment can say which one the
+build reads. To recover, delete `.internal/lib` and run `bob resolve` again. With no
+`dependencies.json`, `--frozen` fetches each archive itself, and passing then says
+nothing about a later build.
+
+`resolve` reads a dependency's files and runs none of them: it parses the archive,
+its `game.project`, its `.script_api` docs and its Lua annotations, type-checks its
+`types/*.d.ts`, and copies its scene files. This toolchain's own modules start no
+process to do that. Third-party packages they use, such as the TypeScript compiler,
+are not covered by that statement. The dependency's Lua runs when your game does,
+and its native code is compiled when you build.
+
 #### Cache location
 
 `resolve` takes each dependency's archive from the first of these that has it:
@@ -7130,7 +7170,8 @@ over it would accept every drift and move every library.
    resolved to, and one zip per URL. `resolve` reads that zip in place, and
    only when its zip comment carries the listed commit, so the types match the
    code the game builds with. It never writes under `.internal/`. `--json`
-   reports `provenance: "defold"`.
+   reports `provenance: "defold"`. A `--frozen` run takes no other copy once
+   `dependencies.json` exists; see [Dependency safety](#dependency-safety).
 2. **Its own cache**, revalidated on every run: `resolve` asks the server
    whether the archive changed since the copy it stored (by `ETag`), keeps the
    copy when it did not (`provenance: "cache"`), and replaces it when it did
