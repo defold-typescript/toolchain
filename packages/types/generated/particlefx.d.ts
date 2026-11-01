@@ -45,7 +45,7 @@ declare global {
      * ```ts
      * // How to play a particle fx when a game object is created.
      * // The callback receives the hash of the path to the particlefx, the hash of the id
-     * // of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.
+     * // of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_<STATE>.
      * export default defineScript({
      *   init(self) {
      *     particlefx.play("#particlefx", (self, id, emitter, state) => {

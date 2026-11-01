@@ -72,7 +72,7 @@ declare global {
      * AABB information return as a table with `min` and `max` fields, where `min` and `max` has type `vmath.vector3`.
      *
      * @param url - the model
-     * @returns A table containing info about all AABB in the format
+     * @returns A table containing info about all AABB in the format <hash(mesh_id), aabb_info>
      * @example
      * ```ts
      * model.get_mesh_aabb("#model"); // => { hash("Sword") = { min = vmath.vector3(-0.5, -0.5, 0), max = vmath.vector3(0.5, 0.5, 0) }, hash("Shield") = { min = vmath.vector3(-0.5, -0.5, -0.5), max = vmath.vector3(0.5, 0.5, 0.5) } }
