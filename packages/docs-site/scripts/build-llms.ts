@@ -167,8 +167,8 @@ export function buildLlmsTxt(target: LlmsTarget = SITE_TARGET): string {
   // (site) or its `llms-full.txt` anchor (package), sourced from the same
   // projection `llms-full` serializes — so a namespace present only in a
   // historical tracked version still gets a link. Non-engine pages (lua-stdlib,
-  // global value types, vendored libraries) are version-independent and keep
-  // their default source and `apiHref`.
+  // global value types) are version-independent and keep their default source and
+  // `apiHref`.
   const engineLinks = loadCombinedSurface(TYPES_DIR).namespaces.map(
     (ns) => `- [${ns.namespace}](${target.combinedApiHref(ns.namespace)})`,
   );

@@ -6,9 +6,10 @@ import { namespaceBadgeCounts } from "../lib/combined-surface";
 // `/api` is the canonical Combined index: the union of every tracked version's
 // namespaces at their unprefixed `/api/<ns>` routes, grouped like the sidebar
 // (Globals, Global types, Lua standard, Defold engine). Libraries are reached
-// through `/libraries`; the exact-version indexes live at `/api/defold-<version>`.
+// through the library docs site; the exact-version indexes live at
+// `/api/defold-<version>`.
 export default createRoute((c) => {
-  const pages = canonicalApiPages().filter((page) => page.category !== "library");
+  const pages = canonicalApiPages();
   const badgeCounts = new Map(
     combinedSurface().namespaces.map((ns) => [ns.namespace, namespaceBadgeCounts(ns)]),
   );

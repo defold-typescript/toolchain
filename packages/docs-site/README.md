@@ -7,8 +7,9 @@ and `@hono/vite-ssg`, deployable to Cloudflare Pages.
 This package is `private` and is never part of the coordinated npm release.
 
 The chrome is a top bar that groups the guide pages plus the API reference into
-Get started, Guides, API, and optional Libraries categories (the Tetris tutorial
-nests as the first subgroup inside Guides), a per-category
+Get started, Guides and API categories (the Tetris tutorial
+nests as the first subgroup inside Guides) and a Libraries tab that links to the
+[library docs site](https://defold-typescript.github.io/library-data), a per-category
 left sidebar, a right-side scroll-spy table of contents, and a flash-free dark/light
 theme toggle over self-hosted Inter / JetBrains Mono fonts. Tailwind v4 powers the
 design tokens and utility classes.

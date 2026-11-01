@@ -18,7 +18,6 @@ import {
   apiVersions,
   canonicalApiPages,
   combinedSurface,
-  libraryNavGroups,
   versionNamespaceAtom,
 } from "../lib/api-content";
 import { navLeafBadgeHtml } from "../lib/api-page-render";
@@ -277,12 +276,6 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     return { label: p.namespace, route: p.route, ...(badgeHtml ? { badgeHtml } : {}) };
   };
 
-  // Library pages grouped by GitHub owner and repo for the Libraries tab;
-  // namespace leaves keep the dotted route slug, and untyped listings sit among
-  // them as single leaves routed to their own `/libraries/` pages. The grouping
-  // is `libraryNavGroups`, the one composition the sidebar tests exercise.
-  const libraries = libraryNavGroups(allApiPages);
-
   const nav = buildNav(guidePages(), {
     globals: allApiPages.filter((p) => p.namespace === "globals").map(toNamespace),
     globalTypes: allApiPages.filter((p) => p.category === "global-type").map(toNamespace),
@@ -290,7 +283,6 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     engine: allApiPages
       .filter((p) => p.category === "engine" && p.namespace !== "globals")
       .map(toEngineNamespace),
-    libraries,
   });
   const surfaceNav = apiNavForPath(nav, path, search, surfaceConfig);
 
@@ -567,11 +559,7 @@ function SidebarNav({ category, path }: { category: NavCategory | undefined; pat
           {category.label}
         </p>
       )}
-      <SidebarItems
-        links={category.links}
-        path={path}
-        uppercaseGroupHeaders={category.id !== "libraries"}
-      />
+      <SidebarItems links={category.links} path={path} />
       {category.shortcuts ? (
         <section data-testid="sidebar-shortcuts" class="mt-6">
           <p class="mb-3 px-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint">

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
+import { libraryPageNames } from "../app/lib/__fixtures__/library-page-names";
 import { renderedHeadingIds } from "../app/lib/__fixtures__/rendered-heading-ids";
 import {
   HISTORICAL_ONLY_NAMESPACE,
@@ -22,7 +23,6 @@ import { resolveVersionWindow, windowCombinedSurface } from "../app/lib/version-
 import { searchIndexOutputs, versionRoutePages } from "./build-search-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
-const LIBRARY_TYPES_DIR = join(import.meta.dir, "..", "..", "library-types");
 
 describe("searchIndexOutputs", () => {
   const outputs = searchIndexOutputs();
@@ -41,12 +41,26 @@ describe("searchIndexOutputs", () => {
 
   test("keeps the version-independent reference pages in the shared index", () => {
     const sharedRoutes = new Set(shared?.records.map((record) => record.route));
-    const versionIndependentRoutes = loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR).map(
+    const versionIndependentRoutes = loadVersionIndependentPages(TYPES_DIR).map(
       (page) => page.route,
     );
     expect(versionIndependentRoutes.length).toBeGreaterThan(0);
     for (const route of versionIndependentRoutes) {
       expect(sharedRoutes.has(route)).toBe(true);
+    }
+  });
+
+  test("no index offers a library page", () => {
+    const libraryRoutes = new Set(libraryPageNames().map((name) => `/api/${name}`));
+    expect(libraryRoutes.size).toBeGreaterThan(0);
+    for (const { file, records } of outputs) {
+      const offered = records
+        .map((record) => record.route)
+        .filter(
+          (route) =>
+            route.startsWith("/libraries") || libraryRoutes.has(route.split("#")[0] as string),
+        );
+      expect({ file, offered: offered.slice(0, 5) }).toEqual({ file, offered: [] });
     }
   });
 
@@ -61,9 +75,7 @@ describe("searchIndexOutputs", () => {
   });
 
   test("every version index carries the version-independent reference records at canonical /api/<ns> routes", () => {
-    const sharedRoutes = loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR).map(
-      (page) => page.route,
-    );
+    const sharedRoutes = loadVersionIndependentPages(TYPES_DIR).map((page) => page.route);
     expect(sharedRoutes.length).toBeGreaterThan(0);
     for (const version of versionsWithDiskFixtures(TYPES_DIR)) {
       const output = outputs.find((o) => o.file === `search-index-${version.id}.json`);
@@ -79,9 +91,7 @@ describe("searchIndexOutputs", () => {
   });
 
   test("exact engine records stay version-prefixed and no shared route is version-prefixed", () => {
-    const sharedRoutes = new Set(
-      loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR).map((page) => page.route),
-    );
+    const sharedRoutes = new Set(loadVersionIndependentPages(TYPES_DIR).map((page) => page.route));
     for (const version of versionsWithDiskFixtures(TYPES_DIR)) {
       const output = outputs.find((o) => o.file === `search-index-${version.id}.json`);
       const apiRecords = (output?.records ?? []).filter((r) => r.route.startsWith("/api/"));
@@ -184,17 +194,12 @@ describe("searchIndexOutputs — the canonical index carries the full-range Comb
 // A search hit links to `<route>#<anchor>`, so every anchor an emitted record
 // carries must be a heading id the page at that route renders. Each page renders
 // with the options its `/api` route passes: an engine page with the Combined
-// availability markers, a library page without its H1, any other shared
-// reference page plainly.
+// availability markers, any other shared reference page plainly.
 describe("searchIndexOutputs — every anchored record lands on a rendered heading", () => {
   const outputs = searchIndexOutputs();
-  const sharedPages = loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR);
+  const sharedPages = loadVersionIndependentPages(TYPES_DIR);
   type RenderOptions = Parameters<typeof apiPageMarkdown>[2];
-  const sharedRender = (page: ApiPage): [string, ApiPage, RenderOptions] => [
-    page.route,
-    page,
-    page.category === "library" ? { omitHeading: true } : {},
-  ];
+  const sharedRender = (page: ApiPage): [string, ApiPage, RenderOptions] => [page.route, page, {}];
 
   async function unrenderedAnchors(
     file: string,
@@ -254,7 +259,7 @@ describe("searchIndexOutputs — every anchored record lands on a rendered headi
 // qualified key never hide each other's route.
 describe("searchIndexOutputs — every symbol-index member route is searchable", () => {
   const outputs = searchIndexOutputs();
-  const sharedPages = loadVersionIndependentPages(TYPES_DIR, LIBRARY_TYPES_DIR);
+  const sharedPages = loadVersionIndependentPages(TYPES_DIR);
 
   function unsearchableRoutes(
     file: string,
@@ -281,7 +286,7 @@ describe("searchIndexOutputs — every symbol-index member route is searchable",
       ...combinedApiPages(loadCombinedSurface(TYPES_DIR)),
       ...sharedPages,
     ]);
-    expect(expected).toBeGreaterThan(5000);
+    expect(expected).toBeGreaterThan(1000);
     expect(missing).toEqual([]);
   });
 
@@ -293,7 +298,7 @@ describe("searchIndexOutputs — every symbol-index member route is searchable",
         ...versionRoutePages(TYPES_DIR, id),
         ...sharedPages,
       ]);
-      expect(expected).toBeGreaterThan(5000);
+      expect(expected).toBeGreaterThan(1000);
       expect(missing).toEqual([]);
     }
   });

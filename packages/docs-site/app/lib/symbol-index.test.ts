@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { renderedHeadingIds } from "./__fixtures__/rendered-heading-ids";
-import { apiPages, canonicalApiPages } from "./api-content";
+import { canonicalApiPages } from "./api-content";
 import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { type ApiVersion, loadCombinedSurface } from "./api-surface-loader";
 import { combinedApiPages } from "./combined-surface";
@@ -17,7 +17,6 @@ import {
 } from "./symbol-index";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 function emptyModule(namespace: string): ApiModule {
   return {
@@ -183,9 +182,7 @@ describe("memberAnchors", () => {
   });
 
   test("a function whose signature changed anchors at its current signature", () => {
-    const b2d = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
-      (p) => p.namespace === "b2d",
-    );
+    const b2d = canonicalApiPages(REAL_TYPES_DIR).find((p) => p.namespace === "b2d");
     if (!b2d) throw new Error("no canonical b2d page");
     const newest = b2d.availability?.versions[0];
     const current = apiModuleSymbols(b2d, b2d.translations, b2d.signatures).filter(
@@ -303,13 +300,6 @@ describe("combinedSymbolIndexRecords", () => {
 });
 
 describe("buildSymbolIndex — platform markers", () => {
-  test("the adinfo brief carries no bracket marker", () => {
-    const index = buildSymbolIndex(apiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR));
-    expect(index.adinfo?.brief).toBe(
-      "Provides functionality to get the advertising id and tracking status. Supported on iOS and Android.",
-    );
-  });
-
   test("member briefs drop the markers an engine icon span becomes", () => {
     const index = buildSymbolIndex([
       page("sys", {

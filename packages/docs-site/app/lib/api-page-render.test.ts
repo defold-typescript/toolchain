@@ -10,7 +10,6 @@ import {
   signatureTransitionNames,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import { LibraryHeading } from "../routes/api/[namespace]";
 import { MIDDLE, makeWindowedTypesDir, NEWEST, OLDEST } from "./__fixtures__/windowed-surface";
 import { canonicalApiPages, windowedApiPages } from "./api-content";
 import {
@@ -19,9 +18,7 @@ import {
   apiReplacementResolver,
   apiSignatureSymbolLinks,
   defoldRefLine,
-  dependencyStep,
   isKnownVersionId,
-  listingPageMarkdown,
   namespaceCountBadges,
   navLeafBadgeHtml,
   navNamespaceBadges,
@@ -60,8 +57,6 @@ import {
 } from "./combined-surface";
 import { pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
-import type { LibraryListing } from "./nav";
-import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { escapeAttr } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
 import type { VersionWindow } from "./version-window";
@@ -89,7 +84,6 @@ const MISSING_VERSION_FIXTURE_DIR = join(
   "__fixtures__/api-surface-missing-version",
 );
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
-const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 // A non-default surface page: its route already carries the version prefix, so
 // any link derived from it must stay version-scoped.
@@ -168,7 +162,7 @@ function fieldsPage(): ApiPage {
     },
     translations: {},
     signatures: {},
-    category: "library",
+    category: "global-type",
   };
 }
 
@@ -239,42 +233,7 @@ function typedefPage(): ApiPage {
     },
     translations: {},
     signatures: {},
-    category: "library",
-  };
-}
-
-// A vendored library page carrying the structured provenance metadata the
-// uniform render block reads.
-function libraryPageWithMeta(overrides: Partial<ApiPage> = {}): ApiPage {
-  return {
-    namespace: "orthographic.camera",
-    route: "/api/orthographic.camera",
-    brief: "Camera",
-    module: {
-      namespace: "orthographic.camera",
-      brief: "Camera",
-      description: "Orthographic camera helpers.",
-      functions: [],
-      variables: [],
-      constants: [],
-      properties: [],
-      typedefs: [],
-    },
-    translations: {},
-    signatures: {},
-    category: "library",
-    libraryMeta: {
-      author: "Britzl",
-      authorUrl: "https://github.com/britzl/defold-orthographic",
-      commit: "2fe3aed3352a913d2859e6e85d34a8b23d821368",
-      sourceUrl:
-        "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts",
-      importString: 'import * as camera from "orthographic.camera"',
-      license: "MIT",
-      authoredHere: false,
-      usage: "import",
-    },
-    ...overrides,
+    category: "global-type",
   };
 }
 
@@ -529,457 +488,8 @@ describe("apiPageMarkdown field tree", () => {
   });
 });
 
-describe("Defold library page callback arguments", () => {
-  const admob = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
-    (p) => p.category === "library" && p.namespace === "admob",
-  );
-  const fieldNames = (params: { name: string }[] | undefined) => params?.map((p) => p.name);
-
-  test("admob.set_callback carries the callback's arguments and the message table's fields", () => {
-    expect(admob).toBeDefined();
-    const setCallback = apiModuleSymbols(admob as ApiPage).find(
-      (s) => s.name === "admob.set_callback",
-    );
-    const callback = setCallback?.parameters.find((p) => p.name === "callback");
-    expect(fieldNames(callback?.fields)).toEqual(["self", "message_id", "message"]);
-    const message = callback?.fields?.find((f) => f.name === "message");
-    expect(fieldNames(message?.fields)).toEqual(["event", "code", "message"]);
-  });
-
-  test("apiPageMarkdown renders message_id as a bullet indented under callback", () => {
-    const md = apiPageMarkdown(admob as ApiPage, (t) => t);
-    expect(md).toMatch(
-      /^- <strong class="api-name">`callback`.*\n(?: {2}- .*\n)* {2}- `message_id`/m,
-    );
-  });
-
-  const librarySymbols = (namespace: string) => {
-    const page = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
-      (p) => p.category === "library" && p.namespace === namespace,
-    );
-    expect(page).toBeDefined();
-    return apiModuleSymbols(page as ApiPage);
-  };
-
-  test("adinfo.get reads its callback from the upstream members: key", () => {
-    const get = librarySymbols("adinfo").find((s) => s.name === "adinfo.get");
-    expect(fieldNames(get?.parameters)).toEqual(["callback"]);
-  });
-
-  test("generator placeholder names never become symbols or parameters", () => {
-    expect(librarySymbols("imgui").map((s) => s.name)).not.toContain("imgui.None");
-    expect(librarySymbols("realtime").filter((s) => s.name.includes(" "))).toEqual([]);
-    const shop = librarySymbols("shop");
-    expect(shop.length).toBeGreaterThan(0);
-    const bracketed = shop.flatMap((s) => s.parameters.filter((p) => p.name.includes("(")));
-    expect(bracketed).toEqual([]);
-  });
-});
-
-describe("apiPageMarkdown library provenance block", () => {
-  test("emits a single GitHub provenance bullet (no Author/License) with the numbered steps nested directly under it", () => {
-    const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);
-    const iDesc = md.indexOf("Orthographic camera helpers.");
-    const iGithub = md.indexOf("- GitHub:");
-    const iStep1 = md.indexOf("  1. Pick a release");
-    for (const i of [iDesc, iGithub, iStep1]) {
-      expect(i).toBeGreaterThan(-1);
-    }
-    expect(iDesc).toBeLessThan(iGithub);
-    // The steps nest directly under the GitHub bullet — no `Usage:` label.
-    expect(iGithub).toBeLessThan(iStep1);
-    expect(md).toContain(
-      "- GitHub: [britzl/defold-orthographic](https://github.com/britzl/defold-orthographic) — pinned to [`2fe3aed`](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
-    );
-    // Author and License are omitted; the reader gets them from the linked repo.
-    expect(md).not.toContain("Author:");
-    expect(md).not.toContain("License:");
-    expect(md).not.toContain("- Usage:");
-    expect(md).not.toContain("- Commit pin:");
-    // The import nests as a fenced code block under step 3, not a top-level bullet.
-    expect(md).not.toContain("- Import");
-    expect(md).not.toContain("- Source:");
-    expect(md).not.toContain("- Attribution:");
-    expect(md).not.toContain("vendored via ts-defold/library");
-  });
-
-  test("GitHub links the upstream author repo, the pin links the generating .d.ts, and add/resolve/import nest as numbered steps", () => {
-    const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);
-    expect(md).toContain("](https://github.com/britzl/defold-orthographic)");
-    expect(md).toContain(
-      "](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
-    );
-    // Step 1 links the repo's /releases page so the user picks a pinned version
-    // (never a minted moving archive URL); step 2 runs resolve; step 3 folds the
-    // import in as a fenced block at the ordered-item content column.
-    expect(md).toContain(
-      "  1. Pick a release from [britzl/defold-orthographic releases](https://github.com/britzl/defold-orthographic/releases) and add its **Source code (zip)** URL (or a packaged `.zip` asset, if the library ships one) to `game.project` under `[project]` `dependencies`, then **Fetch Libraries** in the Defold editor.",
-    );
-    // No auto-minted moving archive URL — no HEAD.zip, no branch-specific zips.
-    expect(md).not.toContain("HEAD.zip");
-    expect(md).not.toContain("master.zip");
-    expect(md).not.toContain("main.zip");
-    expect(md).toContain(
-      "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
-    );
-    expect(md).toContain(
-      '  3. Import it under a namespace alias of your choice:\n     ```ts\n     import * as camera from "orthographic.camera"\n     ```',
-    );
-  });
-
-  test("a library page with an empty author omits Author and GitHub, starts at Commit pin, and names the dependency step without a link", () => {
-    const md = apiPageMarkdown(
-      libraryPageWithMeta({
-        libraryMeta: {
-          author: "",
-          authorUrl: "",
-          commit: "2fe3aed3352a913d2859e6e85d34a8b23d821368",
-          sourceUrl:
-            "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts",
-          importString: 'import * as camera from "orthographic.camera"',
-          license: "MIT",
-          authoredHere: false,
-          usage: "import",
-        },
-      }),
-      (t) => t,
-    );
-    const iCommit = md.indexOf("- Commit pin:");
-    const iStep1 = md.indexOf("  1. Pick a release");
-    expect(iCommit).toBeGreaterThan(-1);
-    expect(iStep1).toBeGreaterThan(iCommit);
-    expect(md).not.toContain("- Author:");
-    expect(md).not.toContain("- GitHub:");
-    // With no author, the bullet is the standalone Commit pin; Author/License omitted.
-    expect(md).toContain(
-      "- Commit pin: [`2fe3aed`](https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/defold-orthographic/orthographic.camera.d.ts)",
-    );
-    expect(md).not.toContain("License:");
-    expect(md).not.toContain("- Usage:");
-    // No NOTICE credit → no repo, so step 1 is named generically with no /releases link.
-    expect(md).toContain(
-      "  1. Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged `.zip` asset, if the library ships one) to `game.project` under `[project]` `dependencies`, then **Fetch Libraries** in the Defold editor.",
-    );
-    expect(md).not.toContain("/releases");
-    expect(md).not.toContain("HEAD.zip");
-  });
-
-  test("a non-library page emits no provenance block", () => {
-    const md = apiPageMarkdown(versionedWmathPage(), (t) => t);
-    expect(md).not.toContain("- Commit pin:");
-    expect(md).not.toContain("- Attribution:");
-  });
-
-  test("the druid page renders its component typedefs and pins to Insality/druid, not ts-defold/library", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const druid = pages.find((p) => p.namespace === "druid");
-    expect(druid).toBeDefined();
-    if (!druid) return;
-    const md = apiPageMarkdown(druid, apiLinkify(pages));
-    // Emitter-equivalent signatures: a mapped/sanitized generic module function and a
-    // sanitized typedef method, not the raw LuaLS `druid.`-dotted / unbound-`T` form.
-    expect(md).toContain("get_widget<T extends druid_widget>");
-    expect(md).toContain("druid_button.set_enabled(state?: boolean | undefined): druid_button");
-    // No raw LuaLS token survives in a signature position (heading lines). Prose doc
-    // text may still mention `fun(self, ...)` and `druid.<component>` verbatim.
-    const signatureLines = md
-      .split("\n")
-      .filter((line) => line.startsWith("### ") || line.startsWith("#### "));
-    for (const line of signatureLines) {
-      expect(line).not.toContain("table|nil");
-      expect(line).not.toContain("fun(");
-      expect(line).not.toMatch(/druid\.[a-z]/);
-    }
-    expect(md).not.toContain("table|nil");
-    // Emitter-equivalent variadic + multi-return: arrayified vararg and a tuple,
-    // never the pre-lift `...: string` param or `): number, number` return token.
-    expect(md).toContain("...args: string[]");
-    expect(md).toContain("LuaMultiReturn<[number, number]>");
-    expect(md).not.toContain("...: string");
-    expect(md).not.toContain("): number, number");
-    expect(md).toContain("[Insality/druid](https://github.com/Insality/druid)");
-    expect(md).not.toContain("ts-defold/library");
-    expect(md).toMatchSnapshot();
-  });
-
-  // Codeberg has no `/tree/` route, and these repos have releases switched off, so
-  // the bullet names the forge, the pin uses Codeberg's browse route, and step 1
-  // names the commit archive rather than a releases page that would 404.
-  test("the shutter page names its Codeberg repo and adopts from the pinned commit archive", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const shutter = pages.find((p) => p.namespace === "shutter");
-    expect(shutter).toBeDefined();
-    if (!shutter) return;
-    const md = apiPageMarkdown(shutter, apiLinkify(pages));
-    expect(md).toContain(
-      "- Codeberg: [Klaleus/defold-shutter](https://codeberg.org/Klaleus/defold-shutter) — pinned to [`fc0e632`](https://codeberg.org/Klaleus/defold-shutter/src/commit/fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1)",
-    );
-    expect(md).toContain(
-      "  1. This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, `https://codeberg.org/Klaleus/defold-shutter/archive/fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1.zip` —",
-    );
-    expect(md).not.toContain("/releases");
-    expect(md).not.toContain("- GitHub:");
-  });
-
-  // Projected through the real committed corpus, so a clause that survives extraction
-  // but is lost in the render still reds. The boom pair is also the collapse proof: its
-  // declaration spans five source lines and must render as one, and the second form is
-  // a typedef method rather than a module function.
-  test("the authored generic pages declare the type parameter their signatures reference", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const md = (namespace: string) => {
-      const page = pages.find((p) => p.namespace === namespace);
-      expect(page).toBeDefined();
-      return page ? apiPageMarkdown(page, apiLinkify(pages)) : "";
-    };
-
-    expect(md("checkpoint")).toContain(
-      "read<T = unknown>(path: string): LuaMultiReturn<[ T | false, string | undefined ]>",
-    );
-    expect(md("deftest")).toContain("assert_equal<T>(a: T, b: T)");
-    const boom = md("boom");
-    expect(boom).toContain(
-      "add<T extends (BoomComponent | BoomTag)[]>(comps: T): BoomGameObject<T>",
-    );
-    expect(boom).toContain(
-      "BoomBlankGameObject.add<T extends (BoomComponent | BoomTag)[]>(comps: T): BoomGameObject<T>",
-    );
-  });
-
-  test("the migrated tweener page pins to Insality/defold-tweener, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const tweener = pages.find((p) => p.namespace === "tweener");
-    expect(tweener).toBeDefined();
-    if (!tweener) return;
-    expect(tweener.category).toBe("library");
-    const md = apiPageMarkdown(tweener, apiLinkify(pages));
-    expect(md).toContain("[Insality/defold-tweener](https://github.com/Insality/defold-tweener)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated event page pins to Insality/defold-event, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const event = pages.find((p) => p.namespace === "event");
-    expect(event).toBeDefined();
-    if (!event) return;
-    expect(event.category).toBe("library");
-    const md = apiPageMarkdown(event, apiLinkify(pages));
-    expect(md).toContain("[Insality/defold-event](https://github.com/Insality/defold-event)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated lang page pins to Insality/defold-lang, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const lang = pages.find((p) => p.namespace === "lang");
-    expect(lang).toBeDefined();
-    if (!lang) return;
-    expect(lang.category).toBe("library");
-    const md = apiPageMarkdown(lang, apiLinkify(pages));
-    expect(md).toContain("[Insality/defold-lang](https://github.com/Insality/defold-lang)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated log page pins to Insality/defold-log, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const log = pages.find((p) => p.namespace === "log");
-    expect(log).toBeDefined();
-    if (!log) return;
-    expect(log.category).toBe("library");
-    const md = apiPageMarkdown(log, apiLinkify(pages));
-    expect(md).toContain("[Insality/defold-log](https://github.com/Insality/defold-log)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated proto page pins to Insality/defold-proto, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const proto = pages.find((p) => p.namespace === "proto");
-    expect(proto).toBeDefined();
-    if (!proto) return;
-    expect(proto.category).toBe("library");
-    const md = apiPageMarkdown(proto, apiLinkify(pages));
-    expect(md).toContain("[Insality/defold-proto](https://github.com/Insality/defold-proto)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated immutable page pins to paweljarosz/lua-immutable, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const immutable = pages.find((p) => p.namespace === "immutable");
-    expect(immutable).toBeDefined();
-    if (!immutable) return;
-    expect(immutable.category).toBe("library");
-    const md = apiPageMarkdown(immutable, apiLinkify(pages));
-    expect(md).toContain(
-      "[paweljarosz/lua-immutable](https://github.com/paweljarosz/lua-immutable)",
-    );
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated squid page pins to paweljarosz/squid, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const squid = pages.find((p) => p.namespace === "squid");
-    expect(squid).toBeDefined();
-    if (!squid) return;
-    expect(squid.category).toBe("library");
-    const md = apiPageMarkdown(squid, apiLinkify(pages));
-    expect(md).toContain("[paweljarosz/squid](https://github.com/paweljarosz/squid)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated narrator page pins to astrochili/narrator, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const narrator = pages.find((p) => p.namespace === "narrator");
-    expect(narrator).toBeDefined();
-    if (!narrator) return;
-    expect(narrator.category).toBe("library");
-    const md = apiPageMarkdown(narrator, apiLinkify(pages));
-    expect(md).toContain("[astrochili/narrator](https://github.com/astrochili/narrator)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated saver.saver page pins to Insality/defold-saver, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const saver = pages.find((p) => p.namespace === "saver.saver");
-    expect(saver).toBeDefined();
-    if (!saver) return;
-    expect(saver.category).toBe("library");
-    const md = apiPageMarkdown(saver, apiLinkify(pages));
-    expect(md).toContain("[Insality/defold-saver](https://github.com/Insality/defold-saver)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated saver.storage page pins to Insality/defold-saver, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const storage = pages.find((p) => p.namespace === "saver.storage");
-    expect(storage).toBeDefined();
-    if (!storage) return;
-    expect(storage.category).toBe("library");
-    const md = apiPageMarkdown(storage, apiLinkify(pages));
-    expect(md).toContain("[Insality/defold-saver](https://github.com/Insality/defold-saver)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the migrated bridge page pins to Playgama/bridge-defold, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const bridge = pages.find((p) => p.namespace === "bridge");
-    expect(bridge).toBeDefined();
-    if (!bridge) return;
-    expect(bridge.category).toBe("library");
-    const md = apiPageMarkdown(bridge, apiLinkify(pages));
-    expect(md).toContain("[Playgama/bridge-defold](https://github.com/Playgama/bridge-defold)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the forked defcon page pins to britzl/defcon, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const defcon = pages.find((p) => p.namespace === "defcon");
-    expect(defcon).toBeDefined();
-    if (!defcon) return;
-    expect(defcon.category).toBe("library");
-    const md = apiPageMarkdown(defcon, apiLinkify(pages));
-    expect(md).toContain("[britzl/defcon](https://github.com/britzl/defcon)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the forked deftest page pins to britzl/deftest, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const deftest = pages.find((p) => p.namespace === "deftest");
-    expect(deftest).toBeDefined();
-    if (!deftest) return;
-    expect(deftest.category).toBe("library");
-    const md = apiPageMarkdown(deftest, apiLinkify(pages));
-    expect(md).toContain("[britzl/deftest](https://github.com/britzl/deftest)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the forked persist page pins to whiteboxdev/library-defold-persist, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const persist = pages.find((p) => p.namespace === "persist");
-    expect(persist).toBeDefined();
-    if (!persist) return;
-    expect(persist.category).toBe("library");
-    const md = apiPageMarkdown(persist, apiLinkify(pages));
-    expect(md).toContain(
-      "[whiteboxdev/library-defold-persist](https://github.com/whiteboxdev/library-defold-persist)",
-    );
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the forked defmath page pins to subsoap/defmath, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const defmath = pages.find((p) => p.namespace === "defmath");
-    expect(defmath).toBeDefined();
-    if (!defmath) return;
-    expect(defmath.category).toBe("library");
-    const md = apiPageMarkdown(defmath, apiLinkify(pages));
-    expect(md).toContain("[subsoap/defmath](https://github.com/subsoap/defmath)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the forked zzfx page pins to thejustinwalsh/defold-zzfx, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const zzfx = pages.find((p) => p.namespace === "zzfx");
-    expect(zzfx).toBeDefined();
-    if (!zzfx) return;
-    expect(zzfx.category).toBe("library");
-    const md = apiPageMarkdown(zzfx, apiLinkify(pages));
-    expect(md).toContain(
-      "[thejustinwalsh/defold-zzfx](https://github.com/thejustinwalsh/defold-zzfx)",
-    );
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the forked boom page pins to britzl/boom, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const boom = pages.find((p) => p.namespace === "boom");
-    expect(boom).toBeDefined();
-    if (!boom) return;
-    expect(boom.category).toBe("library");
-    const md = apiPageMarkdown(boom, apiLinkify(pages));
-    expect(md).toContain("[britzl/boom](https://github.com/britzl/boom)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("the forked defsave page pins to subsoap/defsave, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const defsave = pages.find((p) => p.namespace === "defsave");
-    expect(defsave).toBeDefined();
-    if (!defsave) return;
-    expect(defsave.category).toBe("library");
-    const md = apiPageMarkdown(defsave, apiLinkify(pages));
-    expect(md).toContain("[subsoap/defsave](https://github.com/subsoap/defsave)");
-    expect(md).not.toContain("ts-defold/library");
-  });
-
-  test("every forked nakama page pins to heroiclabs/nakama-defold, not the ts-defold/library corpus", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    for (const namespace of ["nakama", "nakama.engine.defold", "nakama.util.log"]) {
-      const page = pages.find((p) => p.namespace === namespace);
-      expect(page).toBeDefined();
-      if (!page) continue;
-      expect(page.category).toBe("library");
-      const md = apiPageMarkdown(page, apiLinkify(pages));
-      expect(md).toContain(
-        "[heroiclabs/nakama-defold](https://github.com/heroiclabs/nakama-defold)",
-      );
-      expect(md).not.toContain("ts-defold/library");
-    }
-  });
-});
-
-describe("apiPageMarkdown display name", () => {
-  test("renders the alias as the H1 and keeps the raw namespace visible beneath it", () => {
-    const md = apiPageMarkdown(
-      libraryPageWithMeta({ displayName: "britzl / defold-orthographic" }),
-      (t) => t,
-    );
-    const iTitle = md.indexOf("# britzl / defold-orthographic");
-    const iNamespace = md.indexOf("`orthographic.camera`");
-    expect(iTitle).toBe(0);
-    expect(iNamespace).toBeGreaterThan(iTitle);
-    expect(md).not.toContain("# orthographic.camera");
-  });
-
-  test("a page without displayName renders `# <namespace>` unchanged", () => {
+describe("apiPageMarkdown heading", () => {
+  test("a page renders `# <namespace>` unchanged", () => {
     const md = apiPageMarkdown(versionedWmathPage(), (t) => t);
     expect(md.startsWith("# wmath")).toBe(true);
   });
@@ -1929,7 +1439,7 @@ describe("signature brand deep-links", () => {
   ].join("\n");
 
   test("links the Opaque brand at both render sites with no nested anchors", async () => {
-    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const pages = canonicalApiPages(REAL_TYPES_DIR);
     const html = await renderMarkdown(bothSitesMarkdown, {
       highlightSignatureHeadings: true,
       signatureSymbolLinks: apiSignatureSymbolLinks(pages),
@@ -1941,7 +1451,7 @@ describe("signature brand deep-links", () => {
   });
 
   test("the outer permalink/jump anchor still covers the non-brand signature text", async () => {
-    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const pages = canonicalApiPages(REAL_TYPES_DIR);
     const html = await renderMarkdown(bothSitesMarkdown, {
       highlightSignatureHeadings: true,
       signatureSymbolLinks: apiSignatureSymbolLinks(pages),
@@ -1962,7 +1472,7 @@ describe("signature brand deep-links", () => {
 
 describe("apiReplacementResolver", () => {
   test("resolves a known member to its page route with anchor and returns undefined otherwise", () => {
-    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const pages = canonicalApiPages(REAL_TYPES_DIR);
     const resolve = apiReplacementResolver(pages);
     const go = pages.find((p) => p.namespace === "go");
     expect(go).toBeDefined();
@@ -1993,204 +1503,21 @@ describe("apiReplacementResolver", () => {
   });
 });
 
-describe("LibraryHeading — path", () => {
-  const headingHtml = (owner: string, repo: string, namespace: string): string =>
-    LibraryHeading({ owner, repo, namespace }).toString();
-
-  test("renders the owner, repo, and namespace as one accented path", () => {
-    const h1 = headingHtml("whiteboxdev", "library-defold-persist", "persist");
-    expect(h1).toContain("whiteboxdev");
-    expect(h1).toContain("library-defold-persist");
-    expect(h1).toContain('text-accent">persist');
-  });
-
-  test("collapses a namespace that repeats its repo name", () => {
-    const h1 = headingHtml("Insality", "druid", "druid");
-    expect(h1.split("druid").length - 1).toBe(1);
-    expect(h1).toContain("Insality");
-  });
-});
-
-// A fork whose surface is mostly ambient globals (`boom`, `deftest`) publishes
-// symbols the page's single `import * as …` step does not reach, so the marker
-// and the import caveat are what keep the page from reading as if it did.
-describe("apiPageMarkdown ambient-global marker", () => {
-  const noLink = (text: string) => text;
-
-  const pageWithFunctions = (functions: (Partial<ApiFunction> & { name: string })[]): ApiPage =>
-    libraryPageWithMeta({
-      module: {
-        namespace: "orthographic.camera",
-        brief: "Camera",
-        description: "Orthographic camera helpers.",
-        functions: functions.map(
-          (fn) =>
-            ({
-              brief: "",
-              description: "",
-              parameters: [],
-              returnValues: [],
-              ...fn,
-            }) as ApiFunction,
-        ),
-        variables: [],
-        constants: [],
-        properties: [],
-        typedefs: [],
-      },
-    });
-
-  test("marks a global symbol's heading and leaves a module member's unmarked", () => {
-    const md = apiPageMarkdown(
-      pageWithFunctions([{ name: "describe", global: true }, { name: "camera.get_zoom" }]),
-      noLink,
-    );
-    const heading = (signature: string) =>
-      md.split("\n").find((line) => line.startsWith(`### \`${signature}\``)) ?? "";
-
-    expect(heading("describe()")).toContain(
-      'api-badge-dot--global" aria-label="Ambient global" title="Ambient global">G</span>',
-    );
-    expect(heading("camera.get_zoom()")).not.toContain("api-badge-dot");
-  });
-
-  test("a page with a global symbol adds the no-import caveat under the import step", () => {
-    const md = apiPageMarkdown(
-      pageWithFunctions([{ name: "describe", global: true }, { name: "camera.get_zoom" }]),
-      noLink,
-    );
-    expect(md).toContain('import * as camera from "orthographic.camera"');
-    expect(md).toContain("ambient globals");
-    // The caveat belongs to the import step, so it sits after the fenced import.
-    expect(md.indexOf("ambient globals")).toBeGreaterThan(
-      md.indexOf('import * as camera from "orthographic.camera"'),
-    );
-  });
-
-  test("a page with no global symbol leaves the provenance block unchanged", () => {
-    const md = apiPageMarkdown(pageWithFunctions([{ name: "camera.get_zoom" }]), noLink);
-    expect(md).toContain('import * as camera from "orthographic.camera"');
-    expect(md).not.toContain("ambient globals");
-    expect(md).not.toContain("api-badge-dot");
-  });
-});
-
-// An imported brief is upstream's prose, not the fork's, and the page says so
-// rather than presenting it as first-party. The marker reuses the `api-badge-dot`
-// markup so the heading slugger's strip rule already covers it — adding provenance
-// must not move an anchor a reader may have linked.
-describe("apiPageMarkdown upstream-documentation marker", () => {
-  const noLink = (text: string) => text;
-
-  const pageWithFunctions = (functions: (Partial<ApiFunction> & { name: string })[]): ApiPage =>
-    libraryPageWithMeta({
-      module: {
-        namespace: "orthographic.camera",
-        brief: "Camera",
-        description: "Orthographic camera helpers.",
-        functions: functions.map(
-          (fn) =>
-            ({
-              brief: "",
-              description: "",
-              parameters: [],
-              returnValues: [],
-              ...fn,
-            }) as ApiFunction,
-        ),
-        variables: [],
-        constants: [],
-        properties: [],
-        typedefs: [],
-      },
-    });
-
-  const heading = (md: string, signature: string) =>
-    md.split("\n").find((line) => line.startsWith(`### \`${signature}\``)) ?? "";
-
-  test("marks an imported symbol's heading and leaves a fork-documented one unmarked", () => {
-    const md = apiPageMarkdown(
-      pageWithFunctions([
-        { name: "camera.start", docSource: "upstream", brief: "Start the camera" },
-        { name: "camera.get_zoom", brief: "Get the current zoom level of the camera." },
-      ]),
-      noLink,
-    );
-
-    expect(heading(md, "camera.start()")).toContain(
-      'api-badge-dot--upstream" aria-label="Documentation imported from upstream" title="Documentation imported from upstream">U</span>',
-    );
-    expect(heading(md, "camera.get_zoom()")).not.toContain("api-badge-dot");
-  });
-
-  test("a page with no imported symbol renders no marker at all", () => {
-    const md = apiPageMarkdown(pageWithFunctions([{ name: "camera.get_zoom" }]), noLink);
-    expect(md).not.toContain("api-badge-dot--upstream");
-    expect(md).not.toContain("Documentation imported from upstream");
-  });
-
-  // Through `renderMarkdown`, because the slug is derived there: the assertion has
-  // to compare the anchors the site actually emits, not the markdown they come from.
-  test("the marker leaves the heading anchor byte-identical to the unmarked page", async () => {
-    const anchors = async (fn: Partial<ApiFunction> & { name: string }) => {
-      const html = await renderMarkdown(apiPageMarkdown(pageWithFunctions([fn]), noLink));
-      return [...html.matchAll(/<h3[^>]*\bid="([^"]+)"/g)].map((m) => m[1]);
-    };
-
-    const marked = await anchors({ name: "camera.start", docSource: "upstream" });
-    const plain = await anchors({ name: "camera.start" });
-
-    expect(marked).toContain("camerastart");
-    expect(marked).toEqual(plain);
-  });
-
-  // End-to-end over the committed api-docs. Both namespaces come from the measured
-  // precedence evidence: defcon's fork documents `start` nowhere, and
-  // orthographic.camera's fork writes its own `get_zoom` brief over upstream's.
-  test("the real defcon page marks start, and orthographic.camera does not mark get_zoom", () => {
-    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    const page = (namespace: string) => {
-      const found = pages.find((p) => p.namespace === namespace);
-      if (!found) throw new Error(`no ${namespace} page in the real surface`);
-      return apiPageMarkdown(found, apiLinkify(pages));
-    };
-    const headingFor = (md: string, signature: string) =>
-      md.split("\n").find((line) => line.startsWith(`### \`${signature}`)) ?? "";
-
-    const start = headingFor(page("defcon"), "start(");
-    expect(start).toContain("api-badge-dot--upstream");
-    expect(start).toContain("Documentation imported from upstream");
-
-    const getZoom = headingFor(page("orthographic.camera"), "get_zoom(");
-    expect(getZoom).not.toBe("");
-    expect(getZoom).not.toContain("api-badge-dot");
-  });
-
-  test("both markers ride the same heading when a symbol is global and imported", () => {
-    const md = apiPageMarkdown(
-      pageWithFunctions([{ name: "describe", global: true, docSource: "upstream" }]),
-      noLink,
-    );
-    expect(heading(md, "describe()")).toContain("api-badge-dot--global");
-    expect(heading(md, "describe()")).toContain("api-badge-dot--upstream");
-  });
-});
-
-// The `@deprecated` carried from an authored `.d.ts` renders as text in the same
-// availability block that holds the engine lifecycle facts, so a `library` page —
-// which never has an availability record — still shows the fact.
+// The `@deprecated` carried from an api-doc renders as text in the same
+// availability block that holds the engine lifecycle facts, so a page with no
+// availability record still shows the fact.
 describe("apiPageMarkdown deprecation from the api-doc tag", () => {
   const noLink = (text: string) => text;
 
-  function libraryPage(fn: Partial<ApiFunction> & { name: string }): ApiPage {
+  function taggedPage(fn: Partial<ApiFunction> & { name: string }): ApiPage {
     return {
-      namespace: "yagames",
-      route: "/api/yagames",
-      brief: "YaGames",
+      namespace: "demo",
+      route: "/api/demo",
+      brief: "Demo",
       module: {
-        namespace: "yagames",
-        brief: "YaGames",
-        description: "Yandex Games bindings.",
+        namespace: "demo",
+        brief: "Demo",
+        description: "Demo bindings.",
         functions: [
           { brief: "", description: "", parameters: [], returnValues: [], ...fn } as ApiFunction,
         ],
@@ -2201,13 +1528,13 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
       },
       translations: {},
       signatures: {},
-      category: "library",
+      category: "engine",
     };
   }
 
   test("renders the label and the tag text as an availability list item", () => {
     const md = apiPageMarkdown(
-      libraryPage({ name: "player_get_id", deprecated: "Use `player_get_unique_id` instead." }),
+      taggedPage({ name: "player_get_id", deprecated: "Use `player_get_unique_id` instead." }),
       noLink,
     );
     expect(md).toContain('aria-label="Availability"');
@@ -2217,7 +1544,7 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
   });
 
   test("renders a bare tag as the label alone, with no dash", () => {
-    const md = apiPageMarkdown(libraryPage({ name: "old_thing", deprecated: "" }), noLink);
+    const md = apiPageMarkdown(taggedPage({ name: "old_thing", deprecated: "" }), noLink);
     expect(md).toContain('aria-label="Availability"');
     expect(availabilityItem(md, "Deprecated").text).toBe("Deprecated");
     expect(md).not.toContain("Deprecated —");
@@ -2225,7 +1552,7 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
 
   test("leads a source deprecation tag with the Deprecated chip", () => {
     for (const deprecated of ["Use `player_get_unique_id` instead.", ""]) {
-      const md = apiPageMarkdown(libraryPage({ name: "player_get_id", deprecated }), noLink);
+      const md = apiPageMarkdown(taggedPage({ name: "player_get_id", deprecated }), noLink);
       const item = availabilityItem(md, "Deprecated");
       expect({ deprecated, kind: item.kind, glyph: item.glyph }).toEqual({
         deprecated,
@@ -2237,7 +1564,7 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
 
   test("folds a wrapped tag onto one list item so a continuation cannot break the list", () => {
     const md = apiPageMarkdown(
-      libraryPage({
+      taggedPage({
         name: "leaderboards_init",
         deprecated: "The leaderboards subsystem no longer needs initializing;\n- the others work.",
       }),
@@ -2250,7 +1577,7 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
 
   test("opens the symbol body with a source-tag-only note, ahead of the description", () => {
     const md = apiPageMarkdown(
-      libraryPage({
+      taggedPage({
         name: "player_get_id",
         description: "Library function.",
         deprecated: "Use `player_get_unique_id` instead.",
@@ -2265,7 +1592,7 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
   });
 
   test("renders no availability block when the symbol carries neither fact", () => {
-    const md = apiPageMarkdown(libraryPage({ name: "current_thing" }), noLink);
+    const md = apiPageMarkdown(taggedPage({ name: "current_thing" }), noLink);
     expect(md).not.toContain('aria-label="Availability"');
     expect(md).not.toContain("Deprecated");
   });
@@ -2276,10 +1603,10 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
     fn: Partial<ApiFunction> & { name: string },
     record: Omit<ApiAvailability, "identity">,
   ): ApiPage {
-    const page = libraryPage(fn);
+    const page = taggedPage(fn);
     const built = page.module.functions[0] as ApiFunction;
     const identity = {
-      namespace: "yagames",
+      namespace: "demo",
       kind: "FUNCTION",
       name: built.name,
       signature: normalizedFunctionSignature(built),
@@ -2378,276 +1705,6 @@ describe("apiPageMarkdown — provenance on a non-default version's windowed pag
     );
     expect(canonical).toContain("demo.evolving(a: string, b?: number): void");
   });
-});
-
-describe("Defold extension pages", () => {
-  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const render = (route: string) => {
-    const page = pages.find((p) => p.route === route);
-    if (!page) throw new Error(`no page at ${route}`);
-    return apiPageMarkdown(page, (t) => t);
-  };
-
-  const importStep = (statement: string) =>
-    `  3. Import it under a namespace alias of your choice:\n     \`\`\`ts\n     ${statement}\n     \`\`\``;
-
-  test("an extension page links its releases, keeps resolve, and imports its namespace", () => {
-    const md = render("/api/iap");
-    expect(md).toContain("](https://github.com/defold/extension-iap/releases)");
-    expect(md).toContain(
-      "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
-    );
-    expect(md).toContain(importStep('import * as iap from "iap"'));
-    expect(md).not.toContain("no import");
-    expect(md).not.toContain("/archive/");
-  });
-
-  test("a dotted extension page imports its module under the segments past the first", () => {
-    expect(render("/api/rive.cmd")).toContain(importStep('import * as cmd from "rive.cmd"'));
-  });
-
-  const manifest = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
-  ) as {
-    libraries: {
-      repo: string;
-      ref: string;
-      refKind: string;
-      docs: { namespace: string; page: string }[];
-    }[];
-  };
-  const firstPinnedWithDocs = (refKind: string) => {
-    const entry = manifest.libraries.find((e) => e.refKind === refKind && e.docs.length > 0);
-    const doc = entry?.docs[0];
-    if (!entry || !doc) {
-      throw new Error(
-        `defold-extensions.json has no ${refKind}-pinned entry with docs; pick another subject`,
-      );
-    }
-    const md = render(`/api/${doc.page}`);
-    return { entry, doc, md, step1: stepOne(md) };
-  };
-  const stepOne = (md: string) => {
-    const line = md.split("\n").find((l) => l.startsWith("  1. "));
-    if (!line) throw new Error("no adopt step 1");
-    return line;
-  };
-  const expectSharedSteps = (md: string, namespace: string) => {
-    expect(md).toContain(
-      "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
-    );
-    expect(md).toContain(importStep(`import * as ${namespace} from "${namespace}"`));
-    expect(md).not.toContain("no import");
-  };
-
-  test("a tag-pinned extension page names its tag archive instead of picking a release", () => {
-    const { entry, doc, md, step1 } = firstPinnedWithDocs("tag");
-    expect(step1).toContain(`${entry.repo}/archive/refs/tags/${entry.ref}.zip`);
-    expect(step1).toContain(`](${entry.repo}/tags)`);
-    expect(md).not.toContain("Pick a release");
-    expect(md).not.toContain("/releases");
-    expectSharedSteps(md, doc.namespace);
-  });
-
-  test("a commit-pinned extension page names its commit archive and no releases or tags", () => {
-    const { entry, doc, md, step1 } = firstPinnedWithDocs("commit");
-    expect(entry.ref).toMatch(/^[0-9a-f]{40}$/);
-    expect(step1).toContain(`${entry.repo}/archive/${entry.ref}.zip`);
-    expect(md).not.toContain("Pick a release");
-    expect(md).not.toContain("/releases");
-    expect(md).not.toContain("/tags)");
-    expectSharedSteps(md, doc.namespace);
-  });
-
-  test("an extension doc that declares an engine namespace says it adds members to it", () => {
-    const md = render("/api/spine.gui");
-    expect(md).toContain(
-      "  3. Call it through the global `gui` — no import. It adds members to the engine `gui` namespace.",
-    );
-  });
-
-  test("a Defold extension page links no Asset Portal entry", () => {
-    expect(render("/api/iap")).not.toContain("Asset Portal");
-  });
-});
-
-describe("Asset Portal script_api pages", () => {
-  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-  const manifest = JSON.parse(
-    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "asset-portal-script-api.json"), "utf8"),
-  ) as {
-    libraries: {
-      id: string;
-      repo: string;
-      ref: string;
-      refKind: "release" | "tag" | "commit";
-      docs: { namespace: string; page: string }[];
-    }[];
-  };
-
-  for (const refKind of ["release", "tag", "commit"] as const) {
-    test(`the first ${refKind}-pinned portal page gives that pin's dependency step, its import and its portal entry`, () => {
-      const library = manifest.libraries.find((entry) => entry.refKind === refKind);
-      const doc = library?.docs[0];
-      if (!library || !doc) {
-        throw new Error(
-          `asset-portal-script-api.json has no ${refKind}-pinned library; pick another subject`,
-        );
-      }
-      const page = pages.find((p) => p.route === `/api/${doc.page}`);
-      if (!page) throw new Error(`no page at /api/${doc.page}`);
-      const md = apiPageMarkdown(page, (t) => t);
-      const repoName = library.repo.split("/").at(-1);
-      const portal = `- Asset Portal: [${repoName}](https://defold.com/assets/${library.id}/)`;
-      const imported = `     import * as ${doc.namespace} from "${doc.namespace}"`;
-      expect(md).toContain(dependencyStep(library.repo, refKind, library.ref));
-      expect(md).toContain("  3. Import it under a namespace alias of your choice:");
-      expect(md).toContain(imported);
-      expect(md).not.toContain("no import");
-      expect(md).toContain(portal);
-      expect(md.indexOf(portal)).toBeGreaterThan(md.indexOf(imported));
-    });
-  }
-});
-
-describe("listingPageMarkdown", () => {
-  const listing = (overrides: Partial<LibraryListing> = {}): LibraryListing => ({
-    owner: "defold",
-    repo: "extension-x",
-    url: "https://github.com/defold/extension-x",
-    ref: "1.2.0",
-    pinKind: "release",
-    description: "",
-    official: true,
-    route: "/libraries/defold/extension-x",
-    api: "untyped",
-    adoption: "standard",
-    ships: "A module that tunes performance.",
-    steps: ["Require `x` from a script.", "Call `x.start` in `init`."],
-    engineApis: "Reads [`sys`](/api/sys) settings.",
-    ...overrides,
-  });
-  const indexOfLine = (lines: string[], predicate: (line: string) => boolean) => {
-    const index = lines.findIndex(predicate);
-    if (index === -1) throw new Error("line not found");
-    return index;
-  };
-
-  test("lays out lead, kind sentence, linked GitHub pin, nested steps and engine APIs in order", () => {
-    const subject = listing();
-    const lines = listingPageMarkdown(subject).split("\n");
-    const order = [
-      indexOfLine(lines, (line) => line === subject.ships),
-      indexOfLine(lines, (line) => line === LIBRARY_API_KIND_SENTENCE.untyped),
-      indexOfLine(
-        lines,
-        (line) =>
-          line ===
-          "- GitHub: [defold/extension-x](https://github.com/defold/extension-x) — pinned to [`1.2.0`](https://github.com/defold/extension-x/tree/1.2.0)",
-      ),
-      indexOfLine(lines, (line) =>
-        line.startsWith(
-          "  1. Pick a release from [defold/extension-x releases](https://github.com/defold/extension-x/releases)",
-        ),
-      ),
-      indexOfLine(lines, (line) => line === `  2. ${subject.steps[0]}`),
-      indexOfLine(lines, (line) => line === `  3. ${subject.steps[1]}`),
-      indexOfLine(lines, (line) => line === "## Engine APIs"),
-    ];
-    expect(order).toEqual([...order].sort((a, b) => a - b));
-    expect(new Set(order).size).toBe(order.length);
-    expect(lines[order[3] ?? -1]).toEndWith(", then **Fetch Libraries** in the Defold editor.");
-    expect(lines[(order[5] ?? -2) + 1]).not.toMatch(/^ {2}\d+\. /);
-    expect(lines).toContain(subject.engineApis ?? "");
-  });
-
-  for (const adoption of ["fork", "unavailable"] as const) {
-    test(`a listing adopted as ${adoption} has no dependency step and numbers its own steps from 1 under the GitHub pin`, () => {
-      const subject = listing({ adoption });
-      const lines = listingPageMarkdown(subject).split("\n");
-      expect(lines).not.toContain(dependencyStep(subject.url, subject.pinKind, subject.ref));
-      const githubAt = indexOfLine(lines, (line) => line.startsWith("- GitHub: "));
-      expect(lines.slice(githubAt + 1, githubAt + 3)).toEqual([
-        `  1. ${subject.steps[0]}`,
-        `  2. ${subject.steps[1]}`,
-      ]);
-      const order = [
-        indexOfLine(lines, (line) => line === subject.ships),
-        indexOfLine(lines, (line) => line === LIBRARY_API_KIND_SENTENCE.untyped),
-        githubAt,
-        indexOfLine(lines, (line) => line === "## Engine APIs"),
-      ];
-      expect(order).toEqual([...order].sort((a, b) => a - b));
-    });
-  }
-
-  test("a commit pin reads as its short sha linking the full sha, and no engine APIs means no section", () => {
-    const sha = "0123456789abcdef0123456789abcdef01234567";
-    const { engineApis, ...withoutEngineApis } = listing({ ref: sha, pinKind: "commit" });
-    expect(engineApis).toBeString();
-    const md = listingPageMarkdown(withoutEngineApis);
-    expect(md).toContain(
-      `— pinned to [\`0123456\`](https://github.com/defold/extension-x/tree/${sha})`,
-    );
-    expect(md).not.toContain("## Engine APIs");
-  });
-
-  test("names the Defold version current when the pin was cut on the pin bullet, and nothing without one", () => {
-    const pinLine = (md: string) => md.split("\n").find((line) => line.startsWith("- GitHub: "));
-    expect(pinLine(listingPageMarkdown(listing({ releaseEra: "1.9.0" })))).toEndWith(
-      " (released while Defold 1.9.0 was current)",
-    );
-    expect(listingPageMarkdown(listing())).not.toContain("released while");
-  });
-
-  test("a typed Defold page names the same era on its pin bullet, and nothing without one", () => {
-    const meta = {
-      author: "",
-      authorUrl: "https://github.com/defold/extension-x",
-      commit: "1.2.0",
-      sourceUrl: "https://github.com/defold/extension-x/blob/1.2.0/api/x.script_api",
-      importString: 'import * as x from "x"',
-      license: "MIT",
-      authoredHere: true,
-      usage: "import" as const,
-      pinKind: "release" as const,
-    };
-    const pinLine = (md: string) => md.split("\n").find((line) => line.startsWith("- GitHub: "));
-    const dated = apiPageMarkdown(
-      libraryPageWithMeta({ libraryMeta: { ...meta, releaseEra: "1.9.0" } }),
-      (text) => text,
-    );
-    expect(pinLine(dated)).toEndWith(" (released while Defold 1.9.0 was current)");
-    const undated = apiPageMarkdown(libraryPageWithMeta({ libraryMeta: meta }), (text) => text);
-    expect(undated).not.toContain("released while");
-  });
-
-  for (const pinKind of ["release", "tag", "commit"] as const) {
-    test(`a ${pinKind}-pinned listing gives the same step 1 as a typed library page with that pin`, () => {
-      const ref = pinKind === "commit" ? "0123456789abcdef0123456789abcdef01234567" : "v1.2.0";
-      const stepOne = (md: string) => md.split("\n").find((line) => line.startsWith("  1. "));
-      const typed = apiPageMarkdown(
-        libraryPageWithMeta({
-          libraryMeta: {
-            author: "Defold",
-            authorUrl: "https://github.com/defold/extension-x",
-            commit: ref,
-            sourceUrl: `https://github.com/defold/extension-x/tree/${ref}`,
-            importString: "",
-            license: "MIT",
-            authoredHere: true,
-            usage: "ambient",
-            globalNamespace: "x",
-            pinKind,
-          },
-        }),
-        (text) => text,
-      );
-      const listed = listingPageMarkdown(listing({ ref, pinKind }));
-      expect(stepOne(typed)).toBeString();
-      expect(stepOne(listed)).toBe(stepOne(typed));
-    });
-  }
 });
 
 describe("constant union alias entries", () => {
@@ -3488,9 +2545,7 @@ describe("a slot doc carrying a list stays under its bullet", () => {
 
 describe("per-form availability on an authored override", () => {
   test("go.property's string form carries its own availability line and span", () => {
-    const page = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
-      (p) => p.namespace === "go",
-    );
+    const page = canonicalApiPages(REAL_TYPES_DIR).find((p) => p.namespace === "go");
     if (!page) throw new Error("no canonical go page");
     const record = apiModuleSymbols(page, page.translations, page.signatures).find(
       (s) =>
@@ -3524,9 +2579,7 @@ describe("per-form availability on an authored override", () => {
 });
 
 describe("function-level markers on the canonical go page", () => {
-  const page = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
-    (p) => p.namespace === "go",
-  );
+  const page = canonicalApiPages(REAL_TYPES_DIR).find((p) => p.namespace === "go");
   if (!page) throw new Error("no canonical go page");
   const md = apiPageMarkdown(page, apiLinkify([page]), { combinedMarkers: true });
   const heading = overloadHeading(groupFor(page, "go.property"));
@@ -3566,7 +2619,7 @@ describe("function-level markers on the canonical go page", () => {
 });
 
 describe("overload added/removed summary", () => {
-  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const pages = canonicalApiPages(REAL_TYPES_DIR);
   const pageOf = (namespace: string): ApiPage => {
     const page = pages.find((p) => p.namespace === namespace);
     if (!page) throw new Error(`no canonical ${namespace} page`);
@@ -3772,7 +2825,7 @@ describe("overload added/removed summary", () => {
 describe("slot name emphasis", () => {
   const NEWTRY =
     "socket.newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T";
-  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const pages = canonicalApiPages(REAL_TYPES_DIR);
   const render = (namespace: string): string => {
     const page = pages.find((p) => p.namespace === namespace);
     if (!page) throw new Error(`namespace ${namespace} missing from the canonical surface`);
@@ -3803,7 +2856,7 @@ describe("slot name emphasis", () => {
   });
 
   test("a nested field bullet carries no name emphasis", () => {
-    const md = render("admob");
+    const md = render("liveupdate");
     const nested = md.split("\n").filter((l) => /^ {2,}- `/.test(l));
     expect(nested.length).toBeGreaterThan(0);
     expect(nested.filter((l) => l.includes(API_NAME_OPEN))).toEqual([]);
@@ -3820,7 +2873,7 @@ describe("slot name emphasis", () => {
 });
 
 describe("a renamed engine type shows its Defold name", () => {
-  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const pages = canonicalApiPages(REAL_TYPES_DIR);
   const linkify = apiLinkify(pages);
   const markdownFor = (namespace: string): string[] => {
     const page = pages.find((candidate) => candidate.namespace === namespace);

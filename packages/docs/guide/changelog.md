@@ -14,16 +14,18 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Library types](./resolve.md#library-data)** update without a CLI release, and `resolve --frozen` needs a recorded commit.
+> - **[Library API pages](https://defold-typescript.github.io/library-data)** moved to their own docs site, with no redirect from the old URLs.
 > - **[API docs](/api/particlefx)** keep text that only looks like a tag.
 
 ### Breaking
 
 - **`resolve` fetches library data itself:** library types come from the [library data repo](https://github.com/defold-typescript/library-data) and update without a CLI release, and `@defold-typescript/library-types` is no longer published. `resolve` and `watch` record the commit as `"libraryData"` in `package.json` and [move it only when the data changes](./resolve.md#library-data), `resolve --frozen` fails until one is recorded, and `export-types` reads the newest data.
+- **Library API pages moved:** library pages and the Libraries index are on the [library docs site](https://defold-typescript.github.io/library-data), with no redirect from their old `/api/<library>` and `/libraries` URLs, and this site's search no longer finds them.
 
 ### Improved
 
 - **Releases check the library data they will read:** a release publishes only after [`library check`](./library.md) passes with that release's CLI against the live `main` of the [library data repo](https://github.com/defold-typescript/library-data). A nightly run does the same check, so data that stops passing is reported before a release depends on it.
-- **Library guides moved:** the guides for [adding a library](https://defold-typescript.github.io/library-data/guides/authoring-luals-library-types) and [refreshing its pin](https://defold-typescript.github.io/library-data/guides/refreshing-library-pins) are on the library docs site, and the `library add` notes link there.
+- **Library docs update on every data merge:** the library docs site rebuilds with each library data merge rather than each toolchain release. The guides for [adding a library](https://defold-typescript.github.io/library-data/guides/authoring-luals-library-types) and [refreshing its pin](https://defold-typescript.github.io/library-data/guides/refreshing-library-pins) are there too, and the `library add` notes link to them.
 
 ### Fixed
 

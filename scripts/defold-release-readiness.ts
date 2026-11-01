@@ -704,7 +704,6 @@ export function collectDocs(root: string, release: string, baseline: string): Do
   let manifestProblems: readonly string[] = [];
   try {
     const typesDir = path.join(root, "packages/types");
-    const libraryTypesDir = path.join(root, "packages/library-types");
     const versions = versionsWithDiskFixtures(typesDir);
     // Derive the required complete-version set straight from the disk fixtures,
     // before and independent of the manifest we then validate against it. A
@@ -718,7 +717,7 @@ export function collectDocs(root: string, release: string, baseline: string): Do
     const oldest = axis[axis.length - 1];
     const manifest = buildReleaseRouteManifest({
       versions,
-      canonicalPages: canonicalApiPages(typesDir, libraryTypesDir),
+      canonicalPages: canonicalApiPages(typesDir),
       pagesByVersion: Object.fromEntries(
         versions.map((v) => [
           v.id,
@@ -731,8 +730,8 @@ export function collectDocs(root: string, release: string, baseline: string): Do
     const evidence = docsRouteEvidence({
       requiredVersionIds,
       manifest,
-      generatedSearchFiles: searchIndexOutputs({ typesDir, libraryTypesDir }).map((o) => o.file),
-      generatedSymbolFiles: symbolIndexOutputs({ typesDir, libraryTypesDir }).map((o) => o.file),
+      generatedSearchFiles: searchIndexOutputs({ typesDir }).map((o) => o.file),
+      generatedSymbolFiles: symbolIndexOutputs({ typesDir }).map((o) => o.file),
     });
     canonicalRoutes = evidence.canonicalRoutes;
     exactRoutesByVersion = { ...evidence.exactRoutesByVersion };
