@@ -56,6 +56,9 @@ export interface ResolveExtensionArchiveOptions {
   // Reads only the archive Bob will build from `projectDir`, and throws
   // `DefoldCopyRefused` rather than take any other copy.
   readonly requireDefoldCopy?: boolean;
+  // A failed download throws even when a cached copy exists, for a caller that must
+  // not act on bytes it could not confirm are current.
+  readonly requireRevalidation?: boolean;
   readonly download?: DownloadExtensionArchive;
   readonly readZip?: ReadExtensionZip;
 }
@@ -96,12 +99,14 @@ export const fetchExtensionArchive: DownloadExtensionArchive = async (url, etag)
 
 // Revalidated on every run, so a moving ref such as `master.zip` follows its
 // branch; when the request fails, the cached copy is served with a warning so
-// an offline run still resolves. The archive lands by rename, so a concurrent
-// run reads the old copy or the new one, never half of one.
+// an offline run still resolves, unless `requireRevalidation` makes the failure
+// throw. The archive lands by rename, so a concurrent run reads the old copy or
+// the new one, never half of one.
 export async function cachedOrDownloaded(
   url: string,
   cacheDir: string,
   download: DownloadExtensionArchive,
+  requireRevalidation = false,
 ): Promise<{ provenance: "cache" | "download"; archivePath: string; warning?: string }> {
   const dir = join(cacheDir, extensionArchiveKey(url));
   const archivePath = join(dir, "archive.zip");
@@ -113,7 +118,7 @@ export async function cachedOrDownloaded(
   try {
     answer = await download(url, etag);
   } catch (err) {
-    if (!cached) {
+    if (!cached || requireRevalidation) {
       throw err;
     }
     const message = err instanceof Error ? err.message : String(err);
@@ -182,7 +187,12 @@ export async function resolveExtensionArchive(
   const source =
     defoldPath !== null
       ? { provenance: "defold" as const, archivePath: defoldPath }
-      : await cachedOrDownloaded(dep.url, opts.cacheDir, opts.download ?? fetchExtensionArchive);
+      : await cachedOrDownloaded(
+          dep.url,
+          opts.cacheDir,
+          opts.download ?? fetchExtensionArchive,
+          opts.requireRevalidation,
+        );
 
   const zip = await open(source.archivePath);
   let identity: ArchiveIdentity;

@@ -666,3 +666,15 @@ describe("a column-0 colon method of the returned table is a method member", () 
     expect(box2d.members.some((member) => member.method === true)).toBe(false);
   });
 });
+
+describe("parseLuaSurface strict mode", () => {
+  const INDENTED = ["local M = {}", "  function M.start(a) end", "return M", ""].join("\n");
+
+  test("an indented definition throws, naming its line", () => {
+    expect(() => parseLuaSurface(INDENTED, { strict: true })).toThrow("line 2");
+  });
+
+  test("without strict the same source reads an empty surface", () => {
+    expect(parseLuaSurface(INDENTED)).toEqual({ moduleLocal: "M", members: [] });
+  });
+});
