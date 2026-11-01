@@ -9966,6 +9966,7 @@ describe("dispatch library review", () => {
 
   beforeEach(() => {
     base = mkdtempSync(path.join(os.tmpdir(), "dispatch-library-review-"));
+    failing = new Set([BAD_URL]);
     dataDir = path.join(base, "data", "0.1.0");
     writeLibrary("first", "1.0.0");
     writeLibrary("second", "2.0.0");
@@ -9991,8 +9992,10 @@ describe("dispatch library review", () => {
     { comment: COMMIT },
   );
 
+  let failing: ReadonlySet<string> = new Set([BAD_URL]);
+
   const download: DownloadExtensionArchive = async (url) => {
-    if (url === BAD_URL) throw new Error("HTTP 404");
+    if (failing.has(url)) throw new Error("HTTP 404");
     return { status: "ok", bytes: archiveBytes };
   };
 
@@ -10059,6 +10062,24 @@ describe("dispatch library review", () => {
     expect(err()).toContain("library review: error: ");
     expect(JSON.parse(readFileSync(reviewedPath("first"), "utf8")).reviews).toHaveLength(1);
     expect(JSON.parse(readFileSync(reviewedPath("second"), "utf8"))).toEqual({ ref: "2.0.0" });
+  });
+
+  test("a failed download fails the library even with a cached copy", async () => {
+    const firstUrl = "https://github.com/owner/first/archive/1.0.0.zip";
+    expect(await run(["first", "--data", dataFlag()], captureStreams().io)).toBe(0);
+    writeLibrary("first", "1.0.0");
+    const restored = readFileSync(reviewedPath("first"), "utf8");
+    failing = new Set([firstUrl]);
+    const { io, out, err } = captureStreams();
+
+    const code = await run(["--data", dataFlag()], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("first: ");
+    expect(err()).toContain("HTTP 404");
+    expect(err()).toContain("library review: error: ");
+    expect(out()).toContain(`second: recorded ${COMMIT}`);
+    expect(readFileSync(reviewedPath("first"), "utf8")).toBe(restored);
   });
 
   test("--json on a failed download exits 1 with both lists", async () => {

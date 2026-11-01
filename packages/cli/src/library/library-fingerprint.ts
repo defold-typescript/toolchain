@@ -52,10 +52,13 @@ const isDoc = (line: string): boolean => line.trimStart().startsWith("---") && !
 function luaMembers(path: string, text: string, lines: readonly string[]): [string, string][] {
   let surface: ReturnType<typeof parseLuaSurface>;
   try {
-    surface = parseLuaSurface(text);
+    surface = parseLuaSurface(text, { strict: true });
   } catch {
-    // A `---@meta` file is refused for returning nothing, and its annotations are all
-    // it declares, so they count here with the code.
+    // The reader refuses a file for one of two reasons: it cannot tell what the file
+    // exports, or a member may be hiding in a shape it cannot follow. Either way a
+    // member hash would miss a signature change, so the file counts whole. A `---@meta`
+    // file is refused for returning nothing, and its annotations are all it declares,
+    // so they count here with the code.
     const counted = lines.filter((line) => !isComment(line) || isAnnotation(line));
     return [[path, memberHash(counted.join("\n"))]];
   }
