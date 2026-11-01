@@ -37,6 +37,7 @@ import {
   NON_API_DIRS,
   portalEntryKind,
 } from "./library-evidence";
+import { archiveFingerprint, recordReview } from "./library-fingerprint";
 import { selectLualsSources } from "./sync-luals-types";
 
 export interface AddLibraryOptions {
@@ -269,10 +270,11 @@ export async function addLibrary(
   }
 
   const license = archiveLicense(zip);
+  const { reviews } = recordReview([], archiveFingerprint(zip), archive.identity.commit);
   claimLibraryFolder(root, folder, dataDir);
   try {
     writeLibraryJson(dataDir, { repo, ...(license === undefined ? {} : { license }) });
-    writeReviewedJson(dataDir, folder, { ref });
+    writeReviewedJson(dataDir, folder, { ref, reviews });
     if (generated !== undefined && generated.copies.size > 0) {
       writeRecipeJson(dataDir, folder, generated.recipe);
       for (const [dest, path] of generated.copies) {
