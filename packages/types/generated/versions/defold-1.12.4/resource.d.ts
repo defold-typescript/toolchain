@@ -102,10 +102,10 @@ declare global {
      * number the height of the animation
      *
      * - `frame_start`
-     * number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 .. in atlas.
+     * number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 .. <number-of-geometries> in atlas.
      *
      * - `frame_end`
-     * number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 .. in atlas.
+     * number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 .. <number-of-geometries> in atlas.
      *
      * - `playback`
      * constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
@@ -1096,10 +1096,10 @@ declare global {
      * number the height of the animation
      *
      * - `frame_start`
-     * number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 .. in atlas.
+     * number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 .. <number-of-geometries> in atlas.
      *
      * - `frame_end`
-     * number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 .. in atlas.
+     * number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 .. <number-of-geometries> in atlas.
      *
      * - `playback`
      * constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD

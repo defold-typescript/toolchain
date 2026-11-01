@@ -795,8 +795,8 @@
   ],
   "gui.play_particlefx": [
     {
-      "sourceHash": "19a26b6e14ad0997",
-      "ts": "// How to play a particle fx when a gui node is created.\n// The callback receives the gui node, the hash of the id\n// of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.\nexport default defineGuiScript({\n  init(self) {\n    gui.play_particlefx(gui.get_node(\"particlefx\"), (self, node, emitter, state) => {\n      if (emitter === hash(\"exhaust\") && state === particlefx.EMITTER_STATE_POSTSPAWN) {\n        // exhaust is done spawning particles...\n      }\n    });\n  },\n});"
+      "sourceHash": "3a4e5cb8e98bf1a0",
+      "ts": "// How to play a particle fx when a gui node is created.\n// The callback receives the gui node, the hash of the id\n// of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_<STATE>.\nexport default defineGuiScript({\n  init(self) {\n    gui.play_particlefx(gui.get_node(\"particlefx\"), (self, node, emitter, state) => {\n      if (emitter === hash(\"exhaust\") && state === particlefx.EMITTER_STATE_POSTSPAWN) {\n        // exhaust is done spawning particles...\n      }\n    });\n  },\n});"
     }
   ],
   "gui.reset_material": [
@@ -1107,8 +1107,8 @@
   ],
   "particlefx.play": [
     {
-      "sourceHash": "01a21997b47ac4fc",
-      "ts": "// How to play a particle fx when a game object is created.\n// The callback receives the hash of the path to the particlefx, the hash of the id\n// of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.\nexport default defineScript({\n  init(self) {\n    particlefx.play(\"#particlefx\", (self, id, emitter, state) => {\n      if (emitter === hash(\"exhaust\") && state === particlefx.EMITTER_STATE_POSTSPAWN) {\n        // exhaust is done spawning particles...\n      }\n    });\n  },\n});"
+      "sourceHash": "ad5d0aba2677b291",
+      "ts": "// How to play a particle fx when a game object is created.\n// The callback receives the hash of the path to the particlefx, the hash of the id\n// of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_<STATE>.\nexport default defineScript({\n  init(self) {\n    particlefx.play(\"#particlefx\", (self, id, emitter, state) => {\n      if (emitter === hash(\"exhaust\") && state === particlefx.EMITTER_STATE_POSTSPAWN) {\n        // exhaust is done spawning particles...\n      }\n    });\n  },\n});"
     }
   ],
   "particlefx.reset_constant": [

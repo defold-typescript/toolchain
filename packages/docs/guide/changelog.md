@@ -13,7 +13,8 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Library types](./resolve.md#library-data)** update without a CLI release; the recorded commit moves only when data changes, and `resolve --frozen` needs one.
+> - **[Library types](./resolve.md#library-data)** update without a CLI release, and `resolve --frozen` needs a recorded commit.
+> - **[API docs](/api/particlefx)** keep text that only looks like a tag.
 
 ### Breaking
 
@@ -22,6 +23,10 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **Releases check the library data they will read:** a release publishes only after [`library check`](./library.md) passes with that release's CLI against the live `main` of the [library data repo](https://github.com/defold-typescript/library-data). A nightly run does the same check, so data that stops passing is reported before a release depends on it.
+
+### Fixed
+
+- **Doc comments and API pages keep upstream text that only looks like a tag:** declarations lost everything from a `<` to the next `>`, so the `random` library's probability doc read `Values = 1 are always true`. Text such as `Values <= 0` and `particlefx.EMITTER_STATE_<STATE>` now comes through whole.
 
 ## v0.55.0
 

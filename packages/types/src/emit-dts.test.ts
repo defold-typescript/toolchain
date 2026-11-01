@@ -8658,3 +8658,31 @@ describe("slots typed from ref-doc fields", () => {
     expect(undeclared).toContain('origin: Opaque<"constant">) => void');
   });
 });
+
+describe("doc text that only looks like a tag", () => {
+  test("a parameter doc reaches its @param line whole", () => {
+    const sentence =
+      "Probability from 0.0 to 1.0. Values <= 0 are always false and values >= 1 are always true.";
+    const module: ApiModule = {
+      namespace: "thing",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "thing.chance",
+          brief: "",
+          description: "",
+          parameters: [
+            { name: "probability", doc: sentence, types: ["number"], isOptional: false },
+          ],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    expect(emitDeclarations(module)).toContain(`@param probability - ${sentence}`);
+  });
+});
