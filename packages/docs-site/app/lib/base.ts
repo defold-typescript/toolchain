@@ -16,8 +16,12 @@ const BASE = (typeof __DOCS_BASE__ !== "undefined" ? __DOCS_BASE__ : "/").replac
 
 export const LIBRARY_DOCS_URL = "https://defold-typescript.github.io/library-data";
 
+export function isExternalUrl(url: string): boolean {
+  return /^https?:\/\//.test(url);
+}
+
 export function withBase(path: string): string {
-  if (/^https?:\/\//.test(path)) return path;
+  if (isExternalUrl(path)) return path;
   const rel = path.startsWith("/") ? path : `/${path}`;
   return `${BASE}${rel}`;
 }

@@ -20,7 +20,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Breaking
 
 - **`resolve` fetches library data itself:** library types come from the [library data repo](https://github.com/defold-typescript/library-data) and update without a CLI release, and `@defold-typescript/library-types` is no longer published. `resolve` and `watch` record the commit as `"libraryData"` in `package.json` and [move it only when the data changes](./resolve.md#library-data), `resolve --frozen` fails until one is recorded, and `export-types` reads the newest data.
-- **Library API pages moved:** library pages and the Libraries index are on the [library docs site](https://defold-typescript.github.io/library-data), with no redirect from their old `/api/<library>` and `/libraries` URLs, and this site's search no longer finds them.
+- **Library API pages moved:** library pages and the Libraries index are on the [library docs site](https://defold-typescript.github.io/library-data), with no redirect from their old `/api/<library>` and `/libraries` URLs, and this site's search no longer finds them. The Libraries tab opens there in a new tab, marked as an external link.
 
 ### Improved
 

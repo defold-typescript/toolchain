@@ -17,7 +17,7 @@ import { withBase } from "./base";
 import { glyphSvg } from "./glyph";
 import { BADGE_DOT_RE, slugify } from "./headings";
 import { imageMaxWidthStyle } from "./image-style";
-import { phosphorDuotone } from "./phosphor";
+import { EXTERNAL_LINK_ICON } from "./phosphor";
 import { type Glyph, PLATFORM_MARKER, platformIcon } from "./platform-icons";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
 import { signatureEmphasis } from "./signature-emphasis";
@@ -66,10 +66,6 @@ const HEADING_ANCHOR_ICON =
   "</svg></span>";
 
 const HEADING_ANCHOR_CLOSE = `${HEADING_ANCHOR_ICON}</a>`;
-
-// Phosphor `arrow-square-out` (duotone), appended inside external links by the
-// link-rewrite ruler to mark destinations that leave the docs site.
-const EXTERNAL_LINK_ICON = phosphorDuotone("arrow-square-out", "external-icon");
 
 // Guide pages cross-link with relative `.md` paths (`./foo.md`, `foo.md#anchor`),
 // but the site routes each file at its slug (`README.md` -> `/`, `foo.md` -> `/foo`),
@@ -521,6 +517,7 @@ export async function renderMarkdown(
           }
         } else if (child.type === "link_close" && appendExternalIcon) {
           const icon = new state.Token("html_inline", "", 0);
+          // Marks a destination that leaves the docs site.
           icon.content = EXTERNAL_LINK_ICON;
           out.push(icon);
           appendExternalIcon = false;

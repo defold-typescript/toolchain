@@ -23,3 +23,6 @@ export function phosphorDuotone(name: string, className: string): string {
   );
   return decorateSvg(raw, className);
 }
+
+// Phosphor `arrow-square-out` (duotone), marking a link that leaves the docs site.
+export const EXTERNAL_LINK_ICON = phosphorDuotone("arrow-square-out", "external-icon");

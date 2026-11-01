@@ -1167,9 +1167,10 @@
   }
 
   /* External-link out icon (Phosphor duotone), appended inside `a.external` by
-     markdown.ts. Tailwind Preflight resets `svg` to `display: block`, so flow
-     it inline with a hair of space; opacity softens it against the link text. */
-  .prose a.external .external-icon {
+     markdown.ts and beside an external top bar tab's label by category-link.tsx.
+     Tailwind Preflight resets `svg` to `display: block`, so flow it inline with a
+     hair of space; opacity softens it against the link text. */
+  .external-icon {
     display: inline-block;
     vertical-align: -0.1em;
     margin-left: 0.15em;
