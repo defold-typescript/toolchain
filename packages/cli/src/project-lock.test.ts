@@ -199,11 +199,27 @@ describe("a pin's followed ref", () => {
     ["a commit, which cannot move", PINNED, `https://github.com/a/a/archive/${OTHER_COMMIT}.zip`],
     ["a non-string", PINNED, 7],
     ["a ref on a URL that is not a commit", URL_A, URL_A],
+    [
+      "a ref that climbs out of the repo",
+      PINNED,
+      "https://github.com/a/a/archive/../../../attacker/fork/archive/main.zip",
+    ],
+    [
+      "a ref that climbs out with encoded dots",
+      PINNED,
+      "https://github.com/a/a/archive/%2e%2e/%2E%2E/%2e%2e/attacker/fork/archive/main.zip",
+    ],
   ])("%s is invalid and names the entry", (_label, url, follows) => {
     const read = readProjectLock(seedFollowing(url, follows));
 
     expect(read.status).toBe("invalid");
     expect(read.status === "invalid" ? read.reason : "").toContain(url);
+  });
+
+  test("a nested ref of the entry's own repo reads back", () => {
+    const follows = "https://github.com/a/a/archive/refs/heads/feature/x.zip";
+
+    expect(readProjectLock(seedFollowing(PINNED, follows)).status).toBe("ok");
   });
 });
 
