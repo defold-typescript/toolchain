@@ -27,11 +27,15 @@ function isSectionHeader(line: string): boolean {
   return /^\[.+\]\s*$/.test(line.trim());
 }
 
-export function readGameProjectDependencies(gameProjectText: string): ExtensionDependency[] {
-  const lines = gameProjectText.split("\n");
-  const deps: ExtensionDependency[] = [];
+// The trailing group holds whatever follows the URL, a CRLF's `\r` included.
+const DEPENDENCY_LINE = /^(dependencies#(\d+)\s*=\s*)(.+?)(\s*)$/;
+
+// Each `[project]` dependency line, with where it sits so a caller can replace it.
+function projectDependencyLines(lines: readonly string[]) {
+  const found: { lineIndex: number; prefix: string; index: number; url: string; tail: string }[] =
+    [];
   let inProject = false;
-  for (const line of lines) {
+  for (const [lineIndex, line] of lines.entries()) {
     if (isSectionHeader(line)) {
       inProject = isProjectHeader(line);
       continue;
@@ -39,12 +43,35 @@ export function readGameProjectDependencies(gameProjectText: string): ExtensionD
     if (!inProject) {
       continue;
     }
-    const match = line.match(/^dependencies#(\d+)\s*=\s*(.+)$/);
-    if (match?.[1] !== undefined && match[2] !== undefined) {
-      deps.push({ index: Number(match[1]), url: match[2] });
+    const match = line.match(DEPENDENCY_LINE);
+    if (match !== null) {
+      const [, prefix = "", index = "", url = "", tail = ""] = match;
+      found.push({ lineIndex, prefix, index: Number(index), url, tail });
     }
   }
-  return deps;
+  return found;
+}
+
+export function readGameProjectDependencies(gameProjectText: string): ExtensionDependency[] {
+  return projectDependencyLines(gameProjectText.split("\n")).map(({ index, url }) => ({
+    index,
+    url,
+  }));
+}
+
+// Replaces the URL of one `dependencies#N` line; every other byte stays.
+export function rewriteGameProjectDependency(
+  gameProjectText: string,
+  index: number,
+  url: string,
+): string {
+  const lines = gameProjectText.split("\n");
+  for (const found of projectDependencyLines(lines)) {
+    if (found.index === index) {
+      lines[found.lineIndex] = `${found.prefix}${url}${found.tail}`;
+    }
+  }
+  return lines.join("\n");
 }
 
 // The leading directory every entry sits under — GitHub packs an archive under

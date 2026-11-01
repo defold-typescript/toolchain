@@ -3439,3 +3439,388 @@ describe("runResolve with a library data archive", () => {
     expect(namespaceOf(cwd).libraryData).toBeUndefined();
   });
 });
+
+describe("runResolve moves moving URLs to commits", () => {
+  const ONE = "1".repeat(40);
+  const TWO = "2".repeat(40);
+  const REPO = "https://github.com/owner/mylib";
+  const BRANCH = `${REPO}/archive/master.zip`;
+  const AT_ONE = `${REPO}/archive/${ONE}.zip`;
+  const AT_TWO = `${REPO}/archive/${TWO}.zip`;
+  const TAG = "https://github.com/owner/other/archive/refs/tags/v1.zip";
+  const OTHER_AT_TWO = `https://github.com/owner/other/archive/${TWO}.zip`;
+
+  // GitHub names the wrapper after the ref asked for; the files under it are the same.
+  const archive = (
+    wrapper: string,
+    comment?: string,
+    { doc = ALPHA, level = 'name: "level"\n' } = {},
+  ): Uint8Array =>
+    writeZipArchive(
+      [
+        { name: `${wrapper}/api.script_api`, text: doc },
+        { name: `${wrapper}/game.project`, text: "[library]\ninclude_dirs = scenes\n" },
+        { name: `${wrapper}/scenes/level.collection`, text: level },
+      ],
+      comment === undefined ? {} : { comment },
+    );
+
+  function serving(byUrl: Record<string, Uint8Array>) {
+    const requests: string[] = [];
+    const download: DownloadExtensionArchive = async (url) => {
+      requests.push(url);
+      const bytes = byUrl[url];
+      if (bytes === undefined) {
+        throw new Error(`no archive at ${url}`);
+      }
+      return { status: "ok", bytes };
+    };
+    return { download, requests };
+  }
+
+  function setUp(body: string) {
+    const cwd = tmp();
+    writeProject(cwd, body);
+    return { cwd, cacheDir: tmp() };
+  }
+
+  const run = (
+    project: { cwd: string; cacheDir: string },
+    download: DownloadExtensionArchive,
+    extra: Partial<RunResolveOptions> = {},
+  ) => runResolve({ ...project, libraryDataDir: null, typesRoot: null, download, ...extra });
+
+  const gameProject = (cwd: string) => readFileSync(join(cwd, "game.project"), "utf8");
+  const locked = (cwd: string) => {
+    const read = readProjectLock(cwd);
+    if (read.status !== "ok") {
+      throw new Error(`lockfile not readable: ${read.status}`);
+    }
+    return read.lock.extensions;
+  };
+  const extensionTypes = (cwd: string) => {
+    const dir = join(cwd, ".defold-types", "extensions");
+    return Object.fromEntries(
+      readdirSync(dir)
+        .sort()
+        .map((name) => [name, readFileSync(join(dir, name), "utf8")]),
+    );
+  };
+
+  describe("--pin-urls", () => {
+    test("a branch and a tag move to their commits, and the types stay", async () => {
+      const body = `[project]\ntitle = T\ndependencies#0 = ${BRANCH}\ndependencies#1 = ${TAG}\n`;
+      const project = setUp(body);
+      const { download } = serving({
+        [BRANCH]: archive("mylib-master", ONE),
+        [TAG]: archive("other-1", TWO, { doc: ALPHA.replaceAll("alpha", "beta") }),
+      });
+      const plain = setUp(body);
+      await run(plain, download);
+
+      const result = await run(project, download, { pinUrls: true });
+
+      expect(result.ok).toBe(true);
+      expect(gameProject(project.cwd)).toBe(
+        `[project]\ntitle = T\ndependencies#0 = ${AT_ONE}\ndependencies#1 = ${OTHER_AT_TWO}\n`,
+      );
+      expect(locked(project.cwd)).toEqual({
+        [AT_ONE]: { commit: ONE, files: anyFiles, follows: BRANCH },
+        [OTHER_AT_TWO]: { commit: TWO, files: anyFiles, follows: TAG },
+      });
+      expect(result.extensions.map(({ url, pinStatus }) => [url, pinStatus])).toEqual([
+        [AT_ONE, "match"],
+        [OTHER_AT_TWO, "match"],
+      ]);
+      expect(result.notices?.some((line) => line.includes(AT_ONE))).toBe(true);
+      expect(Object.keys(extensionTypes(project.cwd))).toContain("alpha.d.ts");
+      expect(extensionTypes(project.cwd)).toEqual(extensionTypes(plain.cwd));
+    });
+
+    test("the scene surface is keyed by the new URL, which the scene walk reads", async () => {
+      const project = setUp(`[project]\ndependencies#0 = ${BRANCH}\n`);
+      const { download } = serving({ [BRANCH]: archive("mylib-master", ONE) });
+
+      await run(project, download, { pinUrls: true });
+
+      const dependencies = join(project.cwd, ".defold-types", "dependencies");
+      const keys = readdirSync(dependencies).filter((name) => name !== "dependencies.json");
+      expect(keys).toEqual([extensionArchiveKey(AT_ONE)]);
+      const manifest = readFileSync(join(dependencies, "dependencies.json"), "utf8");
+      expect(manifest).toContain(AT_ONE);
+      expect(manifest).not.toContain(BRANCH);
+    });
+
+    test("a CRLF project keeps its line endings", async () => {
+      const project = setUp(`[project]\r\ndependencies#0 = ${BRANCH}\r\n`);
+      const { download } = serving({ [BRANCH]: archive("mylib-master", ONE) });
+
+      await run(project, download, { pinUrls: true });
+
+      expect(gameProject(project.cwd)).toBe(`[project]\r\ndependencies#0 = ${AT_ONE}\r\n`);
+    });
+
+    test("a release asset, another host and a commentless archive stay, each with a warning", async () => {
+      const RELEASE = "https://github.com/owner/rel/releases/download/v1/rel.zip";
+      const HOST = "https://example.com/owner/host/archive/main.zip";
+      const BARE = "https://github.com/owner/bare/archive/main.zip";
+      const body = `[project]\ndependencies#0 = ${RELEASE}\ndependencies#1 = ${HOST}\ndependencies#2 = ${BARE}\n`;
+      const project = setUp(body);
+      const { download } = serving({
+        [RELEASE]: archive("rel"),
+        [HOST]: archive("host"),
+        [BARE]: archive("bare-main"),
+      });
+
+      const result = await run(project, download, { pinUrls: true });
+
+      expect(result.ok).toBe(true);
+      expect(gameProject(project.cwd)).toBe(body);
+      for (const url of [RELEASE, HOST, BARE]) {
+        expect(result.warnings.filter((line) => line.includes(url))).toHaveLength(1);
+        expect(locked(project.cwd)[url]?.follows).toBeUndefined();
+      }
+    });
+
+    test("a second run changes nothing, by bytes and mtime", async () => {
+      const project = setUp(`[project]\ndependencies#0 = ${BRANCH}\n`);
+      const { download } = serving({
+        [BRANCH]: archive("mylib-master", ONE),
+        [AT_ONE]: archive(`mylib-${ONE}`, ONE),
+      });
+      await run(project, download, { pinUrls: true });
+      const paths = [join(project.cwd, "game.project"), join(project.cwd, PROJECT_LOCK_FILE)];
+      const past = new Date(1_000_000_000_000);
+      for (const path of paths) {
+        utimesSync(path, past, past);
+      }
+      const before = paths.map((path) => readFileSync(path, "utf8"));
+
+      const result = await run(project, download, { pinUrls: true });
+
+      expect(result.ok).toBe(true);
+      expect(result.notices).toBeUndefined();
+      expect(paths.map((path) => readFileSync(path, "utf8"))).toEqual(before);
+      expect(paths.map((path) => statSync(path).mtimeMs)).toEqual([past.getTime(), past.getTime()]);
+    });
+
+    test("a pin that drifted stays until --update accepts it", async () => {
+      const project = setUp(`[project]\ndependencies#0 = ${BRANCH}\n`);
+      writePins(project.cwd, { [BRANCH]: { commit: TWO, files: SOME_FILES } });
+      const { download } = serving({ [BRANCH]: archive("mylib-master", ONE) });
+
+      const held = await run(project, download, { pinUrls: true });
+
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${BRANCH}\n`);
+      expect(locked(project.cwd)[BRANCH]).toEqual({ commit: TWO, files: SOME_FILES });
+      expect(held.warnings.filter((line) => line.includes(BRANCH))).toHaveLength(1);
+
+      await run(project, download, { pinUrls: true, update: true });
+
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      expect(locked(project.cwd)).toEqual({
+        [AT_ONE]: { commit: ONE, files: anyFiles, follows: BRANCH },
+      });
+    });
+
+    test("a plain run rewrites nothing", async () => {
+      const body = `[project]\ndependencies#0 = ${BRANCH}\n`;
+      const project = setUp(body);
+      const { download } = serving({ [BRANCH]: archive("mylib-master", ONE) });
+
+      await run(project, download);
+
+      expect(gameProject(project.cwd)).toBe(body);
+      expect(locked(project.cwd)[BRANCH]?.follows).toBeUndefined();
+    });
+
+    test("once Defold has fetched libraries, the notice says to fetch again", async () => {
+      const project = setUp(`[project]\ndependencies#0 = ${BRANCH}\n`);
+      mkdirSync(join(project.cwd, ".internal", "lib"), { recursive: true });
+      writeFileSync(join(project.cwd, ".internal", "lib", "dependencies.json"), "[]");
+      const { download } = serving({ [BRANCH]: archive("mylib-master", ONE) });
+
+      const result = await run(project, download, { pinUrls: true });
+
+      expect(result.notices?.some((line) => line.includes("bob resolve"))).toBe(true);
+    });
+  });
+
+  describe("following a ref", () => {
+    const pinnedProject = () => {
+      const project = setUp(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      const files = archiveIdentityOf(archive(`mylib-${ONE}`, ONE)).files;
+      writeProjectLock(project.cwd, {
+        extensions: { [AT_ONE]: { commit: ONE, files, follows: BRANCH } },
+      });
+      return project;
+    };
+
+    function archiveIdentityOf(bytes: Uint8Array): ArchiveIdentity {
+      const path = join(tmp(), "archive.zip");
+      writeFileSync(path, bytes);
+      return archiveIdentity(readZip(path));
+    }
+
+    test("--update moves game.project and the lock to the ref's newer commit", async () => {
+      const project = pinnedProject();
+      const { download } = serving({
+        [BRANCH]: archive("mylib-master", TWO),
+        [AT_TWO]: archive(`mylib-${TWO}`, TWO),
+      });
+
+      const result = await run(project, download, { update: true });
+
+      expect(result.ok).toBe(true);
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${AT_TWO}\n`);
+      expect(locked(project.cwd)).toEqual({
+        [AT_TWO]: { commit: TWO, files: anyFiles, follows: BRANCH },
+      });
+      expect(result.extensions[0]?.pinStatus).toBe("match");
+      expect(result.notices?.some((line) => line.includes(AT_TWO))).toBe(true);
+    });
+
+    test("--update on the same commit changes nothing", async () => {
+      const project = pinnedProject();
+      const before = readFileSync(join(project.cwd, PROJECT_LOCK_FILE), "utf8");
+      const { download } = serving({
+        [BRANCH]: archive("mylib-master", ONE),
+        [AT_ONE]: archive(`mylib-${ONE}`, ONE),
+      });
+
+      const result = await run(project, download, { update: true });
+
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      expect(readFileSync(join(project.cwd, PROJECT_LOCK_FILE), "utf8")).toBe(before);
+      expect(result.notices).toBeUndefined();
+    });
+
+    test("--update that accepts changed files under one commit keeps the ref", async () => {
+      const project = pinnedProject();
+      const { download } = serving({
+        [BRANCH]: archive("mylib-master", ONE),
+        [AT_ONE]: archive(`mylib-${ONE}`, ONE, { level: 'name: "changed"\n' }),
+      });
+
+      await run(project, download, { update: true });
+
+      const pin = locked(project.cwd)[AT_ONE];
+      expect(pin?.follows).toBe(BRANCH);
+      expect(pin?.files).not.toBe(archiveIdentityOf(archive(`mylib-${ONE}`, ONE)).files);
+    });
+
+    test("--update=<name> touches that dependency alone", async () => {
+      const OTHER_BRANCH = "https://github.com/owner/other/archive/main.zip";
+      const OTHER_AT_ONE = `https://github.com/owner/other/archive/${ONE}.zip`;
+      const project = setUp(
+        `[project]\ndependencies#0 = ${AT_ONE}\ndependencies#1 = ${OTHER_AT_ONE}\n`,
+      );
+      const files = archiveIdentityOf(archive(`mylib-${ONE}`, ONE)).files;
+      writeProjectLock(project.cwd, {
+        extensions: {
+          [AT_ONE]: { commit: ONE, files, follows: BRANCH },
+          [OTHER_AT_ONE]: { commit: ONE, files, follows: OTHER_BRANCH },
+        },
+      });
+      const { download, requests } = serving({
+        [BRANCH]: archive("mylib-master", TWO),
+        [AT_TWO]: archive(`mylib-${TWO}`, TWO),
+        [OTHER_BRANCH]: archive("other-main", TWO),
+        [OTHER_AT_ONE]: archive(`other-${ONE}`, ONE),
+      });
+
+      await run(project, download, { update: ["mylib"] });
+
+      expect(gameProject(project.cwd)).toBe(
+        `[project]\ndependencies#0 = ${AT_TWO}\ndependencies#1 = ${OTHER_AT_ONE}\n`,
+      );
+      expect(requests).not.toContain(OTHER_BRANCH);
+      expect(locked(project.cwd)[OTHER_AT_ONE]?.follows).toBe(OTHER_BRANCH);
+    });
+
+    test("a commit URL with no ref to follow holds under --update, with a notice", async () => {
+      const project = setUp(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      const { download, requests } = serving({ [AT_ONE]: archive(`mylib-${ONE}`, ONE) });
+
+      const result = await run(project, download, { update: true });
+
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      expect(requests).toEqual([AT_ONE]);
+      expect(
+        result.notices?.filter((line) => line.includes(AT_ONE) && line.includes("no ref")),
+      ).toHaveLength(1);
+    });
+
+    test("a ref that cannot be checked holds, with a warning naming it", async () => {
+      const project = pinnedProject();
+      const { download } = serving({ [AT_ONE]: archive(`mylib-${ONE}`, ONE) });
+
+      const result = await run(project, download, { update: true });
+
+      expect(result.ok).toBe(true);
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      expect(locked(project.cwd)[AT_ONE]?.follows).toBe(BRANCH);
+      expect(result.warnings.filter((line) => line.includes(BRANCH))).toHaveLength(1);
+    });
+
+    test("a ref served only from the cache does not move the project", async () => {
+      const project = pinnedProject();
+      await run(
+        project,
+        serving({
+          [BRANCH]: archive("mylib-master", TWO),
+          [AT_TWO]: archive(`mylib-${TWO}`, TWO),
+        }).download,
+        { update: true },
+      );
+      writeProject(project.cwd, `[project]\ndependencies#0 = ${AT_ONE}\n`);
+      writeProjectLock(project.cwd, {
+        extensions: {
+          [AT_ONE]: {
+            commit: ONE,
+            files: archiveIdentityOf(archive(`mylib-${ONE}`, ONE)).files,
+            follows: BRANCH,
+          },
+        },
+      });
+
+      const result = await run(
+        project,
+        serving({ [AT_ONE]: archive(`mylib-${ONE}`, ONE) }).download,
+        {
+          update: true,
+        },
+      );
+
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      expect(result.warnings.filter((line) => line.includes(BRANCH))).toHaveLength(1);
+    });
+
+    test("a ref whose archive names no commit holds, with a warning naming it", async () => {
+      const project = pinnedProject();
+      const { download } = serving({
+        [BRANCH]: archive("mylib-master"),
+        [AT_ONE]: archive(`mylib-${ONE}`, ONE),
+      });
+
+      const result = await run(project, download, { update: true });
+
+      expect(gameProject(project.cwd)).toBe(`[project]\ndependencies#0 = ${AT_ONE}\n`);
+      expect(result.warnings.filter((line) => line.includes(BRANCH))).toHaveLength(1);
+    });
+
+    test("a plain run on a commit URL requests no ref and reports no drift", async () => {
+      const project = pinnedProject();
+      const { download, requests } = serving({
+        [BRANCH]: archive("mylib-master", TWO),
+        [AT_ONE]: archive(`mylib-${ONE}`, ONE),
+      });
+
+      const result = await run(project, download);
+
+      expect(requests).toEqual([AT_ONE]);
+      expect(result.extensions[0]?.pinStatus).toBe("match");
+      expect(locked(project.cwd)[AT_ONE]?.follows).toBe(BRANCH);
+    });
+  });
+});

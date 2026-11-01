@@ -10218,6 +10218,106 @@ describe("library data from the data repo", () => {
     expect(requests).toEqual([]);
   });
 
+  describe("--pin-urls", () => {
+    const gameProject = () => readFileSync(path.join(cwd, "game.project"), "utf8");
+    const PINNED_URL = DEP_URL.replace(
+      /[^/]+\.zip$/,
+      "3333333333333333333333333333333333333333.zip",
+    );
+
+    test("resolve rewrites game.project and reports the move", async () => {
+      writeDependentProject();
+      const { resolveInternals } = seams();
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--pin-urls"], io, { resolveInternals });
+
+      expect(code).toBe(0);
+      expect(gameProject()).toBe(`[project]\ndependencies#0 = ${PINNED_URL}\n`);
+      expect(err()).toContain(PINNED_URL);
+      const read = readProjectLock(cwd);
+      expect(read.status === "ok" ? read.lock.extensions[PINNED_URL]?.follows : "").toBe(DEP_URL);
+    });
+
+    test("resolve --json carries the move in its notices", async () => {
+      writeDependentProject();
+      const { resolveInternals } = seams();
+      const { io, out } = captureStreams();
+
+      await dispatch(["resolve", cwd, "--pin-urls", "--json"], io, { resolveInternals });
+
+      const parsed = JSON.parse(out());
+      expect(parsed.extensions[0].url).toBe(PINNED_URL);
+      expect(parsed.notices.join("\n")).toContain(PINNED_URL);
+    });
+
+    test("with --frozen it fails naming both flags, writing and requesting nothing", async () => {
+      writeDependentProject();
+      const { requests, resolveInternals } = seams();
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--pin-urls", "--frozen"], io, {
+        resolveInternals,
+      });
+
+      expect(code).toBe(1);
+      expect(err()).toContain("--pin-urls");
+      expect(err()).toContain("--frozen");
+      expect(requests).toEqual([]);
+      expect(gameProject()).toBe(`[project]\ndependencies#0 = ${DEP_URL}\n`);
+    });
+
+    test("off resolve it is accepted and does nothing", async () => {
+      writeDependentProject();
+      const { io, err } = captureStreams();
+
+      // Ahead of the path, so the flag read as a positional would name the project.
+      const code = await dispatch(["scene-types", "--pin-urls", cwd], io);
+
+      expect(failureOutput(err())).toBe("");
+      expect(code).toBe(0);
+      expect(gameProject()).toBe(`[project]\ndependencies#0 = ${DEP_URL}\n`);
+    });
+
+    test("watch never rewrites, with the flag or without it", async () => {
+      writeFileSync(path.join(cwd, "main.script"), "");
+      writeDependentProject();
+      const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+      writeFileSync(
+        path.join(sourceGeneratedDir, "label.d.ts"),
+        "declare const __label: unknown;\n",
+      );
+      const { resolveInternals } = seams();
+      let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+      const main: WatcherFactory = (_dir, onEvent): Watcher => {
+        triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+        return { close() {} };
+      };
+      const component: WatcherFactory = (): Watcher => ({ close() {} });
+      const { onWatchStart, ready } = watchHandle();
+
+      const result = dispatch(["watch", cwd, "--pin-urls"], captureStreams().io, {
+        debounceMs: 5,
+        watcherFactory: main,
+        componentWatcherFactory: component,
+        sourceGeneratedDir,
+        detectEditorVersion: () => null,
+        resolveInternals,
+        onWatchStart,
+      });
+      const handle = await ready;
+      await handle?.waitForIdle();
+      triggerMain?.("change", "game.project");
+      await handle?.waitForIdle();
+
+      expect(gameProject()).toBe(`[project]\ndependencies#0 = ${DEP_URL}\n`);
+
+      handle?.stop();
+      expect(await result).toBe(0);
+      rmSync(sourceGeneratedDir, { recursive: true, force: true });
+    });
+  });
+
   test("resolve --update=<name> takes the name, not a project path", async () => {
     writeDependentProject();
     const { resolveInternals, serve } = seams();

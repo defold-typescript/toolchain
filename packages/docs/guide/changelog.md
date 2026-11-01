@@ -16,6 +16,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **[Library types](./resolve.md#library-data)** update without a CLI release, each library pinned until `resolve --update[=<name>]`.
 > - **[`defold-typescript.lock`](./resolve.md#the-lockfile)** holds what `resolve` records; commit it, since `resolve --frozen` needs it.
 > - **[`resolve --frozen`](./resolve.md#dependency-safety)** checks the archives `bob build` will read.
+> - **[`resolve --pin-urls`](./resolve.md#pin-urls-to-commits)** moves branch and tag URLs in `game.project` to commits, which also protects the editor's own fetch.
 > - **[Library API pages](https://defold-typescript.github.io/library-data)** moved to their own site, with no redirects.
 
 ### Breaking
@@ -27,12 +28,14 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
+- **[`resolve --pin-urls`](./resolve.md#pin-urls-to-commits) pins dependency URLs to commits:** it rewrites each GitHub branch or tag URL in `game.project` to the commit its archive names, so the editor and `bob resolve` fetch fixed code. `resolve --update` then follows the original ref, moving `game.project` and `defold-typescript.lock` together.
 - **Releases check the library data they will read:** a release publishes only after [`library check`](./library.md) passes with that release's CLI against the live `main` of the [library data repo](https://github.com/defold-typescript/library-data). A nightly run does the same check, so data that stops passing is reported before a release depends on it.
 - **Library docs update on every data merge:** the library docs site rebuilds with each library data merge rather than each toolchain release. The guides for [adding a library](https://defold-typescript.github.io/library-data/guides/authoring-luals-library-types) and [refreshing its pin](https://defold-typescript.github.io/library-data/guides/refreshing-library-pins) are there too, and the `library add` notes link to them.
 
 ### Fixed
 
 - **Doc comments and API pages keep upstream text that only looks like a tag:** declarations lost everything from a `<` to the next `>`, so the `random` library's probability doc read `Values = 1 are always true`. Text such as `Values <= 0` and `particlefx.EMITTER_STATE_<STATE>` now comes through whole.
+- **A `game.project` with CRLF line endings keeps its dependencies:** its `dependencies#N` lines read as absent, so `resolve` and `watch` removed the project's dependency types and the scene walk saw no dependencies.
 
 ## v0.55.0
 

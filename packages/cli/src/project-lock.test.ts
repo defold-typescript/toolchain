@@ -160,6 +160,53 @@ describe("readProjectLock", () => {
   });
 });
 
+describe("a pin's followed ref", () => {
+  const PINNED = `https://github.com/a/a/archive/${COMMIT}.zip`;
+  const seedFollowing = (url: string, follows: unknown): string => {
+    const cwd = project();
+    seed(
+      cwd,
+      JSON.stringify({
+        version: 1,
+        extensions: { [url]: { commit: COMMIT, files: FILES, follows } },
+      }),
+    );
+    return cwd;
+  };
+
+  test("it reads back as written, on the entry's own line", () => {
+    const cwd = project();
+    const pin = { commit: COMMIT, files: FILES, follows: URL_A };
+
+    writeProjectLock(cwd, { extensions: { [PINNED]: pin } });
+
+    expect(readProjectLock(cwd)).toEqual({ status: "ok", lock: { extensions: { [PINNED]: pin } } });
+    expect(lockText(cwd)).toContain(
+      `${JSON.stringify(PINNED)}: { "commit": "${COMMIT}", "files": "${FILES}", "follows": "${URL_A}" }`,
+    );
+  });
+
+  test("a pin with no ref writes no field", () => {
+    const cwd = project();
+
+    writeProjectLock(cwd, { extensions: { [PINNED]: { commit: COMMIT, files: FILES } } });
+
+    expect(lockText(cwd)).not.toContain("follows");
+  });
+
+  test.each<[string, string, unknown]>([
+    ["a ref in another repo", PINNED, URL_B],
+    ["a commit, which cannot move", PINNED, `https://github.com/a/a/archive/${OTHER_COMMIT}.zip`],
+    ["a non-string", PINNED, 7],
+    ["a ref on a URL that is not a commit", URL_A, URL_A],
+  ])("%s is invalid and names the entry", (_label, url, follows) => {
+    const read = readProjectLock(seedFollowing(url, follows));
+
+    expect(read.status).toBe("invalid");
+    expect(read.status === "invalid" ? read.reason : "").toContain(url);
+  });
+});
+
 describe("writeProjectLock", () => {
   test("two inserts in either order give the same bytes", () => {
     const first = project();
