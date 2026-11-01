@@ -23,7 +23,7 @@ named for the repository, into the data folder `library check` reads:
 | File | When | What it holds |
 | ---- | ---- | ------------- |
 | `library.json` | always | `repo`, and `license` when the first line of the archive's `LICENSE` names MIT, Apache-2.0, BSD 2- or 3-Clause or Zlib. |
-| `reviewed.json` | always | `ref`: the tag the URL names, or the commit a branch URL's archive was packed from. |
+| `reviewed.json` | always | `ref`: the tag the URL names, or the commit a branch URL's archive was packed from. `reviews`: [the archive's hashes](#what-library-review-records) and its commit. |
 | `recipe.json` | when the library can generate a module | A starting entry, chosen below. |
 | `source/` | with `recipe.json` | The upstream files that entry reads, at the paths a later re-pin writes. |
 
@@ -53,6 +53,32 @@ An archive that declares no `include_dirs`, an entry that steps out of its folde
 and a module another library already names are errors, and leave the data folder
 as it was. With `--json`, `library` names the folder, `written` holds its absolute
 path and `warnings` holds the notes.
+
+## What `library review` records
+
+`library review --data <dir>` downloads `<repo>/archive/<ref>.zip` for each library
+and adds what it finds to `reviews` in that library's `reviewed.json`.
+`library review <name> --data <dir>` does this for one library, named by its folder.
+Each entry holds the commit the archive names and three hashes over the files the
+archive shares under its `include_dirs`:
+
+| Hash | Moves when |
+| ---- | ---------- |
+| `api` | A Lua member is added or removed, a parameter changes, or a `---@` line changes. Any change to a `.script_api` or C-family file, or to a Lua file with a shape the reader cannot follow, also moves it. |
+| `doc` | A `---` line that is not `---@` changes. |
+| `source` | Any shared file changes. |
+
+`members` holds one short hash per member, so two entries can show what differs.
+`api` does not read function bodies or constant values, so a change to what an
+unannotated function returns moves `source` alone.
+
+An archive whose hashes match an entry adds its commit to that entry, and any other
+archive adds a new entry. A repeat run changes nothing. `library check` requires no
+review, so a repository that has since gone never fails a data PR.
+
+A name the data folder does not hold is an error before any download. A library
+whose archive fails is reported by name and the others are still written, and the
+command exits 1.
 
 ## What `library check` runs
 
@@ -115,8 +141,8 @@ every module afresh, so it reads no committed report and nothing outside
 ## `--data`
 
 `--data <dir>` names a directory of version-named data folders (`0.55.0/`,
-`0.56.0/`, ...), which the data repo keeps in its `data/` folder. `library check`
-and `library add` use the one this CLI reads, by the same rule as
+`0.56.0/`, ...), which the data repo keeps in its `data/` folder. `library check`,
+`library add` and `library review` use the one this CLI reads, by the same rule as
 [`resolve --library-data`](./resolve.md#flags): the highest folder at or below
 the CLI version. A relative `<dir>` resolves against the
 working directory. A `<dir>` with no folder for this CLI version is an error.
@@ -182,3 +208,25 @@ With `--json`, `library check` writes one object:
 A clean run has `"ok": true`, an empty `problems` array, `libraryCount`, the
 number of libraries the folder holds, and `written`, the absolute path of each
 file `--api-doc-out` wrote.
+
+With `--json`, `library review` writes one object:
+
+```json
+{
+  "command": "library",
+  "ok": false,
+  "error": "library review: 1 failed in /path/to/library-data/data/0.55.0",
+  "subcommand": "review",
+  "dataFolder": "/path/to/library-data/data/0.55.0",
+  "reviewed": [
+    { "library": "flow", "commit": "0123456789abcdef0123456789abcdef01234567", "added": true }
+  ],
+  "failed": [
+    { "library": "monarch", "message": "HTTP 404" }
+  ]
+}
+```
+
+`added` is false when the review was already recorded, and `commit` is `null` for
+an archive that names none. A run with no failure has `"ok": true` and `written`,
+the absolute path of each `reviewed.json` it changed.

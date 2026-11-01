@@ -9863,9 +9863,11 @@ describe("dispatch library add", () => {
         "",
       ].join("\n"),
     );
-    expect(JSON.parse(readFileSync(path.join(dataDir, "mylib", "reviewed.json"), "utf8"))).toEqual({
-      ref: "1.2.3",
-    });
+    const reviewed = JSON.parse(
+      readFileSync(path.join(dataDir, "mylib", "reviewed.json"), "utf8"),
+    ) as { ref: string; reviews: unknown[] };
+    expect(reviewed.ref).toBe("1.2.3");
+    expect(reviewed.reviews).toHaveLength(1);
     expect(existsSync(path.join(dataDir, "mylib", "source/mylib/mylib/mylib.lua"))).toBe(true);
     expect(readdirSync(path.join(base, "data", "0.2.0"))).toEqual([]);
   });
@@ -9943,6 +9945,158 @@ describe("dispatch library add", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toContain("library folder mylib already exists");
+  });
+});
+
+describe("dispatch library review", () => {
+  const COMMIT = "0123456789abcdef0123456789abcdef01234567";
+  const BAD_URL = "https://github.com/owner/second/archive/2.0.0.zip";
+
+  let base: string;
+  let dataDir: string;
+
+  const writeLibrary = (folder: string, ref: string): void => {
+    mkdirSync(path.join(dataDir, folder), { recursive: true });
+    writeFileSync(
+      path.join(dataDir, folder, "library.json"),
+      JSON.stringify({ repo: `https://github.com/owner/${folder}` }),
+    );
+    writeFileSync(path.join(dataDir, folder, "reviewed.json"), JSON.stringify({ ref }));
+  };
+
+  beforeEach(() => {
+    base = mkdtempSync(path.join(os.tmpdir(), "dispatch-library-review-"));
+    dataDir = path.join(base, "data", "0.1.0");
+    writeLibrary("first", "1.0.0");
+    writeLibrary("second", "2.0.0");
+    // Newer than this CLI, so landing here shows the flag was not read as `check` reads it.
+    mkdirSync(path.join(base, "data", "0.2.0"));
+  });
+
+  afterEach(() => {
+    rmSync(base, { recursive: true, force: true });
+  });
+
+  const dataFlag = (): string => path.join(base, "data");
+  const reviewedPath = (folder: string): string => path.join(dataDir, folder, "reviewed.json");
+
+  const archiveBytes = writeZipArchive(
+    [
+      { name: "first-1.0.0/game.project", text: "[library]\ninclude_dirs = first\n" },
+      {
+        name: "first-1.0.0/first/first.lua",
+        text: "local M = {}\nfunction M.go() end\nreturn M\n",
+      },
+    ],
+    { comment: COMMIT },
+  );
+
+  const download: DownloadExtensionArchive = async (url) => {
+    if (url === BAD_URL) throw new Error("HTTP 404");
+    return { status: "ok", bytes: archiveBytes };
+  };
+
+  const run = (args: string[], io: ReturnType<typeof captureStreams>["io"]) =>
+    dispatch(["library", "review", ...args], io, {
+      cliVersion: "0.1.5",
+      resolveInternals: { libraryDataDir: null, download, cacheDir: path.join(base, "cache") },
+    });
+
+  test("a named library is recorded, reported and exits 0", async () => {
+    const { io, out, err } = captureStreams();
+    const untouched = readFileSync(reviewedPath("second"), "utf8");
+
+    const code = await run(["first", "--data", dataFlag()], io);
+
+    expect(err()).toBe("");
+    expect(code).toBe(0);
+    expect(out()).toBe(
+      [
+        `first: recorded ${COMMIT}`,
+        `defold-typescript library review: ${dataDir}: 1 reviewed, 0 failed`,
+        "",
+      ].join("\n"),
+    );
+    expect(readFileSync(reviewedPath("second"), "utf8")).toBe(untouched);
+    expect(readdirSync(path.join(base, "data", "0.2.0"))).toEqual([]);
+  });
+
+  test("--json reports each review and added is false on a repeat run", async () => {
+    const first = captureStreams();
+    expect(await run(["first", "--data", dataFlag(), "--json"], first.io)).toBe(0);
+    expect(JSON.parse(first.out())).toEqual({
+      command: "library",
+      ok: true,
+      subcommand: "review",
+      dataFolder: dataDir,
+      written: [reviewedPath("first")],
+      reviewed: [{ library: "first", commit: COMMIT, added: true }],
+      failed: [],
+    });
+
+    const repeat = captureStreams();
+    expect(await run(["first", "--data", dataFlag(), "--json"], repeat.io)).toBe(0);
+    expect(JSON.parse(repeat.out())).toEqual({
+      command: "library",
+      ok: true,
+      subcommand: "review",
+      dataFolder: dataDir,
+      written: [],
+      reviewed: [{ library: "first", commit: COMMIT, added: false }],
+      failed: [],
+    });
+  });
+
+  test("a failed download exits 1, names the library and keeps the others' records", async () => {
+    const { io, out, err } = captureStreams();
+
+    const code = await run(["--data", dataFlag()], io);
+
+    expect(code).toBe(1);
+    expect(out()).toContain(`first: recorded ${COMMIT}`);
+    expect(err()).toContain("second: ");
+    expect(err()).toContain("HTTP 404");
+    expect(err()).toContain("library review: error: ");
+    expect(JSON.parse(readFileSync(reviewedPath("first"), "utf8")).reviews).toHaveLength(1);
+    expect(JSON.parse(readFileSync(reviewedPath("second"), "utf8"))).toEqual({ ref: "2.0.0" });
+  });
+
+  test("--json on a failed download exits 1 with both lists", async () => {
+    const { io, out } = captureStreams();
+
+    const code = await run(["--data", dataFlag(), "--json"], io);
+
+    expect(code).toBe(1);
+    expect(JSON.parse(out())).toEqual({
+      command: "library",
+      ok: false,
+      error: `library review: 1 failed in ${dataDir}`,
+      subcommand: "review",
+      dataFolder: dataDir,
+      reviewed: [{ library: "first", commit: COMMIT, added: true }],
+      failed: [{ library: "second", message: expect.stringContaining("HTTP 404") }],
+    });
+  });
+
+  test("an unknown name exits 1 naming it, with nothing written", async () => {
+    const { io, out, err } = captureStreams();
+
+    const code = await run(["nope", "--data", dataFlag()], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toContain("library review: error: ");
+    expect(err()).toContain("nope");
+    expect(JSON.parse(readFileSync(reviewedPath("first"), "utf8"))).toEqual({ ref: "1.0.0" });
+  });
+
+  test("no --data exits 1 naming the review verb", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await run([], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("library review: error: --data needs a directory");
   });
 });
 
