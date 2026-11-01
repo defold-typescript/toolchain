@@ -72,13 +72,21 @@ archive shares under its `include_dirs`:
 `api` does not read function bodies or constant values, so a change to what an
 unannotated function returns moves `source` alone.
 
+A Lua file counts whole, under one `members` key named by its path, when the reader
+cannot follow how it builds its table. That covers a definition or assignment off
+column 0, a nested or bracketed one (`function M.sub.start()`, `M["start"] = ...`), a
+multiple assignment, a member whose value names something defined elsewhere
+(`M.start = start`), and a module that reads no members. Its `api` then moves on any
+change except to a comment that is not `---@`.
+
 An archive whose hashes match an entry adds its commit to that entry, and any other
 archive adds a new entry. A repeat run changes nothing. `library check` requires no
 review, so a repository that has since gone never fails a data PR.
 
 A name the data folder does not hold is an error before any download. A library
 whose archive fails is reported by name and the others are still written, and the
-command exits 1.
+command exits 1. A failed download counts as a failure even when a cached copy exists,
+and leaves that library's `reviewed.json` untouched.
 
 ## What `library check` runs
 

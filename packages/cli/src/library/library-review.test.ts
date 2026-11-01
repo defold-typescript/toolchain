@@ -166,6 +166,50 @@ describe("reviewLibraries", () => {
     expect(readLibraryReviews(dataDir, "second")).toHaveLength(1);
   });
 
+  describe("with the archive already cached and the record restored", () => {
+    const FIRST_RECORD = JSON.stringify({ ref: "1.0.0" });
+    const restoreFirst = (): void =>
+      writeFileSync(join(dataDir, "first", "reviewed.json"), FIRST_RECORD);
+
+    test("a failed download fails that library, records nothing and runs the others", async () => {
+      await review(BOTH, ["first"]);
+      restoreFirst();
+      const download: DownloadExtensionArchive = async (url) => {
+        if (url === FIRST_URL) throw new Error("HTTP 503");
+        return { status: "ok", bytes: BOTH[SECOND_URL] as Uint8Array };
+      };
+
+      const result = await reviewLibraries(dataDir, [], { cacheDir, download });
+
+      expect(result.failed).toEqual([{ library: "first", message: "HTTP 503" }]);
+      expect(reviewedText("first")).toBe(FIRST_RECORD);
+      expect(result.reviewed).toEqual([{ library: "second", commit: COMMIT_B, added: true }]);
+      expect(readLibraryReviews(dataDir, "second")).toHaveLength(1);
+    });
+
+    test("an answer of not modified reviews the cached bytes", async () => {
+      const bytes = BOTH[FIRST_URL] as Uint8Array;
+      const download: DownloadExtensionArchive = async (_url, etag) =>
+        etag === "v1" ? { status: "not-modified" } : { status: "ok", bytes, etag: "v1" };
+      const run = () => reviewLibraries(dataDir, ["first"], { cacheDir, download });
+      await run();
+      restoreFirst();
+
+      const restored = await run();
+      expect(restored.reviewed).toEqual([{ library: "first", commit: COMMIT_A, added: true }]);
+      expect(restored.failed).toEqual([]);
+      const recorded = reviewedText("first");
+      expect(JSON.parse(recorded).reviews).toEqual([
+        { ...fingerprintOf(bytes), commits: [COMMIT_A] },
+      ]);
+
+      const repeat = await run();
+      expect(repeat.reviewed).toEqual([{ library: "first", commit: COMMIT_A, added: false }]);
+      expect(repeat.failed).toEqual([]);
+      expect(reviewedText("first")).toBe(recorded);
+    });
+  });
+
   test("a folder without library.json is skipped", async () => {
     mkdirSync(join(dataDir, "not-a-library"));
 

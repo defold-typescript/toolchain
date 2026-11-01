@@ -26,7 +26,8 @@ export interface LibraryReviewResult {
  * Record a review for the libraries `names` lists, or for every library when it is
  * empty. Throws, before any download, on a name the data folder does not hold; a
  * library whose archive cannot be read is reported in `failed` and leaves the others
- * to be written.
+ * to be written. A failed download fails its library even when a cached copy exists,
+ * because a record says what the archive holds now.
  */
 export async function reviewLibraries(
   dataDir: string,
@@ -48,6 +49,7 @@ export async function reviewLibraries(
         { index: 0, url: `${repo}/archive/${ref}.zip` },
         {
           cacheDir: opts.cacheDir ?? extensionCacheDir(),
+          requireRevalidation: true,
           ...(opts.download === undefined ? {} : { download: opts.download }),
         },
       );

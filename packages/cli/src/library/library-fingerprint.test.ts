@@ -156,6 +156,141 @@ describe("archiveFingerprint", () => {
     });
   });
 
+  describe("a Lua shape the surface reader cannot follow counts whole", () => {
+    const shapes: readonly [string, string, string][] = [
+      [
+        "an indented definition",
+        "local M = {}\n  function M.start() end\nreturn M\n",
+        "local M = {}\n  function M.start(a) end\nreturn M\n",
+      ],
+      [
+        "a definition in a do block",
+        "local M = {}\ndo\n  function M.start() end\nend\nreturn M\n",
+        "local M = {}\ndo\n  function M.start(a) end\nend\nreturn M\n",
+      ],
+      [
+        "an indented colon method",
+        "local M = {}\n  function M:start() end\nreturn M\n",
+        "local M = {}\n  function M:start(a) end\nreturn M\n",
+      ],
+      [
+        "an indented assignment",
+        "local M = {}\n  M.start = function() end\nreturn M\n",
+        "local M = {}\n  M.start = function(a) end\nreturn M\n",
+      ],
+      [
+        "an assignment of a local function",
+        "local M = {}\nlocal function start() end\nM.start = start\nreturn M\n",
+        "local M = {}\nlocal function start(a) end\nM.start = start\nreturn M\n",
+      ],
+      [
+        "a constructor entry naming a local function",
+        "local function start() end\nlocal M = {\n  start = start,\n}\nreturn M\n",
+        "local function start(a) end\nlocal M = {\n  start = start,\n}\nreturn M\n",
+      ],
+      [
+        "a nested definition",
+        "local M = {}\nfunction M.sub.start() end\nreturn M\n",
+        "local M = {}\nfunction M.sub.start(a) end\nreturn M\n",
+      ],
+      [
+        "a bracketed assignment",
+        'local M = {}\nM["start"] = function() end\nreturn M\n',
+        'local M = {}\nM["start"] = function(a) end\nreturn M\n',
+      ],
+      [
+        "a nested assignment",
+        "local M = {}\nM.sub.start = function() end\nreturn M\n",
+        "local M = {}\nM.sub.start = function(a) end\nreturn M\n",
+      ],
+      [
+        "a multiple assignment",
+        "local M = {}\nM.start, other = function() end, 1\nreturn M\n",
+        "local M = {}\nM.start, other = function(a) end, 1\nreturn M\n",
+      ],
+      [
+        "a second definition on one line",
+        "local M = {}\nfunction M.a() end function M.start() end\nreturn M\n",
+        "local M = {}\nfunction M.a() end function M.start(a) end\nreturn M\n",
+      ],
+      [
+        "a member holding another table",
+        "local M = {}\nlocal C = {}\nfunction C.start() end\nM.C = C\nreturn M\n",
+        "local M = {}\nlocal C = {}\nfunction C.start(a) end\nM.C = C\nreturn M\n",
+      ],
+      [
+        "a module built by a call",
+        "local M = make(function() end)\nreturn M\n",
+        "local M = make(function(a) end)\nreturn M\n",
+      ],
+    ];
+
+    test.each(shapes)("%s moves api", (_shape, before, after) => {
+      const was = luaFingerprint(before);
+      const now = luaFingerprint(after);
+
+      expect(now.api).not.toBe(was.api);
+      expect(Object.keys(now.members)).toEqual([LUA_PATH]);
+    });
+
+    const INDENTED = "local M = {}\n  ---@param a number\n  function M.start(a) end\nreturn M\n";
+
+    test("the same module with CRLF line endings gives the same api", () => {
+      const crlf = luaFingerprint(INDENTED.replaceAll("\n", "\r\n"));
+
+      expect(crlf.api).toBe(luaFingerprint(INDENTED).api);
+    });
+
+    test("a ---@ change moves api and a plain comment change does not", () => {
+      const was = luaFingerprint(INDENTED);
+
+      expect(luaFingerprint(INDENTED.replace("a number", "a string")).api).not.toBe(was.api);
+      expect(luaFingerprint(`-- note\n${INDENTED}`).api).toBe(was.api);
+    });
+
+    test("outside include_dirs it moves nothing", () => {
+      const before = fingerprintOf({ [LUA_PATH]: MODULE, "example/use.lua": INDENTED });
+      const after = fingerprintOf({
+        [LUA_PATH]: MODULE,
+        "example/use.lua": INDENTED.replace("M.start(a)", "M.start(a, b)"),
+      });
+
+      expect(after).toEqual(before);
+    });
+  });
+
+  test("a body change in a module of readable shapes moves no api and keeps member keys", () => {
+    const readable = (body: string): string =>
+      [
+        "local function helper(a)",
+        "  return a",
+        "end",
+        "",
+        'local M = component.create("x")',
+        'M.ID = hash("x")',
+        "",
+        "function M.start(a)",
+        "  timer.delay(1, false, function(self, handle) end)",
+        "  M.start(1)",
+        "  local y = M.ID",
+        '  msg.post(".", M.ID, { action = 1 })',
+        "  if M.ID == 1 then",
+        `    ${body}`,
+        "  end",
+        "end",
+        "",
+        "return M",
+        "",
+      ].join("\n");
+
+    const before = luaFingerprint(readable("return 1"));
+    const after = luaFingerprint(readable("return 2"));
+
+    expect(after.api).toBe(before.api);
+    expect(after.members).toEqual(before.members);
+    expect(Object.keys(after.members)).toEqual([`${LUA_PATH}#ID`, `${LUA_PATH}#start`]);
+  });
+
   for (const path of [
     "mylib/mylib.script_api",
     "mylib/src/ext.c",
