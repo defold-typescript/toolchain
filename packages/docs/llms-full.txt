@@ -6859,7 +6859,9 @@ release involved, and asks the server whether it changed since the copy it store
 }
 ```
 
-- **A plain `resolve`** moves `libraryData` to the newest commit.
+- **A plain `resolve`** moves `libraryData` to the newest commit whose data folder
+  differs from the recorded one. A commit that changes nothing in that folder
+  leaves it in place.
 - **`resolve --frozen`** holds to the recorded commit and fails when none is
   recorded; run a plain `resolve` first and commit the result.
 - **Offline**, a plain `resolve` uses the copy it stored and warns on `stderr`.

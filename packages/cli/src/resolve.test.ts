@@ -2463,16 +2463,26 @@ describe("runResolve with a library data archive", () => {
   );
 
   // A real data folder, packed the way GitHub packs the data repo's root.
-  function dataArchive(commit: string, contents: string): Uint8Array {
+  function dataArchive(
+    commit: string,
+    contents: string,
+    outsideDataFolder: Readonly<Record<string, string>> = {},
+  ): Uint8Array {
     const folder = writeAuthoredLibraryData({ "mylib.core": contents });
     const files = (readdirSync(folder, { recursive: true }) as string[]).filter((path) =>
       statSync(join(folder, path)).isFile(),
     );
     return writeZipArchive(
-      files.map((path) => ({
-        name: `library-data-${commit}/0.0.1/${path.replace(/\\/g, "/")}`,
-        text: readFileSync(join(folder, path), "utf8"),
-      })),
+      [
+        ...files.map((path) => ({
+          name: `library-data-${commit}/0.0.1/${path.replace(/\\/g, "/")}`,
+          text: readFileSync(join(folder, path), "utf8"),
+        })),
+        ...Object.entries(outsideDataFolder).map(([path, text]) => ({
+          name: `library-data-${commit}/${path}`,
+          text,
+        })),
+      ],
       { comment: commit },
     );
   }
@@ -2546,6 +2556,45 @@ describe("runResolve with a library data archive", () => {
 
     expect(namespaceOf(cwd).libraryData).toBe(TWO);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
+  });
+
+  test("a newer commit with the same data folder keeps the commit, and --frozen prints the same", async () => {
+    const cwd = project();
+    const cacheDir = tmp();
+    await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      download: serving(dataArchive(ONE, declares("one"))).download,
+    });
+    const pkgPath = join(cwd, "package.json");
+    const compact = JSON.stringify(JSON.parse(readFileSync(pkgPath, "utf8")));
+    writeFileSync(pkgPath, compact);
+    const printed = readFileSync(surface(cwd), "utf8");
+
+    const plain = await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      download: serving(dataArchive(TWO, declares("one"), { "site/app.ts": "export {};\n" }))
+        .download,
+    });
+
+    expect(plain.ok).toBe(true);
+    expect(readFileSync(pkgPath, "utf8")).toBe(compact);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(printed);
+
+    const frozen = await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      freeze: true,
+      download: serving(null).download,
+    });
+
+    expect(frozen.ok).toBe(true);
+    expect(namespaceOf(cwd).libraryData).toBe(ONE);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(printed);
   });
 
   test("a run at the recorded commit leaves package.json byte-identical", async () => {

@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -128,6 +129,7 @@ describe("resolveLibraryDataArchive, plain", () => {
   test("an unchanged archive is revalidated by its ETag and served from the cache", async () => {
     const cacheDir = tmp();
     await resolve(cacheDir, serves(dataArchive(COMMIT), '"v1"'));
+    cacheCommit(cacheDir, OTHER);
     const second = counting(async () => ({ status: "not-modified" }));
 
     const result = await resolve(cacheDir, second.download, { recorded: OTHER });
@@ -310,6 +312,162 @@ describe("resolveLibraryDataArchive, plain", () => {
     expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
     expect(readFileSync(racer, "utf8")).toBe("first");
     expect(readdirSync(join(cacheDir, "commits"))).toEqual([COMMIT]);
+  });
+});
+
+describe("resolveLibraryDataArchive, plain, with a recorded commit behind main", () => {
+  const DATA: readonly ZipFixtureEntry[] = [
+    { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
+    { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+  ];
+  const NEWER_OUTSIDE_DATA: readonly ZipFixtureEntry[] = [
+    ...DATA,
+    { name: "library-data-x/README.md", text: "# docs" },
+    { name: "library-data-x/site/app.ts", text: "export {};\n" },
+  ];
+  const kept = (cacheDir: string) => ({ dir: dirFor(cacheDir, OTHER), commit: OTHER });
+  const moved = (cacheDir: string) => ({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
+
+  // Main is served from `main`; the recorded commit's own url gets `recordedUrl`.
+  const answering =
+    (main: Uint8Array, recordedUrl: DownloadExtensionArchive): DownloadExtensionArchive =>
+    (url, etag) =>
+      url === LIBRARY_DATA_MAIN_URL ? serves(main)(url, etag) : recordedUrl(url, etag);
+
+  async function cacheArchive(
+    cacheDir: string,
+    commit: string,
+    entries: readonly ZipFixtureEntry[],
+  ): Promise<void> {
+    await resolve(cacheDir, serves(dataArchive(commit, entries)));
+  }
+
+  test("a cached recorded commit stays when main differs only outside the data folder", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, DATA);
+    const { download, calls } = counting(serves(dataArchive(COMMIT, NEWER_OUTSIDE_DATA)));
+
+    const result = await resolve(cacheDir, download, { recorded: OTHER });
+
+    expect(result).toEqual(kept(cacheDir));
+    expect(calls.map(({ url }) => url)).toEqual([LIBRARY_DATA_MAIN_URL]);
+  });
+
+  test("an uncached recorded commit is fetched by its own url and stays", async () => {
+    const cacheDir = tmp();
+    const { download, calls } = counting(
+      answering(dataArchive(COMMIT, NEWER_OUTSIDE_DATA), serves(dataArchive(OTHER, DATA))),
+    );
+
+    const result = await resolve(cacheDir, download, { recorded: OTHER });
+
+    expect(result).toEqual(kept(cacheDir));
+    expect(calls.map(({ url }) => url)).toEqual([
+      LIBRARY_DATA_MAIN_URL,
+      libraryDataCommitUrl(OTHER),
+    ]);
+  });
+
+  test("a change only in a folder this CLI does not read keeps the recorded commit", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, DATA);
+    const newer = [...DATA, { name: "library-data-x/0.99.0/mylib/library.json", text: "{}" }];
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, newer)), {
+      recorded: OTHER,
+    });
+
+    expect(result).toEqual(kept(cacheDir));
+  });
+
+  test.each<[string, DownloadExtensionArchive]>([
+    ["unreachable", offline],
+    ["not an archive", serves(new TextEncoder().encode("not a zip"))],
+    ["holding another commit", serves(dataArchive(COMMIT, DATA))],
+  ])("a recorded commit %s yields the newest commit with no warning", async (_name, recordedUrl) => {
+    const cacheDir = tmp();
+
+    const result = await resolve(cacheDir, answering(dataArchive(COMMIT, DATA), recordedUrl), {
+      recorded: OTHER,
+    });
+
+    expect(result).toEqual(moved(cacheDir));
+  });
+
+  test("a recorded commit with no folder for this CLI yields the newest commit", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, [
+      { name: "library-data-x/9.9.9/mylib/library.json", text: "{}" },
+    ]);
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), { recorded: OTHER });
+
+    expect(result).toEqual(moved(cacheDir));
+  });
+
+  test.skipIf(process.platform === "win32")(
+    "a recorded folder that cannot be read yields the newest commit with no warning",
+    async () => {
+      const cacheDir = tmp();
+      await cacheArchive(cacheDir, OTHER, DATA);
+      symlinkSync(join(cacheDir, "absent"), join(dirFor(cacheDir, OTHER), "dangling"));
+
+      const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), {
+        recorded: OTHER,
+      });
+
+      expect(result).toEqual(moved(cacheDir));
+    },
+  );
+
+  test.each<[string, readonly ZipFixtureEntry[], readonly ZipFixtureEntry[]]>([
+    [
+      "a changed file",
+      DATA,
+      [
+        { name: "library-data-x/0.55.0/mylib/library.json", text: '{"changed":true}' },
+        { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+      ],
+    ],
+    [
+      "an added file",
+      DATA,
+      [...DATA, { name: "library-data-x/0.55.0/mylib/extra.json", text: "{}" }],
+    ],
+    ["a removed file", DATA, DATA.slice(0, 1)],
+    [
+      "a file moved with the same bytes",
+      DATA,
+      [
+        { name: "library-data-x/0.55.0/renamed/library.json", text: "{}" },
+        { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+      ],
+    ],
+    [
+      "a file split in two where its bytes read as the next file's name",
+      [{ name: "library-data-x/0.55.0/a", text: "x\0b\0y" }],
+      [
+        { name: "library-data-x/0.55.0/a", text: "x" },
+        { name: "library-data-x/0.55.0/b", text: "y" },
+      ],
+    ],
+    [
+      "a higher data folder with identical files",
+      [{ name: "library-data-x/0.54.0/mylib/library.json", text: "{}" }],
+      [
+        { name: "library-data-x/0.54.0/mylib/library.json", text: "{}" },
+        { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
+      ],
+    ],
+  ])("%s moves to the newest commit", async (_name, recordedEntries, newestEntries) => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, recordedEntries);
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, newestEntries)), {
+      recorded: OTHER,
+    });
+
+    expect(result).toEqual(moved(cacheDir));
   });
 });
 

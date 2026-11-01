@@ -4,9 +4,19 @@
 // project's `package.json` and becomes a cache path and a URL, so it is checked
 // before either.
 
-import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join, sep } from "node:path";
 import { archiveWrapperOf, isContainedResourcePath } from "@defold-typescript/transpiler";
 import {
   cachedOrDownloaded,
@@ -110,6 +120,22 @@ function unpackCommit(zip: ExtensionZip, target: string): void {
   }
 }
 
+// Each file's length is hashed before its bytes, so bytes that read like the next
+// file's name cannot make two different folders hash alike.
+function dataFolderDigest(dir: string): string {
+  const hash = createHash("sha256");
+  const paths = (readdirSync(dir, { recursive: true }) as string[])
+    .filter((path) => statSync(join(dir, path)).isFile())
+    .map((path) => path.split(sep).join("/"))
+    .sort();
+  for (const path of paths) {
+    const bytes = readFileSync(join(dir, path));
+    hash.update(`${path}\0${bytes.length}\0`);
+    hash.update(bytes);
+  }
+  return hash.digest("hex");
+}
+
 export async function resolveLibraryDataArchive(
   opts: ResolveLibraryDataArchiveOptions,
 ): Promise<LibraryDataArchive> {
@@ -156,22 +182,50 @@ export async function resolveLibraryDataArchive(
     return fromCommit(commit, warning);
   };
 
+  const fromCommitUrl = async (commit: string): Promise<LibraryDataArchive> => {
+    if (existsSync(commitDir(commit))) {
+      return fromCommit(commit);
+    }
+    const url = libraryDataCommitUrl(commit, mainUrl);
+    try {
+      const { archivePath, warning } = await cachedOrDownloaded(url, cacheDir, download);
+      return await fromArchive(url, archivePath, commit, warning);
+    } catch (err) {
+      return unavailable(`could not download ${url}: ${errorMessage(err)}`);
+    }
+  };
+
+  // Only a data change moves a project's commit, so a commit to the data repo's
+  // docs or workflows rewrites no `package.json`. This never fails a run, which
+  // already holds good data at the newest commit.
+  const keepingRecorded = async (
+    newest: LibraryDataArchive,
+    warning?: string,
+  ): Promise<LibraryDataArchive> => {
+    if (recorded === null || newest.dir === null || newest.commit === recorded) {
+      return newest;
+    }
+    const held = await fromCommitUrl(recorded);
+    if (held.dir === null) {
+      return newest;
+    }
+    try {
+      const unchanged =
+        basename(held.dir) === basename(newest.dir) &&
+        dataFolderDigest(held.dir) === dataFolderDigest(newest.dir);
+      return unchanged ? fromCommit(recorded, warning) : newest;
+    } catch {
+      return newest;
+    }
+  };
+
   if (frozen) {
     if (recorded === null) {
       return unavailable(
         "--frozen needs a recorded library data commit: run a plain `defold-typescript resolve` first",
       );
     }
-    if (existsSync(commitDir(recorded))) {
-      return fromCommit(recorded);
-    }
-    const url = libraryDataCommitUrl(recorded, mainUrl);
-    try {
-      const { archivePath, warning } = await cachedOrDownloaded(url, cacheDir, download);
-      return await fromArchive(url, archivePath, recorded, warning);
-    } catch (err) {
-      return unavailable(`could not download ${url}: ${errorMessage(err)}`);
-    }
+    return fromCommitUrl(recorded);
   }
 
   const recordedCached = recorded !== null && existsSync(commitDir(recorded));
@@ -180,7 +234,7 @@ export async function resolveLibraryDataArchive(
     if (warning !== undefined && recordedCached) {
       return fromCommit(recorded, warning);
     }
-    return await fromArchive(mainUrl, archivePath, null, warning);
+    return await keepingRecorded(await fromArchive(mainUrl, archivePath, null, warning), warning);
   } catch (err) {
     const message = errorMessage(err);
     if (recordedCached) {
