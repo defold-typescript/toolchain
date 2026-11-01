@@ -420,7 +420,7 @@ normally.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
-  `resolvedVersion`, `resolvedFiles`, `pinnedVersion`, `pinnedFiles`, `pinStatus`, `sceneSources`; and a `libraries` array with
+  `ref`, `resolvedVersion`, `resolvedFiles`, `pinnedVersion`, `pinnedFiles`, `pinStatus`, `sceneSources`; and a `libraries` array with
   each match's `source`, `modules`, `provenance`, and `verified`; plus a
   `sharedNamespaces` array, present only when a namespace was merged, giving each
   merged `namespace` and the `urls` that declare it; and a `notices` array, present
@@ -541,6 +541,11 @@ are not covered by that statement. The dependency's Lua runs when your game does
 and its native code is compiled when you build.
 
 ### Pin URLs to commits
+
+A branch URL such as `master.zip` can change without notice, so `resolve` warns about
+each one, naming `resolve --pin-urls`, and so does `watch` each time a `game.project`
+save makes it resolve again. The warning does not change the exit code. A tag URL draws
+no warning: tags rarely move, and the lockfile reports one that does.
 
 The lockfile cannot reach the editor's fetch, and `game.project` can. `resolve
 --pin-urls` rewrites each GitHub branch or tag URL there to the commit that ref's own

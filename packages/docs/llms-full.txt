@@ -7050,7 +7050,7 @@ normally.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
-  `resolvedVersion`, `resolvedFiles`, `pinnedVersion`, `pinnedFiles`, `pinStatus`, `sceneSources`; and a `libraries` array with
+  `ref`, `resolvedVersion`, `resolvedFiles`, `pinnedVersion`, `pinnedFiles`, `pinStatus`, `sceneSources`; and a `libraries` array with
   each match's `source`, `modules`, `provenance`, and `verified`; plus a
   `sharedNamespaces` array, present only when a namespace was merged, giving each
   merged `namespace` and the `urls` that declare it; and a `notices` array, present
@@ -7171,6 +7171,11 @@ are not covered by that statement. The dependency's Lua runs when your game does
 and its native code is compiled when you build.
 
 ##### Pin URLs to commits
+
+A branch URL such as `master.zip` can change without notice, so `resolve` warns about
+each one, naming `resolve --pin-urls`, and so does `watch` each time a `game.project`
+save makes it resolve again. The warning does not change the exit code. A tag URL draws
+no warning: tags rarely move, and the lockfile reports one that does.
 
 The lockfile cannot reach the editor's fetch, and `game.project` can. `resolve
 --pin-urls` rewrites each GitHub branch or tag URL there to the commit that ref's own
@@ -8210,7 +8215,9 @@ whether it was `assetOnly`, `sceneSources` (how many [shared scene
 files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
 (`commit:<sha>` or `files-sha256:<hex>`), the `resolvedFiles` hash of the files a game
 can use, — when the project pins that url — the `pinnedVersion` and `pinnedFiles`, and
-the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
+the `pinStatus` (`unpinned` / `match` / `drift`), and the `ref`, the kind of URL it is
+(`commit` / `tag` / `branch` / `release` / `unknown`), where only `commit` is fixed and
+`branch` draws a [warning](./resolve.md#pin-urls-to-commits). A separate `libraries` array reports
 a dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
@@ -8249,6 +8256,7 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
   "extensions": [
     {
       "url": "https://github.com/defold/extension-iap/archive/main.zip",
+      "ref": "branch",
       "namespaces": ["iap"],
       "typeSurface": "extension",
       "scriptApiCount": 1,
@@ -8263,6 +8271,7 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
     },
     {
       "url": "https://github.com/paulomrpp/dicebag/archive/main.zip",
+      "ref": "branch",
       "namespaces": [],
       "typeSurface": "vendored-library",
       "scriptApiCount": 0,
@@ -8725,6 +8734,7 @@ its index and `package.json` to exactly the declared set.
   "extensions": [
     {
       "url": "<archive url>",
+      "ref": "<commit | tag | branch | release | unknown>",
       "provenance": "<defold | cache | download>",
       "namespaces": ["<namespace>"],
       "typeSurface": "<none | extension | vendored-library | vendored-native | shipped>",
@@ -8751,7 +8761,7 @@ On failure:
 came from (`provenance`), which type surface it contributed (`typeSurface`), how
 many `.script_api` files the archive carries (`scriptApiCount` — a
 `"vendored-library"` entry can carry docs and still contribute no namespace), how many
-scene sources it shared (`sceneSources`), and its pin state
+scene sources it shared (`sceneSources`), what kind of URL it is (`ref`), and its pin state
 (`resolvedVersion`/`resolvedFiles`/`pinStatus`). Pins live in the committed
 [`defold-typescript.lock`](./resolve.md#the-lockfile), which `resolve` writes, so
 commit it with the change. The `written` array is always empty for `resolve`. If
@@ -9707,7 +9717,8 @@ their shape, so the [VS Code problem matcher](./transpile-diagnostics.md) that
 - **`warning`** — the command succeeded, but something needs attention: every
   entry of a command's `warnings` list, `scene-types` incomplete-address
   reasons, a dependency that ships no scene source, an unverified library
-  match, a surface that could not be materialized, `resolve` pin drift, and an
+  match, a surface that could not be materialized, `resolve` pin drift, a
+  dependency on a [branch URL](./resolve.md#pin-urls-to-commits), and an
   editor that attaches to `watch` later with a version other than the target.
   `resolve` pin drift is an `error` under `--frozen`, because the run then
   fails.

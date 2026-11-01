@@ -1,3 +1,4 @@
+import type { DependencyUrlKind } from "./dependency-url";
 import type { CompileOutcome, EditorIssue, RunOutcome } from "./editor-attach";
 import type { CompileIssue } from "./editor-compile";
 import type { InitOperation } from "./init";
@@ -24,6 +25,8 @@ export type CliCommand =
 
 export interface ResolvedExtensionReportJson {
   readonly url: string;
+  // What the URL can be held to; only "commit" is fixed.
+  readonly ref: DependencyUrlKind;
   readonly provenance: string;
   readonly namespaces: readonly string[];
   // Which type surface this dependency contributed. `namespaces: []` is normal
