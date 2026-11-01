@@ -42,10 +42,15 @@ export function readDefoldTargetPin(pkg: unknown): string | undefined {
   return typeof target === "string" ? target : undefined;
 }
 
-// The only keys the readers consume: `defold-target` here, `extensions` in
-// extension-version.ts, `runtime-dir` in build-output.ts. Anything else in the
-// namespace is inert, so it is diagnosed rather than silently dropped.
-export const RECOGNIZED_NAMESPACE_KEYS = ["defold-target", "extensions", "runtime-dir"] as const;
+// The only keys the readers consume: `defold-target` here, `extensions` and
+// `libraryData` in extension-version.ts, `runtime-dir` in build-output.ts. Anything
+// else in the namespace is inert, so it is diagnosed rather than silently dropped.
+export const RECOGNIZED_NAMESPACE_KEYS = [
+  "defold-target",
+  "extensions",
+  "libraryData",
+  "runtime-dir",
+] as const;
 
 // The spellings that predate `defold-target`. The flag surface already hard-
 // rejects them (dispatch.ts) — the pin surface points at the same replacement.
