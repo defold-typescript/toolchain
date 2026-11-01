@@ -44,7 +44,7 @@ describe("readProjectLock", () => {
     const cwd = project();
     const lock: ProjectLock = {
       extensions: { [URL_A]: `commit:${OTHER_COMMIT}`, [URL_B]: FILES_PIN },
-      libraryData: COMMIT,
+      libraryData: { shared: COMMIT, libraries: { monarch: OTHER_COMMIT, druid: COMMIT } },
     };
     writeProjectLock(cwd, lock);
     expect(readProjectLock(cwd)).toEqual({ status: "ok", lock });
@@ -68,10 +68,45 @@ describe("readProjectLock", () => {
     ["an unknown version", JSON.stringify({ version: 2, extensions: {} }), '"version"'],
     ["a missing version", JSON.stringify({ extensions: {} }), '"version"'],
     [
-      "a library data value that is not a commit",
-      JSON.stringify({ version: 1, extensions: {}, libraryData: "../../x" }),
+      "a library data value that is not a map",
+      JSON.stringify({ version: 1, extensions: {}, libraryData: COMMIT }),
       '"libraryData"',
     ],
+    [
+      "a shared pin that is not a commit",
+      JSON.stringify({
+        version: 1,
+        extensions: {},
+        libraryData: { shared: "../../x", libraries: {} },
+      }),
+      '"libraryData.shared"',
+    ],
+    [
+      "library pins that are not a map",
+      JSON.stringify({ version: 1, extensions: {}, libraryData: { shared: COMMIT } }),
+      '"libraryData.libraries"',
+    ],
+    [
+      "a library pin that is not a commit",
+      JSON.stringify({
+        version: 1,
+        extensions: {},
+        libraryData: { shared: COMMIT, libraries: { monarch: "../../x" } },
+      }),
+      "monarch",
+    ],
+    ...["../../x", "a/b", "a\\b", "..", ".", ""].map(
+      (key) =>
+        [
+          `the library key ${JSON.stringify(key)}`,
+          JSON.stringify({
+            version: 1,
+            extensions: {},
+            libraryData: { shared: COMMIT, libraries: { [key]: COMMIT } },
+          }),
+          '"libraryData.libraries"',
+        ] as const,
+    ),
     [
       "extensions that are not a map",
       JSON.stringify({ version: 1, extensions: [] }),
@@ -129,7 +164,7 @@ describe("writeProjectLock", () => {
     const cwd = project();
     writeProjectLock(cwd, {
       extensions: { [URL_B]: FILES_PIN, [URL_A]: `commit:${OTHER_COMMIT}` },
-      libraryData: COMMIT,
+      libraryData: { shared: COMMIT, libraries: { monarch: COMMIT, druid: OTHER_COMMIT } },
     });
     expect(lockText(cwd)).toBe(
       [
@@ -139,7 +174,13 @@ describe("writeProjectLock", () => {
         `    "${URL_A}": "commit:${OTHER_COMMIT}",`,
         `    "${URL_B}": "${FILES_PIN}"`,
         "  },",
-        `  "libraryData": "${COMMIT}"`,
+        '  "libraryData": {',
+        `    "shared": "${COMMIT}",`,
+        '    "libraries": {',
+        `      "druid": "${OTHER_COMMIT}",`,
+        `      "monarch": "${COMMIT}"`,
+        "    }",
+        "  }",
         "}",
         "",
       ].join("\n"),
@@ -160,10 +201,11 @@ describe("writeProjectLock", () => {
   test("a write that changes a value replaces the file and leaves no stage behind", () => {
     const cwd = project();
     writeProjectLock(cwd, { extensions: { [URL_A]: FILES_PIN } });
-    writeProjectLock(cwd, { extensions: {}, libraryData: COMMIT });
+    const libraryData = { shared: COMMIT, libraries: {} };
+    writeProjectLock(cwd, { extensions: {}, libraryData });
     expect(readProjectLock(cwd)).toEqual({
       status: "ok",
-      lock: { extensions: {}, libraryData: COMMIT },
+      lock: { extensions: {}, libraryData },
     });
     expect(readdirSync(cwd)).toEqual([PROJECT_LOCK_FILE]);
   });

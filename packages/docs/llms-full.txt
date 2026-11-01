@@ -6847,37 +6847,59 @@ is missing and a warning would be noise.
 
 `resolve` fetches the library data repo's `main` on its own schedule, with no CLI
 release involved, and asks the server whether it changed since the copy it stored
-(by `ETag`). It records the commit it reads as `libraryData` in
-[`defold-typescript.lock`](#the-lockfile), which you commit, and follows that commit
-the way `bun install` follows its lockfile:
+(by `ETag`). It records in [`defold-typescript.lock`](#the-lockfile), which you
+commit, the commit each library your project uses is read from, so moving one library
+leaves the others' types byte-identical:
 
 ```json
 {
   "version": 1,
   "extensions": {},
-  "libraryData": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f"
+  "libraryData": {
+    "shared": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
+    "libraries": {
+      "druid": "9a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f4f1c9e",
+      "monarch": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f"
+    }
+  }
 }
 ```
 
-- **The first `resolve`** records the newest commit.
-- **A plain `resolve` or `watch`** holds the recorded commit and prints from it.
-  When newer data changes or drops a library the project uses, it prints a notice
-  naming the library. A change to any other library says nothing.
-- **Two cases move the commit on their own**, each with a notice. One commit covers
-  every library, so a dependency only newer data covers moves it, because holding
-  would leave that library untyped. A recorded commit this CLI cannot read moves it
-  too: one that holds no folder for this CLI or cannot be fetched, or one a CLI
-  upgrade has left behind a newer data folder.
-- **`resolve --update`** moves `libraryData` to the newest commit whose data folder
-  differs from the recorded one. A commit that changes nothing in that folder
-  leaves it in place.
-- **`resolve --frozen`** holds to the recorded commit and fails when none is
-  recorded; run a plain `resolve` first and commit the result.
-- **Offline**, a plain `resolve` uses the recorded commit with no warning when it
-  is stored. When it is not, `resolve` warns and prints no library declarations,
-  because the commit never moves to data it could not check. With nothing recorded
-  it uses the copy of `main` it stored and warns on `stderr`, and with nothing
-  stored it warns and prints no library declarations.
+`shared` is the commit `index-slot-classifications.json` is read from, the one data
+file no library owns. It only adds doc notes to extension declarations, so nothing
+reports when it moves.
+
+- **The first `resolve`** pins each used library and `shared` at the newest commit.
+- **A plain `resolve` or `watch`** holds every pin and prints from it, so a data
+  merge touching a library you do not use writes nothing. When newer data changes or
+  drops a library you use, one notice names each such library.
+- **A dependency you add** pins that library alone at the newest commit. A dependency
+  already in the lockfile that newer data has come to cover does the same, with a
+  notice.
+- **A pin this CLI cannot read moves on its own**, with a notice: one that holds no
+  folder for this CLI or for the library, one that cannot be fetched, or one a CLI
+  upgrade has left behind a newer data folder. When the newest data does not cover
+  that library, its pin is dropped instead.
+- **Pins that do not load together**, such as one module named by two libraries from
+  different commits, all move to the newest commit, with a notice naming the
+  conflict. The data repo's CI checks that commit as a whole.
+- **A pin for a library you no longer declare** is pruned.
+- **`resolve --update`** moves every library whose own folder differs from the newest
+  commit's, and `shared` when its file differs. A library the same in both keeps its
+  pin, and one the newest data dropped holds it, with a notice.
+- **`resolve --update=<name>`** does this for the named dependency alone and leaves
+  `shared`. `--update=a,b` names several. A name is the repository name in the
+  dependency's URL, in lower case.
+- **`resolve --frozen`** reads pins alone and requests no `main`. It fails when
+  nothing is recorded, or when a declared library's pinned folder is missing or does
+  not load, naming it. A declared dependency with no library pin prints no library
+  and passes.
+- **Offline**, or on a stale copy of `main`, no pin moves. A plain `resolve` holds its
+  pins with no warning when it can read them, and `--update` holds them and warns.
+  When a pin cannot be read, `resolve` warns and prints no library declarations, and
+  the surface already there stays. With nothing recorded it records the copy of `main`
+  it stored and warns, and with nothing stored it warns about each new dependency and
+  prints no library declarations.
 
 A project with no dependencies fetches nothing and records nothing. Data lands in
 the `library-data` folder beside the archive cache described in
@@ -7007,11 +7029,13 @@ normally.
   drift, when the file is missing, or when a declared dependency has no pin (so CI
   gates the upgrade), and write nothing. See
   [Pinning extension versions](#pinning-extension-versions).
-- `--update` — move the recorded library data commit to the newest data. See
-  [Library data](#library-data). It cannot be combined with `--frozen` or
-  `--library-data`.
+- `--update[=<name>]` — move [library data pins](#library-data) to the newest data
+  and [accept extension drift](#pinning-extension-versions), for every dependency or
+  only the named ones (`--update=monarch,druid`). The name takes `=`, never a space,
+  and one that names no dependency exits non-zero. It cannot be combined with
+  `--frozen` or `--library-data`.
 - `--library-data <dir>` — read library data from `<dir>` instead of the
-  [library data repo](#library-data), with no request for it and no commit
+  [library data repo](#library-data), with no request for it and no pin
   recorded. `<dir>` holds version-named data folders, which the data repo keeps in
   its `data/` folder, and is chosen from by the same rule, and a relative `<dir>`
   resolves against the working directory.
@@ -7061,6 +7085,8 @@ gated by two knobs:
   runs. Absent pins are seeded; existing pins are never clobbered; and a pin whose
   URL is no longer declared in `[dependencies]` is pruned, so the pin map tracks
   the URLs that actually resolve.
+- **`--update`** — accepts drift: the pin takes the value just fetched and the run
+  reports no drift. `--update=<name>` does this for that dependency alone.
 - **`--frozen`** — exits non-zero on drift, and before any download when the
   lockfile is missing or a declared URL has no pin in it. It writes nothing (no
   seeding, no clobbering, no pruning). A pin for a URL no longer declared does not
@@ -7082,8 +7108,9 @@ entries merge cleanly, and a run that changes nothing leaves the file as it is. 
 a conflict, keep either side, or delete the file to record afresh.
 
 A lockfile that does not parse, or that holds a pin in any form but the two above,
-fails `resolve` with or without `--frozen`, and nothing is written. Recording over
-it would accept every drift and move every library.
+fails `resolve` with or without `--frozen`, and nothing is written. So does a
+`libraryData` in any shape but the one under [Library data](#library-data). Recording
+over it would accept every drift and move every library.
 
 #### Cache location
 

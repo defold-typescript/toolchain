@@ -49,7 +49,7 @@ describe("release-smoke override derivation", () => {
     expect(() => overridesFor(deps, [])).toThrow();
   });
 
-  test("curatedDeclarationPath finds a native declaration through the recorded commit", () => {
+  test("curatedDeclarationPath finds a native declaration through its pinned commit", () => {
     const cache = mkdtempSync(path.join(os.tmpdir(), "release-smoke-cache-"));
     const commit = "1111111111111111111111111111111111111111";
     const folder = path.join(cache, "library-data", "commits", commit, "data", "0.0.1");
@@ -71,7 +71,10 @@ describe("release-smoke override derivation", () => {
     const declaration = path.join(folder, library, "fork", "daabbcc.d.ts");
     writeFileSync(declaration, "declare namespace daabbcc {}\n");
     const recorded = mkdtempSync(path.join(os.tmpdir(), "release-smoke-project-"));
-    writeProjectLock(recorded, { extensions: {}, libraryData: commit });
+    writeProjectLock(recorded, {
+      extensions: {},
+      libraryData: { shared: commit, libraries: { daabbcc: commit } },
+    });
     const unrecorded = mkdtempSync(path.join(os.tmpdir(), "release-smoke-project-"));
 
     expect(curatedDeclarationPath(cache, recorded, "daabbcc")).toBe(declaration);
