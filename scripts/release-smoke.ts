@@ -23,6 +23,7 @@ import * as path from "node:path";
 import { selectDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { libraryDataCacheDir } from "../packages/cli/src/library-data-archive.ts";
 import { loadVendoredNativeRegistry } from "../packages/cli/src/library-registry.ts";
+import { readProjectLock } from "../packages/cli/src/project-lock.ts";
 import { PACKAGES } from "./release-pack-proof";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
@@ -102,16 +103,15 @@ function packAll(dest: string): string[] | null {
 }
 
 // The curated declaration `resolve` copied for `namespace`, found through the
-// commit the project recorded, in the cache the run used.
+// commit the project's lockfile recorded, in the cache the run used.
 export function curatedDeclarationPath(
   cache: string,
-  projectManifest: unknown,
+  project: string,
   namespace: string,
 ): string | null {
-  const commit = (projectManifest as { "defold-typescript"?: { libraryData?: unknown } })[
-    "defold-typescript"
-  ]?.libraryData;
-  if (typeof commit !== "string") return null;
+  const read = readProjectLock(project);
+  const commit = read.status === "ok" ? read.lock.libraryData : undefined;
+  if (commit === undefined) return null;
   const dataRoot = path.join(
     libraryDataCacheDir({ DEFOLD_TYPESCRIPT_CACHE: cache }),
     "commits",
@@ -248,11 +248,7 @@ async function runtimeFlow(runtime: string, tarballs: string[]): Promise<void> {
     });
     const extensionsDir = path.join(app, ".defold-types", "extensions");
     const extensionTypes = path.join(extensionsDir, "daabbcc.d.ts");
-    const curated = curatedDeclarationPath(
-      path.join(proj, "cache"),
-      JSON.parse(readFileSync(path.join(app, "package.json"), "utf8")),
-      "daabbcc",
-    );
+    const curated = curatedDeclarationPath(path.join(proj, "cache"), app, "daabbcc");
     record(
       `${runtime} resolve types a native extension`,
       resolve.code === 0 &&

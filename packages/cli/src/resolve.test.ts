@@ -29,6 +29,7 @@ import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fi
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
+import { PROJECT_LOCK_FILE, readProjectLock, writeProjectLock } from "./project-lock";
 import { type RunResolveOptions, runResolve } from "./resolve";
 import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 
@@ -91,19 +92,13 @@ function makeReadZip(byKey: Record<string, FakeArchive>): (zipPath: string) => E
 }
 
 function writePins(cwd: string, pins: Record<string, string>): string {
-  const pkgPath = join(cwd, "package.json");
-  writeFileSync(
-    pkgPath,
-    `${JSON.stringify({ "defold-typescript": { extensions: pins } }, null, 2)}\n`,
-  );
-  return pkgPath;
+  writeProjectLock(cwd, { extensions: pins });
+  return join(cwd, PROJECT_LOCK_FILE);
 }
 
-function readPins(pkgPath: string): Record<string, string> | undefined {
-  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
-    "defold-typescript"?: { extensions?: Record<string, string> };
-  };
-  return pkg["defold-typescript"]?.extensions;
+function readPins(cwd: string): Readonly<Record<string, string>> | undefined {
+  const read = readProjectLock(cwd);
+  return read.status === "ok" ? read.lock.extensions : undefined;
 }
 
 function writeProject(cwd: string, body: string): void {
@@ -199,7 +194,7 @@ describe("runResolve", () => {
     const cwd = tmp();
     const url = "https://example.com/alpha.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = writePins(cwd, { [url]: `commit:${OTHER_COMMIT}` });
+    writePins(cwd, { [url]: `commit:${OTHER_COMMIT}` });
     const byKey: Record<string, FakeArchive> = {
       [extensionArchiveKey(url)]: {
         entries: ["ext/api/alpha.script_api"],
@@ -222,63 +217,7 @@ describe("runResolve", () => {
     expect(report?.resolvedVersion).toBe(`commit:${COMMIT}`);
     expect(report?.pinnedVersion).toBe(`commit:${OTHER_COMMIT}`);
     expect(report?.pinStatus).toBe("drift");
-    expect(readPins(pkgPath)).toEqual({ [url]: `commit:${OTHER_COMMIT}` });
-  });
-
-  test("a plain run rewrites a retired zip-byte pin to the archive's commit", async () => {
-    const cwd = tmp();
-    const url = "https://example.com/alpha.zip";
-    const retired = `sha256:${"a".repeat(64)}`;
-    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = writePins(cwd, { [url]: retired });
-    const byKey: Record<string, FakeArchive> = {
-      [extensionArchiveKey(url)]: {
-        entries: ["ext/api/alpha.script_api"],
-        contents: { "ext/api/alpha.script_api": ALPHA },
-        comment: COMMIT,
-      },
-    };
-
-    const result = await runResolve({
-      libraryDataDir: null,
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip(byKey),
-    });
-
-    expect(result.ok).toBe(true);
-    expect(result.extensions[0]?.pinStatus).toBe("retired");
-    expect(result.extensions[0]?.pinnedVersion).toBe(retired);
-    expect(readPins(pkgPath)).toEqual({ [url]: `commit:${COMMIT}` });
-  });
-
-  test("freeze:true reports a retired pin and writes nothing", async () => {
-    const cwd = tmp();
-    const url = "https://example.com/alpha.zip";
-    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = writePins(cwd, { [url]: `sha256:${"a".repeat(64)}` });
-    const original = readFileSync(pkgPath, "utf8");
-    const byKey: Record<string, FakeArchive> = {
-      [extensionArchiveKey(url)]: {
-        entries: ["ext/api/alpha.script_api"],
-        contents: { "ext/api/alpha.script_api": ALPHA },
-        comment: COMMIT,
-      },
-    };
-
-    const result = await runResolve({
-      libraryDataDir: null,
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip(byKey),
-      freeze: true,
-    });
-
-    expect(result.ok).toBe(true);
-    expect(result.extensions[0]?.pinStatus).toBe("retired");
-    expect(readFileSync(pkgPath, "utf8")).toBe(original);
+    expect(readPins(cwd)).toEqual({ [url]: `commit:${OTHER_COMMIT}` });
   });
 
   test("reports pinStatus:match when the pin equals the resolved archive digest", async () => {
@@ -302,15 +241,8 @@ describe("runResolve", () => {
     const matchingDigest = first.extensions[0]?.resolvedVersion as string;
     expect(matchingDigest).toMatch(/^files-sha256:[0-9a-f]{64}$/);
 
-    // Re-run with a package.json that pins the same digest
-    writeFileSync(
-      join(cwd, "package.json"),
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: matchingDigest } } },
-        null,
-        2,
-      )}\n`,
-    );
+    // Re-run with a lockfile that pins the same digest
+    writePins(cwd, { [url]: matchingDigest });
     const second = await runResolve({
       libraryDataDir: null,
       cwd,
@@ -354,12 +286,11 @@ describe("runResolve", () => {
     expect(report.pinStatus).toBe("unpinned");
   });
 
-  test("seeds an absent pin into package.json from the archive's commit", async () => {
-    const cwd = tmp();
+  describe("the project lockfile", () => {
     const url = "https://example.com/alpha.zip";
-    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = join(cwd, "package.json");
-    writeFileSync(pkgPath, "{}\n");
+    const orphanUrl = "https://example.com/gone.zip";
+    const livePin = `files-sha256:${"b".repeat(64)}`;
+    const orphanPin = `commit:${OTHER_COMMIT}`;
     const byKey: Record<string, FakeArchive> = {
       [extensionArchiveKey(url)]: {
         entries: ["ext/api/alpha.script_api"],
@@ -368,184 +299,247 @@ describe("runResolve", () => {
       },
     };
 
-    const result = await runResolve({
-      libraryDataDir: null,
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip(byKey),
-    });
+    function dependentProject(): string {
+      const cwd = tmp();
+      writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+      return cwd;
+    }
 
-    expect(result.ok).toBe(true);
-    expect(readPins(pkgPath)).toEqual({ [url]: `commit:${COMMIT}` });
-  });
+    function run(
+      cwd: string,
+      options: Partial<RunResolveOptions> = {},
+    ): ReturnType<typeof runResolve> {
+      return runResolve({
+        libraryDataDir: null,
+        cwd,
+        cacheDir: tmp(),
+        download: someBytes,
+        readZip: makeReadZip(byKey),
+        ...options,
+      });
+    }
 
-  test("preserves an existing pin instead of clobbering it", async () => {
-    const cwd = tmp();
-    const url = "https://example.com/alpha.zip";
-    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = writePins(cwd, { [url]: `files-sha256:${"b".repeat(64)}` });
-    const byKey: Record<string, FakeArchive> = {
-      [extensionArchiveKey(url)]: {
-        entries: ["ext/api/alpha.script_api"],
-        contents: { "ext/api/alpha.script_api": ALPHA },
-      },
-    };
-
-    await runResolve({
-      libraryDataDir: null,
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip(byKey),
-    });
-
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
-      "defold-typescript"?: { extensions?: Record<string, string> };
-    };
-    expect(pkg["defold-typescript"]?.extensions?.[url]).toBe(`files-sha256:${"b".repeat(64)}`);
-  });
-
-  test("freeze:true skips seeding absent pins but still computes pinStatus", async () => {
-    const cwd = tmp();
-    const url = "https://example.com/alpha.zip";
-    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = join(cwd, "package.json");
-    const original = "{}\n";
-    writeFileSync(pkgPath, original);
-    const byKey: Record<string, FakeArchive> = {
-      [extensionArchiveKey(url)]: {
-        entries: ["ext/api/alpha.script_api"],
-        contents: { "ext/api/alpha.script_api": ALPHA },
-      },
-    };
-
-    const result = await runResolve({
-      libraryDataDir: null,
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip(byKey),
-      freeze: true,
-    });
-
-    expect(result.ok).toBe(true);
-    // package.json is byte-unchanged — no pin seeded
-    expect(readFileSync(pkgPath, "utf8")).toBe(original);
-    // report still carries pinStatus
-    const report = result.extensions[0] as { pinStatus: string };
-    expect(report.pinStatus).toBe("unpinned");
-  });
-
-  test("freeze:true leaves drift detection intact (pinStatus:drift is reported)", async () => {
-    const cwd = tmp();
-    const url = "https://example.com/alpha.zip";
-    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = join(cwd, "package.json");
-    const original = `${JSON.stringify(
-      { "defold-typescript": { extensions: { [url]: `commit:${OTHER_COMMIT}` } } },
-      null,
-      2,
-    )}\n`;
-    writeFileSync(pkgPath, original);
-    const byKey: Record<string, FakeArchive> = {
-      [extensionArchiveKey(url)]: {
-        entries: ["ext/api/alpha.script_api"],
-        contents: { "ext/api/alpha.script_api": ALPHA },
-      },
-    };
-
-    const result = await runResolve({
-      libraryDataDir: null,
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip(byKey),
-      freeze: true,
-    });
-
-    expect(result.ok).toBe(true);
-    // file is byte-unchanged even when drift would have seeded otherwise
-    expect(readFileSync(pkgPath, "utf8")).toBe(original);
-    const report = result.extensions[0] as { pinStatus: string };
-    expect(report.pinStatus).toBe("drift");
-  });
-
-  test("a prune-only run rewrites package.json, dropping an orphan pin", async () => {
-    const cwd = tmp();
-    const url = "https://example.com/alpha.zip";
-    const orphanUrl = "https://example.com/gone.zip";
-    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = join(cwd, "package.json");
-    writeFileSync(
-      pkgPath,
-      `${JSON.stringify(
-        {
-          "defold-typescript": {
-            extensions: { [url]: "files-sha256:live", [orphanUrl]: "sha256:orphan" },
-          },
+    function countingDownload(): {
+      requests: string[];
+      download: NonNullable<RunResolveOptions["download"]>;
+    } {
+      const requests: string[] = [];
+      return {
+        requests,
+        download: async (requested) => {
+          requests.push(requested);
+          return { status: "ok", bytes: new Uint8Array() };
         },
-        null,
-        2,
-      )}\n`,
-    );
-    const byKey: Record<string, FakeArchive> = {
-      [extensionArchiveKey(url)]: {
-        entries: ["ext/api/alpha.script_api"],
-        contents: { "ext/api/alpha.script_api": ALPHA },
-      },
-    };
+      };
+    }
 
-    const result = await runResolve({
-      libraryDataDir: null,
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip(byKey),
+    const lockBytes = (cwd: string) => readFileSync(join(cwd, PROJECT_LOCK_FILE), "utf8");
+
+    test("a plain run records an absent pin and keeps package.json's bytes and mtime", async () => {
+      const cwd = dependentProject();
+      const pkgPath = join(cwd, "package.json");
+      const original = '{"name":"game"}';
+      writeFileSync(pkgPath, original);
+      const old = new Date("2020-01-01T00:00:00Z");
+      utimesSync(pkgPath, old, old);
+
+      const result = await run(cwd);
+
+      expect(result.ok).toBe(true);
+      expect(readPins(cwd)).toEqual({ [url]: `commit:${COMMIT}` });
+      expect(readFileSync(pkgPath, "utf8")).toBe(original);
+      expect(statSync(pkgPath).mtimeMs).toBe(old.getTime());
     });
 
-    expect(result.ok).toBe(true);
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
-      "defold-typescript"?: { extensions?: Record<string, string> };
-    };
-    expect(pkg["defold-typescript"]?.extensions?.[url]).toBe("files-sha256:live");
-    expect(pkg["defold-typescript"]?.extensions?.[orphanUrl]).toBeUndefined();
-  });
+    test("a plain run with no package.json leaves it absent", async () => {
+      const cwd = dependentProject();
 
-  test("freeze:true never prunes an orphan pin", async () => {
-    const cwd = tmp();
-    const url = "https://example.com/alpha.zip";
-    const orphanUrl = "https://example.com/gone.zip";
-    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = join(cwd, "package.json");
-    const original = `${JSON.stringify(
-      {
+      await run(cwd);
+
+      expect(readPins(cwd)).toEqual({ [url]: `commit:${COMMIT}` });
+      expect(existsSync(join(cwd, "package.json"))).toBe(false);
+    });
+
+    test("an unparseable package.json neither stops the run nor loses the pins", async () => {
+      const cwd = dependentProject();
+      const pkgPath = join(cwd, "package.json");
+      writeFileSync(pkgPath, "{ not json");
+
+      const result = await run(cwd);
+
+      expect(result.ok).toBe(true);
+      expect(readPins(cwd)).toEqual({ [url]: `commit:${COMMIT}` });
+      expect(readFileSync(pkgPath, "utf8")).toBe("{ not json");
+    });
+
+    test("pins left in package.json are neither read nor removed", async () => {
+      const cwd = dependentProject();
+      const pkgPath = join(cwd, "package.json");
+      const original = JSON.stringify({
         "defold-typescript": {
-          extensions: { [url]: "files-sha256:live", [orphanUrl]: "sha256:orphan" },
+          extensions: { [url]: livePin },
+          libraryData: OTHER_COMMIT,
         },
-      },
-      null,
-      2,
-    )}\n`;
-    writeFileSync(pkgPath, original);
-    const byKey: Record<string, FakeArchive> = {
-      [extensionArchiveKey(url)]: {
-        entries: ["ext/api/alpha.script_api"],
-        contents: { "ext/api/alpha.script_api": ALPHA },
-      },
-    };
+      });
+      writeFileSync(pkgPath, original);
 
-    const result = await runResolve({
-      libraryDataDir: null,
-      cwd,
-      cacheDir: tmp(),
-      download: someBytes,
-      readZip: makeReadZip(byKey),
-      freeze: true,
+      const result = await run(cwd);
+
+      expect(result.extensions[0]?.pinStatus).toBe("unpinned");
+      expect(readPins(cwd)).toEqual({ [url]: `commit:${COMMIT}` });
+      expect(readFileSync(pkgPath, "utf8")).toBe(original);
     });
 
-    expect(result.ok).toBe(true);
-    expect(readFileSync(pkgPath, "utf8")).toBe(original);
+    test("a plain run keeps an existing pin instead of clobbering it", async () => {
+      const cwd = dependentProject();
+      writePins(cwd, { [url]: livePin });
+
+      await run(cwd);
+
+      expect(readPins(cwd)).toEqual({ [url]: livePin });
+    });
+
+    test("a plain run prunes a pin for an undeclared URL", async () => {
+      const cwd = dependentProject();
+      writePins(cwd, { [url]: livePin, [orphanUrl]: orphanPin });
+
+      const result = await run(cwd);
+
+      expect(result.ok).toBe(true);
+      expect(readPins(cwd)).toEqual({ [url]: livePin });
+    });
+
+    test("a no-dependency project fetches nothing and leaves an existing lockfile alone", async () => {
+      const cwd = tmp();
+      writeProject(cwd, "[project]\ntitle = Test\n");
+      writePins(cwd, { [orphanUrl]: orphanPin });
+      const before = lockBytes(cwd);
+      const { download, requests } = countingDownload();
+
+      const result = await run(cwd, { download });
+
+      expect(result.ok).toBe(true);
+      expect(requests).toEqual([]);
+      expect(lockBytes(cwd)).toBe(before);
+    });
+
+    test("a no-dependency project passes a frozen run with no lockfile", async () => {
+      const cwd = tmp();
+      writeProject(cwd, "[project]\ntitle = Test\n");
+
+      const result = await run(cwd, { freeze: true });
+
+      expect(result.ok).toBe(true);
+      expect(existsSync(join(cwd, PROJECT_LOCK_FILE))).toBe(false);
+    });
+
+    describe.each([
+      { mode: "plain", freeze: false },
+      { mode: "frozen", freeze: true },
+    ])("an invalid lockfile on a $mode run", ({ freeze }) => {
+      const INVALID: readonly (readonly [string, string])[] = [
+        ["conflict markers", "<<<<<<< HEAD\n{}\n=======\n{}\n>>>>>>> branch\n"],
+        [
+          "a retired pin",
+          JSON.stringify({ version: 1, extensions: { [url]: `sha256:${"a".repeat(64)}` } }),
+        ],
+        ["a traversal commit", JSON.stringify({ version: 1, libraryData: "../../x" })],
+      ];
+
+      test.each(
+        INVALID,
+      )("%s fails naming the file, with no request and no write", async (_, bad) => {
+        const cwd = dependentProject();
+        writeFileSync(join(cwd, PROJECT_LOCK_FILE), bad);
+        const { download, requests } = countingDownload();
+
+        const result = await runResolve({ cwd, cacheDir: tmp(), download, freeze });
+
+        expect(result.ok).toBe(false);
+        expect(result.error).toContain(PROJECT_LOCK_FILE);
+        expect(requests).toEqual([]);
+        expect(lockBytes(cwd)).toBe(bad);
+        expect(existsSync(join(cwd, ".defold-types"))).toBe(false);
+      });
+
+      test("it fails a project with no dependencies too, pruning nothing", async () => {
+        const cwd = tmp();
+        writeProject(cwd, "[project]\ntitle = Test\n");
+        const surface = join(cwd, ".defold-types", "extensions");
+        mkdirSync(surface, { recursive: true });
+        writeFileSync(join(surface, "alpha.d.ts"), "declare namespace alpha {}\n");
+        writeFileSync(join(cwd, PROJECT_LOCK_FILE), "<<<<<<< HEAD\n");
+
+        const result = await run(cwd, { freeze });
+
+        expect(result.ok).toBe(false);
+        expect(result.error).toContain(PROJECT_LOCK_FILE);
+        expect(existsSync(join(surface, "alpha.d.ts"))).toBe(true);
+      });
+    });
+
+    test.each([
+      { lane: "the data archive", laneOptions: {} },
+      { lane: "a set data folder", laneOptions: { libraryDataDir: null } },
+    ])("a frozen run with dependencies and no lockfile fails on $lane", async ({ laneOptions }) => {
+      const cwd = dependentProject();
+      const { download, requests } = countingDownload();
+
+      const result = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        download,
+        freeze: true,
+        ...laneOptions,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain(PROJECT_LOCK_FILE);
+      expect(result.error).toContain("plain");
+      expect(result.error).not.toContain(url);
+      expect(requests).toEqual([]);
+      expect(existsSync(join(cwd, PROJECT_LOCK_FILE))).toBe(false);
+    });
+
+    test("a frozen run fails naming a declared URL the lockfile has no pin for", async () => {
+      const cwd = tmp();
+      writeProject(cwd, `[project]\ndependencies#0 = ${url}\ndependencies#1 = ${orphanUrl}\n`);
+      writePins(cwd, { [url]: livePin });
+      const before = lockBytes(cwd);
+      const { download, requests } = countingDownload();
+
+      const result = await run(cwd, { download, freeze: true });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain(orphanUrl);
+      expect(result.error).not.toContain(url);
+      expect(requests).toEqual([]);
+      expect(lockBytes(cwd)).toBe(before);
+    });
+
+    test("a frozen run passes over an undeclared URL's pin and never prunes it", async () => {
+      const cwd = dependentProject();
+      writePins(cwd, { [url]: `commit:${COMMIT}`, [orphanUrl]: orphanPin });
+      const before = lockBytes(cwd);
+
+      const result = await run(cwd, { freeze: true });
+
+      expect(result.ok).toBe(true);
+      expect(result.extensions[0]?.pinStatus).toBe("match");
+      expect(lockBytes(cwd)).toBe(before);
+    });
+
+    test("a frozen run reports drift and writes nothing", async () => {
+      const cwd = dependentProject();
+      writePins(cwd, { [url]: `commit:${OTHER_COMMIT}` });
+      const before = lockBytes(cwd);
+
+      const result = await run(cwd, { freeze: true });
+
+      expect(result.ok).toBe(true);
+      expect(result.extensions[0]?.pinStatus).toBe("drift");
+      expect(lockBytes(cwd)).toBe(before);
+    });
   });
 
   test("a project with no [dependencies] resolves clean with no writes", async () => {
@@ -2526,12 +2520,14 @@ describe("runResolve with a library data archive", () => {
   }
 
   const surface = (cwd: string) => join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts");
-  const namespaceOf = (cwd: string) =>
-    (
-      JSON.parse(readFileSync(join(cwd, "package.json"), "utf8")) as {
-        "defold-typescript": { libraryData?: string; extensions?: Record<string, string> };
-      }
-    )["defold-typescript"];
+  const namespaceOf = (cwd: string) => {
+    const read = readProjectLock(cwd);
+    if (read.status !== "ok") {
+      throw new Error(`expected a readable lockfile, got ${read.status}`);
+    }
+    return read.lock;
+  };
+  const lockPathOf = (cwd: string) => join(cwd, PROJECT_LOCK_FILE);
 
   test("a plain run prints from the fetched data and records its commit beside the pins", async () => {
     const cwd = project();
@@ -2573,7 +2569,7 @@ describe("runResolve with a library data archive", () => {
 
   async function recordOne(cwd: string, cacheDir: string, data: Uint8Array): Promise<string> {
     await runResolve({ cwd, cacheDir, libraryDataUrl: DATA_URL, download: serving(data).download });
-    return readFileSync(join(cwd, "package.json"), "utf8");
+    return readFileSync(lockPathOf(cwd), "utf8");
   }
 
   test("newer data for a library the project uses holds the commit and says so", async () => {
@@ -2589,7 +2585,7 @@ describe("runResolve with a library data archive", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+    expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
     expect(result.notices).toHaveLength(1);
     expect(result.notices?.[0]).toContain("mylib");
@@ -2618,7 +2614,7 @@ describe("runResolve with a library data archive", () => {
         .download,
     });
 
-    expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+    expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
     expect(result.notices?.[0]).toContain("mylib");
   });
@@ -2640,16 +2636,13 @@ describe("runResolve with a library data archive", () => {
       download: serving(data(TWO, "// two\n")).download,
     });
 
-    expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+    expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
     expect(result.notices).toBeUndefined();
   });
 
   test("a recorded commit with no folder for this CLI moves the commit and says so", async () => {
     const cwd = project();
-    writeFileSync(
-      join(cwd, "package.json"),
-      JSON.stringify({ "defold-typescript": { libraryData: ONE } }),
-    );
+    writeProjectLock(cwd, { extensions: {}, libraryData: ONE });
     const held = writeZipArchive([{ name: `library-data-${ONE}/README.md`, text: "# docs" }], {
       comment: ONE,
     });
@@ -2671,19 +2664,19 @@ describe("runResolve with a library data archive", () => {
     expect(result.notices?.[0]).toContain(TWO);
   });
 
-  test("a run after a hold leaves package.json's bytes and mtime alone", async () => {
+  test("a run after a hold leaves the lockfile's bytes and mtime alone", async () => {
     const cwd = project();
     const cacheDir = tmp();
-    const pkgPath = join(cwd, "package.json");
+    const lockPath = lockPathOf(cwd);
     const before = await recordOne(cwd, cacheDir, dataArchive(ONE, declares("one")));
     const newer = serving(dataArchive(TWO, declares("two"))).download;
     const old = new Date("2020-01-01T00:00:00Z");
-    utimesSync(pkgPath, old, old);
+    utimesSync(lockPath, old, old);
 
     for (let run = 0; run < 2; run++) {
       await runResolve({ cwd, cacheDir, libraryDataUrl: DATA_URL, download: newer });
-      expect(readFileSync(pkgPath, "utf8")).toBe(before);
-      expect(statSync(pkgPath).mtimeMs).toBe(old.getTime());
+      expect(readFileSync(lockPath, "utf8")).toBe(before);
+      expect(statSync(lockPath).mtimeMs).toBe(old.getTime());
     }
   });
 
@@ -2810,9 +2803,7 @@ describe("runResolve with a library data archive", () => {
       libraryDataUrl: DATA_URL,
       download: serving(dataArchive(ONE, declares("one"))).download,
     });
-    const pkgPath = join(cwd, "package.json");
-    const compact = JSON.stringify(JSON.parse(readFileSync(pkgPath, "utf8")));
-    writeFileSync(pkgPath, compact);
+    const before = readFileSync(lockPathOf(cwd), "utf8");
     const printed = readFileSync(surface(cwd), "utf8");
 
     const plain = await runResolve({
@@ -2824,7 +2815,7 @@ describe("runResolve with a library data archive", () => {
     });
 
     expect(plain.ok).toBe(true);
-    expect(readFileSync(pkgPath, "utf8")).toBe(compact);
+    expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
     expect(readFileSync(surface(cwd), "utf8")).toBe(printed);
 
     const frozen = await runResolve({
@@ -2840,18 +2831,16 @@ describe("runResolve with a library data archive", () => {
     expect(readFileSync(surface(cwd), "utf8")).toBe(printed);
   });
 
-  test("a run at the recorded commit leaves package.json byte-identical", async () => {
+  test("a run at the recorded commit leaves the lockfile byte-identical", async () => {
     const cwd = project();
     const cacheDir = tmp();
     const { download } = serving(dataArchive(ONE, declares("one")));
     await runResolve({ cwd, cacheDir, libraryDataUrl: DATA_URL, download });
-    const pkgPath = join(cwd, "package.json");
-    const compact = JSON.stringify(JSON.parse(readFileSync(pkgPath, "utf8")));
-    writeFileSync(pkgPath, compact);
+    const before = readFileSync(lockPathOf(cwd), "utf8");
 
     await runResolve({ cwd, cacheDir, libraryDataUrl: DATA_URL, download });
 
-    expect(readFileSync(pkgPath, "utf8")).toBe(compact);
+    expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
   });
 
   test("a frozen run holds to the recorded commit with no request for main", async () => {
@@ -2863,7 +2852,7 @@ describe("runResolve with a library data archive", () => {
       libraryDataUrl: DATA_URL,
       download: serving(dataArchive(ONE, declares("one"))).download,
     });
-    const before = readFileSync(join(cwd, "package.json"), "utf8");
+    const before = readFileSync(lockPathOf(cwd), "utf8");
     const newer = serving(dataArchive(TWO, declares("two")));
 
     const result = await runResolve({
@@ -2877,12 +2866,13 @@ describe("runResolve with a library data archive", () => {
     expect(result.ok).toBe(true);
     expect(newer.requests).not.toContain(DATA_URL);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
-    expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+    expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
     expect(result.notices).toBeUndefined();
   });
 
-  test("a frozen run with nothing recorded fails and asks for a plain resolve", async () => {
+  test("a frozen run with no recorded commit fails and asks for a plain resolve", async () => {
     const cwd = project();
+    writeProjectLock(cwd, { extensions: { [DEP_URL]: `commit:${"3".repeat(40)}` } });
     const { download, requests } = serving(dataArchive(ONE, declares("one")));
 
     const result = await runResolve({
@@ -2935,6 +2925,7 @@ describe("runResolve with a library data archive", () => {
 
     expect(result.ok).toBe(true);
     expect(requests).toEqual([]);
+    expect(existsSync(lockPathOf(cwd))).toBe(false);
     expect(existsSync(join(cwd, "package.json"))).toBe(false);
   });
 

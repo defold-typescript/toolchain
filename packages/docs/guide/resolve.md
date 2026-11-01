@@ -219,15 +219,15 @@ is missing and a warning would be noise.
 
 `resolve` fetches the library data repo's `main` on its own schedule, with no CLI
 release involved, and asks the server whether it changed since the copy it stored
-(by `ETag`). It records the commit it reads in `package.json`, under
-`"defold-typescript"`, and follows that commit the way `bun install` follows its
-lockfile:
+(by `ETag`). It records the commit it reads as `libraryData` in
+[`defold-typescript.lock`](#the-lockfile), which you commit, and follows that commit
+the way `bun install` follows its lockfile:
 
 ```json
 {
-  "defold-typescript": {
-    "libraryData": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f"
-  }
+  "version": 1,
+  "extensions": {},
+  "libraryData": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f"
 }
 ```
 
@@ -375,9 +375,10 @@ normally.
 
 ## Flags
 
-- `--frozen` — treat the committed pin set as a lockfile: exit non-zero on drift
-  or on a pin in the retired `sha256:` form (so CI gates the upgrade) and write
-  nothing. See [Pinning extension versions](#pinning-extension-versions).
+- `--frozen` — hold to the committed [lockfile](#the-lockfile): exit non-zero on
+  drift, when the file is missing, or when a declared dependency has no pin (so CI
+  gates the upgrade), and write nothing. See
+  [Pinning extension versions](#pinning-extension-versions).
 - `--update` — move the recorded library data commit to the newest data. See
   [Library data](#library-data). It cannot be combined with `--frozen` or
   `--library-data`.
@@ -409,11 +410,13 @@ same URL can yield a different commit over time. So the reproducible identity of
   file when it declares none), each by its path inside the library. A change
   elsewhere in the repository leaves the pin as it is.
 
-`resolve` records that pin as the dependency's version and seeds it into the
-project's `package.json` when absent, never clobbering an existing pin:
+`resolve` records that pin as the dependency's version in the project's
+[`defold-typescript.lock`](#the-lockfile) when absent, never clobbering an existing
+pin:
 
 ```jsonc
-"defold-typescript": {
+{
+  "version": 1,
   "extensions": {
     "https://github.com/defold/extension-iap/archive/main.zip": "commit:5c33c398…"
   }
@@ -430,18 +433,29 @@ gated by two knobs:
   runs. Absent pins are seeded; existing pins are never clobbered; and a pin whose
   URL is no longer declared in `[dependencies]` is pruned, so the pin map tracks
   the URLs that actually resolve.
-- **`--frozen`** — treats the pin set as a lockfile: exits non-zero on drift and
-  writes nothing (no seeding, no clobbering, no pruning). An unpinned extension
-  passes and stays unseeded.
-
-A pin in the retired `sha256:` form hashed the zip bytes, so no current pin can
-match it. A plain `resolve` replaces it with the current form and notes each
-replacement on `stderr`; `resolve --frozen` fails on it and asks for a plain
-`resolve`.
+- **`--frozen`** — exits non-zero on drift, and before any download when the
+  lockfile is missing or a declared URL has no pin in it. It writes nothing (no
+  seeding, no clobbering, no pruning). A pin for a URL no longer declared does not
+  fail it.
 
 Either way `resolve` still materializes the surface for the drifted dependencies;
-only the `package.json` write and the exit code are gated. `--json` reports
-`pinStatus` per extension (`unpinned` / `match` / `drift` / `retired`).
+only the lockfile write and the exit code are gated. `--json` reports `pinStatus`
+per extension (`unpinned` / `match` / `drift`).
+
+### The lockfile
+
+Commit `defold-typescript.lock` beside `game.project`. `resolve` writes it and never
+touches `package.json`, where `defold-target` stays because it is a choice rather
+than a record. A leftover `"extensions"` key in `package.json` is ignored and
+diagnosed; delete it.
+
+Each entry sits on its own line in sorted order, so branches touching different
+entries merge cleanly, and a run that changes nothing leaves the file as it is. For
+a conflict, keep either side, or delete the file to record afresh.
+
+A lockfile that does not parse, or that holds a pin in any form but the two above,
+fails `resolve` with or without `--frozen`, and nothing is written. Recording over
+it would accept every drift and move every library.
 
 ## Cache location
 
