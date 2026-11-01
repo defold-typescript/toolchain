@@ -30,7 +30,7 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
     url: `https://example.com/${declarations.map((d) => d.namespace).join("-") || "asset"}.zip`,
     provenance: "cache",
     assetOnly: declarations.length === 0,
-    resolvedVersion: "sha256:stub",
+    identity: { files: "stub" },
     archivePath: "archive.zip",
     declarations,
     luaModules: [],

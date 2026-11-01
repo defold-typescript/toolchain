@@ -52,7 +52,6 @@ export interface AddedLibrary {
 const FORK_GUIDE =
   "https://defold-typescript.github.io/library-data/guides/authoring-forked-library-types";
 const EXTENSIONS_GUIDE = "extensions.md";
-const COMMIT_PIN = "commit:";
 const MOVING_REFS: ReadonlySet<string> = new Set(["master", "main"]);
 const ARCHIVE_URL = /^(https?:\/\/[^/]+\/.+?)\/archive\/(?:refs\/(tags|heads)\/)?(.+)\.zip$/i;
 const LICENSE_FILE = /^licen[cs]e(\.(md|txt))?$/i;
@@ -216,11 +215,7 @@ export async function addLibrary(
       ...(opts.download === undefined ? {} : { download: opts.download }),
     },
   );
-  const ref =
-    tag ??
-    (archive.resolvedVersion.startsWith(COMMIT_PIN)
-      ? archive.resolvedVersion.slice(COMMIT_PIN.length)
-      : undefined);
+  const ref = tag ?? archive.identity.commit;
   if (ref === undefined) {
     throw new Error(`${url} is a branch and its archive names no commit: use a tag URL`);
   }

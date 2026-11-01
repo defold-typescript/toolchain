@@ -80,7 +80,7 @@ function extensionBundle(url: string): ExtensionDeclarations {
     url,
     provenance: "cache",
     assetOnly: false,
-    resolvedVersion: "sha256:stub",
+    identity: { files: "stub" },
     archivePath: "archive.zip",
     declarations: [],
     luaModules: [],
