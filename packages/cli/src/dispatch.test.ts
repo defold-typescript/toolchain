@@ -4796,6 +4796,7 @@ describe("dispatch resolve", () => {
     expect(parsed.extensions).toEqual([
       {
         url,
+        ref: "unknown",
         provenance: "download",
         namespaces: ["alpha"],
         typeSurface: "extension",
@@ -5134,7 +5135,7 @@ describe("dispatch resolve", () => {
     expect(code).toBe(0);
     expect(out()).not.toContain("mylib.core");
     expect(err()).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: warning: unverified library match for ${url}: repo name matched but no shipped module path was found in the archive; not materialized\n`,
+      `defold-typescript resolve: warning: ${url} follows a branch, so it can change without notice: run \`defold-typescript resolve --pin-urls\` to pin it to a commit\n${noSceneSource(url)}defold-typescript resolve: warning: unverified library match for ${url}: repo name matched but no shipped module path was found in the archive; not materialized\n`,
     );
   });
 
@@ -10216,6 +10217,86 @@ describe("library data from the data repo", () => {
     expect(err()).toContain("--update");
     expect(err()).toContain(flag);
     expect(requests).toEqual([]);
+  });
+
+  describe("a dependency on a branch", () => {
+    const WARNING = `defold-typescript resolve: warning: ${DEP_URL}`;
+
+    test("resolve prints the warning and exits 0", async () => {
+      writeDependentProject();
+      const { resolveInternals } = seams();
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd], io, { resolveInternals });
+
+      expect(code).toBe(0);
+      expect(err()).toContain(WARNING);
+      expect(err()).toContain("resolve --pin-urls");
+    });
+
+    test("resolve --frozen prints the warning and exits 0", async () => {
+      writeDependentProject();
+      const { resolveInternals } = seams();
+      await dispatch(["resolve", cwd], captureStreams().io, { resolveInternals });
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--frozen"], io, { resolveInternals });
+
+      expect(code).toBe(0);
+      expect(err()).toContain(WARNING);
+    });
+
+    test("resolve --json keeps the warning on stderr and reports the ref", async () => {
+      writeDependentProject();
+      const { resolveInternals } = seams();
+      const { io, out, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--json"], io, { resolveInternals });
+
+      expect(code).toBe(0);
+      expect(err()).toContain(WARNING);
+      const parsed = JSON.parse(out()) as { extensions: { url: string; ref: string }[] };
+      expect(parsed.extensions.map(({ url, ref }) => [url, ref])).toEqual([[DEP_URL, "branch"]]);
+    });
+
+    test("watch prints the warning when game.project changes", async () => {
+      writeFileSync(path.join(cwd, "main.script"), "");
+      writeDependentProject();
+      const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+      writeFileSync(
+        path.join(sourceGeneratedDir, "label.d.ts"),
+        "declare const __label: unknown;\n",
+      );
+      const { resolveInternals } = seams();
+      let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+      const main: WatcherFactory = (_dir, onEvent): Watcher => {
+        triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+        return { close() {} };
+      };
+      const component: WatcherFactory = (): Watcher => ({ close() {} });
+      const { onWatchStart, ready } = watchHandle();
+      const { io, err } = captureStreams();
+
+      const result = dispatch(["watch", cwd], io, {
+        debounceMs: 5,
+        watcherFactory: main,
+        componentWatcherFactory: component,
+        sourceGeneratedDir,
+        detectEditorVersion: () => null,
+        resolveInternals,
+        onWatchStart,
+      });
+      const handle = await ready;
+      await handle?.waitForIdle();
+
+      triggerMain?.("change", "game.project");
+      await handle?.waitForIdle();
+
+      expect(err()).toContain(WARNING);
+      handle?.stop();
+      expect(await result).toBe(0);
+      rmSync(sourceGeneratedDir, { recursive: true, force: true });
+    });
   });
 
   describe("--pin-urls", () => {

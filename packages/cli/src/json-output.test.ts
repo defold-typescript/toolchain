@@ -72,6 +72,7 @@ describe("renderResult", () => {
       extensions: [
         {
           url: "https://example.com/alpha.zip",
+          ref: "unknown",
           provenance: "download",
           namespaces: ["alpha"],
           typeSurface: "extension",
@@ -90,6 +91,7 @@ describe("renderResult", () => {
     expect(parsed.extensions).toEqual([
       {
         url: "https://example.com/alpha.zip",
+        ref: "unknown",
         provenance: "download",
         namespaces: ["alpha"],
         typeSurface: "extension",

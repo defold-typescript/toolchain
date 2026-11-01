@@ -29,7 +29,8 @@ their shape, so the [VS Code problem matcher](./transpile-diagnostics.md) that
 - **`warning`** — the command succeeded, but something needs attention: every
   entry of a command's `warnings` list, `scene-types` incomplete-address
   reasons, a dependency that ships no scene source, an unverified library
-  match, a surface that could not be materialized, `resolve` pin drift, and an
+  match, a surface that could not be materialized, `resolve` pin drift, a
+  dependency on a [branch URL](./resolve.md#pin-urls-to-commits), and an
   editor that attaches to `watch` later with a version other than the target.
   `resolve` pin drift is an `error` under `--frozen`, because the run then
   fails.

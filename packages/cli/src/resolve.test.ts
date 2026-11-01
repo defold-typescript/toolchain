@@ -18,6 +18,7 @@ import * as ts from "typescript";
 import { writeZipArchive } from "../../types/test/zip-fixture";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
+import { classifyDependencyUrl, type DependencyUrlKind } from "./dependency-url";
 import { runExportTypes } from "./export-types";
 import {
   type DownloadExtensionArchive,
@@ -147,6 +148,7 @@ describe("runResolve", () => {
     expect(result.extensions).toEqual([
       {
         url,
+        ref: "unknown",
         provenance: "download",
         namespaces: ["alpha"],
         typeSurface: "extension",
@@ -185,6 +187,7 @@ describe("runResolve", () => {
     expect(result.extensions).toEqual([
       {
         url,
+        ref: "unknown",
         provenance: "download",
         namespaces: [],
         typeSurface: "none",
@@ -3531,6 +3534,106 @@ describe("runResolve moves moving URLs to commits", () => {
         .map((name) => [name, readFileSync(join(dir, name), "utf8")]),
     );
   };
+
+  describe("a dependency on a branch", () => {
+    const RELEASE = `${REPO}/releases/download/v1/mylib.zip`;
+    const UNKNOWN = "https://example.com/mylib.zip";
+    const movingWarnings = (warnings: readonly string[]) =>
+      warnings.filter((line) => line.includes("resolve --pin-urls"));
+
+    const projectOn = (url: string) => {
+      const project = setUp(`[project]\ntitle = T\ndependencies#0 = ${url}\n`);
+      const { download } = serving({ [url]: archive("mylib-ref", ONE) });
+      return { project, download };
+    };
+
+    test("a plain run warns once, naming the URL and the fix, and still succeeds", async () => {
+      const { project, download } = projectOn(BRANCH);
+
+      const result = await run(project, download);
+
+      expect(result.ok).toBe(true);
+      expect(movingWarnings(result.warnings)).toHaveLength(1);
+      expect(movingWarnings(result.warnings)[0]).toContain(BRANCH);
+    });
+
+    test("a frozen run warns the same way and still succeeds", async () => {
+      const { project, download } = projectOn(BRANCH);
+      await run(project, download);
+
+      const result = await run(project, download, { freeze: true });
+
+      expect(result.ok).toBe(true);
+      expect(movingWarnings(result.warnings)).toHaveLength(1);
+      expect(movingWarnings(result.warnings)[0]).toContain(BRANCH);
+    });
+
+    test("the same branch declared twice warns once", async () => {
+      const project = setUp(
+        `[project]\ntitle = T\ndependencies#0 = ${BRANCH}\ndependencies#1 = ${BRANCH}\n`,
+      );
+      const { download } = serving({ [BRANCH]: archive("mylib-master", ONE) });
+
+      const result = await run(project, download);
+
+      expect(movingWarnings(result.warnings)).toHaveLength(1);
+    });
+
+    test.each([
+      ["commit", AT_ONE],
+      ["tag", TAG],
+      ["release", RELEASE],
+      ["unknown", UNKNOWN],
+    ])("a %s URL draws no warning", async (kind, url) => {
+      expect(classifyDependencyUrl(url)).toBe(kind as DependencyUrlKind);
+      const { project, download } = projectOn(url);
+
+      const result = await run(project, download);
+
+      expect(result.ok).toBe(true);
+      expect(movingWarnings(result.warnings)).toEqual([]);
+    });
+
+    test("each extension reports the classifier's kind of its URL", async () => {
+      const urls = [BRANCH, AT_TWO.replace("mylib", "pinned"), TAG, RELEASE, UNKNOWN];
+      const project = setUp(
+        `[project]\ntitle = T\n${urls.map((url, i) => `dependencies#${i} = ${url}\n`).join("")}`,
+      );
+      const { download } = serving(
+        Object.fromEntries(urls.map((url) => [url, archive("mylib-ref", ONE)])),
+      );
+
+      const result = await run(project, download);
+
+      expect(result.extensions.map(({ url, ref }) => [url, ref])).toEqual(
+        urls.map((url) => [url, classifyDependencyUrl(url)]),
+      );
+      expect(new Set(result.extensions.map(({ ref }) => ref))).toEqual(
+        new Set(["branch", "commit", "tag", "release", "unknown"]),
+      );
+    });
+
+    test("--pin-urls moving the branch leaves no warning and reports a commit", async () => {
+      const { project, download } = projectOn(BRANCH);
+
+      const result = await run(project, download, { pinUrls: true });
+
+      expect(movingWarnings(result.warnings)).toEqual([]);
+      expect(result.extensions.map(({ url, ref }) => [url, ref])).toEqual([[AT_ONE, "commit"]]);
+    });
+
+    test("--pin-urls leaving the branch gives its reason and not the advice to run it", async () => {
+      const project = setUp(`[project]\ntitle = T\ndependencies#0 = ${BRANCH}\n`);
+      const { download } = serving({ [BRANCH]: archive("mylib-master") });
+
+      const result = await run(project, download, { pinUrls: true });
+
+      expect(result.warnings.filter((line) => line.includes(BRANCH))).toEqual([
+        `--pin-urls left ${BRANCH}: its archive names no commit`,
+      ]);
+      expect(result.extensions.map(({ url, ref }) => [url, ref])).toEqual([[BRANCH, "branch"]]);
+    });
+  });
 
   describe("--pin-urls", () => {
     test("a branch and a tag move to their commits, and the types stay", async () => {
