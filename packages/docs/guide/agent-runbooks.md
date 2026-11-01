@@ -144,7 +144,9 @@ whether it was `assetOnly`, `sceneSources` (how many [shared scene
 files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
 (`commit:<sha>` or `files-sha256:<hex>`), the `resolvedFiles` hash of the files a game
 can use, — when the project pins that url — the `pinnedVersion` and `pinnedFiles`, and
-the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
+the `pinStatus` (`unpinned` / `match` / `drift`), and the `ref`, the kind of URL it is
+(`commit` / `tag` / `branch` / `release` / `unknown`), where only `commit` is fixed and
+`branch` draws a [warning](./resolve.md#pin-urls-to-commits). A separate `libraries` array reports
 a dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
@@ -183,6 +185,7 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
   "extensions": [
     {
       "url": "https://github.com/defold/extension-iap/archive/main.zip",
+      "ref": "branch",
       "namespaces": ["iap"],
       "typeSurface": "extension",
       "scriptApiCount": 1,
@@ -197,6 +200,7 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
     },
     {
       "url": "https://github.com/paulomrpp/dicebag/archive/main.zip",
+      "ref": "branch",
       "namespaces": [],
       "typeSurface": "vendored-library",
       "scriptApiCount": 0,
@@ -659,6 +663,7 @@ its index and `package.json` to exactly the declared set.
   "extensions": [
     {
       "url": "<archive url>",
+      "ref": "<commit | tag | branch | release | unknown>",
       "provenance": "<defold | cache | download>",
       "namespaces": ["<namespace>"],
       "typeSurface": "<none | extension | vendored-library | vendored-native | shipped>",
@@ -685,7 +690,7 @@ On failure:
 came from (`provenance`), which type surface it contributed (`typeSurface`), how
 many `.script_api` files the archive carries (`scriptApiCount` — a
 `"vendored-library"` entry can carry docs and still contribute no namespace), how many
-scene sources it shared (`sceneSources`), and its pin state
+scene sources it shared (`sceneSources`), what kind of URL it is (`ref`), and its pin state
 (`resolvedVersion`/`resolvedFiles`/`pinStatus`). Pins live in the committed
 [`defold-typescript.lock`](./resolve.md#the-lockfile), which `resolve` writes, so
 commit it with the change. The `written` array is always empty for `resolve`. If
