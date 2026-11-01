@@ -8,6 +8,7 @@ import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.t
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
 import { readOpenApiTargets } from "../packages/cli/src/library/sync-openapi-types.ts";
 import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
 import {
   collectPinnedTargets,
   describeReport,
@@ -283,7 +284,7 @@ describe("issue identity", () => {
     expect(report.issueBody).toContain("1.0.0");
     expect(report.issueBody).toContain("2");
     expect(report.issueBody).toContain("luals:widget.widget");
-    expect(report.issueBody).toContain("refreshing-library-pins");
+    expect(report.issueBody).toContain(`${LIBRARY_DOCS_URL}/guides/refreshing-library-pins`);
   });
 });
 
