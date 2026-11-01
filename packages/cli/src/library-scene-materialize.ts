@@ -4,10 +4,10 @@
 // depending project addresses them by.
 //
 // `resolve` does this rather than the scene walk because the shipped zip seam is
-// `Bun.spawnSync("unzip")`, which cannot run inside `tsserver` where the editor
-// plugin's walk is synchronous node. `/.defold-types` is defignored, so bob never
-// sees the copies and cannot double-load a library scene. These are resources,
-// not types, so nothing points tsconfig at them.
+// asynchronous, which cannot run inside `tsserver` where the editor plugin's walk
+// is synchronous node. `/.defold-types` is defignored, so bob never sees the copies
+// and cannot double-load a library scene. These are resources, not types, so
+// nothing points tsconfig at them.
 
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";

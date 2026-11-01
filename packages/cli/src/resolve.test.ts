@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -11,6 +12,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
+import { readZip } from "@defold-typescript/types/cli-runtime";
 import * as ts from "typescript";
 import { writeZipArchive } from "../../types/test/zip-fixture";
 import { resolveTypesPackageRoot } from "./api-registry";
@@ -549,6 +551,202 @@ describe("runResolve", () => {
       expect(result.ok).toBe(true);
       expect(result.extensions[0]?.pinStatus).toBe("drift");
       expect(lockBytes(cwd)).toBe(before);
+    });
+  });
+
+  describe("a frozen run over Defold's library folder", () => {
+    const LIB_URL = "https://github.com/owner/lib/archive/refs/heads/main.zip";
+    const OTHER_URL = "https://github.com/owner/other/archive/refs/heads/main.zip";
+    const lockBytes = (cwd: string) => readFileSync(join(cwd, PROJECT_LOCK_FILE), "utf8");
+
+    const archiveBytes = (comment: string, body = "return 1\n"): Uint8Array =>
+      writeZipArchive(
+        [
+          { name: "lib-main/game.project", text: "[library]\ninclude_dirs = lib\n" },
+          { name: "lib-main/lib/core.lua", text: body },
+        ],
+        { comment },
+      );
+
+    const zipName = (url: string, etag = "ZXRhZw") =>
+      `${createHash("sha1").update(url).digest("hex")}-${etag}.zip`;
+
+    function pinOf(comment: string): ArchiveIdentity {
+      const dir = tmp();
+      const path = join(dir, "pin.zip");
+      writeFileSync(path, archiveBytes(comment));
+      return archiveIdentity(readZip(path));
+    }
+
+    function folderProject(
+      urls: readonly string[],
+      manifest: string,
+    ): { cwd: string; lib: string } {
+      const cwd = tmp();
+      const lib = join(cwd, ".internal", "lib");
+      mkdirSync(lib, { recursive: true });
+      writeFileSync(join(lib, "dependencies.json"), manifest);
+      writeProject(
+        cwd,
+        `[project]\n${urls.map((url, i) => `dependencies#${i} = ${url}`).join("\n")}\n`,
+      );
+      return { cwd, lib };
+    }
+
+    const listing = (entries: readonly { url: string; commit: string }[]): string =>
+      JSON.stringify(entries.map(({ url, commit }) => ({ url, "commit-sha1": commit })));
+
+    function requestLog(): { download: DownloadExtensionArchive; requests: string[] } {
+      const requests: string[] = [];
+      return {
+        requests,
+        download: async (requested) => {
+          requests.push(requested);
+          return { status: "ok", bytes: archiveBytes(OTHER_COMMIT) };
+        },
+      };
+    }
+
+    const frozen = (cwd: string, download: DownloadExtensionArchive, freeze = true) =>
+      runResolve({
+        cwd,
+        cacheDir: tmp(),
+        libraryDataDir: null,
+        typesRoot: null,
+        download,
+        freeze,
+      });
+
+    test("reads the listed archive, reports it from Defold, and requests nothing", async () => {
+      const { cwd, lib } = folderProject([LIB_URL], listing([{ url: LIB_URL, commit: COMMIT }]));
+      writeFileSync(join(lib, zipName(LIB_URL)), archiveBytes(COMMIT));
+      writePins(cwd, { [LIB_URL]: pinOf(COMMIT) });
+      const { download, requests } = requestLog();
+
+      const result = await frozen(cwd, download);
+
+      expect(result.ok).toBe(true);
+      expect(result.extensions[0]?.provenance).toBe("defold");
+      expect(result.extensions[0]?.pinStatus).toBe("match");
+      expect(requests).toEqual([]);
+    });
+
+    test("reads a release asset, which lists no commit and carries no comment", async () => {
+      const { cwd, lib } = folderProject([LIB_URL], listing([{ url: LIB_URL, commit: "" }]));
+      writeFileSync(join(lib, zipName(LIB_URL)), archiveBytes(""));
+      writePins(cwd, { [LIB_URL]: pinOf("") });
+      const { download, requests } = requestLog();
+
+      const result = await frozen(cwd, download);
+
+      expect(result.ok).toBe(true);
+      expect(result.extensions[0]?.provenance).toBe("defold");
+      expect(result.extensions[0]?.pinStatus).toBe("match");
+      expect(requests).toEqual([]);
+    });
+
+    const refusals: readonly (readonly [string, string, (lib: string) => void])[] = [
+      [
+        "an unlisted URL",
+        listing([{ url: `${LIB_URL}?other`, commit: COMMIT }]),
+        (lib) => writeFileSync(join(lib, zipName(LIB_URL)), archiveBytes(COMMIT)),
+      ],
+      [
+        "a comment naming another commit",
+        listing([{ url: LIB_URL, commit: COMMIT }]),
+        (lib) => writeFileSync(join(lib, zipName(LIB_URL)), archiveBytes(OTHER_COMMIT)),
+      ],
+      [
+        "bytes that are not a zip",
+        listing([{ url: LIB_URL, commit: COMMIT }]),
+        (lib) => writeFileSync(join(lib, zipName(LIB_URL)), "partial download"),
+      ],
+      [
+        "two zips under one URL",
+        listing([{ url: LIB_URL, commit: COMMIT }]),
+        (lib) => {
+          writeFileSync(join(lib, zipName(LIB_URL, "QQ")), archiveBytes(COMMIT));
+          writeFileSync(join(lib, zipName(LIB_URL, "Qg")), archiveBytes(OTHER_COMMIT));
+        },
+      ],
+      ["no zip for a listed URL", listing([{ url: LIB_URL, commit: COMMIT }]), () => {}],
+      ["a manifest that does not parse", "{ not json", () => {}],
+      [
+        "an included file that does not inflate",
+        listing([{ url: LIB_URL, commit: COMMIT }]),
+        (lib) => {
+          const bytes = Buffer.from(archiveBytes(COMMIT));
+          const name = "lib-main/lib/core.lua";
+          // The byte after the local header's name: BTYPE 11 is no deflate block.
+          bytes[bytes.indexOf(name) + name.length] = 0xff;
+          writeFileSync(join(lib, zipName(LIB_URL)), bytes);
+        },
+      ],
+    ];
+
+    test.each(
+      refusals,
+    )("%s fails, naming the URL and bob resolve, with no request", async (_, manifest, seed) => {
+      const { cwd, lib } = folderProject([LIB_URL], manifest);
+      seed(lib);
+      writePins(cwd, { [LIB_URL]: pinOf(COMMIT) });
+      const before = lockBytes(cwd);
+      const { download, requests } = requestLog();
+
+      const result = await frozen(cwd, download);
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain(LIB_URL);
+      expect(result.error).toContain("bob resolve");
+      expect(requests).toEqual([]);
+      expect(lockBytes(cwd)).toBe(before);
+      expect(existsSync(join(cwd, ".defold-types"))).toBe(false);
+    });
+
+    test("one refused dependency stops the run before another one writes", async () => {
+      const { cwd, lib } = folderProject(
+        [LIB_URL, OTHER_URL],
+        listing([
+          { url: LIB_URL, commit: COMMIT },
+          { url: OTHER_URL, commit: COMMIT },
+        ]),
+      );
+      writeFileSync(join(lib, zipName(LIB_URL)), archiveBytes(COMMIT));
+      writePins(cwd, { [LIB_URL]: pinOf(COMMIT), [OTHER_URL]: pinOf(COMMIT) });
+      const { download, requests } = requestLog();
+
+      const result = await frozen(cwd, download);
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain(OTHER_URL);
+      expect(requests).toEqual([]);
+      expect(existsSync(join(cwd, ".defold-types"))).toBe(false);
+    });
+
+    test("with no dependencies.json it fetches", async () => {
+      const cwd = tmp();
+      writeProject(cwd, `[project]\ndependencies#0 = ${LIB_URL}\n`);
+      writePins(cwd, { [LIB_URL]: pinOf(OTHER_COMMIT) });
+      const { download, requests } = requestLog();
+
+      const result = await frozen(cwd, download);
+
+      expect(result.ok).toBe(true);
+      expect(result.extensions[0]?.provenance).toBe("download");
+      expect(result.extensions[0]?.pinStatus).toBe("match");
+      expect(requests).toEqual([LIB_URL]);
+    });
+
+    test("a plain run keeps falling back to a download", async () => {
+      const { cwd, lib } = folderProject([LIB_URL], listing([{ url: LIB_URL, commit: COMMIT }]));
+      writeFileSync(join(lib, zipName(LIB_URL)), archiveBytes(OTHER_COMMIT));
+      const { download, requests } = requestLog();
+
+      const result = await frozen(cwd, download, false);
+
+      expect(result.ok).toBe(true);
+      expect(result.extensions[0]?.provenance).toBe("download");
+      expect(requests).toEqual([LIB_URL]);
     });
   });
 
