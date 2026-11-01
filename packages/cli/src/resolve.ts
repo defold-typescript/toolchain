@@ -37,6 +37,7 @@ import { formatJsonLikeBiome } from "./format-json";
 import { printLibraryModules } from "./library/print-library";
 import { archiveSourceTree } from "./library/source-tree";
 import {
+  dataFolderDigest,
   LIBRARY_DATA_MAIN_URL,
   type LibraryDataArchive,
   libraryDataCacheDir,
@@ -49,6 +50,7 @@ import {
   type PrintedLibrary,
 } from "./library-materialize";
 import {
+  librariesForDependencies,
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
   type VendoredNativeExtension,
@@ -108,6 +110,9 @@ export interface RunResolveOptions {
   // When true, skip writing newly-resolved pins into `package.json`. Used by
   // `--frozen` to verify the committed pin set without mutating it.
   readonly freeze?: boolean;
+  // Moves a recorded library data commit to newer data, which a plain run holds
+  // back from.
+  readonly update?: boolean;
   // The library data dependencies are matched against and printed from. Both
   // default to the data repo's archive; tests inject a synthetic registry and
   // data folder to stay hermetic, and a `null` folder prints nothing and keeps a
@@ -136,6 +141,8 @@ export interface RunResolveResult {
   // TypeScript merges them; empty when every namespace has one source.
   readonly sharedNamespaces: SharedExtensionNamespace[];
   readonly warnings: readonly string[];
+  // Advice about the library data commit, which needs no action to stay correct.
+  readonly notices?: readonly string[];
 }
 
 function hasProjectSection(text: string): boolean {
@@ -239,20 +246,75 @@ function seedExtensionPins(
   writeFileSync(join(cwd, "package.json"), `${formatJsonLikeBiome(merged)}\n`);
 }
 
-async function selectLibraryData(opts: RunResolveOptions): Promise<LibraryDataArchive> {
-  if (opts.libraryDataDir !== undefined) {
-    return { dir: opts.libraryDataDir, commit: null };
+function changedLibraryFolder(held: string, newer: string): boolean {
+  try {
+    return dataFolderDigest(held) !== dataFolderDigest(newer);
+  } catch {
+    return true;
   }
-  return resolveLibraryDataArchive({
+}
+
+// One commit covers every library, so a dependency only the newer data covers
+// moves the whole commit: holding it would leave a declared library untyped. Only
+// a library the project uses earns a notice, since data merges are frequent.
+function weighNewerLibraryData(
+  heldDir: string,
+  heldCommit: string | null,
+  newer: { readonly dir: string; readonly commit: string },
+  urls: readonly string[],
+): { archive: LibraryDataArchive; notices: string[] } {
+  const held = librariesForDependencies(heldDir, urls);
+  const next = librariesForDependencies(newer.dir, urls);
+  const covered = next.filter(({ dir }) => !held.some((library) => library.dir === dir));
+  if (covered.length > 0) {
+    const names = covered.map(({ dir }) => dir).join(", ");
+    return {
+      archive: { dir: newer.dir, commit: newer.commit },
+      notices: [`library data moved to commit ${newer.commit}, the first to cover ${names}`],
+    };
+  }
+  const changed = held.filter(({ dir }) => {
+    const counterpart = next.find((library) => library.dir === dir);
+    return (
+      counterpart === undefined ||
+      changedLibraryFolder(join(heldDir, dir), join(newer.dir, counterpart.dir))
+    );
+  });
+  const archive = { dir: heldDir, commit: heldCommit };
+  if (changed.length === 0) {
+    return { archive, notices: [] };
+  }
+  const names = changed.map(({ dir }) => dir).join(", ");
+  return {
+    archive,
+    notices: [
+      `newer library data changes ${names}; run \`defold-typescript resolve --update\` to move to it`,
+    ],
+  };
+}
+
+async function selectLibraryData(
+  opts: RunResolveOptions,
+  urls: readonly string[],
+): Promise<{ archive: LibraryDataArchive; notices: string[] }> {
+  if (opts.libraryDataDir !== undefined) {
+    return { archive: { dir: opts.libraryDataDir, commit: null }, notices: [] };
+  }
+  const archive = await resolveLibraryDataArchive({
     mainUrl: opts.libraryDataUrl ?? LIBRARY_DATA_MAIN_URL,
     cacheDir:
       opts.cacheDir === undefined ? libraryDataCacheDir() : join(opts.cacheDir, "library-data"),
     recorded: readLibraryDataCommit(readExistingPackageJson(opts.cwd).value),
     frozen: opts.freeze === true,
+    ...(opts.update === true ? { update: true } : {}),
     cliVersion: readCliVersion(),
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
   });
+  if (archive.dir !== null && archive.newer !== undefined) {
+    return weighNewerLibraryData(archive.dir, archive.commit, archive.newer, urls);
+  }
+  return { archive, notices: archive.moved === undefined ? [] : [archive.moved] };
 }
 
 export async function runResolve(opts: RunResolveOptions): Promise<RunResolveResult> {
@@ -306,7 +368,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     };
   }
 
-  const libraryData = await selectLibraryData(opts);
+  const { archive: libraryData, notices } = await selectLibraryData(
+    opts,
+    deps.map(({ url }) => url),
+  );
   if (libraryData.error !== undefined) {
     return {
       ok: false,
@@ -549,5 +614,6 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     libraries,
     sharedNamespaces,
     warnings,
+    ...(notices.length > 0 ? { notices } : {}),
   };
 }

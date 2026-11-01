@@ -6,6 +6,7 @@ import {
   readdirSync,
   readFileSync,
   statSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -24,7 +25,7 @@ import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printLibraryModules } from "./library/print-library";
 import { readNativeTargets } from "./library/sync-native-types";
 import { readNativeExpectations } from "./library/target-expectations";
-import { writeAuthoredLibraryData } from "./library-data-fixture";
+import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fixture";
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
@@ -2468,7 +2469,18 @@ describe("runResolve with a library data archive", () => {
     contents: string,
     outsideDataFolder: Readonly<Record<string, string>> = {},
   ): Uint8Array {
-    const folder = writeAuthoredLibraryData({ "mylib.core": contents });
+    return packDataFolder(
+      commit,
+      writeAuthoredLibraryData({ "mylib.core": contents }),
+      outsideDataFolder,
+    );
+  }
+
+  function packDataFolder(
+    commit: string,
+    folder: string,
+    outsideDataFolder: Readonly<Record<string, string>> = {},
+  ): Uint8Array {
     const files = (readdirSync(folder, { recursive: true }) as string[]).filter((path) =>
       statSync(join(folder, path)).isFile(),
     );
@@ -2537,7 +2549,7 @@ describe("runResolve with a library data archive", () => {
     expect(namespaceOf(cwd).extensions?.[DEP_URL]).toStartWith("commit:");
   });
 
-  test("a second run against a newer archive moves the commit and prints from it", async () => {
+  test("--update against a newer archive moves the commit and prints from it", async () => {
     const cwd = project();
     const cacheDir = tmp();
     await runResolve({
@@ -2551,11 +2563,242 @@ describe("runResolve with a library data archive", () => {
       cwd,
       cacheDir,
       libraryDataUrl: DATA_URL,
+      update: true,
       download: serving(dataArchive(TWO, declares("two"))).download,
     });
 
     expect(namespaceOf(cwd).libraryData).toBe(TWO);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
+  });
+
+  async function recordOne(cwd: string, cacheDir: string, data: Uint8Array): Promise<string> {
+    await runResolve({ cwd, cacheDir, libraryDataUrl: DATA_URL, download: serving(data).download });
+    return readFileSync(join(cwd, "package.json"), "utf8");
+  }
+
+  test("newer data for a library the project uses holds the commit and says so", async () => {
+    const cwd = project();
+    const cacheDir = tmp();
+    const before = await recordOne(cwd, cacheDir, dataArchive(ONE, declares("one")));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      download: serving(dataArchive(TWO, declares("two"))).download,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
+    expect(result.notices).toHaveLength(1);
+    expect(result.notices?.[0]).toContain("mylib");
+    expect(result.notices?.[0]).toContain("resolve --update");
+    expect(result.warnings.filter((line) => line.includes("library data"))).toEqual([]);
+  });
+
+  test("newer data that drops a library the project uses holds the commit and says so", async () => {
+    const cwd = project();
+    const cacheDir = tmp();
+    const keep = 'declare module "other.core" {}\n';
+    const before = await recordOne(
+      cwd,
+      cacheDir,
+      packDataFolder(
+        ONE,
+        writeAuthoredLibraryData({ "mylib.core": declares("one"), "other.core": keep }),
+      ),
+    );
+
+    const result = await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      download: serving(packDataFolder(TWO, writeAuthoredLibraryData({ "other.core": keep })))
+        .download,
+    });
+
+    expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
+    expect(result.notices?.[0]).toContain("mylib");
+  });
+
+  test("newer data for a library the project does not use says nothing", async () => {
+    const cwd = project();
+    const cacheDir = tmp();
+    const data = (commit: string, other: string) =>
+      packDataFolder(
+        commit,
+        writeAuthoredLibraryData({ "mylib.core": declares("one"), "other.core": other }),
+      );
+    const before = await recordOne(cwd, cacheDir, data(ONE, "// one\n"));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: DATA_URL,
+      download: serving(data(TWO, "// two\n")).download,
+    });
+
+    expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+    expect(result.notices).toBeUndefined();
+  });
+
+  test("a recorded commit with no folder for this CLI moves the commit and says so", async () => {
+    const cwd = project();
+    writeFileSync(
+      join(cwd, "package.json"),
+      JSON.stringify({ "defold-typescript": { libraryData: ONE } }),
+    );
+    const held = writeZipArchive([{ name: `library-data-${ONE}/README.md`, text: "# docs" }], {
+      comment: ONE,
+    });
+    const main = dataArchive(TWO, declares("two"));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      download: async (url) => ({
+        status: "ok",
+        bytes: url === DEP_URL ? DEPENDENCY : url === DATA_URL ? main : held,
+      }),
+    });
+
+    expect(namespaceOf(cwd).libraryData).toBe(TWO);
+    expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
+    expect(result.notices?.[0]).toContain(ONE);
+    expect(result.notices?.[0]).toContain(TWO);
+  });
+
+  test("a run after a hold leaves package.json's bytes and mtime alone", async () => {
+    const cwd = project();
+    const cacheDir = tmp();
+    const pkgPath = join(cwd, "package.json");
+    const before = await recordOne(cwd, cacheDir, dataArchive(ONE, declares("one")));
+    const newer = serving(dataArchive(TWO, declares("two"))).download;
+    const old = new Date("2020-01-01T00:00:00Z");
+    utimesSync(pkgPath, old, old);
+
+    for (let run = 0; run < 2; run++) {
+      await runResolve({ cwd, cacheDir, libraryDataUrl: DATA_URL, download: newer });
+      expect(readFileSync(pkgPath, "utf8")).toBe(before);
+      expect(statSync(pkgPath).mtimeMs).toBe(old.getTime());
+    }
+  });
+
+  describe("a dependency only the newer data covers moves the commit", () => {
+    const NEW_URL = "https://github.com/owner/newlib/archive/main.zip";
+    const repo = "https://github.com/owner/newlib";
+    const LUA = [
+      "---@class newlib.core",
+      "local M = {}",
+      "---@return number",
+      "function M.answer_probe() end",
+      "return M",
+      "",
+    ].join("\n");
+
+    const LANES: readonly {
+      lane: string;
+      archive: readonly { name: string; text: string }[];
+      write: (root: string) => void;
+      printed: (cwd: string) => string;
+    }[] = [
+      {
+        lane: "luals",
+        archive: [{ name: "newlib-main/newlib/core.lua", text: LUA }],
+        write: (root) => {
+          writeLibraryTargets(root, {
+            luals: [
+              {
+                repo,
+                ref: "1.0.0",
+                sourceGlobs: ["newlib/**/*.lua"],
+                moduleId: "newlib.core",
+                namespace: "newlib.core",
+              },
+            ],
+          });
+        },
+        printed: (cwd) => join(cwd, ".defold-types", LIBRARIES_DIR, "newlib.core.d.ts"),
+      },
+      {
+        lane: "authored",
+        archive: [{ name: "newlib-main/newlib/core.lua", text: "return {}\n" }],
+        write: (root) => {
+          mkdirSync(join(root, "newlib", "fork"), { recursive: true });
+          writeFileSync(
+            join(root, "newlib", "fork", "newlib.core.d.ts"),
+            'declare module "newlib.core" {\n  export const answer_probe: number;\n}\n',
+          );
+          writeLibraryTargets(root, {
+            forks: [
+              {
+                repo,
+                ref: "1.0.0",
+                authored: "fork/newlib.core.d.ts",
+                moduleId: "newlib.core",
+                namespace: "newlib.core",
+                apiDoc: "api-doc/newlib.core.json",
+                upstreamLua: ["source/upstream/newlib.core.lua"],
+              },
+            ],
+          });
+        },
+        printed: (cwd) => join(cwd, ".defold-types", LIBRARIES_DIR, "newlib.core.d.ts"),
+      },
+      {
+        lane: "native",
+        archive: [{ name: "newlib-main/newlib/ext.manifest", text: "name: newlib\n" }],
+        write: (root) => {
+          mkdirSync(join(root, "newlib"), { recursive: true });
+          writeFileSync(
+            join(root, "newlib", "newlib.d.ts"),
+            "declare namespace newlib {\n  const answer_probe: number;\n}\n",
+          );
+          writeLibraryTargets(root, {
+            native: [
+              {
+                repo,
+                ref: "1.0.0",
+                namespace: "newlib",
+                manifestDir: "newlib",
+                declaration: "newlib.d.ts",
+                upstreamSource: "source/upstream/src/extension.cpp",
+              },
+            ],
+          });
+        },
+        printed: (cwd) => join(cwd, ".defold-types", "extensions", "newlib.d.ts"),
+      },
+    ];
+
+    test.each(LANES)("on the $lane lane", async ({ archive, write, printed }) => {
+      const cwd = tmp();
+      writeProject(cwd, `[project]\ndependencies#0 = ${NEW_URL}\n`);
+      const cacheDir = tmp();
+      const dependency = writeZipArchive(archive, { comment: "3".repeat(40) });
+      const other = 'declare module "other.core" {}\n';
+      const run = (data: Uint8Array) =>
+        runResolve({
+          cwd,
+          cacheDir,
+          libraryDataUrl: DATA_URL,
+          download: async (url) => ({ status: "ok", bytes: url === NEW_URL ? dependency : data }),
+        });
+      await run(packDataFolder(ONE, writeAuthoredLibraryData({ "other.core": other })));
+      expect(namespaceOf(cwd).libraryData).toBe(ONE);
+      expect(existsSync(printed(cwd))).toBe(false);
+
+      const newer = writeAuthoredLibraryData({ "other.core": other });
+      write(newer);
+      const result = await run(packDataFolder(TWO, newer));
+
+      expect(namespaceOf(cwd).libraryData).toBe(TWO);
+      expect(readFileSync(printed(cwd), "utf8")).toContain("answer_probe");
+      expect(result.notices?.[0]).toContain("newlib");
+    });
   });
 
   test("a newer commit with the same data folder keeps the commit, and --frozen prints the same", async () => {
@@ -2635,6 +2878,7 @@ describe("runResolve with a library data archive", () => {
     expect(newer.requests).not.toContain(DATA_URL);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
     expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
+    expect(result.notices).toBeUndefined();
   });
 
   test("a frozen run with nothing recorded fails and asks for a plain resolve", async () => {
