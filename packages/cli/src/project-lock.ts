@@ -1,17 +1,18 @@
 // What `resolve` recorded, in a committed file of its own: `package.json` is edited
 // by hand, and a record there is lost whenever that file does not parse. Maps are
-// sorted with one entry per line, so branches touching different entries merge
-// cleanly. A value here reaches cache paths and download URLs, so reading checks
-// every one rather than trusting a file that a merge can leave in any state.
+// sorted with one entry per line, an extension's object included, so branches
+// touching different entries merge cleanly. A value here reaches cache paths and
+// download URLs, so reading checks every one rather than trusting a file that a
+// merge can leave in any state.
 
 import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { COMMIT_COMMENT } from "./extension-version";
+import { type ArchiveIdentity, COMMIT_COMMENT } from "./extension-version";
 
 export const PROJECT_LOCK_FILE = "defold-typescript.lock";
 
 const LOCK_VERSION = 1;
-const PIN = /^(commit:[0-9a-f]{40}|files-sha256:[0-9a-f]{64})$/;
+const FILES_HASH = /^[0-9a-f]{64}$/;
 // A library key becomes a folder name under the cache, so it is one path segment.
 const LIBRARY_KEY = /^(?!\.{1,2}$)[A-Za-z0-9._-]+$/;
 
@@ -23,7 +24,7 @@ export interface LibraryDataPins {
 }
 
 export interface ProjectLock {
-  readonly extensions: Readonly<Record<string, string>>;
+  readonly extensions: Readonly<Record<string, ArchiveIdentity>>;
   readonly libraryData?: LibraryDataPins;
 }
 
@@ -38,6 +39,18 @@ function invalid(detail: string): ProjectLockRead {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isArchiveIdentity(value: unknown): value is ArchiveIdentity {
+  if (!isPlainObject(value)) {
+    return false;
+  }
+  const { commit, files } = value;
+  return (
+    typeof files === "string" &&
+    FILES_HASH.test(files) &&
+    (commit === undefined || (typeof commit === "string" && COMMIT_COMMENT.test(commit)))
+  );
 }
 
 export function readProjectLock(cwd: string): ProjectLockRead {
@@ -64,15 +77,15 @@ export function readProjectLock(cwd: string): ProjectLockRead {
     return invalid('has an "extensions" value that is not a map');
   }
   for (const [url, pin] of Object.entries(extensions)) {
-    if (typeof pin !== "string" || !PIN.test(pin)) {
+    if (!isArchiveIdentity(pin)) {
       return invalid(
-        `has "extensions" entry ${url} in neither form: commit:<40 hex> or files-sha256:<hex>`,
+        `has "extensions" entry ${url} in neither form: { "commit": "<40 hex>", "files": "<64 hex>" } or { "files": "<64 hex>" }`,
       );
     }
   }
   const { libraryData } = root;
   if (libraryData === undefined) {
-    return { status: "ok", lock: { extensions: extensions as Record<string, string> } };
+    return { status: "ok", lock: { extensions: extensions as Record<string, ArchiveIdentity> } };
   }
   if (!isPlainObject(libraryData)) {
     return invalid('has a "libraryData" value that is not a map');
@@ -95,7 +108,7 @@ export function readProjectLock(cwd: string): ProjectLockRead {
   return {
     status: "ok",
     lock: {
-      extensions: extensions as Record<string, string>,
+      extensions: extensions as Record<string, ArchiveIdentity>,
       libraryData: { shared, libraries: libraries as Record<string, string> },
     },
   };
@@ -109,23 +122,34 @@ function sortedByKey(map: Readonly<Record<string, string>>): Record<string, stri
   );
 }
 
+function serializeIdentity({ commit, files }: ArchiveIdentity): string {
+  const commitField = commit === undefined ? "" : `"commit": ${JSON.stringify(commit)}, `;
+  return `{ ${commitField}"files": ${JSON.stringify(files)} }`;
+}
+
+function serializeExtensions(extensions: ProjectLock["extensions"]): string {
+  const lines = Object.keys(extensions)
+    .sort()
+    .map(
+      (url) =>
+        `    ${JSON.stringify(url)}: ${serializeIdentity(extensions[url] as ArchiveIdentity)}`,
+    );
+  return lines.length === 0 ? "{}" : `{\n${lines.join(",\n")}\n  }`;
+}
+
+function serializeLibraryData({ shared, libraries }: LibraryDataPins): string {
+  return JSON.stringify({ shared, libraries: sortedByKey(libraries) }, null, 2).replaceAll(
+    "\n",
+    "\n  ",
+  );
+}
+
 function serializeProjectLock(lock: ProjectLock): string {
-  return `${JSON.stringify(
-    {
-      version: LOCK_VERSION,
-      extensions: sortedByKey(lock.extensions),
-      ...(lock.libraryData === undefined
-        ? {}
-        : {
-            libraryData: {
-              shared: lock.libraryData.shared,
-              libraries: sortedByKey(lock.libraryData.libraries),
-            },
-          }),
-    },
-    null,
-    2,
-  )}\n`;
+  const libraryData =
+    lock.libraryData === undefined
+      ? ""
+      : `,\n  "libraryData": ${serializeLibraryData(lock.libraryData)}`;
+  return `{\n  "version": ${LOCK_VERSION},\n  "extensions": ${serializeExtensions(lock.extensions)}${libraryData}\n}\n`;
 }
 
 export function writeProjectLock(cwd: string, lock: ProjectLock): void {

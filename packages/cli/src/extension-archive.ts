@@ -16,7 +16,7 @@ import {
   type ExtensionDependency,
   type ResolvedExtension,
 } from "./extension-deps";
-import { archivePin } from "./extension-version";
+import { type ArchiveIdentity, archiveIdentity } from "./extension-version";
 
 export type ExtensionArchiveProvenance = "defold" | "cache" | "download";
 
@@ -43,7 +43,7 @@ export type ReadExtensionZip = (zipPath: string) => ExtensionZip | Promise<Exten
 export interface ResolvedExtensionArchive extends ResolvedExtension {
   readonly provenance: ExtensionArchiveProvenance;
   readonly archivePath: string;
-  readonly resolvedVersion: string;
+  readonly identity: ArchiveIdentity;
   // Set when the cached copy was served because revalidating it failed.
   readonly warning?: string;
 }
@@ -167,7 +167,7 @@ export async function resolveExtensionArchive(
   return {
     ...classifyExtension(dep.url, zip.entries()),
     ...source,
-    resolvedVersion: archivePin(zip),
+    identity: archiveIdentity(zip),
   };
 }
 

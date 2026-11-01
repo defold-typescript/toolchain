@@ -22,6 +22,7 @@ import {
 import type { ExtensionDependency } from "./extension-deps";
 import { type EmittedExtension, emitExtensionDeclaration } from "./extension-emit";
 import { curatedIndexPages } from "./extension-index-pages";
+import type { ArchiveIdentity } from "./extension-version";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 import { locateShippedDeclarations, selectShippedDeclarations } from "./shipped-declarations";
 
@@ -29,7 +30,7 @@ export interface ExtensionDeclarations {
   readonly url: string;
   readonly provenance: ExtensionArchiveProvenance;
   readonly assetOnly: boolean;
-  readonly resolvedVersion: string;
+  readonly identity: ArchiveIdentity;
   // The archive the bundle was read from, which `resolve` reopens to print the
   // library modules it confirms.
   readonly archivePath: string;
@@ -146,7 +147,7 @@ export async function resolveExtensionDeclarations(
         url: archive.url,
         provenance: archive.provenance,
         assetOnly: true,
-        resolvedVersion: archive.resolvedVersion,
+        identity: archive.identity,
         archivePath: archive.archivePath,
         ...warning,
         declarations: [],
@@ -170,7 +171,7 @@ export async function resolveExtensionDeclarations(
       url: archive.url,
       provenance: archive.provenance,
       assetOnly: false,
-      resolvedVersion: archive.resolvedVersion,
+      identity: archive.identity,
       archivePath: archive.archivePath,
       ...warning,
       declarations,

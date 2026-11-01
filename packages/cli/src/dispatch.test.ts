@@ -36,7 +36,7 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
-import { archivePin } from "./extension-version";
+import { archiveIdentity, archiveVersion } from "./extension-version";
 import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
@@ -214,8 +214,8 @@ const ALPHA = `
 // matter which targets ship. The precondition assertion below keeps it honest
 // if the registry ever grows toward it.
 const UNREGISTERED_TARGET = "1.0.0";
-const PINNED = `commit:${"1".repeat(40)}`;
-const STALE = `commit:${"2".repeat(40)}`;
+const PINNED = { commit: "1".repeat(40), files: "a".repeat(64) };
+const STALE = { commit: "2".repeat(40), files: "a".repeat(64) };
 
 function registeredTargetVersions(): string[] {
   return loadApiTargetsRegistry().map((target) => target.id.replace(/^defold-/, ""));
@@ -4801,6 +4801,7 @@ describe("dispatch resolve", () => {
         sceneSources: 0,
         assetOnly: false,
         resolvedVersion: expect.stringMatching(/^files-sha256:[0-9a-f]{64}$/) as unknown as string,
+        resolvedFiles: expect.stringMatching(/^[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
       },
     ] as unknown as typeof parsed.extensions);
@@ -4918,7 +4919,7 @@ describe("dispatch resolve", () => {
     };
     expect(parsed.extensions).toHaveLength(1);
     expect(parsed.extensions[0]?.resolvedVersion).toMatch(/^files-sha256:[0-9a-f]{64}$/);
-    expect(parsed.extensions[0]?.pinnedVersion).toBe(PINNED);
+    expect(parsed.extensions[0]?.pinnedVersion).toBe(archiveVersion(PINNED));
   });
 
   function libraryResolveInternals(url: string): {
@@ -5299,7 +5300,7 @@ describe("dispatch resolve", () => {
 
     expect(code).toBe(0);
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: warning: pin drift for ${url}: ${PINNED} -> files-sha256:<digest>\n`,
+      `${noSceneSource(url)}defold-typescript resolve: warning: pin drift for ${url}: ${archiveVersion(PINNED)} -> files-sha256:<digest>\n`,
     );
   });
 
@@ -5307,7 +5308,7 @@ describe("dispatch resolve", () => {
     const { io, err } = captureStreams();
     const driftedUrl = "https://example.com/drifted.zip";
     const freshUrl = "https://example.com/fresh.zip";
-    const freshPin = archivePin({
+    const freshPin = archiveIdentity({
       entries: () => ["asset/foo.png"],
       read: () => "",
       comment: () => "",
@@ -5352,7 +5353,7 @@ describe("dispatch resolve", () => {
 
     expect(code).toBe(1);
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(driftedUrl)}${noSceneSource(freshUrl)}defold-typescript resolve: error: pin drift for ${driftedUrl}: ${STALE} -> files-sha256:<digest>\n`,
+      `${noSceneSource(driftedUrl)}${noSceneSource(freshUrl)}defold-typescript resolve: error: pin drift for ${driftedUrl}: ${archiveVersion(STALE)} -> files-sha256:<digest>\n`,
     );
     // lockfile byte-unchanged: no drift clobber
     expect(readFileSync(lockPath, "utf8")).toBe(originalLock);
@@ -5373,7 +5374,9 @@ describe("dispatch resolve", () => {
     expect(first.ok).toBe(true);
     const matchingDigest = first.extensions[0]?.resolvedVersion as string;
     expect(matchingDigest).toMatch(/^files-sha256:[0-9a-f]{64}$/);
-    writeProjectLock(cwd, { extensions: { [url]: matchingDigest } });
+    writeProjectLock(cwd, {
+      extensions: { [url]: { files: first.extensions[0]?.resolvedFiles as string } },
+    });
     const lockPath = path.join(cwd, PROJECT_LOCK_FILE);
     const originalLock = readFileSync(lockPath, "utf8");
 
@@ -5431,8 +5434,96 @@ describe("dispatch resolve", () => {
     expect(parsed.extensions[0]?.url).toBe(url);
     expect(parsed.extensions[0]?.pinStatus).toBe("drift");
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: error: 1 extension pin(s) drifted:\n  ${url}: ${STALE} -> files-sha256:<digest>\n`,
+      `${noSceneSource(url)}defold-typescript resolve: error: 1 extension pin(s) drifted:\n  ${url}: ${archiveVersion(STALE)} -> files-sha256:<digest>\n`,
     );
+  });
+
+  describe("drift between two real archives", () => {
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    const COMMIT = "1".repeat(40);
+    const OTHER_COMMIT = "2".repeat(40);
+    const archive = (commit: string, lua: string): Uint8Array =>
+      writeZipArchive(
+        [
+          {
+            name: "mylib-main/game.project",
+            text: "[project]\ntitle = mylib\n\n[library]\ninclude_dirs = mylib\n",
+          },
+          { name: "mylib-main/mylib/core.lua", text: lua },
+        ],
+        { comment: commit },
+      );
+    const serving = (bytes: Uint8Array) => ({
+      resolveInternals: {
+        libraryDataDir: null,
+        cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
+        download: async () => ({ status: "ok" as const, bytes }),
+      },
+    });
+    const BASE = archive(COMMIT, "return {}\n");
+    const EDITED = archive(COMMIT, "return { edited = true }\n");
+
+    async function pinnedProject(): Promise<void> {
+      writeProject(`[project]\ndependencies#0 = ${url}\n`);
+      expect(await dispatch(["resolve", cwd], captureStreams().io, serving(BASE))).toBe(0);
+    }
+
+    test("a plain run warns that the files changed under the commit", async () => {
+      await pinnedProject();
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd], io, serving(EDITED));
+
+      expect(code).toBe(0);
+      expect(err()).toContain(
+        `warning: pin drift for ${url}: files changed under commit:${COMMIT}\n`,
+      );
+    });
+
+    test("--frozen exits with the same line as an error", async () => {
+      await pinnedProject();
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--frozen"], io, serving(EDITED));
+
+      expect(code).toBe(1);
+      expect(err()).toContain(
+        `error: pin drift for ${url}: files changed under commit:${COMMIT}\n`,
+      );
+    });
+
+    test("--frozen --json names the same case and reports both hashes", async () => {
+      await pinnedProject();
+      const { io, out, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--frozen", "--json"], io, serving(EDITED));
+
+      expect(code).toBe(1);
+      expect(err()).toContain(`  ${url}: files changed under commit:${COMMIT}\n`);
+      const { extensions } = JSON.parse(out()) as {
+        extensions: { pinStatus: string; pinnedFiles: string; resolvedFiles: string }[];
+      };
+      expect(extensions[0]?.pinStatus).toBe("drift");
+      expect(extensions[0]?.pinnedFiles).toMatch(/^[0-9a-f]{64}$/);
+      expect(extensions[0]?.resolvedFiles).toMatch(/^[0-9a-f]{64}$/);
+      expect(extensions[0]?.pinnedFiles).not.toBe(extensions[0]?.resolvedFiles as string);
+    });
+
+    test("a changed commit names the two commits, even over identical files", async () => {
+      await pinnedProject();
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(
+        ["resolve", cwd],
+        io,
+        serving(archive(OTHER_COMMIT, "return {}\n")),
+      );
+
+      expect(code).toBe(0);
+      expect(err()).toContain(
+        `warning: pin drift for ${url}: commit:${COMMIT} -> commit:${OTHER_COMMIT}\n`,
+      );
+    });
   });
 
   test("--library-data reads library data from the data folder its directory holds for this CLI", async () => {

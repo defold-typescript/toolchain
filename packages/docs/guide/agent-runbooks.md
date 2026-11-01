@@ -142,8 +142,9 @@ generated `namespaces`, `typeSurface`, `scriptApiCount`, `provenance` (`defold`,
 `download`; see [Cache location](./resolve.md#cache-location)),
 whether it was `assetOnly`, `sceneSources` (how many [shared scene
 files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
-(`commit:<sha>` or `files-sha256:<hex>`), — when the project pins that url —
-the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
+(`commit:<sha>` or `files-sha256:<hex>`), the `resolvedFiles` hash of the files a game
+can use, — when the project pins that url — the `pinnedVersion` and `pinnedFiles`, and
+the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
 a dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
@@ -189,7 +190,9 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
       "assetOnly": false,
       "sceneSources": 0,
       "resolvedVersion": "commit:5c33c398…",
+      "resolvedFiles": "e3b0c442…",
       "pinnedVersion": "commit:5c33c398…",
+      "pinnedFiles": "e3b0c442…",
       "pinStatus": "match"
     },
     {
@@ -201,6 +204,7 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
       "assetOnly": true,
       "sceneSources": 0,
       "resolvedVersion": "commit:9f1e0a27…",
+      "resolvedFiles": "7d865e95…",
       "pinStatus": "unpinned"
     }
   ],
@@ -216,8 +220,10 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
 }
 ```
 
-A `pinnedVersion` field is only present when the project's
-[`defold-typescript.lock`](./resolve.md#the-lockfile) records a pin for that `url`. See [Resolve](./resolve.md#pinning-extension-versions) for
+The `pinnedVersion` and `pinnedFiles` fields are only present when the project's
+[`defold-typescript.lock`](./resolve.md#the-lockfile) records a pin for that `url`. The
+versions can match while `pinStatus` is `drift`: that means the files changed under the
+same commit, which `pinnedFiles` and `resolvedFiles` show. See [Resolve](./resolve.md#pinning-extension-versions) for
 what `pinStatus` drives.
 
 When several dependencies declare one namespace, each of their `extensions[]`
@@ -660,6 +666,7 @@ its index and `package.json` to exactly the declared set.
       "assetOnly": false,
       "sceneSources": 0,
       "resolvedVersion": "<version>",
+      "resolvedFiles": "<hex>",
       "pinStatus": "<unpinned | match | drift>"
     }
   ]
@@ -679,7 +686,7 @@ came from (`provenance`), which type surface it contributed (`typeSurface`), how
 many `.script_api` files the archive carries (`scriptApiCount` — a
 `"vendored-library"` entry can carry docs and still contribute no namespace), how many
 scene sources it shared (`sceneSources`), and its pin state
-(`resolvedVersion`/`pinStatus`). Pins live in the committed
+(`resolvedVersion`/`resolvedFiles`/`pinStatus`). Pins live in the committed
 [`defold-typescript.lock`](./resolve.md#the-lockfile), which `resolve` writes, so
 commit it with the change. The `written` array is always empty for `resolve`. If
 `ok` is `false`, surface `error`; the existing surface is left untouched.

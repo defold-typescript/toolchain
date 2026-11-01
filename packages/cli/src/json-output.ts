@@ -34,7 +34,9 @@ export interface ResolvedExtensionReportJson {
   readonly scriptApiCount: number;
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
+  readonly resolvedFiles: string;
   readonly pinnedVersion?: string;
+  readonly pinnedFiles?: string;
   readonly pinStatus: "unpinned" | "match" | "drift" | "retired";
 }
 

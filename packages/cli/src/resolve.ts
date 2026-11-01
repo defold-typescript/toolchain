@@ -26,7 +26,7 @@ import {
   materializeExtensionDeclarations,
   type SharedExtensionNamespace,
 } from "./extension-materialize";
-import { mergeResolvedVersionPins } from "./extension-version";
+import { archiveVersion, mergeResolvedVersionPins, sameArchive } from "./extension-version";
 import { printLibraryModules } from "./library/print-library";
 import { archiveSourceTree } from "./library/source-tree";
 import { LIBRARY_DATA_MAIN_URL, libraryDataCacheDir } from "./library-data-archive";
@@ -82,7 +82,9 @@ export interface ResolvedExtensionReport {
   readonly scriptApiCount: number;
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
+  readonly resolvedFiles: string;
   readonly pinnedVersion?: string;
+  readonly pinnedFiles?: string;
   readonly pinStatus: PinStatus;
   // How many scene sources this dependency shares into the address universe.
   readonly sceneSources: number;
@@ -299,6 +301,17 @@ export function unknownUpdateNames(
   return `defold-typescript resolve: --update names no dependency called ${unknown.join(", ")}; declared: ${names}`;
 }
 
+// What a drifted pin differs by. The two version strings are equal only when both
+// name one commit, so what moved is the files under it.
+export function describePinDrift({
+  pinnedVersion,
+  resolvedVersion,
+}: Pick<ResolvedExtensionReport, "pinnedVersion" | "resolvedVersion">): string {
+  return pinnedVersion === resolvedVersion
+    ? `files changed under ${pinnedVersion}`
+    : `${pinnedVersion ?? "(none)"} -> ${resolvedVersion}`;
+}
+
 export async function runResolve(opts: RunResolveOptions): Promise<RunResolveResult> {
   const { cwd } = opts;
   const gameProjectPath = join(cwd, "game.project");
@@ -462,7 +475,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       .filter(
         ({ url }) => pins[url] !== undefined && wantsUpdate(opts.update, normalizeSourceId(url)),
       )
-      .map(({ url, resolvedVersion }) => [url, resolvedVersion]),
+      .map(({ url, identity }) => [url, identity]),
   );
   const heldPins = { ...pins, ...acceptedPins };
 
@@ -515,7 +528,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     writeProjectLock(cwd, {
       extensions: mergeResolvedVersionPins(
         heldPins,
-        Object.fromEntries(bundles.map((bundle) => [bundle.url, bundle.resolvedVersion])),
+        Object.fromEntries(bundles.map((bundle) => [bundle.url, bundle.identity])),
       ),
       ...(libraryData.pins === undefined ? {} : { libraryData: libraryData.pins }),
     });
@@ -525,7 +538,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     const supersededByLibrary = confirmedLibraryUrls.has(bundle.url);
     const pin = heldPins[bundle.url];
     const pinStatus: PinStatus =
-      pin === undefined ? "unpinned" : pin === bundle.resolvedVersion ? "match" : "drift";
+      pin === undefined ? "unpinned" : sameArchive(pin, bundle.identity) ? "match" : "drift";
     // A superseded bundle contributed no namespace, so reporting the ones its
     // `.script_api` would have produced would double-count its modules against
     // `libraries[]`. `scriptApiCount` stays the real archive count.
@@ -542,7 +555,9 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       scriptApiCount: number;
       assetOnly: boolean;
       resolvedVersion: string;
+      resolvedFiles: string;
       pinnedVersion?: string;
+      pinnedFiles?: string;
       pinStatus: PinStatus;
       sceneSources: number;
     } = {
@@ -560,12 +575,14 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
               : "none",
       scriptApiCount: scriptApiCounts.get(bundle.url) ?? 0,
       assetOnly: bundle.assetOnly,
-      resolvedVersion: bundle.resolvedVersion,
+      resolvedVersion: archiveVersion(bundle.identity),
+      resolvedFiles: bundle.identity.files,
       pinStatus,
       sceneSources: sceneSourceCounts.get(bundle.url) ?? 0,
     };
     if (pin !== undefined) {
-      report.pinnedVersion = pin;
+      report.pinnedVersion = archiveVersion(pin);
+      report.pinnedFiles = pin.files;
     }
     return report;
   });
