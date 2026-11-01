@@ -383,8 +383,9 @@ normally.
   `--library-data`.
 - `--library-data <dir>` — read library data from `<dir>` instead of the
   [library data repo](#library-data), with no request for it and no commit
-  recorded. `<dir>` holds version-named data folders and is chosen from by the
-  same rule, and a relative `<dir>` resolves against the working directory.
+  recorded. `<dir>` holds version-named data folders, which the data repo keeps in
+  its `data/` folder, and is chosen from by the same rule, and a relative `<dir>`
+  resolves against the working directory.
   `resolve` exits non-zero when `<dir>` holds no folder for this CLI version.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape

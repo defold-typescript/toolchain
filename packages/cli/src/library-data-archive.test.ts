@@ -38,9 +38,10 @@ function dataArchive(
   commit: string | undefined,
   entries: readonly ZipFixtureEntry[] = [
     { name: "library-data-x/" },
-    { name: "library-data-x/0.55.0/" },
-    { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
-    { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+    { name: "library-data-x/data/" },
+    { name: "library-data-x/data/0.55.0/" },
+    { name: "library-data-x/data/0.55.0/mylib/library.json", text: "{}" },
+    { name: "library-data-x/data/0.55.0/mylib/icon.bin", bytes: BINARY },
   ],
 ): Uint8Array {
   return writeZipArchive(entries, commit === undefined ? {} : { comment: commit });
@@ -86,7 +87,7 @@ function resolve(
   });
 }
 
-const dirFor = (cacheDir: string, commit: string) => join(cacheDir, "commits", commit, CLI);
+const dirFor = (cacheDir: string, commit: string) => join(cacheDir, "commits", commit, "data", CLI);
 
 function cacheCommit(cacheDir: string, commit: string): void {
   mkdirSync(dirFor(cacheDir, commit), { recursive: true });
@@ -285,7 +286,20 @@ describe("resolveLibraryDataArchive, plain", () => {
 
   test("no folder for this CLI yields no data and a warning naming the version", async () => {
     const cacheDir = tmp();
-    const bytes = dataArchive(COMMIT, [{ name: "top/9.9.9/mylib/library.json", text: "{}" }]);
+    const bytes = dataArchive(COMMIT, [{ name: "top/data/9.9.9/mylib/library.json", text: "{}" }]);
+
+    const result = await resolve(cacheDir, serves(bytes));
+
+    expect(result.dir).toBeNull();
+    expect(result.commit).toBeNull();
+    expect(result.warning).toContain(CLI);
+  });
+
+  test("version folders only at the archive root yield no data and a warning naming the version", async () => {
+    const cacheDir = tmp();
+    const bytes = dataArchive(COMMIT, [
+      { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
+    ]);
 
     const result = await resolve(cacheDir, serves(bytes));
 
@@ -321,12 +335,12 @@ describe("resolveLibraryDataArchive, plain", () => {
 
 describe("resolveLibraryDataArchive, plain, holding the recorded commit", () => {
   const DATA: readonly ZipFixtureEntry[] = [
-    { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
-    { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+    { name: "library-data-x/data/0.55.0/mylib/library.json", text: "{}" },
+    { name: "library-data-x/data/0.55.0/mylib/icon.bin", bytes: BINARY },
   ];
   const CHANGED: readonly ZipFixtureEntry[] = [
-    { name: "library-data-x/0.55.0/mylib/library.json", text: '{"changed":true}' },
-    { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+    { name: "library-data-x/data/0.55.0/mylib/library.json", text: '{"changed":true}' },
+    { name: "library-data-x/data/0.55.0/mylib/icon.bin", bytes: BINARY },
   ];
   const held = (cacheDir: string) => ({ dir: dirFor(cacheDir, OTHER), commit: OTHER });
 
@@ -379,9 +393,12 @@ describe("resolveLibraryDataArchive, plain, holding the recorded commit", () => 
 
   test("a higher data folder in main moves to main and names the folder", async () => {
     const cacheDir = tmp();
-    const lower = [{ name: "library-data-x/0.54.0/mylib/library.json", text: "{}" }];
+    const lower = [{ name: "library-data-x/data/0.54.0/mylib/library.json", text: "{}" }];
     await cacheArchive(cacheDir, OTHER, lower);
-    const higher = [...lower, { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" }];
+    const higher = [
+      ...lower,
+      { name: "library-data-x/data/0.55.0/mylib/library.json", text: "{}" },
+    ];
 
     const result = await resolve(cacheDir, serves(dataArchive(COMMIT, higher)), {
       recorded: OTHER,
@@ -397,7 +414,22 @@ describe("resolveLibraryDataArchive, plain, holding the recorded commit", () => 
   test("a recorded commit with no folder for this CLI moves to main and names both", async () => {
     const cacheDir = tmp();
     await cacheArchive(cacheDir, OTHER, [
-      { name: "library-data-x/9.9.9/mylib/library.json", text: "{}" },
+      { name: "library-data-x/data/9.9.9/mylib/library.json", text: "{}" },
+    ]);
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), { recorded: OTHER });
+
+    expect(result.dir).toBe(dirFor(cacheDir, COMMIT));
+    expect(result.commit).toBe(COMMIT);
+    expect(result.moved).toContain(OTHER);
+    expect(result.moved).toContain(CLI);
+    expect(result.warning).toBeUndefined();
+  });
+
+  test("a recorded commit with version folders only at its root moves to main and names both", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, [
+      { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
     ]);
 
     const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), { recorded: OTHER });
@@ -504,8 +536,8 @@ describe("resolveLibraryDataArchive, plain, holding the recorded commit", () => 
 
 describe("resolveLibraryDataArchive, --update, with a recorded commit behind main", () => {
   const DATA: readonly ZipFixtureEntry[] = [
-    { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
-    { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+    { name: "library-data-x/data/0.55.0/mylib/library.json", text: "{}" },
+    { name: "library-data-x/data/0.55.0/mylib/icon.bin", bytes: BINARY },
   ];
   const NEWER_OUTSIDE_DATA: readonly ZipFixtureEntry[] = [
     ...DATA,
@@ -558,7 +590,7 @@ describe("resolveLibraryDataArchive, --update, with a recorded commit behind mai
   test("a change only in a folder this CLI does not read keeps the recorded commit", async () => {
     const cacheDir = tmp();
     await cacheArchive(cacheDir, OTHER, DATA);
-    const newer = [...DATA, { name: "library-data-x/0.99.0/mylib/library.json", text: "{}" }];
+    const newer = [...DATA, { name: "library-data-x/data/0.99.0/mylib/library.json", text: "{}" }];
 
     const result = await resolve(cacheDir, serves(dataArchive(COMMIT, newer)), {
       recorded: OTHER,
@@ -586,7 +618,7 @@ describe("resolveLibraryDataArchive, --update, with a recorded commit behind mai
   test("a recorded commit with no folder for this CLI yields the newest commit", async () => {
     const cacheDir = tmp();
     await cacheArchive(cacheDir, OTHER, [
-      { name: "library-data-x/9.9.9/mylib/library.json", text: "{}" },
+      { name: "library-data-x/data/9.9.9/mylib/library.json", text: "{}" },
     ]);
 
     const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), {
@@ -618,38 +650,38 @@ describe("resolveLibraryDataArchive, --update, with a recorded commit behind mai
       "a changed file",
       DATA,
       [
-        { name: "library-data-x/0.55.0/mylib/library.json", text: '{"changed":true}' },
-        { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+        { name: "library-data-x/data/0.55.0/mylib/library.json", text: '{"changed":true}' },
+        { name: "library-data-x/data/0.55.0/mylib/icon.bin", bytes: BINARY },
       ],
     ],
     [
       "an added file",
       DATA,
-      [...DATA, { name: "library-data-x/0.55.0/mylib/extra.json", text: "{}" }],
+      [...DATA, { name: "library-data-x/data/0.55.0/mylib/extra.json", text: "{}" }],
     ],
     ["a removed file", DATA, DATA.slice(0, 1)],
     [
       "a file moved with the same bytes",
       DATA,
       [
-        { name: "library-data-x/0.55.0/renamed/library.json", text: "{}" },
-        { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+        { name: "library-data-x/data/0.55.0/renamed/library.json", text: "{}" },
+        { name: "library-data-x/data/0.55.0/mylib/icon.bin", bytes: BINARY },
       ],
     ],
     [
       "a file split in two where its bytes read as the next file's name",
-      [{ name: "library-data-x/0.55.0/a", text: "x\0b\0y" }],
+      [{ name: "library-data-x/data/0.55.0/a", text: "x\0b\0y" }],
       [
-        { name: "library-data-x/0.55.0/a", text: "x" },
-        { name: "library-data-x/0.55.0/b", text: "y" },
+        { name: "library-data-x/data/0.55.0/a", text: "x" },
+        { name: "library-data-x/data/0.55.0/b", text: "y" },
       ],
     ],
     [
       "a higher data folder with identical files",
-      [{ name: "library-data-x/0.54.0/mylib/library.json", text: "{}" }],
+      [{ name: "library-data-x/data/0.54.0/mylib/library.json", text: "{}" }],
       [
-        { name: "library-data-x/0.54.0/mylib/library.json", text: "{}" },
-        { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
+        { name: "library-data-x/data/0.54.0/mylib/library.json", text: "{}" },
+        { name: "library-data-x/data/0.55.0/mylib/library.json", text: "{}" },
       ],
     ],
   ])("%s moves to the newest commit", async (_name, recordedEntries, newestEntries) => {
@@ -756,7 +788,7 @@ describe("resolveLibraryDataArchive, frozen", () => {
 
   test("a recorded commit with no folder for this CLI is an error", async () => {
     const cacheDir = tmp();
-    mkdirSync(join(cacheDir, "commits", COMMIT, "9.9.9"), { recursive: true });
+    mkdirSync(join(cacheDir, "commits", COMMIT, "data", "9.9.9"), { recursive: true });
 
     const result = await resolve(cacheDir, offline, { recorded: COMMIT, frozen: true });
 

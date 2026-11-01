@@ -2463,7 +2463,7 @@ describe("runResolve with a library data archive", () => {
     { comment: "3333333333333333333333333333333333333333" },
   );
 
-  // A real data folder, packed the way GitHub packs the data repo's root.
+  // A real data folder under `data/`, packed the way GitHub packs the data repo.
   function dataArchive(
     commit: string,
     contents: string,
@@ -2487,7 +2487,7 @@ describe("runResolve with a library data archive", () => {
     return writeZipArchive(
       [
         ...files.map((path) => ({
-          name: `library-data-${commit}/0.0.1/${path.replace(/\\/g, "/")}`,
+          name: `library-data-${commit}/data/0.0.1/${path.replace(/\\/g, "/")}`,
           text: readFileSync(join(folder, path), "utf8"),
         })),
         ...Object.entries(outsideDataFolder).map(([path, text]) => ({

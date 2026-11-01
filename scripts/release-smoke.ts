@@ -112,12 +112,13 @@ export function curatedDeclarationPath(
     "defold-typescript"
   ]?.libraryData;
   if (typeof commit !== "string") return null;
-  const commitDir = path.join(
+  const dataRoot = path.join(
     libraryDataCacheDir({ DEFOLD_TYPESCRIPT_CACHE: cache }),
     "commits",
     commit,
+    "data",
   );
-  const target = loadVendoredNativeRegistry(selectDataFolder(commitDir, "0.0.0")).find(
+  const target = loadVendoredNativeRegistry(selectDataFolder(dataRoot, "0.0.0")).find(
     (entry) => entry.namespace === namespace,
   );
   return target !== undefined && existsSync(target.declarationPath) ? target.declarationPath : null;

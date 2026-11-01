@@ -160,7 +160,7 @@ export async function resolveLibraryDataArchive(
       : { dir: null, commit: null, warning: message };
 
   const fromCommit = (commit: string, warning?: string): LibraryDataArchive => {
-    const dir = selectDataFolder(commitDir(commit), cliVersion);
+    const dir = selectDataFolder(join(commitDir(commit), "data"), cliVersion);
     if (dir === null) {
       return unavailable(`library data commit ${commit} holds no folder for CLI ${cliVersion}`);
     }

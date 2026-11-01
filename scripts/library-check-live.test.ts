@@ -55,7 +55,7 @@ function writeDataFolder(dataDir: string, forkMembers: readonly string[]): void 
   }
 }
 
-// An archive as GitHub packs the data repo: every file under one `<repo>-<ref>/`
+// An archive as GitHub packs the data repo: every file under one `<repo>-<ref>/data/`
 // folder, with the commit in the comment.
 function dataArchive(folder: string, forkMembers: readonly string[]): Uint8Array {
   const root = tmp();
@@ -69,7 +69,7 @@ function dataArchive(folder: string, forkMembers: readonly string[]): Uint8Array
         walk(path);
       } else {
         const rel = relative(root, path).replaceAll("\\", "/");
-        entries.push({ name: `library-data-main/${rel}`, text: readFileSync(path, "utf8") });
+        entries.push({ name: `library-data-main/data/${rel}`, text: readFileSync(path, "utf8") });
       }
     }
   };
