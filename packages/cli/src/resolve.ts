@@ -16,6 +16,7 @@ import { DEFOLD_DEPENDENCIES_MANIFEST, DEFOLD_LIBRARY_DIR } from "./defold-libra
 import {
   classifyDependencyUrl,
   commitUrlFor,
+  type DependencyUrlKind,
   rewriteGameProjectDependency,
 } from "./dependency-url";
 import {
@@ -92,6 +93,7 @@ export type PinStatus = "unpinned" | "match" | "drift";
 
 export interface ResolvedExtensionReport {
   readonly url: string;
+  readonly ref: DependencyUrlKind;
   readonly provenance: ExtensionArchiveProvenance;
   readonly namespaces: string[];
   readonly typeSurface: ResolvedTypeSurface;
@@ -658,6 +660,18 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     ...urlPins.warnings,
     ...shippedWarnings,
   ];
+  // A `--pin-urls` run already moved each branch URL or said why it left it, so advice
+  // to run it again would only contradict that. Tags draw nothing: they rarely move, and
+  // the lockfile reports one that does.
+  if (opts.pinUrls !== true) {
+    for (const url of new Set(bundles.map((bundle) => bundle.url))) {
+      if (classifyDependencyUrl(url) === "branch") {
+        warnings.push(
+          `${url} follows a branch, so it can change without notice: run \`defold-typescript resolve --pin-urls\` to pin it to a commit`,
+        );
+      }
+    }
+  }
   for (const bundle of bundles) {
     if (bundle.warning !== undefined) {
       warnings.push(bundle.warning);
@@ -762,6 +776,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
         : bundle.declarations.map((d) => d.namespace).sort();
     const report: {
       url: string;
+      ref: DependencyUrlKind;
       provenance: ExtensionArchiveProvenance;
       namespaces: string[];
       typeSurface: ResolvedTypeSurface;
@@ -775,6 +790,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       sceneSources: number;
     } = {
       url: bundle.url,
+      ref: classifyDependencyUrl(bundle.url),
       provenance: bundle.provenance,
       namespaces,
       typeSurface: shippedUrls.has(bundle.url)
