@@ -91,6 +91,61 @@ describe("canFollow", () => {
   });
 });
 
+describe("a URL is read the way a fetch reads it", () => {
+  const OWN = "https://github.com/owner/mylib";
+  const pinned = `${OWN}/archive/${COMMIT}.zip`;
+
+  describe("an escape has no kind", () => {
+    const escapes = [
+      `${OWN}/archive/../../../attacker/fork/archive/main.zip`,
+      `${OWN}/archive/%2e%2e/%2E%2E/%2e%2e/attacker/fork/archive/main.zip`,
+      `${OWN}/archive/.%2e/%2E./../attacker/fork/archive/main.zip`,
+      `${OWN}/archive/..\\..\\..\\attacker\\fork\\archive\\main.zip`,
+      `${OWN}/archive/..%2f..%2f..%2fattacker%2ffork%2farchive%2fmain.zip`,
+      `${OWN}/archive/%252e%252e/%252e%252e/%252e%252e/attacker/fork/archive/main.zip`,
+      `${OWN}/archive/.\t./.\t./.\t./attacker/fork/archive/main.zip`,
+      `${OWN}/archive/stays/../main.zip`,
+      `${OWN}/archive/stays/.\t./main.zip`,
+      "https://github.com/owner/mylib?/archive/main.zip",
+      "https://github.com/owner/../archive/main.zip",
+      "https://evil.example\\@github.com/owner/mylib/archive/main.zip",
+    ];
+
+    test.each(escapes)("%s", (url) => {
+      expect(classifyDependencyUrl(url)).toBe("unknown");
+      expect(commitUrlFor(url, COMMIT)).toBeNull();
+      expect(canFollow(pinned, url)).toBe(false);
+    });
+  });
+
+  describe("a legitimate name keeps its kind", () => {
+    const names: [string, DependencyUrlKind][] = [
+      [`${OWN}/archive/refs/heads/feature/x.zip`, "branch"],
+      [`${OWN}/archive/refs/heads/feature%2Fx.zip`, "branch"],
+      [`${OWN}/archive/refs/heads/fonctionnalité.zip`, "branch"],
+      [`${OWN}/archive/refs/heads/100%.zip`, "branch"],
+      [`${OWN}/archive/refs/tags/v1.2.zip`, "tag"],
+      ["https://github.com/owner/.github/archive/main.zip", "branch"],
+      ["https://github.com/owner/defold.lib/archive/v1.2.3.zip", "tag"],
+      [`${OWN}/releases/download/v1/asset.zip`, "release"],
+    ];
+
+    test.each(names)("%s is %s", (url, kind) => {
+      expect(classifyDependencyUrl(url)).toBe(kind);
+    });
+  });
+
+  test.each([
+    "https://__TOKEN__@github.com/owner/mylib",
+    "https://__USER__:__TOKEN__@github.com/owner/mylib",
+  ])("a nested ref under %s is followed, and the authority stays", (repo) => {
+    const ref = `${repo}/archive/refs/heads/feature/x.zip`;
+
+    expect(canFollow(`${repo}/archive/${COMMIT}.zip`, ref)).toBe(true);
+    expect(commitUrlFor(ref, COMMIT)).toBe(`${repo}/archive/${COMMIT}.zip`);
+  });
+});
+
 describe("rewriteGameProjectDependency", () => {
   const url = `${REPO}/archive/master.zip`;
   const next = `${REPO}/archive/${COMMIT}.zip`;
