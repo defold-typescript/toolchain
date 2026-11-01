@@ -51,7 +51,7 @@ describe("release-smoke override derivation", () => {
   test("curatedDeclarationPath finds a native declaration through the recorded commit", () => {
     const cache = mkdtempSync(path.join(os.tmpdir(), "release-smoke-cache-"));
     const commit = "1111111111111111111111111111111111111111";
-    const folder = path.join(cache, "library-data", "commits", commit, "0.0.1");
+    const folder = path.join(cache, "library-data", "commits", commit, "data", "0.0.1");
     mkdirSync(folder, { recursive: true });
     writeLibraryTargets(folder, {
       native: [

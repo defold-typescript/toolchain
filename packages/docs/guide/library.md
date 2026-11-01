@@ -11,8 +11,8 @@ toolchain checkout. Library data is added by a PR to
 [`defold-typescript/library-data`](https://github.com/defold-typescript/library-data).
 
 ```sh
-bunx @defold-typescript/cli library add https://github.com/owner/mylib/archive/refs/tags/1.2.3.zip --data path/to/library-data
-bunx @defold-typescript/cli library check --data path/to/library-data
+bunx @defold-typescript/cli library add https://github.com/owner/mylib/archive/refs/tags/1.2.3.zip --data path/to/library-data/data
+bunx @defold-typescript/cli library check --data path/to/library-data/data
 ```
 
 ## What `library add` writes
@@ -115,9 +115,10 @@ every module afresh, so it reads no committed report and nothing outside
 ## `--data`
 
 `--data <dir>` names a directory of version-named data folders (`0.55.0/`,
-`0.56.0/`, ...). `library check` and `library add` use the one this CLI reads, by
-the same rule as [`resolve --library-data`](./resolve.md#flags): the highest
-folder at or below the CLI version. A relative `<dir>` resolves against the
+`0.56.0/`, ...), which the data repo keeps in its `data/` folder. `library check`
+and `library add` use the one this CLI reads, by the same rule as
+[`resolve --library-data`](./resolve.md#flags): the highest folder at or below
+the CLI version. A relative `<dir>` resolves against the
 working directory. A `<dir>` with no folder for this CLI version is an error.
 
 ## `--api-doc-out`
@@ -126,7 +127,7 @@ working directory. A `<dir>` with no folder for this CLI version is an error.
 to `<dir>`, the JSON files the [library docs site](https://defold-typescript.github.io/library-data) renders:
 
 ```sh
-bunx @defold-typescript/cli library check --data path/to/library-data --api-doc-out path/to/api-doc
+bunx @defold-typescript/cli library check --data path/to/library-data/data --api-doc-out path/to/api-doc
 ```
 
 It writes only after every check passes, so a failing run leaves `<dir>` as it
@@ -141,7 +142,7 @@ file also used as a folder, fail before anything is written.
 A clean data folder prints one line and exits `0`:
 
 ```text
-defold-typescript library check: /path/to/library-data/0.55.0: 81 libraries, no problems
+defold-typescript library check: /path/to/library-data/data/0.55.0: 81 libraries, no problems
 ```
 
 Otherwise each problem prints on its own line as
@@ -150,7 +151,7 @@ exits `1`:
 
 ```text
 flow: compile: usage/flow-usage.test-d.ts:12 Property 'erase' does not exist on type 'typeof import("flow.ui")'.
-defold-typescript library check: error: 1 problem in /path/to/library-data/0.55.0
+defold-typescript library check: error: 1 problem in /path/to/library-data/data/0.55.0
 ```
 
 `<library>` is the library folder. `<check>` is `data`, `print`, `compile` or
@@ -169,9 +170,9 @@ With `--json`, `library check` writes one object:
 {
   "command": "library",
   "ok": false,
-  "error": "library check: 1 problem in /path/to/library-data/0.55.0",
+  "error": "library check: 1 problem in /path/to/library-data/data/0.55.0",
   "subcommand": "check",
-  "dataFolder": "/path/to/library-data/0.55.0",
+  "dataFolder": "/path/to/library-data/data/0.55.0",
   "problems": [
     { "library": "flow", "check": "compile", "message": "usage/flow-usage.test-d.ts:12 ..." }
   ]
