@@ -41,8 +41,8 @@ leaving out example, test, demo and sample directories:
 | ------------------ | -------------------- |
 | A `.script_api` file with a Lua module at `<include_dir>/<name>.lua` | A `scriptApi` entry, `moduleId` `<include_dir>.<name>`, per file. |
 | A `.script_api` file with no such module | No entry: it documents a native global, and [`resolve` types it](./extensions.md) from the dependency's own archive. |
-| Lua with `---@` annotations | One `luals` entry for `<include_dir>/<include_dir>.lua`, else the first annotated file. See [Authoring LuaLS library types](./authoring-luals-library-types.md). |
-| An `ext.manifest`, or Lua with no annotations | No recipe. See [Authoring forked library types](./authoring-forked-library-types.md). |
+| Lua with `---@` annotations | One `luals` entry for `<include_dir>/<include_dir>.lua`, else the first annotated file. See [Authoring LuaLS library types](https://defold-typescript.github.io/library-data/guides/authoring-luals-library-types). |
+| An `ext.manifest`, or Lua with no annotations | No recipe. See [Authoring forked library types](https://defold-typescript.github.io/library-data/guides/authoring-forked-library-types). |
 
 The command prints the folder it wrote, anything left to do by hand, and the
 `library check` command to run next. That first check reports each generated
@@ -103,7 +103,7 @@ and by namespace for a native extension:
 | Module | Floor | What is measured |
 | ------ | ----- | ---------------- |
 | Generated from LuaLS annotations or a `.script_api` file | a ratio | The share of its type tokens that map to a known type. |
-| A fork that lists `upstreamLua` | `{ "callable", "field" }` | Its upstream members declared at the right parameter count, and its upstream fields declared. The library's `parityExceptions` count as declared. See [Surface parity](./authoring-forked-library-types.md#4-surface-parity-against-the-upstream-lua). |
+| A fork that lists `upstreamLua` | `{ "callable", "field" }` | Its upstream members declared at the right parameter count, and its upstream fields declared. The library's `parityExceptions` count as declared. See [Surface parity](https://defold-typescript.github.io/library-data/guides/authoring-forked-library-types#4-surface-parity-against-the-upstream-lua). |
 | A native extension | `{ "callable", "field" }` | The functions, methods and constants its C++ registers that its declaration names. A wrong module name or parameter count is a problem at any coverage. |
 
 A module below its floor is a problem, and so is a module with no floor or one

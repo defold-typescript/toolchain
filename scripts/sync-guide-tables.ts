@@ -5,6 +5,7 @@ import {
   type NativeTarget,
   readNativeTargets,
 } from "../packages/cli/src/library/sync-native-types.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
 
 // Guide tables that list one row per shipped target. Each lives in a marked
 // region of its guide page and is rewritten from the registry the toolchain
@@ -35,7 +36,7 @@ function pinLabel(target: CuratedNativeRow): string {
 export function curatedNativeTable(targets: readonly CuratedNativeRow[]): string {
   const rows = targets.map(
     (target) =>
-      `| [${repoSlug(target.repo)}](${target.repo}) | \`${pinLabel(target)}\` | [\`${target.namespace}\`](/api/${target.namespace}) | \`${target.manifestDir}/ext.manifest\` |`,
+      `| [${repoSlug(target.repo)}](${target.repo}) | \`${pinLabel(target)}\` | [\`${target.namespace}\`](${LIBRARY_DOCS_URL}/api/${target.namespace}) | \`${target.manifestDir}/ext.manifest\` |`,
   );
   return [
     "| Extension | Pinned at | Namespace | Confirmed by        |",

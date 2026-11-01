@@ -9697,7 +9697,9 @@ describe("dispatch library add", () => {
     });
 
     expect(code).toBe(0);
-    expect(out()).toContain("authoring-forked-library-types.md");
+    expect(out()).toContain(
+      "https://defold-typescript.github.io/library-data/guides/authoring-forked-library-types",
+    );
   });
 
   test("--json reports the library, the folder written and the notes", async () => {
