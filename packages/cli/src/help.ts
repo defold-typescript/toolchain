@@ -165,6 +165,10 @@ const COMMANDS: readonly HelpCommand[] = [
         desc: "fail on a drifted or retired extension pin and write no pins",
       },
       {
+        flag: "--update",
+        desc: "move the recorded library data commit to the newest data",
+      },
+      {
         flag: "--library-data <dir>",
         desc: "read library data from a local directory of version-named data folders",
       },

@@ -315,6 +315,15 @@ function dispatchCommand(
   const writeWarning = (message: string): void => {
     io.stderr.write(`${severityLine(message, "warning", stderrColor)}\n`);
   };
+  // Advice with no severity word, carried by the envelope under `--json`.
+  const writeResolveNotices = (notices: readonly string[] | undefined): void => {
+    if (json) {
+      return;
+    }
+    for (const notice of notices ?? []) {
+      io.stderr.write(`defold-typescript resolve: ${notice}\n`);
+    }
+  };
 
   if (head.includes("--version") || head.includes("-v")) {
     const version = internals?.cliVersion ?? readCliVersion();
@@ -347,6 +356,7 @@ function dispatchCommand(
   const wallList = head.includes("--list");
   const wallCheck = head.includes("--check");
   const frozen = head.includes("--frozen");
+  const update = isResolve && head.includes("--update");
   const failOnDrift = head.includes("--fail-on-drift");
   const noUpdateCheck =
     head.includes("--no-update-check") || Boolean(process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK);
@@ -395,6 +405,7 @@ function dispatchCommand(
       a !== "--list" &&
       a !== "--check" &&
       a !== "--frozen" &&
+      a !== "--update" &&
       a !== "--fail-on-drift" &&
       a !== "--no-update-check" &&
       a !== "--hot-reload" &&
@@ -464,6 +475,17 @@ function dispatchCommand(
         : `defold-typescript: ${misplacedEditorFlag} is a build flag; use: defold-typescript build ${misplacedEditorFlag}`;
     if (json) {
       io.stdout.write(renderResult({ command: "build", error: message }));
+    } else {
+      writeError(message);
+    }
+    return 1;
+  }
+
+  if (update && (frozen || libraryDataGiven)) {
+    const other = frozen ? "--frozen" : "--library-data";
+    const message = `defold-typescript resolve: --update moves the recorded library data commit, which ${other} rules out; use one or the other`;
+    if (json) {
+      io.stdout.write(renderResult({ command: "resolve", error: message }));
     } else {
       writeError(message);
     }
@@ -1508,6 +1530,7 @@ function dispatchCommand(
             for (const warning of result.warnings) {
               writeWarning(`defold-typescript resolve: ${warning}`);
             }
+            writeResolveNotices(result.notices);
             if (json) {
               io.stdout.write(
                 renderResult(
@@ -1520,6 +1543,7 @@ function dispatchCommand(
                         ...(result.sharedNamespaces.length > 0
                           ? { sharedNamespaces: result.sharedNamespaces }
                           : {}),
+                        ...(result.notices === undefined ? {} : { notices: result.notices }),
                       }
                     : { command: "resolve", error: result.error ?? "resolve failed" },
                 ),
@@ -1782,10 +1806,12 @@ function dispatchCommand(
               ? { libraryDataDir: seams.libraryDataDir }
               : {}),
           ...(frozen ? { freeze: true } : {}),
+          ...(update ? { update: true } : {}),
         });
         for (const warning of result.warnings) {
           writeWarning(`defold-typescript resolve: ${warning}`);
         }
+        writeResolveNotices(result.notices);
         if (json) {
           io.stdout.write(
             renderResult(
@@ -1804,6 +1830,7 @@ function dispatchCommand(
                     ...(result.sharedNamespaces.length > 0
                       ? { sharedNamespaces: result.sharedNamespaces }
                       : {}),
+                    ...(result.notices === undefined ? {} : { notices: result.notices }),
                   }
                 : { command: "resolve", error: result.error ?? "resolve failed" },
             ),

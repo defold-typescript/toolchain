@@ -136,6 +136,14 @@ describe("renderHelp", () => {
     expect(text).toContain("--frozen");
     expect(text).not.toContain("--fail-on-drift");
   });
+
+  test("resolve help lists --update with its library data meaning", () => {
+    const resolve = JSON.parse(renderHelpJson("resolve"));
+    const update = resolve.flags.find((f: { flag: string }) => f.flag === "--update");
+
+    expect(update.desc).toContain("library data");
+    expect(renderHelp("resolve")).toContain("--update");
+  });
 });
 
 describe("renderHelpJson", () => {

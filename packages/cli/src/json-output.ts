@@ -95,6 +95,7 @@ export interface RenderResultInput {
     readonly namespace: string;
     readonly urls: readonly string[];
   }[];
+  readonly notices?: readonly string[];
   readonly warnings?: readonly string[];
   // The structured half of the unreachable-address findings `warnings` states in
   // prose. Absent — never an empty array — when the check was suppressed, which
@@ -230,8 +231,9 @@ export function renderResult(input: RenderResultInput): string {
     "sharedNamespaces" in input
       ? { ...withLibraries, sharedNamespaces: input.sharedNamespaces }
       : withLibraries;
+  const withNotices = "notices" in input ? { ...withShared, notices: input.notices } : withShared;
   const withWarnings =
-    "warnings" in input ? { ...withShared, warnings: input.warnings } : withShared;
+    "warnings" in input ? { ...withNotices, warnings: input.warnings } : withNotices;
   const withUnreachable =
     "unreachableAddresses" in input
       ? { ...withWarnings, unreachableAddresses: input.unreachableAddresses }

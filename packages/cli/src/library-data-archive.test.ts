@@ -71,7 +71,7 @@ function counting(download: DownloadExtensionArchive): {
 function resolve(
   cacheDir: string,
   download: DownloadExtensionArchive,
-  options: { recorded?: string; frozen?: boolean; mainUrl?: string } = {},
+  options: { recorded?: string; frozen?: boolean; update?: boolean; mainUrl?: string } = {},
   readZip?: ReadExtensionZip,
 ) {
   return resolveLibraryDataArchive({
@@ -79,6 +79,7 @@ function resolve(
     cacheDir,
     recorded: options.recorded ?? null,
     frozen: options.frozen ?? false,
+    ...(options.update === undefined ? {} : { update: options.update }),
     cliVersion: CLI,
     download,
     ...(readZip === undefined ? {} : { readZip }),
@@ -132,26 +133,29 @@ describe("resolveLibraryDataArchive, plain", () => {
     cacheCommit(cacheDir, OTHER);
     const second = counting(async () => ({ status: "not-modified" }));
 
-    const result = await resolve(cacheDir, second.download, { recorded: OTHER });
+    const result = await resolve(cacheDir, second.download, { recorded: OTHER, update: true });
 
     expect(second.calls).toEqual([{ url: LIBRARY_DATA_MAIN_URL, etag: '"v1"' }]);
     expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
   });
 
-  test("a newer main moves past the recorded commit", async () => {
+  test("--update moves a newer main past the recorded commit", async () => {
     const cacheDir = tmp();
     cacheCommit(cacheDir, OTHER);
 
-    const result = await resolve(cacheDir, serves(dataArchive(COMMIT)), { recorded: OTHER });
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT)), {
+      recorded: OTHER,
+      update: true,
+    });
 
     expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
   });
 
-  test("offline with only the recorded commit cached serves it and names the url", async () => {
+  test("--update offline with only the recorded commit cached serves it and names the url", async () => {
     const cacheDir = tmp();
     cacheCommit(cacheDir, COMMIT);
 
-    const result = await resolve(cacheDir, offline, { recorded: COMMIT });
+    const result = await resolve(cacheDir, offline, { recorded: COMMIT, update: true });
 
     expect(result.dir).toBe(dirFor(cacheDir, COMMIT));
     expect(result.commit).toBe(COMMIT);
@@ -159,23 +163,23 @@ describe("resolveLibraryDataArchive, plain", () => {
     expect(result.error).toBeUndefined();
   });
 
-  test("offline prefers the recorded commit over a newer cached main", async () => {
+  test("--update offline prefers the recorded commit over a newer cached main", async () => {
     const cacheDir = tmp();
     await resolve(cacheDir, serves(dataArchive(COMMIT)));
     await resolve(cacheDir, serves(dataArchive(OTHER)));
 
-    const result = await resolve(cacheDir, offline, { recorded: COMMIT });
+    const result = await resolve(cacheDir, offline, { recorded: COMMIT, update: true });
 
     expect(result.dir).toBe(dirFor(cacheDir, COMMIT));
     expect(result.commit).toBe(COMMIT);
     expect(result.warning).toContain(LIBRARY_DATA_MAIN_URL);
   });
 
-  test("offline with only main cached serves that copy and its commit", async () => {
+  test("--update offline with only main cached serves that copy and its commit", async () => {
     const cacheDir = tmp();
     await resolve(cacheDir, serves(dataArchive(OTHER)));
 
-    const result = await resolve(cacheDir, offline, { recorded: COMMIT });
+    const result = await resolve(cacheDir, offline, { recorded: COMMIT, update: true });
 
     expect(result.dir).toBe(dirFor(cacheDir, OTHER));
     expect(result.commit).toBe(OTHER);
@@ -315,7 +319,190 @@ describe("resolveLibraryDataArchive, plain", () => {
   });
 });
 
-describe("resolveLibraryDataArchive, plain, with a recorded commit behind main", () => {
+describe("resolveLibraryDataArchive, plain, holding the recorded commit", () => {
+  const DATA: readonly ZipFixtureEntry[] = [
+    { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
+    { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+  ];
+  const CHANGED: readonly ZipFixtureEntry[] = [
+    { name: "library-data-x/0.55.0/mylib/library.json", text: '{"changed":true}' },
+    { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
+  ];
+  const held = (cacheDir: string) => ({ dir: dirFor(cacheDir, OTHER), commit: OTHER });
+
+  async function cacheArchive(
+    cacheDir: string,
+    commit: string,
+    entries: readonly ZipFixtureEntry[],
+  ): Promise<void> {
+    await resolve(cacheDir, serves(dataArchive(commit, entries)));
+  }
+
+  test("a change in main's data folder serves the recorded commit and names main as newer", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, DATA);
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, CHANGED)), {
+      recorded: OTHER,
+    });
+
+    expect(result).toEqual({
+      ...held(cacheDir),
+      newer: { dir: dirFor(cacheDir, COMMIT), commit: COMMIT },
+    });
+    expect(readFileSync(join(dirFor(cacheDir, COMMIT), "mylib", "library.json"), "utf8")).toBe(
+      '{"changed":true}',
+    );
+  });
+
+  test("a change only outside the data folder serves the recorded commit with no newer", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, DATA);
+    const outside = [...DATA, { name: "library-data-x/README.md", text: "# docs" }];
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, outside)), {
+      recorded: OTHER,
+    });
+
+    expect(result).toEqual(held(cacheDir));
+  });
+
+  test("main at the recorded commit needs no second download", async () => {
+    const cacheDir = tmp();
+    const { download, calls } = counting(serves(dataArchive(OTHER, DATA)));
+
+    const result = await resolve(cacheDir, download, { recorded: OTHER });
+
+    expect(result).toEqual(held(cacheDir));
+    expect(calls.map(({ url }) => url)).toEqual([LIBRARY_DATA_MAIN_URL]);
+  });
+
+  test("a higher data folder in main moves to main and names the folder", async () => {
+    const cacheDir = tmp();
+    const lower = [{ name: "library-data-x/0.54.0/mylib/library.json", text: "{}" }];
+    await cacheArchive(cacheDir, OTHER, lower);
+    const higher = [...lower, { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" }];
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, higher)), {
+      recorded: OTHER,
+    });
+
+    expect(result.dir).toBe(dirFor(cacheDir, COMMIT));
+    expect(result.commit).toBe(COMMIT);
+    expect(result.moved).toContain("0.55.0");
+    expect(result.newer).toBeUndefined();
+    expect(result.warning).toBeUndefined();
+  });
+
+  test("a recorded commit with no folder for this CLI moves to main and names both", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, [
+      { name: "library-data-x/9.9.9/mylib/library.json", text: "{}" },
+    ]);
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), { recorded: OTHER });
+
+    expect(result.dir).toBe(dirFor(cacheDir, COMMIT));
+    expect(result.commit).toBe(COMMIT);
+    expect(result.moved).toContain(OTHER);
+    expect(result.moved).toContain(CLI);
+    expect(result.warning).toBeUndefined();
+  });
+
+  test("a recorded commit its own url cannot serve moves to main and names it", async () => {
+    const cacheDir = tmp();
+    const download: DownloadExtensionArchive = (url, etag) =>
+      url === LIBRARY_DATA_MAIN_URL
+        ? serves(dataArchive(COMMIT, DATA))(url, etag)
+        : offline(url, etag);
+
+    const result = await resolve(cacheDir, download, { recorded: OTHER });
+
+    expect(result.commit).toBe(COMMIT);
+    expect(result.moved).toContain(OTHER);
+    expect(result.warning).toBeUndefined();
+  });
+
+  test.skipIf(process.platform === "win32")(
+    "a recorded folder that cannot be read moves to main and names it",
+    async () => {
+      const cacheDir = tmp();
+      await cacheArchive(cacheDir, OTHER, DATA);
+      symlinkSync(join(cacheDir, "absent"), join(dirFor(cacheDir, OTHER), "dangling"));
+
+      const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), {
+        recorded: OTHER,
+      });
+
+      expect(result.commit).toBe(COMMIT);
+      expect(result.moved).toContain(OTHER);
+      expect(result.warning).toBeUndefined();
+    },
+  );
+
+  test("offline with the recorded commit cached serves it with no warning", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, DATA);
+
+    const result = await resolve(cacheDir, offline, { recorded: OTHER });
+
+    expect(result).toEqual(held(cacheDir));
+  });
+
+  test("a stale main beside a cached recorded commit serves it with no warning", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, DATA);
+    await cacheArchive(cacheDir, COMMIT, CHANGED);
+
+    const result = await resolve(cacheDir, offline, { recorded: OTHER });
+
+    expect(result).toEqual(held(cacheDir));
+  });
+
+  test("main that cannot be read beside a cached recorded commit serves it with no warning", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, OTHER, DATA);
+
+    const result = await resolve(cacheDir, serves(new TextEncoder().encode("not a zip")), {
+      recorded: OTHER,
+    });
+
+    expect(result).toEqual(held(cacheDir));
+  });
+
+  test("offline with the recorded commit uncached never moves to a stale main", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, COMMIT, DATA);
+
+    const result = await resolve(cacheDir, offline, { recorded: OTHER });
+
+    expect(result.dir).toBeNull();
+    expect(result.commit).toBeNull();
+    expect(result.warning).toContain(LIBRARY_DATA_MAIN_URL);
+    expect(result.error).toBeUndefined();
+  });
+
+  test("nothing recorded with a stale main cached still serves that copy", async () => {
+    const cacheDir = tmp();
+    await cacheArchive(cacheDir, COMMIT, DATA);
+
+    const result = await resolve(cacheDir, offline);
+
+    expect(result.dir).toBe(dirFor(cacheDir, COMMIT));
+    expect(result.commit).toBe(COMMIT);
+    expect(result.warning).toContain(LIBRARY_DATA_MAIN_URL);
+  });
+
+  test.each([[false], [true]])("nothing recorded serves main with update %p", async (update) => {
+    const cacheDir = tmp();
+
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), { update });
+
+    expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
+  });
+});
+
+describe("resolveLibraryDataArchive, --update, with a recorded commit behind main", () => {
   const DATA: readonly ZipFixtureEntry[] = [
     { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
     { name: "library-data-x/0.55.0/mylib/icon.bin", bytes: BINARY },
@@ -347,7 +534,7 @@ describe("resolveLibraryDataArchive, plain, with a recorded commit behind main",
     await cacheArchive(cacheDir, OTHER, DATA);
     const { download, calls } = counting(serves(dataArchive(COMMIT, NEWER_OUTSIDE_DATA)));
 
-    const result = await resolve(cacheDir, download, { recorded: OTHER });
+    const result = await resolve(cacheDir, download, { recorded: OTHER, update: true });
 
     expect(result).toEqual(kept(cacheDir));
     expect(calls.map(({ url }) => url)).toEqual([LIBRARY_DATA_MAIN_URL]);
@@ -359,7 +546,7 @@ describe("resolveLibraryDataArchive, plain, with a recorded commit behind main",
       answering(dataArchive(COMMIT, NEWER_OUTSIDE_DATA), serves(dataArchive(OTHER, DATA))),
     );
 
-    const result = await resolve(cacheDir, download, { recorded: OTHER });
+    const result = await resolve(cacheDir, download, { recorded: OTHER, update: true });
 
     expect(result).toEqual(kept(cacheDir));
     expect(calls.map(({ url }) => url)).toEqual([
@@ -375,6 +562,7 @@ describe("resolveLibraryDataArchive, plain, with a recorded commit behind main",
 
     const result = await resolve(cacheDir, serves(dataArchive(COMMIT, newer)), {
       recorded: OTHER,
+      update: true,
     });
 
     expect(result).toEqual(kept(cacheDir));
@@ -389,6 +577,7 @@ describe("resolveLibraryDataArchive, plain, with a recorded commit behind main",
 
     const result = await resolve(cacheDir, answering(dataArchive(COMMIT, DATA), recordedUrl), {
       recorded: OTHER,
+      update: true,
     });
 
     expect(result).toEqual(moved(cacheDir));
@@ -400,7 +589,10 @@ describe("resolveLibraryDataArchive, plain, with a recorded commit behind main",
       { name: "library-data-x/9.9.9/mylib/library.json", text: "{}" },
     ]);
 
-    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), { recorded: OTHER });
+    const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), {
+      recorded: OTHER,
+      update: true,
+    });
 
     expect(result).toEqual(moved(cacheDir));
   });
@@ -414,6 +606,7 @@ describe("resolveLibraryDataArchive, plain, with a recorded commit behind main",
 
       const result = await resolve(cacheDir, serves(dataArchive(COMMIT, DATA)), {
         recorded: OTHER,
+        update: true,
       });
 
       expect(result).toEqual(moved(cacheDir));
@@ -465,6 +658,7 @@ describe("resolveLibraryDataArchive, plain, with a recorded commit behind main",
 
     const result = await resolve(cacheDir, serves(dataArchive(COMMIT, newestEntries)), {
       recorded: OTHER,
+      update: true,
     });
 
     expect(result).toEqual(moved(cacheDir));
