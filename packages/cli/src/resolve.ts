@@ -332,8 +332,10 @@ export function describePinDrift({
 }
 
 // A dependency line this run moves to a commit URL, and the ref that commit came from.
+// `from` is the URL the run read at `index`.
 interface MovedDependency {
   readonly index: number;
+  readonly from: string;
   readonly url: string;
   readonly follows: string;
 }
@@ -391,7 +393,7 @@ async function followRefs(
         const next = commit === null ? null : commitUrlFor(follows, commit);
         if (next !== null && next !== url) {
           notices.push(`${follows} moved ${url} to ${next}`);
-          moved.push({ index: dep.index, url: next, follows });
+          moved.push({ index: dep.index, from: url, url: next, follows });
           url = next;
         }
       }
@@ -437,17 +439,35 @@ function planUrlPins(
       continue;
     }
     notices.push(`pinned ${url} to ${next}`);
-    moved.push({ index, url: next, follows: url });
+    moved.push({ index, from: url, url: next, follows: url });
   }
   return { moved, notices, warnings };
 }
 
+// Whether every moved index still holds the URL the run read there, and only that.
+// Other lines may change freely: a rewrite replaces just these.
+function savedDependenciesMatch(text: string, moved: readonly MovedDependency[]): boolean {
+  const saved = readExtensionDependencies(text);
+  return moved.every(({ index, from }) => {
+    const lines = saved.filter((dep) => dep.index === index);
+    return lines.length > 0 && lines.every(({ url }) => url === from);
+  });
+}
+
 // Read again rather than reusing the text the run started from, which a save during
-// the downloads would have outdated.
-function moveGameProjectDependencies(path: string, moved: readonly MovedDependency[]): void {
+// the run would have outdated. False, with nothing written, when that save deleted the
+// file or changed a dependency this run would move.
+function moveGameProjectDependencies(path: string, moved: readonly MovedDependency[]): boolean {
+  if (!existsSync(path)) {
+    return false;
+  }
+  const saved = readFileSync(path, "utf8");
+  if (!savedDependenciesMatch(saved, moved)) {
+    return false;
+  }
   const text = moved.reduce(
     (current, { index, url }) => rewriteGameProjectDependency(current, index, url),
-    readFileSync(path, "utf8"),
+    saved,
   );
   const stage = `${path}.${process.pid}.partial`;
   writeFileSync(stage, text, { mode: statSync(path).mode });
@@ -457,6 +477,7 @@ function moveGameProjectDependencies(path: string, moved: readonly MovedDependen
     rmSync(stage, { force: true });
     throw err;
   }
+  return true;
 }
 
 export async function runResolve(opts: RunResolveOptions): Promise<RunResolveResult> {
@@ -712,8 +733,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   );
 
   if (opts.freeze !== true) {
-    if (moved.length > 0) {
-      moveGameProjectDependencies(gameProjectPath, moved);
+    if (moved.length > 0 && !moveGameProjectDependencies(gameProjectPath, moved)) {
+      return failedResolve(
+        "game.project changed its dependencies during this run, so nothing was rewritten: run `defold-typescript resolve` again",
+      );
     }
     writeProjectLock(cwd, {
       extensions: mergeResolvedVersionPins(
