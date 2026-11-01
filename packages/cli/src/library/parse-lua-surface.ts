@@ -15,7 +15,10 @@
  * - **Column 0 only.** A definition is a member when it starts the line. This is
  *   what keeps `nakama/util/log.lua`'s `M.log = noop` — reassigned inside three
  *   different function bodies — out of the surface, and it is why the reader never
- *   needs to know where a block ends.
+ *   needs to know where a block ends. It also means a member defined off column 0 is
+ *   not read. `options.strict` is for a caller that cannot accept that: it leaves this
+ *   rule alone and throws on a source where a member may be hiding, so the caller knows
+ *   the surface is not complete.
  * - **Loud failure over silent undercount.** A missing `return <name>` or a
  *   parameter list that never closes throws, as does a
  *   `return setmetatable(M, …)` whose metatable carries `__index` or is named by a
@@ -91,6 +94,9 @@ export interface LuaSurfaceOptions {
    * surface rather than throwing: the caller named the table, so an empty result is its
    * own answer. */
   moduleLocal?: string;
+  /** Throw on a source that may hold a member the column-0 rule cannot read, instead of
+   * reading it short. See `assertNoHiddenMembers`. */
+  strict?: boolean;
 }
 
 const RETURN_LINE = /^return\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$/;
@@ -102,6 +108,8 @@ const COLON_DEFINITION = new RegExp(
   `^function\\s+(${IDENTIFIER}(?:\\.${IDENTIFIER})*):(${IDENTIFIER})\\s*\\(`,
 );
 const CONSTRUCTOR_ENTRY = new RegExp(`^\\s*(${IDENTIFIER})\\s*=(?!=)\\s*(.*)$`);
+const NAMED_VALUE = new RegExp(`^${IDENTIFIER}(?:\\.${IDENTIFIER})*$`);
+const LITERAL_NAMES: ReadonlySet<string> = new Set(["true", "false", "nil"]);
 
 /** The metatable argument of a `return setmetatable(<name>, …)`, refused unless its
  * keys are readable and none of them delegates. `text` runs from the comma to the end
@@ -230,6 +238,50 @@ function readEntry(
   return { name: entry[1] as string, rhs: entry[2] as string };
 }
 
+/** Refuses a member whose value names something defined elsewhere, which may be a
+ * function or a table whose shape the member's own line does not show. `line` and `text`
+ * name it in the throw. */
+function assertNotNamedValue(rhs: string, line: number, text: string): void {
+  const value = stripStringsAndComment(rhs).replace(/[,;\s]+$/, "");
+  if (NAMED_VALUE.test(value) && !LITERAL_NAMES.has(value)) {
+    throw new Error(
+      `lua surface: line ${line} gives a member the value \`${value}\`, defined elsewhere, so its signature is invisible — ${text}`,
+    );
+  }
+}
+
+/** Refuses every line writing to `moduleLocal` in a shape the column-0 scan does not
+ * read. A table read or a comparison is not a write, so a function body that only uses
+ * the table stays readable. */
+function assertNoHiddenMembers(lines: readonly string[], moduleLocal: string): void {
+  const table = `(?<![\\w.:])${moduleLocal}`;
+  const assign = "\\s*=(?!=)";
+  const hidden = [
+    new RegExp(`(?<=.)(?<![\\w.:])function\\s+${moduleLocal}[.:]`),
+    new RegExp(`^function\\s+${moduleLocal}(?:\\.${IDENTIFIER}){2,}\\s*\\(`),
+    new RegExp(`(?<=.)${table}\\.${IDENTIFIER}${assign}`),
+    new RegExp(`${table}(?:\\.${IDENTIFIER}){2,}${assign}`),
+    new RegExp(`${table}\\[.*\\]${assign}`),
+    new RegExp(`${table}\\.${IDENTIFIER}\\s*,[^=(){}]*=(?!=)`),
+  ];
+  for (const [index, line] of lines.entries()) {
+    const code = stripStringsAndComment(line);
+    if (hidden.some((shape) => shape.test(code))) {
+      throw new Error(
+        `lua surface: line ${index + 1} writes to \`${moduleLocal}\` in a shape this reader cannot follow, so a member would be invisible — ${line.trim()}`,
+      );
+    }
+  }
+}
+
+function assertSomeMembers(count: number): void {
+  if (count === 0) {
+    throw new Error(
+      "lua surface: the source reads no members, so whatever it exports is invisible and the surface would read as complete while short.",
+    );
+  }
+}
+
 /** The depth-1 entries of the constructor whose `{` sits at `open` on line `index`, and
  * the line holding its matching `}`. An entry is read at the line that starts it, so a
  * nested table's keys stay out while its own entry counts. A constructor that closes on
@@ -239,6 +291,7 @@ function readConstructor(
   lines: string[],
   index: number,
   open: number,
+  strict: boolean,
 ): { entries: LuaMember[]; close: number } {
   const opening = lines[index] as string;
   const inline = stripStringsAndComment(opening.slice(open + 1));
@@ -251,6 +304,7 @@ function readConstructor(
     }
     const entries = splitTopLevel(body).map((piece): LuaMember => {
       const { name, rhs } = readEntry(CONSTRUCTOR_ENTRY.exec(piece), index + 1, opening.trim());
+      if (strict) assertNotNamedValue(rhs, index + 1, opening.trim());
       if (!FUNCTION_VALUE.test(rhs)) return { name, varargs: false, doc: "", refusedDoc: false };
       const { params, varargs } = readParams([rhs], 0, rhs.indexOf("("));
       return { name, params, varargs, doc: "", refusedDoc: false };
@@ -264,6 +318,7 @@ function readConstructor(
     const trimmed = line.trim();
     if (depth === 1 && trimmed !== "" && !trimmed.startsWith("--") && !trimmed.startsWith("}")) {
       const { name, rhs } = readEntry(CONSTRUCTOR_ENTRY.exec(line), cursor + 1, trimmed);
+      if (strict) assertNotNamedValue(rhs, cursor + 1, trimmed);
       if (FUNCTION_VALUE.test(rhs)) {
         const { params, varargs } = readParams(
           lines,
@@ -322,8 +377,8 @@ function readDoc(lines: string[], index: number): Pick<LuaMember, "doc" | "refus
 }
 
 /** The entries of the table literal a data module returns at line `index`. */
-function readReturnedLiteral(lines: string[], index: number): LuaMember[] {
-  const { entries } = readConstructor(lines, index, (lines[index] as string).indexOf("{"));
+function readReturnedLiteral(lines: string[], index: number, strict: boolean): LuaMember[] {
+  const { entries } = readConstructor(lines, index, (lines[index] as string).indexOf("{"), strict);
   if (entries.some((entry) => entry.name === "__index")) {
     throw new Error(
       "lua surface: the returned table carries `__index`, so members reached through it would be invisible and the surface would read as complete while short.",
@@ -338,16 +393,22 @@ function readReturnedLiteral(lines: string[], index: number): LuaMember[] {
  * source order. A name defined more than once keeps its first position and its last
  * definition, matching Lua, unless one definition is a `:` method and another is not,
  * which throws. A source returning a table literal has the literal's entries as its
- * surface and no module local.
+ * surface and no module local. Under `options.strict` it also throws on a write to the
+ * table the scan cannot read, on a member whose value is a name, and on a surface with
+ * no members.
  */
 export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {}): LuaSurface {
   const lines = source.split("\n");
+  const strict = options.strict === true;
   const returned: ModuleReturn =
     options.moduleLocal !== undefined ? { local: options.moduleLocal } : resolveModuleReturn(lines);
   if ("literal" in returned) {
-    return { moduleLocal: undefined, members: readReturnedLiteral(lines, returned.literal) };
+    const literal = readReturnedLiteral(lines, returned.literal, strict);
+    if (strict) assertSomeMembers(literal.length);
+    return { moduleLocal: undefined, members: literal };
   }
   const moduleLocal = returned.local;
+  if (strict) assertNoHiddenMembers(lines, moduleLocal);
   const definition = new RegExp(`^function\\s+${moduleLocal}\\.(${IDENTIFIER})\\s*\\(`);
   const assignment = new RegExp(`^${moduleLocal}\\.(${IDENTIFIER})\\s*=\\s*(.*)$`);
   const derived = options.moduleLocal === undefined;
@@ -371,7 +432,7 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
     const line = lines[index] as string;
     const opened = tableConstructor?.exec(line);
     if (opened) {
-      const { entries, close } = readConstructor(lines, index, opened[0].length - 1);
+      const { entries, close } = readConstructor(lines, index, opened[0].length - 1, strict);
       for (const entry of entries) record(entry);
       index = close;
       continue;
@@ -405,6 +466,7 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
     const name = assigned[1] as string;
     const rhs = assigned[2] as string;
     if (!FUNCTION_VALUE.test(rhs)) {
+      if (strict) assertNotNamedValue(rhs, index + 1, line.trim());
       record({ name, varargs: false, ...readDoc(lines, index) });
       continue;
     }
@@ -413,5 +475,6 @@ export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {})
     record({ name, params, varargs, ...readDoc(lines, index) });
   }
 
+  if (strict) assertSomeMembers(members.size);
   return { moduleLocal, members: [...members.values()] };
 }
