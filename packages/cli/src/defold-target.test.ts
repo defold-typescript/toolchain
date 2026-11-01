@@ -11,6 +11,7 @@ import {
   setDefoldTargetPin,
 } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
+import { mergeLibraryDataCommit } from "./extension-version";
 
 describe("classifyDefoldTarget", () => {
   test("a semantic version classifies as a fixed version", () => {
@@ -96,6 +97,10 @@ describe("diagnoseDefoldNamespace", () => {
         "defold-typescript": { extensions: { "https://github.com/x/y": "1.0.0" } },
       }),
     ).toEqual([]);
+  });
+
+  test("the library data commit resolve records is recognized and produces no diagnostics", () => {
+    expect(diagnoseDefoldNamespace(mergeLibraryDataCommit({}, "4f1c9e0a"))).toEqual([]);
   });
 
   test("runtime-dir beside defold-target is recognized and produces no diagnostics", () => {
