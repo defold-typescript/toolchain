@@ -2541,11 +2541,11 @@ describe("runResolve with a library data archive", () => {
 
     expect(result.ok).toBe(true);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
-    expect(namespaceOf(cwd).libraryData).toBe(ONE);
+    expect(namespaceOf(cwd).libraryData).toEqual({ shared: ONE, libraries: { mylib: ONE } });
     expect(namespaceOf(cwd).extensions?.[DEP_URL]).toStartWith("commit:");
   });
 
-  test("--update against a newer archive moves the commit and prints from it", async () => {
+  test("--update against a newer archive moves the library's pin and prints from it", async () => {
     const cwd = project();
     const cacheDir = tmp();
     await runResolve({
@@ -2563,7 +2563,7 @@ describe("runResolve with a library data archive", () => {
       download: serving(dataArchive(TWO, declares("two"))).download,
     });
 
-    expect(namespaceOf(cwd).libraryData).toBe(TWO);
+    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ mylib: TWO });
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
   });
 
@@ -2572,7 +2572,7 @@ describe("runResolve with a library data archive", () => {
     return readFileSync(lockPathOf(cwd), "utf8");
   }
 
-  test("newer data for a library the project uses holds the commit and says so", async () => {
+  test("newer data for a library the project uses holds its pin and says so", async () => {
     const cwd = project();
     const cacheDir = tmp();
     const before = await recordOne(cwd, cacheDir, dataArchive(ONE, declares("one")));
@@ -2593,7 +2593,7 @@ describe("runResolve with a library data archive", () => {
     expect(result.warnings.filter((line) => line.includes("library data"))).toEqual([]);
   });
 
-  test("newer data that drops a library the project uses holds the commit and says so", async () => {
+  test("newer data that drops a library the project uses holds its pin and says so", async () => {
     const cwd = project();
     const cacheDir = tmp();
     const keep = 'declare module "other.core" {}\n';
@@ -2640,9 +2640,12 @@ describe("runResolve with a library data archive", () => {
     expect(result.notices).toBeUndefined();
   });
 
-  test("a recorded commit with no folder for this CLI moves the commit and says so", async () => {
+  test("a pinned commit with no folder for this CLI moves the pin and says so", async () => {
     const cwd = project();
-    writeProjectLock(cwd, { extensions: {}, libraryData: ONE });
+    writeProjectLock(cwd, {
+      extensions: {},
+      libraryData: { shared: ONE, libraries: { mylib: ONE } },
+    });
     const held = writeZipArchive([{ name: `library-data-${ONE}/README.md`, text: "# docs" }], {
       comment: ONE,
     });
@@ -2658,7 +2661,7 @@ describe("runResolve with a library data archive", () => {
       }),
     });
 
-    expect(namespaceOf(cwd).libraryData).toBe(TWO);
+    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ mylib: TWO });
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("two"));
     expect(result.notices?.[0]).toContain(ONE);
     expect(result.notices?.[0]).toContain(TWO);
@@ -2680,7 +2683,7 @@ describe("runResolve with a library data archive", () => {
     }
   });
 
-  describe("a dependency only the newer data covers moves the commit", () => {
+  describe("a dependency only the newer data covers pins that library alone", () => {
     const NEW_URL = "https://github.com/owner/newlib/archive/main.zip";
     const repo = "https://github.com/owner/newlib";
     const LUA = [
@@ -2768,33 +2771,38 @@ describe("runResolve with a library data archive", () => {
     ];
 
     test.each(LANES)("on the $lane lane", async ({ archive, write, printed }) => {
-      const cwd = tmp();
-      writeProject(cwd, `[project]\ndependencies#0 = ${NEW_URL}\n`);
+      const cwd = project();
       const cacheDir = tmp();
       const dependency = writeZipArchive(archive, { comment: "3".repeat(40) });
-      const other = 'declare module "other.core" {}\n';
       const run = (data: Uint8Array) =>
         runResolve({
           cwd,
           cacheDir,
           libraryDataUrl: DATA_URL,
-          download: async (url) => ({ status: "ok", bytes: url === NEW_URL ? dependency : data }),
+          download: async (url) => ({
+            status: "ok",
+            bytes: url === NEW_URL ? dependency : url === DEP_URL ? DEPENDENCY : data,
+          }),
         });
-      await run(packDataFolder(ONE, writeAuthoredLibraryData({ "other.core": other })));
-      expect(namespaceOf(cwd).libraryData).toBe(ONE);
-      expect(existsSync(printed(cwd))).toBe(false);
+      await run(dataArchive(ONE, declares("one")));
+      expect(namespaceOf(cwd).libraryData).toEqual({ shared: ONE, libraries: { mylib: ONE } });
+      const printedBefore = readFileSync(surface(cwd), "utf8");
 
-      const newer = writeAuthoredLibraryData({ "other.core": other });
+      writeProject(cwd, `[project]\ndependencies#0 = ${DEP_URL}\ndependencies#1 = ${NEW_URL}\n`);
+      const newer = writeAuthoredLibraryData({ "mylib.core": declares("two") });
       write(newer);
-      const result = await run(packDataFolder(TWO, newer));
+      await run(packDataFolder(TWO, newer));
 
-      expect(namespaceOf(cwd).libraryData).toBe(TWO);
+      expect(namespaceOf(cwd).libraryData).toEqual({
+        shared: ONE,
+        libraries: { mylib: ONE, newlib: TWO },
+      });
       expect(readFileSync(printed(cwd), "utf8")).toContain("answer_probe");
-      expect(result.notices?.[0]).toContain("newlib");
+      expect(readFileSync(surface(cwd), "utf8")).toBe(printedBefore);
     });
   });
 
-  test("a newer commit with the same data folder keeps the commit, and --frozen prints the same", async () => {
+  test("a newer commit with the same data folder keeps the pin, and --frozen prints the same", async () => {
     const cwd = project();
     const cacheDir = tmp();
     await runResolve({
@@ -2827,11 +2835,11 @@ describe("runResolve with a library data archive", () => {
     });
 
     expect(frozen.ok).toBe(true);
-    expect(namespaceOf(cwd).libraryData).toBe(ONE);
+    expect(namespaceOf(cwd).libraryData?.libraries).toEqual({ mylib: ONE });
     expect(readFileSync(surface(cwd), "utf8")).toBe(printed);
   });
 
-  test("a run at the recorded commit leaves the lockfile byte-identical", async () => {
+  test("a run at the pinned commit leaves the lockfile byte-identical", async () => {
     const cwd = project();
     const cacheDir = tmp();
     const { download } = serving(dataArchive(ONE, declares("one")));
@@ -2843,7 +2851,7 @@ describe("runResolve with a library data archive", () => {
     expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
   });
 
-  test("a frozen run holds to the recorded commit with no request for main", async () => {
+  test("a frozen run holds to its pins with no request for main", async () => {
     const cwd = project();
     const cacheDir = tmp();
     await runResolve({
@@ -2870,7 +2878,7 @@ describe("runResolve with a library data archive", () => {
     expect(result.notices).toBeUndefined();
   });
 
-  test("a frozen run with no recorded commit fails and asks for a plain resolve", async () => {
+  test("a frozen run with no recorded library data fails and asks for a plain resolve", async () => {
     const cwd = project();
     writeProjectLock(cwd, { extensions: { [DEP_URL]: `commit:${"3".repeat(40)}` } });
     const { download, requests } = serving(dataArchive(ONE, declares("one")));
@@ -2889,7 +2897,157 @@ describe("runResolve with a library data archive", () => {
     expect(existsSync(surface(cwd))).toBe(false);
   });
 
-  test("an unreachable archive warns, keeps the surface and leaves the commit", async () => {
+  test("a frozen run whose pinned commit lacks a declared library fails, naming it", async () => {
+    const cwd = project();
+    writeProjectLock(cwd, {
+      extensions: { [DEP_URL]: `commit:${"3".repeat(40)}` },
+      libraryData: { shared: ONE, libraries: { mylib: ONE } },
+    });
+    const without = packDataFolder(ONE, writeAuthoredLibraryData({ "other.core": "// other\n" }));
+    const { download, requests } = serving(without);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      freeze: true,
+      download,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("mylib");
+    expect(requests).not.toContain(DATA_URL);
+  });
+
+  test("a frozen run whose pins do not load together fails, naming the module", async () => {
+    const cwd = tmp();
+    const OTHER_URL = "https://github.com/owner/other/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${DEP_URL}\ndependencies#1 = ${OTHER_URL}\n`);
+    writeProjectLock(cwd, {
+      extensions: {
+        [DEP_URL]: `commit:${"3".repeat(40)}`,
+        [OTHER_URL]: `commit:${"3".repeat(40)}`,
+      },
+      libraryData: { shared: ONE, libraries: { mylib: ONE, other: TWO } },
+    });
+    const naming = (library: string, plain: string) => {
+      const folder = writeAuthoredLibraryData({ [`${plain}.core`]: "// plain\n" });
+      mkdirSync(join(folder, library, "fork"), { recursive: true });
+      writeFileSync(join(folder, library, "fork", "clash.d.ts"), "// clash\n");
+      writeLibraryTargets(folder, {
+        forks: [
+          {
+            repo: `https://github.com/owner/${library}`,
+            ref: "1.0.0",
+            authored: "fork/clash.d.ts",
+            moduleId: "clash",
+            namespace: "clash",
+            apiDoc: "api-doc/clash.json",
+            upstreamLua: ["source/upstream/clash.lua"],
+          },
+        ],
+      });
+      return folder;
+    };
+    const atOne = packDataFolder(ONE, naming("mylib", "other"));
+    const atTwo = packDataFolder(TWO, naming("other", "mylib"));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      freeze: true,
+      download: async (url) => ({
+        status: "ok",
+        bytes: url.includes(ONE) ? atOne : url.includes(TWO) ? atTwo : DEPENDENCY,
+      }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("clash");
+  });
+
+  test("a frozen run with a pinned URL and no library pin prints no library and passes", async () => {
+    const cwd = project();
+    const lock = {
+      extensions: {},
+      libraryData: { shared: ONE, libraries: {} },
+    };
+    writeProjectLock(cwd, {
+      ...lock,
+      extensions: { [DEP_URL]: `commit:${"3".repeat(40)}` },
+    });
+    const { download, requests } = serving(dataArchive(ONE, declares("one")));
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataUrl: DATA_URL,
+      freeze: true,
+      download,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(requests).not.toContain(DATA_URL);
+    expect(existsSync(surface(cwd))).toBe(false);
+  });
+
+  describe("--update accepts extension drift", () => {
+    const OLD_PIN = `commit:${"9".repeat(40)}`;
+    const FETCHED_PIN = `commit:${"3".repeat(40)}`;
+    const OTHER_URL = "https://github.com/owner/other/archive/main.zip";
+    const OTHER = writeZipArchive([{ name: "other-main/asset/foo.png", text: "png" }], {
+      comment: "4".repeat(40),
+    });
+
+    async function drifted(update?: true | readonly string[]) {
+      const cwd = tmp();
+      writeProject(cwd, `[project]\ndependencies#0 = ${DEP_URL}\ndependencies#1 = ${OTHER_URL}\n`);
+      writeProjectLock(cwd, {
+        extensions: { [DEP_URL]: OLD_PIN, [OTHER_URL]: OLD_PIN },
+      });
+      const data = dataArchive(ONE, declares("one"));
+      const result = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        libraryDataUrl: DATA_URL,
+        ...(update === undefined ? {} : { update }),
+        download: async (url) => ({
+          status: "ok",
+          bytes: url === DEP_URL ? DEPENDENCY : url === OTHER_URL ? OTHER : data,
+        }),
+      });
+      const statusOf = (url: string) => result.extensions.find((e) => e.url === url)?.pinStatus;
+      return { lock: namespaceOf(cwd).extensions, statusOf };
+    }
+
+    test("a plain run keeps the pin and reports the drift", async () => {
+      const { lock, statusOf } = await drifted();
+
+      expect(lock[DEP_URL]).toBe(OLD_PIN);
+      expect(statusOf(DEP_URL)).toBe("drift");
+    });
+
+    test("--update takes the fetched value on every URL and reports no drift", async () => {
+      const { lock, statusOf } = await drifted(true);
+
+      expect(lock[DEP_URL]).toBe(FETCHED_PIN);
+      expect(lock[OTHER_URL]).toBe(`commit:${"4".repeat(40)}`);
+      expect(statusOf(DEP_URL)).toBe("match");
+      expect(statusOf(OTHER_URL)).toBe("match");
+    });
+
+    test("--update=<name> does this for that URL alone", async () => {
+      const { lock, statusOf } = await drifted(["mylib"]);
+
+      expect(lock[DEP_URL]).toBe(FETCHED_PIN);
+      expect(lock[OTHER_URL]).toBe(OLD_PIN);
+      expect(statusOf(DEP_URL)).toBe("match");
+      expect(statusOf(OTHER_URL)).toBe("drift");
+    });
+  });
+
+  test("an unreachable archive warns, keeps the surface and leaves the pins", async () => {
     const cwd = project();
     await runResolve({
       cwd,
@@ -2908,7 +3066,7 @@ describe("runResolve with a library data archive", () => {
     expect(result.ok).toBe(true);
     expect(result.warnings.filter((line) => line.includes(DATA_URL))).toHaveLength(1);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
-    expect(namespaceOf(cwd).libraryData).toBe(ONE);
+    expect(namespaceOf(cwd).libraryData).toEqual({ shared: ONE, libraries: { mylib: ONE } });
   });
 
   test("a project with no dependencies fetches nothing and records nothing", async () => {

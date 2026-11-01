@@ -29,13 +29,13 @@ import {
 import { mergeResolvedVersionPins } from "./extension-version";
 import { printLibraryModules } from "./library/print-library";
 import { archiveSourceTree } from "./library/source-tree";
+import { LIBRARY_DATA_MAIN_URL, libraryDataCacheDir } from "./library-data-archive";
 import {
-  dataFolderDigest,
-  LIBRARY_DATA_MAIN_URL,
-  type LibraryDataArchive,
-  libraryDataCacheDir,
-  resolveLibraryDataArchive,
-} from "./library-data-archive";
+  frozenLibraryData,
+  type LibraryDataUpdate,
+  selectLibraryPins,
+  wantsUpdate,
+} from "./library-data-pins";
 import { matchVendoredLibrary, normalizeSourceId, type VendoredLibrary } from "./library-match";
 import {
   ensureLibraryTypesReference,
@@ -43,13 +43,18 @@ import {
   type PrintedLibrary,
 } from "./library-materialize";
 import {
-  librariesForDependencies,
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
   type VendoredNativeExtension,
 } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
-import { PROJECT_LOCK_FILE, readProjectLock, writeProjectLock } from "./project-lock";
+import {
+  type LibraryDataPins,
+  PROJECT_LOCK_FILE,
+  type ProjectLock,
+  readProjectLock,
+  writeProjectLock,
+} from "./project-lock";
 import { checkShippedDeclarations } from "./shipped-declarations";
 
 // Which type surface a dependency actually contributed. `assetOnly` cannot
@@ -102,9 +107,9 @@ export interface RunResolveOptions {
   // When true, skip writing the lockfile, and fail when it cannot answer for a
   // declared dependency. Used by `--frozen` to verify the committed records.
   readonly freeze?: boolean;
-  // Moves a recorded library data commit to newer data, which a plain run holds
-  // back from.
-  readonly update?: boolean;
+  // Moves library data pins to newer data and accepts extension drift, which a plain
+  // run holds back from: everything for `true`, those dependencies alone for names.
+  readonly update?: LibraryDataUpdate;
   // The library data dependencies are matched against and printed from. Both
   // default to the data repo's archive; tests inject a synthetic registry and
   // data folder to stay hermetic, and a `null` folder prints nothing and keeps a
@@ -112,8 +117,8 @@ export interface RunResolveOptions {
   readonly libraryRegistry?: readonly VendoredLibrary[];
   readonly libraryDataDir?: string | null;
   // The data repo's `main.zip`, fetched for the library data when `libraryDataDir`
-  // is unset, with the commit it resolves to recorded in the lockfile. Defaults
-  // to `LIBRARY_DATA_MAIN_URL`.
+  // is unset, with the commits it resolves to pinned in the lockfile. Defaults to
+  // `LIBRARY_DATA_MAIN_URL`.
   readonly libraryDataUrl?: string;
   // The curated native-extension targets. Defaults to the native extensions the
   // library data folder holds.
@@ -133,7 +138,7 @@ export interface RunResolveResult {
   // TypeScript merges them; empty when every namespace has one source.
   readonly sharedNamespaces: SharedExtensionNamespace[];
   readonly warnings: readonly string[];
-  // Advice about the library data commit, which needs no action to stay correct.
+  // Advice about the library data pins, which needs no action to stay correct.
   readonly notices?: readonly string[];
 }
 
@@ -227,76 +232,71 @@ function applyShippedDeclarations(
   return { bundles: applied, shippedUrls, warnings };
 }
 
-function changedLibraryFolder(held: string, newer: string): boolean {
-  try {
-    return dataFolderDigest(held) !== dataFolderDigest(newer);
-  } catch {
-    return true;
-  }
-}
-
-// One commit covers every library, so a dependency only the newer data covers
-// moves the whole commit: holding it would leave a declared library untyped. Only
-// a library the project uses earns a notice, since data merges are frequent.
-function weighNewerLibraryData(
-  heldDir: string,
-  heldCommit: string | null,
-  newer: { readonly dir: string; readonly commit: string },
-  urls: readonly string[],
-): { archive: LibraryDataArchive; notices: string[] } {
-  const held = librariesForDependencies(heldDir, urls);
-  const next = librariesForDependencies(newer.dir, urls);
-  const covered = next.filter(({ dir }) => !held.some((library) => library.dir === dir));
-  if (covered.length > 0) {
-    const names = covered.map(({ dir }) => dir).join(", ");
-    return {
-      archive: { dir: newer.dir, commit: newer.commit },
-      notices: [`library data moved to commit ${newer.commit}, the first to cover ${names}`],
-    };
-  }
-  const changed = held.filter(({ dir }) => {
-    const counterpart = next.find((library) => library.dir === dir);
-    return (
-      counterpart === undefined ||
-      changedLibraryFolder(join(heldDir, dir), join(newer.dir, counterpart.dir))
-    );
-  });
-  const archive = { dir: heldDir, commit: heldCommit };
-  if (changed.length === 0) {
-    return { archive, notices: [] };
-  }
-  const names = changed.map(({ dir }) => dir).join(", ");
-  return {
-    archive,
-    notices: [
-      `newer library data changes ${names}; run \`defold-typescript resolve --update\` to move to it`,
-    ],
-  };
+interface SelectedLibraryData {
+  readonly dir: string | null;
+  // Absent when nothing is recorded, so a lockfile with no pins stays that way.
+  readonly pins?: LibraryDataPins;
+  readonly notices: readonly string[];
+  readonly warning?: string;
+  readonly error?: string;
 }
 
 async function selectLibraryData(
   opts: RunResolveOptions,
   urls: readonly string[],
-  recorded: string | null,
-): Promise<{ archive: LibraryDataArchive; notices: string[] }> {
+  lock: ProjectLock | undefined,
+): Promise<SelectedLibraryData> {
+  const recorded = lock?.libraryData ?? null;
+  const held = recorded === null ? {} : { pins: recorded };
   if (opts.libraryDataDir !== undefined) {
-    return { archive: { dir: opts.libraryDataDir, commit: null }, notices: [] };
+    return { dir: opts.libraryDataDir, notices: [], ...held };
   }
-  const archive = await resolveLibraryDataArchive({
+  const source = {
     mainUrl: opts.libraryDataUrl ?? LIBRARY_DATA_MAIN_URL,
     cacheDir:
       opts.cacheDir === undefined ? libraryDataCacheDir() : join(opts.cacheDir, "library-data"),
-    recorded,
-    frozen: opts.freeze === true,
-    ...(opts.update === true ? { update: true } : {}),
     cliVersion: readCliVersion(),
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
-  });
-  if (archive.dir !== null && archive.newer !== undefined) {
-    return weighNewerLibraryData(archive.dir, archive.commit, archive.newer, urls);
+  };
+  if (opts.freeze === true) {
+    const frozen = await frozenLibraryData(source, recorded, urls);
+    return { ...frozen, notices: [], ...held };
   }
-  return { archive, notices: archive.moved === undefined ? [] : [archive.moved] };
+  const { dir, pins, notices, warning } = await selectLibraryPins({
+    ...source,
+    urls,
+    knownUrls: Object.keys(lock?.extensions ?? {}),
+    pins: recorded,
+    ...(opts.update === undefined ? {} : { update: opts.update }),
+  });
+  return {
+    dir,
+    notices,
+    ...(pins === null ? {} : { pins }),
+    ...(warning === undefined ? {} : { warning }),
+  };
+}
+
+// Why `--update=<names>` cannot run, or null when it can. A project this cannot read
+// is `runResolve`'s to report.
+export function unknownUpdateNames(
+  cwd: string,
+  update: LibraryDataUpdate | undefined,
+): string | null {
+  const gameProjectPath = join(cwd, "game.project");
+  if (update === undefined || update === true || !existsSync(gameProjectPath)) {
+    return null;
+  }
+  const declared = readExtensionDependencies(readFileSync(gameProjectPath, "utf8")).map(({ url }) =>
+    normalizeSourceId(url),
+  );
+  const unknown = update.filter((name) => !declared.includes(name));
+  if (unknown.length === 0) {
+    return null;
+  }
+  const names = declared.length === 0 ? "none" : declared.join(", ");
+  return `defold-typescript resolve: --update names no dependency called ${unknown.join(", ")}; declared: ${names}`;
 }
 
 export async function runResolve(opts: RunResolveOptions): Promise<RunResolveResult> {
@@ -356,10 +356,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     }
   }
 
-  const { archive: libraryData, notices } = await selectLibraryData(
+  const libraryData = await selectLibraryData(
     opts,
     deps.map(({ url }) => url),
-    lock?.libraryData ?? null,
+    lock,
   );
   if (libraryData.error !== undefined) {
     return failedResolve(libraryData.error);
@@ -455,6 +455,17 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     }
   }
 
+  // `--update` accepts what it fetched for a dependency it covers, so that pin stops
+  // reporting drift.
+  const acceptedPins = Object.fromEntries(
+    bundles
+      .filter(
+        ({ url }) => pins[url] !== undefined && wantsUpdate(opts.update, normalizeSourceId(url)),
+      )
+      .map(({ url, resolvedVersion }) => [url, resolvedVersion]),
+  );
+  const heldPins = { ...pins, ...acceptedPins };
+
   // Each confirmed library prints from the archive the project depends on, so its
   // types follow the version the game ships rather than the one library data pins.
   let printedLibraries: PrintedLibrary[] | null = null;
@@ -501,19 +512,18 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   );
 
   if (opts.freeze !== true) {
-    const libraryDataCommit = libraryData.commit ?? lock?.libraryData;
     writeProjectLock(cwd, {
       extensions: mergeResolvedVersionPins(
-        pins,
+        heldPins,
         Object.fromEntries(bundles.map((bundle) => [bundle.url, bundle.resolvedVersion])),
       ),
-      ...(libraryDataCommit === undefined ? {} : { libraryData: libraryDataCommit }),
+      ...(libraryData.pins === undefined ? {} : { libraryData: libraryData.pins }),
     });
   }
 
   const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {
     const supersededByLibrary = confirmedLibraryUrls.has(bundle.url);
-    const pin = pins[bundle.url];
+    const pin = heldPins[bundle.url];
     const pinStatus: PinStatus =
       pin === undefined ? "unpinned" : pin === bundle.resolvedVersion ? "match" : "drift";
     // A superseded bundle contributed no namespace, so reporting the ones its
@@ -567,6 +577,6 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     libraries,
     sharedNamespaces,
     warnings,
-    ...(notices.length > 0 ? { notices } : {}),
+    ...(libraryData.notices.length > 0 ? { notices: libraryData.notices } : {}),
   };
 }
