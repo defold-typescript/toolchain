@@ -134,8 +134,8 @@ it installs are `@globalTable` modules, so a project writes
 ## Browsing Defold's own extensions
 
 The extensions Defold publishes on GitHub have reference pages under
-[Libraries](/libraries) › defold, one per `.script_api` doc, such as
-[iap](/api/iap) and [spine.gui](/api/spine.gui). The defold section is listed
+[Libraries](https://defold-typescript.github.io/library-data) › defold, one per `.script_api` doc, such as
+[iap](https://defold-typescript.github.io/library-data/api/iap) and [spine.gui](https://defold-typescript.github.io/library-data/api/spine.gui). The defold section is listed
 first, in the sidebar and on the Libraries page, and marked `(official)` so it
 reads apart from community libraries. Each page shows the pin it was
 read from — the latest release, else the newest tag, else a commit. A release
@@ -145,22 +145,22 @@ only fixes what the page shows: which version your project depends on is still
 your choice in `game.project`, and `resolve` types whichever one you pick.
 
 Defold libraries that ship no `.script_api` have pages there too, such as
-[extension-qrcode](/libraries/defold/extension-qrcode) and
-[asset-pbr](/libraries/defold/asset-pbr). Their sidebar entries and cards are
+[extension-qrcode](https://defold-typescript.github.io/library-data/libraries/defold/extension-qrcode) and
+[asset-pbr](https://defold-typescript.github.io/library-data/libraries/defold/asset-pbr). Their sidebar entries and cards are
 marked with a no-typed-API icon. Each page describes what the library ships and
 whether it registers a Lua API that is simply not typed, then shows the same
 GitHub pin and numbered setup steps as a typed library page: add the dependency
 at that pin, then the library's own steps. Two kinds of repo depart from that.
 A placeholder repo with nothing in it yet, such as
-[extension-playintegrity](/libraries/defold/extension-playintegrity), has no
+[extension-playintegrity](https://defold-typescript.github.io/library-data/libraries/defold/extension-playintegrity), has no
 install step. A repo upstream asks you to fork, such as
-[extension-prometheus](/libraries/defold/extension-prometheus), starts with
+[extension-prometheus](https://defold-typescript.github.io/library-data/libraries/defold/extension-prometheus), starts with
 forking it and depending on your fork. `resolve` still reports each one as
 `asset-only, skipped`.
 
 Libraries on the [Defold Asset Portal](https://defold.com/assets/) that ship a
 `.script_api` have reference pages under their GitHub owner, one per doc, such
-as [defos](/api/defos) and [astar](/api/astar). Each page is read from the doc
+as [defos](https://defold-typescript.github.io/library-data/api/defos) and [astar](https://defold-typescript.github.io/library-data/api/astar). Each page is read from the doc
 at the pin the portal survey recorded, gives the dependency step for that pin,
 and links the library's Asset Portal entry. A doc with no description of its own
 leads with the portal's. `resolve` types these libraries from your dependency
@@ -168,7 +168,7 @@ like any other extension.
 
 Portal libraries that ship no Lua API, such as shaders, materials, sounds and
 editor scripts, are listed the same way under their GitHub owner, such as
-[defold-sharp-sprite](/libraries/indiesoftby/defold-sharp-sprite). Each page
+[defold-sharp-sprite](https://defold-typescript.github.io/library-data/libraries/indiesoftby/defold-sharp-sprite). Each page
 leads with the portal's description of the library, gives the dependency step
 for its pin, and links its Asset Portal entry. On both kinds of portal page, a
 release or tag pin also names the Defold version that was current when it was

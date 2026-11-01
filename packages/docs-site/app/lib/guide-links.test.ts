@@ -358,18 +358,6 @@ describe("docs/guide link and anchor resolution", () => {
     expect(unknown).toEqual([]);
   });
 
-  // Non-vacuity for the check above: a widened `isExempt` — or a guide that
-  // stopped linking the site's own pages — would otherwise leave it passing
-  // over nothing.
-  test("the route guard inspected the non-api absolute links the guide carries", async () => {
-    const { inspected } = await siteReport;
-    const absolute = inspected
-      .map((i) => i.target)
-      .filter((t) => t.startsWith("/") && !isApiRoute(t));
-    expect(absolute.length).toBeGreaterThan(0);
-    expect(absolute).toContain("/libraries");
-  });
-
   // The static set is read off the route directory and the guide directory, so a
   // route file renamed or deleted without its links being fixed reds the check
   // above rather than shipping a 404.

@@ -10,6 +10,7 @@ import {
   loadVendoredNativeRegistry,
 } from "../packages/cli/src/library-registry.ts";
 import { checkShippedDeclarations } from "../packages/cli/src/shipped-declarations.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
 import { type ForgeFetch, forgeReadsFor } from "./library-upstream-check.ts";
 import {
   evaluateShippedTypes,
@@ -189,6 +190,7 @@ describe("runShippedTypesCheck verdicts", () => {
       "widgetnative",
       "widget/fork/widgetnative.d.ts",
       "a.d.ts",
+      `${LIBRARY_DOCS_URL}/guides/refreshing-library-pins`,
     ]) {
       expect(widget.issueBody).toContain(fragment);
     }

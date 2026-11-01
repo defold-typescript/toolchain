@@ -9,6 +9,7 @@ import {
   locateShippedDeclarations,
   selectShippedDeclarations,
 } from "../packages/cli/src/shipped-declarations.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
 import {
   datedTags,
   type ForgeReads,
@@ -132,7 +133,7 @@ function issueBodyFor(report: ShippedTypesReport & { ref: string }): string {
     "",
     "A project on an earlier release has no `types/` folder to fall back on once the curated copy is gone, so weigh that before retiring.",
     "Retiring is a reviewed change, as `pixels` was: follow *Retiring a curated target* in",
-    "`packages/docs/guide/refreshing-library-pins.md`.",
+    `${LIBRARY_DOCS_URL}/guides/refreshing-library-pins.`,
     "",
     "_Opened automatically by `shipped-types-check`._",
   ].join("\n");
