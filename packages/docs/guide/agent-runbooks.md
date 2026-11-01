@@ -143,7 +143,7 @@ generated `namespaces`, `typeSurface`, `scriptApiCount`, `provenance` (`defold`,
 whether it was `assetOnly`, `sceneSources` (how many [shared scene
 files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
 (`commit:<sha>` or `files-sha256:<hex>`), — when the project pins that url —
-the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift` / `retired`). A separate `libraries` array reports
+the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
 a dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
@@ -216,8 +216,8 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
 }
 ```
 
-A `pinnedVersion` field is only present when the project's `package.json` records
-a pin for that `url`. See [Resolve](./resolve.md#pinning-extension-versions) for
+A `pinnedVersion` field is only present when the project's
+[`defold-typescript.lock`](./resolve.md#the-lockfile) records a pin for that `url`. See [Resolve](./resolve.md#pinning-extension-versions) for
 what `pinStatus` drives.
 
 When several dependencies declare one namespace, each of their `extensions[]`
@@ -660,7 +660,7 @@ its index and `package.json` to exactly the declared set.
       "assetOnly": false,
       "sceneSources": 0,
       "resolvedVersion": "<version>",
-      "pinStatus": "<unpinned | match | drift | retired>"
+      "pinStatus": "<unpinned | match | drift>"
     }
   ]
 }
@@ -679,9 +679,10 @@ came from (`provenance`), which type surface it contributed (`typeSurface`), how
 many `.script_api` files the archive carries (`scriptApiCount` — a
 `"vendored-library"` entry can carry docs and still contribute no namespace), how many
 scene sources it shared (`sceneSources`), and its pin state
-(`resolvedVersion`/`pinStatus`). The `written` array is always empty for
-`resolve`. If `ok` is `false`, surface `error`; the existing surface is left
-untouched.
+(`resolvedVersion`/`pinStatus`). Pins live in the committed
+[`defold-typescript.lock`](./resolve.md#the-lockfile), which `resolve` writes, so
+commit it with the change. The `written` array is always empty for `resolve`. If
+`ok` is `false`, surface `error`; the existing surface is left untouched.
 
 ## Add a script
 

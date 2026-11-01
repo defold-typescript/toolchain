@@ -53,7 +53,8 @@ own `[tools]` and `[tasks.*]` entries in `mise.toml`, and your other
 `tsconfig.json` settings all survive the upgrade untouched. Inside a managed
 `mise.toml` task the refresh rewrites only the two keys the scaffold authors —
 `description` and `run` — so a key you added there, such as an `alias` or a
-`depends`, survives too.
+`depends`, survives too. The upgrade never touches `defold-typescript.lock` either;
+only [`resolve`](./resolve.md#the-lockfile) writes it.
 
 ## What it does to your `defold-target` pin
 

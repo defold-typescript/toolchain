@@ -13,13 +13,15 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Library types](./resolve.md#library-data)** update without a CLI release, hold a recorded commit until `resolve --update`, and `resolve --frozen` needs that commit.
+> - **[Library types](./resolve.md#library-data)** update without a CLI release and hold a recorded commit until `resolve --update`.
+> - **[`defold-typescript.lock`](./resolve.md#the-lockfile)** holds what `resolve` records; commit it, since `resolve --frozen` fails without it.
 > - **[Library API pages](https://defold-typescript.github.io/library-data)** moved to their own docs site, with no redirect from the old URLs.
 > - **[API docs](/api/particlefx)** keep text that only looks like a tag.
 
 ### Breaking
 
-- **`resolve` fetches library data itself:** library types come from the [library data repo](https://github.com/defold-typescript/library-data) and update without a CLI release, and `@defold-typescript/library-types` is no longer published. `resolve` and `watch` record the commit as `"libraryData"` in `package.json` and [hold it like a lockfile until `resolve --update`](./resolve.md#library-data), `resolve --frozen` fails until one is recorded, and `export-types` reads the newest data.
+- **`resolve` fetches library data itself:** library types come from the [library data repo](https://github.com/defold-typescript/library-data) and update without a CLI release, and `@defold-typescript/library-types` is no longer published. `resolve` and `watch` record the commit and [hold it until `resolve --update`](./resolve.md#library-data), `resolve --frozen` fails until one is recorded, and `export-types` reads the newest data.
+- **Pins moved to `defold-typescript.lock`:** `resolve` keeps its records in [this committed file](./resolve.md#the-lockfile) and no longer writes `package.json`, so run `resolve` and commit it; that first run records what it fetches, so drift pending at the upgrade is accepted without a report. `resolve --frozen` fails until the file is committed and when a declared dependency has no entry, and any `resolve` fails on a lockfile that does not parse.
 - **Library API pages moved:** library pages and the Libraries index are on the [library docs site](https://defold-typescript.github.io/library-data), with no redirect from their old `/api/<library>` and `/libraries` URLs, and this site's search no longer finds them. The Libraries tab opens there in a new tab, marked as an external link.
 
 ### Improved
