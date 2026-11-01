@@ -252,7 +252,7 @@ describe("resolveExtensionArchive", () => {
       expect(result.provenance).toBe("defold");
       expect(result.archivePath).toBe(zipPath);
       expect(result.scriptApis).toEqual(["defold-pixels-master/api/pixels.script_api"]);
-      expect(result.resolvedVersion).toBe(`commit:${commit}`);
+      expect(result.identity.commit).toBe(commit);
       expect(snapshot(projectDir)).toEqual(before);
       expect(readdirSync(cacheDir)).toEqual([]);
     });

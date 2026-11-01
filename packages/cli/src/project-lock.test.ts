@@ -19,7 +19,10 @@ import {
 
 const COMMIT = "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f";
 const OTHER_COMMIT = "5c33c398a1b2c3d4e5f60718293a4b5c6d7e8f90";
-const FILES_PIN = `files-sha256:${"a".repeat(64)}`;
+const FILES = "a".repeat(64);
+const OTHER_FILES = "b".repeat(64);
+const FILES_PIN = { files: FILES };
+const COMMIT_PIN = { commit: OTHER_COMMIT, files: OTHER_FILES };
 const URL_A = "https://github.com/a/a/archive/main.zip";
 const URL_B = "https://github.com/b/b/archive/main.zip";
 
@@ -43,7 +46,7 @@ describe("readProjectLock", () => {
   test("a written lock reads back equal", () => {
     const cwd = project();
     const lock: ProjectLock = {
-      extensions: { [URL_A]: `commit:${OTHER_COMMIT}`, [URL_B]: FILES_PIN },
+      extensions: { [URL_A]: COMMIT_PIN, [URL_B]: FILES_PIN },
       libraryData: { shared: COMMIT, libraries: { monarch: OTHER_COMMIT, druid: COMMIT } },
     };
     writeProjectLock(cwd, lock);
@@ -112,21 +115,27 @@ describe("readProjectLock", () => {
       JSON.stringify({ version: 1, extensions: [] }),
       '"extensions"',
     ],
-    [
-      "a pin in the zip-byte form",
-      JSON.stringify({ version: 1, extensions: { [URL_A]: `sha256:${"a".repeat(64)}` } }),
-      URL_A,
-    ],
-    [
-      "a pin that is not a string",
-      JSON.stringify({ version: 1, extensions: { [URL_A]: 7 } }),
-      URL_A,
-    ],
-    [
-      "a commit pin that is not 40 hex",
-      JSON.stringify({ version: 1, extensions: { [URL_A]: "commit:../../x" } }),
-      URL_A,
-    ],
+    ...(
+      [
+        ["a commit string", `commit:${COMMIT}`],
+        ["a files string", `files-sha256:${FILES}`],
+        ["a number", 7],
+        ["a null", null],
+        ["an array", [FILES]],
+        ["a missing files hash", { commit: COMMIT }],
+        ["a files hash that is not 64 hex", { files: "../../x" }],
+        ["a files hash that is not a string", { files: 7 }],
+        ["a commit that is not 40 hex", { commit: "../../x", files: FILES }],
+        ["a commit that is not a string", { commit: 7, files: FILES }],
+      ] as const
+    ).map(
+      ([name, entry]) =>
+        [
+          `an extensions entry holding ${name}`,
+          JSON.stringify({ version: 1, extensions: { [URL_A]: entry } }),
+          URL_A,
+        ] as const,
+    ),
   ];
 
   for (const [name, text, names] of invalid) {
@@ -160,10 +169,24 @@ describe("writeProjectLock", () => {
     expect(lockText(first)).toBe(lockText(second));
   });
 
+  test("an entry's fields keep one order, however they arrive", () => {
+    const first = project();
+    const second = project();
+    writeProjectLock(first, { extensions: { [URL_A]: { commit: COMMIT, files: FILES } } });
+    writeProjectLock(second, { extensions: { [URL_A]: { files: FILES, commit: COMMIT } } });
+    expect(lockText(first)).toBe(lockText(second));
+  });
+
+  test("a lock with no entries still parses", () => {
+    const cwd = project();
+    writeProjectLock(cwd, { extensions: {} });
+    expect(readProjectLock(cwd)).toEqual({ status: "ok", lock: { extensions: {} } });
+  });
+
   test("each entry has its own line and the file ends in a newline", () => {
     const cwd = project();
     writeProjectLock(cwd, {
-      extensions: { [URL_B]: FILES_PIN, [URL_A]: `commit:${OTHER_COMMIT}` },
+      extensions: { [URL_B]: FILES_PIN, [URL_A]: COMMIT_PIN },
       libraryData: { shared: COMMIT, libraries: { monarch: COMMIT, druid: OTHER_COMMIT } },
     });
     expect(lockText(cwd)).toBe(
@@ -171,8 +194,8 @@ describe("writeProjectLock", () => {
         "{",
         '  "version": 1,',
         '  "extensions": {',
-        `    "${URL_A}": "commit:${OTHER_COMMIT}",`,
-        `    "${URL_B}": "${FILES_PIN}"`,
+        `    "${URL_A}": { "commit": "${OTHER_COMMIT}", "files": "${OTHER_FILES}" },`,
+        `    "${URL_B}": { "files": "${FILES}" }`,
         "  },",
         '  "libraryData": {',
         `    "shared": "${COMMIT}",`,

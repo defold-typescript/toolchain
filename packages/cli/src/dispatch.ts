@@ -1791,7 +1791,7 @@ function dispatchCommand(
     if (command === "resolve") {
       const seams = internals?.resolveInternals;
       return (async (): Promise<number> => {
-        const { runResolve, unknownUpdateNames } = await import("./resolve");
+        const { describePinDrift, runResolve, unknownUpdateNames } = await import("./resolve");
         // Ahead of the target, so a mistyped name requests nothing.
         const unknownUpdate = unknownUpdateNames(cwd, update);
         if (unknownUpdate !== null) {
@@ -1861,9 +1861,7 @@ function dispatchCommand(
               // This branch always exits non-zero below, so the header is an error.
               writeError(`defold-typescript resolve: ${drifted.length} extension pin(s) drifted:`);
               for (const ext of drifted) {
-                io.stderr.write(
-                  `  ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
-                );
+                io.stderr.write(`  ${ext.url}: ${describePinDrift(ext)}\n`);
               }
             }
           }
@@ -1913,9 +1911,7 @@ function dispatchCommand(
           const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
           const report = frozen ? writeError : writeWarning;
           for (const ext of drifted) {
-            report(
-              `defold-typescript resolve: pin drift for ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}`,
-            );
+            report(`defold-typescript resolve: pin drift for ${ext.url}: ${describePinDrift(ext)}`);
           }
         } else {
           writeError(`${result.error}`);
