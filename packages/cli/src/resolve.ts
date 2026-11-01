@@ -8,7 +8,7 @@
 // download/readZip/cacheDir seams stay injectable so the orchestration is
 // network-free under test.
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
@@ -26,14 +26,7 @@ import {
   materializeExtensionDeclarations,
   type SharedExtensionNamespace,
 } from "./extension-materialize";
-import {
-  isRetiredPin,
-  mergeLibraryDataCommit,
-  mergeResolvedVersionPins,
-  readExtensionVersionPins,
-  readLibraryDataCommit,
-} from "./extension-version";
-import { formatJsonLikeBiome } from "./format-json";
+import { mergeResolvedVersionPins } from "./extension-version";
 import { printLibraryModules } from "./library/print-library";
 import { archiveSourceTree } from "./library/source-tree";
 import {
@@ -56,6 +49,7 @@ import {
   type VendoredNativeExtension,
 } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
+import { PROJECT_LOCK_FILE, readProjectLock, writeProjectLock } from "./project-lock";
 import { checkShippedDeclarations } from "./shipped-declarations";
 
 // Which type surface a dependency actually contributed. `assetOnly` cannot
@@ -73,9 +67,7 @@ export type ResolvedTypeSurface =
   | "vendored-native"
   | "shipped";
 
-// `retired` is a pin in the zip-byte form, which a plain run replaces and
-// `--frozen` refuses, whatever the archive now holds.
-export type PinStatus = "unpinned" | "match" | "drift" | "retired";
+export type PinStatus = "unpinned" | "match" | "drift";
 
 export interface ResolvedExtensionReport {
   readonly url: string;
@@ -107,8 +99,8 @@ export interface RunResolveOptions {
   readonly cacheDir?: string;
   readonly download?: DownloadExtensionArchive;
   readonly readZip?: ReadExtensionZip;
-  // When true, skip writing newly-resolved pins into `package.json`. Used by
-  // `--frozen` to verify the committed pin set without mutating it.
+  // When true, skip writing the lockfile, and fail when it cannot answer for a
+  // declared dependency. Used by `--frozen` to verify the committed records.
   readonly freeze?: boolean;
   // Moves a recorded library data commit to newer data, which a plain run holds
   // back from.
@@ -120,7 +112,7 @@ export interface RunResolveOptions {
   readonly libraryRegistry?: readonly VendoredLibrary[];
   readonly libraryDataDir?: string | null;
   // The data repo's `main.zip`, fetched for the library data when `libraryDataDir`
-  // is unset, with the commit it resolves to recorded in `package.json`. Defaults
+  // is unset, with the commit it resolves to recorded in the lockfile. Defaults
   // to `LIBRARY_DATA_MAIN_URL`.
   readonly libraryDataUrl?: string;
   // The curated native-extension targets. Defaults to the native extensions the
@@ -149,16 +141,16 @@ function hasProjectSection(text: string): boolean {
   return text.split("\n").some((line) => line.trim() === "[project]");
 }
 
-function readExistingPackageJson(cwd: string): { value: unknown; writable: boolean } {
-  const pkgPath = join(cwd, "package.json");
-  if (!existsSync(pkgPath)) {
-    return { value: {}, writable: true };
-  }
-  try {
-    return { value: JSON.parse(readFileSync(pkgPath, "utf8")) as unknown, writable: true };
-  } catch {
-    return { value: null, writable: false };
-  }
+function failedResolve(error: string): RunResolveResult {
+  return {
+    ok: false,
+    error,
+    materializedSurface: null,
+    extensions: [],
+    libraries: [],
+    sharedNamespaces: [],
+    warnings: [],
+  };
 }
 
 // A native target is confirmed only when the archive both matches its source id
@@ -235,17 +227,6 @@ function applyShippedDeclarations(
   return { bundles: applied, shippedUrls, warnings };
 }
 
-function seedExtensionPins(
-  cwd: string,
-  existing: unknown,
-  resolved: Record<string, string>,
-  liveUrls: Iterable<string>,
-  retiredUrls: Iterable<string>,
-): void {
-  const merged = mergeResolvedVersionPins(existing, resolved, liveUrls, retiredUrls);
-  writeFileSync(join(cwd, "package.json"), `${formatJsonLikeBiome(merged)}\n`);
-}
-
 function changedLibraryFolder(held: string, newer: string): boolean {
   try {
     return dataFolderDigest(held) !== dataFolderDigest(newer);
@@ -296,6 +277,7 @@ function weighNewerLibraryData(
 async function selectLibraryData(
   opts: RunResolveOptions,
   urls: readonly string[],
+  recorded: string | null,
 ): Promise<{ archive: LibraryDataArchive; notices: string[] }> {
   if (opts.libraryDataDir !== undefined) {
     return { archive: { dir: opts.libraryDataDir, commit: null }, notices: [] };
@@ -304,7 +286,7 @@ async function selectLibraryData(
     mainUrl: opts.libraryDataUrl ?? LIBRARY_DATA_MAIN_URL,
     cacheDir:
       opts.cacheDir === undefined ? libraryDataCacheDir() : join(opts.cacheDir, "library-data"),
-    recorded: readLibraryDataCommit(readExistingPackageJson(opts.cwd).value),
+    recorded,
     frozen: opts.freeze === true,
     ...(opts.update === true ? { update: true } : {}),
     cliVersion: readCliVersion(),
@@ -321,29 +303,22 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   const { cwd } = opts;
   const gameProjectPath = join(cwd, "game.project");
   if (!existsSync(gameProjectPath)) {
-    return {
-      ok: false,
-      error: `no game.project found in ${cwd}`,
-      materializedSurface: null,
-      extensions: [],
-      libraries: [],
-      sharedNamespaces: [],
-      warnings: [],
-    };
+    return failedResolve(`no game.project found in ${cwd}`);
   }
 
   const text = readFileSync(gameProjectPath, "utf8");
   if (!hasProjectSection(text)) {
-    return {
-      ok: false,
-      error: "game.project has no [project] section",
-      materializedSurface: null,
-      extensions: [],
-      libraries: [],
-      sharedNamespaces: [],
-      warnings: [],
-    };
+    return failedResolve("game.project has no [project] section");
   }
+
+  // Read ahead of every write, so a lockfile a merge left broken stops the run
+  // before anything it would have kept in step has moved.
+  const lockRead = readProjectLock(cwd);
+  if (lockRead.status === "invalid") {
+    return failedResolve(lockRead.reason);
+  }
+  const lock = lockRead.status === "ok" ? lockRead.lock : undefined;
+  const pins = lock?.extensions ?? {};
 
   const deps = readExtensionDependencies(text);
   if (deps.length === 0) {
@@ -368,20 +343,26 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     };
   }
 
+  if (opts.freeze === true) {
+    const plainRun = "run a plain `defold-typescript resolve` and commit the file";
+    if (lock === undefined) {
+      return failedResolve(`--frozen needs ${PROJECT_LOCK_FILE}: ${plainRun}`);
+    }
+    const unpinned = deps.map(({ url }) => url).filter((url) => pins[url] === undefined);
+    if (unpinned.length > 0) {
+      return failedResolve(
+        `${PROJECT_LOCK_FILE} has no pin for ${unpinned.join(", ")}: ${plainRun}`,
+      );
+    }
+  }
+
   const { archive: libraryData, notices } = await selectLibraryData(
     opts,
     deps.map(({ url }) => url),
+    lock?.libraryData ?? null,
   );
   if (libraryData.error !== undefined) {
-    return {
-      ok: false,
-      error: libraryData.error,
-      materializedSurface: null,
-      extensions: [],
-      libraries: [],
-      sharedNamespaces: [],
-      warnings: [],
-    };
+    return failedResolve(libraryData.error);
   }
   const libraryDataDir = libraryData.dir;
   const resolvedBundles = await resolveExtensionDeclarations(deps, {
@@ -519,50 +500,22 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     }),
   );
 
-  const existingPkg = readExistingPackageJson(cwd);
-  const pins = readExtensionVersionPins(existingPkg.value);
-  const liveUrls = bundles.map((b) => b.url);
-  const retiredUrls = bundles
-    .filter((bundle) => {
-      const pin = pins[bundle.url];
-      return pin !== undefined && isRetiredPin(pin);
-    })
-    .map((bundle) => bundle.url);
-  const resolvedForSeed: Record<string, string> = {};
-  for (const bundle of bundles) {
-    if (!(bundle.url in pins) || retiredUrls.includes(bundle.url)) {
-      resolvedForSeed[bundle.url] = bundle.resolvedVersion;
-    }
-  }
-  const orphaned = Object.keys(pins).some((u) => !liveUrls.includes(u));
-  if (
-    !opts.freeze &&
-    existingPkg.writable &&
-    (Object.keys(resolvedForSeed).length > 0 || orphaned)
-  ) {
-    seedExtensionPins(cwd, existingPkg.value, resolvedForSeed, liveUrls, retiredUrls);
-  }
-  if (!opts.freeze && libraryData.commit !== null) {
-    const latestPkg = readExistingPackageJson(cwd);
-    if (latestPkg.writable && readLibraryDataCommit(latestPkg.value) !== libraryData.commit) {
-      writeFileSync(
-        join(cwd, "package.json"),
-        `${formatJsonLikeBiome(mergeLibraryDataCommit(latestPkg.value, libraryData.commit))}\n`,
-      );
-    }
+  if (opts.freeze !== true) {
+    const libraryDataCommit = libraryData.commit ?? lock?.libraryData;
+    writeProjectLock(cwd, {
+      extensions: mergeResolvedVersionPins(
+        pins,
+        Object.fromEntries(bundles.map((bundle) => [bundle.url, bundle.resolvedVersion])),
+      ),
+      ...(libraryDataCommit === undefined ? {} : { libraryData: libraryDataCommit }),
+    });
   }
 
   const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {
     const supersededByLibrary = confirmedLibraryUrls.has(bundle.url);
     const pin = pins[bundle.url];
     const pinStatus: PinStatus =
-      pin === undefined
-        ? "unpinned"
-        : isRetiredPin(pin)
-          ? "retired"
-          : pin === bundle.resolvedVersion
-            ? "match"
-            : "drift";
+      pin === undefined ? "unpinned" : pin === bundle.resolvedVersion ? "match" : "drift";
     // A superseded bundle contributed no namespace, so reporting the ones its
     // `.script_api` would have produced would double-count its modules against
     // `libraries[]`. `scriptApiCount` stays the real archive count.

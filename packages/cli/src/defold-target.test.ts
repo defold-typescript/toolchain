@@ -11,7 +11,6 @@ import {
   setDefoldTargetPin,
 } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
-import { mergeLibraryDataCommit } from "./extension-version";
 
 describe("classifyDefoldTarget", () => {
   test("a semantic version classifies as a fixed version", () => {
@@ -91,18 +90,6 @@ describe("diagnoseDefoldNamespace", () => {
     );
   });
 
-  test("extensions alone is recognized and produces no diagnostics", () => {
-    expect(
-      diagnoseDefoldNamespace({
-        "defold-typescript": { extensions: { "https://github.com/x/y": "1.0.0" } },
-      }),
-    ).toEqual([]);
-  });
-
-  test("the library data commit resolve records is recognized and produces no diagnostics", () => {
-    expect(diagnoseDefoldNamespace(mergeLibraryDataCommit({}, "4f1c9e0a"))).toEqual([]);
-  });
-
   test("runtime-dir beside defold-target is recognized and produces no diagnostics", () => {
     expect(
       diagnoseDefoldNamespace({
@@ -134,7 +121,21 @@ describe("diagnoseDefoldNamespace", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]).toContain("defoldTarget");
     expect(diagnostics[0]).toContain("defold-target");
-    expect(diagnostics[0]).toContain("extensions");
+    expect(diagnostics[0]).toContain("runtime-dir");
+  });
+
+  test("a leftover extensions key says where the pins moved", () => {
+    expect(
+      diagnoseDefoldNamespace({ "defold-typescript": { extensions: { url: "commit:abc" } } }),
+    ).toEqual([
+      'package.json "defold-typescript"."extensions" moved to defold-typescript.lock; delete it.',
+    ]);
+  });
+
+  test("a libraryData key is diagnosed like any other unrecognized key", () => {
+    const diagnostics = diagnoseDefoldNamespace({ "defold-typescript": { libraryData: "abc" } });
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toContain("is not a recognized key");
   });
 
   test("multiple bad keys produce one diagnostic each, in sorted order", () => {

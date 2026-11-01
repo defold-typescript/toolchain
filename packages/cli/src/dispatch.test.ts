@@ -36,6 +36,7 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
+import { archivePin } from "./extension-version";
 import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
@@ -44,6 +45,7 @@ import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fi
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
+import { PROJECT_LOCK_FILE, readProjectLock, writeProjectLock } from "./project-lock";
 import {
   labelRefDocResolveOpts,
   multiKindRefDocResolveOpts,
@@ -212,6 +214,8 @@ const ALPHA = `
 // matter which targets ship. The precondition assertion below keeps it honest
 // if the registry ever grows toward it.
 const UNREGISTERED_TARGET = "1.0.0";
+const PINNED = `commit:${"1".repeat(40)}`;
+const STALE = `commit:${"2".repeat(40)}`;
 
 function registeredTargetVersions(): string[] {
   return loadApiTargetsRegistry().map((target) => target.id.replace(/^defold-/, ""));
@@ -3162,6 +3166,73 @@ describe("dispatch", () => {
     rmSync(cacheDir, { recursive: true, force: true });
   });
 
+  test("watch prints an invalid lockfile's error and resolves again once it is fixed", async () => {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "main.ts"), "export const a = 1;\n");
+    writeFileSync(path.join(cwd, "main.script"), "");
+    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+    writeFileSync(path.join(sourceGeneratedDir, "label.d.ts"), "declare const __label: unknown;\n");
+    const url = "https://example.com/alpha.zip";
+    writeFileSync(path.join(cwd, "game.project"), `[project]\ndependencies#0 = ${url}\n`);
+    const lockPath = path.join(cwd, PROJECT_LOCK_FILE);
+    writeFileSync(lockPath, "<<<<<<< HEAD\n");
+
+    const { io, err } = captureStreams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const main: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      sourceGeneratedDir,
+      detectEditorVersion: () => null,
+      resolveInternals: {
+        libraryDataDir: null,
+        cacheDir,
+        download: async () => ({ status: "ok", bytes: new TextEncoder().encode("z") }),
+        readZip: () => ({
+          entries: () => ["ext/api/alpha.script_api"],
+          comment: () => "",
+          bytes: () => new Uint8Array(0),
+          read: () => ALPHA,
+        }),
+      },
+      onWatchStart,
+    });
+    const handle = await ready;
+    await handle?.waitForIdle();
+    const extPath = path.join(cwd, ".defold-types", "extensions", "alpha.d.ts");
+
+    triggerMain?.("change", "game.project");
+    await handle?.waitForIdle();
+
+    expect(err()).toContain(PROJECT_LOCK_FILE);
+    expect(existsSync(extPath)).toBe(false);
+    expect(readFileSync(lockPath, "utf8")).toBe("<<<<<<< HEAD\n");
+
+    rmSync(lockPath);
+    triggerMain?.("change", "game.project");
+    await handle?.waitForIdle();
+
+    expect(existsSync(extPath)).toBe(true);
+    expect(existsSync(lockPath)).toBe(true);
+
+    handle?.stop();
+    expect(await result).toBe(0);
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+    rmSync(cacheDir, { recursive: true, force: true });
+  });
+
   test("watch re-resolves a game.project with no [dependencies] without writing an extension surface", async () => {
     const tsconfig = JSON.stringify(
       { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
@@ -4837,14 +4908,7 @@ describe("dispatch resolve", () => {
     const { io, out } = captureStreams();
     const url = "https://example.com/alpha.zip";
     writeProject(`[project]\ndependencies#0 = ${url}\n`);
-    writeFileSync(
-      path.join(cwd, "package.json"),
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: "commit:pinned" } } },
-        null,
-        2,
-      )}\n`,
-    );
+    writeProjectLock(cwd, { extensions: { [url]: PINNED } });
 
     const code = await dispatch(["resolve", cwd, "--json"], io, resolveInternals(url));
 
@@ -4854,7 +4918,7 @@ describe("dispatch resolve", () => {
     };
     expect(parsed.extensions).toHaveLength(1);
     expect(parsed.extensions[0]?.resolvedVersion).toMatch(/^files-sha256:[0-9a-f]{64}$/);
-    expect(parsed.extensions[0]?.pinnedVersion).toBe("commit:pinned");
+    expect(parsed.extensions[0]?.pinnedVersion).toBe(PINNED);
   });
 
   function libraryResolveInternals(url: string): {
@@ -5229,38 +5293,30 @@ describe("dispatch resolve", () => {
     const { io, err } = captureStreams();
     const url = "https://example.com/alpha.zip";
     writeProject(`[project]\ndependencies#0 = ${url}\n`);
-    writeFileSync(
-      path.join(cwd, "package.json"),
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: "commit:pinned" } } },
-        null,
-        2,
-      )}\n`,
-    );
+    writeProjectLock(cwd, { extensions: { [url]: PINNED } });
 
     const code = await dispatch(["resolve", cwd], io, resolveInternals(url));
 
     expect(code).toBe(0);
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: warning: pin drift for ${url}: commit:pinned -> files-sha256:<digest>\n`,
+      `${noSceneSource(url)}defold-typescript resolve: warning: pin drift for ${url}: ${PINNED} -> files-sha256:<digest>\n`,
     );
   });
 
-  test("--frozen fails on drift and does not seed absent pins", async () => {
+  test("--frozen fails on drift and leaves the lockfile alone", async () => {
     const { io, err } = captureStreams();
     const driftedUrl = "https://example.com/drifted.zip";
     const freshUrl = "https://example.com/fresh.zip";
+    const freshPin = archivePin({
+      entries: () => ["asset/foo.png"],
+      read: () => "",
+      comment: () => "",
+      bytes: () => new Uint8Array(0),
+    });
     writeProject(`[project]\ndependencies#0 = ${driftedUrl}\ndependencies#1 = ${freshUrl}\n`);
-    const pkgPath = path.join(cwd, "package.json");
-    writeFileSync(
-      pkgPath,
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [driftedUrl]: "commit:stale" } } },
-        null,
-        2,
-      )}\n`,
-    );
-    const originalPkg = readFileSync(pkgPath, "utf8");
+    const lockPath = path.join(cwd, PROJECT_LOCK_FILE);
+    writeProjectLock(cwd, { extensions: { [driftedUrl]: STALE, [freshUrl]: freshPin } });
+    const originalLock = readFileSync(lockPath, "utf8");
 
     // Custom readZip that returns ALPHA for the drifted url and a no-op archive
     // for the fresh one (no entries -> asset-only branch).
@@ -5296,60 +5352,10 @@ describe("dispatch resolve", () => {
 
     expect(code).toBe(1);
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(driftedUrl)}${noSceneSource(freshUrl)}defold-typescript resolve: error: pin drift for ${driftedUrl}: commit:stale -> files-sha256:<digest>\n`,
+      `${noSceneSource(driftedUrl)}${noSceneSource(freshUrl)}defold-typescript resolve: error: pin drift for ${driftedUrl}: ${STALE} -> files-sha256:<digest>\n`,
     );
-    // package.json byte-unchanged: no drift clobber, no absent-pinned seed
-    expect(readFileSync(pkgPath, "utf8")).toBe(originalPkg);
-  });
-
-  test("--frozen fails on a retired zip-byte pin and asks for a plain resolve", async () => {
-    const { io, err } = captureStreams();
-    const url = "https://example.com/alpha.zip";
-    writeProject(`[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = path.join(cwd, "package.json");
-    writeFileSync(
-      pkgPath,
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: `sha256:${"a".repeat(64)}` } } },
-        null,
-        2,
-      )}\n`,
-    );
-    const originalPkg = readFileSync(pkgPath, "utf8");
-
-    const code = await dispatch(["resolve", cwd, "--frozen"], io, resolveInternals(url));
-
-    expect(code).toBe(1);
-    expect(withoutDigests(err())).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: error: retired pin for ${url}: sha256:<digest> hashes the zip bytes; run \`defold-typescript resolve\` without --frozen to replace it\n`,
-    );
-    expect(readFileSync(pkgPath, "utf8")).toBe(originalPkg);
-  });
-
-  test("a plain resolve replaces a retired zip-byte pin and notes it", async () => {
-    const { io, err } = captureStreams();
-    const url = "https://example.com/alpha.zip";
-    writeProject(`[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = path.join(cwd, "package.json");
-    writeFileSync(
-      pkgPath,
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: `sha256:${"a".repeat(64)}` } } },
-        null,
-        2,
-      )}\n`,
-    );
-
-    const code = await dispatch(["resolve", cwd], io, resolveInternals(url));
-
-    expect(code).toBe(0);
-    expect(withoutDigests(err())).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: replaced retired pin for ${url}: sha256:<digest> -> files-sha256:<digest>\n`,
-    );
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
-      "defold-typescript": { extensions: Record<string, string> };
-    };
-    expect(pkg["defold-typescript"].extensions[url]).toMatch(/^files-sha256:[0-9a-f]{64}$/);
+    // lockfile byte-unchanged: no drift clobber
+    expect(readFileSync(lockPath, "utf8")).toBe(originalLock);
   });
 
   test("--frozen passes when all pins match", async () => {
@@ -5367,51 +5373,49 @@ describe("dispatch resolve", () => {
     expect(first.ok).toBe(true);
     const matchingDigest = first.extensions[0]?.resolvedVersion as string;
     expect(matchingDigest).toMatch(/^files-sha256:[0-9a-f]{64}$/);
-    writeFileSync(
-      path.join(cwd, "package.json"),
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: matchingDigest } } },
-        null,
-        2,
-      )}\n`,
-    );
+    writeProjectLock(cwd, { extensions: { [url]: matchingDigest } });
+    const lockPath = path.join(cwd, PROJECT_LOCK_FILE);
+    const originalLock = readFileSync(lockPath, "utf8");
 
     const code = await dispatch(["resolve", cwd, "--frozen"], io, resolveInternals(url));
 
     expect(code).toBe(0);
     // No drift warning expected
     expect(err()).not.toContain("drift");
+    expect(readFileSync(lockPath, "utf8")).toBe(originalLock);
   });
 
-  test("--frozen passes when all extensions are unpinned and seeds nothing", async () => {
+  test("--frozen fails with no lockfile and records nothing", async () => {
     const { io, err } = captureStreams();
     const url = "https://example.com/alpha.zip";
     writeProject(`[project]\ndependencies#0 = ${url}\n`);
-    const pkgPath = path.join(cwd, "package.json");
-    const originalPkg = "{}\n";
-    writeFileSync(pkgPath, originalPkg);
 
     const code = await dispatch(["resolve", cwd, "--frozen"], io, resolveInternals(url));
 
-    expect(code).toBe(0);
-    // No drift warning (unpinned passes under --frozen)
-    expect(err()).not.toContain("drift");
-    // No pin seeded
-    expect(readFileSync(pkgPath, "utf8")).toBe(originalPkg);
+    expect(code).toBe(1);
+    expect(err()).toContain(PROJECT_LOCK_FILE);
+    expect(existsSync(path.join(cwd, PROJECT_LOCK_FILE))).toBe(false);
+  });
+
+  test("a lockfile that does not parse fails a plain resolve and stays as it was", async () => {
+    const { io, err } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const lockPath = path.join(cwd, PROJECT_LOCK_FILE);
+    writeFileSync(lockPath, "<<<<<<< HEAD\n");
+
+    const code = await dispatch(["resolve", cwd], io, resolveInternals(url));
+
+    expect(code).toBe(1);
+    expect(err()).toContain(PROJECT_LOCK_FILE);
+    expect(readFileSync(lockPath, "utf8")).toBe("<<<<<<< HEAD\n");
   });
 
   test("--json carries pinStatus and --frozen still exits 1 on drift", async () => {
     const { io, out, err } = captureStreams();
     const url = "https://example.com/alpha.zip";
     writeProject(`[project]\ndependencies#0 = ${url}\n`);
-    writeFileSync(
-      path.join(cwd, "package.json"),
-      `${JSON.stringify(
-        { "defold-typescript": { extensions: { [url]: "commit:stale" } } },
-        null,
-        2,
-      )}\n`,
-    );
+    writeProjectLock(cwd, { extensions: { [url]: STALE } });
 
     const code = await dispatch(["resolve", cwd, "--json", "--frozen"], io, resolveInternals(url));
 
@@ -5427,7 +5431,7 @@ describe("dispatch resolve", () => {
     expect(parsed.extensions[0]?.url).toBe(url);
     expect(parsed.extensions[0]?.pinStatus).toBe("drift");
     expect(withoutDigests(err())).toBe(
-      `${noSceneSource(url)}defold-typescript resolve: error: 1 extension pin(s) drifted:\n  ${url}: commit:stale -> files-sha256:<digest>\n`,
+      `${noSceneSource(url)}defold-typescript resolve: error: 1 extension pin(s) drifted:\n  ${url}: ${STALE} -> files-sha256:<digest>\n`,
     );
   });
 
@@ -9813,12 +9817,10 @@ describe("library data from the data repo", () => {
 
   const surface = () =>
     path.join(cwd, ".defold-types", librariesDirName(readCliVersion()), "mylib.core.d.ts");
-  const recordedCommit = () =>
-    (
-      JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
-        "defold-typescript"?: { libraryData?: string };
-      }
-    )["defold-typescript"]?.libraryData;
+  const recordedCommit = () => {
+    const read = readProjectLock(cwd);
+    return read.status === "ok" ? read.lock.libraryData : undefined;
+  };
 
   test("resolve prints a matched library from the data repo and records its commit", async () => {
     writeDependentProject();

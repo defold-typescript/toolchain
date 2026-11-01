@@ -2,11 +2,10 @@
 // declared identity of a `[dependencies]` URL is often a moving ref
 // (`.../archive/master.zip`), so the reproducible identity of *what was
 // resolved* is the commit the archive was packed from, or failing that a digest
-// of the files it shares, not a URL segment. `resolve` records that pin, seeds
-// it into `package.json` `"defold-typescript": { "extensions": { url: commit:… } }`
-// when absent (never clobbering a pin in a current form), and reports both the
-// resolved and pinned version per extension in `--json` — the visible signal a
-// user acts on to upgrade. `resolve` warns on drift and `--frozen` fails on it.
+// of the files it shares, not a URL segment. `resolve` records that pin in
+// `defold-typescript.lock` when absent (never clobbering one), and reports both
+// the resolved and pinned version per extension in `--json` — the visible signal
+// a user acts on to upgrade. `resolve` warns on drift and `--frozen` fails on it.
 
 import { createHash } from "node:crypto";
 import {
@@ -57,101 +56,13 @@ export function archivePin(zip: ExtensionZip): string {
   return `files-sha256:${hash.digest("hex")}`;
 }
 
-// The zip-byte pin form: it named no commit and moved with any file in the
-// repository, so a plain `resolve` replaces it and `--frozen` refuses it.
-export function isRetiredPin(pin: string): boolean {
-  return pin.startsWith("sha256:");
-}
-
-export function readExtensionVersionPins(pkg: unknown): Record<string, string> {
-  if (typeof pkg !== "object" || pkg === null) {
-    return {};
-  }
-  const namespace = (pkg as Record<string, unknown>)["defold-typescript"];
-  if (typeof namespace !== "object" || namespace === null) {
-    return {};
-  }
-  const extensions = (namespace as Record<string, unknown>).extensions;
-  if (typeof extensions !== "object" || extensions === null) {
-    return {};
-  }
-  const out: Record<string, string> = {};
-  for (const [url, version] of Object.entries(extensions as Record<string, unknown>)) {
-    if (typeof version === "string") {
-      out[url] = version;
-    }
-  }
-  return out;
-}
-
-// `replaceUrls` names the pins `resolved` overwrites instead of only seeding:
-// ones in the retired form, which no resolved pin can ever match.
+// One pin per resolved URL, keeping a recorded one so drift stays visible until the
+// user acts on it. A pin for a URL no longer resolved is dropped.
 export function mergeResolvedVersionPins(
-  pkg: unknown,
-  resolved: Record<string, string>,
-  liveUrls?: Iterable<string>,
-  replaceUrls: Iterable<string> = [],
-): Record<string, unknown> {
-  const base: Record<string, unknown> =
-    typeof pkg === "object" && pkg !== null && !Array.isArray(pkg)
-      ? { ...(pkg as Record<string, unknown>) }
-      : {};
-  const existingNamespace =
-    typeof base["defold-typescript"] === "object" &&
-    base["defold-typescript"] !== null &&
-    !Array.isArray(base["defold-typescript"])
-      ? { ...(base["defold-typescript"] as Record<string, unknown>) }
-      : {};
-  const existingExtensions =
-    typeof existingNamespace.extensions === "object" &&
-    existingNamespace.extensions !== null &&
-    !Array.isArray(existingNamespace.extensions)
-      ? { ...(existingNamespace.extensions as Record<string, unknown>) }
-      : {};
-  if (liveUrls !== undefined) {
-    const live = new Set(liveUrls);
-    for (const url of Object.keys(existingExtensions)) {
-      if (!live.has(url)) {
-        delete existingExtensions[url];
-      }
-    }
-  }
-  const replace = new Set(replaceUrls);
-  for (const [url, version] of Object.entries(resolved)) {
-    if (!(url in existingExtensions) || replace.has(url)) {
-      existingExtensions[url] = version;
-    }
-  }
-  existingNamespace.extensions = existingExtensions;
-  base["defold-typescript"] = existingNamespace;
-  return base;
-}
-
-// The library data commit a project last resolved against, unchecked: it comes
-// from a file the user edits.
-export function readLibraryDataCommit(pkg: unknown): string | null {
-  if (typeof pkg !== "object" || pkg === null) {
-    return null;
-  }
-  const namespace = (pkg as Record<string, unknown>)["defold-typescript"];
-  if (typeof namespace !== "object" || namespace === null) {
-    return null;
-  }
-  const commit = (namespace as Record<string, unknown>).libraryData;
-  return typeof commit === "string" ? commit : null;
-}
-
-export function mergeLibraryDataCommit(pkg: unknown, commit: string): Record<string, unknown> {
-  const base: Record<string, unknown> =
-    typeof pkg === "object" && pkg !== null && !Array.isArray(pkg)
-      ? { ...(pkg as Record<string, unknown>) }
-      : {};
-  const namespace = base["defold-typescript"];
-  base["defold-typescript"] = {
-    ...(typeof namespace === "object" && namespace !== null && !Array.isArray(namespace)
-      ? namespace
-      : {}),
-    libraryData: commit,
-  };
-  return base;
+  pins: Readonly<Record<string, string>>,
+  resolved: Readonly<Record<string, string>>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(resolved).map(([url, version]) => [url, pins[url] ?? version]),
+  );
 }

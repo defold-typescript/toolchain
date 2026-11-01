@@ -1,8 +1,8 @@
 // Library data as the data repo's archive: a moving `main.zip` revalidated by
 // ETag, unpacked once per commit, so a project can record the commit it resolved
 // against and `--frozen` can hold to it. A commit reaches this module from a
-// project's `package.json` and becomes a cache path and a URL, so it is checked
-// before either.
+// project's lockfile and becomes a cache path and a URL, so it is checked before
+// either.
 
 import { createHash } from "node:crypto";
 import {
@@ -35,7 +35,7 @@ export const LIBRARY_DATA_MAIN_URL =
 export interface ResolveLibraryDataArchiveOptions {
   readonly mainUrl: string;
   readonly cacheDir: string;
-  // The commit the project's `package.json` holds, unchecked.
+  // The commit the project's lockfile holds.
   readonly recorded: string | null;
   readonly frozen: boolean;
   // Moves a recorded commit to newer data. Without it a recorded commit holds, the
@@ -204,7 +204,7 @@ export async function resolveLibraryDataArchive(
   };
 
   // Only a data change moves a project's commit, so a commit to the data repo's
-  // docs or workflows rewrites no `package.json`. This never fails a run, which
+  // docs or workflows rewrites no lockfile. This never fails a run, which
   // already holds good data at the newest commit.
   const keepingRecorded = async (
     newest: LibraryDataArchive,
