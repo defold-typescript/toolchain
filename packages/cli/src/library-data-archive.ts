@@ -32,19 +32,42 @@ import { selectDataFolder } from "./library/data-folder";
 export const LIBRARY_DATA_MAIN_URL =
   "https://github.com/defold-typescript/library-data/archive/refs/heads/main.zip";
 
-export interface ResolveLibraryDataArchiveOptions {
+export interface LibraryDataSource {
   readonly mainUrl: string;
   readonly cacheDir: string;
+  readonly cliVersion: string;
+  readonly download?: DownloadExtensionArchive;
+  readonly readZip?: ReadExtensionZip;
+}
+
+export interface ResolveLibraryDataArchiveOptions extends LibraryDataSource {
   // The commit the project's lockfile holds.
   readonly recorded: string | null;
   readonly frozen: boolean;
   // Moves a recorded commit to newer data. Without it a recorded commit holds, the
   // way `bun install` holds its lockfile.
   readonly update?: boolean;
-  readonly cliVersion: string;
-  readonly download?: DownloadExtensionArchive;
-  readonly readZip?: ReadExtensionZip;
 }
+
+export interface LibraryDataFolder {
+  readonly dir: string;
+  readonly commit: string;
+  // The selected version folder's name.
+  readonly folder: string;
+  readonly warning?: string;
+}
+
+export interface LibraryDataUnavailable {
+  readonly dir: null;
+  readonly reason: string;
+}
+
+export type LibraryDataAtCommit = LibraryDataFolder | LibraryDataUnavailable;
+
+// `stale` is a cached copy served after a failed request, which `warning` explains.
+export type NewestLibraryData =
+  | (LibraryDataFolder & { readonly stale: boolean })
+  | LibraryDataUnavailable;
 
 // `dir` and `commit` are both set or both null. A failure is a `warning` on a
 // plain run and an `error` on a frozen one, which must not guess.
@@ -81,41 +104,18 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-// Lands by rename, so a concurrent run sees a whole commit folder or none. A
-// commit's contents never change, so a folder that landed first is as good as
-// this one.
-function unpackCommit(zip: ExtensionZip, target: string): void {
+// Lands by rename, so a concurrent run sees a whole folder or none. A commit's
+// contents never change, and neither do a folder's whose name is derived from
+// them, so a folder that landed first is as good as this one.
+export function landFolder(target: string, fill: (stage: string) => void): void {
   if (existsSync(target)) {
     return;
   }
-  const entries = zip.entries();
-  const wrapper = archiveWrapperOf(entries);
-  if (wrapper === undefined || !isContainedResourcePath(wrapper)) {
-    throw new Error("its entries do not share one top folder");
-  }
-  const files: { entry: string; path: string }[] = [];
-  for (const entry of entries) {
-    const path = entry.slice(wrapper.length + 1);
-    if (path.length === 0) {
-      continue;
-    }
-    if (!isContainedResourcePath(path.replace(/\/$/, ""))) {
-      throw new Error(`it holds the unsafe entry ${entry}`);
-    }
-    if (!path.endsWith("/")) {
-      files.push({ entry, path });
-    }
-  }
-
   const stage = `${target}.${process.pid}.partial`;
   rmSync(stage, { recursive: true, force: true });
   mkdirSync(stage, { recursive: true });
   try {
-    for (const { entry, path } of files) {
-      const out = join(stage, path);
-      mkdirSync(dirname(out), { recursive: true });
-      writeFileSync(out, zip.bytes(entry));
-    }
+    fill(stage);
     try {
       renameSync(stage, target);
     } catch (err) {
@@ -126,6 +126,34 @@ function unpackCommit(zip: ExtensionZip, target: string): void {
   } finally {
     rmSync(stage, { recursive: true, force: true });
   }
+}
+
+function unpackCommit(zip: ExtensionZip, target: string): void {
+  landFolder(target, (stage) => {
+    const entries = zip.entries();
+    const wrapper = archiveWrapperOf(entries);
+    if (wrapper === undefined || !isContainedResourcePath(wrapper)) {
+      throw new Error("its entries do not share one top folder");
+    }
+    const files: { entry: string; path: string }[] = [];
+    for (const entry of entries) {
+      const path = entry.slice(wrapper.length + 1);
+      if (path.length === 0) {
+        continue;
+      }
+      if (!isContainedResourcePath(path.replace(/\/$/, ""))) {
+        throw new Error(`it holds the unsafe entry ${entry}`);
+      }
+      if (!path.endsWith("/")) {
+        files.push({ entry, path });
+      }
+    }
+    for (const { entry, path } of files) {
+      const out = join(stage, path);
+      mkdirSync(dirname(out), { recursive: true });
+      writeFileSync(out, zip.bytes(entry));
+    }
+  });
 }
 
 // Each file's length is hashed before its bytes, so bytes that read like the next
@@ -144,64 +172,127 @@ export function dataFolderDigest(dir: string): string {
   return hash.digest("hex");
 }
 
+const commitDirOf = (cacheDir: string, commit: string) => join(cacheDir, "commits", commit);
+
+function readCommit(
+  source: LibraryDataSource,
+  commit: string,
+  warning?: string,
+): LibraryDataAtCommit {
+  const { cacheDir, cliVersion } = source;
+  const dir = selectDataFolder(join(commitDirOf(cacheDir, commit), "data"), cliVersion);
+  if (dir === null) {
+    return {
+      dir: null,
+      reason: `library data commit ${commit} holds no folder for CLI ${cliVersion}`,
+    };
+  }
+  return { dir, commit, folder: basename(dir), ...(warning === undefined ? {} : { warning }) };
+}
+
+async function readArchive(
+  source: LibraryDataSource,
+  url: string,
+  archivePath: string,
+  expected: string | null,
+  warning?: string,
+): Promise<LibraryDataAtCommit> {
+  const open = source.readZip ?? defaultReadZip;
+  let commit: string;
+  try {
+    const zip = await open(archivePath);
+    commit = zip.comment();
+    if (!COMMIT_COMMENT.test(commit)) {
+      return { dir: null, reason: `the archive at ${url} names no commit in its comment` };
+    }
+    if (expected !== null && commit !== expected) {
+      return { dir: null, reason: `the archive at ${url} holds commit ${commit}, not ${expected}` };
+    }
+    unpackCommit(zip, commitDirOf(source.cacheDir, commit));
+  } catch (err) {
+    return { dir: null, reason: `could not unpack the archive at ${url}: ${errorMessage(err)}` };
+  }
+  return readCommit(source, commit, warning);
+}
+
+export async function fetchNewestLibraryData(
+  source: LibraryDataSource,
+): Promise<NewestLibraryData> {
+  const { mainUrl, cacheDir } = source;
+  try {
+    const { archivePath, warning } = await cachedOrDownloaded(
+      mainUrl,
+      cacheDir,
+      source.download ?? fetchExtensionArchive,
+    );
+    const read = await readArchive(source, mainUrl, archivePath, null, warning);
+    return read.dir === null ? read : { ...read, stale: warning !== undefined };
+  } catch (err) {
+    return {
+      dir: null,
+      reason: `could not download ${mainUrl} and nothing is cached: ${errorMessage(err)}`,
+    };
+  }
+}
+
+export async function libraryDataAtCommit(
+  source: LibraryDataSource,
+  commit: string,
+): Promise<LibraryDataAtCommit> {
+  if (!COMMIT_COMMENT.test(commit)) {
+    return { dir: null, reason: `${commit} is not a library data commit` };
+  }
+  if (existsSync(commitDirOf(source.cacheDir, commit))) {
+    return readCommit(source, commit);
+  }
+  const url = libraryDataCommitUrl(commit, source.mainUrl);
+  try {
+    const { archivePath, warning } = await cachedOrDownloaded(
+      url,
+      source.cacheDir,
+      source.download ?? fetchExtensionArchive,
+    );
+    return await readArchive(source, url, archivePath, commit, warning);
+  } catch (err) {
+    return { dir: null, reason: `could not download ${url}: ${errorMessage(err)}` };
+  }
+}
+
 export async function resolveLibraryDataArchive(
   opts: ResolveLibraryDataArchiveOptions,
 ): Promise<LibraryDataArchive> {
-  const { mainUrl, cacheDir, frozen, cliVersion } = opts;
+  const { mainUrl, cacheDir, frozen } = opts;
   const download = opts.download ?? fetchExtensionArchive;
-  const open = opts.readZip ?? defaultReadZip;
   const recorded =
     opts.recorded !== null && COMMIT_COMMENT.test(opts.recorded) ? opts.recorded : null;
-  const commitDir = (commit: string) => join(cacheDir, "commits", commit);
+  const commitDir = (commit: string) => commitDirOf(cacheDir, commit);
 
   const unavailable = (message: string): LibraryDataArchive =>
     frozen
       ? { dir: null, commit: null, error: message }
       : { dir: null, commit: null, warning: message };
 
-  const fromCommit = (commit: string, warning?: string): LibraryDataArchive => {
-    const dir = selectDataFolder(join(commitDir(commit), "data"), cliVersion);
-    if (dir === null) {
-      return unavailable(`library data commit ${commit} holds no folder for CLI ${cliVersion}`);
-    }
-    return { dir, commit, ...(warning === undefined ? {} : { warning }) };
-  };
+  const archiveOf = (read: LibraryDataAtCommit): LibraryDataArchive =>
+    read.dir === null
+      ? unavailable(read.reason)
+      : {
+          dir: read.dir,
+          commit: read.commit,
+          ...(read.warning === undefined ? {} : { warning: read.warning }),
+        };
+
+  const fromCommit = (commit: string, warning?: string): LibraryDataArchive =>
+    archiveOf(readCommit(opts, commit, warning));
 
   const fromArchive = async (
     url: string,
     archivePath: string,
-    expected: string | null,
     warning?: string,
-  ): Promise<LibraryDataArchive> => {
-    let commit: string;
-    try {
-      const zip = await open(archivePath);
-      commit = zip.comment();
-      if (!COMMIT_COMMENT.test(commit)) {
-        return unavailable(`the archive at ${url} names no commit in its comment`);
-      }
-      if (expected !== null && commit !== expected) {
-        return unavailable(`the archive at ${url} holds commit ${commit}, not ${expected}`);
-      }
-      unpackCommit(zip, commitDir(commit));
-    } catch (err) {
-      return unavailable(`could not unpack the archive at ${url}: ${errorMessage(err)}`);
-    }
-    return fromCommit(commit, warning);
-  };
+  ): Promise<LibraryDataArchive> =>
+    archiveOf(await readArchive(opts, url, archivePath, null, warning));
 
-  const fromCommitUrl = async (commit: string): Promise<LibraryDataArchive> => {
-    if (existsSync(commitDir(commit))) {
-      return fromCommit(commit);
-    }
-    const url = libraryDataCommitUrl(commit, mainUrl);
-    try {
-      const { archivePath, warning } = await cachedOrDownloaded(url, cacheDir, download);
-      return await fromArchive(url, archivePath, commit, warning);
-    } catch (err) {
-      return unavailable(`could not download ${url}: ${errorMessage(err)}`);
-    }
-  };
+  const fromCommitUrl = async (commit: string): Promise<LibraryDataArchive> =>
+    archiveOf(await libraryDataAtCommit(opts, commit));
 
   // Only a data change moves a project's commit, so a commit to the data repo's
   // docs or workflows rewrites no lockfile. This never fails a run, which
@@ -235,9 +326,7 @@ export async function resolveLibraryDataArchive(
     try {
       const { archivePath, warning } = await cachedOrDownloaded(mainUrl, cacheDir, download);
       newest =
-        warning === undefined
-          ? await fromArchive(mainUrl, archivePath, null)
-          : unavailable(warning);
+        warning === undefined ? await fromArchive(mainUrl, archivePath) : unavailable(warning);
     } catch (err) {
       newest = unavailable(
         `could not download ${mainUrl} and nothing is cached: ${errorMessage(err)}`,
@@ -293,7 +382,7 @@ export async function resolveLibraryDataArchive(
     if (warning !== undefined && recordedCached) {
       return fromCommit(recorded, warning);
     }
-    return await keepingRecorded(await fromArchive(mainUrl, archivePath, null, warning), warning);
+    return await keepingRecorded(await fromArchive(mainUrl, archivePath, warning), warning);
   } catch (err) {
     const message = errorMessage(err);
     if (recordedCached) {
