@@ -219,8 +219,9 @@ is missing and a warning would be noise.
 
 `resolve` fetches the library data repo's `main` on its own schedule, with no CLI
 release involved, and asks the server whether it changed since the copy it stored
-(by `ETag`). It records the commit it read in `package.json`, under
-`"defold-typescript"`:
+(by `ETag`). It records the commit it reads in `package.json`, under
+`"defold-typescript"`, and follows that commit the way `bun install` follows its
+lockfile:
 
 ```json
 {
@@ -230,13 +231,25 @@ release involved, and asks the server whether it changed since the copy it store
 }
 ```
 
-- **A plain `resolve`** moves `libraryData` to the newest commit whose data folder
+- **The first `resolve`** records the newest commit.
+- **A plain `resolve` or `watch`** holds the recorded commit and prints from it.
+  When newer data changes or drops a library the project uses, it prints a notice
+  naming the library. A change to any other library says nothing.
+- **Two cases move the commit on their own**, each with a notice. One commit covers
+  every library, so a dependency only newer data covers moves it, because holding
+  would leave that library untyped. A recorded commit this CLI cannot read moves it
+  too: one that holds no folder for this CLI or cannot be fetched, or one a CLI
+  upgrade has left behind a newer data folder.
+- **`resolve --update`** moves `libraryData` to the newest commit whose data folder
   differs from the recorded one. A commit that changes nothing in that folder
   leaves it in place.
 - **`resolve --frozen`** holds to the recorded commit and fails when none is
   recorded; run a plain `resolve` first and commit the result.
-- **Offline**, a plain `resolve` uses the copy it stored and warns on `stderr`.
-  With nothing stored it warns and prints no library declarations.
+- **Offline**, a plain `resolve` uses the recorded commit with no warning when it
+  is stored. When it is not, `resolve` warns and prints no library declarations,
+  because the commit never moves to data it could not check. With nothing recorded
+  it uses the copy of `main` it stored and warns on `stderr`, and with nothing
+  stored it warns and prints no library declarations.
 
 A project with no dependencies fetches nothing and records nothing. Data lands in
 the `library-data` folder beside the archive cache described in
@@ -365,6 +378,9 @@ normally.
 - `--frozen` — treat the committed pin set as a lockfile: exit non-zero on drift
   or on a pin in the retired `sha256:` form (so CI gates the upgrade) and write
   nothing. See [Pinning extension versions](#pinning-extension-versions).
+- `--update` — move the recorded library data commit to the newest data. See
+  [Library data](#library-data). It cannot be combined with `--frozen` or
+  `--library-data`.
 - `--library-data <dir>` — read library data from `<dir>` instead of the
   [library data repo](#library-data), with no request for it and no commit
   recorded. `<dir>` holds version-named data folders and is chosen from by the
@@ -376,7 +392,8 @@ normally.
   `resolvedVersion`, `pinnedVersion`, `pinStatus`, `sceneSources`; and a `libraries` array with
   each match's `source`, `modules`, `provenance`, and `verified`; plus a
   `sharedNamespaces` array, present only when a namespace was merged, giving each
-  merged `namespace` and the `urls` that declare it).
+  merged `namespace` and the `urls` that declare it; and a `notices` array, present
+  only when there is one, holding the [library data](#library-data) notices).
 
 ## Pinning extension versions
 

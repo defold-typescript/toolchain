@@ -46,6 +46,17 @@ function readLibraryDataOrNone(dataDir: string | null): LibraryData[] {
   }
 }
 
+// Reading each `library.json` covers every lane, native included. A folder that
+// stops the registry loading reads as no libraries, so a run on it cannot hold a
+// dependency it could not type.
+export function librariesForDependencies(
+  dataDir: string | null,
+  urls: readonly string[],
+): LibraryData[] {
+  const used = new Set(urls.map(normalizeSourceId));
+  return readLibraryDataOrNone(dataDir).filter(({ repo }) => used.has(normalizeSourceId(repo)));
+}
+
 // A native extension ships C++ and no Lua module, so it is matched by source id
 // and confirmed by the `<manifestDir>/ext.manifest` its archive ships rather than
 // by a require path. Its declaration is a curated ambient namespace the resolver

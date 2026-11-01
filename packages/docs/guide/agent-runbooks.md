@@ -224,7 +224,8 @@ When several dependencies declare one namespace, each of their `extensions[]`
 entries lists it, and a `sharedNamespaces` array names it once with the `urls`
 that declare it, in `[dependencies]` order:
 `"sharedNamespaces": [{ "namespace": "firebase", "urls": ["…/extension-firebase/archive/main.zip", "…/extension-firebase-analytics/archive/main.zip"] }]`.
-The key is absent when no namespace is shared.
+The key is absent when no namespace is shared. A `notices` array holds the
+[library data notices](./resolve.md#library-data), and is absent when there are none.
 
 ## Offline knowledge pack
 

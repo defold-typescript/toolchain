@@ -34,7 +34,8 @@ their shape, so the [VS Code problem matcher](./transpile-diagnostics.md) that
   `resolve` pin drift is an `error` under `--frozen`, because the run then
   fails.
 - **no word** — progress, results, and advisory notices such as the
-  [pin check](./pinning-defold-target.md) and a newer upstream Defold release.
+  [pin check](./pinning-defold-target.md), a newer upstream Defold release, and the
+  [library data notice](./resolve.md#library-data).
 
 ## Defold editor console lines
 
