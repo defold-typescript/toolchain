@@ -2,9 +2,9 @@ import { readCliVersion } from "../packages/cli/src/cli-version.ts";
 import type { DownloadExtensionArchive } from "../packages/cli/src/extension-archive.ts";
 import { checkLibraryData } from "../packages/cli/src/library/library-check.ts";
 import {
+  fetchNewestLibraryData,
   LIBRARY_DATA_MAIN_URL,
   libraryDataCacheDir,
-  resolveLibraryDataArchive,
 } from "../packages/cli/src/library-data-archive.ts";
 
 // Runs `library check` with this working tree's CLI against the data repo's live
@@ -20,23 +20,24 @@ export interface LiveLibraryCheckOptions {
 
 export async function runLiveLibraryCheck(opts: LiveLibraryCheckOptions): Promise<number> {
   const { download, cacheDir, cliVersion, write } = opts;
-  const { dir, commit, warning, error } = await resolveLibraryDataArchive({
+  const newest = await fetchNewestLibraryData({
     mainUrl: LIBRARY_DATA_MAIN_URL,
     cacheDir,
-    recorded: null,
-    frozen: false,
     cliVersion,
     ...(download === undefined ? {} : { download }),
   });
 
-  // A warning means the run fell back to a cached copy or found no data, and a gate
-  // that checks a stale copy would pass on data it never saw.
-  const unread = error ?? warning;
-  if (unread !== undefined || dir === null) {
-    write(`library check: ${unread ?? `no library data for CLI ${cliVersion}`}\n`);
+  // A gate that checks a stale copy would pass on data it never saw.
+  if (newest.dir === null) {
+    write(`library check: ${newest.reason}\n`);
+    return 1;
+  }
+  if (newest.stale) {
+    write(`library check: ${newest.warning}\n`);
     return 1;
   }
 
+  const { dir, commit } = newest;
   const problems = await checkLibraryData(dir);
   for (const { library, check, message } of problems) {
     write(`${library}: ${check}: ${message}\n`);

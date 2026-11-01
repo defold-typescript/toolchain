@@ -15,9 +15,9 @@ import { readCliVersion } from "./cli-version";
 import type { DownloadExtensionArchive, ReadExtensionZip } from "./extension-archive";
 import { printLibraryModules } from "./library/print-library";
 import {
+  fetchNewestLibraryData,
   LIBRARY_DATA_MAIN_URL,
   libraryDataCacheDir,
-  resolveLibraryDataArchive,
 } from "./library-data-archive";
 import { normalizeSourceId } from "./library-match";
 import { loadVendoredLibraryRegistry, loadVendoredNativeRegistry } from "./library-registry";
@@ -116,18 +116,16 @@ function existingShippedFiles(
 // An export holds to no project's recorded commit, so it reads the newest data.
 function selectLibraryData(
   opts: RunExportTypesOptions,
-): Promise<{ readonly dir: string | null; readonly warning?: string }> {
+): Promise<{ readonly dir: string | null; readonly reason?: string }> {
   if (opts.libraryDataDir !== undefined) {
     return Promise.resolve({ dir: opts.libraryDataDir });
   }
-  return resolveLibraryDataArchive({
+  return fetchNewestLibraryData({
     mainUrl: LIBRARY_DATA_MAIN_URL,
     cacheDir:
       opts.cacheDir === undefined
         ? libraryDataCacheDir()
         : path.join(opts.cacheDir, "library-data"),
-    recorded: null,
-    frozen: false,
     cliVersion: readCliVersion(),
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
@@ -136,10 +134,10 @@ function selectLibraryData(
 
 export async function runExportTypes(opts: RunExportTypesOptions): Promise<RunExportTypesResult> {
   const sourceId = normalizeSourceId(opts.library);
-  const { dir: root, warning } = await selectLibraryData(opts);
-  const sources = sourceId === "" ? [] : await curatedFiles(sourceId, root);
+  const data = await selectLibraryData(opts);
+  const sources = sourceId === "" ? [] : await curatedFiles(sourceId, data.dir);
   if (sources.length === 0) {
-    const why = root === null && warning !== undefined ? `: ${warning}` : "";
+    const why = data.reason === undefined ? "" : `: ${data.reason}`;
     throw new Error(`no curated types for "${opts.library}"${why}`);
   }
 
