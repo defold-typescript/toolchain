@@ -21,6 +21,7 @@ import {
   type ExtensionZip,
   extensionArchiveKey,
 } from "./extension-archive";
+import { type ArchiveIdentity, archiveIdentity } from "./extension-version";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printLibraryModules } from "./library/print-library";
 import { readNativeTargets } from "./library/sync-native-types";
@@ -69,6 +70,8 @@ const someBytes: DownloadExtensionArchive = async () => ({
 // The commit a GitHub archive names in its zip comment.
 const COMMIT = "5c33c398e3c1d3ab3c0ee0d5f8f45c4c7c4e0b21";
 const OTHER_COMMIT = "0123456789abcdef0123456789abcdef01234567";
+const SOME_FILES = "a".repeat(64);
+const anyFiles = expect.stringMatching(/^[0-9a-f]{64}$/) as unknown as string;
 
 function makeReadZip(byKey: Record<string, FakeArchive>): (zipPath: string) => ExtensionZip {
   return (zipPath: string) => {
@@ -91,12 +94,12 @@ function makeReadZip(byKey: Record<string, FakeArchive>): (zipPath: string) => E
   };
 }
 
-function writePins(cwd: string, pins: Record<string, string>): string {
+function writePins(cwd: string, pins: Record<string, ArchiveIdentity>): string {
   writeProjectLock(cwd, { extensions: pins });
   return join(cwd, PROJECT_LOCK_FILE);
 }
 
-function readPins(cwd: string): Readonly<Record<string, string>> | undefined {
+function readPins(cwd: string): Readonly<Record<string, ArchiveIdentity>> | undefined {
   const read = readProjectLock(cwd);
   return read.status === "ok" ? read.lock.extensions : undefined;
 }
@@ -148,6 +151,7 @@ describe("runResolve", () => {
         sceneSources: 0,
         assetOnly: false,
         resolvedVersion: expect.stringMatching(/^files-sha256:[0-9a-f]{64}$/) as unknown as string,
+        resolvedFiles: anyFiles,
         pinStatus: "unpinned",
       },
     ]);
@@ -185,6 +189,7 @@ describe("runResolve", () => {
         sceneSources: 0,
         assetOnly: true,
         resolvedVersion: expect.stringMatching(/^files-sha256:[0-9a-f]{64}$/) as unknown as string,
+        resolvedFiles: anyFiles,
         pinStatus: "unpinned",
       },
     ]);
@@ -194,7 +199,8 @@ describe("runResolve", () => {
     const cwd = tmp();
     const url = "https://example.com/alpha.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
-    writePins(cwd, { [url]: `commit:${OTHER_COMMIT}` });
+    const pinned = { commit: OTHER_COMMIT, files: SOME_FILES };
+    writePins(cwd, { [url]: pinned });
     const byKey: Record<string, FakeArchive> = {
       [extensionArchiveKey(url)]: {
         entries: ["ext/api/alpha.script_api"],
@@ -217,7 +223,7 @@ describe("runResolve", () => {
     expect(report?.resolvedVersion).toBe(`commit:${COMMIT}`);
     expect(report?.pinnedVersion).toBe(`commit:${OTHER_COMMIT}`);
     expect(report?.pinStatus).toBe("drift");
-    expect(readPins(cwd)).toEqual({ [url]: `commit:${OTHER_COMMIT}` });
+    expect(readPins(cwd)).toEqual({ [url]: pinned });
   });
 
   test("reports pinStatus:match when the pin equals the resolved archive digest", async () => {
@@ -242,7 +248,7 @@ describe("runResolve", () => {
     expect(matchingDigest).toMatch(/^files-sha256:[0-9a-f]{64}$/);
 
     // Re-run with a lockfile that pins the same digest
-    writePins(cwd, { [url]: matchingDigest });
+    writePins(cwd, { [url]: { files: first.extensions[0]?.resolvedFiles as string } });
     const second = await runResolve({
       libraryDataDir: null,
       cwd,
@@ -289,8 +295,9 @@ describe("runResolve", () => {
   describe("the project lockfile", () => {
     const url = "https://example.com/alpha.zip";
     const orphanUrl = "https://example.com/gone.zip";
-    const livePin = `files-sha256:${"b".repeat(64)}`;
-    const orphanPin = `commit:${OTHER_COMMIT}`;
+    const livePin = { files: "b".repeat(64) };
+    const orphanPin = { commit: OTHER_COMMIT, files: SOME_FILES };
+    const recorded = { commit: COMMIT, files: anyFiles };
     const byKey: Record<string, FakeArchive> = {
       [extensionArchiveKey(url)]: {
         entries: ["ext/api/alpha.script_api"],
@@ -346,7 +353,7 @@ describe("runResolve", () => {
       const result = await run(cwd);
 
       expect(result.ok).toBe(true);
-      expect(readPins(cwd)).toEqual({ [url]: `commit:${COMMIT}` });
+      expect(readPins(cwd)).toEqual({ [url]: recorded });
       expect(readFileSync(pkgPath, "utf8")).toBe(original);
       expect(statSync(pkgPath).mtimeMs).toBe(old.getTime());
     });
@@ -356,7 +363,7 @@ describe("runResolve", () => {
 
       await run(cwd);
 
-      expect(readPins(cwd)).toEqual({ [url]: `commit:${COMMIT}` });
+      expect(readPins(cwd)).toEqual({ [url]: recorded });
       expect(existsSync(join(cwd, "package.json"))).toBe(false);
     });
 
@@ -368,7 +375,7 @@ describe("runResolve", () => {
       const result = await run(cwd);
 
       expect(result.ok).toBe(true);
-      expect(readPins(cwd)).toEqual({ [url]: `commit:${COMMIT}` });
+      expect(readPins(cwd)).toEqual({ [url]: recorded });
       expect(readFileSync(pkgPath, "utf8")).toBe("{ not json");
     });
 
@@ -386,7 +393,7 @@ describe("runResolve", () => {
       const result = await run(cwd);
 
       expect(result.extensions[0]?.pinStatus).toBe("unpinned");
-      expect(readPins(cwd)).toEqual({ [url]: `commit:${COMMIT}` });
+      expect(readPins(cwd)).toEqual({ [url]: recorded });
       expect(readFileSync(pkgPath, "utf8")).toBe(original);
     });
 
@@ -519,7 +526,10 @@ describe("runResolve", () => {
 
     test("a frozen run passes over an undeclared URL's pin and never prunes it", async () => {
       const cwd = dependentProject();
-      writePins(cwd, { [url]: `commit:${COMMIT}`, [orphanUrl]: orphanPin });
+      const fetched = archiveIdentity(
+        makeReadZip(byKey)(join(extensionArchiveKey(url), "archive.zip")),
+      );
+      writePins(cwd, { [url]: fetched, [orphanUrl]: orphanPin });
       const before = lockBytes(cwd);
 
       const result = await run(cwd, { freeze: true });
@@ -531,7 +541,7 @@ describe("runResolve", () => {
 
     test("a frozen run reports drift and writes nothing", async () => {
       const cwd = dependentProject();
-      writePins(cwd, { [url]: `commit:${OTHER_COMMIT}` });
+      writePins(cwd, { [url]: orphanPin });
       const before = lockBytes(cwd);
 
       const result = await run(cwd, { freeze: true });
@@ -584,6 +594,128 @@ describe("runResolve", () => {
 
     expect(result.ok).toBe(false);
     expect(result.error).toBeDefined();
+  });
+});
+
+describe("runResolve pins an archive by its commit and its files", () => {
+  const URL = "https://github.com/owner/mylib/archive/main.zip";
+
+  const archive = (commit: string, lua: string, example = "-- example\n"): Uint8Array =>
+    writeZipArchive(
+      [
+        {
+          name: "mylib-main/game.project",
+          text: "[project]\ntitle = mylib\n\n[library]\ninclude_dirs = mylib\n",
+        },
+        { name: "mylib-main/mylib/core.lua", text: lua },
+        { name: "mylib-main/example/example.script", text: example },
+      ],
+      { comment: commit },
+    );
+
+  const run = (
+    cwd: string,
+    bytes: Uint8Array,
+    options: Partial<RunResolveOptions> = {},
+  ): ReturnType<typeof runResolve> =>
+    runResolve({
+      libraryDataDir: null,
+      cwd,
+      cacheDir: tmp(),
+      download: async () => ({ status: "ok", bytes }),
+      ...options,
+    });
+
+  async function pinned(bytes: Uint8Array): Promise<string> {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${URL}\n`);
+    await run(cwd, bytes);
+    return cwd;
+  }
+
+  const lockBytes = (cwd: string) => readFileSync(join(cwd, PROJECT_LOCK_FILE), "utf8");
+  const BASE = archive(COMMIT, "return {}\n");
+  const EDITED = archive(COMMIT, "return { edited = true }\n");
+
+  test("a new commit's first record writes both fields", async () => {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${URL}\n`);
+
+    const result = await run(cwd, BASE);
+
+    const report = result.extensions[0];
+    expect(report?.pinStatus).toBe("unpinned");
+    expect(report?.resolvedVersion).toBe(`commit:${COMMIT}`);
+    expect(report?.resolvedFiles).toMatch(/^[0-9a-f]{64}$/);
+    expect(readPins(cwd)).toEqual({
+      [URL]: { commit: COMMIT, files: report?.resolvedFiles as string },
+    });
+  });
+
+  test("the same bytes under the same commit match", async () => {
+    const cwd = await pinned(BASE);
+
+    const result = await run(cwd, BASE);
+
+    expect(result.extensions[0]?.pinStatus).toBe("match");
+    expect(result.extensions[0]?.pinnedFiles).toBe(result.extensions[0]?.resolvedFiles as string);
+  });
+
+  test("a change outside what a game can use matches", async () => {
+    const cwd = await pinned(BASE);
+
+    const result = await run(cwd, archive(COMMIT, "return {}\n", "-- edited\n"));
+
+    expect(result.extensions[0]?.pinStatus).toBe("match");
+  });
+
+  test("changed files under an unchanged commit drift, and the entry is kept", async () => {
+    const cwd = await pinned(BASE);
+    const before = lockBytes(cwd);
+
+    const result = await run(cwd, EDITED);
+
+    const report = result.extensions[0];
+    expect(report?.pinStatus).toBe("drift");
+    expect(report?.pinnedVersion).toBe(`commit:${COMMIT}`);
+    expect(report?.resolvedVersion).toBe(`commit:${COMMIT}`);
+    expect(report?.pinnedFiles).not.toBe(report?.resolvedFiles as string);
+    expect(lockBytes(cwd)).toBe(before);
+  });
+
+  test("a frozen run reports the same drift and writes nothing", async () => {
+    const cwd = await pinned(BASE);
+    const before = lockBytes(cwd);
+
+    const result = await run(cwd, EDITED, { freeze: true });
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.pinStatus).toBe("drift");
+    expect(lockBytes(cwd)).toBe(before);
+  });
+
+  test("a changed commit over identical files drifts", async () => {
+    const cwd = await pinned(BASE);
+
+    const result = await run(cwd, archive(OTHER_COMMIT, "return {}\n"));
+
+    const report = result.extensions[0];
+    expect(report?.pinStatus).toBe("drift");
+    expect(report?.pinnedVersion).toBe(`commit:${COMMIT}`);
+    expect(report?.resolvedVersion).toBe(`commit:${OTHER_COMMIT}`);
+    expect(report?.pinnedFiles).toBe(report?.resolvedFiles as string);
+  });
+
+  test("--update accepts changed files under an unchanged commit", async () => {
+    const cwd = await pinned(BASE);
+
+    const result = await run(cwd, EDITED, { update: true });
+
+    const report = result.extensions[0];
+    expect(report?.pinStatus).toBe("match");
+    expect(readPins(cwd)).toEqual({
+      [URL]: { commit: COMMIT, files: report?.resolvedFiles as string },
+    });
   });
 });
 
@@ -2447,6 +2579,7 @@ describe("runResolve with a library data archive", () => {
   const DEP_URL = "https://github.com/owner/mylib/archive/main.zip";
   const ONE = "1111111111111111111111111111111111111111";
   const TWO = "2222222222222222222222222222222222222222";
+  const DEP_PIN = { commit: "3".repeat(40), files: SOME_FILES };
   const declares = (version: string) =>
     `declare module "mylib.core" {\n  export const version: "${version}";\n}\n`;
   const DEPENDENCY = writeZipArchive(
@@ -2542,7 +2675,10 @@ describe("runResolve with a library data archive", () => {
     expect(result.ok).toBe(true);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
     expect(namespaceOf(cwd).libraryData).toEqual({ shared: ONE, libraries: { mylib: ONE } });
-    expect(namespaceOf(cwd).extensions?.[DEP_URL]).toStartWith("commit:");
+    expect(namespaceOf(cwd).extensions?.[DEP_URL]).toEqual({
+      commit: "3".repeat(40),
+      files: anyFiles,
+    });
   });
 
   test("--update against a newer archive moves the library's pin and prints from it", async () => {
@@ -2880,7 +3016,7 @@ describe("runResolve with a library data archive", () => {
 
   test("a frozen run with no recorded library data fails and asks for a plain resolve", async () => {
     const cwd = project();
-    writeProjectLock(cwd, { extensions: { [DEP_URL]: `commit:${"3".repeat(40)}` } });
+    writeProjectLock(cwd, { extensions: { [DEP_URL]: DEP_PIN } });
     const { download, requests } = serving(dataArchive(ONE, declares("one")));
 
     const result = await runResolve({
@@ -2900,7 +3036,7 @@ describe("runResolve with a library data archive", () => {
   test("a frozen run whose pinned commit lacks a declared library fails, naming it", async () => {
     const cwd = project();
     writeProjectLock(cwd, {
-      extensions: { [DEP_URL]: `commit:${"3".repeat(40)}` },
+      extensions: { [DEP_URL]: DEP_PIN },
       libraryData: { shared: ONE, libraries: { mylib: ONE } },
     });
     const without = packDataFolder(ONE, writeAuthoredLibraryData({ "other.core": "// other\n" }));
@@ -2925,8 +3061,8 @@ describe("runResolve with a library data archive", () => {
     writeProject(cwd, `[project]\ndependencies#0 = ${DEP_URL}\ndependencies#1 = ${OTHER_URL}\n`);
     writeProjectLock(cwd, {
       extensions: {
-        [DEP_URL]: `commit:${"3".repeat(40)}`,
-        [OTHER_URL]: `commit:${"3".repeat(40)}`,
+        [DEP_URL]: DEP_PIN,
+        [OTHER_URL]: DEP_PIN,
       },
       libraryData: { shared: ONE, libraries: { mylib: ONE, other: TWO } },
     });
@@ -2975,7 +3111,7 @@ describe("runResolve with a library data archive", () => {
     };
     writeProjectLock(cwd, {
       ...lock,
-      extensions: { [DEP_URL]: `commit:${"3".repeat(40)}` },
+      extensions: { [DEP_URL]: DEP_PIN },
     });
     const { download, requests } = serving(dataArchive(ONE, declares("one")));
 
@@ -2993,8 +3129,8 @@ describe("runResolve with a library data archive", () => {
   });
 
   describe("--update accepts extension drift", () => {
-    const OLD_PIN = `commit:${"9".repeat(40)}`;
-    const FETCHED_PIN = `commit:${"3".repeat(40)}`;
+    const OLD_PIN = { commit: "9".repeat(40), files: SOME_FILES };
+    const FETCHED_PIN = { commit: "3".repeat(40), files: anyFiles };
     const OTHER_URL = "https://github.com/owner/other/archive/main.zip";
     const OTHER = writeZipArchive([{ name: "other-main/asset/foo.png", text: "png" }], {
       comment: "4".repeat(40),
@@ -3024,15 +3160,15 @@ describe("runResolve with a library data archive", () => {
     test("a plain run keeps the pin and reports the drift", async () => {
       const { lock, statusOf } = await drifted();
 
-      expect(lock[DEP_URL]).toBe(OLD_PIN);
+      expect(lock[DEP_URL]).toEqual(OLD_PIN);
       expect(statusOf(DEP_URL)).toBe("drift");
     });
 
     test("--update takes the fetched value on every URL and reports no drift", async () => {
       const { lock, statusOf } = await drifted(true);
 
-      expect(lock[DEP_URL]).toBe(FETCHED_PIN);
-      expect(lock[OTHER_URL]).toBe(`commit:${"4".repeat(40)}`);
+      expect(lock[DEP_URL]).toEqual(FETCHED_PIN);
+      expect(lock[OTHER_URL]).toEqual({ commit: "4".repeat(40), files: anyFiles });
       expect(statusOf(DEP_URL)).toBe("match");
       expect(statusOf(OTHER_URL)).toBe("match");
     });
@@ -3040,8 +3176,8 @@ describe("runResolve with a library data archive", () => {
     test("--update=<name> does this for that URL alone", async () => {
       const { lock, statusOf } = await drifted(["mylib"]);
 
-      expect(lock[DEP_URL]).toBe(FETCHED_PIN);
-      expect(lock[OTHER_URL]).toBe(OLD_PIN);
+      expect(lock[DEP_URL]).toEqual(FETCHED_PIN);
+      expect(lock[OTHER_URL]).toEqual(OLD_PIN);
       expect(statusOf(DEP_URL)).toBe("match");
       expect(statusOf(OTHER_URL)).toBe("drift");
     });

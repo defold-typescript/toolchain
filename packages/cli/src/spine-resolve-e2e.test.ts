@@ -122,6 +122,7 @@ describe("extension-spine resolves and its materialized types are usable end to 
         sceneSources: 0,
         assetOnly: false,
         resolvedVersion: expect.stringMatching(/^files-sha256:[0-9a-f]{64}$/) as unknown as string,
+        resolvedFiles: expect.stringMatching(/^[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
       },
     ]);

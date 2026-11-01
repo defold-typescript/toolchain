@@ -415,7 +415,7 @@ normally.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
-  `resolvedVersion`, `pinnedVersion`, `pinStatus`, `sceneSources`; and a `libraries` array with
+  `resolvedVersion`, `resolvedFiles`, `pinnedVersion`, `pinnedFiles`, `pinStatus`, `sceneSources`; and a `libraries` array with
   each match's `source`, `modules`, `provenance`, and `verified`; plus a
   `sharedNamespaces` array, present only when a namespace was merged, giving each
   merged `namespace` and the `urls` that declare it; and a `notices` array, present
@@ -425,14 +425,14 @@ normally.
 
 A `dependencies#N` URL is often a **moving** ref (`.../archive/master.zip`) — the
 same URL can yield a different commit over time. So the reproducible identity of
-*what was actually resolved* is pinned in one of two forms, never a URL segment:
+*what was actually resolved* is pinned by two fields, never a URL segment:
 
-- **`commit:<sha>`** — the commit the archive was packed from. A GitHub archive
-  of a branch, a tag or a commit names it in its zip comment.
-- **`files-sha256:<hex>`** — for an archive without a commit in its comment, a
-  sha256 over the files under its `game.project` `[library] include_dirs` (every
-  file when it declares none), each by its path inside the library. A change
-  elsewhere in the repository leaves the pin as it is.
+- **`commit`** — the commit the archive was packed from. A GitHub archive of a
+  branch, a tag or a commit names it in its zip comment.
+- **`files`** — a sha256 over the files a game can use: those under its
+  `game.project` `[library] include_dirs` (every file when it declares none), each
+  by its path inside the library. A change elsewhere in the repository, or a
+  renamed wrapper folder, leaves it as it is.
 
 `resolve` records that pin as the dependency's version in the project's
 [`defold-typescript.lock`](#the-lockfile) when absent, never clobbering an existing
@@ -442,17 +442,24 @@ pin:
 {
   "version": 1,
   "extensions": {
-    "https://github.com/defold/extension-iap/archive/main.zip": "commit:5c33c398…"
+    "https://github.com/defold/extension-iap/archive/main.zip": { "commit": "5c33c398…", "files": "e3b0c442…" }
   }
 }
 ```
 
+An archive with no commit in its comment has `files` alone. The comment is only a
+claim, which a host other than GitHub or a tampered cache can keep, so `files` is what
+shows that the bytes changed under the same commit. Neither field proves that a commit
+belongs to its repo, or that its code is safe. `--json` and the drift line name a pin
+as `commit:<sha>`, or as `files-sha256:<hex>` when it has no commit.
+
 A committed pin is human-owned intent. When the URL later yields another commit
-or other files, the fresh pin no longer matches and `resolve` reports **drift**,
-gated by two knobs:
+or other files, either field differing means the fresh pin no longer matches and
+`resolve` reports **drift**, gated by two knobs:
 
 - **Default (no flag)** — warns on drift, writing one `stderr` line per drifted
-  URL (e.g. `pin drift for https://...: commit:5c33c398… -> commit:9f1e0a27…`) but
+  URL, either `pin drift for https://...: commit:5c33c398… -> commit:9f1e0a27…` or
+  `pin drift for https://...: files changed under commit:5c33c398…`, but
   exits `0`, so drift surfaces on a developer's machine without breaking scripted
   runs. Absent pins are seeded; existing pins are never clobbered; and a pin whose
   URL is no longer declared in `[dependencies]` is pruned, so the pin map tracks
@@ -466,7 +473,8 @@ gated by two knobs:
 
 Either way `resolve` still materializes the surface for the drifted dependencies;
 only the lockfile write and the exit code are gated. `--json` reports `pinStatus`
-per extension (`unpinned` / `match` / `drift`).
+per extension (`unpinned` / `match` / `drift`), with `resolvedFiles` and `pinnedFiles`
+beside the two version strings.
 
 ### The lockfile
 
@@ -479,7 +487,8 @@ Each entry sits on its own line in sorted order, so branches touching different
 entries merge cleanly, and a run that changes nothing leaves the file as it is. For
 a conflict, keep either side, or delete the file to record afresh.
 
-A lockfile that does not parse, or that holds a pin in any form but the two above,
+A lockfile that does not parse, or that holds an extension entry in any form but
+the two above (a `commit` with `files`, or `files` alone),
 fails `resolve` with or without `--frozen`, and nothing is written. So does a
 `libraryData` in any shape but the one under [Library data](#library-data). Recording
 over it would accept every drift and move every library.

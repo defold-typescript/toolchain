@@ -4,19 +4,27 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readZip } from "@defold-typescript/types/cli-runtime";
 import { writeZipArchive, type ZipFixtureEntry } from "../../types/test/zip-fixture";
-import { archivePin, mergeResolvedVersionPins } from "./extension-version";
+import {
+  type ArchiveIdentity,
+  archiveIdentity,
+  archiveVersion,
+  mergeResolvedVersionPins,
+} from "./extension-version";
 
 const URL_A = "https://github.com/defold/extension-iap/archive/main.zip";
 const URL_B = "https://github.com/defold/extension-push/archive/main.zip";
 
-describe("archivePin", () => {
+describe("archiveIdentity", () => {
   const COMMIT = "5c33c398e3c1d3ab3c0ee0d5f8f45c4c7c4e0b21";
 
-  function pinOf(entries: readonly ZipFixtureEntry[], comment?: string): string {
-    const zipPath = join(mkdtempSync(join(tmpdir(), "archive-pin-")), "archive.zip");
+  function identityOf(entries: readonly ZipFixtureEntry[], comment?: string): ArchiveIdentity {
+    const zipPath = join(mkdtempSync(join(tmpdir(), "archive-identity-")), "archive.zip");
     writeFileSync(zipPath, writeZipArchive(entries, comment === undefined ? {} : { comment }));
-    return archivePin(readZip(zipPath));
+    return archiveIdentity(readZip(zipPath));
   }
+
+  const filesOf = (entries: readonly ZipFixtureEntry[], comment?: string): string =>
+    identityOf(entries, comment).files;
 
   function library(
     overrides: {
@@ -44,29 +52,58 @@ describe("archivePin", () => {
     ];
   }
 
-  test("names the commit a 40-hex zip comment carries", () => {
-    expect(pinOf(library(), COMMIT)).toBe(`commit:${COMMIT}`);
+  test("a 40-hex zip comment gives the commit beside the same files hash", () => {
+    expect(identityOf(library(), COMMIT)).toEqual({
+      commit: COMMIT,
+      files: filesOf(library()),
+    });
   });
 
-  test("hashes the files when the comment is not a lowercase 40-hex commit", () => {
-    const files = pinOf(library());
-    expect(files).toMatch(/^files-sha256:[0-9a-f]{64}$/);
+  test("anything but a lowercase 40-hex comment gives the files hash alone", () => {
+    const files = filesOf(library());
+    expect(files).toMatch(/^[0-9a-f]{64}$/);
     for (const comment of [COMMIT.toUpperCase(), `${COMMIT}\n`, COMMIT.slice(1), "v1.0"]) {
-      expect(pinOf(library(), comment)).toBe(files);
+      expect(identityOf(library(), comment)).toEqual({ files });
     }
   });
 
-  test("a files pin ignores a change outside include_dirs", () => {
-    expect(pinOf(library({ example: "-- edited\n" }))).toBe(pinOf(library()));
-  });
+  for (const [name, comment] of [
+    ["with no commit", undefined],
+    ["under a commit", COMMIT],
+  ] as const) {
+    describe(`the files hash ${name}`, () => {
+      const unedited = filesOf(library(), comment);
 
-  test("a files pin changes with any file inside include_dirs, a script as well as a scene", () => {
-    expect(pinOf(library({ lua: "return { edited = true }\n" }))).not.toBe(pinOf(library()));
-  });
+      test("ignores a change outside include_dirs", () => {
+        expect(filesOf(library({ example: "-- edited\n" }), comment)).toBe(unedited);
+      });
 
-  test("a files pin over a slash-wrapped nested dir moves only with a file beneath it", () => {
+      test("ignores a renamed archive wrapper", () => {
+        expect(filesOf(library({ wrapper: "monarch-6.0.3" }), comment)).toBe(unedited);
+      });
+
+      test("moves with a changed included file, a script as well as a scene", () => {
+        expect(filesOf(library({ lua: "return { edited = true }\n" }), comment)).not.toBe(unedited);
+      });
+
+      test("moves with an added included file", () => {
+        const added = [
+          ...library(),
+          { name: "monarch-master/monarch/added.lua", text: "return {}\n" },
+        ];
+        expect(filesOf(added, comment)).not.toBe(unedited);
+      });
+
+      test("moves with a removed included file", () => {
+        const removed = library().filter(({ name }) => !name.endsWith("monarch.gui"));
+        expect(filesOf(removed, comment)).not.toBe(unedited);
+      });
+    });
+  }
+
+  test("a slash-wrapped nested dir moves the hash only with a file beneath it", () => {
     const nested = (overrides: Parameters<typeof library>[0] = {}) =>
-      pinOf(library({ includeDirs: "/monarch/transitions/", ...overrides }));
+      filesOf(library({ includeDirs: "/monarch/transitions/", ...overrides }));
     const unedited = nested();
     expect(nested({ lua: "return { edited = true }\n" })).toBe(unedited);
     expect(nested({ example: "-- edited\n" })).toBe(unedited);
@@ -74,16 +111,12 @@ describe("archivePin", () => {
     expect(nested({ transition: "return { edited = true }\n" })).not.toBe(unedited);
   });
 
-  test("a files pin over whitespace-separated dirs moves only with a file beneath one", () => {
+  test("whitespace-separated dirs move the hash only with a file beneath one", () => {
     const spaced = (overrides: Parameters<typeof library>[0] = {}) =>
-      pinOf(library({ includeDirs: "monarch example", ...overrides }));
+      filesOf(library({ includeDirs: "monarch example", ...overrides }));
     const unedited = spaced();
     expect(spaced({ readme: "# edited\n" })).toBe(unedited);
     expect(spaced({ example: "-- edited\n" })).not.toBe(unedited);
-  });
-
-  test("a files pin does not depend on the archive wrapper's name", () => {
-    expect(pinOf(library({ wrapper: "monarch-6.0.3" }))).toBe(pinOf(library()));
   });
 
   test("an archive with no game.project hashes every entry", () => {
@@ -91,44 +124,53 @@ describe("archivePin", () => {
       { name: "lib/lib.lua", text: "return {}\n" },
       { name: "lib/readme.md", text: readme },
     ];
-    expect(pinOf(bare("a\n"))).toMatch(/^files-sha256:[0-9a-f]{64}$/);
-    expect(pinOf(bare("b\n"))).not.toBe(pinOf(bare("a\n")));
+    expect(filesOf(bare("a\n"))).toMatch(/^[0-9a-f]{64}$/);
+    expect(filesOf(bare("b\n"))).not.toBe(filesOf(bare("a\n")));
+  });
+});
+
+describe("archiveVersion", () => {
+  const FILES = "a".repeat(64);
+
+  test("names the commit when there is one", () => {
+    expect(archiveVersion({ commit: "1".repeat(40), files: FILES })).toBe(
+      `commit:${"1".repeat(40)}`,
+    );
+  });
+
+  test("names the files hash otherwise", () => {
+    expect(archiveVersion({ files: FILES })).toBe(`files-sha256:${FILES}`);
   });
 });
 
 describe("mergeResolvedVersionPins", () => {
+  const OLD: ArchiveIdentity = { commit: "1".repeat(40), files: "a".repeat(64) };
+  const NEW: ArchiveIdentity = { commit: "2".repeat(40), files: "b".repeat(64) };
+  const OTHER: ArchiveIdentity = { files: "c".repeat(64) };
+
   test("adds a pin when the url is absent", () => {
-    expect(mergeResolvedVersionPins({}, { [URL_A]: "commit:new" })).toEqual({
-      [URL_A]: "commit:new",
-    });
+    expect(mergeResolvedVersionPins({}, { [URL_A]: NEW })).toEqual({ [URL_A]: NEW });
   });
 
   test("keeps a recorded pin over a newly resolved one", () => {
-    expect(mergeResolvedVersionPins({ [URL_A]: "commit:old" }, { [URL_A]: "commit:new" })).toEqual({
-      [URL_A]: "commit:old",
-    });
+    expect(mergeResolvedVersionPins({ [URL_A]: OLD }, { [URL_A]: NEW })).toEqual({ [URL_A]: OLD });
   });
 
   test("seeds a new url beside a kept one", () => {
-    expect(
-      mergeResolvedVersionPins(
-        { [URL_A]: "commit:old" },
-        { [URL_A]: "commit:new", [URL_B]: "commit:b" },
-      ),
-    ).toEqual({ [URL_A]: "commit:old", [URL_B]: "commit:b" });
+    expect(mergeResolvedVersionPins({ [URL_A]: OLD }, { [URL_A]: NEW, [URL_B]: OTHER })).toEqual({
+      [URL_A]: OLD,
+      [URL_B]: OTHER,
+    });
   });
 
   test("drops a pin for a url no longer resolved", () => {
-    expect(
-      mergeResolvedVersionPins(
-        { [URL_A]: "commit:a", [URL_B]: "commit:b" },
-        { [URL_A]: "commit:a" },
-      ),
-    ).toEqual({ [URL_A]: "commit:a" });
+    expect(mergeResolvedVersionPins({ [URL_A]: OLD, [URL_B]: OTHER }, { [URL_A]: OLD })).toEqual({
+      [URL_A]: OLD,
+    });
   });
 
   test("returns a fresh object, not a reference to the input", () => {
-    const pins = { [URL_A]: "commit:a" };
-    expect(mergeResolvedVersionPins(pins, { [URL_A]: "commit:a" })).not.toBe(pins);
+    const pins = { [URL_A]: OLD };
+    expect(mergeResolvedVersionPins(pins, { [URL_A]: OLD })).not.toBe(pins);
   });
 });

@@ -78,6 +78,7 @@ describe("renderResult", () => {
           scriptApiCount: 1,
           assetOnly: false,
           resolvedVersion: "sha256:abc",
+          resolvedFiles: "abc",
           pinStatus: "match",
         },
       ],
@@ -95,6 +96,7 @@ describe("renderResult", () => {
         scriptApiCount: 1,
         assetOnly: false,
         resolvedVersion: "sha256:abc",
+        resolvedFiles: "abc",
         pinStatus: "match",
       },
     ]);
