@@ -9764,8 +9764,8 @@ describe("library data from the data repo", () => {
   );
 
   // A real data folder, packed the way GitHub packs the data repo's root.
-  function dataArchive(): Uint8Array {
-    const folder = writeAuthoredLibraryData({ "mylib.core": DECLARATION });
+  function dataArchive(commit = COMMIT, declaration = DECLARATION): Uint8Array {
+    const folder = writeAuthoredLibraryData({ "mylib.core": declaration });
     return writeZipArchive(
       readdirSync(folder, { recursive: true, withFileTypes: true })
         .filter((entry) => entry.isFile())
@@ -9773,22 +9773,26 @@ describe("library data from the data repo", () => {
           const file = path.join(entry.parentPath, entry.name);
           const rel = path.relative(folder, file).split(path.sep).join("/");
           return {
-            name: `library-data-${COMMIT}/0.0.1/${rel}`,
+            name: `library-data-${commit}/0.0.1/${rel}`,
             text: readFileSync(file, "utf8"),
           };
         }),
-      { comment: COMMIT },
+      { comment: commit },
     );
   }
 
   function seams(): {
     resolveInternals: { cacheDir: string; download: DownloadExtensionArchive };
     requests: string[];
+    serve: (bytes: Uint8Array) => void;
   } {
     const requests: string[] = [];
-    const archive = dataArchive();
+    let archive = dataArchive();
     return {
       requests,
+      serve: (bytes) => {
+        archive = bytes;
+      },
       resolveInternals: {
         cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-data-cache-")),
         download: async (url) => {
@@ -9905,6 +9909,116 @@ describe("library data from the data repo", () => {
     handle?.stop();
     expect(await result).toBe(0);
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
+
+  describe("a recorded commit behind newer data", () => {
+    const NEWER = "2222222222222222222222222222222222222222";
+    const NEWER_DECLARATION =
+      'declare module "mylib.core" {\n  export const version: "newer";\n}\n';
+
+    async function recordedBehindNewer() {
+      writeDependentProject();
+      const { requests, resolveInternals, serve } = seams();
+      expect(await dispatch(["resolve", cwd], captureStreams().io, { resolveInternals })).toBe(0);
+      serve(dataArchive(NEWER, NEWER_DECLARATION));
+      requests.length = 0;
+      return { requests, resolveInternals };
+    }
+
+    test("resolve holds it and prints a notice with no severity word", async () => {
+      const { resolveInternals } = await recordedBehindNewer();
+      const { io, out, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd], io, { resolveInternals });
+
+      expect(code).toBe(0);
+      expect(recordedCommit()).toBe(COMMIT);
+      expect(readFileSync(surface(), "utf8")).toBe(DECLARATION);
+      expect(err()).toContain("defold-typescript resolve: newer library data changes mylib;");
+      expect(err()).toContain("resolve --update");
+      expect(err()).not.toContain("warning: newer library data");
+      expect(out()).not.toContain("resolve --update");
+    });
+
+    test("--json lists the notice and keeps stdout one JSON object", async () => {
+      const { resolveInternals } = await recordedBehindNewer();
+      const { io, out, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--json"], io, { resolveInternals });
+
+      expect(code).toBe(0);
+      const parsed = JSON.parse(out()) as { notices: string[] };
+      expect(parsed.notices).toHaveLength(1);
+      expect(parsed.notices[0]).toContain("resolve --update");
+      expect(err()).not.toContain("resolve --update");
+    });
+
+    test("resolve --update moves it and prints the newer declaration", async () => {
+      const { resolveInternals } = await recordedBehindNewer();
+      const { io, err } = captureStreams();
+
+      const code = await dispatch(["resolve", cwd, "--update"], io, { resolveInternals });
+
+      expect(code).toBe(0);
+      expect(recordedCommit()).toBe(NEWER);
+      expect(readFileSync(surface(), "utf8")).toBe(NEWER_DECLARATION);
+      expect(err()).not.toContain("resolve --update");
+    });
+
+    test("watch holds it and prints the notice, with --update accepted and ignored", async () => {
+      writeFileSync(path.join(cwd, "main.script"), "");
+      const { resolveInternals } = await recordedBehindNewer();
+      const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+      writeFileSync(
+        path.join(sourceGeneratedDir, "label.d.ts"),
+        "declare const __label: unknown;\n",
+      );
+      let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+      const main: WatcherFactory = (_dir, onEvent): Watcher => {
+        triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+        return { close() {} };
+      };
+      const component: WatcherFactory = (): Watcher => ({ close() {} });
+      const { onWatchStart, ready } = watchHandle();
+      const { io, err } = captureStreams();
+
+      const result = dispatch(["watch", cwd, "--update"], io, {
+        debounceMs: 5,
+        watcherFactory: main,
+        componentWatcherFactory: component,
+        sourceGeneratedDir,
+        detectEditorVersion: () => null,
+        resolveInternals,
+        onWatchStart,
+      });
+      const handle = await ready;
+      await handle?.waitForIdle();
+      triggerMain?.("change", "game.project");
+      await handle?.waitForIdle();
+      handle?.stop();
+
+      expect(await result).toBe(0);
+      expect(recordedCommit()).toBe(COMMIT);
+      expect(err()).toContain("defold-typescript resolve: newer library data changes mylib;");
+      expect(err()).not.toContain("warning: newer library data");
+      rmSync(sourceGeneratedDir, { recursive: true, force: true });
+    });
+  });
+
+  test.each<[string, string[]]>([
+    ["--frozen", ["--frozen"]],
+    ["--library-data", ["--library-data", "."]],
+  ])("resolve --update with %s fails and names both flags", async (flag, args) => {
+    writeDependentProject();
+    const { requests, resolveInternals } = seams();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["resolve", cwd, "--update", ...args], io, { resolveInternals });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("--update");
+    expect(err()).toContain(flag);
+    expect(requests).toEqual([]);
   });
 
   test("export-types reads the data repo through the same seam", async () => {

@@ -38,6 +38,9 @@ export interface ResolveLibraryDataArchiveOptions {
   // The commit the project's `package.json` holds, unchecked.
   readonly recorded: string | null;
   readonly frozen: boolean;
+  // Moves a recorded commit to newer data. Without it a recorded commit holds, the
+  // way `bun install` holds its lockfile.
+  readonly update?: boolean;
   readonly cliVersion: string;
   readonly download?: DownloadExtensionArchive;
   readonly readZip?: ReadExtensionZip;
@@ -50,6 +53,11 @@ export interface LibraryDataArchive {
   readonly commit: string | null;
   readonly warning?: string;
   readonly error?: string;
+  // Main's data folder when it differs from the recorded commit this holds to, for
+  // the caller to weigh against what the project uses.
+  readonly newer?: { readonly dir: string; readonly commit: string };
+  // Why a run left its recorded commit without being asked to.
+  readonly moved?: string;
 }
 
 // Mirrors `extensionCacheDir`.
@@ -122,7 +130,7 @@ function unpackCommit(zip: ExtensionZip, target: string): void {
 
 // Each file's length is hashed before its bytes, so bytes that read like the next
 // file's name cannot make two different folders hash alike.
-function dataFolderDigest(dir: string): string {
+export function dataFolderDigest(dir: string): string {
   const hash = createHash("sha256");
   const paths = (readdirSync(dir, { recursive: true }) as string[])
     .filter((path) => statSync(join(dir, path)).isFile())
@@ -219,6 +227,53 @@ export async function resolveLibraryDataArchive(
     }
   };
 
+  // Main is checked before the recorded commit is fetched, so a project already at
+  // main's commit downloads one archive. Data this run could not check never moves
+  // the commit.
+  const holdingRecorded = async (commit: string): Promise<LibraryDataArchive> => {
+    let newest: LibraryDataArchive;
+    try {
+      const { archivePath, warning } = await cachedOrDownloaded(mainUrl, cacheDir, download);
+      newest =
+        warning === undefined
+          ? await fromArchive(mainUrl, archivePath, null)
+          : unavailable(warning);
+    } catch (err) {
+      newest = unavailable(
+        `could not download ${mainUrl} and nothing is cached: ${errorMessage(err)}`,
+      );
+    }
+    if (newest.commit === commit) {
+      return newest;
+    }
+    const held = await fromCommitUrl(commit);
+    if (newest.dir === null || newest.commit === null) {
+      return held.dir === null ? newest : { dir: held.dir, commit: held.commit };
+    }
+    const movedFrom = (reason: string): LibraryDataArchive => ({
+      dir: newest.dir,
+      commit: newest.commit,
+      moved: `${reason}, so library data moved to commit ${newest.commit}`,
+    });
+    if (held.dir === null) {
+      return movedFrom(held.warning ?? `library data commit ${commit} could not be read`);
+    }
+    if (basename(held.dir) !== basename(newest.dir)) {
+      return movedFrom(`this CLI now reads the ${basename(newest.dir)} data folder`);
+    }
+    try {
+      return dataFolderDigest(held.dir) === dataFolderDigest(newest.dir)
+        ? { dir: held.dir, commit: held.commit }
+        : {
+            dir: held.dir,
+            commit: held.commit,
+            newer: { dir: newest.dir, commit: newest.commit },
+          };
+    } catch {
+      return movedFrom(`library data commit ${commit} could not be read`);
+    }
+  };
+
   if (frozen) {
     if (recorded === null) {
       return unavailable(
@@ -226,6 +281,10 @@ export async function resolveLibraryDataArchive(
       );
     }
     return fromCommitUrl(recorded);
+  }
+
+  if (recorded !== null && opts.update !== true) {
+    return holdingRecorded(recorded);
   }
 
   const recordedCached = recorded !== null && existsSync(commitDir(recorded));
