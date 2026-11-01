@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -17,7 +18,9 @@ import {
   type ReadExtensionZip,
 } from "./extension-archive";
 import {
+  fetchNewestLibraryData,
   LIBRARY_DATA_MAIN_URL,
+  libraryDataAtCommit,
   libraryDataCacheDir,
   libraryDataCommitUrl,
   resolveLibraryDataArchive,
@@ -72,19 +75,43 @@ function counting(download: DownloadExtensionArchive): {
 function resolve(
   cacheDir: string,
   download: DownloadExtensionArchive,
-  options: { recorded?: string; frozen?: boolean; update?: boolean; mainUrl?: string } = {},
-  readZip?: ReadExtensionZip,
+  options: { recorded?: string; frozen?: boolean; update?: boolean } = {},
 ) {
   return resolveLibraryDataArchive({
-    mainUrl: options.mainUrl ?? LIBRARY_DATA_MAIN_URL,
+    mainUrl: LIBRARY_DATA_MAIN_URL,
     cacheDir,
     recorded: options.recorded ?? null,
     frozen: options.frozen ?? false,
     ...(options.update === undefined ? {} : { update: options.update }),
     cliVersion: CLI,
     download,
+  });
+}
+
+function newest(cacheDir: string, download: DownloadExtensionArchive, readZip?: ReadExtensionZip) {
+  return fetchNewestLibraryData({
+    mainUrl: LIBRARY_DATA_MAIN_URL,
+    cacheDir,
+    cliVersion: CLI,
+    download,
     ...(readZip === undefined ? {} : { readZip }),
   });
+}
+
+function atCommit(
+  cacheDir: string,
+  commit: string,
+  download: DownloadExtensionArchive,
+  mainUrl = LIBRARY_DATA_MAIN_URL,
+) {
+  return libraryDataAtCommit({ mainUrl, cacheDir, cliVersion: CLI, download }, commit);
+}
+
+function reasonOf(result: { dir: string } | { dir: null; reason: string }): string {
+  if (result.dir !== null) {
+    throw new Error(`expected no data, got ${result.dir}`);
+  }
+  return result.reason;
 }
 
 const dirFor = (cacheDir: string, commit: string) => join(cacheDir, "commits", commit, "data", CLI);
@@ -113,12 +140,17 @@ describe("libraryDataCommitUrl", () => {
   });
 });
 
-describe("resolveLibraryDataArchive, plain", () => {
+describe("fetchNewestLibraryData", () => {
   test("a fresh run selects the data folder and reads the commit from the comment", async () => {
     const cacheDir = tmp();
-    const result = await resolve(cacheDir, serves(dataArchive(COMMIT)));
+    const result = await newest(cacheDir, serves(dataArchive(COMMIT)));
 
-    expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
+    expect(result).toEqual({
+      dir: dirFor(cacheDir, COMMIT),
+      commit: COMMIT,
+      folder: CLI,
+      stale: false,
+    });
     expect(readFileSync(join(dirFor(cacheDir, COMMIT), "mylib", "library.json"), "utf8")).toBe(
       "{}",
     );
@@ -128,18 +160,282 @@ describe("resolveLibraryDataArchive, plain", () => {
     expect(readdirSync(join(cacheDir, "commits"))).toEqual([COMMIT]);
   });
 
-  test("an unchanged archive is revalidated by its ETag and served from the cache", async () => {
+  test("an unchanged archive is revalidated by its ETag and served from the cache as fresh", async () => {
     const cacheDir = tmp();
-    await resolve(cacheDir, serves(dataArchive(COMMIT), '"v1"'));
-    cacheCommit(cacheDir, OTHER);
+    await newest(cacheDir, serves(dataArchive(COMMIT), '"v1"'));
     const second = counting(async () => ({ status: "not-modified" }));
 
-    const result = await resolve(cacheDir, second.download, { recorded: OTHER, update: true });
+    const result = await newest(cacheDir, second.download);
 
     expect(second.calls).toEqual([{ url: LIBRARY_DATA_MAIN_URL, etag: '"v1"' }]);
-    expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
+    expect(result).toEqual({
+      dir: dirFor(cacheDir, COMMIT),
+      commit: COMMIT,
+      folder: CLI,
+      stale: false,
+    });
   });
 
+  test("a failed request over a cached copy serves it as stale and names the url", async () => {
+    const cacheDir = tmp();
+    await newest(cacheDir, serves(dataArchive(COMMIT)));
+
+    const result = await newest(cacheDir, offline);
+
+    expect(result).toEqual({
+      dir: dirFor(cacheDir, COMMIT),
+      commit: COMMIT,
+      folder: CLI,
+      stale: true,
+      warning: expect.stringContaining(LIBRARY_DATA_MAIN_URL),
+    });
+  });
+
+  test("offline with nothing cached gives the reason", async () => {
+    expect(reasonOf(await newest(tmp(), offline))).toContain(LIBRARY_DATA_MAIN_URL);
+  });
+
+  test("an archive with no commit comment gives the reason and unpacks nothing", async () => {
+    const cacheDir = tmp();
+
+    const result = await newest(cacheDir, serves(dataArchive(undefined)));
+
+    expect(reasonOf(result)).toContain("commit");
+    expect(existsSync(join(cacheDir, "commits"))).toBe(false);
+  });
+
+  test("bytes that are not an archive give the reason", async () => {
+    const result = await newest(tmp(), serves(new TextEncoder().encode("not a zip")));
+
+    expect(reasonOf(result)).toContain(LIBRARY_DATA_MAIN_URL);
+  });
+
+  test("an unsafe entry refuses the whole archive and writes nothing outside the cache", async () => {
+    const root = tmp();
+    const cacheDir = join(root, "a", "b", "c");
+    const bytes = dataArchive(COMMIT, [
+      { name: "top/0.55.0/mylib/library.json", text: "{}" },
+      { name: "top/../../evil", text: "owned" },
+    ]);
+
+    const result = await newest(cacheDir, serves(bytes));
+
+    expect(reasonOf(result)).toContain("top/../../evil");
+    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
+    const written = readdirSync(root, { recursive: true }) as string[];
+    expect(written.filter((path) => path.endsWith("evil"))).toEqual([]);
+  });
+
+  test("an unsafe directory entry refuses the archive too", async () => {
+    const cacheDir = tmp();
+    const bytes = dataArchive(COMMIT, [
+      { name: "top/0.55.0/mylib/library.json", text: "{}" },
+      { name: "top/../../evil/" },
+    ]);
+
+    const result = await newest(cacheDir, serves(bytes));
+
+    expect(result.dir).toBeNull();
+    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
+  });
+
+  test("two top folders refuse the archive", async () => {
+    const cacheDir = tmp();
+    const bytes = dataArchive(COMMIT, [
+      { name: "one/0.55.0/mylib/library.json", text: "{}" },
+      { name: "two/0.55.0/mylib/library.json", text: "{}" },
+    ]);
+
+    const result = await newest(cacheDir, serves(bytes));
+
+    expect(reasonOf(result)).toContain("top folder");
+    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
+  });
+
+  test("an entry that cannot be written leaves no stage folder behind", async () => {
+    const cacheDir = tmp();
+    const bytes = dataArchive(COMMIT, [
+      { name: "top/0.55.0/clash", text: "a file" },
+      { name: "top/0.55.0/clash/inner", text: "under a file" },
+    ]);
+
+    const result = await newest(cacheDir, serves(bytes));
+
+    expect(reasonOf(result)).toContain(LIBRARY_DATA_MAIN_URL);
+    expect(readdirSync(join(cacheDir, "commits"))).toEqual([]);
+  });
+
+  test("no folder for this CLI gives a reason naming the version", async () => {
+    const cacheDir = tmp();
+    const bytes = dataArchive(COMMIT, [{ name: "top/data/9.9.9/mylib/library.json", text: "{}" }]);
+
+    expect(reasonOf(await newest(cacheDir, serves(bytes)))).toContain(CLI);
+  });
+
+  test("version folders only at the archive root give a reason naming the version", async () => {
+    const cacheDir = tmp();
+    const bytes = dataArchive(COMMIT, [
+      { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
+    ]);
+
+    expect(reasonOf(await newest(cacheDir, serves(bytes)))).toContain(CLI);
+  });
+
+  test("a commit folder that appears during extraction is used, and the stage goes", async () => {
+    const cacheDir = tmp();
+    const racer = join(dirFor(cacheDir, COMMIT), "racer");
+    const readZip: ReadExtensionZip = async (path) => {
+      const zip = await defaultReadZip(path);
+      return {
+        entries: () => zip.entries(),
+        read: (entry) => zip.read(entry),
+        comment: () => zip.comment(),
+        bytes: (entry) => {
+          mkdirSync(dirFor(cacheDir, COMMIT), { recursive: true });
+          writeFileSync(racer, "first");
+          return zip.bytes(entry);
+        },
+      };
+    };
+
+    const result = await newest(cacheDir, serves(dataArchive(COMMIT)), readZip);
+
+    expect(result).toEqual({
+      dir: dirFor(cacheDir, COMMIT),
+      commit: COMMIT,
+      folder: CLI,
+      stale: false,
+    });
+    expect(readFileSync(racer, "utf8")).toBe("first");
+    expect(readdirSync(join(cacheDir, "commits"))).toEqual([COMMIT]);
+  });
+
+  test("folder names the version folder selected below this CLI", async () => {
+    const cacheDir = tmp();
+    const bytes = dataArchive(COMMIT, [
+      { name: "top/data/0.54.0/mylib/library.json", text: "{}" },
+      { name: "top/data/9.9.9/mylib/library.json", text: "{}" },
+    ]);
+
+    expect(await newest(cacheDir, serves(bytes))).toMatchObject({ folder: "0.54.0" });
+  });
+});
+
+describe("libraryDataAtCommit", () => {
+  test("a cached commit is served with no request", async () => {
+    const cacheDir = tmp();
+    cacheCommit(cacheDir, COMMIT);
+    const { download, calls } = counting(offline);
+
+    const result = await atCommit(cacheDir, COMMIT, download);
+
+    expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT, folder: CLI });
+    expect(calls).toEqual([]);
+  });
+
+  test("an uncached commit is fetched by its own url", async () => {
+    const cacheDir = tmp();
+    const { download, calls } = counting(serves(dataArchive(COMMIT)));
+
+    const result = await atCommit(cacheDir, COMMIT, download);
+
+    expect(calls.map(({ url }) => url)).toEqual([libraryDataCommitUrl(COMMIT)]);
+    expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT, folder: CLI });
+  });
+
+  test("the commit url follows the main url's repository", async () => {
+    const { download, calls } = counting(serves(dataArchive(COMMIT)));
+
+    await atCommit(
+      tmp(),
+      COMMIT,
+      download,
+      "https://example.test/owner/fork/archive/refs/heads/main.zip",
+    );
+
+    expect(calls.map(({ url }) => url)).toEqual([
+      `https://example.test/owner/fork/archive/${COMMIT}.zip`,
+    ]);
+  });
+
+  test("an archive holding another commit is refused and caches nothing under either", async () => {
+    const cacheDir = tmp();
+
+    const result = await atCommit(cacheDir, COMMIT, serves(dataArchive(OTHER)));
+
+    expect(reasonOf(result)).toContain(COMMIT);
+    expect(reasonOf(result)).toContain(OTHER);
+    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
+    expect(existsSync(join(cacheDir, "commits", OTHER))).toBe(false);
+  });
+
+  test("an unreachable commit gives the reason, naming its url", async () => {
+    expect(reasonOf(await atCommit(tmp(), COMMIT, offline))).toContain(
+      libraryDataCommitUrl(COMMIT),
+    );
+  });
+
+  test("a commit whose unpacked folder went serves its cached archive with the warning", async () => {
+    const cacheDir = tmp();
+    await atCommit(cacheDir, COMMIT, serves(dataArchive(COMMIT)));
+    rmSync(join(cacheDir, "commits", COMMIT), { recursive: true });
+
+    const result = await atCommit(cacheDir, COMMIT, offline);
+
+    expect(result).toEqual({
+      dir: dirFor(cacheDir, COMMIT),
+      commit: COMMIT,
+      folder: CLI,
+      warning: expect.stringContaining(libraryDataCommitUrl(COMMIT)),
+    });
+  });
+
+  test("bytes that are not an archive give the reason", async () => {
+    const result = await atCommit(tmp(), COMMIT, serves(new TextEncoder().encode("not a zip")));
+
+    expect(reasonOf(result)).toContain(libraryDataCommitUrl(COMMIT));
+  });
+
+  test("an unsafe entry refuses the commit's archive", async () => {
+    const cacheDir = tmp();
+    const bytes = dataArchive(COMMIT, [
+      { name: "top/data/0.55.0/mylib/library.json", text: "{}" },
+      { name: "top/../../evil", text: "owned" },
+    ]);
+
+    expect(reasonOf(await atCommit(cacheDir, COMMIT, serves(bytes)))).toContain("top/../../evil");
+    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
+  });
+
+  test("a malformed commit touches no path and makes no request", async () => {
+    const root = tmp();
+    const cacheDir = join(root, "a", "b", "c");
+    mkdirSync(cacheDir, { recursive: true });
+    const { download, calls } = counting(serves(dataArchive(COMMIT)));
+
+    const result = await atCommit(cacheDir, "../../x", download);
+
+    expect(reasonOf(result)).toContain("../../x");
+    expect(calls).toEqual([]);
+    expect(readdirSync(cacheDir)).toEqual([]);
+  });
+
+  test("a commit with no folder for this CLI gives a reason naming the version", async () => {
+    const cacheDir = tmp();
+    mkdirSync(join(cacheDir, "commits", COMMIT, "data", "9.9.9"), { recursive: true });
+
+    expect(reasonOf(await atCommit(cacheDir, COMMIT, offline))).toContain(CLI);
+  });
+
+  test("folder names the version folder selected below this CLI", async () => {
+    const cacheDir = tmp();
+    mkdirSync(join(cacheDir, "commits", COMMIT, "data", "0.54.0"), { recursive: true });
+
+    expect(await atCommit(cacheDir, COMMIT, offline)).toMatchObject({ folder: "0.54.0" });
+  });
+});
+
+describe("resolveLibraryDataArchive, plain", () => {
   test("--update moves a newer main past the recorded commit", async () => {
     const cacheDir = tmp();
     cacheCommit(cacheDir, OTHER);
@@ -203,133 +499,6 @@ describe("resolveLibraryDataArchive, plain", () => {
     const result = await resolve(cacheDir, serves(dataArchive(COMMIT)), { recorded: "../../x" });
 
     expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
-  });
-
-  test("an archive with no commit comment yields no data and a warning", async () => {
-    const cacheDir = tmp();
-
-    const result = await resolve(cacheDir, serves(dataArchive(undefined)));
-
-    expect(result.dir).toBeNull();
-    expect(result.commit).toBeNull();
-    expect(result.warning).toContain("commit");
-    expect(existsSync(join(cacheDir, "commits"))).toBe(false);
-  });
-
-  test("bytes that are not an archive yield no data and a warning", async () => {
-    const result = await resolve(tmp(), serves(new TextEncoder().encode("not a zip")));
-
-    expect(result.dir).toBeNull();
-    expect(result.commit).toBeNull();
-    expect(result.warning).toContain(LIBRARY_DATA_MAIN_URL);
-  });
-
-  test("an unsafe entry refuses the whole archive and writes nothing outside the cache", async () => {
-    const root = tmp();
-    const cacheDir = join(root, "a", "b", "c");
-    const bytes = dataArchive(COMMIT, [
-      { name: "top/0.55.0/mylib/library.json", text: "{}" },
-      { name: "top/../../evil", text: "owned" },
-    ]);
-
-    const result = await resolve(cacheDir, serves(bytes));
-
-    expect(result.dir).toBeNull();
-    expect(result.commit).toBeNull();
-    expect(result.warning).toContain("top/../../evil");
-    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
-    const written = readdirSync(root, { recursive: true }) as string[];
-    expect(written.filter((path) => path.endsWith("evil"))).toEqual([]);
-  });
-
-  test("an unsafe directory entry refuses the archive too", async () => {
-    const cacheDir = tmp();
-    const bytes = dataArchive(COMMIT, [
-      { name: "top/0.55.0/mylib/library.json", text: "{}" },
-      { name: "top/../../evil/" },
-    ]);
-
-    const result = await resolve(cacheDir, serves(bytes));
-
-    expect(result.dir).toBeNull();
-    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
-  });
-
-  test("two top folders refuse the archive", async () => {
-    const cacheDir = tmp();
-    const bytes = dataArchive(COMMIT, [
-      { name: "one/0.55.0/mylib/library.json", text: "{}" },
-      { name: "two/0.55.0/mylib/library.json", text: "{}" },
-    ]);
-
-    const result = await resolve(cacheDir, serves(bytes));
-
-    expect(result.dir).toBeNull();
-    expect(result.commit).toBeNull();
-    expect(result.warning).toContain("top folder");
-    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
-  });
-
-  test("an entry that cannot be written leaves no stage folder behind", async () => {
-    const cacheDir = tmp();
-    const bytes = dataArchive(COMMIT, [
-      { name: "top/0.55.0/clash", text: "a file" },
-      { name: "top/0.55.0/clash/inner", text: "under a file" },
-    ]);
-
-    const result = await resolve(cacheDir, serves(bytes));
-
-    expect(result.dir).toBeNull();
-    expect(result.warning).toContain(LIBRARY_DATA_MAIN_URL);
-    expect(readdirSync(join(cacheDir, "commits"))).toEqual([]);
-  });
-
-  test("no folder for this CLI yields no data and a warning naming the version", async () => {
-    const cacheDir = tmp();
-    const bytes = dataArchive(COMMIT, [{ name: "top/data/9.9.9/mylib/library.json", text: "{}" }]);
-
-    const result = await resolve(cacheDir, serves(bytes));
-
-    expect(result.dir).toBeNull();
-    expect(result.commit).toBeNull();
-    expect(result.warning).toContain(CLI);
-  });
-
-  test("version folders only at the archive root yield no data and a warning naming the version", async () => {
-    const cacheDir = tmp();
-    const bytes = dataArchive(COMMIT, [
-      { name: "library-data-x/0.55.0/mylib/library.json", text: "{}" },
-    ]);
-
-    const result = await resolve(cacheDir, serves(bytes));
-
-    expect(result.dir).toBeNull();
-    expect(result.commit).toBeNull();
-    expect(result.warning).toContain(CLI);
-  });
-
-  test("a commit folder that appears during extraction is used, and the stage goes", async () => {
-    const cacheDir = tmp();
-    const racer = join(dirFor(cacheDir, COMMIT), "racer");
-    const readZip: ReadExtensionZip = async (path) => {
-      const zip = await defaultReadZip(path);
-      return {
-        entries: () => zip.entries(),
-        read: (entry) => zip.read(entry),
-        comment: () => zip.comment(),
-        bytes: (entry) => {
-          mkdirSync(dirFor(cacheDir, COMMIT), { recursive: true });
-          writeFileSync(racer, "first");
-          return zip.bytes(entry);
-        },
-      };
-    };
-
-    const result = await resolve(cacheDir, serves(dataArchive(COMMIT)), {}, readZip);
-
-    expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
-    expect(readFileSync(racer, "utf8")).toBe("first");
-    expect(readdirSync(join(cacheDir, "commits"))).toEqual([COMMIT]);
   });
 });
 
@@ -707,46 +876,6 @@ describe("resolveLibraryDataArchive, frozen", () => {
 
     expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
     expect(calls).toEqual([]);
-  });
-
-  test("an uncached recorded commit is fetched by its own url", async () => {
-    const cacheDir = tmp();
-    const { download, calls } = counting(serves(dataArchive(COMMIT)));
-
-    const result = await resolve(cacheDir, download, { recorded: COMMIT, frozen: true });
-
-    expect(calls.map(({ url }) => url)).toEqual([libraryDataCommitUrl(COMMIT)]);
-    expect(result).toEqual({ dir: dirFor(cacheDir, COMMIT), commit: COMMIT });
-  });
-
-  test("the commit url follows the main url's repository", async () => {
-    const { download, calls } = counting(serves(dataArchive(COMMIT)));
-
-    await resolve(tmp(), download, {
-      recorded: COMMIT,
-      frozen: true,
-      mainUrl: "https://example.test/owner/fork/archive/refs/heads/main.zip",
-    });
-
-    expect(calls.map(({ url }) => url)).toEqual([
-      `https://example.test/owner/fork/archive/${COMMIT}.zip`,
-    ]);
-  });
-
-  test("an archive holding another commit is refused and caches nothing under the recorded one", async () => {
-    const cacheDir = tmp();
-
-    const result = await resolve(cacheDir, serves(dataArchive(OTHER)), {
-      recorded: COMMIT,
-      frozen: true,
-    });
-
-    expect(result.dir).toBeNull();
-    expect(result.commit).toBeNull();
-    expect(result.error).toContain(COMMIT);
-    expect(result.error).toContain(OTHER);
-    expect(existsSync(join(cacheDir, "commits", COMMIT))).toBe(false);
-    expect(existsSync(join(cacheDir, "commits", OTHER))).toBe(false);
   });
 
   test("nothing recorded asks for a plain resolve and makes no request", async () => {
