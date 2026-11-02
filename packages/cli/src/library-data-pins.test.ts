@@ -12,7 +12,11 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { writeZipArchive } from "../../types/test/zip-fixture";
 import type { DownloadExtensionArchive } from "./extension-archive";
-import { EXTENSION_INDEX_SLOTS_FILE, readLibraryData } from "./library/library-data";
+import {
+  DEFOLD_EXTENSIONS_FILE,
+  EXTENSION_INDEX_SLOTS_FILE,
+  readLibraryData,
+} from "./library/library-data";
 import { fetchNewestLibraryData, libraryDataCommitUrl } from "./library-data-archive";
 import { writeLibraryTargets } from "./library-data-fixture";
 import { frozenLibraryData, selectLibraryPins } from "./library-data-pins";
@@ -612,6 +616,26 @@ describe("the shared pin", () => {
     expect(pins?.shared).toBe(THREE);
     expect(slotsIn(dir)).toBe(NEWER);
     expect(notices).toEqual([]);
+  });
+
+  test("update with no names moves it when only the extension page map differs", async () => {
+    const pagesAt = (commit: string, pages: string) =>
+      dataAt(
+        commit,
+        { monarch: "same" },
+        { slots: SLOTS, files: { [DEFOLD_EXTENSIONS_FILE]: pages } },
+      );
+    const { dir, pins } = await select(
+      serving(pagesAt(THREE, '{"libraries":["new"]}'), {
+        [TWO]: pagesAt(TWO, '{"libraries":["old"]}'),
+      }).download,
+      { pins: pinsAt(TWO, { monarch: TWO }), update: true },
+    );
+
+    expect(pins?.shared).toBe(THREE);
+    expect(readFileSync(join(dir as string, DEFOLD_EXTENSIONS_FILE), "utf8")).toBe(
+      '{"libraries":["new"]}',
+    );
   });
 
   test("update with no names holds it when the file is the same", async () => {

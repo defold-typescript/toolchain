@@ -4,8 +4,15 @@
 import { createHash } from "node:crypto";
 import { cpSync, existsSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { EXTENSION_INDEX_SLOTS_FILE, LIBRARY_FILE } from "./library/library-data";
+import {
+  DEFOLD_EXTENSIONS_FILE,
+  EXTENSION_INDEX_SLOTS_FILE,
+  LIBRARY_FILE,
+} from "./library/library-data";
 import { landFolder } from "./library-data-archive";
+
+// The files no library owns, read from the shared folder.
+export const SHARED_DATA_FILES = [EXTENSION_INDEX_SLOTS_FILE, DEFOLD_EXTENSIONS_FILE] as const;
 
 export interface AssembleLibraryDataViewOptions {
   readonly cacheDir: string;
@@ -28,12 +35,17 @@ const copyTree = (from: string, to: string): void => {
 };
 
 // Relative to the cache, so a moved cache keeps its views. The pair is encoded whole,
-// so a library named `shared` cannot read as the shared folder.
-function viewKey({ cacheDir, libraries, shared }: AssembleLibraryDataViewOptions): string {
+// so a library named `shared` cannot read as the shared folder. The shared files
+// present are named too: a view is never rebuilt once it exists, so one an earlier
+// CLI built for the same commits without a file would otherwise serve forever.
+function viewKey(
+  { cacheDir, libraries, shared }: AssembleLibraryDataViewOptions,
+  sharedFiles: readonly string[],
+): string {
   const inCache = (dir: string) => relative(cacheDir, dir).split(sep).join("/");
   const lines = libraries.map(({ name, folderDir }) => `${name}=${inCache(folderDir)}`).sort();
   return createHash("sha256")
-    .update(JSON.stringify([lines, shared === null ? null : inCache(shared)]))
+    .update(JSON.stringify([lines, shared === null ? null : inCache(shared), sharedFiles]))
     .digest("hex");
 }
 
@@ -47,14 +59,15 @@ export function assembleLibraryDataView(opts: AssembleLibraryDataViewOptions): L
     return { dir: null, missing };
   }
 
-  const dir = join(cacheDir, "views", viewKey(opts));
+  const sharedFiles =
+    shared === null ? [] : SHARED_DATA_FILES.filter((file) => existsSync(join(shared, file)));
+  const dir = join(cacheDir, "views", viewKey(opts, sharedFiles));
   landFolder(dir, (stage) => {
     for (const { name, folderDir } of libraries) {
       copy(join(folderDir, name), join(stage, name));
     }
-    const sharedFile = shared === null ? null : join(shared, EXTENSION_INDEX_SLOTS_FILE);
-    if (sharedFile !== null && existsSync(sharedFile)) {
-      copy(sharedFile, join(stage, EXTENSION_INDEX_SLOTS_FILE));
+    for (const file of sharedFiles) {
+      copy(join(shared as string, file), join(stage, file));
     }
   });
   return { dir, missing };
