@@ -13,11 +13,11 @@ export const EXTENSION_GOLDENS_DIR = "extension-goldens";
 const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
 const EXTENSION_GOLDEN_NAMESPACES = ["iac", "iap", "push", "webview"] as const;
 
-// Each golden's doc is the conversion of the extension's `.script_api` at its
-// `packages/library-types/defold-extensions.json` pin, the same JSON the
-// Libraries pages render, so a golden carries the namespace's constants, optional
-// slots and callback arguments exactly as `resolve` would emit them for a project.
-const EXTENSION_DOCS_DIR = resolve(PACKAGE_ROOT, "../library-types/defold-extensions/api-doc");
+// Each golden's doc is a copy of the conversion of the extension's `.script_api`
+// at its `defold-extensions.json` pin, the same JSON the Libraries pages render,
+// so a golden carries the namespace's constants, optional slots and callback
+// arguments exactly as `resolve` would emit them for a project.
+const EXTENSION_DOCS_DIR = resolve(PACKAGE_ROOT, "fixtures/extension-docs");
 
 export const EXTENSION_GOLDEN_MANIFEST: readonly ModuleManifestEntry[] =
   EXTENSION_GOLDEN_NAMESPACES.map((namespace) => ({
