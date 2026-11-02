@@ -1,0 +1,105 @@
+name: Library data publish
+
+# Publishes this repo's library data and library docs site to
+# defold-typescript/library-data: its `main` gets exactly the files
+# scripts/library-data-mirror.ts writes, and its `gh-pages` branch the built
+# site, which GitHub Pages serves at https://defold-typescript.github.io/library-data/.
+# `resolve` pins each library to a data repo commit, so a push that changes no
+# published file must write no commit there. Both pushes use the
+# LIBRARY_DATA_PUSH_TOKEN secret, a token with contents write on the data repo.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/library-types/data/**
+      - packages/library-types/NOTICE
+      - packages/library-types/LICENSE
+      - packages/library-docs/**
+      - scripts/library-data-mirror.ts
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Publishes never interleave; a newer pending run replaces an older pending one,
+# and each run writes the whole tree, so the newest one wins.
+concurrency:
+  group: library-data-publish
+  cancel-in-progress: false
+
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the push token
+        env:
+          TOKEN: ${{ secrets.LIBRARY_DATA_PUSH_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::the LIBRARY_DATA_PUSH_TOKEN secret is not set"
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          path: toolchain
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: defold-typescript/library-data
+          ref: main
+          path: library-data
+          token: ${{ secrets.LIBRARY_DATA_PUSH_TOKEN }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - run: bun toolchain/scripts/library-data-mirror.ts --target library-data
+      - name: Commit and push a changed tree
+        working-directory: library-data
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The published tree is unchanged; nothing to publish."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "publish library data from ${GITHUB_SHA::7}"
+          git push origin HEAD:main
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the push token
+        env:
+          TOKEN: ${{ secrets.LIBRARY_DATA_PUSH_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::the LIBRARY_DATA_PUSH_TOKEN secret is not set"
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - run: bun install --frozen-lockfile
+      - name: Build the library docs site for the data repo's Pages subpath
+        run: bun run --cwd packages/library-docs build:site
+        env:
+          DOCS_BASE: /library-data/
+      # Without this marker Pages runs Jekyll over the branch, which skips any file
+      # whose name starts with `_`; the site is already built.
+      - run: touch packages/library-docs/dist/.nojekyll
+      - name: Push the site to the data repo's gh-pages branch as one commit
+        working-directory: packages/library-docs/dist
+        env:
+          TOKEN: ${{ secrets.LIBRARY_DATA_PUSH_TOKEN }}
+        run: |
+          git init -q -b gh-pages
+          git add -A
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "publish the library docs site from ${GITHUB_SHA::7}"
+          git push --force "https://x-access-token:${TOKEN}@github.com/defold-typescript/library-data.git" gh-pages
