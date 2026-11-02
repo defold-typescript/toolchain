@@ -15,7 +15,7 @@ import type { DownloadExtensionArchive } from "./extension-archive";
 import { EXTENSION_INDEX_SLOTS_FILE, readLibraryData } from "./library/library-data";
 import { fetchNewestLibraryData, libraryDataCommitUrl } from "./library-data-archive";
 import { writeLibraryTargets } from "./library-data-fixture";
-import { selectLibraryPins } from "./library-data-pins";
+import { frozenLibraryData, selectLibraryPins } from "./library-data-pins";
 import type { LibraryDataPins } from "./project-lock";
 
 const MAIN_URL = "https://example.test/library-data/archive/refs/heads/main.zip";
@@ -616,5 +616,63 @@ describe("pins that do not load together", () => {
     expect(notices).toEqual([]);
     expect(warning).toContain("clash");
     expect(warning).toContain(MAIN_URL);
+  });
+});
+
+describe("the folder a run reads", () => {
+  const libraries = { monarch: "one" };
+  const sharedAt = (commit: string): LibraryDataPins => ({
+    shared: commit,
+    libraries: { monarch: commit },
+  });
+  const rootOf = (cacheDir: string, commit: string) => join(cacheDir, "commits", commit, "data");
+
+  test("a plain run names the newest commit it read, ahead of an older pin", async () => {
+    const cacheDir = tmp();
+
+    const { dataRoot, folder } = await select(
+      serving(dataAt(TWO, libraries), { [ONE]: dataAt(ONE, libraries) }).download,
+      { cacheDir, pins: sharedAt(ONE) },
+    );
+
+    expect(dataRoot).toBe(rootOf(cacheDir, TWO));
+    expect(folder).toBe("0.55.0");
+  });
+
+  test("with main unreachable it names the shared pin's commit", async () => {
+    const cacheDir = tmp();
+
+    const { dataRoot, folder } = await select(
+      serving(null, { [ONE]: dataAt(ONE, libraries) }).download,
+      { cacheDir, pins: sharedAt(ONE) },
+    );
+
+    expect(dataRoot).toBe(rootOf(cacheDir, ONE));
+    expect(folder).toBe("0.55.0");
+  });
+
+  test("a frozen run names the shared pin's commit and never asks for main", async () => {
+    const cacheDir = tmp();
+    const { download, requests } = serving(dataAt(TWO, libraries), {
+      [ONE]: dataAt(ONE, libraries),
+    });
+
+    const { dataRoot, folder } = await frozenLibraryData(
+      { mainUrl: MAIN_URL, cacheDir, cliVersion: CLI, download },
+      sharedAt(ONE),
+      [MONARCH],
+    );
+
+    expect(dataRoot).toBe(rootOf(cacheDir, ONE));
+    expect(folder).toBe("0.55.0");
+    expect(requests).toEqual([libraryDataCommitUrl(ONE, MAIN_URL)]);
+  });
+
+  test("a run with nothing to read names no folder", async () => {
+    const selection = await select(serving(null).download);
+
+    expect(selection.dir).toBeNull();
+    expect(selection.dataRoot).toBeUndefined();
+    expect(selection.folder).toBeUndefined();
   });
 });

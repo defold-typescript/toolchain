@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -26,6 +27,9 @@ import {
   extensionArchiveKey,
 } from "./extension-archive";
 import { type ArchiveIdentity, archiveIdentity } from "./extension-version";
+import { type LibraryReview, writeReviewedJson } from "./library/library-data";
+import { archiveFingerprint, recordReview } from "./library/library-fingerprint";
+import { type LibraryStatus, libraryStatusMessages } from "./library/library-status";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printLibraryModules } from "./library/print-library";
 import { readNativeTargets } from "./library/sync-native-types";
@@ -86,11 +90,11 @@ function makeReadZip(byKey: Record<string, FakeArchive>): (zipPath: string) => E
     return {
       entries: () => archive.entries,
       read: (entry: string) => {
-        const text = archive.contents[entry];
-        if (text === undefined) {
+        // Every listed file can be read: the fingerprint reads each one, whichever lane prints it.
+        if (!archive.entries.includes(entry)) {
           throw new Error(`unexpected read of ${entry}`);
         }
-        return text;
+        return archive.contents[entry] ?? "";
       },
       comment: () => archive.comment ?? "",
       bytes: (entry: string) => new TextEncoder().encode(archive.contents[entry] ?? ""),
@@ -2855,6 +2859,8 @@ describe("runResolve with a library data archive", () => {
   }
 
   const surface = (cwd: string) => join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts");
+  const unrecordedNotice = (url: string) =>
+    libraryStatusMessages([{ url, status: { status: "unrecorded" } }]).notices[0] as string;
   const namespaceOf = (cwd: string) => {
     const read = readProjectLock(cwd);
     if (read.status !== "ok") {
@@ -2925,9 +2931,10 @@ describe("runResolve with a library data archive", () => {
     expect(result.ok).toBe(true);
     expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
-    expect(result.notices).toHaveLength(1);
+    expect(result.notices).toHaveLength(2);
     expect(result.notices?.[0]).toContain("mylib");
     expect(result.notices?.[0]).toContain("resolve --update");
+    expect(result.notices?.[1]).toBe(unrecordedNotice(DEP_URL));
     expect(result.warnings.filter((line) => line.includes("library data"))).toEqual([]);
   });
 
@@ -2957,7 +2964,7 @@ describe("runResolve with a library data archive", () => {
     expect(result.notices?.[0]).toContain("mylib");
   });
 
-  test("newer data for a library the project does not use says nothing", async () => {
+  test("newer data for a library the project does not use says nothing about it", async () => {
     const cwd = project();
     const cacheDir = tmp();
     const data = (commit: string, other: string) =>
@@ -2975,7 +2982,7 @@ describe("runResolve with a library data archive", () => {
     });
 
     expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
-    expect(result.notices).toBeUndefined();
+    expect(result.notices).toEqual([unrecordedNotice(DEP_URL)]);
   });
 
   test("a pinned commit with no folder for this CLI moves the pin and says so", async () => {
@@ -3213,7 +3220,7 @@ describe("runResolve with a library data archive", () => {
     expect(newer.requests).not.toContain(DATA_URL);
     expect(readFileSync(surface(cwd), "utf8")).toBe(declares("one"));
     expect(readFileSync(lockPathOf(cwd), "utf8")).toBe(before);
-    expect(result.notices).toBeUndefined();
+    expect(result.notices).toEqual([unrecordedNotice(DEP_URL)]);
   });
 
   test("a frozen run with no recorded library data fails and asks for a plain resolve", async () => {
@@ -4089,6 +4096,521 @@ describe("runResolve moves moving URLs to commits", () => {
       expect(gameProject(project.cwd)).toBe(saved);
       expect(readFileSync(lockPath, "utf8")).toBe(lockBefore);
       expect(statSync(lockPath).mtimeMs).toBe(past.getTime());
+    });
+  });
+});
+
+describe("runResolve reports each library's status", () => {
+  const REPO = "https://github.com/owner/statuslib";
+  const COMMIT_A = "a".repeat(40);
+  const COMMIT_B = "b".repeat(40);
+  // A commit URL, which draws no branch warning.
+  const urlAt = (commit: string) => `${REPO}/archive/${commit}.zip`;
+
+  const luaModule = (answer: number, ...added: readonly string[]) =>
+    [
+      "local M = {}",
+      "---@return number",
+      `function M.start() return ${answer} end`,
+      ...added.map((name) => `function M.${name}() return 1 end`),
+      "return M",
+      "",
+    ].join("\n");
+
+  const gameProject = (name: string) => ({
+    name: `${name}-1/game.project`,
+    text: `[project]\ntitle = ${name}\n\n[library]\ninclude_dirs = ${name}\n`,
+  });
+
+  const archiveOf = (commit: string, source: string) =>
+    writeZipArchive(
+      [gameProject("statuslib"), { name: "statuslib-1/statuslib/core.lua", text: source }],
+      { comment: commit },
+    );
+
+  const nativeArchiveOf = (commit: string, source: string) =>
+    writeZipArchive(
+      [
+        gameProject("statuslib"),
+        { name: "statuslib-1/statuslib/ext.manifest", text: "name: statuslib\n" },
+        { name: "statuslib-1/statuslib/src/extension.cpp", text: source },
+      ],
+      { comment: commit },
+    );
+
+  function fingerprintOf(bytes: Uint8Array) {
+    const path = join(tmp(), "archive.zip");
+    writeFileSync(path, bytes);
+    return archiveFingerprint(readZip(path));
+  }
+
+  const reviewsOf = (...records: readonly (readonly [Uint8Array, string])[]): LibraryReview[] =>
+    records.reduce<LibraryReview[]>(
+      (reviews, [bytes, commit]) => recordReview(reviews, fingerprintOf(bytes), commit).reviews,
+      [],
+    );
+
+  type Lane = "fork" | "recipe" | "native";
+
+  function writeStatusData(
+    lane: Lane,
+    reviews: readonly LibraryReview[] | null,
+    folder = join(tmp(), "0.55.0"),
+  ): string {
+    const library = join(folder, "statuslib");
+    mkdirSync(join(library, "fork"), { recursive: true });
+    if (lane === "fork") {
+      writeFileSync(
+        join(library, "fork", "statuslib.core.d.ts"),
+        'declare module "statuslib.core" {\n  export const forked: number;\n}\n',
+      );
+      writeLibraryTargets(folder, {
+        forks: [
+          {
+            repo: REPO,
+            ref: "1.0.0",
+            authored: "fork/statuslib.core.d.ts",
+            moduleId: "statuslib.core",
+            namespace: "statuslib.core",
+            apiDoc: "api-doc/statuslib.core.json",
+            upstreamLua: ["source/upstream/statuslib.core.lua"],
+          },
+        ],
+      });
+    } else if (lane === "recipe") {
+      writeLibraryTargets(folder, {
+        luals: [
+          {
+            repo: REPO,
+            ref: "1.0.0",
+            sourceGlobs: ["statuslib/**/*.lua"],
+            moduleId: "statuslib.core",
+            namespace: "statuslib.core",
+          },
+        ],
+      });
+    } else {
+      writeFileSync(
+        join(library, "statuslib.d.ts"),
+        "declare namespace statuslib {\n  const native: number;\n}\n",
+      );
+      writeLibraryTargets(folder, {
+        native: [
+          {
+            repo: REPO,
+            ref: "1.0.0",
+            namespace: "statuslib",
+            manifestDir: "statuslib",
+            declaration: "statuslib.d.ts",
+            upstreamSource: "source/upstream/src/extension.cpp",
+          },
+        ],
+      });
+    }
+    if (reviews !== null) {
+      writeReviewedJson(folder, "statuslib", { ref: "1.0.0", reviews: [...reviews] });
+    }
+    return folder;
+  }
+
+  async function resolveAt(commit: string, bytes: Uint8Array, libraryDataDir: string | null) {
+    const cwd = tmp();
+    const url = urlAt(commit);
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataDir,
+      download: async () => ({ status: "ok", bytes }),
+    });
+    expect(result.ok).toBe(true);
+    return { cwd, url, result, status: result.extensions[0]?.libraryStatus };
+  }
+
+  describe.each(["fork", "recipe"] as const)("for a %s library", (lane) => {
+    const reviewed = () => reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A]);
+
+    test("the commit reviewed is exact by commit", async () => {
+      const { status } = await resolveAt(
+        COMMIT_A,
+        archiveOf(COMMIT_A, luaModule(1)),
+        writeStatusData(lane, reviewed()),
+      );
+      expect(status).toEqual({ status: "exact", by: "commit" });
+    });
+
+    test("a changed body at an unreviewed commit is exact by api", async () => {
+      const { status } = await resolveAt(
+        COMMIT_B,
+        archiveOf(COMMIT_B, luaModule(2)),
+        writeStatusData(lane, reviewed()),
+      );
+      expect(status).toEqual({ status: "exact", by: "api" });
+    });
+
+    test("an added member follows how the library printed", async () => {
+      const { status } = await resolveAt(
+        COMMIT_B,
+        archiveOf(COMMIT_B, luaModule(1, "added")),
+        writeStatusData(lane, reviewed()),
+      );
+      expect(status).toEqual(
+        lane === "fork"
+          ? {
+              status: "unsupported",
+              closest: COMMIT_A,
+              members: ["statuslib/core.lua#added"],
+            }
+          : { status: "generated" },
+      );
+    });
+
+    test("the printed declaration does not depend on the status", async () => {
+      const unreviewed = archiveOf(COMMIT_B, luaModule(1, "added"));
+      const printed = async (folder: string) => {
+        const { cwd, status } = await resolveAt(COMMIT_B, unreviewed, folder);
+        const file = join(cwd, ".defold-types", LIBRARIES_DIR, "statuslib.core.d.ts");
+        return { status: status?.status, bytes: readFileSync(file, "utf8") };
+      };
+      const newer = writeStatusData(lane, null);
+      writeStatusData(lane, reviewsOf([unreviewed, COMMIT_B]), join(dirname(newer), "0.60.0"));
+
+      const runs = [
+        await printed(writeStatusData(lane, reviewsOf([unreviewed, COMMIT_B]))),
+        await printed(writeStatusData(lane, reviewed())),
+        await printed(writeStatusData(lane, null)),
+        await printed(newer),
+      ];
+
+      expect(runs.map(({ status }) => status)).toEqual([
+        "exact",
+        lane === "fork" ? "unsupported" : "generated",
+        "unrecorded",
+        "newer-cli",
+      ]);
+      expect(new Set(runs.map(({ bytes }) => bytes)).size).toBe(1);
+    });
+  });
+
+  test("a recipe that fell back to the pinned sources is unsupported", async () => {
+    const url = "https://github.com/paweljarosz/lua-immutable/archive/v1.1.zip";
+    const own = "immutable/immutable.lua";
+    const source = readFileSync(
+      join(LIBRARY_DATA_DIR, "lua-immutable", "source", "immutable", own),
+      "utf8",
+    );
+    const zipOf = (text: string) =>
+      writeZipArchive([{ name: `lua-immutable-1.1/${own}`, text }], { comment: COMMIT_B });
+    const folder = join(tmp(), "0.55.0");
+    cpSync(join(LIBRARY_DATA_DIR, "lua-immutable"), join(folder, "lua-immutable"), {
+      recursive: true,
+    });
+    writeReviewedJson(folder, "lua-immutable", {
+      ref: "v1.1",
+      reviews: reviewsOf([zipOf(source), COMMIT_A]),
+    });
+    const unprintable = zipOf(
+      `${source}\n---@param value vmath.print_probe\nfunction Immutable.print_probe(value)\nend\n`,
+    );
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataDir: folder,
+      download: async () => ({ status: "ok", bytes: unprintable }),
+    });
+
+    expect(result.extensions[0]?.libraryStatus?.status).toBe("unsupported");
+    expect(result.warnings.some((warning) => warning.startsWith("printed "))).toBe(true);
+  });
+
+  test("a native extension gets a status, printed from the pinned sources", async () => {
+    const reviews = reviewsOf([nativeArchiveOf(COMMIT_A, "// one\n"), COMMIT_A]);
+    const folder = () => writeStatusData("native", reviews);
+
+    const exact = await resolveAt(COMMIT_A, nativeArchiveOf(COMMIT_A, "// one\n"), folder());
+    const moved = await resolveAt(COMMIT_B, nativeArchiveOf(COMMIT_B, "// two\n"), folder());
+
+    expect(exact.result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(exact.status).toEqual({ status: "exact", by: "commit" });
+    expect(moved.status).toEqual({
+      status: "unsupported",
+      closest: COMMIT_A,
+      members: ["statuslib/src/extension.cpp"],
+    });
+  });
+
+  test("a dependency library data does not type gets no status", async () => {
+    const data = () =>
+      writeStatusData("fork", reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A]));
+    const scriptApi = writeZipArchive([{ name: "other-1/other/alpha.script_api", text: ALPHA }], {
+      comment: COMMIT_B,
+    });
+    const shipped = writeZipArchive(
+      [
+        { name: "statuslib-1/statuslib/core.lua", text: luaModule(1) },
+        { name: "statuslib-1/types/statuslib.d.ts", text: "export const value: number;\n" },
+      ],
+      { comment: COMMIT_A },
+    );
+    const assets = writeZipArchive([{ name: "other-1/asset/foo.png", text: "png" }], {
+      comment: COMMIT_B,
+    });
+    const run = async (url: string, bytes: Uint8Array) => {
+      const cwd = tmp();
+      writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+      const { extensions } = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        libraryDataDir: data(),
+        typesRoot: null,
+        download: async () => ({ status: "ok", bytes }),
+      });
+      return extensions[0];
+    };
+    const otherUrl = `https://github.com/owner/other/archive/${COMMIT_B}.zip`;
+
+    const fromScriptApi = await run(otherUrl, scriptApi);
+    const fromShipped = await run(urlAt(COMMIT_A), shipped);
+    const unmatched = await run(otherUrl, assets);
+
+    expect(fromScriptApi?.typeSurface).toBe("extension");
+    expect(fromScriptApi).not.toHaveProperty("libraryStatus");
+    expect(fromShipped?.typeSurface).toBe("shipped");
+    expect(fromShipped).not.toHaveProperty("libraryStatus");
+    expect(unmatched?.typeSurface).toBe("none");
+    expect(unmatched).not.toHaveProperty("libraryStatus");
+  });
+
+  test("a run with no library data gets no status", async () => {
+    const { result } = await resolveAt(COMMIT_A, archiveOf(COMMIT_A, luaModule(1)), null);
+
+    expect(result.extensions[0]).not.toHaveProperty("libraryStatus");
+    expect(result.notices).toBeUndefined();
+  });
+
+  describe("a higher data folder", () => {
+    const unreviewed = archiveOf(COMMIT_B, luaModule(1, "added"));
+
+    function dataWithNewer(write: (library: string) => void): string {
+      const folder = writeStatusData(
+        "fork",
+        reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A]),
+      );
+      const library = join(dirname(folder), "0.60.0", "statuslib");
+      mkdirSync(library, { recursive: true });
+      write(library);
+      return folder;
+    }
+
+    test("that covers the commit gives newer-cli, naming the folder", async () => {
+      const folder = dataWithNewer((library) =>
+        writeFileSync(
+          join(library, "reviewed.json"),
+          JSON.stringify({ ref: "1.0.0", reviews: reviewsOf([unreviewed, COMMIT_B]) }),
+        ),
+      );
+
+      const { status, url, result } = await resolveAt(COMMIT_B, unreviewed, folder);
+
+      expect(status).toEqual({ status: "newer-cli", folder: "0.60.0" });
+      expect(result.warnings).toEqual([]);
+      const notice = result.notices?.find((line) => line.includes(url));
+      expect(notice).toContain("0.60.0");
+    });
+
+    test("holding a malformed reviewed.json is ignored", async () => {
+      const folder = dataWithNewer((library) =>
+        writeFileSync(join(library, "reviewed.json"), "{ not json"),
+      );
+
+      const { status } = await resolveAt(COMMIT_B, unreviewed, folder);
+
+      expect(status?.status).toBe("unsupported");
+    });
+  });
+
+  test("a frozen run reports the same status from its pin and asks for no library data", async () => {
+    const dataUrl = "https://example.test/library-data/archive/refs/heads/main.zip";
+    const dataCommit = "1".repeat(40);
+    const folder = writeStatusData(
+      "fork",
+      reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A]),
+    );
+    const files = (readdirSync(folder, { recursive: true }) as string[]).filter((path) =>
+      statSync(join(folder, path)).isFile(),
+    );
+    const data = writeZipArchive(
+      files.map((path) => ({
+        name: `library-data-${dataCommit}/data/0.0.1/${path.replace(/\\/g, "/")}`,
+        text: readFileSync(join(folder, path), "utf8"),
+      })),
+      { comment: dataCommit },
+    );
+    const dependency = archiveOf(COMMIT_B, luaModule(1, "added"));
+    const url = urlAt(COMMIT_B);
+    const cwd = tmp();
+    const cacheDir = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const plain = await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: dataUrl,
+      download: async (requested) => ({
+        status: "ok",
+        bytes: requested === url ? dependency : data,
+      }),
+    });
+    const requests: string[] = [];
+    const frozen = await runResolve({
+      cwd,
+      cacheDir,
+      libraryDataUrl: dataUrl,
+      freeze: true,
+      download: async (requested) => {
+        requests.push(requested);
+        throw new Error(`no request expected: ${requested}`);
+      },
+    });
+
+    expect(plain.extensions[0]?.libraryStatus?.status).toBe("unsupported");
+    expect(frozen.ok).toBe(true);
+    expect(frozen.extensions[0]?.libraryStatus).toEqual(
+      plain.extensions[0]?.libraryStatus as LibraryStatus,
+    );
+    expect(requests).toEqual([url]);
+  });
+
+  describe("the plain report", () => {
+    const reviewed = () => reviewsOf([archiveOf(COMMIT_A, luaModule(1)), COMMIT_A]);
+
+    test("an exact library adds nothing", async () => {
+      const { result } = await resolveAt(
+        COMMIT_A,
+        archiveOf(COMMIT_A, luaModule(1)),
+        writeStatusData("fork", reviewed()),
+      );
+
+      expect(result.warnings).toEqual([]);
+      expect(result.notices).toBeUndefined();
+    });
+
+    test("a generated library adds one notice naming its URL", async () => {
+      const { result, url } = await resolveAt(
+        COMMIT_B,
+        archiveOf(COMMIT_B, luaModule(1, "added")),
+        writeStatusData("recipe", reviewed()),
+      );
+
+      expect(result.warnings).toEqual([]);
+      expect(result.notices).toHaveLength(1);
+      expect(result.notices?.[0]).toContain(url);
+    });
+
+    test("an unsupported library warns with its closest commit and five members at most", async () => {
+      const names = ["m1", "m2", "m3", "m4", "m5", "m6", "m7"];
+      const { result, url } = await resolveAt(
+        COMMIT_B,
+        archiveOf(COMMIT_B, luaModule(1, ...names)),
+        writeStatusData("fork", reviewed()),
+      );
+
+      expect(result.notices).toBeUndefined();
+      expect(result.warnings).toHaveLength(1);
+      const [warning] = result.warnings;
+      expect(warning).toContain(url);
+      expect(warning).toContain(COMMIT_A);
+      expect(warning).toContain("statuslib/core.lua#m5");
+      expect(warning).not.toContain("statuslib/core.lua#m6");
+      expect(warning).toContain("+2 more");
+    });
+
+    test("an unsupported library with nothing to compare still warns", async () => {
+      const { result, url } = await resolveAt(
+        COMMIT_B,
+        archiveOf(COMMIT_B, luaModule(1)),
+        writeStatusData("fork", []),
+      );
+
+      expect(result.extensions[0]?.libraryStatus).toEqual({
+        status: "unsupported",
+        closest: null,
+        members: [],
+      });
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings[0]).toContain(url);
+    });
+
+    test("every unrecorded library shares one notice naming them and resolve --update", async () => {
+      const urlOf = (name: string) => `https://github.com/owner/${name}/archive/${COMMIT_A}.zip`;
+      const zipOf = (name: string) =>
+        writeZipArchive(
+          [gameProject(name), { name: `${name}-1/${name}/core.lua`, text: "return {}\n" }],
+          { comment: COMMIT_A },
+        );
+      const cwd = tmp();
+      writeProject(
+        cwd,
+        `[project]\ndependencies#0 = ${urlOf("first")}\ndependencies#1 = ${urlOf("second")}\n`,
+      );
+
+      const result = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        libraryDataDir: writeAuthoredLibraryData({
+          "first.core": 'declare module "first.core" {}\n',
+          "second.core": 'declare module "second.core" {}\n',
+        }),
+        download: async (url) => ({
+          status: "ok",
+          bytes: zipOf(url.includes("/first/") ? "first" : "second"),
+        }),
+      });
+
+      expect(result.extensions.map(({ libraryStatus }) => libraryStatus?.status)).toEqual([
+        "unrecorded",
+        "unrecorded",
+      ]);
+      expect(result.warnings).toEqual([]);
+      expect(result.notices).toHaveLength(1);
+      expect(result.notices?.[0]).toContain(urlOf("first"));
+      expect(result.notices?.[0]).toContain(urlOf("second"));
+      expect(result.notices?.[0]).toContain("resolve --update");
+    });
+
+    test("a run whose --update moved every unrecorded library does not repeat the advice", async () => {
+      const cwd = tmp();
+      // A commit URL would add its own notice that `--update` has no ref to follow.
+      const url = `${REPO}/archive/refs/tags/v1.zip`;
+      writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+      const download: DownloadExtensionArchive = async () => ({
+        status: "ok",
+        bytes: archiveOf(COMMIT_B, luaModule(1)),
+      });
+      const libraryDataDir = writeStatusData("fork", null);
+
+      const named = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        libraryDataDir,
+        update: ["statuslib"],
+        download,
+      });
+      const other = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        libraryDataDir,
+        update: ["another"],
+        download,
+      });
+
+      expect(named.notices).toHaveLength(1);
+      expect(named.notices?.[0]).toContain(url);
+      expect(named.notices?.[0]).not.toContain("resolve --update");
+      expect(other.notices?.[0]).toContain("resolve --update");
     });
   });
 });

@@ -49,9 +49,7 @@ function defconArchiveReadZip(url: string): (zipPath: string) => ExtensionZip {
       entries: () => ["defcon-2.6.0/defcon/console.lua", "defcon-2.6.0/asset/foo.png"],
       comment: () => "",
       bytes: () => new Uint8Array(0),
-      read: (entry: string) => {
-        throw new Error(`unexpected read of ${entry}`);
-      },
+      read: () => "return {}\n",
     };
   };
 }

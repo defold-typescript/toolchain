@@ -9,7 +9,7 @@
 // network-free under test.
 
 import { existsSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { join, posix } from "node:path";
+import { basename, dirname, join, posix, resolve } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 import { readCliVersion } from "./cli-version";
 import { DEFOLD_DEPENDENCIES_MANIFEST, DEFOLD_LIBRARY_DIR } from "./defold-library-cache";
@@ -44,11 +44,20 @@ import {
   mergeResolvedVersionPins,
   sameArchive,
 } from "./extension-version";
+import { readLibraryReviews } from "./library/library-data";
+import { archiveFingerprint } from "./library/library-fingerprint";
+import {
+  classifyLibraryStatus,
+  type LibraryStatus,
+  libraryStatusMessages,
+  newerFolderCovering,
+} from "./library/library-status";
 import { printLibraryModules } from "./library/print-library";
 import { archiveSourceTree } from "./library/source-tree";
 import { LIBRARY_DATA_MAIN_URL, libraryDataCacheDir } from "./library-data-archive";
 import {
   frozenLibraryData,
+  type LibraryDataFolders,
   type LibraryDataUpdate,
   selectLibraryPins,
   wantsUpdate,
@@ -60,6 +69,7 @@ import {
   type PrintedLibrary,
 } from "./library-materialize";
 import {
+  librariesForDependencies,
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
   type VendoredNativeExtension,
@@ -106,6 +116,9 @@ export interface ResolvedExtensionReport {
   readonly pinStatus: PinStatus;
   // How many scene sources this dependency shares into the address universe.
   readonly sceneSources: number;
+  // Set for a `vendored-library` or `vendored-native` surface when the run read
+  // library data.
+  readonly libraryStatus?: LibraryStatus;
 }
 
 export interface ResolvedLibraryReport {
@@ -255,7 +268,7 @@ function applyShippedDeclarations(
   return { bundles: applied, shippedUrls, warnings };
 }
 
-interface SelectedLibraryData {
+interface SelectedLibraryData extends LibraryDataFolders {
   readonly dir: string | null;
   // Absent when nothing is recorded, so a lockfile with no pins stays that way.
   readonly pins?: LibraryDataPins;
@@ -272,7 +285,10 @@ async function selectLibraryData(
   const recorded = lock?.libraryData ?? null;
   const held = recorded === null ? {} : { pins: recorded };
   if (opts.libraryDataDir !== undefined) {
-    return { dir: opts.libraryDataDir, notices: [], ...held };
+    const dir = opts.libraryDataDir;
+    const folders =
+      dir === null ? {} : { dataRoot: dirname(resolve(dir)), folder: basename(resolve(dir)) };
+    return { dir, notices: [], ...held, ...folders };
   }
   const source = {
     mainUrl: opts.libraryDataUrl ?? LIBRARY_DATA_MAIN_URL,
@@ -286,7 +302,7 @@ async function selectLibraryData(
     const frozen = await frozenLibraryData(source, recorded, urls);
     return { ...frozen, notices: [], ...held };
   }
-  const { dir, pins, notices, warning } = await selectLibraryPins({
+  const { dir, pins, notices, warning, dataRoot, folder } = await selectLibraryPins({
     ...source,
     urls,
     knownUrls: Object.keys(lock?.extensions ?? {}),
@@ -298,7 +314,52 @@ async function selectLibraryData(
     notices,
     ...(pins === null ? {} : { pins }),
     ...(warning === undefined ? {} : { warning }),
+    ...(dataRoot === undefined ? {} : { dataRoot }),
+    ...(folder === undefined ? {} : { folder }),
   };
+}
+
+// How each dependency library data types stands against the reviews it records. A
+// `.script_api`, shipped or unmatched dependency has no review to stand against.
+async function classifyLibraries(
+  bundles: readonly ExtensionDeclarations[],
+  confirmedNativeUrls: ReadonlySet<string>,
+  printedFrom: ReadonlyMap<string, readonly ("archive" | "pinned")[]>,
+  libraryData: SelectedLibraryData,
+  open: ReadExtensionZip,
+): Promise<Map<string, LibraryStatus>> {
+  const statuses = new Map<string, LibraryStatus>();
+  const { dir, dataRoot, folder } = libraryData;
+  if (dir === null) {
+    return statuses;
+  }
+  const typed = bundles.filter(({ url }) => confirmedNativeUrls.has(url) || printedFrom.has(url));
+  const libraries = librariesForDependencies(
+    dir,
+    typed.map(({ url }) => url),
+  );
+  for (const { url, archivePath, identity } of typed) {
+    const name = normalizeSourceId(url);
+    const library = libraries.find(({ repo }) => normalizeSourceId(repo) === name);
+    if (library === undefined) {
+      continue;
+    }
+    const fingerprint = archiveFingerprint(await open(archivePath));
+    statuses.set(
+      url,
+      classifyLibraryStatus({
+        reviews: readLibraryReviews(dir, library.dir),
+        commit: identity.commit,
+        fingerprint,
+        printedFrom: confirmedNativeUrls.has(url) ? ["pinned"] : (printedFrom.get(url) ?? []),
+        newerFolder:
+          dataRoot === undefined || folder === undefined
+            ? null
+            : newerFolderCovering(dataRoot, folder, library.dir, identity.commit, fingerprint),
+      }),
+    );
+  }
+  return statuses;
 }
 
 // Why `--update=<names>` cannot run, or null when it can. A project this cannot read
@@ -704,6 +765,11 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // Each confirmed library prints from the archive the project depends on, so its
   // types follow the version the game ships rather than the one library data pins.
   let printedLibraries: PrintedLibrary[] | null = null;
+  // Every confirmed library has an entry, empty when another dependency printed its
+  // modules first.
+  const printedFrom = new Map<string, ("archive" | "pinned")[]>(
+    [...confirmedLibraryUrls].map((url) => [url, []]),
+  );
   if (libraryDataDir !== null) {
     printedLibraries = [];
     const archivePaths = new Map(resolvedBundles.map((b) => [b.url, b.archivePath]));
@@ -717,9 +783,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       }
       const archive = archiveSourceTree(await open(archivePath));
       const { printed, unprintable } = await printLibraryModules(libraryDataDir, modules, archive);
-      for (const { module, contents, ref, reason } of printed) {
+      for (const { module, contents, from, ref, reason } of printed) {
         seen.add(module);
         printedLibraries.push({ module, contents });
+        printedFrom.get(url)?.push(from);
         if (reason !== undefined) {
           warnings.push(
             `printed ${module} from the ${ref} sources pinned in library data, not from ${url}: ${reason}`,
@@ -761,6 +828,18 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     });
   }
 
+  const libraryStatuses = await classifyLibraries(
+    bundles,
+    confirmedNativeUrls,
+    printedFrom,
+    libraryData,
+    opts.readZip ?? defaultReadZip,
+  );
+  const statusMessages = libraryStatusMessages(
+    [...libraryStatuses].map(([url, status]) => ({ url, status })),
+    (url) => wantsUpdate(opts.update, normalizeSourceId(url)),
+  );
+
   const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {
     const supersededByLibrary = confirmedLibraryUrls.has(bundle.url);
     const pin = heldPins[bundle.url];
@@ -788,6 +867,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       pinnedFiles?: string;
       pinStatus: PinStatus;
       sceneSources: number;
+      libraryStatus?: LibraryStatus;
     } = {
       url: bundle.url,
       ref: classifyDependencyUrl(bundle.url),
@@ -813,6 +893,10 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       report.pinnedVersion = archiveVersion(pin);
       report.pinnedFiles = pin.files;
     }
+    const libraryStatus = libraryStatuses.get(bundle.url);
+    if (libraryStatus !== undefined) {
+      report.libraryStatus = libraryStatus;
+    }
     return report;
   });
 
@@ -825,6 +909,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
           `${DEFOLD_LIBRARY_DIR} holds nothing for a URL that moved: run \`defold-typescript bob resolve\` or Fetch Libraries`,
         ]
       : []),
+    ...statusMessages.notices,
   ];
   return {
     ok: true,
@@ -832,7 +917,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     extensions,
     libraries,
     sharedNamespaces,
-    warnings,
+    warnings: [...warnings, ...statusMessages.warnings],
     ...(notices.length > 0 ? { notices } : {}),
   };
 }
