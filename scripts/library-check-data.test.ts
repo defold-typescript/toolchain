@@ -3,13 +3,13 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { Writable } from "node:stream";
-import { fileURLToPath } from "node:url";
 import type { DispatchIo } from "../packages/cli/src/dispatch.ts";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import { writeLibraryTargets } from "../packages/cli/src/library-data-fixture.ts";
 import { type LibraryCheckRunner, runLibraryDataCheck } from "./library-check-data.ts";
 
 const CHECK_TIMEOUT = 120_000;
-const REPO_DATA = fileURLToPath(new URL("../packages/library-types/data", import.meta.url));
+const REPO_DATA = dirname(LIBRARY_DATA_DIR);
 
 const slash = (path: string): string => path.replaceAll("\\", "/");
 
