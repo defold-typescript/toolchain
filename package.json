@@ -33,7 +33,7 @@
     "upstream:release-check": "bun scripts/defold-upstream-check.ts",
     "upstream:library-check": "bun scripts/library-upstream-check.ts --data packages/library-types/data",
     "upstream:shipped-types-check": "bun scripts/shipped-types-check.ts --data packages/library-types/data",
-    "library:check": "bun scripts/library-check-live.ts",
+    "library:check": "bun scripts/library-check-data.ts",
     "asset-portal:report": "bun scripts/asset-portal-check.ts --report --data packages/library-types/data",
     "asset-portal:script-api": "bun scripts/sync-asset-portal-script-api.ts --fetch --data packages/library-types/data",
     "changelog:commits": "bun scripts/changelog-commits.ts"
