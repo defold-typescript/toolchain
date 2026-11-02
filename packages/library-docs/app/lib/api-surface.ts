@@ -1,0 +1,2341 @@
+import {
+  type ApiAvailability,
+  type ApiFunction,
+  type ApiModule,
+  type ApiParameter,
+  type ApiVariable,
+  type AvailabilityLabelKind,
+  availabilityLabel,
+  DEFOLD_TYPE_MAP,
+  engineTypeName,
+  examplesHtmlToMarkdown,
+  firstSlotAlternativeOf,
+  htmlToDocText,
+  type LibraryIndexSlotClassifications,
+  lookupExampleSegments,
+  lookupSignature,
+  luaMultiReturn,
+  normalizedFunctionSignature,
+  type SignatureStore,
+  type SlotTypes,
+  segmentExampleRegions,
+  splitExampleSources,
+  symbolIdentityKey,
+  symbolNameKey,
+  type TranslationStore,
+  translateProseFences,
+  varargElementType,
+  withIndexBaseNotes,
+  withLibraryIndexBaseNotes,
+} from "@defold-typescript/types";
+import { slugify } from "./headings";
+import { platformDocText } from "./platform-icons";
+
+/**
+ * Per-surface availability index, keyed by {@link symbolIdentityKey} so a symbol
+ * joins its `api-availability.json` record at exact namespace/kind/name/overload-
+ * signature granularity — adding or removing one overload never relabels its
+ * siblings. Shared by every page of a version's surface; a symbol only carries a
+ * badge when its identity is present, so the same lookup is safe on the canonical
+ * and historical surfaces at once.
+ */
+/**
+ * A version's availability index: the ordered tracked `versions` axis (newest
+ * first), the identity-keyed record map, and the logical names that merely
+ * re-signatured. The versions axis rides on the lookup so a friendly label
+ * (`Since Defold X`, `Removed in Defold X`) can be computed from a symbol's
+ * `availableIn` at render and search time; `transitions` rides along with it so
+ * a label reading the end of a span knows whether the name really disappeared.
+ */
+export interface AvailabilityLookup {
+  readonly versions: readonly string[];
+  readonly records: ReadonlyMap<string, ApiAvailability>;
+  readonly transitions: ReadonlySet<string>;
+}
+
+type IdentityKind = "FUNCTION" | "CONSTANT" | "VARIABLE" | "PROPERTY" | "TYPEDEF";
+
+function availabilityForIdentity(
+  availability: AvailabilityLookup | undefined,
+  identity: string,
+): ApiAvailability | undefined {
+  if (!availability) return undefined;
+  return availability.records.get(identity);
+}
+
+// One record standing for several identities of the same symbol: the newest
+// record's facts over the union of every record's versions, newest first.
+export function mergedAvailability(
+  records: readonly ApiAvailability[],
+  versions: readonly string[],
+): ApiAvailability | undefined {
+  const [first] = records;
+  if (first === undefined || records.length === 1) return first;
+  const availableIn = [...new Set(records.flatMap((record) => record.availableIn))].sort(
+    (a, b) => versions.indexOf(a) - versions.indexOf(b),
+  );
+  const newest =
+    records.find((record) => record.availableIn.includes(availableIn[0] ?? "")) ?? first;
+  return { ...newest, availableIn };
+}
+
+function joinAvailability(
+  availability: AvailabilityLookup | undefined,
+  namespace: string,
+  kind: IdentityKind,
+  name: string,
+  signature: string,
+): ApiAvailability | undefined {
+  return availabilityForIdentity(
+    availability,
+    symbolIdentityKey({ namespace, kind, name, signature }),
+  );
+}
+
+// The authoritative inner signature for one symbol, or `undefined` when the page
+// carries no Combined signature map or the identity is absent. Functions key by
+// their normalized overload signature (so both arms of a transition resolve
+// distinctly); members key with the empty signature. A miss falls back to the
+// token-derived render, so exact-version pages (no map) are unaffected.
+function authoritativeSignatureFor(
+  authoritative: ReadonlyMap<string, string> | undefined,
+  namespace: string,
+  kind: IdentityKind,
+  name: string,
+  signature: string,
+): string | undefined {
+  return authoritative?.get(symbolIdentityKey({ namespace, kind, name, signature }));
+}
+
+/**
+ * The lifecycle labels rendered as compact text badges and threaded into the
+ * search projection. The availability span is turned into a friendly label
+ * against the lookup's ordered `versions` (an all-versions span carries none —
+ * it is implied); deprecation and Box2D facts follow. Text, never color alone,
+ * so the facts stay accessible. The replacement link is rendered separately (it
+ * needs version-correct resolution); {@link availabilityProse} appends its plain
+ * name. An absent lookup carries no transition set, so a span that ends early
+ * reads as a removal.
+ */
+export function availabilityLabels(
+  av: ApiAvailability,
+  availability: AvailabilityLookup | undefined,
+): string[] {
+  return availabilityItems(av, availability).map((item) => item.label);
+}
+
+export type AvailabilityItemCategory = "new" | "changed" | "deprecated";
+
+export interface AvailabilityItem {
+  readonly label: string;
+  readonly category?: AvailabilityItemCategory;
+}
+
+/**
+ * The {@link availabilityLabels} facts, each paired with the color category its
+ * list chip shows. The span's category comes from {@link badgeCategoryFromLabel},
+ * so a list item and the heading chip for the same span always agree; the
+ * deprecation line is `deprecated` and the Box2D backend fact carries none.
+ */
+export function availabilityItems(
+  av: ApiAvailability,
+  availability: AvailabilityLookup | undefined,
+): AvailabilityItem[] {
+  const items: AvailabilityItem[] = [];
+  const span = availabilityLabel(av.availableIn, availability?.versions ?? [], {
+    transition: availability?.transitions.has(symbolNameKey(av.identity)) ?? false,
+  });
+  if (span.kind !== "all") {
+    const category = badgeCategoryFromLabel(span.kind, false);
+    items.push({
+      label: span.label,
+      ...(category.isNew ? { category: "new" } : category.isChanged ? { category: "changed" } : {}),
+    });
+  }
+  if (av.deprecatedSince) {
+    items.push({ label: `Deprecated since ${av.deprecatedSince}`, category: "deprecated" });
+  }
+  if (av.box2d && av.box2d.length > 0) items.push({ label: `Box2D: ${av.box2d.join(", ")}` });
+  return items;
+}
+
+/**
+ * The three independent, co-occurring availability categories a symbol can carry,
+ * driving the glanceable color layer (per-symbol heading dots, namespace count
+ * pills). `isNew`/`isChanged` come from the availability span; `isDeprecated` is
+ * orthogonal, so a changed-and-deprecated symbol carries both.
+ */
+export interface BadgeCategory {
+  readonly isNew: boolean;
+  readonly isChanged: boolean;
+  readonly isDeprecated: boolean;
+}
+
+/**
+ * Core span-to-category mapping, kept in one place so the per-symbol dots and the
+ * namespace counts agree byte-for-byte: a `since` span is New, any bounded/partial
+ * span (`through`/`range`/`discrete`) is Changed, an all-versions span is neither.
+ * Deprecation is an independent flag the caller supplies.
+ */
+export function badgeCategoryFromLabel(
+  kind: AvailabilityLabelKind,
+  isDeprecated: boolean,
+): BadgeCategory {
+  return {
+    isNew: kind === "since",
+    isChanged: kind === "through" || kind === "range" || kind === "discrete",
+    isDeprecated,
+  };
+}
+
+/**
+ * Categorize a symbol's availability record for the color-badge layer. Absent
+ * availability (a symbol present everywhere with no curated fact) is all-false.
+ */
+export function badgeCategory(
+  av: ApiAvailability | undefined,
+  versions: readonly string[],
+): BadgeCategory {
+  if (!av) return badgeCategoryFromLabel("all", false);
+  return badgeCategoryFromLabel(
+    availabilityLabel(av.availableIn, versions).kind,
+    av.deprecatedSince !== undefined,
+  );
+}
+
+/**
+ * The inclusive `[from, to]` range a category is measured against. Structurally
+ * identical to {@link version-window!VersionWindow}, restated here because
+ * `version-window` imports `combined-surface`, which imports this module — an
+ * import in the other direction would close that cycle.
+ */
+export interface CategoryWindow {
+  readonly from: string;
+  readonly to: string;
+}
+
+/**
+ * Strip a route id's `defold-` prefix, passing bare semver through. The route
+ * vocabulary is prefixed and the projection axis is not, so every string entering
+ * a windowed derivation is normalized through this and either form works on
+ * either side.
+ */
+export function bareId(id: string): string {
+  return id.replace(/^defold-/, "");
+}
+
+/**
+ * Categorize a symbol for the color-badge layer **relative to the selected
+ * window** rather than the whole tracked axis: the span is measured against the
+ * inclusive `[from, to]` slice, so covering the window is no category, reaching
+ * `to` but not `from` is New, and every other in-window shape is Changed. A
+ * window whose bounds are untracked or inverted is a hand-edited URL rather than
+ * a real narrowing, so it widens to the full axis — the identity case, which is
+ * why the canonical route's output cannot move.
+ *
+ * A symbol the window does not contain carries **no** category. Without that
+ * guard it would reach {@link availabilityLabel} with no in-slice presence and
+ * come back as the `(none)` `discrete` label, scoring Changed for a range it is
+ * absent from. At the full range this guard can only fire for an `availableIn`
+ * naming no tracked version at all, which the Combined projection never builds.
+ *
+ * Deprecation is bounded by `to` on the same terms: a deprecation that lands
+ * after the window's target has not happened yet from the reader's position. A
+ * `deprecatedSince` that names no tracked version is a curated fact about a
+ * release outside the axis, so it keeps marking the symbol.
+ */
+export function windowedBadgeCategory(
+  availableIn: readonly string[],
+  deprecatedSince: string | undefined,
+  versions: readonly string[],
+  window: CategoryWindow,
+): BadgeCategory {
+  return functionBadgeCategory(
+    [deprecatedSince === undefined ? { availableIn } : { availableIn, deprecatedSince }],
+    versions,
+    window,
+  );
+}
+
+/** One ref-doc identity of a function: its presence and curated deprecation. */
+export interface BadgeMember {
+  readonly availableIn: readonly string[];
+  readonly deprecatedSince?: string;
+}
+
+interface CategorySlice {
+  readonly axis: readonly string[];
+  readonly slice: readonly string[];
+  readonly toIndex: number;
+}
+
+// The window's inclusive slice of the bare axis. Untracked or inverted bounds
+// widen to the whole axis, so a hand-edited URL never empties the slice.
+function categorySlice(versions: readonly string[], window: CategoryWindow): CategorySlice {
+  const axis = versions.map(bareId);
+  const newestIndex = axis.indexOf(bareId(window.to));
+  const oldestIndex = axis.indexOf(bareId(window.from));
+  const unresolvable = newestIndex === -1 || oldestIndex === -1 || newestIndex > oldestIndex;
+  return {
+    axis,
+    slice: unresolvable ? axis : axis.slice(newestIndex, oldestIndex + 1),
+    toIndex: unresolvable ? 0 : newestIndex,
+  };
+}
+
+function deprecatedAt(member: BadgeMember, { axis, toIndex }: CategorySlice): boolean {
+  if (member.deprecatedSince === undefined) return false;
+  const deprecatedIndex = axis.indexOf(bareId(member.deprecatedSince));
+  return deprecatedIndex === -1 || deprecatedIndex >= toIndex;
+}
+
+/**
+ * One category for a whole function, scored from every ref-doc identity of it
+ * the window contains, so a heading, its overview card and the namespace counts
+ * answer for the function rather than for its overload forms. The union of the
+ * present members' spans decides New (the function itself first appears inside
+ * the window); otherwise the function is Changed when that union is bounded or
+ * gapped, when any member's span differs from the union, or when only some
+ * members are deprecated. Deprecated needs every present member deprecated.
+ *
+ * A member the window does not contain is ignored, and with none present the
+ * function carries no category. With a single member this is exactly
+ * {@link windowedBadgeCategory}, including its widening of unresolvable bounds
+ * and its `to`-bounded deprecation.
+ */
+export function functionBadgeCategory(
+  members: readonly BadgeMember[],
+  versions: readonly string[],
+  window: CategoryWindow,
+): BadgeCategory {
+  const scope = categorySlice(versions, window);
+  const { slice } = scope;
+  const present = members
+    .map((member) => ({
+      member,
+      inSlice: new Set(member.availableIn.map(bareId).filter((version) => slice.includes(version))),
+    }))
+    .filter(({ inSlice }) => inSlice.size > 0);
+  if (present.length === 0) return badgeCategoryFromLabel("all", false);
+
+  const union = slice.filter((version) => present.some(({ inSlice }) => inSlice.has(version)));
+  const kind = availabilityLabel(union, slice).kind;
+  const deprecatedCount = present.filter(({ member }) => deprecatedAt(member, scope)).length;
+  const isNew = kind === "since";
+  const isChanged =
+    !isNew &&
+    (badgeCategoryFromLabel(kind, false).isChanged ||
+      present.some(({ inSlice }) => inSlice.size !== union.length) ||
+      (deprecatedCount > 0 && deprecatedCount < present.length));
+  return { isNew, isChanged, isDeprecated: deprecatedCount === present.length };
+}
+
+/**
+ * Every ref-doc identity a page's module declares for the function `name`, as
+ * the members {@link functionBadgeCategory} scores. An identity with no record is
+ * present across the whole axis, which is why the lookup holds none for it. A
+ * page with no availability lookup yields no members, so the caller decides
+ * what stands for the function there.
+ */
+export function functionBadgeMembers(
+  page: Pick<ApiPage, "module" | "availability">,
+  name: string,
+): BadgeMember[] {
+  const availability = page.availability;
+  if (!availability) return [];
+  const seen = new Set<string>();
+  const members: BadgeMember[] = [];
+  for (const fn of page.module.functions) {
+    if (fn.name !== name) continue;
+    const identity = symbolIdentityKey({
+      namespace: page.module.namespace,
+      kind: "FUNCTION",
+      name: fn.name,
+      signature: normalizedFunctionSignature(fn),
+    });
+    if (seen.has(identity)) continue;
+    seen.add(identity);
+    const record = availability.records.get(identity);
+    members.push(
+      record === undefined
+        ? { availableIn: availability.versions }
+        : record.deprecatedSince === undefined
+          ? { availableIn: record.availableIn }
+          : { availableIn: record.availableIn, deprecatedSince: record.deprecatedSince },
+    );
+  }
+  return members;
+}
+
+// Flat prose form for the search index: the badge labels plus the replacement's
+// plain name, so a reader searching "available through" or a replacement symbol
+// finds the historical page. Empty when the record carries no renderable fact.
+function availabilityProse(
+  av: ApiAvailability,
+  availability: AvailabilityLookup | undefined,
+): string {
+  const labels = availabilityLabels(av, availability);
+  if (av.replacement) labels.push(`Replaced by ${av.replacement.name}`);
+  return labels.length > 0 ? `${labels.join(". ")}.` : "";
+}
+
+function pushAvailabilityProse(
+  lines: string[],
+  av: ApiAvailability | undefined,
+  availability: AvailabilityLookup | undefined,
+): void {
+  if (!av) return;
+  const prose = availabilityProse(av, availability);
+  if (prose) lines.push(prose, "");
+}
+
+export type ApiPageCategory = "engine" | "lua-stdlib" | "global-type" | "library";
+
+type ApiTypedef = ApiModule["typedefs"][number];
+
+/**
+ * Structured provenance for a vendored `library` page, joined from
+ * `library-classification.json` (repo, pinned commit, license, the module's
+ * upstream `dir`) and `NOTICE` (author credit). Rendered as the uniform
+ * Author / GitHub / Commit pin / Import / License block; leads with the real
+ * origin (the upstream author and their repo) rather than the ts-defold
+ * vendoring plumbing.
+ */
+export interface LibraryMeta {
+  /** NOTICE author credit for the upstream dir; `""` when the dir has no credit. */
+  author: string;
+  /** Link to the author's upstream repo (the NOTICE credit URL); `""` when the dir has no credit. */
+  authorUrl: string;
+  /** The pinned commit sha — abbreviated for display, full inside the link. */
+  commit: string;
+  /**
+   * Link to the exact `.d.ts` the types were generated from, at the pinned
+   * commit (`<repo>/blob/<commit>/<path>`); falls back to the repo tree at the
+   * commit (`<repo>/tree/<commit>`) when the upstream file path is unknown.
+   */
+  sourceUrl: string;
+  /** The vendored `import * as <alias> from '<module>'` string. */
+  importString: string;
+  /** SPDX-style license id from the classification `source`. */
+  license: string;
+  /**
+   * `true` for a library this repo maintains through a LuaLS or script_api
+   * recipe in library data (e.g. druid, bridge)
+   * (namespace absent from `moduleDir`), or a Defold extension page read from
+   * its own `.script_api`; `false` for a vendored library.
+   */
+  authoredHere: boolean;
+  /**
+   * `import` for a Lua module a project requires or a native extension a project
+   * imports; `ambient` for a `.script_api` doc adding members to an engine
+   * namespace, which stays that global, so the page tells the reader to call it
+   * with no import.
+   */
+  usage: "import" | "ambient";
+  /** The global an ambient extension is called through: its doc's declared namespace. */
+  globalNamespace?: string;
+  /**
+   * The engine namespace an ambient extension doc adds members to when it
+   * declares one (`extension-spine`'s `spine.gui` page declares `gui`).
+   */
+  extendsNamespace?: string;
+  /**
+   * How a Defold extension page's upstream pin was chosen — its latest release,
+   * else its newest tag, else a commit — so the adopt steps name a dependency
+   * URL that exists at that pin. Set only for Defold extension pages; absent
+   * keeps release selection, because a vendored or authored pin is our
+   * generation source, not the user's dependency.
+   */
+  pinKind?: "release" | "tag" | "commit";
+  /**
+   * The Defold version that was current when a Defold extension's release or
+   * tag pin was cut. A hint about the pin's age, not a compatibility claim;
+   * absent when the pin carries no date.
+   */
+  releaseEra?: string;
+  /** The Asset Portal entry a portal `.script_api` page links; absent on every other page. */
+  portal?: { id: string; url: string };
+}
+
+export interface ApiPage {
+  namespace: string;
+  route: string;
+  brief: string;
+  module: ApiModule;
+  /** Hand-authored TypeScript `@example` translations, shared across the surface. */
+  translations: TranslationStore;
+  /** Hand-authored `lua-types`-derived signature overrides, keyed by FQN, shared across the surface. */
+  signatures: SignatureStore;
+  /**
+   * Exact-identity ({@link symbolIdentityKey}) to inner-render-form signature
+   * map, present only on Combined pages. When a symbol's identity is in the map
+   * the render/index/search layers use its authoritative declaration text
+   * verbatim instead of re-deriving the signature from ref-doc tokens (which can
+   * drift from the shipped `generated/*.d.ts`). A symbol absent from the map
+   * falls back to the token-derived `functionSignature`.
+   */
+  authoritativeSignatures?: ReadonlyMap<string, string>;
+  /**
+   * A library page's index-slot classifications from library data, keyed
+   * `<page>/<slot>`; absent on every other page.
+   */
+  indexSlots?: LibraryIndexSlotClassifications;
+  /**
+   * The per-slot companion to {@link authoritativeSignatures}, keyed by name
+   * identity (`<ns>\0FUNCTION\0<fqn>`) rather than by overload signature: the
+   * Parameters and Returns lists render one ref-doc entry per row, and its raw
+   * overload key does not survive the authored-override collapse. A slot present
+   * here renders the type its signature shows; one absent falls back to
+   * {@link mapDocType}, which is what keeps lua-stdlib, editor-vm and
+   * override-supplied symbols rendering at all.
+   */
+  authoritativeSlotTypes?: ReadonlyMap<string, SlotTypes>;
+  /**
+   * The further arms of a generated declaration that declares several overloads
+   * (the `b2d.shape` `body, shape_index` alternative), keyed by the same exact
+   * identity as {@link authoritativeSignatures}, which carries the first arm.
+   * Present only on Combined pages; each arm renders as its own row.
+   */
+  authoritativeArms?: ReadonlyMap<string, readonly string[]>;
+  /**
+   * The ref-doc element each arm of a declaration several elements share was
+   * emitted from (the Box2D backend forms of a `b2d.world` query), arm 0 first,
+   * keyed like {@link authoritativeArms}. Present only on Combined pages; an arm
+   * with an element renders that element's prose and tables.
+   */
+  authoritativeArmElements?: ReadonlyMap<string, readonly ApiFunction[]>;
+  /**
+   * The versions each authored overload arm exists in, keyed by FQN and then by
+   * the arm's text. Present only on Combined pages, where the store renders
+   * every arm whatever the version; a store row whose arm some version lacks
+   * takes this span.
+   */
+  authoredArmSpans?: ReadonlyMap<string, ReadonlyMap<string, readonly string[]>>;
+  /**
+   * The versions each arm of a declaration several ref-doc elements share
+   * exists in, keyed like {@link authoritativeArms} and then by the arm's text.
+   * Present only on Combined pages, where the shared identity can span versions
+   * whose declaration held other lines; each of those arm rows takes this span.
+   */
+  authoritativeArmSpans?: ReadonlyMap<string, ReadonlyMap<string, readonly string[]>>;
+  /**
+   * `engine` for Defold-engine namespaces emitted from `api-targets.json` `modules`
+   * and the synthetic globals page; `lua-stdlib` for pure-Lua / LuaJIT surfaces
+   * (currently `base`, `bit`) sourced from `target.luaStdlib` and rendered under
+   * the docs-site's separate "Lua standard library" reference category. Types
+   * for `lua-stdlib` pages come from the `lua-types` dependency, not from
+   * `@defold-typescript/types` generation. `global-type` for the hand-curated
+   * core value types (`Vector3`, `Hash`, …) parsed from `core-types.ts` and
+   * rendered under the "Global types" reference category — never emitted from
+   * `ref-doc.zip`. `library` for vendored third-party library modules
+   * (`monarch.monarch`, `in.button`, …) sourced from `@defold-typescript/library-types`
+   * fixtures, pinned to an upstream-library commit rather than a Defold version,
+   * and surfaced default-only under the "Libraries" reference category.
+   */
+  category: ApiPageCategory;
+  /**
+   * Version-correct symbol availability for this surface, joined from
+   * `api-availability.json`. Absent when the artifact is missing (the surface
+   * renders exactly as before). The same lookup rides on every page of a version.
+   */
+  availability?: AvailabilityLookup;
+  /** Structured provenance for a `library` page; absent for every other category. */
+  libraryMeta?: LibraryMeta;
+  /**
+   * Presentation-only author-first title for a `library` page
+   * (`paweljarosz / squid`); absent for every other category. The `namespace`
+   * stays the canonical `require()` path — `displayName` never touches the
+   * route, the import example, or the provenance block.
+   */
+  displayName?: string;
+}
+
+export interface ApiSymbolParam {
+  name: string;
+  doc: string;
+  types: string[];
+  isOptional: boolean;
+  /** Object-literal member docs, projected recursively; absent for plain types. */
+  fields?: ApiSymbolParam[];
+}
+
+export interface ApiSymbol {
+  kind: "function" | "variable" | "constant" | "property" | "type";
+  name: string;
+  /** Inner signature text, e.g. `go.get_position(): vector3` — no backticks. */
+  signature: string;
+  /** Plain-text description markdown (left column). */
+  docMarkdown: string;
+  /** Converted Lua example markdown (right rail), absent when the symbol has none. */
+  exampleMarkdown?: string;
+  /** Structured parameters; always present, empty for non-functions. */
+  parameters: ApiSymbolParam[];
+  /** Structured return values; always present, empty for non-functions. */
+  returnValues: ApiSymbolParam[];
+  /**
+   * The exact declaration identity this row's authoritative-signature, slot and
+   * availability lookups keyed on — {@link symbolIdentityKey} over the namespace,
+   * the kind, the name and the normalized ref-doc signature. Distinguishes the
+   * rows of an ordinary overload, which share a name. Absent on an authored
+   * override's arm rows, which render `.d.ts` text no single ref-doc declaration
+   * produced.
+   */
+  declarationIdentity?: string;
+  /**
+   * Version-correct lifecycle/backend metadata joined by exact overload identity;
+   * absent when the symbol has no availability record. The render layer turns it
+   * into text badges and a resolved replacement link.
+   */
+  availability?: ApiAvailability;
+  /**
+   * The source's `@deprecated` text, carried from the api-doc; `""` for a bare
+   * tag, absent when the symbol is not deprecated. Independent of
+   * {@link ApiAvailability.deprecatedSince}, which is the curated, version-keyed
+   * engine fact — a `library` page carries no availability record at all.
+   */
+  deprecated?: string;
+  /**
+   * Present when the symbol is an ambient global rather than a member of the
+   * page's imported module, carried from the api-doc. Absent for a module
+   * member, so a page whose symbols are all module members renders exactly as
+   * before.
+   */
+  global?: true;
+  /**
+   * Present when this symbol's prose was imported from the library's upstream
+   * source rather than written in the fork, carried from the api-doc. Absent for
+   * first-party prose, and the render layer marks only what is present — an
+   * imported brief is never presented as the fork's own.
+   */
+  docSource?: "upstream";
+  /**
+   * The reference's own qualified name for an engine type the declarations
+   * rename (`gui.EASING` for `gui.Easing`) and its defold.com entry, so a reader
+   * can match the row to the Defold documentation. Absent when the declared name
+   * is the reference's.
+   */
+  defoldRef?: DefoldRef;
+}
+
+/** A Defold reference name and the URL of its entry on defold.com. */
+export interface DefoldRef {
+  name: string;
+  url: string;
+}
+
+// The defold.com entry of a ref-doc element: its module's page, which keeps the
+// namespace's dots (`b2d.body-lua`), anchored by the element's own name.
+export function defoldRefUrl(namespace: string, name: string): string {
+  return `https://defold.com/ref/${namespace}-lua#${name}`;
+}
+
+export interface ApiSymbolGroup {
+  label: string;
+  symbols: ApiSymbol[];
+}
+
+/**
+ * Partition a namespace's `function` symbols for `/api` rendering: module
+ * functions (no colon in `name`) lead under a single `Functions` group,
+ * followed by one group per `<receiver>:<method>` receiver in first-appearance
+ * order. Handle methods like `file:read` or `client:send` thus render apart
+ * from the module table rather than interleaved as if `io.file:read` were
+ * callable. The `Functions` group is emitted only when non-empty; input order
+ * is preserved within every group. Presentation-only — does not feed the
+ * search index or `apiModuleSymbols`.
+ */
+export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
+  const moduleFns: ApiSymbol[] = [];
+  const byReceiver = new Map<string, ApiSymbol[]>();
+
+  for (const fn of functions) {
+    const colon = fn.name.indexOf(":");
+    if (colon === -1) {
+      moduleFns.push(fn);
+      continue;
+    }
+    const receiver = fn.name.slice(0, colon);
+    const bucket = byReceiver.get(receiver);
+    if (bucket) bucket.push(fn);
+    else byReceiver.set(receiver, [fn]);
+  }
+
+  const groups: ApiSymbolGroup[] = [];
+  if (moduleFns.length > 0) groups.push({ label: "Functions", symbols: moduleFns });
+  for (const [receiver, symbols] of byReceiver) {
+    groups.push({ label: `\`${receiver}\` methods`, symbols });
+  }
+  return groups;
+}
+
+export interface TypeSymbolLayout {
+  types: ApiSymbol[];
+  shapes: ApiSymbolGroup[];
+}
+
+/**
+ * Partition a namespace's `type` symbols for `/api` rendering into member-less
+ * rows and shapes with members, each in first-appearance order.
+ * `apiModuleSymbols` projects every typedef member as `<Shape>.<member>`, so the
+ * split is at the *first* `.` — a member whose own name carries a dot stays with
+ * its shape rather than minting one. A dotless name is the shape's own definition
+ * symbol and heads that shape's group. A type with no members (a `type` alias or
+ * an `interface` row) is a row: the rows share one heading, and each row's own
+ * signature heading is its anchor. A shape with members is labeled with the bare
+ * shape name and owns a heading, {@link typeShapeHeading} of that label, because
+ * that heading is the only anchor a signature token naming it can resolve to.
+ * Input order is preserved within every shape.
+ * Presentation-only — does not feed the search index or `apiModuleSymbols`.
+ */
+export function groupTypeSymbols(types: ApiSymbol[]): TypeSymbolLayout {
+  const byShape = new Map<string, ApiSymbol[]>();
+
+  for (const type of types) {
+    const dot = type.name.indexOf(".");
+    const shape = dot === -1 ? type.name : type.name.slice(0, dot);
+    const bucket = byShape.get(shape);
+    if (bucket) bucket.push(type);
+    else byShape.set(shape, [type]);
+  }
+
+  const layout: TypeSymbolLayout = { types: [], shapes: [] };
+  for (const [shape, symbols] of byShape) {
+    if (symbols.every((s) => !s.name.includes("."))) layout.types.push(...symbols);
+    else layout.shapes.push({ label: shape, symbols });
+  }
+  return layout;
+}
+
+/**
+ * One callable form of a function and the forms it replaced, newest first. Each
+ * predecessor's `boundary` is the tracked version the form after it first
+ * appears in.
+ */
+export interface FunctionRevision {
+  readonly symbol: ApiSymbol;
+  readonly predecessors: readonly { readonly symbol: ApiSymbol; readonly boundary: string }[];
+}
+
+/** A revision chain that ends before its function's newest version, at `boundary`. */
+export interface RemovedFunctionRevision extends FunctionRevision {
+  readonly boundary: string;
+}
+
+/**
+ * One function's forms paired into revision chains: `forms` are the chains that
+ * reach the function's newest present version, the overloads a caller picks
+ * between; `removed` are the chains that end earlier.
+ */
+export interface FunctionRevisionGroup {
+  readonly forms: readonly FunctionRevision[];
+  readonly removed: readonly RemovedFunctionRevision[];
+}
+
+interface RevisionNode {
+  readonly symbol: ApiSymbol;
+  readonly order: number;
+  readonly newest: number;
+  readonly oldest: number;
+  predecessor?: RevisionNode;
+  successor?: RevisionNode;
+}
+
+// The axis indices a form is present at, newest first: its record's versions,
+// or the whole axis when it has no record or names no tracked version.
+function revisionSpan(symbol: ApiSymbol, axis: readonly string[]): number[] {
+  const indices = (symbol.availability?.availableIn ?? [])
+    .map((version) => axis.indexOf(bareId(version)))
+    .filter((index) => index >= 0)
+    .sort((a, b) => a - b);
+  return indices.length > 0 ? indices : axis.map((_, index) => index);
+}
+
+function parameterNames(symbol: ApiSymbol): string {
+  return (outerCallParams(symbol.signature) ?? symbol.parameters.map((p) => p.name)).join(",");
+}
+
+// Pair the forms that end just before `boundary` with the forms that start at
+// it: first one-to-one by identical parameter-name list, then a lone remaining
+// ender with a lone remaining starter. Anything else stays unpaired.
+function pairAtBoundary(enders: RevisionNode[], starters: RevisionNode[]): void {
+  const link = (ender: RevisionNode, starter: RevisionNode) => {
+    ender.successor = starter;
+    starter.predecessor = ender;
+  };
+  const byNames = (nodes: RevisionNode[]) => {
+    const map = new Map<string, RevisionNode[]>();
+    for (const node of nodes) {
+      const key = parameterNames(node.symbol);
+      map.set(key, [...(map.get(key) ?? []), node]);
+    }
+    return map;
+  };
+  const startersByNames = byNames(starters);
+  for (const [key, sameEnders] of byNames(enders)) {
+    const sameStarters = startersByNames.get(key) ?? [];
+    const [ender] = sameEnders;
+    const [starter] = sameStarters;
+    if (sameEnders.length === 1 && sameStarters.length === 1 && ender && starter) {
+      link(ender, starter);
+    }
+  }
+  const leftEnders = enders.filter((node) => node.successor === undefined);
+  const leftStarters = starters.filter((node) => node.predecessor === undefined);
+  const [ender] = leftEnders;
+  const [starter] = leftStarters;
+  if (leftEnders.length === 1 && leftStarters.length === 1 && ender && starter) {
+    link(ender, starter);
+  }
+}
+
+function revisionChains(
+  symbols: readonly ApiSymbol[],
+  axis: readonly string[],
+): FunctionRevisionGroup {
+  if (axis.length === 0) {
+    return { forms: symbols.map((symbol) => ({ symbol, predecessors: [] })), removed: [] };
+  }
+  const bare = axis.map(bareId);
+  const nodes: RevisionNode[] = symbols.map((symbol, order) => {
+    const span = revisionSpan(symbol, bare);
+    return { symbol, order, newest: span[0] ?? 0, oldest: span[span.length - 1] ?? 0 };
+  });
+  for (let boundary = 0; boundary < bare.length - 1; boundary++) {
+    pairAtBoundary(
+      nodes.filter((node) => node.newest === boundary + 1),
+      nodes.filter((node) => node.oldest === boundary),
+    );
+  }
+  const functionNewest = Math.min(...nodes.map((node) => node.newest));
+  const forms: FunctionRevision[] = [];
+  const removed: RemovedFunctionRevision[] = [];
+  for (const head of nodes.filter((node) => node.successor === undefined)) {
+    const predecessors: { symbol: ApiSymbol; boundary: string }[] = [];
+    for (let node = head; node.predecessor; node = node.predecessor) {
+      predecessors.push({ symbol: node.predecessor.symbol, boundary: axis[node.oldest] ?? "" });
+    }
+    if (head.newest === functionNewest) forms.push({ symbol: head.symbol, predecessors });
+    else removed.push({ symbol: head.symbol, predecessors, boundary: axis[head.newest - 1] ?? "" });
+  }
+  return { forms, removed };
+}
+
+/**
+ * Partition function rows into one {@link FunctionRevisionGroup} per `name`, in
+ * first-appearance order, pairing each name's forms into revision chains over
+ * the newest-first tracked `axis`. A form whose span ends at the version just
+ * older than another form's first version is that form's predecessor; at one
+ * boundary, forms pair by identical parameter-name list, then as a lone ender
+ * with a lone starter. Overlapping or gapped spans never pair, a form with no
+ * record is present everywhere, and an empty axis pairs nothing. Chain heads
+ * keep the input order of their own symbol.
+ */
+export function groupFunctionRevisions(
+  symbols: readonly ApiSymbol[],
+  axis: readonly string[],
+): FunctionRevisionGroup[] {
+  const byName = new Map<string, ApiSymbol[]>();
+  for (const symbol of symbols) {
+    const group = byName.get(symbol.name);
+    if (group) group.push(symbol);
+    else byName.set(symbol.name, [symbol]);
+  }
+  return [...byName.values()].map((group) => revisionChains(group, axis));
+}
+
+/**
+ * Partition function rows into overload groups: one group per `name`, in
+ * first-appearance order, each holding the newest form of every live revision
+ * chain ({@link groupFunctionRevisions}). A group of one is an ordinary
+ * function; a larger group renders as one `/api` block. Presentation-only, like
+ * {@link groupFunctionSymbols} — `apiModuleSymbols` keeps one row per form for
+ * the search text and `llms-full.txt`.
+ */
+export function groupOverloadForms(symbols: ApiSymbol[], axis: readonly string[]): ApiSymbol[][] {
+  return groupFunctionRevisions(symbols, axis).map((group) =>
+    group.forms.map((form) => form.symbol),
+  );
+}
+
+/**
+ * The heading text of an overload group, without the backticks: `<fqn>(...)`
+ * followed by the return type when every form returns the same one. Forms whose
+ * returns differ, or that return nothing, keep theirs on each form line instead.
+ */
+export function overloadHeading(group: readonly ApiSymbol[]): string {
+  const [first] = group;
+  if (first === undefined) return "";
+  const returns = group.map((symbol) => splitCallForm(symbol).returns);
+  const [shared] = returns;
+  return `${first.name}(...)${shared != null && returns.every((r) => r === shared) ? shared : ""}`;
+}
+
+/**
+ * The code each form of an overload group lists under its heading: the form's
+ * parameter list, plus its return type unless every form returns the same one.
+ */
+export function overloadFormCodes(group: readonly ApiSymbol[]): string[] {
+  const splits = group.map(splitCallForm);
+  const sameReturns = splits.every((s) => s.returns === splits[0]?.returns);
+  return splits.map((s) => (sameReturns ? s.params : `${s.params}${s.returns ?? ""}`));
+}
+
+/**
+ * The heading text a function group renders under, and so the text its anchor
+ * slugs from: a single form keeps its full signature, a group takes
+ * {@link overloadHeading}.
+ */
+export function functionAnchorText(group: readonly ApiSymbol[]): string {
+  const [first] = group;
+  if (first === undefined) return "";
+  return group.length === 1 ? first.signature : overloadHeading(group);
+}
+
+// The index of the bracket closing the one opened at `start`. String literal
+// types are skipped whole, and an arrow's `>` closes nothing.
+function closingBracket(text: string, start: number, open: string, close: string): number {
+  let depth = 0;
+  let quote: string | null = null;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (quote !== null) {
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") quote = ch;
+    else if (ch === ">" && text[i - 1] === "=") continue;
+    else if (ch === open) depth++;
+    else if (ch === close && --depth === 0) return i;
+  }
+  return text.length - 1;
+}
+
+/**
+ * One form's signature with its qualified name dropped: `params` runs from any
+ * `<...>` generic head through the `)` closing the outer call list, `returns` is
+ * the rest (`: <type>`), or `null` when nothing follows. A signature that does not
+ * start with its name, or is not a call (`package.path: string`), comes back
+ * whole as `params`.
+ */
+export function splitCallForm(symbol: Pick<ApiSymbol, "name" | "signature">): {
+  params: string;
+  returns: string | null;
+} {
+  const { name, signature } = symbol;
+  if (!signature.startsWith(name)) return { params: signature, returns: null };
+  let open = name.length;
+  if (signature[open] === "<") open = closingBracket(signature, open, "<", ">") + 1;
+  if (signature[open] !== "(") return { params: signature, returns: null };
+  const close = closingBracket(signature, open, "(", ")");
+  const tail = signature.slice(close + 1);
+  return { params: signature.slice(name.length, close + 1), returns: tail === "" ? null : tail };
+}
+
+// `text` split on every `separator` outside brackets and string literal types.
+function splitTopLevel(text: string, separator: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i] ?? "";
+    if (quote !== null) {
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") quote = ch;
+    else if (ch === ">" && text[i - 1] === "=") continue;
+    else if ("([{<".includes(ch)) depth++;
+    else if (")]}>".includes(ch)) depth--;
+    else if (depth === 0 && text.startsWith(separator, i)) {
+      parts.push(text.slice(start, i));
+      start = i + separator.length;
+      i = start - 1;
+    }
+  }
+  parts.push(text.slice(start));
+  return parts;
+}
+
+// Each parameter's union members, or `null` for a form whose types are not plain
+// names: a generic head binds them to the call site.
+function formParameterTypes(name: string, signature: string): string[][] | null {
+  const { params } = splitCallForm({ name, signature });
+  if (!params.startsWith("(") || !params.endsWith(")")) return null;
+  const list = params.slice(1, -1).trim();
+  if (list === "") return [];
+  return splitTopLevel(list, ",").map((param) => {
+    const colon = param.indexOf(":");
+    return splitTopLevel(param.slice(colon + 1), " | ").map((type) => type.trim());
+  });
+}
+
+function identitySlotTypes(record: ApiAvailability): string[][] | null {
+  const signature = record.identity.signature ?? "";
+  const arrow = signature.indexOf("]->[");
+  if (arrow < 0) return null;
+  const slots = JSON.parse(signature.slice(0, arrow + 1)) as { types: string[] }[];
+  return slots.map((slot) => slot.types);
+}
+
+/**
+ * The span of one authored form that collapses several ref-doc identities: the
+ * merged record of just the identities whose parameter types admit every type
+ * the form names, or `undefined` when that set is empty or every identity, so
+ * a form nothing singles out keeps whatever span its group gives it.
+ */
+function formAvailability(
+  signature: string,
+  name: string,
+  records: readonly ApiAvailability[],
+  versions: readonly string[],
+): ApiAvailability | undefined {
+  const form = formParameterTypes(name, signature);
+  if (form === null) return undefined;
+  const admitting = records.filter((record) => {
+    const slots = identitySlotTypes(record);
+    return (
+      slots !== null &&
+      slots.length === form.length &&
+      form.every((types, i) => types.every((type) => slots[i]?.includes(type)))
+    );
+  });
+  if (admitting.length === 0 || admitting.length === records.length) return undefined;
+  return mergedAvailability(admitting, versions);
+}
+
+/**
+ * Compact per-group function index for the top of an `/api/<namespace>` page:
+ * a bulleted list with one card per function name, counting only the live forms
+ * of {@link groupOverloadForms}. A single-form function links
+ * its full `signature` (parameter and return types included); an overloaded one
+ * links its {@link overloadHeading} with the same `N overloads` count badge its
+ * block heading carries, and nests one item per form under it, each
+ * linking the same block with that form's {@link overloadFormCodes} entry. Each
+ * points down to the detailed block (anchor = `slugify(functionAnchorText(group))`,
+ * matching the `slugify-headings` markdown-it rule). Presentation-only — no new
+ * heading, so the "On this page" TOC is unchanged. Returns `""` for an empty list
+ * so the caller emits nothing.
+ */
+export function functionOverviewCards(
+  symbols: ApiSymbol[],
+  // The page's tracked axis, which pairs a function's forms into revision chains
+  // so a card counts only live forms; `[]` pairs nothing.
+  axis: readonly string[],
+  // Optional per-group marker HTML appended after the signature link in the same
+  // list item (Combined pages pass the `badgeDots` category glyphs). An empty
+  // return — and the default of no callback — leaves the row byte-unchanged.
+  markerFor?: (group: ApiSymbol[]) => string,
+): string {
+  if (symbols.length === 0) return "";
+  const rows = groupOverloadForms(symbols, axis).flatMap((group) => {
+    const text = functionAnchorText(group);
+    const anchor = slugify(text);
+    const count =
+      group.length > 1 ? ` <span class="api-overload-count">${group.length} overloads</span>` : "";
+    const row = `- [\`${text}\`${count}](#${anchor})${markerFor ? markerFor(group) : ""}`;
+    if (group.length === 1) return [row];
+    return [row, ...overloadFormCodes(group).map((code) => `  - [\`${code}\`](#${anchor})`)];
+  });
+  return [
+    '<div class="api-overview" aria-label="Function overview">',
+    "",
+    ...rows,
+    "",
+    "</div>",
+  ].join("\n");
+}
+
+function normalizeTypes(types: string[]): string[] {
+  return types.map((t) => t.trim()).filter((t) => t.length > 0);
+}
+
+/**
+ * Render a single Defold ref-doc type token as the TypeScript type the `.d.ts`
+ * emitter produces, reusing the authoritative `DEFOLD_TYPE_MAP` so `/api`
+ * signatures can't drift from the generated typings. Unmapped tokens (doc-only
+ * names with no engine type, e.g. `playback`) pass through verbatim — unlike
+ * `emit-dts.ts` `defaultMapType`, which falls back to `unknown`.
+ */
+export function mapDocType(token: string): string {
+  return Object.hasOwn(DEFOLD_TYPE_MAP, token) ? (DEFOLD_TYPE_MAP[token] as string) : token;
+}
+
+type MapType = (token: string) => string;
+
+function typeList(types: string[], mapType: MapType = mapDocType): string {
+  const real = normalizeTypes(types).map(mapType);
+  return real.length > 0 ? real.join(" | ") : "unknown";
+}
+
+// A library page's key and the index slots library data classifies under it.
+interface LibraryPageSlots {
+  readonly key: string;
+  readonly classifications: LibraryIndexSlotClassifications;
+}
+
+const NO_LIBRARY_INDEX_SLOTS: LibraryIndexSlotClassifications = new Map();
+
+// A library page reads its own classifications under its page key and names the
+// library; every other page reads the engine map and names Defold.
+function withSlotBaseNotes(
+  libraryPage: LibraryPageSlots | undefined,
+  elementName: string,
+  kind: "param" | "return",
+  slotName: string,
+  doc: string,
+): string {
+  return libraryPage === undefined
+    ? withIndexBaseNotes(elementName, kind, slotName, doc)
+    : withLibraryIndexBaseNotes(
+        libraryPage.classifications,
+        libraryPage.key,
+        elementName,
+        kind,
+        slotName,
+        doc,
+      );
+}
+
+// The page key and classifications a library page's notes read, absent on every
+// other page.
+function libraryPageKey(
+  page: Pick<ApiPage, "namespace" | "category" | "indexSlots">,
+): LibraryPageSlots | undefined {
+  return page.category === "library"
+    ? { key: page.namespace, classifications: page.indexSlots ?? NO_LIBRARY_INDEX_SLOTS }
+    : undefined;
+}
+
+// A class field's doc with its base note, which only a library page records.
+function withFieldBaseNotes(
+  libraryPage: LibraryPageSlots | undefined,
+  typeName: string,
+  fieldName: string,
+  doc: string,
+): string {
+  return libraryPage === undefined
+    ? doc
+    : withLibraryIndexBaseNotes(
+        libraryPage.classifications,
+        libraryPage.key,
+        typeName,
+        "field",
+        fieldName,
+        doc,
+      );
+}
+
+/**
+ * Project one call list into render rows. When `slots` carries an entry for a
+ * row's `<kind>:<position>:<name>`, that row shows the type and optionality the
+ * emitter actually rendered into the signature above it — the curated mapping,
+ * documented-constant brand, recovered inline object or slot correction a bare
+ * token and the ref-doc `is_optional` flag cannot express. Absent, the row keeps
+ * the `mapDocType` render and the ref-doc flag. Nested `fields` always take the
+ * token path: they carry per-field prose and sit below a slot type that already
+ * spells them out.
+ */
+function projectParams(
+  list: ApiParameter[],
+  mapType: MapType = mapDocType,
+  slots?: SlotTypes,
+  kind: "param" | "return" = "param",
+  elementName?: string,
+  translations: TranslationStore = {},
+  libraryPage?: LibraryPageSlots,
+): ApiSymbolParam[] {
+  return list.map((p, index) => {
+    const emitted = slots?.[`${kind}:${index}:${p.name}`];
+    const doc =
+      elementName !== undefined
+        ? withSlotBaseNotes(
+            libraryPage,
+            elementName,
+            kind,
+            p.name,
+            translateProseFences(platformDocText(p.doc), elementName, translations, KEEP_SOURCE),
+          )
+        : platformDocText(p.doc);
+    return {
+      name: p.name,
+      doc,
+      types: emitted !== undefined ? [emitted.type] : normalizeTypes(p.types).map(mapType),
+      isOptional: emitted !== undefined ? emitted.optional : p.isOptional,
+      ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
+    };
+  });
+}
+
+/**
+ * Argument count of the outermost call list in a rendered signature, or `null`
+ * when the text is not a call at all. See {@link outerCallParams}.
+ */
+export function outerCallArity(signature: string): number | null {
+  return outerCallParams(signature)?.length ?? null;
+}
+
+/** One slot of a rendered signature's outer call list. */
+export interface CallSlot {
+  name: string;
+  isOptional: boolean;
+  type: string;
+}
+
+/**
+ * Parameter names of the outermost call list in a rendered signature, or `null`
+ * when the text is not a call at all. See {@link outerCallSlots}.
+ */
+export function outerCallParams(signature: string): string[] | null {
+  return outerCallSlots(signature)?.map((slot) => slot.name) ?? null;
+}
+
+/**
+ * Slots of the outermost call list in a rendered signature, or `null`
+ * when the text is not a call at all. A `: ` before any `(` or `<` marks a
+ * property annotation, so a function-typed value is never read as a call list;
+ * only the first parenthesized list is read, so a curried return type
+ * (`go.get<P>(): <K …>(url, …) => P[K]`) reports the outer form's arity — zero —
+ * rather than the arity of the function it returns. This is a property of the
+ * rendered signature text, not of the ref-doc model.
+ */
+export function outerCallSlots(signature: string): CallSlot[] | null {
+  let i = 0;
+  for (; i < signature.length; i++) {
+    const ch = signature[i];
+    if (ch === "(" || ch === "<") break;
+    if (ch === ":" && /\s/.test(signature[i + 1] ?? "")) return null;
+  }
+  if (signature[i] === "<") {
+    let generic = 0;
+    for (; i < signature.length; i++) {
+      const ch = signature[i];
+      // an arrow's `>` closes nothing — skip it before the depth bookkeeping
+      if (ch === "=" && signature[i + 1] === ">") {
+        i++;
+      } else if (ch === "<") {
+        generic++;
+      } else if (ch === ">" && --generic === 0) {
+        i++;
+        break;
+      }
+    }
+    while (i < signature.length && signature[i] !== "(") i++;
+  }
+  if (signature[i] !== "(") return null;
+
+  let depth = 0;
+  let start = i + 1;
+  let hasArguments = false;
+  const segments: string[] = [];
+  for (; i < signature.length; i++) {
+    const ch = signature[i] as string;
+    if (ch === "=" && signature[i + 1] === ">") {
+      i++;
+    } else if (ch === "(" || ch === "<" || ch === "[" || ch === "{") {
+      depth++;
+    } else if (ch === ")" || ch === ">" || ch === "]" || ch === "}") {
+      if (--depth === 0) {
+        if (hasArguments) segments.push(signature.slice(start, i));
+        return segments.map((segment) => {
+          const slot = segment.trim().match(/^(?:\.\.\.)?([\w$]*)(\??)\s*(?::([\s\S]*))?$/);
+          return {
+            name: slot?.[1] ?? "",
+            isOptional: slot?.[2] === "?",
+            type: slot?.[3]?.trim() ?? "",
+          };
+        });
+      }
+    } else if (depth === 1 && ch === ",") {
+      segments.push(signature.slice(start, i));
+      start = i + 1;
+    } else if (!/\s/.test(ch)) {
+      hasArguments = true;
+    }
+  }
+  return null;
+}
+
+/**
+ * Pair each authored override row with the ref-doc entry its call shape selects,
+ * or `null` when the shapes cannot pick one out unambiguously. Parameter names
+ * decide first: `vmath.lerp`/`vmath.slerp` entries are arity-identical but name
+ * their slots apart (`v1`/`q1`/`n1`). Otherwise arity decides — pairwise-distinct
+ * entry arities, and every row's arity equal to exactly one entry's. Rows may
+ * outnumber entries: `msg.url`'s receiver-typed forms share the arity, and so the
+ * entry, of the plain form they mirror.
+ */
+function pairFixtureEntries(
+  entries: readonly ApiFunction[],
+  rowSignatures: readonly string[],
+): readonly ApiFunction[] | null {
+  if (entries.length > rowSignatures.length) return null;
+  const byNames = rowSignatures.map((signature) => {
+    const names = outerCallParams(signature);
+    const hits = entries.filter(
+      (e) =>
+        names !== null &&
+        e.parameters.length === names.length &&
+        e.parameters.every((p, index) => p.name === names[index]),
+    );
+    return hits.length === 1 ? hits[0] : undefined;
+  });
+  if (byNames.every((entry) => entry !== undefined)) return byNames;
+  const byArity = new Map(entries.map((e) => [e.parameters.length, e] as const));
+  if (byArity.size !== entries.length) return null;
+  const paired: ApiFunction[] = [];
+  for (const signature of rowSignatures) {
+    const arity = outerCallArity(signature);
+    const entry = arity === null ? undefined : byArity.get(arity);
+    if (entry === undefined) return null;
+    paired.push(entry);
+  }
+  return paired;
+}
+
+/**
+ * Which unpaired row carries the ref-doc entry's parameter and return tables:
+ * row 1 as before, unless row 1 is a zero-argument form the tables cannot
+ * describe (the curried `go.get`/`go.set` factories), in which case they move to
+ * the first row whose arity accepts them — or `-1`, nowhere, if none does.
+ */
+function unpairedTableRow(entry: ApiFunction, rowSignatures: readonly string[]): number {
+  if (entry.parameters.length === 0) return 0;
+  if (outerCallArity(rowSignatures[0] ?? "") !== 0) return 0;
+  return rowSignatures.findIndex((s) => outerCallArity(s) === entry.parameters.length);
+}
+
+// `isLibrary` gates the emitter-equivalent variadic (`...args: T[]`) and multi-return
+// (`LuaMultiReturn<[...]>`) forms so a LuaLS- or script_api-sourced library `/api`
+// page matches its printed declaration; engine pages keep `...: T` and comma-joined returns.
+function functionSignature(
+  fn: ApiFunction,
+  mapType: MapType = mapDocType,
+  isLibrary = false,
+): string {
+  const params = fn.parameters
+    .map((p) =>
+      isLibrary && p.isVararg
+        ? `${p.name}: ${varargElementType(typeList(p.types, mapType))}`
+        : `${p.name}${p.isOptional ? "?" : ""}: ${typeList(p.types, mapType)}`,
+    )
+    .join(", ");
+  const mapped = fn.returnValues.map((r) => typeList(r.types, mapType));
+  const ret = isLibrary && mapped.length > 1 ? luaMultiReturn(mapped) : mapped.join(", ");
+  return `${fn.name}${fn.generics ?? ""}(${params})${ret ? `: ${ret}` : ""}`;
+}
+
+function variableSignature(v: ApiVariable, mapType: MapType = mapDocType): string {
+  return `${v.name}${v.isOptional ? "?" : ""}: ${typeList(v.types, mapType)}`;
+}
+
+function renderableTypedefs(
+  typedefs: ApiTypedef[],
+  namespace: string,
+  authoritative: ReadonlyMap<string, string> | undefined,
+): ApiTypedef[] {
+  return typedefs.filter(
+    (td) =>
+      (td.functions?.length ?? 0) > 0 ||
+      (td.properties?.length ?? 0) > 0 ||
+      typedefDefinition(td, namespace, authoritative) !== undefined,
+  );
+}
+
+// A typedef's definition line: the ledger's signed declaration when the page
+// carries one, else the shape its ref-doc arms or parents spell.
+function typedefDefinition(
+  td: ApiTypedef,
+  namespace: string,
+  authoritative: ReadonlyMap<string, string> | undefined,
+  mapType: MapType = mapDocType,
+): string | undefined {
+  return (
+    authoritativeSignatureFor(authoritative, namespace, "TYPEDEF", td.name, "") ??
+    typedefDefinitionSignature(td, mapType)
+  );
+}
+
+/**
+ * The line that defines a shape rather than one of its members — a union alias's
+ * arms, an interface's parents, or a generic shape's bare `Name<params>` so the
+ * parameters its member rows use are declared. `undefined` for a typedef that
+ * carries none of these, which renders through its members alone, and for a
+ * generic shape with no members, which has nothing to head.
+ */
+function typedefDefinitionSignature(
+  td: ApiTypedef,
+  mapType: MapType = mapDocType,
+): string | undefined {
+  const arms = normalizeTypes(td.types ?? []).map(mapType);
+  if (arms.length > 0) return `type ${td.name}${td.generics ?? ""} = ${arms.join(" | ")}`;
+  const parents = normalizeTypes(td.extends ?? []).map(mapType);
+  if (parents.length > 0) {
+    return `interface ${td.name}${td.generics ?? ""} extends ${parents.join(", ")}`;
+  }
+  const hasMembers = (td.functions?.length ?? 0) > 0 || (td.properties?.length ?? 0) > 0;
+  if (td.generics && hasMembers) return `${td.name}${td.generics}`;
+  return undefined;
+}
+
+function typeMemberName(typeName: string, memberName: string): string {
+  return `${typeName}.${memberName}`;
+}
+
+// Functions/constants come namespace-qualified (`go.get_position`), properties
+// come bare (`position`); only prefix when the name is not already qualified.
+// The synthetic `globals` page documents prefixless ambient symbols (`hash`),
+// so its members are keyed bare.
+export function qualify(namespace: string, name: string): string {
+  if (namespace === "globals") return name;
+  return name.startsWith(`${namespace}.`) ? name : `${namespace}.${name}`;
+}
+
+const IDENTIFIER_CHAR = /[\w$]/;
+
+// `text` opens with `head` as a whole token, not as the prefix of a longer name.
+function opensWith(text: string, head: string): boolean {
+  return text.startsWith(head) && !IDENTIFIER_CHAR.test(text.charAt(head.length));
+}
+
+/**
+ * A type row spelled by the path a script names it with: a definition opening
+ * `type <leaf>` or `interface <leaf>` names the whole qualified path
+ * (`type Type` on `image` -> `type image.Type`, `interface Action` filed as
+ * `go`'s `on_input.Action` -> `interface go.on_input.Action`), and a shape
+ * member row opening with its own `<Shape>.<member>` name gains the namespace
+ * (`Logger.info(...)` -> `demo.Logger.info(...)`). Any other signature is
+ * returned unchanged.
+ */
+function qualifiedTypeSignature(namespace: string, name: string, signature: string): string {
+  const path = qualify(namespace, name);
+  const leaf = name.slice(name.lastIndexOf(".") + 1);
+  for (const keyword of ["type", "interface"]) {
+    const head = `${keyword} ${leaf}`;
+    if (opensWith(signature, head)) return `${keyword} ${path}${signature.slice(head.length)}`;
+  }
+  if (opensWith(signature, name)) return `${path}${signature.slice(name.length)}`;
+  return signature;
+}
+
+/**
+ * The heading over a shape's member rows: the qualified path on an engine page,
+ * where scripts reach every type through its namespace, and the bare shape name
+ * on any other page, where the type is imported or ambient by that name.
+ */
+export function typeShapeHeading(page: Pick<ApiPage, "namespace" | "category">, label: string) {
+  return page.category === "engine" ? qualify(page.namespace, label) : label;
+}
+
+function typeMemberFunctionSignature(
+  typeName: string,
+  fn: ApiFunction,
+  mapType: MapType = mapDocType,
+  isLibrary = false,
+): string {
+  return `${typeName}.${functionSignature(fn, mapType, isLibrary)}`;
+}
+
+function typeMemberPropertySignature(
+  typeName: string,
+  prop: ApiVariable,
+  mapType: MapType = mapDocType,
+): string {
+  return `${typeName}.${variableSignature(prop, mapType)}`;
+}
+
+// `ApiConstant`/`ApiProperty` are not re-exported from the types package entry;
+// these helpers only touch the structural fields they need.
+function constantSignature(cst: { name: string }): string {
+  return cst.name;
+}
+
+function propertySignature(
+  prop: { name: string; types: string[] },
+  mapType: MapType = mapDocType,
+): string {
+  return `${prop.name}: ${typeList(prop.types, mapType)}`;
+}
+
+// Resolve a function's example to rendered markdown, matching the `.d.ts` emit
+// (`emit-dts.ts` `functionDocLines`) exactly so `/api` and the typings agree:
+// each example resolves by its own segment hash, a single-example element's one
+// segment being the whole blob with no prose, and renders as ```ts only when
+// every segment has an authored body; any miss keeps the clean Lua fallback.
+// Each ```ts fence is followed by its segment's source as a `<lang> original`
+// fence, the clean code the Lua fallback would show, which the page renders as
+// the second tab. Returns `undefined` when the function carries no example at all.
+export function exampleMarkdownFor(
+  fn: ApiFunction,
+  translations: TranslationStore = {},
+): string | undefined {
+  if (!fn.examples) return undefined;
+  const keyed = splitExampleSources(fn.examples);
+  const resolved = lookupExampleSegments(translations, fn.name, keyed);
+  if (resolved !== null) {
+    // `splitExampleSources` returns the walk's own segments whenever there are
+    // several, so both lists line up with `resolved` index for index.
+    const walked = segmentExampleRegions(fn.examples).segments;
+    const sources = walked.length > 0 ? walked : keyed;
+    return resolved
+      .map(({ ts: body, prose }, i) => {
+        const source = sources[i];
+        const fences = source
+          ? `${tsFence(body)}\n\n\`\`\`${source.lang} original\n${source.code}\n\`\`\``
+          : tsFence(body);
+        return prose === "" ? fences : `${prose}\n\n${fences}`;
+      })
+      .join("\n\n");
+  }
+  const converted = examplesHtmlToMarkdown(fn.examples);
+  return converted === "" ? undefined : converted;
+}
+
+/**
+ * A ref-doc prose fragment as page Markdown, with each ```lua fence swapped for
+ * the TypeScript pinned under `key` — the element's name, or the namespace for
+ * its description — exactly as the emitted hover shows it.
+ */
+export function proseDocText(html: string, key: string, translations: TranslationStore): string {
+  return translateProseFences(platformDocText(html), key, translations, KEEP_SOURCE);
+}
+
+const KEEP_SOURCE = { keepSource: true };
+
+function tsFence(body: string): string {
+  return `\`\`\`ts\n${body.replace(/\n+$/, "")}\n\`\`\``;
+}
+
+type ApiModuleMarkdownPage = Pick<
+  ApiPage,
+  | "namespace"
+  | "module"
+  | "displayName"
+  | "category"
+  | "availability"
+  | "authoritativeSignatures"
+  | "authoritativeSlotTypes"
+  | "authoritativeArms"
+  | "authoritativeArmElements"
+  | "authoredArmSpans"
+  | "authoritativeArmSpans"
+> &
+  Partial<Pick<ApiPage, "signatures">>;
+
+/** The member kinds `apiModuleMarkdown` renders a heading group for. */
+export type ApiSectionKind = "function" | "variable" | "constant" | "property" | "type";
+
+/** One member entry's share of the flat module markdown. */
+export interface ApiModuleSection {
+  kind: ApiSectionKind;
+  name: string;
+  markdown: string;
+}
+
+interface ModuleLines {
+  head: string[];
+  groups: {
+    heading: string;
+    sections: { kind: ApiSectionKind; name: string; lines: string[] }[];
+  }[];
+}
+
+/**
+ * The flat search/index projection of a module: the title and intro, one `##`
+ * group per member kind holding each member's headings, prose, examples and
+ * parameter/return prose, then the `## Types` block.
+ */
+export function apiModuleMarkdown(
+  page: ApiModuleMarkdownPage,
+  translations: TranslationStore = {},
+): string {
+  const { head, groups } = moduleLines(page, translations);
+  const lines = [...head];
+  for (const group of groups) {
+    lines.push(group.heading, "");
+    for (const section of group.sections) lines.push(...section.lines);
+  }
+  return lines.join("\n");
+}
+
+/**
+ * {@link apiModuleMarkdown} cut at its member boundaries: `head` is the title and
+ * intro, and `sections` holds each function/variable/constant/property entry's
+ * own lines in page order, then each `## Types` entry's — a constant-union
+ * alias, a typedef's heading and definition, and each typedef function and
+ * property — named as {@link apiModuleSymbols} names its `type` symbols. The
+ * group headings belong to none of them.
+ */
+export function apiModuleSections(
+  page: ApiModuleMarkdownPage,
+  translations: TranslationStore = {},
+): { head: string; sections: ApiModuleSection[] } {
+  const { head, groups } = moduleLines(page, translations);
+  return {
+    head: head.join("\n"),
+    sections: groups.flatMap((group) =>
+      group.sections.map(({ kind, name, lines }) => ({ kind, name, markdown: lines.join("\n") })),
+    ),
+  };
+}
+
+function moduleLines(page: ApiModuleMarkdownPage, translations: TranslationStore): ModuleLines {
+  const m = page.module;
+  const authoritative = page.authoritativeSignatures;
+  // `library` JSON tokens are already TypeScript, so re-mapping them through the
+  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the printed library declarations.
+  const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
+  const isLibrary = page.category === "library";
+  const libraryPage = libraryPageKey(page);
+  const head: string[] = [`# ${page.displayName ?? m.namespace}`, ""];
+  const groups: ModuleLines["groups"] = [];
+  let lines = head;
+  const section = (kind: ApiSectionKind, name: string): string[] => {
+    const own: string[] = [];
+    groups.at(-1)?.sections.push({ kind, name, lines: own });
+    return own;
+  };
+  if (page.displayName && page.displayName !== m.namespace) {
+    lines.push(`\`${m.namespace}\``, "");
+  }
+  const intro = translateProseFences(
+    htmlToDocText(m.description || m.brief),
+    m.namespace,
+    translations,
+    KEEP_SOURCE,
+  );
+  if (intro) lines.push(intro, "");
+
+  if (m.functions.length > 0) {
+    groups.push({ heading: "## Functions", sections: [] });
+    // The page's own rows own the signature precedence (authoritative, authored
+    // override, token render); each declaration heads the rows it renders, so an
+    // override-collapsed later entry contributes its prose under the rows above.
+    // Rows that share an identity (the arms of a declaration several ref-doc
+    // elements share) all list under it.
+    const identityRows = new Map<string, ApiSymbol[]>();
+    let current: ApiSymbol[] | undefined;
+    for (const symbol of apiModuleSymbols(page, translations, page.signatures)) {
+      if (symbol.kind !== "function") continue;
+      if (symbol.declarationIdentity !== undefined) {
+        current = identityRows.get(symbol.declarationIdentity) ?? [];
+        identityRows.set(symbol.declarationIdentity, current);
+      }
+      current?.push(symbol);
+    }
+    for (const fn of m.functions) {
+      lines = section("function", fn.name);
+      const identity = symbolIdentityKey({
+        namespace: m.namespace,
+        kind: "FUNCTION",
+        name: fn.name,
+        signature: normalizedFunctionSignature(fn),
+      });
+      const rows = identityRows.get(identity) ?? [];
+      for (const row of rows) {
+        lines.push(`### \`${row.signature}\``, "");
+      }
+      const doc = translateProseFences(
+        htmlToDocText(fn.description || fn.brief),
+        fn.name,
+        translations,
+        KEEP_SOURCE,
+      );
+      if (doc) lines.push(doc, "");
+      // Arms dated by their own lines state the span they cover together, not
+      // the shared identity's.
+      pushAvailabilityProse(
+        lines,
+        page.authoritativeArmSpans?.has(identity)
+          ? mergedAvailability(
+              rows.flatMap((row) => row.availability ?? []),
+              page.availability?.versions ?? [],
+            )
+          : joinAvailability(
+              page.availability,
+              m.namespace,
+              "FUNCTION",
+              fn.name,
+              normalizedFunctionSignature(fn),
+            ),
+        page.availability,
+      );
+      const example = exampleMarkdownFor(fn, translations);
+      if (example) lines.push(example, "");
+      for (const p of [...fn.parameters, ...fn.returnValues]) {
+        const kind = fn.parameters.includes(p) ? "param" : "return";
+        const pdoc = withSlotBaseNotes(
+          libraryPage,
+          fn.name,
+          kind,
+          p.name,
+          translateProseFences(htmlToDocText(p.doc), fn.name, translations, KEEP_SOURCE),
+        );
+        if (!pdoc) continue;
+        lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
+      }
+    }
+  }
+
+  if (m.variables.length > 0) {
+    groups.push({ heading: "## Variables", sections: [] });
+    for (const v of m.variables) {
+      lines = section("variable", v.name);
+      const authSig =
+        authoritativeSignatureFor(authoritative, m.namespace, "VARIABLE", v.name, "") ??
+        variableSignature(v, mapType);
+      lines.push(`### \`${authSig}\``, "");
+      const doc = htmlToDocText(v.description || v.brief);
+      if (doc) lines.push(doc, "");
+      pushAvailabilityProse(
+        lines,
+        joinAvailability(page.availability, m.namespace, "VARIABLE", v.name, ""),
+        page.availability,
+      );
+    }
+  }
+
+  if (m.constants.length > 0) {
+    groups.push({ heading: "## Constants", sections: [] });
+    for (const cst of m.constants) {
+      lines = section("constant", cst.name);
+      const authSig =
+        authoritativeSignatureFor(authoritative, m.namespace, "CONSTANT", cst.name, "") ??
+        constantSignature(cst);
+      lines.push(`### \`${authSig}\``, "");
+      const doc = htmlToDocText(cst.description || cst.brief);
+      if (doc) lines.push(doc, "");
+      pushAvailabilityProse(
+        lines,
+        joinAvailability(page.availability, m.namespace, "CONSTANT", cst.name, ""),
+        page.availability,
+      );
+    }
+  }
+
+  if (m.properties.length > 0) {
+    groups.push({ heading: "## Properties", sections: [] });
+    for (const prop of m.properties) {
+      lines = section("property", prop.name);
+      const authSig =
+        authoritativeSignatureFor(authoritative, m.namespace, "PROPERTY", prop.name, "") ??
+        propertySignature(prop, mapType);
+      lines.push(`### \`${authSig}\``, "");
+      const doc = htmlToDocText(prop.description || prop.brief);
+      if (doc) lines.push(doc, "");
+      pushAvailabilityProse(
+        lines,
+        joinAvailability(page.availability, m.namespace, "PROPERTY", prop.name, ""),
+        page.availability,
+      );
+    }
+  }
+
+  const ledgerOnly = ledgerOnlyTypedefs(authoritative, m);
+  const typedefs = renderableTypedefs(m.typedefs, m.namespace, authoritative);
+  if (ledgerOnly.length > 0 || typedefs.length > 0) {
+    groups.push({ heading: "## Types", sections: [] });
+    for (const [name, definition] of ledgerOnly) {
+      section("type", name).push(`### ${name}`, "", `\`${definition}\``, "");
+    }
+    for (const td of typedefs) {
+      lines = section("type", td.name);
+      lines.push(`### ${td.name}`, "");
+      const definition = typedefDefinition(td, m.namespace, authoritative, mapType);
+      if (definition) lines.push(`\`${definition}\``, "");
+      for (const fn of td.functions ?? []) {
+        lines = section("type", typeMemberName(td.name, fn.name));
+        lines.push(`#### \`${functionSignature(fn, mapType, isLibrary)}\``, "");
+        const doc = htmlToDocText(fn.description || fn.brief);
+        if (doc) lines.push(doc, "");
+        const example = exampleMarkdownFor(fn, translations);
+        if (example) lines.push(example, "");
+        for (const p of [...fn.parameters, ...fn.returnValues]) {
+          const kind = fn.parameters.includes(p) ? "param" : "return";
+          const pdoc =
+            libraryPage === undefined
+              ? htmlToDocText(p.doc)
+              : withLibraryIndexBaseNotes(
+                  libraryPage.classifications,
+                  libraryPage.key,
+                  fn.name,
+                  kind,
+                  p.name,
+                  htmlToDocText(p.doc),
+                );
+          if (!pdoc) continue;
+          lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
+        }
+      }
+      for (const prop of td.properties ?? []) {
+        lines = section("type", typeMemberName(td.name, prop.name));
+        lines.push(`#### \`${variableSignature(prop, mapType)}\``, "");
+        const doc = withFieldBaseNotes(
+          libraryPage,
+          td.name,
+          prop.name,
+          htmlToDocText(prop.description || prop.brief),
+        );
+        if (doc) lines.push(doc, "");
+      }
+    }
+  }
+
+  return { head, groups };
+}
+
+/**
+ * Structured per-symbol projection of a module — the same source walk as
+ * `apiModuleMarkdown`, but emitting `{ kind, name, signature, docMarkdown,
+ * exampleMarkdown }` records the API route lays out as prose-left / code-right
+ * rows. `apiModuleMarkdown` stays the flat search/index projection.
+ */
+// The `TYPEDEF` ledger entries a module owns that no ref-doc typedef declares:
+// the constant-union aliases, the overload slot alias and the ledger-only
+// interfaces. Returned as `[bare name, definition]` with the trailing `;`
+// dropped, so the signature reads like every other type symbol's.
+function ledgerOnlyTypedefs(
+  authoritative: ReadonlyMap<string, string> | undefined,
+  module: ApiModule,
+): [string, string][] {
+  if (authoritative === undefined) return [];
+  const declared = new Set(module.typedefs.map((td) => td.name));
+  const out: [string, string][] = [];
+  for (const [key, signature] of authoritative) {
+    const [namespace, kind, name, rest] = key.split("\u0000");
+    if (namespace !== module.namespace || kind !== "TYPEDEF" || rest !== "") continue;
+    if (name === undefined || declared.has(name)) continue;
+    out.push([name, signature.replace(/;$/, "")]);
+  }
+  return out.sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+export function apiModuleSymbols(
+  page: Pick<
+    ApiPage,
+    | "namespace"
+    | "module"
+    | "category"
+    | "availability"
+    | "authoritativeSignatures"
+    | "authoritativeSlotTypes"
+    | "authoritativeArms"
+    | "authoritativeArmElements"
+    | "authoredArmSpans"
+    | "authoritativeArmSpans"
+  >,
+  translations: TranslationStore = {},
+  signatures: SignatureStore = {},
+): ApiSymbol[] {
+  const m = page.module;
+  // `library` JSON tokens are already TypeScript, so re-mapping them through the
+  // ref-doc `DEFOLD_TYPE_MAP` would drift `/api` from the printed library declarations.
+  const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
+  const isLibrary = page.category === "library";
+  const libraryPage = libraryPageKey(page);
+  const authoritative = page.authoritativeSignatures;
+  const slotTypes = page.authoritativeSlotTypes;
+  const functionIdentity = (fn: ApiFunction): string =>
+    symbolIdentityKey({
+      namespace: m.namespace,
+      kind: "FUNCTION",
+      name: fn.name,
+      signature: normalizedFunctionSignature(fn),
+    });
+  const symbols: ApiSymbol[] = [];
+  const artifactBacked = new Set<ApiSymbol>();
+  const overrideEmitted = new Set<string>();
+  // The signatures each override-covered FQN has rendered, so a later identity
+  // repeating one collapses while a changed one still gets its row.
+  const overrideRows = new Map<string, Set<string>>();
+  // Every ref-doc entry of an override-covered FQN, grouped in source order
+  // before the walk: the collapse below renders only the first entry it meets,
+  // so the pairing needs the whole group to reach the later ones.
+  const overrideEntries = new Map<string, ApiFunction[]>();
+  for (const fn of m.functions) {
+    if (lookupSignature(signatures, fn.name) === null) continue;
+    const group = overrideEntries.get(fn.name);
+    if (group) group.push(fn);
+    else overrideEntries.set(fn.name, [fn]);
+  }
+
+  for (const fn of m.functions) {
+    const ov = lookupSignature(signatures, fn.name);
+    // override-covered FQN: render the store signatures once, not per fixture entry
+    // (`vmath.lerp` has 3 ref-doc entries but one authored override set). A later
+    // identity whose authoritative declaration the page has not rendered yet — a
+    // signature that changed between releases on a Combined page — still renders
+    // its own row.
+    const collapsed = ov !== null && overrideEmitted.has(fn.name);
+    if (collapsed) {
+      const later = authoritative?.get(functionIdentity(fn));
+      if (later === undefined || overrideRows.get(fn.name)?.has(later) === true) continue;
+    }
+    // One key for every per-declaration lookup this row makes, so the signature,
+    // the slots, the availability badge and the identity the row reports can never
+    // come from different declarations.
+    const identity = functionIdentity(fn);
+    // The authoritative Combined signature wins over both the token render and
+    // the authored override store; on exact-version pages the map is absent, so
+    // the existing override/token precedence is unchanged.
+    const authSig = authoritative?.get(identity);
+    const primarySignature =
+      authSig ??
+      (ov === null
+        ? functionSignature(fn, mapType, isLibrary)
+        : (ov.signatures[0] ?? functionSignature(fn, mapType, isLibrary)));
+    // The rows this FQN renders, in authored order, against the ref-doc entries
+    // the override collapses over. When the call shapes pick an entry out per row
+    // (`msg.url`'s 0/1/3 arities) each row reads its own; otherwise every row
+    // keeps entry 0, exactly as before.
+    const rowSignatures =
+      ov === null || collapsed ? [primarySignature] : [primarySignature, ...ov.signatures.slice(1)];
+    const entries = ov === null || collapsed ? [fn] : (overrideEntries.get(fn.name) ?? [fn]);
+    const paired = ov === null || collapsed ? null : pairFixtureEntries(entries, rowSignatures);
+    const tableRow =
+      paired !== null ? -1 : ov === null || collapsed ? 0 : unpairedTableRow(fn, rowSignatures);
+    const rowEntry = (i: number): ApiFunction | null => paired?.[i] ?? (i === tableRow ? fn : null);
+    // per-overload description: each override row keeps its own `docs[i]` prose,
+    // falling back to its paired ref-doc entry's description — or, unpaired, to
+    // the first row's authored prose, which documents the whole function, else
+    // the shared entry-0 one — when absent/`null`.
+    const fixtureDoc = proseDocText(fn.description || fn.brief, fn.name, translations);
+    const headDoc = ov?.docs?.[0];
+    const overloadDoc = (i: number): string => {
+      const authored = ov?.docs?.[i];
+      if (authored != null) return platformDocText(authored);
+      const entry = paired?.[i];
+      if (entry) return proseDocText(entry.description || entry.brief, fn.name, translations);
+      return headDoc != null ? platformDocText(headDoc) : fixtureDoc;
+    };
+    const primaryEntry = rowEntry(0);
+    // A paired row carries its own entry's example. The first row to reach an
+    // entry takes it, so rows sharing one (`msg.url`) never repeat it; unpaired,
+    // the example stays on the primary row.
+    const rowExample = (i: number): string | undefined => {
+      const entry = paired?.[i];
+      if (entry === undefined) return i === 0 ? exampleMarkdownFor(fn, translations) : undefined;
+      return paired?.indexOf(entry) === i ? exampleMarkdownFor(entry, translations) : undefined;
+    };
+    // Slots resolve through the same exact identity the authoritative signature
+    // does, and are used only on a row that actually renders that signature. A row
+    // whose signature fell back to the token render keeps token-derived slots too,
+    // so the two halves of a row can never come from different sources.
+    const primarySlots =
+      authSig !== undefined && primarySignature === authSig ? slotTypes?.get(identity) : undefined;
+    const symbol: ApiSymbol = {
+      kind: "function",
+      name: fn.name,
+      signature: primarySignature,
+      declarationIdentity: identity,
+      docMarkdown: ov === null || collapsed ? fixtureDoc : overloadDoc(0),
+      parameters: primaryEntry
+        ? projectParams(
+            primaryEntry.parameters,
+            mapType,
+            primarySlots,
+            "param",
+            fn.name,
+            translations,
+            libraryPage,
+          )
+        : [],
+      returnValues: primaryEntry
+        ? projectParams(
+            primaryEntry.returnValues,
+            mapType,
+            primarySlots,
+            "return",
+            fn.name,
+            translations,
+            libraryPage,
+          )
+        : [],
+    };
+    const example = rowExample(0);
+    if (example) symbol.exampleMarkdown = example;
+    // Deprecation is a fact about the symbol, not about one overload identity,
+    // so every authored-override row below carries it too.
+    if (fn.deprecated !== undefined) symbol.deprecated = fn.deprecated;
+    // Ambient-global-ness is a fact about the declaration, not about one overload
+    // identity, so every authored-override row below carries it too.
+    if (fn.global) symbol.global = true;
+    // Prose provenance is likewise a fact about the declaration: every row of an
+    // authored override renders the same imported text, so every row is marked.
+    if (fn.docSource) symbol.docSource = fn.docSource;
+    // The join keys off the raw ref-doc overload signature — the exact value
+    // `api-availability.json` was derived with — so a badge lands on the one
+    // overload it identifies. Authored-override extra rows below share the raw
+    // symbol and carry no badge of their own.
+    //
+    // An authored override renders one set of forms across every version, so a
+    // ref-doc signature change that collapses into them reaches the reader only
+    // through the forms it singles out: a form whose parameter types only some
+    // identities admit spans just those, and every other row carries the span of
+    // every identity it stands for, not one record's half.
+    const versions = page.availability?.versions ?? [];
+    const overrideRecords =
+      ov === null || collapsed
+        ? []
+        : (overrideEntries.get(fn.name) ?? [fn])
+            .map(functionIdentity)
+            .filter((id) => {
+              const signature = authoritative?.get(id);
+              return signature === undefined || rowSignatures.includes(signature);
+            })
+            .map((id) => availabilityForIdentity(page.availability, id))
+            .filter((record) => record !== undefined);
+    const groupAv =
+      ov === null || collapsed
+        ? availabilityForIdentity(page.availability, identity)
+        : mergedAvailability(overrideRecords, versions);
+    // A Combined page dates an authored arm some targets lack by the folds that
+    // declare it, which no ref-doc identity it collapses over can say. An arm
+    // every target declares keeps the reading below, which can still narrow it
+    // to the ref-doc signatures that admit it (`go.property`'s string form). An
+    // arm of a declaration several ref-doc elements share is dated the same way,
+    // by the values that declare its line rather than by the shared identity.
+    const armSpans =
+      ov === null ? page.authoritativeArmSpans?.get(identity) : page.authoredArmSpans?.get(fn.name);
+    const armAvailability = (signature: string): ApiAvailability | undefined => {
+      const availableIn = armSpans?.get(signature);
+      if (availableIn === undefined || availableIn.length === versions.length) return undefined;
+      const identityOf = {
+        namespace: m.namespace,
+        kind: "FUNCTION",
+        name: fn.name,
+        signature: normalizedFunctionSignature(fn),
+      };
+      return { ...(groupAv ?? { identity: identityOf }), availableIn };
+    };
+    const av =
+      armAvailability(primarySignature) ??
+      (ov === null || collapsed
+        ? groupAv
+        : (formAvailability(primarySignature, fn.name, overrideRecords, versions) ?? groupAv));
+    if (av) symbol.availability = av;
+    symbols.push(symbol);
+    if (primarySlots !== undefined) artifactBacked.add(symbol);
+    // Each remaining authored overload renders as its own row, reusing the
+    // distinct-row overload pattern: its own `docs[k+1]` prose (else its paired
+    // ref-doc description), and the parameter/return tables only when an entry
+    // is paired to it or the primary row's call shape could not hold them. Its
+    // example follows the same pairing (`rowExample`).
+    // A generated declaration's further arms render as their own rows: shared
+    // prose, the declaration's own availability, and no tables unless a curated
+    // first-slot alternative names the arm's leading arguments. The arguments
+    // after them are the primary's, so they keep its emitted slot types. An arm
+    // emitted from a ref-doc element of its own renders that element's prose,
+    // tables and example. The artifact keeps only the slots every arm of such a
+    // declaration shares, so the arm's tables take them as the primary's do.
+    if (ov === null && authSig !== undefined) {
+      const alternative = firstSlotAlternativeOf(fn, m.namespace);
+      const leading = (alternative?.parameters.length ?? 0) - (fn.parameters.length - 1);
+      const alternativeHead = `${fn.name}(${alternative?.parameters[0]?.name}:`;
+      const armElements = page.authoritativeArmElements?.get(identity);
+      for (const [index, signature] of (page.authoritativeArms?.get(identity) ?? []).entries()) {
+        const element = armElements?.[index + 1];
+        const armAv = armAvailability(signature) ?? av;
+        if (element !== undefined) {
+          const project = (list: ApiParameter[], kind: "param" | "return") =>
+            projectParams(list, mapType, primarySlots, kind, fn.name, translations, libraryPage);
+          const example = exampleMarkdownFor(element, translations);
+          const arm: ApiSymbol = {
+            kind: "function",
+            name: fn.name,
+            signature,
+            declarationIdentity: identity,
+            docMarkdown: proseDocText(element.description || element.brief, fn.name, translations),
+            parameters: project(element.parameters, "param"),
+            returnValues: project(element.returnValues, "return"),
+            ...(example ? { exampleMarkdown: example } : {}),
+            ...(armAv ? { availability: armAv } : {}),
+            ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
+            ...(fn.global ? { global: true } : {}),
+            ...(fn.docSource ? { docSource: fn.docSource } : {}),
+          };
+          symbols.push(arm);
+          if (primarySlots !== undefined) artifactBacked.add(arm);
+          continue;
+        }
+        const armAlternative = signature.startsWith(alternativeHead) ? alternative : null;
+        symbols.push({
+          kind: "function",
+          name: fn.name,
+          signature,
+          docMarkdown: fixtureDoc,
+          parameters: armAlternative
+            ? [
+                ...projectParams(
+                  armAlternative.parameters.slice(0, leading),
+                  mapType,
+                  undefined,
+                  "param",
+                  fn.name,
+                  translations,
+                  libraryPage,
+                ),
+                ...symbol.parameters.slice(1),
+              ]
+            : [],
+          returnValues: armAlternative ? symbol.returnValues : [],
+          ...(armAv ? { availability: armAv } : {}),
+          ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
+          ...(fn.global ? { global: true } : {}),
+          ...(fn.docSource ? { docSource: fn.docSource } : {}),
+        });
+      }
+    }
+    if (ov !== null) {
+      const rows = overrideRows.get(fn.name) ?? new Set<string>();
+      rows.add(primarySignature);
+      if (!collapsed) for (const signature of ov.signatures.slice(1)) rows.add(signature);
+      overrideRows.set(fn.name, rows);
+    }
+    if (ov !== null && !collapsed) {
+      overrideEmitted.add(fn.name);
+      for (const [k, signature] of ov.signatures.slice(1).entries()) {
+        const entry = rowEntry(k + 1);
+        const example = rowExample(k + 1);
+        const formAv =
+          armAvailability(signature) ??
+          formAvailability(signature, fn.name, overrideRecords, versions);
+        symbols.push({
+          kind: "function",
+          name: fn.name,
+          signature,
+          docMarkdown: overloadDoc(k + 1),
+          parameters: entry
+            ? projectParams(
+                entry.parameters,
+                mapType,
+                undefined,
+                "param",
+                fn.name,
+                translations,
+                libraryPage,
+              )
+            : [],
+          returnValues: entry
+            ? projectParams(
+                entry.returnValues,
+                mapType,
+                undefined,
+                "return",
+                fn.name,
+                translations,
+                libraryPage,
+              )
+            : [],
+          ...(example ? { exampleMarkdown: example } : {}),
+          ...(formAv ? { availability: formAv } : {}),
+          ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
+          ...(fn.global ? { global: true } : {}),
+          ...(fn.docSource ? { docSource: fn.docSource } : {}),
+        });
+      }
+    }
+  }
+
+  for (const v of m.variables) {
+    const symbol: ApiSymbol = {
+      kind: "variable",
+      name: v.name,
+      signature:
+        authoritativeSignatureFor(authoritative, m.namespace, "VARIABLE", v.name, "") ??
+        variableSignature(v, mapType),
+      docMarkdown: platformDocText(v.description || v.brief),
+      parameters: [],
+      returnValues: [],
+    };
+    const av = joinAvailability(page.availability, m.namespace, "VARIABLE", v.name, "");
+    if (av) symbol.availability = av;
+    if (v.deprecated !== undefined) symbol.deprecated = v.deprecated;
+    if (v.global) symbol.global = true;
+    if (v.docSource) symbol.docSource = v.docSource;
+    symbols.push(symbol);
+  }
+
+  for (const cst of m.constants) {
+    const symbol: ApiSymbol = {
+      kind: "constant",
+      name: cst.name,
+      signature:
+        authoritativeSignatureFor(authoritative, m.namespace, "CONSTANT", cst.name, "") ??
+        constantSignature(cst),
+      docMarkdown: platformDocText(cst.description || cst.brief),
+      parameters: [],
+      returnValues: [],
+    };
+    const av = joinAvailability(page.availability, m.namespace, "CONSTANT", cst.name, "");
+    if (av) symbol.availability = av;
+    if (cst.global) symbol.global = true;
+    symbols.push(symbol);
+  }
+
+  for (const prop of m.properties) {
+    const symbol: ApiSymbol = {
+      kind: "property",
+      name: prop.name,
+      signature:
+        authoritativeSignatureFor(authoritative, m.namespace, "PROPERTY", prop.name, "") ??
+        propertySignature(prop, mapType),
+      docMarkdown: platformDocText(prop.description || prop.brief),
+      parameters: [],
+      returnValues: [],
+    };
+    const av = joinAvailability(page.availability, m.namespace, "PROPERTY", prop.name, "");
+    if (av) symbol.availability = av;
+    symbols.push(symbol);
+  }
+
+  // A ledger-only typedef (a constant-union alias, the overload slot alias, a
+  // signed interface) has no ref-doc typedef behind it — the emitter mints it —
+  // so it reaches the page only through the authoritative ledger. Rendering it
+  // as an ordinary type symbol gives a constant union's members a home where
+  // signatures carry the alias name, and gives each interface its own row.
+  for (const [name, signature] of ledgerOnlyTypedefs(authoritative, m)) {
+    symbols.push({
+      kind: "type",
+      name,
+      signature,
+      docMarkdown: "",
+      parameters: [],
+      returnValues: [],
+    });
+  }
+
+  for (const td of renderableTypedefs(m.typedefs, m.namespace, authoritative)) {
+    const definition = typedefDefinition(td, m.namespace, authoritative, mapType);
+    if (definition) {
+      symbols.push({
+        kind: "type",
+        name: td.name,
+        signature: definition,
+        docMarkdown: "",
+        parameters: [],
+        returnValues: [],
+        ...(td.global ? { global: true } : {}),
+      });
+    }
+    for (const fn of td.functions ?? []) {
+      const symbol: ApiSymbol = {
+        kind: "type",
+        name: typeMemberName(td.name, fn.name),
+        signature: typeMemberFunctionSignature(td.name, fn, mapType, isLibrary),
+        docMarkdown: platformDocText(fn.description || fn.brief),
+        // Only a library page keys its class methods; they carry no translations.
+        parameters:
+          libraryPage === undefined
+            ? projectParams(fn.parameters, mapType)
+            : projectParams(fn.parameters, mapType, undefined, "param", fn.name, {}, libraryPage),
+        returnValues:
+          libraryPage === undefined
+            ? projectParams(fn.returnValues, mapType)
+            : projectParams(
+                fn.returnValues,
+                mapType,
+                undefined,
+                "return",
+                fn.name,
+                {},
+                libraryPage,
+              ),
+      };
+      const example = exampleMarkdownFor(fn, translations);
+      if (example) symbol.exampleMarkdown = example;
+      if (fn.deprecated !== undefined) symbol.deprecated = fn.deprecated;
+      if (td.global) symbol.global = true;
+      symbols.push(symbol);
+    }
+    for (const prop of td.properties ?? []) {
+      symbols.push({
+        kind: "type",
+        name: typeMemberName(td.name, prop.name),
+        signature: typeMemberPropertySignature(td.name, prop, mapType),
+        docMarkdown: withFieldBaseNotes(
+          libraryPage,
+          td.name,
+          prop.name,
+          platformDocText(prop.description || prop.brief),
+        ),
+        parameters: [],
+        returnValues: [],
+        ...(prop.deprecated !== undefined ? { deprecated: prop.deprecated } : {}),
+        ...(td.global ? { global: true } : {}),
+      });
+    }
+  }
+
+  for (const symbol of symbols) {
+    if (symbol.kind === "function" && !artifactBacked.has(symbol)) {
+      symbol.parameters = paramsFromSignature(symbol.parameters, symbol.signature);
+    }
+  }
+  // Qualified here rather than at render time so a type row's heading and the
+  // anchor `memberAnchors` slugs from its signature stay the same text.
+  if (page.category === "engine") {
+    const defoldRefs = defoldTypeRefs(m);
+    for (const symbol of symbols) {
+      if (symbol.kind !== "type") continue;
+      const defoldRef = defoldRefs.get(symbol.name);
+      if (defoldRef !== undefined) symbol.defoldRef = defoldRef;
+      symbol.signature = qualifiedTypeSignature(page.namespace, symbol.name, symbol.signature);
+    }
+  }
+  return symbols;
+}
+
+/**
+ * The reference name and defold.com entry of one ref-doc type listed on
+ * `module`'s page. The name nests under the page's namespace, keeping the
+ * segments as the reference spells them (`go.on_input.action`). The entry sits
+ * on the page of the module that declared the type, which routing can differ
+ * from (`b2d.joint.filter_definition` is on `b2d`), anchored by the element's
+ * own name, which leaves the namespace off where the reference does (`node`).
+ */
+export function defoldTypeRef(
+  module: ApiModule,
+  element: { name: string; declaredIn?: string },
+): DefoldRef {
+  const prefix = `${module.namespace}.`;
+  const local = element.name.startsWith(prefix) ? element.name.slice(prefix.length) : element.name;
+  return {
+    name: `${prefix}${local}`,
+    url: defoldRefUrl(element.declaredIn ?? module.namespace, element.name),
+  };
+}
+
+// The reference name and entry each engine type the declarations rename was
+// derived from, keyed by its declared local path (`Easing` -> `gui.EASING`).
+function defoldTypeRefs(module: ApiModule): Map<string, DefoldRef> {
+  const refs = new Map<string, DefoldRef>();
+  const prefix = `${module.namespace}.`;
+  for (const element of [...(module.enums ?? []), ...(module.structs ?? []), ...module.typedefs]) {
+    const { name } = element;
+    const local = name.startsWith(prefix) ? name.slice(prefix.length) : name;
+    const dot = local.lastIndexOf(".");
+    const declared = `${local.slice(0, dot + 1)}${engineTypeName(local.slice(dot + 1))}`;
+    if (declared !== local) refs.set(declared, defoldTypeRef(module, element));
+  }
+  return refs;
+}
+
+/**
+ * A row with no emitter record (an authored override row or arm, or a token
+ * render) takes each parameter's optionality from the signature printed above
+ * it, the only source it has, when the slot at that position names the same
+ * parameter (a reserved word prints with an `_` on either side). The slot's type is
+ * copied too when it is the row's type plus a `| undefined` arm, the way an
+ * omissible interior slot prints.
+ */
+function paramsFromSignature(params: ApiSymbolParam[], signature: string): ApiSymbolParam[] {
+  const slots = outerCallSlots(signature);
+  if (slots === null) return params;
+  return params.map((p, index) => {
+    const slot = slots[index];
+    if (slot === undefined || ![p.name, `_${p.name}`, `${p.name}_`].includes(slot.name)) return p;
+    const widened = slot.type === `${p.types.join(" | ")} | undefined`;
+    return { ...p, isOptional: slot.isOptional, ...(widened ? { types: [slot.type] } : {}) };
+  });
+}

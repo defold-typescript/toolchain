@@ -10,8 +10,9 @@ build/
 out/
 lib/
 *.tsbuildinfo
-# docs-site app source lives in an app/lib/ dir — not build output, keep it tracked
+# docs-site and library-docs app source lives in an app/lib/ dir — not build output, keep it tracked
 !packages/docs-site/app/lib/
+!packages/library-docs/app/lib/
 # the hsm-view client keeps shadcn's `cn` helper in client/lib/ — source, keep it tracked
 !packages/cli/client/lib/
 
