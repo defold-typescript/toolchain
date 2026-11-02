@@ -7891,7 +7891,8 @@ an archive that names none. A run with no failure has `"ok": true` and `written`
 the absolute path of each `reviewed.json` it changed.
 
 With `--json`, `library update` writes the same shape with `updated` in place of
-`reviewed`, and its paths use forward slashes on every platform:
+`reviewed`, and its paths use forward slashes on every platform, with a network
+path keeping its leading `//`:
 
 ```json
 {
