@@ -1,0 +1,348 @@
+{
+  "info": {
+    "namespace": "push",
+    "brief": "Functions and constants for interacting with local, as well as Apple''s and Google''s push notification services. These API's only exist on mobile platforms. [icon:ios] [icon:android]",
+    "description": "Functions and constants for interacting with local, as well as Apple''s and Google''s push notification services. These API's only exist on mobile platforms. [icon:ios] [icon:android]"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "push.register",
+      "description": "Send a request for push notifications. Note that the notifications table parameter is iOS only and will be ignored on Android.",
+      "parameters": [
+        {
+          "name": "notifications",
+          "doc": "The types of notifications to listen to. [icon:ios]",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Register callback function.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "token",
+              "doc": "The APNs device token on iOS or Firebase Installation ID (FID) on Android if registration is successful.",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "A table containing eventual error information.",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<p>Register for push notifications on iOS. Note that the token needs to be converted on this platform.</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function push_listener(self, payload, origin)\n     -- The payload arrives here.\nend\n\nfunction init(self)\n     local alerts = {push.NOTIFICATION_BADGE, push.NOTIFICATION_SOUND, push.NOTIFICATION_ALERT}\n     push.register(alerts, function (self, token, error)\n     if token then\n          -- NOTE: %02x to pad byte with leading zero\n          local token_string = \"\"\n          for i = 1,#token do\n              token_string = token_string .. string.format(\"%02x\", string.byte(token, i))\n          end\n          print(token_string)\n          push.set_listener(push_listener)\n     else\n          -- Push registration failed.\n          print(error.error)\n     end\nend</code></pre></div><p>Register for push notifications on Android.</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function push_listener(self, payload, origin)\n     -- The payload arrives here.\nend\n\nfunction init(self)\n     push.register({}, function (self, installation_id, error)\n         if installation_id then\n              print(installation_id)\n              push.set_listener(push_listener)\n         else\n              -- Push registration failed.\n              print(error.error)\n         end\n    end)\nend</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.set_listener",
+      "description": "Sets a listener function to listen to push notifications.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "Listener callback function.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "payload",
+              "doc": "The push payload",
+              "types": [
+                "table"
+              ]
+            },
+            {
+              "name": "origin",
+              "doc": "Origin of the push that can be one of the predefined constants below\n- `push.ORIGIN_LOCAL`\n- `push.ORIGIN_REMOTE`",
+              "types": [
+                "constant"
+              ]
+            },
+            {
+              "name": "activated",
+              "doc": "If the application was activated via the notification.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<p>Set the push notification listener.</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function push_listener(self, payload, origin, activated)\n     -- The payload arrives here.\n     pprint(payload)\n     if origin == push.ORIGIN_LOCAL then\n         -- This was a local push\n         ...\n     end\n\n     if origin == push.ORIGIN_REMOTE then\n         -- This was a remote push\n         ...\n     end\nend\n\nlocal init(self)\n     ...\n     -- Assuming that push.register() has been successfully called earlier\n     push.set_listener(push_listener)\nend</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.set_badge_count",
+      "description": "Set the badge count for application icon. This function is only available on iOS. [icon:ios]",
+      "parameters": [
+        {
+          "name": "count",
+          "doc": "Badge count",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.schedule",
+      "description": "Local push notifications are scheduled with this function.\nThe returned `id` value is uniquely identifying the scheduled notification and can be stored for later reference.",
+      "parameters": [
+        {
+          "name": "time",
+          "doc": "Number of seconds into the future until the notification should be triggered.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "title",
+          "doc": "Localized title to be displayed to the user if the application is not running.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "alert",
+          "doc": "Localized body message of the notification to be displayed to the user if the application is not running.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "payload",
+          "doc": "JSON string to be passed to the registered listener function.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "notification_settings",
+          "doc": "Table with notification and platform specific fields",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "action",
+              "doc": "The alert action string to be used as the title of the right button of the alert or the value of the unlock slider, where the value replaces \"unlock\" in \"slide to unlock\" text. [icon:ios]",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "badge_count",
+              "doc": "The numeric value of the icon badge. [icon:ios]",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "priority",
+              "doc": "The priority is a hint to the device UI about how the notification should be displayed. There are five priority levels, from -2 to 2 where -1 is the lowest priority and 2 the highest. Unless specified, a default priority level of 2 is used. [icon:android]",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Unique id that can be used to cancel or inspect the notification",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "",
+          "doc": "Error string if something went wrong, otherwise nil",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "examples": "<p>This example demonstrates how to schedule a local notification:</p><div class=\"codehilite\"><pre><code class=\"language-lua\">-- Schedule a local push in 3 seconds\nlocal payload = '{ \"data\" : { \"field\" : \"Some value\", \"field2\" : \"Other value\" } }'\nid, err = push.schedule(3, \"Update!\", \"There are new stuff in the app\", payload, { action = \"check it out\" })\nif err then\n     -- Something went wrong\n     ...\nend</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.cancel",
+      "description": "Use this function to cancel a previously scheduled local push notification.\nThe notification is identified by a numeric id as returned by `push.schedule()`.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The numeric id of the local push notification",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.cancel_all_issued",
+      "description": "Use this function to cancel a previously issued local push notifications.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.get_scheduled",
+      "description": "Returns a table with all data associated with a specified local push notification.\nThe notification is identified by a numeric id as returned by `push.schedule()`.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The numeric id of the local push notification.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Table with all data associated with the notification.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "push.get_all_scheduled",
+      "description": "Returns a table with all data associated with all scheduled local push notifications.\nThe table contains key, value pairs where the key is the push notification id and the value is a table with the notification data, corresponding to the data given by `push.get_scheduled(id)`.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Table with all data associated with all scheduled notifications.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.NOTIFICATION_BADGE",
+      "brief": "Badge notification type.",
+      "description": "Badge notification type.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.NOTIFICATION_SOUND",
+      "brief": "Sound notification type.",
+      "description": "Sound notification type.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.NOTIFICATION_ALERT",
+      "brief": "Alert notification type.",
+      "description": "Alert notification type.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.ORIGIN_LOCAL",
+      "brief": "Local push origin.",
+      "description": "Local push origin.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.ORIGIN_REMOTE",
+      "brief": "Remote push origin.",
+      "description": "Remote push origin.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_MIN",
+      "brief": "This priority is for items might not be shown to the user except under special circumstances, such as detailed notification logs. Only available on Android. [icon:android]",
+      "description": "This priority is for items might not be shown to the user except under special circumstances, such as detailed notification logs. Only available on Android. [icon:android]",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_LOW",
+      "brief": "Priority for items that are less important. Only available on Android. [icon:android]",
+      "description": "Priority for items that are less important. Only available on Android. [icon:android]",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_DEFAULT",
+      "brief": "The default notification priority. Only available on Android. [icon:android]",
+      "description": "The default notification priority. Only available on Android. [icon:android]",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_HIGH",
+      "brief": "Priority for more important notifications or alerts. Only available on Android. [icon:android]",
+      "description": "Priority for more important notifications or alerts. Only available on Android. [icon:android]",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_MAX",
+      "brief": "Set this priority for your application's most important items that require the user's prompt attention or input. Only available on Android. [icon:android]",
+      "description": "Set this priority for your application's most important items that require the user's prompt attention or input. Only available on Android. [icon:android]",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}
