@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import { type ForgeFetch, forgeReadsFor } from "../packages/cli/src/library/upstream-forge.ts";
 import { writeLibraryTargets } from "../packages/cli/src/library-data-fixture.ts";
 import { normalizeSourceId } from "../packages/cli/src/library-match.ts";
@@ -22,7 +22,6 @@ import {
   type TypesFolderFile,
 } from "./shipped-types-check.ts";
 
-const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
 const TYPES_ROOT = join(import.meta.dir, "..", "packages", "types");
 
 const WIDGET = "https://github.com/acme/widget";
@@ -439,14 +438,10 @@ describe("evaluateShippedTypes over every forge tag page", () => {
 
 describe("readCuratedRepos over the committed corpus", () => {
   test("sweeps exactly the sources `resolve` can install curated types for, each once", () => {
-    const swept = readCuratedRepos(newestDataFolder(PACKAGE_ROOT)).map(({ repo }) =>
-      normalizeSourceId(repo),
-    );
+    const swept = readCuratedRepos(LIBRARY_DATA_DIR).map(({ repo }) => normalizeSourceId(repo));
     const installable = new Set([
-      ...loadVendoredLibraryRegistry(newestDataFolder(PACKAGE_ROOT)).map(
-        ({ sourceId }) => sourceId,
-      ),
-      ...loadVendoredNativeRegistry(newestDataFolder(PACKAGE_ROOT)).map(({ sourceId }) => sourceId),
+      ...loadVendoredLibraryRegistry(LIBRARY_DATA_DIR).map(({ sourceId }) => sourceId),
+      ...loadVendoredNativeRegistry(LIBRARY_DATA_DIR).map(({ sourceId }) => sourceId),
     ]);
     expect(installable.size).toBeGreaterThan(0);
     expect(swept.length).toBe(new Set(swept).size);

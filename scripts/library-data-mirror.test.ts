@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import { writeMirror } from "./library-data-mirror.ts";
 
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -174,9 +175,7 @@ describe("library-data-mirror CLI", () => {
       });
 
       expect(await proc.exited).toBe(0);
-      expect(listFiles(join(target, "data"))).toEqual(
-        listFiles(join(REPO_ROOT, "packages/library-types/data")),
-      );
+      expect(listFiles(join(target, "data"))).toEqual(listFiles(dirname(LIBRARY_DATA_DIR)));
       expect(existsSync(join(target, "site"))).toBe(false);
     },
     CLI_TIMEOUT,
