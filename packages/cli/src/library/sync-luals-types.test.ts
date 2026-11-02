@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -13,6 +14,7 @@ import { dirname, join } from "node:path";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import { emitLibraryDeclarations, isPublicMethod } from "./emit-library-dts";
 import { LIBRARY_DATA_DIR } from "./package-root";
+import type { LibraryInterface, LibraryModel } from "./parse-luals";
 import {
   buildTargetFidelity,
   buildTargetModel,
@@ -442,5 +444,108 @@ describe("panthera ingestion spans the subtree and hides its private module func
   // declaring it as an externalTypes dependency would be a fiction.
   test("panthera declares no externalTypes — tweener is a runtime-only companion", () => {
     expect(pantheraTarget().externalTypes).toBeUndefined();
+  });
+});
+
+describe("narrator annotation overrides make the surface runtime-faithful", () => {
+  function narratorTarget(): LualsTarget {
+    const target = readLualsTargets(DATA_DIR).find((t) => t.namespace === "narrator");
+    if (!target) throw new Error("narrator target missing from library data");
+    return target;
+  }
+
+  // Naive comma split: safe because no parameter type in this token carries a comma.
+  function splitObserverParams(token: string): { name: string; type: string }[] {
+    return token
+      .slice(token.indexOf("(") + 1, token.lastIndexOf(")"))
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0)
+      .map((entry) => {
+        const colon = entry.indexOf(":");
+        return colon === -1
+          ? { name: entry, type: "" }
+          : { name: entry.slice(0, colon).trim(), type: entry.slice(colon + 1).trim() };
+      });
+  }
+
+  function storyMember(model: LibraryModel): LibraryInterface {
+    const story = model.interfaces.find((i) => i.name === "Narrator.Story");
+    if (!story) throw new Error("Narrator.Story missing from the built model");
+    return story;
+  }
+
+  function observerParams(model: LibraryModel): { name: string; type: string }[] {
+    const types = storyMember(model)
+      .methods.find((m) => m.name === "observe")
+      ?.params.find((p) => p.name === "observer")?.types;
+    if (types?.length !== 1 || !types[0]) {
+      throw new Error(
+        `Narrator.Story.observe observer: expected one type token, saw ${JSON.stringify(types)}`,
+      );
+    }
+    return splitObserverParams(types[0]);
+  }
+
+  // The observed value is whatever was just written into the variable store, so the
+  // store's own declared value type is the callback argument's source of truth.
+  function expectedObserverParamType(model: LibraryModel): string {
+    const field = storyMember(model).fields.find((f) => f.name === "variables");
+    const token = field?.types.length === 1 ? field.types[0] : undefined;
+    if (!token) {
+      throw new Error(
+        `Narrator.Story.variables: expected one type token, saw ${JSON.stringify(field?.types)}`,
+      );
+    }
+    const match = /^table<\s*string\s*,\s*(.+?)\s*>$/.exec(token);
+    if (!match?.[1]) {
+      throw new Error(
+        `Narrator.Story.variables: expected a "table<string, V>" token, saw "${token}"`,
+      );
+    }
+    return match[1];
+  }
+
+  test("its callback's argument type equals the variable store's declared value type", () => {
+    const model = buildTargetModel(DATA_DIR, narratorTarget());
+    expect(observerParams(model).map((p) => p.type)).toEqual([expectedObserverParamType(model)]);
+  });
+
+  test("a retyped variable store reds that comparison, proving the derivation is live", () => {
+    const target = narratorTarget();
+    const root = tempRoot("luals-types-narrator-store-");
+    const sourceRoot = join(root, target.sourceDir);
+    cpSync(join(DATA_DIR, target.sourceDir), sourceRoot, { recursive: true });
+
+    const storyPath = join(sourceRoot, "narrator/story.lua");
+    const original = readFileSync(storyPath, "utf8");
+    const mutated = original.replace(
+      "---@field variables table<string, any>",
+      "---@field variables table<string, string>",
+    );
+    if (mutated === original) throw new Error("variable store field missing from story.lua");
+    writeFileSync(storyPath, mutated);
+
+    // The committed target, so the override still declares `fun(value: any)`.
+    const mutatedModel = buildTargetModel(root, target);
+    expect(expectedObserverParamType(mutatedModel)).toBe("string");
+    expect(observerParams(mutatedModel).map((p) => p.type)).not.toEqual(["string"]);
+
+    const pristine = buildTargetModel(DATA_DIR, target);
+    expect(expectedObserverParamType(pristine)).toBe("any");
+  });
+
+  // Counts, not names: Lua passes arguments by position, so a renamed parameter is
+  // harmless while an added or dropped one is not.
+  test("its callback takes as many parameters as the runtime's observer call passes", () => {
+    const target = narratorTarget();
+    const story = readFileSync(join(DATA_DIR, target.sourceDir, "narrator/story.lua"), "utf8");
+    const invoked = /^\s*observer\(([^)]*)\)/m.exec(story);
+    if (!invoked) throw new Error("observer invocation missing from story.lua");
+    const argumentCount = (invoked[1] ?? "")
+      .split(",")
+      .filter((entry) => entry.trim().length > 0).length;
+
+    expect(observerParams(buildTargetModel(DATA_DIR, target))).toHaveLength(argumentCount);
   });
 });
