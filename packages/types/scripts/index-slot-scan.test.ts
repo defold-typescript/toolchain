@@ -142,40 +142,100 @@ describe("scanFunctionBaseStatements over the defold-1.13.1 ref-doc", () => {
   });
 });
 
-const LIBRARY_API_DOC = join(import.meta.dirname, "..", "..", "library-types", "api-doc");
-
-function libraryDoc(file: string): unknown {
-  return JSON.parse(readFileSync(join(LIBRARY_API_DOC, file), "utf8"));
-}
-
-describe("scanTypedefMemberSlots over the library api-doc", () => {
+describe("scanTypedefMemberSlots", () => {
   test("keys an index-named class field to its class", () => {
-    const decore = new Map(
-      scanTypedefMemberSlots(libraryDoc("decore.json")).map((hit) => [hit.key, hit.evidence]),
-    );
-    expect(decore.get("system:field:index")).toBe("name");
-    const panthera = new Map(
-      scanTypedefMemberSlots(libraryDoc("panthera.json")).map((hit) => [hit.key, hit.evidence]),
-    );
-    expect(panthera.get("panthera_animation:field:animation_keys_index")).toBe("name");
+    const doc = {
+      info: { namespace: "ecs" },
+      elements: [
+        {
+          type: "TYPEDEF",
+          name: "system",
+          properties: [{ name: "index", brief: "", description: "", types: ["number"] }],
+        },
+        {
+          type: "TYPEDEF",
+          name: "track",
+          properties: [
+            {
+              name: "keys_index",
+              brief: "Keys index",
+              description: "Keys index",
+              types: ["number"],
+            },
+          ],
+        },
+      ],
+    };
+    const hits = new Map(scanTypedefMemberSlots(doc).map((hit) => [hit.key, hit.evidence]));
+    expect(hits.get("system:field:index")).toBe("name");
+    expect(hits.get("track:field:keys_index")).toBe("name");
   });
 
   test("reports nothing for a member that is not a position", () => {
-    const keys = scanTypedefMemberSlots(libraryDoc("decore.json")).map((hit) => hit.key);
-    expect(keys.filter((key) => key.endsWith(":field:entities"))).toEqual([]);
+    const doc = {
+      info: { namespace: "ecs" },
+      elements: [
+        {
+          type: "TYPEDEF",
+          name: "system",
+          properties: [
+            { name: "entities", brief: "", description: "", types: ["entity[]"] },
+            { name: "index", brief: "", description: "", types: ["number"] },
+          ],
+        },
+      ],
+    };
+    expect(scanTypedefMemberSlots(doc).map((hit) => hit.key)).toEqual(["system:field:index"]);
   });
 });
 
-describe("callbackArgKeys over the library api-doc", () => {
+describe("callbackArgKeys", () => {
   test("declares each argument a `function(...)` slot doc names", () => {
-    const keys = callbackArgKeys(libraryDoc("bridge.json"));
-    expect(keys).toContain("bridge.daily_rewards.get_current_day:param:on_success:day");
-    expect(keys).toContain("bridge.daily_rewards.get_current_day:param:on_failure:error");
+    const doc = {
+      info: { namespace: "rewards" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "rewards.get_current_day",
+          parameters: [
+            { name: "on_success", doc: "function(_, day)", types: ["function"] },
+            { name: "on_failure", doc: "function(_, error)", types: ["function"] },
+          ],
+          returnvalues: [],
+        },
+      ],
+    };
+    expect(callbackArgKeys(doc)).toEqual([
+      "rewards.get_current_day:param:on_success:day",
+      "rewards.get_current_day:param:on_failure:error",
+    ]);
   });
 
   test("declares no key for a slot whose doc is not a `function(...)` form", () => {
-    const keys = callbackArgKeys(libraryDoc("druid.json"));
-    expect(keys.filter((key) => key.startsWith("new_data_list:param:create_function"))).toEqual([]);
+    const doc = {
+      info: { namespace: "lists" },
+      elements: [
+        {
+          type: "TYPEDEF",
+          name: "list_instance",
+          functions: [
+            {
+              type: "FUNCTION",
+              name: "new_list",
+              parameters: [
+                {
+                  name: "create_function",
+                  doc: "The create function callback(self, data, index, data_list). Function should return (node, [component])",
+                  types: ["function"],
+                },
+                { name: "on_item", doc: "function(_, item)", types: ["function"] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    expect(callbackArgKeys(doc)).toEqual(["new_list:param:on_item:item"]);
   });
 });
 

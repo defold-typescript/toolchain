@@ -19,6 +19,7 @@
       "!packages/types/hsm",
       "!**/extension-goldens",
       "!**/api-doc",
+      "!packages/types/fixtures/extension-docs",
       "!**/fidelity",
       "!**/library-classification.json",
       "!**/asset-portal.json",
