@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { selectDataFolder } from "./data-folder";
+import { newerDataFolders, selectDataFolder } from "./data-folder";
 
 describe("selectDataFolder", () => {
   let base: string;
@@ -38,5 +38,37 @@ describe("selectDataFolder", () => {
 
   test("a base that does not exist holds no data folder", () => {
     expect(selectDataFolder(join(base, "missing"), "0.55.0")).toBeNull();
+  });
+});
+
+describe("newerDataFolders", () => {
+  let base: string;
+
+  beforeAll(() => {
+    base = mkdtempSync(join(tmpdir(), "library-data-newer-"));
+    for (const folder of ["0.9.0", "0.10.0", "0.55.0", "scratch"]) {
+      mkdirSync(join(base, folder));
+    }
+    writeFileSync(join(base, "0.60.0"), "");
+  });
+
+  afterAll(() => {
+    rmSync(base, { recursive: true, force: true });
+  });
+
+  test("returns the version folders above the given one, ascending and numerically", () => {
+    expect(newerDataFolders(base, "0.9.0")).toEqual(["0.10.0", "0.55.0"]);
+  });
+
+  test("the highest folder has nothing above it", () => {
+    expect(newerDataFolders(base, "0.55.0")).toEqual([]);
+  });
+
+  test("a folder that is not a version name has nothing above it", () => {
+    expect(newerDataFolders(base, "scratch")).toEqual([]);
+  });
+
+  test("a base that does not exist holds none", () => {
+    expect(newerDataFolders(join(base, "missing"), "0.9.0")).toEqual([]);
   });
 });

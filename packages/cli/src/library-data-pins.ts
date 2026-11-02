@@ -5,7 +5,7 @@
 // `normalizeSourceId` as `libraryFolderName` derives both from the repo.
 
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { EXTENSION_INDEX_SLOTS_FILE, LIBRARY_FILE, readIndexSlots } from "./library/library-data";
 import {
   dataFolderDigest,
@@ -31,14 +31,22 @@ export interface SelectLibraryPinsOptions extends LibraryDataSource {
   readonly update?: LibraryDataUpdate;
 }
 
-export interface LibraryPinSelection {
+// Where the version folders sit beside the one this CLI reads, in a commit the run
+// already holds, so looking at them costs no request. `dir` cannot say: it is a view
+// assembled from each pin.
+export interface LibraryDataFolders {
+  readonly dataRoot?: string;
+  readonly folder?: string;
+}
+
+export interface LibraryPinSelection extends LibraryDataFolders {
   readonly dir: string | null;
   readonly pins: LibraryDataPins | null;
   readonly notices: readonly string[];
   readonly warning?: string;
 }
 
-export interface FrozenLibraryData {
+export interface FrozenLibraryData extends LibraryDataFolders {
   readonly dir: string | null;
   readonly error?: string;
 }
@@ -48,6 +56,10 @@ export function wantsUpdate(update: LibraryDataUpdate | undefined, name: string)
 }
 
 const errorMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+function foldersOf(at: LibraryDataAtCommit | null): LibraryDataFolders {
+  return at === null || at.dir === null ? {} : { dataRoot: dirname(at.dir), folder: at.folder };
+}
 
 // Why this commit cannot serve this library, or null when it can.
 function pinTrouble(at: LibraryDataAtCommit, commit: string, name: string): string | null {
@@ -248,9 +260,10 @@ export async function selectLibraryPins(
     return { dir: null, pins, notices: [], ...warning };
   }
 
+  const folders = foldersOf(main.dir !== null ? main : pins === null ? null : readOf(pins.shared));
   const view = loadView(cacheDir, reads, libraries, shared);
   if (view.dir !== null) {
-    return { dir: view.dir, pins: { shared, libraries }, notices, ...warning };
+    return { dir: view.dir, pins: { shared, libraries }, notices, ...warning, ...folders };
   }
   const conflict = `library data pins do not load together: ${view.failure}`;
   if (newest === null) {
@@ -265,6 +278,7 @@ export async function selectLibraryPins(
     dir: fallback.dir,
     pins: { shared: newest.commit, libraries: atMain },
     notices: [`${conflict}, so every used library moved to commit ${newest.commit}`],
+    ...folders,
   };
 }
 
@@ -300,5 +314,5 @@ export async function frozenLibraryData(
   const view = loadView(source.cacheDir, reads, libraries, pins.shared);
   return view.dir === null
     ? { dir: null, error: `the library data pins do not load: ${view.failure}` }
-    : { dir: view.dir };
+    : { dir: view.dir, ...foldersOf(shared) };
 }

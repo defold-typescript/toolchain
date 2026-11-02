@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -41,6 +42,9 @@ import {
 import { archiveIdentity, archiveVersion } from "./extension-version";
 import type { HsmViewServer, ServeHsmViewOptions } from "./hsm-view-server";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
+import { writeReviewedJson } from "./library/library-data";
+import { archiveFingerprint, recordReview } from "./library/library-fingerprint";
+import { libraryStatusMessages } from "./library/library-status";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { LIBRARY_DATA_MAIN_URL } from "./library-data-archive";
 import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fixture";
@@ -10187,6 +10191,9 @@ describe("library data from the data repo", () => {
     const read = readProjectLock(cwd);
     return read.status === "ok" ? read.lock.libraryData?.libraries.mylib : undefined;
   };
+  // This fixture's data records no reviews, which `resolve` says on every run.
+  const unrecordedLine = () =>
+    `defold-typescript resolve: ${libraryStatusMessages([{ url: DEP_URL, status: { status: "unrecorded" } }]).notices[0]}`;
 
   test("resolve prints a matched library from the data repo and records its commit", async () => {
     writeDependentProject();
@@ -10195,7 +10202,7 @@ describe("library data from the data repo", () => {
 
     const code = await dispatch(["resolve", cwd], io, { resolveInternals });
 
-    expect(failureOutput(err())).toBe("");
+    expect(failureOutput(err())).toBe(unrecordedLine());
     expect(code).toBe(0);
     expect(requests).toContain(LIBRARY_DATA_MAIN_URL);
     expect(readFileSync(surface(), "utf8")).toBe(DECLARATION);
@@ -10212,7 +10219,7 @@ describe("library data from the data repo", () => {
 
     const code = await dispatch(["resolve", cwd, "--frozen"], io, { resolveInternals });
 
-    expect(failureOutput(err())).toBe("");
+    expect(failureOutput(err())).toBe(unrecordedLine());
     expect(code).toBe(0);
     expect(requests).toEqual([DEP_URL]);
     expect(readFileSync(surface(), "utf8")).toBe(DECLARATION);
@@ -10316,7 +10323,7 @@ describe("library data from the data repo", () => {
 
       expect(code).toBe(0);
       const parsed = JSON.parse(out()) as { notices: string[] };
-      expect(parsed.notices).toHaveLength(1);
+      expect(parsed.notices).toHaveLength(2);
       expect(parsed.notices[0]).toContain("resolve --update");
       expect(err()).not.toContain("resolve --update");
     });
@@ -10621,5 +10628,128 @@ describe("library data from the data repo", () => {
     expect(code).toBe(0);
     expect(requests).toEqual([LIBRARY_DATA_MAIN_URL]);
     expect(readFileSync(path.join(cwd, "types", "mylib.core.d.ts"), "utf8")).toBe(DECLARATION);
+  });
+});
+
+describe("dispatch resolve library status", () => {
+  const REPO = "https://github.com/owner/statuslib";
+  const COMMIT_A = "a".repeat(40);
+  const COMMIT_B = "b".repeat(40);
+  const URL = `${REPO}/archive/${COMMIT_B}.zip`;
+  const moduleWith = (...names: readonly string[]) =>
+    [
+      "local M = {}",
+      ...names.map((name) => `function M.${name}() return 1 end`),
+      "return M",
+      "",
+    ].join("\n");
+  const archiveOf = (commit: string, source: string) =>
+    writeZipArchive([{ name: "statuslib-1/statuslib/core.lua", text: source }], {
+      comment: commit,
+    });
+  const tempDir = () => mkdtempSync(path.join(os.tmpdir(), "defold-typescript-status-"));
+
+  // A fork reviewed at COMMIT_A only, so the archive COMMIT_B serves is unsupported.
+  async function unsupportedSetup() {
+    const reviewedPath = path.join(tempDir(), "reviewed.zip");
+    writeFileSync(reviewedPath, archiveOf(COMMIT_A, moduleWith("start")));
+    const { reviews } = recordReview(
+      [],
+      archiveFingerprint(await defaultReadZip(reviewedPath)),
+      COMMIT_A,
+    );
+    const libraryDataDir = writeAuthoredLibraryData({
+      "statuslib.core": 'declare module "statuslib.core" {}\n',
+    });
+    writeReviewedJson(libraryDataDir, "statuslib", { ref: "1.0.0", reviews });
+    const project = tempDir();
+    writeFileSync(path.join(project, "game.project"), `[project]\ndependencies#0 = ${URL}\n`);
+    return {
+      project,
+      internals: {
+        resolveInternals: {
+          libraryDataDir,
+          cacheDir: tempDir(),
+          download: async () => ({
+            status: "ok" as const,
+            bytes: archiveOf(COMMIT_B, moduleWith("start", "added")),
+          }),
+        },
+      },
+    };
+  }
+
+  test("text mode says warning for an unsupported library and exits 0", async () => {
+    const { project, internals } = await unsupportedSetup();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["resolve", project], io, internals);
+
+    expect(code).toBe(0);
+    const line = err()
+      .split("\n")
+      .find((text) => text.includes(URL) && text.includes("statuslib/core.lua#added"));
+    expect(line).toContain("warning");
+    expect(line).toContain(COMMIT_A);
+  });
+
+  test("--json keeps stdout one object carrying the status", async () => {
+    const { project, internals } = await unsupportedSetup();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["resolve", project, "--json"], io, internals);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out()).extensions[0].libraryStatus).toEqual({
+      status: "unsupported",
+      closest: COMMIT_A,
+      members: ["statuslib/core.lua#added"],
+    });
+  });
+
+  test("--frozen with an unsupported library exits 0", async () => {
+    const { project, internals } = await unsupportedSetup();
+    const first = captureStreams();
+    expect(await dispatch(["resolve", project], first.io, internals)).toBe(0);
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["resolve", project, "--frozen", "--json"], io, internals);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out()).extensions[0].libraryStatus.status).toBe("unsupported");
+  });
+
+  test("--library-data reads a newer sibling of the folder this CLI selects", async () => {
+    const { project, internals } = await unsupportedSetup();
+    const root = tempDir();
+    const folder = path.join(root, "0.55.0");
+    cpSync(internals.resolveInternals.libraryDataDir, folder, { recursive: true });
+    const archivePath = path.join(tempDir(), "served.zip");
+    writeFileSync(archivePath, archiveOf(COMMIT_B, moduleWith("start", "added")));
+    const newer = path.join(root, "0.60.0", "statuslib");
+    mkdirSync(newer, { recursive: true });
+    writeFileSync(
+      path.join(newer, "reviewed.json"),
+      JSON.stringify({
+        ref: "1.0.0",
+        reviews: recordReview([], archiveFingerprint(await defaultReadZip(archivePath)), COMMIT_B)
+          .reviews,
+      }),
+    );
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["resolve", project, "--json", "--library-data", root], io, {
+      cliVersion: "0.55.0",
+      resolveInternals: {
+        cacheDir: internals.resolveInternals.cacheDir,
+        download: internals.resolveInternals.download,
+      },
+    });
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out()).extensions[0].libraryStatus).toEqual({
+      status: "newer-cli",
+      folder: "0.60.0",
+    });
   });
 });
