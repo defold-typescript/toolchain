@@ -368,9 +368,10 @@ export function renderNativeParity(report: NativeParityReport): string {
 }
 
 if (import.meta.main) {
-  const { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
-  for (const target of readNativeTargets(LIBRARY_DATA_DIR)) {
-    const report = buildNativeParity(LIBRARY_DATA_DIR, target);
+  const { toolDataOrExit } = await import("./tool-data-flag");
+  const { dataDir, reportRoot: root } = toolDataOrExit("packages/cli/src/library/native-parity.ts");
+  for (const target of readNativeTargets(dataDir)) {
+    const report = buildNativeParity(dataDir, target);
     const dest = join(root, nativeParityPath(target));
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, renderNativeParity(report));

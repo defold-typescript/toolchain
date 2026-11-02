@@ -26,7 +26,7 @@ import { readNativeTargets } from "./sync-native-types";
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 const PARITY_DIR = "fidelity/authored";
-const REGENERATE = "bun run --cwd packages/library-types parity";
+const REGENERATE = "bun packages/cli/src/library/authored-parity.ts --data <dir>";
 
 const ARTIFACTS = {
   ...collectAuthoredParity(PACKAGE_ROOT),

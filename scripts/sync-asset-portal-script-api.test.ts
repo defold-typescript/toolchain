@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { dirname, join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import type {
   AssetPortalManifest,
@@ -27,8 +27,7 @@ import {
   syncAssetPortalScriptApi,
 } from "./sync-asset-portal-script-api.ts";
 
-const REAL_PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
-const REAL_DATA_DIR = newestDataFolder(REAL_PACKAGE_ROOT);
+const REAL_DATA_DIR = newestDataFolder(join(import.meta.dir, "..", "packages", "library-types"));
 const SYNCED_AT = "2026-10-21T00:00:00.000Z";
 
 const ASTAR_SCRIPT_API = `- name: astar
@@ -85,29 +84,22 @@ function scriptApiEntry(overrides: Partial<PortalEntry> & { id: string }): Porta
 const DEFOLD_PAD_REPO = "https://github.com/defold/extension-pad";
 
 /**
- * A `library-types` package root beside a `types` dir declaring the engine `gui`,
- * with the real lane registries except a one-library Defold manifest (page `pad`),
- * one native target (`share`) and one vendored library (`monarch`).
+ * A data folder with the real lane registries except a one-library Defold manifest
+ * (page `pad`), one native target (`share`) and one vendored library (`monarch`).
+ * The engine namespaces, `gui` among them, come from the types package. It sits in
+ * a temp directory of its own, which the no-write checks snapshot.
  */
-function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = {}): string {
-  const base = mkdtempSync(join(tmpdir(), "portal-script-api-"));
-  const root = join(base, "library-types");
-  mkdirSync(join(base, "types"), { recursive: true });
-  mkdirSync(join(root, "api-doc"), { recursive: true });
-  for (const file of readdirSync(REAL_PACKAGE_ROOT)) {
-    if (file.endsWith(".json") && file !== "asset-portal-script-api.json") {
-      copyFileSync(join(REAL_PACKAGE_ROOT, file), join(root, file));
-    }
-  }
-  const data = join(root, relative(REAL_PACKAGE_ROOT, REAL_DATA_DIR));
-  mkdirSync(data, { recursive: true });
+function dataFolder(entries: PortalEntry[], verdicts: Record<string, string> = {}): string {
+  const data = join(mkdtempSync(join(tmpdir(), "portal-script-api-")), "data");
+  mkdirSync(data);
   for (const entry of readdirSync(REAL_DATA_DIR, { withFileTypes: true })) {
     if (!entry.isDirectory()) {
-      if (entry.name.endsWith(".json")) {
+      if (entry.name.endsWith(".json") && entry.name !== "asset-portal-script-api.json") {
         copyFileSync(join(REAL_DATA_DIR, entry.name), join(data, entry.name));
       }
       continue;
     }
+    if (!existsSync(join(REAL_DATA_DIR, entry.name, "library.json"))) continue;
     const library = JSON.parse(
       readFileSync(join(REAL_DATA_DIR, entry.name, "library.json"), "utf8"),
     ) as Record<string, unknown>;
@@ -118,11 +110,6 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
       if (existsSync(from)) copyFileSync(from, join(data, entry.name, file));
     }
   }
-  writeFileSync(
-    join(base, "types", "api-targets.json"),
-    JSON.stringify({ targets: [{ modules: [{ namespace: "gui" }] }] }),
-  );
-  writeFileSync(join(root, "api-doc", "monarch.json"), "{}");
   const defcon = JSON.parse(readFileSync(join(data, "defcon", "library.json"), "utf8")) as {
     forks: Record<string, unknown>[];
   };
@@ -134,7 +121,7 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
   });
   writeFileSync(join(data, "defcon", "library.json"), JSON.stringify(defcon));
   writeFileSync(
-    join(root, "defold-extensions.json"),
+    join(data, "defold-extensions.json"),
     JSON.stringify({
       libraries: [
         {
@@ -157,8 +144,8 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
     }),
   );
   writeFileSync(join(data, "native-share", "reviewed.json"), JSON.stringify({ ref: "1" }));
-  writeFileSync(join(root, "asset-portal-aliases.json"), JSON.stringify({ aliases: {} }));
-  writeFileSync(join(root, "asset-portal-verdicts.json"), JSON.stringify({ verdicts }));
+  writeFileSync(join(data, "asset-portal-aliases.json"), JSON.stringify({ aliases: {} }));
+  writeFileSync(join(data, "asset-portal-verdicts.json"), JSON.stringify({ verdicts }));
   const manifest: AssetPortalManifest = {
     source: {
       repo: "https://github.com/defold/asset-portal",
@@ -167,13 +154,13 @@ function packageRoot(entries: PortalEntry[], verdicts: Record<string, string> = 
     },
     entries,
   };
-  writeFileSync(join(root, "asset-portal.json"), JSON.stringify(manifest));
-  return root;
+  writeFileSync(join(data, "asset-portal.json"), JSON.stringify(manifest));
+  return data;
 }
 
-/** `packageRoot` plus an empty committed manifest and one prior api-doc, `kept.json`. */
-function seededPackageRoot(entries: PortalEntry[]): string {
-  const root = packageRoot(entries);
+/** `dataFolder` plus an empty committed manifest and one prior api-doc, `kept.json`. */
+function seededDataFolder(entries: PortalEntry[]): string {
+  const root = dataFolder(entries);
   writeFileSync(
     join(root, "asset-portal-script-api.json"),
     `${JSON.stringify({ libraries: [] }, null, 2)}\n`,
@@ -279,7 +266,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
     );
 
   test("a script-api candidate yields one library at its manifest pin, paging only include_dirs docs", async () => {
-    const root = packageRoot([astar]);
+    const root = dataFolder([astar]);
     const source = astarSource();
     const manifest = await syncAssetPortalScriptApi(root, source);
     expect(manifest.libraries).toEqual([
@@ -302,7 +289,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
   });
 
   test("a candidate whose portal entry carries refDate copies it directly after refKind", async () => {
-    const root = packageRoot([{ ...astar, refDate: "2024-03-01T00:00:00Z" }]);
+    const root = dataFolder([{ ...astar, refDate: "2024-03-01T00:00:00Z" }]);
     const [library] = (await syncAssetPortalScriptApi(root, astarSource())).libraries;
     expect(library?.refDate).toBe("2024-03-01T00:00:00Z");
     const keys = Object.keys(library ?? {});
@@ -312,7 +299,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
   });
 
   test("the written api-doc is the complete conversion, constants and nested callback fields included", async () => {
-    const root = packageRoot([astar]);
+    const root = dataFolder([astar]);
     await syncAssetPortalScriptApi(root, astarSource());
     const doc = JSON.parse(
       readFileSync(join(root, "asset-portal-script-api", "api-doc", "astar.json"), "utf8"),
@@ -334,7 +321,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
   });
 
   test("an entry a lane pins, a declined entry and a pure-lua candidate yield no library", async () => {
-    const root = packageRoot(
+    const root = dataFolder(
       [
         astar,
         scriptApiEntry({ id: "pad", repo: DEFOLD_PAD_REPO }),
@@ -348,7 +335,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
   });
 
   test("a re-sync over its own output pages the same library again", async () => {
-    const root = packageRoot([astar]);
+    const root = dataFolder([astar]);
     const first = await syncAssetPortalScriptApi(root, astarSource());
     const second = await syncAssetPortalScriptApi(root, astarSource());
     expect(second).toEqual(first);
@@ -357,7 +344,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
   });
 
   test("a stale api-doc from an earlier sync is removed", async () => {
-    const root = packageRoot([astar]);
+    const root = dataFolder([astar]);
     const apiDoc = join(root, "asset-portal-script-api", "api-doc");
     mkdirSync(apiDoc, { recursive: true });
     writeFileSync(join(apiDoc, "gone.json"), "{}");
@@ -366,7 +353,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
   });
 
   test("a candidate whose include_dirs hold no .script_api at its pin throws naming the repo and pin", async () => {
-    const root = packageRoot([astar]);
+    const root = dataFolder([astar]);
     const source = fakeSource({ "acme/defold-astar@v1.2.3": ["example/demo.script_api"] }, {});
     await expect(syncAssetPortalScriptApi(root, source)).rejects.toThrow(
       "https://github.com/acme/defold-astar@v1.2.3",
@@ -374,7 +361,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
   });
 
   test("a .script_api the converter rejects throws naming its raw URL", async () => {
-    const root = packageRoot([astar]);
+    const root = dataFolder([astar]);
     const url = raw("acme/defold-astar", "v1.2.3", "astar/api/astar.script_api");
     const source = fakeSource(
       { "acme/defold-astar@v1.2.3": ["astar/api/astar.script_api"] },
@@ -392,7 +379,7 @@ describe("syncAssetPortalScriptApi — page keys", () => {
       { repo: "defold-sharing", namespace: "share" },
       { repo: "defold-router", namespace: "monarch" },
     ]);
-    const manifest = await syncAssetPortalScriptApi(packageRoot(entries), source);
+    const manifest = await syncAssetPortalScriptApi(dataFolder(entries), source);
     expect(pagesOf(manifest)).toEqual({
       "https://github.com/acme/defold-ui#gui": "ui.gui",
       "https://github.com/acme/defold-gamepad#pad": "gamepad.pad",
@@ -406,7 +393,7 @@ describe("syncAssetPortalScriptApi — page keys", () => {
       { repo: "rnd", namespace: "rnd" },
       { repo: "defold-rng", namespace: "rnd" },
     ]);
-    const manifest = await syncAssetPortalScriptApi(packageRoot(entries), source);
+    const manifest = await syncAssetPortalScriptApi(dataFolder(entries), source);
     expect(pagesOf(manifest)).toEqual({
       "https://github.com/acme/rnd#rnd": "rnd",
       "https://github.com/acme/defold-rng#rnd": "rng",
@@ -418,14 +405,14 @@ describe("syncAssetPortalScriptApi — page keys", () => {
       { repo: "acme/rng", namespace: "rng" },
       { repo: "bob/rng", namespace: "rng" },
     ]);
-    await expect(syncAssetPortalScriptApi(packageRoot(entries), source)).rejects.toThrow(
+    await expect(syncAssetPortalScriptApi(dataFolder(entries), source)).rejects.toThrow(
       /^asset-portal-script-api: page key "rng" is claimed by both acme\/rng\/rng\/api\.script_api \(rng\) and bob\/rng\/rng\/api\.script_api \(rng\)/,
     );
   });
 
   test("a key that traverses out of api-doc throws before any file under the package changes", async () => {
     const { entries, source } = declaring([{ repo: "escape", namespace: "../../asset-portal" }]);
-    const root = seededPackageRoot(entries);
+    const root = seededDataFolder(entries);
     const before = snapshot(dirname(root));
     await expect(syncAssetPortalScriptApi(root, source)).rejects.toThrow(
       'asset-portal-script-api: page key "../../asset-portal" from acme/escape/escape/api.script_api ',
@@ -449,7 +436,7 @@ describe("syncAssetPortalScriptApi — page keys", () => {
     "Aux.cmd",
   ])("key %p is a Windows device name and throws before any file under the package changes", async (namespace) => {
     const { entries, source } = declaring([{ repo: "device", namespace }]);
-    const root = seededPackageRoot(entries);
+    const root = seededDataFolder(entries);
     const before = snapshot(dirname(root));
     await expect(syncAssetPortalScriptApi(root, source)).rejects.toThrow(
       `asset-portal-script-api: page key ${JSON.stringify(namespace)} from acme/device/device/api.script_api `,
@@ -459,7 +446,7 @@ describe("syncAssetPortalScriptApi — page keys", () => {
 
   test("a derived key whose stem is a Windows device name throws naming the derived key", async () => {
     const { entries, source } = declaring([{ repo: "defold-nul", namespace: "gui" }]);
-    await expect(syncAssetPortalScriptApi(packageRoot(entries), source)).rejects.toThrow(
+    await expect(syncAssetPortalScriptApi(dataFolder(entries), source)).rejects.toThrow(
       'asset-portal-script-api: page key "nul.gui" from acme/defold-nul/defold-nul/api.script_api ',
     );
   });
@@ -473,7 +460,7 @@ describe("syncAssetPortalScriptApi — page keys", () => {
       { repo: "nullable", namespace: "nullable" },
       { repo: "rive", namespace: "rive.con" },
     ]);
-    const root = packageRoot(entries);
+    const root = dataFolder(entries);
     const manifest = await syncAssetPortalScriptApi(root, source);
     expect(pagesOf(manifest)).toEqual({
       "https://github.com/acme/console#console": "console",
@@ -508,7 +495,7 @@ describe("syncAssetPortalScriptApi — page keys", () => {
     "pct%2f",
   ])("key %p is no safe route and file-name segment and throws naming it", async (namespace) => {
     const { entries, source } = declaring([{ repo: "unsafe", namespace }]);
-    await expect(syncAssetPortalScriptApi(packageRoot(entries), source)).rejects.toThrow(
+    await expect(syncAssetPortalScriptApi(dataFolder(entries), source)).rejects.toThrow(
       `asset-portal-script-api: page key ${JSON.stringify(namespace)} from acme/unsafe/unsafe/api.script_api `,
     );
   });
@@ -520,7 +507,7 @@ describe("syncAssetPortalScriptApi — page keys", () => {
       { repo: "firebase", namespace: "firebase" },
       { repo: "firebase-analytics", namespace: "firebase" },
     ]);
-    const root = packageRoot(entries);
+    const root = dataFolder(entries);
     const manifest = await syncAssetPortalScriptApi(root, source);
     expect(pagesOf(manifest)).toEqual({
       "https://github.com/acme/rive#rive.cmd": "rive.cmd",
@@ -539,7 +526,7 @@ describe("syncAssetPortalScriptApi — page keys", () => {
   test("every committed Defold extension and portal page key is safe", () => {
     const pages = ["defold-extensions.json", "asset-portal-script-api.json"].flatMap((file) =>
       (
-        JSON.parse(readFileSync(join(REAL_PACKAGE_ROOT, file), "utf8")) as
+        JSON.parse(readFileSync(join(REAL_DATA_DIR, file), "utf8")) as
           | DefoldExtensionsManifest
           | AssetPortalScriptApiManifest
       ).libraries.flatMap((library) => library.docs.map((doc) => doc.page)),

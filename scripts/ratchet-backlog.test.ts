@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { FLOOR_MANIFEST_FILE } from "../packages/cli/src/library/fidelity-floor.ts";
 import type {
@@ -58,17 +58,15 @@ const LINE_SHAPES: Record<string, RegExp> = {
     /^[A-Za-z0-9._-]+\.json: (script-api|native-untyped|pure-lua-annotated|pure-lua):[^\s:]+:https?:\/\/\S+$/,
 };
 
-// Spelled out rather than imported so relocating either manifest reds this suite.
+// Spelled out rather than imported so relocating the library data reds this suite.
 const MANIFEST_DIR = join("packages", "library-types");
+const COMMITTED_DATA = newestDataFolder(join(REPO_ROOT, MANIFEST_DIR));
 
-// The lane registries the portal probe joins its manifest against, copied from
-// the committed package so a temp root resolves the same pins the repo does. The
-// served lanes' targets sit in the library data folder's library folders.
-const COVERAGE_REGISTRY_FILES = [
-  "markdown-targets.json",
-  "openapi-targets.json",
-  "defold-extensions.json",
-];
+// The registries the portal probe joins its manifest against, copied from the
+// committed data folder so a temp one resolves the same pins the repo does. The
+// served lanes' targets sit in its library folders; the markdown and openapi lanes
+// are the CLI's lane evaluations.
+const COVERAGE_REGISTRY_FILES = ["defold-extensions.json"];
 const LIBRARY_DATA_FILES = ["library.json", "reviewed.json", "recipe.json"];
 
 const PORTAL_SYNCED_AT = "2026-10-21T00:00:00.000Z";
@@ -108,10 +106,17 @@ function portalManifest(entries: PortalEntry[]): AssetPortalManifest {
   };
 }
 
-// `parity` holds the floors of one fork, `b`, in a library folder of its own. The
-// committed libraries are copied without theirs, so only the case's floors are open.
+/** The data folder `tempRoot` writes beside the repo-relative manifests. */
+function dataOf(root: string): string {
+  return join(root, "data");
+}
+
+// `fidelity` holds token floors by report, `fidelity/<namespace>.json`: each is the
+// floor of a LuaLS module of library `a`. `parity` holds the floors of one fork,
+// `b`, in a library folder of its own. The committed libraries are copied without
+// theirs, so only the case's floors are open.
 function tempRoot(
-  fidelity: unknown,
+  fidelity: Record<string, unknown>,
   parity: unknown,
   pins: unknown = {},
   bindingVerdicts: unknown = {},
@@ -121,14 +126,12 @@ function tempRoot(
   verdicts: Record<string, string> = {},
 ): string {
   const root = mkdtempSync(join(tmpdir(), "ratchet-backlog-"));
-  const dir = join(root, MANIFEST_DIR);
-  mkdirSync(dir, { recursive: true });
-  for (const file of COVERAGE_REGISTRY_FILES) {
-    copyFileSync(join(REPO_ROOT, MANIFEST_DIR, file), join(dir, file));
-  }
-  const committedData = newestDataFolder(join(REPO_ROOT, MANIFEST_DIR));
-  const data = join(dir, relative(join(REPO_ROOT, MANIFEST_DIR), committedData));
+  const data = dataOf(root);
   mkdirSync(data, { recursive: true });
+  for (const file of COVERAGE_REGISTRY_FILES) {
+    copyFileSync(join(COMMITTED_DATA, file), join(data, file));
+  }
+  const committedData = COMMITTED_DATA;
   for (const folder of readdirSync(committedData)) {
     for (const file of LIBRARY_DATA_FILES) {
       if (!existsSync(join(committedData, folder, file))) continue;
@@ -143,16 +146,39 @@ function tempRoot(
       }
     }
   }
-  writeFileSync(join(dir, "asset-portal.json"), `${JSON.stringify(portal, null, 2)}\n`);
+  writeFileSync(join(data, "asset-portal.json"), `${JSON.stringify(portal, null, 2)}\n`);
   writeFileSync(
-    join(dir, "asset-portal-aliases.json"),
+    join(data, "asset-portal-aliases.json"),
     `${JSON.stringify({ aliases }, null, 2)}\n`,
   );
   writeFileSync(
-    join(dir, "asset-portal-verdicts.json"),
+    join(data, "asset-portal-verdicts.json"),
     `${JSON.stringify({ verdicts }, null, 2)}\n`,
   );
-  writeFileSync(join(dir, FLOOR_MANIFEST_FILE), `${JSON.stringify(fidelity, null, 2)}\n`);
+  const tokenModules = Object.keys(fidelity).map((report) =>
+    report.replace(/^fidelity\/(.+)\.json$/, "$1"),
+  );
+  mkdirSync(join(data, "a"), { recursive: true });
+  writeFileSync(join(data, "a", "reviewed.json"), JSON.stringify({ ref: "v1" }));
+  writeFileSync(
+    join(data, "a", "recipe.json"),
+    JSON.stringify({
+      luals: tokenModules.map((namespace) => ({
+        sourceGlobs: [`${namespace}/**/*.lua`],
+        moduleId: namespace,
+        namespace,
+      })),
+    }),
+  );
+  writeFileSync(
+    join(data, "a", "library.json"),
+    JSON.stringify({
+      repo: "https://github.com/owner/a",
+      floors: Object.fromEntries(
+        Object.values(fidelity).map((floor, index) => [tokenModules[index], floor]),
+      ),
+    }),
+  );
   mkdirSync(join(data, "b"), { recursive: true });
   writeFileSync(join(data, "b", "reviewed.json"), JSON.stringify({ ref: "v1" }));
   writeFileSync(
@@ -230,7 +256,7 @@ describe("collectOpenSlots — both floor sources through the production readers
   test("a below-target slot in each manifest is reported, each line naming its manifest", () => {
     const root = tempRoot({ "fidelity/a.json": 0.75 }, { b: { callable: 1, field: 0.5 } });
     try {
-      expect(collectOpenSlots(root)).toEqual([
+      expect(collectOpenSlots(root, dataOf(root))).toEqual([
         `${PARITY_FLOORS_LABEL}: fidelity/authored/b.json field 0.5 (target 1)`,
         `${FLOOR_MANIFEST_FILE}: fidelity/a.json coverage 0.75 (target 1)`,
       ]);
@@ -242,7 +268,7 @@ describe("collectOpenSlots — both floor sources through the production readers
   test("manifests entirely at target yield no lines", () => {
     const root = tempRoot({ "fidelity/a.json": 1 }, { b: { callable: 1, field: 1 } });
     try {
-      expect(collectOpenSlots(root)).toEqual([]);
+      expect(collectOpenSlots(root, dataOf(root))).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -251,7 +277,7 @@ describe("collectOpenSlots — both floor sources through the production readers
   test("a malformed manifest propagates the parser's error instead of reading as satisfied", () => {
     const root = tempRoot({ "fidelity/a.json": 1 }, { b: { callable: 1 } });
     try {
-      expect(() => collectOpenSlots(root)).toThrow(/missing its "field" axis/);
+      expect(() => collectOpenSlots(root, dataOf(root))).toThrow(/missing its "field" axis/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -266,10 +292,10 @@ describe("collectOpenSlots — both floor sources through the production readers
       },
     );
     try {
-      expect(collectOpenSlots(root)).toEqual([
+      expect(collectOpenSlots(root, dataOf(root))).toEqual([
         `${PINS_FILE}: defold-1.13.1:go.get:0123456789abcdef diagnostics 1 (target 0)`,
       ]);
-      expect(collectOpenSlots(root, "authored-example-typecheck")).toHaveLength(1);
+      expect(collectOpenSlots(root, dataOf(root), "authored-example-typecheck")).toHaveLength(1);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -278,7 +304,7 @@ describe("collectOpenSlots — both floor sources through the production readers
   test("a single source id restricts the walk to that manifest", () => {
     const root = tempRoot({ "fidelity/a.json": 0.75 }, { b: { callable: 1, field: 0.5 } });
     try {
-      expect(collectOpenSlots(root, "fidelity-floor")).toEqual([
+      expect(collectOpenSlots(root, dataOf(root), "fidelity-floor")).toEqual([
         `${FLOOR_MANIFEST_FILE}: fidelity/a.json coverage 0.75 (target 1)`,
       ]);
     } finally {
@@ -301,7 +327,7 @@ describe("engine-binding-open — open verdicts as backlog", () => {
       "defold-1.9.8:*:missing-binding": { verdict: "accepted", reason: "not vendored" },
     });
     try {
-      expect(collectOpenSlots(root, "engine-binding-open")).toEqual([
+      expect(collectOpenSlots(root, dataOf(root), "engine-binding-open")).toEqual([
         `${VERDICTS_FILE_NAME}: *:gui.animate:too-narrow:4 open (extracted number|vector, declared number)`,
       ]);
     } finally {
@@ -314,7 +340,7 @@ describe("engine-binding-open — open verdicts as backlog", () => {
       "*:gui.animate:manual:2": { verdict: "manual", reason: "lua_type switch" },
     });
     try {
-      expect(collectOpenSlots(root)).toEqual([]);
+      expect(collectOpenSlots(root, dataOf(root))).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -323,7 +349,7 @@ describe("engine-binding-open — open verdicts as backlog", () => {
   test("a verdict with no known verdict throws rather than reading as satisfied", () => {
     const root = tempRoot(...atTarget, { "*:gui.animate:arity": { verdict: "later" } });
     try {
-      expect(() => collectOpenSlots(root, "engine-binding-open")).toThrow(/verdict/);
+      expect(() => collectOpenSlots(root, dataOf(root), "engine-binding-open")).toThrow(/verdict/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -350,7 +376,7 @@ describe("lua-annotation-open — open annotation mismatches as backlog", () => 
       },
     });
     try {
-      expect(collectOpenSlots(root, "lua-annotation-open")).toEqual([
+      expect(collectOpenSlots(root, dataOf(root), "lua-annotation-open")).toEqual([
         `${ANNOTATION_VERDICTS_FILE_NAME}: runtime:gui.animate:too-narrow:4 open (annotated number|vector4, declared number)`,
       ]);
     } finally {
@@ -366,7 +392,7 @@ describe("lua-annotation-open — open annotation mismatches as backlog", () => 
       },
     });
     try {
-      expect(collectOpenSlots(root, "lua-annotation-open")).toEqual([]);
+      expect(collectOpenSlots(root, dataOf(root), "lua-annotation-open")).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -375,7 +401,7 @@ describe("lua-annotation-open — open annotation mismatches as backlog", () => 
   test("a verdict with no known verdict throws rather than reading as satisfied", () => {
     const root = tempRoot(...atTarget, { "runtime:gui.animate:arity": { verdict: "manual" } });
     try {
-      expect(() => collectOpenSlots(root, "lua-annotation-open")).toThrow(/verdict/);
+      expect(() => collectOpenSlots(root, dataOf(root), "lua-annotation-open")).toThrow(/verdict/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -395,7 +421,7 @@ describe("asset-portal-candidates — untracked portal entries as backlog", () =
   test("an entry no lane pins prints one line naming its kind, id and repo", () => {
     const root = tempRoot(...atTarget, portalManifest([widget]));
     try {
-      expect(collectOpenSlots(root, "asset-portal-candidates")).toEqual([
+      expect(collectOpenSlots(root, dataOf(root), "asset-portal-candidates")).toEqual([
         "asset-portal.json: pure-lua:widget:https://github.com/acme/widget",
       ]);
     } finally {
@@ -413,18 +439,18 @@ describe("asset-portal-candidates — untracked portal entries as backlog", () =
       },
     );
     try {
-      expect(collectOpenSlots(root, "asset-portal-candidates")).toEqual([]);
+      expect(collectOpenSlots(root, dataOf(root), "asset-portal-candidates")).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 
   test("an entry whose repo the copied registries pin prints nothing", () => {
-    const pinned = readCoverageRegistries(join(REPO_ROOT, MANIFEST_DIR)).pinned[0];
+    const pinned = readCoverageRegistries(COMMITTED_DATA).pinned[0];
     if (!pinned) throw new Error("the committed registries pin no repo");
     const root = tempRoot(...atTarget, portalManifest([portalEntry("pinned", pinned.repo)]));
     try {
-      expect(collectOpenSlots(root, "asset-portal-candidates")).toEqual([]);
+      expect(collectOpenSlots(root, dataOf(root), "asset-portal-candidates")).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -436,7 +462,7 @@ describe("asset-portal-candidates — untracked portal entries as backlog", () =
   ])("a manifest with %s throws naming the file rather than reading as drained", (_label, portal) => {
     const root = tempRoot(...atTarget, portal);
     try {
-      expect(() => collectOpenSlots(root, "asset-portal-candidates")).toThrow(
+      expect(() => collectOpenSlots(root, dataOf(root), "asset-portal-candidates")).toThrow(
         "asset-portal.json: expected an asset-portal manifest",
       );
     } finally {
@@ -489,9 +515,10 @@ describe("CLI contract — what the planning pass consumes", () => {
 
   for (const source of RATCHET_SOURCES) {
     test(`\`${source.id}\` exits 0 and prints only conforming lines`, () => {
-      const proc = Bun.spawnSync(["bun", "scripts/ratchet-backlog.ts", source.id], {
-        cwd: REPO_ROOT,
-      });
+      const proc = Bun.spawnSync(
+        ["bun", "scripts/ratchet-backlog.ts", source.id, "--data", join(MANIFEST_DIR, "data")],
+        { cwd: REPO_ROOT },
+      );
       expect(proc.exitCode).toBe(0);
       const lines = proc.stdout.toString().split("\n").filter(Boolean);
       const shape = LINE_SHAPES[source.id];
@@ -499,6 +526,22 @@ describe("CLI contract — what the planning pass consumes", () => {
       for (const line of lines) expect(line).toMatch(shape);
     });
   }
+
+  test("a library data source without --data exits non-zero naming the flag", () => {
+    const proc = Bun.spawnSync(["bun", "scripts/ratchet-backlog.ts", "fidelity-floor"], {
+      cwd: REPO_ROOT,
+    });
+    expect(proc.exitCode).not.toBe(0);
+    expect(proc.stdout.toString()).toBe("");
+    expect(proc.stderr.toString()).toContain("scripts/ratchet-backlog.ts --data <dir>");
+  });
+
+  test("a source outside the library data needs no --data", () => {
+    const proc = Bun.spawnSync(["bun", "scripts/ratchet-backlog.ts", "engine-binding-open"], {
+      cwd: REPO_ROOT,
+    });
+    expect(proc.exitCode).toBe(0);
+  });
 
   test("an unknown source id exits non-zero with empty stdout", () => {
     const proc = Bun.spawnSync(["bun", "scripts/ratchet-backlog.ts", "no-such-source"], {

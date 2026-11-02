@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import type { FidelityReport } from "./luals-fidelity";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
 import { type OpenApiDoc, parseOpenApi } from "./parse-openapi-api";
 import {
   computeScriptApiFidelity,
@@ -161,11 +161,8 @@ interface RegenModule {
 // openapi target references a branded engine handle.
 const OPENAPI_CORE_TYPES_IMPORT = "../src/core-types";
 
-async function loadGenerate(
-  packageRoot: string,
-): Promise<RegenModule["generateModuleDeclaration"]> {
-  const typesRoot = join(packageRoot, "..", "types");
-  const regen = (await import(join(typesRoot, "scripts", "regen.ts"))) as RegenModule;
+async function loadGenerate(): Promise<RegenModule["generateModuleDeclaration"]> {
+  const regen = (await import("@defold-typescript/types/cli-runtime")) as RegenModule;
   return regen.generateModuleDeclaration;
 }
 
@@ -203,7 +200,7 @@ export async function emitOpenApiDeclaration(
   packageRoot: string,
   target: OpenApiTarget,
 ): Promise<string> {
-  const generate = await loadGenerate(packageRoot);
+  const generate = await loadGenerate();
   const doc = retargetedFixtureDoc(packageRoot, target);
   const { contents } = generate({
     namespace: target.namespace,
@@ -266,7 +263,7 @@ const defaultFetchText: FetchText = async (url) => {
 };
 
 if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
+  const root = LANE_EVALUATIONS_ROOT;
   const argv = process.argv.slice(2);
   if (argv.includes("--fetch")) {
     for (const target of readOpenApiTargets(root)) {

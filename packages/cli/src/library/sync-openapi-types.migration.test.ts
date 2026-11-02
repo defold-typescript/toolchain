@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus } from "./print-corpus";
 import { readOpenApiTargets } from "./sync-openapi-types";
@@ -17,7 +18,9 @@ const DATA_DIR = LIBRARY_DATA_DIR;
 // assertions are the mirror image of the deftest/defcon `go`-branch
 // migration-integrity checks.
 describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
-  const target = readOpenApiTargets(PACKAGE_ROOT).find((t) => t.moduleId === "nakama.nakama");
+  const target = readOpenApiTargets(LANE_EVALUATIONS_ROOT).find(
+    (t) => t.moduleId === "nakama.nakama",
+  );
   if (target === undefined) throw new Error("nakama.nakama openapi target missing");
 
   test("the recorded decision is no-go", () => {
@@ -26,7 +29,7 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
 
   test("nakama.nakama is no longer a ts-defold library-targets row, and none remain", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "nakama.nakama")).toBe(false);
     expect(targets).toEqual([]);
@@ -34,7 +37,7 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
 
   test("the nakama-defold dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string; modules: string[] }[] };
     expect(dirs.some((d) => d.dir === "nakama-defold")).toBe(false);
     expect(dirs.flatMap((d) => d.modules)).not.toContain("nakama.nakama");
@@ -47,8 +50,8 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
   });
 
   test("the openapi api-doc and fidelity goldens exist as a committed regeneration proof", () => {
-    expect(existsSync(join(PACKAGE_ROOT, target.apiDoc))).toBe(true);
-    expect(existsSync(join(PACKAGE_ROOT, target.fidelity))).toBe(true);
+    expect(existsSync(join(LANE_EVALUATIONS_ROOT, target.apiDoc))).toBe(true);
+    expect(existsSync(join(LANE_EVALUATIONS_ROOT, target.fidelity))).toBe(true);
     // The proof lives under an `openapi/` subdir so it never shadows the
     // authored `api-doc/nakama.json` docs-site page, which is what the
     // canonical path holds now that the bare namespace is the module's own.
@@ -56,9 +59,11 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
   });
 
   test("the pinned swagger + proto snapshots are committed", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/openapi/nakama.nakama.swagger.json"))).toBe(
-      true,
-    );
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/openapi/nakama.nakama.api.proto"))).toBe(true);
+    expect(
+      existsSync(join(LANE_EVALUATIONS_ROOT, "fixtures/openapi/nakama.nakama.swagger.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(LANE_EVALUATIONS_ROOT, "fixtures/openapi/nakama.nakama.api.proto")),
+    ).toBe(true);
   });
 });

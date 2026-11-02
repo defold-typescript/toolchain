@@ -582,7 +582,7 @@ function coverageField(raw: Record<string, unknown>, field: string, path: string
 }
 
 /**
- * Every committed parity artifact under `parityDir`, keyed by package-root-relative
+ * Every committed parity artifact under `parityDir`, keyed by report-root-relative
  * POSIX path and sorted by that key. Both axes are read under a validating contract,
  * so a renamed or dropped coverage key throws here rather than reaching the ratchet
  * as `undefined` — where every `<` comparison would be false and the gate would pass
@@ -684,9 +684,12 @@ export function authoredFloorRegressions(
 }
 
 if (import.meta.main) {
-  const { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
-  for (const target of authoredParityTargets(LIBRARY_DATA_DIR)) {
-    const report = buildAuthoredParity(LIBRARY_DATA_DIR, target);
+  const { toolDataOrExit } = await import("./tool-data-flag");
+  const { dataDir, reportRoot: root } = toolDataOrExit(
+    "packages/cli/src/library/authored-parity.ts",
+  );
+  for (const target of authoredParityTargets(dataDir)) {
+    const report = buildAuthoredParity(dataDir, target);
     const dest = join(root, authoredParityPath(target));
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, renderAuthoredParity(report));

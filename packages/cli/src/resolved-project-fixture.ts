@@ -168,10 +168,7 @@ export function scaffoldResolvedProject(cwd: string): void {
   installResolvedDeclarations(cwd);
 }
 
-const EXTENSION_API_DOCS = path.join(
-  import.meta.dir,
-  "../../library-types/defold-extensions/api-doc",
-);
+const EXTENSION_API_DOCS = path.join(LIBRARY_DATA_DIR, "defold-extensions", "api-doc");
 
 /**
  * A script importing both dependencies' share of `firebase` and the dotted

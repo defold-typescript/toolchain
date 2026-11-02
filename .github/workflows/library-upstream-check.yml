@@ -47,7 +47,7 @@ jobs:
       - name: Scan every lane registry for a moved upstream
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bun scripts/library-upstream-check.ts --json > upstream.json
+        run: bun scripts/library-upstream-check.ts --json --data packages/library-types/data > upstream.json
 
       # The scan exits 1 when any one of the 35 groups is unreadable, and a step
       # defaults to `if: success()` — so without this the whole corpus's findings
@@ -90,7 +90,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bun scripts/asset-portal-check.ts --json > portal.json
+        run: bun scripts/asset-portal-check.ts --json --data packages/library-types/data > portal.json
 
       - name: Open one issue for unclassified portal entries
         if: ${{ !cancelled() }}
@@ -125,7 +125,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bun scripts/shipped-types-check.ts --json > shipped.json
+        run: bun scripts/shipped-types-check.ts --json --data packages/library-types/data > shipped.json
 
       - name: Open one issue per repo that ships types
         if: ${{ !cancelled() }}

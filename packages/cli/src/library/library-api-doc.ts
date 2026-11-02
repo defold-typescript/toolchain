@@ -1,7 +1,7 @@
 // The API model the docs site renders, lowered from a library data folder alone,
 // through the lowering of the lane that serves each module. The openapi and
-// markdown lanes read their targets from the library-types package, not from
-// library data, and keep their own `--api-doc` runs.
+// markdown lanes read their targets from the CLI's lane evaluations
+// (`lane-evaluations.ts`), not from library data, and keep their own `--api-doc` runs.
 
 import { API_DOC_DIR, readLibraryData } from "./library-data";
 import { lowerAuthoredApiDoc } from "./sync-authored-types";

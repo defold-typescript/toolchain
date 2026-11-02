@@ -1,6 +1,5 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { includedScriptApiPaths } from "../packages/cli/src/library/library-evidence.ts";
 import {
   livePortalSource,
@@ -35,7 +34,6 @@ import {
 // published library-types package.
 
 const LABEL = "asset-portal-script-api";
-const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
 
 export interface AssetPortalScriptApiLibrary {
   id: string;
@@ -59,16 +57,10 @@ export type ScriptApiSource = Pick<PortalSource, "repo" | "tree" | "fetchText">;
  * Every `/api/` page a portal page key must not shadow: engine namespaces,
  * vendored libraries, Defold extension pages and curated native namespaces.
  */
-export async function loadPortalReservedNamespaces(
-  packageRoot: string,
-  dataDir: string = newestDataFolder(packageRoot),
-): Promise<ReservedNamespaces> {
-  const { engineNamespaces, libraryNamespaces } = await loadReservedNamespaces(
-    dataDir,
-    packageRoot,
-  );
+export async function loadPortalReservedNamespaces(dataDir: string): Promise<ReservedNamespaces> {
+  const { engineNamespaces, libraryNamespaces } = await loadReservedNamespaces(dataDir);
   const defold = JSON.parse(
-    readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
+    readFileSync(join(dataDir, "defold-extensions.json"), "utf8"),
   ) as DefoldExtensionsManifest;
   return {
     engineNamespaces,
@@ -87,28 +79,27 @@ function docKey(id: string, path: string, namespace: string): string {
 /**
  * Convert every `script-api` candidate's docs through `source`, then write
  * `asset-portal-script-api.json` (sorted by id) and recreate
- * `asset-portal-script-api/api-doc/<page>.json` under `packageRoot`. Candidacy
+ * `asset-portal-script-api/api-doc/<page>.json` in the data folder. Candidacy
  * is computed with the portal lane emptied, so a re-sync does not read its own
  * pages as tracked and drop them. A gone repo, a doc the converter rejects, a
  * candidate left with no doc, or a page key that still collides or is no safe
  * file name throws, the last two before any file is deleted or written.
  */
 export async function syncAssetPortalScriptApi(
-  packageRoot: string,
+  dataDir: string,
   source: ScriptApiSource,
-  dataDir: string = newestDataFolder(packageRoot),
 ): Promise<AssetPortalScriptApiManifest> {
-  const manifest = readAssetPortalManifest(packageRoot);
+  const manifest = readAssetPortalManifest(dataDir);
   const coverage = portalCoverage(
     manifest,
-    { ...readCoverageRegistries(packageRoot, dataDir), portal: [] },
-    readPortalAliases(packageRoot),
-    readPortalVerdicts(packageRoot),
+    { ...readCoverageRegistries(dataDir), portal: [] },
+    readPortalAliases(dataDir),
+    readPortalVerdicts(dataDir),
   );
   const paged = new Set(
     coverage.filter((entry) => entry.candidate && entry.kind === "script-api").map((e) => e.id),
   );
-  const reserved = await loadPortalReservedNamespaces(packageRoot, dataDir);
+  const reserved = await loadPortalReservedNamespaces(dataDir);
 
   const surveyed: (Omit<AssetPortalScriptApiLibrary, "docs"> & {
     docs: { path: string; namespace: string }[];
@@ -154,7 +145,7 @@ export async function syncAssetPortalScriptApi(
     docs: keyed[index]?.docs ?? [],
   }));
 
-  const apiDocDir = join(packageRoot, "asset-portal-script-api", "api-doc");
+  const apiDocDir = join(dataDir, "asset-portal-script-api", "api-doc");
   rmSync(apiDocDir, { recursive: true, force: true });
   mkdirSync(apiDocDir, { recursive: true });
   for (const library of libraries) {
@@ -168,14 +159,16 @@ export async function syncAssetPortalScriptApi(
 
   const output: AssetPortalScriptApiManifest = { libraries };
   writeFileSync(
-    join(packageRoot, "asset-portal-script-api.json"),
+    join(dataDir, "asset-portal-script-api.json"),
     `${JSON.stringify(output, null, 2)}\n`,
   );
   return output;
 }
 
 if (import.meta.main && process.argv.includes("--fetch")) {
-  const { libraries } = await syncAssetPortalScriptApi(PACKAGE_ROOT, livePortalSource());
+  const { toolDataOrExit } = await import("../packages/cli/src/library/tool-data-flag.ts");
+  const { dataDir } = toolDataOrExit("scripts/sync-asset-portal-script-api.ts");
+  const { libraries } = await syncAssetPortalScriptApi(dataDir, livePortalSource());
   const docs = libraries.reduce((sum, library) => sum + library.docs.length, 0);
   console.log(`paged ${libraries.length} Asset Portal script_api libraries, ${docs} docs`);
 }

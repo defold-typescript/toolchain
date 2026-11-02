@@ -151,6 +151,16 @@ async function sweep(widget: FakeRepo, others: Record<string, FakeRepo> = QUIET)
   return { ...fake, code, run, widget: reportFor("acme/widget"), reportFor };
 }
 
+describe("runShippedTypesCheck without curated repos given", () => {
+  test("a run without --data exits 1 naming the flag, and reads no repo", async () => {
+    const fake = fakeIo({});
+    const code = await runShippedTypesCheck(["--json"], fake.io, undefined, TYPES_ROOT);
+    expect(code).toBe(1);
+    expect(fake.err.join("")).toContain("scripts/shipped-types-check.ts --data <dir>");
+    expect(fake.tagReads).toEqual([]);
+  });
+});
+
 describe("runShippedTypesCheck verdicts", () => {
   test("types `resolve` accepts at the newest-dated tag are actionable and name every entry to retire", async () => {
     const rejected = [{ name: "a.d.ts", contents: BAD_MODULE }];
@@ -429,7 +439,9 @@ describe("evaluateShippedTypes over every forge tag page", () => {
 
 describe("readCuratedRepos over the committed corpus", () => {
   test("sweeps exactly the sources `resolve` can install curated types for, each once", () => {
-    const swept = readCuratedRepos().map(({ repo }) => normalizeSourceId(repo));
+    const swept = readCuratedRepos(newestDataFolder(PACKAGE_ROOT)).map(({ repo }) =>
+      normalizeSourceId(repo),
+    );
     const installable = new Set([
       ...loadVendoredLibraryRegistry(newestDataFolder(PACKAGE_ROOT)).map(
         ({ sourceId }) => sourceId,
