@@ -14,7 +14,7 @@ const PRINT_TIMEOUT_MS = 120_000;
 
 describe("the published CLI's bundle", () => {
   test(
-    "loads nothing from library-types and carries the curated page map itself",
+    "loads nothing from library-types and bundles no curated page map",
     async () => {
       const build = await Bun.build({
         entrypoints: [path.join(CLI_SRC, "bin.ts"), path.join(CLI_SRC, "index.ts")],
@@ -26,7 +26,7 @@ describe("the published CLI's bundle", () => {
       const code = (await Promise.all(build.outputs.map((output) => output.text()))).join("\n");
 
       expect(code).not.toContain("@defold-typescript/library-types");
-      expect(code).toContain('"spine.gui"');
+      expect(code).not.toContain('"spine.gui"');
     },
     PRINT_TIMEOUT_MS,
   );

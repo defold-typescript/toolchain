@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import {
@@ -9,7 +9,7 @@ import {
 } from "./extension-archive";
 import { resolveExtensionDeclarations } from "./extension-declarations";
 import type { ExtensionDependency } from "./extension-deps";
-import { LIBRARY_DATA_DIR } from "./library/package-root";
+import { DEFOLD_EXTENSIONS_FILE, EXTENSION_INDEX_SLOTS_FILE } from "./library/library-data";
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), "extension-declarations-"));
@@ -276,11 +276,44 @@ const STEAM = `
 `;
 
 describe("resolveExtensionDeclarations index notes", () => {
-  async function steamDeclaration(url: string, wrapper: string): Promise<string> {
+  const CURATED_STEAM = "https://github.com/defold/extension-steam/archive/refs/tags/3.0.0.zip";
+
+  function steamData({ pages }: { pages: boolean }): string {
+    const dir = tmp();
+    writeFileSync(
+      join(dir, EXTENSION_INDEX_SLOTS_FILE),
+      JSON.stringify({
+        "steam/steam.friends_get_friend_by_index:param:iFriend": {
+          class: "native-0",
+          evidence: "fixture",
+        },
+      }),
+    );
+    if (pages) {
+      writeFileSync(
+        join(dir, DEFOLD_EXTENSIONS_FILE),
+        JSON.stringify({
+          libraries: [
+            {
+              repo: "https://github.com/defold/extension-steam",
+              docs: [{ path: "steam/api/steam.script_api", namespace: "steam", page: "steam" }],
+            },
+          ],
+        }),
+      );
+    }
+    return dir;
+  }
+
+  async function steamDeclaration(
+    url: string,
+    wrapper: string,
+    libraryDataDir = steamData({ pages: true }),
+  ): Promise<string> {
     const entry = `${wrapper}/steam/api/steam.script_api`;
     const bundles = await resolveExtensionDeclarations([dep(url)], {
       cacheDir: tmp(),
-      libraryDataDir: LIBRARY_DATA_DIR,
+      libraryDataDir,
       download: someBytes,
       readZip: makeReadZip(
         {
@@ -296,13 +329,20 @@ describe("resolveExtensionDeclarations index notes", () => {
   }
 
   test("a curated extension's classified index names the library", async () => {
-    const contents = await steamDeclaration(
-      "https://github.com/defold/extension-steam/archive/refs/tags/3.0.0.zip",
-      "extension-steam-3.0.0",
-    );
+    const contents = await steamDeclaration(CURATED_STEAM, "extension-steam-3.0.0");
     expect(contents).toContain(
       "@param iFriend - Is a index of range [0, GetFriendCount()). **0️⃣ 0-based; passed to `steam` unchanged.**",
     );
+  });
+
+  test("library data without defold-extensions.json curates nothing", async () => {
+    const contents = await steamDeclaration(
+      CURATED_STEAM,
+      "extension-steam-3.0.0",
+      steamData({ pages: false }),
+    );
+    expect(contents).toContain("@param iFriend - Is a index of range [0, GetFriendCount())");
+    expect(contents.includes("based; passed to")).toBe(false);
   });
 
   test("the same bytes from an uncurated repo carry no note", async () => {

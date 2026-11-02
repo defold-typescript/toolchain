@@ -5,12 +5,14 @@ import {
   mkdirSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
+  DEFOLD_EXTENSIONS_FILE,
   EXTENSION_INDEX_SLOTS_FILE,
   type IndexSlotEntry,
   LibraryDataError,
@@ -171,12 +173,11 @@ describe("assembleLibraryDataView", () => {
     expect(readdirSync(view)).toEqual(["monarch"]);
   });
 
-  test("other top-level files and libraries not asked for stay out", () => {
+  test("the extension page map comes from the shared folder with the same bytes", () => {
     const cacheDir = tmp();
     const { a, b } = writeTwoCommits(cacheDir);
-    writeFileSync(join(a, "stray.json"), "{}");
-    writeFileSync(join(b, "stray.json"), "{}");
-    writeSharedSlots(b, {});
+    writeFileSync(join(a, DEFOLD_EXTENSIONS_FILE), '{"libraries":["wrong commit"]}\n');
+    writeFileSync(join(b, DEFOLD_EXTENSIONS_FILE), '{"libraries":["right commit"]}\n');
 
     const view = assembled(
       assembleLibraryDataView({
@@ -186,7 +187,30 @@ describe("assembleLibraryDataView", () => {
       }),
     );
 
-    expect(readdirSync(view).sort()).toEqual([EXTENSION_INDEX_SLOTS_FILE, "monarch"].sort());
+    expect(readFileSync(join(view, DEFOLD_EXTENSIONS_FILE), "utf8")).toBe(
+      '{"libraries":["right commit"]}\n',
+    );
+  });
+
+  test("other top-level files and libraries not asked for stay out", () => {
+    const cacheDir = tmp();
+    const { a, b } = writeTwoCommits(cacheDir);
+    writeFileSync(join(a, "stray.json"), "{}");
+    writeFileSync(join(b, "stray.json"), "{}");
+    writeSharedSlots(b, {});
+    writeFileSync(join(b, DEFOLD_EXTENSIONS_FILE), '{"libraries":[]}');
+
+    const view = assembled(
+      assembleLibraryDataView({
+        cacheDir,
+        libraries: [{ name: "monarch", folderDir: a }],
+        shared: b,
+      }),
+    );
+
+    expect(readdirSync(view).sort()).toEqual(
+      [DEFOLD_EXTENSIONS_FILE, EXTENSION_INDEX_SLOTS_FILE, "monarch"].sort(),
+    );
   });
 
   test.each([
@@ -246,6 +270,27 @@ describe("assembleLibraryDataView", () => {
       );
 
     expect(new Set([view(a, null), view(b, null), view(a, a), view(a, b)]).size).toBe(4);
+  });
+
+  test("the key follows which shared files the shared folder holds", () => {
+    const cacheDir = tmp();
+    const { a, b } = writeTwoCommits(cacheDir);
+    writeSharedSlots(b, {});
+    const view = () =>
+      assembled(
+        assembleLibraryDataView({
+          cacheDir,
+          libraries: [{ name: "monarch", folderDir: a }],
+          shared: b,
+        }),
+      );
+
+    const before = view();
+    writeFileSync(join(b, DEFOLD_EXTENSIONS_FILE), '{"libraries":[]}');
+    const after = view();
+
+    expect(after).not.toBe(before);
+    expect(existsSync(join(after, DEFOLD_EXTENSIONS_FILE))).toBe(true);
   });
 
   test("the key follows the library's name", () => {
