@@ -141,7 +141,7 @@ describe("updateLibraries", () => {
 
     test("a newer tag with reviewed hashes adds the forge's commit and keeps the ref", async () => {
       const result = await update(upstream, {
-        [urlOf("tagged", "v2")]: archiveOf(SAME, ARCHIVE_COMMIT),
+        [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME, ARCHIVE_COMMIT),
       });
 
       expect(result).toEqual({
@@ -155,7 +155,7 @@ describe("updateLibraries", () => {
     });
 
     test("a second run downloads nothing and writes nothing", async () => {
-      const archives = { [urlOf("tagged", "v2")]: archiveOf(SAME) };
+      const archives = { [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME) };
       await update(upstream, archives);
       const recorded = reviewedText("tagged");
       downloaded = [];
@@ -172,7 +172,7 @@ describe("updateLibraries", () => {
     test("a newer tag with a changed member reads differs and writes nothing", async () => {
       const before = reviewedText("tagged");
 
-      const result = await update(upstream, { [urlOf("tagged", "v2")]: archiveOf(CHANGED) });
+      const result = await update(upstream, { [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED) });
 
       expect(result.updated).toEqual([
         { library: "tagged", status: "differs", recorded: [], differs: [NEW_COMMIT] },
@@ -183,7 +183,7 @@ describe("updateLibraries", () => {
     test("a change only to a function body differs, since its source hash moved", async () => {
       const bodyEdit = SAME.replace(") end", ") return 1 end");
 
-      const result = await update(upstream, { [urlOf("tagged", "v2")]: archiveOf(bodyEdit) });
+      const result = await update(upstream, { [urlOf("tagged", NEW_COMMIT)]: archiveOf(bodyEdit) });
 
       expect(result.updated[0]?.differs).toEqual([NEW_COMMIT]);
     });
@@ -192,12 +192,12 @@ describe("updateLibraries", () => {
       const result = await update(
         { [repoOf("tagged")]: { tags: [LATER_TAG, PIN_TAG, NEW_TAG] } },
         {
-          [urlOf("tagged", "v2")]: archiveOf(SAME),
-          [urlOf("tagged", "v3")]: archiveOf(CHANGED),
+          [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME),
+          [urlOf("tagged", LATER_COMMIT)]: archiveOf(CHANGED),
         },
       );
 
-      expect(downloaded).toEqual([urlOf("tagged", "v2"), urlOf("tagged", "v3")]);
+      expect(downloaded).toEqual([urlOf("tagged", NEW_COMMIT), urlOf("tagged", LATER_COMMIT)]);
       expect(result.updated).toEqual([
         { library: "tagged", status: "differs", recorded: [NEW_COMMIT], differs: [LATER_COMMIT] },
       ]);
@@ -230,14 +230,38 @@ describe("updateLibraries", () => {
             tags: [PIN_TAG, NEW_TAG, { ...NEW_TAG, name: "v2.0" }],
           },
         },
-        {
-          [urlOf("tagged", "v2")]: archiveOf(CHANGED),
-          [urlOf("tagged", "v2.0")]: archiveOf(CHANGED),
-        },
+        { [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED) },
       );
 
       expect(downloaded).toHaveLength(1);
       expect(result.updated[0]?.differs).toEqual([NEW_COMMIT]);
+    });
+
+    test("a tag that serves reviewed bytes does not vouch for a commit that differs", async () => {
+      const before = reviewedText("tagged");
+
+      const result = await update(upstream, {
+        [urlOf("tagged", "v2")]: archiveOf(SAME),
+        [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED),
+      });
+
+      expect(result.updated).toEqual([
+        { library: "tagged", status: "differs", recorded: [], differs: [NEW_COMMIT] },
+      ]);
+      expect(downloaded).toEqual([urlOf("tagged", NEW_COMMIT)]);
+      expect(reviewedText("tagged")).toBe(before);
+    });
+
+    test("a commit archive that names no commit still records the forge's commit", async () => {
+      const result = await update(upstream, { [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME) });
+
+      expect(result.updated).toEqual([
+        { library: "tagged", status: "recorded", recorded: [NEW_COMMIT], differs: [] },
+      ]);
+      expect(readLibraryReviews(dataDir, "tagged")?.map(({ commits }) => commits)).toEqual([
+        [PIN_COMMIT, NEW_COMMIT],
+      ]);
+      expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual(["v1"]);
     });
 
     test("a pinned tag upstream no longer lists fails the library", async () => {
@@ -255,7 +279,7 @@ describe("updateLibraries", () => {
 
       const result = await update(
         { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
-        { [urlOf("tagged", "v2")]: archiveOf(SAME) },
+        { [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME) },
       );
 
       expect(result.updated).toEqual([]);
@@ -266,7 +290,7 @@ describe("updateLibraries", () => {
     });
 
     test("a failed download fails the library even with a cached copy", async () => {
-      await update(upstream, { [urlOf("tagged", "v2")]: archiveOf(CHANGED) });
+      await update(upstream, { [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED) });
 
       const result = await update(upstream, {});
 
@@ -356,7 +380,7 @@ describe("updateLibraries", () => {
 
       const result = await update(
         { [repoOf("second")]: { tags: [PIN_TAG, NEW_TAG] } },
-        { [urlOf("second", "v2")]: archiveOf(SAME) },
+        { [urlOf("second", NEW_COMMIT)]: archiveOf(SAME) },
       );
 
       expect(result.failed).toEqual([
