@@ -2,8 +2,8 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { LANE_EVALUATIONS_ROOT } from "../packages/cli/src/library/lane-evaluations.ts";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
@@ -29,8 +29,7 @@ import {
   runLibraryCheckCli,
 } from "./library-upstream-check.ts";
 
-const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
-const DATA_DIR = newestDataFolder(PACKAGE_ROOT);
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 function group(overrides: Partial<PinnedGroup> = {}): PinnedGroup {
   return {
