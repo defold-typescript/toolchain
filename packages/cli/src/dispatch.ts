@@ -52,6 +52,7 @@ import {
 } from "./installed-editor-version";
 import { type RenderResultInput, renderResult } from "./json-output";
 import { createLateEditorVersionCheck } from "./late-editor-version";
+import type { UpdateForge } from "./library/library-update";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
 import {
@@ -102,6 +103,7 @@ export interface DispatchInternals {
     readonly cacheDir?: string;
     readonly libraryRegistry?: readonly VendoredLibrary[];
     readonly libraryDataDir?: string | null;
+    readonly forge?: (repo: string) => UpdateForge;
   };
   // Reads the detected Defold editor's `config` and returns its `version` key,
   // or null when no editor is detected. The default is the live
@@ -164,7 +166,7 @@ Run \`defold-typescript --help\` for per-command usage and flags.
 `;
 const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle|status|run> [path]\n";
 const LIBRARY_USAGE =
-  "Usage: defold-typescript library check --data <dir> [--api-doc-out <dir>]\n       defold-typescript library add <url> --data <dir>\n       defold-typescript library review [<name>] --data <dir>\n";
+  "Usage: defold-typescript library check --data <dir> [--api-doc-out <dir>]\n       defold-typescript library add <url> --data <dir>\n       defold-typescript library review [<name>] --data <dir>\n       defold-typescript library update [<name>] --data <dir>\n";
 
 /** How long `build` waits for an editor to identify itself before giving up on it. */
 const EDITOR_PROBE_TIMEOUT_MS = 2000;
@@ -699,7 +701,12 @@ function dispatchCommand(
   if (command === "library") {
     // Runs on a directory of library data, not a Defold project: no target resolution.
     const subcommand = rest[0];
-    if (subcommand !== "check" && subcommand !== "add" && subcommand !== "review") {
+    if (
+      subcommand !== "check" &&
+      subcommand !== "add" &&
+      subcommand !== "review" &&
+      subcommand !== "update"
+    ) {
       io.stderr.write(LIBRARY_USAGE);
       return 1;
     }
@@ -730,7 +737,7 @@ function dispatchCommand(
       const selected =
         dataFlag === undefined || dataFlag === "" || dataFlag.startsWith("-")
           ? {
-              error: `defold-typescript library ${subcommand}: --data needs a directory; use: defold-typescript library ${subcommand}${subcommand === "add" ? " <url>" : subcommand === "review" ? " [<name>]" : ""} --data <dir>`,
+              error: `defold-typescript library ${subcommand}: --data needs a directory; use: defold-typescript library ${subcommand}${subcommand === "add" ? " <url>" : subcommand === "review" || subcommand === "update" ? " [<name>]" : ""} --data <dir>`,
             }
           : libraryDataFromFlag(
               `library ${subcommand}: --data`,
@@ -823,6 +830,56 @@ function dispatchCommand(
           }
           io.stdout.write(
             `defold-typescript library review: ${dataFolder}: ${reviewed.length} reviewed, ${failed.length} failed\n`,
+          );
+        }
+        return failed.length > 0 ? 1 : 0;
+      }
+      if (subcommand === "update") {
+        const { updateLibraries } = await import("./library/library-update");
+        const seams = internals?.resolveInternals;
+        let result: Awaited<ReturnType<typeof updateLibraries>>;
+        try {
+          result = await updateLibraries(dataFolder, rest[1] === undefined ? [] : [rest[1]], {
+            ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
+            ...(seams?.download ? { download: seams.download } : {}),
+            ...(seams?.forge ? { forge: seams.forge } : {}),
+          });
+        } catch (err) {
+          return fail(
+            `defold-typescript library update: ${err instanceof Error ? err.message : String(err)}`,
+            { dataFolder },
+          );
+        }
+        const { updated, failed } = result;
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "library",
+              ...(failed.length > 0
+                ? { error: `library update: ${failed.length} failed in ${dataFolder}` }
+                : {}),
+              subcommand,
+              dataFolder,
+              written: updated
+                .filter(({ recorded }) => recorded.length > 0)
+                .map(({ library }) => path.join(dataFolder, library, "reviewed.json")),
+              updated,
+              failed,
+            }),
+          );
+        } else {
+          for (const { library, status, recorded, differs } of updated) {
+            if (status === "held" || status === "current") {
+              io.stdout.write(`${library}: ${status}\n`);
+            }
+            for (const commit of recorded) io.stdout.write(`${library}: recorded ${commit}\n`);
+            for (const commit of differs) io.stdout.write(`${library}: differs at ${commit}\n`);
+          }
+          for (const { library, message } of failed) {
+            writeError(`defold-typescript library update: ${library}: ${message}`);
+          }
+          io.stdout.write(
+            `defold-typescript library update: ${dataFolder}: ${updated.length} checked, ${failed.length} failed\n`,
           );
         }
         return failed.length > 0 ? 1 : 0;
