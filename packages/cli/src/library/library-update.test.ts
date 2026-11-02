@@ -33,6 +33,7 @@ const archiveOf = (lua: string, comment?: string): Uint8Array =>
   archiveOfFiles({ "mylib/mylib.lua": lua }, comment);
 
 const SAME = moduleOf("a");
+const TWO_FUNCTIONS = `${SAME.replace("return M\n", "")}function M.stop() end\nreturn M\n`;
 const CHANGED = moduleOf("a, b");
 const NO_MEMBERS = { added: [], removed: [], changed: [] };
 
@@ -453,10 +454,10 @@ describe("updateLibraries", () => {
       ],
     };
 
-    async function pinLuals(folder: string): Promise<void> {
-      await pinLibrary(folder, "v1");
+    async function pinLuals(folder: string, lua: string = SAME): Promise<void> {
+      await pinLibrary(folder, "v1", undefined, lua);
       writeDataFile(folder, "recipe.json", JSON.stringify(LUALS_RECIPE));
-      writeDataFile(folder, "source/mylib/mylib/mylib.lua", SAME);
+      writeDataFile(folder, "source/mylib/mylib/mylib.lua", lua);
       writeDataFile(folder, "source/mylib/mylib/old.lua", "return {}\n");
     }
 
@@ -680,6 +681,43 @@ describe("updateLibraries", () => {
       expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual([NEW_COMMIT]);
     });
 
+    test("a restored pin compares with its own review, not the last one", async () => {
+      await pinLuals("restored", TWO_FUNCTIONS);
+      await update(
+        { [repoOf("restored")]: TWO_TAGS },
+        { [urlOf("restored", NEW_COMMIT)]: archiveOf(SAME) },
+      );
+      const moved = JSON.parse(reviewedText("restored")) as Record<string, unknown>;
+      writeFileSync(file("restored", "reviewed.json"), JSON.stringify({ ...moved, ref: "v1" }));
+      writeDataFile("restored", "source/mylib/mylib/mylib.lua", TWO_FUNCTIONS);
+
+      const restored = await reviewLibraries(dataDir, ["restored"], {
+        cacheDir,
+        download: serving({ [urlOf("restored", "v1")]: archiveOf(TWO_FUNCTIONS, PIN_COMMIT) }),
+      });
+
+      expect(restored).toEqual({
+        reviewed: [{ library: "restored", commit: PIN_COMMIT, added: false }],
+        failed: [],
+      });
+      expect(readLibraryReviews(dataDir, "restored")?.map(({ commits }) => commits)).toEqual([
+        [PIN_COMMIT],
+        [NEW_COMMIT],
+      ]);
+
+      const result = await update(
+        { [repoOf("restored")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
+        { [urlOf("restored", LATER_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")) },
+      );
+
+      expect(result.failed).toEqual([]);
+      expect(result.updated[0]).toMatchObject({
+        change: "changed",
+        members: { ...NO_MEMBERS, removed: ["mylib/mylib.lua#stop"] },
+        ref: "v3",
+      });
+    });
+
     test("a run after a regeneration reads current and downloads nothing", async () => {
       await pinLibrary("tagged", "v1");
       const upstream = { [repoOf("tagged")]: TWO_TAGS };
@@ -699,8 +737,6 @@ describe("updateLibraries", () => {
   });
 
   describe("classifying a change", () => {
-    const TWO_FUNCTIONS = `${SAME.replace("return M\n", "")}function M.stop() end\nreturn M\n`;
-
     async function classified(lua: string, pinned: string = SAME) {
       await pinLibrary("tagged", "v1", undefined, pinned);
       const result = await update(
@@ -760,10 +796,13 @@ describe("updateLibraries", () => {
     });
 
     test("a changed whole file is a change that names it", async () => {
-      await pinLibrary("tagged", "v1");
-      const pinned = archiveOfFiles({ "mylib/mylib.lua": SAME, "mylib/ext.cpp": "// one\n" });
+      writeLibrary("tagged", "v1");
+      const pinned = archiveOfFiles(
+        { "mylib/mylib.lua": SAME, "mylib/ext.cpp": "// one\n" },
+        PIN_COMMIT,
+      );
       const reviewed = await reviewLibraries(dataDir, ["tagged"], {
-        cacheDir: join(base, "second-cache"),
+        cacheDir,
         download: serving({ [urlOf("tagged", "v1")]: pinned }),
       });
       expect(reviewed.failed).toEqual([]);
@@ -814,7 +853,7 @@ describe("updateLibraries", () => {
       expect(result.updated[0]?.members).toEqual(NO_MEMBERS);
     });
 
-    test("a change compares with the last review, the pin's", async () => {
+    test("a change compares with the review of the pin's commit", async () => {
       await pinLibrary("tagged", "v1");
       await update(
         { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
@@ -824,6 +863,50 @@ describe("updateLibraries", () => {
       const result = await update(
         { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
         { [urlOf("tagged", LATER_COMMIT)]: archiveOf(CHANGED.replace(") end", ") return 1 end")) },
+      );
+
+      expect(result.updated[0]?.change).toBe("kept");
+    });
+
+    test("a pinned tag that now names an unreviewed commit compares with nothing", async () => {
+      await pinLibrary("tagged", "v1");
+
+      const result = await update(
+        { [repoOf("tagged")]: { tags: [{ ...PIN_TAG, sha: ARCHIVE_COMMIT }, NEW_TAG] } },
+        { [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")) },
+      );
+
+      expect(result.updated[0]?.change).toBe("changed");
+      expect(result.updated[0]?.members).toEqual(NO_MEMBERS);
+    });
+
+    test("a pin two reviews list compares with nothing", async () => {
+      await pinLibrary("tagged", "v1");
+      const conflicting = await reviewLibraries(dataDir, ["tagged"], {
+        cacheDir: join(base, "second-cache"),
+        download: serving({ [urlOf("tagged", "v1")]: archiveOf(CHANGED, PIN_COMMIT) }),
+      });
+      expect(conflicting.failed).toEqual([]);
+      expect(readLibraryReviews(dataDir, "tagged")?.map(({ commits }) => commits)).toEqual([
+        [PIN_COMMIT],
+        [PIN_COMMIT],
+      ]);
+
+      const result = await update(
+        { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")) },
+      );
+
+      expect(result.updated[0]?.change).toBe("changed");
+      expect(result.updated[0]?.members).toEqual(NO_MEMBERS);
+    });
+
+    test("a followed branch compares with the review of its pinned commit", async () => {
+      await pinLibrary("branched", PIN_COMMIT);
+
+      const result = await update(
+        { [repoOf("branched")]: { head: NEW_COMMIT } },
+        { [urlOf("branched", NEW_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")) },
       );
 
       expect(result.updated[0]?.change).toBe("kept");

@@ -41,9 +41,10 @@ export interface UpdateLibrariesOptions extends AddLibraryOptions {
 }
 
 /**
- * What upstream did to a library's members. `kept`: its `api` hash held, so only
- * doc comments or function bodies moved. `added`: every old member held its hash and
- * new ones exist. `changed`: anything else, or no review to compare with.
+ * What upstream did to a library's members, against the review of the pinned commit.
+ * `kept`: its `api` hash held, so only doc comments or function bodies moved. `added`:
+ * every old member held its hash and new ones exist. `changed`: anything else, or no
+ * single review of the pinned commit to compare with.
  */
 export type LibraryChange = "kept" | "added" | "changed";
 
@@ -85,50 +86,76 @@ interface Candidate {
   readonly commit: string;
 }
 
+interface Candidates {
+  // The commit the pin names today, whose review a change is compared with.
+  readonly pinCommit: string;
+  readonly candidates: Candidate[];
+}
+
 const UPSTREAM_DIR = "source/upstream";
 
-async function tagCandidates({ repo, ref }: LibraryData, forge: UpdateForge): Promise<Candidate[]> {
+async function tagCandidates({ repo, ref }: LibraryData, forge: UpdateForge): Promise<Candidates> {
   const tags = await datedTags(repo, forge);
   const pinned = tags.find((tag) => tag.name === ref);
   if (pinned === undefined || Number.isNaN(pinned.date)) {
     throw new Error(`upstream no longer lists the pinned tag ${ref}`);
   }
   const series = tagSeries(ref);
-  return tags
-    .filter(
-      (tag) => !Number.isNaN(tag.date) && tag.date > pinned.date && tagSeries(tag.name) === series,
-    )
-    .sort((a, b) => a.date - b.date)
-    .map((tag) => ({ ref: tag.name, commit: tag.sha }));
+  return {
+    pinCommit: pinned.sha,
+    candidates: tags
+      .filter(
+        (tag) =>
+          !Number.isNaN(tag.date) && tag.date > pinned.date && tagSeries(tag.name) === series,
+      )
+      .sort((a, b) => a.date - b.date)
+      .map((tag) => ({ ref: tag.name, commit: tag.sha })),
+  };
 }
 
 async function branchCandidates(
   { repo, ref }: LibraryData,
   forge: UpdateForge,
-): Promise<Candidate[]> {
+): Promise<Candidates> {
   const { defaultBranch } = await forge.readRepo(repo);
   const head = await forge.headCommit(repo, defaultBranch);
-  return head === ref ? [] : [{ ref: head, commit: head }];
+  return { pinCommit: ref, candidates: head === ref ? [] : [{ ref: head, commit: head }] };
+}
+
+/**
+ * The one review of this fingerprint version that lists `pinCommit`, or `undefined`
+ * when none does or several do: two reviews of one commit hold different hashes, so
+ * neither can be trusted as its baseline.
+ */
+function reviewOfPin(
+  reviews: readonly LibraryReview[],
+  pinCommit: string,
+): LibraryReview | undefined {
+  const listing = reviews.filter(
+    ({ version, commits }) => version === FINGERPRINT_VERSION && commits.includes(pinCommit),
+  );
+  return listing.length === 1 ? listing[0] : undefined;
 }
 
 function classifyChange(
   reviews: readonly LibraryReview[],
+  pinCommit: string,
   fingerprint: LibraryFingerprint,
 ): { change: LibraryChange; members: MemberChanges } {
-  // Reviews append, so the last one a regeneration wrote is the pin's.
-  const last = reviews.filter(({ version }) => version === FINGERPRINT_VERSION).at(-1);
-  if (last === undefined) {
+  // By the pin's commit, not list order: a restored pin keeps its review where it was.
+  const pinned = reviewOfPin(reviews, pinCommit);
+  if (pinned === undefined) {
     return { change: "changed", members: { added: [], removed: [], changed: [] } };
   }
-  const differing = differingMembers(last.members, fingerprint.members);
-  const added = differing.filter((member) => !Object.hasOwn(last.members, member));
+  const differing = differingMembers(pinned.members, fingerprint.members);
+  const added = differing.filter((member) => !Object.hasOwn(pinned.members, member));
   const removed = differing.filter((member) => !Object.hasOwn(fingerprint.members, member));
   const changed = differing.filter(
     (member) => !added.includes(member) && !removed.includes(member),
   );
   const onlyAdded = added.length > 0 && removed.length === 0 && changed.length === 0;
   return {
-    change: last.api === fingerprint.api ? "kept" : onlyAdded ? "added" : "changed",
+    change: pinned.api === fingerprint.api ? "kept" : onlyAdded ? "added" : "changed",
     members: { added, removed, changed },
   };
 }
@@ -204,7 +231,7 @@ async function updateLibrary(
   }
 
   const forge = (opts.forge ?? forgeReadsFor)(repo);
-  const candidates =
+  const { pinCommit, candidates } =
     follows === "tags"
       ? await tagCandidates(library, forge)
       : await branchCandidates(library, forge);
@@ -254,7 +281,7 @@ async function updateLibrary(
 
   const { candidate, zip, fingerprint } = newest;
   const regeneration = planRegeneration(dataDir, library, zip, candidate.ref);
-  const classified = classifyChange(reviews, fingerprint);
+  const classified = classifyChange(reviews, pinCommit, fingerprint);
   writeRegeneration(dataDir, regeneration);
   writeReviewedJson(dataDir, dir, {
     ref: candidate.ref,
