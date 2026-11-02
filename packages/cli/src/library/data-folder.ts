@@ -43,6 +43,27 @@ export function selectDataFolder(base: string, cliVersion: string): string | nul
   return best === null ? null : resolve(base, best.name);
 }
 
+// The version folders above `folder`, ascending: what a newer CLI would read.
+export function newerDataFolders(base: string, folder: string): string[] {
+  const current = parseTriple(folder);
+  if (current === null) return [];
+  let entries: { name: string; isDirectory(): boolean }[];
+  try {
+    entries = readdirSync(base, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const newer: { name: string; version: Triple }[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const version = parseTriple(entry.name);
+    if (version !== null && compareTriples(version, current) > 0) {
+      newer.push({ name: entry.name, version });
+    }
+  }
+  return newer.sort((a, b) => compareTriples(a.version, b.version)).map(({ name }) => name);
+}
+
 // The newest data folder under a library-types package root, which is what the
 // toolchain reads and writes.
 export function newestDataFolder(packageRoot: string): string {
