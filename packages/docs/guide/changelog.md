@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Library types](./resolve.md#library-data)** update without a CLI release, each library pinned until `resolve --update[=<name>]`.
-> - **[Library status](./resolve.md#library-status)** says whether each library's commit was reviewed, and **[`library update`](./library.md#what-library-update-does)** records unchanged upstream commits.
+> - **[Library status](./resolve.md#library-status)** says whether each library's commit was reviewed, and **[`library update`](./library.md#what-library-update-does)** moves each library to its newest upstream commit.
 > - **[`defold-typescript.lock`](./resolve.md#the-lockfile)** holds what `resolve` records; commit it, since [`resolve --frozen`](./resolve.md#dependency-safety) needs it to check the archives `bob build` will read.
 > - **[`resolve --pin-urls`](./resolve.md#pin-urls-to-commits)** moves branch and tag URLs in `game.project` to commits, and `resolve` warns about each branch URL.
 > - **[Library API pages](https://defold-typescript.github.io/library-data)** moved to their own site, with no redirects.
@@ -28,7 +28,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[`library update`](./library.md#what-library-update-does) finds new upstream commits:** it walks what each library's `follows` setting in `library.json` names, tags or the default branch, downloads each new commit's archive by that commit, and records the commit when a review already holds its hashes. It reports the commits that differ, and its paths use forward slashes on every platform and keep a network root.
+- **[`library update`](./library.md#what-library-update-does) follows upstream:** it records each new commit, from the tags or default branch `follows` names in `library.json`, whose hashes a review already holds, and moves the library to the newest that differs by re-copying its upstream files and never its forks. It reports whether that change `kept` every member, only `added` some or `changed` others, naming them, and fails a library whose new commit no longer holds a file it reads, leaving its folder untouched.
 - **[`resolve --pin-urls`](./resolve.md#pin-urls-to-commits) pins dependency URLs to commits:** it rewrites each GitHub branch or tag URL in `game.project` to the commit its archive names, never over a dependency saved during the run, and `resolve --update` then follows the original ref inside that repo. `resolve` and `watch` warn about each branch URL, and `--json` reports each dependency's kind of URL as `ref`.
 - **Releases check the library data they will read:** a release publishes only after [`library check`](./library.md) passes with that release's CLI against the live `main` of the [library data repo](https://github.com/defold-typescript/library-data). A nightly run does the same check, so data that stops passing is reported before a release depends on it.
 - **Library docs update on every data merge:** the library docs site rebuilds with each library data merge rather than each toolchain release. The guides for [adding a library](https://defold-typescript.github.io/library-data/guides/authoring-luals-library-types) and [refreshing its pin](https://defold-typescript.github.io/library-data/guides/refreshing-library-pins) are there too, and the `library add` notes link to them.

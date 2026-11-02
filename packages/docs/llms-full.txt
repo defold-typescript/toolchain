@@ -7721,7 +7721,20 @@ A commit a review already lists is skipped with no download. Each other commit's
 archive is downloaded by its commit, so a tag that moves cannot change what is hashed,
 and hashed as [`library review`](#what-library-review-records) hashes it. When all the
 hashes match a review, the commit is added to that review, and `ref` stays as it was.
-When they do not, the commit is reported and nothing is written for it.
+
+When they do not, the newest such commit moves the library. `ref` becomes its tag, or
+the commit itself for a library following a branch, and its hashes go in a new review.
+Older commits that differ stay unrecorded, because the data was never checked against
+them. The upstream files the library reads are copied from that commit's archive:
+
+- A recipe's LuaLS module has its `source/<namespace>/` folder replaced by what its
+  globs select, so a file upstream removed leaves.
+- A recipe's `.script_api` module has its `source/<moduleId>.script_api` file replaced.
+- Each file under `source/upstream/`, which forks and native extensions read, is
+  replaced from the same path in the archive.
+
+`fork/`, `usage/`, `library.json` and `recipe.json` are never written, so run
+[`library check`](#what-library-check-runs) afterwards to see whether a fork still fits.
 
 Each library reads as one of these:
 
@@ -7730,12 +7743,27 @@ Each library reads as one of these:
 | `held` | It follows `none`. |
 | `current` | Nothing new upstream. |
 | `recorded` | Every new commit was added to a review. |
-| `differs` | At least one new commit has hashes no review holds. |
+| `regenerated` | The library moved to the newest commit whose hashes no review holds. |
+
+A regenerated library also reports `change`, comparing the new hashes with the pin's
+review, the last one of this CLI's hash version:
+
+| `change` | Meaning |
+| -------- | ------- |
+| `kept` | The `api` hash held: only doc comments or function bodies moved. |
+| `added` | Every old member held its hash and new ones exist. |
+| `changed` | A member was removed or changed, or there is no review to compare with. |
+
+`members` lists what `added`, `removed` and `changed`. `---@` annotations and whole
+files count as members, so a moved annotation reads `changed`. This says only what
+upstream did, not whether a fork still covers it.
 
 A name the data folder does not hold is an error before any request. A library that
 cannot be read, such as one whose pinned tag upstream no longer lists or whose download
-fails, is reported by name, keeps its `reviewed.json` untouched, and the others still run.
-The command then exits 1. A commit that differs is not a failure.
+fails, is reported by name, keeps its folder untouched, and the others still run. So is
+a library whose new commit no longer holds a file it reads, reported as
+`<path> is gone from <ref>`, or whose archive holds a file that would land outside its
+folder. The command then exits 1.
 
 Set `GH_TOKEN` or `GITHUB_TOKEN` to raise GitHub's rate limit.
 
@@ -7900,18 +7928,33 @@ path keeping its leading `//`:
   "ok": true,
   "subcommand": "update",
   "dataFolder": "/path/to/library-data/data/0.55.0",
-  "written": [],
+  "written": [
+    "/path/to/library-data/data/0.55.0/flow/source/upstream/flow/ui.lua",
+    "/path/to/library-data/data/0.55.0/flow/reviewed.json"
+  ],
   "updated": [
     {
       "library": "flow",
-      "status": "differs",
+      "status": "regenerated",
       "recorded": [],
-      "differs": ["0123456789abcdef0123456789abcdef01234567"]
+      "differs": ["0123456789abcdef0123456789abcdef01234567"],
+      "written": ["source/upstream/flow/ui.lua", "reviewed.json"],
+      "ref": "v2",
+      "change": "added",
+      "members": {
+        "added": ["flow/ui.lua#draw"],
+        "removed": [],
+        "changed": []
+      }
     }
   ],
   "failed": []
 }
 ```
+
+Each entry's `written` holds the files it wrote, relative to the library's folder, and
+the top-level `written` holds the same files as absolute paths. A file upstream removed
+is not listed. `ref`, `change` and `members` appear only on a `regenerated` library.
 
 ### Live transpile diagnostics
 
