@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/whiteboxdev/library-defold-rendy",
   "license": "Zlib",
+  "follows": "none",
   "forks": [
     {
       "authored": "fork/rendy.rendy.d.ts",

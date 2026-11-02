@@ -55,3 +55,19 @@ upstream repository and its license, and its `reviewed.json` the pinned ref.
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition
 packaging that those forks are derived from.
+
+Each data folder also holds the extension docs and portal listings the library
+docs site reads:
+
+    - `defold-extensions/api-doc/` and `asset-portal-script-api/api-doc/` are
+      converted from the `.script_api` files of upstream repositories. Each
+      library's entry in `defold-extensions.json` or
+      `asset-portal-script-api.json` names its repository and pinned ref.
+    - `asset-portal.json` lists libraries from the Defold Asset Portal,
+      https://github.com/defold/asset-portal, at the commit it records. An
+      entry names its upstream repository when it has one.
+
+Those docs and listings stay under their upstream authors' terms. The `license`
+field in `defold-extensions.json` and `asset-portal-script-api.json` is what
+GitHub reports for the repository: it is empty or `NOASSERTION` when GitHub
+identifies no license.

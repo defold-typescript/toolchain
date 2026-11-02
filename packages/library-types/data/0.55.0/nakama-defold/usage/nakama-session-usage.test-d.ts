@@ -18,6 +18,20 @@ const _withRefresh = session.create({
 const _expires: number = _session.expires;
 const _created: number = _session.created;
 const _userId: string = _session.user_id;
+const _token: string = _session.token;
+const _username: string = _session.username;
+
+// `create` always writes these five, and writes the refresh half only inside its
+// `refresh_token` check and `vars` only when the access token carries a `vrs` claim. The
+// two `unknown` fields admit any read, so building a session is the only way to hold
+// that all six may be left out.
+const _minimal: session.Session = {
+  created: 0,
+  token: "header.payload.signature",
+  expires: 0,
+  username: "player",
+  user_id: "id",
+};
 
 // The refresh half is filled only when the response carried a refresh token, so reading
 // it without a check is exactly the mistake the optional marker exists to catch.
@@ -49,6 +63,9 @@ if (_restored) {
 void _expires;
 void _created;
 void _userId;
+void _token;
+void _username;
+void _minimal;
 void _refreshExpires;
 void _soon;
 void _expired;

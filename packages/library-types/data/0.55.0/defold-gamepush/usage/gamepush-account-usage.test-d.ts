@@ -88,6 +88,15 @@ player.fetch_fields((fields: unknown) => {
 const days: number = player.stats.active_days();
 void days;
 
+// Upstream annotates every statistic `---@return boolean`, but each one's own description
+// and the JS getter it calls name a count of days or seconds, so all four return a number.
+const streak: number = player.stats.active_days_consecutive();
+const today: number = player.stats.playtime_today();
+const total: number = player.stats.playtime_all();
+void streak;
+void today;
+void total;
+
 payments.has(42);
 ads.show_rewarded_video();
 
