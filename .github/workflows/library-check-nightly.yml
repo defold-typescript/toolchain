@@ -1,8 +1,10 @@
-# Checks the library data repo's live `main` with this repo's CLI every night.
+# Checks this repo's library data every night: with this repo's CLI, as the
+# release gate does, and with every published CLI that reads one of its data
+# folders.
 #
-# The data repo moves on its own commits, so no toolchain push or PR notices when
-# its data stops passing `library check`. A failure otherwise surfaces only when a
-# release refuses to publish.
+# Pull request CI checks library data with this repo's CLI only. Published CLIs
+# read the same data once it reaches the data repo, so data that a published CLI
+# fails on would otherwise surface only when a user's `resolve` reads it.
 #
 # A `schedule:` trigger only ever runs on the default branch and is auto-disabled
 # after 60 days without repository activity; `workflow_dispatch` is kept so a
@@ -31,8 +33,26 @@ jobs:
           bun-version: "1.4"
       - run: bun install --frozen-lockfile
 
-      - name: Library check against live data
+      - name: Library check with this repo's CLI
         run: bun run library:check
+
+      # Runs after a red above too, so one night reports every CLI that fails.
+      - name: Library check with each published CLI that reads the data
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          versions=$(bun scripts/cli-range.ts --all)
+          failed=""
+          for version in $versions; do
+            echo "::group::@defold-typescript/cli@$version"
+            bunx "@defold-typescript/cli@$version" library check --data packages/library-types/data \
+              || failed="$failed $version"
+            echo "::endgroup::"
+          done
+          if [ -n "$failed" ]; then
+            echo "::error::library check fails with @defold-typescript/cli$failed"
+            exit 1
+          fi
 
       - name: Open an issue when the check fails
         if: failure()
@@ -41,7 +61,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          title="Library check fails against live library data"
+          title="Library check fails on this repo's library data"
           # The title is stable, so this finds the issue an earlier night opened and
           # stays a no-op until a maintainer closes it.
           existing=$(gh issue list --state open --limit 100 --json number,title \
@@ -50,4 +70,4 @@ jobs:
             echo "already tracked as #$existing"
             exit 0
           fi
-          gh issue create --title "$title" --body "\`bun run library:check\` failed: $RUN_URL. A release refuses to publish until this passes."
+          gh issue create --title "$title" --body "The nightly \`library check\` failed on \`packages/library-types/data\`: $RUN_URL. A failure with this repo's CLI also stops a release from publishing."
