@@ -7747,14 +7747,17 @@ Each library reads as one of these:
 | `recorded` | Every new commit was added to a review. |
 | `regenerated` | The library moved to the newest commit whose hashes no review holds. |
 
-A regenerated library also reports `change`, comparing the new hashes with the pin's
-review, the last one of this CLI's hash version:
+A regenerated library also reports `change`, comparing the new hashes with the review
+of this CLI's hash version that lists the pinned commit, wherever it sits in the list:
 
 | `change` | Meaning |
 | -------- | ------- |
 | `kept` | The `api` hash held: only doc comments or function bodies moved. |
 | `added` | Every old member held its hash and new ones exist. |
-| `changed` | A member was removed or changed, or there is no review to compare with. |
+| `changed` | A member was removed or changed, or no single review lists the pinned commit, so there is nothing to compare with. |
+
+A pinned tag's commit is the one upstream names for it today, so a moved tag compares
+with nothing until a review lists its new commit.
 
 `members` lists what `added`, `removed` and `changed`. `---@` annotations and whole
 files count as members, so a moved annotation reads `changed`. This says only what

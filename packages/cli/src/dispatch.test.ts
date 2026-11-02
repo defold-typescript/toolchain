@@ -10133,12 +10133,15 @@ describe("dispatch library update", () => {
   let base: string;
   let dataDir: string;
 
-  const luaArchive = (lua: string): Uint8Array =>
-    writeZipArchive([
-      { name: "first-1.0.0/game.project", text: "[library]\ninclude_dirs = first\n" },
-      { name: "first-1.0.0/first/first.lua", text: lua },
-    ]);
-  const PINNED_ARCHIVE = luaArchive("local M = {}\nfunction M.go() end\nreturn M\n");
+  const luaArchive = (lua: string, comment?: string): Uint8Array =>
+    writeZipArchive(
+      [
+        { name: "first-1.0.0/game.project", text: "[library]\ninclude_dirs = first\n" },
+        { name: "first-1.0.0/first/first.lua", text: lua },
+      ],
+      comment === undefined ? {} : { comment },
+    );
+  const PINNED_ARCHIVE = luaArchive("local M = {}\nfunction M.go() end\nreturn M\n", PIN);
   const CHANGED_ARCHIVE = luaArchive("local M = {}\nfunction M.go(a) end\nreturn M\n");
 
   const download: DownloadExtensionArchive = async (url) => {
