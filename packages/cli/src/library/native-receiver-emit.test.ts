@@ -4,7 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { readNativeTargets } from "./sync-native-types";
+import { readNativeExpectations } from "./target-expectations";
 
 // A native declaration whose module returns objects: methods that read their
 // object from stack slot 1, fields beside them, and callbacks the extension
@@ -141,4 +143,15 @@ describe("a native declaration emits the receiver form upstream defines", () => 
     ]);
     expect(lua).toMatchSnapshot();
   });
+});
+
+describe("each shipped native declaration emits the receiver form its expectation records", () => {
+  for (const [namespace, { receiverEmit }] of readNativeExpectations()) {
+    if (receiverEmit === undefined) continue;
+
+    test(`${namespace}: a consumer transpiles with the call forms the declaration produces`, () => {
+      const lua = transpileConsumer(LIBRARY_DATA_DIR, namespace, receiverEmit.consumer);
+      expect(lua).toMatchSnapshot(namespace);
+    });
+  }
 });
