@@ -2,8 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { parseMarkdownApi } from "./parse-markdown-api";
+import { lowerAuthoredApiDoc, readAuthoredTargets } from "./sync-authored-types";
 import {
   compareFidelityToTsDefold,
   emitMarkdownDeclaration,
@@ -14,7 +15,6 @@ import {
   tsDefoldMembers,
 } from "./sync-markdown-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 const LANES = LANE_EVALUATIONS_ROOT;
 
@@ -2267,7 +2267,9 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
   // `parseMarkdownApi`. A divergence is a stop-and-record against
   // `platypus/platypus.lua` at the pin, never a re-baseline of either side.
   test("the pinned README stays the reference for the forked instance surface", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/platypus.json"), "utf8")) as {
+    const fork = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === "platypus");
+    if (!fork) throw new Error("library data forks no platypus");
+    const doc = JSON.parse(lowerAuthoredApiDoc(DATA_DIR, fork)) as {
       elements: { name: string; functions?: { name: string }[] }[];
     };
     const instance = doc.elements.find((e) => e.name === "PlatypusInstance");

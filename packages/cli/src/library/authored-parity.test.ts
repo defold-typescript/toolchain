@@ -12,10 +12,13 @@ import {
   hasTrailingDiscard,
 } from "./authored-parity";
 import { type AuthoredParityException, parseAuthoredExceptions } from "./library-data";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
-import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
+import { LIBRARY_DATA_DIR } from "./package-root";
+import {
+  type AuthoredTarget,
+  lowerAuthoredApiDoc,
+  readAuthoredTargets,
+} from "./sync-authored-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 const TARGETS = readAuthoredTargets(DATA_DIR);
 
@@ -33,11 +36,18 @@ interface ApiDocElement {
   description?: string;
 }
 
+// The fork's api-doc elements, lowered when the test runs so a fork edit reaches every
+// case without regenerating a report. Each fork lowers once per file.
+const loweredElements = new Map<string, ApiDocElement[]>();
+
 function apiDocElements(entry: AuthoredTarget): ApiDocElement[] {
-  const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, entry.apiDoc), "utf8")) as {
+  const cached = loweredElements.get(entry.authored);
+  if (cached) return cached;
+  const { elements } = JSON.parse(lowerAuthoredApiDoc(DATA_DIR, entry)) as {
     elements: ApiDocElement[];
   };
-  return doc.elements;
+  loweredElements.set(entry.authored, elements);
+  return elements;
 }
 
 const roots: string[] = [];
