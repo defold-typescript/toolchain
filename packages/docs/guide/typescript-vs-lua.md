@@ -127,7 +127,9 @@ index position on a library or extension page the same way, naming the library
 that counts from that base: "**⚠️ 1-based; passed to `gooey` unchanged.**" The
 same note shows in the editor hover for every library declaration, such as
 `bridge`, `druid`, `gooey` and `tile_raycast`, and for each extension `resolve`
-types from a curated page, such as `steam` and `spine`.
+types from a curated page, such as `steam` and `spine`. `resolve` reads which
+pages are curated from library data, so a newly curated page reaches the hover
+with no CLI upgrade.
 
 Because nothing is converted, an engine function behaves like any other
 function: you can pass it as a value, alias it, spread arguments into it, or

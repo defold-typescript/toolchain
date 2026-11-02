@@ -6,7 +6,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { EXTENSION_INDEX_SLOTS_FILE, LIBRARY_FILE, readIndexSlots } from "./library/library-data";
+import { LIBRARY_FILE, readIndexSlots } from "./library/library-data";
 import {
   fetchNewestLibraryData,
   type LibraryDataAtCommit,
@@ -14,7 +14,7 @@ import {
   libraryDataAtCommit,
   libraryFolderChange,
 } from "./library-data-archive";
-import { assembleLibraryDataView } from "./library-data-view";
+import { assembleLibraryDataView, SHARED_DATA_FILES } from "./library-data-view";
 import { normalizeSourceId } from "./library-match";
 import { librariesForDependencies } from "./library-registry";
 import type { LibraryDataPins } from "./project-lock";
@@ -71,9 +71,13 @@ function pinTrouble(at: LibraryDataAtCommit, commit: string, name: string): stri
     : `library data commit ${commit} holds no ${name}`;
 }
 
-function readSharedFile(dataDir: string): string | null {
-  const path = join(dataDir, EXTENSION_INDEX_SLOTS_FILE);
-  return existsSync(path) ? readFileSync(path, "utf8") : null;
+function readSharedFiles(dataDir: string): string {
+  return JSON.stringify(
+    SHARED_DATA_FILES.map((file) => {
+      const path = join(dataDir, file);
+      return existsSync(path) ? readFileSync(path, "utf8") : null;
+    }),
+  );
 }
 
 // Each commit's read, once, in order, so a pin at main's commit costs no second one.
@@ -244,7 +248,7 @@ export async function selectLibraryPins(
     if (
       at.dir === null ||
       at.folder !== newest.folder ||
-      (update === true && readSharedFile(at.dir) !== readSharedFile(newest.dir))
+      (update === true && readSharedFiles(at.dir) !== readSharedFiles(newest.dir))
     ) {
       shared = newest.commit;
     }

@@ -164,6 +164,8 @@ export const USAGE_DIR = "usage";
 // Index slots of library pages no library folder owns: the extensions `resolve`
 // types from a project's own archive.
 export const EXTENSION_INDEX_SLOTS_FILE = "index-slot-classifications.json";
+// Which page of the API reference documents each extension `.script_api`.
+export const DEFOLD_EXTENSIONS_FILE = "defold-extensions.json";
 
 /** The folder a repo's library data sits in: its URL's last path segment, lowercased, without `.git`. */
 export function libraryFolderName(repo: string): string {
