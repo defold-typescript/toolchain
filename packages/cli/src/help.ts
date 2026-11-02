@@ -240,9 +240,9 @@ const COMMANDS: readonly HelpCommand[] = [
   {
     name: "library",
     summary:
-      "Work on library data: add starts a library's folder from its dependency URL; check runs the reader, the print and the compile against this CLI's engine types, and exits 1 on any problem; review records the hashes of each library's pinned archive.",
+      "Work on library data: add starts a library's folder from its dependency URL; check runs the reader, the print and the compile against this CLI's engine types, and exits 1 on any problem; review records the hashes of each library's pinned archive; update records new upstream commits whose hashes a review already holds, and reports the ones that differ.",
     usage:
-      "bunx @defold-typescript/cli library check --data <dir> [--api-doc-out <dir>]\n       bunx @defold-typescript/cli library add <url> --data <dir>\n       bunx @defold-typescript/cli library review [<name>] --data <dir>",
+      "bunx @defold-typescript/cli library check --data <dir> [--api-doc-out <dir>]\n       bunx @defold-typescript/cli library add <url> --data <dir>\n       bunx @defold-typescript/cli library review [<name>] --data <dir>\n       bunx @defold-typescript/cli library update [<name>] --data <dir>",
     flags: [
       {
         flag: "--data <dir>",

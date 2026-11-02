@@ -7,7 +7,8 @@ toc-title: library
 library declarations from. `library add` starts a library's folder from the URL a
 game would depend on, and `library check` checks a directory of that data the way
 the running CLI reads it, so you can write and validate library data without a
-toolchain checkout. Library data is added by a PR to
+toolchain checkout. `library update` finds what each library's upstream has published
+since its pin. Library data is added by a PR to
 [`defold-typescript/library-data`](https://github.com/defold-typescript/library-data).
 
 ```sh
@@ -22,7 +23,7 @@ named for the repository, into the data folder `library check` reads:
 
 | File | When | What it holds |
 | ---- | ---- | ------------- |
-| `library.json` | always | `repo`, and `license` when the first line of the archive's `LICENSE` names MIT, Apache-2.0, BSD 2- or 3-Clause or Zlib. |
+| `library.json` | always | `repo`, and `license` when the first line of the archive's `LICENSE` names MIT, Apache-2.0, BSD 2- or 3-Clause or Zlib. You can add [`follows`](#what-library-update-does) by hand. |
 | `reviewed.json` | always | `ref`: the tag the URL names, or the commit a branch URL's archive was packed from. `reviews`: [the archive's hashes](#what-library-review-records) and its commit. |
 | `recipe.json` | when the library can generate a module | A starting entry, chosen below. |
 | `source/` | with `recipe.json` | The upstream files that entry reads, at the paths a later re-pin writes. |
@@ -87,6 +88,39 @@ A name the data folder does not hold is an error before any download. A library
 whose archive fails is reported by name and the others are still written, and the
 command exits 1. A failed download counts as a failure even when a cached copy exists,
 and leaves that library's `reviewed.json` untouched.
+
+## What `library update` does
+
+`library update --data <dir>` asks each library's forge, GitHub or Codeberg, what is
+newer than its pin. `library update <name> --data <dir>` does this for one library,
+named by its folder. `follows` in `library.json` says what to watch:
+
+| `follows` | New commits are |
+| --------- | --------------- |
+| `tags` | The commits of tags in the pin's series dated after it. `v1.2` is in the series of `v1.1`, and `editor.9` is not in the series of `runtime.8`. The default for a `ref` that is not a commit. |
+| `branch` | The head of the default branch, unless it is the pin. The default for a `ref` that is a commit. |
+| `none` | None. The library is held and no request is made. |
+
+A commit a review already lists is skipped with no download. Each other commit's
+archive is hashed as [`library review`](#what-library-review-records) hashes it. When
+all the hashes match a review, the commit is added to that review, and `ref` stays as
+it was. When they do not, the commit is reported and nothing is written for it.
+
+Each library reads as one of these:
+
+| Status | Meaning |
+| ------ | ------- |
+| `held` | It follows `none`. |
+| `current` | Nothing new upstream. |
+| `recorded` | Every new commit was added to a review. |
+| `differs` | At least one new commit has hashes no review holds. |
+
+A name the data folder does not hold is an error before any request. A library that
+cannot be read, such as one whose pinned tag upstream no longer lists or whose download
+fails, is reported by name, keeps its `reviewed.json` untouched, and the others still run.
+The command then exits 1. A commit that differs is not a failure.
+
+Set `GH_TOKEN` or `GITHUB_TOKEN` to raise GitHub's rate limit.
 
 ## What `library check` runs
 
@@ -238,3 +272,25 @@ With `--json`, `library review` writes one object:
 `added` is false when the review was already recorded, and `commit` is `null` for
 an archive that names none. A run with no failure has `"ok": true` and `written`,
 the absolute path of each `reviewed.json` it changed.
+
+With `--json`, `library update` writes the same shape with `updated` in place of
+`reviewed`:
+
+```json
+{
+  "command": "library",
+  "ok": true,
+  "subcommand": "update",
+  "dataFolder": "/path/to/library-data/data/0.55.0",
+  "written": [],
+  "updated": [
+    {
+      "library": "flow",
+      "status": "differs",
+      "recorded": [],
+      "differs": ["0123456789abcdef0123456789abcdef01234567"]
+    }
+  ],
+  "failed": []
+}
+```

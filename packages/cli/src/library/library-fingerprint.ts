@@ -97,6 +97,20 @@ export function archiveFingerprint(zip: ExtensionZip): LibraryFingerprint {
   };
 }
 
+/** The index of the review holding this fingerprint's hashes, or -1. */
+export function findReview(
+  reviews: readonly LibraryReview[],
+  { version, api, doc, source }: LibraryFingerprint,
+): number {
+  return reviews.findIndex(
+    (review) =>
+      review.version === version &&
+      review.api === api &&
+      review.doc === doc &&
+      review.source === source,
+  );
+}
+
 /** `reviews` with this fingerprint recorded, and whether that changed anything. */
 export function recordReview(
   reviews: readonly LibraryReview[],
@@ -104,13 +118,7 @@ export function recordReview(
   commit: string | undefined,
 ): { reviews: LibraryReview[]; added: boolean } {
   const { version, api, doc, source, members } = fingerprint;
-  const index = reviews.findIndex(
-    (review) =>
-      review.version === version &&
-      review.api === api &&
-      review.doc === doc &&
-      review.source === source,
-  );
+  const index = findReview(reviews, fingerprint);
   const match = reviews[index];
   if (match === undefined) {
     const commits = commit === undefined ? [] : [commit];

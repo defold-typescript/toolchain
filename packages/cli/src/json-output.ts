@@ -5,6 +5,7 @@ import type { InitOperation } from "./init";
 import type { LibraryProblem } from "./library/library-check";
 import type { FailedReview, ReviewedLibrary } from "./library/library-review";
 import type { LibraryStatus } from "./library/library-status";
+import type { UpdatedLibrary } from "./library/library-update";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { WallCheckResult } from "./wall-check";
 
@@ -97,6 +98,8 @@ export interface RenderResultInput {
   readonly problems?: readonly LibraryProblem[];
   // `library review` only: the libraries it recorded and those whose archive failed.
   readonly reviewed?: readonly ReviewedLibrary[];
+  // `library update` only: what each library's walk found. It shares `failed`.
+  readonly updated?: readonly UpdatedLibrary[];
   readonly failed?: readonly FailedReview[];
   readonly exitCode?: number;
   readonly output?: string;
@@ -231,7 +234,9 @@ export function renderResult(input: RenderResultInput): string {
     "problems" in input ? { ...withLibraryCount, problems: input.problems } : withLibraryCount;
   const withReviewed =
     "reviewed" in input ? { ...withProblems, reviewed: input.reviewed } : withProblems;
-  const withFailed = "failed" in input ? { ...withReviewed, failed: input.failed } : withReviewed;
+  const withUpdated =
+    "updated" in input ? { ...withReviewed, updated: input.updated } : withReviewed;
+  const withFailed = "failed" in input ? { ...withUpdated, failed: input.failed } : withUpdated;
   const withExit = "exitCode" in input ? { ...withFailed, exitCode: input.exitCode } : withFailed;
   const withOutput = "output" in input ? { ...withExit, output: input.output } : withExit;
   const withBobJar = "bobJar" in input ? { ...withOutput, bobJar: input.bobJar } : withOutput;

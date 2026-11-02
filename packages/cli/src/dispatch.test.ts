@@ -10125,6 +10125,163 @@ describe("dispatch library review", () => {
   });
 });
 
+describe("dispatch library update", () => {
+  const PIN = "0123456789abcdef0123456789abcdef01234567";
+  const NEWER = "89abcdef0123456789abcdef0123456789abcdef";
+  const REPO = "https://github.com/owner/first";
+
+  let base: string;
+  let dataDir: string;
+
+  const luaArchive = (lua: string): Uint8Array =>
+    writeZipArchive([
+      { name: "first-1.0.0/game.project", text: "[library]\ninclude_dirs = first\n" },
+      { name: "first-1.0.0/first/first.lua", text: lua },
+    ]);
+  const PINNED_ARCHIVE = luaArchive("local M = {}\nfunction M.go() end\nreturn M\n");
+  const CHANGED_ARCHIVE = luaArchive("local M = {}\nfunction M.go(a) end\nreturn M\n");
+
+  const download: DownloadExtensionArchive = async (url) => {
+    if (url === `${REPO}/archive/1.0.0.zip`) return { status: "ok", bytes: PINNED_ARCHIVE };
+    if (url === `${REPO}/archive/1.1.0.zip`) return { status: "ok", bytes: CHANGED_ARCHIVE };
+    throw new Error("HTTP 404");
+  };
+
+  const forge = (repo: string) => {
+    const dated = (sha: string) => ({
+      sha,
+      date: sha === PIN ? "2026-01-01T00:00:00Z" : "2026-02-01T00:00:00Z",
+    });
+    return {
+      listTags: async () => {
+        if (repo !== REPO) throw new Error(`GET ${repo} responded 503`);
+        return [
+          { name: "1.0.0", sha: PIN },
+          { name: "1.1.0", sha: NEWER },
+        ];
+      },
+      readCommit: async (_repo: string, sha: string) => dated(sha),
+      readRepo: async () => ({ defaultBranch: "main" }),
+      headCommit: async () => NEWER,
+    };
+  };
+
+  const run = (args: string[], io: ReturnType<typeof captureStreams>["io"]) =>
+    dispatch(["library", "update", ...args], io, {
+      cliVersion: "0.1.5",
+      resolveInternals: {
+        libraryDataDir: null,
+        download,
+        forge,
+        cacheDir: path.join(base, "cache"),
+      },
+    });
+
+  const reviewedPath = (folder: string): string => path.join(dataDir, folder, "reviewed.json");
+
+  const writeLibrary = (folder: string): void => {
+    mkdirSync(path.join(dataDir, folder), { recursive: true });
+    writeFileSync(
+      path.join(dataDir, folder, "library.json"),
+      JSON.stringify({ repo: `https://github.com/owner/${folder}` }),
+    );
+    writeFileSync(reviewedPath(folder), JSON.stringify({ ref: "1.0.0" }));
+  };
+
+  beforeEach(async () => {
+    base = mkdtempSync(path.join(os.tmpdir(), "dispatch-library-update-"));
+    dataDir = path.join(base, "data", "0.1.0");
+    writeLibrary("first");
+    const reviewed = await dispatch(
+      ["library", "review", "first", "--data", path.join(base, "data")],
+      captureStreams().io,
+      {
+        cliVersion: "0.1.5",
+        resolveInternals: { libraryDataDir: null, download, cacheDir: path.join(base, "cache") },
+      },
+    );
+    expect(reviewed).toBe(0);
+  });
+
+  afterEach(() => {
+    rmSync(base, { recursive: true, force: true });
+  });
+
+  const dataFlag = (): string => path.join(base, "data");
+
+  test("--json reports a differing commit under updated, writes nothing and exits 0", async () => {
+    const before = readFileSync(reviewedPath("first"), "utf8");
+    const { io, out } = captureStreams();
+
+    const code = await run(["--data", dataFlag(), "--json"], io);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out())).toEqual({
+      command: "library",
+      ok: true,
+      subcommand: "update",
+      dataFolder: dataDir,
+      written: [],
+      updated: [{ library: "first", status: "differs", recorded: [], differs: [NEWER] }],
+      failed: [],
+    });
+    expect(readFileSync(reviewedPath("first"), "utf8")).toBe(before);
+  });
+
+  test("the plain report names each commit and the counts", async () => {
+    const { io, out, err } = captureStreams();
+
+    const code = await run(["first", "--data", dataFlag()], io);
+
+    expect(err()).toBe("");
+    expect(code).toBe(0);
+    expect(out()).toBe(
+      [
+        `first: differs at ${NEWER}`,
+        `defold-typescript library update: ${dataDir}: 1 checked, 0 failed`,
+        "",
+      ].join("\n"),
+    );
+  });
+
+  test("a failing library exits 1, names it on stderr and still updates the others", async () => {
+    writeLibrary("second");
+    const { io, out, err } = captureStreams();
+
+    const code = await run(["--data", dataFlag()], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("library update: error: ");
+    expect(err()).toContain("second: GET https://github.com/owner/second responded 503");
+    expect(out()).toContain(`first: differs at ${NEWER}`);
+  });
+
+  test("--json on a failure exits 1 with both lists", async () => {
+    writeLibrary("second");
+    const { io, out } = captureStreams();
+
+    const code = await run(["--data", dataFlag(), "--json"], io);
+
+    expect(code).toBe(1);
+    expect(JSON.parse(out())).toMatchObject({
+      ok: false,
+      error: `library update: 1 failed in ${dataDir}`,
+      subcommand: "update",
+      updated: [{ library: "first", status: "differs" }],
+      failed: [{ library: "second" }],
+    });
+  });
+
+  test("no --data exits 1 naming the update verb", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await run([], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("library update: error: --data needs a directory");
+  });
+});
+
 describe("library data from the data repo", () => {
   const DEP_URL = "https://github.com/owner/mylib/archive/main.zip";
   const COMMIT = "1111111111111111111111111111111111111111";

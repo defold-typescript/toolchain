@@ -8,12 +8,16 @@ import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.t
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
 import { readOpenApiTargets } from "../packages/cli/src/library/sync-openapi-types.ts";
 import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
+import {
+  type ForgeFetch,
+  forgeFor,
+  forgeReadsFor,
+} from "../packages/cli/src/library/upstream-forge.ts";
 import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
 import {
   collectPinnedTargets,
   describeReport,
   evaluateLibraryDrift,
-  forgeFor,
   groupPinnedTargets,
   issueTitleFor,
   type LibraryCheckIo,
@@ -260,6 +264,31 @@ describe("forge dispatch", () => {
     expect(() => forgeFor("https://gitlab.com/acme/widget")).toThrow(
       "no forge API is known for gitlab.com",
     );
+  });
+
+  test("each forge's branch head is read from the field that forge answers with", async () => {
+    const SHA = "fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1";
+    const answering =
+      (route: string, body: unknown): ForgeFetch =>
+      async (url) =>
+        url === route ? Response.json(body) : new Response("not found", { status: 404 });
+
+    expect(
+      await forgeReadsFor(
+        "https://github.com/acme/widget",
+        answering("https://api.github.com/repos/acme/widget/branches/main", {
+          commit: { sha: SHA },
+        }),
+      ).headCommit("https://github.com/acme/widget", "main"),
+    ).toBe(SHA);
+    expect(
+      await forgeReadsFor(
+        codeberg,
+        answering("https://codeberg.org/api/v1/repos/acme/widget/branches/main", {
+          commit: { id: SHA },
+        }),
+      ).headCommit(codeberg, "main"),
+    ).toBe(SHA);
   });
 });
 

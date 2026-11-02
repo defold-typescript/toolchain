@@ -83,6 +83,7 @@ describe("readLibraryData projects each library folder into lane targets", () =>
         repo: "https://github.com/Pause-Games/flow",
         ref: "v1.2.0",
         license: "MIT",
+        follows: "tags",
         luals: [
           {
             repo: "https://github.com/Pause-Games/flow",
@@ -122,6 +123,7 @@ describe("readLibraryData projects each library folder into lane targets", () =>
         ref: "v2.0",
         license: "MIT",
         refKind: "tag",
+        follows: "tags",
         luals: [],
         scriptApi: [],
         authored: [],
