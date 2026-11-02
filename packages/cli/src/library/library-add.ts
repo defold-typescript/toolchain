@@ -9,6 +9,7 @@ import {
   archiveGameProjectEntry,
   archiveWrapperOf,
   isContainedResourcePath,
+  type LibrarySharedEntry,
   libraryIncludeDirFiles,
   readLibraryIncludeDirs,
 } from "@defold-typescript/transpiler";
@@ -171,6 +172,15 @@ function scriptApiRecipe(paths: readonly string[], includeDirs: readonly string[
   return { recipe: { scriptApi: [...entries.values()] }, copies, notes };
 }
 
+/** Throws on a file that would land outside the folder it is copied under. */
+export function requireContainedFiles(files: readonly LibrarySharedEntry[], source: string): void {
+  for (const { entry, path } of files) {
+    if (!isContainedResourcePath(path)) {
+      throw new Error(`${source} holds ${entry}, which leaves the library's folder`);
+    }
+  }
+}
+
 function folderExistsError(folder: string, dataDir: string): Error {
   return new Error(`library folder ${folder} already exists in ${dataDir}`);
 }
@@ -227,11 +237,7 @@ export async function addLibrary(
   const gameProject = gameProjectEntry === undefined ? undefined : zip.read(gameProjectEntry);
   const includeDirs = gameProject === undefined ? [] : readLibraryIncludeDirs(gameProject);
   const shared = libraryIncludeDirFiles(entries, gameProject);
-  for (const { entry, path } of shared) {
-    if (!isContainedResourcePath(path)) {
-      throw new Error(`${url} holds ${entry}, which leaves the library's folder`);
-    }
-  }
+  requireContainedFiles(shared, url);
   const entryAt = new Map(shared.map(({ entry, path }) => [path, entry]));
   const paths = [...entryAt.keys()].sort();
   const annotated = paths.filter(

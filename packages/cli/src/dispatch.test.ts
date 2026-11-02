@@ -10214,8 +10214,7 @@ describe("dispatch library update", () => {
 
   const dataFlag = (): string => path.join(base, "data");
 
-  test("--json reports a differing commit under updated, writes nothing and exits 0", async () => {
-    const before = readFileSync(reviewedPath("first"), "utf8");
+  test("--json reports a moved library under updated and exits 0", async () => {
     const { io, out } = captureStreams();
 
     const code = await run(["--data", dataFlag(), "--json"], io);
@@ -10226,11 +10225,22 @@ describe("dispatch library update", () => {
       ok: true,
       subcommand: "update",
       dataFolder: reportedDir(),
-      written: [],
-      updated: [{ library: "first", status: "differs", recorded: [], differs: [NEWER] }],
+      written: [`${reportedDir()}/first/reviewed.json`],
+      updated: [
+        {
+          library: "first",
+          status: "regenerated",
+          recorded: [],
+          differs: [NEWER],
+          written: ["reviewed.json"],
+          ref: "1.1.0",
+          change: "changed",
+          members: { added: [], removed: [], changed: ["first/first.lua#go"] },
+        },
+      ],
       failed: [],
     });
-    expect(readFileSync(reviewedPath("first"), "utf8")).toBe(before);
+    expect(JSON.parse(readFileSync(reviewedPath("first"), "utf8")).ref).toBe("1.1.0");
   });
 
   test("--json names the file it changed by an absolute forward-slash path", async () => {
@@ -10261,6 +10271,7 @@ describe("dispatch library update", () => {
     expect(out()).toBe(
       [
         `first: differs at ${NEWER}`,
+        "first: moved to 1.1.0 (changed)",
         `defold-typescript library update: ${reportedDir()}: 1 checked, 0 failed`,
         "",
       ].join("\n"),
@@ -10290,7 +10301,7 @@ describe("dispatch library update", () => {
       ok: false,
       error: `library update: 1 failed in ${reportedDir()}`,
       subcommand: "update",
-      updated: [{ library: "first", status: "differs" }],
+      updated: [{ library: "first", status: "regenerated" }],
       failed: [{ library: "second" }],
     });
   });
