@@ -28,6 +28,7 @@ import {
 } from "./extension-archive";
 import { COMMIT_COMMENT } from "./extension-version";
 import { selectDataFolder } from "./library/data-folder";
+import { REVIEWED_FILE } from "./library/library-data";
 
 export const LIBRARY_DATA_MAIN_URL =
   "https://github.com/defold-typescript/library-data/archive/refs/heads/main.zip";
@@ -135,18 +136,48 @@ function unpackCommit(zip: ExtensionZip, target: string): void {
 
 // Each file's length is hashed before its bytes, so bytes that read like the next
 // file's name cannot make two different folders hash alike.
-export function dataFolderDigest(dir: string): string {
+export function dataFolderDigest(
+  dir: string,
+  transform: (path: string, bytes: Uint8Array) => Uint8Array = (_path, bytes) => bytes,
+): string {
   const hash = createHash("sha256");
   const paths = (readdirSync(dir, { recursive: true }) as string[])
     .filter((path) => statSync(join(dir, path)).isFile())
     .map((path) => path.split(sep).join("/"))
     .sort();
   for (const path of paths) {
-    const bytes = readFileSync(join(dir, path));
+    const bytes = transform(path, readFileSync(join(dir, path)));
     hash.update(`${path}\0${bytes.length}\0`);
     hash.update(bytes);
   }
   return hash.digest("hex");
+}
+
+function withoutReviews(path: string, bytes: Uint8Array): Uint8Array {
+  if (path !== REVIEWED_FILE) {
+    return bytes;
+  }
+  const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error(`${REVIEWED_FILE} holds no object`);
+  }
+  const { reviews: _reviews, ...rest } = parsed as Record<string, unknown>;
+  return new TextEncoder().encode(JSON.stringify(rest));
+}
+
+// `reviews` is what a followed branch's every commit adds to, so a change to it alone
+// leaves a library's types alone. A folder that cannot be read counts as changed.
+export function libraryFolderChange(a: string, b: string): "same" | "reviews" | "data" {
+  try {
+    if (dataFolderDigest(a) === dataFolderDigest(b)) {
+      return "same";
+    }
+    return dataFolderDigest(a, withoutReviews) === dataFolderDigest(b, withoutReviews)
+      ? "reviews"
+      : "data";
+  } catch {
+    return "data";
+  }
 }
 
 const commitDirOf = (cacheDir: string, commit: string) => join(cacheDir, "commits", commit);
