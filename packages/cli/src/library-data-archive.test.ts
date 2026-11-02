@@ -22,6 +22,7 @@ import {
   libraryDataAtCommit,
   libraryDataCacheDir,
   libraryDataCommitUrl,
+  libraryFolderChange,
 } from "./library-data-archive";
 
 const COMMIT = "0123456789abcdef0123456789abcdef01234567";
@@ -101,6 +102,72 @@ const dirFor = (cacheDir: string, commit: string) => join(cacheDir, "commits", c
 function cacheCommit(cacheDir: string, commit: string): void {
   mkdirSync(dirFor(cacheDir, commit), { recursive: true });
 }
+
+describe("libraryFolderChange", () => {
+  const REVIEW = { version: 1, commits: [COMMIT], api: "api" };
+
+  function folder(reviewed: string, source = "return {}", nested?: string): string {
+    const dir = tmp();
+    writeFileSync(join(dir, "reviewed.json"), reviewed);
+    mkdirSync(join(dir, "source"));
+    writeFileSync(join(dir, "source", "lib.lua"), source);
+    if (nested !== undefined) {
+      writeFileSync(join(dir, "source", "reviewed.json"), nested);
+    }
+    return dir;
+  }
+  const reviewed = (ref: string, reviews: readonly unknown[]) => JSON.stringify({ ref, reviews });
+
+  test("equal bytes read same", () => {
+    const text = reviewed("1.0.0", [REVIEW]);
+
+    expect(libraryFolderChange(folder(text), folder(text))).toBe("same");
+  });
+
+  test.each<[string, string, string]>([
+    ["reviews alone", reviewed("1.0.0", []), reviewed("1.0.0", [REVIEW])],
+    [
+      "key order inside reviews",
+      reviewed("1.0.0", [{ version: 1, commits: [COMMIT] }]),
+      reviewed("1.0.0", [{ commits: [COMMIT], version: 1 }]),
+    ],
+    ["a file with no reviews", JSON.stringify({ ref: "1.0.0" }), reviewed("1.0.0", [REVIEW])],
+  ])("a difference in %s reads reviews", (_label, a, b) => {
+    expect(libraryFolderChange(folder(a), folder(b))).toBe("reviews");
+  });
+
+  test.each<[string, string, string]>([
+    ["ref", reviewed("1.0.0", [REVIEW]), reviewed("2.0.0", [REVIEW])],
+    ["ref and reviews", reviewed("1.0.0", []), reviewed("2.0.0", [REVIEW])],
+    ["unparsable JSON on one side", "{", reviewed("1.0.0", [REVIEW])],
+    ["a file that holds no object", "[]", reviewed("1.0.0", [REVIEW])],
+  ])("a difference in %s reads data", (_label, a, b) => {
+    expect(libraryFolderChange(folder(a), folder(b))).toBe("data");
+  });
+
+  test("a changed file beside reviewed.json reads data", () => {
+    const text = reviewed("1.0.0", []);
+
+    expect(libraryFolderChange(folder(text, "return {}"), folder(text, "return nil"))).toBe("data");
+  });
+
+  test("only the folder's own reviewed.json has its reviews ignored", () => {
+    const text = reviewed("1.0.0", []);
+
+    expect(
+      libraryFolderChange(
+        folder(text, "return {}", reviewed("1.0.0", [])),
+        folder(text, "return {}", reviewed("1.0.0", [REVIEW])),
+      ),
+    ).toBe("data");
+  });
+
+  test("a folder that cannot be read reads data", () => {
+    const text = reviewed("1.0.0", []);
+
+    expect(libraryFolderChange(folder(text), join(tmp(), "absent"))).toBe("data");
+  });
+});
 
 describe("libraryDataCacheDir", () => {
   test("the cache override wins, else the XDG root, else the home cache", () => {

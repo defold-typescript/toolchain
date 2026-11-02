@@ -8,11 +8,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { EXTENSION_INDEX_SLOTS_FILE, LIBRARY_FILE, readIndexSlots } from "./library/library-data";
 import {
-  dataFolderDigest,
   fetchNewestLibraryData,
   type LibraryDataAtCommit,
   type LibraryDataSource,
   libraryDataAtCommit,
+  libraryFolderChange,
 } from "./library-data-archive";
 import { assembleLibraryDataView } from "./library-data-view";
 import { normalizeSourceId } from "./library-match";
@@ -69,14 +69,6 @@ function pinTrouble(at: LibraryDataAtCommit, commit: string, name: string): stri
   return existsSync(join(at.dir, name, LIBRARY_FILE))
     ? null
     : `library data commit ${commit} holds no ${name}`;
-}
-
-function sameFolder(a: string, b: string): boolean {
-  try {
-    return dataFolderDigest(a) === dataFolderDigest(b);
-  } catch {
-    return false;
-  }
 }
 
 function readSharedFile(dataDir: string): string | null {
@@ -194,10 +186,11 @@ export async function selectLibraryPins(
       }
       continue;
     }
-    if (
-      commit === newest.commit ||
-      sameFolder(join(at.dir as string, name), join(newest.dir, name))
-    ) {
+    const change =
+      commit === newest.commit
+        ? "same"
+        : libraryFolderChange(join(at.dir as string, name), join(newest.dir, name));
+    if (change === "same" || (change === "reviews" && !wanted)) {
       libraries[name] = commit;
     } else if (wanted) {
       libraries[name] = newest.commit;

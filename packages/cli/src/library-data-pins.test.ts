@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { writeZipArchive } from "../../types/test/zip-fixture";
 import type { DownloadExtensionArchive } from "./extension-archive";
 import { EXTENSION_INDEX_SLOTS_FILE, readLibraryData } from "./library/library-data";
@@ -38,9 +38,15 @@ type Library = string | { readonly text: string; readonly moduleId: string };
 interface DataOptions {
   readonly slots?: string;
   readonly folder?: string;
+  // Written over what `libraries` produces, by path below the version folder.
+  readonly files?: Readonly<Record<string, string>>;
 }
 
-function writeData(libraries: Readonly<Record<string, Library>>, slots?: string): string {
+function writeData(
+  libraries: Readonly<Record<string, Library>>,
+  slots?: string,
+  files: Readonly<Record<string, string>> = {},
+): string {
   const root = tmp();
   writeLibraryTargets(root, {
     forks: Object.entries(libraries).map(([name, library]) => {
@@ -62,6 +68,10 @@ function writeData(libraries: Readonly<Record<string, Library>>, slots?: string)
   if (slots !== undefined) {
     writeFileSync(join(root, EXTENSION_INDEX_SLOTS_FILE), slots);
   }
+  for (const [path, text] of Object.entries(files)) {
+    mkdirSync(dirname(join(root, path)), { recursive: true });
+    writeFileSync(join(root, path), text);
+  }
   return root;
 }
 
@@ -69,9 +79,9 @@ function writeData(libraries: Readonly<Record<string, Library>>, slots?: string)
 function dataAt(
   commit: string,
   libraries: Readonly<Record<string, Library>>,
-  { slots, folder = "0.55.0" }: DataOptions = {},
+  { slots, folder = "0.55.0", files: overrides }: DataOptions = {},
 ): Uint8Array {
-  const root = writeData(libraries, slots);
+  const root = writeData(libraries, slots, overrides);
   const files = (readdirSync(root, { recursive: true }) as string[]).filter((path) =>
     statSync(join(root, path)).isFile(),
   );
@@ -261,6 +271,67 @@ describe("a pinned library with a fresh main", () => {
     expect(printedIn(dir, "monarch")).toBe("newer");
     expect(notices.join()).toContain("monarch");
     expect(notices.join()).not.toContain("resolve --update");
+  });
+
+  describe("a newest commit that differs from the pin", () => {
+    const REVIEW = {
+      version: 1,
+      commits: ["a".repeat(40)],
+      api: "api",
+      doc: "doc",
+      source: "source",
+      members: {},
+    };
+    const reviewedAs = (ref: string, reviews: readonly unknown[]) => ({
+      "monarch/reviewed.json": JSON.stringify({ ref, reviews }),
+    });
+    const PINNED = {
+      [TWO]: dataAt(TWO, { monarch: "same" }, { files: reviewedAs("1.0.0", []) }),
+    };
+    const pinned = pinsAt(TWO, { monarch: TWO });
+    const newestWith = (files: Readonly<Record<string, string>>) =>
+      serving(dataAt(THREE, { monarch: "same" }, { files }), PINNED).download;
+
+    test("only in reviews, a plain run holds the pin and says nothing", async () => {
+      const { pins, notices } = await select(newestWith(reviewedAs("1.0.0", [REVIEW])), {
+        pins: pinned,
+      });
+
+      expect(pins).toEqual(pinned);
+      expect(notices).toEqual([]);
+    });
+
+    test("only in reviews, --update moves the pin and names the library", async () => {
+      const { pins, notices } = await select(newestWith(reviewedAs("1.0.0", [REVIEW])), {
+        pins: pinned,
+        update: true,
+      });
+
+      expect(pins?.libraries).toEqual({ monarch: THREE });
+      expect(notices.join()).toContain("monarch");
+    });
+
+    test("only in reviews, --update of another library holds the pin and says nothing", async () => {
+      const { pins, notices } = await select(newestWith(reviewedAs("1.0.0", [REVIEW])), {
+        pins: pinned,
+        update: ["druid"],
+      });
+
+      expect(pins).toEqual(pinned);
+      expect(notices).toEqual([]);
+    });
+
+    test.each<[string, Readonly<Record<string, string>>]>([
+      ["reviews and ref", reviewedAs("2.0.0", [REVIEW])],
+      ["a source file", { "monarch/source/upstream/monarch.core.lua": "return {}" }],
+    ])("in %s, a plain run holds the pin and names the library", async (_label, files) => {
+      const { pins, notices } = await select(newestWith(files), { pins: pinned });
+
+      expect(pins).toEqual(pinned);
+      expect(notices).toHaveLength(1);
+      expect(notices[0]).toContain("monarch");
+      expect(notices[0]).toContain("resolve --update");
+    });
   });
 
   test("main dropping it holds, in the one notice", async () => {
