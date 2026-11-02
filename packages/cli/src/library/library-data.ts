@@ -9,6 +9,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, posix, sep, win32 } from "node:path";
 import type { IndexSlotClassification } from "@defold-typescript/types";
+import { COMMIT_COMMENT } from "../extension-version";
 import type { AuthoredTarget } from "./sync-authored-types";
 import type { RefKind } from "./sync-defold-extensions";
 import type { LualsTarget } from "./sync-luals-types";
@@ -99,10 +100,16 @@ export type ScriptApiEntry = Omit<ScriptApiTarget, PerLibrary | "fidelity" | "so
   fidelity?: string;
 };
 
+/** What `library update` watches upstream for a library. */
+export const LIBRARY_FOLLOWS = ["tags", "branch", "none"] as const;
+
+export type LibraryFollows = (typeof LIBRARY_FOLLOWS)[number];
+
 export interface LibraryJson {
   repo: string;
   license?: string;
   refKind?: RefKind;
+  follows?: LibraryFollows;
   forks?: ForkEntry[];
   native?: NativeEntry;
   indexSlots?: Record<string, IndexSlotEntry>;
@@ -139,6 +146,7 @@ export interface LibraryData {
   ref: string;
   license: string;
   refKind?: RefKind;
+  follows: LibraryFollows;
   luals: LualsTarget[];
   scriptApi: ScriptApiTarget[];
   authored: AuthoredTarget[];
@@ -622,6 +630,16 @@ export function readLibraryReviews(dataDir: string, folder: string): LibraryRevi
   return requireReviews(file, readJson<Partial<ReviewedJson>>(dataDir, file).reviews);
 }
 
+function readFollows(file: string, follows: unknown, ref: string): LibraryFollows {
+  if (follows === undefined) return COMMIT_COMMENT.test(ref) ? "branch" : "tags";
+  if (!LIBRARY_FOLLOWS.includes(follows as LibraryFollows)) {
+    throw new Error(
+      `${file}: follows must be one of ${LIBRARY_FOLLOWS.join(", ")}, got ${describeValue(follows)}`,
+    );
+  }
+  return follows as LibraryFollows;
+}
+
 function readLibrary(dataDir: string, dir: string): LibraryData {
   const library = readJson<Partial<LibraryJson>>(dataDir, `${dir}/${LIBRARY_FILE}`);
   if (typeof library.repo !== "string") {
@@ -655,6 +673,7 @@ function readLibrary(dataDir: string, dir: string): LibraryData {
     ref,
     license: library.license ?? "",
     ...(library.refKind === undefined ? {} : { refKind: library.refKind }),
+    follows: readFollows(file, library.follows, ref),
     luals,
     scriptApi,
     authored,

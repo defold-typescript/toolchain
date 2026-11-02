@@ -5,18 +5,18 @@ import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.t
 import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
 import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
 import {
+  datedTags,
+  type ForgeReads,
+  forgeReadsFor,
+  repoSlug,
+} from "../packages/cli/src/library/upstream-forge.ts";
+import {
   checkShippedDeclarations,
   locateShippedDeclarations,
   selectShippedDeclarations,
 } from "../packages/cli/src/shipped-declarations.ts";
 import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
-import {
-  datedTags,
-  type ForgeReads,
-  forgeReadsFor,
-  type LibraryCheckIo,
-  repoSlug,
-} from "./library-upstream-check.ts";
+import type { LibraryCheckIo } from "./library-upstream-check.ts";
 
 // Reports each curated repo whose newest upstream release ships a `types/`
 // folder that `resolve` would install in place of the curated declarations.
@@ -28,7 +28,7 @@ import {
 // locate, select and check calls `resolve` makes, against the same
 // `@defold-typescript/types`.
 
-export type { TypesFolderFile } from "./library-upstream-check.ts";
+export type { TypesFolderFile } from "../packages/cli/src/library/upstream-forge.ts";
 
 export type CuratedLane = "authored" | "luals" | "native" | "scriptApi";
 

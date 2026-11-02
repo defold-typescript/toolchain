@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { type ForgeFetch, forgeReadsFor } from "../packages/cli/src/library/upstream-forge.ts";
 import { writeLibraryTargets } from "../packages/cli/src/library-data-fixture.ts";
 import { normalizeSourceId } from "../packages/cli/src/library-match.ts";
 import {
@@ -11,7 +12,6 @@ import {
 } from "../packages/cli/src/library-registry.ts";
 import { checkShippedDeclarations } from "../packages/cli/src/shipped-declarations.ts";
 import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
-import { type ForgeFetch, forgeReadsFor } from "./library-upstream-check.ts";
 import {
   evaluateShippedTypes,
   readCuratedRepos,
