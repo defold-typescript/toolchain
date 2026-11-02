@@ -83,8 +83,9 @@ async function updateLibrary(
     // Two tags on one commit name one candidate.
     if (differs.includes(candidate.commit)) continue;
     if (reviews.some(({ commits }) => commits.includes(candidate.commit))) continue;
+    // By commit, since a tag can move after the forge names its commit.
     const archive = await resolveExtensionArchive(
-      { index: 0, url: `${repo}/archive/${candidate.ref}.zip` },
+      { index: 0, url: `${repo}/archive/${candidate.commit}.zip` },
       {
         cacheDir: opts.cacheDir ?? extensionCacheDir(),
         requireRevalidation: true,

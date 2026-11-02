@@ -837,6 +837,7 @@ function dispatchCommand(
       if (subcommand === "update") {
         const { updateLibraries } = await import("./library/library-update");
         const seams = internals?.resolveInternals;
+        const reportedFolder = dataFolder.split(path.sep).join("/");
         let result: Awaited<ReturnType<typeof updateLibraries>>;
         try {
           result = await updateLibraries(dataFolder, rest[1] === undefined ? [] : [rest[1]], {
@@ -847,7 +848,7 @@ function dispatchCommand(
         } catch (err) {
           return fail(
             `defold-typescript library update: ${err instanceof Error ? err.message : String(err)}`,
-            { dataFolder },
+            { dataFolder: reportedFolder },
           );
         }
         const { updated, failed } = result;
@@ -856,13 +857,13 @@ function dispatchCommand(
             renderResult({
               command: "library",
               ...(failed.length > 0
-                ? { error: `library update: ${failed.length} failed in ${dataFolder}` }
+                ? { error: `library update: ${failed.length} failed in ${reportedFolder}` }
                 : {}),
               subcommand,
-              dataFolder,
+              dataFolder: reportedFolder,
               written: updated
                 .filter(({ recorded }) => recorded.length > 0)
-                .map(({ library }) => path.join(dataFolder, library, "reviewed.json")),
+                .map(({ library }) => path.posix.join(reportedFolder, library, "reviewed.json")),
               updated,
               failed,
             }),
@@ -879,7 +880,7 @@ function dispatchCommand(
             writeError(`defold-typescript library update: ${library}: ${message}`);
           }
           io.stdout.write(
-            `defold-typescript library update: ${dataFolder}: ${updated.length} checked, ${failed.length} failed\n`,
+            `defold-typescript library update: ${reportedFolder}: ${updated.length} checked, ${failed.length} failed\n`,
           );
         }
         return failed.length > 0 ? 1 : 0;
