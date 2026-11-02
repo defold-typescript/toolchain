@@ -14,8 +14,8 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Library types](./resolve.md#library-data)** update without a CLI release, each library pinned until `resolve --update[=<name>]`.
-> - **[`defold-typescript.lock`](./resolve.md#the-lockfile)** holds what `resolve` records; commit it, since `resolve --frozen` needs it.
-> - **[`resolve --frozen`](./resolve.md#dependency-safety)** checks the archives `bob build` will read.
+> - **[Library status](./resolve.md#library-status)** says whether each library's commit was reviewed.
+> - **[`defold-typescript.lock`](./resolve.md#the-lockfile)** holds what `resolve` records; commit it, since [`resolve --frozen`](./resolve.md#dependency-safety) needs it to check the archives `bob build` will read.
 > - **[`resolve --pin-urls`](./resolve.md#pin-urls-to-commits)** moves branch and tag URLs in `game.project` to commits, protecting the editor's own fetch, and `resolve` warns about each branch URL.
 > - **[Library API pages](https://defold-typescript.github.io/library-data)** moved to their own site, with no redirects.
 
@@ -31,7 +31,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **[`resolve --pin-urls`](./resolve.md#pin-urls-to-commits) pins dependency URLs to commits:** it rewrites each GitHub branch or tag URL in `game.project` to the commit its archive names, never over a dependency saved during the run, and `resolve --update` then follows the original ref inside that repo. `resolve` and `watch` warn about each branch URL, and `--json` reports each dependency's kind of URL as `ref`.
 - **Releases check the library data they will read:** a release publishes only after [`library check`](./library.md) passes with that release's CLI against the live `main` of the [library data repo](https://github.com/defold-typescript/library-data). A nightly run does the same check, so data that stops passing is reported before a release depends on it.
 - **Library docs update on every data merge:** the library docs site rebuilds with each library data merge rather than each toolchain release. The guides for [adding a library](https://defold-typescript.github.io/library-data/guides/authoring-luals-library-types) and [refreshing its pin](https://defold-typescript.github.io/library-data/guides/refreshing-library-pins) are there too, and the `library add` notes link to them.
-- **Library data records what it was checked against:** [`library review --data <dir>`](./library.md#what-library-review-records) adds API, doc and source hashes of each library's pinned archive to its `reviewed.json`, with the commit they cover, and `library add` records the first set. A failed download fails that library with its record untouched, even with a cached copy.
+- **`resolve` reports each library's [status](./resolve.md#library-status) against what library data reviewed:** `resolve --json` carries it as `libraryStatus` and the plain report names every library that is not `exact`, from API, doc and source hashes that `library add` and [`library review --data <dir>`](./library.md#what-library-review-records) record. A failed download fails that library's review with its record untouched, even with a cached copy.
 
 ### Fixed
 

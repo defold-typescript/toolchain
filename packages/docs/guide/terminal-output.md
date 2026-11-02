@@ -30,13 +30,15 @@ their shape, so the [VS Code problem matcher](./transpile-diagnostics.md) that
   entry of a command's `warnings` list, `scene-types` incomplete-address
   reasons, a dependency that ships no scene source, an unverified library
   match, a surface that could not be materialized, `resolve` pin drift, a
-  dependency on a [branch URL](./resolve.md#pin-urls-to-commits), and an
+  dependency on a [branch URL](./resolve.md#pin-urls-to-commits), an
+  [`unsupported` library](./resolve.md#library-status), and an
   editor that attaches to `watch` later with a version other than the target.
   `resolve` pin drift is an `error` under `--frozen`, because the run then
   fails.
 - **no word** — progress, results, and advisory notices such as the
-  [pin check](./pinning-defold-target.md), a newer upstream Defold release, and the
-  [library data notice](./resolve.md#library-data).
+  [pin check](./pinning-defold-target.md), a newer upstream Defold release, the
+  [library data notice](./resolve.md#library-data), and a
+  [`generated`, `newer-cli` or `unrecorded` library](./resolve.md#library-status).
 
 ## Defold editor console lines
 

@@ -157,6 +157,14 @@ asset-only. An unconfirmed match on a dependency that ships its own
 `.script_api` has no `libraries[]` entry at all and stays `typeSurface:
 "extension"` with its own namespaces.
 
+A `"vendored-library"` or `"vendored-native"` entry also carries `libraryStatus`, how
+its archive stands against the [reviews in library
+data](./resolve.md#library-status): `{ "status": "exact", "by": "commit" | "api" }`,
+`{ "status": "generated" }`, `{ "status": "unsupported", "closest": <commit> | null,
+"members": [...] }`, `{ "status": "newer-cli", "folder": <version> }` or
+`{ "status": "unrecorded" }`. It is absent when the run read no library data. No status
+changes the exit code.
+
 `typeSurface` is present on every `extensions[]` entry and names which type
 surface that dependency actually contributed:
 
@@ -209,7 +217,8 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
       "sceneSources": 0,
       "resolvedVersion": "commit:9f1e0a27…",
       "resolvedFiles": "7d865e95…",
-      "pinStatus": "unpinned"
+      "pinStatus": "unpinned",
+      "libraryStatus": { "status": "exact", "by": "commit" }
     }
   ],
   "libraries": [

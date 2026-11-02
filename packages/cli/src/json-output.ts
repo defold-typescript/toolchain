@@ -4,6 +4,7 @@ import type { CompileIssue } from "./editor-compile";
 import type { InitOperation } from "./init";
 import type { LibraryProblem } from "./library/library-check";
 import type { FailedReview, ReviewedLibrary } from "./library/library-review";
+import type { LibraryStatus } from "./library/library-status";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { WallCheckResult } from "./wall-check";
 
@@ -42,6 +43,9 @@ export interface ResolvedExtensionReportJson {
   readonly pinnedVersion?: string;
   readonly pinnedFiles?: string;
   readonly pinStatus: "unpinned" | "match" | "drift" | "retired";
+  // How this dependency stands against the reviews in library data; only a
+  // "vendored-library" or "vendored-native" surface read from library data has one.
+  readonly libraryStatus?: LibraryStatus;
 }
 
 export interface ResolvedLibraryReportJson {

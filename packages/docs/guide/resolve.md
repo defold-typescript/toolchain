@@ -277,6 +277,26 @@ A project with no dependencies fetches nothing and records nothing. Data lands i
 the `library-data` folder beside the archive cache described in
 [Cache location](#cache-location).
 
+### Library status
+
+Library data records which upstream commits of each library were reviewed, with a hash
+of each one's API. `resolve` compares the archive your project uses against those
+reviews and reports the result as `libraryStatus` on the library's
+[`--json`](./agent-runbooks.md) entry. The plain report names every library that is not
+`exact`.
+
+| Status        | What it means | What to do |
+| ------------- | ------------- | ---------- |
+| `exact`       | Your commit (`by: "commit"`) or its API (`by: "api"`) was reviewed. A change that only touches function bodies stays exact. | Nothing. |
+| `generated`   | Your commit was not reviewed, and its types were printed from your archive. | Check that the types match how you use the library. |
+| `unsupported` | Your commit was not reviewed, and its types come from the sources library data pins: a fork, a native declaration, or a recipe that could not read your archive. `closest` names the nearest reviewed commit, and `members` lists what differs from it. | Move the dependency to `closest`, or check the listed members yourself. |
+| `newer-cli`   | Only a data folder for a newer CLI covers your commit. `folder` names it. | [Upgrade the CLI](./upgrade.md) to that version. |
+| `unrecorded`  | The library data your project is pinned to holds no reviews. | Run `resolve --update`. |
+
+No status changes what is printed or fails a run, `--frozen` included. A dependency
+library data does not type, such as one with its own `.script_api` or
+[shipped types](#types-a-library-ships), has no status.
+
 ## Curated native extensions
 
 A native extension registers its Lua API in C++. One that ships no
