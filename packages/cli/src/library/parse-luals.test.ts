@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { applyAnnotationOverrides } from "./apply-luals-overrides";
 import { emitLibraryDeclarations } from "./emit-library-dts";
-import { LIBRARY_DATA_DIR } from "./package-root";
 import {
   type LibraryField,
   type LibraryInterface,
@@ -12,8 +9,6 @@ import {
   mergeLibraryModels,
   parseLualsSource,
 } from "./parse-luals";
-
-const DATA_DIR = LIBRARY_DATA_DIR;
 
 // Build sources line-by-line so annotations and declarations sit at column 0 —
 // the scanner only recognizes column-0 lines, mirroring how LuaLS libraries
@@ -25,7 +20,7 @@ describe("parseLualsSource", () => {
     const model = parseLualsSource(
       lua(
         "---A clickable button",
-        "---@class Button : druid.component",
+        "---@class Button : kit.component",
         "---@field text string the label text",
         "---@field on_click fun(self):nil the click handler",
         "local Button = {}",
@@ -34,7 +29,7 @@ describe("parseLualsSource", () => {
     expect(model.interfaces).toHaveLength(1);
     const iface = model.interfaces[0];
     expect(iface?.name).toBe("Button");
-    expect(iface?.extends).toBe("druid.component");
+    expect(iface?.extends).toBe("kit.component");
     expect(iface?.brief).toBe("A clickable button");
     expect(iface?.fields).toEqual([
       { name: "text", types: ["string"], doc: "the label text", isOptional: false },
@@ -45,13 +40,13 @@ describe("parseLualsSource", () => {
   test("a @class with a same-line description and no inheritance names the class by its bare identifier", () => {
     const model = parseLualsSource(
       lua(
-        "---@class Immutable Immutable class to convert any table into runtime read-only table",
-        "local Immutable = {}",
+        "---@class Frozen Frozen class to convert any table into runtime read-only table",
+        "local Frozen = {}",
       ),
     );
     expect(model.interfaces).toHaveLength(1);
     const iface = model.interfaces[0];
-    expect(iface?.name).toBe("Immutable");
+    expect(iface?.name).toBe("Frozen");
     expect(iface?.extends).toBeUndefined();
     expect(iface?.name).not.toContain(" ");
     expect(iface?.name).not.toContain("_");
@@ -59,18 +54,18 @@ describe("parseLualsSource", () => {
 
   test("a @class with inheritance and a same-line description parses name and parent, dropping the prose", () => {
     const model = parseLualsSource(
-      lua("---@class Widget : druid.component a reusable widget base", "local Widget = {}"),
+      lua("---@class Widget : kit.component a reusable widget base", "local Widget = {}"),
     );
     expect(model.interfaces).toHaveLength(1);
     const iface = model.interfaces[0];
     expect(iface?.name).toBe("Widget");
-    expect(iface?.extends).toBe("druid.component");
+    expect(iface?.extends).toBe("kit.component");
   });
 
   test("a Name: Parent head with no description is unchanged", () => {
-    const model = parseLualsSource(lua("---@class Button : druid.component", "local Button = {}"));
+    const model = parseLualsSource(lua("---@class Button : kit.component", "local Button = {}"));
     const iface = model.interfaces.find((i) => i.name === "Button");
-    expect(iface?.extends).toBe("druid.component");
+    expect(iface?.extends).toBe("kit.component");
   });
 
   test("a @param/@return block before function mod.new yields a typed module function", () => {
@@ -80,8 +75,8 @@ describe("parseLualsSource", () => {
         "---@param context table the parent",
         "---@param style? table optional style",
         "---@param ... any extra args",
-        "---@return druid.instance instance the new instance",
-        "function druid.new(context)",
+        "---@return kit.instance instance the new instance",
+        "function kit.new(context)",
         "end",
       ),
     );
@@ -97,7 +92,7 @@ describe("parseLualsSource", () => {
     expect(fn?.returns).toEqual([
       {
         name: "instance",
-        types: ["druid.instance"],
+        types: ["kit.instance"],
         doc: "the new instance",
         isOptional: false,
         isVararg: false,
@@ -128,11 +123,11 @@ describe("parseLualsSource", () => {
   });
 
   test("a colon method binds through the local that backs the @class, not only the class name", () => {
-    // Druid names a class `druid.button` but backs it with `local M = component.create(...)`,
-    // then defines `function M:init(...)`. The scanner must route M's methods to druid.button.
+    // A library names a class `kit.button` but backs it with `local M = component.create(...)`,
+    // then defines `function M:init(...)`. The scanner must route M's methods to kit.button.
     const model = parseLualsSource(
       lua(
-        "---@class druid.button : druid.component",
+        "---@class kit.button : kit.component",
         "---@field node node the clickable node",
         'local M = component.create("button")',
         "",
@@ -141,7 +136,7 @@ describe("parseLualsSource", () => {
         "end",
       ),
     );
-    const iface = model.interfaces.find((i) => i.name === "druid.button");
+    const iface = model.interfaces.find((i) => i.name === "kit.button");
     expect(iface).toBeDefined();
     expect(iface?.fields.map((f) => f.name)).toEqual(["node"]);
     expect(iface?.methods.map((m) => m.name)).toEqual(["init"]);
@@ -149,13 +144,13 @@ describe("parseLualsSource", () => {
   });
 
   test("@alias preserves the whole raw type expression verbatim, including spaced unions", () => {
-    expect(parseLualsSource("---@alias DruidStyle table<string, any>").aliases).toEqual([
-      { name: "DruidStyle", types: ["table<string, any>"], doc: "" },
+    expect(parseLualsSource("---@alias KitStyle table<string, any>").aliases).toEqual([
+      { name: "KitStyle", types: ["table<string, any>"], doc: "" },
     ]);
     expect(
-      parseLualsSource('---@alias druid.container.mode "stretch" | "fit" | "stretch_x"').aliases,
+      parseLualsSource('---@alias kit.container.mode "stretch" | "fit" | "stretch_x"').aliases,
     ).toEqual([
-      { name: "druid.container.mode", types: ['"stretch" | "fit" | "stretch_x"'], doc: "" },
+      { name: "kit.container.mode", types: ['"stretch" | "fit" | "stretch_x"'], doc: "" },
     ]);
   });
 
@@ -187,15 +182,15 @@ describe("parseLualsSource", () => {
   test("@generic on the following function preserves the generic name and constraint verbatim", () => {
     const model = parseLualsSource(
       lua(
-        "---@generic T : druid.widget",
+        "---@generic T : kit.widget",
         "---@param widget T the widget",
         "---@return T",
-        "function druid.get(widget)",
+        "function kit.get(widget)",
         "end",
       ),
     );
     const fn = model.moduleFunctions[0];
-    expect(fn?.generics).toEqual([{ name: "T", constraint: "druid.widget" }]);
+    expect(fn?.generics).toEqual([{ name: "T", constraint: "kit.widget" }]);
     expect(fn?.params[0]?.types).toEqual(["T"]);
     expect(fn?.returns[0]?.types).toEqual(["T"]);
   });
@@ -349,7 +344,7 @@ describe("parseLualsSource", () => {
 
   test("parsing the same source twice yields deeply-equal models (determinism)", () => {
     const source = lua(
-      "---@class Widget : druid.component",
+      "---@class Widget : kit.component",
       "---@field id string the id",
       "local M = {}",
       "---@param x number",
@@ -898,9 +893,9 @@ describe("parseLualsSource returned module object and function-local class", () 
       interfaces: [],
       aliases: [],
       moduleFunctions: [],
-      moduleObject: "Squid",
+      moduleObject: "Ripple",
     };
-    expect(mergeLibraryModels([without, withMod]).moduleObject).toBe("Squid");
+    expect(mergeLibraryModels([without, withMod]).moduleObject).toBe("Ripple");
     expect(mergeLibraryModels([without]).moduleObject).toBeUndefined();
   });
 });
@@ -1281,24 +1276,96 @@ describe("parseLualsSource @deprecated", () => {
   });
 });
 
-describe("druid parse snapshot", () => {
-  const druidRoot = join(DATA_DIR, "druid/source/druid");
-  const files = readdirSync(druidRoot, { recursive: true })
-    .map((entry) => String(entry))
-    .filter((entry) => entry.endsWith(".lua"))
-    .sort();
+describe("multi-file library parse snapshot", () => {
+  // A UI-kit-shaped library: a module file, a component class backed by a factory
+  // local, and a system file of shared classes and aliases.
+  const sources: Record<string, string> = {
+    "kit/kit.lua": lua(
+      "local M = {}",
+      "",
+      '---@alias kit.align "left" | "center" | "right"',
+      "",
+      "---Create a new kit instance",
+      "---@param context table the parent context",
+      "---@param style? table optional style",
+      "---@return kit.instance instance the new instance",
+      "function M.new(context, style)",
+      "end",
+      "",
+      "---@param callback fun(text_id: string): string Get localized text",
+      "function M.set_text_function(callback)",
+      "end",
+      "",
+      "local function wrap_widget(widget)",
+      "\treturn widget",
+      "end",
+      "",
+      "---@generic T : kit.widget",
+      "---@param widget T the widget",
+      "---@return T",
+      "function M.get_widget(widget)",
+      "end",
+      "",
+      "---@deprecated Use `get_widget` instead.",
+      "function M.get(widget)",
+      "end",
+      "",
+      "return M",
+    ),
+    "kit/widget/button.lua": lua(
+      "---A clickable button",
+      "---@class kit.button : kit.widget",
+      "---@field node node the clickable node",
+      "---@field private hover boolean whether the pointer is over it",
+      "---@field on_click? fun(self: kit.button) the click handler",
+      'local M = component.create("button")',
+      "",
+      "---@param node_id string|node the node",
+      "function M:init(node_id)",
+      "end",
+      "",
+      "---Set the label text",
+      "---@param text string the new text",
+      "---@return kit.button self",
+      "function M:set_text(text)",
+      "end",
+      "",
+      "---@local",
+      "function M:on_input(action_id, action)",
+      "end",
+      "",
+      "return M",
+    ),
+    "kit/system/helper.lua": lua(
+      "---@alias kit.mode",
+      '---| "stretch" # fill the parent',
+      '---| "fit"',
+      "",
+      "---@class kit.widget",
+      "---@field id string the widget id",
+      "local W = {}",
+      "",
+      "---@overload fun(a:string): number Build the helper",
+      "---@class kit.helper",
+      "local M = {}",
+      "",
+      "function M.clamp(x, min, max)",
+      "end",
+      "",
+      "return M",
+    ),
+  };
+  const files = Object.keys(sources).sort();
 
-  test("merged model over the committed druid fixture matches its snapshot", () => {
+  test("merged model over a multi-file library matches its snapshot", () => {
     const model: LibraryModel = mergeLibraryModels(
-      files.map((rel) => parseLualsSource(readFileSync(join(druidRoot, rel), "utf8"))),
+      files.map((rel) => parseLualsSource(sources[rel] as string)),
     );
     expect(model).toMatchSnapshot();
   });
 
-  test("the druid model is non-trivial: an interface with methods and a module function exist", () => {
-    const model = mergeLibraryModels(
-      files.map((rel) => parseLualsSource(readFileSync(join(druidRoot, rel), "utf8"))),
-    );
+  test("the merged model is non-trivial: an interface with methods and a module function exist", () => {
+    const model = mergeLibraryModels(files.map((rel) => parseLualsSource(sources[rel] as string)));
     expect(model.interfaces.some((i) => i.methods.length > 0)).toBe(true);
     expect(model.moduleFunctions.length).toBeGreaterThan(0);
   });

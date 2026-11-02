@@ -1,5 +1,9 @@
-import { expect, test } from "bun:test";
+import { afterEach, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { appendNotes, libraryIndexBaseNotes } from "@defold-typescript/types";
+import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import {
   emitLibraryDeclarations,
   isPublicField,
@@ -7,10 +11,21 @@ import {
   sanitizeTypeName,
 } from "./emit-library-dts";
 import { readLibraryIndexSlotClassifications } from "./index-slot-classifications";
-import { LIBRARY_DATA_DIR } from "./package-root";
 import { type LibraryModel, type LibraryParam, parseLualsSource } from "./parse-luals";
 import { printedModule } from "./print-corpus";
 import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
+
+const roots: string[] = [];
+
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+function tempDataDir(): string {
+  const dataDir = mkdtempSync(join(tmpdir(), "emit-library-dts-"));
+  roots.push(dataDir);
+  return dataDir;
+}
 
 test("emits a declare module block with an interface, its field and method, and a module function", () => {
   const model: LibraryModel = {
@@ -224,11 +239,11 @@ test("emits a reserved-word member through the reserved-name path, not raw", () 
 test("emits a constrained generic param and an extends clause when the parent is a declared interface", () => {
   const model: LibraryModel = {
     interfaces: [
-      { name: "druid.component", generics: [], fields: [], methods: [], brief: "" },
+      { name: "panel.component", generics: [], fields: [], methods: [], brief: "" },
       {
         name: "box",
-        extends: "druid.component",
-        generics: [{ name: "T", constraint: "druid.component" }],
+        extends: "panel.component",
+        generics: [{ name: "T", constraint: "panel.component" }],
         fields: [],
         methods: [],
         brief: "",
@@ -240,7 +255,7 @@ test("emits a constrained generic param and an extends clause when the parent is
 
   const out = emitLibraryDeclarations(model, { moduleId: "x.x" });
 
-  expect(out).toContain("interface box<T extends druid_component> extends druid_component {");
+  expect(out).toContain("interface box<T extends panel_component> extends panel_component {");
 });
 
 test("emits a bare generic param when the generic has no constraint", () => {
@@ -854,22 +869,69 @@ test("renders @deprecated on a tagged interface, alias, method and module functi
   expect(out.match(/@deprecated/g)).toHaveLength(4);
 });
 
-const EMIT_TARGETS = readLualsTargets(LIBRARY_DATA_DIR).map(
+const EMIT_TARGETS = readLualsTargets(FIXTURE_DATA_DIR).map(
   (target) => [target.namespace, target] as const,
 );
 
-test("the luals corpus carries more than one target, proving the pipeline generalizes beyond druid", () => {
-  const namespaces = EMIT_TARGETS.map(([namespace]) => namespace);
-  expect(namespaces).toContain("druid");
-  expect(namespaces.length).toBeGreaterThan(1);
-});
-
 // Names the contract, so a print that silently drops parameters reports as an
 // arity regression rather than as an opaque declaration diff.
-test("the printed druid declaration carries drag's full six-parameter callback signature", async () => {
-  const golden = await printedModule(LIBRARY_DATA_DIR, "druid.druid");
+test("the printed declaration carries an overridden drag callback's full six-parameter signature", async () => {
+  const dataDir = tempDataDir();
+  writeLibraryTargets(dataDir, {
+    luals: [
+      {
+        repo: "https://github.com/example/swipe",
+        ref: "1.0.0",
+        sourceGlobs: ["swipe/**/*.lua"],
+        moduleId: "swipe.swipe",
+        namespace: "swipe",
+        typeRenames: {},
+        ignore: [],
+        annotationOverrides: {
+          interfaces: {
+            "swipe.drag": {
+              methods: {
+                init: {
+                  params: {
+                    on_drag_callback: {
+                      type: "fun(self: any, dx: number, dy: number, x: number, y: number, touch: touch)",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+  });
+  const source = join(dataDir, "swipe", "source", "swipe", "swipe");
+  mkdirSync(source, { recursive: true });
+  writeFileSync(
+    join(source, "swipe.lua"),
+    "local M = {}\n\n---@return swipe.drag\nfunction M.new_drag() end\n\nreturn M\n",
+  );
+  writeFileSync(
+    join(source, "drag.lua"),
+    `---@class touch
+---@field x number
+---@field y number
 
-  expect(golden).toContain(
+---@class swipe.drag
+local M = {}
+
+---@param node node|string The node to subscribe to drag events over
+---@param on_drag_callback fun(self, touch) The callback to call when a drag occurs
+function M:init(node, on_drag_callback)
+end
+
+return M
+`,
+  );
+
+  const printed = await printedModule(dataDir, "swipe.swipe");
+
+  expect(printed).toContain(
     "on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void",
   );
 });
@@ -908,20 +970,20 @@ function missingDeclarations(model: LibraryModel, out: string): string[] {
 }
 
 const moduleObjectModel: LibraryModel = {
-  moduleObject: "Squid",
+  moduleObject: "Ledger",
   interfaces: [
     {
-      name: "Squid",
+      name: "Ledger",
       generics: [],
       fields: [
         { name: "TRACE", types: ["integer"], doc: "trace level", isOptional: false },
         { name: "ALLOWLIST", types: ["table"], doc: "", isOptional: false },
       ],
       methods: [],
-      brief: "The squid module.\nSaveable logging.",
+      brief: "The ledger module.\nSaveable logging.",
     },
     {
-      name: "SquidInstance",
+      name: "LedgerInstance",
       generics: [],
       fields: [],
       methods: [
@@ -953,35 +1015,35 @@ const moduleObjectModel: LibraryModel = {
       generics: [],
       params: [{ name: "tag", types: ["string"], doc: "", isOptional: true, isVararg: false }],
       returns: [
-        { name: "", types: ["SquidInstance"], doc: "", isOptional: false, isVararg: false },
+        { name: "", types: ["LedgerInstance"], doc: "", isOptional: false, isVararg: false },
       ],
     },
   ],
 };
 
 test("a moduleObject lifts its fields to export consts, drops its interface, and keeps full-typed instance methods", () => {
-  const out = emitLibraryDeclarations(moduleObjectModel, { moduleId: "squid.squid" });
+  const out = emitLibraryDeclarations(moduleObjectModel, { moduleId: "ledger.ledger" });
   // Module constants become module-level export consts.
   expect(out).toContain("export const TRACE: number;");
   expect(out).toContain("export const ALLOWLIST: LuaTable;");
   // The module-object class itself is not a standalone interface.
-  expect(out).not.toContain("interface Squid {");
+  expect(out).not.toContain("interface Ledger {");
   // The captured instance interface survives with a full-typed method (not a hook).
-  expect(out).toContain("interface SquidInstance {");
+  expect(out).toContain("interface LedgerInstance {");
   expect(out).toContain("log(message: string | number, data?: unknown): void;");
   expect(out).not.toContain("log?(...args: any[])");
   // The inferred return flows through: `new` (reserved) is aliased and returns the instance.
-  expect(out).toContain("export function new_(this: void, tag?: string): SquidInstance;");
+  expect(out).toContain("export function new_(this: void, tag?: string): LedgerInstance;");
   expect(out).toContain("export { new_ as new };");
 });
 
 test("emit drops no public modeled surface for a hand-built moduleObject model", () => {
-  const out = emitLibraryDeclarations(moduleObjectModel, { moduleId: "squid.squid" });
+  const out = emitLibraryDeclarations(moduleObjectModel, { moduleId: "ledger.ledger" });
   expect(missingDeclarations(moduleObjectModel, out)).toEqual([]);
 });
 
 test("the structural drop guard reds when a modeled declaration is absent from the output", () => {
-  const emptyOut = "/** @noResolution */\ndeclare module 'squid.squid' {\n}\n";
+  const emptyOut = "/** @noResolution */\ndeclare module 'ledger.ledger' {\n}\n";
   expect(missingDeclarations(moduleObjectModel, emptyOut).length).toBeGreaterThan(0);
 });
 
@@ -992,7 +1054,7 @@ test("module constants emit as documented export consts after the module object'
       { name: "MSG_READY", types: ["hash"], doc: "Sent when ready.", isOptional: false },
     ],
   };
-  const out = emitLibraryDeclarations(model, { moduleId: "squid.squid" });
+  const out = emitLibraryDeclarations(model, { moduleId: "ledger.ledger" });
   const constant = "\t/**\n\t * Sent when ready.\n\t */\n\texport const MSG_READY: Hash;";
   expect(out).toContain(constant);
   const at = out.indexOf(constant);
@@ -1003,8 +1065,8 @@ test("module constants emit as documented export consts after the module object'
 
 test.each(
   EMIT_TARGETS,
-)("emit drops no public modeled surface for the real %s model", (_namespace, target) => {
-  const model = buildTargetModel(LIBRARY_DATA_DIR, target);
+)("emit drops no public modeled surface for the fixture %s model", (_namespace, target) => {
+  const model = buildTargetModel(FIXTURE_DATA_DIR, target);
   const out = emitLibraryDeclarations(model, {
     moduleId: target.moduleId,
     typeRenames: target.typeRenames,
@@ -1214,7 +1276,7 @@ const gridParam = (name: string, doc = ""): LibraryParam => ({
 const indexBaseModel: LibraryModel = {
   interfaces: [
     {
-      name: "druid.grid",
+      name: "board.grid",
       generics: [],
       fields: [
         { name: "first_index", types: ["number"], doc: "The first index", isOptional: false },
@@ -1266,13 +1328,41 @@ function docAbove(out: string, memberLine: string): string {
 }
 
 test("a library page notes each classified param, return and class field under the API reference's keys", () => {
-  const classifications = readLibraryIndexSlotClassifications(LIBRARY_DATA_DIR);
-  const paramNotes = libraryIndexBaseNotes(classifications, "druid", "get_pos", "param", "index");
-  const returnNotes = libraryIndexBaseNotes(classifications, "druid", "get_index", "return", "");
+  const dataDir = tempDataDir();
+  writeLibraryTargets(dataDir, {
+    luals: [
+      {
+        repo: "https://github.com/example/board",
+        ref: "1.0.0",
+        sourceGlobs: ["board/**/*.lua"],
+        moduleId: "board.board",
+        namespace: "board",
+        typeRenames: {},
+        ignore: [],
+      },
+    ],
+    indexSlots: {
+      "board/get_pos:param:index": {
+        class: "native-1",
+        evidence: "grid.lua:get_pos places index 1 at row 0, column 0",
+      },
+      "board/get_index:return:": {
+        class: "native-1",
+        evidence: "grid.lua:get_index returns the index get_pos reads",
+      },
+      "board/board_grid:field:first_index": {
+        class: "native-1",
+        evidence: "grid.lua:update_indexes takes the least key of the nodes array",
+      },
+    },
+  });
+  const classifications = readLibraryIndexSlotClassifications(dataDir);
+  const paramNotes = libraryIndexBaseNotes(classifications, "board", "get_pos", "param", "index");
+  const returnNotes = libraryIndexBaseNotes(classifications, "board", "get_index", "return", "");
   const fieldNotes = libraryIndexBaseNotes(
     classifications,
-    "druid",
-    "druid_grid",
+    "board",
+    "board_grid",
     "field",
     "first_index",
   );
@@ -1282,7 +1372,7 @@ test("a library page notes each classified param, return and class field under t
 
   const out = emitLibraryDeclarations(indexBaseModel, {
     moduleId: "x.x",
-    indexBase: { page: "druid", classifications },
+    indexBase: { page: "board", classifications },
   });
 
   expect(docAbove(out, "get_pos(index: number)")).toContain(

@@ -1,4 +1,3 @@
-/// <reference types="@typescript-to-lua/language-extensions" />
 /// <reference types="@defold-typescript/types" />
 
 import { enginehandle } from "test.enginehandle";

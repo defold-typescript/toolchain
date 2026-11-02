@@ -1,11 +1,17 @@
-import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { afterEach, describe, expect, test } from "bun:test";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { MarkdownDoc } from "./parse-markdown-api";
-import { printCorpus, printedModule } from "./print-corpus";
 import {
   buildMarkdownFidelity,
   compareFidelityToTsDefold,
@@ -21,8 +27,6 @@ import {
 } from "./sync-markdown-types";
 import { type FetchText, loadTypeResolver } from "./sync-script-api-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const DATA_DIR = LIBRARY_DATA_DIR;
 const LANES = LANE_EVALUATIONS_ROOT;
 
 // The orthographic.camera target as it appears in a validated config. A markdown
@@ -86,30 +90,6 @@ describe("readMarkdownTargets", () => {
 // orthographic severed into the authored lane while its markdown verdict stands.
 // The proof artifacts the no-go produced are untouched by that severance.
 describe("orthographic severed to the authored lane without disturbing the markdown proof", () => {
-  test("orthographic.camera is no longer a ts-defold library-targets row", () => {
-    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
-      targets: { module: string }[];
-    };
-    expect(targets.targets.some((t) => t.module === "orthographic.camera")).toBe(false);
-  });
-
-  test("the vendored authored fork replaced the retired ts-defold fixture", () => {
-    expect(existsSync(join(DATA_DIR, "defold-orthographic/fork/orthographic.camera.d.ts"))).toBe(
-      true,
-    );
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/orthographic.camera.d.ts"))).toBe(
-      false,
-    );
-  });
-
-  test("resolve serves the authored fork, not the markdown emit (no cutover)", async () => {
-    const served = await printedModule(DATA_DIR, "orthographic.camera");
-    expect(served).toBe(
-      readFileSync(join(DATA_DIR, "defold-orthographic/fork/orthographic.camera.d.ts"), "utf8"),
-    );
-    expect(served).not.toBe(await emitMarkdownDeclaration(LANES, ORTHOGRAPHIC));
-  });
-
   test("the markdown target, its no-go decision, and its fidelity artifact are untouched", () => {
     const target = readMarkdownTargets(LANES).find((t) => t.moduleId === "orthographic.camera");
     expect(target).toBeDefined();
@@ -125,59 +105,82 @@ describe("defold-input registers no markdown target on the all-no-go outcome", (
     const targets = readMarkdownTargets(LANES);
     expect(targets.filter((t) => t.moduleId.startsWith("in."))).toEqual([]);
   });
-
-  // A markdown target's golden is the canonical `api-doc/<ns>.json`, and for
-  // defold-input the markdown namespace `in.<mod>`
-  // is the *same* key the live ts-defold module already publishes under (unlike
-  // orthographic, whose `orthographic` namespace differs from `orthographic.camera`).
-  // Registering a no-go target would therefore overwrite the live artifacts, and
-  // the namespace-keyed `decision != "go"` skip would drop the module's docs page
-  // outright. The decisions live in `markdown-fidelity-gate.test.ts` instead.
-  test("the live ts-defold in.* goldens are the ones the docs site still enumerates", async () => {
-    const corpus = await printCorpus(DATA_DIR);
-    for (const mod of ["cursor", "state"]) {
-      expect(corpus.has(`in.${mod}`)).toBe(true);
-      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `in.${mod}.json`))).toBe(true);
-    }
-  });
 });
 
 describe("evaluateMarkdownCandidate", () => {
   // An unregistered in-memory target for a library whose markdown namespace is
-  // its live ts-defold moduleId. Evaluating it must not touch the canonical
-  // paths that module already publishes under.
+  // its live moduleId. Evaluating it must not touch the canonical paths that
+  // module already publishes under.
   //
   // The subject does not need a `library-targets.json` row —
   // `evaluateMarkdownCandidate` never reads that file; it resolves the compared
   // surface from its optional `snapshot` argument, falling back to
   // `fixtures/ts-defold/<moduleId>.d.ts`. The real preconditions are a committed
   // markdown fixture, a resolvable snapshot, and a live golden at the candidate's
-  // `apiDoc` path with no `fidelity/` occupant. That misreading is
-  // why this subject churned through `monarch.monarch` -> `gooey.gooey` ->
-  // `dicebag.dicebag` -> `rendy.rendy`, one move per Bucket-C severance.
-  //
-  // A dotted-severed library with `namespace === moduleId` satisfies all four
-  // permanently, and that equality is precisely the in-place hazard under test,
-  // so `monarch.monarch` is a stable subject rather than the next one to expire.
-  const MONARCH: MarkdownTarget = {
-    repo: "https://github.com/britzl/monarch",
-    ref: "6.0.2",
+  // `apiDoc` path with no `fidelity/` occupant, so each test builds all three in
+  // a temp root. `namespace === moduleId` is precisely the in-place hazard under
+  // test.
+  const WIDGET: MarkdownTarget = {
+    repo: "https://github.com/example/widget",
+    ref: "1.0.0",
     license: "MIT",
-    markdown: "README_API.md",
-    moduleId: "monarch.monarch",
-    namespace: "monarch.monarch",
-    apiDoc: "api-doc/monarch.monarch.json",
-    fidelity: "fidelity/monarch.monarch.json",
+    markdown: "README.md",
+    moduleId: "widget.widget",
+    namespace: "widget.widget",
+    apiDoc: "api-doc/widget.widget.json",
+    fidelity: "fidelity/widget.widget.json",
     decision: "no-go",
   };
 
-  // monarch severed into the authored lane, so its retired ts-defold snapshot is
-  // gone and the comparison resolves against the fork it was taken from.
-  const MONARCH_SNAPSHOT = join(DATA_DIR, "monarch/fork/monarch.monarch.d.ts");
+  const README = [
+    "# Widget API",
+    "",
+    "### widget.show(id)",
+    "Show a widget.",
+    "",
+    "**PARAMETERS**",
+    "* `id` (string) - Id of the widget to show.",
+    "",
+  ].join("\n");
+
+  // The surface the README would replace; it documents `show` and not `hide`.
+  const SNAPSHOT = [
+    "declare module 'widget.widget' {",
+    "\texport function show(id: string): void;",
+    "\texport function hide(id: string): void;",
+    "}",
+    "",
+  ].join("\n");
+
+  const LIVE_GOLDEN = '{ "live": true }\n';
+
+  const roots: string[] = [];
+
+  afterEach(() => {
+    for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  });
+
+  function candidateRoot(): { root: string; snapshot: string } {
+    const root = mkdtempSync(join(tmpdir(), "markdown-candidate-"));
+    roots.push(root);
+    mkdirSync(join(root, "fixtures/markdown"), { recursive: true });
+    writeFileSync(join(root, "fixtures/markdown", `${WIDGET.moduleId}.md`), README);
+    mkdirSync(join(root, "api-doc"), { recursive: true });
+    writeFileSync(join(root, WIDGET.apiDoc), LIVE_GOLDEN);
+    const snapshot = join(root, "snapshot.d.ts");
+    writeFileSync(snapshot, SNAPSHOT);
+    return { root, snapshot };
+  }
+
+  const files = (root: string): string[] =>
+    readdirSync(root, { recursive: true })
+      .map((entry) => String(entry).replace(/\\/g, "/"))
+      .sort();
 
   test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
-    const result = await evaluateMarkdownCandidate(LANES, MONARCH, MONARCH_SNAPSHOT);
-    expect(result.emitted).toContain("declare module 'monarch.monarch' {");
+    const { root, snapshot } = candidateRoot();
+    const result = await evaluateMarkdownCandidate(root, WIDGET, snapshot);
+    expect(result.emitted).toContain("declare module 'widget.widget' {");
     expect(result.emitted).toContain("function show(");
     expect(result.markdownMembers).toContain("show");
     expect(result.tsDefoldMembers).toContain("show");
@@ -185,17 +188,15 @@ describe("evaluateMarkdownCandidate", () => {
   });
 
   test("writes nothing — the live in-place golden survives byte-identical", async () => {
-    const contents = (root: string, rel: string): string | null =>
-      existsSync(join(root, rel)) ? readFileSync(join(root, rel), "utf8") : null;
-    const before = [PACKAGE_ROOT, LANES].map((root) => contents(root, MONARCH.apiDoc));
+    const { root, snapshot } = candidateRoot();
+    const before = files(root);
 
-    await evaluateMarkdownCandidate(LANES, MONARCH, MONARCH_SNAPSHOT);
+    await evaluateMarkdownCandidate(root, WIDGET, snapshot);
 
-    expect([PACKAGE_ROOT, LANES].map((root) => contents(root, MONARCH.apiDoc))).toEqual(before);
+    expect(readFileSync(join(root, WIDGET.apiDoc), "utf8")).toBe(LIVE_GOLDEN);
+    expect(files(root)).toEqual(before);
     // The fidelity path has no live occupant, so it must simply never appear.
-    for (const root of [PACKAGE_ROOT, LANES]) {
-      expect(existsSync(join(root, MONARCH.fidelity))).toBe(false);
-    }
+    expect(existsSync(join(root, WIDGET.fidelity))).toBe(false);
   });
 });
 

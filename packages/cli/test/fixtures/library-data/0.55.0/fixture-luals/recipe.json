@@ -1,0 +1,30 @@
+{
+  "luals": [
+    {
+      "sourceGlobs": ["glow-kit/**/*.lua"],
+      "moduleId": "glow-kit.glow",
+      "namespace": "glow",
+      "typeRenames": {
+        "vector4": "Vector4"
+      },
+      "ignore": [],
+      "annotationOverrides": {
+        "moduleFunctions": {
+          "setup": {
+            "params": {
+              "self": {
+                "type": "table<string, any>",
+                "optional": false
+              }
+            }
+          }
+        },
+        "moduleConstants": {
+          "mode": {
+            "type": "{ GLOW_SOFT: integer, GLOW_HARD: integer }"
+          }
+        }
+      }
+    }
+  ]
+}

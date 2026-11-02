@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   type ForkEntry,
   type IndexSlotEntry,
@@ -22,6 +23,14 @@ interface Pin {
   license?: string;
   refKind?: RefKind;
 }
+
+// A committed library data folder of invented libraries, one per lane: LuaLS
+// (`fixture-luals`), `.script_api` (`fixture-script-api`), native
+// (`fixture-native`) and authored fork (`fixture-fork`). It passes `library
+// check`, so a test reading it reads data a real folder could hold.
+export const FIXTURE_DATA_DIR = fileURLToPath(
+  new URL("../test/fixtures/library-data/0.55.0", import.meta.url),
+);
 
 // A lane target as one flat record: its library's pin beside its lane entry.
 export type Flat<Entry> = Pin & Partial<Entry>;

@@ -1,0 +1,18 @@
+{
+  "scriptApi": [
+    {
+      "scriptApi": "beacon/api/beacon.script_api",
+      "moduleId": "beacon.beacon",
+      "namespace": "beacon",
+      "apiDoc": "api-doc/beacon.json",
+      "fidelity": "fidelity/beacon.json",
+      "omittableSlots": [
+        {
+          "element": "beacon.platform.send",
+          "slot": "options",
+          "evidence": "Optional message-specific options (may be omitted)."
+        }
+      ]
+    }
+  ]
+}

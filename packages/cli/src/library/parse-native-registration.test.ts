@@ -1,76 +1,74 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_DATA_DIR } from "./package-root";
+import { FIXTURE_DATA_DIR } from "../library-data-fixture";
 import { parseNativeMethodTables, parseNativeRegistration } from "./parse-native-registration";
 
-const DATA_DIR = LIBRARY_DATA_DIR;
-
 function vendored(path: string) {
-  return parseNativeRegistration(readFileSync(join(DATA_DIR, path), "utf8"), path);
+  return parseNativeRegistration(readFileSync(join(FIXTURE_DATA_DIR, path), "utf8"), path);
 }
 
-describe("parseNativeRegistration over the vendored registering files", () => {
-  test("daabbcc: 18 registered functions, the commented-out init skipped, three constants", () => {
-    const surface = vendored("defold-daabbcc/source/upstream/daabbcc/src/extension.cpp");
-    expect(surface.moduleName).toBe("daabbcc");
-    expect(surface.functions).toHaveLength(18);
-    expect(surface.functions).toContain("query_aabb_sort");
-    expect(surface.functions).toContain("rebuild_all");
-    expect(surface.functions).not.toContain("init");
-    expect(surface.methods).toEqual({});
-    expect(surface.constants).toEqual([
-      "UPDATE_FULLREBUILD",
-      "UPDATE_INCREMENTAL",
-      "UPDATE_PARTIALREBUILD",
-    ]);
-  });
-
-  test("tile_raycast: five functions and the four direction constants", () => {
-    const surface = vendored(
-      "defold-tile-raycast/source/upstream/tile-raycast/src/tileraycast.cpp",
-    );
-    expect(surface.moduleName).toBe("tile_raycast");
-    expect(surface.functions).toEqual(["cast", "get_at", "reset", "set_at", "setup"]);
-    expect(surface.methods).toEqual({});
-    expect(surface.constants).toEqual(["BOTTOM", "LEFT", "RIGHT", "TOP"]);
-  });
-
-  test("share: file, image and text with no constants", () => {
-    const surface = vendored("defold-sharing/source/upstream/share/src/share.cpp");
-    expect(surface.moduleName).toBe("share");
-    expect(surface.functions).toEqual(["file", "image", "text"]);
-    expect(surface.methods).toEqual({});
-    expect(surface.constants).toEqual([]);
-  });
-
-  test("uuid4: a single generate function", () => {
-    const surface = vendored("defold-uuid4/source/upstream/uuid4/src/extension.cpp");
-    expect(surface.moduleName).toBe("uuid4");
-    expect(surface.functions).toEqual(["generate"]);
-    expect(surface.methods).toEqual({});
-    expect(surface.constants).toEqual([]);
-  });
-
-  test("def_windward_jps: the Grid methods keyed by the metatable its const char* names", () => {
-    const surface = vendored(
-      "def-windward-jps/source/upstream/def_windward_jps/src/def_windward_jps.cpp",
-    );
-    expect(surface.moduleName).toBe("def_windward_jps");
-    expect(surface.functions).toEqual(["create_grid"]);
-    expect(surface.methods).toEqual({ "def_windward_jps.Grid": ["find_path", "is_walkable"] });
-    expect(surface.constants).toEqual([]);
-  });
-
-  test("detour: init, and the NavMesh and Crowd tables keyed by the functions that build them", () => {
-    const surface = vendored("defold-detour/source/upstream/detour/src/detour.cpp");
-    expect(surface.moduleName).toBe("detour");
-    expect(surface.functions).toEqual(["init"]);
-    expect(surface.methods).toEqual({
-      "CreateCrowd()": ["add_agent", "remove_agent", "reset_target", "set_target", "update"],
-      "Init()": ["create_crowd", "delete", "find_path", "set_area_cost", "set_include_flags"],
+describe("parseNativeRegistration over a vendored registering file", () => {
+  test("stamp: its two registered functions, with no methods or constants", () => {
+    const surface = vendored("fixture-native/source/upstream/stamp/src/extension.cpp");
+    expect(surface).toEqual({
+      moduleName: "stamp",
+      functions: ["at", "issue"],
+      methods: {},
+      constants: [],
     });
-    expect(surface.constants).toEqual([]);
+  });
+
+  test("a SETCONSTANT macro defined across continuation lines after the call reads only its uses, the commented-out entry and the #else stub skipped", () => {
+    const source = [
+      '#define LIB_NAME "Grove"',
+      '#define MODULE_NAME "grove"',
+      "#if defined(DM_PLATFORM_ANDROID)",
+      "// Functions exposed to Lua",
+      "static const luaL_reg Module_methods[] = {",
+      '    // {"init", Init},',
+      "",
+      "    // Plot Operations",
+      '    { "plant", Plant },',
+      '    { "uproot", Uproot },',
+      "",
+      "    // Harvest Operations",
+      '    { "harvest_sorted", HarvestSorted },',
+      "",
+      "    { 0, 0 }",
+      "};",
+      "",
+      "static void LuaInit(lua_State* L)",
+      "{",
+      "    int top = lua_gettop(L);",
+      "",
+      "    // Register lua names",
+      "    luaL_register(L, MODULE_NAME, Module_methods);",
+      "",
+      "#define SETCONSTANT(name) \\",
+      "    lua_pushnumber(L, (lua_Number)grove::name); \\",
+      "    lua_setfield(L, -2, #name);",
+      "",
+      "    SETCONSTANT(SEASON_SPRING);",
+      "    SETCONSTANT(SEASON_AUTUMN);",
+      "    SETCONSTANT(SEASON_WINTER);",
+      "#undef SETCONSTANT",
+      "",
+      "    lua_pop(L, 1);",
+      "    assert(top == lua_gettop(L));",
+      "}",
+      "#else",
+      "",
+      "static void LuaInit(lua_State* L) {}",
+      "",
+      "#endif",
+    ].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp")).toEqual({
+      moduleName: "grove",
+      functions: ["harvest_sorted", "plant", "uproot"],
+      methods: {},
+      constants: ["SEASON_AUTUMN", "SEASON_SPRING", "SEASON_WINTER"],
+    });
   });
 });
 

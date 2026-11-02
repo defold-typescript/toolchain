@@ -14,7 +14,6 @@ import {
   classifyLibraryDirs,
   codemodDeclaration,
   type FetchRepoDescription,
-  type FetchText,
   type LibrarySource,
   type LibraryTarget,
   type LibraryTargets,
@@ -148,56 +147,29 @@ describe("codemodDeclaration", () => {
   });
 });
 
-describe("the dormant ts-defold lane", () => {
-  test("library-targets.json still exists and pins its source, but owns no rows", () => {
-    // The severance series drained this registry to zero. The file itself stays
-    // committed because three consumers read it as a *presence* check, not a
-    // content one: the CLI's `loadVendoredLibraryRegistry` returns EMPTY — no
-    // LuaLS, script_api or authored libraries at all — when it is missing,
-    // `libraryModuleDirs` guards on `existsSync`, and `library-classification.json`
-    // asserts its commit pin against this `source` block.
-    //
-    // Stated explicitly because the data-driven `checkDrift` ok-case below now
-    // iterates nothing and passes vacuously. It is not coverage of an empty
-    // registry; the drift machinery keeps its real coverage through the
-    // `writeTempTarget` synthetic roots.
-    expect(existsSync(join(DATA_DIR, "library-targets.json"))).toBe(true);
-    expect(REGISTRY.targets).toEqual([]);
-    expect(REGISTRY.source.repo).toBe("https://github.com/ts-defold/library");
-    expect(REGISTRY.source.commit).toMatch(/^[0-9a-f]{40}$/);
-    expect(REGISTRY.source.license).toBe("MIT");
-  });
-});
-
 describe("rawUrl", () => {
   test("composes the pinned raw.githubusercontent URL for a target", () => {
-    // Composed from a synthetic target: the real registry is permanently empty,
-    // so there is no row left to read a subject off. This is the end of the
-    // subject relay (`monarch.monarch`, then `gooey.gooey`, then
-    // `nakama.nakama`), not another move.
+    // Composed from a synthetic source and target: the test reads no data folder,
+    // and the real registry is permanently empty, so there is no row left to read
+    // a subject off. This is the end of the subject relay (`monarch.monarch`, then
+    // `gooey.gooey`, then `nakama.nakama`), not another move.
+    const source: LibrarySource = {
+      repo: "https://github.com/example/library",
+      commit: "1111111111111111111111111111111111111111",
+      license: "MIT",
+    };
     const target: LibraryTarget = {
       module: "sample.sample",
       path: "packages/sample-dir/sample.sample.d.ts",
       fixture: "fixtures/ts-defold/sample.sample.d.ts",
     };
-    expect(rawUrl(REGISTRY.source, target)).toBe(
-      `https://raw.githubusercontent.com/ts-defold/library/${REGISTRY.source.commit}/packages/sample-dir/sample.sample.d.ts`,
+    expect(rawUrl(source, target)).toBe(
+      "https://raw.githubusercontent.com/example/library/1111111111111111111111111111111111111111/packages/sample-dir/sample.sample.d.ts",
     );
   });
 });
 
 describe("checkDrift", () => {
-  test("reports ok when every fetched upstream matches its committed fixture", async () => {
-    const fetchText: FetchText = async (url) => {
-      const target = REGISTRY.targets.find((t) => rawUrl(REGISTRY.source, t) === url);
-      if (!target) throw new Error(`no target for ${url}`);
-      return readFileSync(join(DATA_DIR, target.fixture), "utf8");
-    };
-    const results = await checkDrift(DATA_DIR, fetchText);
-    expect(results.map((r) => r.module)).toEqual(REGISTRY.targets.map((t) => t.module));
-    expect(results.every((r) => r.status === "ok")).toBe(true);
-  });
-
   test("reports ok when fetched bytes equal the committed fixture", async () => {
     const fixture = "declare module 'sample.sample' {\n  export const A: hash;\n}\n";
     const root = writeTempTarget(fixture);
@@ -801,27 +773,9 @@ describe("library-classification.json coverage", () => {
     }
   });
 
-  test("no pure-Lua candidates remain", () => {
-    expect([...byDir.values()].filter((entry) => entry.classification === "pure-lua")).toEqual([]);
-  });
-
   test("goal-covered dirs are covered-by-goal", () => {
     expect(byDir.get("defold-lldebugger")?.classification).toBe("covered-by-goal");
     expect(byDir.get("defold-xmath")?.classification).toBe("covered-by-goal");
-  });
-
-  test("no dir is already-vendored, because the registry derives none", () => {
-    // The derivation is kept rather than replaced by a literal: a returning
-    // `library-targets.json` row re-arms the per-dir assertion instead of this
-    // test silently passing on an empty set. With the registry drained, the
-    // committed manifest must carry no `already-vendored` entry at all — the
-    // token is now reachable only through `writeClassification`'s synthetic
-    // roots.
-    expect(vendoredDirs.size).toBe(0);
-    for (const dir of vendoredDirs) {
-      expect(byDir.get(dir)?.classification).toBe("already-vendored");
-    }
-    expect(manifest.dirs.filter((e) => e.classification === "already-vendored")).toEqual([]);
   });
 
   test("no committed module is owned by a maintained-here lane", () => {

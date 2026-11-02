@@ -1,11 +1,7 @@
 import { expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { lowerLibraryModel } from "./lower-api-doc";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LibraryModel, parseLualsSource } from "./parse-luals";
-import { buildTargetModel, readLualsTargets } from "./sync-luals-types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -18,12 +14,12 @@ function elementsOf(lowered: unknown): Record<string, unknown>[] {
 
 test("a module function lowers its param/return tokens to emitter-equivalent TypeScript", () => {
   const model: LibraryModel = {
-    interfaces: [{ name: "druid.instance", generics: [], fields: [], methods: [], brief: "" }],
+    interfaces: [{ name: "panel.instance", generics: [], fields: [], methods: [], brief: "" }],
     aliases: [],
     moduleFunctions: [
       {
         name: "new",
-        brief: "Create a new Druid instance.\nLonger description.",
+        brief: "Create a new Panel instance.\nLonger description.",
         generics: [],
         params: [
           {
@@ -44,7 +40,7 @@ test("a module function lowers its param/return tokens to emitter-equivalent Typ
         returns: [
           {
             name: "",
-            types: ["druid.instance"],
+            types: ["panel.instance"],
             doc: "the instance",
             isOptional: false,
             isVararg: false,
@@ -54,10 +50,10 @@ test("a module function lowers its param/return tokens to emitter-equivalent Typ
     ],
   };
 
-  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   expect(fn?.type).toBe("FUNCTION");
   expect(fn?.name).toBe("new");
-  expect(fn?.brief).toBe("Create a new Druid instance.\nLonger description.");
+  expect(fn?.brief).toBe("Create a new Panel instance.\nLonger description.");
   expect(fn?.parameters).toEqual([
     {
       name: "context",
@@ -74,7 +70,7 @@ test("a module function lowers its param/return tokens to emitter-equivalent Typ
       is_vararg: "False",
     },
   ]);
-  expect(fn?.returnvalues).toEqual([{ name: "", doc: "the instance", types: ["druid_instance"] }]);
+  expect(fn?.returnvalues).toEqual([{ name: "", doc: "the instance", types: ["panel_instance"] }]);
   expect(fn).not.toHaveProperty("generics");
 });
 
@@ -82,7 +78,7 @@ test("a method lowers a `boolean|nil` param and a dotted return to mapped TypeSc
   const model: LibraryModel = {
     interfaces: [
       {
-        name: "druid.button",
+        name: "panel.button",
         generics: [],
         fields: [],
         methods: [
@@ -102,7 +98,7 @@ test("a method lowers a `boolean|nil` param and a dotted return to mapped TypeSc
             returns: [
               {
                 name: "self",
-                types: ["druid.button"],
+                types: ["panel.button"],
                 doc: "",
                 isOptional: false,
                 isVararg: false,
@@ -117,8 +113,8 @@ test("a method lowers a `boolean|nil` param and a dotted return to mapped TypeSc
     moduleFunctions: [],
   };
 
-  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
-  expect(typedef?.name).toBe("druid_button");
+  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
+  expect(typedef?.name).toBe("panel_button");
   expect(typedef?.functions).toEqual([
     {
       type: "FUNCTION",
@@ -134,7 +130,7 @@ test("a method lowers a `boolean|nil` param and a dotted return to mapped TypeSc
           is_vararg: "False",
         },
       ],
-      returnvalues: [{ name: "", doc: "", types: ["druid_button"] }],
+      returnvalues: [{ name: "", doc: "", types: ["panel_button"] }],
     },
   ]);
 });
@@ -162,7 +158,7 @@ test("a `fun(...)` param token lowers to an arrow type", () => {
     ],
   };
 
-  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   expect(fn?.parameters).toEqual([
     {
       name: "cb",
@@ -191,7 +187,7 @@ test("a `...` param lowers with is_vararg True, name ...args, and the mapped ele
     ],
   };
 
-  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   expect(fn?.parameters).toEqual([
     {
       name: "...args",
@@ -207,7 +203,7 @@ test("a two-return method keeps two returnvalues entries with their distinct doc
   const model: LibraryModel = {
     interfaces: [
       {
-        name: "druid.text",
+        name: "panel.text",
         generics: [],
         fields: [],
         methods: [
@@ -249,7 +245,7 @@ test("a two-return method keeps two returnvalues entries with their distinct doc
     moduleFunctions: [],
   };
 
-  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   const fn = (typedef?.functions as Record<string, unknown>[])[0];
   expect(fn?.returnvalues).toEqual([
     { name: "", doc: "The text width", types: ["number"] },
@@ -259,27 +255,27 @@ test("a two-return method keeps two returnvalues entries with their distinct doc
 
 test("a dotted interface name and a dotted alias name lower to sanitized TYPEDEF names", () => {
   const model: LibraryModel = {
-    interfaces: [{ name: "druid.button", generics: [], fields: [], methods: [], brief: "" }],
-    aliases: [{ name: "druid.callback", types: ["fun():void"], doc: "" }],
+    interfaces: [{ name: "panel.button", generics: [], fields: [], methods: [], brief: "" }],
+    aliases: [{ name: "panel.callback", types: ["fun():void"], doc: "" }],
     moduleFunctions: [],
   };
 
-  const elements = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const elements = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   expect(elements.map((e) => [e.type, e.name])).toEqual([
-    ["TYPEDEF", "druid_button"],
-    ["TYPEDEF", "druid_callback"],
+    ["TYPEDEF", "panel_button"],
+    ["TYPEDEF", "panel_callback"],
   ]);
 });
 
 test("a generic module function carries a `generics` clause and keeps its bound `T`", () => {
   const model: LibraryModel = {
-    interfaces: [{ name: "druid.widget", generics: [], fields: [], methods: [], brief: "" }],
+    interfaces: [{ name: "panel.widget", generics: [], fields: [], methods: [], brief: "" }],
     aliases: [],
     moduleFunctions: [
       {
         name: "get_widget",
         brief: "Get a widget.",
-        generics: [{ name: "T", constraint: "druid.widget" }],
+        generics: [{ name: "T", constraint: "panel.widget" }],
         params: [
           {
             name: "widget_class",
@@ -304,8 +300,8 @@ test("a generic module function carries a `generics` clause and keeps its bound 
     ],
   };
 
-  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
-  expect(fn?.generics).toBe("<T extends druid_widget>");
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
+  expect(fn?.generics).toBe("<T extends panel_widget>");
   expect(fn?.parameters).toEqual([
     {
       name: "widget_class",
@@ -355,7 +351,7 @@ test("a generic interface method carries a `generics` clause and keeps its bound
     moduleFunctions: [],
   };
 
-  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   const fn = (typedef?.functions as Record<string, unknown>[])[0];
   expect(fn?.generics).toBe("<T>");
   expect(fn?.parameters).toEqual([
@@ -402,7 +398,7 @@ test("a non-public field and method are dropped; public members are kept and map
     moduleFunctions: [],
   };
 
-  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const [typedef] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   const props = typedef?.properties as { name: string; types: string[] }[];
   expect(props.map((p) => p.name)).toEqual(["kept", "shown"]);
   expect(props[0]?.types).toEqual(["number"]);
@@ -416,7 +412,7 @@ test("emits moduleFunctions, then interfaces, then aliases in order", () => {
     aliases: [{ name: "al", types: ["number"], doc: "" }],
     moduleFunctions: [{ name: "fn", brief: "", generics: [], params: [], returns: [] }],
   };
-  const elements = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const elements = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   expect(elements.map((e) => [e.type, e.name])).toEqual([
     ["FUNCTION", "fn"],
     ["TYPEDEF", "iface"],
@@ -457,7 +453,7 @@ test("a trailing nil-bearing param lowers to is_optional True; a mid-list one st
     ],
   };
 
-  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "druid" }));
+  const [fn] = elementsOf(lowerLibraryModel(model, { namespace: "panel" }));
   const flags = (fn?.parameters as { name: string; is_optional: string }[]).map((p) => [
     p.name,
     p.is_optional,
@@ -485,76 +481,28 @@ test("the lowered object round-trips through parseDefoldApiDoc", () => {
     aliases: [{ name: "al", types: ["number"], doc: "" }],
     moduleFunctions: [{ name: "fn", brief: "", generics: [], params: [], returns: [] }],
   };
-  const lowered = lowerLibraryModel(model, { namespace: "druid" });
+  const lowered = lowerLibraryModel(model, { namespace: "panel" });
   const parsed = parseDefoldApiDoc(lowered);
-  expect(parsed.namespace).toBe("druid");
+  expect(parsed.namespace).toBe("panel");
   expect(parsed.functions).toHaveLength(1);
   expect(parsed.typedefs).toHaveLength(2);
   expect(parsed.typedefs[0]?.functions).toHaveLength(1);
   expect(parsed.typedefs[0]?.properties).toHaveLength(1);
 });
 
-test("the committed druid golden carries the emitter-equivalent vararg + multi-return shape", () => {
-  const packageRoot = LIBRARY_TYPES_ROOT;
-  const golden = JSON.parse(readFileSync(join(packageRoot, "api-doc", "druid.json"), "utf8"));
-  const typedef = (name: string) =>
-    (golden.elements as Record<string, unknown>[]).find(
-      (e) => e.type === "TYPEDEF" && e.name === name,
-    );
-  const method = (typeName: string, fnName: string) =>
-    ((typedef(typeName)?.functions as Record<string, unknown>[]) ?? []).find(
-      (f) => f.name === fnName,
-    );
-
-  const translate = method("druid_lang_text", "translate");
-  expect(translate?.parameters).toEqual([
-    {
-      name: "locale_id",
-      doc: "Locale id to get text from",
-      types: ["string"],
-      is_optional: "False",
-      is_vararg: "False",
-    },
-    {
-      name: "...args",
-      doc: "Optional params for string.format",
-      types: ["string"],
-      is_optional: "False",
-      is_vararg: "True",
-    },
-  ]);
-
-  const format = method("druid_lang_text", "format");
-  expect(format?.parameters).toEqual([
-    {
-      name: "...args",
-      doc: "Optional params for string.format",
-      types: ["string"],
-      is_optional: "False",
-      is_vararg: "True",
-    },
-  ]);
-
-  const getTextSize = method("druid_text", "get_text_size");
-  expect(getTextSize?.returnvalues).toEqual([
-    { name: "", doc: "The text width", types: ["number"] },
-    { name: "", doc: "The text height", types: ["number"] },
-  ]);
-});
-
 test("a moduleObject sources the page description and lowers its fields as module-level VARIABLEs, not a TYPEDEF", () => {
   const model: LibraryModel = {
-    moduleObject: "Squid",
+    moduleObject: "Ledger",
     interfaces: [
       {
-        name: "Squid",
+        name: "Ledger",
         generics: [],
         fields: [
           { name: "TRACE", types: ["integer"], doc: "trace level", isOptional: false },
           { name: "ALLOWLIST", types: ["table"], doc: "the allowlist", isOptional: false },
         ],
         methods: [],
-        brief: "The squid module.\nSaveable logging.",
+        brief: "The ledger module.\nSaveable logging.",
       },
     ],
     aliases: [],
@@ -568,11 +516,11 @@ test("a moduleObject sources the page description and lowers its fields as modul
       },
     ],
   };
-  const lowered = lowerLibraryModel(model, { namespace: "squid" });
+  const lowered = lowerLibraryModel(model, { namespace: "ledger" });
   const info = isRecord(lowered) && isRecord(lowered.info) ? lowered.info : {};
   // The page description comes from the moduleObject class, though its name != namespace.
-  expect(info.description).toBe("The squid module.\nSaveable logging.");
-  expect(info.brief).toBe("The squid module.");
+  expect(info.description).toBe("The ledger module.\nSaveable logging.");
+  expect(info.brief).toBe("The ledger module.");
   const elements = elementsOf(lowered);
   // Module constants lower as top-level VARIABLE elements with mapped types.
   const trace = elements.find((e) => e.type === "VARIABLE" && e.name === "TRACE");
@@ -585,7 +533,7 @@ test("a moduleObject sources the page description and lowers its fields as modul
   });
   expect(elements.find((e) => e.type === "VARIABLE" && e.name === "ALLOWLIST")).toBeDefined();
   // The moduleObject is not lowered as a TYPEDEF named after the class.
-  expect(elements.some((e) => e.type === "TYPEDEF" && e.name === "Squid")).toBe(false);
+  expect(elements.some((e) => e.type === "TYPEDEF" && e.name === "Ledger")).toBe(false);
 });
 
 test("each module constant lowers as a top-level VARIABLE with its mapped type", () => {
@@ -615,48 +563,22 @@ test("with no moduleObject, the namespace-named class still sources the descript
   const model: LibraryModel = {
     interfaces: [
       {
-        name: "druid",
+        name: "panel",
         generics: [],
         fields: [{ name: "config", types: ["table"], doc: "cfg", isOptional: false }],
         methods: [],
-        brief: "The druid module.",
+        brief: "The panel module.",
       },
     ],
     aliases: [],
     moduleFunctions: [],
   };
-  const lowered = lowerLibraryModel(model, { namespace: "druid" });
+  const lowered = lowerLibraryModel(model, { namespace: "panel" });
   const info = isRecord(lowered) && isRecord(lowered.info) ? lowered.info : {};
-  expect(info.description).toBe("The druid module.");
+  expect(info.description).toBe("The panel module.");
   const elements = elementsOf(lowered);
-  expect(elements.some((e) => e.type === "TYPEDEF" && e.name === "druid")).toBe(true);
+  expect(elements.some((e) => e.type === "TYPEDEF" && e.name === "panel")).toBe(true);
   expect(elements.some((e) => e.type === "VARIABLE")).toBe(false);
-});
-
-const packageRoot = LIBRARY_TYPES_ROOT;
-const targets = readLualsTargets(LIBRARY_DATA_DIR);
-
-for (const target of targets) {
-  test(`regenerating ${target.namespace} from the committed fixtures matches its committed api-doc golden byte-for-byte`, () => {
-    const model = buildTargetModel(LIBRARY_DATA_DIR, target);
-    const lowered = lowerLibraryModel(model, {
-      namespace: target.namespace,
-      typeRenames: target.typeRenames,
-      externalTypes: target.externalTypes,
-    });
-    const emitted = `${JSON.stringify(lowered, null, 2)}\n`;
-    const golden = readFileSync(join(packageRoot, "api-doc", `${target.namespace}.json`), "utf8");
-
-    expect(emitted).toBe(golden);
-  });
-}
-
-test("the regen-drift guard covers every LuaLS target (druid, decore, tweener)", () => {
-  expect(targets.length).toBeGreaterThan(0);
-  const namespaces = new Set(targets.map((t) => t.namespace));
-  for (const required of ["druid", "decore", "tweener"]) {
-    expect(namespaces.has(required)).toBe(true);
-  }
 });
 
 test("an external token lowers to its local alias, not unknown and not an import expression", () => {
@@ -772,32 +694,6 @@ test("a tagged module function, method, interface and alias each lower their dep
   const mode = byName("mode");
   expect(mode && Object.keys(mode)).not.toContain("deprecated");
 });
-
-test("the committed druid golden marks druid_text's set_to deprecated, leaving its set_text sibling untagged", () => {
-  const golden = JSON.parse(readFileSync(join(packageRoot, "api-doc", "druid.json"), "utf8"));
-  const text = elementsOf(golden).find((e) => e.name === "druid_text");
-  const functions = text?.functions as Record<string, unknown>[];
-
-  expect(functions.find((f) => f.name === "set_to")?.deprecated).toBe("Use set_text instead");
-  const setText = functions.find((f) => f.name === "set_text");
-  expect(setText && Object.keys(setText)).not.toContain("deprecated");
-});
-
-for (const namespace of ["saver.storage", "saver.saver"]) {
-  test(`the committed ${namespace} golden marks the saver_storage_state typedef deprecated, leaving its neighbours untagged`, () => {
-    const golden = JSON.parse(
-      readFileSync(join(packageRoot, "api-doc", `${namespace}.json`), "utf8"),
-    );
-    const elements = elementsOf(golden);
-
-    expect(elements.find((e) => e.name === "saver_storage_state")?.deprecated).toBe("");
-    for (const neighbour of ["saver_state", "saver_game_state"]) {
-      const found = elements.find((e) => e.name === neighbour);
-      expect(found).toBeDefined();
-      expect(found && Object.keys(found)).not.toContain("deprecated");
-    }
-  });
-}
 
 test("a string-keyed table param lowers to the same widened type the emitter declares", () => {
   const model: LibraryModel = {

@@ -10,74 +10,78 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import {
   authoredFloorRegressions,
-  authoredParityPath,
   authoredParityTargets,
   collectAuthoredParity,
 } from "./authored-parity";
 import { readLibraryData } from "./library-data";
 import { parityFloorsByReport } from "./library-floors";
-import { NATIVE_PARITY_DIR, nativeParityPath } from "./native-parity";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
+import { NATIVE_PARITY_DIR } from "./native-parity";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { readAuthoredTargets } from "./sync-authored-types";
 import { readNativeTargets } from "./sync-native-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const DATA_DIR = LIBRARY_DATA_DIR;
 const PARITY_DIR = "fidelity/authored";
-const REGENERATE = "bun packages/cli/src/library/authored-parity.ts --data <dir>";
 
-const ARTIFACTS = {
-  ...collectAuthoredParity(PACKAGE_ROOT),
-  ...collectAuthoredParity(PACKAGE_ROOT, NATIVE_PARITY_DIR),
-};
-const FLOORS = parityFloorsByReport(readLibraryData(DATA_DIR));
+const roots: string[] = [];
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+function tempRoot(): string {
+  const root = mkdtempSync(join(tmpdir(), "authored-parity-"));
+  roots.push(root);
+  return root;
+}
+
+/** A package root holding one parity report under `dir`, so each case exercises the
+ * collector over the JSON a regenerated report would write rather than over an
+ * artifact the test hands `authoredFloorRegressions` directly. */
+function reportRoot(dir: string, report: Record<string, unknown>): string {
+  const root = tempRoot();
+  mkdirSync(join(root, dir), { recursive: true });
+  writeFileSync(join(root, dir, "x.json"), JSON.stringify(report));
+  return root;
+}
 
 describe("the authored-lane surface-parity ratchet", () => {
-  test("the walk finds the committed artifacts, so the gate cannot pass vacuously", () => {
-    expect(Object.keys(ARTIFACTS).length).toBeGreaterThan(0);
-    expect(Object.keys(ARTIFACTS)).toEqual(
-      [
-        ...authoredParityTargets(DATA_DIR).map((target) => authoredParityPath(target)),
-        ...readNativeTargets(DATA_DIR).map((target) => nativeParityPath(target)),
-      ].sort(),
-    );
-  });
-
-  test("every committed parity artifact has a floor entry", () => {
-    const missing = Object.keys(ARTIFACTS)
-      .filter((path) => FLOORS[path] === undefined)
-      .map((path) => `${path}: no floor entry — add one at its current coverage`);
-    expect(missing).toEqual([]);
-  });
-
-  test("every floor entry names an artifact that exists", () => {
-    const stale = Object.keys(FLOORS)
-      .filter((path) => ARTIFACTS[path] === undefined)
-      .map((path) => `${path}: floor entry has no such artifact — drop the key from its library`);
-    expect(stale).toEqual([]);
-  });
-
-  test("neither axis of any artifact sits below its floor", () => {
-    expect(authoredFloorRegressions(ARTIFACTS, FLOORS)).toEqual([]);
-  });
-
+  // Listed out of key order, so only the sort can put the floors in key order.
   test("the floors read back sorted by artifact", () => {
-    const keys = Object.keys(FLOORS);
-    expect(keys).toEqual([...keys].sort());
+    const root = tempRoot();
+    writeLibraryTargets(root, {
+      forks: ["zeta", "alpha"].map((name) => ({
+        repo: "https://github.com/example/ordering",
+        ref: "1.0.0",
+        authored: `fork/${name}.${name}.d.ts`,
+        moduleId: `${name}.${name}`,
+        namespace: name,
+        apiDoc: `api-doc/${name}.json`,
+        upstreamLua: [`source/upstream/${name}.lua`],
+      })),
+      floors: {
+        ordering: {
+          "zeta.zeta": { callable: 1, field: 1 },
+          "alpha.alpha": { callable: 0.5, field: 0.25 },
+        },
+      },
+    });
+    const floors = parityFloorsByReport(readLibraryData(root));
+    expect(Object.keys(floors)).toEqual([`${PARITY_DIR}/alpha.json`, `${PARITY_DIR}/zeta.json`]);
+    expect(floors).toEqual({
+      [`${PARITY_DIR}/alpha.json`]: { callable: 0.5, field: 0.25 },
+      [`${PARITY_DIR}/zeta.json`]: { callable: 1, field: 1 },
+    });
   });
 });
 
 describe("every committed floor covers both axes", () => {
   test("each artifact's floor parses into two axes", () => {
-    for (const [key, floor] of Object.entries(FLOORS)) {
-      expect(typeof floor.callable).toBe("number");
-      expect(typeof floor.field).toBe("number");
-      expect(key.startsWith(`${PARITY_DIR}/`) || key.startsWith(`${NATIVE_PARITY_DIR}/`)).toBe(
-        true,
-      );
-    }
+    expect(parityFloorsByReport(readLibraryData(FIXTURE_DATA_DIR))).toEqual({
+      [`${PARITY_DIR}/tally.json`]: { callable: 1, field: 1 },
+      [`${NATIVE_PARITY_DIR}/stamp.json`]: { callable: 1, field: 1 },
+    });
   });
 });
 
@@ -159,33 +163,7 @@ describe("the two-axis ratchet reports each axis on its own", () => {
   });
 });
 
-describe("the committed native artifacts carry the module-name verdict", () => {
-  test("a renamed or absent moduleNameMatches cannot read as undefined and pass", () => {
-    const native = Object.entries(ARTIFACTS).filter(([path]) =>
-      path.startsWith(`${NATIVE_PARITY_DIR}/`),
-    );
-    expect(native.length).toBe(readNativeTargets(DATA_DIR).length);
-    for (const [, artifact] of native) expect(typeof artifact.moduleNameMatches).toBe("boolean");
-  });
-});
-
 describe("the collector carries the arity axis a measured report declares", () => {
-  const roots: string[] = [];
-  afterEach(() => {
-    for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-  });
-
-  /** A package root holding one parity report under `dir`, so each case exercises the
-   * collector over the JSON a regenerated report would write rather than over an
-   * artifact the test hands `authoredFloorRegressions` directly. */
-  function reportRoot(dir: string, report: Record<string, unknown>): string {
-    const root = mkdtempSync(join(tmpdir(), "authored-parity-"));
-    roots.push(root);
-    mkdirSync(join(root, dir), { recursive: true });
-    writeFileSync(join(root, dir, "x.json"), JSON.stringify(report));
-    return root;
-  }
-
   const KEY = `${NATIVE_PARITY_DIR}/x.json`;
   const FULL_FLOOR = { [KEY]: { callable: 1, field: 1 } };
 
@@ -251,37 +229,32 @@ describe("the collector carries the arity axis a measured report declares", () =
     expect(artifacts[key]?.arityMismatches).toBeUndefined();
     expect(authoredFloorRegressions(artifacts, { [key]: { callable: 1, field: 1 } })).toEqual([]);
   });
-
-  test("every committed native report declaring the axis is collected with a list", () => {
-    const measured = readdirSync(join(PACKAGE_ROOT, NATIVE_PARITY_DIR))
-      .filter((name) => name.endsWith(".json"))
-      .filter((name) => {
-        const raw = JSON.parse(
-          readFileSync(join(PACKAGE_ROOT, NATIVE_PARITY_DIR, name), "utf8"),
-        ) as Record<string, unknown>;
-        return raw.arityMeasured === true;
-      });
-    expect(measured.length).toBeGreaterThan(0);
-    for (const name of measured) {
-      expect(ARTIFACTS[`${NATIVE_PARITY_DIR}/${name}`]?.arityMismatches).toBeInstanceOf(Array);
-    }
-  });
 });
 
-describe("the committed artifacts carry both coverage keys", () => {
+describe("a collected artifact carries both coverage keys", () => {
   test("a renamed or absent axis key cannot read as undefined and compare nothing", () => {
-    for (const name of readdirSync(join(PACKAGE_ROOT, PARITY_DIR)).sort()) {
-      if (!name.endsWith(".json")) continue;
-      const raw = JSON.parse(readFileSync(join(PACKAGE_ROOT, PARITY_DIR, name), "utf8")) as Record<
-        string,
-        unknown
-      >;
-      expect(typeof raw.callableCoverage).toBe("number");
-      expect(typeof raw.fieldCoverage).toBe("number");
-      expect(raw.coverage).toBeUndefined();
+    for (const report of [
+      { namespace: "x", fieldCoverage: 1 },
+      { namespace: "x", callableCoverage: 1 },
+      { namespace: "x", coverage: 1 },
+      { namespace: "x", callableCoverage: "1", fieldCoverage: 1 },
+    ]) {
+      const root = reportRoot(PARITY_DIR, report);
+      expect(() => collectAuthoredParity(root, PARITY_DIR)).toThrow(/fidelity\/authored\/x\.json/);
     }
+    const root = reportRoot(PARITY_DIR, {
+      namespace: "x",
+      callableCoverage: 1,
+      fieldCoverage: 0.5,
+    });
+    expect(collectAuthoredParity(root, PARITY_DIR)).toEqual({
+      [`${PARITY_DIR}/x.json`]: { namespace: "x", callableCoverage: 1, fieldCoverage: 0.5 },
+    });
   });
 });
+
+const DATA_DIR = LIBRARY_DATA_DIR;
+const REGENERATE = "bun packages/cli/src/library/authored-parity.ts --data <dir>";
 
 function upstreamFiles(dir: string, prefix: string, out: string[]): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
