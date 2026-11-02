@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseMarkdownApi } from "./parse-markdown-api";
 import { printCorpus } from "./print-corpus";
@@ -17,17 +18,16 @@ import {
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
+const LANES = LANE_EVALUATIONS_ROOT;
 
 // The authored forks a severed verdict compares against sit in the library data
-// folder; the markdown snapshots and ts-defold paths stay at the package root.
+// folder; the markdown snapshots and ts-defold paths sit in the lane evaluations.
 function fixtureFile(path: string): string {
-  return join(path.startsWith("fixtures/") ? PACKAGE_ROOT : DATA_DIR, path);
+  return join(path.startsWith("fixtures/") ? LANES : DATA_DIR, path);
 }
 
 function orthographicTarget(): MarkdownTarget {
-  const target = readMarkdownTargets(PACKAGE_ROOT).find(
-    (t) => t.moduleId === "orthographic.camera",
-  );
+  const target = readMarkdownTargets(LANES).find((t) => t.moduleId === "orthographic.camera");
   if (target === undefined) throw new Error("orthographic.camera target missing");
   return target;
 }
@@ -45,7 +45,7 @@ const AUTHORED_SNAPSHOT = "defold-orthographic/fork/orthographic.camera.d.ts";
 
 async function comparison() {
   const target = orthographicTarget();
-  const markdownEmittedDts = await emitMarkdownDeclaration(PACKAGE_ROOT, target);
+  const markdownEmittedDts = await emitMarkdownDeclaration(LANES, target);
   const tsDefold = readFileSync(fixtureFile(AUTHORED_SNAPSHOT), "utf8");
   return { target, ...compareFidelityToTsDefold(markdownEmittedDts, tsDefold) };
 }
@@ -214,9 +214,9 @@ function severedFor(record: LibraryRecord, module: string): SeveredSource | unde
  * guesses would miss. `writeClassification` derives the classification name from
  * the upstream filename, which is what `basename(path)` reproduces. */
 function targetFor(moduleId: string, severed?: SeveredSource): LibraryTargetRow {
-  const { targets } = JSON.parse(
-    readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-  ) as { targets: LibraryTargetRow[] };
+  const { targets } = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+    targets: LibraryTargetRow[];
+  };
   const row = targets.find((t) => t.module === moduleId);
   if (row !== undefined) return row;
   if (severed !== undefined) {
@@ -246,7 +246,7 @@ function candidateTarget(record: LibraryRecord, decision: ModuleDecision): Markd
 
 function fixtureText(record: LibraryRecord, decision: ModuleDecision): string {
   return readFileSync(
-    join(PACKAGE_ROOT, "fixtures/markdown", `${record.prefix}${decision.module}.md`),
+    join(LANES, "fixtures/markdown", `${record.prefix}${decision.module}.md`),
     "utf8",
   );
 }
@@ -280,7 +280,7 @@ function filterToReceiver(markdown: string, receiver: string): string {
  */
 async function comparisonForMarkdown(markdown: string, moduleId: string, severed?: SeveredSource) {
   const doc = retargetDoc(parseMarkdownApi(markdown, moduleId), moduleId);
-  const regen = (await import(join(PACKAGE_ROOT, "..", "types", "scripts", "regen.ts"))) as {
+  const regen = (await import("@defold-typescript/types/cli-runtime")) as {
     generateModuleDeclaration: (entry: {
       namespace: string;
       doc: unknown;
@@ -314,7 +314,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
   describe(`${library} per-module fidelity decisions at tag ${ref}`, () => {
     test("the decision record covers exactly the library's library-targets modules", () => {
       const libraryTargets = JSON.parse(
-        readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+        readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
       ) as { targets: { module: string }[] };
       const shipped = libraryTargets.targets
         .map((t) => t.module)
@@ -335,9 +335,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
         noMarkdown,
       )(`${record.prefix}$module ships no upstream .md, so it has no snapshot to parse`, (decision) => {
         expect(
-          existsSync(
-            join(PACKAGE_ROOT, "fixtures/markdown", `${record.prefix}${decision.module}.md`),
-          ),
+          existsSync(join(LANES, "fixtures/markdown", `${record.prefix}${decision.module}.md`)),
         ).toBe(false);
       });
     }
@@ -397,7 +395,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
   if (noGo.length > 0 && severedCount === 0) {
     describe(`every no-go ${library} module stays ts-defold-sourced`, () => {
       const shippedModules = (
-        JSON.parse(readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8")) as {
+        JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
           targets: { module: string }[];
         }
       ).targets.map((t) => t.module);
@@ -412,7 +410,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       });
 
       test("no no-go module is registered as a markdown target", () => {
-        const registered = readMarkdownTargets(PACKAGE_ROOT).map((t) => t.moduleId);
+        const registered = readMarkdownTargets(LANES).map((t) => t.moduleId);
         for (const decision of noGo) {
           expect(registered).not.toContain(`${record.prefix}${decision.module}`);
         }
@@ -420,7 +418,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 
       test(`the ${record.classificationDir} dir retains exactly the modules that stayed`, () => {
         const classification = JSON.parse(
-          readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+          readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
         ) as { dirs: { dir: string; modules: string[] }[] };
         const entry = classification.dirs.find((d) => d.dir === record.classificationDir);
         expect(entry).toBeDefined();
@@ -434,7 +432,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
   if (noGo.length > 0 && severedCount > 0) {
     describe(`every no-go ${library} module severed ts-defold for the authored lane`, () => {
       const shippedModules = (
-        JSON.parse(readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8")) as {
+        JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
           targets: { module: string }[];
         }
       ).targets.map((t) => t.module);
@@ -455,7 +453,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
       });
 
       test("no no-go module is registered as a markdown target", () => {
-        const registered = readMarkdownTargets(PACKAGE_ROOT).map((t) => t.moduleId);
+        const registered = readMarkdownTargets(LANES).map((t) => t.moduleId);
         for (const decision of noGo) {
           expect(registered).not.toContain(`${record.prefix}${decision.module}`);
         }
@@ -463,7 +461,7 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 
       test(`the ${record.classificationDir} dir is gone from library-classification.json`, () => {
         const classification = JSON.parse(
-          readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+          readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
         ) as { dirs: { dir: string }[] };
         expect(classification.dirs.some((d) => d.dir === record.classificationDir)).toBe(false);
       });
@@ -1392,7 +1390,7 @@ const severedSnapshot = (decision: ModuleDecision): string | undefined =>
 
 const comparisonFor = (record: LibraryRecord, module: string) =>
   evaluateMarkdownCandidate(
-    PACKAGE_ROOT,
+    LANES,
     candidateTarget(record, decisionFor(record, module)),
     severedSnapshot(decisionFor(record, module)),
   );
@@ -1789,14 +1787,14 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
   });
 
   test("monarch.transitions.easings has no upstream doc anywhere in the repo", () => {
-    expect(
-      existsSync(join(PACKAGE_ROOT, "fixtures/markdown", "monarch.transitions.easings.md")),
-    ).toBe(false);
+    expect(existsSync(join(LANES, "fixtures/markdown", "monarch.transitions.easings.md"))).toBe(
+      false,
+    );
   });
 
   test("monarch.transitions.gui documents its signatures only in prose bullets", () => {
     const text = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/markdown", "monarch.transitions.gui.md"),
+      join(LANES, "fixtures/markdown", "monarch.transitions.gui.md"),
       "utf8",
     );
     expect(() => parseMarkdownApi(text, "monarch.transitions.gui")).toThrow(
@@ -2098,7 +2096,7 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
 
 describe("checkpoint markdown re-measurement at pin e4268ff", () => {
   const README = "fixtures/markdown/checkpoint.checkpoint.md";
-  const readme = () => readFileSync(join(PACKAGE_ROOT, README), "utf8");
+  const readme = () => readFileSync(join(LANES, README), "utf8");
   const parse = () => parseMarkdownApi(readme(), "checkpoint.checkpoint");
 
   // `authored-add-checkpoint` measured this README against the narrow front-end

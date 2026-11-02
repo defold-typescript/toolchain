@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { copyFileSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
@@ -28,6 +28,8 @@ import {
   readPortalVerdicts,
   runAssetPortalCheckCli,
 } from "./asset-portal-check.ts";
+
+const DATA_DIR = newestDataFolder(join(import.meta.dir, "..", "packages", "library-types"));
 
 const SYNCED_AT = "2026-10-21T00:00:00.000Z";
 const DAY_MS = 86_400_000;
@@ -155,32 +157,26 @@ describe("portalCoverage — lane join", () => {
 });
 
 describe("readCoverageRegistries — the portal lane", () => {
-  const REAL_PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
-  const REAL_DATA_DIR = newestDataFolder(REAL_PACKAGE_ROOT);
-
-  function packageRootCopy(): string {
-    const root = mkdtempSync(join(tmpdir(), "coverage-registries-"));
-    for (const file of readdirSync(REAL_PACKAGE_ROOT)) {
-      if (file.endsWith(".json") && file !== "asset-portal-script-api.json") {
-        copyFileSync(join(REAL_PACKAGE_ROOT, file), join(root, file));
-      }
-    }
-    return root;
+  // A data folder holding no library folders, so only the two registries vary.
+  function dataFolderCopy(): string {
+    const dir = mkdtempSync(join(tmpdir(), "coverage-registries-"));
+    copyFileSync(join(DATA_DIR, "defold-extensions.json"), join(dir, "defold-extensions.json"));
+    return dir;
   }
 
-  test("a package root without asset-portal-script-api.json pins nothing on the portal lane", () => {
-    expect(readCoverageRegistries(packageRootCopy(), REAL_DATA_DIR).portal).toEqual([]);
+  test("a data folder without asset-portal-script-api.json pins nothing on the portal lane", () => {
+    expect(readCoverageRegistries(dataFolderCopy()).portal).toEqual([]);
   });
 
   test("each library asset-portal-script-api.json lists is pinned on the portal lane", () => {
-    const root = packageRootCopy();
+    const dir = dataFolderCopy();
     writeFileSync(
-      join(root, "asset-portal-script-api.json"),
+      join(dir, "asset-portal-script-api.json"),
       JSON.stringify({ libraries: [{ id: "defos", repo: "https://github.com/subsoap/defos" }] }),
     );
-    expect(
-      readCoverageRegistries(root, REAL_DATA_DIR).portal.map((library) => library.repo),
-    ).toEqual(["https://github.com/subsoap/defos"]);
+    expect(readCoverageRegistries(dir).portal.map((library) => library.repo)).toEqual([
+      "https://github.com/subsoap/defos",
+    ]);
   });
 });
 
@@ -218,10 +214,10 @@ describe("portalCoverage — aliases", () => {
   test("the committed alias file validates against the committed manifest and registries", () => {
     expect(() =>
       portalCoverage(
-        readAssetPortalManifest(),
-        readCoverageRegistries(),
-        readPortalAliases(),
-        readPortalVerdicts(),
+        readAssetPortalManifest(DATA_DIR),
+        readCoverageRegistries(DATA_DIR),
+        readPortalAliases(DATA_DIR),
+        readPortalVerdicts(DATA_DIR),
       ),
     ).not.toThrow();
   });
@@ -284,10 +280,10 @@ describe("portalCoverage — verdicts", () => {
   test("the committed verdicts file validates against the committed manifest, registries and aliases", () => {
     expect(() =>
       portalCoverage(
-        readAssetPortalManifest(),
-        readCoverageRegistries(),
-        readPortalAliases(),
-        readPortalVerdicts(),
+        readAssetPortalManifest(DATA_DIR),
+        readCoverageRegistries(DATA_DIR),
+        readPortalAliases(DATA_DIR),
+        readPortalVerdicts(DATA_DIR),
       ),
     ).not.toThrow();
   });
@@ -538,7 +534,9 @@ describe("portalDrift", () => {
     expect(report.issueTitle).toBe(PORTAL_DRIFT_ISSUE_TITLE);
     expect(PORTAL_DRIFT_ISSUE_TITLE).toBe("Asset portal entries differ from asset-portal.json");
     expect(report.issueBody).toContain("https://github.com/acme/fresh");
-    expect(report.issueBody).toContain("bun run --cwd packages/library-types asset-portal:sync");
+    expect(report.issueBody).toContain(
+      "bun packages/cli/src/library/sync-asset-portal.ts --fetch --data <dir>",
+    );
     expect(head.entryCalls).toEqual(["fresh.json"]);
   });
 
@@ -549,7 +547,9 @@ describe("portalDrift", () => {
     expect(report.removed).toEqual(["dropped"]);
     expect(report.issueTitle).toBe(PORTAL_DRIFT_ISSUE_TITLE);
     expect(report.issueBody).toContain("`dropped`");
-    expect(report.issueBody).toContain("bun run --cwd packages/library-types asset-portal:sync");
+    expect(report.issueBody).toContain(
+      "bun packages/cli/src/library/sync-asset-portal.ts --fetch --data <dir>",
+    );
   });
 
   test("changed content under the same ids is not actionable and reads no entry", async () => {
@@ -586,6 +586,19 @@ function cliIo(head: PortalHead): AssetPortalCheckIo & { out: string[]; err: str
 }
 
 describe("runAssetPortalCheckCli", () => {
+  test("a run without --data exits 1 naming the flag, and reads no head", async () => {
+    const seam = cliIo({
+      ...portalHead({}),
+      head: async () => {
+        throw new Error("the head must not be read");
+      },
+    });
+    const code = await runAssetPortalCheckCli(["--report"], seam);
+    expect(code).toBe(1);
+    expect(seam.err.join("")).toContain("scripts/asset-portal-check.ts --data <dir>");
+    expect(seam.out).toHaveLength(0);
+  });
+
   test("an unreadable head exits 1 with the error on stderr", async () => {
     const seam = cliIo({
       ...portalHead({}),
@@ -593,7 +606,7 @@ describe("runAssetPortalCheckCli", () => {
         throw new Error("network down");
       },
     });
-    const code = await runAssetPortalCheckCli(["--json"], seam);
+    const code = await runAssetPortalCheckCli(["--json"], seam, DATA_DIR);
     expect(code).toBe(1);
     const report = JSON.parse(seam.out.join("")) as PortalDriftReport;
     expect(report.command).toBe("asset-portal:check");
@@ -602,10 +615,10 @@ describe("runAssetPortalCheckCli", () => {
   });
 
   test("drift is a finding: exit 0 with the report on stdout", async () => {
-    const committed = readAssetPortalManifest();
+    const committed = readAssetPortalManifest(DATA_DIR);
     const files = Object.fromEntries(committed.entries.map((e) => [`${e.id}.json`, asset(e.id)]));
     const seam = cliIo(portalHead({ ...files, "brand-new.json": asset("brand-new") }));
-    const code = await runAssetPortalCheckCli(["--json"], seam);
+    const code = await runAssetPortalCheckCli(["--json"], seam, DATA_DIR);
     expect(code).toBe(0);
     const report = JSON.parse(seam.out.join("")) as PortalDriftReport;
     expect(report.pinnedCommit).toBe(committed.source.commit);

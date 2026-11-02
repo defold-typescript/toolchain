@@ -234,14 +234,14 @@ describe("defcon.console migration integrity", () => {
 
   test("defcon.console is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "defcon.console")).toBe(false);
   });
 
   test("the defcon dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defcon")).toBe(false);
   });
@@ -259,14 +259,14 @@ describe("deftest.deftest migration integrity", () => {
 
   test("deftest.deftest is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "deftest.deftest")).toBe(false);
   });
 
   test("the deftest dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "deftest")).toBe(false);
   });
@@ -296,14 +296,14 @@ describe("defmath.defmath migration integrity", () => {
 
   test("defmath.defmath is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "defmath.defmath")).toBe(false);
   });
 
   test("the defmath dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defmath")).toBe(false);
   });
@@ -332,14 +332,14 @@ describe("zzfx.api migration integrity", () => {
 
   test("zzfx.api is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "zzfx.api")).toBe(false);
   });
 
   test("the defold-zzfx dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defold-zzfx")).toBe(false);
   });
@@ -364,7 +364,7 @@ describe("nakama helpers migration integrity", () => {
 
   test("neither helper is a ts-defold library-targets row any longer", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "nakama.engine.defold")).toBe(false);
     expect(targets.some((t) => t.module === "nakama.util.log")).toBe(false);
@@ -376,7 +376,7 @@ describe("nakama helpers migration integrity", () => {
   // a helper — which is what a regen resurrecting the dir would violate.
   test("no classification entry claims either helper, and the dir they shared is gone", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string; modules: string[] }[] };
     expect(dirs.some((c) => c.dir === "nakama-defold")).toBe(false);
     const modules = dirs.flatMap((c) => c.modules);
@@ -401,14 +401,14 @@ describe("boom.boom migration integrity", () => {
 
   test("boom.boom is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "boom.boom")).toBe(false);
   });
 
   test("the boom dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "boom")).toBe(false);
   });
@@ -465,14 +465,14 @@ describe("defsave.defsave migration integrity", () => {
 
   test("defsave.defsave is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "defsave.defsave")).toBe(false);
   });
 
   test("the defsave dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defsave")).toBe(false);
   });
@@ -522,14 +522,14 @@ describe("persist.persist migration integrity", () => {
 
   test("persist.persist is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "persist.persist")).toBe(false);
   });
 
   test("the library-defold-persist dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "library-defold-persist")).toBe(false);
   });
@@ -562,14 +562,14 @@ describe("orthographic.camera migration integrity", () => {
 
   test("orthographic.camera is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "orthographic.camera")).toBe(false);
   });
 
   test("the defold-orthographic dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defold-orthographic")).toBe(false);
   });
@@ -612,14 +612,14 @@ describe("yagames.yagames migration integrity", () => {
 
   test("yagames.yagames is no longer a ts-defold library-targets row", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "yagames.yagames")).toBe(false);
   });
 
   test("the defold-yagames dir is gone from library-classification.json", () => {
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defold-yagames")).toBe(false);
   });
@@ -725,13 +725,13 @@ describe("defold-input migration integrity", () => {
 
   test("none of the ten is a ts-defold library-targets row and the defold-input dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     for (const mod of MODULES) {
       expect(targets.some((t) => t.module === `in.${mod}`)).toBe(false);
     }
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defold-input")).toBe(false);
   });
@@ -799,13 +799,13 @@ describe("monarch migration integrity", () => {
   // severance has to re-pin.
   test("none of the three is a ts-defold library-targets row and the monarch dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     for (const mod of MODULES) {
       expect(targets.some((t) => t.module === `monarch.${mod}`)).toBe(false);
     }
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "monarch")).toBe(false);
   });
@@ -875,7 +875,7 @@ describe("richtext migration integrity", () => {
 
   test("none of the three is a ts-defold library-targets row and the defold-richtext dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     for (const mod of MODULES) {
       expect(targets.some((t) => t.module === `richtext.${mod}`)).toBe(false);
@@ -883,7 +883,7 @@ describe("richtext migration integrity", () => {
     // The global row count is pinned once, in the newest cutover's describe, so
     // it does not need an edit in every severance that came before.
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defold-richtext")).toBe(false);
   });
@@ -975,13 +975,13 @@ describe("metrics migration integrity", () => {
 
   test("neither is a ts-defold library-targets row and the defold-metrics dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     for (const mod of MODULES) {
       expect(targets.some((t) => t.module === `metrics.${mod}`)).toBe(false);
     }
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "defold-metrics")).toBe(false);
   });
@@ -1054,11 +1054,11 @@ describe("gooey.gooey migration integrity", () => {
 
   test("gooey.gooey is no longer a ts-defold library-targets row and the gooey dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "gooey.gooey")).toBe(false);
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "gooey")).toBe(false);
   });
@@ -1114,11 +1114,11 @@ describe("bzAnim.bzLibrary migration integrity", () => {
 
   test("bzAnim.bzLibrary is no longer a ts-defold library-targets row and the bzAnim dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "bzAnim.bzLibrary")).toBe(false);
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "bzAnim")).toBe(false);
   });
@@ -1250,11 +1250,11 @@ describe("platypus.platypus migration integrity", () => {
 
   test("platypus.platypus is no longer a ts-defold library-targets row and the platypus dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "platypus.platypus")).toBe(false);
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "platypus")).toBe(false);
   });
@@ -1372,11 +1372,11 @@ describe("dicebag.dicebag migration integrity", () => {
 
   test("dicebag.dicebag is no longer a ts-defold library-targets row and the dicebag dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "dicebag.dicebag")).toBe(false);
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "dicebag")).toBe(false);
   });
@@ -1454,11 +1454,11 @@ describe("rendy.rendy migration integrity", () => {
 
   test("rendy.rendy is no longer a ts-defold library-targets row and the dir is gone", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "rendy.rendy")).toBe(false);
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "library-defold-rendy")).toBe(false);
   });
@@ -1565,14 +1565,14 @@ describe("nakama.nakama migration integrity", () => {
 
   test("nakama.nakama is the last ts-defold row to go, leaving 0 rows and no dir", () => {
     const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
     ) as { targets: { module: string }[] };
     expect(targets.some((t) => t.module === "nakama.nakama")).toBe(false);
     // The count catches a cutover that took a second row with it; the absence
     // check above cannot. This is the last cutover the pin will ever move to.
     expect(targets.length).toBe(0);
     const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(dirs.some((c) => c.dir === "nakama-defold")).toBe(false);
   });
@@ -1639,7 +1639,7 @@ describe("nakama.nakama migration integrity", () => {
     // only, so the page intro has to come from the description override the
     // dropped `nakama-defold` dir no longer supplies.
     const overrides = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-description-overrides.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-description-overrides.json"), "utf8"),
     ) as Record<string, string>;
     expect(overrides.nakama?.length).toBeGreaterThan(0);
   });
@@ -1782,7 +1782,7 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
     // only, so the page intro comes from the namespace-keyed description instead.
     expect((doc.info.description ?? "").length).toBe(0);
     const descriptions = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-descriptions.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-descriptions.json"), "utf8"),
     ) as Record<string, string>;
     expect(descriptions.shutter?.length).toBeGreaterThan(0);
   });
@@ -1886,7 +1886,7 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
     // intro comes from the namespace-keyed description instead.
     expect((doc.info.description ?? "").length).toBe(0);
     const descriptions = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-descriptions.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-descriptions.json"), "utf8"),
     ) as Record<string, string>;
     expect(descriptions.checkpoint?.length).toBeGreaterThan(0);
   });

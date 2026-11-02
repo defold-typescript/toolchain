@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import type { OpenApiDoc } from "./parse-openapi-api";
 import {
   buildOpenApiFidelity,
@@ -11,10 +11,10 @@ import {
 } from "./sync-openapi-types";
 import type { TypeResolver } from "./sync-script-api-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-
 function nakamaTarget(): OpenApiTarget {
-  const target = readOpenApiTargets(PACKAGE_ROOT).find((t) => t.moduleId === "nakama.nakama");
+  const target = readOpenApiTargets(LANE_EVALUATIONS_ROOT).find(
+    (t) => t.moduleId === "nakama.nakama",
+  );
   if (target === undefined) throw new Error("nakama.nakama openapi target missing");
   return target;
 }
@@ -34,14 +34,14 @@ describe("readOpenApiTargets", () => {
     });
     // A hand-rolled reader over a bad blob is exercised via the exported parser on
     // an in-memory config: the proto field is absent, so it must throw naming both.
-    expect(() => readOpenApiTargets(PACKAGE_ROOT, bad)).toThrow(/proto/);
-    expect(() => readOpenApiTargets(PACKAGE_ROOT, bad)).toThrow(/x\.y/);
+    expect(() => readOpenApiTargets(LANE_EVALUATIONS_ROOT, bad)).toThrow(/proto/);
+    expect(() => readOpenApiTargets(LANE_EVALUATIONS_ROOT, bad)).toThrow(/x\.y/);
   });
 });
 
 describe("emitOpenApiDeclaration routes the retargeted doc through the shared emitter", () => {
   test("produces an importable `declare module 'nakama.nakama'` body", async () => {
-    const dts = await emitOpenApiDeclaration(PACKAGE_ROOT, nakamaTarget());
+    const dts = await emitOpenApiDeclaration(LANE_EVALUATIONS_ROOT, nakamaTarget());
     expect(dts).toContain("declare module 'nakama.nakama'");
     // The swagger RPC and the proto realtime constructor both reach the surface.
     expect(dts).toContain("authenticate_custom");
@@ -90,7 +90,7 @@ describe("computeOpenApiFidelity loud-fails on an unmappable token", () => {
 
 describe("buildOpenApiFidelity on the committed nakama source", () => {
   test("returns a FidelityReport whose tokens all resolve (no unmappable token)", async () => {
-    const report = await buildOpenApiFidelity(PACKAGE_ROOT, nakamaTarget());
+    const report = await buildOpenApiFidelity(LANE_EVALUATIONS_ROOT, nakamaTarget());
     expect(report.namespace).toBe("nakama");
     expect(report.totalMembers).toBeGreaterThan(100);
     // Every token the parser emits is in the resolver's vocabulary, so the build

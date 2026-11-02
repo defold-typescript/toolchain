@@ -1,15 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import { type OpenApiDoc, type OpenApiElement, parseOpenApi } from "./parse-openapi-api";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const SWAGGER = readFileSync(
-  join(PACKAGE_ROOT, "fixtures/openapi/nakama.nakama.swagger.json"),
+  join(LANE_EVALUATIONS_ROOT, "fixtures/openapi/nakama.nakama.swagger.json"),
   "utf8",
 );
-const PROTO = readFileSync(join(PACKAGE_ROOT, "fixtures/openapi/nakama.nakama.api.proto"), "utf8");
+const PROTO = readFileSync(
+  join(LANE_EVALUATIONS_ROOT, "fixtures/openapi/nakama.nakama.api.proto"),
+  "utf8",
+);
 
 function element(doc: OpenApiDoc, name: string): OpenApiElement | undefined {
   return doc.elements.find((e) => e.name === name);

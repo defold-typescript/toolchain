@@ -101,14 +101,14 @@ describe("readScriptApiTargets", () => {
 
 describe("bridge migrated off the ts-defold corpus", () => {
   test("bridge.bridge is no longer a ts-defold library-targets row", () => {
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "bridge.bridge")).toBe(false);
   });
 
   test("the defold-bridge dir is gone from the ts-defold classification", () => {
-    const classification = readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8");
+    const classification = readFileSync(join(DATA_DIR, "library-classification.json"), "utf8");
     expect(classification).not.toContain("defold-bridge");
   });
 

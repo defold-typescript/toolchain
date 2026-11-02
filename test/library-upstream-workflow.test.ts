@@ -63,6 +63,18 @@ describe("library upstream check workflow", () => {
     );
   });
 
+  test("passes every library tool the data folder it reads", () => {
+    const runs = steps()
+      .map((step) => step.run ?? "")
+      .filter((cmd) =>
+        /bun scripts\/(library-upstream-check|asset-portal-check|shipped-types-check)\.ts/.test(
+          cmd,
+        ),
+      );
+    expect(runs).toHaveLength(3);
+    expect(runs.filter((cmd) => !/ --data \S+/.test(cmd))).toEqual([]);
+  });
+
   test("creates an issue only for a report the script marked actionable", () => {
     const script = steps()
       .map((step) => step.run ?? "")

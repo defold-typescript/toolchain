@@ -386,7 +386,10 @@ const defaultFetchText: FetchText = async (url) => {
 };
 
 if (import.meta.main) {
-  const { LIBRARY_DATA_DIR: data, LIBRARY_TYPES_ROOT: root } = await import("./package-root");
+  const { toolDataOrExit } = await import("./tool-data-flag");
+  const { dataDir: data, reportRoot: root } = toolDataOrExit(
+    "packages/cli/src/library/sync-script-api-types.ts",
+  );
   const argv = process.argv.slice(2);
   if (argv.includes("--fetch")) {
     for (const target of readScriptApiTargets(data)) {

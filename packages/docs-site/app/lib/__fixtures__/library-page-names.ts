@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { newestDataFolder } from "../../../../cli/src/library/data-folder";
 
 const LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../../library-types");
 
@@ -10,7 +11,7 @@ export function libraryPageNames(): string[] {
     .filter((file) => file.endsWith(".json"))
     .map((file) => file.slice(0, -".json".length));
   const { libraries } = JSON.parse(
-    readFileSync(join(LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+    readFileSync(join(newestDataFolder(LIBRARY_TYPES_DIR), "defold-extensions.json"), "utf8"),
   ) as { libraries: { docs: { page: string }[] }[] };
   return [...stems, ...libraries.flatMap((library) => library.docs.map((doc) => doc.page))];
 }

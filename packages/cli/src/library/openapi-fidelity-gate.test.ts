@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import {
   compareFidelityToTsDefold,
   emitOpenApiDeclaration,
@@ -9,11 +10,12 @@ import {
   readOpenApiTargets,
 } from "./sync-openapi-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 
 function nakamaTarget(): OpenApiTarget {
-  const target = readOpenApiTargets(PACKAGE_ROOT).find((t) => t.moduleId === "nakama.nakama");
+  const target = readOpenApiTargets(LANE_EVALUATIONS_ROOT).find(
+    (t) => t.moduleId === "nakama.nakama",
+  );
   if (target === undefined) throw new Error("nakama.nakama openapi target missing");
   return target;
 }
@@ -30,7 +32,7 @@ function nakamaTarget(): OpenApiTarget {
 // that no longer describes it.
 async function comparison() {
   const target = nakamaTarget();
-  const emitted = await emitOpenApiDeclaration(PACKAGE_ROOT, target);
+  const emitted = await emitOpenApiDeclaration(LANE_EVALUATIONS_ROOT, target);
   const snapshot = readFileSync(
     join(DATA_DIR, "nakama-defold/fork", `${target.moduleId}.d.ts`),
     "utf8",

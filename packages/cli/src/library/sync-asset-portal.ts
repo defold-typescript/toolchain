@@ -6,7 +6,6 @@ import {
   type PortalKind,
   portalEntryKind,
 } from "./library-evidence";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
 import {
   apiJson,
   apiJsonOrNull,
@@ -111,14 +110,12 @@ export interface AssetPortalManifest {
 /** Portal entry id -> the tracked repo URL its library moved to. */
 export type PortalAliases = Readonly<Record<string, string>>;
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-
-export function readAssetPortalManifest(packageRoot: string = PACKAGE_ROOT): AssetPortalManifest {
-  return JSON.parse(readFileSync(join(packageRoot, "asset-portal.json"), "utf8"));
+export function readAssetPortalManifest(dataDir: string): AssetPortalManifest {
+  return JSON.parse(readFileSync(join(dataDir, "asset-portal.json"), "utf8"));
 }
 
-export function readPortalAliases(packageRoot: string = PACKAGE_ROOT): PortalAliases {
-  const file = join(packageRoot, "asset-portal-aliases.json");
+export function readPortalAliases(dataDir: string): PortalAliases {
+  const file = join(dataDir, "asset-portal-aliases.json");
   return (JSON.parse(readFileSync(file, "utf8")) as { aliases: PortalAliases }).aliases;
 }
 
@@ -227,11 +224,11 @@ async function classifyEntry(
 
 /**
  * Classify every entry at the portal head through `source`, then write
- * `asset-portal.json` (sorted by id) under `packageRoot`. An entry whose repo
+ * `asset-portal.json` (sorted by id) under `dataDir`. An entry whose repo
  * is gone or off GitHub is recorded as `no-source` and the sync carries on.
  */
 export async function syncAssetPortal(
-  packageRoot: string,
+  dataDir: string,
   source: PortalSource,
   syncedAt: string,
 ): Promise<AssetPortalManifest> {
@@ -246,7 +243,7 @@ export async function syncAssetPortal(
     source: { repo: `https://github.com/${PORTAL_REPO}`, commit, syncedAt },
     entries,
   };
-  writeFileSync(join(packageRoot, "asset-portal.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  writeFileSync(join(dataDir, "asset-portal.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
 }
 
@@ -257,10 +254,10 @@ export async function syncAssetPortal(
  * lookup leaves it untouched.
  */
 export async function syncAssetPortalDates(
-  packageRoot: string,
+  dataDir: string,
   source: PinDating,
 ): Promise<{ pins: number }> {
-  const manifest = readAssetPortalManifest(packageRoot);
+  const manifest = readAssetPortalManifest(dataDir);
   let pins = 0;
   const entries: PortalEntry[] = [];
   for (const entry of manifest.entries) {
@@ -282,7 +279,7 @@ export async function syncAssetPortalDates(
     if (refDate !== undefined) pins++;
   }
   writeFileSync(
-    join(packageRoot, "asset-portal.json"),
+    join(dataDir, "asset-portal.json"),
     `${JSON.stringify({ ...manifest, entries }, null, 2)}\n`,
   );
   return { pins };
@@ -290,13 +287,13 @@ export async function syncAssetPortalDates(
 
 /** The `--fetch` path: reclassify the portal, then date the pins it chose. */
 export async function fetchAssetPortal(
-  packageRoot: string,
+  dataDir: string,
   source: PortalSource,
   syncedAt: string,
 ): Promise<AssetPortalManifest> {
-  await syncAssetPortal(packageRoot, source, syncedAt);
-  await syncAssetPortalDates(packageRoot, source);
-  return readAssetPortalManifest(packageRoot);
+  await syncAssetPortal(dataDir, source, syncedAt);
+  await syncAssetPortalDates(dataDir, source);
+  return readAssetPortalManifest(dataDir);
 }
 
 async function fetchText(url: string): Promise<string> {
@@ -375,12 +372,12 @@ export function livePortalSource(): PortalSource {
   };
 }
 
+const TOOL = "packages/cli/src/library/sync-asset-portal.ts";
+
 if (import.meta.main && process.argv.includes("--fetch")) {
-  const manifest = await fetchAssetPortal(
-    LIBRARY_TYPES_ROOT,
-    livePortalSource(),
-    new Date().toISOString(),
-  );
+  const { toolDataOrExit } = await import("./tool-data-flag");
+  const { dataDir } = toolDataOrExit(TOOL);
+  const manifest = await fetchAssetPortal(dataDir, livePortalSource(), new Date().toISOString());
   const byKind = new Map<PortalKind, number>();
   for (const entry of manifest.entries) byKind.set(entry.kind, (byKind.get(entry.kind) ?? 0) + 1);
   const counts = [...byKind].map(([kind, n]) => `${kind} ${n}`).join(", ");
@@ -390,6 +387,8 @@ if (import.meta.main && process.argv.includes("--fetch")) {
 }
 
 if (import.meta.main && process.argv.includes("--dates")) {
-  const { pins } = await syncAssetPortalDates(LIBRARY_TYPES_ROOT, livePortalSource());
+  const { toolDataOrExit } = await import("./tool-data-flag");
+  const { dataDir } = toolDataOrExit(TOOL);
+  const { pins } = await syncAssetPortalDates(dataDir, livePortalSource());
   console.log(`dated ${pins} Asset Portal pins`);
 }

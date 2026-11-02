@@ -8547,9 +8547,9 @@ copy-pasteable config.
 
 #### Surface the ratchet backlog
 
-`bun scripts/ratchet-backlog.ts <source>` lists every library-types coverage
-floor still sitting below its `1.0` target, one slot per line, for either
-`fidelity-floor` or `authored-parity-floor`. A line reads
+`bun scripts/ratchet-backlog.ts <source> --data <dir>` lists every library coverage
+floor in the library data under `<dir>` still sitting below its `1.0` target, one
+slot per line, for either `fidelity-floor` or `authored-parity-floor`. A line reads
 `<source>.json: <key> <axis> <value> (target 1)` — the floor source it came from,
 the artifact whose floor is short, which axis is short, and by how much. No
 output means that source is entirely at target.
