@@ -157,26 +157,28 @@ describe("archiveFingerprint", () => {
   });
 
   describe("a Lua shape the surface reader cannot follow counts whole", () => {
+    // The `M.VISIBLE` rows carry a readable member because without one they pass on the
+    // empty-surface refusal alone, whatever happens to the rule they name.
     const shapes: readonly [string, string, string][] = [
       [
         "an indented definition",
-        "local M = {}\n  function M.start() end\nreturn M\n",
-        "local M = {}\n  function M.start(a) end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\n  function M.start() end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\n  function M.start(a) end\nreturn M\n",
       ],
       [
         "a definition in a do block",
-        "local M = {}\ndo\n  function M.start() end\nend\nreturn M\n",
-        "local M = {}\ndo\n  function M.start(a) end\nend\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\ndo\n  function M.start() end\nend\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\ndo\n  function M.start(a) end\nend\nreturn M\n",
       ],
       [
         "an indented colon method",
-        "local M = {}\n  function M:start() end\nreturn M\n",
-        "local M = {}\n  function M:start(a) end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\n  function M:start() end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\n  function M:start(a) end\nreturn M\n",
       ],
       [
         "an indented assignment",
-        "local M = {}\n  M.start = function() end\nreturn M\n",
-        "local M = {}\n  M.start = function(a) end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\n  M.start = function() end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\n  M.start = function(a) end\nreturn M\n",
       ],
       [
         "an assignment of a local function",
@@ -190,23 +192,23 @@ describe("archiveFingerprint", () => {
       ],
       [
         "a nested definition",
-        "local M = {}\nfunction M.sub.start() end\nreturn M\n",
-        "local M = {}\nfunction M.sub.start(a) end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\nfunction M.sub.start() end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\nfunction M.sub.start(a) end\nreturn M\n",
       ],
       [
         "a bracketed assignment",
-        'local M = {}\nM["start"] = function() end\nreturn M\n',
-        'local M = {}\nM["start"] = function(a) end\nreturn M\n',
+        'local M = {}\nM.VISIBLE = true\nM["start"] = function() end\nreturn M\n',
+        'local M = {}\nM.VISIBLE = true\nM["start"] = function(a) end\nreturn M\n',
       ],
       [
         "a nested assignment",
-        "local M = {}\nM.sub.start = function() end\nreturn M\n",
-        "local M = {}\nM.sub.start = function(a) end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\nM.sub.start = function() end\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\nM.sub.start = function(a) end\nreturn M\n",
       ],
       [
         "a multiple assignment",
-        "local M = {}\nM.start, other = function() end, 1\nreturn M\n",
-        "local M = {}\nM.start, other = function(a) end, 1\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\nM.start, other = function() end, 1\nreturn M\n",
+        "local M = {}\nM.VISIBLE = true\nM.start, other = function(a) end, 1\nreturn M\n",
       ],
       [
         "a second definition on one line",
@@ -219,9 +221,19 @@ describe("archiveFingerprint", () => {
         "local M = {}\nlocal C = {}\nfunction C.start(a) end\nM.C = C\nreturn M\n",
       ],
       [
+        "an inline constructor entry naming a local function",
+        "local function start() end\nlocal M = { start = start }\nreturn M\n",
+        "local function start(a) end\nlocal M = { start = start }\nreturn M\n",
+      ],
+      [
         "a module built by a call",
         "local M = make(function() end)\nreturn M\n",
         "local M = make(function(a) end)\nreturn M\n",
+      ],
+      [
+        "a returned empty table",
+        "local function start() end\nreturn {}\n",
+        "local function start(a) end\nreturn {}\n",
       ],
     ];
 
