@@ -1,370 +1,145 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
-exports[`each shipped authored declaration emits the receiver form its expectation records colyseus: a consumer transpiles with the call forms the declaration produces: colyseus 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces module functions are called with \`.\`, and the callbacks they take have no self 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local Colyseus = require("colyseus.sdk")
-function ____exports.connect()
-    local client = Colyseus.Client("ws://localhost:2567")
-    client:join_or_create(
-        "my_room",
-        function(err, room)
-            if err ~= nil or room == nil then
-                return
-            end
-            local callbacks = Colyseus.callbacks(room)
-            callbacks:listen(
-                "currentTurn",
-                function(current, previous)
-                    print(current, previous)
-                end
-            )
-            room:on(
-                "leave",
-                function(event)
-                    print(event and event.code)
-                end
-            )
-            room.reconnection.backoff = function(attempt, delay) return attempt * delay end
-            local handle = room:input({allow_rewind = function(data) return data.x ~= nil end})
-            handle:send()
-            room.connection:once(
-                "close",
-                function(event)
-                    print(event.code)
-                end
-            )
-            room:send("move", {x = 1, y = 2})
-            room.connection:close(Colyseus.protocol.CLOSE_CODE.MAY_TRY_RECONNECT)
-        end
-    )
-    client.http:get(
-        "/test",
-        function(err, response)
-            print(err and err.message, response)
-        end
-    )
-    Colyseus.Client.select_by_latency(
-        {"ws://localhost:2567"},
-        function(err, best)
-            print(err, best and best.settings.hostname)
-        end
-    )
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records printer: a consumer transpiles with the call forms the declaration produces: printer 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local printer = require("printer.printer")
-function ____exports.init(____self, dt)
-    local p = printer.new(____self, "printer")
-    p:print("{red}hi", "Illidan")
-    p:update(dt)
-    printer.print(p, "again")
-    printer.add_word_style("powerful", "red")
-    printer.play_sound = function(name)
-        print(name)
-    end
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records ink: a consumer transpiles with the call forms the declaration produces: ink 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local ink = require("ink.story")
-function ____exports.play(json)
-    local story = ink.create(json)
-    local paragraphs, answers = story.continue(1)
-    story.jump("knot")
-    story.add_observer(
-        "x",
-        function(value) return print(value) end
-    )
-    story.bind(
-        "add",
-        function(a, b) return a + b end
-    )
-    print(#paragraphs, #answers)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records pointer_lock: a consumer transpiles with the call forms the declaration produces: pointer_lock 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local pointer = require("pointer_lock.pointer")
-function ____exports.on_input(action_id, action)
-    local id, act = pointer.transform_input(action_id, action)
-    pointer.cursor_visible = true
-    pointer.update_lock_state()
-    print(id, act.x, act.y)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records operator.bezier: a consumer transpiles with the call forms the declaration produces: operator.bezier 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local bezier = require("operator.bezier")
-function ____exports.follow(points, t)
-    local path = bezier.new(points)
-    local uniform = path:uniform_position(t)
-    local classic = bezier.position(path, t)
-    print(uniform, classic)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records operator.operator: a consumer transpiles with the call forms the declaration produces: operator.operator 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local operator = require("operator.operator")
+local tally = require("tally.tally")
 function ____exports.init()
-    operator.flight_look_easing = function(x) return x end
-    local look = operator.flight_look_easing(0.5)
-    local rotation = operator.quat_from_euler(vmath.vector3(0, look, 0))
-    print(
-        rotation,
-        operator.EASING_INOUT_QUART(0.5)
+    tally.push(
+        function() return nil end,
+        function() return 1 end
     )
+    tally.flush({verbose = true, pattern = "^on_"})
 end
 return ____exports
 "
 `;
 
-exports[`each shipped authored declaration emits the receiver form its expectation records defarmy: a consumer transpiles with the call forms the declaration produces: defarmy 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces a multiple return assigns each value, into new and existing locals 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local defarmy = require("defarmy.defarmy")
-function ____exports.update(soldier, current)
-    local army = defarmy.army_create(
-        current,
-        vmath.quat(),
-        32,
-        true,
-        defarmy.PATTERN.CUSTOMIZED,
-        function(count) return {count} end
-    )
-    local position, rotation = defarmy.soldier_move(soldier, current, 100)
-    print(army, position, rotation)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records defgraph: a consumer transpiles with the call forms the declaration produces: defgraph 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local defgraph = require("defgraph.defgraph")
+local pair = require("pair.pair")
 function ____exports.update(current)
-    local a = defgraph.map_add_node(vmath.vector3(10, 10, 0))
-    local b = defgraph.map_add_node(vmath.vector3(100, 10, 0))
-    defgraph.map_add_route(a, b)
-    local move = defgraph.move_initialize(current, {a, b}, defgraph.ROUTETYPE.CYCLE)
+    local x, y, w, h = pair.bounds("#sprite")
+    local state = pair.start(current)
     local result
-    move, result = defgraph.move_player(current, 2, move)
-    print(move, result.position)
+    state, result = pair.step(current, state)
+    print(
+        x,
+        y,
+        w,
+        h,
+        state,
+        result.position
+    )
 end
 return ____exports
 "
 `;
 
-exports[`each shipped authored declaration emits the receiver form its expectation records def_behavior_tree: a consumer transpiles with the call forms the declaration produces: def_behavior_tree 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces instance methods are called with \`:\`, each link of a chain on the last 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local BehaviorTree = require("def_behavior_tree.behavior_tree")
-function ____exports.init(ship, id)
-    BehaviorTree.registerTemplates({TREES = {SHIP = {main_node = {
-        type = BehaviorTree.Task,
-        run = function(task) return task.success() end
-    }}}})
-    local tree = BehaviorTree.new({tree_name = "SHIP", payload = ship})
-    tree:run()
-    tree:restart(id)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records dissolve_fx: a consumer transpiles with the call forms the declaration produces: dissolve_fx 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local dissolve_fx = require("dissolve_fx.dissolve_fx")
+local chain = require("chain.node")
 function ____exports.init()
-    dissolve_fx.init("#sprite", "noise", "ramp", "cover")
-    local x, y, w, h = dissolve_fx.find_uvrect("#sprite", "noise", "stretch")
-    print(x, y, w, h)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records water: a consumer transpiles with the call forms the declaration produces: water 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local water = require("water.water")
-function ____exports.update(____self, state, predicates, draw_options)
-    local direction, amplitude, wavelength, speed = water.get_wave1()
-    print(direction, amplitude, wavelength, speed)
-    water.render_update(____self, state, predicates, draw_options)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records wrap.node: a consumer transpiles with the call forms the declaration produces: wrap.node 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local wrap_node = require("wrap.node")
-function ____exports.init()
-    local node = wrap_node.new("box")
+    local node = chain.new("box")
     node:set_alpha(0.5):set_enabled(true)
 end
 return ____exports
 "
 `;
 
-exports[`each shipped authored declaration emits the receiver form its expectation records wrap.node_list: a consumer transpiles with the call forms the declaration produces: wrap.node_list 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces an instance method is called with \`:\`, the module function taking it first with \`.\` 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local wrap_node_list = require("wrap.node_list")
-function ____exports.init()
-    local list = wrap_node_list.new({"title", "button"})
-    list.title:set_text("Admin")
+local scroll = require("scroll.scroll")
+function ____exports.init(____self, dt)
+    local s = scroll.new(____self, "scroll")
+    s:write("hi")
+    s:update(dt)
+    scroll.write(s, "again")
 end
 return ____exports
 "
 `;
 
-exports[`each shipped authored declaration emits the receiver form its expectation records wrap.go: a consumer transpiles with the call forms the declaration produces: wrap.go 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces a module function a project assigns takes no self, and neither does its call 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local wrap_go = require("wrap.go")
+local scroll = require("scroll.scroll")
 function ____exports.init()
-    local hero = wrap_go.new("/hero")
-    hero:set_position_x(1):add_position_y(2)
+    scroll.play_sound = function(name)
+        print(name)
+    end
+    scroll.play_sound("tick")
 end
 return ____exports
 "
 `;
 
-exports[`each shipped authored declaration emits the receiver form its expectation records wrap.go_list: a consumer transpiles with the call forms the declaration produces: wrap.go_list 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces the closures of a \`@noSelf\` instance are called with \`.\` 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local wrap_go_list = require("wrap.go_list")
-function ____exports.init()
-    local list = wrap_go_list.new({hero = "/hero", camera = "/camera"})
-    list.hero:post("jump")
+local tale = require("tale.story")
+function ____exports.play(json)
+    local story = tale.create(json)
+    local lines, choices = story.continue(1)
+    story.jump("knot")
+    print(#lines, #choices)
 end
 return ____exports
 "
 `;
 
-exports[`each shipped authored declaration emits the receiver form its expectation records wrap.gui_scene: a consumer transpiles with the call forms the declaration produces: wrap.gui_scene 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces a callback and the function returned to unsubscribe it take no self 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local gui_applet = require("wrap.gui_applet")
-local gui_scene = require("wrap.gui_scene")
-local Lobby = gui_scene.extend()
-Lobby.init = function(self)
-    self:set_transitions({
-        transition_in = self:slide_in_left(),
-        transition_out = self:slide_out_right()
-    })
-end
-local app = gui_applet.new("root")
-app:register_scene("lobby", Lobby)
-function ____exports.update(dt)
-    app:update(dt)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records wrap.wrap: a consumer transpiles with the call forms the declaration produces: wrap.wrap 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local wrap = require("wrap.wrap")
+local watch = require("watch.watch")
 function ____exports.init()
-    wrap.node("box"):set_alpha(0.5):set_enabled(true)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records minit: a consumer transpiles with the call forms the declaration produces: minit 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local minit = require("minit.minit")
-function ____exports.init()
-    local off = minit.on_viewable_change(function(viewable) return print(viewable) end)
+    local off = watch.on_change(function(visible) return print(visible) end)
     off()
-    minit.report_result(42, {flavor_text = "gg"})
 end
 return ____exports
 "
 `;
 
-exports[`each shipped authored declaration emits the receiver form its expectation records asobi.client: a consumer transpiles with the call forms the declaration produces: asobi.client 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces a callable table is called directly, and its static function with \`.\` 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local asobi = require("asobi.client")
-function ____exports.init()
-    local client = asobi.create("localhost")
-    client.set_tokens("a", "b")
-    local rt = client.realtime
-    rt:on(
-        "connected",
-        function() return rt:quick_play("default") end
-    )
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records asobi.device: a consumer transpiles with the call forms the declaration produces: asobi.device 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local device = require("asobi.device")
-function ____exports.init()
-    local id, secret = device.load_or_create()
-    print(id, secret)
-end
-return ____exports
-"
-`;
-
-exports[`each shipped authored declaration emits the receiver form its expectation records asobi.api.auth: a consumer transpiles with the call forms the declaration produces: asobi.api.auth 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local asobi = require("asobi.client")
-function ____exports.init()
-    local client = asobi.create("localhost")
-    client.auth.guest_device(
-        client,
-        function(data, err)
+local dial = require("dial.dial")
+function ____exports.connect()
+    local connection = dial.Connection("ws://localhost:2567")
+    connection:send("hello")
+    dial.Connection.select_fastest(
+        {"ws://localhost:2567"},
+        function(err, best)
+            print(err, best)
         end
     )
-    client.leaderboards.submit_score(client, "weekly", 10)
 end
 return ____exports
 "
 `;
 
-exports[`each shipped authored declaration emits the receiver form its expectation records asobi.http: a consumer transpiles with the call forms the declaration produces: asobi.http 1`] = `
+exports[`each authored receiver shape emits the call form its declaration produces a table of instances is read by \`.\` field, each instance's methods by their own form 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local asobi = require("asobi.client")
+local chain_list = require("chain.list")
 function ____exports.init()
-    local client = asobi.create("localhost")
+    local list = chain_list.new({"title", "button"})
+    list.title:set_alpha(0.5)
+    list.button.remove()
+end
+return ____exports
+"
+`;
+
+exports[`each authored receiver shape emits the call form its declaration produces a module reached through a \`typeof\` field keeps \`.\`, the client passed explicitly 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local portal = require("portal.client")
+function ____exports.init()
+    local client = portal.create("localhost")
     client.http.post(
         client,
         "/x",
@@ -372,6 +147,21 @@ function ____exports.init()
         function(data, err)
         end
     )
+end
+return ____exports
+"
+`;
+
+exports[`each authored receiver shape emits the call form its declaration produces a hook assigned onto a class table takes the instance as \`self\` 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local scene = require("stage.scene")
+local Lobby = scene.extend()
+Lobby.init = function(self)
+    self:fade_in()
+end
+function ____exports.show()
+    Lobby.new():init()
 end
 return ____exports
 "

@@ -1,0 +1,7 @@
+{
+  "repo": "https://github.com/example/fixture-luals",
+  "license": "MIT",
+  "floors": {
+    "glow-kit.glow": 1
+  }
+}

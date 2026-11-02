@@ -1,0 +1,19 @@
+{
+  "repo": "https://github.com/example/fixture-fork",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/tally.tally.d.ts",
+      "moduleId": "tally.tally",
+      "namespace": "tally",
+      "apiDoc": "api-doc/tally.json",
+      "upstreamLua": ["source/upstream/tally/tally.lua"]
+    }
+  ],
+  "floors": {
+    "tally.tally": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

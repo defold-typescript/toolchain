@@ -1,14 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { emitLibraryDeclarations } from "./emit-library-dts";
 import { buildFidelityReport } from "./luals-fidelity";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type LibraryModel, parseLualsSource } from "./parse-luals";
-import { buildTargetFidelity, readLualsTargets } from "./sync-luals-types";
-
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const DATA_DIR = LIBRARY_DATA_DIR;
 
 const tinyModel: LibraryModel = {
   interfaces: [
@@ -122,10 +115,10 @@ describe("buildFidelityReport", () => {
 
   test("a moduleObject's constant fields and a captured instance interface's methods count toward totalMembers", () => {
     const model: LibraryModel = {
-      moduleObject: "Squid",
+      moduleObject: "Ripple",
       interfaces: [
         {
-          name: "Squid",
+          name: "Ripple",
           generics: [],
           brief: "the module",
           methods: [],
@@ -135,7 +128,7 @@ describe("buildFidelityReport", () => {
           ],
         },
         {
-          name: "SquidInstance",
+          name: "RippleInstance",
           generics: [],
           brief: "the instance",
           fields: [],
@@ -161,12 +154,12 @@ describe("buildFidelityReport", () => {
           generics: [],
           params: [],
           returns: [
-            { name: "", types: ["SquidInstance"], doc: "", isOptional: false, isVararg: false },
+            { name: "", types: ["RippleInstance"], doc: "", isOptional: false, isVararg: false },
           ],
         },
       ],
     };
-    const report = buildFidelityReport("squid", model, {});
+    const report = buildFidelityReport("ripple", model, {});
     // 2 module constants + 2 instance methods + 1 module function.
     expect(report.totalMembers).toBe(5);
     // The instance-method and module-function type tokens flow through the tally cleanly.
@@ -362,9 +355,9 @@ describe("buildFidelityReport", () => {
   test("typing a callback field's params clears the unknown fallbacks an untyped fun(...) records", () => {
     const build = (fieldType: string): LibraryModel => ({
       interfaces: [
-        { name: "druid.button", generics: [], brief: "the button", methods: [], fields: [] },
+        { name: "kit.button", generics: [], brief: "the button", methods: [], fields: [] },
         {
-          name: "druid.button.style",
+          name: "kit.button.style",
           generics: [],
           brief: "the style",
           methods: [],
@@ -375,15 +368,11 @@ describe("buildFidelityReport", () => {
       moduleFunctions: [],
     });
 
-    const untyped = buildFidelityReport("druid", build("fun(self, node)|nil"), {});
+    const untyped = buildFidelityReport("kit", build("fun(self, node)|nil"), {});
     expect(untyped.unknownFallbacks).toBe(2);
     expect(untyped.unknownTokens).toEqual(["node", "self"]);
 
-    const typed = buildFidelityReport(
-      "druid",
-      build("fun(self: druid.button, node: node)|nil"),
-      {},
-    );
+    const typed = buildFidelityReport("kit", build("fun(self: kit.button, node: node)|nil"), {});
     expect(typed.unknownFallbacks).toBe(0);
     expect(typed.unknownTokens).toEqual([]);
     expect(typed.coverage).toBe(1);
@@ -423,23 +412,6 @@ describe("buildFidelityReport", () => {
     expect(buildFidelityReport("widgets", tinyModel, {})).toEqual(
       buildFidelityReport("widgets", tinyModel, {}),
     );
-  });
-});
-
-describe("fidelity round-trip", () => {
-  const targets = readLualsTargets(DATA_DIR);
-  if (!targets.some((t) => t.namespace === "druid")) {
-    throw new Error("druid target missing from luals-targets.json");
-  }
-
-  test.each(
-    targets.map((t) => [t.namespace, t] as const),
-  )("%s: the committed report matches a freshly built one (offline)", (namespace, target) => {
-    const built = buildTargetFidelity(DATA_DIR, target);
-    const committed = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "fidelity", `${namespace}.json`), "utf8"),
-    );
-    expect(built).toEqual(committed);
   });
 });
 

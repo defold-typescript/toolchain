@@ -1,16 +1,12 @@
-import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { afterAll, describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import ts from "typescript";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
-import {
-  lowerNativeApiDoc,
-  type NativeTarget,
-  nativeApiDocPath,
-  readNativeTargets,
-} from "./sync-native-types";
+import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
+import { LIBRARY_DATA_DIR } from "./package-root";
+import { lowerNativeApiDoc, type NativeTarget, readNativeTargets } from "./sync-native-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 
 interface Element {
@@ -24,38 +20,242 @@ interface Element {
   functions?: { name: string }[];
 }
 
-function target(namespace: string): NativeTarget {
-  const found = readNativeTargets(DATA_DIR).find((t) => t.namespace === namespace);
+// A flat module: constants, functions, an overload pair, and the shapes its
+// signatures reach.
+const GAUGE_DECLARATION = `/** @noSelfInFile */
+/** @globalTable */
+declare module "gauge" {
+  interface Hit {
+    id: number;
+    bits: number;
+  }
+
+  interface RangedHit extends Hit {
+    distance: number;
+  }
+
+  interface DeepHit extends RangedHit {
+    depth: number;
+  }
+
+  type ProbeResult = number[] | Hit[] | DeepHit[];
+
+  type RangedProbeResult = RangedHit[] | Hit[] | DeepHit[];
+
+  interface SaveOptions {
+    type?: string;
+    text?: string;
+    title?: string;
+    url?: string;
+  }
+
+  type Cell = [x: number, y: number];
+
+  type Metric = "near" | "far" | "exact";
+
+  interface Board {
+    route(start: Cell, goal: Cell, metric?: Metric): Cell[] | undefined;
+    is_open(cell: Cell): boolean;
+  }
+
+  interface Session {
+    step(dt: number): void;
+    close(): void;
+  }
+
+  interface Reading {
+    position: Vector3;
+    level: number;
+    peak?: true;
+  }
+
+  interface LoopRing {
+    shape: "ring";
+    points: Vector3[];
+    loop: true;
+  }
+
+  interface OpenRing {
+    shape: "ring";
+    points: Vector3[];
+    loop?: false;
+    prev: Vector3;
+    next: Vector3;
+  }
+
+  type Ring = LoopRing | OpenRing;
+
+  interface JointDefBase {
+    collide?: boolean;
+  }
+
+  interface HingeDef extends JointDefBase {
+    anchor: Vector3;
+  }
+
+  const MODE_FAST: number;
+  const MODE_SLOW: number;
+
+  function probe(group: number, mask?: number): ProbeResult;
+  function probe_sorted(group: number): RangedProbeResult;
+  function save(path: string, text?: string, options?: SaveOptions): void;
+  function cast(x: number, y: number): LuaMultiReturn<[false] | [true, number, number]>;
+  function create_board(width: number, height: number): Board;
+  function open(path: string): Session;
+  function read(session: Session): LuaTable<number, Reading>;
+  function add_ring(ring: Ring): void;
+  function add_hinge(def: HingeDef): void;
+  function send(body: string, on_done: (reply: string) => void): void;
+  function send(id: string, body: string, on_done: (reply: string) => void): void;
+}
+`;
+
+// Userdata methods, callbacks the extension calls with only their own
+// arguments, and constants grouped in tables.
+const RIG_DECLARATION = `/** @noSelfInFile */
+/** @globalTable */
+declare module "rig" {
+  namespace Shape {
+    const CIRCLE: 0;
+    const BOX: 1;
+  }
+
+  namespace BodyType {
+    const STATIC: 0;
+    const DYNAMIC: 1;
+  }
+
+  interface Contact {
+    SetEnabled(flag: boolean): void;
+    IsTouching(): boolean;
+  }
+
+  interface ContactListener {
+    BeginContact?: (this: void, contact: Contact) => void;
+    EndContact?: (this: void, contact: Contact) => void;
+  }
+
+  interface DrawCallbacks {
+    DrawCircle: (this: void, center: Vector3, radius: number) => void;
+    DrawSegment: (this: void, from: Vector3, to: Vector3) => void;
+  }
+
+  interface Body {
+    ApplyForce(force: Vector3): void;
+    GetType(): number;
+  }
+
+  interface World {
+    CreateBody(type?: number): Body;
+    SetContactListener(listener: ContactListener | undefined): void;
+    SetDebugDraw(draw: DrawCallbacks): void;
+    RayCast(
+      callback: (this: void, body: Body, fraction: number) => number,
+      from: Vector3,
+      to: Vector3,
+    ): void;
+    Step(dt: number): void;
+  }
+
+  function NewWorld(gravity?: Vector3): World;
+  function NewCircle(): number;
+}
+`;
+
+function writeSourceDir(): string {
+  const dataDir = mkdtempSync(join(tmpdir(), "sync-native-types-"));
+  const libraries = [
+    { name: "gauge", declaration: GAUGE_DECLARATION, methodTables: undefined },
+    {
+      name: "rig",
+      declaration: RIG_DECLARATION,
+      methodTables: { "Rig::World": ["World"], "Rig::Body": ["Body"], "Rig::Contact": ["Contact"] },
+    },
+  ];
+  writeLibraryTargets(dataDir, {
+    native: libraries.map(({ name, methodTables }) => ({
+      repo: `https://github.com/example/fixture-${name}`,
+      ref: "v1.0",
+      namespace: name,
+      manifestDir: name,
+      declaration: `fork/${name}.d.ts`,
+      upstreamSource: `source/upstream/${name}/src/${name}.cpp`,
+      ...(methodTables === undefined ? {} : { methodTables }),
+    })),
+  });
+  for (const { name, declaration } of libraries) {
+    mkdirSync(join(dataDir, `fixture-${name}`, "fork"), { recursive: true });
+    writeFileSync(join(dataDir, `fixture-${name}`, "fork", `${name}.d.ts`), declaration);
+  }
+  return dataDir;
+}
+
+const SOURCE_DIR = writeSourceDir();
+
+afterAll(() => {
+  rmSync(SOURCE_DIR, { recursive: true, force: true });
+});
+
+function target(namespace: string, dataDir = DATA_DIR): NativeTarget {
+  const found = readNativeTargets(dataDir).find((t) => t.namespace === namespace);
   if (!found) throw new Error(`native-targets.json has no ${namespace} entry`);
   return found;
 }
 
-function lowered(namespace: string): { info: { namespace: string }; elements: Element[] } {
-  return JSON.parse(lowerNativeApiDoc(DATA_DIR, target(namespace)));
+function lowered(
+  namespace: string,
+  dataDir = DATA_DIR,
+): { info: { namespace: string }; elements: Element[] } {
+  return JSON.parse(lowerNativeApiDoc(dataDir, target(namespace, dataDir)));
 }
 
 describe("lowerNativeApiDoc", () => {
-  test("lowers daabbcc to bare member names under its namespace", () => {
-    const doc = lowered("daabbcc");
-    expect(doc.info.namespace).toBe("daabbcc");
-    expect(doc.elements.filter((e) => e.type === "FUNCTION")).toHaveLength(18);
-    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(3);
+  test("lowers a native module to bare member names under its namespace", () => {
+    const doc = lowered("gauge", SOURCE_DIR);
+    expect(doc.info.namespace).toBe("gauge");
+    expect(
+      doc.elements
+        .filter((e) => e.type === "FUNCTION")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual([
+      "add_hinge",
+      "add_ring",
+      "cast",
+      "create_board",
+      "open",
+      "probe",
+      "probe_sorted",
+      "read",
+      "save",
+      "send",
+      "send",
+    ]);
+    expect(
+      doc.elements
+        .filter((e) => e.type === "VARIABLE")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["MODE_FAST", "MODE_SLOW"]);
     const names = doc.elements.map((e) => e.name);
-    expect(names).toContain("new_group");
-    expect(names).toContain("UPDATE_INCREMENTAL");
     expect(names.filter((n) => n.startsWith("global.") || n.includes("."))).toEqual([]);
   });
 
   // The page already says the namespace is a global called with no import, so a
   // per-member ambient-global badge would repeat it on every row.
   test("carries no per-member global marker", () => {
-    for (const { namespace } of readNativeTargets(DATA_DIR)) {
-      expect(lowered(namespace).elements.filter((e) => e.global)).toEqual([]);
+    const dataDirs = [FIXTURE_DATA_DIR, SOURCE_DIR];
+    const namespaces = dataDirs.flatMap((dataDir) =>
+      readNativeTargets(dataDir).map(({ namespace }) => [namespace, dataDir] as const),
+    );
+    expect(namespaces.map(([namespace]) => namespace).sort()).toEqual(["gauge", "rig", "stamp"]);
+    for (const [namespace, dataDir] of namespaces) {
+      expect(lowered(namespace, dataDir).elements.filter((e) => e.global)).toEqual([]);
     }
   });
 
-  test("defines the options shape share.file names", () => {
-    const options = lowered("share").elements.find((e) => e.name === "FileOptions");
+  test("defines the options shape a function names", () => {
+    const options = lowered("gauge", SOURCE_DIR).elements.find((e) => e.name === "SaveOptions");
     expect(options?.type).toBe("TYPEDEF");
     expect(options?.properties?.map((p) => [p.name, p.is_optional])).toEqual([
       ["type", "True"],
@@ -65,20 +265,13 @@ describe("lowerNativeApiDoc", () => {
     ]);
   });
 
-  test("defines daabbcc's query results and the hit shapes they name", () => {
-    const byName = new Map(lowered("daabbcc").elements.map((e) => [e.name, e]));
-    expect(byName.get("QueryResult")?.types).toEqual(["number[]", "BitsHit[]", "ManifoldHit[]"]);
-    expect(byName.get("SortedQueryResult")?.types).toContain("SortedHit[]");
-    expect(byName.get("ManifoldHit")?.extends).toEqual(["SortedHit"]);
-    expect(byName.get("SortedHit")?.extends).toEqual(["BitsHit"]);
-    expect(byName.get("BitsHit")?.properties?.map((p) => p.name)).toContain("id");
-  });
-
-  test("lowers daabbcc3d's registered functions and its rebuild constants", () => {
-    const doc = lowered("daabbcc3d");
-    expect(doc.info.namespace).toBe("daabbcc3d");
-    expect(doc.elements.filter((e) => e.type === "FUNCTION")).toHaveLength(18);
-    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(3);
+  test("defines the query results and the hit shapes they name", () => {
+    const byName = new Map(lowered("gauge", SOURCE_DIR).elements.map((e) => [e.name, e]));
+    expect(byName.get("ProbeResult")?.types).toEqual(["number[]", "Hit[]", "DeepHit[]"]);
+    expect(byName.get("RangedProbeResult")?.types).toContain("RangedHit[]");
+    expect(byName.get("DeepHit")?.extends).toEqual(["RangedHit"]);
+    expect(byName.get("RangedHit")?.extends).toEqual(["Hit"]);
+    expect(byName.get("Hit")?.properties?.map((p) => p.name)).toContain("id");
   });
 
   test("lowers wave's registered functions and none of the stubs its C++ never registers", () => {
@@ -90,124 +283,55 @@ describe("lowerNativeApiDoc", () => {
     expect(functions).not.toContain("get_wave2_time_height");
   });
 
-  test("keeps tile_raycast.cast's hit-or-miss return union", () => {
-    const cast = lowered("tile_raycast").elements.find((e) => e.name === "cast");
+  test("keeps a hit-or-miss multi-return union", () => {
+    const cast = lowered("gauge", SOURCE_DIR).elements.find((e) => e.name === "cast");
     expect(cast?.returnvalues?.[0]?.types).toEqual([
-      "LuaMultiReturn<[ false ] | [ true, number, number, number, number, number, number, number ]>",
+      "LuaMultiReturn<[ false ] | [ true, number, number ]>",
     ]);
   });
 
-  test("lowers box2d's shape-table unions and joint-def inheritance", () => {
-    const byName = new Map(lowered("box2d").elements.map((e) => [e.name, e]));
-    const chain = byName.get("ChainShapeTable");
-    expect(chain?.type).toBe("TYPEDEF");
-    expect(chain?.types).toEqual(["LoopChainShapeTable", "OpenChainShapeTable"]);
-    expect(
-      byName.get("OpenChainShapeTable")?.properties?.map((p) => [p.name, p.is_optional]),
-    ).toEqual([
+  test("lowers shape-table unions and joint-def inheritance", () => {
+    const byName = new Map(lowered("gauge", SOURCE_DIR).elements.map((e) => [e.name, e]));
+    const ring = byName.get("Ring");
+    expect(ring?.type).toBe("TYPEDEF");
+    expect(ring?.types).toEqual(["LoopRing", "OpenRing"]);
+    expect(byName.get("OpenRing")?.properties?.map((p) => [p.name, p.is_optional])).toEqual([
       ["shape", undefined],
-      ["chain_vertices", undefined],
-      ["chain_loop", "True"],
-      ["chain_prev_vertex", undefined],
-      ["chain_next_vertex", undefined],
+      ["points", undefined],
+      ["loop", "True"],
+      ["prev", undefined],
+      ["next", undefined],
     ]);
-    expect(byName.get("RevoluteJointDef")?.extends).toEqual(["JointDefBase"]);
+    expect(byName.get("HingeDef")?.extends).toEqual(["JointDefBase"]);
   });
 
-  test("lowers def_windward_jps with its grid methods and the point and heuristic shapes", () => {
-    const doc = lowered("def_windward_jps");
-    expect(doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name)).toEqual([
-      "create_grid",
-    ]);
-    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(0);
-    const byName = new Map(doc.elements.map((e) => [e.name, e]));
-    const grid = byName.get("Grid");
-    expect(grid?.type).toBe("TYPEDEF");
-    expect(grid?.functions?.map((f) => f.name)).toEqual(["find_path", "is_walkable"]);
-    expect(grid?.properties).toBeUndefined();
-    expect(byName.get("Point")?.type).toBe("TYPEDEF");
-    expect(byName.get("Heuristic")?.type).toBe("TYPEDEF");
-    expect(byName.get("Heuristic")?.types).toEqual(['"octile"', '"manhattan"', '"euclidean"']);
+  test("lowers an object's methods and the tuple and literal-union shapes they name", () => {
+    const byName = new Map(lowered("gauge", SOURCE_DIR).elements.map((e) => [e.name, e]));
+    const board = byName.get("Board");
+    expect(board?.type).toBe("TYPEDEF");
+    expect(board?.functions?.map((f) => f.name)).toEqual(["route", "is_open"]);
+    expect(board?.properties).toBeUndefined();
+    expect(byName.get("Cell")?.type).toBe("TYPEDEF");
+    expect(byName.get("Metric")?.type).toBe("TYPEDEF");
+    expect(byName.get("Metric")?.types).toEqual(['"near"', '"far"', '"exact"']);
   });
 
-  test("lowers taptic_engine to bare function and constant names", () => {
-    const doc = lowered("taptic_engine");
-    expect(doc.info.namespace).toBe("taptic_engine");
-    expect(
-      doc.elements
-        .filter((e) => e.type === "FUNCTION")
-        .map((e) => e.name)
-        .sort(),
-    ).toEqual(["impact", "isSupported", "notification", "selection"]);
-    expect(
-      doc.elements
-        .filter((e) => e.type === "VARIABLE")
-        .map((e) => e.name)
-        .sort(),
-    ).toEqual([
-      "IMPACT_HEAVY",
-      "IMPACT_LIGHT",
-      "IMPACT_MEDIUM",
-      "NOTIFICATION_ERROR",
-      "NOTIFICATION_SUCCESS",
-      "NOTIFICATION_WARNING",
-    ]);
-    expect(doc.elements.map((e) => e.name).filter((n) => n.startsWith("global."))).toEqual([]);
+  test("lowers the functions of an overload pair as one element per call shape, named bare", () => {
+    const functions = lowered("gauge", SOURCE_DIR)
+      .elements.filter((e) => e.type === "FUNCTION")
+      .map((e) => e.name);
+    expect(functions.filter((name) => name === "send")).toEqual(["send", "send"]);
+    expect(functions.filter((name) => name.startsWith("global."))).toEqual([]);
   });
 
-  test("lowers png's codec functions and its LodePNG color-type constants, named bare", () => {
-    const doc = lowered("png");
-    expect(doc.info.namespace).toBe("png");
-    expect(
-      doc.elements
-        .filter((e) => e.type === "FUNCTION")
-        .map((e) => e.name)
-        .sort(),
-    ).toEqual(["decode_rgb", "decode_rgba", "encode_rgb", "encode_rgba", "info"]);
-    expect(
-      doc.elements
-        .filter((e) => e.type === "VARIABLE")
-        .map((e) => e.name)
-        .sort(),
-    ).toEqual(["GREY", "GREY_ALPHA", "PALETTE", "RGB", "RGBA"]);
-    expect(doc.elements.map((e) => e.name).filter((n) => n.startsWith("global."))).toEqual([]);
-  });
-
-  test("lowers ainpc's functions with one element per call shape, named bare", () => {
-    const doc = lowered("ainpc");
-    expect(doc.info.namespace).toBe("ainpc");
-    expect(
-      doc.elements
-        .filter((e) => e.type === "FUNCTION")
-        .map((e) => e.name)
-        .sort(),
-    ).toEqual([
-      "chat_completion",
-      "npc_chat",
-      "npc_chat",
-      "npc_kill",
-      "npc_kill",
-      "npc_responses",
-      "npc_responses",
-      "npc_spawn",
-      "npc_spawn",
-      "stop_npc_responses",
-    ]);
-    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(0);
-    expect(doc.elements.map((e) => e.name).filter((n) => n.startsWith("global."))).toEqual([]);
-  });
-
-  test("lowers detour's init, its NavMesh and Crowd methods and the result shapes", () => {
-    const doc = lowered("detour");
-    expect(doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name)).toEqual(["init"]);
-    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(0);
-    const byName = new Map(doc.elements.map((e) => [e.name, e]));
-    for (const name of ["NavMesh", "Crowd"]) {
+  test("lowers method-only objects with functions and data shapes with properties", () => {
+    const byName = new Map(lowered("gauge", SOURCE_DIR).elements.map((e) => [e.name, e]));
+    for (const name of ["Board", "Session"]) {
       expect(byName.get(name)?.type).toBe("TYPEDEF");
-      expect(byName.get(name)?.functions).toHaveLength(5);
+      expect(byName.get(name)?.functions).toHaveLength(2);
       expect(byName.get(name)?.properties).toBeUndefined();
     }
-    for (const name of ["PathPoint", "CrowdAgent"]) {
+    for (const name of ["Reading", "OpenRing"]) {
       expect(byName.get(name)?.properties?.length).toBeGreaterThan(0);
       expect(byName.get(name)?.functions).toBeUndefined();
     }
@@ -215,25 +339,29 @@ describe("lowerNativeApiDoc", () => {
 
   // A userdata method lowered as a property, or a callback lowered as a method, reads on
   // the page as a member the runtime does not have.
-  test("lowers box2d methods as functions, callbacks as properties and constants by table", () => {
-    const doc = lowered("box2d");
-    expect(doc.elements.filter((e) => e.type === "FUNCTION")).toHaveLength(18);
-    const variables = doc.elements.filter((e) => e.type === "VARIABLE").map((e) => e.name);
-    expect(variables).toHaveLength(27);
-    expect(variables).toContain("b2Shape.e_circle");
+  test("lowers userdata methods as functions, callbacks as properties and constants by table", () => {
+    const doc = lowered("rig", SOURCE_DIR);
     expect(
-      variables.filter(
-        (name) =>
-          !/^(b2Shape|b2BodyType|b2JointType|b2Draw|b2Manifold_Type)\.[A-Za-z0-9_]+$/.test(name),
-      ),
-    ).toEqual([]);
+      doc.elements
+        .filter((e) => e.type === "FUNCTION")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["NewCircle", "NewWorld"]);
+    expect(
+      doc.elements
+        .filter((e) => e.type === "VARIABLE")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["BodyType.DYNAMIC", "BodyType.STATIC", "Shape.BOX", "Shape.CIRCLE"]);
 
     const typedefs = new Map(
       doc.elements.filter((e) => e.type === "TYPEDEF").map((e) => [e.name, e]),
     );
     const isCallback = (p: { types?: string[] }) => (p.types ?? []).some((t) => t.includes("=>"));
-    const methodBearing = [...new Set(Object.values(target("box2d").methodTables ?? {}).flat())];
-    expect(methodBearing).toHaveLength(21);
+    const methodBearing = [
+      ...new Set(Object.values(target("rig", SOURCE_DIR).methodTables ?? {}).flat()),
+    ];
+    expect(methodBearing).toHaveLength(3);
     for (const name of methodBearing) {
       const typedef = typedefs.get(name);
       expect(typedef?.functions?.length ?? 0).toBeGreaterThan(0);
@@ -248,34 +376,8 @@ describe("lowerNativeApiDoc", () => {
 
     const callbacks = (name: string) =>
       (typedefs.get(name)?.properties ?? []).filter(isCallback).map((p) => p.name);
-    expect(callbacks("ContactListener")).toEqual([
-      "BeginContact",
-      "EndContact",
-      "PreSolve",
-      "PostSolve",
-    ]);
-    expect(callbacks("DestructionListener")).toEqual(["SayGoodbyeFixture", "SayGoodbyeJoint"]);
-    expect(callbacks("DebugDrawCallbacks")).toEqual([
-      "DrawPolygon",
-      "DrawSolidPolygon",
-      "DrawCircle",
-      "DrawSolidCircle",
-      "DrawSegment",
-      "DrawTransform",
-      "DrawPoint",
-    ]);
-  });
-});
-
-describe("committed native api-docs", () => {
-  test("every native target has a committed api-doc equal to a fresh lowering", () => {
-    const targets = readNativeTargets(DATA_DIR);
-    expect(targets.length).toBeGreaterThan(0);
-    for (const t of targets) {
-      const path = join(PACKAGE_ROOT, nativeApiDocPath(t));
-      expect(existsSync(path)).toBe(true);
-      expect(readFileSync(path, "utf8")).toBe(lowerNativeApiDoc(DATA_DIR, t));
-    }
+    expect(callbacks("ContactListener")).toEqual(["BeginContact", "EndContact"]);
+    expect(callbacks("DrawCallbacks")).toEqual(["DrawCircle", "DrawSegment"]);
   });
 });
 

@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LIBRARY_DATA_DIR } from "./package-root";
+import { FIXTURE_DATA_DIR } from "../library-data-fixture";
 import {
   assignPageKeys,
   type DefoldGitHub,
@@ -19,11 +19,9 @@ import {
   syncDefoldReleaseDates,
 } from "./sync-defold-extensions";
 
-const DATA_DIR = LIBRARY_DATA_DIR;
-
 let reserved: ReservedNamespaces;
 beforeAll(async () => {
-  reserved = await loadReservedNamespaces(DATA_DIR);
+  reserved = await loadReservedNamespaces(FIXTURE_DATA_DIR);
 });
 
 function repo(name: string, overrides: Partial<GitHubRepo> = {}): GitHubRepo {
@@ -141,7 +139,7 @@ describe("assignPageKeys", () => {
         entry("extension-firebase-crashlytics", ["firebase"]),
         entry("extension-firebase-remoteconfig", ["firebase"]),
         entry("extension-admob", ["admob"]),
-        entry("extension-proto", ["proto"]),
+        entry("extension-beacon", ["beacon"]),
       ],
       reserved,
     );
@@ -157,12 +155,14 @@ describe("assignPageKeys", () => {
       "extension-firebase-crashlytics": ["firebase-crashlytics"],
       "extension-firebase-remoteconfig": ["firebase-remoteconfig"],
       "extension-admob": ["admob"],
-      "extension-proto": ["extension-proto"],
+      "extension-beacon": ["extension-beacon"],
     });
   });
 
-  test("the reserved sets are the real ones: camera is live, iap is no engine page, proto is vendored", () => {
-    expect(reserved.libraryNamespaces.has("proto")).toBe(true);
+  test("the reserved sets read the engine targets and each library page the data names: camera is live, iap is no engine page, glow, beacon and tally are vendored", () => {
+    expect(reserved.libraryNamespaces.has("glow")).toBe(true);
+    expect(reserved.libraryNamespaces.has("beacon")).toBe(true);
+    expect(reserved.libraryNamespaces.has("tally")).toBe(true);
     expect(reserved.engineNamespaces.has("camera")).toBe(true);
     expect(reserved.engineNamespaces.has("iap")).toBe(false);
   });
@@ -210,7 +210,7 @@ function fakeGitHub(): { github: DefoldGitHub; fetched: string[] } {
   const fetched: string[] = [];
   const repos: GitHubRepo[] = [
     repo("extension-iap", { license: { spdx_id: "Apache-2.0" } }),
-    repo("extension-proto", { license: null, description: null }),
+    repo("extension-beacon", { license: null, description: null }),
     repo("extension-rive"),
     repo("sample-thing"),
     repo("asset-pbr"),
@@ -218,7 +218,7 @@ function fakeGitHub(): { github: DefoldGitHub; fetched: string[] } {
   ];
   const trees: Record<string, string[]> = {
     "extension-iap@8.4.0": ["README.md", "extension-iap/api/iap.script_api"],
-    "extension-proto@deadbeef": ["proto/api/proto.script_api"],
+    "extension-beacon@deadbeef": ["beacon/api/beacon.script_api"],
     "extension-rive@13.1.0": ["defold-rive/api/rive.script_api"],
     "asset-pbr@main-sha": ["pbr/pbr.lua"],
   };
@@ -227,7 +227,7 @@ function fakeGitHub(): { github: DefoldGitHub; fetched: string[] } {
     gameProject: async (name) => (name === "asset-pbr" ? "[library]\ninclude_dirs = pbr\n" : null),
     latestRelease: async (name) => (name === "extension-iap" ? { tag_name: "8.4.0" } : null),
     tags: async (name) => (name === "extension-rive" ? [{ name: "13.1.0" }] : []),
-    headSha: async (name) => (name === "extension-proto" ? "deadbeef" : "main-sha"),
+    headSha: async (name) => (name === "extension-beacon" ? "deadbeef" : "main-sha"),
     tree: async (name, ref) => trees[`${name}@${ref}`] ?? [],
     releaseByTag: async (name, tag) =>
       name === "extension-iap" && tag === "8.4.0" ? { published_at: "2024-03-02T00:00:00Z" } : null,
@@ -254,8 +254,8 @@ describe("syncDefoldExtensions", () => {
     await syncDefoldExtensions(out, github, reserved);
 
     expect(fetched.sort()).toEqual([
+      "https://raw.githubusercontent.com/defold/extension-beacon/deadbeef/beacon/api/beacon.script_api",
       "https://raw.githubusercontent.com/defold/extension-iap/8.4.0/extension-iap/api/iap.script_api",
-      "https://raw.githubusercontent.com/defold/extension-proto/deadbeef/proto/api/proto.script_api",
       "https://raw.githubusercontent.com/defold/extension-rive/13.1.0/defold-rive/api/rive.script_api",
     ]);
 
@@ -271,22 +271,22 @@ describe("syncDefoldExtensions", () => {
           docs: [],
         },
         {
+          repo: "https://github.com/defold/extension-beacon",
+          ref: "deadbeef",
+          refKind: "commit",
+          license: "",
+          description: "",
+          docs: [
+            { path: "beacon/api/beacon.script_api", namespace: "beacon", page: "extension-beacon" },
+          ],
+        },
+        {
           repo: "https://github.com/defold/extension-iap",
           ref: "8.4.0",
           refKind: "release",
           license: "Apache-2.0",
           description: "extension-iap description",
           docs: [{ path: "extension-iap/api/iap.script_api", namespace: "iap", page: "iap" }],
-        },
-        {
-          repo: "https://github.com/defold/extension-proto",
-          ref: "deadbeef",
-          refKind: "commit",
-          license: "",
-          description: "",
-          docs: [
-            { path: "proto/api/proto.script_api", namespace: "proto", page: "extension-proto" },
-          ],
         },
         {
           repo: "https://github.com/defold/extension-rive",
@@ -626,7 +626,7 @@ describe("fetchDefoldExtensions", () => {
     const entries = byRepo(out);
     expect(entries["extension-iap"]?.refDate).toBe("2024-01-01T00:00:00Z");
     expect(entries["extension-rive"]?.refDate).toBe("2024-05-06T00:00:00Z");
-    expect(entries["extension-proto"]).not.toHaveProperty("refDate");
+    expect(entries["extension-beacon"]).not.toHaveProperty("refDate");
     expect(entries["asset-pbr"]).not.toHaveProperty("refDate");
   });
 });

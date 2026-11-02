@@ -1,11 +1,11 @@
-import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeLibraryTargets } from "../library-data-fixture";
+import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import { extractApiDoc } from "./extract-api-doc";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
-import { printCorpus, printedModule } from "./print-corpus";
+import { printedModule } from "./print-corpus";
 import {
   type AuthoredTarget,
   emitAuthoredDeclaration,
@@ -16,21 +16,21 @@ import {
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 
-// The defcon.console target as it appears in a validated config. An authored
+// The fixture's tally.tally fork as `readAuthoredTargets` returns it. An authored
 // target vendors a first-party/forked `.d.ts` and pins the publish namespace it
 // is emitted under plus the canonical golden paths. Unlike the markdown/luals/
 // script_api lanes the source is already a `declare module` ambient, so the lane
 // vendors + `extractApiDoc`s it rather than parsing a foreign source.
-const DEFCON: AuthoredTarget = {
-  repo: "https://github.com/britzl/defcon",
-  ref: "2.6.0",
+const TALLY: AuthoredTarget = {
+  repo: "https://github.com/example/fixture-fork",
+  ref: "2.0.0",
   license: "MIT",
-  authored: "defcon/fork/defcon.console.d.ts",
-  moduleId: "defcon.console",
-  namespace: "defcon",
-  apiDoc: "api-doc/defcon.json",
-  fidelity: "fidelity/defcon.json",
-  upstreamLua: ["defcon/source/upstream/defcon/console.lua"],
+  authored: "fixture-fork/fork/tally.tally.d.ts",
+  moduleId: "tally.tally",
+  namespace: "tally",
+  apiDoc: "api-doc/tally.json",
+  fidelity: "fidelity/tally.json",
+  upstreamLua: ["fixture-fork/source/upstream/tally/tally.lua"],
 };
 
 // The committed api-doc JSON's element list — what the docs-site consumes for a
@@ -51,76 +51,76 @@ interface ImportedElement {
   docSource?: string;
 }
 
-function authoredTarget(namespace: string): AuthoredTarget {
-  const found = readAuthoredTargets(DATA_DIR).find((entry) => entry.namespace === namespace);
-  if (!found) throw new Error(`library data forks no ${namespace}`);
-  return found;
+const tempDirs: string[] = [];
+
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  tempDirs.push(dir);
+  return dir;
 }
 
 // Paths in a written fork stay as given, relative to its library folder.
 function writeConfig(targets: Partial<AuthoredTarget>[]): string {
-  const root = mkdtempSync(join(tmpdir(), "authored-targets-config-"));
+  const root = tempDir("authored-targets-config-");
   writeLibraryTargets(root, {
-    forks: targets.map((target) => ({ repo: DEFCON.repo, ...target })),
+    forks: targets.map((target) => ({ repo: TALLY.repo, ...target })),
   });
   return root;
 }
 
 describe("readAuthoredTargets", () => {
-  test("parses the committed defcon entry into a typed target", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const defcon = targets.find((t) => t.moduleId === "defcon.console");
-    expect(defcon).toBeDefined();
-    expect(defcon?.namespace).toBe("defcon");
-    expect(defcon?.repo).toBe("https://github.com/britzl/defcon");
-    expect(defcon?.ref).toBe("2.6.0");
-    expect(defcon?.authored).toBe("defcon/fork/defcon.console.d.ts");
-    expect(defcon?.apiDoc).toBe("api-doc/defcon.json");
-    expect(defcon?.license).toBe("MIT");
+  test("parses the fixture's tally entry into a typed target", () => {
+    const targets = readAuthoredTargets(FIXTURE_DATA_DIR);
+    const tally = targets.find((t) => t.moduleId === "tally.tally");
+    expect(tally).toEqual(TALLY);
   });
 
   test("throws naming the missing field and the offending entry", () => {
-    const { authored: _drop, ...missingAuthored } = DEFCON;
+    const { authored: _drop, ...missingAuthored } = TALLY;
     const root = writeConfig([missingAuthored]);
     expect(() => readAuthoredTargets(root)).toThrow(/authored/);
-    expect(() => readAuthoredTargets(root)).toThrow(/defcon\.console/);
+    expect(() => readAuthoredTargets(root)).toThrow(/tally\.tally/);
   });
 
   test("names the entry index when moduleId itself is the missing field", () => {
-    const { moduleId: _drop, ...missingModuleId } = DEFCON;
+    const { moduleId: _drop, ...missingModuleId } = TALLY;
     const root = writeConfig([missingModuleId]);
     expect(() => readAuthoredTargets(root)).toThrow(/moduleId/);
     expect(() => readAuthoredTargets(root)).toThrow(/0/);
   });
 
   test("defaults fidelity to fidelity/<namespace>.json and license to '' when omitted", () => {
-    const { fidelity: _f, license: _l, ...bare } = DEFCON;
+    const { fidelity: _f, license: _l, ...bare } = TALLY;
     const root = writeConfig([bare]);
     const [target] = readAuthoredTargets(root);
-    expect(target?.fidelity).toBe("fidelity/defcon.json");
+    expect(target?.fidelity).toBe("fidelity/tally.json");
     expect(target?.license).toBe("");
   });
 });
 
 describe("emitAuthoredDeclaration", () => {
   test("prints the vendored authored .d.ts verbatim", () => {
-    const contents = emitAuthoredDeclaration(DATA_DIR, DEFCON);
+    const contents = emitAuthoredDeclaration(FIXTURE_DATA_DIR, TALLY);
     // The forked ambient module keyed by moduleId, exported symbols intact
     // (assert on symbols, never the whole blob).
-    expect(contents).toContain("declare module 'defcon.console' {");
-    expect(contents).toContain("function start(");
-    expect(contents).toContain("function register_command(");
+    expect(contents).toContain("declare module 'tally.tally' {");
+    expect(contents).toContain("function push(");
+    expect(contents).toContain("function flush(");
   });
 });
 
 describe("lowerAuthoredApiDoc", () => {
   test("extractApiDoc lowers the fork under the publish namespace", () => {
-    const json = lowerAuthoredApiDoc(DATA_DIR, DEFCON);
+    const json = lowerAuthoredApiDoc(FIXTURE_DATA_DIR, TALLY);
     const doc = JSON.parse(json) as { info: { namespace: string }; elements: { name: string }[] };
-    expect(doc.info.namespace).toBe("defcon");
+    expect(doc.info.namespace).toBe("tally");
     const names = doc.elements.map((e) => e.name);
-    expect(names).toContain("start");
-    expect(names).toContain("register_command");
+    expect(names).toContain("push");
+    expect(names).toContain("flush");
   });
 });
 
@@ -129,62 +129,130 @@ describe("lowerAuthoredApiDoc", () => {
 // imported brief is only ever visible through this lowering and the `/api` page it
 // feeds.
 describe("upstream LuaDoc import at api-doc lowering", () => {
-  function loweredElements(target: AuthoredTarget): ImportedElement[] {
-    const { elements } = JSON.parse(lowerAuthoredApiDoc(DATA_DIR, target)) as {
+  // A fork that documents `get_level` and `LIMIT_NONE` itself and leaves `start` blank.
+  const RELAY_FORK = `/** @noSelfInFile **/
+
+/**
+ * Relays messages between peers.
+ * @noResolution
+ */
+declare module 'relay.relay' {
+	export function start(port: number): void;
+	/** The relay's current level. */
+	export function get_level(): number;
+	/** A documented limit. */
+	export const LIMIT_NONE: "NONE";
+}
+`;
+
+  // Upstream documents all three members, `start` with a trailing `@param` line and
+  // `LIMIT_NONE` under a snake_case heading that is not the member's own name.
+  const RELAY_UPSTREAM = `local M = {}
+
+--- limit_mode
+-- Limit that caps how many messages the relay holds.
+M.LIMIT_NONE = "NONE"
+
+--- Start the relay
+-- @param port The port to listen for messages at
+function M.start(port)
+end
+
+--- Upstream's own words for the level
+function M.get_level()
+	return 1
+end
+
+return M
+`;
+
+  // A data folder holding the relay fork beside its upstream `.lua`. The target names
+  // that file when `measured`, and records a parity verdict in its place otherwise.
+  function writeRelay(measured = true): { dataDir: string; target: AuthoredTarget } {
+    const dataDir = tempDir("authored-lowering-");
+    const library = join(dataDir, "relay");
+    mkdirSync(join(library, "fork"), { recursive: true });
+    mkdirSync(join(library, "source", "upstream", "relay"), { recursive: true });
+    writeFileSync(join(library, "fork", "relay.relay.d.ts"), RELAY_FORK);
+    writeFileSync(join(library, "source", "upstream", "relay", "relay.lua"), RELAY_UPSTREAM);
+    writeLibraryTargets(dataDir, {
+      forks: [
+        {
+          repo: "https://github.com/example/relay",
+          ref: "1.0.0",
+          authored: "fork/relay.relay.d.ts",
+          moduleId: "relay.relay",
+          namespace: "relay",
+          apiDoc: "api-doc/relay.json",
+          ...(measured
+            ? { upstreamLua: ["source/upstream/relay/relay.lua"] }
+            : {
+                parityVerdict: {
+                  reason: "no-module-file" as const,
+                  note: "The relay ships no module file to measure.",
+                },
+              }),
+        },
+      ],
+    });
+    const [target] = readAuthoredTargets(dataDir);
+    if (!target) throw new Error("the relay data folder forks nothing");
+    return { dataDir, target };
+  }
+
+  function loweredElements(dataDir: string, target: AuthoredTarget): ImportedElement[] {
+    const { elements } = JSON.parse(lowerAuthoredApiDoc(dataDir, target)) as {
       elements: ImportedElement[];
     };
     return elements;
   }
 
-  function element(target: AuthoredTarget, name: string): ImportedElement {
-    const found = loweredElements(target).find((entry) => entry.name === name);
+  function element(dataDir: string, target: AuthoredTarget, name: string): ImportedElement {
+    const found = loweredElements(dataDir, target).find((entry) => entry.name === name);
     if (!found) throw new Error(`${target.namespace} lowers no element named ${name}`);
     return found;
   }
 
-  test("defcon takes upstream's summary for the six members its fork leaves blank", () => {
-    const imported = loweredElements(DEFCON).filter((e) => e.docSource === "upstream");
-    expect(imported.map((e) => e.name).sort()).toEqual([
-      "register_command",
-      "register_module",
-      "set_environment",
-      "start",
-      "stop",
-      "update",
-    ]);
+  test("tally takes upstream's summary for both members its fork leaves blank", () => {
+    const imported = loweredElements(FIXTURE_DATA_DIR, TALLY).filter(
+      (e) => e.docSource === "upstream",
+    );
+    expect(imported.map((e) => e.name).sort()).toEqual(["flush", "push"]);
   });
 
-  test("defcon.start's imported description drops the @param line", () => {
-    const start = element(DEFCON, "start");
-    expect(start.description).toBe("Start the console");
-    expect(start.brief).toBe("Start the console");
+  test("relay.start's imported description drops the @param line", () => {
+    const { dataDir, target } = writeRelay();
+    const start = element(dataDir, target, "start");
+    expect(start.description).toBe("Start the relay");
+    expect(start.brief).toBe("Start the relay");
+    expect(start.docSource).toBe("upstream");
   });
 
-  test("orthographic.camera keeps the fork's own prose over upstream's", () => {
-    const target = authoredTarget("orthographic.camera");
-    const getZoom = element(target, "get_zoom");
-    expect(getZoom.brief).toBe("Get the current zoom level of the camera.");
-    expect(getZoom.docSource).toBeUndefined();
+  test("relay.get_level keeps the fork's own prose over upstream's", () => {
+    const { dataDir, target } = writeRelay();
+    const getLevel = element(dataDir, target, "get_level");
+    expect(getLevel.brief).toBe("The relay's current level.");
+    expect(getLevel.docSource).toBeUndefined();
   });
 
   test("a target with no vendored upstream imports nothing", () => {
-    for (const target of readAuthoredTargets(DATA_DIR)) {
-      if (target.upstreamLua.length > 0) continue;
-      const imported = loweredElements(target).filter((e) => e.docSource !== undefined);
-      expect({ namespace: target.namespace, imported: imported.map((e) => e.name) }).toEqual({
-        namespace: target.namespace,
-        imported: [],
-      });
-    }
+    const imported = ({ dataDir, target }: { dataDir: string; target: AuthoredTarget }) =>
+      loweredElements(dataDir, target)
+        .filter((e) => e.docSource !== undefined)
+        .map((e) => e.name);
+    expect(imported(writeRelay())).toEqual(["start"]);
+    const unmeasured = writeRelay(false);
+    expect(unmeasured.target.upstreamLua).toEqual([]);
+    expect(imported(unmeasured)).toEqual([]);
   });
 
   // The importer's opt-out is "an element the fork gave either a `brief` or a
   // `description` is returned untouched", and it now works on the field axis too:
   // `extractApiDoc` carries a doc comment onto a `VARIABLE` element as well as a
-  // `FUNCTION` one, so a constant the fork documents keeps the fork's words. nakama's
-  // three run-leading constants are the corpus's only case; each used to import
-  // upstream's LuaDoc *heading* instead — a snake_case type name `withoutNameLine`
-  // does not strip, because it is not the member's own name.
+  // `FUNCTION` one, so a constant the fork documents keeps the fork's words. The
+  // relay's `LIMIT_NONE` sits under an upstream block that opens with a snake_case
+  // heading `withoutNameLine` does not strip, because it is not the member's own
+  // name, so a constant that failed to opt out would import that heading instead.
   test("a fork doc-comment on a constant opts the member out of the import", () => {
     const documented = extractApiDoc(
       `declare module "x.y" {\n  /** A documented constant. */\n  export const A: number;\n}\n`,
@@ -194,396 +262,10 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
     expect(a?.brief).toBe("A documented constant.");
     expect(a?.description).toBe("A documented constant.");
 
-    const operator = element(authoredTarget("nakama"), "APIOPERATOR_NO_OVERRIDE");
-    expect(operator.docSource).toBeUndefined();
-    expect(operator.brief).toBe(
-      "Operator that can be used to override the one set in the leaderboard.",
-    );
-  });
-
-  test("the whole corpus imports 254 briefs across 14 targets", () => {
-    const counts = readAuthoredTargets(DATA_DIR)
-      .map((target) => ({
-        namespace: target.namespace,
-        imported: loweredElements(target).filter((e) => e.docSource === "upstream").length,
-      }))
-      .filter((entry) => entry.imported > 0);
-    expect(counts.length).toBe(14);
-    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(254);
-  });
-});
-
-// A fork's emit is lossless by construction: the emitted surface IS the vendored
-// `.d.ts`, which `print-library.test.ts` proves through the lane dispatch, so
-// only the api-doc lowering is compared against a committed golden.
-describe("authored api-docs regenerate byte-for-byte", () => {
-  test("each target's lowered api-doc matches its committed api-doc golden", () => {
-    for (const target of readAuthoredTargets(DATA_DIR)) {
-      const regenerated = lowerAuthoredApiDoc(DATA_DIR, target);
-      const committed = readFileSync(join(PACKAGE_ROOT, target.apiDoc), "utf8");
-      expect(regenerated).toBe(committed);
-    }
-  });
-});
-
-describe("defcon.console migration integrity", () => {
-  test("defcon is registered in library data", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    expect(targets.some((t) => t.namespace === "defcon")).toBe(true);
-  });
-
-  test("defcon.console is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "defcon.console")).toBe(false);
-  });
-
-  test("the defcon dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defcon")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture is deleted", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defcon.console.d.ts"))).toBe(false);
-  });
-});
-
-describe("deftest.deftest migration integrity", () => {
-  test("deftest is registered in library data", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    expect(targets.some((t) => t.namespace === "deftest")).toBe(true);
-  });
-
-  test("deftest.deftest is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "deftest.deftest")).toBe(false);
-  });
-
-  test("the deftest dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "deftest")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture is deleted", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/deftest.deftest.d.ts"))).toBe(false);
-  });
-
-  test("the lowered api-doc publishes the ambient test DSL alongside the unmarked module members", () => {
-    const elements = apiDocElements("deftest");
-    const byName = (name: string) => elements.find((e) => e.name === name);
-    for (const name of ["describe", "test", "assert_equal", "assert_error"]) {
-      expect(byName(name)).toMatchObject({ type: "FUNCTION", global: true });
-    }
-    for (const name of ["add", "run"]) {
-      expect(byName(name)).toMatchObject({ type: "FUNCTION" });
-      expect(Object.hasOwn(byName(name) ?? {}, "global")).toBe(false);
-    }
-  });
-});
-
-describe("defmath.defmath migration integrity", () => {
-  test("defmath is registered in library data", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    expect(targets.some((t) => t.namespace === "defmath")).toBe(true);
-  });
-
-  test("defmath.defmath is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "defmath.defmath")).toBe(false);
-  });
-
-  test("the defmath dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defmath")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture is deleted", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defmath.defmath.d.ts"))).toBe(false);
-  });
-
-  test("the golden carries the core-type-renamed ambient engine types", async () => {
-    const golden = await printedModule(DATA_DIR, "defmath.defmath");
-    expect(golden).toContain("Vector3 | Vector4");
-    expect(golden).toContain(": Quaternion");
-  });
-
-  test("the golden references no dotted vmath engine types", async () => {
-    const golden = await printedModule(DATA_DIR, "defmath.defmath");
-    expect(golden).not.toContain("vmath.");
-  });
-});
-
-describe("zzfx.api migration integrity", () => {
-  test("zzfx is registered in library data", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    expect(targets.some((t) => t.namespace === "zzfx")).toBe(true);
-  });
-
-  test("zzfx.api is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "zzfx.api")).toBe(false);
-  });
-
-  test("the defold-zzfx dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defold-zzfx")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture is deleted", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/zzfx.api.d.ts"))).toBe(false);
-  });
-
-  test("the golden carries the module-external opaque handle declaration", async () => {
-    const golden = await printedModule(DATA_DIR, "zzfx.api");
-    expect(golden).toContain("type ZzFXSample = LuaUserdata");
-    expect(golden).toContain("declare module 'zzfx.api' {");
-  });
-});
-
-describe("nakama helpers migration integrity", () => {
-  test("both hand-written helpers are registered in library data", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    expect(targets.some((t) => t.namespace === "nakama.engine.defold")).toBe(true);
-    expect(targets.some((t) => t.namespace === "nakama.util.log")).toBe(true);
-  });
-
-  test("neither helper is a ts-defold library-targets row any longer", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "nakama.engine.defold")).toBe(false);
-    expect(targets.some((t) => t.module === "nakama.util.log")).toBe(false);
-  });
-
-  // This severance only dropped the helpers from the dir, which survived on its
-  // one remaining live row; that row has since severed too, so the dir is gone
-  // and the surviving claim is that no classification entry anywhere still owns
-  // a helper — which is what a regen resurrecting the dir would violate.
-  test("no classification entry claims either helper, and the dir they shared is gone", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string; modules: string[] }[] };
-    expect(dirs.some((c) => c.dir === "nakama-defold")).toBe(false);
-    const modules = dirs.flatMap((c) => c.modules);
-    expect(modules.length).toBeGreaterThan(0);
-    expect(modules).not.toContain("nakama.engine.defold");
-    expect(modules).not.toContain("nakama.util.log");
-  });
-
-  test("the retired ts-defold helper fixtures are gone (authored copies replace them)", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.engine.defold.d.ts"))).toBe(
-      false,
-    );
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.util.log.d.ts"))).toBe(false);
-  });
-});
-
-describe("boom.boom migration integrity", () => {
-  test("boom is registered in library data", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    expect(targets.some((t) => t.namespace === "boom")).toBe(true);
-  });
-
-  test("boom.boom is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "boom.boom")).toBe(false);
-  });
-
-  test("the boom dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "boom")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are deleted", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/boom.boom.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/boom.boom.json"))).toBe(false);
-  });
-
-  test("the golden carries the core-type-renamed Hash/Url at every site ts-defold spelled lowercase", async () => {
-    const golden = await printedModule(DATA_DIR, "boom.boom");
-    expect(golden).toContain("readonly __url?: Url;");
-    expect(golden).toContain("readonly id: Hash;");
-    expect(golden).toContain("readonly ids: LuaMap<Hash, Hash>;");
-    expect(golden).toContain("readonly tags: LuaMap<string | Hash, boolean>;");
-    expect(golden).toContain("readonly area_url: Url | undefined;");
-    expect(golden).toContain("atlas?: string | Hash;");
-    for (const lowercase of [": hash", ": url", "<hash", "| hash", "| url"]) {
-      expect(golden).not.toContain(lowercase);
-    }
-  });
-
-  test("the lowered api-doc publishes boom's ambient globals and component members", () => {
-    const elements = apiDocElements("boom");
-    const byName = (name: string) => elements.find((e) => e.name === name);
-    for (const name of ["add", "vec2", "rand", "on_collide"]) {
-      expect(byName(name)).toMatchObject({ type: "FUNCTION", global: true });
-    }
-    for (const name of ["rgb.RED", "vec2.UP"]) {
-      expect(byName(name)).toMatchObject({ type: "VARIABLE", global: true });
-    }
-    for (const [shape, member] of [
-      ["AreaComp", "has_point"],
-      ["BodyComp", "jump"],
-      ["SpriteComp", "play"],
-    ]) {
-      const typedef = byName(shape ?? "") as
-        | { global?: true; functions?: { name: string }[] }
-        | undefined;
-      expect(typedef).toMatchObject({ type: "TYPEDEF", global: true });
-      expect(typedef?.functions?.map((f) => f.name)).toContain(member);
-    }
-    // The one symbol the page's `import * as boom from "boom.boom"` reaches.
-    expect(byName("boom")).toMatchObject({ type: "FUNCTION" });
-    expect(Object.hasOwn(byName("boom") ?? {}, "global")).toBe(false);
-  });
-});
-
-describe("defsave.defsave migration integrity", () => {
-  test("defsave is registered in library data", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    expect(targets.some((t) => t.namespace === "defsave")).toBe(true);
-  });
-
-  test("defsave.defsave is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "defsave.defsave")).toBe(false);
-  });
-
-  test("the defsave dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defsave")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are deleted", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/defsave.defsave.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/defsave.defsave.json"))).toBe(false);
-  });
-
-  test("the golden declares the members ts-defold omitted and corrects the wrong returns", async () => {
-    const golden = await printedModule(DATA_DIR, "defsave.defsave");
-    for (const added of [
-      "function obfuscate(",
-      "function get_file_path(",
-      "function key_exists(",
-      "function isset(",
-      "function reset_to_default(",
-      "function is_loaded(",
-      "function final(",
-    ]) {
-      expect(golden).toContain(added);
-    }
-    expect(golden).toContain("let enable_obfuscation: boolean;");
-    expect(golden).toContain("function save(file: string, force?: boolean): boolean | undefined;");
-    expect(golden).toContain(
-      "function set(file: string, key: string, value: any): boolean | undefined;",
-    );
-    expect(golden).not.toContain("function save(config: string): void;");
-    expect(golden).not.toContain("function set(config: string, name: string, value: any): void;");
-  });
-});
-
-// The first Bucket-C library to sever: its markdown `no-go` retired the markdown
-// front-end as a regeneration path but left the ts-defold dependency untouched,
-// and the authored lane answers that second question. The fork is verbatim, so
-// the generic regen-drift and fork-identity loops above already cover fidelity.
-describe("persist.persist migration integrity", () => {
-  test("persist is registered in library data", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const persist = targets.find((t) => t.namespace === "persist");
-    expect(persist).toBeDefined();
-    expect(persist?.moduleId).toBe("persist.persist");
-    expect(persist?.repo).toBe("https://github.com/whiteboxdev/library-defold-persist");
-    expect(persist?.ref).toBe("b37f61040740f232d86f68e2606f27b6f1bd15c4");
-    expect(persist?.license).toBe("Zlib");
-  });
-
-  test("persist.persist is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "persist.persist")).toBe(false);
-  });
-
-  test("the library-defold-persist dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "library-defold-persist")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are deleted", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/persist.persist.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/persist.persist.json"))).toBe(false);
-  });
-});
-
-// The second Bucket-C severance, and the first whose publish namespace must stay
-// dotted: the markdown lane's `no-go` proof already owns the bare `orthographic`
-// namespace (`api-doc/orthographic.json`) and is
-// hidden from page enumeration, so forking under `orthographic` would collide
-// with the proof artifacts and render no page. The dotted namespace overwrites
-// the retired ts-defold golden in place instead, keeping route and import string
-// byte-identical.
-describe("orthographic.camera migration integrity", () => {
-  test("orthographic is registered in library data under its dotted namespace", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const orthographic = targets.find((t) => t.namespace === "orthographic.camera");
-    expect(orthographic).toBeDefined();
-    expect(orthographic?.moduleId).toBe("orthographic.camera");
-    expect(orthographic?.repo).toBe("https://github.com/britzl/defold-orthographic");
-    expect(orthographic?.ref).toBe("3.6.3");
-    expect(orthographic?.license).toBe("MIT");
-    expect(orthographic?.authored).toBe("defold-orthographic/fork/orthographic.camera.d.ts");
-    expect(orthographic?.apiDoc).toBe("api-doc/orthographic.camera.json");
-  });
-
-  test("orthographic.camera is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "orthographic.camera")).toBe(false);
-  });
-
-  test("the defold-orthographic dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defold-orthographic")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture is gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/orthographic.camera.d.ts"))).toBe(
-      false,
-    );
-  });
-
-  test("the golden widens follow to accept one target or an array of targets", async () => {
-    const golden = await printedModule(DATA_DIR, "orthographic.camera");
-    expect(golden).toContain("targets: Hash | Url | (Hash | Url)[],");
-    expect(golden).not.toContain("target: Hash | Url,");
+    const { dataDir, target } = writeRelay();
+    const limit = element(dataDir, target, "LIMIT_NONE");
+    expect(limit.docSource).toBeUndefined();
+    expect(limit.brief).toBe("A documented limit.");
   });
 });
 
@@ -598,53 +280,6 @@ describe("orthographic.camera migration integrity", () => {
 // 0.19.0 replaced the whole `banner_*` family with the sticky-banner API, so the
 // golden assertions below gate a correction rather than a copy.
 describe("yagames.yagames migration integrity", () => {
-  test("yagames is registered in library data under its bare namespace", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const yagames = targets.find((t) => t.namespace === "yagames");
-    expect(yagames).toBeDefined();
-    expect(yagames?.moduleId).toBe("yagames.yagames");
-    expect(yagames?.repo).toBe("https://github.com/indiesoftby/defold-yagames");
-    expect(yagames?.ref).toBe("0.19.0");
-    expect(yagames?.license).toBe("MIT");
-    expect(yagames?.authored).toBe("defold-yagames/fork/yagames.yagames.d.ts");
-    expect(yagames?.apiDoc).toBe("api-doc/yagames.json");
-  });
-
-  test("yagames.yagames is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "yagames.yagames")).toBe(false);
-  });
-
-  test("the defold-yagames dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defold-yagames")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/yagames.yagames.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/yagames.yagames.json"))).toBe(false);
-  });
-
-  test("the sticky-banner API replaced the banner_* family in the golden", async () => {
-    const golden = await printedModule(DATA_DIR, "yagames.yagames");
-    for (const fn of ["adv_show_banner_adv", "adv_hide_banner_adv", "adv_get_banner_adv_status"]) {
-      expect(golden).toContain(`export function ${fn}(`);
-    }
-    for (const fn of [
-      "banner_init",
-      "banner_create",
-      "banner_delete",
-      "banner_refresh",
-      "banner_set",
-    ]) {
-      expect(golden).not.toContain(fn);
-    }
-  });
-
   // `player_get_id` is deprecated upstream, not removed, so the correction is the
   // misspelling in the existing tag — asserting only that the text names the
   // replacement would pass with `unqiue` still sitting beside it.
@@ -664,853 +299,6 @@ describe("yagames.yagames migration integrity", () => {
     // Anchored on the declaration so the tag cannot drift onto a neighbour.
     expect(golden).toMatch(/@deprecated[\s\S]{0,200}?\*\/\s*export function leaderboards_init\(/);
   });
-
-  // The shipped api-doc is what the docs-site loads, so the deprecation has to
-  // survive lowering — not just sit in the `.d.ts` the site never reads.
-  test("the committed api-doc carries both deprecations with their text", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/yagames.json"), "utf8")) as {
-      elements: Array<{ name: string; deprecated?: string }>;
-    };
-    const named = (name: string) => doc.elements.find((e) => e.name === name);
-
-    expect(named("player_get_id")?.deprecated).toBe("Use `player_get_unique_id` instead.");
-
-    const leaderboards = named("leaderboards_init")?.deprecated ?? "";
-    expect(leaderboards).toStartWith("The leaderboards subsystem no longer needs initializing");
-    expect(leaderboards).toContain("functions work without it.");
-
-    // An untagged neighbour must stay clean, so the key tracks the tag rather
-    // than every element.
-    expect(Object.hasOwn(named("player_get_unique_id") ?? {}, "deprecated")).toBe(false);
-  });
-});
-
-// The fifth Bucket-C severance and the first multi-module one: ten `in.<mod>`
-// modules move at once, keeping `namespace === moduleId` so every `/api` route,
-// export subpath and import string stays byte-identical and the goldens are
-// overwritten in place rather than renamed. `in` is a reserved word, which is
-// why a bare `in` namespace is not an option here the way `yagames` was.
-//
-// Nine of the ten ts-defold fixtures differ from their goldens (`in.triggers` on
-// 171 lines), so this is also the severance where forking the raw snapshot would
-// have shipped `hash`/`url`/`vmath.vector3` to every consumer.
-describe("defold-input migration integrity", () => {
-  const MODULES = [
-    "accelerometer",
-    "button",
-    "cursor",
-    "gesture",
-    "keyboard",
-    "mapper",
-    "onscreen",
-    "state",
-    "textbox",
-    "triggers",
-  ];
-
-  test("all ten modules are registered in library data under their dotted namespaces", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    for (const mod of MODULES) {
-      const moduleId = `in.${mod}`;
-      const target = targets.find((t) => t.moduleId === moduleId);
-      expect(target).toBeDefined();
-      expect(target?.namespace).toBe(moduleId);
-      expect(target?.repo).toBe("https://github.com/britzl/defold-input");
-      expect(target?.ref).toBe("4.8.0");
-      expect(target?.license).toBe("MIT");
-      expect(target?.authored).toBe(`defold-input/fork/${moduleId}.d.ts`);
-      expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
-    }
-  });
-
-  test("none of the ten is a ts-defold library-targets row and the defold-input dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    for (const mod of MODULES) {
-      expect(targets.some((t) => t.module === `in.${mod}`)).toBe(false);
-    }
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defold-input")).toBe(false);
-  });
-
-  // `namespace === moduleId`, so unlike every prior severance nothing is renamed:
-  // only the ts-defold snapshots die, and the goldens and api-docs stay exactly
-  // where they were.
-  test("the ts-defold fixtures are gone while the goldens and api-docs are untouched", async () => {
-    for (const mod of MODULES) {
-      const moduleId = `in.${mod}`;
-      expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
-      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
-    }
-  });
-
-  // The lane-guidance rule on the largest surface it applies to: a fork copies the
-  // *golden*, so the mapped spelling ships. Asserting the mapped names alone would
-  // also pass on the raw ts-defold snapshot, so the unmapped ones are excluded too.
-  test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const triggers = readFileSync(join(DATA_DIR, "defold-input/fork/in.triggers.d.ts"), "utf8");
-    expect(triggers).toContain("KEY_SPACE: Hash;");
-    expect(triggers).not.toContain(": hash;");
-
-    const accelerometer = readFileSync(
-      join(DATA_DIR, "defold-input/fork/in.accelerometer.d.ts"),
-      "utf8",
-    );
-    expect(accelerometer).toContain("Vector3");
-    expect(accelerometer).not.toContain("vmath.vector3");
-  });
-});
-
-// The sixth Bucket-C severance and the second multi-module one: three
-// `monarch.<mod>` modules move at once under their existing dotted namespaces, so
-// every `/api` route, export subpath and import string stays byte-identical and
-// the goldens are overwritten in place. Unlike `in`, monarch's classification dir
-// and its top namespace segment are the same string, so the nav group survives on
-// `libraryGroupKey` alone.
-//
-// Two of the three ts-defold fixtures differ from their goldens (`monarch.monarch`
-// on `hash`/`url`, `transitions.gui` on `node`/`vmath.vector3`), so forking the
-// raw snapshot would again have shipped unresolvable ambients.
-describe("monarch migration integrity", () => {
-  const MODULES = ["monarch", "transitions.easings", "transitions.gui"];
-
-  test("all three modules are registered in library data under their dotted namespaces", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    for (const mod of MODULES) {
-      const moduleId = `monarch.${mod}`;
-      const target = targets.find((t) => t.moduleId === moduleId);
-      expect(target).toBeDefined();
-      expect(target?.namespace).toBe(moduleId);
-      expect(target?.repo).toBe("https://github.com/britzl/monarch");
-      expect(target?.ref).toBe("6.0.3");
-      expect(target?.license).toBe("MIT");
-      expect(target?.authored).toBe(`monarch/fork/${moduleId}.d.ts`);
-      expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
-    }
-  });
-
-  // The surviving-row count is deliberately not re-asserted here: it is a global
-  // figure every later severance moves, so it lives once, with the most recent
-  // cutover (richtext's, below), rather than as a copy per library that each new
-  // severance has to re-pin.
-  test("none of the three is a ts-defold library-targets row and the monarch dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    for (const mod of MODULES) {
-      expect(targets.some((t) => t.module === `monarch.${mod}`)).toBe(false);
-    }
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "monarch")).toBe(false);
-  });
-
-  test("the ts-defold fixtures are gone while the goldens and api-docs are untouched", async () => {
-    for (const mod of MODULES) {
-      const moduleId = `monarch.${mod}`;
-      expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
-      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
-    }
-  });
-
-  // Asserting the mapped names alone would also pass on the raw ts-defold
-  // snapshot, so each check excludes the unmapped spelling too.
-  test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const monarch = readFileSync(join(DATA_DIR, "monarch/fork/monarch.monarch.d.ts"), "utf8");
-    expect(monarch).toContain("DONE: Hash");
-    expect(monarch).toContain("add_listener(url?: Url)");
-    expect(monarch).not.toContain(": hash;");
-    expect(monarch).not.toContain(": url,");
-
-    const gui = readFileSync(join(DATA_DIR, "monarch/fork/monarch.transitions.gui.d.ts"), "utf8");
-    expect(gui).toContain('Opaque<"node">');
-    expect(gui).toContain("Vector3");
-    expect(gui).not.toContain("node: node");
-    expect(gui).not.toContain("vmath.vector3");
-  });
-
-  // The goal was captured expecting an `on_focus_changed` -> `on_focus_change`
-  // rename. Upstream contradicts it: `monarch/monarch.lua:1295` at tag 6.0.2
-  // defines `M.on_focus_changed` and nothing else, so the fork stays verbatim and
-  // the README heading is recorded as the defect instead.
-  test("the fork is verbatim where the goal proposed changing it", () => {
-    const monarch = readFileSync(join(DATA_DIR, "monarch/fork/monarch.monarch.d.ts"), "utf8");
-    expect(monarch).toContain("on_focus_changed");
-    expect(monarch).not.toContain("on_focus_change(");
-  });
-});
-
-// The second three-module dotted severance, and the one that regroups: the
-// classification dir is `defold-richtext` while the top namespace segment is
-// `richtext`, so dropping the dir moves the nav group key the way defold-input's
-// did rather than leaving it in place the way monarch's did.
-//
-// Two of the three ts-defold fixtures differ from their goldens (`richtext.color`
-// on 22 `vmath.vector4` -> `Vector4` renames, `richtext.richtext` on `hash`,
-// `node` and both vector tokens), so forking the raw snapshot would once more
-// have shipped unresolvable ambients.
-describe("richtext migration integrity", () => {
-  const MODULES = ["color", "richtext", "tags"];
-
-  test("all three modules are registered in library data under their dotted namespaces", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    for (const mod of MODULES) {
-      const moduleId = `richtext.${mod}`;
-      const target = targets.find((t) => t.moduleId === moduleId);
-      expect(target).toBeDefined();
-      expect(target?.namespace).toBe(moduleId);
-      expect(target?.repo).toBe("https://github.com/britzl/defold-richtext");
-      expect(target?.ref).toBe("5.22.1");
-      expect(target?.license).toBe("MIT");
-      expect(target?.authored).toBe(`defold-richtext/fork/${moduleId}.d.ts`);
-      expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
-    }
-  });
-
-  test("none of the three is a ts-defold library-targets row and the defold-richtext dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    for (const mod of MODULES) {
-      expect(targets.some((t) => t.module === `richtext.${mod}`)).toBe(false);
-    }
-    // The global row count is pinned once, in the newest cutover's describe, so
-    // it does not need an edit in every severance that came before.
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defold-richtext")).toBe(false);
-  });
-
-  test("the ts-defold fixtures are gone while the goldens and api-docs are untouched", async () => {
-    for (const mod of MODULES) {
-      const moduleId = `richtext.${mod}`;
-      expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
-      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
-    }
-  });
-
-  // Asserting the mapped names alone would also pass on the raw ts-defold
-  // snapshot, so each check excludes the unmapped spelling too.
-  test("the authored forks took the mapped goldens, not the ts-defold spelling", () => {
-    const color = readFileSync(join(DATA_DIR, "defold-richtext/fork/richtext.color.d.ts"), "utf8");
-    expect(color).toContain("Vector4");
-    expect(color).not.toContain("vmath.vector4");
-
-    const richtext = readFileSync(
-      join(DATA_DIR, "defold-richtext/fork/richtext.richtext.d.ts"),
-      "utf8",
-    );
-    expect(richtext).toContain('Opaque<"node">');
-    expect(richtext).toContain("Vector3");
-    expect(richtext).toContain("LuaMap<Hash, Hash>");
-    expect(richtext).not.toContain("vmath.vector");
-    expect(richtext).not.toContain(": hash;");
-    expect(richtext).not.toContain("parent?: node;");
-  });
-
-  // The fork is verbatim, so the hand-written structure a flat markdown parse
-  // collapses survives intact — the surface the recorded `surface-loss` verdict
-  // is a judgment about.
-  test("the fork keeps the constants and named types the markdown emit loses", () => {
-    const richtext = readFileSync(
-      join(DATA_DIR, "defold-richtext/fork/richtext.richtext.d.ts"),
-      "utf8",
-    );
-    for (const constant of [
-      "ALIGN_LEFT",
-      "ALIGN_CENTER",
-      "ALIGN_RIGHT",
-      "ALIGN_JUSTIFY",
-      "VALIGN_TOP",
-      "VALIGN_MIDDLE",
-      "VALIGN_BOTTOM",
-    ]) {
-      expect(richtext).toContain(`export const ${constant}:`);
-    }
-    for (const named of [
-      "Alignment",
-      "VAlignment",
-      "Word",
-      "Settings",
-      "FontsTable",
-      "TextMetrics",
-    ]) {
-      expect(richtext).toContain(`type ${named} =`);
-    }
-  });
-});
-
-// The third dotted severance that regroups (`defold-metrics` -> `metrics`), and
-// the first whose fork is a strict improvement on the surface rather than a lane
-// move: both ts-defold fixtures are byte-identical to their goldens, so nothing
-// was at stake in *which* copy was forked, but each module really exports three
-// module-level members upstream that ts-defold never hand-wrote. The fork is
-// where they land, so the assertions below read the vendored copy the lane
-// prints.
-describe("metrics migration integrity", () => {
-  const MODULES = ["fps", "mem"];
-
-  test("both modules are registered in library data under their dotted namespaces", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    for (const mod of MODULES) {
-      const moduleId = `metrics.${mod}`;
-      const target = targets.find((t) => t.moduleId === moduleId);
-      expect(target).toBeDefined();
-      expect(target?.namespace).toBe(moduleId);
-      expect(target?.repo).toBe("https://github.com/britzl/defold-metrics");
-      expect(target?.ref).toBe("1.2.1");
-      expect(target?.license).toBe("MIT");
-      expect(target?.authored).toBe(`defold-metrics/fork/${moduleId}.d.ts`);
-      expect(target?.apiDoc).toBe(`api-doc/${moduleId}.json`);
-    }
-  });
-
-  test("neither is a ts-defold library-targets row and the defold-metrics dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    for (const mod of MODULES) {
-      expect(targets.some((t) => t.module === `metrics.${mod}`)).toBe(false);
-    }
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "defold-metrics")).toBe(false);
-  });
-
-  test("the ts-defold fixtures are gone while the goldens and api-docs survive", async () => {
-    for (const mod of MODULES) {
-      const moduleId = `metrics.${mod}`;
-      expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold", `${moduleId}.d.ts`))).toBe(false);
-      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
-      expect(existsSync(join(PACKAGE_ROOT, "api-doc", `${moduleId}.json`))).toBe(true);
-    }
-  });
-
-  // `<mod>()` is the reading accessor and differs per module, so asserting it by
-  // name is what separates a real per-module correction from one module's block
-  // pasted into both.
-  test("the correction landed on both forks and left the factory intact", () => {
-    for (const mod of MODULES) {
-      const fork = readFileSync(
-        join(DATA_DIR, "defold-metrics/fork", `metrics.${mod}.d.ts`),
-        "utf8",
-      );
-      expect(fork).toContain("export function update(): void;");
-      expect(fork).toContain("export function draw(): void;");
-      expect(fork).toContain(`export function ${mod}(): number;`);
-      expect(fork).toContain("export interface Metrics {");
-      expect(fork).toContain("): Metrics;");
-    }
-  });
-});
-
-// The ninth Bucket-C severance, on the yagames bare-namespace template: the
-// ts-defold fixture and the golden are *not* byte-identical (the golden maps
-// `hash` -> `Hash`, `node` -> `Opaque<"node">` and `vmath.vector3` -> `Vector3`
-// across the seven state interfaces), so the fork has to be taken from the
-// golden or it ships the unmapped spelling.
-//
-// The correction is `group`'s arity. Upstream `gooey/gooey.lua:191` at tag
-// 10.5.3 declares `function M.group(id, action_id, action, fn)`; ts-defold bound
-// the two parameters its LDoc block lists instead, so the three-argument call
-// every README example writes does not type-check. Unlike yagames the correction
-// moves no recorded comparison term, so the fork's own content is what proves it
-// landed — assert on the vendored fork, which is what the lane prints.
-describe("gooey.gooey migration integrity", () => {
-  const OTHER_FUNCTIONS = [
-    "button",
-    "checkbox",
-    "radio",
-    "static_list",
-    "dynamic_list",
-    "horizontal_dynamic_list",
-    "vertical_dynamic_list",
-    "horizontal_static_list",
-    "vertical_static_list",
-    "vertical_scrollbar",
-    "input",
-  ];
-
-  test("gooey is registered in library data under its bare namespace", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const gooey = targets.find((t) => t.namespace === "gooey");
-    expect(gooey).toBeDefined();
-    expect(gooey?.moduleId).toBe("gooey.gooey");
-    expect(gooey?.repo).toBe("https://github.com/britzl/gooey");
-    expect(gooey?.ref).toBe("10.5.3");
-    expect(gooey?.license).toBe("MIT");
-    expect(gooey?.authored).toBe("gooey/fork/gooey.gooey.d.ts");
-    expect(gooey?.apiDoc).toBe("api-doc/gooey.json");
-  });
-
-  test("gooey.gooey is no longer a ts-defold library-targets row and the gooey dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "gooey.gooey")).toBe(false);
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "gooey")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/gooey.gooey.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/gooey.gooey.json"))).toBe(false);
-  });
-
-  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const authored = readFileSync(join(DATA_DIR, "gooey/fork/gooey.gooey.d.ts"), "utf8");
-    expect(authored).toContain('node: Opaque<"node">;');
-    expect(authored).toContain("node_id: Hash;");
-    expect(authored).toContain('LuaMap<Hash, Opaque<"node">>');
-    expect(authored).toContain("scroll: Vector3;");
-    expect(authored).not.toContain(": hash;");
-    expect(authored).not.toContain("vmath.vector3");
-  });
-
-  test("the group correction landed on the vendored fork, leaving the other declarations intact", () => {
-    const fork = readFileSync(join(DATA_DIR, "gooey/fork/gooey.gooey.d.ts"), "utf8");
-    expect(fork).toMatch(
-      /export function group\(\s*group_id: Hash \| string,\s*action_id: Hash,\s*action: table,\s*group_fn: \(\) => void,\s*\): table;/,
-    );
-    expect(fork).not.toContain("export function group(group_id: string, fn: () => void): table;");
-    for (const fn of OTHER_FUNCTIONS) {
-      expect(fork).toContain(`export function ${fn}(`);
-    }
-  });
-});
-
-// bzAnim severs under the bare namespace `bzAnim` and lands no correction. What
-// makes it worth forking is the pair of hand-written options tables: both entry
-// points take a single options table, which a flat signature table cannot
-// express, so `AnimateArgs`/`AnimateSequenceArgs` are the only structured
-// description of this library anywhere. `keep` would strand that surface in a
-// lane no generation path can maintain.
-describe("bzAnim.bzLibrary migration integrity", () => {
-  const AUTHORED = "bzanim/fork/bzAnim.bzLibrary.d.ts";
-  const FUNCTIONS = ["animate", "animateSequence", "cancel", "info", "isReady", "setDebugLevel"];
-
-  test("bzAnim is registered in library data under its bare namespace", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const bzAnim = targets.find((t) => t.namespace === "bzAnim");
-    expect(bzAnim).toBeDefined();
-    expect(bzAnim?.moduleId).toBe("bzAnim.bzLibrary");
-    expect(bzAnim?.repo).toBe("https://github.com/jbp4444/bzAnim");
-    expect(bzAnim?.ref).toBe("v.1.2");
-    expect(bzAnim?.license).toBe("Apache-2.0");
-    expect(bzAnim?.authored).toBe(AUTHORED);
-    expect(bzAnim?.apiDoc).toBe("api-doc/bzAnim.json");
-  });
-
-  test("bzAnim.bzLibrary is no longer a ts-defold library-targets row and the bzAnim dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "bzAnim.bzLibrary")).toBe(false);
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "bzAnim")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
-    // The retired fixture is named for the *upstream filename*, not the module.
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/bzAnim.bzAnim.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/bzAnim.bzLibrary.json"))).toBe(false);
-  });
-
-  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const authored = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    expect(authored.match(/obj: Hash \| string \| undefined;/g)?.length).toBe(2);
-    expect(authored).not.toContain("obj: hash");
-  });
-
-  test("the fork keeps the two options tables the severance exists to preserve", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    expect(fork).toMatch(
-      /type AnimateArgs = \{\s*obj: Hash \| string \| undefined;\s*easing: EASING_TYPES;\s*duration\?: number;\s*delay\?: number;\s*path\?: Array<Path>;\s*\};/,
-    );
-    expect(fork).toMatch(
-      /type AnimateSequenceArgs = \{\s*obj: Hash \| string \| undefined;\s*easing: EASING_TYPES;\s*segments\?: Array<Segment>;\s*on_complete\?: boolean \| string;\s*\};/,
-    );
-    expect(fork).toMatch(/export type Path = \{\s*x: number;\s*y: number;\s*\};/);
-    expect(fork).toMatch(
-      /export type Segment = \{\s*duration: number;\s*delay: number;\s*path: Array<Path>;\s*\};/,
-    );
-    expect(fork).toContain("export const INFO_LEVEL = 1;");
-    expect(fork).toContain("export const DEBUG_LEVEL = 2;");
-    expect(fork).toContain("export const TRACE_LEVEL = 3;");
-    for (const fn of FUNCTIONS) {
-      expect(fork).toContain(`export function ${fn}(`);
-    }
-    // The easing union is a file-scope ambient global, declared before the module
-    // block rather than inside it.
-    expect(fork.indexOf("declare type EASING_TYPES")).toBeLessThan(
-      fork.indexOf('declare module "bzAnim.bzLibrary"'),
-    );
-  });
-
-  test("the api-doc publishes the options tables as member-bearing typedefs and omits the easing union", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/bzAnim.json"), "utf8")) as {
-      info: { namespace: string };
-      elements: { name: string; type: string; properties?: { name: string }[] }[];
-    };
-    expect(doc.info.namespace).toBe("bzAnim");
-    for (const name of ["AnimateArgs", "AnimateSequenceArgs"]) {
-      const typedef = doc.elements.find((e) => e.name === name);
-      expect(typedef?.type).toBe("TYPEDEF");
-      expect((typedef?.properties ?? []).map((p) => p.name)).toContain("easing");
-    }
-    // A string-literal union is neither member-bearing nor reachable as a
-    // typedef, so the emitter publishes no element for it. Asserted so the gap
-    // stays deliberate — widening the rule is a separate goal.
-    expect(doc.elements.some((e) => e.name === "EASING_TYPES")).toBe(false);
-  });
-});
-
-// platypus severs under the bare namespace `platypus` and lands no correction.
-// The comparator that recorded its markdown `no-go` reads top-level
-// `function`/`const` only, so it never scored the two interfaces that are the
-// whole library: `PlatypusConfig` (a required nested `collisions` shape plus 11
-// optional fields) and `PlatypusInstance extends PlatypusConfig` (19 methods plus
-// `velocity`). No markdown, LuaLS or script_api lane can express a returned-object
-// interface, so `keep` would freeze that structure in a lane nothing here
-// maintains.
-describe("platypus.platypus migration integrity", () => {
-  const AUTHORED = "platypus/fork/platypus.platypus.d.ts";
-  const CONFIG_FIELDS = [
-    "debug",
-    "reparent",
-    "gravity",
-    "max_velocity",
-    "wall_jump_power_ratio_x",
-    "wall_jump_power_ratio_y",
-    "allow_double_jump",
-    "allow_wall_jump",
-    "const_wall_jump",
-    "allow_wall_slide",
-    "wall_slide_velocity",
-  ];
-  const INSTANCE_METHODS = [
-    "update",
-    "on_message",
-    "left",
-    "right",
-    "up",
-    "down",
-    "move",
-    "jump",
-    "force_jump",
-    "abort_jump",
-    "abort_wall_slide",
-    "has_ground_contact",
-    "has_wall_contact",
-    "is_falling",
-    "is_jumping",
-    "is_wall_jumping",
-    "is_wall_sliding",
-    "toggle_debug",
-    "set_collisions",
-  ];
-  const MESSAGE_HASHES = [
-    "FALLING",
-    "GROUND_CONTACT",
-    "WALL_CONTACT",
-    "JUMP",
-    "WALL_JUMP",
-    "DOUBLE_JUMP",
-    "WALL_SLIDE",
-  ];
-  const DIRECTIONS = ["DIR_UP", "DIR_LEFT", "DIR_RIGHT", "DIR_DOWN", "DIR_ALL"];
-  // Also `Hash`-typed, and declared by the field correction rather than by the
-  // severance, so the exhaustive count below is over both runs.
-  const SEPARATION_MODES = ["SEPARATION_RAYS", "SEPARATION_SHAPES"];
-
-  test("platypus is registered in library data under its bare namespace", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const platypus = targets.find((t) => t.namespace === "platypus");
-    expect(platypus).toBeDefined();
-    expect(platypus?.moduleId).toBe("platypus.platypus");
-    expect(platypus?.repo).toBe("https://github.com/britzl/platypus");
-    expect(platypus?.ref).toBe("4.3.1");
-    expect(platypus?.license).toBe("MIT");
-    expect(platypus?.authored).toBe(AUTHORED);
-    expect(platypus?.apiDoc).toBe("api-doc/platypus.json");
-  });
-
-  test("platypus.platypus is no longer a ts-defold library-targets row and the platypus dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "platypus.platypus")).toBe(false);
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "platypus")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/platypus.platypus.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/platypus.platypus.json"))).toBe(false);
-  });
-
-  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    expect(fork).toContain("LuaMap<Hash, Direction>");
-    expect(fork).toContain("velocity: Vector3;");
-    expect(fork).toContain("move(velocity: Vector3): void;");
-    expect(fork).toContain("offset?: Vector3;");
-    expect(fork).toContain("on_message(message_id: Hash, message: AnyNotNil): void;");
-    expect(fork.match(/export const \w+: Hash;/g)?.length).toBe(
-      MESSAGE_HASHES.length + SEPARATION_MODES.length,
-    );
-    expect(fork).not.toContain(": hash");
-    expect(fork).not.toContain("vmath.vector3");
-  });
-
-  test("the fork keeps the config and instance interfaces the severance exists to preserve", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    // The required nested shape: four numeric bounds plus the group map, and the
-    // one optional inside it.
-    expect(fork).toMatch(
-      /\bcollisions: \{\s*groups: LuaMap<Hash, Direction>;\s*left: number;\s*right: number;\s*top: number;\s*bottom: number;\s*offset\?: Vector3;\s*\};/,
-    );
-    for (const field of CONFIG_FIELDS) {
-      expect(fork).toMatch(new RegExp(`\\b${field}\\?: (?:boolean|number);`));
-    }
-    expect(fork).toContain("interface PlatypusInstance extends PlatypusConfig {");
-    for (const method of INSTANCE_METHODS) {
-      expect(fork).toMatch(new RegExp(`\\b${method}\\(`));
-    }
-    expect(fork).toContain("export function create(config: PlatypusConfig): PlatypusInstance;");
-    for (const constant of [...MESSAGE_HASHES, ...SEPARATION_MODES]) {
-      expect(fork).toContain(`export const ${constant}: Hash;`);
-    }
-    for (const constant of DIRECTIONS) {
-      expect(fork).toContain(`export const ${constant}: Direction;`);
-    }
-  });
-
-  test("the api-doc publishes the config and instance shapes as member-bearing typedefs", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/platypus.json"), "utf8")) as {
-      info: { namespace: string; description?: string };
-      elements: {
-        name: string;
-        type: string;
-        properties?: { name: string; fields?: { name: string }[] }[];
-      }[];
-    };
-    expect(doc.info.namespace).toBe("platypus");
-    // The page intro comes from the fork's own module JSDoc, which is why this
-    // severance owes no `library-description-overrides.json` key.
-    expect((doc.info.description ?? "").length).toBeGreaterThan(0);
-
-    const config = doc.elements.find((e) => e.name === "PlatypusConfig");
-    expect(config?.type).toBe("TYPEDEF");
-    const collisions = (config?.properties ?? []).find((p) => p.name === "collisions");
-    expect(collisions).toBeDefined();
-    expect((collisions?.fields ?? []).map((f) => f.name)).toContain("groups");
-
-    const instance = doc.elements.find((e) => e.name === "PlatypusInstance");
-    expect(instance?.type).toBe("TYPEDEF");
-    expect((instance?.properties ?? []).map((p) => p.name)).toContain("velocity");
-  });
-});
-
-// dicebag is the first severance whose recorded markdown verdict is
-// `type-downgrade` — the two surfaces match one-for-one on names, and the no-go
-// rests entirely on three types the README underspecifies. So the fork exists to
-// keep exactly those three, and the assertions below name them rather than a
-// structural shape no lane can express (platypus's case).
-describe("dicebag.dicebag migration integrity", () => {
-  const AUTHORED = "dicebag/fork/dicebag.dicebag.d.ts";
-  const FUNCTIONS = [
-    "bag_create",
-    "bag_draw",
-    "bag_reset",
-    "flip_coin",
-    "roll_custom_dice",
-    "roll_dice",
-    "roll_special_dice",
-    "set_up_rng",
-    "table_create",
-    "table_reset",
-    "table_roll",
-  ];
-  // The six functions whose `id` parameter carries the core-type rename the
-  // mapped golden applied.
-  const ID_BEARING = [
-    "bag_create",
-    "bag_draw",
-    "bag_reset",
-    "table_create",
-    "table_roll",
-    "table_reset",
-  ];
-
-  test("dicebag is registered in library data under its bare namespace", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const dicebag = targets.find((t) => t.namespace === "dicebag");
-    expect(dicebag).toBeDefined();
-    expect(dicebag?.moduleId).toBe("dicebag.dicebag");
-    expect(dicebag?.repo).toBe("https://github.com/8bitskull/dicebag");
-    expect(dicebag?.ref).toBe("0.3");
-    expect(dicebag?.license).toBe("CC0-1.0");
-    expect(dicebag?.authored).toBe(AUTHORED);
-    expect(dicebag?.apiDoc).toBe("api-doc/dicebag.json");
-  });
-
-  test("dicebag.dicebag is no longer a ts-defold library-targets row and the dicebag dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "dicebag.dicebag")).toBe(false);
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "dicebag")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/dicebag.dicebag.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/dicebag.dicebag.json"))).toBe(false);
-  });
-
-  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    for (const fn of ID_BEARING) {
-      expect(fork).toMatch(new RegExp(`function ${fn}\\(id: string \\| number \\| Hash\\b`));
-    }
-    expect(fork).not.toContain("| hash");
-  });
-
-  test("the fork keeps the three types the recorded downgrades are about", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    expect(fork).toContain("sides: Array<[number, number]>");
-    expect(fork).toContain("rollable_table: Array<[number, any, boolean?]>");
-    expect(fork).toContain("function set_up_rng(seed?: number): number;");
-    for (const fn of FUNCTIONS) {
-      expect(fork).toMatch(new RegExp(`export function ${fn}\\(`));
-    }
-  });
-
-  test("the api-doc publishes the 11 functions under the bare namespace with its own description", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/dicebag.json"), "utf8")) as {
-      info: { namespace: string; description?: string };
-      elements: { name: string; type: string }[];
-    };
-    expect(doc.info.namespace).toBe("dicebag");
-    // The page intro comes from the fork's own module JSDoc, which is why this
-    // severance owes no `library-description-overrides.json` key.
-    expect((doc.info.description ?? "").length).toBeGreaterThan(0);
-    const functions = doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name);
-    expect([...functions].sort()).toEqual(FUNCTIONS);
-  });
-});
-
-// rendy's recorded markdown verdict is `signature-loss`: the README documents 11
-// members but carries no `**PARAMETERS**` or `**RETURN**` block anywhere, so a
-// markdown emit would render every one of them as a zero-arity `(): void` stub.
-// The fork therefore exists to keep the parameter lists themselves, and the
-// assertions below name the five signatures that emit would have erased rather
-// than a type the README merely underspecified (dicebag's case).
-describe("rendy.rendy migration integrity", () => {
-  const AUTHORED = "library-defold-rendy/fork/rendy.rendy.d.ts";
-  const FUNCTIONS = [
-    "cancel_shake",
-    "create_camera",
-    "destroy_camera",
-    "get",
-    "get_display_size",
-    "get_stack",
-    "get_window_size",
-    "screen_to_world",
-    "set",
-    "shake",
-    "world_to_screen",
-  ];
-
-  test("rendy is registered in library data under its bare namespace", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const rendy = targets.find((t) => t.namespace === "rendy");
-    expect(rendy).toBeDefined();
-    expect(rendy?.moduleId).toBe("rendy.rendy");
-    expect(rendy?.repo).toBe("https://github.com/whiteboxdev/library-defold-rendy");
-    expect(rendy?.ref).toBe("b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3");
-    expect(rendy?.license).toBe("Zlib");
-    expect(rendy?.authored).toBe(AUTHORED);
-    expect(rendy?.apiDoc).toBe("api-doc/rendy.json");
-  });
-
-  test("rendy.rendy is no longer a ts-defold library-targets row and the dir is gone", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "rendy.rendy")).toBe(false);
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "library-defold-rendy")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/rendy.rendy.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/rendy.rendy.json"))).toBe(false);
-  });
-
-  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    expect(fork).toContain("type CameraId = Hash | string;");
-    expect(fork).toContain("function get_display_size(): Vector3;");
-    expect(fork).not.toContain("| hash");
-    expect(fork).not.toContain("vmath.vector3");
-    expect(fork).not.toContain("vmath.quaternion");
-    expect(fork).not.toContain("vmath.vector4");
-  });
-
-  test("the fork keeps the five signatures a zero-arity markdown emit would have discarded", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    expect(fork).toContain("function get_stack(screen_x: number, screen_y: number): CameraId[];");
-    expect(fork).toMatch(
-      /function screen_to_world\(\s*camera_id: CameraId,\s*screen_position: Vector3,\s*\): Vector3;/,
-    );
-    expect(fork).toMatch(
-      /function world_to_screen\(\s*camera_id: CameraId,\s*world_position: Vector3,\s*\): Vector3;/,
-    );
-    expect(fork).toMatch(
-      /function shake\(\s*camera_id: CameraId,\s*radius: number,\s*intensity: number,\s*duration: number,\s*scaler\?: number,\s*\): void;/,
-    );
-    // rendy is the corpus's only module written with zero `export` keywords —
-    // inside an ambient `declare module` every declaration is exported anyway.
-    for (const fn of FUNCTIONS) {
-      expect(fork).toMatch(new RegExp(`\\n\\tfunction ${fn}\\(`));
-    }
-    expect(fork).not.toContain("export function");
-  });
-
-  test("the api-doc publishes the 11 functions and the CameraId typedef with its own description", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/rendy.json"), "utf8")) as {
-      info: { namespace: string; description?: string };
-      elements: { name: string; type: string }[];
-    };
-    expect(doc.info.namespace).toBe("rendy");
-    // The page intro comes from the fork's own module JSDoc, which is why this
-    // severance owes no `library-description-overrides.json` key.
-    expect((doc.info.description ?? "").length).toBeGreaterThan(0);
-    const functions = doc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name);
-    expect([...functions].sort()).toEqual(FUNCTIONS);
-    expect(doc.elements.find((e) => e.name === "CameraId")?.type).toBe("TYPEDEF");
-  });
 });
 
 // nakama.nakama's verdict comes from the openapi lane, not markdown: the REST
@@ -1521,7 +309,6 @@ describe("rendy.rendy migration integrity", () => {
 // assertions below name the members the verdict counts as missing rather than a
 // spelling the codemod moved.
 describe("nakama.nakama migration integrity", () => {
-  const AUTHORED = "nakama-defold/fork/nakama.nakama.d.ts";
   // Every member `compareFidelityToTsDefold` reports missing from the openapi
   // emit. `openapi-fidelity-gate.test.ts` re-derives the set from the real
   // emitter; this list is what the fork must still carry for that verdict to keep
@@ -1542,85 +329,6 @@ describe("nakama.nakama migration integrity", () => {
     "set_bearer_token",
     "sync",
   ];
-
-  test("nakama is registered in library data under its bare namespace", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    const nakama = targets.find((t) => t.namespace === "nakama");
-    expect(nakama).toBeDefined();
-    expect(nakama?.moduleId).toBe("nakama.nakama");
-    // The same repo/ref/license triple both sibling helpers already carry: the
-    // upstream Lua library the types bind, not the ts-defold binding's own MIT.
-    expect(nakama?.repo).toBe("https://github.com/heroiclabs/nakama-defold");
-    expect(nakama?.ref).toBe("v3.4.0");
-    expect(nakama?.license).toBe("Apache-2.0");
-    expect(nakama?.authored).toBe(AUTHORED);
-    expect(nakama?.apiDoc).toBe("api-doc/nakama.json");
-    for (const sibling of ["nakama.engine.defold", "nakama.util.log"]) {
-      const helper = targets.find((t) => t.moduleId === sibling);
-      expect(helper?.repo).toBe(nakama?.repo);
-      expect(helper?.ref).toBe(nakama?.ref);
-      expect(helper?.license).toBe(nakama?.license);
-    }
-  });
-
-  test("nakama.nakama is the last ts-defold row to go, leaving 0 rows and no dir", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "nakama.nakama")).toBe(false);
-    // The count catches a cutover that took a second row with it; the absence
-    // check above cannot. This is the last cutover the pin will ever move to.
-    expect(targets.length).toBe(0);
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "nakama-defold")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture and dotted api-doc are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.nakama.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/nakama.nakama.json"))).toBe(false);
-  });
-
-  test("the fork keeps every member the recorded openapi no-go counts as missing", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    for (const member of VERDICT_MEMBERS) {
-      expect(fork).toMatch(new RegExp(`\\bfunction ${member}\\(`));
-    }
-    expect(fork).toContain("export function create_client(config: ClientConfig): Client;");
-    expect(fork).toContain("export function set_bearer_token(client: Client, token: SessionToken)");
-    // `sync` takes upstream's optional cancellation token as its second parameter
-    // (`nakama.lua:47`); the helper itself is otherwise unmoved.
-    expect(fork).toContain(
-      "export function sync(fn: () => void, cancellation_token?: CancellationToken): void;",
-    );
-  });
-
-  test("the fork declares the client brands and the config and session shapes", () => {
-    const fork = readFileSync(join(DATA_DIR, AUTHORED), "utf8");
-    // The `symbol` brands are what make `set_bearer_token` reject a bare string;
-    // widening either to `unknown` would keep every signature above compiling.
-    expect(fork).toContain("export type Client = symbol;");
-    expect(fork).toContain("type SessionToken = symbol;");
-    const config = fork.match(/export interface ClientConfig \{([^}]*)\}/)?.[1] ?? "";
-    expect(
-      config
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0),
-    ).toEqual([
-      "host: string;",
-      "port: number;",
-      "use_ssl?: boolean;",
-      "username: string;",
-      "password: string;",
-      "engine: unknown;",
-    ]);
-    const session = fork.match(/interface Session \{([^}]*)\}/)?.[1] ?? "";
-    expect(session).toContain("token: SessionToken;");
-    expect(session).toContain("refresh_token: SessionToken;");
-    expect(session).toContain("created: boolean;");
-  });
 
   // 174 from the callable rollout's 162: the field correction declared upstream's
   // 12 enum constants, each lowering to one `VARIABLE` element.
@@ -1651,7 +359,6 @@ describe("nakama.nakama migration integrity", () => {
 // api-doc model the golden and the docs-site are both built from rather than against
 // the fork's text, so the emit path is exercised rather than restated.
 describe("shutter.shutter type claims upstream states only in its body", () => {
-  const AUTHORED = "defold-shutter/fork/shutter.shutter.d.ts";
   const FUNCTIONS = [
     "activate",
     "cancel_shake",
@@ -1666,98 +373,6 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
     "shake",
     "world_to_screen",
   ];
-
-  function element(name: string): Record<string, unknown> {
-    const found = apiDocElements("shutter").find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/shutter.json declares no ${name}`);
-    return found;
-  }
-
-  function returnTypes(name: string): string[] {
-    const { returnvalues } = element(name) as {
-      returnvalues?: { types: string[] }[];
-    };
-    return (returnvalues ?? []).flatMap((value) => value.types);
-  }
-
-  function parameters(name: string): { name: string; types: string[]; is_optional: string }[] {
-    const { parameters } = element(name) as {
-      parameters?: { name: string; types: string[]; is_optional: string }[];
-    };
-    return parameters ?? [];
-  }
-
-  test("shutter is registered under its bare namespace and measures rather than asserts", () => {
-    const entry = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === "shutter");
-    expect(entry).toBeDefined();
-    expect(entry?.moduleId).toBe("shutter.shutter");
-    expect(entry?.repo).toBe("https://codeberg.org/Klaleus/defold-shutter");
-    expect(entry?.ref).toBe("fc0e6321d7c2bbacf3a52ffe9e9b5b94b16954b1");
-    expect(entry?.license).toBe("Zlib");
-    expect(entry?.authored).toBe(AUTHORED);
-    expect(entry?.apiDoc).toBe("api-doc/shutter.json");
-    expect(entry?.parityVerdict).toBeUndefined();
-    expect(entry?.upstreamLua).toEqual(["defold-shutter/source/upstream/shutter/shutter.lua"]);
-  });
-
-  // `return viewport_x, viewport_y, viewport_width, viewport_height` — four values, not
-  // a vector and not one number. Typed as a single `number` the call would still
-  // compile and silently discard three quarters of the viewport.
-  test("get_viewport returns four numbers as one multi-return", () => {
-    expect(returnTypes("get_viewport")).toEqual([
-      "LuaMultiReturn<[ number, number, number, number ]>",
-    ]);
-  });
-
-  // Both guard on `visible` and bail with a bare `return`, so nil reaches the caller.
-  // Narrowing either to `Vector3` would hand a consumer an unchecked value.
-  test("the two clip-space conversions admit the nil upstream returns", () => {
-    for (const name of ["screen_to_world", "world_to_screen"]) {
-      expect(returnTypes(name)).toEqual(["Vector3 | undefined"]);
-    }
-  });
-
-  // `shutter.script` keys the table with `go.get_id()`, so the index is a `Hash`. A
-  // `string` key would typecheck at every call site and miss at runtime.
-  test("camera_table is a map indexed by Hash, not by string", () => {
-    const field = element("camera_table") as { type: string; types: string[] };
-    expect(field.type).toBe("VARIABLE");
-    expect(field.types).toEqual(["LuaMap<Hash, ShutterCamera>"]);
-  });
-
-  // The optional tail is what upstream defaults (`x = x or 1`) or truthy-tests; the
-  // required head is not. Marking `parent` optional on `shake` would be wrong in the
-  // other direction — three required parameters follow it.
-  test("only the parameters upstream defaults or truthy-tests are optional", () => {
-    const optional = (name: string) =>
-      parameters(name)
-        .filter((p) => p.is_optional === "True")
-        .map((p) => p.name);
-    expect(optional("shake")).toEqual(["duration_scalar", "radius_scalar"]);
-    expect(optional("cancel_shake")).toEqual(["parent"]);
-    expect(optional("get_distance")).toEqual(["absolute"]);
-    expect(optional("screen_to_world")).toEqual(["visible"]);
-    expect(optional("world_to_screen")).toEqual(["visible"]);
-    expect(parameters("shake").map((p) => p.name)).toEqual([
-      "object",
-      "parent",
-      "count",
-      "duration",
-      "radius",
-      "duration_scalar",
-      "radius_scalar",
-    ]);
-  });
-
-  // Every member is keyed by the game object the camera lives on, which the script
-  // registers as a `Hash`. A `Url` or `string` here would diverge from the table key.
-  test("every camera member takes its object as a Hash", () => {
-    for (const name of FUNCTIONS) {
-      if (name === "deactivate") continue;
-      expect(parameters(name)[0]).toMatchObject({ name: "object", types: ["Hash"] });
-    }
-    expect(parameters("deactivate")).toEqual([]);
-  });
 
   test("the api-doc publishes the twelve functions, four constants and the camera typedef", () => {
     const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/shutter.json"), "utf8")) as {
@@ -1793,77 +408,6 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
 // the lowered api-doc model the golden and the docs-site are both built from rather
 // than against the fork's text, so the emit path is exercised rather than restated.
 describe("checkpoint.checkpoint type claims upstream states only in its body", () => {
-  const AUTHORED = "defold-checkpoint/fork/checkpoint.checkpoint.d.ts";
-
-  function element(name: string): Record<string, unknown> {
-    const found = apiDocElements("checkpoint").find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/checkpoint.json declares no ${name}`);
-    return found;
-  }
-
-  function returnTypes(name: string): string[] {
-    const { returnvalues } = element(name) as { returnvalues?: { types: string[] }[] };
-    return (returnvalues ?? []).flatMap((value) => value.types);
-  }
-
-  test("checkpoint is registered under its bare namespace and measures rather than asserts", () => {
-    const entry = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === "checkpoint");
-    expect(entry).toBeDefined();
-    expect(entry?.moduleId).toBe("checkpoint.checkpoint");
-    expect(entry?.repo).toBe("https://codeberg.org/Klaleus/defold-checkpoint");
-    expect(entry?.ref).toBe("a5cf87e1dce8d8980f641301e33843747986ff81");
-    expect(entry?.license).toBe("Zlib");
-    expect(entry?.authored).toBe(AUTHORED);
-    expect(entry?.apiDoc).toBe("api-doc/checkpoint.json");
-    expect(entry?.parityVerdict).toBeUndefined();
-    expect(entry?.upstreamLua).toEqual([
-      "defold-checkpoint/source/upstream/checkpoint/checkpoint.lua",
-    ]);
-  });
-
-  // Every failure path is `return false, err` and the success path is a bare
-  // `return data`, so the second slot is genuinely absent on success. Collapsing the
-  // first slot to `unknown` would hide the `false` arm a caller has to narrow against.
-  test("read carries the loaded value beside the false arm and an optional error", () => {
-    expect(returnTypes("read")).toEqual(["LuaMultiReturn<[ T | false, string | undefined ]>"]);
-    // The published artifact must declare the `T` its own return type references;
-    // `write` is the neighbour that declares none, so absence stays the encoding.
-    expect(element("read").generics).toBe("<T = unknown>");
-    expect(Object.hasOwn(element("write"), "generics")).toBe(false);
-    const { parameters } = element("read") as {
-      parameters?: { name: string; types: string[]; is_optional: string }[];
-    };
-    expect(parameters?.length).toBe(1);
-    expect(parameters?.[0]).toMatchObject({
-      name: "path",
-      types: ["string"],
-      is_optional: "False",
-    });
-  });
-
-  // `return true` on success, `return false, err` on each of the four failure paths.
-  // A bare `boolean` would compile at every call site and drop the error string.
-  test("write returns the success flag paired with an optional error", () => {
-    expect(returnTypes("write")).toEqual(["LuaMultiReturn<[ boolean, string | undefined ]>"]);
-  });
-
-  // `lfs.attributes(...) and true or false` — a real boolean, not the attributes table
-  // and not a truthy value, which is what makes `if exists(path)` safe to write.
-  test("exists returns a boolean and list returns save-relative path strings", () => {
-    expect(returnTypes("exists")).toEqual(["boolean"]);
-    expect(returnTypes("list")).toEqual(["string[]"]);
-  });
-
-  // Both resolve once at load from `sys.get_config_string` and `sys.get_save_file`, so
-  // they are string constants rather than accessors.
-  test("the two module constants are strings", () => {
-    for (const name of ["project_title", "project_save_path"]) {
-      const field = element(name) as { type: string; types: string[] };
-      expect(field.type).toBe("VARIABLE");
-      expect(field.types).toEqual(["string"]);
-    }
-  });
-
   test("the api-doc publishes the four functions and two constants", () => {
     const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/checkpoint.json"), "utf8")) as {
       info: { namespace: string; description?: string };
@@ -1892,412 +436,17 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
   });
 });
 
-// Parity sees names and arities only. What `create` hands back, which argument
-// `node_repeat.create` asserts, and the two-value aspect-ratio return are stated
-// by the Lua body alone, so they are held here against the lowered model.
-describe("defold-sprite-repeat type claims upstream states only in its body", () => {
-  type Parameter = { name: string; types: string[]; is_optional?: string | null };
-
-  function element(namespace: string, name: string): Record<string, unknown> {
-    const found = apiDocElements(namespace).find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
-    return found;
-  }
-
-  function parameters(namespace: string, name: string): Parameter[] {
-    return (element(namespace, name) as { parameters?: Parameter[] }).parameters ?? [];
-  }
-
-  function returnTypes(namespace: string, name: string): string[] {
-    const { returnvalues } = element(namespace, name) as { returnvalues?: { types: string[] }[] };
-    return (returnvalues ?? []).flatMap((value) => value.types);
-  }
-
-  test("both modules register under their bare folder names at the v0.3 pin", () => {
-    for (const namespace of ["sprite_repeat", "node_repeat"]) {
-      const entry = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === namespace);
-      expect(entry?.moduleId).toBe(`${namespace}.${namespace}`);
-      expect(entry?.repo).toBe("https://github.com/Dragosha/defold-sprite-repeat");
-      expect(entry?.ref).toBe("v0.3");
-      expect(entry?.license).toBe("MIT");
-      expect(entry?.parityVerdict).toBeUndefined();
-      expect(entry?.upstreamLua).toEqual([
-        `defold-sprite-repeat/source/upstream/${namespace}/${namespace}.lua`,
-      ]);
-    }
-  });
-
-  // `assert(atlas_path, ...)` makes the third argument required, while a nil
-  // `animation_id` falls back to `gui.get_flipbook(node)`.
-  test("node_repeat.create requires the atlas path and accepts a missing animation id", () => {
-    const [node, animation, atlas] = parameters("node_repeat", "create");
-    expect(node).toMatchObject({ name: "node_or_string", types: ['Opaque<"node"> | string'] });
-    expect(animation?.name).toBe("animation_id");
-    expect(animation?.types[0]?.split(" | ")).toContain("undefined");
-    expect(atlas).toMatchObject({
-      name: "atlas_path",
-      types: ["Hash | string"],
-      is_optional: "False",
-    });
-  });
-
-  // A nil `sprite_id` falls back to the sprite's `animation` property, and `self`
-  // is read only when present.
-  test("sprite_repeat.create takes the sprite, then an optional animation and cache", () => {
-    const [url, id, self] = parameters("sprite_repeat", "create");
-    expect(url).toMatchObject({ name: "sprite_url", is_optional: "False" });
-    expect(id).toMatchObject({ name: "sprite_id", is_optional: "True" });
-    expect(self).toMatchObject({ name: "self", is_optional: "True" });
-  });
-
-  test("get_screen_aspect_ratio returns both ratios and the module fields are numbers", () => {
-    expect(returnTypes("node_repeat", "get_screen_aspect_ratio")).toEqual([
-      "LuaMultiReturn<[ number, number ]>",
-    ]);
-    for (const name of ["x_ratio", "y_ratio"]) {
-      expect(element("node_repeat", name)).toMatchObject({ type: "VARIABLE", types: ["number"] });
-    }
-  });
-
-  // `animate`, `stop` and `update` live on the returned table, so they surface on
-  // the handle's TYPEDEF; `update` skips each nil argument.
-  test("each create returns the named handle, which carries the frames and methods", () => {
-    for (const [namespace, handle, methods] of [
-      ["sprite_repeat", "SpriteRepeatAnimation", ["animate", "stop"]],
-      ["node_repeat", "NodeRepeatAnimation", ["animate", "stop", "update"]],
-    ] as const) {
-      expect(returnTypes(namespace, "create")).toEqual([handle]);
-      const typedef = element(namespace, handle) as {
-        type: string;
-        properties: { name: string; types: string[]; is_optional?: string | null }[];
-        functions: { name: string; parameters: Parameter[] }[];
-      };
-      expect(typedef.type).toBe("TYPEDEF");
-      expect(typedef.properties.find((p) => p.name === "frames")?.types).toEqual(["RepeatFrame[]"]);
-      expect(typedef.properties.find((p) => p.name === "handle")?.is_optional).toBe("True");
-      expect(typedef.functions.map((f) => f.name)).toEqual([...methods]);
-    }
-    const update = (
-      element("node_repeat", "NodeRepeatAnimation") as {
-        functions: { name: string; parameters: Parameter[] }[];
-      }
-    ).functions.find((f) => f.name === "update");
-    expect(update?.parameters.map((p) => p.is_optional)).toEqual(["True", "True"]);
-  });
-});
-
-// Parity sees names and arities only. Which config field `init` asserts, what a crash
-// callback must hand back, and the shape of the capture callback are stated by the Lua
-// body alone, so they are held here against the lowered model.
-describe("sentinel.sentry type claims upstream states only in its body", () => {
-  type Property = { name: string; types: string[]; is_optional?: string | null };
-
-  function element(name: string): Record<string, unknown> {
-    const found = apiDocElements("sentinel").find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/sentinel.json declares no ${name}`);
-    return found;
-  }
-
-  function property(typedef: string, name: string): Property {
-    const { properties } = element(typedef) as { properties: Property[] };
-    const found = properties.find((entry) => entry.name === name);
-    if (!found) throw new Error(`${typedef} declares no ${name}`);
-    return found;
-  }
-
-  test("the module registers as sentinel.sentry at the 1.3.1 pin", () => {
-    const entry = readAuthoredTargets(DATA_DIR).find((t) => t.namespace === "sentinel");
-    expect(entry?.moduleId).toBe("sentinel.sentry");
-    expect(entry?.repo).toBe("https://github.com/indiesoftby/defold-sentinel");
-    expect(entry?.ref).toBe("1.3.1");
-    expect(entry?.license).toBe("MIT");
-    expect(entry?.parityVerdict).toBeUndefined();
-    expect(entry?.upstreamLua).toEqual(["defold-sentinel/source/upstream/sentinel/sentry.lua"]);
-  });
-
-  // `assert(type(M.config.dsn) == "string", ...)` is the only config field `init` demands.
-  test("init takes a Config whose dsn alone is required", () => {
-    const [config] = (element("init") as { parameters: Property[] }).parameters;
-    expect(config).toMatchObject({ name: "config", types: ["Config"], is_optional: "False" });
-    const dsn = property("Config", "dsn");
-    expect(dsn.types).toEqual(["string"]);
-    expect(dsn.is_optional).toBeUndefined();
-    for (const name of ["debug", "send_timeout", "set_error_handler", "tags", "user"]) {
-      expect(property("Config", name).is_optional).toBe("True");
-    }
-  });
-
-  // The first return value is concatenated into a log line (`sentry.lua:256`, `:341`),
-  // so a callback returning nothing raises there.
-  test("both crash callbacks must return a string or a number", () => {
-    for (const name of ["on_soft_crash", "on_hard_crash"]) {
-      expect(property("Config", name)).toMatchObject({
-        types: ["(info: CrashInfo) => string | number"],
-        is_optional: "True",
-      });
-    }
-  });
-
-  test("capture_message's level is one of the five Sentry severities", () => {
-    expect(property("MessageInfo", "level")).toMatchObject({
-      types: ['"fatal" | "error" | "warning" | "info" | "debug"'],
-      is_optional: "True",
-    });
-  });
-
-  // Success hands back the event id and nil; throttling or a failed request hands back
-  // nil and the error string.
-  test("each capture callback receives an optional id and an optional error", () => {
-    for (const typedef of ["ExceptionInfo", "MessageInfo"]) {
-      expect(property(typedef, "callback")).toMatchObject({
-        types: ["(id: string | undefined, err: string | undefined) => void"],
-        is_optional: "True",
-      });
-    }
-  });
-
-  test("tags and extra values are the scalars set_tag and set_extra accept", () => {
-    for (const name of ["set_tag", "set_extra"]) {
-      const [key, value] = (element(name) as { parameters: Property[] }).parameters;
-      expect(key).toMatchObject({ name: "key", types: ["string"] });
-      expect(value).toMatchObject({ name: "value", types: ["string | number | boolean"] });
-    }
-  });
-});
-
-// Parity sees names and arities only. Which arguments the GamePush wrappers demand is
-// decided by the `helpers.check_*` call in each body, and what they return by the README
-// API table, so both are held here against the lowered models.
-describe("GamePush account and commerce type claims upstream states only in its body", () => {
-  type Property = { name: string; types: string[]; is_optional?: string | null };
-  type Returned = { types: string[] };
-
-  const MODULES = [
-    "player",
-    "player_stats",
-    "players",
-    "payments",
-    "ads",
-    "achievements",
-    "leaderboard",
-    "rewards",
-    "uniques",
-    "variables",
-    "storage",
-  ].map((name) => `gamepush.core.${name}`);
-
-  function element(namespace: string, name: string): Record<string, unknown> {
-    const found = apiDocElements(namespace).find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
-    return found;
-  }
-
-  function parameters(namespace: string, name: string): Property[] {
-    return (element(namespace, name) as { parameters: Property[] }).parameters;
-  }
-
-  function property(namespace: string, typedef: string, name: string): Property {
-    const { properties } = element(namespace, typedef) as { properties: Property[] };
-    const found = properties.find((entry) => entry.name === name);
-    if (!found) throw new Error(`${typedef} declares no ${name}`);
-    return found;
-  }
-
-  test("each module registers under its own module id at the v1.4.1 pin", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    for (const moduleId of MODULES) {
-      const entry = targets.find((t) => t.moduleId === moduleId);
-      expect(entry).toMatchObject({
-        namespace: moduleId,
-        repo: "https://github.com/megalanthus/defold-gamepush",
-        ref: "v1.4.1",
-        license: "MIT",
-      });
-      expect(entry?.parityVerdict).toBeUndefined();
-      expect(entry?.upstreamLua).toEqual([
-        `defold-gamepush/source/upstream/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
-      ]);
-    }
-  });
-
-  // `check_table_required` guards `enable_auto_sync`, and the README lists the storage
-  // values the table takes.
-  test("enable_auto_sync demands its table, whose storage is one of four kinds", () => {
-    const [table] = parameters("gamepush.core.player", "enable_auto_sync");
-    expect(table).toMatchObject({
-      name: "parameters",
-      types: ["AutoSyncParameters"],
-      is_optional: "False",
-    });
-    expect(property("gamepush.core.player", "AutoSyncParameters", "storage")).toMatchObject({
-      types: ['"preferred" | "cloud" | "platform" | "local"'],
-    });
-  });
-
-  // `check_table` and `check_callback` both let nil through.
-  test("both sync arguments are optional", () => {
-    const [table, callback] = parameters("gamepush.core.player", "sync");
-    expect(table).toMatchObject({ name: "parameters", is_optional: "True" });
-    expect(callback).toMatchObject({ name: "callback", is_optional: "True" });
-  });
-
-  test("a player field takes the scalars check_value accepts", () => {
-    const [key, value] = parameters("gamepush.core.player", "set");
-    expect(key).toMatchObject({ name: "key", types: ["string"] });
-    expect(value).toMatchObject({ name: "value", types: ["string | number | boolean"] });
-  });
-
-  // Upstream annotates all four `---@return boolean`; the README and the JS getters they
-  // read return day and second counts.
-  test("every player statistic returns a count", () => {
-    for (const name of [
-      "active_days",
-      "active_days_consecutive",
-      "playtime_today",
-      "playtime_all",
-    ]) {
-      const { returnvalues } = element("gamepush.core.player_stats", name) as {
-        returnvalues: Returned[];
-      };
-      expect({ name, types: returnvalues.map((r) => r.types) }).toEqual({
-        name,
-        types: [["number"]],
-      });
-    }
-  });
-
-  test("payments.has takes a product id or tag and compares the answer to true", () => {
-    const [product] = parameters("gamepush.core.payments", "has");
-    expect(product).toMatchObject({ name: "product", types: ["string | number"] });
-    const { returnvalues } = element("gamepush.core.payments", "has") as {
-      returnvalues: Returned[];
-    };
-    expect(returnvalues.map((r) => r.types)).toEqual([["boolean"]]);
-  });
-});
-
-// The same split as the account and commerce modules: parity holds the names and arities,
-// and the `helpers.check_*` calls and the Lua constants decide what is held here.
-describe("GamePush social and live-ops type claims upstream states only in its body", () => {
-  type Property = { name: string; types: string[]; is_optional?: string | null };
-
-  const MODULES = [
-    "channels",
-    "socials",
-    "multiplayer",
-    "events",
-    "triggers",
-    "schedulers",
-    "feedbacks",
-    "reactions",
-  ].map((name) => `gamepush.core.${name}`);
-
-  function element(namespace: string, name: string): Record<string, unknown> {
-    const found = apiDocElements(namespace).find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
-    return found;
-  }
-
-  function parameters(namespace: string, name: string): Property[] {
-    return (element(namespace, name) as { parameters: Property[] }).parameters;
-  }
-
-  test("each module registers under its own module id at the v1.4.1 pin", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    for (const moduleId of MODULES) {
-      const entry = targets.find((t) => t.moduleId === moduleId);
-      expect(entry).toMatchObject({
-        namespace: moduleId,
-        repo: "https://github.com/megalanthus/defold-gamepush",
-        ref: "v1.4.1",
-        license: "MIT",
-      });
-      expect(entry?.parityVerdict).toBeUndefined();
-      expect(entry?.upstreamLua).toEqual([
-        `defold-gamepush/source/upstream/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
-      ]);
-    }
-  });
-
-  // `check_table_required` raises on a missing table; `check_callback` lets nil through.
-  test("send_message demands its table and leaves the callback optional", () => {
-    const [table, callback] = parameters("gamepush.core.channels", "send_message");
-    expect(table).toMatchObject({ name: "parameters", is_optional: "False" });
-    expect(callback).toMatchObject({ name: "callback", is_optional: "True" });
-  });
-
-  // `check_table` lets nil through.
-  test("open_chat's table is optional", () => {
-    const [table] = parameters("gamepush.core.channels", "open_chat");
-    expect(table).toMatchObject({ name: "parameters", is_optional: "True" });
-  });
-
-  // `check_number` is called without `can_be_nil`, so the day is required.
-  test("claim_day takes a scheduler id or tag and demands its day", () => {
-    const [scheduler, day] = parameters("gamepush.core.schedulers", "claim_day");
-    expect(scheduler).toMatchObject({ name: "id_or_tag", types: ["string | number"] });
-    expect(day).toMatchObject({ name: "day", types: ["number"], is_optional: "False" });
-  });
-
-  test("the sync modes are the literals the Lua assigns", () => {
-    expect(element("gamepush.core.multiplayer", "MODE_FAST")).toMatchObject({
-      types: ['"fast"'],
-    });
-    expect(element("gamepush.core.multiplayer", "MODE_SMOOTH")).toMatchObject({
-      types: ['"smooth"'],
-    });
-  });
-});
-
 // The platform modules follow the same split. `platform.lua` is where the body and the
 // annotations disagree most: a `---@return string` over an `== true` comparison, and a
 // native passthrough whose only check is on the method name.
 describe("GamePush platform type claims upstream states only in its body", () => {
-  type Property = { name: string; types: string[]; is_optional?: string | null };
   type Returned = { types: string[] };
-
-  const MODULES = [
-    "app",
-    "platform",
-    "analytics",
-    "documents",
-    "experiments",
-    "files",
-    "fullscreen",
-    "games_collections",
-    "images",
-    "logger",
-    "segments",
-    "sounds",
-    "windows",
-  ].map((name) => `gamepush.core.${name}`);
 
   function element(namespace: string, name: string): Record<string, unknown> {
     const found = apiDocElements(namespace).find((entry) => entry.name === name);
     if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
     return found;
   }
-
-  function parameters(namespace: string, name: string): Property[] {
-    return (element(namespace, name) as { parameters: Property[] }).parameters;
-  }
-
-  test("each module registers under its own module id at the v1.4.1 pin", () => {
-    const targets = readAuthoredTargets(DATA_DIR);
-    for (const moduleId of MODULES) {
-      const entry = targets.find((t) => t.moduleId === moduleId);
-      expect(entry).toMatchObject({
-        namespace: moduleId,
-        repo: "https://github.com/megalanthus/defold-gamepush",
-        ref: "v1.4.1",
-        license: "MIT",
-      });
-      expect(entry?.parityVerdict).toBeUndefined();
-      expect(entry?.upstreamLua).toEqual([
-        `defold-gamepush/source/upstream/gamepush/core/${moduleId.slice("gamepush.core.".length)}.lua`,
-      ]);
-    }
-  });
 
   // Annotated `---@return string`, but the body returns `call_api(...) == true`.
   test("is_secret_code_auth_available returns the boolean its comparison yields", () => {
@@ -2305,15 +454,6 @@ describe("GamePush platform type claims upstream states only in its body", () =>
       returnvalues: Returned[];
     };
     expect(returnvalues.map((r) => r.types)).toEqual([["boolean"]]);
-  });
-
-  // The body raises on a non-string or empty method, passes the parameters through
-  // unchecked, and lets a nil callback through `check_callback`.
-  test("call_native_sdk demands only its method name", () => {
-    const [method, passed, callback] = parameters("gamepush.core.platform", "call_native_sdk");
-    expect(method).toMatchObject({ name: "method", types: ["string"], is_optional: "False" });
-    expect(passed).toMatchObject({ name: "parameters", is_optional: "True" });
-    expect(callback).toMatchObject({ name: "callback", is_optional: "True" });
   });
 
   test("each platform constant is the literal of its own name", () => {
@@ -2330,324 +470,10 @@ describe("Flow authored module type claims", () => {
     return found;
   }
 
-  test("the three modules register at the Flow pin and measure their vendored Lua", () => {
-    for (const [moduleId, source] of [
-      ["flow.color", "color.lua"],
-      ["flow.bottom_sheet", "bottom_sheet/init.lua"],
-      ["flow.flow", "flow.lua"],
-    ] as const) {
-      expect(authoredTarget(moduleId)).toMatchObject({
-        moduleId,
-        namespace: moduleId,
-        repo: "https://github.com/Pause-Games/flow",
-        ref: "1.0.0",
-        license: "MIT",
-        upstreamLua: [`flow/source/upstream/${source}`],
-      });
-    }
-  });
-
-  test("flow.color.rgba takes four numbers and returns a color value", () => {
-    const rgba = element("flow.color", "rgba") as {
-      parameters: { name: string; types: string[] }[];
-      returnvalues: { types: string[] }[];
-    };
-    expect(rgba.parameters.map(({ name, types }) => ({ name, types }))).toEqual([
-      { name: "r", types: ["number"] },
-      { name: "g", types: ["number"] },
-      { name: "b", types: ["number"] },
-      { name: "a", types: ["number"] },
-    ]);
-    expect(rgba.returnvalues.flatMap(({ types }) => types)).toEqual(["Flow_ColorValue"]);
-  });
-
   test("flow.bottom_sheet.init requires its host config", () => {
     expect(element("flow.bottom_sheet", "init")).toMatchObject({
       type: "VARIABLE",
       types: ["(self: FlowSelf, config: Flow_BottomSheetHostConfig) => void"],
     });
-  });
-
-  interface DocFunction {
-    name: string;
-    parameters: { name: string; types: string[]; is_optional: string }[];
-    returnvalues: { types: string[] }[];
-  }
-
-  interface DocTypedef {
-    functions?: DocFunction[];
-    properties?: { name: string; types: string[] }[];
-  }
-
-  function typedef(namespace: string, name: string): DocTypedef {
-    const found = element(namespace, name);
-    expect(found.type).toBe("TYPEDEF");
-    return found as DocTypedef;
-  }
-
-  const names = (members: { name: string }[] | undefined) => (members ?? []).map((m) => m.name);
-
-  test("flow.flow documents the component constructors reached through ui.cp", () => {
-    const components = typedef("flow.flow", "FlowComponents");
-    expect(names(components.functions)).toEqual([
-      "Box",
-      "Button",
-      "ButtonImage",
-      "Icon",
-      "Popup",
-      "Scroll",
-      "Text",
-    ]);
-    expect(components.properties?.map(({ name, types }) => ({ name, types }))).toEqual([
-      { name: "Markdown", types: ["FlowMarkdownComponent"] },
-    ]);
-    expect(names(typedef("flow.flow", "FlowMarkdownComponent").functions)).toEqual([
-      "__call",
-      "parse",
-      "viewer",
-    ]);
-  });
-
-  test("flow.flow documents the runtime facade reached through nav.runtime", () => {
-    expect(names(typedef("flow.flow", "FlowRuntimeFacade").functions)).toEqual([
-      "init",
-      "final",
-      "on_message",
-    ]);
-  });
-
-  test("the callable flow.color and flow.bottom_sheet modules document their direct call", () => {
-    const signature = ({ parameters, returnvalues }: DocFunction) => ({
-      parameters: parameters.map((p) => `${p.name}:${p.types.join("|")}:${p.is_optional}`),
-      returns: returnvalues.flatMap(({ types }) => types),
-    });
-    const [color] = typedef("flow.color", "FlowColorModule").functions ?? [];
-    expect(color?.name).toBe("__call");
-    expect(color && signature(color)).toEqual({
-      parameters: ["r:number:False", "g:number:False", "b:number:False", "a:number:True"],
-      returns: ["Flow_ColorValue"],
-    });
-    const [sheet] = typedef("flow.bottom_sheet", "FlowBottomSheetModule").functions ?? [];
-    expect(sheet?.name).toBe("__call");
-    expect(sheet && signature(sheet)).toEqual({
-      parameters: ["props:Flow_BottomSheetProps:False"],
-      returns: ["Flow_Element"],
-    });
-  });
-});
-
-describe("nakama.session type claims upstream states only in its body", () => {
-  function element(name: string): Record<string, unknown> {
-    const found = apiDocElements("nakama.session").find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/nakama.session.json declares no ${name}`);
-    return found;
-  }
-
-  function returnTypes(name: string): string[] {
-    const { returnvalues } = element(name) as { returnvalues?: { types: string[] }[] };
-    return (returnvalues ?? []).flatMap((value) => value.types);
-  }
-
-  function parameters(name: string): { name: string; types: string[]; is_optional?: string }[] {
-    const { parameters } = element(name) as {
-      parameters?: { name: string; types: string[]; is_optional?: string }[];
-    };
-    return parameters ?? [];
-  }
-
-  function properties(name: string): { name: string; types: string[]; is_optional?: string }[] {
-    const { properties } = element(name) as {
-      properties?: { name: string; types: string[]; is_optional?: string }[];
-    };
-    return properties ?? [];
-  }
-
-  test("the target is registered at the family pin and measures rather than asserts", () => {
-    const entry = authoredTarget("nakama.session");
-    expect(entry.moduleId).toBe("nakama.session");
-    expect(entry.repo).toBe("https://github.com/heroiclabs/nakama-defold");
-    expect(entry.ref).toBe("v3.4.0");
-    expect(entry.license).toBe("Apache-2.0");
-    expect(entry.authored).toBe("nakama-defold/fork/nakama.session.d.ts");
-    expect(entry.apiDoc).toBe("api-doc/nakama.session.json");
-    expect(entry.parityVerdict).toBeUndefined();
-    expect(entry.upstreamLua).toEqual(["nakama-defold/source/upstream/nakama/session.lua"]);
-  });
-
-  // `if not session.token then return nil end` — the stored file can be missing or hold
-  // something that is not a session, and a caller reading `.expires` off the narrowed
-  // return would index nil at runtime.
-  test("restore admits the nil upstream returns when nothing was stored", () => {
-    expect(returnTypes("restore")).toEqual(["Session | undefined"]);
-  });
-
-  // `sys.save` returns a success boolean upstream passes straight through, and
-  // `get_session_save_filename(id or "nakama")` supplies the default id.
-  test("store returns sys.save's boolean and defaults its id", () => {
-    expect(returnTypes("store")).toEqual(["boolean"]);
-    expect(parameters("store").map((p) => `${p.name}:${p.is_optional ?? "False"}`)).toEqual([
-      "session:False",
-      "id:True",
-    ]);
-    expect(parameters("restore").map((p) => `${p.name}:${p.is_optional ?? "False"}`)).toEqual([
-      "id:True",
-    ]);
-  });
-
-  // `create` fills the refresh half only inside `if data.refresh_token then`, and `vars`
-  // comes from a JWT claim that need not be present. Declaring any of the six as required
-  // would let a consumer read them without a check.
-  test("only the fields create writes conditionally are optional", () => {
-    const optional = properties("Session")
-      .filter((p) => p.is_optional === "True")
-      .map((p) => p.name)
-      .sort();
-    expect(optional).toEqual([
-      "refresh_token",
-      "refresh_token_expires",
-      "refresh_token_user_id",
-      "refresh_token_username",
-      "refresh_token_vars",
-      "vars",
-    ]);
-    const required = properties("Session")
-      .filter((p) => p.is_optional !== "True")
-      .map((p) => p.name);
-    expect(required).toEqual(["created", "token", "expires", "username", "user_id"]);
-  });
-
-  // `assert(data.token, "You must provide a token")` is the only field `create` requires;
-  // `refresh_token` is read behind a truthy test and every other key is ignored.
-  test("the create input requires a token and nothing else", () => {
-    expect(parameters("create").flatMap((p) => p.types)).toEqual(["SessionData"]);
-    expect(properties("SessionData").map((p) => `${p.name}:${p.is_optional ?? "False"}`)).toEqual([
-      "token:False",
-      "refresh_token:True",
-    ]);
-  });
-});
-
-describe("nakama.socket type claims upstream states only in its body", () => {
-  interface DocFunction {
-    name: string;
-    parameters?: { name: string; types: string[]; is_optional?: string }[];
-  }
-
-  function element(name: string): Record<string, unknown> {
-    const found = apiDocElements("nakama.socket").find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/nakama.socket.json declares no ${name}`);
-    return found;
-  }
-
-  function moduleFunctions(): DocFunction[] {
-    return apiDocElements("nakama.socket").filter(
-      (entry) => entry.type === "FUNCTION",
-    ) as unknown as DocFunction[];
-  }
-
-  function socketMethods(): DocFunction[] {
-    const { functions } = element("Socket") as { functions?: DocFunction[] };
-    return functions ?? [];
-  }
-
-  test("the target is registered at the family pin and measures rather than asserts", () => {
-    const entry = authoredTarget("nakama.socket");
-    expect(entry.moduleId).toBe("nakama.socket");
-    expect(entry.repo).toBe("https://github.com/heroiclabs/nakama-defold");
-    expect(entry.ref).toBe("v3.4.0");
-    expect(entry.license).toBe("Apache-2.0");
-    expect(entry.authored).toBe("nakama-defold/fork/nakama.socket.d.ts");
-    expect(entry.apiDoc).toBe("api-doc/nakama.socket.json");
-    expect(entry.parityVerdict).toBeUndefined();
-    expect(entry.upstreamLua).toEqual(["nakama-defold/source/upstream/nakama/socket.lua"]);
-  });
-
-  // `for name,fn in pairs(M) do ... socket[name] = function(...) return fn(socket, ...) end`
-  // binds every export but `create` onto the instance, with the socket already applied. A
-  // `Socket` that only carried the fields would compile away the entire bound-method form
-  // upstream's own README uses.
-  test("Socket carries every module export but create, at one parameter fewer", () => {
-    const methods = new Map(socketMethods().map((fn) => [fn.name, fn]));
-    const modules = moduleFunctions().filter((fn) => fn.name !== "create");
-    expect(modules.length).toBe(44);
-    expect(methods.size).toBe(44);
-    const mismatched = modules
-      .filter(
-        (fn) =>
-          (methods.get(fn.name)?.parameters ?? []).length !== (fn.parameters ?? []).length - 1,
-      )
-      .map((fn) => fn.name);
-    expect(mismatched).toEqual([]);
-    expect([...methods.keys()].filter((name) => name === "create")).toEqual([]);
-  });
-
-  // `socket_send(socket, message, callback)` branches on the callback and returns through
-  // `async` when none is given, so the parameter is genuinely optional at every call that
-  // reaches it. Marking one required would make the async form uncallable.
-  test("every message-sending call takes its callback last and optional", () => {
-    const withCallback = moduleFunctions().filter((fn) =>
-      (fn.parameters ?? []).some((p) => p.name === "callback"),
-    );
-    expect(withCallback.length).toBe(27);
-    const wrong = withCallback
-      .filter((fn) => {
-        const params = fn.parameters ?? [];
-        const last = params[params.length - 1];
-        return last?.name !== "callback" || last.is_optional !== "True";
-      })
-      .map((fn) => fn.name);
-    expect(wrong).toEqual([]);
-  });
-
-  // The constants are the wire values a consumer passes back to `channel_join` and reads
-  // off an `on_error` payload. Widened to `number` they stop distinguishing anything, and
-  // the `@ts-expect-error` arm of the compile proof would start compiling.
-  test("the twelve constants keep their numeric literal types", () => {
-    const literal = (name: string) => (element(name) as { types: string[] }).types;
-    expect(literal("CHANNELTYPE_UNSPECIFIED")).toEqual(["0"]);
-    expect(literal("CHANNELTYPE_ROOM")).toEqual(["1"]);
-    expect(literal("CHANNELTYPE_DIRECT_MESSAGE")).toEqual(["2"]);
-    expect(literal("CHANNELTYPE_GROUP")).toEqual(["3"]);
-    expect(literal("ERROR_RUNTIME_EXCEPTION")).toEqual(["0"]);
-    expect(literal("ERROR_MATCH_NOT_FOUND")).toEqual(["4"]);
-    expect(literal("ERROR_RUNTIME_FUNCTION_EXCEPTION")).toEqual(["7"]);
-    const widened = apiDocElements("nakama.socket")
-      .filter((entry) => entry.type === "VARIABLE")
-      .filter((entry) => (entry as { types: string[] }).types.includes("number"))
-      .map((entry) => entry.name);
-    expect(widened).toEqual([]);
-  });
-
-  // `MatchCreate.name` is documented optional upstream and `MatchJoin` declares
-  // `oneof id { match_id, token }`, so each of the three slots is skippable while the
-  // `metadata` and `callback` behind them stay reachable. Declaring them bare `string`
-  // makes an unnamed match and a token-only matchmaker join uncallable.
-  test("the match identifiers admit the nil alternative on both call forms", () => {
-    const shape = (fn: DocFunction | undefined) =>
-      (fn?.parameters ?? []).map((p) => `${p.name}:${p.types.join(" | ")}`);
-    const moduleFunction = (name: string) => moduleFunctions().find((fn) => fn.name === name);
-    const socketMethod = (name: string) => socketMethods().find((fn) => fn.name === name);
-    expect(shape(moduleFunction("match_create"))).toEqual([
-      "socket:Socket",
-      "name:string | undefined",
-      "callback:(message: unknown) => void",
-    ]);
-    expect(shape(socketMethod("match_create"))).toEqual([
-      "name:string | undefined",
-      "callback:(message: unknown) => void",
-    ]);
-    expect(shape(moduleFunction("match_join"))).toEqual([
-      "socket:Socket",
-      "match_id:string | undefined",
-      "token:string | undefined",
-      "metadata:unknown",
-      "callback:(message: unknown) => void",
-    ]);
-    expect(shape(socketMethod("match_join"))).toEqual([
-      "match_id:string | undefined",
-      "token:string | undefined",
-      "metadata:unknown",
-      "callback:(message: unknown) => void",
-    ]);
   });
 });

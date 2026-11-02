@@ -1,0 +1,16 @@
+{
+  "repo": "https://github.com/example/fixture-native",
+  "license": "MIT",
+  "native": {
+    "namespace": "stamp",
+    "manifestDir": "stamp",
+    "declaration": "fork/stamp.d.ts",
+    "upstreamSource": "source/upstream/stamp/src/extension.cpp"
+  },
+  "floors": {
+    "stamp": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}
