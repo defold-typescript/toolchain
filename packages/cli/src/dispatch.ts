@@ -835,7 +835,7 @@ function dispatchCommand(
         return failed.length > 0 ? 1 : 0;
       }
       if (subcommand === "update") {
-        const { updateLibraries } = await import("./library/library-update");
+        const { reportedReviewedPath, updateLibraries } = await import("./library/library-update");
         const seams = internals?.resolveInternals;
         const reportedFolder = dataFolder.split(path.sep).join("/");
         let result: Awaited<ReturnType<typeof updateLibraries>>;
@@ -863,7 +863,7 @@ function dispatchCommand(
               dataFolder: reportedFolder,
               written: updated
                 .filter(({ recorded }) => recorded.length > 0)
-                .map(({ library }) => path.posix.join(reportedFolder, library, "reviewed.json")),
+                .map(({ library }) => reportedReviewedPath(dataFolder, library)),
               updated,
               failed,
             }),

@@ -2,6 +2,7 @@
 // whose hashes a review already holds. A commit that differs is reported, and its
 // library's record is left alone.
 
+import * as path from "node:path";
 import { defaultReadZip, extensionCacheDir, resolveExtensionArchive } from "../extension-archive";
 import type { AddLibraryOptions } from "./library-add";
 import {
@@ -31,6 +32,14 @@ export interface UpdatedLibrary {
 export interface LibraryUpdateResult {
   readonly updated: UpdatedLibrary[];
   readonly failed: FailedReview[];
+}
+
+export function reportedReviewedPath(
+  dataFolder: string,
+  library: string,
+  flavor: Pick<typeof path, "join" | "sep"> = path,
+): string {
+  return flavor.join(dataFolder, library, "reviewed.json").split(flavor.sep).join("/");
 }
 
 interface Candidate {
