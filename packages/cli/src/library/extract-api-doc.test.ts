@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { extractApiDoc } from "./extract-api-doc";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus } from "./print-corpus";
 import { lowerAuthoredApiDoc, readAuthoredTargets } from "./sync-authored-types";
@@ -24,7 +25,7 @@ function externalFrontEndNamespaces(): Set<string> {
   return new Set([
     ...readLualsTargets(DATA_DIR).map((t) => t.namespace),
     ...readScriptApiTargets(DATA_DIR).map((t) => t.namespace),
-    ...readMarkdownTargets(PACKAGE_ROOT).map((t) => t.namespace),
+    ...readMarkdownTargets(LANE_EVALUATIONS_ROOT).map((t) => t.namespace),
   ]);
 }
 

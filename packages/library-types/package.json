@@ -16,15 +16,15 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "regen": "bun ../cli/src/library/sync-library-types.ts",
-    "check": "bun ../cli/src/library/sync-library-types.ts --check",
-    "classify": "bun ../cli/src/library/sync-library-types.ts --classify",
-    "luals:fetch": "bun ../cli/src/library/sync-luals-types.ts --fetch",
-    "luals:fidelity": "bun ../cli/src/library/sync-luals-types.ts --fidelity",
+    "regen": "bun ../cli/src/library/sync-library-types.ts --data data",
+    "check": "bun ../cli/src/library/sync-library-types.ts --check --data data",
+    "classify": "bun ../cli/src/library/sync-library-types.ts --classify --data data",
+    "luals:fetch": "bun ../cli/src/library/sync-luals-types.ts --fetch --data data",
+    "luals:fidelity": "bun ../cli/src/library/sync-luals-types.ts --fidelity --data data",
     "api-doc": "bun ../cli/src/bin.ts library check --data data --api-doc-out api-doc",
-    "asset-portal:sync": "bun ../cli/src/library/sync-asset-portal.ts --fetch",
-    "fidelity:floor": "bun ../cli/src/library/fidelity-floor.ts --raise",
-    "parity": "bun ../cli/src/library/authored-parity.ts && bun ../cli/src/library/native-parity.ts"
+    "asset-portal:sync": "bun ../cli/src/library/sync-asset-portal.ts --fetch --data data",
+    "fidelity:floor": "bun ../cli/src/library/fidelity-floor.ts --raise --data data",
+    "parity": "bun ../cli/src/library/authored-parity.ts --data data && bun ../cli/src/library/native-parity.ts --data data"
   },
   "dependencies": {
     "@defold-typescript/types": "workspace:*"

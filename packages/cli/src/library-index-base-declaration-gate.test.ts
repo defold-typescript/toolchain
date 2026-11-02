@@ -9,7 +9,6 @@ import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printCorpus } from "./library/print-corpus";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 
-const LIBRARY_TYPES_DIR = join(import.meta.dir, "../../library-types");
 const MAP_FILE = "the library data folder's index slots";
 const CLASSIFICATIONS = loadLibraryIndexSlotClassifications(LIBRARY_DATA_DIR);
 
@@ -28,13 +27,13 @@ interface ExtensionManifest {
 
 const extensionPages = (
   JSON.parse(
-    readFileSync(join(LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+    readFileSync(join(LIBRARY_DATA_DIR, "defold-extensions.json"), "utf8"),
   ) as ExtensionManifest
 ).libraries.flatMap((library) => library.docs.map((doc) => doc.page));
 
 const portalPages = (
   JSON.parse(
-    readFileSync(join(LIBRARY_TYPES_DIR, "asset-portal-script-api.json"), "utf8"),
+    readFileSync(join(LIBRARY_DATA_DIR, "asset-portal-script-api.json"), "utf8"),
   ) as ExtensionManifest
 ).libraries.flatMap((library) => library.docs.map((doc) => doc.page));
 
@@ -220,7 +219,7 @@ async function emitLaneDeclaration(page: string, lane: Lane): Promise<string> {
   }
   const docDir = lane === "portal" ? "asset-portal-script-api" : "defold-extensions";
   const doc = JSON.parse(
-    readFileSync(join(LIBRARY_TYPES_DIR, docDir, "api-doc", `${page}.json`), "utf8"),
+    readFileSync(join(LIBRARY_DATA_DIR, docDir, "api-doc", `${page}.json`), "utf8"),
   ) as { info: { namespace: string } };
   return (await emitExtensionDeclarationFromDoc(doc, [page], CLASSIFICATIONS)).contents;
 }

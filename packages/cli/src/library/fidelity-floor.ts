@@ -6,12 +6,16 @@
  * but a regeneration that lowers coverage rewrites the report too, so the drop
  * lands silently. A floor pins each report's coverage from the outside: `regen` never
  * touches it, so the only way a floor moves is the explicit, monotone `--raise`
- * below. A served module's floor sits in its `library.json`, where the reader
- * validates it. `fidelity-floor.json` holds the floors of the lanes that have no
- * library folder, the openapi and markdown evaluations, under a validating contract
- * of its own (`parseFloors`).
+ * below. The ratchet has two halves, each over its own root:
  *
- * Reports are keyed by package-root-relative POSIX path, not by namespace:
+ * - Library reports sit under `fidelity/` in the report root, the directory holding
+ *   `--data`. Each one's floor sits in the `library.json` of the library that
+ *   measures it, in the data folder `--data` selects, where the reader validates it.
+ * - The openapi and markdown `no-go` evaluations have no library folder: their
+ *   reports and their `fidelity-floor.json` sit under `LANE_EVALUATIONS_ROOT`, with a
+ *   validating contract of their own (`parseFloors`). `--lanes` selects this half.
+ *
+ * Reports are keyed by root-relative POSIX path, not by namespace:
  * `fidelity/openapi/nakama.nakama.json` reports `namespace: "nakama"`, and two
  * lanes emitting the same namespace would collide on a namespace key.
  *
@@ -28,7 +32,7 @@
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { newestDataFolder } from "./data-folder";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import {
   describeValue,
   LIBRARY_FILE,
@@ -46,7 +50,10 @@ export const AUTHORED_PARITY_DIRNAME = "authored";
 export const NATIVE_PARITY_DIRNAME = "native";
 const SURFACE_PARITY_DIRNAMES = new Set([AUTHORED_PARITY_DIRNAME, NATIVE_PARITY_DIRNAME]);
 export const FLOOR_MANIFEST_FILE = "fidelity-floor.json";
-export const FLOOR_RAISE_COMMAND = "bun run --cwd packages/library-types fidelity:floor";
+export const FLOOR_RAISE_COMMAND =
+  "bun packages/cli/src/library/fidelity-floor.ts --data <dir> --raise";
+export const LANE_FLOOR_RAISE_COMMAND =
+  "bun packages/cli/src/library/fidelity-floor.ts --lanes --raise";
 
 export interface FidelityFloorReport {
   coverage: number;
@@ -74,7 +81,7 @@ function walkJsonFiles(dir: string, prefix: string, out: string[]): void {
 
 /**
  * Every committed fidelity report under `fidelity/`, at any depth, keyed by its
- * package-root-relative POSIX path and sorted by that key. Reads only — the walk
+ * root-relative POSIX path and sorted by that key. Reads only — the walk
  * is the enumeration the gate trusts, so a lane that emits into a nested
  * directory (`fidelity/openapi/`) is picked up without registration.
  */
@@ -121,14 +128,9 @@ export function readFloors(root: string): Record<string, number> {
   return parseFloors(JSON.parse(readFileSync(path, "utf8")), FLOOR_MANIFEST_FILE);
 }
 
-/** Every token floor, from `library.json` and the manifest, by the report it judges. */
-export function tokenFloors(root: string): Record<string, number> {
-  return sortedByKey(
-    Object.entries({
-      ...readFloors(root),
-      ...tokenFloorsByReport(readLibraryData(newestDataFolder(root))),
-    }),
-  );
+/** Every library's token floor, from its `library.json`, by the report it judges. */
+export function tokenFloors(dataDir: string): Record<string, number> {
+  return sortedByKey(Object.entries(tokenFloorsByReport(readLibraryData(dataDir))));
 }
 
 /**
@@ -161,35 +163,46 @@ function biomeFormatJson(raw: string, file: string): string {
   return out.stdout.toString();
 }
 
-/**
- * Raises every token floor to its committed report's coverage, each in the file that
- * holds it: a served module's in its `library.json`, leaving its parity floors alone, and
- * the rest in `fidelity-floor.json`. Returns one line per change and per file written.
- */
-export function raiseCommittedFloors(root: string): string[] {
-  const dataDir = newestDataFolder(root);
-  const current = tokenFloors(root);
-  const next = raiseFloors(current, collectFidelityReports(root));
+function changeLog(
+  current: Record<string, number>,
+  next: Record<string, number>,
+  owned: (key: string) => boolean,
+): string[] {
   const log: string[] = [];
   for (const key of Object.keys(next)) {
     const before = current[key];
-    if (before === undefined) log.push(`${key}: (new) -> ${next[key]}`);
+    if (!owned(key)) log.push(`${key}: no library measures this report, so it has no floor`);
+    else if (before === undefined) log.push(`${key}: (new) -> ${next[key]}`);
     else if (before !== next[key]) log.push(`${key}: ${before} -> ${next[key]}`);
   }
   for (const key of Object.keys(current)) {
     if (next[key] === undefined) log.push(`${key}: dropped (no such report)`);
   }
+  return log;
+}
 
-  const manifest = { ...next };
-  for (const library of readLibraryData(dataDir)) {
+/**
+ * Raises every library token floor to its committed report's coverage under
+ * `reportRoot`, in the `library.json` that holds it, leaving its parity floors alone.
+ * Returns one line per change, per report no library measures, and per file written.
+ */
+export function raiseCommittedFloors(dataDir: string, reportRoot: string): string[] {
+  const libraries = readLibraryData(dataDir);
+  const measuredReports = new Set(
+    libraries.flatMap((library) => tokenReportPaths(library).map(([path]) => path)),
+  );
+  const current = tokenFloors(dataDir);
+  const next = raiseFloors(current, collectFidelityReports(reportRoot));
+  const log = changeLog(current, next, (key) => measuredReports.has(key));
+
+  for (const library of libraries) {
     const reports = tokenReportPaths(library);
     const tokenModules = new Set(reports.map(([, moduleId]) => moduleId));
     const floors: [string, LibraryFloor][] = Object.entries(library.floors).filter(
       ([key]) => !tokenModules.has(key),
     );
     for (const [path, moduleId] of reports) {
-      const floor = manifest[path];
-      delete manifest[path];
+      const floor = next[path];
       if (floor !== undefined) floors.push([moduleId, floor]);
     }
     const sorted = sortedByKey(floors);
@@ -201,19 +214,46 @@ export function raiseCommittedFloors(root: string): string[] {
     writeFileSync(path, biomeFormatJson(JSON.stringify(updated), LIBRARY_FILE));
     log.push(`wrote ${path}`);
   }
+  return log;
+}
+
+/**
+ * Raises the lane evaluations' floors in `fidelity-floor.json` under `root` to their
+ * reports' coverage there. Writes the manifest only when a floor changed.
+ */
+export function raiseLaneFloors(root: string = LANE_EVALUATIONS_ROOT): string[] {
+  const current = readFloors(root);
+  const next = raiseFloors(current, collectFidelityReports(root));
+  const log = changeLog(current, next, () => true);
+  if (log.length === 0) return log;
   const path = join(root, FLOOR_MANIFEST_FILE);
-  writeFileSync(path, biomeFormatJson(JSON.stringify(manifest), FLOOR_MANIFEST_FILE));
+  writeFileSync(path, biomeFormatJson(JSON.stringify(next), FLOOR_MANIFEST_FILE));
   log.push(`wrote ${path}`);
   return log;
 }
 
 if (import.meta.main) {
-  const { LIBRARY_TYPES_ROOT: root } = await import("./package-root");
-  if (process.argv.includes("--raise")) {
-    for (const line of raiseCommittedFloors(root)) console.log(line);
+  const raise = process.argv.includes("--raise");
+  if (process.argv.includes("--lanes")) {
+    const root = LANE_EVALUATIONS_ROOT;
+    if (raise) for (const line of raiseLaneFloors(root)) console.log(line);
+    else {
+      console.log(
+        JSON.stringify(raiseFloors(readFloors(root), collectFidelityReports(root)), null, 2),
+      );
+    }
   } else {
-    console.log(
-      JSON.stringify(raiseFloors(tokenFloors(root), collectFidelityReports(root)), null, 2),
-    );
+    const { toolDataOrExit } = await import("./tool-data-flag");
+    const { dataDir, reportRoot } = toolDataOrExit("packages/cli/src/library/fidelity-floor.ts");
+    if (raise) for (const line of raiseCommittedFloors(dataDir, reportRoot)) console.log(line);
+    else {
+      console.log(
+        JSON.stringify(
+          raiseFloors(tokenFloors(dataDir), collectFidelityReports(reportRoot)),
+          null,
+          2,
+        ),
+      );
+    }
   }
 }

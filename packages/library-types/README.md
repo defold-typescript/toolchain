@@ -49,13 +49,28 @@ declarations.
     `source/upstream/` holds the upstream files the parity checks measure
     against.
 
-  Beside the library folders, `index-slot-classifications.json` holds the base
-  each index slot counts from for the extension pages no library folder holds.
-- `library-classification.json`, `library-targets.json` — the ts-defold/library
-  registries the classification tooling keeps.
-- `api-doc/<module>.json` — ref-doc JSON extracted from each declaration, consumed
-  by the documentation site to render per-library API pages.
+  Beside the library folders sit the files that describe libraries but belong
+  to no one folder:
+  - `index-slot-classifications.json` — the base each index slot counts from for
+    the extension pages no library folder holds.
+  - `defold-extensions.json` and `defold-extensions/` — Defold's own extensions
+    and their docs; `defold-engine-releases.json` — the engine release dates.
+  - `asset-portal.json`, `asset-portal-script-api.json`,
+    `asset-portal-script-api/`, `asset-portal-aliases.json` and
+    `asset-portal-verdicts.json` — the Asset Portal listing and what was decided
+    about each entry.
+  - `library-classification.json`, `library-targets.json` and
+    `native-sweep-verdicts.json` — the ts-defold/library registries the
+    classification tooling keeps.
+  - `library-descriptions.json`, `library-description-overrides.json` and
+    `library-display-overrides.json` — the library page descriptions and names.
+- `api-doc/` and `fidelity/` — the reports the library tools regenerate beside
+  `data/`: ref-doc JSON extracted from each declaration, and each module's
+  coverage.
 - `NOTICE` — upstream attribution for every vendored library.
+
+Every library sync, parity and upstream-check tool takes `--data <dir>`, the
+directory holding the version folders; this package's scripts pass `--data data`.
 
 ## Provenance
 

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import type { MarkdownDoc } from "./parse-markdown-api";
 import { printCorpus, printedModule } from "./print-corpus";
@@ -22,6 +23,7 @@ import { type FetchText, loadTypeResolver } from "./sync-script-api-types";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
+const LANES = LANE_EVALUATIONS_ROOT;
 
 // The orthographic.camera target as it appears in a validated config. A markdown
 // target pins one README/`.md` path plus the publish namespace the README's own
@@ -46,7 +48,7 @@ function writeConfig(config: unknown): string {
 
 describe("readMarkdownTargets", () => {
   test("parses the committed orthographic entry into a typed target", () => {
-    const targets = readMarkdownTargets(PACKAGE_ROOT);
+    const targets = readMarkdownTargets(LANES);
     const ortho = targets.find((t) => t.moduleId === "orthographic.camera");
     expect(ortho).toBeDefined();
     expect(ortho?.namespace).toBe("orthographic");
@@ -85,9 +87,9 @@ describe("readMarkdownTargets", () => {
 // The proof artifacts the no-go produced are untouched by that severance.
 describe("orthographic severed to the authored lane without disturbing the markdown proof", () => {
   test("orthographic.camera is no longer a ts-defold library-targets row", () => {
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "orthographic.camera")).toBe(false);
   });
 
@@ -105,24 +107,22 @@ describe("orthographic severed to the authored lane without disturbing the markd
     expect(served).toBe(
       readFileSync(join(DATA_DIR, "defold-orthographic/fork/orthographic.camera.d.ts"), "utf8"),
     );
-    expect(served).not.toBe(await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC));
+    expect(served).not.toBe(await emitMarkdownDeclaration(LANES, ORTHOGRAPHIC));
   });
 
   test("the markdown target, its no-go decision, and its fidelity artifact are untouched", () => {
-    const target = readMarkdownTargets(PACKAGE_ROOT).find(
-      (t) => t.moduleId === "orthographic.camera",
-    );
+    const target = readMarkdownTargets(LANES).find((t) => t.moduleId === "orthographic.camera");
     expect(target).toBeDefined();
     expect(target?.namespace).toBe("orthographic");
     expect(target?.apiDoc).toBe("api-doc/orthographic.json");
     expect(target?.decision).toBe("no-go");
-    expect(existsSync(join(PACKAGE_ROOT, "fidelity/orthographic.json"))).toBe(true);
+    expect(existsSync(join(LANES, "fidelity/orthographic.json"))).toBe(true);
   });
 });
 
 describe("defold-input registers no markdown target on the all-no-go outcome", () => {
   test("markdown-targets.json carries no in.* entry", () => {
-    const targets = readMarkdownTargets(PACKAGE_ROOT);
+    const targets = readMarkdownTargets(LANES);
     expect(targets.filter((t) => t.moduleId.startsWith("in."))).toEqual([]);
   });
 
@@ -176,7 +176,7 @@ describe("evaluateMarkdownCandidate", () => {
   const MONARCH_SNAPSHOT = join(DATA_DIR, "monarch/fork/monarch.monarch.d.ts");
 
   test("returns the emitted declaration plus the fidelity-comparison fields", async () => {
-    const result = await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH, MONARCH_SNAPSHOT);
+    const result = await evaluateMarkdownCandidate(LANES, MONARCH, MONARCH_SNAPSHOT);
     expect(result.emitted).toContain("declare module 'monarch.monarch' {");
     expect(result.emitted).toContain("function show(");
     expect(result.markdownMembers).toContain("show");
@@ -185,15 +185,17 @@ describe("evaluateMarkdownCandidate", () => {
   });
 
   test("writes nothing — the live in-place golden survives byte-identical", async () => {
-    const contents = (rel: string): string | null =>
-      existsSync(join(PACKAGE_ROOT, rel)) ? readFileSync(join(PACKAGE_ROOT, rel), "utf8") : null;
-    const before = contents(MONARCH.apiDoc);
+    const contents = (root: string, rel: string): string | null =>
+      existsSync(join(root, rel)) ? readFileSync(join(root, rel), "utf8") : null;
+    const before = [PACKAGE_ROOT, LANES].map((root) => contents(root, MONARCH.apiDoc));
 
-    await evaluateMarkdownCandidate(PACKAGE_ROOT, MONARCH, MONARCH_SNAPSHOT);
+    await evaluateMarkdownCandidate(LANES, MONARCH, MONARCH_SNAPSHOT);
 
-    expect(contents(MONARCH.apiDoc)).toBe(before);
+    expect([PACKAGE_ROOT, LANES].map((root) => contents(root, MONARCH.apiDoc))).toEqual(before);
     // The fidelity path has no live occupant, so it must simply never appear.
-    expect(existsSync(join(PACKAGE_ROOT, MONARCH.fidelity))).toBe(false);
+    for (const root of [PACKAGE_ROOT, LANES]) {
+      expect(existsSync(join(root, MONARCH.fidelity))).toBe(false);
+    }
   });
 });
 
@@ -221,7 +223,7 @@ describe("fetchMarkdownFixture", () => {
 
 describe("emitMarkdownDeclaration", () => {
   test("routes the README through parseMarkdownApi -> retarget -> generateModuleDeclaration", async () => {
-    const contents = await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC);
+    const contents = await emitMarkdownDeclaration(LANES, ORTHOGRAPHIC);
     // Importable module keyed by moduleId, retargeted onto the `orthographic`
     // namespace (the README documents its API under the `camera.` alias).
     expect(contents).toContain("declare module 'orthographic.camera' {");
@@ -235,7 +237,7 @@ describe("emitMarkdownDeclaration", () => {
   // compiled and the proof that the README's `matrix` shorthand reaches a real type is the
   // emitted text rather than a consumer compile.
   test("renders the README's `matrix` returns as Matrix4", async () => {
-    const contents = await emitMarkdownDeclaration(PACKAGE_ROOT, ORTHOGRAPHIC);
+    const contents = await emitMarkdownDeclaration(LANES, ORTHOGRAPHIC);
     expect(contents).toContain("function get_view(");
     expect(contents).toContain("function get_projection(");
     expect(contents).not.toContain("): unknown;");
@@ -249,9 +251,9 @@ describe("emitMarkdownDeclaration", () => {
 
 describe("markdown api-docs regenerate byte-for-byte", () => {
   test("each target's lowered api-doc matches its committed api-doc golden", () => {
-    for (const target of readMarkdownTargets(PACKAGE_ROOT)) {
-      const regenerated = lowerMarkdownApiDoc(PACKAGE_ROOT, target);
-      const committed = readFileSync(join(PACKAGE_ROOT, target.apiDoc), "utf8");
+    for (const target of readMarkdownTargets(LANES)) {
+      const regenerated = lowerMarkdownApiDoc(LANES, target);
+      const committed = readFileSync(join(LANES, target.apiDoc), "utf8");
       expect(regenerated).toBe(committed);
     }
   });
@@ -259,9 +261,9 @@ describe("markdown api-docs regenerate byte-for-byte", () => {
 
 describe("markdown fidelity", () => {
   test("each target's report matches its committed fidelity golden", async () => {
-    for (const target of readMarkdownTargets(PACKAGE_ROOT)) {
-      const report = await buildMarkdownFidelity(PACKAGE_ROOT, target);
-      const committed = readFileSync(join(PACKAGE_ROOT, target.fidelity), "utf8");
+    for (const target of readMarkdownTargets(LANES)) {
+      const report = await buildMarkdownFidelity(LANES, target);
+      const committed = readFileSync(join(LANES, target.fidelity), "utf8");
       expect(`${JSON.stringify(report, null, 2)}\n`).toBe(committed);
     }
   });
@@ -270,7 +272,7 @@ describe("markdown fidelity", () => {
   // render `undefined`, so every one of orthographic's type tokens now reaches a
   // real TS type.
   test("orthographic fidelity reflects the real emitter: coverage 1, no unmapped tokens", async () => {
-    const report = await buildMarkdownFidelity(PACKAGE_ROOT, ORTHOGRAPHIC);
+    const report = await buildMarkdownFidelity(LANES, ORTHOGRAPHIC);
     expect(report.namespace).toBe("orthographic");
     expect(report.totalMembers).toBe(21);
     expect(report.totalTypeTokens).toBe(87);

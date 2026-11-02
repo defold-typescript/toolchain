@@ -9,28 +9,56 @@ import {
   type FidelityFloorReport,
   FLOOR_MANIFEST_FILE,
   FLOOR_RAISE_COMMAND,
+  LANE_FLOOR_RAISE_COMMAND,
   NATIVE_PARITY_DIRNAME,
   parseFloors,
   raiseCommittedFloors,
   raiseFloors,
+  raiseLaneFloors,
   readFloors,
   tokenFloors,
 } from "./fidelity-floor";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 
-describe("fidelity floor gate", () => {
-  const reports = collectFidelityReports(PACKAGE_ROOT);
-  const floors = tokenFloors(PACKAGE_ROOT);
+const GATES = [
+  {
+    half: "library reports",
+    root: PACKAGE_ROOT,
+    floors: tokenFloors(LIBRARY_DATA_DIR),
+    raise: FLOOR_RAISE_COMMAND,
+  },
+  {
+    half: "lane evaluations",
+    root: LANE_EVALUATIONS_ROOT,
+    floors: readFloors(LANE_EVALUATIONS_ROOT),
+    raise: LANE_FLOOR_RAISE_COMMAND,
+  },
+] as const;
 
-  test("the walk reaches every lane, including the nested openapi one", () => {
-    // Without this the whole gate passes vacuously on a walk that descends nowhere.
-    expect(Object.keys(reports).length).toBeGreaterThan(0);
-    expect(reports["fidelity/openapi/nakama.nakama.json"]).toBeDefined();
+describe("fidelity floor gate: the two halves", () => {
+  test("the library walk reaches the library reports", () => {
+    // Without this the library gate passes vacuously on a walk that descends nowhere.
+    expect(Object.keys(collectFidelityReports(PACKAGE_ROOT)).length).toBeGreaterThan(0);
+  });
+
+  test("the lane walk reaches the nested openapi evaluation", () => {
+    expect(
+      collectFidelityReports(LANE_EVALUATIONS_ROOT)["fidelity/openapi/nakama.nakama.json"],
+    ).toBeDefined();
+  });
+
+  test("no report sits in both halves", () => {
+    const lanes = new Set(Object.keys(collectFidelityReports(LANE_EVALUATIONS_ROOT)));
+    expect(
+      Object.keys(collectFidelityReports(PACKAGE_ROOT)).filter((key) => lanes.has(key)),
+    ).toEqual([]);
   });
 
   test("the surface-parity lane is carved out, so the two denominators stay apart", () => {
+    const reports = collectFidelityReports(PACKAGE_ROOT);
     // `fidelity/authored/` coverage is upstream members declared at the right
     // arity, not type tokens — the parity floors in `library.json` ratchet it.
     expect(existsSync(join(PACKAGE_ROOT, "fidelity", AUTHORED_PARITY_DIRNAME))).toBe(true);
@@ -40,14 +68,29 @@ describe("fidelity floor gate", () => {
   });
 
   test("the native surface-parity lane is carved out too", () => {
+    const reports = collectFidelityReports(PACKAGE_ROOT);
     expect(existsSync(join(PACKAGE_ROOT, "fidelity", NATIVE_PARITY_DIRNAME))).toBe(true);
     expect(Object.keys(reports).filter((path) => path.startsWith("fidelity/native/"))).toEqual([]);
   });
 
+  test("the manifest holds only the lanes with no library folder", () => {
+    const evaluated = ["markdown-targets.json", "openapi-targets.json"].flatMap((file) => {
+      const { targets } = JSON.parse(readFileSync(join(LANE_EVALUATIONS_ROOT, file), "utf8")) as {
+        targets: { fidelity: string }[];
+      };
+      return targets.map(({ fidelity }) => fidelity);
+    });
+    expect(Object.keys(readFloors(LANE_EVALUATIONS_ROOT))).toEqual(evaluated.sort());
+  });
+});
+
+describe.each(GATES)("fidelity floor gate: $half", ({ root, floors, raise }) => {
+  const reports = collectFidelityReports(root);
+
   test("every committed fidelity report has a floor entry", () => {
     const missing = Object.keys(reports)
       .filter((path) => floors[path] === undefined)
-      .map((path) => `${path}: no floor entry — run \`${FLOOR_RAISE_COMMAND}\``);
+      .map((path) => `${path}: no floor entry — run \`${raise}\``);
     expect(missing).toEqual([]);
   });
 
@@ -81,16 +124,6 @@ describe("fidelity floor gate", () => {
           `${path}: totalMembers ${report.totalMembers}, totalTypeTokens ${report.totalTypeTokens} — both must be greater than 0`,
       );
     expect(empty).toEqual([]);
-  });
-
-  test("the manifest holds only the lanes with no library folder", () => {
-    const evaluated = ["markdown-targets.json", "openapi-targets.json"].flatMap((file) => {
-      const { targets } = JSON.parse(readFileSync(join(PACKAGE_ROOT, file), "utf8")) as {
-        targets: { fidelity: string }[];
-      };
-      return targets.map(({ fidelity }) => fidelity);
-    });
-    expect(Object.keys(readFloors(PACKAGE_ROOT))).toEqual(evaluated.sort());
   });
 
   test("the floors' keys are sorted and their values are ratios", () => {
@@ -281,10 +314,10 @@ describe("raiseCommittedFloors", () => {
     return root;
   }
 
-  test("a served module's floor rises in its library.json and the rest stay in the manifest", () => {
+  test("a served module's floor rises in its library.json and no manifest is written", () => {
     const root = writeRoot();
     try {
-      const log = raiseCommittedFloors(root);
+      const log = raiseCommittedFloors(join(root, "data", "0.1.0"), root);
 
       const library = JSON.parse(
         readFileSync(join(root, "data", "0.1.0", "lib", "library.json"), "utf8"),
@@ -295,9 +328,11 @@ describe("raiseCommittedFloors", () => {
         "lib.fork": { callable: 0.5, field: 1 },
         "lib.main": 0.75,
       });
-      expect(readFloors(root)).toEqual({ "fidelity/openapi/lib.json": 0.25 });
+      expect(existsSync(join(root, FLOOR_MANIFEST_FILE))).toBe(false);
       expect(log).toContain("fidelity/lib.json: 0.5 -> 0.75");
-      expect(log).toContain("fidelity/openapi/lib.json: (new) -> 0.25");
+      expect(log).toContain(
+        "fidelity/openapi/lib.json: no library measures this report, so it has no floor",
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -310,9 +345,33 @@ describe("raiseCommittedFloors", () => {
         join(root, "fidelity", "lib.json"),
         JSON.stringify({ coverage: 0.25, totalMembers: 1, totalTypeTokens: 1 }),
       );
-      raiseCommittedFloors(root);
+      raiseCommittedFloors(join(root, "data", "0.1.0"), root);
 
-      expect(tokenFloors(root)["fidelity/lib.json"]).toBe(0.5);
+      expect(tokenFloors(join(root, "data", "0.1.0"))["fidelity/lib.json"]).toBe(0.5);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("raiseLaneFloors", () => {
+  test("a lane report gains a floor in the manifest, and an unchanged run writes nothing", () => {
+    const root = mkdtempSync(join(tmpdir(), "fidelity-floor-lanes-"));
+    try {
+      mkdirSync(join(root, "fidelity", "openapi"), { recursive: true });
+      writeFileSync(
+        join(root, "fidelity", "openapi", "lib.json"),
+        JSON.stringify({ coverage: 0.25, totalMembers: 1, totalTypeTokens: 1 }),
+      );
+      const log = raiseLaneFloors(root);
+
+      expect(readFloors(root)).toEqual({ "fidelity/openapi/lib.json": 0.25 });
+      expect(log).toContain("fidelity/openapi/lib.json: (new) -> 0.25");
+      writeFileSync(join(root, FLOOR_MANIFEST_FILE), '{ "fidelity/openapi/lib.json": 0.25 }');
+      expect(raiseLaneFloors(root)).toEqual([]);
+      expect(readFileSync(join(root, FLOOR_MANIFEST_FILE), "utf8")).toBe(
+        '{ "fidelity/openapi/lib.json": 0.25 }',
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

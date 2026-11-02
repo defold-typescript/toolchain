@@ -1,26 +1,21 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { writeLibraryTargets } from "../library-data-fixture";
 import { libraryApiDocs } from "./library-api-doc";
 import { API_DOC_DIR, readLibraryData } from "./library-data";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
-import { readMarkdownTargets } from "./sync-markdown-types";
-import { readOpenApiTargets } from "./sync-openapi-types";
 
 const API_DOC_ROOT = join(LIBRARY_TYPES_ROOT, "api-doc");
 
+// The report root holds library reports only: the markdown and openapi lanes'
+// api-docs sit in the lane evaluations.
 function committedApiDocs(): Map<string, string> {
-  const notData = new Set(
-    [...readMarkdownTargets(LIBRARY_TYPES_ROOT), ...readOpenApiTargets(LIBRARY_TYPES_ROOT)].map(
-      ({ apiDoc }) => relative(API_DOC_ROOT, join(LIBRARY_TYPES_ROOT, apiDoc)).replace(/\\/g, "/"),
-    ),
-  );
   const committed = new Map<string, string>();
   for (const entry of readdirSync(API_DOC_ROOT, { recursive: true }).map(String)) {
     const file = entry.replace(/\\/g, "/");
-    if (!file.endsWith(".json") || notData.has(file)) continue;
+    if (!file.endsWith(".json")) continue;
     committed.set(file, readFileSync(join(API_DOC_ROOT, entry), "utf8"));
   }
   return committed;

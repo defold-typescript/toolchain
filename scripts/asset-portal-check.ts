@@ -1,6 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import type { PortalKind } from "../packages/cli/src/library/library-evidence.ts";
 import {
   type AssetPortalManifest,
@@ -14,6 +13,7 @@ import {
 } from "../packages/cli/src/library/sync-asset-portal.ts";
 import type { DefoldExtensionsManifest } from "../packages/cli/src/library/sync-defold-extensions.ts";
 import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
+import { toolDataFromArgv } from "../packages/cli/src/library/tool-data-flag.ts";
 import { type LaneId, type PinnedTarget, readPinnedTargets } from "./library-upstream-check.ts";
 
 // Joins the pinned Asset Portal manifest against every lane registry to answer,
@@ -112,7 +112,7 @@ export interface AssetPortalCheckIo {
   readonly head: PortalHead;
 }
 
-const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
+const TOOL = "scripts/asset-portal-check.ts";
 
 /**
  * The shape the ratchet probe needs before it joins: a manifest it cannot read
@@ -131,24 +131,21 @@ export function parseAssetPortalManifest(raw: unknown, path: string): AssetPorta
   return manifest as AssetPortalManifest;
 }
 
-export function readPortalVerdicts(packageRoot: string = PACKAGE_ROOT): PortalVerdicts {
-  const file = join(packageRoot, "asset-portal-verdicts.json");
+export function readPortalVerdicts(dataDir: string): PortalVerdicts {
+  const file = join(dataDir, "asset-portal-verdicts.json");
   return (JSON.parse(readFileSync(file, "utf8")) as { verdicts: PortalVerdicts }).verdicts;
 }
 
-export function readCoverageRegistries(
-  packageRoot: string = PACKAGE_ROOT,
-  dataDir: string = newestDataFolder(packageRoot),
-): CoverageRegistries {
+export function readCoverageRegistries(dataDir: string): CoverageRegistries {
   const defold = JSON.parse(
-    readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
+    readFileSync(join(dataDir, "defold-extensions.json"), "utf8"),
   ) as DefoldExtensionsManifest;
-  const portalPath = join(packageRoot, "asset-portal-script-api.json");
+  const portalPath = join(dataDir, "asset-portal-script-api.json");
   const portal = existsSync(portalPath)
     ? (JSON.parse(readFileSync(portalPath, "utf8")) as { libraries: { repo: string }[] }).libraries
     : [];
   return {
-    pinned: readPinnedTargets(packageRoot, dataDir),
+    pinned: readPinnedTargets(dataDir),
     native: readNativeTargets(dataDir),
     defold: defold.libraries,
     portal,
@@ -375,15 +372,15 @@ function driftIssueBody(report: PortalDriftReport): string {
       ? []
       : ["", `Removed (${report.removed.length}):`, ...report.removed.map((id) => `- \`${id}\``)];
   return [
-    `The entries the Asset Portal head \`${shortSha(report.headCommit ?? "")}\` lists differ from those \`packages/library-types/asset-portal.json\` classified at \`${shortSha(report.pinnedCommit)}\`.`,
+    `The entries the Asset Portal head \`${shortSha(report.headCommit ?? "")}\` lists differ from those the library data's \`asset-portal.json\` classified at \`${shortSha(report.pinnedCommit)}\`.`,
     ...added,
     ...removed,
     "",
     "Re-sync the manifest, then rerun the coverage report:",
     "",
     "```sh",
-    'GITHUB_TOKEN="$(gh auth token)" bun run --cwd packages/library-types asset-portal:sync',
-    "bun run asset-portal:report",
+    'GITHUB_TOKEN="$(gh auth token)" bun packages/cli/src/library/sync-asset-portal.ts --fetch --data <dir>',
+    "bun scripts/asset-portal-check.ts --report --data <dir>",
     "```",
     "",
     "A changed entry under an unchanged id is not reported: the portal rewrites release metadata every six hours.",
@@ -445,21 +442,31 @@ function describeDrift(report: PortalDriftReport): string {
 /**
  * `--report` is offline and prints the coverage report. Otherwise the portal
  * head is compared with the manifest (`--json` for one object). Drift exits 0,
- * since it is a finding; an unreadable head exits 1.
+ * since it is a finding; an unreadable head exits 1. With no `given` data folder,
+ * it is the one `--data` selects.
  */
 export async function runAssetPortalCheckCli(
   argv: string[],
   io: AssetPortalCheckIo,
-  packageRoot: string = PACKAGE_ROOT,
+  given?: string,
 ): Promise<number> {
-  const manifest = readAssetPortalManifest(packageRoot);
+  let dataDir = given;
+  if (dataDir === undefined) {
+    const data = toolDataFromArgv(argv, process.cwd(), TOOL);
+    if ("error" in data) {
+      io.stderr(`${data.error}\n`);
+      return 1;
+    }
+    dataDir = data.dataDir;
+  }
+  const manifest = readAssetPortalManifest(dataDir);
   if (argv.includes("--report")) {
     const report = coverageReport(
       portalCoverage(
         manifest,
-        readCoverageRegistries(packageRoot),
-        readPortalAliases(packageRoot),
-        readPortalVerdicts(packageRoot),
+        readCoverageRegistries(dataDir),
+        readPortalAliases(dataDir),
+        readPortalVerdicts(dataDir),
       ),
     );
     const { commit, syncedAt } = manifest.source;
