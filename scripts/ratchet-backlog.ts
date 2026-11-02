@@ -1,5 +1,5 @@
 /**
- * Lists every library-types floor slot still sitting below its 1.0 target.
+ * Lists every library and toolchain floor slot still sitting below its 1.0 target.
  *
  * Coverage floors are one-sided ratchets — the gates assert `coverage >= floor`,
  * so a floor parked under target is green by construction and its remaining work
@@ -9,10 +9,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { FLOOR_MANIFEST_FILE, tokenFloors } from "../packages/cli/src/library/fidelity-floor.ts";
 import { readLibraryData } from "../packages/cli/src/library/library-data.ts";
 import { parityFloorsByReport } from "../packages/cli/src/library/library-floors.ts";
+import { toolDataFromArgv } from "../packages/cli/src/library/tool-data-flag.ts";
 import {
   openVerdictSlots,
   parseVerdicts,
@@ -43,7 +43,7 @@ import {
 /** The coverage every floor is working toward; anything under it is backlog. */
 export const FLOOR_TARGET = 1;
 
-const MANIFEST_DIR = join("packages", "library-types");
+const TOOL = "scripts/ratchet-backlog.ts";
 
 /** What every line of the parity floors starts with; they sit in each `library.json`. */
 export const PARITY_FLOORS_LABEL = "authored-parity-floor.json";
@@ -51,8 +51,9 @@ export const PARITY_FLOORS_LABEL = "authored-parity-floor.json";
 export type RatchetSource = {
   /** The id the planning intake names and the CLI takes as its argument. */
   id: string;
-  /** Repo-root-relative directory holding the manifest. */
-  dir: string;
+  /** Repo-root-relative directory holding the manifest; absent for a source kept in
+   * the library data folder `--data` selects. */
+  dir?: string;
   /** Manifest filename, or a label for floors kept elsewhere, which prefixes every line
    * so one line names its source. */
   file: string;
@@ -72,20 +73,19 @@ export type RatchetSource = {
   ) => string[];
 } & (
   | { parse: (raw: unknown, path: string) => Record<string, unknown> }
-  /** For floors kept across files; `dir` is the absolute directory they sit under. */
+  /** For floors kept across files; `dir` is the absolute directory they sit under:
+   * the data folder for a source with no `dir`. */
   | { read: (dir: string) => Record<string, unknown> }
 );
 
 export const RATCHET_SOURCES: readonly RatchetSource[] = [
   {
     id: "authored-parity-floor",
-    dir: MANIFEST_DIR,
     file: PARITY_FLOORS_LABEL,
-    read: (dir) => ({ ...parityFloorsByReport(readLibraryData(newestDataFolder(dir))) }),
+    read: (dir) => ({ ...parityFloorsByReport(readLibraryData(dir)) }),
   },
   {
     id: "fidelity-floor",
-    dir: MANIFEST_DIR,
     file: FLOOR_MANIFEST_FILE,
     read: tokenFloors,
   },
@@ -112,7 +112,6 @@ export const RATCHET_SOURCES: readonly RatchetSource[] = [
   },
   {
     id: "asset-portal-candidates",
-    dir: MANIFEST_DIR,
     file: "asset-portal.json",
     parse: (raw, path) => ({ ...parseAssetPortalManifest(raw, path) }),
     collect: (file, parsed, dir) =>
@@ -163,14 +162,19 @@ function resolveSource(id: string): RatchetSource {
 }
 
 /**
- * Every open slot under `root`, across all sources or just the named one. Parse
- * and read errors propagate: a manifest this cannot understand is unknown
- * backlog, never satisfied backlog.
+ * Every open slot under `root` and `dataDir`, across all sources or just the named
+ * one. Parse and read errors propagate: a manifest this cannot understand is
+ * unknown backlog, never satisfied backlog.
  */
-export function collectOpenSlots(root: string, id?: string): string[] {
+export function collectOpenSlots(root: string, dataDir: string | undefined, id?: string): string[] {
   const sources = id === undefined ? RATCHET_SOURCES : [resolveSource(id)];
   return sources.flatMap((source) => {
-    const dir = join(root, source.dir);
+    const dir = source.dir === undefined ? dataDir : join(root, source.dir);
+    if (dir === undefined) {
+      throw new Error(
+        `${source.id} reads the library data; use: bun ${TOOL} ${source.id} --data <dir>`,
+      );
+    }
     const collect = source.collect ?? openSlots;
     const parsed =
       "read" in source
@@ -181,13 +185,24 @@ export function collectOpenSlots(root: string, id?: string): string[] {
 }
 
 if (import.meta.main) {
-  const id = process.argv[2];
-  if (id === undefined || !RATCHET_SOURCES.some((source) => source.id === id)) {
-    const ids = RATCHET_SOURCES.map((source) => source.id).join("|");
-    process.stderr.write(`usage: bun scripts/ratchet-backlog.ts <${ids}>\n`);
+  const args = process.argv.slice(2);
+  const id = args.find((arg, i) => !arg.startsWith("--data") && args[i - 1] !== "--data");
+  const source = RATCHET_SOURCES.find((candidate) => candidate.id === id);
+  if (source === undefined) {
+    const ids = RATCHET_SOURCES.map((candidate) => candidate.id).join("|");
+    process.stderr.write(`usage: bun ${TOOL} <${ids}> [--data <dir>]\n`);
     process.exit(1);
   }
-  for (const line of collectOpenSlots(join(import.meta.dir, ".."), id)) {
+  let dataDir: string | undefined;
+  if (source.dir === undefined) {
+    const data = toolDataFromArgv(args, process.cwd(), TOOL);
+    if ("error" in data) {
+      process.stderr.write(`${data.error}\n`);
+      process.exit(1);
+    }
+    dataDir = data.dataDir;
+  }
+  for (const line of collectOpenSlots(join(import.meta.dir, ".."), dataDir, source.id)) {
     process.stdout.write(`${line}\n`);
   }
 }

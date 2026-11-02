@@ -39,7 +39,7 @@ import { readNativeTargets } from "./sync-native-types";
 const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 const REGISTRY = JSON.parse(
-  readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
+  readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
 ) as LibraryTargets;
 
 // A minimal package root with a single vendored target, used by the drift tests
@@ -161,7 +161,7 @@ describe("the dormant ts-defold lane", () => {
     // iterates nothing and passes vacuously. It is not coverage of an empty
     // registry; the drift machinery keeps its real coverage through the
     // `writeTempTarget` synthetic roots.
-    expect(existsSync(join(PACKAGE_ROOT, "library-targets.json"))).toBe(true);
+    expect(existsSync(join(DATA_DIR, "library-targets.json"))).toBe(true);
     expect(REGISTRY.targets).toEqual([]);
     expect(REGISTRY.source.repo).toBe("https://github.com/ts-defold/library");
     expect(REGISTRY.source.commit).toMatch(/^[0-9a-f]{40}$/);
@@ -191,9 +191,9 @@ describe("checkDrift", () => {
     const fetchText: FetchText = async (url) => {
       const target = REGISTRY.targets.find((t) => rawUrl(REGISTRY.source, t) === url);
       if (!target) throw new Error(`no target for ${url}`);
-      return readFileSync(join(PACKAGE_ROOT, target.fixture), "utf8");
+      return readFileSync(join(DATA_DIR, target.fixture), "utf8");
     };
-    const results = await checkDrift(PACKAGE_ROOT, fetchText);
+    const results = await checkDrift(DATA_DIR, fetchText);
     expect(results.map((r) => r.module)).toEqual(REGISTRY.targets.map((t) => t.module));
     expect(results.every((r) => r.status === "ok")).toBe(true);
   });
@@ -685,13 +685,13 @@ describe("nativeSweepRemainder", () => {
 
   test("the committed manifests leave no native dir unaccounted for", () => {
     const manifest = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as ClassificationManifest;
     expect(
       nativeSweepRemainder(
         manifest.dirs,
         readNativeTargets(DATA_DIR),
-        readNativeSweepVerdicts(PACKAGE_ROOT),
+        readNativeSweepVerdicts(DATA_DIR),
       ),
     ).toEqual([]);
   });
@@ -741,7 +741,7 @@ interface ClassificationManifest {
 
 describe("library-classification.json coverage", () => {
   const manifest = JSON.parse(
-    readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+    readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
   ) as ClassificationManifest;
   const byDir = new Map(manifest.dirs.map((e) => [e.dir, e] as const));
   const TOKENS = new Set(["pure-lua", "native", "already-vendored", "covered-by-goal"]);
@@ -828,7 +828,7 @@ describe("library-classification.json coverage", () => {
     const liveModules = new Set(REGISTRY.targets.map((t) => t.module));
     // The assembly is shared with production so a lane added there widens this
     // guard at the same time; only the predicate below stays restated.
-    const registry = readMaintainedHereRegistry(DATA_DIR, PACKAGE_ROOT);
+    const registry = readMaintainedHereRegistry(DATA_DIR);
     // Restated here rather than routed through `maintainedHereModules`, so a bug
     // in the predicate cannot blind the guard at the moment the manifest is wrong.
     const scanned = manifest.dirs.flatMap((e) => e.modules);
@@ -942,8 +942,8 @@ describe("writeClassification", () => {
     license: "MIT",
   };
 
-  // `writeClassification` reads every maintained-here registry from the package
-  // root, and each reader loud-fails on a missing required field — so the temp
+  // `writeClassification` reads every maintained-here registry from the data
+  // folder and the lane root, here one temp root, and each reader loud-fails on a missing required field — so the temp
   // root needs all five complete, not stubs.
   function writeClassifyRoot(opts: {
     vendoredPaths: string[];
@@ -1389,17 +1389,20 @@ describe("writeDescriptions", () => {
 
   test("fetches owner/repo from NOTICE credit URLs, applies overrides, writes sorted map", async () => {
     const root = writeTempRoot();
+    const dataDir = join(root, "data", "0.1.0");
+    mkdirSync(dataDir, { recursive: true });
     const fetchRepoDescription: FetchRepoDescription = async (owner, repo) => {
       if (owner === "alice" && repo === "with-repo") return "fetched with-repo text";
       if (owner === "bob") return "fetched bob text";
       throw new Error(`unexpected fetch: ${owner}/${repo}`);
     };
-    await writeDescriptions(root, {
+    await writeDescriptions(dataDir, root, {
       fetchRepoDescription,
       overrides: { "without-repo": "curated bob text" },
     });
+    expect(existsSync(join(root, "library-descriptions.json"))).toBe(false);
     const written = JSON.parse(
-      readFileSync(join(root, "library-descriptions.json"), "utf8"),
+      readFileSync(join(dataDir, "library-descriptions.json"), "utf8"),
     ) as Record<string, string>;
     expect(written).toEqual({
       "with-repo": "fetched with-repo text",
@@ -1421,7 +1424,7 @@ describe("writeDescriptions", () => {
     const fetchRepoDescription: FetchRepoDescription = async () => {
       throw new Error("should not be called");
     };
-    await writeDescriptions(root, {
+    await writeDescriptions(root, root, {
       fetchRepoDescription,
       overrides: {},
     });

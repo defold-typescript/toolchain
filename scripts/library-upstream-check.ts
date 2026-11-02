@@ -1,11 +1,11 @@
-import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { LANE_EVALUATIONS_ROOT } from "../packages/cli/src/library/lane-evaluations.ts";
 import { libraryFolderName } from "../packages/cli/src/library/library-data.ts";
 import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
 import { readOpenApiTargets } from "../packages/cli/src/library/sync-openapi-types.ts";
 import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
+import { toolDataFromArgv } from "../packages/cli/src/library/tool-data-flag.ts";
 import {
   datedTags,
   type ForgeReads,
@@ -86,7 +86,7 @@ export interface LibraryCheckIo
   readonly stderr: (text: string) => void;
 }
 
-const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
+const TOOL = "scripts/library-upstream-check.ts";
 
 const SHA_REF = /^[0-9a-f]{40}$/;
 
@@ -102,11 +102,11 @@ function upstreamPathFromFixture(repo: string, fixturePath: string): string {
 /**
  * Every target across the five lanes, flattened and path-normalized. The served
  * lanes read from the library data folder, the markdown and openapi lanes from
- * the package root.
+ * the lane evaluations.
  */
 export function readPinnedTargets(
-  packageRoot: string = PACKAGE_ROOT,
-  dataDir: string = newestDataFolder(packageRoot),
+  dataDir: string,
+  laneRoot: string = LANE_EVALUATIONS_ROOT,
 ): PinnedTarget[] {
   const targets: PinnedTarget[] = [];
   for (const t of readAuthoredTargets(dataDir)) {
@@ -129,7 +129,7 @@ export function readPinnedTargets(
       internal: false,
     });
   }
-  for (const t of readMarkdownTargets(packageRoot)) {
+  for (const t of readMarkdownTargets(laneRoot)) {
     targets.push({
       lane: "markdown",
       repo: t.repo,
@@ -139,7 +139,7 @@ export function readPinnedTargets(
       internal: t.decision !== "go",
     });
   }
-  for (const t of readOpenApiTargets(packageRoot)) {
+  for (const t of readOpenApiTargets(laneRoot)) {
     targets.push({
       lane: "openapi",
       repo: t.repo,
@@ -200,8 +200,8 @@ export function groupPinnedTargets(targets: readonly PinnedTarget[]): PinnedGrou
   return [...groups.values()].map(({ group, paths }) => ({ ...group, consumedPaths: [...paths] }));
 }
 
-export function collectPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedGroup[] {
-  return groupPinnedTargets(readPinnedTargets(packageRoot));
+export function collectPinnedTargets(dataDir: string): PinnedGroup[] {
+  return groupPinnedTargets(readPinnedTargets(dataDir));
 }
 
 // Keyed on the repo slug, the upstream version and the internal flag so a rerun
@@ -377,13 +377,23 @@ export function describeRun(run: LibraryUpstreamRun): string {
 /**
  * Exit 0 whether or not there is drift: drift is a finding to report, not a
  * failure. An upstream that could not be read is the failure, so the weekly job
- * stays quiet until a pin actually moves and still goes red on an outage.
+ * stays quiet until a pin actually moves and still goes red on an outage. With no
+ * `groups` given, the pins come from the data folder `--data` selects.
  */
 export async function runLibraryCheckCli(
   argv: string[],
   io: LibraryCheckIo,
-  groups: readonly PinnedGroup[] = collectPinnedTargets(),
+  given?: readonly PinnedGroup[],
 ): Promise<number> {
+  let groups = given;
+  if (groups === undefined) {
+    const data = toolDataFromArgv(argv, process.cwd(), TOOL);
+    if ("error" in data) {
+      io.stderr(`${data.error}\n`);
+      return 1;
+    }
+    groups = collectPinnedTargets(data.dataDir);
+  }
   const reports: LibraryUpstreamReport[] = [];
   for (const group of groups) reports.push(await evaluateLibraryDrift(group, io));
   const run: LibraryUpstreamRun = {

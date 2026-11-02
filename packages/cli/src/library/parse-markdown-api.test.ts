@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { LIBRARY_TYPES_ROOT } from "./package-root";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import {
   type MarkdownDoc,
   type MarkdownElement,
@@ -10,9 +10,8 @@ import {
   parseMarkdownApi,
 } from "./parse-markdown-api";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const FIXTURE = readFileSync(
-  join(PACKAGE_ROOT, "fixtures/markdown/orthographic.camera.md"),
+  join(LANE_EVALUATIONS_ROOT, "fixtures/markdown/orthographic.camera.md"),
   "utf8",
 );
 
@@ -111,7 +110,7 @@ describe("parseMarkdownApi on the committed orthographic README", () => {
 const SIGNATURELESS = ["accelerometer", "button", "gesture", "mapper", "onscreen", "textbox"];
 
 function inputFixture(mod: string): string {
-  return readFileSync(join(PACKAGE_ROOT, "fixtures/markdown", `in.${mod}.md`), "utf8");
+  return readFileSync(join(LANE_EVALUATIONS_ROOT, "fixtures/markdown", `in.${mod}.md`), "utf8");
 }
 
 describe("defold-input module docs at the pinned 4.7.1 snapshot", () => {

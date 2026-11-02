@@ -4,11 +4,11 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import * as ts from "typescript";
 import { emitExtensionDeclarationFromDoc } from "./extension-emit";
+import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 import { resolveCurrentSurfaceGeneratedDir } from "./materialize";
 
 const REPO_ROOT = join(import.meta.dir, "../../..");
-const LIBRARY_TYPES_DIR = join(REPO_ROOT, "packages/library-types");
 const TYPES_INDEX = join(REPO_ROOT, "packages/types/index.d.ts");
 const CORE_TYPES = join(REPO_ROOT, "packages/types/src/core-types");
 const EXTENSION_CORE_TYPES_IMPORT = '"../src/core-types"';
@@ -21,7 +21,7 @@ interface ExtensionManifest {
 // doc, or by the engine surface the editor and `build` type-check against.
 function sharedNamespaceDocs(): { page: string; namespace: string }[] {
   const manifest = JSON.parse(
-    readFileSync(join(LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+    readFileSync(join(LIBRARY_DATA_DIR, "defold-extensions.json"), "utf8"),
   ) as ExtensionManifest;
   const docs = manifest.libraries.flatMap((library) => library.docs);
   const surface = resolveCurrentSurfaceGeneratedDir();
@@ -60,11 +60,11 @@ describe("extension namespace clash gate", () => {
     const dir = mkdtempSync(join(tmpdir(), "extension-namespace-clash-"));
     try {
       const files: string[] = [];
-      const classifications = loadLibraryIndexSlotClassifications(LIBRARY_TYPES_DIR);
+      const classifications = loadLibraryIndexSlotClassifications(LIBRARY_DATA_DIR);
       for (const { page } of members) {
         const doc = JSON.parse(
           readFileSync(
-            join(LIBRARY_TYPES_DIR, "defold-extensions", "api-doc", `${page}.json`),
+            join(LIBRARY_DATA_DIR, "defold-extensions", "api-doc", `${page}.json`),
             "utf8",
           ),
         ) as { info: { namespace: string } };

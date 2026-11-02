@@ -1,7 +1,8 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolveTypesPackageRoot } from "../api-registry";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import { readLibraryData } from "./library-data";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 
 /**
  * The Defold-org extension survey: every library the `defold` GitHub org
@@ -254,20 +255,16 @@ export interface SyncApiDocsModule {
   scriptApiToFixtureJson: (text: string) => string;
 }
 
-// Loaded by resolved path from the sibling types package, mirroring
-// `sync-script-api-types.ts`: a repo-only build script, never shipped with the
-// types it reads.
-async function loadSyncApiDocs(packageRoot: string): Promise<SyncApiDocsModule> {
-  return (await import(
-    join(packageRoot, "..", "types", "scripts", "sync-api-docs.ts")
-  )) as SyncApiDocsModule;
+// Loaded from the types package's CLI runtime, mirroring `sync-script-api-types.ts`.
+async function loadSyncApiDocs(): Promise<SyncApiDocsModule> {
+  return (await import("@defold-typescript/types/cli-runtime")) as SyncApiDocsModule;
 }
 
 // The api-doc paths a library target names: a LuaLS target publishes
 // `api-doc/<namespace>.json`, and every other lane names its file in `apiDoc`.
 // The served lanes' targets sit in the library data folder, the markdown and
-// openapi registries at the package root.
-function targetApiDocs(dataDir: string, packageRoot: string): Set<string> {
+// openapi registries in the lane evaluations.
+function targetApiDocs(dataDir: string): Set<string> {
   const libraries = existsSync(dataDir) ? readLibraryData(dataDir) : [];
   const apiDocs = new Set(
     libraries.flatMap(({ luals }) => luals.map(({ namespace }) => `api-doc/${namespace}.json`)),
@@ -276,7 +273,7 @@ function targetApiDocs(dataDir: string, packageRoot: string): Set<string> {
     for (const { apiDoc } of [...scriptApi, ...authored]) apiDocs.add(apiDoc);
   }
   for (const file of ["openapi-targets.json", "markdown-targets.json"]) {
-    const path = join(packageRoot, file);
+    const path = join(LANE_EVALUATIONS_ROOT, file);
     if (!existsSync(path)) continue;
     const { targets } = JSON.parse(readFileSync(path, "utf8")) as {
       targets: { apiDoc?: string }[];
@@ -286,18 +283,19 @@ function targetApiDocs(dataDir: string, packageRoot: string): Set<string> {
   return apiDocs;
 }
 
-export async function loadReservedNamespaces(
-  dataDir: string,
-  packageRoot: string,
-): Promise<ReservedNamespaces> {
-  const { targets } = JSON.parse(
-    readFileSync(join(packageRoot, "..", "types", "api-targets.json"), "utf8"),
-  ) as { targets: { modules: { namespace: string }[] }[] };
-  const named = targetApiDocs(dataDir, packageRoot);
-  const libraryNamespaces = readdirSync(join(packageRoot, "api-doc"))
-    .filter((file) => file.endsWith(".json"))
-    .map((file) => file.replace(/\.json$/, ""))
-    .filter((namespace) => named.has(`api-doc/${namespace}.json`));
+// A library page is keyed by the namespace of a top-level `api-doc/<namespace>.json`
+// a target names; a nested path (`api-doc/openapi/...`) keys no page.
+const TOP_LEVEL_API_DOC = /^api-doc\/([^/]+)\.json$/;
+
+export async function loadReservedNamespaces(dataDir: string): Promise<ReservedNamespaces> {
+  const typesRoot = resolveTypesPackageRoot();
+  if (typesRoot === null) throw new Error("@defold-typescript/types is not installed");
+  const { targets } = JSON.parse(readFileSync(join(typesRoot, "api-targets.json"), "utf8")) as {
+    targets: { modules: { namespace: string }[] }[];
+  };
+  const libraryNamespaces = [...targetApiDocs(dataDir)].flatMap(
+    (apiDoc) => TOP_LEVEL_API_DOC.exec(apiDoc)?.[1] ?? [],
+  );
   return {
     engineNamespaces: new Set(targets.flatMap((t) => t.modules.map((m) => m.namespace))),
     libraryNamespaces: new Set(libraryNamespaces),
@@ -352,24 +350,24 @@ export function convertChunks(
   return docs;
 }
 
-function writeApiDoc(packageRoot: string, page: string, doc: unknown): void {
+function writeApiDoc(dataDir: string, page: string, doc: unknown): void {
   writeFileSync(
-    join(packageRoot, "defold-extensions", "api-doc", `${page}.json`),
+    join(dataDir, "defold-extensions", "api-doc", `${page}.json`),
     `${JSON.stringify(doc, null, 2)}\n`,
   );
 }
 
 /**
  * Survey the org through `github`, then write `defold-extensions.json` (sorted by
- * repo) and `defold-extensions/api-doc/<page>.json` under `packageRoot`. A
+ * repo) and `defold-extensions/api-doc/<page>.json` under `dataDir`. A
  * library with no `.script_api` stays listed with `docs: []`.
  */
 export async function syncDefoldExtensions(
-  packageRoot: string,
+  dataDir: string,
   github: DefoldGitHub,
   reserved: ReservedNamespaces,
 ): Promise<DefoldExtensionsManifest> {
-  const { scriptApiToFixtureJson } = await loadSyncApiDocs(LIBRARY_TYPES_ROOT);
+  const { scriptApiToFixtureJson } = await loadSyncApiDocs();
 
   const surveyed: (Omit<DefoldExtensionEntry, "docs"> & {
     docs: { path: string; namespace: string }[];
@@ -418,20 +416,17 @@ export async function syncDefoldExtensions(
     docs: keyed[index]?.docs ?? [],
   }));
 
-  const apiDocDir = join(packageRoot, "defold-extensions", "api-doc");
+  const apiDocDir = join(dataDir, "defold-extensions", "api-doc");
   rmSync(apiDocDir, { recursive: true, force: true });
   mkdirSync(apiDocDir, { recursive: true });
   for (const entry of libraries) {
     for (const doc of entry.docs) {
-      writeApiDoc(packageRoot, doc.page, docJson.get(docKey(entry.repo, doc.path, doc.namespace)));
+      writeApiDoc(dataDir, doc.page, docJson.get(docKey(entry.repo, doc.path, doc.namespace)));
     }
   }
 
   const manifest: DefoldExtensionsManifest = { libraries };
-  writeFileSync(
-    join(packageRoot, "defold-extensions.json"),
-    `${JSON.stringify(manifest, null, 2)}\n`,
-  );
+  writeFileSync(join(dataDir, "defold-extensions.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
 }
 
@@ -441,12 +436,12 @@ export async function syncDefoldExtensions(
  * changes reach the pages while every pin and the manifest stay as they are.
  */
 export async function reconvertDefoldExtensions(
-  packageRoot: string,
+  dataDir: string,
   fetchText: (url: string) => Promise<string>,
 ): Promise<number> {
-  const { scriptApiToFixtureJson } = await loadSyncApiDocs(LIBRARY_TYPES_ROOT);
+  const { scriptApiToFixtureJson } = await loadSyncApiDocs();
   const { libraries } = JSON.parse(
-    readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
+    readFileSync(join(dataDir, "defold-extensions.json"), "utf8"),
   ) as DefoldExtensionsManifest;
 
   let written = 0;
@@ -466,7 +461,7 @@ export async function reconvertDefoldExtensions(
           `defold-extensions: ${name}@${entry.ref} ${doc.path} no longer declares namespace "${doc.namespace}".`,
         );
       }
-      writeApiDoc(packageRoot, doc.page, json);
+      writeApiDoc(dataDir, doc.page, json);
       written++;
     }
   }
@@ -544,10 +539,10 @@ function compareVersions(a: string, b: string): number {
  * version that was current when a pin was cut.
  */
 export async function syncDefoldReleaseDates(
-  packageRoot: string,
+  dataDir: string,
   github: DefoldGitHub,
 ): Promise<{ pins: number; releases: DefoldEngineRelease[] }> {
-  const manifestPath = join(packageRoot, "defold-extensions.json");
+  const manifestPath = join(dataDir, "defold-extensions.json");
   const { libraries } = JSON.parse(readFileSync(manifestPath, "utf8")) as DefoldExtensionsManifest;
 
   let pins = 0;
@@ -569,7 +564,7 @@ export async function syncDefoldReleaseDates(
     (a, b) => Date.parse(b.date) - Date.parse(a.date) || compareVersions(b.version, a.version),
   );
   writeFileSync(
-    join(packageRoot, "defold-engine-releases.json"),
+    join(dataDir, "defold-engine-releases.json"),
     `${JSON.stringify({ releases }, null, 2)}\n`,
   );
   return { pins, releases };
@@ -577,14 +572,14 @@ export async function syncDefoldReleaseDates(
 
 /** The `--fetch` path: resurvey the org, then date the pins it chose. */
 export async function fetchDefoldExtensions(
-  packageRoot: string,
+  dataDir: string,
   github: DefoldGitHub,
   reserved: ReservedNamespaces,
 ): Promise<DefoldExtensionsManifest> {
-  await syncDefoldExtensions(packageRoot, github, reserved);
-  await syncDefoldReleaseDates(packageRoot, github);
+  await syncDefoldExtensions(dataDir, github, reserved);
+  await syncDefoldReleaseDates(dataDir, github);
   return JSON.parse(
-    readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
+    readFileSync(join(dataDir, "defold-extensions.json"), "utf8"),
   ) as DefoldExtensionsManifest;
 }
 
@@ -678,22 +673,23 @@ function requireGitHubToken(flag: string): void {
 }
 
 if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
+  const { toolDataOrExit } = await import("./tool-data-flag");
+  const { dataDir } = toolDataOrExit("packages/cli/src/library/sync-defold-extensions.ts");
   if (process.argv.includes("--fetch")) {
     requireGitHubToken("--fetch");
     const manifest = await fetchDefoldExtensions(
-      root,
+      dataDir,
       liveGitHub,
-      await loadReservedNamespaces(LIBRARY_DATA_DIR, root),
+      await loadReservedNamespaces(dataDir),
     );
     const docs = manifest.libraries.reduce((sum, entry) => sum + entry.docs.length, 0);
     console.log(`surveyed ${manifest.libraries.length} Defold libraries, ${docs} docs`);
   } else if (process.argv.includes("--dates")) {
     requireGitHubToken("--dates");
-    const { pins, releases } = await syncDefoldReleaseDates(root, liveGitHub);
+    const { pins, releases } = await syncDefoldReleaseDates(dataDir, liveGitHub);
     console.log(`dated ${pins} Defold library pins and ${releases.length} Defold engine versions`);
   } else if (process.argv.includes("--reconvert")) {
-    const written = await reconvertDefoldExtensions(root, liveGitHub.fetchText);
+    const written = await reconvertDefoldExtensions(dataDir, liveGitHub.fetchText);
     console.log(`reconverted ${written} Defold library docs at their pinned refs`);
   }
 }

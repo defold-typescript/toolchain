@@ -323,7 +323,7 @@ describe("the committed native parity reports", () => {
       return committed !== renderNativeParity(buildNativeParity(DATA_DIR, entry));
     }).map(
       (entry) =>
-        `${nativeParityPath(entry)} is stale — run \`bun run --cwd packages/library-types parity\``,
+        `${nativeParityPath(entry)} is stale — run \`bun packages/cli/src/library/native-parity.ts --data <dir>\``,
     );
     expect(drifted).toEqual([]);
   });

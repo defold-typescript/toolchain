@@ -1,9 +1,9 @@
 import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
 import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
 import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
 import { readScriptApiTargets } from "../packages/cli/src/library/sync-script-api-types.ts";
+import { toolDataFromArgv } from "../packages/cli/src/library/tool-data-flag.ts";
 import {
   datedTags,
   type ForgeReads,
@@ -77,7 +77,7 @@ export interface ShippedTypesIo
   extends Pick<LibraryCheckIo, "stdout" | "stderr" | "listTags" | "readCommit" | "readRepo">,
     Pick<ForgeReads, "listTypesFolder"> {}
 
-const PACKAGE_ROOT = join(import.meta.dir, "..", "packages", "library-types");
+const TOOL = "scripts/shipped-types-check.ts";
 
 const TYPES_ROOT = join(import.meta.dir, "..", "packages", "types");
 
@@ -89,7 +89,7 @@ const ARCHIVE_WRAPPER = "archive";
 const SHIPPED_DIR = "types/";
 
 /** The four lanes `resolve` installs curated declarations from, grouped by repo. */
-export function readCuratedRepos(dataDir: string = newestDataFolder(PACKAGE_ROOT)): CuratedRepo[] {
+export function readCuratedRepos(dataDir: string): CuratedRepo[] {
   const entries: Array<{ repo: string; entry: RetireEntry }> = [];
   const add = (repo: string, lane: CuratedLane, id: string, source: string) =>
     entries.push({ repo, entry: { lane, id, source } });
@@ -128,7 +128,7 @@ function issueBodyFor(report: ShippedTypesReport & { ref: string }): string {
     "Shipped files:",
     ...(report.files ?? []).map((file) => `- \`${SHIPPED_DIR}${file}\``),
     "",
-    "Curated entries to retire (paths under the newest `packages/library-types/data/` folder):",
+    "Curated entries to retire (paths under the library data folder):",
     ...report.retire.map((entry) => `- \`${entry.lane}:${entry.id}\` — \`${entry.source}\``),
     "",
     "A project on an earlier release has no `types/` folder to fall back on once the curated copy is gone, so weigh that before retiring.",
@@ -227,14 +227,24 @@ export function describeRun(run: ShippedTypesRun): string {
 
 /**
  * Exit 0 whether or not a repo ships types: that is a finding, not a failure. A
- * repo that could not be read is the failure, as in `upstream:library-check`.
+ * repo that could not be read is the failure, as in `upstream:library-check`. With
+ * no `given` repos, they come from the data folder `--data` selects.
  */
 export async function runShippedTypesCheck(
   argv: string[],
   io: ShippedTypesIo,
-  repos: readonly CuratedRepo[] = readCuratedRepos(),
+  given?: readonly CuratedRepo[],
   typesRoot: string = TYPES_ROOT,
 ): Promise<number> {
+  let repos = given;
+  if (repos === undefined) {
+    const data = toolDataFromArgv(argv, process.cwd(), TOOL);
+    if ("error" in data) {
+      io.stderr(`${data.error}\n`);
+      return 1;
+    }
+    repos = readCuratedRepos(data.dataDir);
+  }
   const reports: ShippedTypesReport[] = [];
   for (const repo of repos) reports.push(await evaluateShippedTypes(repo, io, typesRoot));
   const run: ShippedTypesRun = {

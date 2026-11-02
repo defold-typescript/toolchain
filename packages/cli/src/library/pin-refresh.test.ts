@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseOpenApi } from "./parse-openapi-api";
 import { readAuthoredTargets } from "./sync-authored-types";
@@ -52,7 +53,7 @@ function pinnedRefs(lane: PinLane): Map<string, string> {
       : lane === "script-api"
         ? readScriptApiTargets(DATA_DIR)
         : lane === "openapi"
-          ? readOpenApiTargets(PACKAGE_ROOT)
+          ? readOpenApiTargets(LANE_EVALUATIONS_ROOT)
           : readAuthoredTargets(DATA_DIR);
   return new Map(targets.map((target) => [target.moduleId, target.ref]));
 }
@@ -65,11 +66,17 @@ function pinnedRefs(lane: PinLane): Map<string, string> {
  */
 async function committedMembers(lane: RefreshLane, moduleId: string): Promise<Set<string>> {
   if (lane === "openapi") {
-    const target = readOpenApiTargets(PACKAGE_ROOT).find((t) => t.moduleId === moduleId);
+    const target = readOpenApiTargets(LANE_EVALUATIONS_ROOT).find((t) => t.moduleId === moduleId);
     if (target === undefined) throw new Error(`no openapi target for ${moduleId}`);
     const doc = parseOpenApi(
-      readFileSync(join(PACKAGE_ROOT, "fixtures/openapi", `${moduleId}.swagger.json`), "utf8"),
-      readFileSync(join(PACKAGE_ROOT, "fixtures/openapi", `${moduleId}.api.proto`), "utf8"),
+      readFileSync(
+        join(LANE_EVALUATIONS_ROOT, "fixtures/openapi", `${moduleId}.swagger.json`),
+        "utf8",
+      ),
+      readFileSync(
+        join(LANE_EVALUATIONS_ROOT, "fixtures/openapi", `${moduleId}.api.proto`),
+        "utf8",
+      ),
     );
     return new Set(doc.elements.map((element) => element.name));
   }

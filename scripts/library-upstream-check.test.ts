@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { LANE_EVALUATIONS_ROOT } from "../packages/cli/src/library/lane-evaluations.ts";
 import { readAuthoredTargets } from "../packages/cli/src/library/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/cli/src/library/sync-luals-types.ts";
 import { readMarkdownTargets } from "../packages/cli/src/library/sync-markdown-types.ts";
@@ -410,11 +411,11 @@ describe("readPinnedTargets — internal flag", () => {
 
   test("over the committed registries, markdown and openapi follow the decision and every other lane is user-facing", () => {
     const decisionOf = new Map<string, string | undefined>();
-    for (const t of readMarkdownTargets(PACKAGE_ROOT))
+    for (const t of readMarkdownTargets(LANE_EVALUATIONS_ROOT))
       decisionOf.set(`markdown:${t.moduleId}`, t.decision);
-    for (const t of readOpenApiTargets(PACKAGE_ROOT))
+    for (const t of readOpenApiTargets(LANE_EVALUATIONS_ROOT))
       decisionOf.set(`openapi:${t.moduleId}`, t.decision);
-    const targets = readPinnedTargets(PACKAGE_ROOT);
+    const targets = readPinnedTargets(DATA_DIR);
     expect(targets.some((t) => t.lane === "authored" || t.lane === "luals")).toBe(true);
     for (const t of targets) {
       const expected =
@@ -499,8 +500,8 @@ describe("collectPinnedTargets over the committed registries", () => {
   const lanes = [
     ["authored", readAuthoredTargets(DATA_DIR)],
     ["luals", readLualsTargets(DATA_DIR)],
-    ["markdown", readMarkdownTargets(PACKAGE_ROOT)],
-    ["openapi", readOpenApiTargets(PACKAGE_ROOT)],
+    ["markdown", readMarkdownTargets(LANE_EVALUATIONS_ROOT)],
+    ["openapi", readOpenApiTargets(LANE_EVALUATIONS_ROOT)],
     ["scriptApi", readScriptApiTargets(DATA_DIR)],
   ] as const;
   const expected = new Map<string, string[]>();
@@ -511,7 +512,7 @@ describe("collectPinnedTargets over the committed registries", () => {
     }
   }
 
-  const groups = collectPinnedTargets(PACKAGE_ROOT);
+  const groups = collectPinnedTargets(DATA_DIR);
 
   test("every repo+ref the five readers yield appears in exactly one group", () => {
     const keys = groups.map((g) => `${g.repo}@${g.ref}`);
@@ -589,6 +590,14 @@ describe("runLibraryCheckCli", () => {
     expect(run.actionable).toBe(true);
     expect(run.reports).toHaveLength(1);
     expect(run.reports[0]?.issueTitle).toBe(issueTitleFor("acme/widget", "2", false));
+  });
+
+  test("with no pins given, a run without --data exits 1 naming the flag", async () => {
+    const seam = taggedIo();
+    const code = await runLibraryCheckCli(["--json"], seam);
+    expect(code).toBe(1);
+    expect(seam.err.join("")).toContain("scripts/library-upstream-check.ts --data <dir>");
+    expect(seam.out).toHaveLength(0);
   });
 
   test("a quiet corpus exits 0 with nothing actionable", async () => {

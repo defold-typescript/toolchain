@@ -305,13 +305,13 @@ describe("tweener migrated off the ts-defold corpus onto the LuaLS front-end", (
     const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "tweener")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "tweener.tweener")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "defold-tweener")).toBe(false);
   });
@@ -326,13 +326,13 @@ describe("event migrated off the ts-defold corpus onto the LuaLS front-end", () 
     const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "event")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "event.event")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "defold-event")).toBe(false);
   });
@@ -348,13 +348,13 @@ describe("lang migrated off the ts-defold corpus onto the LuaLS front-end", () =
     const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "lang")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "lang.lang")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "defold-lang")).toBe(false);
   });
@@ -370,13 +370,13 @@ describe("log migrated off the ts-defold corpus onto the LuaLS front-end", () =>
     const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "log")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "log.log")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "defold-log")).toBe(false);
   });
@@ -392,13 +392,13 @@ describe("proto migrated off the ts-defold corpus onto the LuaLS front-end", () 
     const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "proto")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "proto.proto")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "defold-proto")).toBe(false);
   });
@@ -414,13 +414,13 @@ describe("immutable migrated off the ts-defold corpus onto the LuaLS front-end",
     const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "immutable")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "immutable.immutable")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "lua-immutable")).toBe(false);
   });
@@ -438,13 +438,13 @@ describe("squid migrated off the ts-defold corpus onto the LuaLS front-end", () 
     const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "squid")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "squid.squid")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "squid")).toBe(false);
   });
@@ -460,13 +460,13 @@ describe("narrator migrated off the ts-defold corpus onto the LuaLS front-end", 
     const luals = readLualsTargets(DATA_DIR);
     expect(luals.some((t) => t.namespace === "narrator")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "narrator.narrator")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "narrator")).toBe(false);
   });
@@ -483,14 +483,14 @@ describe("saver migrated off the ts-defold corpus onto the LuaLS front-end", () 
     expect(luals.some((t) => t.namespace === "saver.saver")).toBe(true);
     expect(luals.some((t) => t.namespace === "saver.storage")).toBe(true);
 
-    const targets = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
+    const targets = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
+      targets: { module: string }[];
+    };
     expect(targets.targets.some((t) => t.module === "saver.saver")).toBe(false);
     expect(targets.targets.some((t) => t.module === "saver.storage")).toBe(false);
 
     const classification = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
+      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
     ) as { dirs: { dir: string }[] };
     expect(classification.dirs.some((l) => l.dir === "defold-saver")).toBe(false);
   });

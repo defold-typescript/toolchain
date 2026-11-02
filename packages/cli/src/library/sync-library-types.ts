@@ -3,7 +3,7 @@ import { join } from "node:path";
 import ts from "typescript";
 import { CORE_TYPE_RENAMES } from "./core-type-renames";
 import { extractApiDoc } from "./extract-api-doc";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
+import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import {
   type AssetPortalManifest,
   type PortalAliases,
@@ -93,10 +93,8 @@ export interface LibraryTargets {
   targets: LibraryTarget[];
 }
 
-function readTargets(packageRoot: string): LibraryTargets {
-  return JSON.parse(
-    readFileSync(join(packageRoot, "library-targets.json"), "utf8"),
-  ) as LibraryTargets;
+function readTargets(dataDir: string): LibraryTargets {
+  return JSON.parse(readFileSync(join(dataDir, "library-targets.json"), "utf8")) as LibraryTargets;
 }
 
 /**
@@ -104,10 +102,10 @@ function readTargets(packageRoot: string): LibraryTargets {
  * module` extracts to. Throws on the first unmapped reference so a stale rename
  * table never ships a silently-broken type.
  */
-export function regenerate(packageRoot: string): void {
-  const targets = readTargets(packageRoot);
+export function regenerate(dataDir: string, reportRoot: string): void {
+  const targets = readTargets(dataDir);
   for (const target of targets.targets) {
-    const source = readFileSync(join(packageRoot, target.fixture), "utf8");
+    const source = readFileSync(join(dataDir, target.fixture), "utf8");
     const { unmapped } = codemodDeclaration(source);
     if (unmapped.length > 0) {
       throw new Error(
@@ -115,12 +113,12 @@ export function regenerate(packageRoot: string): void {
       );
     }
   }
-  writeApiDocs(packageRoot);
+  writeApiDocs(dataDir, reportRoot);
 }
 
 /** The pretty-printed ref-doc JSON a module's codemodded fixture extracts to. */
-function apiDocJson(packageRoot: string, target: LibraryTarget): string {
-  const { output } = codemodDeclaration(readFileSync(join(packageRoot, target.fixture), "utf8"));
+function apiDocJson(dataDir: string, target: LibraryTarget): string {
+  const { output } = codemodDeclaration(readFileSync(join(dataDir, target.fixture), "utf8"));
   return `${JSON.stringify(extractApiDoc(output, target.module), null, 2)}\n`;
 }
 
@@ -130,13 +128,13 @@ function apiDocJson(packageRoot: string, target: LibraryTarget): string {
  * `parseDefoldApiDoc`. Runs at the tail of `regenerate` so the fixtures never
  * drift from the `.d.ts` they describe.
  */
-export function writeApiDocs(packageRoot: string): void {
-  const { targets } = readTargets(packageRoot);
-  mkdirSync(join(packageRoot, "api-doc"), { recursive: true });
+export function writeApiDocs(dataDir: string, reportRoot: string): void {
+  const { targets } = readTargets(dataDir);
+  mkdirSync(join(reportRoot, "api-doc"), { recursive: true });
   for (const target of targets) {
     writeFileSync(
-      join(packageRoot, "api-doc", `${target.module}.json`),
-      apiDocJson(packageRoot, target),
+      join(reportRoot, "api-doc", `${target.module}.json`),
+      apiDocJson(dataDir, target),
     );
   }
 }
@@ -146,13 +144,16 @@ export function writeApiDocs(packageRoot: string): void {
  * from its codemodded fixture, without rewriting — the `--check` counterpart to
  * `writeApiDocs`. A missing or stale fixture reports `false`.
  */
-export function checkApiDocs(packageRoot: string): { module: string; ok: boolean }[] {
-  const { targets } = readTargets(packageRoot);
+export function checkApiDocs(
+  dataDir: string,
+  reportRoot: string,
+): { module: string; ok: boolean }[] {
+  const { targets } = readTargets(dataDir);
   return targets.map((target) => {
-    const expected = apiDocJson(packageRoot, target);
+    const expected = apiDocJson(dataDir, target);
     let committed = "";
     try {
-      committed = readFileSync(join(packageRoot, "api-doc", `${target.module}.json`), "utf8");
+      committed = readFileSync(join(reportRoot, "api-doc", `${target.module}.json`), "utf8");
     } catch {
       committed = "";
     }
@@ -166,13 +167,13 @@ export function checkApiDocs(packageRoot: string): { module: string; ok: boolean
  * descriptions use the committed file as the baseline and round-trip unchanged;
  * stale override entries surface so `bun run sync --check` exits red.
  */
-export function checkDescriptions(packageRoot: string): string[] {
+export function checkDescriptions(dataDir: string): string[] {
   let committed: Record<string, string> = {};
-  const path = join(packageRoot, "library-descriptions.json");
+  const path = join(dataDir, "library-descriptions.json");
   if (existsSync(path)) {
     committed = JSON.parse(readFileSync(path, "utf8")) as Record<string, string>;
   }
-  const expected = mergeLibraryDescriptions(committed, readOverrides(packageRoot));
+  const expected = mergeLibraryDescriptions(committed, readOverrides(dataDir));
   const allDirs = new Set<string>([...Object.keys(expected), ...Object.keys(committed)]);
   return [...allDirs].filter((dir) => expected[dir] !== committed[dir]).sort();
 }
@@ -225,14 +226,14 @@ const defaultFetch: FetchText = async (url) => {
  * only the CLI wires the real network.
  */
 export async function checkDrift(
-  packageRoot: string,
+  dataDir: string,
   fetchText: FetchText = defaultFetch,
 ): Promise<DriftResult[]> {
-  const { source, targets } = readTargets(packageRoot);
+  const { source, targets } = readTargets(dataDir);
   const results: DriftResult[] = [];
   for (const target of targets) {
     const fetched = await fetchText(rawUrl(source, target));
-    const fixture = readFileSync(join(packageRoot, target.fixture), "utf8");
+    const fixture = readFileSync(join(dataDir, target.fixture), "utf8");
     results.push({ module: target.module, status: fetched === fixture ? "ok" : "upstream-drift" });
   }
   return results;
@@ -398,8 +399,8 @@ export type NativeSweepVerdicts = Readonly<Record<string, string>>;
  * No absent-file fallback: a missing file would otherwise read as no verdicts.
  * A malformed reason would otherwise count its dir as covered.
  */
-export function readNativeSweepVerdicts(packageRoot: string): NativeSweepVerdicts {
-  const file = join(packageRoot, "native-sweep-verdicts.json");
+export function readNativeSweepVerdicts(dataDir: string): NativeSweepVerdicts {
+  const file = join(dataDir, "native-sweep-verdicts.json");
   const isObject = (value: unknown): value is Record<string, unknown> =>
     value !== null && typeof value === "object" && !Array.isArray(value);
   const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
@@ -627,22 +628,22 @@ async function upstreamScriptApiEligibility(
 
 /**
  * Read every maintained-here lane and union them: the served lanes from the
- * library data folder, the markdown and openapi lanes off the package root.
+ * library data folder, the markdown and openapi lanes off the lane evaluations.
  * Each reader throws on a missing folder or registry and on a missing required
  * field — deliberately no absent-file fallback, so a lane added without its
  * fixture fails loudly rather than silently un-severing that lane's dirs.
  */
 export function readMaintainedHereRegistry(
   dataDir: string,
-  packageRoot: string,
+  laneRoot: string = LANE_EVALUATIONS_ROOT,
 ): MaintainedHereRegistry {
   return {
     moduleIds: new Set(readAuthoredTargets(dataDir).map((t) => t.moduleId)),
     namespaces: new Set([
       ...readLualsTargets(dataDir).map((t) => t.namespace),
       ...readScriptApiTargets(dataDir).map((t) => t.namespace),
-      ...readOpenApiTargets(packageRoot).map((t) => t.namespace),
-      ...readMarkdownTargets(packageRoot).map((t) => t.namespace),
+      ...readOpenApiTargets(laneRoot).map((t) => t.namespace),
+      ...readMarkdownTargets(laneRoot).map((t) => t.namespace),
     ]),
   };
 }
@@ -661,19 +662,19 @@ export function readMaintainedHereRegistry(
  */
 export async function writeClassification(
   dataDir: string,
-  packageRoot: string,
+  laneRoot: string,
   seams: { listTree?: ListTree; lookupUpstream?: LookupUpstream } = {},
 ): Promise<void> {
   const listTree = seams.listTree ?? defaultListTree;
   const lookupUpstream = seams.lookupUpstream ?? defaultLookupUpstream;
-  const { source, targets } = readTargets(packageRoot);
+  const { source, targets } = readTargets(dataDir);
   const vendoredDirs = new Set(
     targets.map((t) => t.path.split("/")[1]).filter((d): d is string => d !== undefined),
   );
   const coveredByGoalDirs = new Set(["defold-lldebugger", "defold-xmath"]);
   const liveModules = new Set(targets.map((t) => t.module));
 
-  const registry = readMaintainedHereRegistry(dataDir, packageRoot);
+  const registry = readMaintainedHereRegistry(dataDir, laneRoot);
 
   const modulesByDir = libraryModulesFromTree(await listTree(source));
   const severedDirs = severedDirsFromModules(modulesByDir, registry, liveModules);
@@ -687,19 +688,19 @@ export async function writeClassification(
       return { dir, modules: modules.filter((m) => !maintained.has(m)) };
     });
   const { libraries } = JSON.parse(
-    readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
+    readFileSync(join(dataDir, "defold-extensions.json"), "utf8"),
   ) as { libraries: DefoldExtensionEntry[] };
   const joined = portalScriptApiEligibility(
     nativeScriptApiEligibility(
       classifyLibraryDirs(dirs, { vendoredDirs, coveredByGoalDirs }),
       libraries,
     ),
-    readAssetPortalManifest(packageRoot),
-    readPortalAliases(packageRoot),
+    readAssetPortalManifest(dataDir),
+    readPortalAliases(dataDir),
   );
   const entries = await upstreamScriptApiEligibility(joined, source, lookupUpstream);
   writeFileSync(
-    join(packageRoot, "library-classification.json"),
+    join(dataDir, "library-classification.json"),
     `${JSON.stringify({ source, dirs: entries }, null, 2)}\n`,
   );
 }
@@ -711,8 +712,8 @@ export async function writeClassification(
 // fixture, so a fresh checkout ships every library page with a non-empty intro.
 export type DescriptionOverrides = Readonly<Record<string, string>>;
 
-function readOverrides(packageRoot: string): DescriptionOverrides {
-  const path = join(packageRoot, "library-description-overrides.json");
+function readOverrides(dataDir: string): DescriptionOverrides {
+  const path = join(dataDir, "library-description-overrides.json");
   if (!existsSync(path)) return {};
   return JSON.parse(readFileSync(path, "utf8")) as DescriptionOverrides;
 }
@@ -746,8 +747,8 @@ const NOTICE_CREDIT = /^\s*-\s+(\S+)\s+—\s+(.+?),\s+(https?:\/\/\S+)\s*$/;
  * vendored library still gets a description from `overrides`, but no network
  * fetch is attempted for it.
  */
-function parseNoticeRepoSlugs(packageRoot: string): Map<string, { owner: string; repo: string }> {
-  const path = join(packageRoot, "NOTICE");
+function parseNoticeRepoSlugs(reportRoot: string): Map<string, { owner: string; repo: string }> {
+  const path = join(reportRoot, "NOTICE");
   if (!existsSync(path)) return new Map();
   const slugs = new Map<string, { owner: string; repo: string }>();
   for (const raw of readFileSync(path, "utf8").split("\n")) {
@@ -767,39 +768,41 @@ function parseNoticeRepoSlugs(packageRoot: string): Map<string, { owner: string;
 }
 
 /**
- * Fetch each NOTICE-credited upstream's GitHub `description`, apply the curated
- * overrides, and write `library-descriptions.json` as a sorted `{ dir: text }`
- * map. Dirs with no upstream GitHub URL contribute only via overrides; dirs
+ * Fetch each upstream credited in the `NOTICE` beside the data directory for its
+ * GitHub `description`, apply the curated overrides, and write
+ * `library-descriptions.json` into the data folder as a sorted `{ dir: text }` map. Dirs with no upstream GitHub URL contribute only via overrides; dirs
  * that fetch to empty AND have no override are dropped.
  */
 export async function writeDescriptions(
-  packageRoot: string,
+  dataDir: string,
+  reportRoot: string,
   seams: {
     fetchRepoDescription?: FetchRepoDescription;
     overrides?: DescriptionOverrides;
   } = {},
 ): Promise<void> {
   const fetchRepoDescription = seams.fetchRepoDescription ?? defaultFetchRepoDescription;
-  const overrides = seams.overrides ?? readOverrides(packageRoot);
+  const overrides = seams.overrides ?? readOverrides(dataDir);
 
-  const slugs = parseNoticeRepoSlugs(packageRoot);
+  const slugs = parseNoticeRepoSlugs(reportRoot);
   const fetched: Record<string, string> = {};
   for (const [dir, { owner, repo }] of slugs) {
     fetched[dir] = await fetchRepoDescription(owner, repo);
   }
   writeFileSync(
-    join(packageRoot, "library-descriptions.json"),
+    join(dataDir, "library-descriptions.json"),
     `${JSON.stringify(mergeLibraryDescriptions(fetched, overrides), null, 2)}\n`,
   );
 }
 
 if (import.meta.main) {
-  const root = LIBRARY_TYPES_ROOT;
+  const { toolDataOrExit } = await import("./tool-data-flag");
+  const { dataDir, reportRoot } = toolDataOrExit("packages/cli/src/library/sync-library-types.ts");
   const argv = process.argv.slice(2);
   if (argv.includes("--classify")) {
-    await writeClassification(LIBRARY_DATA_DIR, root);
+    await writeClassification(dataDir, LANE_EVALUATIONS_ROOT);
     const { dirs } = JSON.parse(
-      readFileSync(join(root, "library-classification.json"), "utf8"),
+      readFileSync(join(dataDir, "library-classification.json"), "utf8"),
     ) as { dirs: ClassificationEntry[] };
     const counts = new Map<DirClassification, number>();
     for (const e of dirs) counts.set(e.classification, (counts.get(e.classification) ?? 0) + 1);
@@ -808,25 +811,25 @@ if (import.meta.main) {
       console.log(`  ${classification}: ${n}`);
     }
   } else if (argv.includes("--descriptions")) {
-    await writeDescriptions(root);
+    await writeDescriptions(dataDir, reportRoot);
     const descriptions = JSON.parse(
-      readFileSync(join(root, "library-descriptions.json"), "utf8"),
+      readFileSync(join(dataDir, "library-descriptions.json"), "utf8"),
     ) as Record<string, string>;
     console.log(
       `wrote ${Object.keys(descriptions).length} description(s) to library-descriptions.json`,
     );
   } else if (argv.includes("--check")) {
-    const results = await checkDrift(root);
+    const results = await checkDrift(dataDir);
     console.log(`checked ${results.length} vendored target(s) against ts-defold/library`);
     for (const { module, status } of results) {
       console.log(`  ${status}: ${module}`);
     }
-    const apiDocs = checkApiDocs(root);
+    const apiDocs = checkApiDocs(dataDir, reportRoot);
     console.log(`checked ${apiDocs.length} api-doc fixture(s)`);
     for (const { module, ok } of apiDocs) {
       if (!ok) console.log(`  api-doc-drift: ${module}`);
     }
-    const descriptionDrift = checkDescriptions(root);
+    const descriptionDrift = checkDescriptions(dataDir);
     if (descriptionDrift.length > 0) {
       console.log(`checked library-descriptions.json`);
       for (const dir of descriptionDrift) console.log(`  description-drift: ${dir}`);
@@ -839,6 +842,6 @@ if (import.meta.main) {
       process.exitCode = 1;
     }
   } else {
-    regenerate(root);
+    regenerate(dataDir, reportRoot);
   }
 }
