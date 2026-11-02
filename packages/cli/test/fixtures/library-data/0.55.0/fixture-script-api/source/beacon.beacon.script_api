@@ -1,0 +1,37 @@
+- name: beacon
+  type: table
+  desc: Functions for talking to the host platform
+  members:
+
+  - name: platform
+    type: table
+    desc: Values the host platform reports about the session.
+    members:
+    - name: language
+      type: function
+      desc: The language the player chose on the platform.
+      returns:
+      - name: result
+        type: string
+
+    - name: payload
+      type: function
+      desc: The extra data the launch URL carried, if any.
+      returns:
+      - name: result
+        type: string | nil
+
+    - name: send
+      type: function
+      desc: Send a predefined message to the platform.
+      parameters:
+        - name: message
+          type: string
+          desc: The message type.
+        - name: options
+          type: table
+          desc: Optional message-specific options (may be omitted).
+        - name: on_success
+          type: function
+        - name: on_failure
+          type: function

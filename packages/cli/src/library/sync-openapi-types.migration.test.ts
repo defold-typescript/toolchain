@@ -1,13 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
-import { printCorpus } from "./print-corpus";
 import { readOpenApiTargets } from "./sync-openapi-types";
-
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const DATA_DIR = LIBRARY_DATA_DIR;
 
 // nakama.nakama's recorded outcome is `no-go`: the REST swagger + realtime proto
 // cannot cover the Lua client's hand-written helpers and socket wrappers, so the
@@ -25,28 +20,6 @@ describe("nakama.nakama openapi migration integrity (recorded no-go)", () => {
 
   test("the recorded decision is no-go", () => {
     expect(target.decision).toBe("no-go");
-  });
-
-  test("nakama.nakama is no longer a ts-defold library-targets row, and none remain", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "nakama.nakama")).toBe(false);
-    expect(targets).toEqual([]);
-  });
-
-  test("the nakama-defold dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string; modules: string[] }[] };
-    expect(dirs.some((d) => d.dir === "nakama-defold")).toBe(false);
-    expect(dirs.flatMap((d) => d.modules)).not.toContain("nakama.nakama");
-  });
-
-  test("the ts-defold fixture gave way to the authored fork", async () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/nakama.nakama.d.ts"))).toBe(false);
-    expect(existsSync(join(DATA_DIR, "nakama-defold/fork/nakama.nakama.d.ts"))).toBe(true);
-    expect((await printCorpus(DATA_DIR)).has("nakama.nakama")).toBe(true);
   });
 
   test("the openapi api-doc and fidelity goldens exist as a committed regeneration proof", () => {

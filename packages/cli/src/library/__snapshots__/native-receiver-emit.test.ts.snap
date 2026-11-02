@@ -1,105 +1,65 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
-exports[`each shipped native declaration emits the receiver form its expectation records box2d: a consumer transpiles with the call forms the declaration produces: box2d 1`] = `
+exports[`a native declaration emits the receiver form upstream defines a module function is called with a dot on the global table 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local box2d = _G.box2d
-function ____exports.simulate()
-    local world = box2d.NewWorld(vmath.vector3(0, -10, 0))
-    local body = world:CreateBody({type = box2d.b2BodyType.b2_dynamicBody})
-    local shape = box2d.NewCircleShape()
-    shape:SetRadius(0.5)
-    body:CreateFixture(shape, 1)
-    world:SetContactListener({BeginContact = function(contact)
-        contact:SetEnabled(false)
+local stamp = _G.stamp
+function ____exports.latest()
+    return stamp.at(1) .. stamp.issue()
+end
+return ____exports
+"
+`;
+
+exports[`a native declaration emits the receiver form upstream defines a method of a returned object is called with a colon, through a chain of objects 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local pegboard = _G.pegboard
+function ____exports.lay()
+    local board = pegboard.open(8, 8)
+    local peg = board:place({1, 1})
+    peg:light()
+    local route = board:route({1, 1}, {4, 4})
+    local ____opt_0 = board:pegs()[1]
+    if ____opt_0 ~= nil then
+        ____opt_0:dim()
+    end
+    return route == nil and 0 or #route
+end
+return ____exports
+"
+`;
+
+exports[`a native declaration emits the receiver form upstream defines a this-void callback receives only its own arguments, as a listener member and as a parameter 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local pegboard = _G.pegboard
+function ____exports.watch()
+    local board = pegboard.open(8, 8)
+    local placed = 0
+    board:watch({on_place = function(peg)
+        placed = placed + 1
+        peg:dim()
     end})
-    local hits = 0
-    world:RayCast(
-        function(fixture, point, normal, fraction)
-            hits = hits + 1
-            return fraction
-        end,
-        vmath.vector3(-5, 0, 0),
-        vmath.vector3(5, 0, 0)
-    )
-    world:Step(1 / 60, 8, 3)
-    return hits
+    board:scan(function(peg, index) return peg.lit and index > 0 end)
+    return placed
 end
 return ____exports
 "
 `;
 
-exports[`each shipped native declaration emits the receiver form its expectation records def_windward_jps: a consumer transpiles with the call forms the declaration produces: def_windward_jps 1`] = `
+exports[`a native declaration emits the receiver form upstream defines a field is read and written with a dot beside its object's methods, and a module variable through an alias 1`] = `
 "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 local ____exports = {}
-local def_windward_jps = _G.def_windward_jps
-function ____exports.route()
-    local grid = def_windward_jps.create_grid(64, 64, {{10, 12}, {11, 12}})
-    if not grid:is_walkable({8, 8}) then
-        return nil
-    end
-    local path = grid:find_path({8, 8}, {40, 40}, "octile")
-    return path
-end
-return ____exports
-"
-`;
-
-exports[`each shipped native declaration emits the receiver form its expectation records detour: a consumer transpiles with the call forms the declaration produces: detour 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local detour = _G.detour
-function ____exports.navigate(data)
-    local mesh = detour.init(data)
-    local from = vmath.vector3(0, 0, 0)
-    local to = vmath.vector3(10, 0, 10)
-    local path = mesh:find_path(from, to)
-    local crowd = mesh:create_crowd(0.6)
-    local agent = crowd:add_agent(
-        from,
-        0.6,
-        2,
-        8,
-        3.5,
-        0
-    )
-    crowd:set_target(to, agent)
-    local agents = crowd:update(1 / 60)
-    mesh:delete()
-    local first = path[0]
-    local ____temp_2
-    if first == nil then
-        ____temp_2 = 0
-    else
-        local ____opt_0 = agents[agent]
-        ____temp_2 = ____opt_0 and ____opt_0.position.x or first.area
-    end
-    return ____temp_2
-end
-return ____exports
-"
-`;
-
-exports[`each shipped native declaration emits the receiver form its expectation records openal: a consumer transpiles with the call forms the declaration produces: openal 1`] = `
-"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
-local ____exports = {}
-local openal = _G.openal
-function ____exports.playShot(path)
-    openal.init()
-    local shot = openal.new_source(resource.load(path))
-    if shot == nil then
-        return
-    end
-    shot.is_looping = true
-    shot.x = 1
-    shot:play()
-    shot:pause()
-    shot:rewind()
-    shot:stop()
-    openal.listener.orientation_up_y = 1
-    local al = openal
-    al.doppler_factor = 2
-    openal.remove_source(shot)
+local pegboard = _G.pegboard
+function ____exports.relabel()
+    local peg = pegboard.open(8, 8):place({2, 2})
+    peg.label = "start"
+    peg:light()
+    pegboard.defaults.width = 16
+    local board = pegboard
+    board.spacing = 2
+    return peg.label
 end
 return ____exports
 "

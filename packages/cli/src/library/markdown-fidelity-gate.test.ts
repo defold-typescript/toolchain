@@ -1,11 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { parseMarkdownApi } from "./parse-markdown-api";
-import { printCorpus } from "./print-corpus";
-import { readAuthoredTargets } from "./sync-authored-types";
 import {
   compareFidelityToTsDefold,
   emitMarkdownDeclaration,
@@ -52,14 +50,18 @@ async function comparison() {
 
 describe("tsDefoldMembers sees bare export-less declarations", () => {
   test("extracts bare `function` members from a module written without `export`", () => {
-    // rendy is the corpus's only module written with zero `export` keywords, and
-    // its fork exhibits that identically. Read through `targetFor` so the lane
-    // the surface lives in follows the severance instead of being hard-coded.
-    const rendy = readFileSync(
-      fixtureFile(targetFor("rendy.rendy", severedFor(RENDY, "rendy")).fixture),
-      "utf8",
-    );
-    const members = tsDefoldMembers(rendy);
+    // A module written with zero `export` keywords, the way a fork copied
+    // verbatim from such an upstream declaration reads.
+    const lens = [
+      "declare module 'lens.lens' {",
+      "\ttype CameraId = Hash | string;",
+      "\tfunction create_camera(camera_id: CameraId): void;",
+      "\tfunction destroy_camera(camera_id: CameraId): void;",
+      "\tfunction get_stack(screen_x: number, screen_y: number): CameraId[];",
+      "\tfunction screen_to_world(camera_id: CameraId, screen_position: Vector3): Vector3;",
+      "}",
+    ].join("\n");
+    const members = tsDefoldMembers(lens);
     for (const fn of ["create_camera", "destroy_camera", "get_stack", "screen_to_world"]) {
       expect(members).toContain(fn);
     }
@@ -169,7 +171,6 @@ interface LibraryRecord {
   ref: string;
   license: string;
   prefix: string;
-  classificationDir: string;
   decisions: ModuleDecision[];
 }
 
@@ -182,20 +183,19 @@ interface LibraryTargetRow {
 /** The two `library-targets.json` fields a severed library's record supplies
  * itself. A markdown `no-go` judges the markdown source, not the ts-defold
  * dependency, so a no-go library may still fork into the authored lane and drop
- * its row — but it still owes its recorded verdict a resolvable snapshot and
- * classification module. Keeping a dead row to satisfy the lookup would make
- * `library-targets.json` stop meaning "still ts-defold-sourced", so the override
- * lives on the decisions that severed. A fork starts byte-identical to the
+ * its row — but it still owes its recorded verdict a resolvable snapshot. Keeping
+ * a dead row to satisfy the lookup would make `library-targets.json` stop meaning
+ * "still ts-defold-sourced", so the override lives on the decisions that
+ * severed. A fork starts byte-identical to the
  * retired snapshot, so `fixture` may point at the vendored authored copy, and the
  * recorded comparison holds until an authored correction changes a term the
- * comparison scores — at which point the verdict is re-checked, not the pin
- * re-baselined blindly.
+ * comparison scores — at which point the verdict is re-checked.
  *
  * The override lives on the *decision*, not the record, because a multi-module
  * library severs one distinct snapshot per module: defold-input's ten modules
  * have ten `packages/defold-input/in.<mod>.d.ts` paths and ten forks, so a single
- * record-level value would score every one of them against one snapshot and pin
- * one digest instead of ten. */
+ * record-level value would score every one of them against one snapshot instead
+ * of ten. */
 interface SeveredSource {
   path: string;
   fixture: string;
@@ -208,11 +208,9 @@ function severedFor(record: LibraryRecord, module: string): SeveredSource | unde
 }
 
 /** The `library-targets.json` row a moduleId ships from. The ts-defold snapshot
- * path and the classification module name are read from the row rather than
- * composed from the moduleId, because the two coincide only by convention:
- * `bzAnim.bzLibrary` ships in `packages/bzAnim/bzAnim.bzAnim.d.ts`, so both
- * guesses would miss. `writeClassification` derives the classification name from
- * the upstream filename, which is what `basename(path)` reproduces. */
+ * path is read from the row rather than composed from the moduleId, because the
+ * two coincide only by convention: `bzAnim.bzLibrary` ships in
+ * `packages/bzAnim/bzAnim.bzAnim.d.ts`, so a guess would miss. */
 function targetFor(moduleId: string, severed?: SeveredSource): LibraryTargetRow {
   const { targets } = JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
     targets: LibraryTargetRow[];
@@ -223,10 +221,6 @@ function targetFor(moduleId: string, severed?: SeveredSource): LibraryTargetRow 
     return { module: moduleId, ...severed };
   }
   throw new Error(`no library-targets row for ${moduleId}`);
-}
-
-function classificationModule(moduleId: string, severed?: SeveredSource): string {
-  return basename(targetFor(moduleId, severed).path, ".d.ts");
 }
 
 function candidateTarget(record: LibraryRecord, decision: ModuleDecision): MarkdownTarget {
@@ -279,6 +273,14 @@ function filterToReceiver(markdown: string, receiver: string): string {
  * `comparisonFor` threads into `evaluateMarkdownCandidate`.
  */
 async function comparisonForMarkdown(markdown: string, moduleId: string, severed?: SeveredSource) {
+  const { doc, emitted } = await emitForMarkdown(markdown, moduleId);
+  const tsDefold = readFileSync(fixtureFile(targetFor(moduleId, severed).fixture), "utf8");
+  return { doc, emitted, ...compareFidelityToTsDefold(emitted, tsDefold) };
+}
+
+/** The parse, retarget and emit half of `comparisonForMarkdown`, for a reading
+ * whose markdown side is asserted on its own. */
+async function emitForMarkdown(markdown: string, moduleId: string) {
   const doc = retargetDoc(parseMarkdownApi(markdown, moduleId), moduleId);
   const regen = (await import("@defold-typescript/types/cli-runtime")) as {
     generateModuleDeclaration: (entry: {
@@ -296,39 +298,22 @@ async function comparisonForMarkdown(markdown: string, moduleId: string, severed
     importsFrom: "../src/core-types",
     moduleId,
   });
-  const tsDefold = readFileSync(fixtureFile(targetFor(moduleId, severed).fixture), "utf8");
-  return { doc, emitted: contents, ...compareFidelityToTsDefold(contents, tsDefold) };
+  return { doc, emitted: contents };
 }
 
 /**
- * The four assertions every per-library decision record owes, so a sibling
- * library costs a decision table plus its own evidence rather than a copied
- * describe block: the record covers exactly the library's shipped modules, a
- * `no-markdown` module has no snapshot, a `no-signature-section` module is
- * refused by the parser, and a `no-go` module stays wired to ts-defold.
+ * The assertions every per-library decision record owes, so a sibling library
+ * costs a decision table plus its own evidence rather than a copied describe
+ * block: a `no-markdown` module has no snapshot, a `no-signature-section` or
+ * `doc-dialect` module is refused by the parser, a `shared-document` module is
+ * refused for spanning several receivers, and a `no-go` module is never
+ * registered as a markdown target.
  */
 function describeLibraryDecisions(record: LibraryRecord): void {
   const { library, ref, decisions } = record;
   const noGo = decisions.filter((d) => d.decision === "no-go");
 
   describe(`${library} per-module fidelity decisions at tag ${ref}`, () => {
-    test("the decision record covers exactly the library's library-targets modules", () => {
-      const libraryTargets = JSON.parse(
-        readFileSync(join(DATA_DIR, "library-targets.json"), "utf8"),
-      ) as { targets: { module: string }[] };
-      const shipped = libraryTargets.targets
-        .map((t) => t.module)
-        .filter((m) => m.startsWith(record.prefix))
-        .sort();
-      const recorded = decisions.map((d) => `${record.prefix}${d.module}`).sort();
-      // A `go` module is dropped from library-targets.json at cutover, so only
-      // the retained (no-go) modules are still expected to appear there.
-      expect(recorded.filter((m) => shipped.includes(m))).toEqual(shipped);
-      expect(decisions.every((d) => d.reason === "no-markdown" || d.markdown !== undefined)).toBe(
-        true,
-      );
-    });
-
     const noMarkdown = decisions.filter((d) => d.reason === "no-markdown");
     if (noMarkdown.length > 0) {
       test.each(
@@ -374,127 +359,15 @@ function describeLibraryDecisions(record: LibraryRecord): void {
     }
   });
 
-  // Severance is a whole-record move: the two branches below assert opposite
-  // things about the same shared config, so a record with some decisions severed
-  // and some not would take one branch and quietly assert the wrong half for the
-  // rest. Partial severance is therefore forbidden outright rather than
-  // supported — no library needs it, and forbidding it is what lets the branch
-  // key off `some`.
-  const severedCount = decisions.filter((d) => d.severedSource !== undefined).length;
-  describe(`${library} severs ts-defold all at once or not at all`, () => {
-    test("every decision carries a severedSource, or none does", () => {
-      expect([severedCount === 0, severedCount === decisions.length]).toContain(true);
-    });
-  });
-
   // A `no-go` retires the *markdown* front-end as this library's regeneration
-  // path. Whether it also keeps the ts-defold dependency is a separate question,
-  // and the two answers get opposite assertions: an unsevered library must still
-  // carry its row, fixture, and classification entry; a severed one must have
-  // dropped all three, its verdict now resolving through `severedSource`.
-  if (noGo.length > 0 && severedCount === 0) {
-    describe(`every no-go ${library} module stays ts-defold-sourced`, () => {
-      const shippedModules = (
-        JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
-          targets: { module: string }[];
-        }
-      ).targets.map((t) => t.module);
-
-      test.each(
-        noGo,
-      )(`${record.prefix}$module keeps its ts-defold row and fixture and stays out of the printed corpus`, async (decision) => {
-        const moduleId = `${record.prefix}${decision.module}`;
-        expect(shippedModules).toContain(moduleId);
-        expect(existsSync(fixtureFile(targetFor(moduleId).fixture))).toBe(true);
-        expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(false);
-      });
-
+  // path, so none of its modules is registered as a markdown target.
+  if (noGo.length > 0) {
+    describe(`every no-go ${library} module stays off the markdown targets`, () => {
       test("no no-go module is registered as a markdown target", () => {
         const registered = readMarkdownTargets(LANES).map((t) => t.moduleId);
         for (const decision of noGo) {
           expect(registered).not.toContain(`${record.prefix}${decision.module}`);
         }
-      });
-
-      test(`the ${record.classificationDir} dir retains exactly the modules that stayed`, () => {
-        const classification = JSON.parse(
-          readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-        ) as { dirs: { dir: string; modules: string[] }[] };
-        const entry = classification.dirs.find((d) => d.dir === record.classificationDir);
-        expect(entry).toBeDefined();
-        expect([...(entry?.modules ?? [])].sort()).toEqual(
-          noGo.map((d) => classificationModule(`${record.prefix}${d.module}`)).sort(),
-        );
-      });
-    });
-  }
-
-  if (noGo.length > 0 && severedCount > 0) {
-    describe(`every no-go ${library} module severed ts-defold for the authored lane`, () => {
-      const shippedModules = (
-        JSON.parse(readFileSync(join(DATA_DIR, "library-targets.json"), "utf8")) as {
-          targets: { module: string }[];
-        }
-      ).targets.map((t) => t.module);
-      const authoredTargets = readAuthoredTargets(DATA_DIR);
-
-      // The fork prints under its `moduleId` whichever namespace it publishes
-      // under: a library that collapses to a bare namespace (yagames'
-      // `yagames.yagames` -> `yagames`) and a dotted severance that keeps
-      // `namespace === moduleId` (defold-input's ten) both reach the corpus
-      // through the authored lane alone.
-      test.each(
-        noGo,
-      )(`${record.prefix}$module dropped its ts-defold row, and the authored lane prints it`, async (decision) => {
-        const moduleId = `${record.prefix}${decision.module}`;
-        expect(shippedModules).not.toContain(moduleId);
-        expect(authoredTargets.some((t) => t.moduleId === moduleId)).toBe(true);
-        expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
-      });
-
-      test("no no-go module is registered as a markdown target", () => {
-        const registered = readMarkdownTargets(LANES).map((t) => t.moduleId);
-        for (const decision of noGo) {
-          expect(registered).not.toContain(`${record.prefix}${decision.module}`);
-        }
-      });
-
-      test(`the ${record.classificationDir} dir is gone from library-classification.json`, () => {
-        const classification = JSON.parse(
-          readFileSync(join(DATA_DIR, "library-classification.json"), "utf8"),
-        ) as { dirs: { dir: string }[] };
-        expect(classification.dirs.some((d) => d.dir === record.classificationDir)).toBe(false);
-      });
-
-      // The two recorded fields carry identity at different strengths. The
-      // `fixture` is always `<library>/fork/<moduleId>.d.ts`, so it is held to
-      // strict identity — that is what catches a `severedSource` copy-pasted from
-      // a sibling module. The `path` is the retired ts-defold row verbatim, whose
-      // basename is the *upstream filename* and coincides with the moduleId only
-      // by convention: `bzAnim.bzLibrary` ships in `bzAnim.bzAnim.d.ts`, so `path`
-      // is held to this library's prefix instead.
-      test.each(
-        noGo,
-      )(`${record.prefix}$module still resolves its snapshot and classification module`, (decision) => {
-        const moduleId = `${record.prefix}${decision.module}`;
-        const severed = severedFor(record, decision.module);
-        expect(severed).toBeDefined();
-        const target = targetFor(moduleId, severed);
-        expect(existsSync(fixtureFile(target.fixture))).toBe(true);
-        expect(basename(target.fixture, ".d.ts")).toBe(moduleId);
-        expect(classificationModule(moduleId, severed)).toStartWith(record.prefix);
-      });
-
-      // Ten modules, ten distinct forks: a record-level override would resolve
-      // every one of them to whichever single snapshot it held. Both fields are
-      // checked because the prefix-shaped `path` assertion above no longer rejects
-      // a sibling's path on its own.
-      test("each severed module resolves a distinct snapshot", () => {
-        const targets = noGo.map((d) =>
-          targetFor(`${record.prefix}${d.module}`, severedFor(record, d.module)),
-        );
-        expect(new Set(targets.map((t) => t.fixture)).size).toBe(targets.length);
-        expect(new Set(targets.map((t) => t.path)).size).toBe(targets.length);
       });
     });
   }
@@ -560,7 +433,6 @@ const DEFOLD_INPUT: LibraryRecord = {
   ref: "4.7.1",
   license: "MIT",
   prefix: "in.",
-  classificationDir: "defold-input",
   decisions: [
     {
       module: "accelerometer",
@@ -691,7 +563,6 @@ const MONARCH: LibraryRecord = {
   ref: "6.0.2",
   license: "MIT",
   prefix: "monarch.",
-  classificationDir: "monarch",
   decisions: [
     {
       module: "monarch",
@@ -758,7 +629,6 @@ const RICHTEXT: LibraryRecord = {
   ref: "5.22.1",
   license: "MIT",
   prefix: "richtext.",
-  classificationDir: "defold-richtext",
   decisions: [
     {
       module: "color",
@@ -822,7 +692,6 @@ const PERSIST: LibraryRecord = {
   ref: "b37f61040740f232d86f68e2606f27b6f1bd15c4",
   license: "Zlib",
   prefix: "persist.",
-  classificationDir: "library-defold-persist",
   decisions: [
     {
       module: "persist",
@@ -882,7 +751,6 @@ const YAGAMES: LibraryRecord = {
   ref: "0.19.0",
   license: "MIT",
   prefix: "yagames.",
-  classificationDir: "defold-yagames",
   decisions: [
     {
       module: "yagames",
@@ -970,7 +838,6 @@ const GOOEY: LibraryRecord = {
   ref: "10.5.3",
   license: "MIT",
   prefix: "gooey.",
-  classificationDir: "gooey",
   decisions: [
     {
       module: "gooey",
@@ -1060,7 +927,6 @@ const METRICS: LibraryRecord = {
   ref: "1.2.1",
   license: "MIT",
   prefix: "metrics.",
-  classificationDir: "defold-metrics",
   decisions: [
     {
       module: "fps",
@@ -1132,7 +998,6 @@ const RENDY: LibraryRecord = {
   ref: "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
   license: "Zlib",
   prefix: "rendy.",
-  classificationDir: "library-defold-rendy",
   decisions: [
     {
       module: "rendy",
@@ -1207,7 +1072,6 @@ const PLATYPUS: LibraryRecord = {
   ref: "4.3.1",
   license: "MIT",
   prefix: "platypus.",
-  classificationDir: "platypus",
   decisions: [
     {
       module: "platypus",
@@ -1291,7 +1155,6 @@ const DICEBAG: LibraryRecord = {
   ref: "0.3",
   license: "CC0-1.0",
   prefix: "dicebag.",
-  classificationDir: "dicebag",
   decisions: [
     {
       module: "dicebag",
@@ -1353,15 +1216,13 @@ const DICEBAG: LibraryRecord = {
 // bzAnim is also the one target whose upstream filename and declared module
 // diverge — it ships `packages/bzAnim/bzAnim.bzAnim.d.ts` as module
 // `bzAnim.bzLibrary` — which is why the shared record resolves the ts-defold
-// snapshot and the classification name through `targetFor` instead of composing
-// them from the moduleId.
+// snapshot through `targetFor` instead of composing it from the moduleId.
 const BZANIM: LibraryRecord = {
   library: "bzAnim",
   repo: "https://github.com/jbp4444/bzAnim",
   ref: "v.1.2",
   license: "Apache-2.0",
   prefix: "bzAnim.",
-  classificationDir: "bzAnim",
   decisions: [
     {
       module: "bzLibrary",
@@ -1397,6 +1258,11 @@ const comparisonFor = (record: LibraryRecord, module: string) =>
 
 const inputComparison = (mod: string) => comparisonFor(DEFOLD_INPUT, mod);
 
+// The markdown side of `comparisonFor` alone, for an assertion that reads no
+// compared surface.
+const markdownEmit = (record: LibraryRecord, module: string) =>
+  emitMarkdownDeclaration(LANES, candidateTarget(record, decisionFor(record, module)));
+
 const LIBRARY_RECORDS = [
   DEFOLD_INPUT,
   MONARCH,
@@ -1413,13 +1279,11 @@ const LIBRARY_RECORDS = [
 
 for (const record of LIBRARY_RECORDS) describeLibraryDecisions(record);
 
-/** Every vendored snapshot a recorded verdict in this file rests on: the upstream
- * `.md` each decision judges, and the ts-defold surface — or, once a library
- * severed, the authored fork — it was compared against. Derived from the records
- * themselves so a new library extends the coverage by existing. */
+/** Every vendored upstream snapshot a recorded verdict in this file rests on: the
+ * `.md` each decision judges. Derived from the records themselves so a new
+ * library extends the coverage by existing. */
 function verdictFixturePaths(): string[] {
   const paths = new Set<string>([
-    AUTHORED_SNAPSHOT,
     "fixtures/markdown/orthographic.camera.md",
     // checkpoint ships no `LibraryRecord` — it was authored from birth, so the
     // loop below never reaches it — but the re-measurement block below reads its
@@ -1430,141 +1294,27 @@ function verdictFixturePaths(): string[] {
     for (const decision of record.decisions) {
       const moduleId = `${record.prefix}${decision.module}`;
       if (decision.reason !== "no-markdown") paths.add(`fixtures/markdown/${moduleId}.md`);
-      paths.add(targetFor(moduleId, decision.severedSource).fixture);
     }
   }
   return [...paths].sort();
 }
 
 function fixtureDigest(path: string): string {
-  return new Bun.CryptoHasher("sha256").update(readFileSync(fixtureFile(path))).digest("hex");
+  return new Bun.CryptoHasher("sha256").update(readFileSync(join(LANES, path))).digest("hex");
 }
 
-/** Paths library data declares as this repo's own forked or
- * hand-authored `.d.ts`. Read from the production config rather than matched on
- * a directory prefix, so a target re-vendored elsewhere keeps its lane. */
-const AUTHORED_LANE = new Set(readAuthoredTargets(DATA_DIR).map((target) => target.authored));
-
-/** What a drifted pin means, and whether re-pinning is the correct response.
- * The two lanes drift for opposite reasons, so they cannot share a remedy: an
- * upstream copy drifting means a snapshot the repo does not own moved under a
- * recorded verdict, while an authored-lane fork drifting is the expected result
- * of deliberate work on a file the repo maintains. */
-function driftRemedy(path: string): { digestMayBeUpdated: boolean; message: string } {
-  if (AUTHORED_LANE.has(path)) {
-    return {
-      digestMayBeUpdated: true,
-      message: `${path} no longer matches the copy every verdict derived from it was read off. It is an authored-lane snapshot this repo owns: re-check the recorded comparison for the modules that read it, then update this digest in the same commit as the edit.`,
-    };
-  }
-  return {
-    digestMayBeUpdated: false,
-    message: `${path} no longer matches the copy every verdict derived from it was read off. Re-run the evaluation for the modules that read it and rewrite their recorded decision — do not re-baseline this digest.`,
-  };
+/** What a drifted pin means: an upstream copy drifting means a snapshot the repo
+ * does not own moved under a recorded verdict, so re-pinning is never the correct
+ * response. */
+function driftMessage(path: string): string {
+  return `${path} no longer matches the copy every verdict derived from it was read off. Re-run the evaluation for the modules that read it and rewrite their recorded decision — do not re-baseline this digest.`;
 }
 
-/** The pinned SHA-256 of every path `verdictFixturePaths` names, across both
- * lanes: the upstream copies taken at a pin, and the authored-lane forks a
- * severed library's verdict now resolves against. Every decision recorded in
- * this file was derived by reading them once; an in-place edit or a silent
- * re-vendor changes what those verdicts are about without changing the
- * verdicts. The lanes drift for different reasons, so `driftRemedy` reports
- * them differently. */
+/** The pinned SHA-256 of every path `verdictFixturePaths` names: the upstream
+ * copies taken at a pin. Every decision recorded in this file was derived by
+ * reading them once; an in-place edit or a silent re-vendor changes what those
+ * verdicts are about without changing the verdicts. */
 const VENDORED_FIXTURE_HASHES: Record<string, string> = {
-  "defold-input/fork/in.accelerometer.d.ts":
-    "d69fcfebd4a5d2bb98c7d0b7dc6ec73cc95e6f72d4239c78271ae78d8933622e",
-  "defold-input/fork/in.button.d.ts":
-    "24c49e22b6170ce45af0056db1e3e60ed51896539579ee8e2fb14f019d007d61",
-  "defold-input/fork/in.cursor.d.ts":
-    "84e1be7786a0b147bb434fdb92254190d5de38cb961be3ca27c9bb2d0adb31fe",
-  "defold-input/fork/in.gesture.d.ts":
-    "1b433bb9d8823cbccc9edb80613e28842b370b5d84830432cfde6dc0bef3a038",
-  "defold-input/fork/in.keyboard.d.ts":
-    "e18b39a30caf3432e54d7808a74a30e7537776eb3cec8fed1eb24015b5d0e59b",
-  "defold-input/fork/in.mapper.d.ts":
-    "d52500f818de9d3b5c36ea878ee2b853ab26e4478eea4039948bb808529c93a8",
-  // Re-pinned with the doc-comment the fork now owes `create`, whose upstream block
-  // the `---` reader declines. A doc-comment declares no member and renames none, and
-  // this module's `no-signature-section` verdict is a parser refusal on `in/onscreen.md`
-  // that builds no comparison against the fork at all — so there was no term to move.
-  // Re-derived against the edited fork first regardless: it held.
-  "defold-input/fork/in.onscreen.d.ts":
-    "899e19927d012feb909c20b923be00605b0fa59954c043939bc04ecaaa27a899",
-  "defold-input/fork/in.state.d.ts":
-    "23764519e7e88f8bd4bbc0ecfc6f06eba54e5e58c490ee29fa10a0e120330a8f",
-  // Re-pinned on the same terms as `in.onscreen` above, for the doc-comment the fork
-  // now owes `text`: `no-signature-section` is a refusal on `in/textbox.md`, so no
-  // comparison against the fork exists to move. Re-derived first; it held.
-  "defold-input/fork/in.textbox.d.ts":
-    "490e845229a3185febc37e802ede17e0fa17a93858cdfc5a63ecea92bb84f089",
-  "defold-input/fork/in.triggers.d.ts":
-    "277cc01d2ddcfdc47878f47ced9fadcaacc2a449d9830b72d8edc346c3cb32de",
-  // Re-pinned with the field correction that declared upstream's seven live
-  // transition/focus hashes and its `register` alias, and carried upstream's own
-  // `@deprecated` onto the grouped forms it had been steering consumers at. The
-  // `surface-loss` verdict was re-derived against the edited fork first: it held,
-  // and its missing set took the eight names README_API.md documents nowhere.
-  // Re-pinned again with the doc-comment the fork now owes
-  // `SCREEN_TRANSITION_IN_STARTED`, whose `-- listener messages` header the reader
-  // declines. `surface-loss` turns on the member *names* either side declares, and a
-  // doc-comment adds none — re-derived first all the same: the decision held and the
-  // missing set is unchanged.
-  "monarch/fork/monarch.monarch.d.ts":
-    "2c2d2000c4cc654f334632028d726be6240abcc1896c3f481bc55e5dab872246",
-  "monarch/fork/monarch.transitions.easings.d.ts":
-    "5ceaab6e08ef808a91a7a23052d638a407e9b5fe2042bd20a5b4de7919836b77",
-  "monarch/fork/monarch.transitions.gui.d.ts":
-    "95baa41fc59bb2495d47c4207089ad12dbf5b968cb947143b1391bedc82f5ca8",
-  // Re-pinned with the field correction that declared `MSG_SET_AUTOMATIC_ZOOM` and
-  // deleted `MSG_USE_PROJECTION` and `ORTHOGRAPHIC_RENDER_SCRIPT_USED`, neither of
-  // which the pinned `camera.lua` defines anywhere. The `no-go` was re-derived
-  // against the edited fork first: it held, the README still adds nothing, and the
-  // missing set traded the two invented names for the declared one.
-  "defold-orthographic/fork/orthographic.camera.d.ts":
-    "8e2714a0f506d073c7b9044f6d439c53ba9653892f288ee67d483ef3d1195f05",
-  "defold-metrics/fork/metrics.fps.d.ts":
-    "20e3d51b21591de2adf9c65432eb3ea7afa9efccc1b1d8e85f60e51dd276a4a9",
-  "defold-metrics/fork/metrics.mem.d.ts":
-    "ccd0b76336aef4130b7f2a43c3ea071b14f30dd57a6c94a3a38710359ef39c91",
-  "library-defold-persist/fork/persist.persist.d.ts":
-    "4ede94326945884649966cd0496316ba51bf243d06be2fbfc868789207df4be8",
-  "gooey/fork/gooey.gooey.d.ts": "729f68b046ce1e2757acce4d9956b3452961143012024c4f2ead685499ad67c7",
-  "bzanim/fork/bzAnim.bzLibrary.d.ts":
-    "5ac9ea3a79428383dca86b3dbd85beff6a55413e2a52867b88079f97a21fbc69",
-  "dicebag/fork/dicebag.dicebag.d.ts":
-    "51649de912a91815fd2bd8aeeda3390689c114ff3d7702d11dc201b29d6a44a8",
-  // Re-pinned with the field correction that declared the two `SEPARATION_*` modes
-  // from `platypus.lua:27-28`. The `shared-document` verdict was re-derived against
-  // the edited fork first: both documented readings held their `no-go`, `create` is
-  // still the only downgrade, and the two names joined the constants the flat
-  // signature parse cannot see.
-  "platypus/fork/platypus.platypus.d.ts":
-    "896068c523d89641edcd8a7684e957adb94605537d36c1259b616ff06848918d",
-  "library-defold-rendy/fork/rendy.rendy.d.ts":
-    "838b7d62ec4fe12bde657bdb76c7444faa3da5cecaff56e0966d83b8bd3b8e0f",
-  // The one entry whose verdict comes from the openapi lane rather than
-  // markdown: `openapi-fidelity-gate.test.ts` scores this fork against the
-  // pinned swagger + proto and records `no-go`. Re-pinned with the signature
-  // correction that took the fork to upstream's own 156 members, in the same
-  // commit and after that gate was re-derived against the edited fork: the
-  // decision held and its missing set narrowed to the client-lifecycle helpers.
-  // Re-pinned again with the field correction that declared upstream's 12 enum
-  // constants, on the same terms: the gate was re-derived first, the decision held,
-  // and the missing set took the 12 names the swagger emits no constant for.
-  // Re-pinned a third time with the doc-comments the fork now owes `cancel`,
-  // `cancellation_token` and `sync`, whose upstream blocks the reader declines. Same
-  // terms as before: the gate was re-derived first, the decision held, and the missing
-  // set is unchanged — a doc-comment declares no member for the swagger to match.
-  "nakama-defold/fork/nakama.nakama.d.ts":
-    "2306ada7aeb519b17fadee53aa6592bfe8463048f4893e3d05817e8d298b39c5",
-  "defold-richtext/fork/richtext.color.d.ts":
-    "fdacac61ee40f105f63c7a15745520630818b9d14ee0ffa077912f899b2f1999",
-  "defold-richtext/fork/richtext.richtext.d.ts":
-    "35b06ed582b027ae84e395856afd015ba74bc76c05460e63c4f0adfd3da6457b",
-  "defold-richtext/fork/richtext.tags.d.ts":
-    "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
-  "defold-yagames/fork/yagames.yagames.d.ts":
-    "6764a3932fc288ac39c60fdd542c5849a34ca036101bac5893fd886f1f58aad0",
   "fixtures/markdown/bzAnim.bzLibrary.md":
     "ffc299add5db0e4348fcdf59fa432b4606071c7188aaa51fae4206f7fa04d8b1",
   "fixtures/markdown/dicebag.dicebag.md":
@@ -1614,43 +1364,21 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
 describe("the vendored snapshots the recorded verdicts were derived from", () => {
   test("every pinned snapshot still hashes to its recorded digest", () => {
     const drifted = Object.entries(VENDORED_FIXTURE_HASHES)
-      .filter(([path]) => existsSync(fixtureFile(path)))
+      .filter(([path]) => existsSync(join(LANES, path)))
       .filter(([path, digest]) => fixtureDigest(path) !== digest)
-      .map(([path]) => driftRemedy(path).message);
+      .map(([path]) => driftMessage(path));
     expect(drifted).toEqual([]);
   });
 
   test("every pinned path still exists, so a renamed snapshot reds", () => {
     expect(Object.keys(VENDORED_FIXTURE_HASHES).length).toBeGreaterThan(0);
     expect(
-      Object.keys(VENDORED_FIXTURE_HASHES).filter((path) => !existsSync(fixtureFile(path))),
+      Object.keys(VENDORED_FIXTURE_HASHES).filter((path) => !existsSync(join(LANES, path))),
     ).toEqual([]);
   });
 
-  test("the pin covers every snapshot a recorded verdict reads", () => {
+  test("the pin covers every upstream snapshot a recorded verdict reads", () => {
     expect(verdictFixturePaths().filter((path) => !(path in VENDORED_FIXTURE_HASHES))).toEqual([]);
-  });
-
-  test("an authored-lane snapshot's drift remedy permits updating the digest", () => {
-    expect(driftRemedy("library-defold-persist/fork/persist.persist.d.ts").digestMayBeUpdated).toBe(
-      true,
-    );
-    expect(driftRemedy("fixtures/markdown/persist.persist.md").digestMayBeUpdated).toBe(false);
-  });
-
-  test("the two lanes do not share a remedy", () => {
-    expect(driftRemedy("library-defold-persist/fork/persist.persist.d.ts").message).not.toBe(
-      driftRemedy("fixtures/markdown/persist.persist.md").message,
-    );
-  });
-
-  test("every pinned authored-lane path is a target the repo declares as its own", () => {
-    const declared = new Set(readAuthoredTargets(DATA_DIR).map((target) => target.authored));
-    expect(
-      Object.keys(VENDORED_FIXTURE_HASHES).filter(
-        (path) => !path.startsWith("fixtures/") && !declared.has(path),
-      ),
-    ).toEqual([]);
   });
 });
 
@@ -1678,7 +1406,7 @@ describe("defold-input surface-loss evidence at tag 4.7.1", () => {
   });
 
   test("the emitter cannot express an in.<mod> namespace: `in` is a reserved word", async () => {
-    const { emitted } = await inputComparison("cursor");
+    const emitted = await markdownEmit(DEFOLD_INPUT, "cursor");
     // `namespace in.cursor` is not parseable TypeScript, so even a module that
     // cleared the surface gate could not be published under this namespace
     // without an emitter change. Recorded here as the structural blocker.
@@ -1688,7 +1416,7 @@ describe("defold-input surface-loss evidence at tag 4.7.1", () => {
 
 describe("monarch surface-loss evidence at tag 6.0.2", () => {
   test("monarch.monarch parses after the header-level widening", async () => {
-    const { markdownMembers } = await comparisonFor(MONARCH, "monarch");
+    const markdownMembers = tsDefoldMembers(await markdownEmit(MONARCH, "monarch"));
     // Exactly the `## monarch.<fn>(...)` signature sections of README_API.md. The
     // four `## monarch.SCREEN_TRANSITION_*` constant headings carry no parens and
     // stay out of the surface, which is why they show up as missing members below.
@@ -1802,30 +1530,11 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
     );
     expect(() => parseMarkdownApi(text, "monarch.transitions.gui")).toThrow(/signature/);
   });
-
-  // Without the dropped rows the lookups would throw, so the three recorded
-  // verdicts are only resolvable because each decision's own `severedSource`
-  // supplies both fields it used to read. One value per module: a single
-  // record-level override would score all three against one snapshot.
-  test("each of the three verdicts still resolves once its ts-defold row is gone", () => {
-    const MODULES = ["monarch", "transitions.easings", "transitions.gui"];
-    const fixtures = MODULES.map((mod) => {
-      const moduleId = `monarch.${mod}`;
-      const severed = severedFor(MONARCH, mod);
-      expect(severed).toBeDefined();
-      const { fixture } = targetFor(moduleId, severed);
-      expect(fixture).toBe(`monarch/fork/${moduleId}.d.ts`);
-      expect(existsSync(fixtureFile(fixture))).toBe(true);
-      expect(classificationModule(moduleId, severed)).toBe(moduleId);
-      return fixture;
-    });
-    expect(new Set(fixtures).size).toBe(3);
-  });
 });
 
 describe("richtext surface-loss evidence at tag 5.22.1", () => {
   test("richtext.richtext parses cleanly to exactly the 8 documented functions", async () => {
-    const { markdownMembers } = await comparisonFor(RICHTEXT, "richtext");
+    const markdownMembers = tsDefoldMembers(await markdownEmit(RICHTEXT, "richtext"));
     // The `# API` section's `### richtext.<fn>(...)` sections. Unlike every prior
     // Bucket-C module this one neither loud-fails nor parses empty.
     expect(markdownMembers).toEqual([
@@ -1879,36 +1588,6 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
     expect(decision).toBe("no-go");
   });
 
-  // Without the dropped rows the lookups would throw, so the three recorded
-  // verdicts are only resolvable because each decision's own `severedSource`
-  // supplies both fields it used to read. One value per module: a single
-  // record-level override would score all three against one snapshot.
-  test("each of the three verdicts still resolves once its ts-defold row is gone", () => {
-    const MODULES = ["color", "richtext", "tags"];
-    const fixtures = MODULES.map((mod) => {
-      const moduleId = `richtext.${mod}`;
-      const severed = severedFor(RICHTEXT, mod);
-      expect(severed).toBeDefined();
-      const { fixture } = targetFor(moduleId, severed);
-      expect(fixture).toBe(`defold-richtext/fork/${moduleId}.d.ts`);
-      expect(existsSync(fixtureFile(fixture))).toBe(true);
-      expect(classificationModule(moduleId, severed)).toBe(moduleId);
-      return fixture;
-    });
-    expect(new Set(fixtures).size).toBe(3);
-  });
-
-  // `namespace === moduleId` for all three, so the fork publishes under the
-  // dotted name the ts-defold row already published.
-  test("each fork registers and prints under the dotted name it published before", async () => {
-    for (const mod of ["color", "richtext", "tags"]) {
-      const moduleId = `richtext.${mod}`;
-      const target = readAuthoredTargets(DATA_DIR).find((t) => t.moduleId === moduleId);
-      expect(target?.namespace).toBe(moduleId);
-      expect((await printCorpus(DATA_DIR)).has(moduleId)).toBe(true);
-    }
-  });
-
   // No upstream correction landed with this cutover — `addedMembers` is `[]`, so
   // the markdown surface names nothing our types lack. What makes that an
   // assertion rather than an absence is the surface the verbatim fork preserves:
@@ -1946,7 +1625,7 @@ describe("richtext surface-loss evidence at tag 5.22.1", () => {
 
 describe("persist signature-loss evidence at pin b37f61040740f232d86f68e2606f27b6f1bd15c4", () => {
   test("the README parses cleanly to exactly the 6 documented functions", async () => {
-    const { markdownMembers } = await comparisonFor(PERSIST, "persist");
+    const markdownMembers = tsDefoldMembers(await markdownEmit(PERSIST, "persist"));
     expect(markdownMembers).toEqual(["create", "exists", "flush", "load", "save", "write"]);
   });
 
@@ -2081,17 +1760,6 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
     expect(surface).toContain("adv_show_fullscreen_adv");
     expect(surface).toContain("player_get_data");
   });
-
-  // Without the dropped row the lookup would throw, so the recorded verdict is
-  // only resolvable because `severedSource` supplies both fields it used to read.
-  test("the verdict still resolves once the ts-defold row is gone", () => {
-    expect(targetFor("yagames.yagames", severedFor(YAGAMES, "yagames")).fixture).toBe(
-      "defold-yagames/fork/yagames.yagames.d.ts",
-    );
-    expect(classificationModule("yagames.yagames", severedFor(YAGAMES, "yagames"))).toBe(
-      "yagames.yagames",
-    );
-  });
 });
 
 describe("checkpoint markdown re-measurement at pin e4268ff", () => {
@@ -2137,9 +1805,8 @@ describe("checkpoint markdown re-measurement at pin e4268ff", () => {
 
   test("the README is pin-covered, so a silent re-vendor reds", () => {
     expect(verdictFixturePaths()).toContain(README);
+    // Upstream: this digest is never re-baselined.
     expect(VENDORED_FIXTURE_HASHES[README]).toBeDefined();
-    // Upstream, not authored-lane: this digest is never re-baselined.
-    expect(driftRemedy(README).digestMayBeUpdated).toBe(false);
   });
 });
 
@@ -2252,17 +1919,6 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     expect(body.some((line) => /^\*\*PARAMETERS\*\*\s*$/.test(line))).toBe(false);
     expect(body.some((line) => /^\*\*RETURN\*\*\s*$/.test(line))).toBe(false);
   });
-
-  // Without the dropped row the lookup would throw, so the recorded verdict is
-  // only resolvable because `severedSource` supplies both fields it used to read.
-  // The bare namespace is what makes the dotted golden a dead path here, so the
-  // namespace-conditional golden assertion takes its absence arm.
-  test("the verdict still resolves once the ts-defold row is gone", () => {
-    const severed = severedFor(GOOEY, "gooey");
-    expect(targetFor("gooey.gooey", severed).fixture).toBe("gooey/fork/gooey.gooey.d.ts");
-    expect(existsSync(fixtureFile(targetFor("gooey.gooey", severed).fixture))).toBe(true);
-    expect(classificationModule("gooey.gooey", severed)).toBe("gooey.gooey");
-  });
 });
 
 describe("metrics shared-README evidence at tag 1.2.1", () => {
@@ -2373,7 +2029,7 @@ describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081
   ];
 
   test("the keyword-prefixed headings are read — the snapshot parses to all 11 members", async () => {
-    const { markdownMembers } = await comparisonFor(RENDY, "rendy");
+    const markdownMembers = tsDefoldMembers(await markdownEmit(RENDY, "rendy"));
     expect(markdownMembers).toEqual(MEMBERS);
   });
 
@@ -2603,18 +2259,6 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
     expect(decisionFor(PLATYPUS, "platypus").reason).toBe("shared-document");
   });
 
-  // Without the dropped row the lookup would throw, so the recorded verdict is
-  // only resolvable because `severedSource` supplies both fields it used to read.
-  // The bare namespace is what makes the dotted golden a dead path here, so the
-  // namespace-conditional golden assertion takes its absence arm.
-  test("the verdict still resolves once the ts-defold row is gone", () => {
-    expect(targetFor("platypus.platypus", severed).fixture).toBe(
-      "platypus/fork/platypus.platypus.d.ts",
-    );
-    expect(existsSync(fixtureFile(targetFor("platypus.platypus", severed).fixture))).toBe(true);
-    expect(classificationModule("platypus.platypus", severed)).toBe("platypus.platypus");
-  });
-
   // The PRD's standing rule for the forked instance surface: upstream's 19
   // documented `instance.` headings are what `PlatypusInstance` is kept current
   // against. Both sides are production output — the api-doc is `extractApiDoc`'s
@@ -2702,7 +2346,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
 
   test("the comma split recovers the `id` union the document always stated", async () => {
     expect(readme()).toContain("* `id` (string, number, hash) - ");
-    const { emitted } = await comparisonFor(DICEBAG, "dicebag");
+    const emitted = await markdownEmit(DICEBAG, "dicebag");
     // ts-defold spells the third alternative with its own ambient `hash`; the
     // shared emitter maps the token to this repo's `Hash`, which the comparator
     // reads as the same precision rather than a downgrade.
@@ -2857,7 +2501,7 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
   });
 
   test("every generously hoisted function emits a zero-arity void stub", async () => {
-    const { emitted } = await comparisonForMarkdown(generous(), "bzAnim.bzLibrary", severed);
+    const { emitted } = await emitForMarkdown(generous(), "bzAnim.bzLibrary");
     for (const fn of SHARED_FUNCTIONS) {
       expect(emitted).toContain(`function ${fn}(): void;`);
     }
@@ -2872,26 +2516,5 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
 
   test("the recorded reason is no-signature-section", () => {
     expect(decisionFor(BZANIM, "bzLibrary").reason).toBe("no-signature-section");
-  });
-
-  // Without the dropped row the lookup would throw, so the recorded verdict is
-  // only resolvable because `severedSource` supplies both fields it used to read.
-  // The bare namespace is what makes the dotted golden a dead path here, so the
-  // namespace-conditional golden assertion takes its absence arm.
-  test("the verdict still resolves once the ts-defold row is gone", () => {
-    expect(targetFor("bzAnim.bzLibrary", severed).fixture).toBe(
-      "bzanim/fork/bzAnim.bzLibrary.d.ts",
-    );
-    expect(existsSync(fixtureFile(targetFor("bzAnim.bzLibrary", severed).fixture))).toBe(true);
-  });
-
-  // The one target in the corpus whose classification name is not its moduleId,
-  // and the reason the shared severed-branch assertion is prefix-shaped rather
-  // than an identity. Recorded with its real value; a fabricated
-  // `bzAnim.bzLibrary.d.ts` path would satisfy the old form by destroying the
-  // provenance `severedSource.path` exists to carry.
-  test("the upstream filename divergence is recorded, not papered over", () => {
-    expect(classificationModule("bzAnim.bzLibrary", severed)).toBe("bzAnim.bzAnim");
-    expect(severed?.path).toBe("packages/bzAnim/bzAnim.bzAnim.d.ts");
   });
 });

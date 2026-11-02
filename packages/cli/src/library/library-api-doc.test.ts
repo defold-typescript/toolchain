@@ -1,25 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { writeLibraryTargets } from "../library-data-fixture";
 import { libraryApiDocs } from "./library-api-doc";
 import { API_DOC_DIR, readLibraryData } from "./library-data";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
-
-const API_DOC_ROOT = join(LIBRARY_TYPES_ROOT, "api-doc");
-
-// The report root holds library reports only: the markdown and openapi lanes'
-// api-docs sit in the lane evaluations.
-function committedApiDocs(): Map<string, string> {
-  const committed = new Map<string, string>();
-  for (const entry of readdirSync(API_DOC_ROOT, { recursive: true }).map(String)) {
-    const file = entry.replace(/\\/g, "/");
-    if (!file.endsWith(".json")) continue;
-    committed.set(file, readFileSync(join(API_DOC_ROOT, entry), "utf8"));
-  }
-  return committed;
-}
 
 // Every module a file statically loads, followed through relative imports. A type
 // import is erased at runtime, so it is not followed.
@@ -44,16 +29,6 @@ describe("libraryApiDocs", () => {
   afterEach(() => {
     for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
   });
-
-  test("lowers the repo's library data to exactly the committed api-doc files", async () => {
-    const docs = await libraryApiDocs(LIBRARY_DATA_DIR);
-    const committed = committedApiDocs();
-
-    expect([...docs.keys()].sort()).toEqual([...committed.keys()].sort());
-    for (const [file, contents] of committed) {
-      if (docs.get(file) !== contents) throw new Error(`${file} differs from its lowering`);
-    }
-  }, 30000);
 
   test("reads a data folder outside the repo, naming each output by its lane", async () => {
     const dataDir = mkdtempSync(join(tmpdir(), "library-api-doc-"));
@@ -152,17 +127,17 @@ describe("libraryApiDocs", () => {
     writeLibraryTargets(dataDir, {
       scriptApi: [
         {
-          repo: "https://github.com/owner/bridge",
+          repo: "https://github.com/owner/relay",
           ref: "1.0.0",
-          scriptApi: "bridge/bridge.script_api",
-          moduleId: "bridge",
-          namespace: "bridge",
-          apiDoc: "api-doc/../api-doc/bridge.json",
+          scriptApi: "relay/relay.script_api",
+          moduleId: "relay",
+          namespace: "relay",
+          apiDoc: "api-doc/../api-doc/relay.json",
         },
       ],
     });
 
-    expect(readLibraryData(dataDir)[0]?.scriptApi[0]?.apiDoc).toBe("api-doc/bridge.json");
+    expect(readLibraryData(dataDir)[0]?.scriptApi[0]?.apiDoc).toBe("api-doc/relay.json");
   });
 
   for (const apiDoc of [

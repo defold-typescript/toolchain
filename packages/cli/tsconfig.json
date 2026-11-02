@@ -4,5 +4,12 @@
     "outDir": "dist",
     "rootDir": ".."
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/dist",
+    "test/fixtures/library-data",
+    "test/fixtures/test-d"
+  ]
 }

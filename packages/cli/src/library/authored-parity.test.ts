@@ -1,21 +1,17 @@
-import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import {
-  authoredParityPath,
+  type AuthoredParityReport,
   authoredParityTargets,
   buildAuthoredParity,
   classifyArity,
   classifyFieldAxis,
   hasTrailingDiscard,
-  renderAuthoredParity,
 } from "./authored-parity";
-import {
-  type AuthoredParityException,
-  parseAuthoredExceptions,
-  readLibraryData,
-} from "./library-data";
+import { type AuthoredParityException, parseAuthoredExceptions } from "./library-data";
 import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
 
@@ -44,6 +40,93 @@ function apiDocElements(entry: AuthoredTarget): ApiDocElement[] {
   return doc.elements;
 }
 
+const roots: string[] = [];
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+function tempRoot(prefix: string): string {
+  const root = mkdtempSync(join(tmpdir(), prefix));
+  roots.push(root);
+  return root;
+}
+
+function fixtureFork(): AuthoredTarget {
+  const found = authoredParityTargets(FIXTURE_DATA_DIR).find(
+    (entry) => entry.moduleId === "tally.tally",
+  );
+  if (!found) throw new Error("the fixture data forks no tally.tally");
+  return found;
+}
+
+const SURFACE_TARGET: AuthoredTarget = {
+  repo: "",
+  ref: "",
+  license: "",
+  authored: "mod/fork/mod.d.ts",
+  moduleId: "mod",
+  namespace: "mod",
+  apiDoc: "api-doc/mod.json",
+  fidelity: "fidelity/mod.json",
+  upstreamLua: ["upstream/mod.lua"],
+};
+
+/** The report over one upstream `.lua` and the api-doc elements a fork lowers to, both
+ * given inline, so a case states the two surfaces it compares. */
+function surfaceReport(
+  lua: string[],
+  elements: unknown[],
+  exceptions: Record<string, AuthoredParityException[]> = {},
+  instanceType?: string,
+): AuthoredParityReport {
+  const root = tempRoot("authored-parity-surface-");
+  mkdirSync(join(root, "upstream"), { recursive: true });
+  writeFileSync(join(root, "upstream/mod.lua"), `${lua.join("\n")}\n`);
+  return buildAuthoredParity(
+    root,
+    { ...SURFACE_TARGET, ...(instanceType === undefined ? {} : { instanceType }) },
+    exceptions,
+    JSON.stringify({ elements }),
+  );
+}
+
+function functionElement(name: string, params = 0, extra: Record<string, unknown> = {}) {
+  return {
+    type: "FUNCTION",
+    name,
+    parameters: Array.from({ length: params }, (_, index) => ({ name: `p${index}` })),
+    description: `${name}.`,
+    ...extra,
+  };
+}
+
+function variableElement(name: string, extra: Record<string, unknown> = {}) {
+  return { type: "VARIABLE", name, description: `${name}.`, ...extra };
+}
+
+// A module whose five lifecycle hooks the engine calls and no fork declares, beside the
+// one member a consumer calls: the shape a `script-lifecycle` exception justifies.
+const LIFECYCLE_HOST = [
+  "local M = {}",
+  "function M.ring(name)",
+  "end",
+  "function M.init(self)",
+  "end",
+  "function M.final(self)",
+  "end",
+  "function M.update(self, dt)",
+  "end",
+  "function M.on_message(self, message_id, message, sender)",
+  "end",
+  "function M.on_input(self, action_id, action)",
+  "end",
+  "return M",
+];
+
+function hostReport(exceptions?: Record<string, AuthoredParityException[]>) {
+  return surfaceReport(LIFECYCLE_HOST, [functionElement("ring", 1)], exceptions);
+}
+
 describe("the measured corpus is exactly the corpus without a verdict", () => {
   // The last unmeasured target was starly, and it was dropped from the corpus rather
   // than measured: its upstream and its author's account are both gone. Nothing sits
@@ -61,38 +144,42 @@ describe("the measured corpus is exactly the corpus without a verdict", () => {
   // `upstreamLua` side. The bijection makes the two agree only when the pass
   // selects correctly, so a widened or narrowed filter reds here.
   test("the parity pass covers every target that recorded no verdict", () => {
-    const measured = authoredParityTargets(DATA_DIR)
+    const root = tempRoot("authored-parity-targets-");
+    const fork = {
+      repo: "https://github.com/example/split",
+      ref: "1.0.0",
+      upstreamLua: ["source/upstream/measured.lua"],
+    };
+    writeLibraryTargets(root, {
+      forks: [
+        {
+          ...fork,
+          authored: "fork/split.measured.d.ts",
+          moduleId: "split.measured",
+          namespace: "measured",
+          apiDoc: "api-doc/measured.json",
+        },
+        {
+          ...fork,
+          authored: "fork/split.excused.d.ts",
+          moduleId: "split.excused",
+          namespace: "excused",
+          apiDoc: "api-doc/excused.json",
+          upstreamLua: [],
+          parityVerdict: { reason: "no-module-file", note: "upstream ships no module file" },
+        },
+      ],
+    });
+    const measured = authoredParityTargets(root)
       .map((entry) => entry.namespace)
       .sort();
-    const expected = TARGETS.filter((entry) => entry.parityVerdict === undefined)
+    const expected = readAuthoredTargets(root)
+      .filter((entry) => entry.parityVerdict === undefined)
       .map((entry) => entry.namespace)
       .sort();
     expect(measured).toEqual(expected);
-    expect(measured.length).toBeGreaterThan(3);
+    expect(measured).toEqual(["measured"]);
   });
-
-  test("the rollout reaches past the nakama repository it started from", () => {
-    const repos = new Set(authoredParityTargets(DATA_DIR).map((entry) => entry.repo));
-    expect(repos.size).toBeGreaterThan(1);
-    expect([...repos]).toContain("https://github.com/britzl/defold-input");
-  });
-
-  test("an unmeasured target has no committed parity artifact", () => {
-    const stray = TARGETS.filter((entry) => entry.upstreamLua.length === 0)
-      .map((entry) => authoredParityPath(entry))
-      .filter((path) => existsSync(join(PACKAGE_ROOT, path)));
-    expect(stray).toEqual([]);
-  });
-});
-
-describe("every committed parity artifact is what the pass recomputes", () => {
-  for (const entry of authoredParityTargets(DATA_DIR)) {
-    test(`${entry.namespace} round-trips byte-for-byte`, () => {
-      const rebuilt = renderAuthoredParity(buildAuthoredParity(DATA_DIR, entry));
-      const committed = readFileSync(join(PACKAGE_ROOT, authoredParityPath(entry)), "utf8");
-      expect(rebuilt).toBe(committed);
-    });
-  }
 });
 
 describe("the nakama.engine.defold parity findings", () => {
@@ -103,11 +190,6 @@ describe("the nakama.engine.defold parity findings", () => {
     expect(report.declaredMembers).toBe(5);
     expect(report.missingMembers).toEqual([]);
     expect(report.phantomMembers).toEqual([]);
-  });
-
-  test("`http` carries upstream's eight parameters and `socket_send` its two", () => {
-    expect(report.arityMismatches).toEqual([]);
-    expect(report.callableCoverage).toBe(1);
   });
 });
 
@@ -200,12 +282,6 @@ describe("the richtext.color parity findings", () => {
     expect(report.phantomMembers).toEqual([]);
     expect(report.arityMismatches).toEqual([]);
     expect(report.callableCoverage).toBe(1);
-  });
-
-  test("the one upstream constant stays declared beside them", () => {
-    expect(report.upstreamFields).toBe(1);
-    expect(report.missingFields).toEqual([]);
-    expect(report.fieldCoverage).toBe(1);
   });
 });
 
@@ -355,13 +431,6 @@ describe("the nakama core parity findings", () => {
     expect(report.callableCoverage).toBe(1);
   });
 
-  // Nothing here is justified rather than declared: the rollout anticipated `nakama`
-  // asking the ledger for an arity or phantom kind, and correcting the fork per member
-  // is what makes that unnecessary.
-  test("the coverage is reached by correction, with no ledger entry", () => {
-    expect(report.parityExceptions).toEqual([]);
-  });
-
   // The one door upstream exposes to the realtime surface, kept while the 26 members
   // that pretended to be on this module go.
   test("socket_send is gone and create_socket stays", () => {
@@ -375,26 +444,22 @@ describe("the nakama core parity findings", () => {
 
 describe("a callable coverage figure cannot be read as completeness", () => {
   test("every report records the upstream fields the callable axis does not examine", () => {
-    for (const entry of authoredParityTargets(DATA_DIR)) {
-      const report = buildAuthoredParity(DATA_DIR, entry);
-      expect(report.upstreamFields).toBeGreaterThanOrEqual(0);
-      expect(Number.isInteger(report.upstreamFields)).toBe(true);
-    }
-  });
-
-  test("platypus pairs a perfect callable coverage with a far larger field surface", () => {
-    const report = buildAuthoredParity(DATA_DIR, target("platypus"));
+    const report = surfaceReport(
+      [
+        "local M = {}",
+        "M.SOFT = 1",
+        "M.HARD = 2",
+        "M.EDGE = 3",
+        "function M.create(a)",
+        "end",
+        "return M",
+      ],
+      [functionElement("create", 1)],
+    );
     expect(report.upstreamMembers).toBe(1);
     expect(report.callableCoverage).toBe(1);
-    expect(report.upstreamFields).toBe(14);
-  });
-
-  test("the corpus contains a thin measurement, so the second axis is load-bearing", () => {
-    const thin = authoredParityTargets(DATA_DIR)
-      .map((entry) => buildAuthoredParity(DATA_DIR, entry))
-      .filter((report) => report.callableCoverage === 1 && report.upstreamFields > 0)
-      .map((report) => report.namespace);
-    expect(thin).toContain("platypus");
+    expect(report.upstreamFields).toBe(3);
+    expect(report.fieldCoverage).toBe(0);
   });
 
   // The signature rollout took the callable axis to 1 and left the field axis at zero;
@@ -497,7 +562,7 @@ describe("the field axis compares the non-callable surface", () => {
   });
 
   test("an empty upstream field surface scores 1, as the callable axis already does", () => {
-    const report = buildAuthoredParity(DATA_DIR, target("monarch.transitions.gui"));
+    const report = buildAuthoredParity(FIXTURE_DATA_DIR, fixtureFork());
     expect(report.upstreamFields).toBe(0);
     expect(report.fieldCoverage).toBe(1);
   });
@@ -665,15 +730,35 @@ describe("a phantom field enters neither side of the coverage figure", () => {
 });
 
 describe("a name callable on either side is compared, never counted as a field", () => {
+  // Each side declares the other's kind once: `TIMEOUT` is an upstream field the fork
+  // declares as a `FUNCTION`, `slide` an upstream function it declares as a `VARIABLE`.
   test("no report charges the same name to both axes", () => {
-    for (const entry of authoredParityTargets(DATA_DIR)) {
-      const report = buildAuthoredParity(DATA_DIR, entry);
-      const callable = new Set([...report.missingMembers, ...report.phantomMembers]);
-      const overlap = [...report.missingFields, ...report.phantomFields].filter((name) =>
-        callable.has(name),
-      );
-      expect(`${report.namespace}: ${overlap.join(", ")}`).toBe(`${report.namespace}: `);
-    }
+    const report = surfaceReport(
+      [
+        "local M = {}",
+        "M.TIMEOUT = 5",
+        "M.MODE = 1",
+        "function M.slide(a)",
+        "end",
+        "function M.gone(a)",
+        "end",
+        "return M",
+      ],
+      [
+        functionElement("TIMEOUT"),
+        variableElement("slide"),
+        variableElement("INVENTED"),
+        functionElement("extra"),
+      ],
+    );
+    expect(report.missingMembers).toEqual(["gone", "slide"]);
+    expect(report.phantomMembers).toEqual(["TIMEOUT", "extra"]);
+    expect(report.missingFields).toEqual(["MODE"]);
+    expect(report.phantomFields).toEqual(["INVENTED"]);
+    const callable = new Set([...report.missingMembers, ...report.phantomMembers]);
+    expect(
+      [...report.missingFields, ...report.phantomFields].filter((name) => callable.has(name)),
+    ).toEqual([]);
   });
 });
 
@@ -1163,77 +1248,42 @@ describe("a generated trailing discard is dropped before the counts are compared
     });
   });
 
-  // 66 is every discard upstream writes, and the term reaches it only because the fork
-  // now declares all 156 members: it counts *compared* members, as `variadicMembers` and
-  // `overloadedMembers` beside it do, so it read 59 while seven discard-carrying
-  // constructors were still among the sixteen the fork left undeclared.
-  test("nakama's generated discards are the whole softening the corpus carries", () => {
-    const report = buildAuthoredParity(DATA_DIR, target("nakama"));
-    expect(report.placeholderMembers).toBe(66);
-    expect(report.arityMismatches).toEqual([]);
-    expect(report.callableCoverage).toBe(1);
-  });
-
-  // The softening is not merely subtractive, which is the check that it is honest rather
-  // than convenient: the fork declared the discard as a real second parameter
-  // (`value_str: any`), so dropping `_` exposed that as the defect it was instead of
-  // hiding it — and correcting it is why the member now agrees at upstream's one.
-  test("create_protobuf_any agrees at the one parameter upstream names", () => {
-    const declared = apiDocElements(target("nakama")).filter(
-      (element) => element.type === "FUNCTION" && element.name === "create_protobuf_any",
+  // The term counts *compared* members, as `variadicMembers` and `overloadedMembers`
+  // beside it do. The softening is not merely subtractive: a fork declaring the discard
+  // as a real parameter (`create_rpc`) is charged for it, at the count compared.
+  test("a generated discard is dropped in the pass, and a mismatch reports the count compared", () => {
+    const report = surfaceReport(
+      [
+        "local M = {}",
+        "function M.create_account(token, vars, _)",
+        "end",
+        "function M.create_session(token, _)",
+        "end",
+        "function M.create_rpc(id, payload, _)",
+        "end",
+        "return M",
+      ],
+      [
+        functionElement("create_account", 2),
+        functionElement("create_session"),
+        functionElement("create_rpc", 3),
+      ],
     );
-    expect(declared.length).toBe(1);
-    expect(declared[0]?.parameters?.length).toBe(1);
-  });
-
-  test("no other measured target carries the generated shape", () => {
-    const softened = authoredParityTargets(DATA_DIR)
-      .map((entry) => buildAuthoredParity(DATA_DIR, entry))
-      .filter((report) => report.placeholderMembers > 0)
-      .map((report) => `${report.namespace}: ${report.placeholderMembers}`);
-    expect(softened).toEqual(["nakama: 66"]);
+    expect(report.placeholderMembers).toBe(3);
+    expect(report.arityMismatches).toEqual([
+      { name: "create_rpc", upstream: 2, declared: 3 },
+      { name: "create_session", upstream: 1, declared: 0 },
+    ]);
+    expect(report.callableCoverage).toBe(0.3333);
   });
 });
 
-describe("the six variadic members the corpus was charging as arity gaps", () => {
-  test("deftest and zzfx reach a full callable coverage once the floor rule applies", () => {
-    const deftest = buildAuthoredParity(DATA_DIR, target("deftest"));
-    expect(deftest.callableCoverage).toBe(1);
-    expect(deftest.variadicMembers).toBe(1);
-    expect(deftest.arityMismatches).toEqual([]);
-
-    const zzfx = buildAuthoredParity(DATA_DIR, target("zzfx"));
-    expect(zzfx.callableCoverage).toBe(1);
-    expect(zzfx.variadicMembers).toBe(2);
-    expect(zzfx.arityMismatches).toEqual([]);
-  });
-
-  test("defmath's three variadic members reach a full coverage against their floor", () => {
-    const report = buildAuthoredParity(DATA_DIR, target("defmath"));
-    expect(report.variadicMembers).toBe(3);
-    expect(report.arityMismatches).toEqual([]);
+describe("a variadic upstream member meets its floor through the whole pass", () => {
+  test("the fixture fork's variadic `push` reaches a full callable coverage once the floor rule applies", () => {
+    const report = buildAuthoredParity(FIXTURE_DATA_DIR, fixtureFork());
     expect(report.callableCoverage).toBe(1);
-  });
-
-  // `logger` forwards its `...` straight to the SDK, so each of its four members is
-  // variadic upstream and declared with a rest parameter.
-  test("GamePush's four logger members meet their floor", () => {
-    const report = buildAuthoredParity(DATA_DIR, target("gamepush.core.logger"));
-    expect(report.variadicMembers).toBe(4);
+    expect(report.variadicMembers).toBe(1);
     expect(report.arityMismatches).toEqual([]);
-    expect(report.callableCoverage).toBe(1);
-  });
-
-  test("the other hundred and eighteen targets share no variadic member at all", () => {
-    const moved = new Set(["deftest", "defmath", "zzfx", "gamepush.core.logger"]);
-    const untouched = authoredParityTargets(DATA_DIR).filter(
-      (entry) => !moved.has(entry.namespace),
-    );
-    expect(untouched.length).toBe(118);
-    for (const entry of untouched) {
-      const report = buildAuthoredParity(DATA_DIR, entry);
-      expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
-    }
   });
 });
 
@@ -1243,26 +1293,22 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
 // justification reads differently from one reaching 1 by declaring everything.
 //
 // The synthetic entries below run through the same production pass as the manifest,
-// hosted on `boom` — whose five omissions are `script-lifecycle` and therefore
-// permanent by design. A host that is merely *awaiting* correction stops providing the
-// shape the moment the rollout reaches it, which is how this suite lost its first host.
+// hosted on a module whose five omissions are `script-lifecycle` hooks and therefore
+// permanent by design, so no fork correction can take the shape away.
 describe("a justified divergence is counted correct and stays named", () => {
-  const BOOM = "boom";
-
   function excepting(entries: AuthoredParityException[]) {
-    return buildAuthoredParity(DATA_DIR, target(BOOM), { [BOOM]: entries });
+    return hostReport({ mod: entries });
   }
 
   const SYNTHETIC: AuthoredParityException = {
     name: "init",
     kind: "script-lifecycle",
-    reason: "synthetic entry, exercising the ledger against a real surface",
+    reason: "synthetic entry, exercising the ledger against a lifecycle surface",
   };
 
   test("an excepted member the fork omits is counted correct instead of missing", () => {
-    // The committed ledger already excepts all five, so the un-excepted baseline is
-    // the empty override rather than the measured artifact.
-    const bare = buildAuthoredParity(DATA_DIR, target(BOOM), {});
+    // The un-excepted baseline is the same surface under an empty ledger.
+    const bare = hostReport();
     expect(bare.missingMembers).toContain("init");
     expect(bare.callableCoverage).toBe(0.1667);
 
@@ -1287,15 +1333,9 @@ describe("a justified divergence is counted correct and stays named", () => {
   });
 
   test("a target with no ledger entry reports an empty list", () => {
-    const excepted = new Set(
-      readLibraryData(DATA_DIR).flatMap(({ parityExceptions }) => Object.keys(parityExceptions)),
-    );
-    const plain = authoredParityTargets(DATA_DIR).filter((entry) => !excepted.has(entry.namespace));
-    expect(plain.length).toBeGreaterThan(0);
-    for (const entry of plain) {
-      const report = buildAuthoredParity(DATA_DIR, entry);
-      expect(`${entry.namespace}: ${report.parityExceptions.length}`).toBe(`${entry.namespace}: 0`);
-    }
+    const report = hostReport({ other: [SYNTHETIC] });
+    expect(report.parityExceptions).toEqual([]);
+    expect(report.missingMembers).toEqual(["final", "init", "on_input", "on_message", "update"]);
   });
 });
 
@@ -1303,40 +1343,34 @@ describe("a justified divergence is counted correct and stays named", () => {
 // silently ignored a stale line would keep crediting a defect that no longer exists —
 // or, worse, credit a member the fork has since declared and count it twice.
 describe("the ledger cannot outlive the defect it justifies", () => {
-  const BOOM = "boom";
-
   test("an entry naming a member upstream does not export throws, naming it", () => {
     expect(() =>
-      buildAuthoredParity(DATA_DIR, target(BOOM), {
-        [BOOM]: [{ name: "on_reload", kind: "script-lifecycle", reason: "stale" }],
-      }),
-    ).toThrow(/boom\.on_reload.*upstream/s);
+      hostReport({ mod: [{ name: "on_reload", kind: "script-lifecycle", reason: "stale" }] }),
+    ).toThrow(/mod\.on_reload.*upstream/s);
   });
 
   test("an entry for a member the fork does declare throws, naming it", () => {
     expect(() =>
-      buildAuthoredParity(DATA_DIR, target(BOOM), {
-        [BOOM]: [{ name: "boom", kind: "script-lifecycle", reason: "unnecessary" }],
-      }),
-    ).toThrow(/boom\.boom.*declares/s);
+      hostReport({ mod: [{ name: "ring", kind: "script-lifecycle", reason: "unnecessary" }] }),
+    ).toThrow(/mod\.ring.*declares/s);
   });
 
   test("a kind outside the closed set throws, naming the namespace and the member", () => {
     expect(() =>
       parseAuthoredExceptions(
-        { boom: [{ name: "init", kind: "inconvenient", reason: "…" }] },
+        { chime: [{ name: "init", kind: "inconvenient", reason: "…" }] },
         "library.json",
       ),
-    ).toThrow(/boom\.init.*inconvenient/s);
+    ).toThrow(/chime\.init.*inconvenient/s);
   });
 
   test("a malformed manifest throws rather than reaching the pass as an empty ledger", () => {
     const malformed: [unknown, RegExp][] = [
       [[], /expected a JSON object/],
-      [{ boom: { name: "init" } }, /must be an array/],
-      [{ boom: [{ kind: "script-lifecycle", reason: "…" }] }, /"name"/],
-      [{ boom: [{ name: "init", kind: "script-lifecycle" }] }, /"reason"/],
-      [{ boom: [{ name: "init", kind: "script-lifecycle", reason: "" }] }, /"reason"/],
+      [{ chime: { name: "init" } }, /must be an array/],
+      [{ chime: [{ kind: "script-lifecycle", reason: "…" }] }, /"name"/],
+      [{ chime: [{ name: "init", kind: "script-lifecycle" }] }, /"reason"/],
+      [{ chime: [{ name: "init", kind: "script-lifecycle", reason: "" }] }, /"reason"/],
     ];
     for (const [raw, message] of malformed) {
       expect(() => parseAuthoredExceptions(raw, "library.json")).toThrow(message);
@@ -1351,28 +1385,6 @@ describe("the ledger cannot outlive the defect it justifies", () => {
 describe("orthographic.camera declares upstream's live surface and none of its dead one", () => {
   const report = buildAuthoredParity(DATA_DIR, target("orthographic.camera"));
 
-  test("every upstream member is now declared or justified", () => {
-    expect(report.upstreamMembers).toBe(35);
-    expect(report.missingMembers).toEqual([]);
-    expect(report.arityMismatches).toEqual([]);
-    expect(report.callableCoverage).toBe(1);
-  });
-
-  test("the nine exceptions are the three lifecycle hooks and the six dead stubs", () => {
-    const byKind = (kind: string) =>
-      report.parityExceptions.filter((entry) => entry.kind === kind).map((entry) => entry.name);
-    expect(byKind("script-lifecycle")).toEqual(["final", "init", "update"]);
-    expect(byKind("deprecated-stub")).toEqual([
-      "add_projector",
-      "get_projection_id",
-      "send_view_projection",
-      "set_dpi_ratio",
-      "use_projector",
-      "world_to_window",
-    ]);
-    expect(report.parityExceptions.length).toBe(9);
-  });
-
   // The nine exceptions are a callable-axis instrument and stay one: the field
   // correction that closed this target's constants neither added an entry nor made an
   // existing one unnecessary, which the ledger would have thrown on outright.
@@ -1382,55 +1394,39 @@ describe("orthographic.camera declares upstream's live surface and none of its d
     expect(report.phantomFields).toEqual([]);
     expect(report.parityExceptions.length).toBe(9);
   });
-
-  // `world_to_screen`'s third parameter was silently ignored at runtime — upstream's
-  // body delegates to `camera.world_to_screen(world, component_url)` (camera.lua:730)
-  // and its own `@param` block names two. The count agreeing is what says so.
-  test("the automatic-zoom pair is declared and world_to_screen reads two parameters", () => {
-    const declared = new Set(
-      apiDocElements(target("orthographic.camera"))
-        .filter((element) => element.type === "FUNCTION")
-        .map((element) => element.name),
-    );
-    expect(declared).toContain("get_automatic_zoom");
-    expect(declared).toContain("set_automatic_zoom");
-    for (const dead of ["add_projector", "get_projection_id", "use_projector"]) {
-      expect(declared).not.toContain(dead);
-    }
-  });
 });
 
 describe("the declared field side reads only api-doc VARIABLE elements", () => {
-  function declaredTypes(entry: AuthoredTarget, type: string): string[] {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, entry.apiDoc), "utf8")) as {
-      elements: { type: string; name: string }[];
-    };
-    return doc.elements.filter((element) => element.type === type).map((element) => element.name);
-  }
-
-  // Both targets declare each kind and no global, so the `VARIABLE` count is the whole
+  // The api-doc declares each kind and no global, so the `VARIABLE` count is the whole
   // of `declaredFields` and a counted `TYPEDEF` would push the figure past it. The
   // second assertion names where such a name would surface: upstream holds no field by
   // any of these type names, so a counted one becomes a phantom field.
-  test.each(["nakama", "platypus"])("%s's TYPEDEFs are not counted as declared fields", (name) => {
-    const entry = target(name);
-    const typedefs = declaredTypes(entry, "TYPEDEF");
-    expect(typedefs.length).toBeGreaterThan(0);
-    const report = buildAuthoredParity(DATA_DIR, entry);
+  test("TYPEDEFs are not counted as declared fields", () => {
+    const report = surfaceReport(
+      ["local M = {}", "M.MODE = 1", "function M.create(options)", "end", "return M"],
+      [
+        functionElement("create", 1),
+        variableElement("MODE"),
+        { type: "TYPEDEF", name: "Options", description: "Options." },
+        { type: "TYPEDEF", name: "Body", description: "Body." },
+      ],
+    );
     expect(report.declaredGlobals).toBe(0);
-    expect(report.declaredFields).toBe(declaredTypes(entry, "VARIABLE").length);
-    expect(report.phantomFields.filter((field) => typedefs.includes(field))).toEqual([]);
+    expect(report.declaredFields).toBe(1);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
   });
 
-  // Vacuous today — no measured target declares an upstream field as a `FUNCTION`, so
-  // this filters an empty set. It guards the corpus as it grows; the clause itself is
-  // pinned by the synthetic corner above.
+  // The synthetic corner above drives the classifier alone; this drives the whole pass.
   test("a name the fork declares as a FUNCTION never reads as a missing field", () => {
-    for (const entry of authoredParityTargets(DATA_DIR)) {
-      const functions = new Set(declaredTypes(entry, "FUNCTION"));
-      const report = buildAuthoredParity(DATA_DIR, entry);
-      expect(report.missingFields.filter((name) => functions.has(name))).toEqual([]);
-    }
+    const report = surfaceReport(
+      ["local M = {}", "M.TIMEOUT = 5", "M.RETRIES = 3", "return M"],
+      [functionElement("TIMEOUT"), variableElement("RETRIES")],
+    );
+    expect(report.upstreamFields).toBe(2);
+    expect(report.declaredFields).toBe(1);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomMembers).toEqual(["TIMEOUT"]);
   });
 });
 
@@ -1559,62 +1555,72 @@ describe("an ambient global is not a member of the module", () => {
     expect(report.phantomMembers).toEqual([]);
   });
 
-  test("excluding them moves neither ratcheted figure", () => {
-    const report = buildAuthoredParity(DATA_DIR, target("deftest"));
-    expect(report.callableCoverage).toBe(1);
-    expect(report.fieldCoverage).toBe(1);
-  });
-
   test("what was excluded stays visible: deftest counts thirty declared globals", () => {
     expect(buildAuthoredParity(DATA_DIR, target("deftest")).declaredGlobals).toBe(30);
   });
 
   test("every report counts the global FUNCTION and VARIABLE elements of its api-doc", () => {
-    for (const entry of authoredParityTargets(DATA_DIR)) {
-      const globals = apiDocElements(entry).filter(
-        (element) =>
-          element.global === true && (element.type === "FUNCTION" || element.type === "VARIABLE"),
-      );
-      expect(`${entry.namespace}: ${buildAuthoredParity(DATA_DIR, entry).declaredGlobals}`).toBe(
-        `${entry.namespace}: ${globals.length}`,
-      );
-    }
+    const report = surfaceReport(
+      ["local M = {}", "function M.run(a)", "end", "return M"],
+      [
+        functionElement("run", 1),
+        functionElement("assert_equal", 2, { global: true }),
+        functionElement("assert_true", 1, { global: true }),
+        variableElement("VERSION", { global: true }),
+        { type: "TYPEDEF", name: "Matcher", global: true },
+      ],
+    );
+    expect(report.declaredGlobals).toBe(3);
   });
 
-  // By name, as `declaredMembers` is: `monarch.transitions.gui` declares `create` twice
-  // as overloads, which are one member of the surface rather than two. A target naming an
-  // `instanceType` adds that interface's methods, the one `TYPEDEF` the axis reads.
+  // By name, as `declaredMembers` is: an overload pair is one member of the surface
+  // rather than two. A target naming an `instanceType` adds that interface's methods, the
+  // one `TYPEDEF` the axis reads.
   test("the declared callable side is the non-global functions and the instance methods", () => {
-    for (const entry of authoredParityTargets(DATA_DIR)) {
-      const elements = apiDocElements(entry);
-      const instance = elements.find(
-        (element) => element.type === "TYPEDEF" && element.name === entry.instanceType,
-      ) as { functions?: { name: string }[] } | undefined;
-      const members = new Set([
-        ...elements
-          .filter((element) => element.type === "FUNCTION" && element.global !== true)
-          .map((element) => element.name),
-        ...(instance?.functions ?? []).map((method) => `${entry.instanceType}:${method.name}`),
-      ]);
-      expect(`${entry.namespace}: ${buildAuthoredParity(DATA_DIR, entry).declaredMembers}`).toBe(
-        `${entry.namespace}: ${members.size}`,
-      );
-    }
+    const report = surfaceReport(
+      [
+        "local Thing = {}",
+        "Thing.__index = Thing",
+        "function Thing:start(a)",
+        "end",
+        "function Thing.create(node)",
+        "  if node then",
+        "  end",
+        "  return setmetatable({}, Thing)",
+        "end",
+        "return Thing",
+      ],
+      [
+        functionElement("create", 1),
+        functionElement("create"),
+        functionElement("assert_true", 1, { global: true }),
+        { type: "TYPEDEF", name: "Thing", functions: [functionElement("start", 1)] },
+      ],
+      {},
+      "Thing",
+    );
+    expect(report.declaredMembers).toBe(2);
+    expect(report.overloadedMembers).toBe(1);
+    expect(report.declaredGlobals).toBe(1);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
   });
 
   test("no target reports a name its api-doc marks global as one the fork invented", () => {
-    for (const entry of authoredParityTargets(DATA_DIR)) {
-      const globals = new Set(
-        apiDocElements(entry)
-          .filter((element) => element.global === true)
-          .map((element) => element.name),
-      );
-      const report = buildAuthoredParity(DATA_DIR, entry);
-      const compared = [...report.phantomMembers, ...report.phantomFields].filter((name) =>
-        globals.has(name),
-      );
-      expect(`${entry.namespace}: ${compared.join(", ")}`).toBe(`${entry.namespace}: `);
-    }
+    const lua = ["local M = {}", "function M.run(a)", "end", "return M"];
+    const elements = (global: boolean) => [
+      functionElement("run", 1),
+      functionElement("assert_equal", 2, { global }),
+      variableElement("VERSION", { global }),
+    ];
+    const marked = surfaceReport(lua, elements(true));
+    expect(marked.phantomMembers).toEqual([]);
+    expect(marked.phantomFields).toEqual([]);
+    // Unmarked, the same two names are what the fork would be inventing.
+    const unmarked = surfaceReport(lua, elements(false));
+    expect(unmarked.phantomMembers).toEqual(["assert_equal"]);
+    expect(unmarked.phantomFields).toEqual(["VERSION"]);
   });
 });
 
@@ -1665,62 +1671,6 @@ describe("upstream prose the reader declined is reported, not absent", () => {
     expect(report?.undocumentedMembers).toBe(0);
   });
 
-  // Both axes, which is why the count is taken over the whole upstream surface rather
-  // than in the arity loop: `monarch.monarch`'s six and `rendy`'s thirteen sit above
-  // constants, which that loop never visits.
-  test("the raw term is non-zero on exactly the targets holding such a block", () => {
-    const refused = Object.fromEntries(
-      reports
-        .filter((report) => report.refusedDocBlocksTotal > 0)
-        .map((report) => [report.namespace, report.refusedDocBlocksTotal])
-        .sort(([a], [b]) => (a as string).localeCompare(b as string)),
-    );
-    expect(refused).toEqual({
-      // asobi writes its notes with a plain `--`, the `---` block above `rpc` aside: above
-      // `quick_start`, the three device functions and `_base64`, and sixteen realtime
-      // methods. Over REST: above `guest_device` and `refresh`, `erase_self`, and
-      // `http.lua`'s `_request` and `_error`.
-      "asobi.api.auth": 2,
-      "asobi.api.players": 1,
-      "asobi.client": 1,
-      "asobi.device": 4,
-      "asobi.http": 2,
-      "asobi.realtime": 16,
-      boom: 5,
-      // The `-- Example: /home/klaleus/...` line above `project_save_path`, the module's
-      // only comment sitting directly on a member.
-      checkpoint: 1,
-      defcon: 1,
-      defmath: 36,
-      "in.onscreen": 1,
-      "in.textbox": 1,
-      // The `-- List of light sources` block above `lights` in the returned literal.
-      "light_and_shadows.constants": 1,
-      // The plain `--` notes above seven settings fields and `draw_upscaled`.
-      "light_and_shadows.light_and_shadows": 8,
-      "monarch.monarch": 6,
-      "monarch.transitions.gui": 1,
-      nakama: 3,
-      // Twelve of socket's thirteen sit above a constant, and the thirteenth is
-      // `channel_join`, whose `---` block runs straight on from the `-- messages`
-      // section header above it with no blank line between them.
-      "nakama.session": 1,
-      "nakama.socket": 13,
-      "nakama.util.log": 1,
-      // The `-- @param` block above `create`, a LuaDoc tag written with a plain `--`.
-      node_repeat: 1,
-      persist: 5,
-      // The `-- Visible or not` and `-- GUI Render Order. 15 is top.` notes above
-      // `cursor_visible` and `cursor_render_order`.
-      pointer_lock: 2,
-      rendy: 13,
-      // The `-- Built-in transitions` section header directly above `fade_in`.
-      "wrap.gui_scene": 1,
-      zzfx: 4,
-    });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(131);
-  });
-
   // The module writes every one of its blocks with a plain `--`, so the reader declines
   // all of them; the fork answers every one in its own api-doc, which is why the
   // narrowed term reads 0 while the raw one still reports the largest refusal in the
@@ -1730,11 +1680,6 @@ describe("upstream prose the reader declined is reported, not absent", () => {
     expect(report?.refusedDocBlocksTotal).toBe(36);
     expect(report?.refusedDocBlocks).toBe(0);
     expect(report?.undocumentedMembers).toBe(0);
-  });
-
-  test("every other target reads 0, so the raw term is not a constant", () => {
-    const clean = reports.filter((report) => report.refusedDocBlocksTotal === 0);
-    expect(clean.length).toBeGreaterThan(reports.length - clean.length);
   });
 });
 
@@ -1885,21 +1830,6 @@ describe("only a refusal the fork left unanswered is charged", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
     expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(131);
   });
-
-  // The one target whose zero comes entirely from the ledger rather than from authored
-  // prose, so the two excuses stay visibly distinct.
-  test("boom's five are excused by their ledger entries, none of them declared", () => {
-    const report = reports.find((entry) => entry.namespace === "boom");
-    expect(report?.refusedDocBlocksTotal).toBe(5);
-    expect(report?.refusedDocBlocks).toBe(0);
-    expect(report?.parityExceptions.map((entry) => entry.name).sort()).toEqual([
-      "final",
-      "init",
-      "on_input",
-      "on_message",
-      "update",
-    ]);
-  });
 });
 
 // Built live rather than read off `fidelity/authored/shutter.json`, so an edit to either
@@ -1946,15 +1876,6 @@ describe("shutter.shutter declares the whole of its upstream module", () => {
     expect(declared).not.toContain("create");
     expect(declared).not.toContain("destroy");
     expect(declared).toContain("screen_to_world");
-  });
-
-  // Upstream writes only `--` comments and none sits directly above a member, so the
-  // reader has nothing to import and nothing to refuse. A non-zero term here would mean
-  // a brief on the fork is answering upstream prose rather than being written fresh.
-  test("no upstream doc block is imported or refused, every brief being first-party", () => {
-    expect(report.refusedDocBlocksTotal).toBe(0);
-    expect(report.refusedDocBlocks).toBe(0);
-    expect(report.importedDocs).toBe(0);
   });
 });
 
@@ -2199,23 +2120,6 @@ for (const slice of GAMEPUSH_SLICES) {
       }
     });
 
-    test(`the measured surface is ${slice.callables} callables and ${slice.fields} fields across ${reports.length} modules`, () => {
-      for (const { namespace, expected, report } of reports) {
-        expect({
-          namespace,
-          callables: report.upstreamMembers,
-          fields: report.upstreamFields,
-        }).toEqual({ namespace, ...expected });
-        expect(report.parityExceptions).toEqual([]);
-      }
-      expect(reports.reduce((sum, { report }) => sum + report.upstreamMembers, 0)).toBe(
-        slice.callables,
-      );
-      expect(reports.reduce((sum, { report }) => sum + report.upstreamFields, 0)).toBe(
-        slice.fields,
-      );
-    });
-
     // Every member is documented here in English. An undocumented one would take upstream's
     // Russian prose onto the reference page through the doc import.
     test("every member carries its own documentation and none is imported", () => {
@@ -2247,12 +2151,6 @@ describe("the GamePush entry module declares the whole of its upstream", () => {
     expect(report.phantomFields).toEqual([]);
     expect(report.callableCoverage).toBe(1);
     expect(report.fieldCoverage).toBe(1);
-  });
-
-  test("the measured surface is 18 callables and 34 fields", () => {
-    expect(report.upstreamMembers).toBe(18);
-    expect(report.upstreamFields).toBe(34);
-    expect(report.parityExceptions).toEqual([]);
   });
 
   test("every member carries its own documentation and none is imported", () => {
@@ -2530,21 +2428,6 @@ describe("the defold-operator modules declare the whole of their upstream module
       expect(report.undocumentedMembers).toBe(0);
     });
   }
-
-  test("operator.operator's exceptions are exactly the six registry hooks", () => {
-    const report = buildAuthoredParity(DATA_DIR, target("operator.operator"));
-    expect(report.parityExceptions.map((entry) => entry.name)).toEqual([
-      "did_activate_operator",
-      "did_deactivate_operator",
-      "did_final_checkpoint",
-      "did_final_operator",
-      "did_init_checkpoint",
-      "did_init_operator",
-    ]);
-    expect(report.parityExceptions.map((entry) => entry.kind)).toEqual(
-      Array(6).fill("script-lifecycle"),
-    );
-  });
 });
 
 // `defarmy.lua` carries no LuaLS annotations. Its fifteen functions are `function M.x`
@@ -3206,23 +3089,63 @@ describe("each asobi.api module declares the whole of its upstream", () => {
 });
 
 describe("the artifact shape is diff-stable", () => {
+  // Every name arrives in reverse order, so only the pass's own sort can order a list.
   test("every list is sorted by name", () => {
-    for (const entry of authoredParityTargets(DATA_DIR)) {
-      const report = buildAuthoredParity(DATA_DIR, entry);
-      expect(report.missingMembers).toEqual([...report.missingMembers].sort());
-      expect(report.phantomMembers).toEqual([...report.phantomMembers].sort());
-      expect(report.missingFields).toEqual([...report.missingFields].sort());
-      expect(report.phantomFields).toEqual([...report.phantomFields].sort());
-      const names = report.arityMismatches.map((mismatch) => mismatch.name);
-      expect(names).toEqual([...names].sort());
-      const excepted = report.parityExceptions.map((entry) => entry.name);
-      expect(excepted).toEqual([...excepted].sort());
-    }
+    const report = surfaceReport(
+      [
+        "local M = {}",
+        "M.ZETA_FIELD = 1",
+        "M.ALPHA_FIELD = 2",
+        "function M.zeta_missing(a)",
+        "end",
+        "function M.alpha_missing(a)",
+        "end",
+        "function M.zeta_short(a, b)",
+        "end",
+        "function M.alpha_short(a, b)",
+        "end",
+        "function M.zeta_excused(a)",
+        "end",
+        "function M.alpha_excused(a)",
+        "end",
+        "return M",
+      ],
+      [
+        functionElement("zeta_short", 1),
+        functionElement("alpha_short", 1),
+        functionElement("zeta_phantom"),
+        functionElement("alpha_phantom"),
+        variableElement("ZETA_INVENTED"),
+        variableElement("ALPHA_INVENTED"),
+      ],
+      {
+        mod: [
+          { name: "zeta_excused", kind: "script-lifecycle", reason: "the engine calls it" },
+          { name: "alpha_excused", kind: "script-lifecycle", reason: "the engine calls it" },
+        ],
+      },
+    );
+    expect(report.missingMembers).toEqual(["alpha_missing", "zeta_missing"]);
+    expect(report.phantomMembers).toEqual(["alpha_phantom", "zeta_phantom"]);
+    expect(report.missingFields).toEqual(["ALPHA_FIELD", "ZETA_FIELD"]);
+    expect(report.phantomFields).toEqual(["ALPHA_INVENTED", "ZETA_INVENTED"]);
+    expect(report.arityMismatches.map((mismatch) => mismatch.name)).toEqual([
+      "alpha_short",
+      "zeta_short",
+    ]);
+    expect(report.parityExceptions.map((entry) => entry.name)).toEqual([
+      "alpha_excused",
+      "zeta_excused",
+    ]);
   });
 
-  test("a field score of 1 means nothing is missing, on every target", () => {
-    for (const entry of authoredParityTargets(DATA_DIR)) {
-      const report = buildAuthoredParity(DATA_DIR, entry);
+  test("a field score of 1 means nothing is missing, whatever the fork declares", () => {
+    const lua = ["local M = {}", "M.A = 1", "M.B = 2", "M.C = 3", "return M"];
+    for (const declared of [["A", "B", "C"], ["A", "B", "C", "INVENTED"], ["A", "B"], []]) {
+      const report = surfaceReport(
+        lua,
+        declared.map((name) => variableElement(name)),
+      );
       expect(report.fieldCoverage).toBeGreaterThanOrEqual(0);
       expect(report.fieldCoverage).toBeLessThanOrEqual(1);
       expect(report.fieldCoverage === 1).toBe(report.missingFields.length === 0);

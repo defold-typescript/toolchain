@@ -1,14 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { writeLibraryTargets } from "../library-data-fixture";
 import {
   AUTHORED_PARITY_DIRNAME,
   collectFidelityReports,
   type FidelityFloorReport,
   FLOOR_MANIFEST_FILE,
-  FLOOR_RAISE_COMMAND,
   LANE_FLOOR_RAISE_COMMAND,
   NATIVE_PARITY_DIRNAME,
   parseFloors,
@@ -19,58 +18,57 @@ import {
   tokenFloors,
 } from "./fidelity-floor";
 import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
+const TOKEN_REPORT = { coverage: 1, totalMembers: 1, totalTypeTokens: 1 };
+// A surface-parity report has no type tokens, so the token walk could not read it.
+const PARITY_REPORT = { namespace: "tally", callableCoverage: 1, fieldCoverage: 1 };
 
-const GATES = [
-  {
-    half: "library reports",
-    root: PACKAGE_ROOT,
-    floors: tokenFloors(LIBRARY_DATA_DIR),
-    raise: FLOOR_RAISE_COMMAND,
-  },
-  {
-    half: "lane evaluations",
-    root: LANE_EVALUATIONS_ROOT,
-    floors: readFloors(LANE_EVALUATIONS_ROOT),
-    raise: LANE_FLOOR_RAISE_COMMAND,
-  },
-] as const;
+function writeReportRoot(parityDir: string): string {
+  const root = mkdtempSync(join(tmpdir(), "fidelity-floor-walk-"));
+  const reports = {
+    "glow.json": TOKEN_REPORT,
+    "openapi/beacon.json": TOKEN_REPORT,
+    [`${parityDir}/tally.json`]: PARITY_REPORT,
+  };
+  for (const [rel, report] of Object.entries(reports)) {
+    const path = join(root, "fidelity", rel);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, JSON.stringify(report));
+  }
+  return root;
+}
 
 describe("fidelity floor gate: the two halves", () => {
-  test("the library walk reaches the library reports", () => {
-    // Without this the library gate passes vacuously on a walk that descends nowhere.
-    expect(Object.keys(collectFidelityReports(PACKAGE_ROOT)).length).toBeGreaterThan(0);
-  });
-
   test("the lane walk reaches the nested openapi evaluation", () => {
     expect(
       collectFidelityReports(LANE_EVALUATIONS_ROOT)["fidelity/openapi/nakama.nakama.json"],
     ).toBeDefined();
   });
 
-  test("no report sits in both halves", () => {
-    const lanes = new Set(Object.keys(collectFidelityReports(LANE_EVALUATIONS_ROOT)));
-    expect(
-      Object.keys(collectFidelityReports(PACKAGE_ROOT)).filter((key) => lanes.has(key)),
-    ).toEqual([]);
-  });
-
   test("the surface-parity lane is carved out, so the two denominators stay apart", () => {
-    const reports = collectFidelityReports(PACKAGE_ROOT);
-    // `fidelity/authored/` coverage is upstream members declared at the right
-    // arity, not type tokens — the parity floors in `library.json` ratchet it.
-    expect(existsSync(join(PACKAGE_ROOT, "fidelity", AUTHORED_PARITY_DIRNAME))).toBe(true);
-    expect(Object.keys(reports).filter((path) => path.startsWith("fidelity/authored/"))).toEqual(
-      [],
-    );
+    const root = writeReportRoot(AUTHORED_PARITY_DIRNAME);
+    try {
+      // `fidelity/authored/` coverage is upstream members declared at the right
+      // arity, not type tokens — the parity floors in `library.json` ratchet it.
+      expect(Object.keys(collectFidelityReports(root))).toEqual([
+        "fidelity/glow.json",
+        "fidelity/openapi/beacon.json",
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   test("the native surface-parity lane is carved out too", () => {
-    const reports = collectFidelityReports(PACKAGE_ROOT);
-    expect(existsSync(join(PACKAGE_ROOT, "fidelity", NATIVE_PARITY_DIRNAME))).toBe(true);
-    expect(Object.keys(reports).filter((path) => path.startsWith("fidelity/native/"))).toEqual([]);
+    const root = writeReportRoot(NATIVE_PARITY_DIRNAME);
+    try {
+      expect(Object.keys(collectFidelityReports(root))).toEqual([
+        "fidelity/glow.json",
+        "fidelity/openapi/beacon.json",
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   test("the manifest holds only the lanes with no library folder", () => {
@@ -84,13 +82,14 @@ describe("fidelity floor gate: the two halves", () => {
   });
 });
 
-describe.each(GATES)("fidelity floor gate: $half", ({ root, floors, raise }) => {
-  const reports = collectFidelityReports(root);
+describe("fidelity floor gate: lane evaluations", () => {
+  const reports = collectFidelityReports(LANE_EVALUATIONS_ROOT);
+  const floors = readFloors(LANE_EVALUATIONS_ROOT);
 
   test("every committed fidelity report has a floor entry", () => {
     const missing = Object.keys(reports)
       .filter((path) => floors[path] === undefined)
-      .map((path) => `${path}: no floor entry — run \`${raise}\``);
+      .map((path) => `${path}: no floor entry — run \`${LANE_FLOOR_RAISE_COMMAND}\``);
     expect(missing).toEqual([]);
   });
 

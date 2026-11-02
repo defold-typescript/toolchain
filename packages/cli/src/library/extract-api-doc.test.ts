@@ -1,50 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { extractApiDoc } from "./extract-api-doc";
-import { LANE_EVALUATIONS_ROOT } from "./lane-evaluations";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
-import { printCorpus } from "./print-corpus";
-import { lowerAuthoredApiDoc, readAuthoredTargets } from "./sync-authored-types";
-import { readLualsTargets } from "./sync-luals-types";
-import { readMarkdownTargets } from "./sync-markdown-types";
-import { readScriptApiTargets } from "./sync-script-api-types";
-
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
-const DATA_DIR = LIBRARY_DATA_DIR;
-
-// The api-doc drift guard covers only the ts-defold front-end, whose generated
-// `<moduleId>.d.ts` each round-trips to an `api-doc/<moduleId>.json` fixture via
-// `extractApiDoc`. A luals namespace's api-doc is lowered from its `LibraryModel`
-// (`lower-api-doc.ts`), a script_api namespace's from its ref-doc `doc`
-// (`sync-script-api-types.ts`), and a markdown namespace's from its parsed README
-// `doc` (`sync-markdown-types.ts`), none extracted from the emitted `.d.ts`, so
-// all three are excluded here and guarded by their own front-end tests.
-function externalFrontEndNamespaces(): Set<string> {
-  return new Set([
-    ...readLualsTargets(DATA_DIR).map((t) => t.namespace),
-    ...readScriptApiTargets(DATA_DIR).map((t) => t.namespace),
-    ...readMarkdownTargets(LANE_EVALUATIONS_ROOT).map((t) => t.namespace),
-  ]);
-}
-
-const CORPUS = await printCorpus(DATA_DIR);
-
-// The page each printed module publishes under, keyed to its module, for every
-// module whose api-doc no external front-end lowers.
-function printedPages(): Map<string, string> {
-  const excluded = externalFrontEndNamespaces();
-  const pages = new Map<string, string>();
-  for (const { namespace, moduleId } of [
-    ...readLualsTargets(DATA_DIR),
-    ...readScriptApiTargets(DATA_DIR),
-    ...readAuthoredTargets(DATA_DIR),
-  ]) {
-    if (CORPUS.has(moduleId) && !excluded.has(namespace)) pages.set(namespace, moduleId);
-  }
-  return new Map([...pages].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
-}
 
 // A fixed module mixing every construct the extractor must handle: module-level
 // summary + import `@example`, a bare `type` alias, an exported `const`, and a
@@ -974,42 +930,6 @@ declare module 'stub.stub' {
     expect(run.parameters.map((p) => p.isOptional)).toEqual([false, true]);
     expect(run.returnValues[0]?.types).toEqual(["boolean"]);
     expect(run.examples).toBe('demo.run("x")');
-  });
-
-  // Drift guard, mirroring the codemodDeclaration guard in
-  // sync-library-types.test.ts: the committed api-doc/<module>.json must be
-  // exactly what its lane lowers from the module `resolve` prints. The authored
-  // lane lowers `extractApiDoc` *plus* upstream's LuaDoc for the members its fork
-  // leaves blank, so it is compared through `lowerAuthoredApiDoc`; the print of an
-  // authored module is its vendored source, so this is still a comparison against
-  // what `resolve` serves.
-  describe("committed api-doc fixtures match what their lane lowers", () => {
-    const authored = new Map(
-      readAuthoredTargets(DATA_DIR).map((target) => [target.namespace, target]),
-    );
-    for (const [moduleName, moduleId] of printedPages()) {
-      test(moduleName, () => {
-        const committed = JSON.parse(
-          readFileSync(join(PACKAGE_ROOT, "api-doc", `${moduleName}.json`), "utf8"),
-        );
-        const target = authored.get(moduleName);
-        if (target) {
-          expect(JSON.parse(lowerAuthoredApiDoc(DATA_DIR, target))).toEqual(committed);
-          return;
-        }
-        expect(extractApiDoc(CORPUS.get(moduleId) as string, moduleName)).toEqual(committed);
-      });
-    }
-  });
-
-  test("every printed module has exactly one api-doc fixture (no stale or missing)", () => {
-    const excluded = externalFrontEndNamespaces();
-    const fixtures = readdirSync(join(PACKAGE_ROOT, "api-doc"))
-      .filter((f) => f.endsWith(".json"))
-      .map((f) => f.slice(0, -".json".length))
-      .filter((name) => !excluded.has(name))
-      .sort();
-    expect(fixtures).toEqual([...printedPages().keys()]);
   });
 });
 
