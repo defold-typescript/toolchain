@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import { extractApiDoc } from "./extract-api-doc";
-import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { printedModule } from "./print-corpus";
 import {
   type AuthoredTarget,
@@ -13,7 +13,6 @@ import {
   readAuthoredTargets,
 } from "./sync-authored-types";
 
-const PACKAGE_ROOT = LIBRARY_TYPES_ROOT;
 const DATA_DIR = LIBRARY_DATA_DIR;
 
 // The fixture's tally.tally fork as `readAuthoredTargets` returns it. An authored
@@ -33,14 +32,25 @@ const TALLY: AuthoredTarget = {
   upstreamLua: ["fixture-fork/source/upstream/tally/tally.lua"],
 };
 
-// The committed api-doc JSON's element list — what the docs-site consumes for a
-// namespace, produced by `lowerAuthoredApiDoc` -> `extractApiDoc` over the
-// vendored fork.
-function apiDocElements(namespace: string): Record<string, unknown>[] {
-  const { elements } = JSON.parse(
-    readFileSync(join(PACKAGE_ROOT, "api-doc", `${namespace}.json`), "utf8"),
-  ) as { elements: Record<string, unknown>[] };
-  return elements;
+interface LoweredApiDoc {
+  info: { namespace: string; description?: string };
+  elements: Record<string, unknown>[];
+}
+
+// The api-doc the docs-site consumes for a namespace, lowered by
+// `lowerAuthoredApiDoc` -> `extractApiDoc` from the fork under `dataDir` when the
+// test runs, so a fork edit reaches every case without regenerating a report.
+function apiDoc(namespace: string, dataDir = DATA_DIR): LoweredApiDoc {
+  const targets = readAuthoredTargets(DATA_DIR).filter((t) => t.namespace === namespace);
+  const [target] = targets;
+  if (targets.length !== 1 || !target) {
+    throw new Error(`library data forks ${targets.length} targets under ${namespace}, not one`);
+  }
+  return JSON.parse(lowerAuthoredApiDoc(dataDir, target)) as LoweredApiDoc;
+}
+
+function apiDocElements(namespace: string, dataDir = DATA_DIR): Record<string, unknown>[] {
+  return apiDoc(namespace, dataDir).elements;
 }
 
 interface ImportedElement {
@@ -333,7 +343,7 @@ describe("nakama.nakama migration integrity", () => {
   // 174 from the callable rollout's 162: the field correction declared upstream's
   // 12 enum constants, each lowering to one `VARIABLE` element.
   test("the api-doc publishes all 174 elements under the bare namespace with the override description", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/nakama.json"), "utf8")) as {
+    const doc = apiDoc("nakama") as {
       info: { namespace: string; description?: string };
       elements: { name: string; type: string }[];
     };
@@ -375,7 +385,7 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
   ];
 
   test("the api-doc publishes the twelve functions, four constants and the camera typedef", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/shutter.json"), "utf8")) as {
+    const doc = apiDoc("shutter") as {
       info: { namespace: string; description?: string };
       elements: { name: string; type: string }[];
     };
@@ -409,7 +419,7 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
 // than against the fork's text, so the emit path is exercised rather than restated.
 describe("checkpoint.checkpoint type claims upstream states only in its body", () => {
   test("the api-doc publishes the four functions and two constants", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/checkpoint.json"), "utf8")) as {
+    const doc = apiDoc("checkpoint") as {
       info: { namespace: string; description?: string };
       elements: { name: string; type: string }[];
     };
@@ -442,18 +452,43 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
 describe("GamePush platform type claims upstream states only in its body", () => {
   type Returned = { types: string[] };
 
-  function element(namespace: string, name: string): Record<string, unknown> {
-    const found = apiDocElements(namespace).find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
+  function element(namespace: string, name: string, dataDir = DATA_DIR): Record<string, unknown> {
+    const found = apiDocElements(namespace, dataDir).find((entry) => entry.name === name);
+    if (!found) throw new Error(`${namespace} lowers no element named ${name}`);
     return found;
+  }
+
+  function secretCodeAuthReturnTypes(dataDir: string): string[][] {
+    const { returnvalues } = element(
+      "gamepush.core.platform",
+      "is_secret_code_auth_available",
+      dataDir,
+    ) as { returnvalues: Returned[] };
+    return returnvalues.map((r) => r.types);
   }
 
   // Annotated `---@return string`, but the body returns `call_api(...) == true`.
   test("is_secret_code_auth_available returns the boolean its comparison yields", () => {
-    const { returnvalues } = element("gamepush.core.platform", "is_secret_code_auth_available") as {
-      returnvalues: Returned[];
-    };
-    expect(returnvalues.map((r) => r.types)).toEqual([["boolean"]]);
+    expect(secretCodeAuthReturnTypes(DATA_DIR)).toEqual([["boolean"]]);
+  });
+
+  // The check reads the declaration it is given, so a fork edit made without
+  // regenerating any report reds it.
+  test("a fork retyped to a string return reaches the check", () => {
+    const dataDir = tempDir("authored-gamepush-retyped-");
+    cpSync(join(DATA_DIR, "defold-gamepush"), join(dataDir, "defold-gamepush"), {
+      recursive: true,
+    });
+    const fork = join(dataDir, "defold-gamepush", "fork", "gamepush.core.platform.d.ts");
+    const original = readFileSync(fork, "utf8");
+    const retyped = original.replace(
+      "is_secret_code_auth_available(): boolean;",
+      "is_secret_code_auth_available(): string;",
+    );
+    if (retyped === original)
+      throw new Error("the GamePush fork declares no boolean secret-code check");
+    writeFileSync(fork, retyped);
+    expect(secretCodeAuthReturnTypes(dataDir)).toEqual([["string"]]);
   });
 
   test("each platform constant is the literal of its own name", () => {
@@ -466,7 +501,7 @@ describe("GamePush platform type claims upstream states only in its body", () =>
 describe("Flow authored module type claims", () => {
   function element(namespace: string, name: string): Record<string, unknown> {
     const found = apiDocElements(namespace).find((entry) => entry.name === name);
-    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
+    if (!found) throw new Error(`${namespace} lowers no element named ${name}`);
     return found;
   }
 
