@@ -835,7 +835,7 @@ function dispatchCommand(
         return failed.length > 0 ? 1 : 0;
       }
       if (subcommand === "update") {
-        const { reportedReviewedPath, updateLibraries } = await import("./library/library-update");
+        const { reportedLibraryPath, updateLibraries } = await import("./library/library-update");
         const seams = internals?.resolveInternals;
         const reportedFolder = dataFolder.split(path.sep).join("/");
         let result: Awaited<ReturnType<typeof updateLibraries>>;
@@ -861,20 +861,23 @@ function dispatchCommand(
                 : {}),
               subcommand,
               dataFolder: reportedFolder,
-              written: updated
-                .filter(({ recorded }) => recorded.length > 0)
-                .map(({ library }) => reportedReviewedPath(dataFolder, library)),
+              written: updated.flatMap(({ library, written }) =>
+                written.map((file) => reportedLibraryPath(dataFolder, library, file)),
+              ),
               updated,
               failed,
             }),
           );
         } else {
-          for (const { library, status, recorded, differs } of updated) {
+          for (const { library, status, recorded, differs, ref, change } of updated) {
             if (status === "held" || status === "current") {
               io.stdout.write(`${library}: ${status}\n`);
             }
             for (const commit of recorded) io.stdout.write(`${library}: recorded ${commit}\n`);
             for (const commit of differs) io.stdout.write(`${library}: differs at ${commit}\n`);
+            if (status === "regenerated") {
+              io.stdout.write(`${library}: moved to ${ref} (${change})\n`);
+            }
           }
           for (const { library, message } of failed) {
             writeError(`defold-typescript library update: ${library}: ${message}`);
