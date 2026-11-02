@@ -1,4 +1,4 @@
-import { archiveWrapperOf } from "@defold-typescript/transpiler";
+import { archiveWrapperOf, type LibrarySharedEntry } from "@defold-typescript/transpiler";
 import type { ExtensionZip } from "../extension-archive";
 
 // The upstream sources a lane reads, at repo-relative forward-slash paths. Both the
@@ -9,17 +9,20 @@ export interface LibrarySourceTree {
   read(path: string): string;
 }
 
-// A dependency's archive with GitHub's `<repo>-<ref>/` folder dropped, found the
+// Every file in an archive with GitHub's `<repo>-<ref>/` folder dropped, found the
 // way the archive's Lua modules and scene sources find it.
-export function archiveSourceTree(zip: ExtensionZip): LibrarySourceTree {
+export function archiveFiles(zip: ExtensionZip): LibrarySharedEntry[] {
   const entries = zip.entries();
   const wrapper = archiveWrapperOf(entries);
   const prefix = wrapper === undefined ? "" : `${wrapper}/`;
-  const paths = new Map<string, string>();
-  for (const entry of entries) {
-    const path = entry.slice(prefix.length);
-    if (path.length > 0 && !path.endsWith("/")) paths.set(path, entry);
-  }
+  return entries
+    .map((entry) => ({ entry, path: entry.slice(prefix.length) }))
+    .filter(({ path }) => path.length > 0 && !path.endsWith("/"));
+}
+
+// A dependency's archive as a source tree.
+export function archiveSourceTree(zip: ExtensionZip): LibrarySourceTree {
+  const paths = new Map(archiveFiles(zip).map(({ entry, path }) => [path, entry]));
   return {
     list: () => [...paths.keys()].sort(),
     read: (path) => {

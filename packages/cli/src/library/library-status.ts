@@ -16,7 +16,7 @@ export type LibraryStatus =
 
 const MEMBERS_NAMED = 5;
 
-function differingMembers(
+export function differingMembers(
   a: Readonly<Record<string, string>>,
   b: Readonly<Record<string, string>>,
 ): string[] {

@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, posix, win32 } from "node:path";
 import { writeZipArchive } from "../../../types/test/zip-fixture";
-import type { DownloadExtensionArchive } from "../extension-archive";
+import { type DownloadExtensionArchive, resolveExtensionArchive } from "../extension-archive";
+import { dataFolderDigest } from "../library-data-archive";
 import { LibraryDataError, readLibraryData, readLibraryReviews } from "./library-data";
+import { FINGERPRINT_VERSION } from "./library-fingerprint";
 import { reviewLibraries } from "./library-review";
-import { reportedReviewedPath, type UpdateForge, updateLibraries } from "./library-update";
+import { reportedLibraryPath, type UpdateForge, updateLibraries } from "./library-update";
+import { listTargetFixtures } from "./sync-luals-types";
 
 const PIN_COMMIT = "a".repeat(40);
 const NEW_COMMIT = "b".repeat(40);
@@ -16,18 +19,22 @@ const ARCHIVE_COMMIT = "f".repeat(40);
 const moduleOf = (params: string): string =>
   `---@class mylib.options\nlocal M = {}\nfunction M.start(${params}) end\nreturn M\n`;
 
-function archiveOf(lua: string, comment?: string): Uint8Array {
+function archiveOfFiles(files: Readonly<Record<string, string>>, comment?: string): Uint8Array {
   return writeZipArchive(
     [
       { name: "repo-ref/game.project", text: "[library]\ninclude_dirs = mylib\n" },
-      { name: "repo-ref/mylib/mylib.lua", text: lua },
+      ...Object.entries(files).map(([path, text]) => ({ name: `repo-ref/${path}`, text })),
     ],
     comment === undefined ? {} : { comment },
   );
 }
 
+const archiveOf = (lua: string, comment?: string): Uint8Array =>
+  archiveOfFiles({ "mylib/mylib.lua": lua }, comment);
+
 const SAME = moduleOf("a");
 const CHANGED = moduleOf("a, b");
+const NO_MEMBERS = { added: [], removed: [], changed: [] };
 
 interface Upstream {
   readonly tags?: ReadonlyArray<{ name: string; sha: string; date: string }>;
@@ -78,11 +85,16 @@ describe("updateLibraries", () => {
   }
 
   // The pin's review comes from production, so no test authors a hash.
-  async function pinLibrary(folder: string, ref: string, follows?: string): Promise<void> {
+  async function pinLibrary(
+    folder: string,
+    ref: string,
+    follows?: string,
+    lua: string = SAME,
+  ): Promise<void> {
     writeLibrary(folder, ref, follows);
     const result = await reviewLibraries(dataDir, [folder], {
       cacheDir,
-      download: serving({ [urlOf(folder, ref)]: archiveOf(SAME, PIN_COMMIT) }),
+      download: serving({ [urlOf(folder, ref)]: archiveOf(lua, PIN_COMMIT) }),
     });
     expect(result.failed).toEqual([]);
     downloaded = [];
@@ -145,7 +157,15 @@ describe("updateLibraries", () => {
       });
 
       expect(result).toEqual({
-        updated: [{ library: "tagged", status: "recorded", recorded: [NEW_COMMIT], differs: [] }],
+        updated: [
+          {
+            library: "tagged",
+            status: "recorded",
+            recorded: [NEW_COMMIT],
+            differs: [],
+            written: ["reviewed.json"],
+          },
+        ],
         failed: [],
       });
       expect(readLibraryReviews(dataDir, "tagged")?.map(({ commits }) => commits)).toEqual([
@@ -165,19 +185,30 @@ describe("updateLibraries", () => {
       expect(downloaded).toEqual([]);
       expect(reviewedText("tagged")).toBe(recorded);
       expect(result.updated).toEqual([
-        { library: "tagged", status: "current", recorded: [], differs: [] },
+        { library: "tagged", status: "current", recorded: [], differs: [], written: [] },
       ]);
     });
 
-    test("a newer tag with a changed member reads differs and writes nothing", async () => {
-      const before = reviewedText("tagged");
-
+    test("a newer tag with a changed member moves the pin and records its review", async () => {
       const result = await update(upstream, { [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED) });
 
       expect(result.updated).toEqual([
-        { library: "tagged", status: "differs", recorded: [], differs: [NEW_COMMIT] },
+        {
+          library: "tagged",
+          status: "regenerated",
+          recorded: [],
+          differs: [NEW_COMMIT],
+          written: ["reviewed.json"],
+          ref: "v2",
+          change: "changed",
+          members: { ...NO_MEMBERS, changed: ["mylib/mylib.lua#start"] },
+        },
       ]);
-      expect(reviewedText("tagged")).toBe(before);
+      expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual(["v2"]);
+      expect(readLibraryReviews(dataDir, "tagged")?.map(({ commits }) => commits)).toEqual([
+        [PIN_COMMIT],
+        [NEW_COMMIT],
+      ]);
     });
 
     test("a change only to a function body differs, since its source hash moved", async () => {
@@ -186,6 +217,7 @@ describe("updateLibraries", () => {
       const result = await update(upstream, { [urlOf("tagged", NEW_COMMIT)]: archiveOf(bodyEdit) });
 
       expect(result.updated[0]?.differs).toEqual([NEW_COMMIT]);
+      expect(result.updated[0]?.status).toBe("regenerated");
     });
 
     test("candidates are walked oldest first, listing what recorded and what differs", async () => {
@@ -198,11 +230,15 @@ describe("updateLibraries", () => {
       );
 
       expect(downloaded).toEqual([urlOf("tagged", NEW_COMMIT), urlOf("tagged", LATER_COMMIT)]);
-      expect(result.updated).toEqual([
-        { library: "tagged", status: "differs", recorded: [NEW_COMMIT], differs: [LATER_COMMIT] },
-      ]);
+      expect(result.updated[0]).toMatchObject({
+        status: "regenerated",
+        recorded: [NEW_COMMIT],
+        differs: [LATER_COMMIT],
+        ref: "v3",
+      });
       expect(readLibraryReviews(dataDir, "tagged")?.map(({ commits }) => commits)).toEqual([
         [PIN_COMMIT, NEW_COMMIT],
+        [LATER_COMMIT],
       ]);
     });
 
@@ -219,7 +255,7 @@ describe("updateLibraries", () => {
 
       expect(downloaded).toEqual([]);
       expect(result.updated).toEqual([
-        { library: "tagged", status: "current", recorded: [], differs: [] },
+        { library: "tagged", status: "current", recorded: [], differs: [], written: [] },
       ]);
     });
 
@@ -238,25 +274,26 @@ describe("updateLibraries", () => {
     });
 
     test("a tag that serves reviewed bytes does not vouch for a commit that differs", async () => {
-      const before = reviewedText("tagged");
-
       const result = await update(upstream, {
         [urlOf("tagged", "v2")]: archiveOf(SAME),
         [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED),
       });
 
-      expect(result.updated).toEqual([
-        { library: "tagged", status: "differs", recorded: [], differs: [NEW_COMMIT] },
-      ]);
+      expect(result.updated[0]).toMatchObject({ status: "regenerated", differs: [NEW_COMMIT] });
       expect(downloaded).toEqual([urlOf("tagged", NEW_COMMIT)]);
-      expect(reviewedText("tagged")).toBe(before);
     });
 
     test("a commit archive that names no commit still records the forge's commit", async () => {
       const result = await update(upstream, { [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME) });
 
       expect(result.updated).toEqual([
-        { library: "tagged", status: "recorded", recorded: [NEW_COMMIT], differs: [] },
+        {
+          library: "tagged",
+          status: "recorded",
+          recorded: [NEW_COMMIT],
+          differs: [],
+          written: ["reviewed.json"],
+        },
       ]);
       expect(readLibraryReviews(dataDir, "tagged")?.map(({ commits }) => commits)).toEqual([
         [PIN_COMMIT, NEW_COMMIT],
@@ -290,7 +327,10 @@ describe("updateLibraries", () => {
     });
 
     test("a failed download fails the library even with a cached copy", async () => {
-      await update(upstream, { [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED) });
+      await resolveExtensionArchive(
+        { index: 0, url: urlOf("tagged", NEW_COMMIT) },
+        { cacheDir, download: serving({ [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED) }) },
+      );
 
       const result = await update(upstream, {});
 
@@ -311,7 +351,13 @@ describe("updateLibraries", () => {
 
       expect(forgeReads).toEqual([`repo ${repoOf("branched")}`, "head main"]);
       expect(result.updated).toEqual([
-        { library: "branched", status: "recorded", recorded: [NEW_COMMIT], differs: [] },
+        {
+          library: "branched",
+          status: "recorded",
+          recorded: [NEW_COMMIT],
+          differs: [],
+          written: ["reviewed.json"],
+        },
       ]);
       expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual([PIN_COMMIT]);
     });
@@ -323,7 +369,7 @@ describe("updateLibraries", () => {
 
       expect(downloaded).toEqual([]);
       expect(result.updated).toEqual([
-        { library: "branched", status: "current", recorded: [], differs: [] },
+        { library: "branched", status: "current", recorded: [], differs: [], written: [] },
       ]);
     });
 
@@ -335,7 +381,7 @@ describe("updateLibraries", () => {
       expect(forgeReads).toEqual([]);
       expect(downloaded).toEqual([]);
       expect(result).toEqual({
-        updated: [{ library: "held", status: "held", recorded: [], differs: [] }],
+        updated: [{ library: "held", status: "held", recorded: [], differs: [], written: [] }],
         failed: [],
       });
     });
@@ -372,6 +418,418 @@ describe("updateLibraries", () => {
     });
   });
 
+  describe("regenerating a library", () => {
+    const TWO_TAGS = { tags: [PIN_TAG, NEW_TAG] };
+    const file = (folder: string, path: string): string => join(dataDir, folder, path);
+
+    function writeDataFile(folder: string, path: string, text: string): void {
+      const target = file(folder, path);
+      mkdirSync(join(target, ".."), { recursive: true });
+      writeFileSync(target, text);
+    }
+
+    function extendLibrary(folder: string, fields: Readonly<Record<string, unknown>>): void {
+      writeFileSync(
+        file(folder, "library.json"),
+        JSON.stringify({ repo: repoOf(folder), ...fields }),
+      );
+    }
+
+    const FORK = {
+      authored: "fork/mylib.d.ts",
+      moduleId: "mylib.mylib",
+      namespace: "mylib.mylib",
+      apiDoc: "api-doc/mylib.json",
+      upstreamLua: ["source/upstream/mylib/mylib.lua"],
+    };
+    const LUALS_RECIPE = {
+      luals: [
+        {
+          sourceGlobs: ["mylib/**/*.lua"],
+          moduleId: "mylib.mylib",
+          namespace: "mylib",
+          ignore: ["**/test/**"],
+        },
+      ],
+    };
+
+    async function pinLuals(folder: string): Promise<void> {
+      await pinLibrary(folder, "v1");
+      writeDataFile(folder, "recipe.json", JSON.stringify(LUALS_RECIPE));
+      writeDataFile(folder, "source/mylib/mylib/mylib.lua", SAME);
+      writeDataFile(folder, "source/mylib/mylib/old.lua", "return {}\n");
+    }
+
+    test("a luals library's source folder matches the candidate's selection", async () => {
+      await pinLuals("luals");
+
+      const result = await update(
+        { [repoOf("luals")]: TWO_TAGS },
+        {
+          [urlOf("luals", NEW_COMMIT)]: archiveOfFiles({
+            "mylib/mylib.lua": CHANGED,
+            "mylib/added.lua": "return 1\n",
+            "mylib/test/skipped.lua": "return 2\n",
+            "outside/other.lua": "return 3\n",
+          }),
+        },
+      );
+
+      expect(result.failed).toEqual([]);
+      const [library] = readLibraryData(dataDir);
+      expect(library?.ref).toBe("v2");
+      const [target] = library?.luals ?? [];
+      expect(target === undefined ? [] : listTargetFixtures(dataDir, target)).toEqual([
+        "mylib/added.lua",
+        "mylib/mylib.lua",
+      ]);
+      expect(readFileSync(file("luals", "source/mylib/mylib/mylib.lua"), "utf8")).toBe(CHANGED);
+      expect(result.updated[0]?.written).toEqual([
+        "source/mylib/mylib/added.lua",
+        "source/mylib/mylib/mylib.lua",
+        "reviewed.json",
+      ]);
+    });
+
+    test("a script_api library's source file holds the candidate's bytes", async () => {
+      const bytes = "- name: mylib\r\n  type: table\r\n";
+      await pinLibrary("scripted", "v1");
+      writeDataFile(
+        "scripted",
+        "recipe.json",
+        JSON.stringify({
+          scriptApi: [
+            {
+              scriptApi: "mylib/mylib.script_api",
+              moduleId: "mylib.mylib",
+              namespace: "mylib",
+              apiDoc: "api-doc/mylib.json",
+            },
+          ],
+        }),
+      );
+
+      const result = await update(
+        { [repoOf("scripted")]: TWO_TAGS },
+        {
+          [urlOf("scripted", NEW_COMMIT)]: archiveOfFiles({
+            "mylib/mylib.lua": SAME,
+            "mylib/mylib.script_api": bytes,
+          }),
+        },
+      );
+
+      expect(result.failed).toEqual([]);
+      const [target] = readLibraryData(dataDir)[0]?.scriptApi ?? [];
+      expect(readFileSync(join(dataDir, target?.sourceFile ?? ""), "utf8")).toBe(bytes);
+      expect(result.updated[0]?.written).toEqual([
+        "source/mylib.mylib.script_api",
+        "reviewed.json",
+      ]);
+    });
+
+    test("a script_api file the candidate no longer holds fails the library", async () => {
+      await pinLibrary("scripted", "v1");
+      writeDataFile(
+        "scripted",
+        "recipe.json",
+        JSON.stringify({
+          scriptApi: [
+            {
+              scriptApi: "mylib/mylib.script_api",
+              moduleId: "mylib.mylib",
+              namespace: "mylib",
+              apiDoc: "api-doc/mylib.json",
+            },
+          ],
+        }),
+      );
+      const before = dataFolderDigest(join(dataDir, "scripted"));
+
+      const result = await update(
+        { [repoOf("scripted")]: TWO_TAGS },
+        { [urlOf("scripted", NEW_COMMIT)]: archiveOf(CHANGED) },
+      );
+
+      expect(result.failed).toEqual([
+        { library: "scripted", message: "mylib/mylib.script_api is gone from v2" },
+      ]);
+      expect(dataFolderDigest(join(dataDir, "scripted"))).toBe(before);
+    });
+
+    test("a fork's upstream files move and its declarations stay", async () => {
+      await pinLibrary("forked", "v1");
+      extendLibrary("forked", { forks: [FORK] });
+      writeDataFile("forked", "source/upstream/mylib/mylib.lua", SAME);
+      writeDataFile("forked", "fork/mylib.d.ts", "export {};\n");
+      writeDataFile("forked", "usage/mylib.ts", "export {};\n");
+      const library = readFileSync(file("forked", "library.json"), "utf8");
+
+      const result = await update(
+        { [repoOf("forked")]: TWO_TAGS },
+        { [urlOf("forked", NEW_COMMIT)]: archiveOf(CHANGED) },
+      );
+
+      expect(result.failed).toEqual([]);
+      expect(readFileSync(file("forked", "source/upstream/mylib/mylib.lua"), "utf8")).toBe(CHANGED);
+      expect(readFileSync(file("forked", "fork/mylib.d.ts"), "utf8")).toBe("export {};\n");
+      expect(readFileSync(file("forked", "usage/mylib.ts"), "utf8")).toBe("export {};\n");
+      expect(readFileSync(file("forked", "library.json"), "utf8")).toBe(library);
+      expect(result.updated[0]?.written).toEqual([
+        "source/upstream/mylib/mylib.lua",
+        "reviewed.json",
+      ]);
+    });
+
+    test("a native upstream file the candidate no longer holds leaves the folder as it was", async () => {
+      await pinLibrary("native", "v1");
+      extendLibrary("native", {
+        native: {
+          namespace: "mylib",
+          manifestDir: "mylib/native",
+          declaration: "fork/mylib.d.ts",
+          upstreamSource: "source/upstream/mylib/src/ext.cpp",
+        },
+      });
+      writeDataFile("native", "source/upstream/mylib/mylib.lua", SAME);
+      writeDataFile("native", "source/upstream/mylib/src/ext.cpp", "// pinned\n");
+      writeDataFile("native", "fork/mylib.d.ts", "export {};\n");
+      const before = dataFolderDigest(join(dataDir, "native"));
+
+      const result = await update(
+        { [repoOf("native")]: TWO_TAGS },
+        { [urlOf("native", NEW_COMMIT)]: archiveOf(CHANGED) },
+      );
+
+      expect(result.updated).toEqual([]);
+      expect(result.failed).toEqual([
+        { library: "native", message: "mylib/src/ext.cpp is gone from v2" },
+      ]);
+      expect(dataFolderDigest(join(dataDir, "native"))).toBe(before);
+    });
+
+    test("a failed read in one lane leaves another lane's files as they were", async () => {
+      await pinLuals("both");
+      extendLibrary("both", { forks: [{ ...FORK, moduleId: "mylib.fork" }] });
+      writeDataFile("both", "source/upstream/mylib/gone.lua", SAME);
+      const before = dataFolderDigest(join(dataDir, "both"));
+
+      const result = await update(
+        { [repoOf("both")]: TWO_TAGS },
+        { [urlOf("both", NEW_COMMIT)]: archiveOf(CHANGED) },
+      );
+
+      expect(result.failed).toEqual([
+        { library: "both", message: "mylib/gone.lua is gone from v2" },
+      ]);
+      expect(dataFolderDigest(join(dataDir, "both"))).toBe(before);
+    });
+
+    test("an entry that leaves its folder fails the library and is not written", async () => {
+      await pinLuals("escaping");
+      const before = dataFolderDigest(join(dataDir, "escaping"));
+
+      const result = await update(
+        { [repoOf("escaping")]: TWO_TAGS },
+        {
+          [urlOf("escaping", NEW_COMMIT)]: archiveOfFiles({
+            "mylib/mylib.lua": CHANGED,
+            "mylib/../../../../evil.lua": "return 1\n",
+          }),
+        },
+      );
+
+      expect(result.failed).toEqual([
+        { library: "escaping", message: expect.stringContaining("leaves the library's folder") },
+      ]);
+      expect(dataFolderDigest(join(dataDir, "escaping"))).toBe(before);
+      expect(existsSync(join(base, "evil.lua"))).toBe(false);
+      expect(existsSync(join(dataDir, "evil.lua"))).toBe(false);
+    });
+
+    test("only the newest differing tag is regenerated", async () => {
+      await pinLibrary("tagged", "v1");
+
+      const result = await update(
+        { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
+        {
+          [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED),
+          [urlOf("tagged", LATER_COMMIT)]: archiveOf(moduleOf("a, b, c")),
+        },
+      );
+
+      expect(result.updated[0]).toMatchObject({
+        status: "regenerated",
+        differs: [NEW_COMMIT, LATER_COMMIT],
+        ref: "v3",
+      });
+      expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual(["v3"]);
+      const commits = readLibraryReviews(dataDir, "tagged")?.flatMap((review) => review.commits);
+      expect(commits).toEqual([PIN_COMMIT, LATER_COMMIT]);
+    });
+
+    test("a followed branch pins the commit", async () => {
+      await pinLibrary("branched", PIN_COMMIT);
+
+      const result = await update(
+        { [repoOf("branched")]: { head: NEW_COMMIT } },
+        { [urlOf("branched", NEW_COMMIT)]: archiveOf(CHANGED) },
+      );
+
+      expect(result.updated[0]?.ref).toBe(NEW_COMMIT);
+      expect(readLibraryData(dataDir).map(({ ref }) => ref)).toEqual([NEW_COMMIT]);
+    });
+
+    test("a run after a regeneration reads current and downloads nothing", async () => {
+      await pinLibrary("tagged", "v1");
+      const upstream = { [repoOf("tagged")]: TWO_TAGS };
+      const archives = { [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED) };
+      await update(upstream, archives);
+      const recorded = reviewedText("tagged");
+      downloaded = [];
+
+      const result = await update(upstream, archives);
+
+      expect(downloaded).toEqual([]);
+      expect(reviewedText("tagged")).toBe(recorded);
+      expect(result.updated).toEqual([
+        { library: "tagged", status: "current", recorded: [], differs: [], written: [] },
+      ]);
+    });
+  });
+
+  describe("classifying a change", () => {
+    const TWO_FUNCTIONS = `${SAME.replace("return M\n", "")}function M.stop() end\nreturn M\n`;
+
+    async function classified(lua: string, pinned: string = SAME) {
+      await pinLibrary("tagged", "v1", undefined, pinned);
+      const result = await update(
+        { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("tagged", NEW_COMMIT)]: archiveOf(lua) },
+      );
+      expect(result.failed).toEqual([]);
+      return result.updated[0];
+    }
+
+    test("a doc comment edit keeps every member", async () => {
+      const entry = await classified(SAME.replace("function", "--- Starts it.\nfunction"));
+
+      expect(entry?.change).toBe("kept");
+      expect(entry?.members).toEqual(NO_MEMBERS);
+    });
+
+    test("a function body edit with the same parameters keeps every member", async () => {
+      const entry = await classified(SAME.replace(") end", ") return 1 end"));
+
+      expect(entry?.change).toBe("kept");
+      expect(entry?.members).toEqual(NO_MEMBERS);
+    });
+
+    test("a new function only adds", async () => {
+      const entry = await classified(TWO_FUNCTIONS);
+
+      expect(entry?.change).toBe("added");
+      expect(entry?.members).toEqual({ ...NO_MEMBERS, added: ["mylib/mylib.lua#stop"] });
+    });
+
+    test("a removed function is a change that names it", async () => {
+      const entry = await classified(SAME, TWO_FUNCTIONS);
+
+      expect(entry?.change).toBe("changed");
+      expect(entry?.members).toEqual({ ...NO_MEMBERS, removed: ["mylib/mylib.lua#stop"] });
+    });
+
+    test("a changed parameter list is a change that names it", async () => {
+      const entry = await classified(CHANGED);
+
+      expect(entry?.change).toBe("changed");
+      expect(entry?.members).toEqual({ ...NO_MEMBERS, changed: ["mylib/mylib.lua#start"] });
+    });
+
+    test("a moved annotation is a change", async () => {
+      const pinned = `---@class mylib.first\n---@class mylib.second\n${SAME}`;
+      const moved = `---@class mylib.second\n---@class mylib.first\n${SAME}`;
+
+      const entry = await classified(moved, pinned);
+
+      expect(entry?.change).toBe("changed");
+      expect(entry?.members).toEqual({
+        ...NO_MEMBERS,
+        changed: ["mylib/mylib.lua#@annotations"],
+      });
+    });
+
+    test("a changed whole file is a change that names it", async () => {
+      await pinLibrary("tagged", "v1");
+      const pinned = archiveOfFiles({ "mylib/mylib.lua": SAME, "mylib/ext.cpp": "// one\n" });
+      const reviewed = await reviewLibraries(dataDir, ["tagged"], {
+        cacheDir: join(base, "second-cache"),
+        download: serving({ [urlOf("tagged", "v1")]: pinned }),
+      });
+      expect(reviewed.failed).toEqual([]);
+
+      const result = await update(
+        { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        {
+          [urlOf("tagged", NEW_COMMIT)]: archiveOfFiles({
+            "mylib/mylib.lua": SAME,
+            "mylib/ext.cpp": "// two\n",
+          }),
+        },
+      );
+
+      expect(result.updated[0]?.change).toBe("changed");
+      expect(result.updated[0]?.members).toEqual({
+        ...NO_MEMBERS,
+        changed: ["mylib/ext.cpp"],
+      });
+    });
+
+    test("a library with no reviews is a change with nothing to name", async () => {
+      writeLibrary("tagged", "v1");
+
+      const result = await update(
+        { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME) },
+      );
+
+      expect(result.updated[0]?.change).toBe("changed");
+      expect(result.updated[0]?.members).toEqual(NO_MEMBERS);
+    });
+
+    test("a review of another fingerprint version compares with nothing", async () => {
+      await pinLibrary("tagged", "v1");
+      const reviewed = JSON.parse(reviewedText("tagged")) as {
+        reviews: { version: number }[];
+      };
+      for (const review of reviewed.reviews) review.version = FINGERPRINT_VERSION + 1;
+      writeFileSync(join(dataDir, "tagged", "reviewed.json"), JSON.stringify(reviewed));
+
+      const result = await update(
+        { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("tagged", NEW_COMMIT)]: archiveOf(SAME.replace(") end", ") return 1 end")) },
+      );
+
+      expect(result.updated[0]?.change).toBe("changed");
+      expect(result.updated[0]?.members).toEqual(NO_MEMBERS);
+    });
+
+    test("a change compares with the last review, the pin's", async () => {
+      await pinLibrary("tagged", "v1");
+      await update(
+        { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG] } },
+        { [urlOf("tagged", NEW_COMMIT)]: archiveOf(CHANGED) },
+      );
+
+      const result = await update(
+        { [repoOf("tagged")]: { tags: [PIN_TAG, NEW_TAG, LATER_TAG] } },
+        { [urlOf("tagged", LATER_COMMIT)]: archiveOf(CHANGED.replace(") end", ") return 1 end")) },
+      );
+
+      expect(result.updated[0]?.change).toBe("kept");
+    });
+  });
+
   describe("across libraries", () => {
     test("a forge failure is reported by name and the next library is still updated", async () => {
       await pinLibrary("first", "v1");
@@ -387,7 +845,13 @@ describe("updateLibraries", () => {
         { library: "first", message: expect.stringContaining("404") },
       ]);
       expect(result.updated).toEqual([
-        { library: "second", status: "recorded", recorded: [NEW_COMMIT], differs: [] },
+        {
+          library: "second",
+          status: "recorded",
+          recorded: [NEW_COMMIT],
+          differs: [],
+          written: ["reviewed.json"],
+        },
       ]);
       expect(reviewedText("first")).toBe(firstBefore);
     });
@@ -412,25 +876,31 @@ describe("updateLibraries", () => {
   });
 });
 
-describe("reportedReviewedPath", () => {
+describe("reportedLibraryPath", () => {
   test("keeps the network root of a UNC data folder", () => {
     const folder = "\\\\server\\share\\data\\0.1.0";
 
-    const reported = reportedReviewedPath(folder, "first", win32);
+    const reported = reportedLibraryPath(folder, "first", "reviewed.json", win32);
 
     expect(reported).toBe("//server/share/data/0.1.0/first/reviewed.json");
     expect(win32.resolve(reported)).toBe(win32.join(folder, "first", "reviewed.json"));
   });
 
   test("keeps the drive of a Windows data folder", () => {
-    expect(reportedReviewedPath("C:\\data\\0.1.0", "first", win32)).toBe(
+    expect(reportedLibraryPath("C:\\data\\0.1.0", "first", "reviewed.json", win32)).toBe(
       "C:/data/0.1.0/first/reviewed.json",
     );
   });
 
   test("keeps a backslash in a POSIX folder name", () => {
-    expect(reportedReviewedPath("/tmp/a\\b/0.1.0", "first", posix)).toBe(
+    expect(reportedLibraryPath("/tmp/a\\b/0.1.0", "first", "reviewed.json", posix)).toBe(
       "/tmp/a\\b/0.1.0/first/reviewed.json",
+    );
+  });
+
+  test("uses forward slashes for a nested file on Windows", () => {
+    expect(reportedLibraryPath("C:\\data\\0.1.0", "first", "source/a/b.lua", win32)).toBe(
+      "C:/data/0.1.0/first/source/a/b.lua",
     );
   });
 });
