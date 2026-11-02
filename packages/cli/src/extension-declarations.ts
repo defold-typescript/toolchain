@@ -21,7 +21,7 @@ import {
 } from "./extension-archive";
 import type { ExtensionDependency } from "./extension-deps";
 import { type EmittedExtension, emitExtensionDeclaration } from "./extension-emit";
-import { curatedIndexPages } from "./extension-index-pages";
+import { curatedIndexPages, loadCuratedExtensionManifest } from "./extension-index-pages";
 import type { ArchiveIdentity } from "./extension-version";
 import { loadLibraryIndexSlotClassifications } from "./library-registry";
 import { locateShippedDeclarations, selectShippedDeclarations } from "./shipped-declarations";
@@ -120,14 +120,15 @@ function archiveManifestDirs(entries: readonly string[]): string[] {
 export async function resolveExtensionDeclarations(
   deps: readonly ExtensionDependency[],
   opts: ResolveExtensionArchiveOptions & {
-    // The library data folder index-slot notes are read from; without one, an
-    // extension's declaration carries no such notes.
+    // The library data folder index-slot notes and the pages they key on are read
+    // from; without one, an extension's declaration carries no such notes.
     readonly libraryDataDir?: string | null;
   },
 ): Promise<ExtensionDeclarations[]> {
   const open = opts.readZip ?? defaultReadZip;
   const resolved = await resolveExtensions(deps, opts);
   const classifications = loadLibraryIndexSlotClassifications(opts.libraryDataDir ?? null);
+  const manifest = loadCuratedExtensionManifest(opts.libraryDataDir ?? null);
 
   const bundles: ExtensionDeclarations[] = [];
   for (const archive of resolved) {
@@ -162,7 +163,7 @@ export async function resolveExtensionDeclarations(
     }
     const declarations: EmittedExtension[] = [];
     for (const scriptApi of archive.scriptApis) {
-      const pages = curatedIndexPages(archive.url, scriptApi, zip.entries());
+      const pages = curatedIndexPages(archive.url, scriptApi, zip.entries(), manifest);
       declarations.push(
         await emitExtensionDeclaration(zip.read(scriptApi), pages, classifications),
       );
