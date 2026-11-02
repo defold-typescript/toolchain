@@ -2,11 +2,10 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { writeLibraryTargets } from "../library-data-fixture";
+import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import { checkLibraryData } from "./library-check";
 import { type LibraryData, readLibraryData } from "./library-data";
 import { floorProblems, parityFloorsByReport, tokenFloorsByReport } from "./library-floors";
-import { LIBRARY_DATA_DIR } from "./package-root";
 
 const FORK = "declare module 'flow.ui' {\n  export function draw(): void;\n}\n";
 
@@ -517,8 +516,8 @@ describe("checkLibraryData measures each module against the floor in its library
     expect((await checkLibraryData(dataDir)).map(({ check }) => check)).toEqual(["compile"]);
   });
 
-  test("the committed library data is clean", async () => {
-    expect(await checkLibraryData(LIBRARY_DATA_DIR)).toEqual([]);
+  test("the fixture data folder every toolchain test reads is clean", async () => {
+    expect(await checkLibraryData(FIXTURE_DATA_DIR)).toEqual([]);
   }, 120_000);
 
   test("the check's static imports never reach the package root, so it reads only --data", () => {

@@ -1,16 +1,13 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import * as path from "node:path";
-import { LIBRARY_DATA_DIR } from "./package-root";
-import { type PrintedLibraryModule, printLibraryModules } from "./print-library";
+import { FIXTURE_DATA_DIR } from "../library-data-fixture";
+import { printLibraryModules } from "./print-library";
 import type { LibrarySourceTree } from "./source-tree";
-import { readAuthoredTargets } from "./sync-authored-types";
-import { readLualsTargets } from "./sync-luals-types";
-import { readScriptApiTargets } from "./sync-script-api-types";
 
 const CLI_SRC = path.resolve(import.meta.dir, "..");
 
-// Printing every served module outruns Bun's 5s default.
-const PRINT_TIMEOUT_MS = 120_000;
+// Bundling the CLI outruns Bun's 5s default.
+const BUILD_TIMEOUT_MS = 120_000;
 
 describe("the published CLI's bundle", () => {
   test(
@@ -28,48 +25,27 @@ describe("the published CLI's bundle", () => {
       expect(code).not.toContain("@defold-typescript/library-types");
       expect(code).not.toContain('"spine.gui"');
     },
-    PRINT_TIMEOUT_MS,
+    BUILD_TIMEOUT_MS,
   );
 });
 
-describe("library data prints every served module", () => {
-  const moduleIds = [
-    ...readLualsTargets(LIBRARY_DATA_DIR),
-    ...readScriptApiTargets(LIBRARY_DATA_DIR),
-    ...readAuthoredTargets(LIBRARY_DATA_DIR),
-  ].map(({ moduleId }) => moduleId);
-  let repoPrinted: PrintedLibraryModule[] = [];
-
-  beforeAll(async () => {
-    repoPrinted = (await printLibraryModules(LIBRARY_DATA_DIR, moduleIds, null)).printed;
-  }, PRINT_TIMEOUT_MS);
-
-  test("prints every module with no archive", () => {
-    expect(repoPrinted.map(({ module }) => module).sort()).toEqual([...moduleIds].sort());
-  });
-
+describe("printLibraryModules", () => {
   test("prints the pinned sources, with the reason, when the archive holds no files", async () => {
-    const [target] = readLualsTargets(LIBRARY_DATA_DIR);
-    if (target === undefined) throw new Error("library data holds no LuaLS target");
+    const moduleId = "glow-kit.glow";
     const empty: LibrarySourceTree = {
       list: () => [],
       read: (file) => {
         throw new Error(`the archive holds no ${file}`);
       },
     };
+    const pinned = await printLibraryModules(FIXTURE_DATA_DIR, [moduleId], null);
 
-    const { printed, unprintable } = await printLibraryModules(
-      LIBRARY_DATA_DIR,
-      [target.moduleId],
-      empty,
-    );
+    const { printed, unprintable } = await printLibraryModules(FIXTURE_DATA_DIR, [moduleId], empty);
 
     expect(unprintable).toEqual([]);
     expect(printed).toHaveLength(1);
     expect(printed[0]?.from).toBe("pinned");
-    expect(printed[0]?.reason).toContain(`${target.moduleId.replace(/\./g, "/")}.lua`);
-    expect(printed[0]?.contents).toBe(
-      repoPrinted.find(({ module }) => module === target.moduleId)?.contents as string,
-    );
+    expect(printed[0]?.reason).toContain("glow-kit/glow.lua");
+    expect(printed[0]?.contents).toBe(pinned.printed[0]?.contents as string);
   });
 });

@@ -1,19 +1,180 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { LIBRARY_DATA_DIR } from "./package-root";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 
-const DATA_DIR = LIBRARY_DATA_DIR;
-const UPSTREAM_DIR = "nakama-defold/source/upstream/nakama";
+// A logging module that reassigns `M.log` inside three function bodies and wraps
+// itself in a metatable statement before its bare return.
+const LOG_MODULE = [
+  "--[[--",
+  "Relay logging module.",
+  "",
+  "@module relay.util.log",
+  "]]",
+  "",
+  "",
+  "local M = {}",
+  "",
+  "local function noop() end",
+  "",
+  "",
+  "--- Silence all logging.",
+  "function M.silent()",
+  "\tM.log = noop",
+  "end",
+  "",
+  "",
+  "--- Print all log messages to the default system output.",
+  "function M.print()",
+  "\tM.log = print",
+  "end",
+  "",
+  "",
+  "-- Format all log message before print to the default system output.",
+  "function M.format()",
+  "\tM.log = function(fmt, ...)",
+  "\t\tprint(string.format(fmt, ...))",
+  "\tend",
+  "end",
+  "",
+  "",
+  "--- Set a custom log function.",
+  "-- @param fn The custom log function.",
+  "function M.custom(fn)",
+  "\tM.log = fn",
+  "end",
+  "",
+  "",
+  "M.silent()",
+  "",
+  "",
+  "setmetatable(M, {",
+  "\t__call = function(t, ...)",
+  "\t\tM.log(...)",
+  "\tend",
+  "})",
+  "",
+  "",
+  "return M",
+  "",
+].join("\n");
 
-function vendored(relative: string): string {
-  return readFileSync(join(DATA_DIR, UPSTREAM_DIR, relative), "utf8");
-}
+// An engine adapter: private helpers, a forward-declared local assigned a function
+// at column 0, and a member taking eight parameters.
+const ENGINE_MODULE = [
+  'local log = require "relay.util.log"',
+  "",
+  "local M = {}",
+  "",
+  "--- Get the device's mac address.",
+  "-- @return The mac address string.",
+  "local function get_mac_address()",
+  '\treturn ""',
+  "end",
+  "",
+  "--- Returns a UUID from the device's mac address.",
+  "-- @return The UUID string.",
+  "function M.uuid()",
+  "\treturn get_mac_address()",
+  "end",
+  "",
+  "local make_http_request",
+  "make_http_request = function(url, method, callback, headers, post_data, options, retry_intervals, retry_count, cancellation_token)",
+  "\thttp.request(url, method, callback, headers, post_data, options)",
+  "end",
+  "",
+  "--- Make a HTTP request.",
+  "-- @param config The http config table, see Defold docs.",
+  "-- @param url_path The request URL.",
+  "function M.http(config, url_path, query_params, method, post_data, retry_policy, cancellation_token, callback)",
+  "\tmake_http_request(url_path, method, callback, nil, post_data, config, nil, 0, cancellation_token)",
+  "end",
+  "",
+  "--- Create a new socket with message handler.",
+  "-- @param config The socket config table, see Defold docs.",
+  "-- @param on_message Your function to process socket messages.",
+  "function M.socket_create(config, on_message)",
+  "\treturn { on_message = on_message }",
+  "end",
+  "",
+  "-- internal on_message, calls user defined socket.on_message function",
+  "local function on_message(socket, message)",
+  "\tsocket.on_message(socket, message)",
+  "end",
+  "",
+  "--- Connect a created socket using web sockets.",
+  "-- @param socket The socket table, see socket_create.",
+  "function M.socket_connect(socket, callback)",
+  "\tlog(socket, callback)",
+  "end",
+  "",
+  "--- Send a socket message.",
+  "-- @param socket The socket table, see socket_create.",
+  "function M.socket_send(socket, message)",
+  "\ton_message(socket, message)",
+  "end",
+  "",
+  "return M",
+  "",
+].join("\n");
 
-function upstream(path: string): string {
-  return readFileSync(join(DATA_DIR, path), "utf8");
-}
+// A client API module: a private `local function http` helper, string constants, and
+// LuaDoc blocks whose `@param` list wraps around a blank line.
+const CLIENT_MODULE = [
+  "local M = {}",
+  "",
+  "-- http request helper used to reduce code duplication in all API functions below",
+  "local function http(client, callback, url_path, query_params, method, post_data, retry_policy, cancellation_token, handler_fn)",
+  "\treturn client.engine.http(client.config, url_path, query_params, method, post_data, retry_policy, cancellation_token, handler_fn)",
+  "end",
+  "",
+  "-- Operator that can be used to override the one set in the leaderboard.",
+  "--",
+  "-- - NO_OVERRIDE: Do not override the leaderboard operator.",
+  "-- - BEST: Override the leaderboard operator with BEST.",
+  "-- - SET: Override the leaderboard operator with SET.",
+  'M.APIOPERATOR_NO_OVERRIDE = "NO_OVERRIDE"',
+  'M.APIOPERATOR_BEST = "BEST"',
+  'M.APIOPERATOR_SET = "SET"',
+  "",
+  "--- create_client",
+  "-- Create a client.",
+  "-- @param config The client config table.",
+  "function M.create_client(config)",
+  "\treturn { config = config }",
+  "end",
+  "",
+  "--- update_account",
+  "-- Update fields in the current user's account.",
+  "-- @param client Client.",
+  "-- @param avatarUrl (string) A URL for an avatar image.",
+  "-- @param username (string) The username of the user's account.",
+  "",
+  "-- @param callback (function) Optional callback function",
+  "-- A coroutine is used and the result is returned if no callback function is provided.",
+  "-- @param retry_policy (function) Optional retry policy used specifically for this call or nil",
+  "-- @param cancellation_token (table) Optional cancellation token for this call",
+  "-- @return The result.",
+  "function M.update_account(client, avatarUrl, username, callback, retry_policy, cancellation_token)",
+  '\tassert(client, "You must provide a client")',
+  '\treturn http(client, callback, "/v2/account", nil, "PUT", nil, retry_policy, cancellation_token)',
+  "end",
+  "",
+  "--- add_friends",
+  "-- Add friends by ID or username to a user's account.",
+  "-- @param client Client.",
+  "-- @param ids_arr () The account id of a user.",
+  "-- @param usernames_arr () The account username of a user.",
+  "-- @param callback (function) Optional callback function",
+  "-- @param retry_policy (function) Optional retry policy used specifically for this call or nil",
+  "-- @param cancellation_token (table) Optional cancellation token for this call",
+  "-- @return The result.",
+  "function M.add_friends(client, ids_arr, usernames_arr, callback, retry_policy, cancellation_token)",
+  '\tassert(client, "You must provide a client")',
+  '\treturn http(client, callback, "/v2/friend", nil, "POST", nil, retry_policy, cancellation_token)',
+  "end",
+  "",
+  "return M",
+  "",
+].join("\n");
 
 function byName(members: LuaMember[]): Map<string, LuaMember> {
   return new Map(members.map((member) => [member.name, member]));
@@ -71,11 +232,11 @@ describe("parseLuaSurface over inline module shapes", () => {
 
   test("the module-local name is derived from the trailing return, never assumed to be M", () => {
     const surface = parseLuaSurface(
-      ["local nakama = {}", "", "function nakama.ping(host)", "end", "", "return nakama", ""].join(
+      ["local relay = {}", "", "function relay.ping(host)", "end", "", "return relay", ""].join(
         "\n",
       ),
     );
-    expect(surface.moduleLocal).toBe("nakama");
+    expect(surface.moduleLocal).toBe("relay");
     expect(surface.members).toEqual([
       { name: "ping", params: ["host"], varargs: false, doc: "", refusedDoc: false },
     ]);
@@ -145,8 +306,8 @@ describe("parseLuaSurface over inline module shapes", () => {
   });
 });
 
-describe("parseLuaSurface over the vendored nakama.util.log", () => {
-  const surface = parseLuaSurface(vendored("util/log.lua"));
+describe("parseLuaSurface over a logging module", () => {
+  const surface = parseLuaSurface(LOG_MODULE);
 
   test("the surface is exactly the four public log members", () => {
     expect(surface.moduleLocal).toBe("M");
@@ -175,8 +336,8 @@ describe("parseLuaSurface over the vendored nakama.util.log", () => {
   });
 });
 
-describe("parseLuaSurface over the vendored nakama.engine.defold", () => {
-  const surface = parseLuaSurface(vendored("engine/defold.lua"));
+describe("parseLuaSurface over an engine adapter module", () => {
+  const surface = parseLuaSurface(ENGINE_MODULE);
 
   test("the five public members parse on the same path as the other files", () => {
     expect(surface.members.map((member) => member.name)).toEqual([
@@ -188,7 +349,7 @@ describe("parseLuaSurface over the vendored nakama.engine.defold", () => {
     ]);
   });
 
-  test("`http` records all eight upstream parameters", () => {
+  test("`http` records all eight parameters", () => {
     expect(byName(surface.members).get("http")?.params).toEqual([
       "config",
       "url_path",
@@ -206,20 +367,20 @@ describe("parseLuaSurface over the vendored nakama.engine.defold", () => {
   });
 });
 
-describe("parseLuaSurface over the vendored nakama core", () => {
-  const surface = parseLuaSurface(vendored("nakama.lua"));
+describe("parseLuaSurface over a client API module", () => {
+  const surface = parseLuaSurface(CLIENT_MODULE);
 
-  test("the whole surface is 168 members: 156 callable plus 12 constant fields", () => {
+  test("the whole surface is 6 members: 3 callable plus 3 constant fields", () => {
     const callable = surface.members.filter((member) => member.params !== undefined);
-    expect(surface.members).toHaveLength(168);
-    expect(callable).toHaveLength(156);
+    expect(surface.members).toHaveLength(6);
+    expect(callable).toHaveLength(3);
   });
 
   test("the private `local function http` is not mistaken for the public surface", () => {
     expect(surface.members.map((member) => member.name)).not.toContain("http");
   });
 
-  test("`add_friends` keeps its retry/cancellation tail, which the fork drops", () => {
+  test("`add_friends` keeps its retry/cancellation tail", () => {
     expect(byName(surface.members).get("add_friends")?.params).toEqual([
       "client",
       "ids_arr",
@@ -289,8 +450,8 @@ describe("one blank line inside a comment run does not end the block", () => {
     expect(docOf(above("--- Summary", ""))).toBe("");
   });
 
-  test("the vendored `update_account` recovers the summary its interior blank hid", () => {
-    const doc = byName(parseLuaSurface(vendored("nakama.lua")).members).get("update_account")?.doc;
+  test("the client module's `update_account` recovers the summary its interior blank hid", () => {
+    const doc = byName(parseLuaSurface(CLIENT_MODULE).members).get("update_account")?.doc;
     expect(doc).toContain("Update fields in the current user's account.");
   });
 });
@@ -305,7 +466,7 @@ describe("a refused comment block is distinguishable from no comment at all", ()
   }
 
   test("a block opening with a plain `--` is recorded as refused, not as absent", () => {
-    expect(member("-- initialize boom")).toMatchObject({ doc: "", refusedDoc: true });
+    expect(member("-- initialize the board")).toMatchObject({ doc: "", refusedDoc: true });
   });
 
   test("a member with no comment above it refused nothing", () => {
@@ -316,27 +477,89 @@ describe("a refused comment block is distinguishable from no comment at all", ()
     expect(member("--- Start the console.")).toMatchObject({ refusedDoc: false });
   });
 
-  test("`format`'s `--`-only block in the vendored log module reads as refused", () => {
-    const format = byName(parseLuaSurface(vendored("util/log.lua")).members).get("format");
+  test("`format`'s `--`-only block in the logging module reads as refused", () => {
+    const format = byName(parseLuaSurface(LOG_MODULE).members).get("format");
     expect(format).toMatchObject({ doc: "", refusedDoc: true });
   });
 });
 
 describe("a module closing with `return setmetatable(<name>, {…})` is the same surface", () => {
-  const surface = parseLuaSurface(upstream("defold-input/source/upstream/in/accelerometer.lua"));
+  // A sensor module whose constructor returns a callable instance of its own and whose
+  // module functions fall back to a shared singleton.
+  const surface = parseLuaSurface(
+    [
+      "local M = {}",
+      "",
+      'local landscape = sys.get_config_int("display.width", 0) > sys.get_config_int("display.height", 0)',
+      "",
+      "local function clamp(x, min, max)",
+      "\treturn x",
+      "end",
+      "",
+      "function M.create(samplecount)",
+      "\tlocal instance = {}",
+      "",
+      "\tfunction instance.reset()",
+      "\tend",
+      "",
+      "\tfunction instance.on_input(action)",
+      "\tend",
+      "",
+      "\tfunction instance.adjusted()",
+      "\t\treturn vmath.vector3()",
+      "\tend",
+      "",
+      "\tfunction instance.on_window_resized(width, height)",
+      "\t\tlandscape = width > height",
+      "\tend",
+      "",
+      "\treturn setmetatable(instance, {",
+      "\t\t__call = function()",
+      "\t\t\treturn instance.adjusted()",
+      "\t\tend",
+      "\t})",
+      "end",
+      "",
+      "",
+      "local singleton = M.create()",
+      "",
+      "function M.reset(instance)",
+      "\tinstance = instance or singleton",
+      "\treturn instance.reset()",
+      "end",
+      "",
+      "function M.on_input(action, instance)",
+      "\tinstance = instance or singleton",
+      "\treturn instance.on_input(action)",
+      "end",
+      "",
+      "function M.adjusted(instance)",
+      "\tinstance = instance or singleton",
+      "\treturn instance.adjusted()",
+      "end",
+      "",
+      "function M.on_window_resized(width, height, instance)",
+      "\tinstance = instance or singleton",
+      "\treturn instance.on_window_resized(width, height)",
+      "end",
+      "",
+      "",
+      "return setmetatable(M, {",
+      "\t__call = function()",
+      "\t\treturn M.adjusted()",
+      "\tend",
+      "})",
+      "",
+    ].join("\n"),
+  );
 
-  test("the vendored accelerometer resolves M, not the instance its inner return closes over", () => {
+  test("a sensor module resolves M, not the instance its inner return closes over", () => {
     expect(surface.moduleLocal).toBe("M");
     expect(surface.members.map((member) => member.name)).toEqual([
       "create",
       "reset",
-      "calibrate",
       "on_input",
-      "calibrated",
       "adjusted",
-      "average",
-      "zero",
-      "latest",
       "on_window_resized",
     ]);
   });
@@ -394,19 +617,65 @@ describe("a metatable that could delegate members is refused, never parsed short
 });
 
 describe("an annotation stub file, whose module table the source never returns", () => {
-  const annotation = readFileSync(
-    join(DATA_DIR, "defold-daabbcc/source/upstream/daabbcc/annotation.lua"),
-    "utf8",
-  );
+  const annotation = [
+    "---@diagnostic disable: missing-return, unused-local",
+    "",
+    "---@class cellgrid",
+    "cellgrid = {",
+    "\tUPDATE_INCREMENTAL = 0,",
+    "\tUPDATE_FULLREBUILD = 1,",
+    "\tUPDATE_PARTIALREBUILD = 2",
+    "}",
+    "",
+    "---@alias rebuildType integer",
+    "---| 'UPDATE_INCREMENTAL' [# No rebuild. Default. ]",
+    "---| 'UPDATE_FULLREBUILD' [# Full Rebuild.   ]",
+    "",
+    "",
+    "---New empty group for AABBs.",
+    "---@param rebuild_type? rebuildType Rebuilds the tree after each update.",
+    "---@return integer group_id New group ID",
+    "function cellgrid.new_group(rebuild_type) end",
+    "",
+    "---Removes the group and all associated AABBs.",
+    "---@param group_id integer  Group ID",
+    "function cellgrid.remove_group(group_id) end",
+    "",
+    "---Insert AABB into the group.",
+    "---@param group_id integer Group ID",
+    "---@param x number x position of AABB.",
+    "---@param y number y position of AABB.",
+    "---@return integer aabb_id New aabb ID",
+    "function cellgrid.insert_aabb(group_id, x, y, width, height, category_bit) end",
+    "",
+    "---Casts a ray through the group.",
+    "---@param group_id integer Group ID",
+    "function cellgrid.raycast(group_id, start_x, start_y, end_x, end_y, mask_bits, get_manifold, get_bits) end",
+    "",
+    "---Stops or starts the update loop.",
+    "---@param state boolean",
+    "function cellgrid.run(state) end",
+    "",
+    "---Removes every group.",
+    "function cellgrid.reset() end",
+    "",
+  ].join("\n");
 
   test("without the option the source is refused, having no trailing `return <name>`", () => {
     expect(() => parseLuaSurface(annotation)).toThrow("no trailing `return <name>`");
   });
 
   test("an explicit module table reads every stub the annotation declares", () => {
-    const surface = parseLuaSurface(annotation, { moduleLocal: "daabbcc" });
-    expect(surface.moduleLocal).toBe("daabbcc");
-    expect(surface.members).toHaveLength(18);
+    const surface = parseLuaSurface(annotation, { moduleLocal: "cellgrid" });
+    expect(surface.moduleLocal).toBe("cellgrid");
+    expect(surface.members.map((member) => member.name)).toEqual([
+      "new_group",
+      "remove_group",
+      "insert_aabb",
+      "raycast",
+      "run",
+      "reset",
+    ]);
     expect(byName(surface.members).get("new_group")?.params).toEqual(["rebuild_type"]);
     expect(byName(surface.members).get("reset")?.params).toEqual([]);
     expect(byName(surface.members).get("raycast")?.params).toEqual([
@@ -422,16 +691,49 @@ describe("an annotation stub file, whose module table the source never returns",
   });
 
   test("the option names the table, so a wrong name reads an empty surface", () => {
-    expect(parseLuaSurface(annotation, { moduleLocal: "daabb" }).members).toEqual([]);
+    expect(parseLuaSurface(annotation, { moduleLocal: "cellgr" }).members).toEqual([]);
   });
 
-  test("the sharing annotation reads too, its stubs sitting under `share`", () => {
-    const share = parseLuaSurface(
-      readFileSync(join(DATA_DIR, "defold-sharing/source/upstream/share/api/share.lua"), "utf8"),
-      { moduleLocal: "share" },
+  test("a `---@meta` annotation reads too, its stubs sitting under its empty global", () => {
+    const outbox = parseLuaSurface(
+      [
+        "--[[",
+        "Outbox",
+        "Native extension to share application data using native sharing dialogs.",
+        "--]]",
+        "",
+        "---@meta",
+        "---@diagnostic disable: lowercase-global",
+        "---@diagnostic disable: missing-return",
+        "",
+        "---@class defold_api.outbox",
+        "outbox = {}",
+        "",
+        "---@class outbox.file_options",
+        "---@field type? string Data type. Default is `text/plain`.",
+        "---@field text? string Text to be shared.",
+        "",
+        "---Share text using a native sharing dialog.",
+        "---@param text string The text to share",
+        "function outbox.text(text) end",
+        "",
+        "---Share an image (with optional text) using a native sharing dialog. Supported formats depend on the platform:",
+        "---- Android - The image format must be supported by BitmapFactory.decodeByteArray().",
+        "---@param bytes string The image bytes to share",
+        "---@param text? string Optional text to share",
+        "---@param file_name? string Optional and only for HTML5 image name. Default is `file.png`.",
+        "function outbox.image(bytes, text, file_name) end",
+        "",
+        "---Share a file (with optional text) using a native sharing dialog.",
+        "---@param path string Full path to the file to share.",
+        "---@param text? string Optional text to share.",
+        "---@param options? outbox.file_options Optional and only for HTML5.",
+        "function outbox.file(path, text, options) end",
+      ].join("\n"),
+      { moduleLocal: "outbox" },
     );
-    expect(share.members.map((member) => member.name)).toEqual(["text", "image", "file"]);
-    expect(byName(share.members).get("image")?.params).toEqual(["bytes", "text", "file_name"]);
+    expect(outbox.members.map((member) => member.name)).toEqual(["text", "image", "file"]);
+    expect(byName(outbox.members).get("image")?.params).toEqual(["bytes", "text", "file_name"]);
   });
 });
 
@@ -542,21 +844,55 @@ describe("a returned table's constructor entries are members", () => {
   });
 
   test("with an explicit module table and no return, a constructor contributes nothing", () => {
-    const annotation = ["daabbcc = { A = 0 }", "function daabbcc.f(x) end"].join("\n");
+    const annotation = ["cellgrid = { A = 0 }", "function cellgrid.f(x) end"].join("\n");
     expect(
-      parseLuaSurface(annotation, { moduleLocal: "daabbcc" }).members.map((member) => member.name),
+      parseLuaSurface(annotation, { moduleLocal: "cellgrid" }).members.map((member) => member.name),
     ).toEqual(["f"]);
   });
 
-  test("the vendored yagames module reads its four readiness flags", () => {
-    const flags = parseLuaSurface(upstream("defold-yagames/source/upstream/yagames/yagames.lua"))
-      .members.slice(0, 4)
-      .map((member) => [member.name, member.params]);
+  test("a module opening on a multi-line constructor reads its four readiness flags first", () => {
+    const flags = parseLuaSurface(
+      [
+        "--- Games SDK for Defold.",
+        "-- @module arcade",
+        'local json = require("arcade.helpers.json")',
+        "",
+        "--",
+        "-- HELPERS",
+        "--",
+        "",
+        "local M = {",
+        "    sdk_ready = false,",
+        "    payments_ready = false,",
+        "    player_ready = false,",
+        "    banner_ready = false",
+        "}",
+        "",
+        "local init_callback = nil",
+        "",
+        "local function call_init_callback(self, err)",
+        "    if init_callback then",
+        "        local cb = init_callback",
+        "        init_callback = nil",
+        "        pcall(cb, self, err)",
+        "    end",
+        "end",
+        "",
+        "--- Initialize the SDK.",
+        "function M.init(callback)",
+        "    init_callback = callback",
+        "end",
+        "",
+        "return M",
+        "",
+      ].join("\n"),
+    ).members.map((member) => [member.name, member.params]);
     expect(flags).toEqual([
-      ["ysdk_ready", undefined],
+      ["sdk_ready", undefined],
       ["payments_ready", undefined],
       ["player_ready", undefined],
       ["banner_ready", undefined],
+      ["init", ["callback"]],
     ]);
   });
 });
@@ -659,11 +995,33 @@ describe("a column-0 colon method of the returned table is a method member", () 
   });
 
   test("an annotation file's class stubs stay out, its module table named by the caller", () => {
-    const box2d = parseLuaSurface(
-      readFileSync(join(DATA_DIR, "defold-box2d/source/upstream/box2d_header.lua"), "utf8"),
-      { moduleLocal: "box2d" },
+    const rigid = parseLuaSurface(
+      [
+        "--region rigid",
+        "rigid = {}",
+        "rigid.b2Shape = {",
+        "    e_circle = 0,",
+        "    e_edge = 1,",
+        "}",
+        "",
+        "---@param gravity vector3|nil the world gravity vector.",
+        "---@return RigidWorld",
+        "function rigid.NewWorld(gravity) end",
+        "",
+        "---@class RigidFixture",
+        "local RigidFixture = {}",
+        "",
+        "---@return number",
+        "function RigidFixture:GetType() end",
+        "",
+        "---@param sensor boolean",
+        "function RigidFixture:SetSensor(sensor) end",
+        "",
+      ].join("\n"),
+      { moduleLocal: "rigid" },
     );
-    expect(box2d.members.some((member) => member.method === true)).toBe(false);
+    expect(rigid.members.some((member) => member.method === true)).toBe(false);
+    expect(rigid.members.map((member) => member.name)).toEqual(["b2Shape", "NewWorld"]);
   });
 });
 
