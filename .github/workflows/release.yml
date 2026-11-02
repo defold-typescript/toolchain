@@ -150,9 +150,9 @@ jobs:
           done
 
       # After the stamp, so the check selects the data folder this version reads:
-      # an unstamped 0.0.0 CLI would select the newest folder instead. Live library
-      # data that fails here blocks the release until the data or the CLI is fixed.
-      - name: Library check against live data
+      # an unstamped 0.0.0 CLI would select the newest folder instead. Library data
+      # that fails here blocks the release until the data or the CLI is fixed.
+      - name: Library check against this repo's library data
         run: bun run library:check
 
       # Dependency order: deps before dependents (types and docs before cli).
