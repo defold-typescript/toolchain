@@ -4384,6 +4384,56 @@ describe("runResolve reports each library's status", () => {
     expect(unmatched).not.toHaveProperty("libraryStatus");
   });
 
+  test("each dependency is classified against the reviews of its own library", async () => {
+    const COMMIT_C = "c".repeat(40);
+    const urlOf = (name: string, commit: string) =>
+      `https://github.com/owner/${name}/archive/${commit}.zip`;
+    const zipOf = (name: string, commit: string, source: string) =>
+      writeZipArchive([gameProject(name), { name: `${name}-1/${name}/core.lua`, text: source }], {
+        comment: commit,
+      });
+    const folder = writeAuthoredLibraryData({
+      "first.core": 'declare module "first.core" {}\n',
+      "second.core": 'declare module "second.core" {}\n',
+    });
+    writeReviewedJson(folder, "first", {
+      ref: "1.0.0",
+      reviews: reviewsOf([zipOf("first", COMMIT_A, luaModule(1)), COMMIT_A]),
+    });
+    writeReviewedJson(folder, "second", {
+      ref: "1.0.0",
+      reviews: reviewsOf([zipOf("second", COMMIT_C, luaModule(1)), COMMIT_C]),
+    });
+    const firstUrl = urlOf("first", COMMIT_A);
+    const secondUrl = urlOf("second", COMMIT_B);
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${firstUrl}\ndependencies#1 = ${secondUrl}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      libraryDataDir: folder,
+      download: async (url) => ({
+        status: "ok",
+        bytes: url.includes("/first/")
+          ? zipOf("first", COMMIT_A, luaModule(1))
+          : zipOf("second", COMMIT_B, luaModule(1, "added")),
+      }),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(
+      Object.fromEntries(result.extensions.map(({ url, libraryStatus }) => [url, libraryStatus])),
+    ).toEqual({
+      [firstUrl]: { status: "exact", by: "commit" },
+      [secondUrl]: {
+        status: "unsupported",
+        closest: COMMIT_C,
+        members: ["second/core.lua#added"],
+      },
+    });
+  });
+
   test("a run with no library data gets no status", async () => {
     const { result } = await resolveAt(COMMIT_A, archiveOf(COMMIT_A, luaModule(1)), null);
 
