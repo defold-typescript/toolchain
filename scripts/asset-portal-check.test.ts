@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { copyFileSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import type {
   AssetPortalManifest,
   PortalAsset,
@@ -29,7 +29,7 @@ import {
   runAssetPortalCheckCli,
 } from "./asset-portal-check.ts";
 
-const DATA_DIR = newestDataFolder(join(import.meta.dir, "..", "packages", "library-types"));
+const DATA_DIR = LIBRARY_DATA_DIR;
 
 const SYNCED_AT = "2026-10-21T00:00:00.000Z";
 const DAY_MS = 86_400_000;

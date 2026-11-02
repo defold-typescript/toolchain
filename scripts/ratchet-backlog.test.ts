@@ -10,9 +10,9 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { dirname, join } from "node:path";
 import { FLOOR_MANIFEST_FILE } from "../packages/cli/src/library/fidelity-floor.ts";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import type {
   AssetPortalManifest,
   PortalEntry,
@@ -58,9 +58,9 @@ const LINE_SHAPES: Record<string, RegExp> = {
     /^[A-Za-z0-9._-]+\.json: (script-api|native-untyped|pure-lua-annotated|pure-lua):[^\s:]+:https?:\/\/\S+$/,
 };
 
-// Spelled out rather than imported so relocating the library data reds this suite.
-const MANIFEST_DIR = join("packages", "library-types");
-const COMMITTED_DATA = newestDataFolder(join(REPO_ROOT, MANIFEST_DIR));
+// Taken from package-root, the one module that names where the library data lives,
+// so a library data change runs this suite.
+const COMMITTED_DATA = LIBRARY_DATA_DIR;
 
 // The registries the portal probe joins its manifest against, copied from the
 // committed data folder so a temp one resolves the same pins the repo does. The
@@ -516,7 +516,7 @@ describe("CLI contract — what the planning pass consumes", () => {
   for (const source of RATCHET_SOURCES) {
     test(`\`${source.id}\` exits 0 and prints only conforming lines`, () => {
       const proc = Bun.spawnSync(
-        ["bun", "scripts/ratchet-backlog.ts", source.id, "--data", join(MANIFEST_DIR, "data")],
+        ["bun", "scripts/ratchet-backlog.ts", source.id, "--data", dirname(LIBRARY_DATA_DIR)],
         { cwd: REPO_ROOT },
       );
       expect(proc.exitCode).toBe(0);

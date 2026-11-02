@@ -11,7 +11,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { newestDataFolder } from "../packages/cli/src/library/data-folder.ts";
+import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import type {
   AssetPortalManifest,
   PortalEntry,
@@ -27,7 +27,7 @@ import {
   syncAssetPortalScriptApi,
 } from "./sync-asset-portal-script-api.ts";
 
-const REAL_DATA_DIR = newestDataFolder(join(import.meta.dir, "..", "packages", "library-types"));
+const REAL_DATA_DIR = LIBRARY_DATA_DIR;
 const SYNCED_AT = "2026-10-21T00:00:00.000Z";
 
 const ASTAR_SCRIPT_API = `- name: astar
