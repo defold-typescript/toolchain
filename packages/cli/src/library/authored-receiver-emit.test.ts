@@ -2,8 +2,10 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
 import { transpileProject } from "@defold-typescript/transpiler";
 import { FIXTURE_DATA_DIR, writeAuthoredLibraryData } from "../library-data-fixture";
+import { LIBRARY_DATA_DIR, LIBRARY_TYPES_ROOT } from "./package-root";
 import { printCorpus } from "./print-corpus";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
+import { readLibraryExpectations } from "./target-expectations";
 
 const IMPORT_SPECIFIER = /^\s*import\s[^;]*?\bfrom\s+['"]([^'"]+)['"]/gm;
 
@@ -159,6 +161,15 @@ async function consumerLua(dataDir: string, moduleId: string, consumer: string[]
   const byModule = new Map(readAuthoredTargets(dataDir).map((target) => [target.moduleId, target]));
   const target = byModule.get(moduleId);
   if (target === undefined) throw new Error(`no authored target ${moduleId}`);
+  return transpileWithSiblings(corpus, target, byModule, consumer);
+}
+
+function transpileWithSiblings(
+  corpus: ReadonlyMap<string, string>,
+  target: AuthoredTarget,
+  byModule: Map<string, AuthoredTarget>,
+  consumer: string[],
+) {
   const project = transpileProject({
     files: {
       ...declarationWithSiblings(corpus, target, byModule),
@@ -307,4 +318,28 @@ describe("each authored receiver shape emits the call form its declaration produ
     ]);
     expect(lua).toMatchSnapshot();
   });
+});
+
+const SHIPPED_CORPUS = await printCorpus(LIBRARY_DATA_DIR);
+
+describe("each shipped authored declaration emits the receiver form its expectation records", () => {
+  const authored = readAuthoredTargets(LIBRARY_DATA_DIR);
+  const targets = new Map(authored.map((target) => [target.namespace, target]));
+  const byModule = new Map(authored.map((target) => [target.moduleId, target]));
+
+  for (const [namespace, { receiverEmit }] of readLibraryExpectations(
+    LIBRARY_TYPES_ROOT,
+    "authored",
+  )) {
+    if (receiverEmit === undefined) continue;
+
+    test(`${namespace}: a consumer transpiles with the call forms the declaration produces`, () => {
+      const target = targets.get(namespace);
+      expect(target).toBeDefined();
+      if (target === undefined) return;
+
+      const lua = transpileWithSiblings(SHIPPED_CORPUS, target, byModule, receiverEmit.consumer);
+      expect(lua).toMatchSnapshot(namespace);
+    });
+  }
 });
