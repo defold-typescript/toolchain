@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/whiteboxdev/library-defold-persist",
   "license": "Zlib",
+  "follows": "none",
   "forks": [
     {
       "authored": "fork/persist.persist.d.ts",

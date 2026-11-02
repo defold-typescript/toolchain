@@ -37,6 +37,29 @@ sentinel.init({
   on_hard_crash: () => {},
 });
 
+// The soft callback's first return value feeds the same kind of log line, and
+// Lua concatenates a number as readily as a string.
+sentinel.init({
+  dsn: "https://key@o0.ingest.sentry.io/0",
+  on_soft_crash: (info) => info.message,
+});
+
+sentinel.init({
+  dsn: "https://key@o0.ingest.sentry.io/0",
+  on_soft_crash: () => 0,
+});
+
+sentinel.init({
+  dsn: "https://key@o0.ingest.sentry.io/0",
+  // @ts-expect-error a callback returning nothing makes the log line after it raise.
+  on_soft_crash: () => {},
+});
+
+sentinel.init({
+  dsn: "https://key@o0.ingest.sentry.io/0",
+  on_hard_crash: () => 0,
+});
+
 // Values are `tostring`ed when an event is built, so scalars of any kind are kept.
 sentinel.set_tag("level", 3);
 sentinel.set_extra("checkpoint", "boss_room");

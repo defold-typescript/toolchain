@@ -61,6 +61,10 @@
     {
       "includes": ["docs/examples/**"],
       "linter": { "rules": { "suspicious": { "noDoubleEquals": "off" } } }
+    },
+    {
+      "includes": ["packages/library-types/data/*/*/reviewed.json"],
+      "json": { "formatter": { "expand": "always" } }
     }
   ]
 }
