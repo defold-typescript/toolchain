@@ -28,13 +28,15 @@ the same script (currently empty); the built-in message catalog
 `messages_doc.json` stays hand-vendored (see below) and is not part of
 `SYNC_MANIFEST`.
 
-The extension goldens take no fixture from this directory:
-`../scripts/extension-goldens.ts` reads each golden's doc from
-`packages/library-types/defold-extensions/api-doc/<ns>.json`, the conversion of
-the extension's `.script_api` at its `defold-extensions.json` pin, regen writes
-`../extension-goldens/<ns>.d.ts` from it, and a parity test holds the `resolve`
-emitter to those goldens. No engine surface imports them, and they are not
-published.
+`extension-docs/<ns>.json` is a copy of the conversion of a Defold extension's
+`.script_api` at its `defold-extensions.json` pin.
+`../scripts/extension-goldens.ts` reads the `iac`, `iap`, `push` and `webview`
+docs, regen writes `../extension-goldens/<ns>.d.ts` from them, and a parity test
+holds the `resolve` emitter to those goldens; `../src/emit-dts.test.ts` also
+reads `steam` and `spine.gui`. Re-pinning one of these extensions means
+re-copying its doc from the data repo's
+`data/<version>/defold-extensions/api-doc/`. No engine surface imports them, and
+they are not published.
 
 Adding a synced fixture to the published types is still a separate, incremental
 edit: wire its `MODULE_MANIFEST` row in `../scripts/regen.ts` and commit the

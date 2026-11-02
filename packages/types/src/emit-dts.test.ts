@@ -2,8 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import * as ts from "typescript";
-import iapDoc from "../../library-types/defold-extensions/api-doc/iap.json" with { type: "json" };
-import pushDoc from "../../library-types/defold-extensions/api-doc/push.json" with { type: "json" };
 import b2dDoc from "../fixtures/b2d_doc.json" with { type: "json" };
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
@@ -45,6 +43,8 @@ import resource114Doc from "../fixtures/defold-1.14.0/resource_doc.json" with { 
 import sprite114Doc from "../fixtures/defold-1.14.0/sprite_doc.json" with { type: "json" };
 import sys114Doc from "../fixtures/defold-1.14.0/sys_doc.json" with { type: "json" };
 import window114Doc from "../fixtures/defold-1.14.0/window_doc.json" with { type: "json" };
+import iapDoc from "../fixtures/extension-docs/iap.json" with { type: "json" };
+import pushDoc from "../fixtures/extension-docs/push.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
@@ -6771,10 +6771,7 @@ describe("engine index base notes", () => {
 });
 
 describe("library index base notes", () => {
-  const CURATED_API_DOC_DIR = resolve(
-    import.meta.dir,
-    "../../library-types/defold-extensions/api-doc",
-  );
+  const CURATED_API_DOC_DIR = resolve(import.meta.dir, "../fixtures/extension-docs");
   const curatedDoc = (page: string): unknown =>
     JSON.parse(readFileSync(join(CURATED_API_DOC_DIR, `${page}.json`), "utf8"));
 
