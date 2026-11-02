@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, posix, win32 } from "node:path";
 import { writeZipArchive } from "../../../types/test/zip-fixture";
 import type { DownloadExtensionArchive } from "../extension-archive";
 import { LibraryDataError, readLibraryData, readLibraryReviews } from "./library-data";
 import { reviewLibraries } from "./library-review";
-import { type UpdateForge, updateLibraries } from "./library-update";
+import { reportedReviewedPath, type UpdateForge, updateLibraries } from "./library-update";
 
 const PIN_COMMIT = "a".repeat(40);
 const NEW_COMMIT = "b".repeat(40);
@@ -409,5 +409,28 @@ describe("updateLibraries", () => {
       expect(forgeReads).toEqual([]);
       expect(downloaded).toEqual([]);
     });
+  });
+});
+
+describe("reportedReviewedPath", () => {
+  test("keeps the network root of a UNC data folder", () => {
+    const folder = "\\\\server\\share\\data\\0.1.0";
+
+    const reported = reportedReviewedPath(folder, "first", win32);
+
+    expect(reported).toBe("//server/share/data/0.1.0/first/reviewed.json");
+    expect(win32.resolve(reported)).toBe(win32.join(folder, "first", "reviewed.json"));
+  });
+
+  test("keeps the drive of a Windows data folder", () => {
+    expect(reportedReviewedPath("C:\\data\\0.1.0", "first", win32)).toBe(
+      "C:/data/0.1.0/first/reviewed.json",
+    );
+  });
+
+  test("keeps a backslash in a POSIX folder name", () => {
+    expect(reportedReviewedPath("/tmp/a\\b/0.1.0", "first", posix)).toBe(
+      "/tmp/a\\b/0.1.0/first/reviewed.json",
+    );
   });
 });
