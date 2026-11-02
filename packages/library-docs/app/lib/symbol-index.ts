@@ -1,0 +1,89 @@
+import { htmlToDocText } from "@defold-typescript/types";
+import {
+  type ApiPage,
+  apiModuleSymbols,
+  functionAnchorText,
+  groupOverloadForms,
+  qualify,
+} from "./api-surface";
+import { slugify } from "./headings";
+import { stripPlatformMarkers } from "./platform-icons";
+
+export interface SymbolEntry {
+  /** Plain-text brief for the tooltip body. */
+  brief: string;
+  /**
+   * The `/api/<namespace>` page the symbol documents, with a `#anchor` for
+   * members so a tooltip or cross-link can jump straight to the symbol's
+   * heading. The bare-namespace entry has no anchor.
+   */
+  route: string;
+}
+
+/**
+ * The heading anchor every member of a page renders under, keyed
+ * `<kind>:<name>` with the {@link apiModuleSymbols} kind. A function anchors at
+ * its overload group's heading, which is the only heading an overloaded name
+ * renders, and a function whose signature changed anchors at its current form;
+ * every other member slugs its own signature. The symbol index and the search
+ * index both route through this map, so a tooltip link and a search hit land on
+ * the same heading.
+ */
+export function memberAnchors(page: ApiPage): Map<string, string> {
+  const symbols = apiModuleSymbols(page, page.translations, page.signatures);
+  const functionAnchors = new Map(
+    groupOverloadForms(
+      symbols.filter((s) => s.kind === "function"),
+      page.availability?.versions ?? [],
+    ).map((group) => [group[0]?.name, functionAnchorText(group)] as const),
+  );
+  const anchors = new Map<string, string>();
+  for (const symbol of symbols) {
+    anchors.set(
+      `${symbol.kind}:${symbol.name}`,
+      slugify(
+        (symbol.kind === "function" ? functionAnchors.get(symbol.name) : undefined) ??
+          symbol.signature,
+      ),
+    );
+  }
+  return anchors;
+}
+
+/**
+ * Flat lookup registry from an inline-code key to the symbol it documents,
+ * derived from the already-parsed API surface. The namespace itself (`go`) and
+ * every function/variable/constant/property (`go.get_position`) become keys.
+ * Member routes carry the heading-slug anchor so a same-page cross-reference
+ * (e.g. `camera.screen_to_world` mentioned inside `camera.world_to_screen`)
+ * jumps to the right section rather than the top of the page.
+ */
+export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> {
+  const index: Record<string, SymbolEntry> = {};
+  for (const page of pages) {
+    const { namespace, route, module } = page;
+    index[namespace] = {
+      brief: stripPlatformMarkers(htmlToDocText(module.description || module.brief)),
+      route,
+    };
+    const anchors = memberAnchors(page);
+    const valueKeys = new Set<string>();
+    for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
+      const key = qualify(namespace, symbol.name);
+      // A type row sharing its key with a value member (`vmath.vector`, the
+      // function and the type it returns) leaves the key to the value. One key
+      // cannot name both; signatures link the type through its own anchor in
+      // `apiSignatureSymbolLinks`.
+      if (symbol.kind === "type") {
+        if (valueKeys.has(key)) continue;
+      } else {
+        valueKeys.add(key);
+      }
+      index[key] = {
+        brief: stripPlatformMarkers(symbol.docMarkdown),
+        route: `${route}#${anchors.get(`${symbol.kind}:${symbol.name}`)}`,
+      };
+    }
+  }
+  return index;
+}
