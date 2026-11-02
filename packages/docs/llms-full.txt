@@ -7629,6 +7629,8 @@ game would depend on, and `library check` checks a directory of that data the wa
 the running CLI reads it, so you can write and validate library data without a
 toolchain checkout. `library update` finds what each library's upstream has published
 since its pin. Library data is added by a PR to
+[`defold-typescript/toolchain`](https://github.com/defold-typescript/toolchain)
+under `packages/library-types/data/`, and published from there to
 [`defold-typescript/library-data`](https://github.com/defold-typescript/library-data).
 
 ```sh

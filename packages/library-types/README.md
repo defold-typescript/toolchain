@@ -1,7 +1,8 @@
 # @defold-typescript/library-types
 
-Library data is edited at https://github.com/defold-typescript/library-data, and
-this folder is the copy the toolchain's tests read until it is removed.
+Library data is edited here, in `data/`, and published to
+https://github.com/defold-typescript/library-data, which `resolve` downloads it
+from.
 
 Vendored TypeScript type declarations for a curated set of popular Defold Lua
 libraries, core-type-renamed against
@@ -67,7 +68,9 @@ declarations.
 - `api-doc/` and `fidelity/` — the reports the library tools regenerate beside
   `data/`: ref-doc JSON extracted from each declaration, and each module's
   coverage.
-- `NOTICE` — upstream attribution for every vendored library.
+- `NOTICE` — upstream attribution for every vendored library, and for the
+  extension docs and portal listings the data folders hold.
+- `LICENSE` — the MIT license the data is published under.
 
 Every library sync, parity and upstream-check tool takes `--data <dir>`, the
 directory holding the version folders; this package's scripts pass `--data data`.
