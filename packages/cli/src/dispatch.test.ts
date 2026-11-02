@@ -10143,7 +10143,7 @@ describe("dispatch library update", () => {
 
   const download: DownloadExtensionArchive = async (url) => {
     if (url === `${REPO}/archive/1.0.0.zip`) return { status: "ok", bytes: PINNED_ARCHIVE };
-    if (url === `${REPO}/archive/1.1.0.zip`) return { status: "ok", bytes: CHANGED_ARCHIVE };
+    if (url === `${REPO}/archive/${NEWER}.zip`) return { status: "ok", bytes: CHANGED_ARCHIVE };
     throw new Error("HTTP 404");
   };
 
@@ -10166,18 +10166,23 @@ describe("dispatch library update", () => {
     };
   };
 
-  const run = (args: string[], io: ReturnType<typeof captureStreams>["io"]) =>
+  const run = (
+    args: string[],
+    io: ReturnType<typeof captureStreams>["io"],
+    archives: DownloadExtensionArchive = download,
+  ) =>
     dispatch(["library", "update", ...args], io, {
       cliVersion: "0.1.5",
       resolveInternals: {
         libraryDataDir: null,
-        download,
+        download: archives,
         forge,
         cacheDir: path.join(base, "cache"),
       },
     });
 
   const reviewedPath = (folder: string): string => path.join(dataDir, folder, "reviewed.json");
+  const reportedDir = (): string => dataDir.split(path.sep).join("/");
 
   const writeLibrary = (folder: string): void => {
     mkdirSync(path.join(dataDir, folder), { recursive: true });
@@ -10220,12 +10225,30 @@ describe("dispatch library update", () => {
       command: "library",
       ok: true,
       subcommand: "update",
-      dataFolder: dataDir,
+      dataFolder: reportedDir(),
       written: [],
       updated: [{ library: "first", status: "differs", recorded: [], differs: [NEWER] }],
       failed: [],
     });
     expect(readFileSync(reviewedPath("first"), "utf8")).toBe(before);
+  });
+
+  test("--json names the file it changed by an absolute forward-slash path", async () => {
+    const { io, out } = captureStreams();
+
+    const code = await run(["--data", dataFlag(), "--json"], io, async (url) => {
+      if (url === `${REPO}/archive/${NEWER}.zip`) return { status: "ok", bytes: PINNED_ARCHIVE };
+      throw new Error("HTTP 404");
+    });
+
+    expect(code).toBe(0);
+    const { written } = JSON.parse(out()) as { written: string[] };
+    expect(written).toHaveLength(1);
+    const [changed = ""] = written;
+    expect(path.isAbsolute(changed)).toBe(true);
+    expect(changed).not.toContain("\\");
+    expect(existsSync(changed)).toBe(true);
+    expect(path.resolve(changed)).toBe(path.resolve(reviewedPath("first")));
   });
 
   test("the plain report names each commit and the counts", async () => {
@@ -10238,7 +10261,7 @@ describe("dispatch library update", () => {
     expect(out()).toBe(
       [
         `first: differs at ${NEWER}`,
-        `defold-typescript library update: ${dataDir}: 1 checked, 0 failed`,
+        `defold-typescript library update: ${reportedDir()}: 1 checked, 0 failed`,
         "",
       ].join("\n"),
     );
@@ -10265,7 +10288,7 @@ describe("dispatch library update", () => {
     expect(code).toBe(1);
     expect(JSON.parse(out())).toMatchObject({
       ok: false,
-      error: `library update: 1 failed in ${dataDir}`,
+      error: `library update: 1 failed in ${reportedDir()}`,
       subcommand: "update",
       updated: [{ library: "first", status: "differs" }],
       failed: [{ library: "second" }],

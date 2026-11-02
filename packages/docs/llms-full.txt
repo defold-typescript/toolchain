@@ -7718,9 +7718,10 @@ named by its folder. `follows` in `library.json` says what to watch:
 | `none` | None. The library is held and no request is made. |
 
 A commit a review already lists is skipped with no download. Each other commit's
-archive is hashed as [`library review`](#what-library-review-records) hashes it. When
-all the hashes match a review, the commit is added to that review, and `ref` stays as
-it was. When they do not, the commit is reported and nothing is written for it.
+archive is downloaded by its commit, so a tag that moves cannot change what is hashed,
+and hashed as [`library review`](#what-library-review-records) hashes it. When all the
+hashes match a review, the commit is added to that review, and `ref` stays as it was.
+When they do not, the commit is reported and nothing is written for it.
 
 Each library reads as one of these:
 
@@ -7890,7 +7891,7 @@ an archive that names none. A run with no failure has `"ok": true` and `written`
 the absolute path of each `reviewed.json` it changed.
 
 With `--json`, `library update` writes the same shape with `updated` in place of
-`reviewed`:
+`reviewed`, and its paths use forward slashes on every platform:
 
 ```json
 {
