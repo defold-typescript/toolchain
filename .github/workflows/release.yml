@@ -9,12 +9,13 @@
 # Re-running the workflow on an existing tag is safe: the real publish step is
 # idempotent — it skips any package whose target version is already on npm.
 #
-# Ordering: require CI green (read the Checks API for this exact commit; abort
-# if CI is absent, still running, or red) -> install (frozen) -> build -> jq
-# stamp (version + workspace dep rewrite) -> library check against live data ->
+# Ordering: require CI's full scope green (scripts/release-ci-gate.ts reads the
+# Checks API for this exact commit; waits for a full-scope run, aborts if one is
+# red or none finishes in time) -> install (frozen) -> build -> jq stamp
+# (version + workspace dep rewrite) -> library check against live data ->
 # dry-run -> publish. The publish never re-runs typecheck/lint/test: it trusts the
-# CI run that already validated this commit on the full OS matrix and refuses to
-# publish if that run is not green, so the checks are done exactly once.
+# CI run that validated this commit on the full OS matrix and refuses to publish
+# if that run is not green.
 #   - Build is load-bearing: cli/tstl-plugin resolve
 #     @defold-typescript/transpiler through its built dist/ (its `types`
 #     export). Mirrors ci.yml.
@@ -86,38 +87,19 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      # Refuse to publish unless ci.yml already finished green on THIS commit.
-      # The release never re-runs the checks; it reads CI's result from the
-      # Checks API (keyed by SHA) and aborts if CI is absent, still running, or
-      # red. ci.yml runs lint-typecheck + a 3-OS `test` matrix, so the names are
-      # `lint-typecheck` and `test (<os>)`. A commit pushed on a branch and then
-      # on main carries one CI run per push, and the Checks API returns them all,
-      # so only the newest check of each name (the highest id) counts: an earlier
-      # cancelled run cannot veto a later green one, and a later red one still blocks.
-      - name: Require CI green on this commit
+      # Refuse to publish until ci.yml's full scope has passed on THIS commit. The
+      # release never re-runs the checks; the gate script reads CI's results from
+      # the Checks API (keyed by SHA) and waits while a full-scope check is
+      # missing, skipped or still running, so a tag on a commit whose CI ran only
+      # the library scopes waits for the full run the tag push starts. Only the
+      # newest run of each check counts: an earlier cancelled run cannot veto a
+      # later green one, and a later red one still blocks.
+      - name: Require CI's full scope green on this commit
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          sha="${{ github.sha }}"
-          runs=$(gh api "repos/${{ github.repository }}/commits/$sha/check-runs?per_page=100" \
-                   --jq '[.check_runs[] | select(.name | test("^lint-typecheck$|^test "))] | group_by(.name) | map(max_by(.id))')
-          total=$(jq 'length' <<<"$runs")
-          completed=$(jq '[.[] | select(.status=="completed")] | length' <<<"$runs")
-          green=$(jq '[.[] | select(.status=="completed" and .conclusion=="success")] | length' <<<"$runs")
-          if [ "$total" -eq 0 ]; then
-            echo "::error::No CI check runs on $sha. Tag a commit whose CI has run; refusing to publish."
-            exit 1
-          fi
-          if [ "$completed" -ne "$total" ]; then
-            echo "::error::CI still running on $sha ($completed/$total complete). Re-run this release once CI finishes."
-            exit 1
-          fi
-          if [ "$green" -ne "$total" ]; then
-            echo "::error::CI is not green on $sha ($green/$total passed); refusing to publish:"
-            jq -r '.[] | select(.conclusion!="success") | "  - \(.name): \(.conclusion)"' <<<"$runs"
-            exit 1
-          fi
-          echo "CI green on $sha ($green/$total). Proceeding to publish."
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: bun scripts/release-ci-gate.ts --repo "$REPO" --sha "$SHA"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
