@@ -12,10 +12,12 @@
 # Ordering: require CI's full scope green (scripts/release-ci-gate.ts reads the
 # Checks API for this exact commit; waits for a full-scope run, aborts if one is
 # red or none finishes in time) -> install (frozen) -> build -> jq stamp
-# (version + workspace dep rewrite) -> library check against live data ->
-# dry-run -> publish. The publish never re-runs typecheck/lint/test: it trusts the
-# CI run that validated this commit on the full OS matrix and refuses to publish
-# if that run is not green.
+# (version + workspace dep rewrite) -> library check against live data -> require
+# the data repo to hold this commit's library data (scripts/release-data-gate.ts
+# compares defold-typescript/library-data's data/ with this commit's; waits up to
+# 10 minutes for library-data-publish) -> dry-run -> publish. The publish never
+# re-runs typecheck/lint/test: it trusts the CI run that validated this commit on
+# the full OS matrix and refuses to publish if that run is not green.
 #   - Build is load-bearing: cli/tstl-plugin resolve
 #     @defold-typescript/transpiler through its built dist/ (its `types`
 #     export). Mirrors ci.yml.
@@ -136,6 +138,16 @@ jobs:
       # that fails here blocks the release until the data or the CLI is fixed.
       - name: Library check against this repo's library data
         run: bun run library:check
+
+      # The CLI reads its library data from the data repo's data/, which
+      # library-data-publish writes after a data change reaches main. Refuse to
+      # publish until that folder holds exactly this commit's library data, so a tag
+      # pushed right after a data merge waits for that merge's publish.
+      - name: Require the data repo to hold this commit's library data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: bun scripts/release-data-gate.ts --repo defold-typescript/library-data --sha "$SHA"
 
       # Dependency order: deps before dependents (types and docs before cli).
       # Idempotent like the real publish below: `npm publish --dry-run` still queries the registry and errors
