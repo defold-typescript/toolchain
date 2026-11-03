@@ -10,6 +10,7 @@ import {
   parseArgs,
   releaseReadiness,
   releaseTagsAt,
+  releaseTarget,
   resolveReleaseTarget,
   sleepSync,
 } from "./release.ts";
@@ -128,72 +129,137 @@ describe("resolveReleaseTarget", () => {
 });
 
 describe("releaseReadiness", () => {
+  const TAGGED_BODY = [
+    "# Changelog",
+    "",
+    "## v0.20.5",
+    "",
+    "### Fixed",
+    "",
+    "- a",
+    "",
+    "## v0.20.4",
+    "",
+    "### Fixed",
+    "",
+    "- old",
+    "",
+  ].join("\n");
+
   test("no release tag on HEAD projects the pending target over the latest tag", () => {
-    expect(releaseReadiness("## v0.20.5\n\n### Fixed\n", ["v0.20.4"], [])).toEqual({
+    expect(releaseReadiness("## v0.20.5\n\n### Fixed\n", ["v0.20.4"], [], null)).toEqual({
       kind: "pending",
       version: "0.20.5",
     });
   });
 
-  test("no release tag on HEAD still throws for an already-tagged top heading", () => {
-    expect(() => releaseReadiness("## v0.20.5\n", ["v0.20.4", "v0.20.5"], [])).toThrow(
+  test("no release tag on HEAD with the released top section untouched is idle", () => {
+    expect(releaseReadiness(TAGGED_BODY, ["v0.20.4", "v0.20.5"], [], TAGGED_BODY)).toEqual({
+      kind: "idle",
+      latest: "v0.20.5",
+    });
+  });
+
+  test("an already-tagged top heading still throws when the tagged body cannot be read", () => {
+    expect(() => releaseReadiness(TAGGED_BODY, ["v0.20.4", "v0.20.5"], [], null)).toThrow(
       /strictly greater/,
     );
   });
 
+  test("an entry added under the released top heading throws", () => {
+    const body = TAGGED_BODY.replace("- a\n", "- a\n- b\n");
+    expect(() => releaseReadiness(body, ["v0.20.4", "v0.20.5"], [], TAGGED_BODY)).toThrow(
+      /differs from the one tagged v0\.20\.5/,
+    );
+  });
+
+  test("an edit to a released section below the top one leaves the state idle", () => {
+    const body = TAGGED_BODY.replace("- old", "- older");
+    expect(releaseReadiness(body, ["v0.20.4", "v0.20.5"], [], TAGGED_BODY)).toEqual({
+      kind: "idle",
+      latest: "v0.20.5",
+    });
+  });
+
+  test("a top heading below the latest tag throws even with a matching tagged body", () => {
+    const body = TAGGED_BODY.replace("## v0.20.5", "## v0.20.3").replace(
+      "## v0.20.4",
+      "## v0.20.2",
+    );
+    expect(() => releaseReadiness(body, ["v0.20.4"], [], body)).toThrow(/strictly greater/);
+  });
+
   test("no release tag on HEAD still throws for a top heading below the latest tag", () => {
-    expect(() => releaseReadiness("## v0.20.3\n", ["v0.20.4"], [])).toThrow(/strictly greater/);
+    expect(() => releaseReadiness("## v0.20.3\n", ["v0.20.4"], [], null)).toThrow(
+      /strictly greater/,
+    );
   });
 
   test("a release tag on HEAD matching the top heading is the released state", () => {
-    expect(releaseReadiness("## v0.20.5\n", ["v0.20.4", "v0.20.5"], ["v0.20.5"])).toEqual({
+    expect(releaseReadiness("## v0.20.5\n", ["v0.20.4", "v0.20.5"], ["v0.20.5"], null)).toEqual({
       kind: "released",
       tag: "v0.20.5",
     });
   });
 
   test("non-release tags on HEAD are filtered out, leaving the pending state", () => {
-    expect(releaseReadiness("## v0.20.5\n", ["v0.20.4"], ["nightly", "v1.2"])).toEqual({
+    expect(releaseReadiness("## v0.20.5\n", ["v0.20.4"], ["nightly", "v1.2"], null)).toEqual({
       kind: "pending",
       version: "0.20.5",
     });
   });
 
   test("a heading above the release tag on HEAD is pending, not a mismatch", () => {
-    expect(releaseReadiness("## v0.21.0\n", ["v0.20.5"], ["v0.20.5"])).toEqual({
+    expect(releaseReadiness("## v0.21.0\n", ["v0.20.5"], ["v0.20.5"], null)).toEqual({
       kind: "pending",
       version: "0.21.0",
     });
   });
 
   test("a heading at or below the release tag on HEAD still throws", () => {
-    expect(() => releaseReadiness("## v0.20.3\n", ["v0.20.5"], ["v0.20.5"])).toThrow(
+    expect(() => releaseReadiness("## v0.20.3\n", ["v0.20.5"], ["v0.20.5"], null)).toThrow(
       /strictly greater/,
     );
   });
 
   test("several release tags on HEAD accept the one the top heading names", () => {
     expect(
-      releaseReadiness("## v0.20.5\n", ["v0.20.4", "v0.20.5"], ["v0.20.5", "v0.20.4"]),
+      releaseReadiness("## v0.20.5\n", ["v0.20.4", "v0.20.5"], ["v0.20.5", "v0.20.4"], null),
     ).toEqual({ kind: "released", tag: "v0.20.5" });
   });
 
   test("several release tags on HEAD leave a heading above them all pending", () => {
-    expect(releaseReadiness("## v0.21.0\n", ["v0.20.5"], ["v0.20.5", "v0.20.4"])).toEqual({
+    expect(releaseReadiness("## v0.21.0\n", ["v0.20.5"], ["v0.20.5", "v0.20.4"], null)).toEqual({
       kind: "pending",
       version: "0.21.0",
     });
   });
 
   test("several release tags on HEAD throw when the heading fell below them", () => {
-    expect(() => releaseReadiness("## v0.20.3\n", ["v0.20.5"], ["v0.20.5", "v0.20.4"])).toThrow(
-      /strictly greater/,
-    );
+    expect(() =>
+      releaseReadiness("## v0.20.3\n", ["v0.20.5"], ["v0.20.5", "v0.20.4"], null),
+    ).toThrow(/strictly greater/);
   });
 
   test("a changelog with no version heading throws even with a tag on HEAD", () => {
-    expect(() => releaseReadiness("# Changelog\n", ["v0.20.5"], ["v0.20.5"])).toThrow(
+    expect(() => releaseReadiness("# Changelog\n", ["v0.20.5"], ["v0.20.5"], null)).toThrow(
       /no ## vX\.Y\.Z version heading/,
+    );
+  });
+});
+
+describe("releaseTarget", () => {
+  test("a pending state targets its projected version", () => {
+    expect(releaseTarget({ kind: "pending", version: "0.20.6" })).toBe("0.20.6");
+  });
+
+  test("a released state targets its tag without the v", () => {
+    expect(releaseTarget({ kind: "released", tag: "v0.20.5" })).toBe("0.20.5");
+  });
+
+  test("an idle state has nothing to release", () => {
+    expect(() => releaseTarget({ kind: "idle", latest: "v0.20.5" })).toThrow(
+      /nothing to release since v0\.20\.5/,
     );
   });
 });
@@ -255,9 +321,21 @@ describe("committed changelog is release-ready", () => {
   const tagsAtHead = repoTagsAtHead(spawnRunner);
 
   test.skipIf(tags.length === 0)("is releasable in whichever state HEAD is in", () => {
-    const readiness = releaseReadiness(body, tags, tagsAtHead);
+    const tagged = spawnRunner([
+      "git",
+      "show",
+      `${latestReleaseTag(tags)}:packages/docs/guide/changelog.md`,
+    ]);
+    const readiness = releaseReadiness(
+      body,
+      tags,
+      tagsAtHead,
+      tagged.code === 0 ? tagged.output : null,
+    );
     if (readiness.kind === "released") {
       expect(readiness.tag).toBe(`v${parseTopChangelogVersion(body)}`);
+    } else if (readiness.kind === "idle") {
+      expect(readiness.latest).toBe(`v${parseTopChangelogVersion(body)}`);
     } else {
       expect(readiness.version).toMatch(/^\d+\.\d+\.\d+$/);
     }

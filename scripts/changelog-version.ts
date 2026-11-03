@@ -27,6 +27,14 @@ export function parseTopChangelogVersion(body: string): string | null {
   return null;
 }
 
+export function topChangelogSection(body: string): string | null {
+  const lines = body.split("\n");
+  const start = lines.findIndex((line) => VERSION_HEADING.test(line));
+  if (start === -1) return null;
+  const next = lines.findIndex((line, i) => i > start && VERSION_HEADING.test(line));
+  return lines.slice(start, next === -1 ? lines.length : next).join("\n");
+}
+
 export function projectedReleaseVersion(body: string, latestTag: string): string {
   const top = parseTopChangelogVersion(body);
   if (top === null) {
