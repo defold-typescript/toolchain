@@ -3,7 +3,8 @@ import { isAbsolute, relative, sep } from "node:path";
 import { scopesOf } from "./ci-scope.ts";
 
 // Opens one PR per library that `library update --json` changed, and turns on
-// auto-merge for a PR only when the change is safe and every path is library data.
+// auto-merge for a PR only when the change is safe and every path is library data,
+// and only for the commit it checked.
 
 type Change = "kept" | "added" | "changed";
 
@@ -109,6 +110,7 @@ function openPullRequest(entry: UpdateEntry, dataFolder: string, run: Run): void
   const branch = `library-update/${entry.library}`;
   must(run, ["git", "add", "-A", "--", `${dataFolder}/${entry.library}`]);
   must(run, ["git", "commit", "--quiet", "-m", title(entry)]);
+  const sha = must(run, ["git", "rev-parse", "HEAD"]).trim();
   // From the commit rather than the report, and with renames split, so a file moved
   // out of a hand-kept folder still names that folder.
   const changedPaths = must(run, [
@@ -122,7 +124,6 @@ function openPullRequest(entry: UpdateEntry, dataFolder: string, run: Run): void
   ])
     .split("\0")
     .filter(Boolean);
-  must(run, ["git", "push", "--force", "--quiet", "origin", `HEAD:refs/heads/${branch}`]);
   // Leaves the other libraries' files in the working tree for their own commit.
   must(run, ["git", "reset", "--quiet", "HEAD~1"]);
 
@@ -139,6 +140,12 @@ function openPullRequest(entry: UpdateEntry, dataFolder: string, run: Run): void
       "number,autoMergeRequest",
     ]),
   ) as { number: number; autoMergeRequest: unknown }[];
+  // A request left on would merge whatever the force-push brings, checked or not, so
+  // it goes off before the push and comes back only for the commit read above.
+  if (open.some(({ autoMergeRequest }) => autoMergeRequest)) {
+    must(run, ["gh", "pr", "merge", branch, "--disable-auto"]);
+  }
+  must(run, ["git", "push", "--force", "--quiet", "origin", `${sha}:refs/heads/${branch}`]);
   const text = ["--title", title(entry), "--body", body(entry)];
   if (open.length === 0) {
     must(run, ["gh", "pr", "create", "--head", branch, "--base", BASE, ...text]);
@@ -146,10 +153,8 @@ function openPullRequest(entry: UpdateEntry, dataFolder: string, run: Run): void
     must(run, ["gh", "pr", "edit", branch, ...text]);
   }
   if (mayAutoMerge(entry, changedPaths, dataFolder)) {
-    must(run, ["gh", "pr", "merge", branch, "--auto", "--squash"]);
-  } else if (open.some(({ autoMergeRequest }) => autoMergeRequest)) {
-    // The force-push may have turned a safe PR into one a human has to read.
-    must(run, ["gh", "pr", "merge", branch, "--disable-auto"]);
+    // GitHub refuses the request if another push moved the branch off this commit.
+    must(run, ["gh", "pr", "merge", branch, "--auto", "--squash", "--match-head-commit", sha]);
   }
 }
 
