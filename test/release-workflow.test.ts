@@ -22,6 +22,8 @@ interface Step {
   uses?: string;
   run?: string;
   if?: string;
+  env?: Record<string, string>;
+  with?: Record<string, string>;
 }
 
 interface Job {
@@ -61,6 +63,22 @@ function publishIndices(): number[] {
 }
 
 const GATE_SCRIPT = /\bbun scripts\/release-ci-gate\.ts\b/;
+const DATA_GATE_SCRIPT = /\bbun scripts\/release-data-gate\.ts\b/;
+
+// The repository library-data-publish.yml checks out to push this repo's library
+// data to.
+function publishedDataRepo(): string {
+  const jobs = parse(readFileSync(join(workflowsDir, "library-data-publish.yml"), "utf8")) as {
+    jobs: Record<string, Job>;
+  };
+  const targets = Object.values(jobs.jobs)
+    .flatMap((job) => job.steps ?? [])
+    .flatMap((s) =>
+      /^actions\/checkout@/.test(s.uses ?? "") && s.with?.repository ? [s.with.repository] : [],
+    );
+  if (targets.length !== 1) throw new Error(`expected one data repo checkout, got ${targets}`);
+  return targets[0] as string;
+}
 
 interface NamedJob {
   name?: string;
@@ -139,6 +157,19 @@ describe("release workflow publishes via OIDC on tags", () => {
     for (const idx of publishIndices()) {
       expect(idx).toBeGreaterThan(requireIdx);
     }
+  });
+
+  test("waits for the data repo to hold this commit's library data before any publish", () => {
+    const gateIdx = stepIndex((s) => DATA_GATE_SCRIPT.test(runCmd(s)));
+    expect(gateIdx).toBeGreaterThanOrEqual(0);
+    for (const idx of publishIndices()) {
+      expect(idx).toBeGreaterThan(gateIdx);
+    }
+    const gate = steps()[gateIdx] as Step;
+    expect(runCmd(gate)).toContain(`--repo ${publishedDataRepo()}`);
+    expect(runCmd(gate)).toContain('--sha "$SHA"');
+    expect(gate.env?.SHA).toMatch(/^\$\{\{\s*github\.sha\s*\}\}$/);
+    expect(gate.env?.GH_TOKEN).toMatch(/^\$\{\{\s*github\.token\s*\}\}$/);
   });
 
   test("reads CI check runs with a checks:read token", () => {
