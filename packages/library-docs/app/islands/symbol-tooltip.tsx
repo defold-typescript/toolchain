@@ -1,7 +1,7 @@
 import { withBase } from "@defold-typescript/docs-render/base";
+import type { SymbolEntry } from "@defold-typescript/docs-render/symbol-index";
 import { isSelfReference, normalizeSymbolKey } from "@defold-typescript/docs-render/symbol-self";
 import { useEffect, useRef, useState } from "hono/jsx";
-import type { SymbolEntry } from "../lib/symbol-index";
 import { tooltipPosition } from "../lib/tooltip-position";
 
 type ActiveTip = {

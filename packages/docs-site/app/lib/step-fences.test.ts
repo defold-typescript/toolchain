@@ -8,8 +8,8 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { isStepFence, stepLines, tsFences } from "../../../cli/src/hsm-guide-steps";
-import { renderMarkdown } from "./markdown";
 
 const PAGE = join(import.meta.dir, "../../../docs/guide/state-machines-tutorial.md");
 

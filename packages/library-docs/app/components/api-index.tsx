@@ -1,9 +1,9 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
 
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-icons";
 import { htmlToDocText } from "@defold-typescript/types";
-import type { ApiPage } from "../lib/api-surface";
 import {
   type LibraryListing,
   type LibraryOrigin,

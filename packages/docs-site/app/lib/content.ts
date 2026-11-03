@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { CHANGELOG_TAG_DATES } from "../generated/changelog-dates";
 import { applyChangelogTagDates } from "./changelog-dates";
 import type { GuidePage } from "./guide";
 import { expandGuideDirectives } from "./guide-directives";
 import { listGuidePages } from "./guide-loader";
 import { guideSymbolRoutes } from "./guide-symbol-links";
-import { renderMarkdown } from "./markdown";
 
 // process.cwd()-relative on purpose: under the Vite/rolldown SSG build the module
 // runner does not populate `import.meta.dir`, so an import.meta anchor resolves to

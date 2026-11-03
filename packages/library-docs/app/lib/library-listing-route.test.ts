@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { dependencyStep } from "@defold-typescript/docs-render/api-page-render";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { Hono } from "hono";
 import { createLibraryListingRoute } from "../routes/libraries/[owner]/[repo]";
 import { apiPages, siteDirs, untypedListings } from "./api-content";
-import { dependencyStep } from "./api-page-render";
-import { renderMarkdown } from "./markdown";
 import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "./no-typed-api-icon";
 import { ssgRoutePaths } from "./ssg-routes";
 

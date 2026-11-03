@@ -1,7 +1,7 @@
+import { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { allPageHeadings } from "@defold-typescript/docs-render/headings";
-import { apiPageMarkdown } from "../api-page-render";
-import type { ApiPage } from "../api-surface";
-import { renderMarkdown } from "../markdown";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 
 // The heading ids a page renders through the same markdown and highlight path the
 // `/api` routes use, so an anchor test checks what a browser can scroll to.

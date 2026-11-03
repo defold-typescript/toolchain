@@ -7,11 +7,11 @@ import {
   pageHeadings,
   slugify,
 } from "@defold-typescript/docs-render/headings";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { renderGuidePage } from "./content";
 import { groupGuidePages } from "./guide-groups";
 import { listGuidePages } from "./guide-loader";
-import { renderMarkdown } from "./markdown";
 import { releaseSection, releaseSections } from "./upgrade-guide";
 
 const SLUG = "upgrading-defold-versions";

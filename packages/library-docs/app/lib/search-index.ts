@@ -1,7 +1,11 @@
-import { type ApiPage, apiModuleSections, qualify } from "./api-surface";
+import {
+  type ApiPage,
+  apiModuleSections,
+  qualify,
+} from "@defold-typescript/docs-render/api-surface";
+import { memberAnchors } from "@defold-typescript/docs-render/symbol-index";
 import type { Guide } from "./guides";
 import type { LibraryListing } from "./nav";
-import { memberAnchors } from "./symbol-index";
 
 export interface SearchRecord {
   route: string;

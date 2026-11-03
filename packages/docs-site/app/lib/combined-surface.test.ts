@@ -2,6 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  type AvailabilityLookup,
+  apiModuleSymbols,
+  badgeCategoryFromLabel,
+} from "@defold-typescript/docs-render/api-surface";
+import {
   type ApiFunction,
   type ApiModule,
   type ApiParameter,
@@ -12,7 +17,6 @@ import {
   type TranslationStore,
 } from "@defold-typescript/types";
 import { OVERLOAD_COVERED_SKIPS } from "../../../types/src/emit-dts";
-import { type AvailabilityLookup, apiModuleSymbols, badgeCategoryFromLabel } from "./api-surface";
 import {
   loadCombinedSurface,
   loadSignaturesArtifact,

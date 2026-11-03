@@ -1,11 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  apiLinkify,
+  apiPageMarkdown,
+  apiSignatureSymbolLinks,
+} from "@defold-typescript/docs-render/api-page-render";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { withBase } from "@defold-typescript/docs-render/base";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
-import { apiLinkify, apiPageMarkdown, apiSignatureSymbolLinks } from "./api-page-render";
-import type { ApiPage } from "./api-surface";
-import { renderMarkdown } from "./markdown";
 import {
   pointAtToolchainDocs,
   TOOLCHAIN_DOCS_URL,

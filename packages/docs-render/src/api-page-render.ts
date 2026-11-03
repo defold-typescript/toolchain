@@ -1,17 +1,4 @@
-import {
-  API_NAME_CLOSE,
-  API_NAME_OPEN,
-  API_TYPE_CODE_CLOSE,
-  API_TYPE_CODE_OPEN,
-} from "@defold-typescript/docs-render/api-type-links";
-import {
-  escapeAttr,
-  type SignatureSymbolTarget,
-} from "@defold-typescript/docs-render/signature-brand-links";
-import { functionTypeEmphasis } from "@defold-typescript/docs-render/signature-emphasis";
-import { symbolLinkifier } from "@defold-typescript/docs-render/symbol-linkify";
 import type { ApiAvailability, ApiSymbolIdentity } from "@defold-typescript/types";
-import { apiVersionAxis, windowedApiPages } from "./api-content";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -36,6 +23,7 @@ import {
   groupFunctionRevisions,
   groupFunctionSymbols,
   groupTypeSymbols,
+  type LibraryMeta,
   mergedAvailability,
   outerCallParams,
   outerCallSlots,
@@ -47,12 +35,19 @@ import {
   typeShapeHeading,
   windowedBadgeCategory,
 } from "./api-surface";
-import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
-import type { BadgeCountTable } from "./api-surface-pref";
-import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
+import {
+  API_NAME_CLOSE,
+  API_NAME_OPEN,
+  API_TYPE_CODE_CLOSE,
+  API_TYPE_CODE_OPEN,
+} from "./api-type-links";
+import { forgeOf } from "./forge";
+import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
+import { functionTypeEmphasis } from "./signature-emphasis";
 import { buildSymbolIndex, memberAnchors } from "./symbol-index";
+import { symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
-import { resolveVersionWindow } from "./version-window";
+import { escapeUpstreamText } from "./upstream-text";
 
 const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
   { kind: "function", label: "Functions" },
@@ -190,13 +185,15 @@ function availabilityBadges(
   resolveReplacement: ReplacementResolver,
   indexRoute: string,
   deprecated?: string,
+  escapeText: (text: string) => string = (text) => text,
 ): string {
   // The curated, version-keyed engine fact wins: when it is present the source
   // tag would only restate it, so a symbol never renders two deprecation lines.
   // A wrapped JSDoc tag carries newlines, so the text is folded to one line —
   // a list item whose continuation began with `-` or `#` would otherwise break
   // out of the item.
-  const tagText = deprecated?.replace(/\s+/g, " ").trim();
+  const tagText =
+    deprecated === undefined ? undefined : escapeText(deprecated.replace(/\s+/g, " ").trim());
   const tagLine =
     tagText !== undefined && !av?.deprecatedSince
       ? tagText === ""
@@ -341,74 +338,6 @@ function symbolSpanMarker(
   return `<span class="api-symbol-span" data-span-oldest="${oldest}" data-span-newest="${newest}" data-span-cats="${cats}" aria-hidden="true"></span>`;
 }
 
-const COUNT_KINDS: {
-  readonly flag: keyof NamespaceBadgeCounts;
-  readonly kind: string;
-  readonly noun: string;
-}[] = [
-  { flag: "new", kind: "new", noun: "new" },
-  { flag: "changed", kind: "changed", noun: "changed" },
-  { flag: "deprecated", kind: "deprecated", noun: "deprecated" },
-];
-
-// The count pills for a Combined namespace: one pill per non-zero category
-// showing its tally and category noun as visible text (`12 new`), the
-// `aria-label` spelling it out for assistive tech so color stays additive rather
-// than the sole signal. The wrapper is an inline `<span>` (not a block `<div>`)
-// so the group rides the namespace-page H1 baseline and the `/api` index card
-// title row instead of wrapping to its own line. Returns `""` when every count
-// is zero (a fully stable namespace shows nothing).
-export function namespaceCountBadges(counts: NamespaceBadgeCounts): string {
-  const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map(
-    (c) =>
-      `<span class="api-badge-count api-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]} ${c.noun}</span>`,
-  );
-  if (pills.length === 0) return "";
-  return `<span class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</span>`;
-}
-
-// The compact count pills for a sidebar namespace leaf: one span per category
-// showing just the tally as visible text (space is tight in the tree), with the
-// category spelled out in the `aria-label` so color stays additive. The spans
-// are sidebar-scoped (`nav-badge-*`, outside `.prose`) rather than the H1 pills'
-// `.prose .api-badge-*`.
-//
-// Shaped after `badgeDots`: `emitted` names every category the reader can reach
-// by narrowing and `counts` the tally the active window gives, so a pill the
-// reader can narrow into is already in the markup, hidden, for a client that
-// only ever toggles `style.display`. The empty guard keys off `emitted`, so a
-// namespace that reaches nothing anywhere still renders nothing.
-export function navNamespaceBadges(
-  counts: NamespaceBadgeCounts,
-  emitted: NamespaceBadgeCounts = counts,
-): string {
-  const pills = COUNT_KINDS.filter((c) => emitted[c.flag] > 0).map((c) => {
-    const hidden = counts[c.flag] > 0 ? "" : ' style="display:none"';
-    return `<span class="nav-badge-count nav-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols"${hidden}>${counts[c.flag]}</span>`;
-  });
-  if (pills.length === 0) return "";
-  return `<span class="nav-badge-counts">${pills.join("")}</span>`;
-}
-
-// One sidebar leaf's pills, read out of the per-window table at the range this
-// render is for. The row is read once: the active window supplies the tallies
-// and the row as a whole supplies what is emitted, so server and browser share
-// one derivation and nothing about reachability crosses into the client. A
-// namespace the table omits reaches nothing and so renders nothing, which is the
-// same "no pills" its omission from the table already meant.
-export function navLeafBadgeHtml(
-  table: BadgeCountTable,
-  namespace: string,
-  activeKey: string,
-): string {
-  const row = table[namespace];
-  const triple = row?.[activeKey];
-  const counts: NamespaceBadgeCounts = triple
-    ? { new: triple[0], changed: triple[1], deprecated: triple[2] }
-    : { new: 0, changed: 0, deprecated: 0 };
-  return navNamespaceBadges(counts, reachableBadgeCounts(row));
-}
-
 // One symbol, single column: the signature heading is the title, and the
 // description + example are wrapped in an indented `.api-symbol-body` so the body
 // reads as subordinate to the title. The heading is `###` under a kind section
@@ -452,6 +381,126 @@ export function defoldRefLine(ref: DefoldRef): string {
   return `[icon:lua] [\`${ref.name}\`](${ref.url})`;
 }
 
+// The heading marker for an ambient global, reusing the `api-badge-dot` markup
+// (and so the heading slugger's rule that strips it) rather than a second visual
+// language. Independent of the availability categories above: a `library` page
+// carries no availability record at all, and this marker rides every page.
+function globalDot(symbol: ApiSymbol): string {
+  if (!symbol.global) return "";
+  return '<span class="api-badge-dot api-badge-dot--global" aria-label="Ambient global" title="Ambient global">G</span>';
+}
+
+// The heading marker for a symbol whose prose came from the library's upstream
+// source rather than from the fork, on the same `api-badge-dot` terms as
+// `globalDot`. The page's provenance block already names the repo and ref the text
+// came from, so the marker points at a source the reader can already see.
+function upstreamDot(symbol: ApiSymbol): string {
+  if (!symbol.docSource) return "";
+  return '<span class="api-badge-dot api-badge-dot--upstream" aria-label="Documentation imported from upstream" title="Documentation imported from upstream">U</span>';
+}
+
+// The `  1.` adopt step naming the dependency URL for a repo at its pin — shared by
+// typed library pages and untyped listing pages so both give one instruction per
+// pin kind. `ref` is the pinned tag or commit; a release pin leaves the choice to
+// the reader, so it goes unused there.
+export function dependencyStep(
+  repoUrl: string,
+  pinKind: LibraryMeta["pinKind"],
+  ref: string,
+): string {
+  const repo = repoUrl ? repoUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "") : "";
+  const forge = forgeOf(repoUrl);
+  const base = repoUrl.replace(/\/$/, "");
+  const dependencies = "to `game.project` under `[project]` `dependencies`";
+  // GitHub and Codeberg serve the same releases, tags and archive routes.
+  const step1 = !forge
+    ? `Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`
+    : pinKind === "tag"
+      ? `This repo publishes no releases. Pick a tag from [${repo} tags](${base}/tags) and add its **Source code (zip)** URL — for the pinned tag, \`${base}/archive/refs/tags/${ref}.zip\` — ${dependencies}`
+      : pinKind === "commit"
+        ? `This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, \`${base}/archive/${ref}.zip\` — ${dependencies}`
+        : `Pick a release from [${repo} releases](${base}/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`;
+  return `  1. ${step1}, then **Fetch Libraries** in the Defold editor.`;
+}
+
+// Appended to a pin bullet: the Defold version current when the pin was cut.
+export function releaseEraSuffix(releaseEra: string | undefined): string {
+  return releaseEra ? ` (released while Defold ${releaseEra} was current)` : "";
+}
+
+// The uniform provenance block for a `library` page: the bullets lead with the
+// real origin (author + upstream GitHub repo), followed by the ts-defold
+// commit pin, the import string, and the license. Author and GitHub are
+// omitted when the dir carries no NOTICE credit (both `meta.author` and
+// `meta.authorUrl` are `""`). The commit-pin text is the abbreviated `meta.commit`
+// sha, linking to `meta.sourceUrl` (the exact `.d.ts` at the pin). The import
+// statement is emitted as a `ts` code block nested under an `Import` bullet (not
+// an inline span) so it renders as a `<pre>` and picks up the copy-to-clipboard
+// button; the fence also keeps the prose linkifier off the dotted module name.
+function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
+  // Abbreviated, still-live pin — `2fe3aed` linking to the generating source.
+  const pin = `[\`${meta.commit.slice(0, 7)}\`](${meta.sourceUrl})`;
+  const repo = meta.authorUrl
+    ? meta.authorUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "")
+    : "";
+  // A single provenance bullet — the upstream repo, labelled by its forge (GitHub
+  // or Codeberg), with the commit pin folded in
+  // as `— pinned to <short-sha>` (or the standalone `Commit pin` when the dir
+  // carries no NOTICE credit). Author and License are deliberately omitted: the
+  // reader gets them from the linked repo. The adopt steps nest as a numbered
+  // list directly under this bullet (no `Usage:` label).
+  //
+  // We deliberately do *not* mint a moving archive URL (`master`/`main`/
+  // `HEAD.zip`): version choice is the user's, and a specific release is a
+  // vetted, reproducible pin rather than whatever the default branch holds at
+  // fetch time. So step 1 links the repo's `/releases` page (browsed, hence a
+  // link) so the reader copies a release's Source-code ZIP or a packaged `.zip`
+  // asset — Defold and `resolve` extract zip, never the tar.gz GitHub also
+  // offers. With no NOTICE credit there is no repo to link, so it is named only.
+  // A Defold extension pinned to a tag or commit has no release to pick, so its
+  // step 1 names the pin's own archive instead: a tag or commit archive is
+  // immutable, so this still mints no moving archive URL, and the tag case
+  // links the repo's tags so version choice stays the user's.
+  // Step 3's import stays a fenced block at the ordered-item content column
+  // (5 spaces) so it renders a copyable <pre>.
+  const head = meta.authorUrl
+    ? `- ${forgeOf(meta.authorUrl) ?? "Source"}: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}${releaseEraSuffix(meta.releaseEra)}`
+    : `- Commit pin: ${pin}${releaseEraSuffix(meta.releaseEra)}`;
+  // An extension adding members to an engine namespace has no module of its
+  // own, so step 3 names the engine global instead of an import.
+  const step3 =
+    meta.usage === "ambient"
+      ? [
+          `  3. Call it through the global \`${meta.globalNamespace}\` — no import.${
+            meta.extendsNamespace
+              ? ` It adds members to the engine \`${meta.extendsNamespace}\` namespace.`
+              : ""
+          }`,
+        ]
+      : [
+          "  3. Import it under a namespace alias of your choice:",
+          "     ```ts",
+          `     ${meta.importString}`,
+          "     ```",
+        ];
+  return [
+    head,
+    dependencyStep(meta.authorUrl, meta.pinKind, meta.commit),
+    "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
+    ...step3,
+    // A fork like `boom` or `deftest` publishes most of its surface outside the
+    // `declare module` block, so the import above reaches only the symbols that
+    // carry no marker; without this the page reads as if it reached them all.
+    ...(hasGlobals
+      ? [
+          "     Symbols marked ambient globals are declared globally and need no import — call them directly.",
+        ]
+      : []),
+    // Labelled by repo name, as an Asset Portal listing page labels its entry.
+    ...(meta.portal ? [`- Asset Portal: [${repo.split("/").at(-1)}](${meta.portal.url})`] : []),
+  ];
+}
+
 // Render the module intro, then each kind's symbols stacked in one column. A
 // single combined string keeps Shiki and the heading-id slugger to one pass, so
 // per-symbol headings stay uniquely id'd for the "On this page" TOC. The
@@ -467,7 +516,15 @@ export function defoldRefLine(ref: DefoldRef): string {
 export function apiPageMarkdown(
   page: Pick<
     ApiPage,
-    "namespace" | "module" | "translations" | "signatures" | "category" | "availability" | "route"
+    | "namespace"
+    | "module"
+    | "translations"
+    | "signatures"
+    | "category"
+    | "availability"
+    | "libraryMeta"
+    | "displayName"
+    | "route"
   >,
   linkify: (text: string) => string,
   // `resolveReplacement` links a symbol's replacement within this surface;
@@ -477,6 +534,7 @@ export function apiPageMarkdown(
     titleBadges = "",
     combinedMarkers = false,
     window,
+    omitHeading = false,
   }: {
     resolveReplacement?: ReplacementResolver;
     // Namespace-title count pills appended inline on the H1 line (Combined pages
@@ -494,6 +552,9 @@ export function apiPageMarkdown(
     // which is the identity case. Omitted is the full range too, so a caller that
     // does not care about windows renders exactly what it always did.
     window?: CategoryWindow;
+    // Library pages render their heading as the styled `creator/dir/namespace`
+    // path component in the route, so the markdown starts at the intro.
+    omitHeading?: boolean;
   } = {},
 ): string {
   // The page's own axis and the range it renders. Omitting `window` is the full
@@ -573,15 +634,35 @@ export function apiPageMarkdown(
   // The title pills ride the H1 line (mirroring the inline `api-badge-dot`
   // signature-heading markers) so they render on the heading baseline rather
   // than as a block that wraps below the title.
-  const heading = `# ${m.namespace}`;
-  lines.push(titleBadges ? `${heading} ${titleBadges}` : heading, "");
+  if (!omitHeading) {
+    const heading = `# ${page.displayName ?? m.namespace}`;
+    lines.push(titleBadges ? `${heading} ${titleBadges}` : heading, "");
+    if (page.displayName && page.displayName !== m.namespace) {
+      lines.push(`\`${m.namespace}\``, "");
+    }
+  }
+  // A library page's text comes from a third-party upstream, so every doc string
+  // a symbol carries enters the page through the escape, after the ref-doc
+  // conversion, because that conversion decodes entities and anything escaped
+  // ahead of it would come back as markup.
+  const escapeText = page.category === "library" ? escapeUpstreamText : (text: string) => text;
   const raw = m.description || m.brief;
-  const intro =
-    page.category === "global-type" ? raw : proseDocText(raw, m.namespace, page.translations);
+  const intro = escapeText(
+    page.category === "global-type" ? raw : proseDocText(raw, m.namespace, page.translations),
+  );
   if (intro) lines.push(linkify(intro), "");
+  if (page.libraryMeta) {
+    lines.push(
+      ...libraryMetaBlock(
+        page.libraryMeta,
+        symbols.some((s) => s.global),
+      ),
+      "",
+    );
+  }
   const linkifyParam = (p: ApiSymbolParam): ApiSymbolParam => ({
     ...p,
-    doc: linkify(p.doc),
+    doc: linkify(escapeText(p.doc)),
     ...(p.fields ? { fields: p.fields.map(linkifyParam) } : {}),
   });
   const noted = new Set<string>();
@@ -594,7 +675,8 @@ export function apiPageMarkdown(
   };
   const linkifySymbol = (symbol: ApiSymbol): ApiSymbol => ({
     ...symbol,
-    docMarkdown: linkify(symbol.docMarkdown),
+    docMarkdown: linkify(escapeText(symbol.docMarkdown)),
+    ...(symbol.exampleMarkdown ? { exampleMarkdown: escapeText(symbol.exampleMarkdown) } : {}),
     parameters: symbol.parameters.map(linkifyParam),
     returnValues: symbol.returnValues.map(linkifyParam),
   });
@@ -605,11 +687,14 @@ export function apiPageMarkdown(
       resolveReplacement,
       indexRoute,
       symbol.deprecated,
+      escapeText,
     );
   const emitSymbol = (symbol: ApiSymbol, depth: SymbolDepth = 3) => {
     const dots =
       (combinedMarkers ? symbolDots(symbol) : "") +
-      (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "");
+      (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "") +
+      globalDot(symbol) +
+      upstreamDot(symbol);
     lines.push(
       symbolBlock(linkifySymbol(symbol), badgesFor(symbol), dots, noteFor(symbol.name), depth),
       "",
@@ -728,7 +813,11 @@ export function apiPageMarkdown(
     depth: SymbolDepth,
   ) => {
     const symbol = chainSymbol(revision);
-    const dots = (combinedMarkers ? groupDots([symbol]) : "") + groupSpan(chainSymbols(group));
+    const dots =
+      (combinedMarkers ? groupDots([symbol]) : "") +
+      groupSpan(chainSymbols(group)) +
+      globalDot(symbol) +
+      upstreamDot(symbol);
     const lead = [
       overloadSummary(group),
       badgesFor(symbol),
@@ -765,19 +854,19 @@ export function apiPageMarkdown(
     const axis = pageAxis.map(bareId);
     const spans = forms.map((s) => (s.availability?.availableIn ?? []).map(bareId));
     const versionsSeen = spans.flat();
-    const newestForm = (): ApiSymbol => {
+    const newestForm = (): number => {
       const newestAt = (index: number) =>
         Math.min(...(spans[index] ?? []).map((v) => axis.indexOf(v)));
       let best = 0;
       for (let i = 1; i < forms.length; i++) if (newestAt(i) < newestAt(best)) best = i;
-      return forms[best] ?? head;
+      return best;
     };
     const blockExample = sameExample
-      ? head.exampleMarkdown
+      ? linked[0]?.exampleMarkdown
       : spanTracked &&
           spans.every((s) => s.length > 0) &&
           new Set(versionsSeen).size === versionsSeen.length
-        ? newestForm().exampleMarkdown
+        ? linked[newestForm()]?.exampleMarkdown
         : undefined;
     const formExamples = blockExample === undefined && !sameExample;
     // One ref-doc entry can land its tables on a form they do not describe
@@ -806,7 +895,11 @@ export function apiPageMarkdown(
     const codes = overloadFormCodes(forms);
     const sharedReturnTable = sameReturnTables && (tableForm?.returnValues.length ?? 0) > 0;
 
-    const dots = (combinedMarkers ? groupDots(forms) : "") + groupSpan(chainSymbols(group));
+    const dots =
+      (combinedMarkers ? groupDots(forms) : "") +
+      groupSpan(chainSymbols(group)) +
+      globalDot(forms.find((s) => s.global) ?? head) +
+      upstreamDot(forms.find((s) => s.docSource) ?? head);
     // The count badge stands where the heading reads `...`; the markdown renderer
     // splices it into the colored signature and keeps it out of the anchor.
     const heading = `${"#".repeat(depth)} \`${overloadHeading(forms)}\` <span class="api-overload-count">${forms.length} overloads</span>`;
@@ -966,7 +1059,6 @@ export function apiSignatureSymbolLinks(
       links.set(shape.label, { route: page.route, heading: typeShapeHeading(page, shape.label) });
     }
   }
-  const index = buildSymbolIndex(pages);
   // A constant-union alias is spelled qualified in every signature that takes it
   // (`gui.Easing`, `graphics.State`), which is also how the symbol index keys it.
   // Keying the qualified name off every alias page rather than the current page
@@ -989,7 +1081,15 @@ export function apiSignatureSymbolLinks(
       if (qualify(p.namespace, name) === qualified) links.set(qualified, `${p.route}#${anchor}`);
     }
   }
-  const route = index.Opaque?.route;
+  if (page?.category === "library") {
+    // The core types live in the toolchain docs. A page's own type of the same
+    // name keeps its link.
+    for (const p of pages) {
+      if (p.category === "global-type" && !links.has(p.namespace)) links.set(p.namespace, p.route);
+    }
+    return links;
+  }
+  const route = buildSymbolIndex(pages).Opaque?.route;
   if (route) links.set("Opaque", route);
   return links;
 }
@@ -1002,37 +1102,4 @@ export function apiSignatureSymbolLinks(
 export function apiReplacementResolver(pages: ApiPage[]): ReplacementResolver {
   const index = buildSymbolIndex(pages);
   return (id) => index[id.name]?.route ?? index[`${id.namespace}.${id.name}`]?.route;
-}
-
-// SSG params for the per-version namespace pages: one entry per engine page of
-// every materialized version — the default included, since it now owns an
-// explicit `/api/defold-<default>/…` family alongside the historical versions.
-// Filtered through `versionsWithDiskFixtures` so an unmaterialized ref-doc target
-// contributes nothing and the build stays clean until its fixtures land.
-//
-// Enumerated from the same windowed surface the route renders, not from the
-// version's own surface: a version's family is the window ending at it, so it
-// includes namespaces that existed earlier and were gone by then. Deriving params
-// and content from one source is what keeps a page's body and its route in
-// agreement. A tracked target carrying no engine namespace is off the window axis
-// and contributes nothing — the release manifest then rejects its empty family
-// rather than the build silently emitting an unreachable route.
-export function versionedApiParams(typesDir: string): { version: string; namespace: string }[] {
-  const axis = apiVersionAxis(typesDir);
-  return versionsWithDiskFixtures(typesDir).flatMap((v) => {
-    const window = resolveVersionWindow(axis, v.id, null);
-    if (!window) return [];
-    return windowedApiPages(window, typesDir).map((page) => ({
-      version: v.id,
-      namespace: page.namespace,
-    }));
-  });
-}
-
-// The `/api/:param` route branches on this: a known version id (default included,
-// now that every version owns a `/api/defold-<version>` index) renders that
-// version's index; anything else is a canonical namespace or the `combined`
-// redirect param.
-export function isKnownVersionId(param: string, versions: ApiVersion[]): boolean {
-  return versions.some((v) => v.id === param);
 }

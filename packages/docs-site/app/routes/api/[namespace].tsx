@@ -3,11 +3,19 @@
 // intentionally carries no JSX config so non-docs workspaces are not coupled to
 // hono/jsx; this pragma pins the JSX dialect for this file.
 
+import {
+  apiLinkify,
+  apiPageMarkdown,
+  apiReplacementResolver,
+  apiSignatureSymbolLinks,
+} from "@defold-typescript/docs-render/api-page-render";
 import { withBase } from "@defold-typescript/docs-render/base";
 import { pageHeadings } from "@defold-typescript/docs-render/headings";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { ApiIndex } from "../../components/api-index";
+import { isKnownVersionId, namespaceCountBadges } from "../../lib/api-badges";
 import {
   apiNamespaceOwner,
   apiVersions,
@@ -16,17 +24,8 @@ import {
   combinedSurface,
   versionIndexPages,
 } from "../../lib/api-content";
-import {
-  apiLinkify,
-  apiPageMarkdown,
-  apiReplacementResolver,
-  apiSignatureSymbolLinks,
-  isKnownVersionId,
-  namespaceCountBadges,
-} from "../../lib/api-page-render";
 import { COMBINED_ROUTE_SEGMENT, combinedRedirect, redirectHtml } from "../../lib/api-redirect";
 import { namespaceBadgeCounts } from "../../lib/combined-surface";
-import { renderMarkdown } from "../../lib/markdown";
 
 // honox flat routing collapses `api/[version]/index.tsx` to `/api/:version`,
 // which collides with this `/api/:namespace` route (the shallower one wins). So

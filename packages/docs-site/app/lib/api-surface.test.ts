@@ -1,26 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
-import {
-  type ApiAvailability,
-  type ApiFunction,
-  hashExampleSource,
-  htmlToCodeText,
-  lookupExampleTranslations,
-  normalizedFunctionSignature,
-  parseDefoldApiDoc,
-  type SignatureStore,
-  signatureTransitionNames,
-  splitExampleSources,
-  symbolIdentityKey,
-  type TranslationStore,
-} from "@defold-typescript/types";
-import { extractApiDoc } from "../../../cli/src/library/extract-api-doc";
-import { loadAnnotations } from "../../../types/scripts/lua-annotations";
-import { loadApiTargets } from "../../../types/scripts/regen";
-import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
-import { canonicalApiPages, windowedApiPages } from "./api-content";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -46,7 +26,28 @@ import {
   overloadHeading,
   splitCallForm,
   windowedBadgeCategory,
-} from "./api-surface";
+} from "@defold-typescript/docs-render/api-surface";
+import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import {
+  type ApiAvailability,
+  type ApiFunction,
+  hashExampleSource,
+  htmlToCodeText,
+  lookupExampleTranslations,
+  normalizedFunctionSignature,
+  parseDefoldApiDoc,
+  type SignatureStore,
+  signatureTransitionNames,
+  splitExampleSources,
+  symbolIdentityKey,
+  type TranslationStore,
+} from "@defold-typescript/types";
+import { extractApiDoc } from "../../../cli/src/library/extract-api-doc";
+import { loadAnnotations } from "../../../types/scripts/lua-annotations";
+import { loadApiTargets } from "../../../types/scripts/regen";
+import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
+import { canonicalApiPages, windowedApiPages } from "./api-content";
 import {
   listApiVersions,
   loadApiSurface,
@@ -59,7 +60,6 @@ import {
   combinedNamespaceToApiPage,
   compareSemverDesc,
 } from "./combined-surface";
-import { renderMarkdown } from "./markdown";
 import { versionLabel } from "./version-switch";
 
 function fnSymbol(name: string, overrides: Partial<ApiSymbol> = {}): ApiSymbol {

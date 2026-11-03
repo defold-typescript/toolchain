@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import type { ApiModule } from "@defold-typescript/types";
 import { makeWindowedTypesDir } from "./__fixtures__/windowed-surface";
 import { apiVersionAxis, canonicalApiPages, windowedApiPages } from "./api-content";
-import type { ApiPage } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import {
   type BuildReleaseRouteManifestInput,

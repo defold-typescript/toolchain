@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { type ApiPage, apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
 import { withBase } from "@defold-typescript/docs-render/base";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
-import { type ApiPage, apiModuleSymbols } from "../app/lib/api-surface";
 import { loadApiSurface, loadCombinedSurface } from "../app/lib/api-surface-loader";
 import {
   compactArmAvailability,
