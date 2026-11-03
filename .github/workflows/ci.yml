@@ -3,10 +3,12 @@ name: CI
 # The scope job sorts a change's files into the scopes it needs
 # (scripts/ci-scope.ts): library data, the library docs site, or everything else.
 # A library-data or library-docs change runs only the jobs for its scopes, and any
-# other change runs the full suite on all three systems. A release tag and a
-# manual run always run the full scope, and release.yml waits for that run before
-# it publishes. ci-done passes only when every job the scopes chose passed, so it
-# is the one check to require.
+# other change runs the full suite on all three systems. A release tag runs the
+# full scope unless its commit already has the green full run release.yml's CI
+# gate accepts, in which case it runs no job; a manual run always runs the full
+# scope. release.yml waits for a green full run on the tagged commit before it
+# publishes. ci-done passes only when every job the scopes chose passed, so it is
+# the one check to require.
 
 on:
   push:
@@ -21,6 +23,10 @@ jobs:
   scope:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # checks: read lets a release tag read its commit's earlier check runs.
+    permissions:
+      contents: read
+      checks: read
     outputs:
       scopes: ${{ steps.scope.outputs.scopes }}
     steps:
@@ -38,10 +44,16 @@ jobs:
           REF_TYPE: ${{ github.ref_type }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PUSH_BEFORE: ${{ github.event.before }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           case "$EVENT_NAME/$REF_TYPE" in
             pull_request/*) base="$PR_BASE" ;;
             push/branch) base="$PUSH_BEFORE" ;;
+            push/tag)
+              bun scripts/ci-scope.ts --tag --repo "$REPO" --sha "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
             *)
               echo "scopes=full" >> "$GITHUB_OUTPUT"
               exit 0

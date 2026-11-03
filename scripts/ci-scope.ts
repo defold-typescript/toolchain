@@ -1,12 +1,23 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { type CheckRun, fetchCheckRuns, gateVerdict } from "./release-ci-gate.ts";
 
 // Sorts a change's files into the CI scopes it needs. Only library data and the
 // library docs site get a narrower scope: any other path, an empty change, or a
-// base git cannot read runs everything.
+// base git cannot read runs everything. A release tag needs no scope when its
+// commit already has the green full run the release gate accepts, and runs
+// everything otherwise.
 
 export type Scope = "data" | "library-docs" | "full";
+
+export async function tagScopes(fetchRuns: () => Promise<CheckRun[]>): Promise<Scope[]> {
+  try {
+    return gateVerdict(await fetchRuns()).state === "pass" ? [] : ["full"];
+  } catch {
+    return ["full"];
+  }
+}
 
 // The one module that names where real library data lives. A test reads that data
 // exactly when it loads this module, directly or through other modules.
@@ -144,20 +155,46 @@ function changedPaths(base: string, head: string): string[] | null {
     .filter((path) => path !== "");
 }
 
-const USAGE = "usage: ci-scope.ts --base <sha> --head <sha> | --real-data-tests";
+const USAGE =
+  "usage: ci-scope.ts --base <sha> --head <sha> | --tag --repo <owner/name> --sha <commit> | --real-data-tests";
 
-function main(argv: string[]): number {
-  let values: { base?: string; head?: string; "real-data-tests"?: boolean };
+async function main(argv: string[]): Promise<number> {
+  let values: {
+    base?: string;
+    head?: string;
+    tag?: boolean;
+    repo?: string;
+    sha?: string;
+    "real-data-tests"?: boolean;
+  };
   try {
     ({ values } = parseArgs({
       args: argv,
       options: {
         base: { type: "string" },
         head: { type: "string" },
+        tag: { type: "boolean" },
+        repo: { type: "string" },
+        sha: { type: "string" },
         "real-data-tests": { type: "boolean" },
       },
     }));
   } catch {
+    console.error(USAGE);
+    return 2;
+  }
+  const { repo, sha } = values;
+  if (values.tag) {
+    const diffOrList =
+      values.base !== undefined || values.head !== undefined || values["real-data-tests"];
+    if (diffOrList || repo === undefined || sha === undefined) {
+      console.error(USAGE);
+      return 2;
+    }
+    console.log(`scopes=${(await tagScopes(() => fetchCheckRuns(repo, sha))).join(",")}`);
+    return 0;
+  }
+  if (repo !== undefined || sha !== undefined) {
     console.error(USAGE);
     return 2;
   }
@@ -174,4 +211,4 @@ function main(argv: string[]): number {
   return 0;
 }
 
-if (import.meta.main) process.exit(main(process.argv.slice(2)));
+if (import.meta.main) process.exit(await main(process.argv.slice(2)));
