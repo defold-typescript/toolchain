@@ -3,23 +3,29 @@ import { rmSync } from "node:fs";
 import { join } from "node:path";
 import type { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
+import {
+  type CombinedSurface,
+  combinedApiPages,
+} from "@defold-typescript/docs-render/combined-surface";
 import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
+import { apiVersionAxis } from "@defold-typescript/docs-render/toolchain-surface";
+import {
+  loadCombinedSurface,
+  loadSignaturesArtifact,
+  loadVersionIndependentPages,
+  versionsWithDiskFixtures,
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
+import {
+  resolveVersionWindow,
+  windowCombinedSurface,
+} from "@defold-typescript/docs-render/version-window";
 import { libraryPageNames } from "../app/lib/__fixtures__/library-page-names";
 import { renderedHeadingIds } from "../app/lib/__fixtures__/rendered-heading-ids";
 import {
   HISTORICAL_ONLY_NAMESPACE,
   makeWindowedTypesDir,
 } from "../app/lib/__fixtures__/windowed-surface";
-import { apiVersionAxis } from "../app/lib/api-content";
-import {
-  loadCombinedSurface,
-  loadSignaturesArtifact,
-  loadVersionIndependentPages,
-  versionsWithDiskFixtures,
-} from "../app/lib/api-surface-loader";
-import { type CombinedSurface, combinedApiPages } from "../app/lib/combined-surface";
 import { combinedSearchRecords, type SearchRecord } from "../app/lib/search-index";
-import { resolveVersionWindow, windowCombinedSurface } from "../app/lib/version-window";
 import { searchIndexOutputs, versionRoutePages } from "./build-search-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");

@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { type ApiPage, apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
+import { combinedSymbolIndexRecords } from "@defold-typescript/docs-render/combined-surface";
 import { buildSymbolIndex, memberAnchors } from "@defold-typescript/docs-render/symbol-index";
-import { searchIndexOutputs } from "../../scripts/build-search-index";
-import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
-import { apiVersionAxis, windowedApiPages } from "./api-content";
+import { apiVersionAxis, windowedApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import {
   listApiVersions,
   loadApiSurface,
@@ -12,8 +11,10 @@ import {
   loadCombinedSurface,
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
-} from "./api-surface-loader";
-import { combinedSymbolIndexRecords } from "./combined-surface";
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
+import { searchIndexOutputs } from "../../scripts/build-search-index";
+import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import type { GuidePage } from "./guide";
 import {
   apiSearchRecords,
@@ -24,9 +25,8 @@ import {
   toPlainText,
   versionSearchIndexRecords,
 } from "./search-index";
-import { resolveVersionWindow } from "./version-window";
 
-const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
+const API_FIXTURE_DIR = join(import.meta.dir, "../../../docs-render/src/__fixtures__/api-surface");
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 // Derived from the target registry, so a version rotation does not need an edit
 // here: "newest tracked" is what the lifecycle prose is keyed on.

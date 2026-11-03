@@ -1,17 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
+import { apiModuleSymbols } from "./api-surface";
+import { combinedNamespaceToApiPage } from "./combined-surface";
 import {
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
   loadVersionIndependentPages,
-} from "./api-surface-loader";
-import { combinedNamespaceToApiPage } from "./combined-surface";
+} from "./toolchain-surface-loader";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
-const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_TYPES_DIR = join(import.meta.dir, "../../types");
 
 describe("loadApiSurfaceForVersion — engine + globals only, always prefixed", () => {
   test("the default target's engine pages take the version prefix, with no version-independent page", () => {

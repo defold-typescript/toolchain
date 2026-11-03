@@ -1,13 +1,13 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { funcIdentity } from "@defold-typescript/docs-render/combined-surface";
 import {
   type ApiFunction,
   type ApiModule,
   parseDefoldApiDoc,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import { funcIdentity } from "../combined-surface";
 
 // A three-version synthetic types dir for the version-window route tests. The
 // real corpus cannot exercise the window's interesting cases: its tracked axis

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { windowHref } from "@defold-typescript/docs-render/version-window";
 import {
   type ApiSurfaceConfig,
   type ApiSurfaceRange,
@@ -14,7 +15,6 @@ import {
   showApiSurfaceSelector,
 } from "./api-surface-pref";
 import type { NavCategory } from "./nav";
-import { windowHref } from "./version-window";
 
 // The tracked axis is newest-first and every version owns an `/api/<id>/…`
 // family. `defold-1.13.0` is the default (what the bare canonical route renders

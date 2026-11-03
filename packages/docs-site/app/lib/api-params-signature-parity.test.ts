@@ -5,9 +5,12 @@ import {
   apiModuleSymbols,
   mapDocType,
 } from "@defold-typescript/docs-render/api-surface";
+import { combinedNamespaceToApiPage } from "@defold-typescript/docs-render/combined-surface";
+import {
+  loadApiSurface,
+  loadCombinedSurface,
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { firstSlotAlternativeOf, lookupSignature } from "@defold-typescript/types";
-import { loadApiSurface, loadCombinedSurface } from "./api-surface-loader";
-import { combinedNamespaceToApiPage } from "./combined-surface";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 

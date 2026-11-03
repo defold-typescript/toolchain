@@ -13,10 +13,10 @@ import {
   overloadHeading,
   splitCallForm,
 } from "@defold-typescript/docs-render/api-surface";
+import { combinedNamespaceToApiPage } from "@defold-typescript/docs-render/combined-surface";
 import { allPageHeadings, pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
-import { loadCombinedSurface } from "./api-surface-loader";
-import { combinedNamespaceToApiPage } from "./combined-surface";
+import { loadCombinedSurface } from "@defold-typescript/docs-render/toolchain-surface-loader";
 
 describe("overload block headings and form lines (committed artifacts)", () => {
   const pages = loadCombinedSurface(join(import.meta.dir, "../../../types")).namespaces.map(

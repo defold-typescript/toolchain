@@ -28,10 +28,27 @@ import {
   API_TYPE_CODE_CLOSE,
   API_TYPE_CODE_OPEN,
 } from "@defold-typescript/docs-render/api-type-links";
+import type { BadgeCountTable } from "@defold-typescript/docs-render/combined-surface";
+import {
+  buildCombinedSurface,
+  combinedNamespaceToApiPage,
+  namespaceBadgeCounts,
+} from "@defold-typescript/docs-render/combined-surface";
 import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { escapeAttr } from "@defold-typescript/docs-render/signature-brand-links";
 import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
+import { namespaceCountBadges } from "@defold-typescript/docs-render/toolchain-page";
+import {
+  canonicalApiPages,
+  windowedApiPages,
+} from "@defold-typescript/docs-render/toolchain-surface";
+import {
+  loadApiSurface,
+  loadApiSurfaceForVersion,
+  loadCombinedSurface,
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
+import type { VersionWindow } from "@defold-typescript/docs-render/version-window";
 import {
   type ApiAvailability,
   type ApiFunction,
@@ -44,24 +61,10 @@ import {
 import { MIDDLE, makeWindowedTypesDir, NEWEST, OLDEST } from "./__fixtures__/windowed-surface";
 import {
   isKnownVersionId,
-  namespaceCountBadges,
   navLeafBadgeHtml,
   navNamespaceBadges,
   versionedApiParams,
 } from "./api-badges";
-import { canonicalApiPages, windowedApiPages } from "./api-content";
-import {
-  loadApiSurface,
-  loadApiSurfaceForVersion,
-  loadCombinedSurface,
-} from "./api-surface-loader";
-import type { BadgeCountTable } from "./api-surface-pref";
-import {
-  buildCombinedSurface,
-  combinedNamespaceToApiPage,
-  namespaceBadgeCounts,
-} from "./combined-surface";
-import type { VersionWindow } from "./version-window";
 
 // The type half of a name/type label: raw `api-type` code whose text is escaped
 // so `linkApiTypeTokens` can find the run without a `<` splitting it. Composed
@@ -80,7 +83,7 @@ function nameCode(name: string): string {
 const PARAMETERS_LABEL = '<p class="api-slot-label">Parameters</p>';
 const RETURNS_LABEL = '<p class="api-slot-label">Returns</p>';
 
-const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
+const FIXTURE_DIR = join(import.meta.dir, "../../../docs-render/src/__fixtures__/api-surface");
 const MISSING_VERSION_FIXTURE_DIR = join(
   import.meta.dir,
   "__fixtures__/api-surface-missing-version",

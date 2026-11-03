@@ -83,9 +83,10 @@ CI automation for deploys is a later slice.
   `/api` into the top-level nav categories.
 - `../docs-render/src/headings.ts` — `pageHeadings`: extract h2/h3 headings with slugs from a
   rendered HTML body, used by the right-side TOC.
-- `app/lib/api-surface.ts` + `app/lib/api-content.ts` — load the Defold reference
-  surface from `packages/types/fixtures/`, with a graceful empty-state page for
-  namespaces whose fixture has no elements yet.
+- `../docs-render/src/toolchain-surface.ts` — load the Defold reference surface
+  from `packages/types/fixtures/`, shared with the library docs site, which links
+  into it; `../docs-render/src/toolchain-page.ts` renders one `/api/<ns>` page.
+  `app/lib/api-content.ts` holds the site's types dir and its route helpers.
 - `app/routes/_renderer.tsx` — the page shell: top bar, left sidebar, main content,
   right TOC. Ships a tiny critical-CSS block in `<head>` so the page is laid out
   correctly before the Tailwind stylesheet arrives (no FOUC logo splash).

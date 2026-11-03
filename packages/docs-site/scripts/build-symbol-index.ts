@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { combinedSymbolIndexRecords } from "@defold-typescript/docs-render/combined-surface";
 import {
   buildSymbolIndex,
   type SymbolEntry,
@@ -10,8 +11,7 @@ import {
   loadCombinedSurface,
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
-} from "../app/lib/api-surface-loader";
-import { combinedSymbolIndexRecords } from "../app/lib/combined-surface";
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
 
 // Anchored on the script's own location, never `process.cwd()`, so the index
 // generation resolves the same whether the build runs from the package dir or

@@ -27,8 +27,24 @@ import {
   splitCallForm,
   windowedBadgeCategory,
 } from "@defold-typescript/docs-render/api-surface";
+import {
+  combinedApiPages,
+  combinedNamespaceToApiPage,
+  compareSemverDesc,
+} from "@defold-typescript/docs-render/combined-surface";
 import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import {
+  canonicalApiPages,
+  windowedApiPages,
+} from "@defold-typescript/docs-render/toolchain-surface";
+import {
+  listApiVersions,
+  loadApiSurface,
+  loadApiSurfaceForVersion,
+  loadCombinedSurface,
+  versionsWithDiskFixtures,
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
 import {
   type ApiAvailability,
   type ApiFunction,
@@ -47,19 +63,6 @@ import { extractApiDoc } from "../../../cli/src/library/extract-api-doc";
 import { loadAnnotations } from "../../../types/scripts/lua-annotations";
 import { loadApiTargets } from "../../../types/scripts/regen";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
-import { canonicalApiPages, windowedApiPages } from "./api-content";
-import {
-  listApiVersions,
-  loadApiSurface,
-  loadApiSurfaceForVersion,
-  loadCombinedSurface,
-  versionsWithDiskFixtures,
-} from "./api-surface-loader";
-import {
-  combinedApiPages,
-  combinedNamespaceToApiPage,
-  compareSemverDesc,
-} from "./combined-surface";
 import { versionLabel } from "./version-switch";
 
 function fnSymbol(name: string, overrides: Partial<ApiSymbol> = {}): ApiSymbol {
@@ -74,7 +77,7 @@ function fnSymbol(name: string, overrides: Partial<ApiSymbol> = {}): ApiSymbol {
   };
 }
 
-const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
+const FIXTURE_DIR = join(import.meta.dir, "../../../docs-render/src/__fixtures__/api-surface");
 const NO_GLOBALS_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface-no-globals");
 const MISSING_VERSION_FIXTURE_DIR = join(
   import.meta.dir,

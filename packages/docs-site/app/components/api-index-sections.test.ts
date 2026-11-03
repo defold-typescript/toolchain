@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiPage, ApiPageCategory } from "@defold-typescript/docs-render/api-surface";
+import type { NamespaceBadgeCounts } from "@defold-typescript/docs-render/combined-surface";
 import type { ApiModule } from "@defold-typescript/types";
-import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import { buildNav } from "../lib/nav";
 import { CombinedIndex } from "./api-index";
 import { apiCardBadgeHtml, apiPageCardDescription, groupApiIndexPages } from "./api-index-sections";
