@@ -1,7 +1,9 @@
 import { withBase } from "@defold-typescript/docs-render/base";
 import { buildBadgeCountTable } from "@defold-typescript/docs-render/combined-surface";
 import { faviconLinks } from "@defold-typescript/docs-render/favicon";
+import { PRELOAD_FONT_FILES } from "@defold-typescript/docs-render/generated/fonts";
 import type { Heading } from "@defold-typescript/docs-render/headings";
+import { THEME_TOKENS } from "@defold-typescript/docs-render/theme-tokens";
 import {
   apiVersions,
   canonicalApiPages,
@@ -13,7 +15,6 @@ import { Script } from "honox/server";
 import { CategoryLink } from "../components/category-link";
 import { RangeSelectorControls } from "../components/range-selector";
 import { SidebarItems } from "../components/sidebar";
-import { FONT_TOKENS, PRELOAD_FONT_FILES } from "../generated/fonts";
 import CodeCopy from "../islands/code-copy";
 import CodeTabs from "../islands/code-tabs";
 import HsmDemos from "../islands/hsm-demos";
@@ -108,67 +109,6 @@ const TOPBAR_HEIGHT_INIT = `(function(){try{var h=document.querySelector('[data-
  * load starts with the current topic visible instead of hidden past the edge.
  */
 const TOPIC_SCROLL_INIT = `(function(){try{var c=document.querySelector('[data-topic-scroll]');if(!c)return;var f=document.querySelector('[data-topic-scroll-frame]')||c.parentElement;var a=c.querySelector('[aria-current="page"]');var isNarrow=function(){return window.matchMedia?window.matchMedia('(max-width: 1023.98px)').matches:c.scrollWidth>c.clientWidth;};var max=function(){return Math.max(0,c.scrollWidth-c.clientWidth);};var update=function(){if(!f)return;var m=max();f.toggleAttribute('data-scroll-left',c.scrollLeft>1);f.toggleAttribute('data-scroll-right',c.scrollLeft<m-1);};var center=function(){if(!a||!isNarrow())return;var cr=c.getBoundingClientRect(),ar=a.getBoundingClientRect(),left=ar.left-cr.left+c.scrollLeft;c.scrollLeft=Math.max(0,Math.min(left-c.clientWidth/2+ar.width/2,max()));};center();update();c.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',function(){center();update();},{passive:true});if(typeof ResizeObserver==='function'){new ResizeObserver(function(){center();update();}).observe(c);}}catch(_){}})();`;
-
-/**
- * The design tokens, inlined so they are available before the Tailwind
- * stylesheet (and `public/critical.css`) load. Without this, `var(--color-text)`
- * in critical.css would be undefined at first paint and the body would briefly
- * render with the wrong color. Tailwind v4's `@theme` block in
- * `app/styles.css` redefines the same tokens; that later definition
- * supersedes these because the cascade is per-property and the @theme
- * block is a higher-specificity origin.
- *
- * Keep this list in sync with the `@theme` block in `app/styles.css` and
- * the dark override below it. The --font-* tokens come from the shared
- * generator output (app/generated/fonts.ts) so they cannot drift from the
- * fallback @font-face rules.
- */
-const THEME_TOKENS = `
-:root {${FONT_TOKENS}
-  /* Prose type scale — single source of truth for both critical.css and
-   * styles.css. Defined here (not @theme) because it must be present before
-   * either stylesheet paints, and it backs no Tailwind utility. */
-  --prose-text-size: 17px;
-  --prose-table-size: 17px;
-  --prose-h1-size: 1.9rem;
-  --prose-h2-size: 1.4rem;
-  --prose-h3-size: 1.1rem;
-  --prose-h4-size: 0.95rem;
-  --prose-code-size: 0.875em;
-  --prose-pre-size: 14px;
-  --prose-code-title-size: 12px;
-  /* Navigation type scale. Top menu is its own knob; the left sidebar and
-   * right "on this page" rail share one. */
-  --nav-top-size: 0.9rem;
-  --nav-side-size: 0.9rem;
-  --color-bg: #ffffff;
-  --color-surface: #f7f7f8;
-  --color-surface-2: #f0f0f2;
-  --color-border: #e6e6e9;
-  --color-border-strong: #d0d0d5;
-  --color-text: #1c1c1f;
-  --color-text-muted: #5b5b62;
-  --color-text-faint: #8a8a92;
-  --color-accent: #1f6feb;
-  --color-accent-soft: rgba(31, 111, 235, 0.08);
-  --color-accent-strong: #1858c4;
-  --color-code-bg: #f6f6f7;
-}
-[data-theme="dark"] {
-  --color-bg: #0e0e10;
-  --color-surface: #161618;
-  --color-surface-2: #1d1d20;
-  --color-border: #2a2a2e;
-  --color-border-strong: #3a3a40;
-  --color-text: #ececef;
-  --color-text-muted: #a4a4ad;
-  --color-text-faint: #6f6f78;
-  --color-accent: #79a8ff;
-  --color-accent-soft: rgba(121, 168, 255, 0.12);
-  --color-accent-strong: #a9c4ff;
-  --color-code-bg: #161618;
-}
-`;
 
 interface ViteManifestEntry {
   file: string;
@@ -405,7 +345,11 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
                 data-testid="search"
                 class="order-1 w-full basis-full lg:order-none lg:w-auto lg:basis-auto"
               >
-                <Search versionIds={versionIds} />
+                <Search
+                  placeholder="Search docs…"
+                  label="Search documentation"
+                  versionIds={versionIds}
+                />
               </div>
               <GithubLink />
               <ThemeToggle />

@@ -1,8 +1,8 @@
 /**
- * Pure helpers for the design-token drift guard. The docs-site color tokens are
- * hand-authored in two files — the Tailwind `@theme`/dark blocks in
- * `app/styles.css` and the pre-paint `THEME_TOKENS` inlined by
- * `app/routes/_renderer.tsx` — and a comment is the only thing that has kept
+ * Pure helpers for the design-token drift guard. The docs sites' color tokens
+ * are hand-authored in two files — the Tailwind `@theme`/dark blocks in
+ * `styles.css` and the pre-paint `THEME_TOKENS` in `theme-tokens.ts`, which
+ * each site's renderer inlines — and a comment is the only thing that has kept
  * them in sync. These functions parse both so a test can assert parity.
  *
  * No DOM: everything operates on the raw file text.

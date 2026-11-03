@@ -3,15 +3,10 @@ import {
   apiModuleSections,
   qualify,
 } from "@defold-typescript/docs-render/api-surface";
+import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { memberAnchors } from "@defold-typescript/docs-render/symbol-index";
 import type { Guide } from "./guides";
 import type { LibraryListing } from "./nav";
-
-export interface SearchRecord {
-  route: string;
-  title: string;
-  text: string;
-}
 
 const flatten = (text: string): string => text.replace(/\s+/g, " ").trim();
 

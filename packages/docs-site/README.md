@@ -26,8 +26,9 @@ bun --filter @defold-typescript/docs-site run dev
 bun --filter @defold-typescript/docs-site run build:site
 ```
 
-`bun run build:site` first runs `build-indexes`, which calls
-`scripts/build-font-fallbacks.ts` to regenerate the metric-matched fallback faces, then
+`bun run build:site` first runs `build-indexes`, which copies the shared
+`critical.css` into `public/`, calls `../docs-render/scripts/build-font-fallbacks.ts` to
+regenerate the metric-matched fallback faces, then
 `scripts/build-search-index.ts` to materialise the prose search index, then
 `scripts/build-symbol-index.ts`, and finally the two-pass Vite build (`--mode client` +
 SSG). The package's `build` script, which the root `bun run build` runs, stops after
@@ -94,19 +95,28 @@ CI automation for deploys is a later slice.
   (one dynamic route prerendering every other guide page via `ssgParams`).
 - `app/routes/api.tsx` and `app/routes/api/[namespace].tsx` — the API index
   and per-namespace reference pages.
-- `app/islands/theme-toggle.tsx` — the hydrated dark/light switch (system fallback,
-  localStorage, no flash on reload).
-- `app/islands/sidebar-toggle.tsx` + `app/islands/sidebar-state.ts` — the `<lg`
-  sidebar-drawer toggle. The island flips `html[data-sidebar]` (the `data-theme`
-  cross-island precedent) and CSS in `styles.css` reveals the off-canvas drawer;
-  the pure open/close helpers live in `sidebar-state.ts` and are unit-tested.
-- `app/islands/search.tsx` — the client-side prose search.
-- `app/islands/toc.tsx` — the right-side table of contents with scroll-spy.
-- `app/styles.css` — Tailwind v4 entry plus the custom `.prose` styles, design
-  tokens, and Shiki theme variables.
+- `app/islands/` — the hydrated islands. HonoX hydrates only modules under this
+  folder, so each island shared with the library docs site is a two-line file here
+  that re-exports its component from `../docs-render/src/islands/`. Those include:
+  - `theme-toggle.tsx` — the dark/light switch (system fallback, localStorage, no
+    flash on reload).
+  - `sidebar-toggle.tsx` + `sidebar-state.ts` — the `<lg` sidebar-drawer toggle. The
+    island flips `html[data-sidebar]` (the `data-theme` cross-island precedent) and
+    CSS in `styles.css` reveals the off-canvas drawer; the pure open/close helpers
+    live in `sidebar-state.ts` and are unit-tested.
+  - `search.tsx` — the client-side prose search.
+  - `toc.tsx` — the right-side table of contents with scroll-spy.
+
+  `code-tabs.tsx` and `hsm-demos.tsx` are this site's own.
+- `app/styles.css` — Tailwind v4 entry: imports the shared
+  `../docs-render/src/styles.css` (the custom `.prose` styles, design tokens, and
+  Shiki theme variables both sites use), then holds this site's own state machine
+  demo rules. `../docs-render/src/critical.css` and `theme-tokens.ts` carry the
+  first-paint copies.
 - `scripts/build-search-index.ts` / `scripts/build-symbol-index.ts` — materialise the
   prose search index and the API symbol index the `build` script consumes.
-- `scripts/build-font-fallbacks.ts` — reads the bundled Fontsource `.woff2` files and
-  emits per-weight metric-matched fallback faces + the `--font-*` token stacks to
-  `app/generated/` (consumed by `app/styles.css` and `app/routes/_renderer.tsx`),
-  eliminating font-load layout shift. Regenerate with `bun run build-font-fallbacks`.
+- `../docs-render/scripts/build-font-fallbacks.ts` — reads the bundled Fontsource
+  `.woff2` files and emits per-weight metric-matched fallback faces + the `--font-*`
+  token stacks to `../docs-render/src/generated/` (consumed by the shared `styles.css`
+  and `theme-tokens.ts`, and by `app/routes/_renderer.tsx`), eliminating font-load
+  layout shift. Regenerate with `bun run --cwd packages/docs-render build-font-fallbacks`.

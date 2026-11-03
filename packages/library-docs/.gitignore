@@ -3,3 +3,4 @@ dist
 node_modules
 public/search-index.json
 public/symbol-index.json
+public/critical.css
