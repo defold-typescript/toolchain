@@ -10,7 +10,9 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    # A bot branch is checked by its PR's run. Its own push run would see a new or
+    # force-pushed branch whose previous head git cannot read, and run the full scope.
+    branches: ["**", "!library-update/**"]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
