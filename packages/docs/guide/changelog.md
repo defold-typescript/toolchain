@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.57.0
+
+> Summary:
+>
+> - **[Forked library types](./resolve.md#vendored-library-types)** show the library's own docs on hover.
+
+### Improved
+
+- **Forked library types carry the library's own docs:** `resolve` prints each member a hand-written fork leaves undocumented with the library's doc summary, so your editor shows it on hover, the same text the member's [library API page](https://defold-typescript.github.io/library-data) shows.
+
 ## v0.56.0
 
 > Summary:

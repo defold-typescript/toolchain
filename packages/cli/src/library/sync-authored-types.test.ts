@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import ts from "typescript";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import { extractApiDoc } from "./extract-api-doc";
 import { LIBRARY_DATA_DIR } from "./package-root";
@@ -113,13 +114,34 @@ describe("readAuthoredTargets", () => {
 });
 
 describe("emitAuthoredDeclaration", () => {
-  test("prints the vendored authored .d.ts verbatim", () => {
-    const contents = emitAuthoredDeclaration(FIXTURE_DATA_DIR, TALLY);
-    // The forked ambient module keyed by moduleId, exported symbols intact
-    // (assert on symbols, never the whole blob).
-    expect(contents).toContain("declare module 'tally.tally' {");
-    expect(contents).toContain("function push(");
-    expect(contents).toContain("function flush(");
+  // The expected prose is the fixture's `tally.lua`, which the fork leaves out: the
+  // declaration a project receives carries the upstream text the docs site shows.
+  // flush's LDoc `@{push}` prints as `\@{push}`, the escape both render as `@`.
+  test("prints the fork with upstream's summary on the members it leaves undocumented", () => {
+    const doc = extractApiDoc(emitAuthoredDeclaration(FIXTURE_DATA_DIR, TALLY), "tally") as {
+      elements: ImportedElement[];
+    };
+    const description = (name: string) =>
+      doc.elements.find((element) => element.name === name)?.description;
+    expect(description("push")).toBe(
+      "Add one or more event handlers\nEach handler must be a function",
+    );
+    expect(description("flush")).toBe("Run every handler added via \\@{push}");
+  });
+
+  // The lane's identity gate: the print adds doc comments and nothing else, so with
+  // comments removed every fork prints exactly the types it vendors.
+  test("every fork prints its vendored types unchanged", () => {
+    const commentFree = (source: string) =>
+      ts
+        .createPrinter({ removeComments: true })
+        .printFile(ts.createSourceFile("fork.d.ts", source, ts.ScriptTarget.Latest, false));
+    const targets = readAuthoredTargets(DATA_DIR);
+    expect(targets.length).toBeGreaterThan(0);
+    for (const target of targets) {
+      const vendored = readFileSync(join(DATA_DIR, target.authored), "utf8");
+      expect(commentFree(emitAuthoredDeclaration(DATA_DIR, target))).toBe(commentFree(vendored));
+    }
   });
 });
 
@@ -132,14 +154,28 @@ describe("lowerAuthoredApiDoc", () => {
     expect(names).toContain("push");
     expect(names).toContain("flush");
   });
+
+  test("marks the members the printed fork took from upstream, after their description", () => {
+    const { elements } = JSON.parse(lowerAuthoredApiDoc(FIXTURE_DATA_DIR, TALLY)) as {
+      elements: Record<string, unknown>[];
+    };
+    for (const name of ["push", "flush"]) {
+      const keys = Object.keys(elements.find((element) => element.name === name) ?? {});
+      expect(keys.slice(keys.indexOf("description"), keys.indexOf("description") + 2)).toEqual([
+        "description",
+        "docSource",
+      ]);
+    }
+  });
 });
 
-// The api-doc is the fork plus upstream's own prose where the fork supplies none.
-// The vendored `.d.ts` and its emitted golden are untouched by the import, so an
-// imported brief is only ever visible through this lowering and the `/api` page it
-// feeds.
+// The api-doc is lowered from the printed fork, which carries upstream's own prose
+// where the fork supplies none. The vendored `.d.ts` is untouched by the merge, so an
+// imported brief reaches a project through the printed declaration and the `/api`
+// page through this lowering, and the two agree.
 describe("upstream LuaDoc import at api-doc lowering", () => {
-  // A fork that documents `get_level` and `LIMIT_NONE` itself and leaves `start` blank.
+  // A fork that documents `get_level`, `LIMIT_NONE` and one overload of `stop`
+  // itself and leaves `start` blank.
   const RELAY_FORK = `/** @noSelfInFile **/
 
 /**
@@ -152,6 +188,9 @@ declare module 'relay.relay' {
 	export function get_level(): number;
 	/** A documented limit. */
 	export const LIMIT_NONE: "NONE";
+	/** Stop once every queued message is sent. */
+	export function stop(drain: boolean): void;
+	export function stop(): void;
 }
 `;
 
@@ -171,6 +210,10 @@ end
 --- Upstream's own words for the level
 function M.get_level()
 	return 1
+end
+
+--- Upstream's own words for stopping
+function M.stop(drain)
 end
 
 return M
@@ -245,6 +288,18 @@ return M
     expect(getLevel.docSource).toBeUndefined();
   });
 
+  // The merge is per member: one documented overload keeps the fork's comments on
+  // every declaration of the name, so the undocumented overload prints and lowers
+  // without upstream's prose rather than with a second, competing text.
+  test("relay.stop keeps the fork's prose on every overload", () => {
+    const { dataDir, target } = writeRelay();
+    const stops = loweredElements(dataDir, target).filter((entry) => entry.name === "stop");
+    expect(stops.map((entry) => [entry.description, entry.docSource])).toEqual([
+      ["Stop once every queued message is sent.", undefined],
+      ["", undefined],
+    ]);
+  });
+
   test("a target with no vendored upstream imports nothing", () => {
     const imported = ({ dataDir, target }: { dataDir: string; target: AuthoredTarget }) =>
       loweredElements(dataDir, target)
@@ -256,10 +311,10 @@ return M
     expect(imported(unmeasured)).toEqual([]);
   });
 
-  // The importer's opt-out is "an element the fork gave either a `brief` or a
-  // `description` is returned untouched", and it now works on the field axis too:
-  // `extractApiDoc` carries a doc comment onto a `VARIABLE` element as well as a
-  // `FUNCTION` one, so a constant the fork documents keeps the fork's words. The
+  // The merge's opt-out is "a member the fork gave a doc summary keeps its comment
+  // untouched", and it works on the field axis too: `extractApiDoc` carries a doc
+  // comment onto a `VARIABLE` element as well as a `FUNCTION` one, so a constant the
+  // fork documents keeps the fork's words. The
   // relay's `LIMIT_NONE` sits under an upstream block that opens with a snake_case
   // heading `withoutNameLine` does not strip, because it is not the member's own
   // name, so a constant that failed to opt out would import that heading instead.

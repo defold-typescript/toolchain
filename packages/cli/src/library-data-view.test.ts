@@ -20,7 +20,7 @@ import {
   readLibraryData,
 } from "./library/library-data";
 import { printLibraryModules } from "./library/print-library";
-import { writeLibraryTargets } from "./library-data-fixture";
+import { writeLibraryTargets, writeUndocumentedUpstreamLua } from "./library-data-fixture";
 import { assembleLibraryDataView } from "./library-data-view";
 
 const COMMIT_A = "0123456789abcdef0123456789abcdef01234567";
@@ -45,6 +45,7 @@ function writeLibrary(
   const authored = `fork/${moduleId}.d.ts`;
   mkdirSync(join(dataDir, library, "fork"), { recursive: true });
   writeFileSync(join(dataDir, library, authored), contents);
+  writeUndocumentedUpstreamLua(join(dataDir, library), `source/upstream/${moduleId}.lua`);
   writeLibraryTargets(dataDir, {
     forks: [
       {
