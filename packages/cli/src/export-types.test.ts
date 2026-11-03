@@ -16,7 +16,11 @@ import { libraryFolderName } from "./library/library-data";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printCorpus } from "./library/print-corpus";
 import { LIBRARY_DATA_MAIN_URL } from "./library-data-archive";
-import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fixture";
+import {
+  writeAuthoredLibraryData,
+  writeLibraryTargets,
+  writeUndocumentedUpstreamLua,
+} from "./library-data-fixture";
 import { loadVendoredLibraryRegistry, loadVendoredNativeRegistry } from "./library-registry";
 import {
   checkShippedDeclarations,
@@ -135,6 +139,10 @@ function writeCorpus(corpus: {
   for (const { repo, declaration, contents } of native) write(repo, declaration, contents);
   for (const { repo, moduleId, contents } of authored) {
     write(repo, `fork/${moduleId}.d.ts`, contents);
+    writeUndocumentedUpstreamLua(
+      join(root, libraryFolderName(repo)),
+      `source/upstream/${moduleId}.lua`,
+    );
   }
   return root;
 }

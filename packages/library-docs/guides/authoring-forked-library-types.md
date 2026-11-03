@@ -160,10 +160,12 @@ Then run this command from the toolchain root:
 bun packages/cli/src/bin.ts library check --data packages/library-types/data --api-doc-out packages/library-types/api-doc
 ```
 
-- `resolve` serves the vendored `.d.ts` verbatim. There is no parse or transform:
-  an authored source is already target-form, so the served surface *is* the
-  vendored surface.
-- **`--api-doc-out`** makes [`library check`](https://defold-typescript.github.io/toolchain/library), once its checks pass, run `extractApiDoc` over the vendored `.d.ts` under the pinned
+- `resolve` serves the vendored `.d.ts` with one addition: each member the fork
+  leaves undocumented carries upstream's LuaDoc summary as its doc comment (see
+  [Upstream LuaDoc import](#upstream-luadoc-import)). Nothing else is transformed:
+  an authored source is already target-form, so the served types *are* the
+  vendored types.
+- **`--api-doc-out`** makes [`library check`](https://defold-typescript.github.io/toolchain/library), once its checks pass, run `extractApiDoc` over that printed declaration under the pinned
   publish `namespace`, producing the `api-doc/<namespace>.json` the `/api`
   page renders. A member's `@deprecated` tag carries through to the page as a
   `Deprecated` line, with the tag's own text when it has any — so mark a
@@ -177,14 +179,16 @@ compare against, and the emit is lossless by construction (see below).
 
 The generated lanes report a coverage number because a parse can lose type
 information the original had. An authored `.d.ts` cannot: the printed declaration
-is the vendored source, so the go/no-go gate is a **forked-vs-printed identity
-diff** — what `resolve` prints is byte-identical to the vendored
-`fork/<moduleId>.d.ts`. `print-library.test.ts` asserts exactly this
-through the lane dispatch. No `fidelity/` artifact is written.
+is the vendored source plus doc comments, so the go/no-go gate is a
+**forked-vs-printed identity diff on types** — what `resolve` prints, with its
+comments removed, is identical to the vendored `fork/<moduleId>.d.ts` with its
+comments removed. `sync-authored-types.test.ts` asserts this for every fork, and
+`print-library.test.ts` checks the lane dispatch serves that print. No
+`fidelity/` artifact is written.
 
 Read that gate narrowly. It proves **emission** fidelity — both sides of the diff
-are the toolchain repo's own files, so all it certifies is that the print loses nothing
-relative to the vendored `.d.ts`. It says nothing about whether the vendored
+are the toolchain repo's own files, so all it certifies is that the print loses no
+type relative to the vendored `.d.ts`. It says nothing about whether the vendored
 surface matches upstream, and there is no primary source to measure it against —
 that is what "no structured type source" means. A *verbatim* fork inherits
 whatever accuracy the binding it copied already had; a *corrected* fork (see
@@ -418,16 +422,20 @@ justify it*, and every entry is a claim about upstream that the next reader can 
 
 ### Upstream LuaDoc import
 
-A measured target's api-doc does not stop at the fork. Where the fork leaves a
-member's `brief` and `description` both empty and upstream documents it, upstream's
-own LuaDoc summary is lowered into `api-doc/<namespace>.json` and rendered on
-the `/api` page, marked so a reader can tell it apart from the fork's own prose.
+A measured target's printed declaration does not stop at the fork. Where the fork
+gives a module-level member no doc summary and upstream documents it, upstream's own
+LuaDoc summary is printed as that member's doc comment, so a project's editor shows
+it on hover. The api-doc is lowered from the same printed declaration, so the `/api`
+page shows the same text, marked so a reader can tell it apart from the fork's own
+prose.
 
-Five rules bound it:
+Six rules bound it:
 
 - **Tags never come with the summary.** The block is truncated at the first line
   starting with `@`, and a tag's unmarked continuation lines go with it. No
-  parameter name, type, or `@return` text from LuaDoc ever reaches the api-doc.
+  parameter name, type, or `@return` text from LuaDoc ever reaches the print. An
+  `@` after a space inside the summary, such as LDoc's `@{name}` reference, prints
+  as `\@` so TypeScript reads it as text rather than as a tag.
 - **One blank line inside a comment run does not end the block.** Upstream often
   wraps a long `@param` list around a blank line, which would otherwise truncate the
   block to its tag half and lose the summary above it. The blank is crossed only when
@@ -439,15 +447,20 @@ Five rules bound it:
   the rendered brief is the summary rather than the symbol you are already reading. A
   first line that merely mentions the name is prose and survives; a block that is
   *only* the name imports nothing at all.
-- **Fork prose always wins.** A member the fork documents — with either a `brief`
-  or a `description` — keeps exactly what the fork wrote. Writing the member's
-  doc-comment in the fork is therefore how you opt it out; there is no exclusion
-  list, because the only thing one would add is "show no prose at all", which is
-  worse than writing the correct brief.
-- **The import is the api-doc's alone.** `fork/<moduleId>.d.ts` and
-  the declaration `resolve` prints from it are untouched, so the forked-vs-printed
-  identity diff still proves the emit is lossless and imported prose stays
-  distinguishable from the fork's forever after.
+- **Fork prose always wins, per member.** A member any of whose declarations carries
+  a doc summary in the fork keeps exactly what the fork wrote, on every overload.
+  Writing the member's doc-comment in the fork is therefore how you opt it out;
+  there is no exclusion list, because the only thing one would add is "show no
+  prose at all", which is worse than writing the correct brief. A comment holding
+  only tags, such as `/** @noSelf */`, is not a summary: the print puts upstream's
+  summary at the top of that same block.
+- **Only the module's own members.** The merge fills the functions and constants
+  directly inside the `declare module` block. A file-scope global and a member of a
+  nested namespace keep whatever the fork wrote.
+- **The import is printed, never vendored.** `fork/<moduleId>.d.ts` is untouched
+  and the print adds comments only, so the identity diff on types still proves the
+  emit is lossless, imported prose stays distinguishable from the fork's forever
+  after, and an upstream doc change reaches the print with no hand edit.
 
 A block whose every segment opens with a plain `--` rather than `---` is **refused**,
 and counted as `refusedDocBlocksTotal` on the target's parity report. Nothing

@@ -34,7 +34,11 @@ import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printLibraryModules } from "./library/print-library";
 import { readNativeTargets } from "./library/sync-native-types";
 import { readNativeExpectations } from "./library/target-expectations";
-import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fixture";
+import {
+  writeAuthoredLibraryData,
+  writeLibraryTargets,
+  writeUndocumentedUpstreamLua,
+} from "./library-data-fixture";
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
@@ -3073,6 +3077,7 @@ describe("runResolve with a library data archive", () => {
             join(root, "newlib", "fork", "newlib.core.d.ts"),
             'declare module "newlib.core" {\n  export const answer_probe: number;\n}\n',
           );
+          writeUndocumentedUpstreamLua(join(root, "newlib"), "source/upstream/newlib.core.lua");
           writeLibraryTargets(root, {
             forks: [
               {
@@ -3279,6 +3284,7 @@ describe("runResolve with a library data archive", () => {
       const folder = writeAuthoredLibraryData({ [`${plain}.core`]: "// plain\n" });
       mkdirSync(join(folder, library, "fork"), { recursive: true });
       writeFileSync(join(folder, library, "fork", "clash.d.ts"), "// clash\n");
+      writeUndocumentedUpstreamLua(join(folder, library), "source/upstream/clash.lua");
       writeLibraryTargets(folder, {
         forks: [
           {
@@ -4164,6 +4170,7 @@ describe("runResolve reports each library's status", () => {
         join(library, "fork", "statuslib.core.d.ts"),
         'declare module "statuslib.core" {\n  export const forked: number;\n}\n',
       );
+      writeUndocumentedUpstreamLua(library, "source/upstream/statuslib.core.lua");
       writeLibraryTargets(folder, {
         forks: [
           {
