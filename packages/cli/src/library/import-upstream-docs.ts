@@ -1,37 +1,26 @@
 /**
- * Carrying upstream's own LuaDoc into the authored lane's api-doc, for members the
- * fork documents nowhere.
+ * The prose half of an upstream LuaDoc block, and the `docSource` mark the api-doc
+ * puts on a member whose printed doc comment came from it.
  *
- * `parse-lua-surface.ts` already reads each upstream member's `---` block and
- * `authored-parity.ts` already counts how many of them the fork drops, so the text
- * exists on one side of the pipeline and was thrown away before the docs-site saw
- * it. This module is the merge, and it runs at api-doc lowering rather than in the
- * vendored `.d.ts`: writing upstream prose into a library's `fork/*.d.ts` would
- * still pass the forked-vs-generated identity diff while destroying what that diff
- * exists to prove — that the emitted surface *is* the vendored fork — and imported
- * prose would be indistinguishable from fork prose forever after.
+ * Which members take upstream's prose is decided once, when the fork is printed
+ * (`merge-fork-docs.ts`); the api-doc is lowered from that printed declaration, so
+ * this module only names where the prose came from. The rules for reading a block
+ * stay here:
  *
- * Three rules carry the whole merge:
- *
- * - **Fork prose always wins.** An element the fork gave either a `brief` or a
- *   `description` is returned untouched and gains no `docSource`, so authoring the
- *   fork's own doc-comment is how a member opts out. There is no exclusion list:
- *   the only thing one would add is "show no prose at all for a member upstream
- *   documented", which is worse than writing the correct brief.
  * - **Tags never come with the summary.** Every block in this corpus is a summary
  *   followed by `@param`/`@return` lines, and a tag's continuation lines carry no
  *   marker of their own, so truncating at the *first* `@` line is what keeps
- *   LuaDoc-derived types and parameter names out of the api-doc.
- * - **A brief never restates its own symbol.** A leading line that is exactly the
- *   element's name is upstream's heading, not prose, and is dropped before the brief is
- *   taken. That is the importer's knowledge, not `summarizeLuaDoc`'s, which stays a pure
+ *   LuaDoc-derived types and parameter names out of the printed doc.
+ * - **A summary never restates its own symbol.** A leading line that is exactly the
+ *   member's name is upstream's heading, not prose, and is dropped. That is
+ *   `upstreamSummary`'s knowledge, not `summarizeLuaDoc`'s, which stays a pure
  *   block-to-prose function.
  */
 
 import type { LuaMember } from "./parse-lua-surface";
 
 /** One `api-doc/<namespace>.json` element, open at the edges: this module reads the
- * four keys the merge turns on and passes every other key through in place. */
+ * keys the mark turns on and passes every other key through in place. */
 export interface ApiDocElement {
   type: string;
   name: string;
@@ -47,8 +36,8 @@ export interface ApiDocElement {
  * starts with `@`, rejoined and trimmed. Empty for a block that is only tags.
  *
  * Interior newlines and blank lines survive. Markdown collapses a soft break at
- * render time, so no unwrapping is done and the imported description stays
- * upstream's own text.
+ * render time, so no unwrapping is done and the printed summary stays upstream's
+ * own text.
  */
 export function summarizeLuaDoc(doc: string): string {
   const summary: string[] = [];
@@ -59,67 +48,55 @@ export function summarizeLuaDoc(doc: string): string {
   return summary.join("\n").trim();
 }
 
-/** The summary without a leading line that is only the element's own name. nakama writes
- * `--- <member_name>` above the real summary, and `briefOf` takes the first line, so
- * leaving it in ships a brief that restates the symbol it sits under. The comparison is
- * exact: a first line that merely mentions the name is prose and survives. */
+/** The summary without a leading line that is only the member's own name. nakama writes
+ * `--- <member_name>` above the real summary, and a brief is the first line, so leaving
+ * it in ships a brief that restates the symbol it sits under. The comparison is exact: a
+ * first line that merely mentions the name is prose and survives. */
 function withoutNameLine(summary: string, name: string): string {
   const [first, ...rest] = summary.split("\n");
   return (first as string).trim() === name ? rest.join("\n").trim() : summary;
 }
 
-/** The element with upstream's summary in place, `docSource` inserted immediately
- * after `description` by copying the element's own entries in order rather than
- * assigning onto it — the key order is what the committed api-doc golden diffs on. */
-function withImportedDoc(element: ApiDocElement, summary: string): ApiDocElement {
-  const brief = summary.split("\n")[0]?.trim() ?? "";
-  const imported: ApiDocElement = { type: element.type, name: element.name };
-  let placedBrief = false;
-  let placedDescription = false;
+/** Upstream's summary for the member published as `name`: its block's prose with the
+ * name-line rule applied. Empty when nothing but tags and the name is left. */
+export function upstreamSummary(member: LuaMember, name: string): string {
+  return withoutNameLine(summarizeLuaDoc(member.doc), name);
+}
+
+/** The element with `docSource: "upstream"` inserted immediately after `description`,
+ * by copying the element's own entries in order rather than assigning onto it — the
+ * key order is what the committed api-doc golden diffs on. */
+function withUpstreamMark(element: ApiDocElement): ApiDocElement {
+  const marked: ApiDocElement = { type: element.type, name: element.name };
+  let placed = false;
   for (const [key, value] of Object.entries(element)) {
-    if (key === "type" || key === "name") continue;
-    if (key === "brief") {
-      imported.brief = brief;
-      placedBrief = true;
-    } else if (key === "description") {
-      imported.description = summary;
-      imported.docSource = "upstream";
-      placedDescription = true;
-    } else imported[key] = value;
+    if (key === "type" || key === "name" || key === "docSource") continue;
+    marked[key] = value;
+    if (key === "description") {
+      marked.docSource = "upstream";
+      placed = true;
+    }
   }
-  if (!placedDescription) {
-    imported.description = summary;
-    imported.docSource = "upstream";
-  }
-  if (!placedBrief) imported.brief = brief;
-  return imported;
+  if (!placed) marked.docSource = "upstream";
+  return marked;
 }
 
 /**
- * The api-doc element list with upstream prose merged in, as a new list.
- *
- * An element is imported when it is a `FUNCTION` or a `VARIABLE` — the two kinds
- * `authored-parity.ts` compares, a `TYPEDEF` being a type rather than a runtime
- * member — is not `global: true`, has an empty `brief` *and* an empty
- * `description`, matches an upstream member by exact name, and that member's
- * summary survives tag stripping. Every other element is returned unchanged.
- *
- * The name match is exact on purpose: a namespace-qualified api-doc name
- * (`bridge.bridge`) never matches a bare upstream name, which is the same non-match
- * the parity pass makes.
+ * The api-doc element list with every module-level `FUNCTION` or `VARIABLE` named in
+ * `names` marked `docSource: "upstream"`, as a new list. `names` is what
+ * `mergeForkDocs` reports it filled, so the docs site marks exactly the members whose
+ * printed comment is upstream's. A `TYPEDEF` is a type rather than a runtime member and
+ * a `global: true` element lives outside the module block, so neither is ever marked;
+ * every other element is returned unchanged.
  */
-export function importUpstreamDocs(
+export function markUpstreamDocs(
   elements: readonly ApiDocElement[],
-  members: ReadonlyMap<string, LuaMember>,
+  names: readonly string[],
 ): ApiDocElement[] {
+  const filled = new Set(names);
   return elements.map((element) => {
     if (element.type !== "FUNCTION" && element.type !== "VARIABLE") return element;
-    if (element.global === true) return element;
-    if ((element.brief ?? "") !== "" || (element.description ?? "") !== "") return element;
-    const member = members.get(element.name);
-    if (member === undefined) return element;
-    const summary = withoutNameLine(summarizeLuaDoc(member.doc), element.name);
-    if (summary === "") return element;
-    return withImportedDoc(element, summary);
+    if (element.global === true || !filled.has(element.name)) return element;
+    return withUpstreamMark(element);
   });
 }

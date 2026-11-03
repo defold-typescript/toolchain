@@ -26,8 +26,8 @@
     {
       "type": "FUNCTION",
       "name": "run",
-      "brief": "Run all tests added via @{add}",
-      "description": "Run all tests added via @{add}\nThe engine will shut down with an exit code indicating success or\nfailure and the test reports will be written to console.",
+      "brief": "Run all tests added via \\@{add}",
+      "description": "Run all tests added via \\@{add}\nThe engine will shut down with an exit code indicating success or\nfailure and the test reports will be written to console.",
       "docSource": "upstream",
       "parameters": [
         {

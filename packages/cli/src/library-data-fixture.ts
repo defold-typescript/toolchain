@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   type ForkEntry,
@@ -106,6 +106,16 @@ export function writeLibraryTargets(dataDir: string, targets: FlatLibraryTargets
   return [...libraries.keys()];
 }
 
+// A fork's vendored upstream `.lua` at `path` under `libraryDir`, a module that
+// documents nothing, so printing the fork adds no upstream comment to its bytes.
+// `library check` measures every listed upstream file, so a fork fixture that lists
+// one must write it.
+export function writeUndocumentedUpstreamLua(libraryDir: string, path: string): void {
+  const file = join(libraryDir, path);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, "local M = {}\n\nreturn M\n");
+}
+
 // A library data folder whose only targets are authored forks, one per module, so
 // a `resolve` test names the modules a fake dependency confirms and the exact
 // bytes each one prints, without the real corpus.
@@ -117,6 +127,8 @@ export function writeAuthoredLibraryData(forks: Readonly<Record<string, string>>
       const authored = `fork/${moduleId}.d.ts`;
       mkdirSync(join(root, library, "fork"), { recursive: true });
       writeFileSync(join(root, library, authored), contents);
+      const upstreamLua = `source/upstream/${moduleId}.lua`;
+      writeUndocumentedUpstreamLua(join(root, library), upstreamLua);
       return {
         repo: `https://github.com/owner/${library}`,
         ref: "1.0.0",
@@ -124,7 +136,7 @@ export function writeAuthoredLibraryData(forks: Readonly<Record<string, string>>
         moduleId,
         namespace: moduleId,
         apiDoc: `api-doc/${moduleId}.json`,
-        upstreamLua: [`source/upstream/${moduleId}.lua`],
+        upstreamLua: [upstreamLua],
       };
     }),
   });
