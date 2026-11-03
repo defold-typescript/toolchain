@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseFrontmatter } from "./frontmatter";
+import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import type { GuidePage } from "./guide";
 
 const SUMMARY_MAX = 160;

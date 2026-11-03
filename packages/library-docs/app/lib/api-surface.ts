@@ -1,3 +1,5 @@
+import { slugify } from "@defold-typescript/docs-render/headings";
+import { platformDocText } from "@defold-typescript/docs-render/platform-icons";
 import {
   type ApiAvailability,
   type ApiFunction,
@@ -28,8 +30,6 @@ import {
   withIndexBaseNotes,
   withLibraryIndexBaseNotes,
 } from "@defold-typescript/types";
-import { slugify } from "./headings";
-import { platformDocText } from "./platform-icons";
 
 /**
  * Per-surface availability index, keyed by {@link symbolIdentityKey} so a symbol

@@ -2,6 +2,9 @@
 // Root `bun test` transpiles this file via the cwd (root) tsconfig, which
 // intentionally carries no JSX config so non-docs workspaces are not coupled to
 // hono/jsx; this pragma pins the JSX dialect for this file.
+
+import { withBase } from "@defold-typescript/docs-render/base";
+import { pageHeadings } from "@defold-typescript/docs-render/headings";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { ApiIndex } from "../../components/api-index";
@@ -22,9 +25,7 @@ import {
   namespaceCountBadges,
 } from "../../lib/api-page-render";
 import { COMBINED_ROUTE_SEGMENT, combinedRedirect, redirectHtml } from "../../lib/api-redirect";
-import { withBase } from "../../lib/base";
 import { namespaceBadgeCounts } from "../../lib/combined-surface";
-import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
 
 // honox flat routing collapses `api/[version]/index.tsx` to `/api/:version`,

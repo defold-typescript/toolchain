@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import {
   apiVersionAxis,
   canonicalApiPages,
@@ -12,7 +13,6 @@ import { versionedApiParams } from "./api-page-render";
 import { combinedRedirect } from "./api-redirect";
 import { versionsWithDiskFixtures } from "./api-surface-loader";
 import { renderGuidePage } from "./content";
-import { parseFrontmatter } from "./frontmatter";
 import { listGuidePages } from "./guide-loader";
 import { renderMarkdown } from "./markdown";
 import { buildSymbolIndex } from "./symbol-index";

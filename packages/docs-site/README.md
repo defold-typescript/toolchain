@@ -81,7 +81,7 @@ CI automation for deploys is a later slice.
 - `app/lib/content.ts` — bridges the libs to the `packages/docs/guide/` directory.
 - `app/lib/nav.ts` — `buildNav` / `activeCategoryId`: group the guide pages plus
   `/api` into the top-level nav categories.
-- `app/lib/headings.ts` — `pageHeadings`: extract h2/h3 headings with slugs from a
+- `../docs-render/src/headings.ts` — `pageHeadings`: extract h2/h3 headings with slugs from a
   rendered HTML body, used by the right-side TOC.
 - `app/lib/api-surface.ts` + `app/lib/api-content.ts` — load the Defold reference
   surface from `packages/types/fixtures/`, with a graceful empty-state page for

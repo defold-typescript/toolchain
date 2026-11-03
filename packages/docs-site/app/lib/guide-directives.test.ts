@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { withBase } from "@defold-typescript/docs-render/base";
 import { engineIndexBaseTable } from "@defold-typescript/types";
 import { buildLlmsFull, SITE_TARGET } from "../../scripts/build-llms";
-import { withBase } from "./base";
 import { renderGuidePage } from "./content";
 import { expandGuideDirectives } from "./guide-directives";
 import { listGuidePages } from "./guide-loader";

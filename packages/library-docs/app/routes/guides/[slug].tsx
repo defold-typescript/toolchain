@@ -1,7 +1,7 @@
+import { pageHeadings } from "@defold-typescript/docs-render/headings";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { guides, renderGuideMarkdown } from "../../lib/guides";
-import { pageHeadings } from "../../lib/headings";
 
 export default createRoute(
   ssgParams(() => guides().map(({ slug }) => ({ slug }))),

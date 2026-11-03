@@ -1,5 +1,5 @@
+import { TOOLTIP_TRIGGER_SLOT } from "@defold-typescript/docs-render/ui";
 import { useEffect, useLayoutEffect, useRef, useState } from "hono/jsx";
-import { TOOLTIP_TRIGGER_SLOT } from "../components/ui/tooltip";
 import { watchTapFocus } from "../lib/tap-focus";
 import { labelTooltipPosition } from "../lib/tooltip-position";
 

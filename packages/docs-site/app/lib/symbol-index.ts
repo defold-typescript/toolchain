@@ -1,3 +1,5 @@
+import { slugify } from "@defold-typescript/docs-render/headings";
+import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-icons";
 import { htmlToDocText } from "@defold-typescript/types";
 import {
   type ApiPage,
@@ -7,8 +9,6 @@ import {
   qualify,
 } from "./api-surface";
 import { type CombinedSurface, combinedApiPages } from "./combined-surface";
-import { slugify } from "./headings";
-import { stripPlatformMarkers } from "./platform-icons";
 
 export interface SymbolEntry {
   /** Plain-text brief for the tooltip body. */

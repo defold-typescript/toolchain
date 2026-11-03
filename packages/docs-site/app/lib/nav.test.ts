@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { LIBRARY_DOCS_URL } from "./base";
+import { LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
 import { activeCategoryId, buildNav, type NavLink } from "./nav";

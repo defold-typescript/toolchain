@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import { apiVersionAxis, windowedApiPages } from "../app/lib/api-content";
 import type { ApiPage } from "../app/lib/api-surface";
 import {
@@ -7,7 +8,6 @@ import {
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
 } from "../app/lib/api-surface-loader";
-import { parseFrontmatter } from "../app/lib/frontmatter";
 import { listGuidePages } from "../app/lib/guide-loader";
 import {
   apiSearchRecords,

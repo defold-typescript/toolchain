@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
+import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { apiPages, libraryNavGroups, siteDirs, untypedListings } from "./api-content";
 import { guides, renderGuideMarkdown } from "./guides";
-import { allPageHeadings } from "./headings";
 import { buildNav } from "./nav";
 
 // Root `bun test` runs from the repo root, so the site directories are passed in.

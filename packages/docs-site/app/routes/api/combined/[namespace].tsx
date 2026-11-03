@@ -1,8 +1,8 @@
+import { withBase } from "@defold-typescript/docs-render/base";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { combinedParams } from "../../../lib/api-content";
 import { combinedRedirect, redirectHtml } from "../../../lib/api-redirect";
-import { withBase } from "../../../lib/base";
 
 // `/api/combined/<namespace>` is now a permanent compatibility redirect to the
 // canonical `/api/<namespace>`: Combined owns the unprefixed surface, so a

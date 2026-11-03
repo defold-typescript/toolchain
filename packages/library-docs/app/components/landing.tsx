@@ -1,7 +1,8 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
+
+import { withBase } from "@defold-typescript/docs-render/base";
 import type { Child } from "hono/jsx";
-import { withBase } from "../lib/base";
 
 // Reusable building blocks for every category landing ("root node") page —
 // Get started, Guides, API, Libraries. Each landing is an article of the same

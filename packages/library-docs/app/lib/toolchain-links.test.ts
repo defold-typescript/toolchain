@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { withBase } from "@defold-typescript/docs-render/base";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { apiLinkify, apiPageMarkdown, apiSignatureSymbolLinks } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
-import { withBase } from "./base";
 import { renderMarkdown } from "./markdown";
 import {
   pointAtToolchainDocs,
@@ -115,8 +115,8 @@ describe("links back to the toolchain docs", () => {
   test("under a non-root base a core type link takes no prefix and a site path does", () => {
     const script = `
       globalThis.__DOCS_BASE__ = "/library-data/";
-      const { withBase } = await import(${JSON.stringify(join(SITE_DIR, "app/lib/base.ts"))});
-      const { splitSignatureBrandLinks } = await import(${JSON.stringify(join(SITE_DIR, "app/lib/signature-brand-links.ts"))});
+      const { withBase } = await import("@defold-typescript/docs-render/base");
+      const { splitSignatureBrandLinks } = await import("@defold-typescript/docs-render/signature-brand-links");
       console.log(JSON.stringify({
         core: withBase(${JSON.stringify(`${TOOLCHAIN_DOCS_URL}/api/Vector3`)}),
         site: withBase("/api/demo"),

@@ -18,11 +18,13 @@ describe("faviconLinks", () => {
     }
   });
 
-  test("every href resolves to an existing, non-empty file under public/", () => {
-    for (const link of faviconLinks()) {
-      const url = new URL(`../../public${link.href}`, import.meta.url);
-      const stat = statSync(url);
-      expect(stat.size).toBeGreaterThan(0);
+  test("every href resolves to an existing, non-empty file under each site's public/", () => {
+    for (const site of ["docs-site", "library-docs"]) {
+      for (const link of faviconLinks()) {
+        const url = new URL(`../../${site}/public${link.href}`, import.meta.url);
+        const stat = statSync(url);
+        expect(stat.size).toBeGreaterThan(0);
+      }
     }
   });
 });
