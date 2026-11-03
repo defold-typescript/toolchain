@@ -218,15 +218,15 @@ is not reported, because the portal rewrites release metadata every six hours.
 
 ## Refresh the lane
 
-Four lanes fetch and regenerate. Run their commands from
-`packages/library-types`, in order, after editing the pinned `ref`:
+Four lanes fetch and regenerate. Run their commands from the toolchain root, in
+order, after editing the pinned `ref`:
 
 | Lane | Pin | Commands |
 | ---- | --- | -------- |
-| LuaLS | the library folder's `reviewed.json` | `bun run luals:fetch`, then `luals:fidelity`, `api-doc` |
-| Markdown | `markdown-targets.json` | `bun ../cli/src/library/sync-markdown-types.ts --fetch --fidelity --api-doc` |
-| OpenAPI | `openapi-targets.json` | `bun ../cli/src/library/sync-openapi-types.ts --fetch --fidelity --api-doc` |
-| script_api | the library folder's `reviewed.json` | `bun ../cli/src/library/sync-script-api-types.ts --fetch --fidelity`, then `bun run api-doc` |
+| LuaLS | the library folder's `reviewed.json` | `bun run --cwd packages/library-types luals:fetch`, then `luals:fidelity`, `api-doc` |
+| Markdown | `markdown-targets.json` | `bun packages/cli/src/library/sync-markdown-types.ts --fetch --fidelity --api-doc` |
+| OpenAPI | `openapi-targets.json` | `bun packages/cli/src/library/sync-openapi-types.ts --fetch --fidelity --api-doc` |
+| script_api | the library folder's `reviewed.json` | `bun packages/cli/src/library/sync-script-api-types.ts --fetch --fidelity --data packages/library-types/data`, then `bun run --cwd packages/library-types api-doc` |
 
 A library folder sits in the newest version-named folder of `packages/library-types/data/`, named for its repository: the URL's last path
 segment, lowercased, without `.git`.
@@ -245,20 +245,21 @@ the rate-limit budget still shows requests remaining, so a 504 here is not
 evidence that the pin or the repo is wrong.
 
 ```sh
-GITHUB_TOKEN="$(gh auth token)" bun run luals:fetch
+GITHUB_TOKEN="$(gh auth token)" bun run --cwd packages/library-types luals:fetch
 ```
 
 **The authored lane is the exception, and it is the one that surprises people.**
 A library's forks have **no `--fetch`** and no fidelity pass. Their
 `source/upstream/` snapshots are vendored by hand and their `.d.ts` is
-hand-written, so `bun run api-doc` is the only command they take.
+hand-written, so `bun run --cwd packages/library-types api-doc` is the only command they take.
 Refreshing an authored pin means:
 
 1. edit the `ref` in the library folder's `reviewed.json`;
 2. copy the upstream files named by `upstreamLua` into the library folder's
    `source/upstream/…` by hand (the path under it mirrors the upstream path);
 3. update the hand-written `.d.ts` for whatever the new upstream added or changed;
-4. re-run `bun run parity` and `bun run api-doc`.
+4. re-run `bun run --cwd packages/library-types parity` and
+   `bun run --cwd packages/library-types api-doc`.
 
 ## The couplings a re-pin moves with it
 
@@ -268,7 +269,8 @@ skip it.
 - **The committed floor.** `floors` in the library's `library.json` holds a
   per-module measurement the gates and `library check` assert against. New upstream
   surface changes the measurement, so the floor entry moves with the pin — raise a
-  generated module's ratio with `bun run fidelity:floor`, and edit a fork's or native
+  generated module's ratio with `bun run --cwd packages/library-types fidelity:floor`,
+  and edit a fork's or native
   extension's `{ callable, field }` pair by hand.
 - **The vendored-snapshot digest.** `authored-parity-floor.test.ts` pins the
   SHA-256 of every file under each forked library's `source/upstream/`, because the committed
