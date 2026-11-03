@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { apiPages, siteDirs, untypedListings } from "../app/lib/api-content";
 import type { LibraryDirs } from "../app/lib/api-surface-loader";
 import { guides } from "../app/lib/guides";
@@ -7,7 +8,6 @@ import {
   apiSearchRecords,
   guideSearchRecords,
   listingSearchRecords,
-  type SearchRecord,
 } from "../app/lib/search-index";
 
 // Served from public/ at a stable path. The search islands append a `?t=` query in

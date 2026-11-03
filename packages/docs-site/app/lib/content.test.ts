@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseTokenBlock } from "@defold-typescript/docs-render/design-tokens";
 import { renderGuidePage } from "./content";
-import { parseTokenBlock } from "./design-tokens";
 import { listGuidePages } from "./guide-loader";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
-const STYLES = readFileSync(join(import.meta.dir, "../styles.css"), "utf8");
+const STYLES = readFileSync(join(import.meta.dir, "../../../docs-render/src/styles.css"), "utf8");
 
 function tokensDeclaredUnder(selector: string): Map<string, string> {
   const tokens = new Map<string, string>();

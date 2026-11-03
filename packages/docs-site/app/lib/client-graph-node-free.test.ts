@@ -28,9 +28,9 @@ const ISLAND_SEEDS = [
 const NON_VACUOUS = [
   "../../docs-render/src/ui/tooltip.tsx",
   "../../docs-render/src/api-surface.ts",
-  "lib/guide.ts",
+  "../../docs-render/src/islands/search.tsx",
   "lib/hsm-demos/view.ts",
-  "lib/search-index.ts",
+  "../../docs-render/src/search-route.ts",
   "../../docs-render/src/symbol-index.ts",
 ];
 
