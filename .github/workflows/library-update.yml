@@ -1,6 +1,7 @@
 # Updates every library in this repo's library data with the latest released CLI
 # and opens one PR per changed library. `scripts/library-update-prs.ts` turns on
-# auto-merge only for a safe change whose every path is library data.
+# auto-merge only for a safe change whose every path is library data, and only for
+# the commit the run checked.
 
 name: Library update
 
@@ -9,6 +10,12 @@ on:
 
 permissions:
   contents: read
+
+# Runs never interleave their pushes and auto-merge calls; a newer pending run
+# replaces an older pending one, and each run updates every library, so nothing is lost.
+concurrency:
+  group: library-update
+  cancel-in-progress: false
 
 jobs:
   library-update:

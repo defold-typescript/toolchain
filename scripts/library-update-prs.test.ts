@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { parse } from "yaml";
 import { main, mayAutoMerge, type Run, type UpdateEntry } from "./library-update-prs.ts";
 
 const DATA = "packages/library-types/data/0.55.0";
@@ -99,12 +100,27 @@ describe("mayAutoMerge", () => {
   });
 });
 
+// The step a `git push` or `gh pr` call takes, so the fake can fail one and a test
+// can read the order they ran in.
+function operation(args: string[]): string {
+  if (args[0] === "git") return args[1] ?? "";
+  if (args[2] !== "merge") return args[2] ?? "";
+  return args.includes("--disable-auto") ? "disable-auto" : "enable";
+}
+
 describe("main", () => {
   let root: string;
   let repo: string;
   let remote: string;
-  let ghCalls: string[][];
-  let openPulls: Record<string, unknown[]>;
+  let seed: string;
+  // Every `git push` and `gh` call, in the order `main` made them.
+  let log: string[][];
+  let failing: Set<string>;
+  let openBranches: Set<string>;
+  // Branches whose PR has auto-merge on, as GitHub would hold it.
+  let autoMerge: Set<string>;
+  // Runs on `pr create` and `pr edit`, standing in for another run's push.
+  let hook: ((args: string[]) => void) | undefined;
 
   function childEnv(): Record<string, string> {
     const env: Record<string, string> = { ...process.env } as Record<string, string>;
@@ -135,8 +151,20 @@ describe("main", () => {
     return index === -1 ? undefined : args[index + 1];
   }
 
+  function remoteHead(branch: string): string {
+    return git(remote, "rev-parse", `refs/heads/${branch}`).trim();
+  }
+
+  function openPull(library: string, { autoMerging }: { autoMerging: boolean }): void {
+    const branch = `library-update/${library}`;
+    git(repo, "push", "--quiet", "origin", `main:refs/heads/${branch}`);
+    openBranches.add(branch);
+    if (autoMerging) autoMerge.add(branch);
+  }
+
   const run: Run = (args) => {
     if (args[0] === "git") {
+      if (operation(args) === "push") log.push(args);
       const result = Bun.spawnSync(["git", ...IDENTITY, ...args.slice(1)], {
         cwd: repo,
         env: childEnv(),
@@ -147,10 +175,32 @@ describe("main", () => {
         stderr: result.stderr.toString(),
       };
     }
-    ghCalls.push(args);
-    if (args[1] === "pr" && args[2] === "list") {
+    log.push(args);
+    const step = operation(args);
+    if (failing.has(step)) return { code: 1, stdout: "", stderr: `${step} refused` };
+    if (step === "list") {
       const branch = flag(args, "--head") ?? "";
-      return { code: 0, stdout: JSON.stringify(openPulls[branch] ?? []), stderr: "" };
+      const pulls = openBranches.has(branch)
+        ? [
+            {
+              number: 7,
+              autoMergeRequest: autoMerge.has(branch) ? { mergeMethod: "SQUASH" } : null,
+            },
+          ]
+        : [];
+      return { code: 0, stdout: JSON.stringify(pulls), stderr: "" };
+    }
+    if (step === "create" || step === "edit") hook?.(args);
+    const branch = args[3] ?? "";
+    if (step === "disable-auto") autoMerge.delete(branch);
+    if (step === "enable") {
+      // GitHub's `expectedHeadOid`: auto-merge goes on only while the branch still
+      // holds the commit the caller names.
+      const expected = flag(args, "--match-head-commit");
+      if (expected !== undefined && expected !== remoteHead(branch)) {
+        return { code: 1, stdout: "", stderr: "head moved" };
+      }
+      autoMerge.add(branch);
     }
     return { code: 0, stdout: "", stderr: "" };
   };
@@ -176,7 +226,11 @@ describe("main", () => {
   }
 
   function gh(subcommand: string): string[][] {
-    return ghCalls.filter((args) => args[1] === "pr" && args[2] === subcommand);
+    return log.filter((args) => args[0] === "gh" && args[2] === subcommand);
+  }
+
+  function order(...steps: string[]): string[] {
+    return log.map(operation).filter((step) => steps.includes(step));
   }
 
   beforeEach(() => {
@@ -195,8 +249,12 @@ describe("main", () => {
     git(repo, "commit", "--quiet", "-m", "seed");
     git(repo, "remote", "add", "origin", remote);
     git(repo, "push", "--quiet", "origin", "main");
-    ghCalls = [];
-    openPulls = {};
+    seed = git(repo, "rev-parse", "HEAD").trim();
+    log = [];
+    failing = new Set();
+    openBranches = new Set();
+    autoMerge = new Set();
+    hook = undefined;
   });
 
   afterEach(() => {
@@ -243,23 +301,92 @@ describe("main", () => {
       run,
     });
     expect(gh("merge")).toEqual([
-      ["gh", "pr", "merge", "library-update/alpha", "--auto", "--squash"],
+      [
+        "gh",
+        "pr",
+        "merge",
+        "library-update/alpha",
+        "--auto",
+        "--squash",
+        "--match-head-commit",
+        remoteHead("library-update/alpha"),
+      ],
     ]);
   });
 
   test("an open PR whose change may not merge has auto-merge turned off and none turned on", () => {
     regenerate("beta");
-    openPulls["library-update/beta"] = [
-      { number: 7, autoMergeRequest: { enabledAt: "2026-11-01T00:00:00Z" } },
-    ];
+    openPull("beta", { autoMerging: true });
     main(report([regenerated("beta", "changed")]), { cwd: repo, run });
     expect(gh("create")).toEqual([]);
     expect(gh("merge")).toEqual([["gh", "pr", "merge", "library-update/beta", "--disable-auto"]]);
+    expect(autoMerge.has("library-update/beta")).toBe(false);
+  });
+
+  test("a run that cannot retitle an auto-merging PR has turned its auto-merge off first", () => {
+    regenerate("beta");
+    openPull("beta", { autoMerging: true });
+    failing.add("edit");
+    expect(() => main(report([regenerated("beta", "changed")]), { cwd: repo, run })).toThrow(
+      "edit refused",
+    );
+    expect(remoteHead("library-update/beta")).not.toBe(seed);
+    expect(branchFiles("beta")).toEqual([
+      `${DATA}/beta/reviewed.json`,
+      `${DATA}/beta/source/beta.lua`,
+    ]);
+    expect(autoMerge.has("library-update/beta")).toBe(false);
+    expect(order("disable-auto", "push")).toEqual(["disable-auto", "push"]);
+  });
+
+  test.each([
+    "list",
+    "disable-auto",
+  ])("a failed %s leaves an auto-merging PR's branch where it was", (step) => {
+    regenerate("beta");
+    openPull("beta", { autoMerging: true });
+    failing.add(step);
+    expect(() => main(report([regenerated("beta", "changed")]), { cwd: repo, run })).toThrow(
+      `${step} refused`,
+    );
+    expect(remoteHead("library-update/beta")).toBe(seed);
+  });
+
+  test("an auto-merging PR whose change may merge gets auto-merge back for the pushed commit", () => {
+    regenerate("alpha");
+    openPull("alpha", { autoMerging: true });
+    main(report([regenerated("alpha", "kept")]), { cwd: repo, run });
+    const head = remoteHead("library-update/alpha");
+    expect(head).not.toBe(seed);
+    expect(order("disable-auto", "push", "enable")).toEqual(["disable-auto", "push", "enable"]);
+    expect(gh("merge").at(-1)).toEqual([
+      "gh",
+      "pr",
+      "merge",
+      "library-update/alpha",
+      "--auto",
+      "--squash",
+      "--match-head-commit",
+      head,
+    ]);
+    expect(autoMerge.has("library-update/alpha")).toBe(true);
+  });
+
+  test("a branch another run moves before auto-merge goes on keeps auto-merge off", () => {
+    regenerate("alpha");
+    hook = (args) => {
+      if (operation(args) === "create")
+        git(remote, "update-ref", "refs/heads/library-update/alpha", seed);
+    };
+    expect(() => main(report([regenerated("alpha", "kept")]), { cwd: repo, run })).toThrow(
+      "head moved",
+    );
+    expect(autoMerge.has("library-update/alpha")).toBe(false);
   });
 
   test("an open PR takes the new title", () => {
     regenerate("beta");
-    openPulls["library-update/beta"] = [{ number: 7, autoMergeRequest: null }];
+    openPull("beta", { autoMerging: false });
     main(report([regenerated("beta", "changed")]), { cwd: repo, run });
     const [edit = []] = gh("edit");
     expect(flag(edit, "--title")).toBe("update beta to v2");
@@ -284,5 +411,19 @@ describe("main", () => {
     );
     expect(code).toBe(1);
     expect(gh("create")).toHaveLength(1);
+  });
+});
+
+describe("library update workflow", () => {
+  test("every run joins one concurrency group and waits for the run before it", () => {
+    const path = join(import.meta.dir, "..", ".github", "workflows", "library-update.yml");
+    const workflow = parse(readFileSync(path, "utf8")) as {
+      concurrency?: { group?: unknown; "cancel-in-progress"?: unknown };
+    };
+    const group = workflow.concurrency?.group;
+    expect(typeof group).toBe("string");
+    expect(group).not.toBe("");
+    expect(String(group)).not.toContain("${{");
+    expect(workflow.concurrency?.["cancel-in-progress"]).not.toBe(true);
   });
 });
