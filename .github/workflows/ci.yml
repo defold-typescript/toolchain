@@ -124,7 +124,10 @@ jobs:
       - name: Library check with the oldest and newest published CLI that read each data folder
         run: |
           set -euo pipefail
-          for version in $(bun scripts/cli-range.ts --ends); do
+          # Assigned first: bash ignores a failed substitution in a for list, so the
+          # loop would run zero times and pass.
+          versions=$(bun scripts/cli-range.ts --ends)
+          for version in $versions; do
             echo "::group::@defold-typescript/cli@$version"
             bunx "@defold-typescript/cli@$version" library check --data packages/library-types/data
             echo "::endgroup::"

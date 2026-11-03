@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { delimiter, join } from "node:path";
+import { delimiter, join, relative } from "node:path";
 import { parse } from "yaml";
 import type { Scope } from "../scripts/ci-scope.ts";
+import { LIBRARY_DATA_DIR } from "../scripts/library-check-data.ts";
 import { admittedScopes, runsFor } from "./workflow-scopes.ts";
 
 const workflowPath = join(import.meta.dir, "..", ".github", "workflows", "ci.yml");
@@ -363,6 +364,51 @@ describe("change scopes", () => {
   });
 });
 
+const PUBLISHED_CLI_DISCOVERY = "bun scripts/cli-range.ts --ends";
+
+// Runs library-data's published-CLI step with `bun` stubbed to print `versions`
+// and exit `discoveryExit`, and `bunx` stubbed to record each call and reject the
+// `rejected` package. Returns the step's exit code and the recorded `bunx` calls.
+function runPublishedCliStep(options: {
+  versions: string[];
+  discoveryExit: number;
+  rejected?: string;
+}): { exitCode: number; bunxCalls: string[] } {
+  const step = ciJob("library-data").steps?.find((s) => s.run?.includes(PUBLISHED_CLI_DISCOVERY));
+  if (step?.run === undefined) throw new Error("library-data has no published-CLI step");
+  if (step.if !== undefined) throw new Error("a conditional published-CLI step is not modelled");
+  if (step.env !== undefined) throw new Error("published-CLI step env is not modelled");
+  const dir = mkdtempSync(join(tmpdir(), "ci-published-cli-step-"));
+  try {
+    const callsFile = join(dir, "bunx-calls");
+    const bun = [
+      "#!/bin/sh",
+      ...options.versions.map((version) => `echo ${version}`),
+      `exit ${options.discoveryExit}`,
+      "",
+    ];
+    const bunx = ["#!/bin/sh", 'echo "$*" >> "$BUNX_CALLS"', '[ "$1" != "$BUNX_REJECTS" ]', ""];
+    writeFileSync(join(dir, "bun"), bun.join("\n"), { mode: 0o755 });
+    writeFileSync(join(dir, "bunx"), bunx.join("\n"), { mode: 0o755 });
+    const result = Bun.spawnSync(["bash", "-e", "-c", step.run], {
+      cwd: repoRoot,
+      env: {
+        PATH: `${dir}${delimiter}${process.env.PATH ?? ""}`,
+        BUNX_CALLS: callsFile,
+        BUNX_REJECTS: options.rejected ?? "",
+      },
+      stdout: "ignore",
+      stderr: "ignore",
+    });
+    const bunxCalls = existsSync(callsFile)
+      ? readFileSync(callsFile, "utf8").split("\n").filter(Boolean)
+      : [];
+    return { exitCode: result.exitCode, bunxCalls };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 describe("library jobs", () => {
   test("library-data checks the data with this repo's CLI and the oldest and newest published readers", () => {
     const runs = jobRuns(ciJob("library-data"));
@@ -395,6 +441,40 @@ describe("library jobs", () => {
     expect(runs.some((cmd) => /\bbun test\b.*\.\/packages\/library-docs\b/.test(cmd))).toBe(true);
     expect(runs).toContain("bun run --cwd packages/library-docs build:site");
   });
+
+  test.skipIf(!posixBash)(
+    "the published-CLI check fails when it cannot list the published versions",
+    () => {
+      const { exitCode, bunxCalls } = runPublishedCliStep({ versions: [], discoveryExit: 1 });
+      expect(exitCode).not.toBe(0);
+      expect(bunxCalls).toEqual([]);
+    },
+  );
+
+  test.skipIf(!posixBash)("the published-CLI check runs every version it lists", () => {
+    const data = relative(repoRoot, LIBRARY_DATA_DIR).replaceAll("\\", "/");
+    const { exitCode, bunxCalls } = runPublishedCliStep({
+      versions: ["0.40.0", "0.41.2"],
+      discoveryExit: 0,
+    });
+    expect(exitCode).toBe(0);
+    expect(bunxCalls).toEqual([
+      `@defold-typescript/cli@0.40.0 library check --data ${data}`,
+      `@defold-typescript/cli@0.41.2 library check --data ${data}`,
+    ]);
+  });
+
+  test.skipIf(!posixBash)(
+    "the published-CLI check fails when a listed CLI rejects the data",
+    () => {
+      const { exitCode } = runPublishedCliStep({
+        versions: ["0.40.0", "0.41.2"],
+        discoveryExit: 0,
+        rejected: "@defold-typescript/cli@0.41.2",
+      });
+      expect(exitCode).not.toBe(0);
+    },
+  );
 });
 
 const NEEDS_JSON = /^\$\{\{\s*toJSON\(needs\)\s*\}\}$/;
