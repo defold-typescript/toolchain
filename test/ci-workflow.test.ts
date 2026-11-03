@@ -209,6 +209,7 @@ interface CiStep {
 interface CiJob {
   needs?: string | string[];
   if?: string;
+  permissions?: Record<string, string>;
   outputs?: Record<string, string>;
   steps?: CiStep[];
 }
@@ -325,19 +326,40 @@ describe("change scopes", () => {
     expect(jobsRunFor(["data", "library-docs"])).toEqual(["library-data", "library-docs"]);
   });
 
+  test("no scope runs no job", () => {
+    expect(jobsRunFor([])).toEqual([]);
+  });
+
+  test("the scope job can read the commit's check runs", () => {
+    const job = ciJob("scope");
+    expect(job.permissions).toEqual({ contents: "read", checks: "read" });
+    const step = job.steps?.find((s) => s.id === "scope");
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal workflow value under assertion
+    expect(step?.env?.GH_TOKEN).toBe("${{ github.token }}");
+  });
+
   test("the scope job checks out the whole history so the diff reaches its base", () => {
     const checkout = ciJob("scope").steps?.find((s) => s.uses?.startsWith("actions/checkout@"));
     expect(checkout?.with?.["fetch-depth"]).toBe(0);
   });
 
-  test.skipIf(!posixBash)("a release tag runs everything without diffing", () => {
+  test.skipIf(!posixBash)("a release tag asks the tagged commit's check runs for its scope", () => {
     const { output, bunArgs } = runScopeStep({
       event_name: "push",
       ref_type: "tag",
+      repository: "owner/name",
+      token: "a-token",
       event: { before: "a".repeat(40) },
     });
-    expect(output.trim()).toBe("scopes=full");
-    expect(bunArgs).toBeNull();
+    expect(bunArgs).toEqual([
+      "scripts/ci-scope.ts",
+      "--tag",
+      "--repo",
+      "owner/name",
+      "--sha",
+      HEAD_SHA,
+    ]);
+    expect(output.trim()).toBe("scopes=data");
   });
 
   test.skipIf(!posixBash)("a manual run runs everything without diffing", () => {
@@ -531,6 +553,7 @@ describe("ci-done", () => {
           results((id) => (id === "scope" || id === "library-docs" ? "success" : "skipped")),
         ),
       ).toBe(false);
+      expect(ciDoneFails(results((id) => (id === "scope" ? "success" : "skipped")))).toBe(false);
     },
   );
 
