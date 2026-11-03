@@ -35,25 +35,7 @@ export function restoreUpstreamMarkers(html: string): string {
   return html.replaceAll(LESS_THAN, "&lt;");
 }
 
-// The tags `htmlToDocText` gives structure to or strips. Any other `<` is text that
-// conversion would otherwise delete (`<name>`, `Array<number>`), so it is written as
-// the entity conversion decodes; `escapeUpstreamText` then guards the result.
-const STRUCTURE_TAG = /^<\/?(?:a|br|code|div|em|i|li|ol|p|pre|span|ul)(?:\s[^<>]*)?\/?>/i;
-const DOC_KEYS = new Set(["brief", "description", "doc", "examples"]);
-const PROSE_KEYS = new Set([...DOC_KEYS, "deprecated", "docSource"]);
-
-function preservedDoc(text: string): string {
-  let result = "";
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i] as string;
-    if (char !== "<") {
-      result += char;
-      continue;
-    }
-    result += STRUCTURE_TAG.test(text.slice(i)) ? char : "&lt;";
-  }
-  return result;
-}
+const PROSE_KEYS = new Set(["brief", "description", "doc", "examples", "deprecated", "docSource"]);
 
 function walkStrings(
   value: unknown,
@@ -68,10 +50,6 @@ function walkStrings(
     record[field] = walkStrings(item, field, visit);
   }
   return record;
-}
-
-export function preserveUpstreamMarkup(module: ApiModule): void {
-  walkStrings(module, "", (text, key) => (DOC_KEYS.has(key) ? preservedDoc(text) : text));
 }
 
 // A name or type reaches the page inside a code span the renderer opens, not through
