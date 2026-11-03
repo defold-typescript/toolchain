@@ -1,0 +1,56 @@
+# Updates every library in this repo's library data with the latest released CLI
+# and opens one PR per changed library. `scripts/library-update-prs.ts` turns on
+# auto-merge only for a safe change whose every path is library data.
+
+name: Library update
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  library-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+
+      - name: Update every library with the latest CLI
+        id: update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A failed library still leaves a report for the next step, so its exit
+          # code fails the job at the end rather than here.
+          code=0
+          bunx @defold-typescript/cli@latest library update --data packages/library-types/data --json \
+            > "$RUNNER_TEMP/report.json" || code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      # The default token will not do here: a PR it opens starts no `pull_request`
+      # run, so the required checks never report, and a merge it makes starts no
+      # `push` run, so the data never reaches the data repo.
+      - name: Open one PR per updated library
+        env:
+          GH_TOKEN: ${{ secrets.LIBRARY_BOT_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url --push origin "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.git"
+          bun scripts/library-update-prs.ts "$RUNNER_TEMP/report.json"
+
+      - name: Fail on a library that could not be updated
+        if: steps.update.outputs.code != '0'
+        env:
+          CODE: ${{ steps.update.outputs.code }}
+        run: |
+          echo "::error::library update exited $CODE"
+          exit 1

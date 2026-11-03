@@ -132,8 +132,13 @@ describe("realDataTests", () => {
 const NAMES_LIBRARY_DATA =
   /packages[\s"',/\\]+library-types(?![\w-])|library-types[\s"',/\\]+data\b|\.\.[/\\]library-types(?![\w-])/;
 
-// The scope rules spell the data folder to match changed paths, not to read it.
-const SCOPE_RULE_FILES = new Set(["scripts/ci-scope.ts", "scripts/ci-scope.test.ts"]);
+// The scope rules, and the library update bot's auto-merge rule built on them,
+// spell the data folder to match changed paths, not to read it.
+const SCOPE_RULE_FILES = new Set([
+  "scripts/ci-scope.ts",
+  "scripts/ci-scope.test.ts",
+  "scripts/library-update-prs.test.ts",
+]);
 
 function repoTestFiles(): string[] {
   const listed = Bun.spawnSync(
