@@ -25,11 +25,12 @@ scripts.
 
 ## The library update workflow
 
-The **Library update** workflow (`.github/workflows/library-update.yml` in
-`defold-typescript/library-data`) runs
+The **Library update** workflow (the toolchain's
+`.github/workflows/library-update.yml`) runs
 [`library update`](https://defold-typescript.github.io/toolchain/library#what-library-update-does)
-over `data/` with the latest CLI, then opens one pull request per library it wrote,
-from the branch `library-update/<library>`. It runs when dispatched:
+over `packages/library-types/data/` with the latest CLI, then opens one pull request
+per library it wrote, from the branch `library-update/<library>`. It runs when
+dispatched:
 
 ```sh
 gh workflow run library-update.yml
@@ -43,11 +44,12 @@ other library has its PR.
 
 ### What merges without a human
 
-The workflow turns on auto-merge, so the PR merges once `library-check` and `build`
-pass, only when both hold:
+The workflow turns on auto-merge, so the PR merges once `ci-done` passes, only when
+both hold:
 
 - the `change` is `kept` or `added`, or the PR only records commits;
-- every file the PR touches is the library's `reviewed.json` or under its `source/`.
+- every file the PR touches is the library's `reviewed.json` or under its `source/`,
+  and CI scopes it as library data.
 
 The second is read from the commit, not from what `library update` reported, so a
 file anything else wrote keeps the PR for a human. Every other PR stays open, and a
