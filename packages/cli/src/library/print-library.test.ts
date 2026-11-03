@@ -13,7 +13,7 @@ import type { ExtensionZip } from "../extension-archive";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import { printLibraryModules } from "./print-library";
 import { archiveSourceTree } from "./source-tree";
-import { readAuthoredTargets } from "./sync-authored-types";
+import { emitAuthoredDeclaration, readAuthoredTargets } from "./sync-authored-types";
 import { type LualsTarget, readLualsTargets } from "./sync-luals-types";
 import { readScriptApiTargets } from "./sync-script-api-types";
 
@@ -190,7 +190,7 @@ describe("printLibraryModules dispatches each module to its lane", () => {
     expect(print.printed.map(({ module, contents }) => ({ module, contents }))).toEqual([
       {
         module: target.moduleId,
-        contents: readFileSync(join(FIXTURE_DATA_DIR, target.authored), "utf8"),
+        contents: emitAuthoredDeclaration(FIXTURE_DATA_DIR, target),
       },
     ]);
     expect(print.unprintable).toEqual(["nobody.prints.this"]);
