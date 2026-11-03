@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { ApiPage } from "./api-surface";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import {
   defoldListingsFromManifest,
   type LibraryDirs,

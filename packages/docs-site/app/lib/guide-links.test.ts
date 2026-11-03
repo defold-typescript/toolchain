@@ -3,19 +3,19 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
+import { versionedApiParams } from "./api-badges";
 import {
   apiVersionAxis,
   canonicalApiPages,
   canonicalNamespaces,
   windowedApiPages,
 } from "./api-content";
-import { versionedApiParams } from "./api-page-render";
 import { combinedRedirect } from "./api-redirect";
 import { versionsWithDiskFixtures } from "./api-surface-loader";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
-import { renderMarkdown } from "./markdown";
-import { buildSymbolIndex } from "./symbol-index";
 import { resolveVersionWindow } from "./version-window";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");

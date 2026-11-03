@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { type MiniElement, parseHtml } from "@defold-typescript/docs-render/__fixtures__/mini-dom";
+import { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import {
+  type ApiPage,
+  type AvailabilityLookup,
+  windowedBadgeCategory,
+} from "@defold-typescript/docs-render/api-surface";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import {
   type ApiFunction,
   type ApiModule,
@@ -7,8 +14,7 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import { apiPageMarkdown, navLeafBadgeHtml, navNamespaceBadges } from "./api-page-render";
-import { type ApiPage, type AvailabilityLookup, windowedBadgeCategory } from "./api-surface";
+import { navLeafBadgeHtml, navNamespaceBadges } from "./api-badges";
 import { type ApiSurfaceConfig, type BadgeCountTable, readStoredRange } from "./api-surface-pref";
 import {
   buildBadgeCountTable,
@@ -17,7 +23,6 @@ import {
   namespaceBadgeCounts,
   type SignaturesArtifact,
 } from "./combined-surface";
-import { renderMarkdown } from "./markdown";
 import { applySinceFilter } from "./since-filter";
 
 // Newest first, matching the tracked axis every availability span is read against.

@@ -1,5 +1,3 @@
-import { slugify } from "@defold-typescript/docs-render/headings";
-import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-icons";
 import { htmlToDocText } from "@defold-typescript/types";
 import {
   type ApiPage,
@@ -8,6 +6,8 @@ import {
   groupOverloadForms,
   qualify,
 } from "./api-surface";
+import { slugify } from "./headings";
+import { stripPlatformMarkers } from "./platform-icons";
 
 export interface SymbolEntry {
   /** Plain-text brief for the tooltip body. */
@@ -86,4 +86,60 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
     }
   }
   return index;
+}
+
+const DEFAULT_SYMBOL_INDEX_FILE = "symbol-index.json";
+
+/**
+ * The symbol-index file the client tooltip must fetch for a given page route,
+ * mirroring {@link searchIndexFileForRoute}: a `/api/defold-<version>/...` route
+ * (the current version included) resolves to `symbol-index-<version-id>.json` so
+ * same-name symbols whose signatures differ across releases tool-tip against the
+ * page's own version; a canonical unprefixed route (or an unknown prefix)
+ * resolves to the shared Combined `symbol-index.json`. The `/api/combined/*`
+ * compat route is not a tracked version id, so it falls through to that shared
+ * canonical index. The tooltip must never load the shared index on a version page.
+ */
+export function symbolIndexFileForRoute(route: string, versionIds: readonly string[]): string {
+  const path = route.split(/[?#]/, 1)[0] ?? "";
+  const segments = path.split("/").filter(Boolean);
+  const apiIndex = segments.indexOf("api");
+  const candidate = apiIndex >= 0 ? segments[apiIndex + 1] : undefined;
+  return candidate && versionIds.includes(candidate)
+    ? `symbol-index-${candidate}.json`
+    : DEFAULT_SYMBOL_INDEX_FILE;
+}
+
+// Minimal version shape, declared locally rather than imported from
+// `api-surface-loader` so the client tooltip's import graph stays node-free
+// (mirrors `SearchIndexVersion` in `search-index.ts`).
+export interface SymbolIndexVersion {
+  id: string;
+  isDefault: boolean;
+}
+
+export interface VersionSymbolIndex {
+  version: string;
+  index: Record<string, SymbolEntry>;
+}
+
+/**
+ * One symbol index per tracked version, the current (default) version included:
+ * that version's own prefixed engine pages (`/api/<id>/<ns>`) composed with the
+ * shared version-independent reference pages, which keep their canonical
+ * `/api/<ns>` routes. The default no longer borrows the flat `symbol-index.json`
+ * (now the Combined canonical index); it gets its own `symbol-index-<version-id>.json`
+ * that carries both the version's engine symbols and the shared reference symbols.
+ * The two page sets own disjoint namespaces (the canonical ownership guard), so
+ * neither shadows the other. `sharedPages` is loaded once and reused per version.
+ */
+export function versionSymbolIndexRecords(
+  versions: readonly SymbolIndexVersion[],
+  pagesForVersion: (versionId: string) => ApiPage[],
+  sharedPages: ApiPage[],
+): VersionSymbolIndex[] {
+  return versions.map((version) => ({
+    version: version.id,
+    index: buildSymbolIndex([...pagesForVersion(version.id), ...sharedPages]),
+  }));
 }

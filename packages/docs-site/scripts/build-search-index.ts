@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import { apiVersionAxis, windowedApiPages } from "../app/lib/api-content";
-import type { ApiPage } from "../app/lib/api-surface";
 import {
   loadCombinedSurface,
   loadVersionIndependentPages,

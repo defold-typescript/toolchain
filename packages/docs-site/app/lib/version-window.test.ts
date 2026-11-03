@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import {
+  type AvailabilityLookup,
+  availabilityLabels,
+} from "@defold-typescript/docs-render/api-surface";
+import {
   type ApiFunction,
   type ApiModule,
   type ApiParameter,
@@ -7,7 +11,6 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import { type AvailabilityLookup, availabilityLabels } from "./api-surface";
 import {
   buildCombinedSurface,
   type CombinedSurface,

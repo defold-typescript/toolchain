@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
-import { apiModuleSymbols } from "./api-surface";
 import {
   loadApiSurface,
   loadApiSurfaceForVersion,

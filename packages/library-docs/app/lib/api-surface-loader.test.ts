@@ -10,8 +10,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
 import { siteDirs, untypedListings } from "./api-content";
-import { apiModuleSymbols } from "./api-surface";
 import {
   defoldListingsFromManifest,
   githubOwner,

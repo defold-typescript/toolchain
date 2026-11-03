@@ -1,14 +1,18 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for `bun test`; the tsconfig's own setting only reaches tsc.
 
+import {
+  apiLinkify,
+  apiPageMarkdown,
+  apiSignatureSymbolLinks,
+} from "@defold-typescript/docs-render/api-page-render";
 import { pageHeadings } from "@defold-typescript/docs-render/headings";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { LibraryPath } from "../../components/api-index";
 import { apiPages, libraryOrigins, linkPages } from "../../lib/api-content";
-import { apiLinkify, apiPageMarkdown, apiSignatureSymbolLinks } from "../../lib/api-page-render";
 import type { LibraryDirs } from "../../lib/api-surface-loader";
-import { renderMarkdown } from "../../lib/markdown";
 import { libraryLineage } from "../../lib/nav";
 
 // The library page heading: the styled `owner/repo/namespace` path. Exported so

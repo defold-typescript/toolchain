@@ -2,36 +2,12 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import {
-  API_NAME_CLOSE,
-  API_NAME_OPEN,
-  API_TYPE_CODE_CLOSE,
-  API_TYPE_CODE_OPEN,
-} from "@defold-typescript/docs-render/api-type-links";
-import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
-import { escapeAttr } from "@defold-typescript/docs-render/signature-brand-links";
-import {
-  type ApiAvailability,
-  type ApiFunction,
-  hashExampleSource,
-  normalizedFunctionSignature,
-  proseLuaFences,
-  signatureTransitionNames,
-  symbolIdentityKey,
-} from "@defold-typescript/types";
-import { MIDDLE, makeWindowedTypesDir, NEWEST, OLDEST } from "./__fixtures__/windowed-surface";
-import { canonicalApiPages, windowedApiPages } from "./api-content";
-import {
   apiLinkify,
   apiPageMarkdown,
   apiReplacementResolver,
   apiSignatureSymbolLinks,
   defoldRefLine,
-  isKnownVersionId,
-  namespaceCountBadges,
-  navLeafBadgeHtml,
-  navNamespaceBadges,
-  versionedApiParams,
-} from "./api-page-render";
+} from "@defold-typescript/docs-render/api-page-render";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -45,7 +21,35 @@ import {
   groupOverloadForms,
   overloadHeading,
   splitCallForm,
-} from "./api-surface";
+} from "@defold-typescript/docs-render/api-surface";
+import {
+  API_NAME_CLOSE,
+  API_NAME_OPEN,
+  API_TYPE_CODE_CLOSE,
+  API_TYPE_CODE_OPEN,
+} from "@defold-typescript/docs-render/api-type-links";
+import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { escapeAttr } from "@defold-typescript/docs-render/signature-brand-links";
+import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
+import {
+  type ApiAvailability,
+  type ApiFunction,
+  hashExampleSource,
+  normalizedFunctionSignature,
+  proseLuaFences,
+  signatureTransitionNames,
+  symbolIdentityKey,
+} from "@defold-typescript/types";
+import { MIDDLE, makeWindowedTypesDir, NEWEST, OLDEST } from "./__fixtures__/windowed-surface";
+import {
+  isKnownVersionId,
+  namespaceCountBadges,
+  navLeafBadgeHtml,
+  navNamespaceBadges,
+  versionedApiParams,
+} from "./api-badges";
+import { canonicalApiPages, windowedApiPages } from "./api-content";
 import {
   loadApiSurface,
   loadApiSurfaceForVersion,
@@ -57,8 +61,6 @@ import {
   combinedNamespaceToApiPage,
   namespaceBadgeCounts,
 } from "./combined-surface";
-import { renderMarkdown } from "./markdown";
-import { buildSymbolIndex } from "./symbol-index";
 import type { VersionWindow } from "./version-window";
 
 // The type half of a name/type label: raw `api-type` code whose text is escaped

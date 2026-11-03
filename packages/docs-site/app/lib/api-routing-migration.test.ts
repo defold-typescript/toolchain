@@ -2,7 +2,10 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { allPageHeadings } from "@defold-typescript/docs-render/headings";
+import { symbolIndexFileForRoute } from "@defold-typescript/docs-render/symbol-index";
 import { normalizedFunctionSignature } from "@defold-typescript/types";
 import { Hono } from "hono";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
@@ -24,6 +27,7 @@ import {
   TYPEDEF_SHAPE_NAME,
   versionId,
 } from "./__fixtures__/windowed-surface";
+import { versionedApiParams } from "./api-badges";
 import {
   canonicalApiPages,
   combinedApiPages,
@@ -32,9 +36,7 @@ import {
   versionNamespaceAtom,
   windowedApiPages,
 } from "./api-content";
-import { apiLinkify, apiPageMarkdown, versionedApiParams } from "./api-page-render";
 import { combinedRedirect, redirectHtml } from "./api-redirect";
-import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import {
   type ApiSurfaceConfig,
@@ -43,7 +45,6 @@ import {
   resolveApiSurfaceRedirect,
 } from "./api-surface-pref";
 import { searchIndexFileForRoute } from "./search-index";
-import { symbolIndexFileForRoute } from "./symbol-index";
 
 // The two-version fixture registry: `cur` (default) owns engine namespaces
 // camera/alpha/globals; `old` (historical) owns wmath. Driving the loaders with

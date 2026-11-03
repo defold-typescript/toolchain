@@ -27,11 +27,11 @@ const ISLAND_SEEDS = [
 // an edge can't make the gate pass by reaching nothing.
 const NON_VACUOUS = [
   "../../docs-render/src/ui/tooltip.tsx",
-  "lib/api-surface.ts",
+  "../../docs-render/src/api-surface.ts",
   "lib/guide.ts",
   "lib/hsm-demos/view.ts",
   "lib/search-index.ts",
-  "lib/symbol-index.ts",
+  "../../docs-render/src/symbol-index.ts",
 ];
 
 const FROM_RE = /\bfrom\s*["']([^"']+)["']/g;

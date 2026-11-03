@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { type ApiPage, apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
+import { buildSymbolIndex, memberAnchors } from "@defold-typescript/docs-render/symbol-index";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { apiVersionAxis, windowedApiPages } from "./api-content";
-import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import {
   listApiVersions,
   loadApiSurface,
@@ -12,6 +13,7 @@ import {
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
+import { combinedSymbolIndexRecords } from "./combined-surface";
 import type { GuidePage } from "./guide";
 import {
   apiSearchRecords,
@@ -22,7 +24,6 @@ import {
   toPlainText,
   versionSearchIndexRecords,
 } from "./search-index";
-import { buildSymbolIndex, combinedSymbolIndexRecords, memberAnchors } from "./symbol-index";
 import { resolveVersionWindow } from "./version-window";
 
 const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");

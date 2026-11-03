@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { renderMarkdown } from "./markdown";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 
 export interface Guide {
   slug: string;

@@ -1,13 +1,18 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import {
+  type ApiSymbol,
+  apiModuleSections,
+  apiModuleSymbols,
+  splitCallForm,
+} from "@defold-typescript/docs-render/api-surface";
 import {
   availabilityLabel,
   type SignatureStore,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import { apiLinkify, apiPageMarkdown } from "./api-page-render";
-import { type ApiSymbol, apiModuleSections, apiModuleSymbols, splitCallForm } from "./api-surface";
 import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loader";
 import {
   type CombinedNamespace,

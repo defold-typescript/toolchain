@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import { type ApiPage, apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { SYMBOL_NOTES } from "@defold-typescript/docs-render/symbol-notes";
 import { canonicalApiPages } from "./api-content";
-import { apiLinkify, apiPageMarkdown } from "./api-page-render";
-import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
-import { renderMarkdown } from "./markdown";
-import { SYMBOL_NOTES } from "./symbol-notes";
 
 // `api-content` and `content` anchor their own dirs on `process.cwd()`, which is
 // the repo root under root `bun test` and `packages/docs-site` under the build,
