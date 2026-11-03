@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { allPageHeadings } from "@defold-typescript/docs-render/headings";
+import { searchIndexFileForRoute } from "@defold-typescript/docs-render/search-route";
 import { symbolIndexFileForRoute } from "@defold-typescript/docs-render/symbol-index";
 import {
   canonicalApiPages,
@@ -46,7 +47,6 @@ import {
   readStoredRange,
   resolveApiSurfaceRedirect,
 } from "./api-surface-pref";
-import { searchIndexFileForRoute } from "./search-index";
 
 // The two-version fixture registry: `cur` (default) owns engine namespaces
 // camera/alpha/globals; `old` (historical) owns wmath. Driving the loaders with

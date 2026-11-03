@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
+import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { apiVersionAxis, windowedApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import {
   loadCombinedSurface,
@@ -14,7 +15,6 @@ import {
   apiSearchRecords,
   buildSearchIndex,
   combinedSearchRecords,
-  type SearchRecord,
   versionSearchIndexRecords,
 } from "../app/lib/search-index";
 
