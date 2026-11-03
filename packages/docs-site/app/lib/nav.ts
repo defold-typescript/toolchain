@@ -1,4 +1,4 @@
-import { isExternalUrl, LIBRARY_DOCS_URL } from "./base";
+import { isExternalUrl, LIBRARY_DOCS_URL } from "@defold-typescript/docs-render/base";
 import { GET_STARTED_SLUGS } from "./get-started";
 import type { GuidePage } from "./guide";
 import { GUIDE_GROUPS } from "./guide-groups";

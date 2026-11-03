@@ -5,7 +5,7 @@
 // so route matching, data, and tests stay base-agnostic; `withBase` is applied
 // only where a value is emitted as a real URL into HTML or a fetch.
 //
-// `__DOCS_BASE__` is replaced at build time by Vite's `define` (see
+// `__DOCS_BASE__` is replaced at build time by Vite's `define` (see each site's
 // vite.config.ts) in BOTH the client and the honox server bundles — unlike
 // `import.meta.env.BASE_URL`, which the server bundle leaves empty. Outside Vite
 // (the Bun test runner) the token is undefined, so `typeof` keeps it safe and
@@ -14,8 +14,14 @@
 declare const __DOCS_BASE__: string;
 const BASE = (typeof __DOCS_BASE__ !== "undefined" ? __DOCS_BASE__ : "/").replace(/\/$/, "");
 
+export const LIBRARY_DOCS_URL = "https://defold-typescript.github.io/library-data";
+
+export function isExternalUrl(url: string): boolean {
+  return /^https?:\/\//.test(url);
+}
+
 export function withBase(path: string): string {
-  // A link into the toolchain docs is already a whole URL.
+  // A link into the other docs site, or any other URL with a scheme, is already whole.
   if (/^[a-z][a-z0-9+.-]*:/i.test(path)) return path;
   const rel = path.startsWith("/") ? path : `/${path}`;
   return `${BASE}${rel}`;

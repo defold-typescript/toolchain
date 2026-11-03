@@ -1,3 +1,4 @@
+import { TOOLTIP_TRIGGER_SLOT } from "@defold-typescript/docs-render/ui";
 import type { StateConfig } from "@defold-typescript/hsm";
 import caretIcon from "@phosphor-icons/core/bold/caret-down-bold.svg?raw";
 import restartIcon from "@phosphor-icons/core/duotone/arrow-counter-clockwise-duotone.svg?raw";
@@ -17,7 +18,6 @@ import regionsIcon from "@phosphor-icons/core/duotone/square-split-horizontal-du
 import starIcon from "@phosphor-icons/core/duotone/star-duotone.svg?raw";
 import stopIcon from "@phosphor-icons/core/duotone/stop-duotone.svg?raw";
 import tagIcon from "@phosphor-icons/core/duotone/tag-duotone.svg?raw";
-import { TOOLTIP_TRIGGER_SLOT } from "../../components/ui/tooltip";
 import {
   type BuddyReaction,
   DEMOS,

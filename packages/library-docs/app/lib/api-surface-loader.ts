@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import {
   type LibraryIndexSlotClassifications,
   parseDefoldApiDoc,
@@ -12,7 +13,6 @@ import {
   releaseEra,
 } from "./defold-release-era";
 import { repoTreeUrl } from "./forge";
-import { parseFrontmatter } from "./frontmatter";
 import { readSiteIndexSlots, readSiteLibraries, type SiteLibrary } from "./library-data";
 import { type LibraryListing, type LibraryOrigin, libraryLineage } from "./nav";
 import {

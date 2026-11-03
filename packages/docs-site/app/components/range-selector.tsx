@@ -1,8 +1,9 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
+
+import { withBase } from "@defold-typescript/docs-render/base";
 import leftGlyphRaw from "@phosphor-icons/core/duotone/arrow-fat-lines-left-duotone.svg?raw";
 import rightGlyphRaw from "@phosphor-icons/core/duotone/arrow-fat-lines-right-duotone.svg?raw";
-import { withBase } from "../lib/base";
 import type { RangeSelector, RangeSelectorOption } from "../lib/version-switch";
 
 // The two bounds point inward at the window they enclose, so the glyph alone

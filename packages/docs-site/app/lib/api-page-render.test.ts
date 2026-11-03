@@ -2,6 +2,14 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import {
+  API_NAME_CLOSE,
+  API_NAME_OPEN,
+  API_TYPE_CODE_CLOSE,
+  API_TYPE_CODE_OPEN,
+} from "@defold-typescript/docs-render/api-type-links";
+import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
+import { escapeAttr } from "@defold-typescript/docs-render/signature-brand-links";
+import {
   type ApiAvailability,
   type ApiFunction,
   hashExampleSource,
@@ -45,19 +53,11 @@ import {
 } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
 import {
-  API_NAME_CLOSE,
-  API_NAME_OPEN,
-  API_TYPE_CODE_CLOSE,
-  API_TYPE_CODE_OPEN,
-} from "./api-type-links";
-import {
   buildCombinedSurface,
   combinedNamespaceToApiPage,
   namespaceBadgeCounts,
 } from "./combined-surface";
-import { pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
-import { escapeAttr } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
 import type { VersionWindow } from "./version-window";
 

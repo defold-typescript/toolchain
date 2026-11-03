@@ -13,7 +13,7 @@ import {
   repoSlug,
   tagSeries,
 } from "../packages/cli/src/library/upstream-forge.ts";
-import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-render/src/base.ts";
 
 // Checks every library-types lane's targets for an upstream that has moved past
 // the pin. `upstream:release-check` is the same idea for the engine itself; the

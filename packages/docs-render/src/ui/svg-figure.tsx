@@ -1,7 +1,7 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
 
-import { imageMaxWidthStyle } from "../../lib/image-style";
+import { imageMaxWidthStyle } from "../image-style";
 
 // An inlined guide figure. The component, not the SVG, owns the size: it caps
 // the figure on a wide page and lays each panel out as its own `<svg>`, so side-

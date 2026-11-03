@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { slugify } from "@defold-typescript/docs-render/headings";
 import type { ApiModule } from "@defold-typescript/types";
 import { memberAnchorPage } from "./__fixtures__/member-anchor-page";
 import { renderedHeadingIds } from "./__fixtures__/rendered-heading-ids";
@@ -7,7 +8,6 @@ import { canonicalApiPages } from "./api-content";
 import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { type ApiVersion, loadCombinedSurface } from "./api-surface-loader";
 import { combinedApiPages } from "./combined-surface";
-import { slugify } from "./headings";
 import {
   buildSymbolIndex,
   combinedSymbolIndexRecords,

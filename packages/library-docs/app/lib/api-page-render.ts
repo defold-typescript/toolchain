@@ -1,4 +1,16 @@
 import {
+  API_NAME_CLOSE,
+  API_NAME_OPEN,
+  API_TYPE_CODE_CLOSE,
+  API_TYPE_CODE_OPEN,
+} from "@defold-typescript/docs-render/api-type-links";
+import {
+  escapeAttr,
+  type SignatureSymbolTarget,
+} from "@defold-typescript/docs-render/signature-brand-links";
+import { functionTypeEmphasis } from "@defold-typescript/docs-render/signature-emphasis";
+import { symbolLinkifier } from "@defold-typescript/docs-render/symbol-linkify";
+import {
   type ApiPage,
   type ApiSymbol,
   type ApiSymbolParam,
@@ -18,19 +30,10 @@ import {
   splitCallForm,
   typeShapeHeading,
 } from "./api-surface";
-import {
-  API_NAME_CLOSE,
-  API_NAME_OPEN,
-  API_TYPE_CODE_CLOSE,
-  API_TYPE_CODE_OPEN,
-} from "./api-type-links";
 import { forgeOf } from "./forge";
 import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
-import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
-import { functionTypeEmphasis } from "./signature-emphasis";
 import { buildSymbolIndex, memberAnchors } from "./symbol-index";
-import { symbolLinkifier } from "./symbol-linkify";
 import { escapeUpstreamText } from "./upstream-text";
 
 const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [

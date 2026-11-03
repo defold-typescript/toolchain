@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { TOOLTIP_TRIGGER_SLOT } from "@defold-typescript/docs-render/ui";
 import { sequence } from "@defold-typescript/hsm/async";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import { TOOLTIP_TRIGGER_SLOT } from "../../components/ui/tooltip";
 import type { Demo, DemoCtx, DemoSpec } from "./demos";
 import { clockText, mountDemos } from "./view";
 

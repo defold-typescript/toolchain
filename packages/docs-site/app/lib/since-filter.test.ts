@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { type MiniElement, parseHtml } from "@defold-typescript/docs-render/__fixtures__/mini-dom";
 import {
   type ApiFunction,
   type ApiModule,
@@ -6,7 +7,6 @@ import {
   normalizedFunctionSignature,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import { type MiniElement, parseHtml } from "./__fixtures__/mini-dom";
 import { apiPageMarkdown, navLeafBadgeHtml, navNamespaceBadges } from "./api-page-render";
 import { type ApiPage, type AvailabilityLookup, windowedBadgeCategory } from "./api-surface";
 import { type ApiSurfaceConfig, type BadgeCountTable, readStoredRange } from "./api-surface-pref";

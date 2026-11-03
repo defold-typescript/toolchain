@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { withBase } from "@defold-typescript/docs-render/base";
 import { canonicalApiPages } from "./api-content";
 import { loadCombinedSurface } from "./api-surface-loader";
-import { withBase } from "./base";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
 import { guideSymbolRoutes } from "./guide-symbol-links";

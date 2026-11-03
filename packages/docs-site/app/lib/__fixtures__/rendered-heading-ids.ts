@@ -1,6 +1,6 @@
+import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import { apiPageMarkdown } from "../api-page-render";
 import type { ApiPage } from "../api-surface";
-import { allPageHeadings } from "../headings";
 import { renderMarkdown } from "../markdown";
 
 // The heading ids a page renders through the same markdown and highlight path the

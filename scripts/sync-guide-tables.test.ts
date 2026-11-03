@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { LIBRARY_DATA_DIR } from "../packages/cli/src/library/package-root.ts";
 import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
-import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-render/src/base.ts";
 import {
   CURATED_NATIVE_END,
   CURATED_NATIVE_START,

@@ -14,7 +14,7 @@ import {
   forgeFor,
   forgeReadsFor,
 } from "../packages/cli/src/library/upstream-forge.ts";
-import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-render/src/base.ts";
 import {
   collectPinnedTargets,
   describeReport,

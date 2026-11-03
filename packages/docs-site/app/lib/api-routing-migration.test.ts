@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import { normalizedFunctionSignature } from "@defold-typescript/types";
 import { Hono } from "hono";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
@@ -41,7 +42,6 @@ import {
   readStoredRange,
   resolveApiSurfaceRedirect,
 } from "./api-surface-pref";
-import { allPageHeadings } from "./headings";
 import { searchIndexFileForRoute } from "./search-index";
 import { symbolIndexFileForRoute } from "./symbol-index";
 

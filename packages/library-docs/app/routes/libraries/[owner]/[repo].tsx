@@ -1,12 +1,13 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for `bun test`; the tsconfig's own setting only reaches tsc.
+
+import { pageHeadings } from "@defold-typescript/docs-render/headings";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { LibraryPath } from "../../../components/api-index";
 import { untypedListings } from "../../../lib/api-content";
 import { listingPageMarkdown } from "../../../lib/api-page-render";
 import type { LibraryDirs } from "../../../lib/api-surface-loader";
-import { pageHeadings } from "../../../lib/headings";
 import { renderMarkdown } from "../../../lib/markdown";
 import { NO_TYPED_API_ICON } from "../../../lib/no-typed-api-icon";
 

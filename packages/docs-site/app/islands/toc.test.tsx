@@ -1,10 +1,10 @@
 /** @jsxImportSource hono/jsx */
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { type Heading, pageHeadings } from "@defold-typescript/docs-render/headings";
 import { apiPageMarkdown } from "../lib/api-page-render";
 import { loadCombinedSurface } from "../lib/api-surface-loader";
 import { combinedNamespaceToApiPage } from "../lib/combined-surface";
-import { type Heading, pageHeadings } from "../lib/headings";
 import { renderMarkdown } from "../lib/markdown";
 import Toc, { outlineLabel } from "./toc";
 
