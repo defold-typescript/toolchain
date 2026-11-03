@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { withBase } from "@defold-typescript/docs-render/base";
 import { availabilityLabel, symbolIdentityKey } from "@defold-typescript/types";
 import { OVERLOAD_COVERED_SKIPS } from "../../types/src/emit-dts";
 import {
@@ -8,7 +9,6 @@ import {
   loadSignaturesArtifact,
   versionsWithDiskFixtures,
 } from "../app/lib/api-surface-loader";
-import { withBase } from "../app/lib/base";
 import { compactAvailability, llmsSignaturesForEntry } from "../app/lib/combined-surface";
 import { listGuidePages } from "../app/lib/guide-loader";
 import { SRC_ROOT_FOOTNOTE_ID, SRC_ROOT_FOOTNOTE_LINE } from "../app/lib/src-root-note";

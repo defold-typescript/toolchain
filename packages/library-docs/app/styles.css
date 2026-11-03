@@ -31,6 +31,13 @@
 @import "./generated/fonts.css";
 
 /*
+ * Tailwind scans only this site's folder; the shared rendering package writes
+ * classes too. Its tests are left out, so their sample strings add no rules.
+ */
+@source "../../docs-render/src";
+@source not "../../docs-render/src/**/*.test.*";
+
+/*
  * Design tokens — the Claude docs look is calm, low-contrast, with a hair of
  * blue for links and a single warm accent. We define them once here so every
  * utility below resolves to the same scale.

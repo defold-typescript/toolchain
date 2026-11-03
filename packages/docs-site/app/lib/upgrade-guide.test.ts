@@ -1,11 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  allPageHeadings,
+  type Heading,
+  pageHeadings,
+  slugify,
+} from "@defold-typescript/docs-render/headings";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { renderGuidePage } from "./content";
 import { groupGuidePages } from "./guide-groups";
 import { listGuidePages } from "./guide-loader";
-import { allPageHeadings, type Heading, pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { releaseSection, releaseSections } from "./upgrade-guide";
 

@@ -2,6 +2,8 @@
 // Root `bun test` transpiles this file via the cwd (root) tsconfig, which
 // intentionally carries no JSX config so non-docs workspaces are not coupled to
 // hono/jsx; this pragma pins the JSX dialect for this file.
+
+import { pageHeadings } from "@defold-typescript/docs-render/headings";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import {
@@ -17,7 +19,6 @@ import {
   apiSignatureSymbolLinks,
   versionedApiParams,
 } from "../../../lib/api-page-render";
-import { pageHeadings } from "../../../lib/headings";
 import { renderMarkdown } from "../../../lib/markdown";
 import { resolveVersionWindow } from "../../../lib/version-window";
 import type { ApiSurfaceDirs } from "../[namespace]";

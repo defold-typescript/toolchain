@@ -1,5 +1,7 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
+
+import { stripPlatformMarkers } from "@defold-typescript/docs-render/platform-icons";
 import { htmlToDocText } from "@defold-typescript/types";
 import type { ApiPage } from "../lib/api-surface";
 import { renderCardSummary } from "../lib/card-summary";
@@ -8,7 +10,6 @@ import { getStartedPages } from "../lib/get-started";
 import type { GuidePage } from "../lib/guide";
 import { groupGuidePages } from "../lib/guide-groups";
 import { humanize } from "../lib/nav";
-import { stripPlatformMarkers } from "../lib/platform-icons";
 import { apiCardBadgeHtml, apiPageCardDescription, groupApiIndexPages } from "./api-index-sections";
 import { LandingCard, LandingCardGrid, LandingPage, LandingSection } from "./landing";
 

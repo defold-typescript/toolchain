@@ -1,7 +1,8 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
+
+import type { Heading } from "@defold-typescript/docs-render/headings";
 import { useEffect, useState } from "hono/jsx";
-import type { Heading } from "../lib/headings";
 
 type ActiveTip = { heading: Heading; top: number; left: number } | null;
 // Per heading id, whether each chip kind is showing in the in-body heading.

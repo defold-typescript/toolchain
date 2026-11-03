@@ -1,3 +1,6 @@
+import { withBase } from "@defold-typescript/docs-render/base";
+import { faviconLinks } from "@defold-typescript/docs-render/favicon";
+import type { Heading } from "@defold-typescript/docs-render/headings";
 import githubIconRaw from "@phosphor-icons/core/duotone/github-logo-duotone.svg?raw";
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Script } from "honox/server";
@@ -13,10 +16,7 @@ import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
 import UiTooltip from "../islands/ui-tooltip";
 import { apiPages, libraryNavGroups } from "../lib/api-content";
-import { withBase } from "../lib/base";
-import { faviconLinks } from "../lib/favicon";
 import { guides } from "../lib/guides";
-import type { Heading } from "../lib/headings";
 import { buildNav, type NavCategory } from "../lib/nav";
 import { buildPager, type Pager as PagerData, type PagerLink } from "../lib/pager";
 
@@ -439,4 +439,4 @@ function Pager({ pager }: { pager: PagerData }) {
   );
 }
 
-// (Headings are imported directly from `app/lib/headings.ts` by routes.)
+// (Headings are imported directly from `@defold-typescript/docs-render/headings` by routes.)

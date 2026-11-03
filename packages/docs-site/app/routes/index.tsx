@@ -1,6 +1,6 @@
+import { pageHeadings } from "@defold-typescript/docs-render/headings";
 import { createRoute } from "honox/factory";
 import { guidePages, INDEX_HEADING, renderGuide } from "../lib/content";
-import { pageHeadings } from "../lib/headings";
 
 export default createRoute(async (c) => {
   const index = guidePages().find((page) => page.isIndex);

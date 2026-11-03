@@ -1,6 +1,6 @@
 /** @jsxImportSource hono/jsx */
 import { describe, expect, test } from "bun:test";
-import { parseHtml } from "../../lib/__fixtures__/mini-dom";
+import { parseHtml } from "../__fixtures__/mini-dom";
 import { TOOLTIP_TRIGGER_SLOT, TooltipTrigger } from "./tooltip";
 
 describe("TooltipTrigger", () => {

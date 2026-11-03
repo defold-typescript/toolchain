@@ -1,3 +1,15 @@
+import {
+  API_NAME_CLOSE,
+  API_NAME_OPEN,
+  API_TYPE_CODE_CLOSE,
+  API_TYPE_CODE_OPEN,
+} from "@defold-typescript/docs-render/api-type-links";
+import {
+  escapeAttr,
+  type SignatureSymbolTarget,
+} from "@defold-typescript/docs-render/signature-brand-links";
+import { functionTypeEmphasis } from "@defold-typescript/docs-render/signature-emphasis";
+import { symbolLinkifier } from "@defold-typescript/docs-render/symbol-linkify";
 import type { ApiAvailability, ApiSymbolIdentity } from "@defold-typescript/types";
 import { apiVersionAxis, windowedApiPages } from "./api-content";
 import {
@@ -37,17 +49,8 @@ import {
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
-import {
-  API_NAME_CLOSE,
-  API_NAME_OPEN,
-  API_TYPE_CODE_CLOSE,
-  API_TYPE_CODE_OPEN,
-} from "./api-type-links";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
-import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
-import { functionTypeEmphasis } from "./signature-emphasis";
 import { buildSymbolIndex, memberAnchors } from "./symbol-index";
-import { symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
 import { resolveVersionWindow } from "./version-window";
 

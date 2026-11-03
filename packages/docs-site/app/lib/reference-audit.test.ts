@@ -81,7 +81,7 @@ describe("findDanglingReferences — same-page fragments", () => {
 
 describe("findDanglingReferences — backtick repo paths", () => {
   test("an existing repo path is clean", () => {
-    const text = "See `packages/docs-site/app/lib/headings.ts` for the slugifier.";
+    const text = "See `packages/docs-render/src/headings.ts` for the slugifier.";
     expect(findDanglingReferences(text, fixtureDir, REPO_ROOT)).toEqual([]);
   });
 

@@ -5,7 +5,7 @@ import {
   type NativeTarget,
   readNativeTargets,
 } from "../packages/cli/src/library/sync-native-types.ts";
-import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-render/src/base.ts";
 
 // Guide tables that list one row per shipped target. Each lives in a marked
 // region of its guide page and is rewritten from the registry the toolchain

@@ -1,3 +1,20 @@
+import { linkApiTypeTokens } from "@defold-typescript/docs-render/api-type-links";
+import { withBase } from "@defold-typescript/docs-render/base";
+import { glyphSvg } from "@defold-typescript/docs-render/glyph";
+import { BADGE_DOT_RE, slugify } from "@defold-typescript/docs-render/headings";
+import { imageMaxWidthStyle } from "@defold-typescript/docs-render/image-style";
+import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
+import {
+  type Glyph,
+  PLATFORM_MARKER,
+  platformIcon,
+} from "@defold-typescript/docs-render/platform-icons";
+import {
+  type SignatureSymbolTarget,
+  splitSignatureBrandLinks,
+} from "@defold-typescript/docs-render/signature-brand-links";
+import { signatureEmphasis } from "@defold-typescript/docs-render/signature-emphasis";
+import { Badge, SvgFigure, TooltipTrigger } from "@defold-typescript/docs-render/ui";
 import { fromHighlighter } from "@shikijs/markdown-it/core";
 import {
   transformerMetaHighlight,
@@ -9,18 +26,6 @@ import MarkdownIt from "markdown-it";
 import type Token from "markdown-it/lib/token.mjs";
 import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter, type ThemedToken } from "shiki";
-import { Badge } from "../components/ui/badge";
-import { SvgFigure } from "../components/ui/svg-figure";
-import { TooltipTrigger } from "../components/ui/tooltip";
-import { linkApiTypeTokens } from "./api-type-links";
-import { withBase } from "./base";
-import { glyphSvg } from "./glyph";
-import { BADGE_DOT_RE, slugify } from "./headings";
-import { imageMaxWidthStyle } from "./image-style";
-import { EXTERNAL_LINK_ICON } from "./phosphor";
-import { type Glyph, PLATFORM_MARKER, platformIcon } from "./platform-icons";
-import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
-import { signatureEmphasis } from "./signature-emphasis";
 import { isSafeLink, restoreUpstreamMarkers } from "./upstream-text";
 
 /**

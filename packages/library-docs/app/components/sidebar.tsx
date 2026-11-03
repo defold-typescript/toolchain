@@ -1,5 +1,5 @@
 /** @jsxImportSource hono/jsx */
-import { withBase } from "../lib/base";
+import { withBase } from "@defold-typescript/docs-render/base";
 import type { NavLink } from "../lib/nav";
 
 export function SidebarItems({

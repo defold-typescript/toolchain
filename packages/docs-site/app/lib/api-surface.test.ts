@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
 import {
   type ApiAvailability,
   type ApiFunction,
@@ -58,7 +59,6 @@ import {
   combinedNamespaceToApiPage,
   compareSemverDesc,
 } from "./combined-surface";
-import { pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { versionLabel } from "./version-switch";
 

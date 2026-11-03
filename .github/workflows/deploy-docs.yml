@@ -3,7 +3,7 @@ name: Deploy docs
 # Publishes packages/docs-site to GitHub Pages. Pages must be enabled with
 # "GitHub Actions" as the source (Settings -> Pages -> Build and deployment).
 # The site is served from the project subpath https://<owner>.github.io/<repo>/,
-# so DOCS_BASE is set to `/<repo>/`; app/lib/base.ts threads it through every
+# so DOCS_BASE is set to `/<repo>/`; packages/docs-render/src/base.ts threads it through every
 # asset and link. Serving from a domain root instead (custom domain or a
 # <owner>.github.io repo) means dropping DOCS_BASE so the base is `/`.
 

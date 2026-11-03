@@ -1,14 +1,14 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { withBase } from "@defold-typescript/docs-render/base";
+import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import { type ApiPage, apiModuleSymbols } from "../app/lib/api-surface";
 import { loadApiSurface, loadCombinedSurface } from "../app/lib/api-surface-loader";
-import { withBase } from "../app/lib/base";
 import {
   compactArmAvailability,
   compactAvailability,
   llmsSignaturesForEntry,
 } from "../app/lib/combined-surface";
-import { parseFrontmatter } from "../app/lib/frontmatter";
 import type { GuidePage } from "../app/lib/guide";
 import { expandGuideDirectives } from "../app/lib/guide-directives";
 import { listGuidePages } from "../app/lib/guide-loader";

@@ -1,9 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import {
+  allPageHeadings,
+  type Heading,
+  pageHeadings,
+  slugify,
+} from "@defold-typescript/docs-render/headings";
 import { apiPageMarkdown } from "./api-page-render";
 import { loadCombinedSurface } from "./api-surface-loader";
 import { combinedNamespaceToApiPage } from "./combined-surface";
-import { allPageHeadings, type Heading, pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 
 describe("slugify", () => {

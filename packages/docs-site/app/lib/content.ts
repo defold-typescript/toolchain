@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
+import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import { CHANGELOG_TAG_DATES } from "../generated/changelog-dates";
 import { applyChangelogTagDates } from "./changelog-dates";
-import { parseFrontmatter } from "./frontmatter";
 import type { GuidePage } from "./guide";
 import { expandGuideDirectives } from "./guide-directives";
 import { listGuidePages } from "./guide-loader";

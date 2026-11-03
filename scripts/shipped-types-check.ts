@@ -15,7 +15,7 @@ import {
   locateShippedDeclarations,
   selectShippedDeclarations,
 } from "../packages/cli/src/shipped-declarations.ts";
-import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-render/src/base.ts";
 import type { LibraryCheckIo } from "./library-upstream-check.ts";
 
 // Reports each curated repo whose newest upstream release ships a `types/`
