@@ -20,7 +20,6 @@ import {
   assertPageKey,
   assertUpstreamIdentifiers,
   assertUrlPart,
-  preserveUpstreamMarkup,
 } from "./upstream-text";
 
 // Where a build reads from: `dataDir` is the data folder, `modelDir` the API model
@@ -809,7 +808,6 @@ export function loadLibraryPageSources(dirs: LibraryDirs): { page: ApiPage; doc:
       if (fallback) module.description = fallback;
     }
     assertUpstreamIdentifiers(module);
-    preserveUpstreamMarkup(module);
     const meta = metaFor(namespace);
     const { owner, repo } = libraryLineage(namespace, origins);
     const displayName =
