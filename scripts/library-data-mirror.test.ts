@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -54,10 +55,12 @@ function contents(dir: string): Record<string, string> {
 }
 
 // The library-types package holds reports beside its data, and the repo root its
-// own NOTICE and LICENSE; none of them may reach the data repo.
+// own NOTICE and LICENSE; none of them may reach the data repo. `untracked.txt`
+// stands in for a repo file that a target overlapping the repo would delete.
 function sourceRepo(): string {
   const root = mkdtempSync(join(tmpdir(), "library-data-mirror-source-"));
   write(root, {
+    "untracked.txt": "not published\n",
     "packages/library-types/data/0.55.0/library-targets.json": '{ "targets": [] }\n',
     "packages/library-types/data/0.55.0/druid/generated/druid.d.ts": "declare module 'druid' {}\n",
     "packages/library-types/NOTICE": "library notice\n",
@@ -154,12 +157,49 @@ describe("writeMirror", () => {
     const parent = mkdtempSync(join(tmpdir(), "library-data-mirror-parent-"));
     const source = join(parent, "toolchain");
     write(source, { "packages/library-types/NOTICE": "library notice\n" });
+    const before = contents(source);
 
-    expect(() => writeMirror(source, source)).toThrow(/holds the source repo/);
-    expect(() => writeMirror(source, parent)).toThrow(/holds the source repo/);
-    expect(readFileSync(join(source, "packages/library-types/NOTICE"), "utf8")).toBe(
-      "library notice\n",
-    );
+    expect(() => writeMirror(source, source)).toThrow(/overlaps the source repo/);
+    expect(() => writeMirror(source, parent)).toThrow(/overlaps the source repo/);
+    expect(contents(source)).toEqual(before);
+  });
+
+  test("refuses a target inside the source repo", () => {
+    const source = sourceRepo();
+    write(source, { "..scratch/note.txt": "scratch\n" });
+
+    for (const inside of [
+      "packages/library-types",
+      "packages/library-types/data",
+      "packages",
+      "..scratch",
+    ]) {
+      const before = contents(source);
+      expect(() => writeMirror(source, join(source, inside))).toThrow(/overlaps the source repo/);
+      expect(contents(source)).toEqual(before);
+    }
+  });
+
+  test("refuses an overlap reached through a symlink or junction", () => {
+    const source = sourceRepo();
+    const links = mkdtempSync(join(tmpdir(), "library-data-mirror-links-"));
+    const repo = join(links, "repo");
+    const types = join(links, "types");
+    symlinkSync(source, repo, "junction");
+    symlinkSync(join(source, "packages/library-types"), types, "junction");
+    const cases: [string, string][] = [
+      [source, repo],
+      [source, types],
+      [source, join(repo, "fresh")],
+      [repo, join(source, "packages/library-types")],
+    ];
+
+    for (const [from, target] of cases) {
+      const before = contents(source);
+      expect(() => writeMirror(from, target)).toThrow(/overlaps the source repo/);
+      expect(contents(source)).toEqual(before);
+    }
+    expect(existsSync(join(source, "fresh"))).toBe(false);
   });
 });
 
