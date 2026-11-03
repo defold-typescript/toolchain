@@ -9,17 +9,20 @@ import {
   splitCallForm,
 } from "@defold-typescript/docs-render/api-surface";
 import {
+  type CombinedNamespace,
+  combinedAuthoritativeSignatures,
+  combinedNamespaceToApiPage,
+} from "@defold-typescript/docs-render/combined-surface";
+import {
+  loadCombinedSurface,
+  loadSignaturesArtifact,
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { windowCombinedSurface } from "@defold-typescript/docs-render/version-window";
+import {
   availabilityLabel,
   type SignatureStore,
   symbolIdentityKey,
 } from "@defold-typescript/types";
-import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loader";
-import {
-  type CombinedNamespace,
-  combinedAuthoritativeSignatures,
-  combinedNamespaceToApiPage,
-} from "./combined-surface";
-import { windowCombinedSurface } from "./version-window";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 

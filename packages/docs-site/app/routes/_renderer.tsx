@@ -1,6 +1,12 @@
 import { withBase } from "@defold-typescript/docs-render/base";
+import { buildBadgeCountTable } from "@defold-typescript/docs-render/combined-surface";
 import { faviconLinks } from "@defold-typescript/docs-render/favicon";
 import type { Heading } from "@defold-typescript/docs-render/headings";
+import {
+  apiVersions,
+  canonicalApiPages,
+  combinedSurface,
+} from "@defold-typescript/docs-render/toolchain-surface";
 import githubIconRaw from "@phosphor-icons/core/duotone/github-logo-duotone.svg?raw";
 import { jsxRenderer } from "hono/jsx-renderer";
 import { Script } from "honox/server";
@@ -19,12 +25,7 @@ import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
 import UiTooltip from "../islands/ui-tooltip";
 import { navLeafBadgeHtml } from "../lib/api-badges";
-import {
-  apiVersions,
-  canonicalApiPages,
-  combinedSurface,
-  versionNamespaceAtom,
-} from "../lib/api-content";
+import { TYPES_DIR, versionNamespaceAtom } from "../lib/api-content";
 import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,
@@ -38,7 +39,6 @@ import {
   retargetRangeOptions,
   showApiSurfaceSelector,
 } from "../lib/api-surface-pref";
-import { buildBadgeCountTable } from "../lib/combined-surface";
 import { guidePages } from "../lib/content";
 import { activeCategoryId, buildNav, type NavCategory } from "../lib/nav";
 import { buildPager, type Pager as PagerData, type PagerLink } from "../lib/pager";
@@ -233,9 +233,9 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // The canonical un-prefixed surface (Combined engine + version-independent) is
   // what the sidebar nav and index render; each version's prefixed family is
   // reached from the selector.
-  const allApiPages = canonicalApiPages();
+  const allApiPages = canonicalApiPages(TYPES_DIR);
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
-  const versions = apiVersions();
+  const versions = apiVersions(TYPES_DIR);
   // Every tracked version — the default included — now owns a prefixed family.
   const versionIds = versions.map((version) => version.id);
   const namespacesByVersion = Object.fromEntries(
@@ -254,7 +254,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     // Every selectable window's tallies, computed once here. The categories are
     // window-relative and `from` is client-side, so the pre-paint filter looks
     // its pills up in this table rather than deriving a span in the browser.
-    badgeCounts: buildBadgeCountTable(combinedSurface().namespaces, versionIds),
+    badgeCounts: buildBadgeCountTable(combinedSurface(TYPES_DIR).namespaces, versionIds),
   };
   // The default version's family and the bare canonical route render the same
   // window, so those pages declare the bare route canonical and the duplicate

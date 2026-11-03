@@ -1,5 +1,5 @@
-import type { ApiVersion } from "./api-surface-loader";
-import { windowOptionHrefs } from "./version-window";
+import type { ApiVersion } from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { windowOptionHrefs } from "@defold-typescript/docs-render/version-window";
 
 /** One option in a rendered `From`/`To` column. */
 export interface RangeSelectorOption {

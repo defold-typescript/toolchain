@@ -1,34 +1,15 @@
-import { apiVersionAxis, windowedApiPages } from "./api-content";
-import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
-import type { BadgeCountTable } from "./api-surface-pref";
-import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
-import { resolveVersionWindow } from "./version-window";
-
-const COUNT_KINDS: {
-  readonly flag: keyof NamespaceBadgeCounts;
-  readonly kind: string;
-  readonly noun: string;
-}[] = [
-  { flag: "new", kind: "new", noun: "new" },
-  { flag: "changed", kind: "changed", noun: "changed" },
-  { flag: "deprecated", kind: "deprecated", noun: "deprecated" },
-];
-
-// The count pills for a Combined namespace: one pill per non-zero category
-// showing its tally and category noun as visible text (`12 new`), the
-// `aria-label` spelling it out for assistive tech so color stays additive rather
-// than the sole signal. The wrapper is an inline `<span>` (not a block `<div>`)
-// so the group rides the namespace-page H1 baseline and the `/api` index card
-// title row instead of wrapping to its own line. Returns `""` when every count
-// is zero (a fully stable namespace shows nothing).
-export function namespaceCountBadges(counts: NamespaceBadgeCounts): string {
-  const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map(
-    (c) =>
-      `<span class="api-badge-count api-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]} ${c.noun}</span>`,
-  );
-  if (pills.length === 0) return "";
-  return `<span class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</span>`;
-}
+import {
+  type BadgeCountTable,
+  type NamespaceBadgeCounts,
+  reachableBadgeCounts,
+} from "@defold-typescript/docs-render/combined-surface";
+import { COUNT_KINDS } from "@defold-typescript/docs-render/toolchain-page";
+import { apiVersionAxis, windowedApiPages } from "@defold-typescript/docs-render/toolchain-surface";
+import {
+  type ApiVersion,
+  versionsWithDiskFixtures,
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
 
 // The compact count pills for a sidebar namespace leaf: one span per category
 // showing just the tally as visible text (space is tight in the tree), with the

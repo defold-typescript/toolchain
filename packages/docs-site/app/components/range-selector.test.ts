@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import type { ApiVersion } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import leftGlyphRaw from "@phosphor-icons/core/duotone/arrow-fat-lines-left-duotone.svg?raw";
 import rightGlyphRaw from "@phosphor-icons/core/duotone/arrow-fat-lines-right-duotone.svg?raw";
-import type { ApiVersion } from "../lib/api-surface-loader";
 import { buildRangeSelector } from "../lib/version-switch";
 import { RangeColumn, RangeSelectorControls } from "./range-selector";
 

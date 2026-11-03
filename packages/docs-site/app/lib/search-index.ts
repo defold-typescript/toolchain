@@ -3,14 +3,14 @@ import {
   apiModuleSections,
   qualify,
 } from "@defold-typescript/docs-render/api-surface";
-import { memberAnchors } from "@defold-typescript/docs-render/symbol-index";
-import { htmlToDocText } from "@defold-typescript/types";
 import {
   type CombinedEntry,
   type CombinedNamespace,
   type CombinedSurface,
   combinedNamespaceToApiPage,
-} from "./combined-surface";
+} from "@defold-typescript/docs-render/combined-surface";
+import { memberAnchors } from "@defold-typescript/docs-render/symbol-index";
+import { htmlToDocText } from "@defold-typescript/types";
 import type { GuidePage } from "./guide";
 
 export interface SearchRecord {

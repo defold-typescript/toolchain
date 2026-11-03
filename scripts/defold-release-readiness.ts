@@ -10,8 +10,8 @@ import {
   apiVersionAxis,
   canonicalApiPages,
   windowedApiPages,
-} from "../packages/docs-site/app/lib/api-content.ts";
-import { versionsWithDiskFixtures } from "../packages/docs-site/app/lib/api-surface-loader.ts";
+} from "../packages/docs-render/src/toolchain-surface.ts";
+import { versionsWithDiskFixtures } from "../packages/docs-render/src/toolchain-surface-loader.ts";
 import {
   buildReleaseRouteManifest,
   type ReleaseRouteManifest,

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import { combinedNamespaceToApiPage } from "@defold-typescript/docs-render/combined-surface";
 import {
   allPageHeadings,
   type Heading,
@@ -8,8 +9,7 @@ import {
   slugify,
 } from "@defold-typescript/docs-render/headings";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
-import { loadCombinedSurface } from "./api-surface-loader";
-import { combinedNamespaceToApiPage } from "./combined-surface";
+import { loadCombinedSurface } from "@defold-typescript/docs-render/toolchain-surface-loader";
 
 describe("slugify", () => {
   test("keeps underscores so on_message-style ids match GitHub", () => {

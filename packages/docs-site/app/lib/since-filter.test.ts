@@ -6,6 +6,14 @@ import {
   type AvailabilityLookup,
   windowedBadgeCategory,
 } from "@defold-typescript/docs-render/api-surface";
+import {
+  type BadgeCountTable,
+  buildBadgeCountTable,
+  buildCombinedSurface,
+  type CombinedVersionSurface,
+  namespaceBadgeCounts,
+  type SignaturesArtifact,
+} from "@defold-typescript/docs-render/combined-surface";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import {
   type ApiFunction,
@@ -15,14 +23,7 @@ import {
   symbolIdentityKey,
 } from "@defold-typescript/types";
 import { navLeafBadgeHtml, navNamespaceBadges } from "./api-badges";
-import { type ApiSurfaceConfig, type BadgeCountTable, readStoredRange } from "./api-surface-pref";
-import {
-  buildBadgeCountTable,
-  buildCombinedSurface,
-  type CombinedVersionSurface,
-  namespaceBadgeCounts,
-  type SignaturesArtifact,
-} from "./combined-surface";
+import { type ApiSurfaceConfig, readStoredRange } from "./api-surface-pref";
 import { applySinceFilter } from "./since-filter";
 
 // Newest first, matching the tracked axis every availability span is read against.
