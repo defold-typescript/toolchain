@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
+import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { libraryPageNames } from "./__fixtures__/library-page-names";
 import {
   MIDDLE,
@@ -22,8 +24,6 @@ import {
   windowedApiPages,
   withVersionIndependentPages,
 } from "./api-content";
-import { apiLinkify, apiPageMarkdown } from "./api-page-render";
-import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion } from "./api-surface-loader";
 import { compareSemverDesc } from "./combined-surface";
 import { resolveVersionWindow } from "./version-window";

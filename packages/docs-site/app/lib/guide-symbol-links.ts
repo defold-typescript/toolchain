@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
 import { canonicalApiPages } from "./api-content";
-import { buildSymbolIndex } from "./symbol-index";
 
 const routesByTypesDir = new Map<string, ReadonlyMap<string, string>>();
 

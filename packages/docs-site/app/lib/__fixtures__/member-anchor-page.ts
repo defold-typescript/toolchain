@@ -1,4 +1,4 @@
-import type { ApiPage } from "../api-surface";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 
 // A page with one member of each anchored shape: a function whose two ref-doc
 // forms share one overload heading, a namespace-qualified constant, a bare

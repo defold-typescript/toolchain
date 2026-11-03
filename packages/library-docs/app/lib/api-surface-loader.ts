@@ -1,26 +1,26 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { ApiPage, LibraryMeta } from "@defold-typescript/docs-render/api-surface";
+import { repoTreeUrl } from "@defold-typescript/docs-render/forge";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
-import {
-  type LibraryIndexSlotClassifications,
-  parseDefoldApiDoc,
-  parseLibraryIndexSlotClassifications,
-} from "@defold-typescript/types";
-import type { ApiPage, LibraryMeta } from "./api-surface";
-import {
-  type DefoldEngineRelease,
-  loadDefoldEngineReleases,
-  releaseEra,
-} from "./defold-release-era";
-import { repoTreeUrl } from "./forge";
-import { readSiteIndexSlots, readSiteLibraries, type SiteLibrary } from "./library-data";
-import { type LibraryListing, type LibraryOrigin, libraryLineage } from "./nav";
 import {
   assertHttpsUrl,
   assertPageKey,
   assertUpstreamIdentifiers,
   assertUrlPart,
-} from "./upstream-text";
+} from "@defold-typescript/docs-render/upstream-text";
+import {
+  type LibraryIndexSlotClassifications,
+  parseDefoldApiDoc,
+  parseLibraryIndexSlotClassifications,
+} from "@defold-typescript/types";
+import {
+  type DefoldEngineRelease,
+  loadDefoldEngineReleases,
+  releaseEra,
+} from "./defold-release-era";
+import { readSiteIndexSlots, readSiteLibraries, type SiteLibrary } from "./library-data";
+import { type LibraryListing, type LibraryOrigin, libraryLineage } from "./nav";
 
 // Where a build reads from: `dataDir` is the data folder, `modelDir` the API model
 // `library check --api-doc-out` wrote, and `typesDir` the published types package,

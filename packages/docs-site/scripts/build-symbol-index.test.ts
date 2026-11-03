@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
+import { buildSymbolIndex, type SymbolEntry } from "@defold-typescript/docs-render/symbol-index";
 import {
   HISTORICAL_ONLY_SYMBOL,
   makeWindowedTypesDir,
@@ -12,11 +13,7 @@ import {
   versionsWithDiskFixtures,
 } from "../app/lib/api-surface-loader";
 import type { CombinedSurface } from "../app/lib/combined-surface";
-import {
-  buildSymbolIndex,
-  combinedSymbolIndexRecords,
-  type SymbolEntry,
-} from "../app/lib/symbol-index";
+import { combinedSymbolIndexRecords } from "../app/lib/combined-surface";
 import { windowCombinedSurface } from "../app/lib/version-window";
 import { symbolIndexOutputs } from "./build-symbol-index";
 

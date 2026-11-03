@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { ApiPage } from "./api-surface";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import {
   type ApiVersion,
   loadApiSurface,

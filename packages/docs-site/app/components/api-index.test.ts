@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import type { ApiModule } from "@defold-typescript/types";
-import type { ApiPage } from "../lib/api-surface";
 import { CombinedIndex } from "./api-index";
 
 function enginePage(namespace: string, brief = ""): ApiPage {

@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
+import { parseGlobalTypes } from "@defold-typescript/docs-render/global-types";
 import {
   parseDefoldApiDoc,
   routeTypeDeclarations,
   type SkipOverloadRule,
   withholdOverloads,
 } from "@defold-typescript/types";
-import type { ApiPage } from "./api-surface";
-import { parseGlobalTypes } from "./global-types";
 
 export const TOOLCHAIN_DOCS_URL = "https://defold-typescript.github.io/toolchain";
 

@@ -1,4 +1,4 @@
-import type { ApiPage } from "../lib/api-surface";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import {
   type LibraryApiKind,
   type LibraryListing,
