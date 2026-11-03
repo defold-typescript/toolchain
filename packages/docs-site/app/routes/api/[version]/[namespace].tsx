@@ -11,16 +11,16 @@ import {
 } from "@defold-typescript/docs-render/api-page-render";
 import { pageHeadings } from "@defold-typescript/docs-render/headings";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
-import { ssgParams } from "hono/ssg";
-import { createRoute } from "honox/factory";
-import { versionedApiParams } from "../../../lib/api-badges";
 import {
   apiVersionAxis,
   canonicalApiPages,
-  TYPES_DIR,
   windowedApiPages,
-} from "../../../lib/api-content";
-import { resolveVersionWindow } from "../../../lib/version-window";
+} from "@defold-typescript/docs-render/toolchain-surface";
+import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
+import { ssgParams } from "hono/ssg";
+import { createRoute } from "honox/factory";
+import { versionedApiParams } from "../../../lib/api-badges";
+import { TYPES_DIR } from "../../../lib/api-content";
 import type { ApiSurfaceDirs } from "../[namespace]";
 
 // The 3-segment `/api/:version/:namespace` route. The page is the version window
@@ -68,7 +68,7 @@ export function createVersionedApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       // from the windowed collection and every alias link keeps the reader in the
       // version they opened.
       const signatureSymbolLinks = apiSignatureSymbolLinks(
-        canonicalApiPages(dirs.typesDir),
+        canonicalApiPages(typesDir),
         page,
         pages,
       );

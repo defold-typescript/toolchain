@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { ApiVersion } from "./api-surface-loader";
+import type { ApiVersion } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { buildRangeSelector, isApiRoute, versionLabel, versionShortLabel } from "./version-switch";
 
 // Newest-first, in the route-id vocabulary every `/api/<id>/…` path and the

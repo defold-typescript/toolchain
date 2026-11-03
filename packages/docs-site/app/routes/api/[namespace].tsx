@@ -3,29 +3,16 @@
 // intentionally carries no JSX config so non-docs workspaces are not coupled to
 // hono/jsx; this pragma pins the JSX dialect for this file.
 
-import {
-  apiLinkify,
-  apiPageMarkdown,
-  apiReplacementResolver,
-  apiSignatureSymbolLinks,
-} from "@defold-typescript/docs-render/api-page-render";
 import { withBase } from "@defold-typescript/docs-render/base";
 import { pageHeadings } from "@defold-typescript/docs-render/headings";
-import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
+import { apiVersions } from "@defold-typescript/docs-render/toolchain-surface";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { ApiIndex } from "../../components/api-index";
-import { isKnownVersionId, namespaceCountBadges } from "../../lib/api-badges";
-import {
-  apiNamespaceOwner,
-  apiVersions,
-  canonicalApiPages,
-  canonicalNamespaces,
-  combinedSurface,
-  versionIndexPages,
-} from "../../lib/api-content";
+import { isKnownVersionId } from "../../lib/api-badges";
+import { canonicalNamespaces, TYPES_DIR, versionIndexPages } from "../../lib/api-content";
 import { COMBINED_ROUTE_SEGMENT, combinedRedirect, redirectHtml } from "../../lib/api-redirect";
-import { namespaceBadgeCounts } from "../../lib/combined-surface";
 
 // honox flat routing collapses `api/[version]/index.tsx` to `/api/:version`,
 // which collides with this `/api/:namespace` route (the shallower one wins). So
@@ -42,10 +29,11 @@ export interface ApiSurfaceDirs {
 }
 
 export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
+  const typesDir = dirs.typesDir ?? TYPES_DIR;
   return createRoute(
     ssgParams(() => [
-      ...canonicalNamespaces().map((namespace) => ({ namespace })),
-      ...apiVersions().map((v) => ({ namespace: v.id })),
+      ...canonicalNamespaces(typesDir).map((namespace) => ({ namespace })),
+      ...apiVersions(typesDir).map((v) => ({ namespace: v.id })),
       // honox collapses `api/combined/index.tsx` to `/api/combined`, which the
       // shallower `/api/:namespace` route shadows — so the Combined redirect param
       // is folded in here alongside the per-version index params.
@@ -66,58 +54,19 @@ export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       // `/api/<default>` family) renders that version's index — the window ending
       // at it, so the index lists everything its `/api/<version>/<ns>` family
       // routes; its version-independent entries link back to their canonical routes.
-      if (isKnownVersionId(param, apiVersions(dirs.typesDir))) {
-        return c.render(
-          <ApiIndex pages={versionIndexPages(param, dirs.typesDir)} version={param} />,
-          {
-            title: `API reference (${param})`,
-          },
-        );
+      if (isKnownVersionId(param, apiVersions(typesDir))) {
+        return c.render(<ApiIndex pages={versionIndexPages(param, typesDir)} version={param} />, {
+          title: `API reference (${param})`,
+        });
       }
 
-      // Otherwise a canonical namespace: dispatch on its owning surface. An unknown
-      // namespace 404s.
-      const owner = apiNamespaceOwner(param, dirs.typesDir);
-      if (!owner) return c.notFound();
-
-      const pages = canonicalApiPages(dirs.typesDir);
-      const page = pages.find((entry) => entry.namespace === param);
-      if (!page) return c.notFound();
-
-      // The linkify + replacement registry span the whole canonical surface, so a
-      // prose mention or a deprecation replacement resolves to its canonical route.
-      const linkify = apiLinkify(pages);
-      const resolveReplacement = apiReplacementResolver(pages);
-      // Deep-link `Opaque` brand tokens in rendered signatures to this surface's
-      // `/api/Opaque` Reference page, and this page's own typedef shapes to their
-      // headings on it. Both render sites below render this same page.
-      const signatureSymbolLinks = apiSignatureSymbolLinks(pages, page);
-
-      // A Combined engine namespace renders with the availability markers and the
-      // namespace-title count pills; a version-independent namespace (global type,
-      // Lua stdlib) renders plainly.
-      const combinedMarkers = owner === "combined-engine";
-      const model = combinedMarkers
-        ? combinedSurface(dirs.typesDir).namespaces.find((n) => n.namespace === param)
-        : undefined;
-      // The canonical route is the full range by definition, so it states that
-      // window explicitly rather than leaning on the option's default: the counts
-      // and the dots then read from the same declared range.
-      const axis = combinedSurface(dirs.typesDir).versions;
-      const window = { from: axis[axis.length - 1] ?? "", to: axis[0] ?? "" };
-      const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model, window)) : "";
-
-      const html = await renderMarkdown(
-        apiPageMarkdown(page, linkify, {
-          resolveReplacement,
-          titleBadges,
-          combinedMarkers,
-          window,
-        }),
-        { highlightSignatureHeadings: true, signatureSymbolLinks },
-      );
+      // Otherwise a canonical namespace, rendered by its owning surface: a Combined
+      // engine page or a version-independent one. An unknown namespace 404s.
+      const html = await renderCanonicalApiPage(param, typesDir);
+      if (html === undefined) return c.notFound();
+      // A canonical page's module carries its route namespace, so the param names it.
       return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
-        title: `${page.module.namespace} API`,
+        title: `${param} API`,
         headings: pageHeadings(html),
       });
     },

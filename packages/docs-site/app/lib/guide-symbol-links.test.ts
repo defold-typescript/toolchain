@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { withBase } from "@defold-typescript/docs-render/base";
+import { combinedSymbolIndexRecords } from "@defold-typescript/docs-render/combined-surface";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
-import { canonicalApiPages } from "./api-content";
-import { loadCombinedSurface } from "./api-surface-loader";
-import { combinedSymbolIndexRecords } from "./combined-surface";
+import { canonicalApiPages } from "@defold-typescript/docs-render/toolchain-surface";
+import { loadCombinedSurface } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
 import { guideSymbolRoutes } from "./guide-symbol-links";

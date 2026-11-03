@@ -2,12 +2,13 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
-import { apiVersionAxis, windowedApiPages } from "../app/lib/api-content";
+import { apiVersionAxis, windowedApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import {
   loadCombinedSurface,
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
-} from "../app/lib/api-surface-loader";
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
 import { listGuidePages } from "../app/lib/guide-loader";
 import {
   apiSearchRecords,
@@ -16,7 +17,6 @@ import {
   type SearchRecord,
   versionSearchIndexRecords,
 } from "../app/lib/search-index";
-import { resolveVersionWindow } from "../app/lib/version-window";
 
 // Anchored on the script's own location, never `process.cwd()`, so the index
 // generation resolves the same whether the build runs from the package dir or

@@ -1,6 +1,6 @@
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
-import { namespaceCountBadges } from "../lib/api-badges";
-import type { NamespaceBadgeCounts } from "../lib/combined-surface";
+import type { NamespaceBadgeCounts } from "@defold-typescript/docs-render/combined-surface";
+import { namespaceCountBadges } from "@defold-typescript/docs-render/toolchain-page";
 
 // The `/api` index renders one card grid per page category. Membership lives
 // here (a JSX-free module) so the grouping is unit-testable under root

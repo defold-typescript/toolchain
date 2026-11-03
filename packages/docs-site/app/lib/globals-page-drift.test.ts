@@ -6,7 +6,7 @@ import {
   loadApiSurfaceForVersion,
   loadCombinedSurface,
   versionsWithDiskFixtures,
-} from "./api-surface-loader";
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
 
 // `api-content`'s `apiVersions` / `apiPagesForVersion` / `combinedSurface` are
 // `process.cwd()`-bound one-line delegations to these loaders, so a root-level

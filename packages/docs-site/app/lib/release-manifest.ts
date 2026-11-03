@@ -1,5 +1,5 @@
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
-import type { ApiVersion } from "./api-surface-loader";
+import type { ApiVersion } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { versionLabel } from "./version-switch";
 
 // Combined is the canonical surface, so the unversioned `search-index.json` /

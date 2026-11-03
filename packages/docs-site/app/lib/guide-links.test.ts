@@ -5,18 +5,18 @@ import { join } from "node:path";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
-import { versionedApiParams } from "./api-badges";
 import {
   apiVersionAxis,
   canonicalApiPages,
-  canonicalNamespaces,
   windowedApiPages,
-} from "./api-content";
+} from "@defold-typescript/docs-render/toolchain-surface";
+import { versionsWithDiskFixtures } from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { resolveVersionWindow } from "@defold-typescript/docs-render/version-window";
+import { versionedApiParams } from "./api-badges";
+import { canonicalNamespaces } from "./api-content";
 import { combinedRedirect } from "./api-redirect";
-import { versionsWithDiskFixtures } from "./api-surface-loader";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
-import { resolveVersionWindow } from "./version-window";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const FIXTURES = join(import.meta.dir, "__fixtures__");

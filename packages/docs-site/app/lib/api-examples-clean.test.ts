@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { exampleMarkdownFor } from "@defold-typescript/docs-render/api-surface";
+import { loadApiSurface } from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { examplesHtmlToMarkdown } from "@defold-typescript/types";
-import { loadApiSurface } from "./api-surface-loader";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
