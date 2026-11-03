@@ -1,5 +1,13 @@
-import { cpSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
@@ -7,6 +15,7 @@ import { parseArgs } from "node:util";
 // data, its NOTICE and LICENSE, and a README that sends changes back here. The
 // target ends up holding exactly that, so a file deleted here is deleted there;
 // only its `.git` is left alone. The publish workflow runs it on each change.
+// It refuses a target that is, holds or sits inside this repo, through any alias.
 
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const LIBRARY_TYPES = "packages/library-types";
@@ -23,14 +32,26 @@ Each folder under \`data/\` holds the data for one data format version. Open a n
 A data folder also holds the extension docs, portal listings and display metadata the library docs site reads.
 `;
 
+function realPath(path: string): string {
+  let existing = resolve(path);
+  const missing: string[] = [];
+  while (!existsSync(existing) && dirname(existing) !== existing) {
+    missing.unshift(basename(existing));
+    existing = dirname(existing);
+  }
+  return join(realpathSync.native(existing), ...missing);
+}
+
 function holds(dir: string, path: string): boolean {
-  const rel = relative(resolve(dir), resolve(path));
-  return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+  const rel = relative(dir, path);
+  return rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
 }
 
 export function writeMirror(repoRoot: string, target: string): void {
-  if (holds(target, repoRoot)) {
-    throw new Error(`refusing to write ${target}: it holds the source repo ${repoRoot}`);
+  const realRepo = realPath(repoRoot);
+  const realTarget = realPath(target);
+  if (holds(realRepo, realTarget) || holds(realTarget, realRepo)) {
+    throw new Error(`refusing to write ${target}: it overlaps the source repo ${repoRoot}`);
   }
   mkdirSync(target, { recursive: true });
   for (const entry of readdirSync(target)) {
