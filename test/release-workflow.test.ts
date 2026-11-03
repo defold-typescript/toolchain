@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
+import { GATED_CHECKS } from "../scripts/release-ci-gate.ts";
 import { PACKAGES } from "../scripts/release-pack-proof.ts";
+import { admittedScopes } from "./workflow-scopes.ts";
 
 const workflowsDir = join(import.meta.dir, "..", ".github", "workflows");
 const workflowPath = join(workflowsDir, "release.yml");
@@ -58,29 +60,25 @@ function publishIndices(): number[] {
     .map(({ i }) => i);
 }
 
-// The release's CI gate filter, run through jq over synthetic check runs.
-function gated(checkRuns: object[]): { name: string; conclusion: string }[] {
-  const gate = steps().find((s) => /check-runs/.test(runCmd(s)) && /exit 1/.test(runCmd(s)));
-  const filter = gate && runCmd(gate).match(/--jq '([^']+)'/)?.[1];
-  if (!filter) throw new Error("the CI gate reads check runs with no --jq filter");
-  const out = Bun.spawnSync(["jq", "-c", filter], {
-    stdin: Buffer.from(JSON.stringify({ check_runs: checkRuns })),
-  });
-  return JSON.parse(out.stdout.toString()) as { name: string; conclusion: string }[];
-}
+const GATE_SCRIPT = /\bbun scripts\/release-ci-gate\.ts\b/;
 
 interface NamedJob {
   name?: string;
+  if?: string;
   strategy?: { matrix?: Record<string, unknown> };
+}
+
+function workflowJobs(file: string): Record<string, NamedJob> {
+  return (
+    parse(readFileSync(join(workflowsDir, file), "utf8")) as { jobs: Record<string, NamedJob> }
+  ).jobs;
 }
 
 // GitHub names a job's check run after its `name:`, or its job id when it has
 // none, and appends a matrix job's values in parentheses.
-function checkRunNames(file: string): string[] {
-  const wf = parse(readFileSync(join(workflowsDir, file), "utf8")) as {
-    jobs: Record<string, NamedJob>;
-  };
-  return Object.entries(wf.jobs).flatMap(([id, job]) => {
+function checkRunNames(file: string, only?: (id: string, job: NamedJob) => boolean): string[] {
+  return Object.entries(workflowJobs(file)).flatMap(([id, job]) => {
+    if (only !== undefined && !only(id, job)) return [];
     const base = job.name ?? id;
     const matrix = job.strategy?.matrix;
     if (!matrix) return [base];
@@ -133,10 +131,10 @@ describe("release workflow publishes via OIDC on tags", () => {
     // must NOT re-run the typecheck/lint/test gate — that work happened in CI.
     const reran = steps().find((s) => /bun run (typecheck|lint)\b|bun test\b/.test(runCmd(s)));
     expect(reran).toBeUndefined();
-    // Instead a step reads the Checks API for this commit and aborts when CI is
-    // absent, still running, or red.
-    const requireIdx = stepIndex((s) => /check-runs/.test(runCmd(s)) && /exit 1/.test(runCmd(s)));
+    // Instead a step waits for ci.yml's full scope to pass on this commit.
+    const requireIdx = stepIndex((s) => GATE_SCRIPT.test(runCmd(s)));
     expect(requireIdx).toBeGreaterThanOrEqual(0);
+    expect(requireIdx).toBeGreaterThan(stepIndex((s) => /^actions\/checkout@/.test(s.uses ?? "")));
     // The CI-green guard fences every publish.
     for (const idx of publishIndices()) {
       expect(idx).toBeGreaterThan(requireIdx);
@@ -147,55 +145,19 @@ describe("release workflow publishes via OIDC on tags", () => {
     expect(publishJob().permissions?.checks).toBe("read");
   });
 
-  test.skipIf(!Bun.which("jq"))("the CI gate counts only the newest check of each name", () => {
-    const names = checkRunNames("ci.yml");
-    const [first] = names;
-    const run = (firstId: number, conclusion: (name: string) => string) =>
-      names.map((name, i) => ({
-        id: firstId + i,
-        name,
-        status: "completed",
-        conclusion: conclusion(name),
-      }));
-    const later = names.length + 1;
-    const docsBuild = { id: 1000, name: "build", status: "completed", conclusion: "failure" };
+  test("the CI gate requires exactly the check runs ci.yml's full scope creates", () => {
+    const fullScope = checkRunNames(
+      "ci.yml",
+      (_, job) =>
+        job.if !== undefined && job.if !== "always()" && admittedScopes(job.if).includes("full"),
+    );
+    expect<string[]>([...GATED_CHECKS].sort()).toEqual(fullScope.sort());
 
-    // A branch push cancelled mid-test, then the main push of the same commit green.
-    const cancelledThenGreen = gated([
-      ...run(1, (name) => (name === first ? "success" : "cancelled")),
-      ...run(later, () => "success"),
-      docsBuild,
-    ]);
-    expect(cancelledThenGreen.map((r) => r.conclusion)).toEqual(names.map(() => "success"));
-
-    // A later red run still blocks an earlier green one.
-    const greenThenRed = gated([
-      ...run(1, () => "success"),
-      ...run(later, (name) => (name === first ? "success" : "failure")),
-    ]);
-    const blocking = greenThenRed.filter((r) => r.conclusion !== "success").map((r) => r.name);
-    expect(blocking.sort()).toEqual(names.filter((name) => name !== first).sort());
-  });
-
-  test.skipIf(!Bun.which("jq"))("the CI gate selects exactly the check runs ci.yml creates", () => {
-    const ci = checkRunNames("ci.yml");
     const foreign = readdirSync(workflowsDir)
       .filter((file) => /\.ya?ml$/.test(file) && file !== "ci.yml")
-      .flatMap(checkRunNames);
+      .flatMap((file) => checkRunNames(file));
     expect(foreign.length).toBeGreaterThan(0);
-    expect(ci.filter((name) => foreign.includes(name))).toEqual([]);
-
-    const everyRun = [...ci, ...foreign].map((name, i) => ({
-      id: i + 1,
-      name,
-      status: "completed",
-      conclusion: "success",
-    }));
-    expect(
-      gated(everyRun)
-        .map((r) => r.name)
-        .sort(),
-    ).toEqual([...ci].sort());
+    expect(checkRunNames("ci.yml").filter((name) => foreign.includes(name))).toEqual([]);
   });
 
   test("builds before any publish (stamp + dry-run resolve workspace dist)", () => {

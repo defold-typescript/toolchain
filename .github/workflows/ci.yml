@@ -1,16 +1,55 @@
 name: CI
 
+# The scope job sorts a change's files into the scopes it needs
+# (scripts/ci-scope.ts): library data, the library docs site, or everything else.
+# A library-data or library-docs change runs only the jobs for its scopes, and any
+# other change runs the full suite on all three systems. A release tag and a
+# manual run always run the full scope, and release.yml waits for that run before
+# it publishes. ci-done passes only when every job the scopes chose passed, so it
+# is the one check to require.
+
 on:
-  # Branch pushes and PRs only — NOT tag pushes. A v* tag is handled by
-  # release.yml (which runs its own gate before publishing) and always points
-  # at an already-CI-green main commit, so running CI here would just burn a
-  # full matrix re-running the same commit.
   push:
     branches: ["**"]
+    tags: ["v*"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      scopes: ${{ steps.scope.outputs.scopes }}
+    steps:
+      # The whole history, so the diff reaches the PR base or the push's previous
+      # head. A base git cannot read makes ci-scope.ts choose the full scope.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          case "$EVENT_NAME/$REF_TYPE" in
+            pull_request/*) base="$PR_BASE" ;;
+            push/branch) base="$PUSH_BEFORE" ;;
+            *)
+              echo "scopes=full" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+          bun scripts/ci-scope.ts --base "$base" --head "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
   lint-typecheck:
+    needs: scope
+    if: contains(needs.scope.outputs.scopes, 'full')
     runs-on: ubuntu-latest
     # Lint, typecheck and the workspace builds; the docs site's page build runs only
     # in the release's docs deploy. 45 min is ample headroom and still ends a hung
@@ -32,6 +71,8 @@ jobs:
       - run: bun run lint
 
   test:
+    needs: scope
+    if: contains(needs.scope.outputs.scopes, 'full')
     strategy:
       # Each OS reports its own result: one runner's failure must not cancel
       # another's and hide a platform-only regression.
@@ -60,3 +101,71 @@ jobs:
       # checkout has no dist, so test-without-build cannot resolve it.
       - run: bun run build
       - run: bun test --timeout 60000
+
+  library-data:
+    needs: scope
+    if: contains(needs.scope.outputs.scopes, 'data') || contains(needs.scope.outputs.scopes, 'full')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # fetch-depth/fetch-tags: bun run build needs the release tags, as in the test job.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - run: bun install --frozen-lockfile
+      - name: Library check with this repo's CLI
+        run: bun run library:check
+      # Published CLIs read the data once it reaches the data repo; the nightly run
+      # checks every release that reads it.
+      - name: Library check with the oldest and newest published CLI that read each data folder
+        run: |
+          set -euo pipefail
+          for version in $(bun scripts/cli-range.ts --ends); do
+            echo "::group::@defold-typescript/cli@$version"
+            bunx "@defold-typescript/cli@$version" library check --data packages/library-types/data
+            echo "::endgroup::"
+          done
+      # The tests below build the cli, which resolves the transpiler through its dist/.
+      - run: bun run build
+      - name: Tests that read real library data
+        run: |
+          set -euo pipefail
+          tests=$(bun scripts/ci-scope.ts --real-data-tests)
+          bun test --timeout 60000 $(printf './%s ' $tests)
+
+  library-docs:
+    needs: scope
+    if: contains(needs.scope.outputs.scopes, 'data') || contains(needs.scope.outputs.scopes, 'library-docs')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - run: bun install --frozen-lockfile
+      - run: bun run --cwd packages/library-docs build:site
+      - run: bun test --timeout 60000 ./packages/library-docs
+
+  # Runs even when a job it needs failed or the run was cancelled, so it never
+  # reports a skip that would read as passing. A job the scopes skipped passes.
+  ci-done:
+    needs: [scope, lint-typecheck, test, library-data, library-docs]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          failed=$(jq -r 'to_entries[] | select(.value.result != "success" and .value.result != "skipped") | "\(.key): \(.value.result)"' <<<"$NEEDS")
+          if [ -n "$failed" ]; then
+            echo "::error::CI failed:"
+            echo "$failed"
+            exit 1
+          fi
+          echo "Every job the change's scopes chose passed."
