@@ -6,6 +6,16 @@ import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import { symbolIndexFileForRoute } from "@defold-typescript/docs-render/symbol-index";
+import {
+  canonicalApiPages,
+  combinedApiPages,
+  versionIndependentPages,
+  windowedApiPages,
+} from "@defold-typescript/docs-render/toolchain-surface";
+import {
+  loadApiSurfaceForVersion,
+  versionsWithDiskFixtures,
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { normalizedFunctionSignature } from "@defold-typescript/types";
 import { Hono } from "hono";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
@@ -28,16 +38,8 @@ import {
   versionId,
 } from "./__fixtures__/windowed-surface";
 import { versionedApiParams } from "./api-badges";
-import {
-  canonicalApiPages,
-  combinedApiPages,
-  versionIndependentPages,
-  versionIndexPages,
-  versionNamespaceAtom,
-  windowedApiPages,
-} from "./api-content";
+import { versionIndexPages, versionNamespaceAtom } from "./api-content";
 import { combinedRedirect, redirectHtml } from "./api-redirect";
-import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import {
   type ApiSurfaceConfig,
   canonicalLinkPath,
@@ -49,7 +51,7 @@ import { searchIndexFileForRoute } from "./search-index";
 // The two-version fixture registry: `cur` (default) owns engine namespaces
 // camera/alpha/globals; `old` (historical) owns wmath. Driving the loaders with
 // an explicit dir keeps this end-to-end contract independent of the real surface.
-const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
+const FIXTURE_DIR = join(import.meta.dir, "../../../docs-render/src/__fixtures__/api-surface");
 
 const routesOf = (pages: { route: string }[]): Set<string> =>
   new Set(pages.map((page) => page.route));
@@ -266,7 +268,7 @@ describe("api routing migration — version-independent pages never 404 under a 
 // versions), `camera` current-only, `wmath` historical-only (enriched here with
 // `wmath.length` so the historical-only class has a concrete symbol to project),
 // `liveupdate` changed-signature (add_mount gains a param in `cur`). The shared
-// `__fixtures__/api-surface` dir is never mutated (six test files read it).
+// docs-render `__fixtures__/api-surface` dir is never mutated (seven test files read it).
 // Each class asserts its namespace's function symbol on Combined and the owning
 // exact page(s), and proves absence on the non-owning version by a missing page —
 // not merely a missing route string.

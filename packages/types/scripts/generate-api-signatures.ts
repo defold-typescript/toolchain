@@ -23,7 +23,7 @@ export interface SignaturesArtifact {
   readonly versions: Record<string, Record<string, string>>;
   // The same axis and keys, carrying each documented slot's rendered type. Kept
   // parallel rather than folded into `versions` because three consumers
-  // (`api-surface-loader`, `combined-surface`, `version-window`) type that map's
+  // (`toolchain-surface-loader`, `combined-surface`, `version-window`) type that map's
   // value as a string; a symbol documenting no slot is absent here.
   readonly slotTypes: Record<string, Record<string, SlotTypes>>;
 }

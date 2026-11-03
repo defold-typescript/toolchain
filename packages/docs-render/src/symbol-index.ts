@@ -111,7 +111,7 @@ export function symbolIndexFileForRoute(route: string, versionIds: readonly stri
 }
 
 // Minimal version shape, declared locally rather than imported from
-// `api-surface-loader` so the client tooltip's import graph stays node-free
+// `toolchain-surface-loader` so the client tooltip's import graph stays node-free
 // (mirrors `SearchIndexVersion` in `search-index.ts`).
 export interface SymbolIndexVersion {
   id: string;

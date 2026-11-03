@@ -4,8 +4,11 @@ import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-
 import { type ApiPage, apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { SYMBOL_NOTES } from "@defold-typescript/docs-render/symbol-notes";
-import { canonicalApiPages } from "./api-content";
-import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
+import { canonicalApiPages } from "@defold-typescript/docs-render/toolchain-surface";
+import {
+  loadApiSurfaceForVersion,
+  versionsWithDiskFixtures,
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
 

@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   apiLinkify,
@@ -9,7 +8,12 @@ import {
 import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { withBase } from "@defold-typescript/docs-render/base";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain-page";
+import { canonicalApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
+import { Hono } from "hono";
+import { createApiNamespaceRoute } from "../routes/api/[namespace]";
+import { apiPages, siteDirs } from "./api-content";
 import {
   pointAtToolchainDocs,
   TOOLCHAIN_DOCS_URL,
@@ -19,6 +23,9 @@ import {
 
 const SITE_DIR = join(import.meta.dir, "../..");
 const TYPES_DIR = join(SITE_DIR, "node_modules/@defold-typescript/types");
+const LINKS_TIMEOUT_MS = 600_000;
+
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 function libraryPage(): ApiPage {
   const module = parseDefoldApiDoc({
@@ -67,16 +74,52 @@ describe("toolchainPages", () => {
     }
   });
 
-  test("holds the core types and every module of the default target", () => {
-    const { targets } = JSON.parse(readFileSync(join(TYPES_DIR, "api-targets.json"), "utf8")) as {
-      targets: { default?: boolean; modules: { namespace: string }[] }[];
-    };
-    const target = targets.find((candidate) => candidate.default);
-    const namespaces = new Set(pages.map((page) => page.namespace));
-    expect(target?.modules.length).toBeGreaterThan(0);
-    for (const { namespace } of target?.modules ?? []) expect(namespaces).toContain(namespace);
+  test("holds exactly the namespaces the toolchain docs serve", () => {
+    const namespaces = pages.map((page) => page.namespace);
+    expect(namespaces).toEqual(canonicalApiPages(TYPES_DIR).map((page) => page.namespace));
     for (const name of ["Vector3", "Hash", "Opaque"]) expect(namespaces).toContain(name);
   });
+});
+
+describe("toolchain member links on library pages", () => {
+  test(
+    "every toolchain member link on a library page lands on a heading",
+    async () => {
+      const REAL_DIRS = siteDirs(SITE_DIR);
+      const app = new Hono();
+      app.get("/api/:namespace", ...createApiNamespaceRoute(REAL_DIRS));
+      const linkPattern = new RegExp(
+        `href="${escapeRegExp(TOOLCHAIN_DOCS_URL)}/api/([^"#]+)#([^"]+)"`,
+        "g",
+      );
+      const holders = new Map<string, Set<string>>();
+      for (const page of apiPages(REAL_DIRS)) {
+        const res = await app.request(`/api/${page.namespace}`);
+        expect(res.status).toBe(200);
+        for (const [, namespace, id] of (await res.text()).matchAll(linkPattern)) {
+          const key = `${namespace}#${id}`;
+          const pagesHolding = holders.get(key) ?? new Set<string>();
+          pagesHolding.add(page.namespace);
+          holders.set(key, pagesHolding);
+        }
+      }
+      expect(holders.size).toBeGreaterThan(0);
+
+      const toolchainHtml = new Map<string, string | undefined>();
+      const missing: string[] = [];
+      for (const [key, pagesHolding] of holders) {
+        const [namespace = "", id = ""] = key.split("#");
+        if (!toolchainHtml.has(namespace)) {
+          toolchainHtml.set(namespace, await renderCanonicalApiPage(namespace, TYPES_DIR));
+        }
+        if (!toolchainHtml.get(namespace)?.includes(`id="${id}"`)) {
+          missing.push(`${key} (on ${[...pagesHolding].sort().join(", ")})`);
+        }
+      }
+      expect(missing).toEqual([]);
+    },
+    LINKS_TIMEOUT_MS,
+  );
 });
 
 describe("links back to the toolchain docs", () => {

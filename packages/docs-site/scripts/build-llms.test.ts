@@ -2,14 +2,17 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { withBase } from "@defold-typescript/docs-render/base";
-import { availabilityLabel, symbolIdentityKey } from "@defold-typescript/types";
-import { OVERLOAD_COVERED_SKIPS } from "../../types/src/emit-dts";
+import {
+  compactAvailability,
+  llmsSignaturesForEntry,
+} from "@defold-typescript/docs-render/combined-surface";
 import {
   loadCombinedSurface,
   loadSignaturesArtifact,
   versionsWithDiskFixtures,
-} from "../app/lib/api-surface-loader";
-import { compactAvailability, llmsSignaturesForEntry } from "../app/lib/combined-surface";
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { availabilityLabel, symbolIdentityKey } from "@defold-typescript/types";
+import { OVERLOAD_COVERED_SKIPS } from "../../types/src/emit-dts";
 import { listGuidePages } from "../app/lib/guide-loader";
 import { SRC_ROOT_FOOTNOTE_ID, SRC_ROOT_FOOTNOTE_LINE } from "../app/lib/src-root-note";
 import {

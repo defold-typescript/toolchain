@@ -1,20 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
+import type { CombinedSurface } from "@defold-typescript/docs-render/combined-surface";
+import { combinedSymbolIndexRecords } from "@defold-typescript/docs-render/combined-surface";
 import { buildSymbolIndex, type SymbolEntry } from "@defold-typescript/docs-render/symbol-index";
-import {
-  HISTORICAL_ONLY_SYMBOL,
-  makeWindowedTypesDir,
-} from "../app/lib/__fixtures__/windowed-surface";
 import {
   loadCombinedSurface,
   loadSignaturesArtifact,
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
-} from "../app/lib/api-surface-loader";
-import type { CombinedSurface } from "../app/lib/combined-surface";
-import { combinedSymbolIndexRecords } from "../app/lib/combined-surface";
-import { windowCombinedSurface } from "../app/lib/version-window";
+} from "@defold-typescript/docs-render/toolchain-surface-loader";
+import { windowCombinedSurface } from "@defold-typescript/docs-render/version-window";
+import {
+  HISTORICAL_ONLY_SYMBOL,
+  makeWindowedTypesDir,
+} from "../app/lib/__fixtures__/windowed-surface";
 import { symbolIndexOutputs } from "./build-symbol-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
