@@ -2,9 +2,9 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { diffColorTokens, parseThemeColorTokens } from "./design-tokens";
+import { THEME_TOKENS } from "./theme-tokens";
 
-const STYLES_CSS = readFileSync(join(import.meta.dir, "../styles.css"), "utf8");
-const RENDERER_TSX = readFileSync(join(import.meta.dir, "../routes/_renderer.tsx"), "utf8");
+const STYLES_CSS = readFileSync(join(import.meta.dir, "styles.css"), "utf8");
 
 // styles.css: light values live in `@theme {`, dark in the top-level
 // `[data-theme="dark"] {` — never the `html[data-theme] .shiki` or
@@ -13,7 +13,7 @@ const STYLES_ANCHORS = {
   lightAnchor: /^@theme \{/m,
   darkAnchor: /^\[data-theme="dark"\] \{/m,
 };
-// _renderer.tsx: the inlined THEME_TOKENS block — light `:root`, dark override.
+// THEME_TOKENS, which each renderer inlines — light `:root`, dark override.
 const INLINE_ANCHORS = {
   lightAnchor: /^:root \{/m,
   darkAnchor: /^\[data-theme="dark"\] \{/m,
@@ -48,21 +48,21 @@ test("parseThemeColorTokens reads styles.css @theme (light) and top-level dark b
   expect(dark.get("--color-text")).toBe("#ececef");
 });
 
-test("parseThemeColorTokens reads the _renderer.tsx inline THEME_TOKENS block", () => {
-  const { light, dark } = parseThemeColorTokens(RENDERER_TSX, INLINE_ANCHORS);
+test("parseThemeColorTokens reads the inline THEME_TOKENS block", () => {
+  const { light, dark } = parseThemeColorTokens(THEME_TOKENS, INLINE_ANCHORS);
   expect(light.get("--color-accent")).toBe("#1f6feb");
   expect(dark.get("--color-accent")).toBe("#79a8ff");
 });
 
 test("the inline block's --color-* name set is exactly the pinned pre-paint set", () => {
-  const { light, dark } = parseThemeColorTokens(RENDERER_TSX, INLINE_ANCHORS);
+  const { light, dark } = parseThemeColorTokens(THEME_TOKENS, INLINE_ANCHORS);
   expect([...light.keys()].sort()).toEqual(EXPECTED_INLINE_TOKENS);
   expect([...dark.keys()].sort()).toEqual(EXPECTED_INLINE_TOKENS);
 });
 
 test("every inline --color-* token matches styles.css in both light and dark", () => {
   const styles = parseThemeColorTokens(STYLES_CSS, STYLES_ANCHORS);
-  const inline = parseThemeColorTokens(RENDERER_TSX, INLINE_ANCHORS);
+  const inline = parseThemeColorTokens(THEME_TOKENS, INLINE_ANCHORS);
   expect(diffColorTokens(inline.light, styles.light)).toEqual([]);
   expect(diffColorTokens(inline.dark, styles.dark)).toEqual([]);
 });

@@ -10,3 +10,6 @@ public/symbol-index-*.json
 # (the committed copies live in packages/docs/; these are the web-served mirror)
 public/llms.txt
 public/llms-full.txt
+
+# Copied at build time from packages/docs-render/src/critical.css by its scripts/write-critical-css.ts
+public/critical.css

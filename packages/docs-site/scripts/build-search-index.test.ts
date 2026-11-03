@@ -7,6 +7,7 @@ import {
   type CombinedSurface,
   combinedApiPages,
 } from "@defold-typescript/docs-render/combined-surface";
+import type { SearchRecord } from "@defold-typescript/docs-render/search-route";
 import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
 import { apiVersionAxis } from "@defold-typescript/docs-render/toolchain-surface";
 import {
@@ -25,7 +26,7 @@ import {
   HISTORICAL_ONLY_NAMESPACE,
   makeWindowedTypesDir,
 } from "../app/lib/__fixtures__/windowed-surface";
-import { combinedSearchRecords, type SearchRecord } from "../app/lib/search-index";
+import { combinedSearchRecords } from "../app/lib/search-index";
 import { searchIndexOutputs, versionRoutePages } from "./build-search-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");

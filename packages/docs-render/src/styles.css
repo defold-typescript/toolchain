@@ -1,0 +1,1546 @@
+/*
+ * Font faces live here (not in the JS client entry) so they ship in the
+ * render-blocking stylesheet — both the dev `<link>` to this file and the
+ * production bundle. Importing them through `app/client.ts` registered the
+ * @font-face only after the async script ran, so text first painted in the
+ * fallback font and reflowed when the web font finally loaded (a shift on
+ * every navigation).
+ */
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/barlow/700.css";
+@import "@fontsource/ubuntu/400.css";
+@import "@fontsource/ubuntu/500.css";
+@import "@fontsource/ubuntu/700.css";
+@import "@fontsource-variable/spline-sans-mono/index.css";
+
+/*
+ * Metric-matched fallback faces + the --font-* token stacks, generated per
+ * web-font weight by scripts/build-font-fallbacks.ts. `font-display: swap`
+ * paints the local fallback first and swaps to the web font once it loads; if
+ * the fallback's metrics differ, that swap reflows the text (a per-navigation
+ * shift). The generated faces remap a local system font (Arial / Courier New)
+ * onto each weight's real ascent/descent/advance via overrides, so the swap
+ * changes glyph shapes but never layout. Keep this in sync with the inline
+ * <head> tokens in src/theme-tokens.ts, which import the same generator
+ * output (src/generated/fonts.ts).
+ */
+@import "./generated/fonts.css";
+
+/*
+ * Tailwind scans only the importing site's folder; this package writes classes
+ * too. Its tests are left out, so their sample strings add no rules.
+ */
+@source ".";
+@source not "./**/*.test.*";
+
+/*
+ * Design tokens — the Claude docs look is calm, low-contrast, with a hair of
+ * blue for links and a single warm accent. We define them once here so every
+ * utility below resolves to the same scale.
+ *
+ * Tailwind v4's @theme block exposes these as design tokens — every `--color-*`,
+ * `--font-*`, `--radius-*`, etc. shows up as `bg-*`, `text-*`, `font-*`,
+ * `rounded-*` utilities automatically.
+ */
+@theme {
+  /* --font-sans / --font-heading / --font-mono are defined in the @theme block
+   * of ./generated/fonts.css (imported above) so the fallback faces and their
+   * token stacks share one source. */
+  --color-bg: #ffffff;
+  --color-surface: #f7f7f8;
+  --color-surface-2: #f0f0f2;
+  --color-border: #e6e6e9;
+  --color-border-strong: #d0d0d5;
+  --color-text: #1c1c1f;
+  --color-text-muted: #5b5b62;
+  --color-text-faint: #8a8a92;
+  --color-accent: #1f6feb;
+  --color-accent-soft: rgba(31, 111, 235, 0.08);
+  --color-accent-strong: #1858c4;
+  --color-code-bg: #f6f6f7;
+  --color-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  /* Availability badge colors — additive over accessible text labels. New/
+   * changed/deprecated map to green/orange/red; the pill/dot rules read these.
+   * The ambient-global and imported-documentation markers are scope and prose
+   * provenance, not lifecycle, so each takes a distinct hue rather than reusing
+   * one of the three. */
+  --color-badge-new: #1a7f37;
+  --color-badge-changed: #bc4c00;
+  --color-badge-deprecated: #cf222e;
+  --color-badge-global: #6639ba;
+  /* The `N overloads` count an overload block heading and its outline entry carry
+   * in place of the call list: a count, not a warning, so a teal that reads apart
+   * from the syntax colors and the lifecycle badges. */
+  --color-overload-count: #0f766e;
+
+  /* Caution tone shared by the `> [!WARNING]` callout and the attention marker
+   * badge (`bg-warning/15`), so the two read as the same signal. */
+  --color-warning: #9a6700;
+
+  /* Alarm tone for chrome showing something other than the newest state, such
+   * as a `To` version pinned behind the newest tracked release. */
+  --color-danger: #cf222e;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+[data-theme="dark"] {
+  --color-bg: #0e0e10;
+  --color-surface: #161618;
+  --color-surface-2: #1d1d20;
+  --color-border: #2a2a2e;
+  --color-border-strong: #3a3a40;
+  --color-text: #ececef;
+  --color-text-muted: #a4a4ad;
+  --color-text-faint: #6f6f78;
+  --color-accent: #79a8ff;
+  --color-accent-soft: rgba(121, 168, 255, 0.12);
+  --color-accent-strong: #a9c4ff;
+  --color-code-bg: #161618;
+  --color-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  --color-badge-new: #3fb950;
+  --color-badge-changed: #db6d28;
+  --color-badge-deprecated: #f85149;
+  --color-badge-global: #a371f7;
+  --color-overload-count: #2dd4bf;
+
+  --color-warning: #d29922;
+
+  --color-danger: #f85149;
+}
+
+/*
+ * Tutorial figure palette. Inlined guide SVGs paint with `var(--fig-<role>,
+ * <hex>)`, so a colour means the same thing in every figure (blue position,
+ * green direction, amber speed, purple velocity, pink rotation, cyan dt, orange
+ * any other arrow) and the dark theme swaps in lighter tints of the same hues.
+ * A token that aliases a `--color-*` theme token follows the theme on its own.
+ */
+:root {
+  --fig-ink: var(--color-text);
+  --fig-muted: var(--color-text-muted);
+  --fig-grid: #e5e9f0;
+  --fig-axis: #94a3b8;
+  --fig-border: #e2e8f0;
+  --fig-panel: var(--color-surface);
+  --fig-bg: var(--color-bg);
+  --fig-pos: #2563eb;
+  --fig-dir: #16a34a;
+  --fig-spd: #ca8a04;
+  --fig-vel: #9333ea;
+  --fig-rot: #db2777;
+  --fig-dt: #0891b2;
+  --fig-vec: #ea580c;
+  --fig-other: #dc2626;
+}
+
+[data-theme="dark"] {
+  --fig-grid: var(--color-border);
+  --fig-axis: var(--color-border-strong);
+  --fig-border: var(--color-border);
+  --fig-pos: #60a5fa;
+  --fig-dir: #4ade80;
+  --fig-spd: #facc15;
+  --fig-vel: #c084fc;
+  --fig-rot: #f472b6;
+  --fig-dt: #22d3ee;
+  --fig-vec: #fb923c;
+  --fig-other: #f87171;
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    /* Reserve the scrollbar gutter so the fixed-width ::-webkit-scrollbar
+     * toggling between short and long pages never shifts the layout. Mirrors
+     * the rule in critical.css so it holds from the first paint. */
+    scrollbar-gutter: stable;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  * {
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-strong);
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-text-faint);
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-text);
+  }
+}
+
+/*
+ * The Shiki output swaps its theme via the `data-theme` attribute on the
+ * <html> element. We pin the Shiki spans to the per-theme variable pair, and
+ * force Shiki's per-line `<span class="line">` background to transparent so
+ * the surrounding `.prose pre` background shows through (those wrappers would
+ * otherwise double-paint a background under every single line). The `<pre>`
+ * itself is intentionally not neutralized — its background comes from
+ * `.prose pre { background: var(--color-code-bg) }`.
+ */
+@layer base {
+  .shiki span:not(.line):not(.api-overload-count) {
+    color: var(--shiki-light, currentColor);
+    background-color: transparent;
+  }
+  html[data-theme="dark"] .shiki span:not(.line):not(.api-overload-count) {
+    color: var(--shiki-dark, currentColor);
+    background-color: transparent;
+  }
+  /*
+   * Line-level overlays painted by the Shiki transformers. A `color-mix` over
+   * `transparent` keys off `currentColor`, so each rule reads under both
+   * data-theme values without a fixed background (the dual-theme is
+   * `defaultColor: false`). Meta ranges (`{2,4-6}`) and `// [!code highlight]`
+   * share the `.highlighted` class; diff and focus notations get their own.
+   */
+  .shiki .line.highlighted {
+    display: inline-block;
+    width: 100%;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+  }
+  .shiki .line.diff {
+    display: inline-block;
+    width: 100%;
+  }
+  .shiki .line.diff.add {
+    background: color-mix(in srgb, #2ea043 15%, transparent);
+  }
+  .shiki .line.diff.remove {
+    background: color-mix(in srgb, #f85149 15%, transparent);
+  }
+  .shiki.has-focused .line:not(.focused) {
+    filter: blur(0.085rem);
+    opacity: 0.5;
+    transition: filter 0.2s, opacity 0.2s;
+  }
+  .shiki.has-focused:hover .line:not(.focused) {
+    filter: none;
+    opacity: 1;
+  }
+}
+
+/*
+ * Prose styles for the rendered markdown body. The reference look keeps
+ * everything narrow, generously spaced, and uses a hair of accent for
+ * links. Code blocks have a soft background, inline code is a subtle pill.
+ */
+@layer components {
+  .prose {
+    color: var(--color-text);
+    font-size: var(--prose-text-size);
+    line-height: 1.7;
+  }
+
+  .prose > * + * {
+    margin-top: 1.1em;
+  }
+
+  .prose p + p {
+    margin-top: 1.1em;
+  }
+
+  /* `.prose p { margin: 0 }` zeroes a paragraph's top margin, and the rhythm
+     above only matches a paragraph that *follows another paragraph*. A paragraph
+     after a list (which carries `margin: 0`) would otherwise butt straight
+     against the last bullet, so restore the gap explicitly. */
+  .prose ul + p,
+  .prose ol + p {
+    margin-top: 1.1em;
+  }
+
+  .prose :is(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-heading);
+  }
+
+  .prose h1 {
+    --heading-anchor-line: 1.2;
+    position: relative;
+    font-size: var(--prose-h1-size);
+    line-height: 1.2;
+    /* A heading may be a long namespace path, not prose: `anywhere` (not
+       `break-word`) so its min-content width stays small and a long name wraps
+       instead of widening the page. Explicit <wbr>s still win the break. */
+    overflow-wrap: anywhere;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 0;
+    margin-bottom: 0.6em;
+    color: var(--color-text);
+    scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
+  }
+
+  .prose h2 {
+    --heading-anchor-line: 1.3;
+    position: relative;
+    font-size: var(--prose-h2-size);
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin-top: 2em;
+    margin-bottom: 0.6em;
+    padding-top: 0.4em;
+    color: var(--color-text);
+    scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
+  }
+
+  .prose h3 {
+    --heading-anchor-line: 1.4;
+    position: relative;
+    font-size: var(--prose-h3-size);
+    line-height: 1.4;
+    font-weight: 600;
+    margin-top: 1.6em;
+    margin-bottom: 0.4em;
+    color: var(--color-text);
+    scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
+  }
+
+  .prose h4 {
+    --heading-anchor-line: 1.4;
+    position: relative;
+    font-size: var(--prose-h4-size);
+    line-height: 1.4;
+    font-weight: 600;
+    margin-top: 1.4em;
+    margin-bottom: 0.4em;
+    color: var(--color-text);
+    scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
+  }
+
+  /* A signature row nested under a shape or receiver heading sits at `h4` for
+     the outline only; it reads at the same size as every other signature row. */
+  .prose h4:has(.api-signature) {
+    font-size: var(--prose-h3-size);
+    margin-top: 1.6em;
+  }
+
+  .prose p {
+    margin: 0;
+  }
+
+  .prose a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-accent) 30%, transparent);
+    transition: border-color 0.15s ease;
+  }
+
+  .prose a:hover {
+    border-bottom-color: var(--color-accent);
+  }
+
+  .prose a.heading-anchor {
+    position: relative;
+    color: inherit;
+    font-weight: inherit;
+    border-bottom: none;
+  }
+
+  .prose a.heading-anchor:hover {
+    color: var(--color-accent);
+  }
+
+  /* Hang the permalink icon in the left margin, centered on the heading's FIRST
+     line. The box is one line-height tall (--heading-anchor-line) anchored at
+     top: 0, so a signature heading that wraps to several lines keeps the icon on
+     the top line instead of dropping to the last. left/width and the glyph size
+     are pinned to --prose-h3-size so horizontal placement and icon size stay
+     uniform across h1-h4 regardless of heading font-size. */
+  .heading-anchor-icon {
+    position: absolute;
+    top: 0;
+    left: calc(-1.15 * var(--prose-h3-size));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--prose-h3-size);
+    height: calc(var(--heading-anchor-line, 1.4) * 1em);
+    opacity: 0;
+    color: var(--color-text-faint);
+    transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+  }
+
+  .heading-anchor-icon svg {
+    width: calc(0.85 * var(--prose-h3-size));
+    height: calc(0.85 * var(--prose-h3-size));
+  }
+
+  .prose :is(h2, h3, h4)[data-current] {
+    color: var(--color-accent-strong);
+  }
+
+  .prose :is(h1, h2, h3, h4):hover .heading-anchor-icon,
+  .heading-anchor:focus-visible .heading-anchor-icon {
+    opacity: 1;
+    color: var(--color-accent);
+  }
+
+  .prose strong {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: var(--prose-code-size);
+    background: var(--color-code-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+    color: var(--color-text);
+    /* A space-less token (long identifier, URL, hash) is otherwise one atomic
+       box that overflows its line and forces page-wide horizontal scroll on
+       narrow screens; `anywhere` lets it break and also reports a small
+       min-content width so a flex/grid content column can still shrink. */
+    overflow-wrap: anywhere;
+  }
+
+  /* If a signature code span is wrapped in a plain `.prose a` link, the link
+     underline already marks it: drop the inline-code border and padding so the
+     chip chrome doesn't fight the underline. Excludes `a.heading-anchor` (the
+     permalink wrapping each detail-heading signature), which keeps its pill.
+     Mirrored in critical.css — that unlayered copy is the one that actually
+     wins over the unlayered `.prose code` rule. */
+  .prose a:not(.heading-anchor) .api-signature {
+    border-color: transparent;
+    padding: 0;
+  }
+
+  /* A prose code span that is itself the link text (`[`resolve`](./resolve.md)`)
+     reads as inert chrome at a glance, because the pill's border and background
+     look the same whether or not it navigates. Tint the pill with the accent so
+     the affordance is legible without hovering.
+     Excludes `.api-signature` (the rule above deliberately strips its chrome)
+     and `a.heading-anchor`. The border goes transparent rather than keeping
+     `--color-border`: a tinted chip inside a neutral grey outline reads as a
+     mistake, and the accent text plus the link underline already carry the
+     affordance, so an accent-colored outline would only add noise. Mirrored in
+     critical.css — that unlayered copy is the one that actually wins over the
+     unlayered `.prose code` rule. */
+  .prose a:not(.heading-anchor) > code:not(.api-signature) {
+    background: var(--color-accent-soft);
+    border-color: transparent;
+    color: var(--color-accent);
+    transition:
+      background-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  /* The glow is the hover state, not the resting one: at rest the tint plus the
+     accent text is enough, and the ring arrives only once the pointer (or the
+     keyboard focus ring) is actually on the target. */
+  .prose a:not(.heading-anchor):hover > code:not(.api-signature),
+  .prose a:not(.heading-anchor):focus-visible > code:not(.api-signature) {
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+
+  .prose pre {
+    font-family: var(--font-mono);
+    font-size: var(--prose-pre-size);
+    line-height: 1.55;
+    background: var(--color-code-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 1.2em 0;
+  }
+
+  .prose pre code {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  /* A `title="src/board.ts"` fence renders a filename chip flush atop the block:
+     the figure owns the vertical rhythm and the pre drops its top radius/margin
+     so the two read as one unit. Mirrored in critical.css. */
+  .prose .code-block {
+    margin: 1.2em 0;
+  }
+
+  .prose .code-title {
+    font-family: var(--font-mono);
+    font-size: var(--prose-code-title-size);
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    padding: 8px 16px;
+  }
+
+  .prose .code-block pre {
+    margin: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  /* Lua/TypeScript language badge (`ui/badge`): inline before the path in a
+     caption; on an untitled block it overlaps the pre's top edge by half its
+     height, so the figure reserves that half and the pre keeps its full
+     radius. Mirrored in critical.css. */
+  .prose .code-block {
+    --code-badge-height: calc(1.25rem + 2px);
+  }
+  .prose .code-title .code-badge {
+    vertical-align: middle;
+    margin-inline-end: 8px;
+  }
+  .prose .code-badge-icon {
+    width: 100%;
+    height: 100%;
+  }
+  .prose .code-block--badged {
+    position: relative;
+    padding-top: calc(var(--code-badge-height) / 2);
+  }
+  .prose .code-block--badged > .code-badge {
+    position: absolute;
+    top: 0;
+    left: 12px;
+    z-index: 1;
+  }
+  .prose .code-block--badged pre {
+    border-radius: 8px;
+  }
+
+  /* TypeScript/Lua tab group: the language badges become tab buttons that
+     overlap the top edge exactly like `.code-block--badged > .code-badge`, so
+     the group reserves the same half-badge padding and its panels drop the
+     figure margin. Selected-tab colors are unlayered below. Mirrored in
+     critical.css. */
+  .prose .code-tabs {
+    --code-badge-height: calc(1.25rem + 2px);
+    position: relative;
+    margin: 1.2em 0;
+    padding-top: calc(var(--code-badge-height) / 2);
+  }
+  .prose .code-tabs-list {
+    position: absolute;
+    top: 0;
+    left: 12px;
+    z-index: 1;
+    display: flex;
+    gap: 6px;
+  }
+  .prose .code-tab {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+  .prose .code-tab:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .prose .code-tabs-panel {
+    margin: 0;
+  }
+  .prose .code-tabs-panel pre {
+    border-radius: 8px;
+  }
+
+  /* Platform marker badge (`ui/badge` in a `ui/tooltip` trigger): a square,
+     icon-only chip sitting on the text baseline. Mirrored in critical.css. */
+  .prose .platform-badge {
+    display: inline-flex;
+    vertical-align: text-bottom;
+    border-radius: 6px;
+  }
+  .prose .platform-badge-icon {
+    padding-inline: 0.25rem;
+  }
+  .prose .platform-badge-glyph {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Copy-to-clipboard button, injected per code block by the CodeCopy island,
+     which wraps each `<pre>` in a `position: relative` `.code-body` so the button
+     pins to the top-right without scrolling with the code. The wrapper must
+     reproduce the exact vertical box the bare `<pre>` had, or hydration reflows
+     the page. The pre keeps its own margin (16.8px, or 0 inside a `.code-block`)
+     and collapses it out through this zero-margin wrapper. The only wrinkle: a
+     wrapper that is a direct prose child otherwise inherits the `.prose > * + *`
+     owl (18.7px), overriding the collapse — so zero it. Do not zero the inner
+     pre: a pre nested in a list yields a wrapper that is not a direct prose
+     child, so it gets no compensating margin and would lose its spacing.
+     Authoritative copy is the unlayered mirror in critical.css (this @layer
+     components rule loses to that file's unlayered owl). */
+  .code-body {
+    position: relative;
+  }
+  .prose > .code-body {
+    margin: 0;
+  }
+  .code-clip {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    opacity: 0.35;
+    cursor: pointer;
+    transition:
+      opacity 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .code-body:hover .code-clip {
+    opacity: 0.7;
+  }
+  .code-clip:hover,
+  .code-clip:focus-visible {
+    opacity: 1;
+    color: var(--color-text);
+    border-color: var(--color-border-strong);
+    outline: none;
+  }
+  .code-clip > svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+  }
+  .code-clip .code-clip-check {
+    display: none;
+  }
+  .code-clip.is-clipped {
+    opacity: 1;
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  .code-clip.is-clipped .code-clip-icon {
+    display: none;
+  }
+  .code-clip.is-clipped .code-clip-check {
+    display: block;
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 1.4em;
+    margin: 0;
+  }
+
+  .prose ul {
+    list-style: disc;
+  }
+
+  .prose ol {
+    list-style: decimal;
+  }
+
+  .prose li {
+    margin-top: 0.35em;
+  }
+
+  .prose li::marker {
+    color: var(--color-text-faint);
+  }
+
+  /* This project hand-rolls `.prose` (no Tailwind typography plugin), so the
+     `not-prose` utility is inert and the `list-none`/`p-0` utilities lose to the
+     `.prose ul` rule above. Give card grids/lists an explicit, higher-specificity
+     opt-out so their `<li>`s carry no marker or gutter. */
+  .prose ul.not-prose {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  /* Symmetric block margin like hr / admonition / code-block. `margin-top` must
+     be non-zero: `.prose blockquote` out-specifies the `.prose > * + *` owl, so
+     a zero top would leave the blockquote butted against the element above it
+     (most visibly after an image, which has no bottom margin of its own). */
+  /* A plain quote shares the admonition box, in a neutral gray tint. */
+  .prose blockquote {
+    margin: 1.4em 0;
+    padding: 0.8em 1em;
+    border-left: 3px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .prose blockquote > :first-child {
+    margin-top: 0;
+  }
+
+  .prose blockquote > :last-child {
+    margin-bottom: 0;
+  }
+
+  .prose .admonition {
+    --admonition-color: var(--color-accent);
+    margin: 1.2em 0;
+    padding: 0.8em 1em;
+    border-left: 3px solid var(--admonition-color);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--admonition-color) 7%, var(--color-bg));
+    color: var(--color-text);
+  }
+
+  .prose .admonition > :first-child {
+    margin-top: 0;
+  }
+
+  .prose .admonition > :last-child {
+    margin-bottom: 0;
+  }
+
+  .prose .admonition-tip {
+    --admonition-color: #1a7f37;
+  }
+
+  .prose .admonition-important {
+    --admonition-color: #8250df;
+  }
+
+  .prose .admonition-warning {
+    --admonition-color: var(--color-warning);
+  }
+
+  .prose .admonition-caution {
+    --admonition-color: #cf222e;
+  }
+
+  /* Inline: the label leads the first paragraph or heading of the body, so the
+     icon, the kind and the opening words share one line. `nowrap` keeps the
+     icon with its word when that line wraps. */
+  .prose .admonition-title {
+    font-weight: 600;
+    color: var(--admonition-color);
+    white-space: nowrap;
+    margin-right: 0.5em;
+  }
+
+  /* Preflight resets `svg` to `display: block`, which would drop the icon onto
+     a line of its own now that the label is inline. Flow it with the text. */
+  .prose .admonition-title svg {
+    display: inline-block;
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: -0.18em;
+    margin-right: 0.3em;
+  }
+
+  /* Body whose first block cannot host an inline label (a list, a code fence,
+     a table) keeps it on a line of its own. */
+  .prose .admonition-lead {
+    margin: 0 0 0.4em;
+  }
+
+  [data-theme="dark"] .prose .admonition-tip {
+    --admonition-color: #3fb950;
+  }
+
+  [data-theme="dark"] .prose .admonition-important {
+    --admonition-color: #a371f7;
+  }
+
+  [data-theme="dark"] .prose .admonition-caution {
+    --admonition-color: #f85149;
+  }
+
+  /* GitHub-flavored footnotes: a muted rule separates the notes from the page
+     body, and the note text sits a step smaller than the prose it annotates. */
+  .prose .footnotes-sep {
+    margin: 2.4em 0 1.2em;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .prose .footnotes {
+    font-size: 0.9em;
+    color: var(--color-text-muted);
+  }
+
+  .prose .footnotes ol {
+    margin: 0;
+  }
+
+  .prose .footnote-ref a,
+  .prose .footnote-backref {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  /* Both ends of a footnote jump are scroll targets under the sticky topbar:
+     the `[1]` marker lands on the note, the back-arrow lands on the marker.
+     Neither is a heading, so each needs the same offset the headings carry or
+     the topbar covers whatever was jumped to. `--topbar-height` is published
+     from the real header, so this tracks the taller mobile bar too. */
+  .prose .footnote-ref a,
+  .prose .footnotes li {
+    scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
+  }
+
+  .prose .footnote-ref a:hover,
+  .prose .footnote-backref:hover {
+    text-decoration: underline;
+  }
+
+  .prose details.more {
+    margin: 1.2em 0;
+    padding: 0.6em 1em;
+    border-left: 3px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-accent) 5%, var(--color-bg));
+    color: var(--color-text);
+  }
+
+  .prose details.more > summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-accent);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+  }
+
+  .prose details.more > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .prose details.more > summary::before {
+    content: "";
+    width: 0.55em;
+    height: 0.55em;
+    flex: none;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
+  }
+
+  .prose details.more[open] > summary::before {
+    transform: rotate(45deg);
+  }
+
+  .prose details.more > summary + * {
+    margin-top: 0.6em;
+  }
+
+  .prose details.more > :last-child {
+    margin-bottom: 0;
+  }
+
+  .prose hr {
+    border: 0;
+    border-top: 1px solid var(--color-border);
+    margin: 2em 0;
+  }
+
+  .prose table {
+    width: auto;
+    max-width: 100%;
+    border-collapse: collapse;
+    font-size: var(--prose-table-size);
+    margin: 1.2em 0;
+  }
+
+  .prose th,
+  .prose td {
+    text-align: left;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .prose th {
+    font-weight: 600;
+    color: var(--color-text);
+    background: var(--color-surface);
+  }
+
+  /* Set at render time on every cell of a short-content column (see
+     markdown.ts), so a long neighbouring column cannot squeeze it. */
+  .prose .cell-nowrap {
+    white-space: nowrap;
+  }
+
+  /* Inside a table, a code span breaks only between spans, never mid-identifier:
+     its full width counts toward the column's minimum, and the `.table-scroll`
+     wrapper takes any overflow on narrow screens. Authoritative copy is the
+     unlayered mirror in critical.css, which beats this layered rule. */
+  .prose :is(td, th) code {
+    overflow-wrap: normal;
+  }
+
+  .prose .table-scroll {
+    overflow-x: auto;
+    max-width: 100%;
+    margin: 1.2em 0;
+  }
+
+  .prose .table-scroll > table {
+    margin: 0;
+    max-width: none;
+  }
+
+  /* A hand-written HTML table whose last column holds fenced code (the State
+     machines cheat sheet). Fixed columns keep a long code line from widening
+     the table and squeezing the text columns: the block scrolls inside its own
+     cell instead. The page writes the `.table-scroll` wrapper itself, because
+     only a Markdown table gets one at render time. */
+  .prose .code-table > table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 53rem;
+  }
+
+  .prose .code-table th:nth-child(1) {
+    width: 17%;
+  }
+
+  .prose .code-table th:nth-child(2) {
+    width: 24%;
+  }
+
+  .prose .code-table td {
+    vertical-align: top;
+  }
+
+  .prose .code-table td > :first-child {
+    margin-top: 0;
+  }
+
+  .prose .code-table td > :last-child {
+    margin-bottom: 0;
+  }
+
+  .prose .code-table .code-block {
+    margin: 0 0 8px;
+  }
+
+  /* Every snippet in the table is TypeScript, so the badge says nothing. */
+  .prose .code-table .code-block--badged {
+    padding-top: 0;
+  }
+
+  .prose .code-table .code-block--badged > .code-badge {
+    display: none;
+  }
+
+  .prose .api-overview {
+    margin: 1.2em 0;
+  }
+
+  .prose .api-overview ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin: 0;
+    padding-left: 1.35rem;
+  }
+
+  .prose .api-overview li {
+    margin: 0;
+    padding-left: 0.1rem;
+  }
+
+  .prose .api-overview a {
+    border-bottom: 0;
+    text-decoration: none;
+  }
+
+  .prose .api-overview a:hover,
+  .prose .api-overview a:focus-visible {
+    border-bottom: 0;
+    text-decoration: none;
+  }
+
+  .prose .api-overview a .api-signature {
+    padding: 0.04em 0.2em;
+    border-color: transparent;
+    background: color-mix(in srgb, var(--color-accent) 6%, var(--color-code-bg));
+    font-size: 0.82em;
+    line-height: 1.55;
+  }
+
+  .prose .api-overview a:hover .api-signature,
+  .prose .api-overview a:focus-visible .api-signature {
+    background: var(--color-accent-soft);
+  }
+
+  /* A brand token (`Opaque`) inside a rendered signature is split into its own
+     deep-link anchor (see signature-brand-links.ts) and wrapped, with the
+     re-emitted permalink/jump fragments, in a `.signature-split` span. That span
+     is the positioning context for the heading permalink icon — a partial
+     re-emitted `heading-anchor` would offset the icon mid-signature — so pin its
+     `position` here and neutralize the fragments' `position: relative`. Flatten
+     the per-fragment pill seams (border, radius, inner padding) so the split run
+     still reads as one signature over its shared background. The brand keeps its
+     Shiki token color and gets a dotted underline so it reads as a link. Placed
+     after the overview rules to win at equal specificity over their
+     `border-bottom: 0`; the `.prose a` base border is unlayered in critical.css,
+     so these overrides are mirrored there too (as with `.badge-link`). */
+  .prose .signature-split {
+    position: relative;
+  }
+
+  .prose .signature-split a.heading-anchor {
+    position: static;
+  }
+
+  /* The `a` keeps this above `.prose a:not(.heading-anchor) .api-signature`, which
+     would otherwise zero the brand fragment's padding and shorten its background. */
+  .prose .signature-split a .api-signature {
+    border-color: transparent;
+    border-radius: 0;
+    /* Uniform vertical padding (matching `.prose code`), zero horizontal, so the
+       fragments' shared background aligns top-to-bottom and abuts seamlessly. */
+    padding: 0.1em 0;
+  }
+
+  /* A `text-decoration` underline (not `border-bottom`) so it draws over the
+     fragment's shared background instead of being hidden beneath it. */
+  .prose a.signature-symbol-link {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: var(--color-accent);
+    text-underline-offset: 0.15em;
+  }
+
+  .prose img {
+    max-width: 100%;
+    margin-top: 0.75rem;
+    border-radius: 8px;
+  }
+
+  /* An inlined `![caption](….svg#inline)` figure (see SvgFigure), capped so it
+     stops growing on a wide page. Each panel is its own `<svg>` sized by its
+     viewBox width `--w`, so the panels of one figure share a row at one common
+     scale. Below 38rem a row would shrink the smallest labels under ~9px, so
+     there the panels stack, each as wide as the page allows but never past the
+     1.33px-per-unit scale a full-width row reaches, so a small panel stays
+     small. A figure with a single panel
+     cannot stack, so there it scrolls inside its frame instead of shrinking its
+     labels past legibility. */
+  .prose .figure-svg {
+    margin: 1.5em auto;
+    max-width: 42rem;
+    container-type: inline-size;
+  }
+
+  .prose .figure-svg-panels {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .prose .figure-svg-panels svg {
+    display: block;
+    height: auto;
+    min-width: 0;
+    flex: var(--w) 1 0;
+  }
+
+  /* A figure drawn twice (see SvgFigure) shows its wide drawing in a row-sized
+     figure and its narrow one wherever the panels of other figures stack. */
+  .prose .figure-svg-panels svg[data-layout="narrow"] {
+    display: none;
+  }
+
+  @container (width < 38rem) {
+    .prose .figure-svg-panels svg[data-layout="wide"] {
+      display: none;
+    }
+
+    .prose .figure-svg-panels svg[data-layout="narrow"] {
+      display: block;
+    }
+
+    .prose .figure-svg-panels {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .prose .figure-svg-panels svg {
+      flex: none;
+      width: 100%;
+      max-width: calc(var(--w) * 1.33px);
+    }
+  }
+
+  .prose .figure-svg--single .figure-svg-panels {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .prose .figure-svg--single .figure-svg-panels svg {
+    width: 100%;
+    min-width: 30rem;
+  }
+
+  /* Figure labels space their parts with runs of spaces ("degrees  vs  radians"). */
+  .prose .figure-svg text {
+    white-space: pre;
+  }
+
+  .prose .figure-svg figcaption {
+    margin-top: 0.75rem;
+    text-align: center;
+    font-size: 0.9em;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  /* Tailwind Preflight resets `img` to `display: block`, which stacks
+     consecutive badge images vertically. Shields badges read as inline chips
+     (as they do on GitHub, where images are not reset), so flow them inline
+     with a small gap and crisp corners. Scoped to badge sources so content
+     images (screenshots) keep their block layout. */
+  .prose img[src*="shields.io"] {
+    display: inline-block;
+    vertical-align: middle;
+    margin-top: 0;
+    margin-right: 0.25rem;
+    border-radius: 3px;
+  }
+
+  /* Badge links are chips, not prose links — drop the `.prose a` underline.
+     The `.badge-link` class is added in markdown.ts to any link wrapping an
+     image. The matching override must ALSO live (unlayered) in critical.css:
+     its unlayered `.prose a` outranks this layered rule regardless of
+     specificity, exactly as for `.prose a.heading-anchor`. */
+  .prose a.badge-link {
+    border-bottom: none;
+  }
+
+  /* External-link out icon (Phosphor duotone), appended inside `a.external` by
+     markdown.ts and beside an external top bar link by each site's top bar.
+     Tailwind Preflight resets `svg` to `display: block`, so flow it inline with a
+     hair of space; opacity softens it against the link text. */
+  .external-icon {
+    display: inline-block;
+    vertical-align: -0.1em;
+    margin-left: 0.15em;
+    opacity: 0.7;
+  }
+
+  .search-snippet mark {
+    background: var(--color-accent-soft);
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 2px;
+  }
+
+  code.symbol-link {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--color-border-strong);
+    cursor: help;
+  }
+
+  /* A self-reference names the symbol whose own body it sits in. It gets no
+     popup — gently underline it so it reads as "the current symbol" without the
+     navigational affordance of a cross-reference link. */
+  code.symbol-self,
+  a.symbol-self {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--color-border-strong);
+    color: inherit;
+    cursor: default;
+  }
+
+  /* Each API symbol's body (description + example) is indented under its
+     signature heading so the title reads as the row's anchor and the content
+     hangs beneath it. */
+  .prose .api-symbol-body {
+    margin-top: 0.6em;
+    margin-left: 0.25rem;
+    padding-left: 1.25rem;
+    border-left: 1px solid var(--color-border);
+  }
+
+  .prose .api-symbol-body > :first-child {
+    margin-top: 0;
+  }
+
+  /* A signature reads at normal weight even inside its `h3`/`h4`; only its names are
+     bold, through the `font-weight` their Shiki spans carry inline (see
+     signature-emphasis.ts). */
+  .prose .api-signature {
+    font-weight: 400;
+  }
+
+  /* `Parameters` and `Returns` are set apart by color and case rather than
+     weight, so bold inside a symbol block marks names only. */
+  .prose .api-slot-label {
+    font-size: 0.85em;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Bold in doc text (descriptions, slot docs, the index-base notes) renders at
+     the surrounding weight; a bold slot name is `.api-name`. Mirrored unlayered
+     in critical.css, whose unlayered `.prose strong` beats this layered copy. */
+  .prose .api-symbol-body strong:not(.api-name) {
+    font-weight: inherit;
+  }
+
+  /* Availability category layer — one compact labeled chip per active category
+   * on a symbol heading, carrying a visible `N`/`C`/`D` glyph so the category is
+   * legible without color, additive over the accessible `aria-label`/`title`.
+   * The heading chip is unscoped so the outline entry and its tooltip, outside
+   * `.prose`, show the same colored chip the heading does. */
+  .api-badge-dot,
+  .prose .api-availability-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.15em;
+    height: 1.15em;
+    padding: 0 0.25em;
+    border-radius: 0.3em;
+    font-size: 0.7em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    vertical-align: middle;
+  }
+
+  .api-badge-dot {
+    margin-left: 0.3em;
+  }
+
+  .api-badge-dot--new,
+  .prose .api-availability-mark--new {
+    background: var(--color-badge-new);
+  }
+
+  .api-badge-dot--changed,
+  .prose .api-availability-mark--changed {
+    background: var(--color-badge-changed);
+  }
+
+  .api-badge-dot--deprecated,
+  .prose .api-availability-mark--deprecated {
+    background: var(--color-badge-deprecated);
+  }
+
+  /* The availability list swaps its bullets for the same chips, so each fact
+   * reads with the category its heading shows. A fact with no category keeps an
+   * empty chip-sized slot, so every label starts at the same column. Signature
+   * history lines lead with the `changed` chip the same way. The list rule's
+   * authoritative copy is the unlayered mirror in critical.css, since this
+   * layered one loses to that file's `.prose ul`. */
+  .prose .api-availability ul,
+  .prose .api-revisions {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .prose .api-availability-mark {
+    margin-right: 0.45em;
+    position: relative;
+    top: -2px;
+  }
+
+  /* An overload block's `N overloads` count, set inside its colored signature
+   * where the call list would be. The Shiki span rules skip it, so it keeps its
+   * own color in both themes. Unscoped so the outline entry, outside `.prose`,
+   * shows the same badge; `em` sizing follows the outline's smaller text. */
+  .api-overload-count {
+    display: inline-block;
+    margin: 0 0.15em;
+    padding: 0 0.45em;
+    border: 1px solid color-mix(in srgb, var(--color-overload-count) 45%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-overload-count) 12%, transparent);
+    color: var(--color-overload-count);
+    font-family: var(--font-sans);
+    font-size: 0.75em;
+    font-weight: 600;
+    line-height: 1.45;
+    vertical-align: 0.1em;
+    white-space: nowrap;
+  }
+
+  /* Namespace-title count pills: one per non-zero category. Inline-flex so the
+     group rides the H1 baseline and the `/api` index card title row instead of
+     wrapping to its own line. */
+  .prose .api-badge-counts {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    vertical-align: middle;
+  }
+
+  .prose .api-badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4em;
+    height: 1.4em;
+    padding: 0 0.4em;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .prose .api-badge-count--new {
+    background: var(--color-badge-new);
+  }
+
+  .prose .api-badge-count--changed {
+    background: var(--color-badge-changed);
+  }
+
+  .prose .api-badge-count--deprecated {
+    background: var(--color-badge-deprecated);
+  }
+
+  /* Sidebar namespace count pills. Not `.prose`-scoped — the sidebar tree sits
+   * outside prose. Compact: only the tally shows, the category lives in the
+   * `aria-label`, so color stays additive rather than the sole cue. Every version
+   * window renders the availability layer, so the pills ride every surface and
+   * the client `?since=` filter recounts them in place. */
+  .nav-badge-counts {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
+
+  .nav-badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25em;
+    height: 1.25em;
+    padding: 0 0.35em;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .nav-badge-count--new {
+    background: var(--color-badge-new);
+  }
+
+  .nav-badge-count--changed {
+    background: var(--color-badge-changed);
+  }
+
+  .nav-badge-count--deprecated {
+    background: var(--color-badge-deprecated);
+  }
+}
+
+/*
+ * Below `lg` the chrome goes mobile, mirroring the Claude API docs narrow
+ * layout: the topbar grows so the topic nav wraps onto a second row, and the
+ * left sidebar becomes an off-canvas drawer driven by `html[data-sidebar]`
+ * (the `data-theme` cross-island precedent). Everything is scoped under the
+ * `lg` breakpoint so the desktop layout and first paint are untouched. The
+ * closed drawer is `visibility: hidden` rather than only translated off-canvas
+ * so it is inert and reports hidden to assistive tech and to Playwright; it
+ * slides in when `data-sidebar="open"`. `critical.css` pins the topbar height,
+ * so the height override here lives in the render-blocking stylesheet (a
+ * higher cascade origin than that critical rule) to win below `lg`.
+ */
+/*
+ * The backdrop is `display: none` at every width so it never becomes an empty
+ * flex item in the desktop content row (which would inject a stray `gap-10`).
+ * Only the `<lg` open rule below reveals it.
+ */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: color-mix(in srgb, #000 45%, transparent);
+}
+
+.topic-scroll-frame {
+  position: relative;
+}
+
+.topic-scroll-frame::before,
+.topic-scroll-frame::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.topic-scroll-frame::before {
+  left: -0.55rem;
+  border-top: 0.28rem solid transparent;
+  border-right: 0.38rem solid var(--color-text-faint);
+  border-bottom: 0.28rem solid transparent;
+  transform: translateY(-50%);
+}
+
+.topic-scroll-frame::after {
+  right: -0.55rem;
+  border-top: 0.28rem solid transparent;
+  border-bottom: 0.28rem solid transparent;
+  border-left: 0.38rem solid var(--color-text-faint);
+  transform: translateY(-50%);
+}
+
+@media (max-width: 1023.98px) {
+  .topic-scroll-frame[data-scroll-left]::before,
+  .topic-scroll-frame[data-scroll-right]::after {
+    opacity: 0.45;
+  }
+
+  /* On a narrow viewport a paragraph can carry an atomic, non-wrapping run
+     wider than the content column — a long inline-code token, URL, or hash the
+     `overflow-wrap: anywhere` break can't split, or a `nowrap` signature span.
+     Let each paragraph scroll on its own X axis instead of widening the page.
+     `auto` shows the scrollbar only when a paragraph actually overflows; normal
+     prose still wraps at spaces, and line-height 1.7 leaves room so the forced
+     `overflow-y: auto` never clips descenders. Mirrored in critical.css. */
+  .prose p {
+    overflow-x: auto;
+  }
+
+  header.topbar-critical {
+    height: auto;
+  }
+
+  .sidebar-drawer {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    visibility: hidden;
+    transform: translateX(-100%);
+    background: var(--color-bg);
+    border-right: 1px solid var(--color-border);
+    transition:
+      transform 0.2s ease,
+      visibility 0.2s ease;
+  }
+
+  .sidebar-drawer > [data-sidebar-scroll] {
+    position: static;
+    max-height: none;
+    height: 100%;
+    overflow-y: auto;
+    padding: 1.5rem 1rem;
+  }
+
+  html[data-sidebar="open"] .sidebar-drawer {
+    visibility: visible;
+    transform: translateX(0);
+  }
+
+  html[data-sidebar="open"] .sidebar-backdrop {
+    display: block;
+  }
+
+  html[data-sidebar="open"] body {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-drawer {
+    transition: none;
+  }
+
+  .heading-anchor-icon,
+  .topic-scroll-frame::before,
+  .topic-scroll-frame::after {
+    transition: none;
+  }
+}
+
+/*
+ * Tab state for the TypeScript/Lua tab group. The tab's badge carries the
+ * `ui/badge` outline variant's utility classes, and `@layer utilities` beats
+ * `@layer components`, so these color overrides must be unlayered. The selected
+ * badge takes an accent border plus a 1px ring drawn with box-shadow (the badge
+ * box keeps its size, so switching tabs never shifts layout) and an opaque
+ * accent-tinted fill, since it overlaps the code block's top edge. Mirrored in
+ * critical.css.
+ */
+.prose .code-tab[aria-selected="true"] .code-badge {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface));
+  color: var(--color-accent-strong);
+}
+.prose .code-tab[aria-selected="false"]:hover .code-badge {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
