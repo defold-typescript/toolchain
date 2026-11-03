@@ -78,7 +78,7 @@ function guideMarkdownReload(): Plugin {
 // honox SSR render, though, does NOT receive Vite's `import.meta.env.BASE_URL`
 // (it stays "" in the server bundle), so the value is also injected as the
 // `__DOCS_BASE__` compile-time constant via `define` — applied to both the
-// client and server builds — which `app/lib/base.ts` reads. Keeping the two in
+// client and server builds — which `packages/docs-render/src/base.ts` reads. Keeping the two in
 // lockstep makes the server-rendered HTML and the hydrated client agree.
 const base = process.env.DOCS_BASE ?? "/";
 const define = { __DOCS_BASE__: JSON.stringify(base) };
@@ -92,6 +92,10 @@ const define = { __DOCS_BASE__: JSON.stringify(base) };
 const experimental = { renderBuiltUrl: (filename: string) => base + filename };
 
 export default defineConfig(({ mode }) => {
+  // The shared rendering package ships TypeScript source, which only a bundled
+  // server build can load; bundling also applies `define`'s `__DOCS_BASE__` to
+  // its `base.ts`.
+  const ssr = { noExternal: ["@defold-typescript/docs-render"] };
   // Pass 1 (`--mode client`): honox bundles the client entry + islands and
   // writes the Vite manifest, emptying dist first. Pass 2 (SSG) renders the
   // HTML and must NOT empty dist, so the client assets + manifest survive for
@@ -101,6 +105,7 @@ export default defineConfig(({ mode }) => {
       base,
       define,
       experimental,
+      ssr,
       plugins: [honox(), tailwindcss(), guideMarkdownReload()],
       customLogger: quietLogger,
     };
@@ -109,6 +114,7 @@ export default defineConfig(({ mode }) => {
     base,
     define,
     experimental,
+    ssr,
     plugins: [honox(), tailwindcss(), ssg({ entry }), guideMarkdownReload()],
     build: { emptyOutDir: false },
     customLogger: quietLogger,

@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 import { join } from "node:path";
+import { allPageHeadings } from "@defold-typescript/docs-render/headings";
 import { canonicalApiPages } from "./api-content";
 import { apiPageMarkdown, apiSignatureSymbolLinks } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
-import { allPageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { buildSymbolIndex } from "./symbol-index";
 

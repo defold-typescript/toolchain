@@ -11,7 +11,7 @@ import {
   loadVendoredNativeRegistry,
 } from "../packages/cli/src/library-registry.ts";
 import { checkShippedDeclarations } from "../packages/cli/src/shipped-declarations.ts";
-import { LIBRARY_DOCS_URL } from "../packages/docs-site/app/lib/base.ts";
+import { LIBRARY_DOCS_URL } from "../packages/docs-render/src/base.ts";
 import {
   evaluateShippedTypes,
   readCuratedRepos,

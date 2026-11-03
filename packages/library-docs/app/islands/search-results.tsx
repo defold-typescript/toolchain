@@ -1,8 +1,8 @@
+import { withBase } from "@defold-typescript/docs-render/base";
+import { buildSnippet } from "@defold-typescript/docs-render/snippet";
 import { create, insertMultiple, type Orama, search } from "@orama/orama";
 import { useEffect, useState } from "hono/jsx";
-import { withBase } from "../lib/base";
 import type { SearchRecord } from "../lib/search-index";
-import { buildSnippet } from "../lib/snippet";
 
 const SCHEMA = { route: "string", title: "string", text: "string" } as const;
 type SearchDb = Orama<typeof SCHEMA>;

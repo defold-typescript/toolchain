@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseFrontmatter } from "./frontmatter";
+import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
 import { renderMarkdown } from "./markdown";

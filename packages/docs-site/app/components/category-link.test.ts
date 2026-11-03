@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
 import { buildNav, type NavCategory } from "../lib/nav";
-import { EXTERNAL_LINK_ICON } from "../lib/phosphor";
 import { CategoryLink } from "./category-link";
 
 function category(id: string): NavCategory {

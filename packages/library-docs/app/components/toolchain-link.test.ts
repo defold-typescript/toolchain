@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { EXTERNAL_LINK_ICON } from "../lib/phosphor";
+import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
 import { TOOLCHAIN_DOCS_URL } from "../lib/toolchain-links";
 import { ToolchainLink } from "./toolchain-link";
 

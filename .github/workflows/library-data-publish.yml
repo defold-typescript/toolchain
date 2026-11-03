@@ -16,6 +16,7 @@ on:
       - packages/library-types/NOTICE
       - packages/library-types/LICENSE
       - packages/library-docs/**
+      - packages/docs-render/**
       - scripts/library-data-mirror.ts
   workflow_dispatch:
 

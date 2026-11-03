@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { slugify } from "./headings";
+import { slugify } from "@defold-typescript/docs-render/headings";
 
 export interface DanglingRef {
   /** Directory of the guide file the reference lives in. */

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 
 const APP_DIR = join(import.meta.dir, "..");
@@ -26,7 +26,7 @@ const ISLAND_SEEDS = [
 // Modules that must stay on the walked path, so a future refactor that severs
 // an edge can't make the gate pass by reaching nothing.
 const NON_VACUOUS = [
-  "components/ui/tooltip.tsx",
+  "../../docs-render/src/ui/tooltip.tsx",
   "lib/api-surface.ts",
   "lib/guide.ts",
   "lib/hsm-demos/view.ts",
@@ -70,6 +70,18 @@ function resolveRelative(fromFile: string, spec: string): string | null {
   return null;
 }
 
+const RENDER_PACKAGE = "@defold-typescript/docs-render";
+
+// The shared rendering package is bundled from source, so its modules reach the
+// client exactly like the app's own. Its specifiers resolve through the
+// package's real `exports` map, as the bundler resolves them.
+function resolveSpecifier(fromFile: string, spec: string): string | null {
+  if (spec === RENDER_PACKAGE || spec.startsWith(`${RENDER_PACKAGE}/`)) {
+    return realpathSync(Bun.resolveSync(spec, dirname(fromFile)));
+  }
+  return resolveRelative(fromFile, spec);
+}
+
 function walkClientGraph(seeds: string[]): {
   visited: Set<string>;
   nodeImporters: Map<string, string[]>;
@@ -88,7 +100,7 @@ function walkClientGraph(seeds: string[]): {
     if (nodeSpecs.length > 0) nodeImporters.set(file, nodeSpecs);
 
     for (const spec of specs) {
-      const resolved = resolveRelative(file, spec);
+      const resolved = resolveSpecifier(file, spec);
       if (resolved && !visited.has(resolved)) queue.push(resolved);
     }
   }
@@ -106,6 +118,20 @@ function relativizeReached(
 ): string[] {
   return [...visited].map((file) => toPosix(rel(appDir, file)));
 }
+
+describe("shared rendering package specifiers", () => {
+  const island = join(APP_DIR, "islands/ui-tooltip.tsx");
+  const resolvedRel = (spec: string) =>
+    toPosix(relative(APP_DIR, resolveSpecifier(island, spec) as string));
+
+  test("a module subpath resolves to its source file in packages/docs-render/src", () => {
+    expect(resolvedRel(`${RENDER_PACKAGE}/base`)).toBe("../../docs-render/src/base.ts");
+  });
+
+  test("the /ui entry resolves to the components' index", () => {
+    expect(resolvedRel(`${RENDER_PACKAGE}/ui`)).toBe("../../docs-render/src/ui/index.ts");
+  });
+});
 
 describe("client island import graph", () => {
   const { visited, nodeImporters } = walkClientGraph(ISLAND_SEEDS);

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { htmlToDocText } from "@defold-typescript/types";
 import { PLATFORM_ICONS, platformDocText, stripPlatformMarkers } from "./platform-icons";
 
-const PACKAGES_DIR = join(import.meta.dir, "../../..");
+const PACKAGES_DIR = join(import.meta.dir, "../..");
 
 function jsonFiles(dir: string): string[] {
   return readdirSync(dir, { recursive: true, encoding: "utf8" })

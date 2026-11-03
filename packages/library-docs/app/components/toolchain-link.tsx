@@ -1,6 +1,6 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
-import { EXTERNAL_LINK_ICON } from "../lib/phosphor";
+import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
 import { TOOLCHAIN_DOCS_URL } from "../lib/toolchain-links";
 
 export function ToolchainLink() {

@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { type MiniElement, parseHtml } from "./__fixtures__/mini-dom";
+import { type MiniElement, parseHtml } from "@defold-typescript/docs-render/__fixtures__/mini-dom";
+import { allPageHeadings, pageHeadings, slugify } from "@defold-typescript/docs-render/headings";
 import { apiPageMarkdown } from "./api-page-render";
 import {
   type ApiSymbol,
@@ -14,7 +15,6 @@ import {
 } from "./api-surface";
 import { loadCombinedSurface } from "./api-surface-loader";
 import { combinedNamespaceToApiPage } from "./combined-surface";
-import { allPageHeadings, pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 
 describe("renderMarkdown", () => {

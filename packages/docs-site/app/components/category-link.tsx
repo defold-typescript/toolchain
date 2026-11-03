@@ -1,8 +1,8 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
-import { isExternalUrl, withBase } from "../lib/base";
+import { isExternalUrl, withBase } from "@defold-typescript/docs-render/base";
+import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
 import type { NavCategory, NavLink } from "../lib/nav";
-import { EXTERNAL_LINK_ICON } from "../lib/phosphor";
 
 function firstRoute(links: NavLink[]): string | undefined {
   for (const link of links) {
