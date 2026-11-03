@@ -40,7 +40,8 @@ A PR that moves a pin is titled `update <library> to <ref>`; one that only adds
 commits to a review is titled `record <library> commits`. A later run force-pushes
 the same branch and retitles its open PR, so a library never has two. A library that
 cannot be read upstream is named in the run's log, and fails the run once every
-other library has its PR.
+other library has its PR. A run dispatched while another is going waits for it to
+finish.
 
 ### What merges without a human
 
@@ -52,9 +53,9 @@ both hold:
   and CI scopes it as library data.
 
 The second is read from the commit, not from what `library update` reported, so a
-file anything else wrote keeps the PR for a human. Every other PR stays open, and a
-run that turns an auto-merging PR into one that may not merge turns its auto-merge
-off.
+file anything else wrote keeps the PR for a human. Every other PR stays open. A run
+turns off an open PR's auto-merge before it replaces the branch, and turns it on
+again only for the commit it read.
 
 ### Reading a PR left open
 
