@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { isAbsolute, relative, sep } from "node:path";
 import { scopesOf } from "./ci-scope.ts";
 
+export const BOT_BRANCH_PREFIX = "library-update/";
+
 // Opens one PR per library that `library update --json` changed, and turns on
 // auto-merge for a PR only when the change is safe and every path is library data,
 // and only for the commit it checked.
@@ -107,7 +109,7 @@ function body(entry: UpdateEntry): string {
 }
 
 function openPullRequest(entry: UpdateEntry, dataFolder: string, run: Run): void {
-  const branch = `library-update/${entry.library}`;
+  const branch = `${BOT_BRANCH_PREFIX}${entry.library}`;
   must(run, ["git", "add", "-A", "--", `${dataFolder}/${entry.library}`]);
   must(run, ["git", "commit", "--quiet", "-m", title(entry)]);
   const sha = must(run, ["git", "rev-parse", "HEAD"]).trim();
