@@ -5,6 +5,7 @@ import { delimiter, join, relative } from "node:path";
 import { parse } from "yaml";
 import type { Scope } from "../scripts/ci-scope.ts";
 import { LIBRARY_DATA_DIR } from "../scripts/library-check-data.ts";
+import { BOT_BRANCH_PREFIX } from "../scripts/library-update-prs.ts";
 import { admittedScopes, runsFor } from "./workflow-scopes.ts";
 
 const workflowPath = join(import.meta.dir, "..", ".github", "workflows", "ci.yml");
@@ -30,6 +31,13 @@ describe("ci workflow", () => {
     const push = on.push as { branches?: string[]; tags?: string[] };
     expect(push.branches).toContain("**");
     expect(push.tags).toContain("v*");
+  });
+
+  test("leaves the update bot's branches to their PR runs", () => {
+    const wf = loadWorkflow();
+    const on = (wf.on ?? wf[true as unknown as string]) as Record<string, unknown>;
+    const push = on.push as { branches?: string[] };
+    expect(push.branches).toContain(`!${BOT_BRANCH_PREFIX}**`);
   });
 
   test("has a job that runs `bun test`", () => {
