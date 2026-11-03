@@ -8,8 +8,15 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
-import { localImports, PACKAGE_ROOT_MODULE, realDataTests, scopesOf } from "./ci-scope.ts";
+import { delimiter, dirname, join, relative } from "node:path";
+import {
+  localImports,
+  PACKAGE_ROOT_MODULE,
+  realDataTests,
+  scopesOf,
+  tagScopes,
+} from "./ci-scope.ts";
+import { type CheckRun, GATED_CHECKS } from "./release-ci-gate.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..");
 const SCRIPT = join(import.meta.dir, "ci-scope.ts");
@@ -274,6 +281,139 @@ describe("the CLI over a git history", () => {
     () => {
       expect(scopes("0".repeat(40), unicode)).toBe("scopes=full\n");
       expect(scopes("f".repeat(40), unicode)).toBe("scopes=full\n");
+    },
+    SPAWN_TIMEOUT,
+  );
+});
+
+type RunState = Pick<CheckRun, "status" | "conclusion">;
+
+const SUCCESS: RunState = { status: "completed", conclusion: "success" };
+
+// One earlier CI run on the tagged commit: its scope job, then each gated check in
+// the state `stateOf` gives it.
+function earlierRun(stateOf: (name: string) => RunState): CheckRun[] {
+  return [
+    { id: 1, name: "scope", ...SUCCESS },
+    ...GATED_CHECKS.map((name, index) => ({ id: index + 2, name, ...stateOf(name) })),
+  ];
+}
+
+describe("tagScopes", () => {
+  test("needs no scope when the commit's gated checks all passed", async () => {
+    expect(await tagScopes(async () => earlierRun(() => SUCCESS))).toEqual([]);
+  });
+
+  test("runs everything after a data-only run, whose other gated checks were skipped", async () => {
+    const dataOnly = earlierRun((name) =>
+      name === "library-data" ? SUCCESS : { status: "completed", conclusion: "skipped" },
+    );
+    expect(await tagScopes(async () => dataOnly)).toEqual(["full"]);
+  });
+
+  test("runs everything while a gated check is still running", async () => {
+    const running = earlierRun((name) =>
+      name === "test (windows-latest)" ? { status: "in_progress", conclusion: null } : SUCCESS,
+    );
+    expect(await tagScopes(async () => running)).toEqual(["full"]);
+  });
+
+  test("runs everything when a gated check failed", async () => {
+    const red = earlierRun((name) =>
+      name === "lint-typecheck" ? { status: "completed", conclusion: "failure" } : SUCCESS,
+    );
+    expect(await tagScopes(async () => red)).toEqual(["full"]);
+  });
+
+  test("runs everything when the check runs cannot be read", async () => {
+    expect(
+      await tagScopes(async () => {
+        throw new Error("HTTP 403");
+      }),
+    ).toEqual(["full"]);
+  });
+});
+
+// `gh` is stubbed with a shell script, which Windows cannot run by that name.
+const posixShell = process.platform !== "win32";
+
+describe("the CLI for a release tag", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ci-scope-tag-"));
+  const ghArgs = join(dir, "gh-args");
+  writeFileSync(
+    join(dir, "gh"),
+    [
+      "#!/bin/sh",
+      'printf \'%s\\n\' "$@" > "$GH_ARGS"',
+      'cat "$GH_RUNS"',
+      'exit "$GH_EXIT"',
+      "",
+    ].join("\n"),
+    { mode: 0o755 },
+  );
+  const tag = (runs: CheckRun[], ghExit: number, ...args: string[]) => {
+    const runsFile = join(dir, "gh-runs");
+    writeFileSync(runsFile, runs.map((run) => `${JSON.stringify(run)}\n`).join(""));
+    return Bun.spawnSync([process.execPath, SCRIPT, ...args], {
+      env: {
+        ...process.env,
+        PATH: `${dir}${delimiter}${process.env.PATH ?? ""}`,
+        GH_ARGS: ghArgs,
+        GH_RUNS: runsFile,
+        GH_EXIT: String(ghExit),
+      },
+    });
+  };
+  const sha = "e".repeat(40);
+
+  test.skipIf(!posixShell)(
+    "reads the tagged commit's check runs and prints no scope when they passed",
+    () => {
+      const proc = tag(
+        earlierRun(() => SUCCESS),
+        0,
+        "--tag",
+        "--repo",
+        "owner/name",
+        "--sha",
+        sha,
+      );
+      expect(proc.exitCode).toBe(0);
+      expect(proc.stdout.toString()).toBe("scopes=\n");
+      expect(readFileSync(ghArgs, "utf8")).toContain(
+        `repos/owner/name/commits/${sha}/check-runs?per_page=100`,
+      );
+    },
+    SPAWN_TIMEOUT,
+  );
+
+  test.skipIf(!posixShell)(
+    "prints the full scope when the check runs cannot be read",
+    () => {
+      const proc = tag(
+        earlierRun(() => SUCCESS),
+        1,
+        "--tag",
+        "--repo",
+        "owner/name",
+        "--sha",
+        sha,
+      );
+      expect(proc.exitCode).toBe(0);
+      expect(proc.stdout.toString()).toBe("scopes=full\n");
+    },
+    SPAWN_TIMEOUT,
+  );
+
+  test(
+    "rejects a diff or test-list flag beside --tag, and a tag without its commit",
+    () => {
+      for (const extra of [["--base", sha], ["--head", sha], ["--real-data-tests"]]) {
+        const proc = tag([], 0, "--tag", "--repo", "owner/name", "--sha", sha, ...extra);
+        expect(proc.exitCode).toBe(2);
+      }
+      expect(tag([], 0, "--tag", "--repo", "owner/name").exitCode).toBe(2);
+      expect(tag([], 0, "--tag", "--sha", sha).exitCode).toBe(2);
     },
     SPAWN_TIMEOUT,
   );

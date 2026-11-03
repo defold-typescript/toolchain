@@ -78,7 +78,7 @@ export async function awaitCiGate(loop: GateLoop): Promise<GateVerdict> {
   }
 }
 
-async function fetchCheckRuns(repo: string, sha: string): Promise<CheckRun[]> {
+export async function fetchCheckRuns(repo: string, sha: string): Promise<CheckRun[]> {
   const proc = Bun.spawn(
     [
       "gh",
