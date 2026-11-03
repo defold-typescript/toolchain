@@ -13,6 +13,7 @@ import { renderMarkdown } from "./markdown";
 import { isSafeLink } from "./upstream-text";
 
 const SCRIPT = "<script>alert(1)</script>";
+const ENCODED_SCRIPT = "&lt;script&gt;alert(1)&lt;/script&gt;";
 const IMG = "<img src=x onerror=alert(1)>";
 const LINK = "[x](javascript:alert(1))";
 const PAYLOAD = `${SCRIPT} ${IMG} ${LINK}`;
@@ -48,7 +49,7 @@ function writeLibrary(dirs: LibraryDirs, namespace: string): void {
   writeFileSync(join(folder, "reviewed.json"), JSON.stringify({ ref: "1.0.0" }));
 }
 
-function writeModule(dirs: LibraryDirs, namespace: string, doc: string): void {
+function writeModule(dirs: LibraryDirs, namespace: string, doc: string, deprecated = doc): void {
   writeLibrary(dirs, namespace);
   writeFileSync(
     join(dirs.modelDir, `${namespace}.json`),
@@ -66,16 +67,18 @@ function writeModule(dirs: LibraryDirs, namespace: string, doc: string): void {
           ],
           returnvalues: [{ name: "out", doc, types: ["string"] }],
           examples: `x\n\`\`\`\n${doc}`,
-          deprecated: doc,
+          deprecated,
         },
       ],
     }),
   );
 }
 
-async function renderPage(doc: string): Promise<string> {
+// The `deprecated` note is the symbol's `@deprecated` source text, not ref-doc HTML, so
+// a test about how HTML converts gives it text of its own.
+async function renderPage(doc: string, deprecated = doc): Promise<string> {
   const dirs = dataDirs();
-  writeModule(dirs, "demo", doc);
+  writeModule(dirs, "demo", doc, deprecated);
   const [source] = loadLibraryPageSources(dirs);
   if (!source) throw new Error("no page");
   return renderMarkdown(apiPageMarkdown(source.page, apiLinkify([source.page])));
@@ -188,11 +191,27 @@ function expectInert(html: string): void {
 }
 
 describe("upstream doc text on a library page", () => {
-  test("a payload in the description, member and slot docs stays inert and readable", async () => {
-    const html = await renderPage(PAYLOAD);
+  test("a payload in the description, member and slot docs stays inert, its tags stripped", async () => {
+    const html = await renderPage(PAYLOAD, "Use demo.walk.");
     expectInert(html);
-    expect(textOf(html)).toContain(SCRIPT);
-    expect(textOf(html)).toContain(IMG);
+    expect(textOf(html)).toContain("alert(1)");
+    expect(textOf(html)).not.toContain("<script");
+  });
+
+  test("a tag the types package strips is stripped as on the toolchain site", async () => {
+    const html = await renderPage(
+      "Use <strong>bold</strong> and <table><tr><td>cell</td></tr></table>.",
+      "Use demo.walk.",
+    );
+    expect(textOf(html)).toContain("Use bold and cell.");
+    expect(html).not.toContain("&lt;strong");
+    expect(html).not.toContain("&lt;table");
+  });
+
+  test("the deprecation note, source text rather than HTML, shows a payload as inert text", async () => {
+    const html = await renderPage("Run it.", PAYLOAD);
+    expectInert(html);
+    expect(textOf(html)).toContain(`Deprecated — ${SCRIPT} ${IMG} x`);
   });
 
   test("an entity-encoded payload, which the ref-doc conversion decodes, stays inert", async () => {
@@ -210,13 +229,16 @@ describe("upstream doc text on a library page", () => {
   });
 
   test("the payload reaches the deprecation note and breaks out of the example fence", async () => {
-    const html = await renderPage(SCRIPT);
+    const html = await renderPage(ENCODED_SCRIPT, SCRIPT);
     expect(html).toContain("api-availability");
     expect(html.split("&lt;script&gt;").length).toBeGreaterThan(4);
   });
 
   test("the same payload in a code span stays code, escaped once rather than twice", async () => {
-    const html = await renderPage(`Before \`${SCRIPT}\` after`);
+    const html = await renderPage(
+      `Before \`${ENCODED_SCRIPT}\` after`,
+      `Before \`${SCRIPT}\` after`,
+    );
     expectInert(html);
     expect(html).toContain("<code>&lt;script&gt;alert(1)&lt;/script&gt;</code>");
     expect(html).not.toContain("&amp;lt;");
