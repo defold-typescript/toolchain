@@ -21,7 +21,11 @@
 
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { parseTopChangelogVersion, projectedReleaseVersion } from "./changelog-version.ts";
+import {
+  parseTopChangelogVersion,
+  projectedReleaseVersion,
+  topChangelogSection,
+} from "./changelog-version.ts";
 
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
@@ -102,26 +106,57 @@ export function resolveReleaseTarget(changelogBody: string, tags: readonly strin
 
 export type ReleaseReadiness =
   | { readonly kind: "released"; readonly tag: string }
+  | { readonly kind: "idle"; readonly latest: string }
   | { readonly kind: "pending"; readonly version: string };
 
-// Which release state the repository is in. `released` is the narrow case where
-// the top heading is itself tagged on HEAD — the release commit as cut, where the
-// tag and the heading are equal *by construction* and the strictly-greater rule
-// would red a healthy tree. Every other state is `pending` and goes through the
-// unchanged projection, so the strictly-greater rule still governs each commit
-// after a tag, and a changelog that has fallen at or below the tags still throws.
-// Opening the next heading while still sitting on the release commit is a healthy
-// pending state, not a mismatch.
+// Which release state the repository is in, one of three:
+// - `released`: the top heading is itself tagged on HEAD — the release commit as
+//   cut, where the tag and the heading are equal *by construction* and the
+//   strictly-greater rule would red a healthy tree.
+// - `idle`: HEAD is past the latest tag, the top heading is that tag's version,
+//   and the top section matches its copy at the tag (`bodyAtLatestTag`, `null`
+//   when unreadable) — nothing has been added since the release. Only the top
+//   section is compared, so a dead-link redaction in an older released section
+//   stays idle, while an entry landing under the released heading throws.
+// - `pending`: every other state, through the unchanged projection, so the
+//   strictly-greater rule still governs a heading that should have moved, and a
+//   changelog that has fallen at or below the tags still throws. Opening the next
+//   heading while still sitting on the release commit is a healthy pending state,
+//   not a mismatch.
 export function releaseReadiness(
   changelogBody: string,
   tags: readonly string[],
   tagsAtHead: readonly string[],
+  bodyAtLatestTag: string | null,
 ): ReleaseReadiness {
   const top = parseTopChangelogVersion(changelogBody);
   if (top !== null && releaseTagsAt(tagsAtHead).includes(`v${top}`)) {
     return { kind: "released", tag: `v${top}` };
   }
+  const latest = latestReleaseTag(tags);
+  if (top !== null && `v${top}` === latest && bodyAtLatestTag !== null) {
+    if (topChangelogSection(changelogBody) === topChangelogSection(bodyAtLatestTag)) {
+      return { kind: "idle", latest };
+    }
+    throw new Error(
+      `changelog top heading v${top} is released, but its section differs from the one tagged v${top}; ` +
+        "open a new ## v<next> heading above it for new entries",
+    );
+  }
   return { kind: "pending", version: resolveReleaseTarget(changelogBody, tags) };
+}
+
+export function releaseTarget(readiness: ReleaseReadiness): string {
+  switch (readiness.kind) {
+    case "pending":
+      return readiness.version;
+    case "released":
+      return readiness.tag.slice(1);
+    case "idle":
+      throw new Error(
+        `nothing to release since ${readiness.latest}: open a ## v<next> heading with this cycle's changes`,
+      );
+  }
 }
 
 function run(cmd: string[], opts: { inherit?: boolean } = {}): { code: number; output: string } {
@@ -238,17 +273,19 @@ function main(): void {
         "re-run the Release workflow on that tag instead of cutting a new version off the same commit",
     );
   }
-  let readiness: ReleaseReadiness;
+  const tagged = run(["git", "show", `${latestTag}:packages/docs/guide/changelog.md`]);
+  let target: string;
   try {
-    readiness = releaseReadiness(
+    const readiness = releaseReadiness(
       readFileSync(new URL("../packages/docs/guide/changelog.md", import.meta.url), "utf8"),
       tags,
       tagsAtHead,
+      tagged.code === 0 ? tagged.output : null,
     );
+    target = releaseTarget(readiness);
   } catch (err) {
     die((err as Error).message);
   }
-  const target = readiness.kind === "pending" ? readiness.version : readiness.tag.slice(1);
   const tag = `v${target}`;
 
   process.stdout.write(
