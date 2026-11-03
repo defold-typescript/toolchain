@@ -1,4 +1,11 @@
 import {
+  type ApiPage,
+  type AvailabilityLookup,
+  type CategoryWindow,
+  functionBadgeCategory,
+} from "@defold-typescript/docs-render/api-surface";
+import { buildSymbolIndex, type SymbolEntry } from "@defold-typescript/docs-render/symbol-index";
+import {
   type ApiAvailability,
   type ApiFunction,
   type ApiModule,
@@ -14,12 +21,6 @@ import {
   symbolNameKey,
   type TranslationStore,
 } from "@defold-typescript/types";
-import {
-  type ApiPage,
-  type AvailabilityLookup,
-  type CategoryWindow,
-  functionBadgeCategory,
-} from "./api-surface";
 import type { BadgeCountTable } from "./api-surface-pref";
 import type { VersionWindow } from "./version-window";
 
@@ -447,6 +448,18 @@ export function llmsSignaturesForEntry(entry: CombinedEntry): string[] {
 /** Every Combined namespace projected as an `ApiPage`, in projection order. */
 export function combinedApiPages(combined: CombinedSurface): ApiPage[] {
   return combined.namespaces.map(combinedNamespaceToApiPage);
+}
+
+/**
+ * The single Combined symbol index, derived from the shared
+ * {@link CombinedSurface} projection rather than a re-walk of raw surfaces. Every
+ * key routes to its canonical `/api/<namespace>` page (members carry the heading
+ * anchor), so a tooltip on a canonical page resolves against the union surface.
+ * The projection already owns the canonical route, so the pages feed the index
+ * directly with no route rewrite.
+ */
+export function combinedSymbolIndexRecords(combined: CombinedSurface): Record<string, SymbolEntry> {
+  return buildSymbolIndex(combinedApiPages(combined));
 }
 
 /**

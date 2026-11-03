@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import {
+  type ApiSymbolParam,
+  apiModuleSymbols,
+  mapDocType,
+} from "@defold-typescript/docs-render/api-surface";
 import { firstSlotAlternativeOf, lookupSignature } from "@defold-typescript/types";
-import { type ApiSymbolParam, apiModuleSymbols, mapDocType } from "./api-surface";
 import { loadApiSurface, loadCombinedSurface } from "./api-surface-loader";
 import { combinedNamespaceToApiPage } from "./combined-surface";
 

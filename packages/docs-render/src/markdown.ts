@@ -1,20 +1,3 @@
-import { linkApiTypeTokens } from "@defold-typescript/docs-render/api-type-links";
-import { withBase } from "@defold-typescript/docs-render/base";
-import { glyphSvg } from "@defold-typescript/docs-render/glyph";
-import { BADGE_DOT_RE, slugify } from "@defold-typescript/docs-render/headings";
-import { imageMaxWidthStyle } from "@defold-typescript/docs-render/image-style";
-import { EXTERNAL_LINK_ICON } from "@defold-typescript/docs-render/phosphor";
-import {
-  type Glyph,
-  PLATFORM_MARKER,
-  platformIcon,
-} from "@defold-typescript/docs-render/platform-icons";
-import {
-  type SignatureSymbolTarget,
-  splitSignatureBrandLinks,
-} from "@defold-typescript/docs-render/signature-brand-links";
-import { signatureEmphasis } from "@defold-typescript/docs-render/signature-emphasis";
-import { Badge, SvgFigure, TooltipTrigger } from "@defold-typescript/docs-render/ui";
 import { fromHighlighter } from "@shikijs/markdown-it/core";
 import {
   transformerMetaHighlight,
@@ -26,6 +9,17 @@ import MarkdownIt from "markdown-it";
 import type Token from "markdown-it/lib/token.mjs";
 import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter, type ThemedToken } from "shiki";
+import { linkApiTypeTokens } from "./api-type-links";
+import { withBase } from "./base";
+import { glyphSvg } from "./glyph";
+import { BADGE_DOT_RE, slugify } from "./headings";
+import { imageMaxWidthStyle } from "./image-style";
+import { EXTERNAL_LINK_ICON } from "./phosphor";
+import { type Glyph, PLATFORM_MARKER, platformIcon } from "./platform-icons";
+import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
+import { signatureEmphasis } from "./signature-emphasis";
+import { Badge, SvgFigure, TooltipTrigger } from "./ui";
+import { isSafeLink, restoreUpstreamMarkers } from "./upstream-text";
 
 /**
  * Two Shiki themes paired to the page's light/dark data-theme. Shiki emits
@@ -73,10 +67,10 @@ const HEADING_ANCHOR_ICON =
 const HEADING_ANCHOR_CLOSE = `${HEADING_ANCHOR_ICON}</a>`;
 
 // Guide pages cross-link with relative `.md` paths (`./foo.md`, `foo.md#anchor`),
-// but the site routes each file at its slug (`README.md` -> `/`, `foo.md` -> `/foo`),
-// so the raw hrefs would 404. Rewrite local `.md` links to their route; leave
-// external URLs, root-absolute paths, and bare fragments untouched.
-function rewriteGuideHref(href: string): string {
+// but the site routes each file at its slug under `prefix` (`README.md` -> `/`,
+// `foo.md` -> `<prefix>/foo`), so the raw hrefs would 404. Rewrite local `.md` links
+// to their route; leave external URLs, root-absolute paths, and bare fragments untouched.
+function rewriteGuideHref(href: string, prefix: string): string {
   if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("/") || href.startsWith("#")) {
     return href;
   }
@@ -84,7 +78,7 @@ function rewriteGuideHref(href: string): string {
   if (!path?.endsWith(".md")) return href;
   const fragment = fragmentParts.length > 0 ? `#${fragmentParts.join("#")}` : "";
   const name = path.replace(/.*\//, "").replace(/\.md$/, "");
-  return `${name === "README" ? "/" : `/${name}`}${fragment}`;
+  return `${name === "README" ? "/" : `${prefix}/${name}`}${fragment}`;
 }
 
 // Prepend the deploy base to an in-site root-absolute URL (`/api` -> `/toolchain/api`)
@@ -331,11 +325,14 @@ export async function renderMarkdown(
     readInlineSvg?: (src: string) => string | undefined;
     /** Symbol key -> root-absolute `/api` route an inline code span naming it links to. */
     symbolCodeLinks?: ReadonlyMap<string, string>;
+    /** The route a relative `.md` link's slug sits under. */
+    guideRoutePrefix?: string;
   } = {},
 ): Promise<string> {
   const source = opts.firstHeading ? replaceFirstHeading(markdown, opts.firstHeading) : markdown;
   const highlighter = await getHighlighter();
   const md = MarkdownIt({ html: true, linkify: true });
+  md.validateLink = isSafeLink;
   // GitHub-flavored footnotes: the one syntax the rendered site, the raw
   // `guide/*.md` on GitHub, and the plain-text corpus all understand. Footnote
   // definitions are block-level and carry no headings, so the rulers below see
@@ -510,7 +507,12 @@ export async function renderMarkdown(
           const href = child.attrGet("href");
           const isBadge = children[i + 1]?.type === "image";
           const isExternal = href != null && /^https?:\/\//i.test(href);
-          if (href) child.attrSet("href", withDeployBase(rewriteGuideHref(href)));
+          if (href) {
+            child.attrSet(
+              "href",
+              withDeployBase(rewriteGuideHref(href, opts.guideRoutePrefix ?? "")),
+            );
+          }
           // A link wrapping an image is a badge/icon, not a prose link — tag it
           // so the stylesheet can drop the `.prose a` underline without a
           // parent-selector (`:has`) the build pipeline may not preserve.
@@ -1001,5 +1003,5 @@ export async function renderMarkdown(
     const qualified = new Map([...resolved].filter(([name]) => name.includes(".")));
     html = linkApiTypeTokens(html, qualified);
   }
-  return html;
+  return restoreUpstreamMarkers(html);
 }

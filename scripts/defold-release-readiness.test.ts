@@ -6,7 +6,7 @@ import {
   CURRENT_STABLE_DEFOLD_VERSION,
   PREVIOUS_STABLE_DEFOLD_VERSION,
 } from "../packages/cli/src/defold-version.ts";
-import type { ApiPage } from "../packages/docs-site/app/lib/api-surface.ts";
+import type { ApiPage } from "../packages/docs-render/src/api-surface";
 import type { ApiVersion } from "../packages/docs-site/app/lib/api-surface-loader.ts";
 import { buildReleaseRouteManifest } from "../packages/docs-site/app/lib/release-manifest.ts";
 import {

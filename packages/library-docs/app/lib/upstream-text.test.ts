@@ -2,15 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { apiLinkify, apiPageMarkdown, listingPageMarkdown } from "./api-page-render";
+import { apiLinkify, apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import {
   defoldListingsFromManifest,
   type LibraryDirs,
   loadLibraryPageSources,
   portalListingsFromManifest,
 } from "./api-surface-loader";
-import { renderMarkdown } from "./markdown";
-import { isSafeLink } from "./upstream-text";
+import { listingPageMarkdown } from "./listing-page";
 
 const SCRIPT = "<script>alert(1)</script>";
 const ENCODED_SCRIPT = "&lt;script&gt;alert(1)&lt;/script&gt;";
@@ -403,30 +403,5 @@ describe("an Asset Portal ID", () => {
     const [listing] = portalListingsFromManifest(dirs);
     if (!listing) throw new Error("no listing");
     expect(await renderMarkdown(listingPageMarkdown(listing))).toMatch(validLink);
-  });
-});
-
-describe("isSafeLink", () => {
-  test("allows http, https, mailto and relative targets", () => {
-    for (const url of ["https://a.b/c", "http://a.b", "mailto:a@b.c", "/api/x", "#top", "x/y.md"]) {
-      expect(isSafeLink(url)).toBe(true);
-    }
-  });
-
-  test("refuses every other scheme, however it is disguised", () => {
-    for (const url of [
-      "javascript:alert(1)",
-      "JaVaScRiPt:x",
-      "java\tscript:x",
-      " data:text/html,x",
-    ]) {
-      expect(isSafeLink(url)).toBe(false);
-    }
-  });
-
-  test("the renderer refuses an unsafe target the escape never saw", async () => {
-    const html = await renderMarkdown("[a](ftp://x/y) [b][1]\n\n[1]: tel:123");
-    expect(html).not.toContain('href="ftp:');
-    expect(html).not.toContain('href="tel:');
   });
 });

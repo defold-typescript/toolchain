@@ -3,23 +3,23 @@
 // intentionally carries no JSX config so non-docs workspaces are not coupled to
 // hono/jsx; this pragma pins the JSX dialect for this file.
 
+import {
+  apiLinkify,
+  apiPageMarkdown,
+  apiReplacementResolver,
+  apiSignatureSymbolLinks,
+} from "@defold-typescript/docs-render/api-page-render";
 import { pageHeadings } from "@defold-typescript/docs-render/headings";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
+import { versionedApiParams } from "../../../lib/api-badges";
 import {
   apiVersionAxis,
   canonicalApiPages,
   TYPES_DIR,
   windowedApiPages,
 } from "../../../lib/api-content";
-import {
-  apiLinkify,
-  apiPageMarkdown,
-  apiReplacementResolver,
-  apiSignatureSymbolLinks,
-  versionedApiParams,
-} from "../../../lib/api-page-render";
-import { renderMarkdown } from "../../../lib/markdown";
 import { resolveVersionWindow } from "../../../lib/version-window";
 import type { ApiSurfaceDirs } from "../[namespace]";
 

@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { withBase } from "@defold-typescript/docs-render/base";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { canonicalApiPages } from "./api-content";
 import { loadCombinedSurface } from "./api-surface-loader";
+import { combinedSymbolIndexRecords } from "./combined-surface";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
 import { guideSymbolRoutes } from "./guide-symbol-links";
-import { renderMarkdown } from "./markdown";
-import { combinedSymbolIndexRecords } from "./symbol-index";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");

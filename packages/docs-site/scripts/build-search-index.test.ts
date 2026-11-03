@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
+import type { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
+import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
 import { libraryPageNames } from "../app/lib/__fixtures__/library-page-names";
 import { renderedHeadingIds } from "../app/lib/__fixtures__/rendered-heading-ids";
 import {
@@ -8,8 +11,6 @@ import {
   makeWindowedTypesDir,
 } from "../app/lib/__fixtures__/windowed-surface";
 import { apiVersionAxis } from "../app/lib/api-content";
-import type { apiPageMarkdown } from "../app/lib/api-page-render";
-import type { ApiPage } from "../app/lib/api-surface";
 import {
   loadCombinedSurface,
   loadSignaturesArtifact,
@@ -18,7 +19,6 @@ import {
 } from "../app/lib/api-surface-loader";
 import { type CombinedSurface, combinedApiPages } from "../app/lib/combined-surface";
 import { combinedSearchRecords, type SearchRecord } from "../app/lib/search-index";
-import { buildSymbolIndex } from "../app/lib/symbol-index";
 import { resolveVersionWindow, windowCombinedSurface } from "../app/lib/version-window";
 import { searchIndexOutputs, versionRoutePages } from "./build-search-index";
 

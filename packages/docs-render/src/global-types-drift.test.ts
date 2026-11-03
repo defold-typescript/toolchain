@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseGlobalTypes } from "./global-types";
 
-const TYPES_SRC = join(import.meta.dir, "../../../../packages/types/src");
+const TYPES_SRC = join(import.meta.dir, "../../types/src");
 const coreSource = readFileSync(join(TYPES_SRC, "core-types.ts"), "utf8");
 const globalsSource = readFileSync(join(TYPES_SRC, "engine-globals.d.ts"), "utf8");
 

@@ -1,11 +1,11 @@
 /** @jsxImportSource hono/jsx */
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { apiPageMarkdown } from "@defold-typescript/docs-render/api-page-render";
 import { type Heading, pageHeadings } from "@defold-typescript/docs-render/headings";
-import { apiPageMarkdown } from "../lib/api-page-render";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import { loadCombinedSurface } from "../lib/api-surface-loader";
 import { combinedNamespaceToApiPage } from "../lib/combined-surface";
-import { renderMarkdown } from "../lib/markdown";
 import Toc, { outlineLabel } from "./toc";
 
 const BADGE_RE = /<span class="api-overload-count">([\s\S]*?)<\/span>/;

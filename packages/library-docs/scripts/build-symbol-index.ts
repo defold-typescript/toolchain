@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { buildSymbolIndex, type SymbolEntry } from "@defold-typescript/docs-render/symbol-index";
 import { apiPages, siteDirs } from "../app/lib/api-content";
 import type { LibraryDirs } from "../app/lib/api-surface-loader";
-import { buildSymbolIndex, type SymbolEntry } from "../app/lib/symbol-index";
 
 // Served from public/ at a stable path. The island appends a `?t=` query in dev
 // (see symbol-tooltip.tsx) to defeat Safari's aggressive dev caching — a

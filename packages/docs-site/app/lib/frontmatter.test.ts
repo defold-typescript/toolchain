@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
-import { renderMarkdown } from "./markdown";
 import { buildNav, type NavLink } from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");

@@ -18,13 +18,13 @@ import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
 import UiTooltip from "../islands/ui-tooltip";
+import { navLeafBadgeHtml } from "../lib/api-badges";
 import {
   apiVersions,
   canonicalApiPages,
   combinedSurface,
   versionNamespaceAtom,
 } from "../lib/api-content";
-import { navLeafBadgeHtml } from "../lib/api-page-render";
 import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,

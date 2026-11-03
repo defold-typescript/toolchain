@@ -1,5 +1,5 @@
-import { namespaceCountBadges } from "../lib/api-page-render";
-import type { ApiPage } from "../lib/api-surface";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
+import { namespaceCountBadges } from "../lib/api-badges";
 import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 
 // The `/api` index renders one card grid per page category. Membership lives

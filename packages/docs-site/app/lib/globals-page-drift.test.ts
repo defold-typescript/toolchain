@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { type ApiPage, apiModuleSymbols } from "./api-surface";
+import { type ApiPage, apiModuleSymbols } from "@defold-typescript/docs-render/api-surface";
 import {
   loadApiSurfaceForVersion,
   loadCombinedSurface,

@@ -1,4 +1,4 @@
-import type { ApiPage } from "./api-surface";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import type { ApiVersion } from "./api-surface-loader";
 import { versionLabel } from "./version-switch";
 

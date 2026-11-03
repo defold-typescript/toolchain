@@ -1,12 +1,15 @@
 import { expect, test } from "bun:test";
 import { join } from "node:path";
+import {
+  apiPageMarkdown,
+  apiSignatureSymbolLinks,
+} from "@defold-typescript/docs-render/api-page-render";
+import type { ApiPage } from "@defold-typescript/docs-render/api-surface";
 import { allPageHeadings } from "@defold-typescript/docs-render/headings";
+import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
+import { buildSymbolIndex } from "@defold-typescript/docs-render/symbol-index";
 import { canonicalApiPages } from "./api-content";
-import { apiPageMarkdown, apiSignatureSymbolLinks } from "./api-page-render";
-import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
-import { renderMarkdown } from "./markdown";
-import { buildSymbolIndex } from "./symbol-index";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 

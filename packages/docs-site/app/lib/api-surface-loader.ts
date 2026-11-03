@@ -1,5 +1,11 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type {
+  ApiPage,
+  ApiPageCategory,
+  AvailabilityLookup,
+} from "@defold-typescript/docs-render/api-surface";
+import { parseGlobalTypes } from "@defold-typescript/docs-render/global-types";
 import {
   type ApiAvailability,
   parseDefoldApiDoc,
@@ -12,13 +18,11 @@ import {
   type TranslationStore,
   withholdOverloads,
 } from "@defold-typescript/types";
-import type { ApiPage, ApiPageCategory, AvailabilityLookup } from "./api-surface";
 import {
   buildCombinedSurface,
   type CombinedSurface,
   type SignaturesArtifact,
 } from "./combined-surface";
-import { parseGlobalTypes } from "./global-types";
 
 interface ApiTarget {
   id: string;
@@ -99,6 +103,7 @@ const CATEGORY_RANK: Record<ApiPageCategory, number> = {
   engine: 0,
   "global-type": 1,
   "lua-stdlib": 2,
+  library: 3,
 };
 
 // Category-then-namespace ordering shared by the engine and version-independent
