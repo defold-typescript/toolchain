@@ -89,9 +89,11 @@ interface WorldRecord {
 // Entity identity. Each world stores its entities' ids under a field of its
 // own, `__ecs_id_<n>`, so one entity can join several worlds and taking a new
 // id in one never rekeys a table another world indexes. A table joining a world
-// always takes a fresh id, and leaving it clears the field. A copied table
-// carries its source's fields, so every lookup also checks that the slot the id
-// names holds this very table.
+// takes a fresh id unless one of the world's systems still caches it under its
+// current one, which only a removal in progress leaves behind, and leaving the
+// world clears the field once the table is gone from the world list. A copied
+// table carries its source's fields, so every lookup also checks that the slot
+// the id names holds this very table.
 
 let lastId = 0;
 let lastWorld = 0;
@@ -121,6 +123,29 @@ function slotOf(
     return undefined;
   }
   return pos;
+}
+
+function cachedId(
+  systems: readonly SystemRecord[],
+  entity: EntityRecord,
+  key: string,
+): number | undefined {
+  const id = idOf(entity, key);
+  if (id === undefined) {
+    return undefined;
+  }
+  const count = systems.length;
+  for (let i = 0; i < count; i++) {
+    const system = systems[i] as SystemRecord;
+    if (
+      system.nocache !== true &&
+      slotOf(system.entities as EntityRecord[], system.indices as IdIndex, entity, key) !==
+        undefined
+    ) {
+      return id;
+    }
+  }
+  return undefined;
 }
 
 function swapRemove(
@@ -450,7 +475,11 @@ function manageEntities(world: WorldRecord): void {
   for (let i = 0; i < changeCount; i++) {
     const entity = e2c[i] as EntityRecord;
     if (slotOf(entities, entityIndex, entity, key) === undefined) {
-      entityIndex[freshId(entity, key)] = entities.length;
+      let id = cachedId(systems, entity, key);
+      if (id === undefined) {
+        id = freshId(entity, key);
+      }
+      entityIndex[id] = entities.length;
       entities.push(entity);
     }
     const systemCount = systems.length;
@@ -505,7 +534,9 @@ function manageEntities(world: WorldRecord): void {
           }
         }
       }
-      entity[key] = undefined;
+      if (slotOf(entities, entityIndex, entity, key) === undefined) {
+        entity[key] = undefined;
+      }
     }
   }
 }
