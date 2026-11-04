@@ -35,6 +35,7 @@ declare module 'gamepush.core.windows' {
    * Shows a confirmation window.
    * @param parameters The window's options.
    * @param callback Receives whether the player confirmed.
+    * @upstreamDoc 650c3482bd63
    */
   export function show_confirm(
     parameters?: ConfirmParameters,

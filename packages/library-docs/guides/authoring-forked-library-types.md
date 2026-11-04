@@ -160,8 +160,9 @@ Then run this command from the toolchain root:
 bun packages/cli/src/bin.ts library check --data packages/library-types/data --api-doc-out packages/library-types/api-doc
 ```
 
-- `resolve` serves the vendored `.d.ts` with one addition: each member the fork
-  leaves undocumented carries upstream's LuaDoc summary as its doc comment (see
+- `resolve` serves the vendored `.d.ts` with one change: each member upstream
+  documents carries upstream's LuaDoc summary as its doc comment unless the fork's
+  own comment is pinned to that text (see
   [Upstream LuaDoc import](#upstream-luadoc-import)). Nothing else is transformed:
   an authored source is already target-form, so the served types *are* the
   vendored types.
@@ -282,7 +283,7 @@ The **callable** axis, upstream members carrying a parameter list against api-do
 | `phantomMembers` | Declared members upstream does not have. |
 | `arityMismatches` | Shared names whose parameter *counts* disagree, each with both numbers — the fork's being the widest signature it declares. Names are not compared — a fork may rename parameters freely. |
 | `undocumentedMembers` | Upstream prose that reached neither the fork nor the import — a member whose accepted block carries no summary to lower, being nothing but tags or nothing but the member's own name. |
-| `importedDocs` | Declared elements carrying upstream's own summary because the fork supplied none. Counted on both axes. |
+| `importedDocs` | Declared elements carrying upstream's own summary because the fork supplied none or did not pin its own. Counted on both axes. |
 | `refusedDocBlocks` | Refused upstream blocks the fork left **unanswered** — neither documented in the fork's own words nor excused by a recorded `parityException`. Counted on both axes, and the one term that reports prose the import never saw. Authoring the brief clears the charge. |
 | `refusedDocBlocksTotal` | The raw refusal count, before the answered and excused ones are subtracted. Kept so a `refusedDocBlocks` of 0 cannot be misread as upstream writing no `--`-only blocks. |
 | `variadicMembers` | Shared members compared against a floor rather than an exact count, upstream being variadic. |
@@ -422,10 +423,10 @@ justify it*, and every entry is a claim about upstream that the next reader can 
 
 ### Upstream LuaDoc import
 
-A measured target's printed declaration does not stop at the fork. Where the fork
-gives a module-level member no doc summary and upstream documents it, upstream's own
-LuaDoc summary is printed as that member's doc comment, so a project's editor shows
-it on hover. The api-doc is lowered from the same printed declaration, so the `/api`
+A measured target's printed declaration does not stop at the fork. Where upstream
+documents a module-level member and the fork does not override it with a
+[pinned comment](#pinning-a-fork-comment), upstream's own LuaDoc summary is printed
+as that member's doc comment, so a project's editor shows it on hover. The api-doc is lowered from the same printed declaration, so the `/api`
 page shows the same text, marked so a reader can tell it apart from the fork's own
 prose.
 
@@ -447,18 +448,20 @@ Six rules bound it:
   the rendered brief is the summary rather than the symbol you are already reading. A
   first line that merely mentions the name is prose and survives; a block that is
   *only* the name imports nothing at all.
-- **Fork prose always wins, per member.** A member any of whose declarations carries
-  a doc summary in the fork keeps exactly what the fork wrote, on every overload.
-  Writing the member's doc-comment in the fork is therefore how you opt it out;
-  there is no exclusion list, because the only thing one would add is "show no
-  prose at all", which is worse than writing the correct brief. A comment holding
-  only tags, such as `/** @noSelf */`, is not a summary: the print puts upstream's
-  summary at the top of that same block.
+- **Fork prose wins only while pinned.** A member upstream documents keeps exactly
+  what the fork wrote, on every overload, only while the fork's comment carries an
+  `@upstreamDoc` pin matching upstream's current text (see
+  [Pinning a fork comment](#pinning-a-fork-comment)). Without one, or with a stale
+  one, upstream's summary replaces the fork's summary and its `@param` and
+  `@returns` tags; every other tag, such as `@noSelf` or `@deprecated`, stays. A
+  member upstream does not document keeps the fork's comment, pinned or not. A
+  comment holding only tags, such as `/** @noSelf */`, is not a summary: the print
+  puts upstream's summary at the top of that same block.
 - **Only the module's own members.** The merge fills the functions and constants
   directly inside the `declare module` block. A file-scope global and a member of a
   nested namespace keep whatever the fork wrote.
 - **The import is printed, never vendored.** `fork/<moduleId>.d.ts` is untouched
-  and the print adds comments only, so the identity diff on types still proves the
+  and the print changes comments only, so the identity diff on types still proves the
   emit is lossless, imported prose stays distinguishable from the fork's forever
   after, and an upstream doc change reaches the print with no hand edit.
 
@@ -482,6 +485,40 @@ and charges none of them, every one being answered in the fork's own words.
 An imported symbol's `/api` heading carries a `U` dot labelled *Documentation
 imported from upstream*, beside the `G` dot an ambient global carries. The page's
 provenance block already names the repo and `ref` the text came from.
+
+### Pinning a fork comment
+
+A fork comment on a member upstream documents is an override of upstream's text, so it
+names the text it replaces. Its last line is `@upstreamDoc` and a 12-character pin,
+on a line of its own:
+
+```ts
+/**
+ * Show a screen, loading it first when it is not loaded.
+ * @param id The screen to show.
+ * @upstreamDoc 3f9c2a7b41d0
+ */
+export function show(id: string | hash): boolean;
+```
+
+The pin is a hash of upstream's whole LuaDoc block for that member, tags included,
+with whitespace collapsed, so re-indenting or re-wrapping upstream's comment keeps
+it and changing a word or a `@param` line does not. The pin never prints: the line
+is removed from the served declaration and the `/api` page.
+
+[`library check`](https://defold-typescript.github.io/toolchain/library) names every
+fork comment that prints upstream's doc instead, with the pin that would keep it:
+
+```text
+monarch: doc: monarch.monarch.show prints upstream's doc; keep the fork's with @upstreamDoc 3f9c2a7b41d0
+```
+
+A notice never fails the check, so an update whose upstream edits a doc you override
+still lands; it prints upstream's new text until you read it, then either copy the
+pin into the fork's comment or delete the comment when upstream now says it well. A
+pin on a member upstream does not document guards nothing and is named as well. A
+pin shaped any other way, or placed anywhere but a module function's or constant's
+doc comment, stops the module from printing.
 
 ### Why the two axes are never averaged
 

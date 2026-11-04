@@ -38,6 +38,7 @@ declare module 'gamepush.core.schedulers' {
    * @param id_or_tag The scheduler's id or tag.
    * @param day The day.
    * @param callback Receives the result.
+    * @upstreamDoc c7fb23108261
    */
   export function claim_day(
     id_or_tag: string | number,
@@ -52,6 +53,7 @@ declare module 'gamepush.core.schedulers' {
    * @param day The day.
    * @param trigger_id_or_tag The activity trigger's id or tag.
    * @param callback Receives the result.
+    * @upstreamDoc 890a95bcb9ed
    */
   export function claim_day_additional(
     id_or_tag: string | number,
@@ -65,6 +67,7 @@ declare module 'gamepush.core.schedulers' {
    * @param id_or_tag The scheduler's id or tag.
    * @param day The day.
    * @param callback Receives the result.
+    * @upstreamDoc ebd550aa33ff
    */
   export function claim_all_day(
     id_or_tag: string | number,
@@ -76,21 +79,29 @@ declare module 'gamepush.core.schedulers' {
    * Claims the rewards for every completed day.
    * @param id_or_tag The scheduler's id or tag.
    * @param callback Receives the result.
+    * @upstreamDoc 50a4d2cb0961
    */
   export function claim_all_days(
     id_or_tag: string | number,
     callback?: (result: unknown) => void,
   ): void;
 
-  /** All schedulers. */
+  /**
+   * All schedulers.
+   * @upstreamDoc 31e27de276ff
+   */
   export function list(): Record<string, unknown>[];
 
-  /** The schedulers the player is taking part in. */
+  /**
+   * The schedulers the player is taking part in.
+   * @upstreamDoc 0f4809902eaf
+   */
   export function active_list(): Record<string, unknown>[];
 
   /**
    * A scheduler's description.
    * @param id_or_tag The scheduler's id or tag.
+    * @upstreamDoc 77ef3cd54f77
    */
   export function get_scheduler(id_or_tag: string | number): Record<string, unknown>;
 
@@ -98,6 +109,7 @@ declare module 'gamepush.core.schedulers' {
    * A scheduler day's description. Raises unless `day` is a number.
    * @param id_or_tag The scheduler's id or tag.
    * @param day The day.
+    * @upstreamDoc 48158738953e
    */
   export function get_scheduler_day(
     id_or_tag: string | number,
@@ -107,18 +119,21 @@ declare module 'gamepush.core.schedulers' {
   /**
    * The description of a scheduler's current day.
    * @param id_or_tag The scheduler's id or tag.
+    * @upstreamDoc f40d8203bb3c
    */
   export function get_scheduler_current_day(id_or_tag: string | number): Record<string, unknown>;
 
   /**
    * Whether the player is taking part in a scheduler.
    * @param id_or_tag The scheduler's id or tag.
+    * @upstreamDoc 61323a15d8e2
    */
   export function is_registered(id_or_tag: string | number): boolean;
 
   /**
    * Whether today's reward was claimed.
    * @param id_or_tag The scheduler's id or tag.
+    * @upstreamDoc 17c78cbbafb7
    */
   export function is_today_reward_claimed(id_or_tag: string | number): boolean;
 
@@ -126,6 +141,7 @@ declare module 'gamepush.core.schedulers' {
    * Whether a day's reward can be claimed. Raises unless `day` is a number.
    * @param id_or_tag The scheduler's id or tag.
    * @param day The day.
+    * @upstreamDoc 8906a3a076ed
    */
   export function can_claim_day(id_or_tag: string | number, day: number): boolean;
 
@@ -135,6 +151,7 @@ declare module 'gamepush.core.schedulers' {
    * @param id_or_tag The scheduler's id or tag.
    * @param day The day.
    * @param trigger_id_or_tag The activity trigger's id or tag.
+    * @upstreamDoc f21591678bce
    */
   export function can_claim_day_additional(
     id_or_tag: string | number,
@@ -147,6 +164,7 @@ declare module 'gamepush.core.schedulers' {
    * number.
    * @param id_or_tag The scheduler's id or tag.
    * @param day The day.
+    * @upstreamDoc 2e66f86306d5
    */
   export function can_claim_all_day(id_or_tag: string | number, day: number): boolean;
 

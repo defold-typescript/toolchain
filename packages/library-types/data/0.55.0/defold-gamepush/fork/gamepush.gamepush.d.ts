@@ -47,64 +47,112 @@ declare module 'gamepush.gamepush' {
    * twice, without a callback, or when `gamepush.id` or `gamepush.token` is missing from
    * `game.project`.
    * @param callback Receives whether initialization succeeded.
+    * @upstreamDoc 677993c959f2
    */
   export function init(callback: (success: boolean) => void): void;
 
-  /** The current language, as an ISO 639-1 code. */
+  /**
+   * The current language, as an ISO 639-1 code.
+   * @upstreamDoc efd19615334f
+   */
   export function language(): string;
 
   /**
    * Sets the language. Raises when the code is not a string.
    * @param language_code The ISO 639-1 code, for example `languages.RUSSIAN`.
+    * @upstreamDoc a4f1590e847d
    */
   export function change_language(language_code: string): void;
 
-  /** Whether the game runs on a mobile device. */
+  /**
+   * Whether the game runs on a mobile device.
+   * @upstreamDoc 161bc80d7061
+   */
   export function is_mobile(): boolean;
 
-  /** Whether the screen is in portrait orientation. */
+  /**
+   * Whether the screen is in portrait orientation.
+   * @upstreamDoc cfbb9afc78a8
+   */
   export function is_portrait(): boolean;
 
-  /** Whether the game runs in development mode. */
+  /**
+   * Whether the game runs in development mode.
+   * @upstreamDoc 6259005e9e8b
+   */
   export function is_dev(): boolean;
 
-  /** Whether the game's host is a trusted origin. */
+  /**
+   * Whether the game's host is a trusted origin.
+   * @upstreamDoc 03744504b29b
+   */
   export function is_allowed_origin(): boolean;
 
-  /** The server time, in ISO 8601 format. */
+  /**
+   * The server time, in ISO 8601 format.
+   * @upstreamDoc 9061b13eb0fb
+   */
   export function get_server_time(): string;
 
-  /** Whether the game is paused. */
+  /**
+   * Whether the game is paused.
+   * @upstreamDoc ad7a03b29b06
+   */
   export function is_paused(): boolean;
 
-  /** Pauses the game. */
+  /**
+   * Pauses the game.
+   * @upstreamDoc 8b8c6b14b054
+   */
   export function pause(): void;
 
-  /** Resumes the game. */
+  /**
+   * Resumes the game.
+   * @upstreamDoc 07c7b8b8142d
+   */
   export function resume(): void;
 
   /**
    * Sets the game's background image. Raises when the table is missing.
    * @param parameters The background, for example `{ url: "/image.png" }`.
+    * @upstreamDoc 3cfe9442b2af
    */
   export function set_background(parameters: Record<string, unknown>): void;
 
-  /** Reports that the game has finished loading. */
+  /**
+   * Reports that the game has finished loading.
+   * @upstreamDoc b547a5404136
+   */
   export function game_start(): void;
 
-  /** Whether the game has finished loading. */
+  /**
+   * Whether the game has finished loading.
+   * @upstreamDoc 946831673b99
+   */
   export function is_game_started(): boolean;
 
-  /** Reports that gameplay started. */
+  /**
+   * Reports that gameplay started.
+   * @upstreamDoc 28b978d2ad36
+   */
   export function gameplay_start(): void;
 
-  /** Reports that gameplay stopped. */
+  /**
+   * Reports that gameplay stopped.
+   * @upstreamDoc d5c4e682b38c
+   */
   export function gameplay_stop(): void;
 
-  /** Whether gameplay is running. */
+  /**
+   * Whether gameplay is running.
+   * @upstreamDoc 5c2e559b542e
+   */
   export function is_game_play(): boolean;
 
-  /** The plugin's version string. */
+  /**
+   * The plugin's version string.
+   * @upstreamDoc 02c2ada7171b
+   */
   export function get_plugin_version(): string;
 
   /** The game's application details, reviews and shortcuts. */

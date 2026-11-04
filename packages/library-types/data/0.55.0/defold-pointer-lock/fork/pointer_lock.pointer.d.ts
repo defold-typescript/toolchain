@@ -25,6 +25,7 @@ declare module 'pointer_lock.pointer' {
   /**
    * The X position of the virtual in-game cursor, between `0` and `DISPLAY_WIDTH`.
    * Starts at the middle of the display; `update_cursor_position` moves it.
+    * @upstreamDoc 6a993dbd08a0
    */
   export let cursor_x: number;
 

@@ -104,7 +104,6 @@ declare module 'monarch.monarch' {
 	export function debug(): void;
 
 	/**
-	 * Check if a screen exists in the current screen stack
 	 * @param {string|hash} screen_id
 	 * @returns true of the screen is in the stack
 	 */
@@ -114,6 +113,7 @@ declare module 'monarch.monarch' {
 	 * Check if a Monarch screen is at the top of the view stack.
 	 * @param {string|hash} screen_id
 	 * @returns true if the screen is at the top of the stack
+	  * @upstreamDoc 272c7dec3bc1
 	 */
 	export function is_top(screen_id: ScreenId): boolean;
 
@@ -121,18 +121,17 @@ declare module 'monarch.monarch' {
 	 * Check if a Monarch screen is visible.
 	 * @param {string|hash} screen_id
 	 * @returns true if the screen is visible
+	  * @upstreamDoc 13d3961a02a5
 	 */
 	export function is_visible(screen_id: ScreenId): boolean;
 
 	/**
-	 * Check if a screen is loaded
 	 * @param {string|hash} screen_id
 	 * @returns true if the screen is loaded
 	 */
 	export function is_loaded(screen_id: ScreenId): boolean;
 
 	/**
-	 * Check if a screen is a popup
 	 * @param {string|hash} screen_id
 	 * @returns true if the screen is a popup
 	 */
@@ -156,6 +155,7 @@ declare module 'monarch.monarch' {
 	 *   * others_keep_input_focus_when_below_screen - If screens below this
 	 *     screen should keep input focus
 	 *   * auto_preload - true if the screen should be automatically preloaded
+	  * @upstreamDoc 0590b4e1f260
 	 */
 	export function register_proxy(
 		screen_id: ScreenId,
@@ -186,6 +186,7 @@ declare module 'monarch.monarch' {
 	 *   * others_keep_input_focus_when_below_screen - If screens below this
 	 *     screen should keep input focus
 	 *   * auto_preload - true if the screen should be automatically preloaded
+	  * @upstreamDoc fa4c71af916a
 	 */
 
 	export function register_factory(
@@ -195,14 +196,11 @@ declare module 'monarch.monarch' {
 	): void;
 
 	/**
-	 * Unregister a screen
-	 * This is done automatically by the screen.script
 	 * @param {string|hash} screen_id - Id of the screen to unregister
 	 */
 	export function unregister(screen_id: ScreenId): void;
 
 	/**
-	 * Get data associated with a screen
 	 * @param {string|hash} screen_id - Id of the screen to get data for
 	 * @returns {object} Data associated with the screen
 	 */
@@ -212,12 +210,14 @@ declare module 'monarch.monarch' {
 	 * Check if a Monarch screen exists.
 	 * @param {string|hash} screen_id - Id of the screen to check if is registered
 	 * @returns {boolean} True or False if the screen id is registered or not
+	  * @upstreamDoc 5e13302db8be
 	 */
 	export function screen_exists(screen_id: ScreenId): boolean;
 
 	/**
 	 * Check if Monarch is busy showing and/or hiding a screen.
 	 * @returns {boolean} true if busy
+	  * @upstreamDoc d7459be596cf
 	 */
 	export function is_busy(): boolean;
 
@@ -234,6 +234,7 @@ declare module 'monarch.monarch' {
 	 *    - pop - The number of screens to pop from the stack before adding the new one.
 	 * @param {any} data - Optional data to set on the screen. Can be retrieved by the `data()` function
 	 * @param {function} callback - Optional callback to invoke when screen is shown
+	  * @upstreamDoc cc42dcd78754
 	 */
 	export function show(
 		screen_id: ScreenId,
@@ -252,6 +253,7 @@ declare module 'monarch.monarch' {
 	 *   - no_stack {boolean} - Set to true to load the screen without adding it to the screen stack.
 	 * @param {any} data - Optional data to set on the screen. Can be retrieved by the data() function.
 	 * @param {function} callback - Optional callback to invoke when the screen is shown.
+	  * @upstreamDoc 241e9145bd08
 	 */
 	export function replace(
 		screen_id: ScreenId,
@@ -297,6 +299,7 @@ declare module 'monarch.monarch' {
 	 * via the Preload screen option.
 	 * @param {string|hash} screen_id - Screen id.
 	 * @returns {boolean} True if preloading, false otherwise.
+	  * @upstreamDoc 17237cd1d52d
 	 */
 	export function is_preloading(screen_id: ScreenId): boolean;
 
@@ -309,6 +312,7 @@ declare module 'monarch.monarch' {
 	 * would prevent a call to `monarch.show` from having any effect).
 	 * @param {string|hash} screen_id - Id of the screen to monitor for preload completion.
 	 * @param {function} callback - Callback to invoke when the screen has been preloaded.
+	  * @upstreamDoc 900223719521
 	 */
 	export function when_preloaded(
 		screen_id: ScreenId,
@@ -316,9 +320,6 @@ declare module 'monarch.monarch' {
 	): void;
 
 	/**
-	 * Preload a screen. This will load but not enable and show a screen.
-	 * Useful for "heavier" screens that you wish to show without any delay.
-	 *
 	 * @param {string|hash} screen_id - Id of the screen to preload.
 	 * @param {object} options - Options for preloading the screen.
 	 * @param {function} callback - Optional callback to invoke when the screen is loaded.
@@ -339,6 +340,7 @@ declare module 'monarch.monarch' {
 	 * Unload a preloaded monarch screen.
 	 * @param {string|hash} screen_id - Id of the screen to unload.
 	 * @param {function} callback - Optional callback to invoke when the screen is unloaded.
+	  * @upstreamDoc 1f1a8de077c3
 	 */
 	export function unload(screen_id: ScreenId, callback?: Callback): void;
 
@@ -350,6 +352,7 @@ declare module 'monarch.monarch' {
 	 * @param {object} [message] - Optional message data to send.
 	 * @returns {boolean} result - True if the message is sent successfully.
 	 * @returns {string|undefined} error - Error message if unable to send the message.
+	  * @upstreamDoc 19369e65efd6
 	 */
 	export function post(
 		screen_id: ScreenId,
@@ -368,6 +371,7 @@ declare module 'monarch.monarch' {
 	 * (Primarily used for unit testing, but could have uses outside testing.)
 	 * @returns {Array} Table with screen IDs. The first entry is at the bottom of the
 	 * stack, and the last value is at the top (and currently visible).
+	  * @upstreamDoc 1bdba082255c
 	 */
 	export function get_stack(): ScreenId[];
 
@@ -376,6 +380,7 @@ declare module 'monarch.monarch' {
 	 *
 	 * @param {number} [offset] - Optional offset from the top of the stack (e.g., -1 for the previous screen).
 	 * @returns {string|hash} - Id of the requested screen.
+	  * @upstreamDoc 0778c92c3290
 	 */
 	export function top(offset?: number): ScreenId;
 
@@ -383,6 +388,7 @@ declare module 'monarch.monarch' {
 	 * Get the screen at the bottom of the stack.
 	 * @param {number} [offset] - Optional offset from the bottom of the stack.
 	 * @returns {string|hash} - Id of the requested screen.
+	  * @upstreamDoc e7154f73a661
 	 */
 	export function bottom(offset?: number): ScreenId;
 
@@ -390,6 +396,7 @@ declare module 'monarch.monarch' {
 	 * Set the timestep to apply for a screen when below a popup.
 	 * @param {string|hash} screen_id - Id of the screen to change the timestep setting for.
 	 * @param {number} timestep - Timestep to apply.
+	  * @upstreamDoc 669cc34ed9d2
 	 */
 	export function set_timestep_below_popup(
 		screen_id: ScreenId,
@@ -404,6 +411,7 @@ declare module 'monarch.monarch' {
 	 *
 	 * @param {string|hash} screen_id - Screen id to associate the transition with.
 	 * @param {function} fn - Transition handler function.
+	  * @upstreamDoc 3d397b5f205f
 	 */
 	export function on_transition(
 		screen_id: ScreenId,
@@ -417,6 +425,7 @@ declare module 'monarch.monarch' {
 	 * this function was called.
 	 * @param {string|hash} screen_id - Screen id to associate the focus listener function with.
 	 * @param {function} fn - Focus listener function.
+	  * @upstreamDoc ccee909a8dea
 	 */
 	export function on_focus_changed(
 		screen_id: ScreenId,
@@ -431,6 +440,7 @@ declare module 'monarch.monarch' {
 	 * this function was called.
 	 * @param {string|hash} screen_id - Screen id to associate the message listener function with.
 	 * @param {function|string} fn_or_url - The function to call or URL to send the message to.
+	  * @upstreamDoc 34c9f1d81fc6
 	 */
 	export function on_post(
 		screen_id: ScreenId,
@@ -440,12 +450,14 @@ declare module 'monarch.monarch' {
 	/**
 	 * Add a listener to be notified when screens are shown or hidden.
 	 * @param {url|undefined} url - The url to notify, undefined for the current url.
+	  * @upstreamDoc 1353408e5121
 	 */
 	export function add_listener(url?: Url): void;
 
 	/**
 	 * Remove a previously added listener.
 	 * @param {url|undefined} url - The url to remove, nil for current url.
+	  * @upstreamDoc 555b4ef08ef7
 	 */
 	export function remove_listener(url?: Url): void;
 

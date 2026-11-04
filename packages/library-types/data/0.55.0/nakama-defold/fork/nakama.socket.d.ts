@@ -173,6 +173,7 @@ declare module 'nakama.socket' {
    * @param socket A socket created with `create`.
    * @param callback Receives whether the connection succeeded, and the error if it did not.
    * @returns The result, when no callback is given.
+    * @upstreamDoc 2455b9be3faf
    */
   function connect(
     socket: Socket,
@@ -186,6 +187,7 @@ declare module 'nakama.socket' {
    * @param message The message table to send.
    * @param callback Receives the server's response.
    * @returns The response, when no callback is given.
+    * @upstreamDoc 8a28a8250538
    */
   function send(socket: Socket, message: unknown, callback?: (message: unknown) => void): unknown;
 
@@ -194,6 +196,7 @@ declare module 'nakama.socket' {
    * arguments, and replaces the socket's bound `on_disconnect` method.
    * @param socket A socket created with `create`.
    * @param fn Called on disconnect.
+    * @upstreamDoc 10091d1f14fe
    */
   function on_disconnect(socket: Socket, fn: () => void): void;
 

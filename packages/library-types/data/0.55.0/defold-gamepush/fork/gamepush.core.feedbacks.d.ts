@@ -44,6 +44,7 @@ declare module 'gamepush.core.feedbacks' {
    * Sends a feedback. Raises when the table is missing.
    * @param parameters The feedback, for example `{ type: "SUGGESTION", text: "..." }`.
    * @param callback Receives the result.
+    * @upstreamDoc 8302878374a9
    */
   export function send(
     parameters: Record<string, unknown>,
@@ -54,6 +55,7 @@ declare module 'gamepush.core.feedbacks' {
    * Opens the feedback list window.
    * @param parameters The list filter, or nil for every feedback.
    * @param callback Receives the result.
+    * @upstreamDoc 0b9c777523e8
    */
   export function open(
     parameters?: Record<string, unknown>,
@@ -64,6 +66,7 @@ declare module 'gamepush.core.feedbacks' {
    * Opens one feedback. Raises when the table is missing.
    * @param parameters The feedback, for example `{ feedbackId: 1 }`.
    * @param callback Receives the result.
+    * @upstreamDoc 1f0419a5bf81
    */
   export function open_feedback(
     parameters: Record<string, unknown>,
@@ -75,6 +78,7 @@ declare module 'gamepush.core.feedbacks' {
    * @param parameters The list filter, or nil for every feedback.
    * @param callback Receives the result.
    * @returns The result when called without `callback`, else nil.
+    * @upstreamDoc e1157a21edb1
    */
   export function fetch(
     parameters?: Record<string, unknown>,
@@ -86,6 +90,7 @@ declare module 'gamepush.core.feedbacks' {
    * @param parameters The list filter, or nil for every feedback.
    * @param callback Receives the result.
    * @returns The result when called without `callback`, else nil.
+    * @upstreamDoc d3ade216dfdc
    */
   export function fetch_more(
     parameters?: Record<string, unknown>,
@@ -96,6 +101,7 @@ declare module 'gamepush.core.feedbacks' {
    * Sends a message to a feedback's chat. Raises when the table is missing.
    * @param parameters The message, for example `{ feedbackId: 1, text: "..." }`.
    * @param callback Receives the result.
+    * @upstreamDoc f56ba33e20c9
    */
   export function send_message(
     parameters: Record<string, unknown>,

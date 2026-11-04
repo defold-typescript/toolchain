@@ -75,6 +75,7 @@ declare module 'gamepush.core.multiplayer' {
    * is missing.
    * @param parameters The room's channel.
    * @param callback Receives the result.
+    * @upstreamDoc 16040006fcfa
    */
   export function connect(parameters: RoomParameters, callback?: (result: unknown) => void): void;
 
@@ -82,6 +83,7 @@ declare module 'gamepush.core.multiplayer' {
    * Disconnects from a room.
    * @param parameters The room's channel, or nil for the current room.
    * @param callback Receives the result.
+    * @upstreamDoc b66039356e6d
    */
   export function disconnect(
     parameters?: RoomParameters,
@@ -91,12 +93,14 @@ declare module 'gamepush.core.multiplayer' {
   /**
    * Declares the player fields to sync. Raises when the table is missing.
    * @param schema The fields and their settings.
+    * @upstreamDoc 39619ba079b9
    */
   export function define_player_schema(schema: Record<string, unknown>): void;
 
   /**
    * Declares the shared fields to sync. Raises when the table is missing.
    * @param schema The fields and their settings.
+    * @upstreamDoc ce8da8e9bf54
    */
   export function define_global_schema(schema: Record<string, unknown>): void;
 
@@ -104,6 +108,7 @@ declare module 'gamepush.core.multiplayer' {
    * Sets how the host creates a joining player's state. Raises unless `initializer` is a
    * function.
    * @param initializer Receives the player's id and info and returns its initial state.
+    * @upstreamDoc d8b3211995f5
    */
   export function set_player_initializer(
     initializer: (
@@ -115,25 +120,34 @@ declare module 'gamepush.core.multiplayer' {
   /**
    * Updates the player's state. Raises when the table is missing.
    * @param state The fields to change.
+    * @upstreamDoc 171135b4b5c0
    */
   export function set_player_state(state: Record<string, unknown>): void;
 
   /**
    * Sets the global state; the host only. Raises when the table is missing.
    * @param state The world state.
+    * @upstreamDoc 770eee8093fc
    */
   export function set_global_state(state: Record<string, unknown>): void;
 
   /**
    * Picks the sync mode. Raises unless `mode` is a string.
    * @param mode `MODE_FAST` or `MODE_SMOOTH`.
+    * @upstreamDoc 492049c879cb
    */
   export function set_mode(mode: "fast" | "smooth"): void;
 
-  /** Subscribes to the SDK tick, delivered to `callbacks.tick`. */
+  /**
+   * Subscribes to the SDK tick, delivered to `callbacks.tick`.
+   * @upstreamDoc 84b5fb24c6bb
+   */
   export function on_tick(): void;
 
-  /** Unsubscribes from the SDK tick. */
+  /**
+   * Unsubscribes from the SDK tick.
+   * @upstreamDoc 75f1f8663111
+   */
   export function off_tick(): void;
 
   /**
@@ -142,6 +156,7 @@ declare module 'gamepush.core.multiplayer' {
    * @param data JSON-compatible data.
    * @param target_or_options `"all"`, a player id, or the target and echo options; nil
    * sends to everyone.
+    * @upstreamDoc 45402241b58b
    */
   export function send_message(
     event_name: string,
@@ -149,31 +164,58 @@ declare module 'gamepush.core.multiplayer' {
     target_or_options?: string | number | SendMessageOptions,
   ): void;
 
-  /** Subscribes to messages from other players, delivered to `callbacks.message`. */
+  /**
+   * Subscribes to messages from other players, delivered to `callbacks.message`.
+   * @upstreamDoc 5c8766c02ee8
+   */
   export function on_message(): void;
 
-  /** Unsubscribes from messages from other players. */
+  /**
+   * Unsubscribes from messages from other players.
+   * @upstreamDoc 4e21aa7b2730
+   */
   export function off_message(): void;
 
-  /** Whether the player is connected to a room. */
+  /**
+   * Whether the player is connected to a room.
+   * @upstreamDoc 370a6d8c2737
+   */
   export function is_connected(): boolean;
 
-  /** Whether the player is the room's host. */
+  /**
+   * Whether the player is the room's host.
+   * @upstreamDoc 9f57ca5e9266
+   */
   export function is_host(): boolean;
 
-  /** The players connected to the room. */
+  /**
+   * The players connected to the room.
+   * @upstreamDoc aaa6ed819bb1
+   */
   export function connected_players(): Record<string, unknown>[];
 
-  /** The current network figures. */
+  /**
+   * The current network figures.
+   * @upstreamDoc 94db28c5f43e
+   */
   export function network_stats(): NetworkStats;
 
-  /** The player's state, or nil before it is set. */
+  /**
+   * The player's state, or nil before it is set.
+   * @upstreamDoc f058f43cf9c9
+   */
   export function my_state(): Record<string, unknown> | undefined;
 
-  /** Every player's state, keyed by player id. */
+  /**
+   * Every player's state, keyed by player id.
+   * @upstreamDoc d5fb14e92e77
+   */
   export function players_state(): Record<string, unknown>;
 
-  /** The last global state, or nil before one is set. */
+  /**
+   * The last global state, or nil before one is set.
+   * @upstreamDoc 5febe19c5950
+   */
   export function global_state(): Record<string, unknown> | undefined;
 
   /** The multiplayer event handlers. */

@@ -10,6 +10,7 @@ declare module 'orthographic.camera' {
 	 * @param camera_id undefined for the first camera
 	 * @param targets Game object(s) to follow
 	 * @param options Options
+	  * @upstreamDoc 798ef0fd4b04
 	 */
 	export function follow(
 		camera_id: Hash | Url | undefined,
@@ -41,6 +42,7 @@ declare module 'orthographic.camera' {
 	/**
 	 * Get the current zoom level of the camera.
 	 * @param camera_id (hash | url), undefined for the first camera
+	  * @upstreamDoc 340a989f5864
 	 */
 	export function get_zoom(camera_id: Hash | Url | undefined): number;
 
@@ -48,6 +50,7 @@ declare module 'orthographic.camera' {
 	 * Change the zoom level of the camera.
 	 * @param camera_id undefined for the first camera
 	 * @param zoom  The new zoom level of the camera
+	  * @upstreamDoc 22cf33f1ceb0
 	 */
 	export function set_zoom(
 		camera_id: Hash | Url | undefined,
@@ -79,6 +82,7 @@ declare module 'orthographic.camera' {
 	 * @param duration Duration of the shake, in seconds. Defaults to 0.5
 	 * @param direction Direction of the shake. Possible values: `both`, `horizontal`, `vertical`. Defaults to `both`.
 	 * @param cb Function to call when the shake has finished. Optional.
+	  * @upstreamDoc 84db852ea1df
 	 */
 	export function shake(
 		camera_id: Hash | Url | undefined,
@@ -91,6 +95,7 @@ declare module 'orthographic.camera' {
 	/**
 	 * Stop shaking the camera.
 	 * @param camera_id (hash | url), undefined for the first camera
+	  * @upstreamDoc c54283e94e8a
 	 */
 	export function stop_shaking(camera_id: Hash | Url | undefined): void;
 
@@ -98,6 +103,7 @@ declare module 'orthographic.camera' {
 	 * Translate screen coordinates to world coordinates, based on the view and projection of the camera.
 	 * @param camera_id (hash | url), undefined for the first camera
 	 * @param screen Screen coordinates to convert
+	  * @upstreamDoc 1ac8a15ff1a7
 	 */
 	export function screen_to_world(
 		camera_id: Hash | Url | undefined,
@@ -116,28 +122,33 @@ declare module 'orthographic.camera' {
 
 	/**
 	 * Get the display size (ie from game.project).
+	  * @upstreamDoc 78e07aca9ae6
 	 */
 	export function get_display_size(): LuaMultiReturn<[number, number]>;
 
 	/**
 	 * Get window size.
+	  * @upstreamDoc 33cea1f9a7d1
 	 */
 	export function get_window_size(): LuaMultiReturn<[number, number]>;
 
 	/**
 	 * Get list of camera ids.
+	  * @upstreamDoc e6ac6c1297e3
 	 */
 	export function get_cameras(): Array<Hash | Url | undefined>;
 
 	/**
 	 * Get the current view of the camera.
 	 * @param camera_id undefined for the first camera
+	  * @upstreamDoc 8062c8727e78
 	 */
 	export function get_view(camera_id: Hash | Url | undefined): Matrix4;
 
 	/**
 	 * Get the current viewport of the camera.
 	 * @param camera_id undefined for the first camera
+	  * @upstreamDoc 30e376a72f25
 	 */
 	export function get_viewport(
 		camera_id: Hash | Url | undefined,
@@ -146,6 +157,7 @@ declare module 'orthographic.camera' {
 	/**
 	 * Get the current projection of the camera.
 	 * @param camera_id undefined for the first camera
+	  * @upstreamDoc 52fa9ed4f9e1
 	 */
 	export function get_projection(
 		camera_id: Hash | Url | undefined,
@@ -156,6 +168,7 @@ declare module 'orthographic.camera' {
 	 * @param camera_id
 	 * @param offset Offset to apply to the camera. Defaults to 0.05
 	 * @param duration Duration of the recoil, in seconds. Defaults to 0.5
+	  * @upstreamDoc c4798b3d2956
 	 */
 	export function recoil(
 		camera_id: Hash | Url,
@@ -166,6 +179,7 @@ declare module 'orthographic.camera' {
 	/**
 	 * Get the current offset of the camera (caused by shake or recoil)
 	 * @param camera_id undefined for the first camera
+	  * @upstreamDoc 001641ed9a76
 	 */
 	export function get_offset(camera_id: Hash | Url | undefined): Vector3;
 
@@ -173,6 +187,7 @@ declare module 'orthographic.camera' {
 	 * Change the camera follow offset.
 	 * @param camera_id undefined for the first camera
 	 * @param offset Camera offset from target position.
+	  * @upstreamDoc d12f33b3a6be
 	 */
 	export function follow_offset(
 		camera_id: Hash | Url | undefined,
@@ -182,6 +197,7 @@ declare module 'orthographic.camera' {
 	/**
 	 * Stop following a game object.
 	 * @param camera_id undefined for the first camera
+	  * @upstreamDoc 174911454bda
 	 */
 	export function unfollow(camera_id: Hash | Url | undefined): void;
 
@@ -192,6 +208,7 @@ declare module 'orthographic.camera' {
 	 * @param top Number of pixels above the camera
 	 * @param right Number of pixels to the right of the camera
 	 * @param bottom Number of pixels below the camera
+	  * @upstreamDoc 11d954c30cfa
 	 */
 	export function deadzone(
 		camera_id: Hash | Url | undefined,
@@ -208,6 +225,7 @@ declare module 'orthographic.camera' {
 	 * @param top Top edge of camera bounds
 	 * @param right  Right edge of camera bounds
 	 * @param bottom Bottom edge of camera bounds
+	  * @upstreamDoc cedadbf24c4d
 	 */
 	export function bounds(
 		camera_id: Hash | Url | undefined,
@@ -220,6 +238,7 @@ declare module 'orthographic.camera' {
 	/**
 	 * Translate screen boundaries (corners) to world coordinates, based on the view and projection of the camera.
 	 * @param camera_id undefined for the first camera
+	  * @upstreamDoc 2dafc5f1cb49
 	 */
 	export function screen_to_world_bounds(
 		camera_id: Hash | Url | undefined,
@@ -229,6 +248,7 @@ declare module 'orthographic.camera' {
 	 * Translate world coordinates to screen coordinates, based on the view and projection of the camera. This is useful when manually culling game objects and you need to determine if a world coordinate will be visible or not. It can also be used to position gui nodes on top of game objects.
 	 * @param camera_id undefined for the first camera
 	 * @param world World coordinates to convert
+	  * @upstreamDoc 70ecbe62ee84
 	 */
 	export function world_to_screen(
 		camera_id: Hash | Url | undefined,

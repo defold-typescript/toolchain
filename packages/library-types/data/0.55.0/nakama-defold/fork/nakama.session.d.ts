@@ -48,12 +48,14 @@ declare module 'nakama.session' {
    * Whether the session's access token expires within the next twenty-four hours.
    * Refresh the session while this is true rather than waiting for it to expire.
    * @param session A session created with `create`.
+    * @upstreamDoc 93b479d9bf66
    */
   function is_token_expired_soon(session: Session): boolean;
 
   /**
    * Whether the session's access token has already expired.
    * @param session A session created with `create`.
+    * @upstreamDoc e4cdd020ef0d
    */
   function is_token_expired(session: Session): boolean;
 
@@ -68,6 +70,7 @@ declare module 'nakama.session' {
    * Whether the session's refresh token has expired. A session created without a
    * refresh token counts as expired, there being nothing left to refresh with.
    * @param session A session created with `create`.
+    * @upstreamDoc 371e80a869c3
    */
   function is_refresh_token_expired(session: Session): boolean;
 
@@ -75,6 +78,7 @@ declare module 'nakama.session' {
    * Builds a session from an authentication response, decoding the tokens it carries
    * to read their expiry, username, user id and session variables.
    * @param data The authentication response, which must carry a `token`.
+    * @upstreamDoc b9c077dc0344
    */
   function create(data: SessionData): Session;
 
@@ -83,6 +87,7 @@ declare module 'nakama.session' {
    * @param session The session to store.
    * @param id Names the saved session. Defaults to `nakama`.
    * @returns Whether the save succeeded.
+    * @upstreamDoc 291b9bb83f72
    */
   function store(session: Session, id?: string): boolean;
 
@@ -90,6 +95,7 @@ declare module 'nakama.session' {
    * Reads back a session written by `store`.
    * @param id The name the session was stored under. Defaults to `nakama`.
    * @returns The stored session, or `nil` if nothing usable was stored under that name.
+    * @upstreamDoc 4f23e5586ecb
    */
   function restore(id?: string): Session | undefined;
 }

@@ -42,6 +42,7 @@ declare module 'nakama.nakama' {
    * - SET: Override the leaderboard operator with SET.
    * - INCREMENT: Override the leaderboard operator with INCREMENT.
    * - DECREMENT: Override the leaderboard operator with DECREMENT.
+    * @upstreamDoc d3b8801c8eef
    */
   export const APIOPERATOR_NO_OVERRIDE: "NO_OVERRIDE";
   export const APIOPERATOR_BEST: "BEST";
@@ -53,6 +54,7 @@ declare module 'nakama.nakama' {
    * - UNKNOWN: Unknown environment.
    * - SANDBOX: Sandbox/test environment.
    * - PRODUCTION: Production environment.
+    * @upstreamDoc d37ddd4bbdce
    */
   export const APISTOREENVIRONMENT_UNKNOWN: "UNKNOWN";
   export const APISTOREENVIRONMENT_SANDBOX: "SANDBOX";
@@ -63,6 +65,7 @@ declare module 'nakama.nakama' {
    * - GOOGLE_PLAY_STORE: Google Play Store
    * - HUAWEI_APP_GALLERY: Huawei App Gallery
    * - FACEBOOK_INSTANT_STORE: Facebook Instant Store
+    * @upstreamDoc 1c2fb74ac101
    */
   export const APISTOREPROVIDER_APPLE_APP_STORE: "APPLE_APP_STORE";
   export const APISTOREPROVIDER_GOOGLE_PLAY_STORE: "GOOGLE_PLAY_STORE";

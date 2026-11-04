@@ -403,6 +403,7 @@
       "name": "in_stack",
       "brief": "Check if a screen exists in the current screen stack",
       "description": "Check if a screen exists in the current screen stack",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "screen_id",
@@ -478,6 +479,7 @@
       "name": "is_loaded",
       "brief": "Check if a screen is loaded",
       "description": "Check if a screen is loaded",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "screen_id",
@@ -503,6 +505,7 @@
       "name": "is_popup",
       "brief": "Check if a screen is a popup",
       "description": "Check if a screen is a popup",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "screen_id",
@@ -603,6 +606,7 @@
       "name": "unregister",
       "brief": "Unregister a screen",
       "description": "Unregister a screen\nThis is done automatically by the screen.script",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "screen_id",
@@ -620,6 +624,7 @@
       "name": "data",
       "brief": "Get data associated with a screen",
       "description": "Get data associated with a screen",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "screen_id",
@@ -924,8 +929,9 @@
     {
       "type": "FUNCTION",
       "name": "preload",
-      "brief": "Preload a screen. This will load but not enable and show a screen.",
-      "description": "Preload a screen. This will load but not enable and show a screen.\nUseful for \"heavier\" screens that you wish to show without any delay.",
+      "brief": "Preload a screen. This will load but not enable and show a screen. Useful for \"heavier\" screens",
+      "description": "Preload a screen. This will load but not enable and show a screen. Useful for \"heavier\" screens\nthat you wish to show without any delay.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "screen_id",
