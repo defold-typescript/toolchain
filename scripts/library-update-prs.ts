@@ -1,12 +1,16 @@
 import { readFileSync } from "node:fs";
 import { isAbsolute, relative, sep } from "node:path";
 import { scopesOf } from "./ci-scope.ts";
+import { isIssueTitle as isMovedIssueTitle } from "./library-upstream-issue.ts";
 
 export const BOT_BRANCH_PREFIX = "library-update/";
+export const ISSUE_TITLE_PREFIX = "library update cannot land ";
 
 // Opens one PR per library that `library update --json` changed, and turns on
 // auto-merge for a PR only when the change is safe and every path is library data,
-// and only for the commit it checked.
+// and only for the commit it checked. It closes its PR for a library found current
+// or held, and keeps one issue open per library it cannot land: one that failed to
+// update, or whose PR's checks were red when the run started.
 
 type Change = "kept" | "added" | "changed";
 
@@ -35,6 +39,41 @@ interface UpdateReport {
 }
 
 export type Run = (args: string[]) => { code: number; stdout: string; stderr: string };
+
+// One entry of `gh pr list --json statusCheckRollup`: a check run, or a commit
+// status from a service that reports through the statuses API.
+export interface Check {
+  readonly __typename?: string;
+  readonly name?: string;
+  readonly context?: string;
+  readonly status?: string;
+  readonly conclusion?: string | null;
+  readonly state?: string;
+}
+
+interface OpenPull {
+  readonly number: number;
+  readonly headRefName: string;
+  readonly statusCheckRollup: Check[] | null;
+}
+
+interface OpenIssue {
+  readonly number: number;
+  readonly title: string;
+}
+
+const RED_CONCLUSIONS = ["FAILURE", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED", "STARTUP_FAILURE"];
+const RED_STATES = ["FAILURE", "ERROR"];
+const GREEN_CONCLUSIONS = ["SUCCESS", "SKIPPED", "NEUTRAL"];
+
+export function checksState(rollup: readonly Check[]): "red" | "green" | "pending" {
+  const failed = ({ conclusion, state }: Check) =>
+    RED_CONCLUSIONS.includes(conclusion ?? "") || RED_STATES.includes(state ?? "");
+  const passed = ({ status, conclusion, state }: Check) =>
+    (status === "COMPLETED" && GREEN_CONCLUSIONS.includes(conclusion ?? "")) || state === "SUCCESS";
+  if (rollup.some(failed)) return "red";
+  return rollup.length > 0 && rollup.every(passed) ? "green" : "pending";
+}
 
 const SAFE_CHANGES: readonly Change[] = ["kept", "added"];
 const BASE = "main";
@@ -160,6 +199,87 @@ function openPullRequest(entry: UpdateEntry, dataFolder: string, run: Run): void
   }
 }
 
+function listed<T>(run: Run, args: string[]): T[] {
+  return JSON.parse(must(run, args)) as T[];
+}
+
+function settledReason(entry: UpdateEntry): string {
+  return entry.status === "held"
+    ? `\`library update\` found ${entry.library} held: its \`follows\` is \`none\`.`
+    : `\`library update\` found ${entry.library} current.`;
+}
+
+function issueBody(library: string, failure: string | undefined, pull: number | undefined): string {
+  const lines: string[] = [];
+  if (failure !== undefined)
+    lines.push(`\`library update\` could not update ${library}: ${failure}`);
+  if (pull !== undefined) lines.push(`#${pull} has a failed check, so it cannot merge.`);
+  lines.push(
+    "",
+    "The library update bot edits this issue on each run and closes it once nothing stops the library landing.",
+  );
+  return `${lines.join("\n")}\n`;
+}
+
+const MOVED_ISSUE_COMMENT =
+  "The library update bot tracks upstream moves: it opens a PR for each library that moved, and files `library update cannot land <library>` when one cannot land.";
+
+// `pulls` holds the bot PRs still open, keyed by library, with the checks read
+// before the run pushed anything.
+function reconcileIssues(
+  failed: readonly { library: string; message: string }[],
+  pulls: ReadonlyMap<string, OpenPull>,
+  settled: ReadonlyMap<string, string>,
+  issues: readonly OpenIssue[],
+  run: Run,
+): void {
+  const failures = new Map(failed.map(({ library, message }) => [library, message]));
+  const red = new Map(
+    [...pulls]
+      .filter(([, pull]) => checksState(pull.statusCheckRollup ?? []) === "red")
+      .map(([library, pull]) => [library, pull.number]),
+  );
+  const open = new Map(
+    issues
+      .filter(({ title }) => title.startsWith(ISSUE_TITLE_PREFIX))
+      .map((issue) => [issue.title.slice(ISSUE_TITLE_PREFIX.length), issue]),
+  );
+  for (const library of new Set([...failures.keys(), ...red.keys()])) {
+    const body = issueBody(library, failures.get(library), red.get(library));
+    const issue = open.get(library);
+    if (issue === undefined) {
+      must(run, [
+        "gh",
+        "issue",
+        "create",
+        "--title",
+        `${ISSUE_TITLE_PREFIX}${library}`,
+        "--body",
+        body,
+      ]);
+    } else {
+      must(run, ["gh", "issue", "edit", String(issue.number), "--body", body]);
+    }
+  }
+  for (const [library, issue] of open) {
+    if (failures.has(library) || red.has(library)) continue;
+    const pull = pulls.get(library);
+    const state = pull === undefined ? undefined : checksState(pull.statusCheckRollup ?? []);
+    if (state === "pending") continue;
+    const reason =
+      settled.get(library) ??
+      (pull === undefined
+        ? `\`library update\` no longer fails for ${library}.`
+        : `#${pull.number} passed its checks.`);
+    must(run, ["gh", "issue", "close", String(issue.number), "--comment", reason]);
+  }
+  for (const issue of issues) {
+    if (isMovedIssueTitle(issue.title)) {
+      must(run, ["gh", "issue", "close", String(issue.number), "--comment", MOVED_ISSUE_COMMENT]);
+    }
+  }
+}
+
 export function main(reportPath: string, { cwd, run }: { cwd: string; run: Run }): number {
   const report = JSON.parse(readFileSync(reportPath, "utf8")) as UpdateReport;
   if (report.updated === undefined || report.failed === undefined) {
@@ -168,9 +288,55 @@ export function main(reportPath: string, { cwd, run }: { cwd: string; run: Run }
     );
   }
   const dataFolder = repoRelative(cwd, report.dataFolder);
+  // Read before the first push: a force-push restarts a PR's checks, so only the
+  // state from before it says how the last refresh did.
+  const pulls = new Map(
+    listed<OpenPull>(run, [
+      "gh",
+      "pr",
+      "list",
+      "--state",
+      "open",
+      "--limit",
+      "200",
+      "--json",
+      "number,headRefName,statusCheckRollup",
+    ])
+      .filter(({ headRefName }) => headRefName.startsWith(BOT_BRANCH_PREFIX))
+      .map((pull) => [pull.headRefName.slice(BOT_BRANCH_PREFIX.length), pull]),
+  );
+  const issues = listed<OpenIssue>(run, [
+    "gh",
+    "issue",
+    "list",
+    "--state",
+    "open",
+    "--limit",
+    "200",
+    "--json",
+    "number,title",
+  ]);
+  const settled = new Map<string, string>();
   for (const entry of report.updated) {
-    if (entry.written.length > 0) openPullRequest(entry, dataFolder, run);
+    if (entry.written.length > 0) {
+      openPullRequest(entry, dataFolder, run);
+      continue;
+    }
+    const reason = settledReason(entry);
+    settled.set(entry.library, reason);
+    if (pulls.delete(entry.library)) {
+      must(run, [
+        "gh",
+        "pr",
+        "close",
+        `${BOT_BRANCH_PREFIX}${entry.library}`,
+        "--delete-branch",
+        "--comment",
+        `${reason} This PR has nothing left to land.`,
+      ]);
+    }
   }
+  reconcileIssues(report.failed, pulls, settled, issues, run);
   for (const { library, message } of report.failed) console.error(`${library}: ${message}`);
   return report.failed.length > 0 ? 1 : 0;
 }

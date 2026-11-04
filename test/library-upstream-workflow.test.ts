@@ -36,6 +36,12 @@ function steps(): Step[] {
   return Object.values(loadWorkflow().jobs ?? {}).flatMap((job) => job.steps ?? []);
 }
 
+const CHECKS = ["asset-portal-check", "shipped-types-check"];
+
+function issueSteps(): Step[] {
+  return steps().filter((step) => (step.run ?? "").includes("gh issue create"));
+}
+
 describe("library upstream check workflow", () => {
   test("is valid YAML", () => {
     expect(() => loadWorkflow()).not.toThrow();
@@ -56,29 +62,29 @@ describe("library upstream check workflow", () => {
     expect(loadWorkflow().permissions?.issues).toBe("write");
   });
 
-  test("invokes the check as a file so only the report reaches stdout", () => {
+  test.each(CHECKS)("invokes %s as a file so only the report reaches stdout", (check) => {
     const runs = steps().map((step) => step.run ?? "");
-    expect(runs.some((cmd) => cmd.includes("bun scripts/library-upstream-check.ts --json"))).toBe(
-      true,
-    );
+    expect(runs.some((cmd) => cmd.includes(`bun scripts/${check}.ts --json`))).toBe(true);
   });
 
   test("passes every library tool the data folder it reads", () => {
+    const tool = new RegExp(`bun scripts/(${CHECKS.join("|")})\\.ts`);
     const runs = steps()
       .map((step) => step.run ?? "")
-      .filter((cmd) =>
-        /bun scripts\/(library-upstream-check|asset-portal-check|shipped-types-check)\.ts/.test(
-          cmd,
-        ),
-      );
-    expect(runs).toHaveLength(3);
+      .filter((cmd) => tool.test(cmd));
+    expect(runs).toHaveLength(CHECKS.length);
     expect(runs.filter((cmd) => !/ --data \S+/.test(cmd))).toEqual([]);
   });
 
-  test("creates an issue only for a report the script marked actionable", () => {
-    const script = steps()
+  test("scans no pins, since the library update bot reports a moved library", () => {
+    const runs = steps().map((step) => step.run ?? "");
+    expect(runs.filter((cmd) => cmd.includes("library-upstream-check.ts"))).toEqual([]);
+  });
+
+  test("creates an issue only for a shipped-types report the script marked actionable", () => {
+    const script = issueSteps()
       .map((step) => step.run ?? "")
-      .find((cmd) => cmd.includes("gh issue create"));
+      .find((cmd) => cmd.includes("shipped.json"));
     expect(script).toBeDefined();
     const body = script ?? "";
     // Assert the guard's polarity, not merely that `actionable` is mentioned:
@@ -89,28 +95,27 @@ describe("library upstream check workflow", () => {
   });
 
   test("looks an open issue up by exact title before creating one", () => {
-    const script = steps()
-      .map((step) => step.run ?? "")
-      .find((cmd) => cmd.includes("gh issue create"));
-    const body = script ?? "";
-    expect(body).toContain("gh issue list");
-    expect(body.indexOf("gh issue list")).toBeLessThan(body.indexOf("gh issue create"));
+    const scripts = issueSteps().map((step) => step.run ?? "");
+    expect(scripts).not.toHaveLength(0);
+    for (const body of scripts) {
+      expect(body).toContain("gh issue list");
+      expect(body.indexOf("gh issue list")).toBeLessThan(body.indexOf("gh issue create"));
+    }
   });
 
   test("opens issues for the reports that were readable even when a scan step failed", () => {
-    const issueStep = steps().find((step) => (step.run ?? "").includes("gh issue create"));
-    expect(issueStep).toBeDefined();
-    // A step defaults to `if: success()`, so one unreadable upstream out of 35
-    // would withhold every other group's issue. The condition has to be one that
-    // still holds after a failed predecessor; `success()` or a missing key reds.
-    const condition = (issueStep?.if ?? "").replace(/\s|\$\{\{|\}\}/g, "");
-    expect(condition).toMatch(/^(!cancelled\(\)|always\(\))$/);
+    const conditions = issueSteps().map((step) => (step.if ?? "").replace(/\s|\$\{\{|\}\}/g, ""));
+    expect(conditions).not.toHaveLength(0);
+    // A step defaults to `if: success()`, so one unreadable repo would withhold
+    // every other report's issue. The condition has to be one that still holds
+    // after a failed predecessor; `success()` or a missing key reds.
+    for (const condition of conditions) expect(condition).toMatch(/^(!cancelled\(\)|always\(\))$/);
   });
 
-  test("keeps the scan step failing the job, so an unreadable upstream is never a quiet green", () => {
-    const scanStep = steps().find((step) =>
-      (step.run ?? "").includes("bun scripts/library-upstream-check.ts"),
-    );
+  test.each(
+    CHECKS,
+  )("keeps the %s step failing the job, so an unreadable source is never a quiet green", (check) => {
+    const scanStep = steps().find((step) => (step.run ?? "").includes(`bun scripts/${check}.ts`));
     expect(scanStep).toBeDefined();
     // The tempting wrong fix for the same bug: `continue-on-error` on the scan
     // would isolate the failure by discarding it, turning a renamed or deleted
