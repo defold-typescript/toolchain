@@ -173,8 +173,14 @@ function deferredChanges(lib: Lib, log: Log): void {
 }
 
 function membership(lib: Lib, log: Log): void {
-  const sys = lib.system<Ent>()(lib.requireAll("a"), tracked(log, "S"));
   const e2: Ent = { name: "e2", a: 1 };
+  const sys = lib.system<Ent>()(lib.requireAll("a"), {
+    ...tracked(log, "S"),
+    onRemove(entity: Ent) {
+      line(log, "onRemove", this.name, entity, undefined);
+      log.push(`onRemove a ${shown(entity.a)} same ${shown(entity === e2)}`);
+    },
+  });
   const w = lib.world<Ent>(
     sys,
     { name: "e1", a: 1 },
@@ -490,6 +496,123 @@ function copies(lib: Lib, log: Log): void {
   log.push(`matched ${names(sys.entities)} world ${names(w.entities)}`);
 }
 
+function copyBeforeSource(lib: Lib, log: Log): void {
+  const make = (name: string) =>
+    lib.processingSystem<Ent>()(lib.requireAll("a"), {
+      ...tracked(log, name),
+      process(entity, dt) {
+        line(log, "process", this.name, entity, dt);
+      },
+    });
+  const a = make("A");
+  const b = make("B");
+  const e1: Ent = { name: "e1", a: 1 };
+  const w = lib.world<Ent>(a, e1);
+  const w2 = lib.world<Ent>(b);
+  const state = (label: string) => {
+    counts(log, `${label} w`, w);
+    counts(log, `${label} w2`, w2);
+    log.push(
+      `${label} w ${names(w.entities)} w2 ${names(w2.entities)} A ${names(a.entities)} B ${names(b.entities)}`,
+    );
+  };
+  const both = (dt: number) => {
+    log.push(`update w ${dt}`);
+    w.update(dt);
+    log.push(`update w2 ${dt}`);
+    w2.update(dt);
+  };
+
+  const c1: Ent = { ...e1, name: "c1" };
+  w2.addEntity(c1);
+  log.push("update w2 0.25");
+  w2.update(0.25);
+  state("copy added");
+
+  w2.addEntity(e1);
+  both(0.5);
+  state("source added");
+
+  e1.a = 2;
+  w.changed(e1);
+  w2.changed(e1);
+  both(0.75);
+  state("changed");
+
+  w.removeEntity(e1);
+  both(1);
+  state("removed from w");
+
+  w2.removeEntity(c1);
+  w2.removeEntity(e1);
+  both(1.25);
+  state("removed from w2");
+}
+
+function reentrantSystemAdd(lib: Lib, log: Log): void {
+  const make = (name: string) =>
+    lib.system<Ent>()(lib.requireAll("a"), {
+      name,
+      onAddToWorld(w: World) {
+        line(log, "onAddToWorld", this.name, undefined, undefined);
+        if (this.name === "A") {
+          log.push(`setSystemIndex A 1 old ${w.setSystemIndex(this, 1)}`);
+        }
+      },
+      onAdd(entity: Ent) {
+        line(log, "onAdd", this.name, entity, undefined);
+      },
+      update(dt: number) {
+        line(log, "update", this.name, undefined, dt);
+      },
+    });
+  const z = make("Z");
+  const a = make("A");
+  const b = make("B");
+  const w = lib.world<Ent>(z, a, b, { name: "e1", a: 1 });
+  log.push(
+    `index Z=${shown(z.index)} A=${shown(a.index)} B=${shown(b.index)} order ${names(w.systems)}`,
+  );
+  frame(log, w, 0.25);
+}
+
+function reentrantEntityChange(lib: Lib, log: Log): void {
+  const e1: Ent = { name: "e1", a: 1 };
+  const e2: Ent = { name: "e2", a: 1 };
+  const e3: Ent = { name: "e3", a: 1 };
+  const e4: Ent = { name: "e4", a: 1 };
+  const sys = lib.system<Ent>()(lib.requireAll("a"), {
+    name: "S",
+    onAdd(entity: Ent) {
+      line(log, "onAdd", this.name, entity, undefined);
+      if (entity === e1) {
+        const w = this.world as World;
+        log.push("queue e3, refresh, queue e4");
+        w.addEntity(e3);
+        w.refresh();
+        w.addEntity(e4);
+      }
+    },
+    onModify(dt: number) {
+      line(log, "onModify", this.name, undefined, dt);
+    },
+  });
+  const w = lib.world<Ent>(sys);
+  const state = (label: string) => {
+    counts(log, label, w);
+    log.push(`${label} matched ${names(sys.entities)}`);
+  };
+
+  w.addEntity(e1);
+  w.addEntity(e2);
+  log.push("refresh");
+  w.refresh();
+  state("refreshed");
+  log.push("refresh");
+  w.refresh();
+  state("refreshed again");
+}
+
 function freeFunctions(lib: Lib, log: Log): void {
   const s = lib.processingSystem<Ent>()(lib.requireAll("a"), {
     ...tracked(log, "S"),
@@ -552,6 +675,9 @@ export const scenarios: readonly Scenario[] = [
   { name: "clearing", run: clearing },
   { name: "construction and sharing", run: constructionAndSharing },
   { name: "copies", run: copies },
+  { name: "copy before source", run: copyBeforeSource },
+  { name: "re-entrant system add", run: reentrantSystemAdd },
+  { name: "re-entrant entity change", run: reentrantEntityChange },
   { name: "free functions", run: freeFunctions },
 ];
 
