@@ -596,6 +596,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when someone joins or leaves a joined chat channel.
    * @param socket A socket created with `create`.
    * @param fn Receives the channel presence event.
+   * @upstreamDoc 1d2e93861af7
    */
   function on_channel_presence_event(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -603,6 +604,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when someone joins or leaves a joined match.
    * @param socket A socket created with `create`.
    * @param fn Receives the match presence event.
+   * @upstreamDoc e8c5d3085e57
    */
   function on_match_presence_event(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -611,6 +613,7 @@ declare module 'nakama.socket' {
    * base64-decoded before the listener sees it.
    * @param socket A socket created with `create`.
    * @param fn Receives the match data.
+   * @upstreamDoc d4eb972e9ea6
    */
   function on_match_data(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -618,6 +621,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when a match is created or joined.
    * @param socket A socket created with `create`.
    * @param fn Receives the match.
+   * @upstreamDoc b3adee0b4502
    */
   function on_match(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -626,6 +630,7 @@ declare module 'nakama.socket' {
    * `match_join` takes.
    * @param socket A socket created with `create`.
    * @param fn Receives the matchmaker result.
+   * @upstreamDoc c0f2427985a6
    */
   function on_matchmaker_matched(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -633,6 +638,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when notifications arrive for this user.
    * @param socket A socket created with `create`.
    * @param fn Receives the notifications.
+   * @upstreamDoc 618e30ef9e53
    */
   function on_notifications(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -640,6 +646,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when someone joins or leaves a joined party.
    * @param socket A socket created with `create`.
    * @param fn Receives the party presence event.
+   * @upstreamDoc 5edc0e766337
    */
   function on_party_presence_event(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -647,6 +654,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when a party is created or joined.
    * @param socket A socket created with `create`.
    * @param fn Receives the party.
+   * @upstreamDoc 96bf837b9c03
    */
   function on_party(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -654,6 +662,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when party data arrives.
    * @param socket A socket created with `create`.
    * @param fn Receives the party data.
+   * @upstreamDoc ba9e92d2bd73
    */
   function on_party_data(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -661,6 +670,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when someone asks to join a party this user leads.
    * @param socket A socket created with `create`.
    * @param fn Receives the join request.
+   * @upstreamDoc 3019fce27039
    */
   function on_party_join_request(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -668,6 +678,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when a party changes leader.
    * @param socket A socket created with `create`.
    * @param fn Receives the new leader.
+   * @upstreamDoc b9372293d92b
    */
   function on_party_leader(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -675,6 +686,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when a followed user comes online or goes offline.
    * @param socket A socket created with `create`.
    * @param fn Receives the status presence event.
+   * @upstreamDoc 04e3242158a3
    */
   function on_status_presence_event(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -682,6 +694,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when a followed user changes their status message.
    * @param socket A socket created with `create`.
    * @param fn Receives the status.
+   * @upstreamDoc 3f1e117aecc9
    */
   function on_status(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -689,6 +702,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when data arrives on a subscribed stream.
    * @param socket A socket created with `create`.
    * @param fn Receives the stream data.
+   * @upstreamDoc 040d3530b4fb
    */
   function on_stream_data(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -697,6 +711,7 @@ declare module 'nakama.socket' {
    * the `ERROR_*` constants.
    * @param socket A socket created with `create`.
    * @param fn Receives the error.
+   * @upstreamDoc ba1874730beb
    */
   function on_error(socket: Socket, fn: (message: unknown) => void): void;
 
@@ -704,6 +719,7 @@ declare module 'nakama.socket' {
    * Registers the function to call when a message arrives on a joined chat channel.
    * @param socket A socket created with `create`.
    * @param fn Receives the channel message.
+   * @upstreamDoc f6eabcd792eb
    */
   function on_channel_message(socket: Socket, fn: (message: unknown) => void): void;
 }

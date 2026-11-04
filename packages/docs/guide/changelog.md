@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **Forked library types carry the library's own docs:** `resolve` prints each member the library documents with its doc summary, unless a hand-written fork's own comment is pinned to that exact text with `@upstreamDoc`, so your editor shows on hover what the member's [library API page](https://defold-typescript.github.io/library-data) shows. [`library check`](./library.md#doc-notices) names each fork comment that prints the library's doc instead, with the pin that would keep it, and does not fail for it.
+- **Forked library types carry the library's own docs:** `resolve` prints each member the library documents with its doc summary and the parameter and return docs for the signature the fork declares, unless a hand-written fork's own comment is pinned to that exact text with `@upstreamDoc`, so your editor shows on hover what the member's [library API page](https://defold-typescript.github.io/library-data) shows. [`library check`](./library.md#doc-notices) names each fork comment that prints the library's doc instead, with the pin that would keep it, and does not fail for it.
 
 ## v0.56.0
 

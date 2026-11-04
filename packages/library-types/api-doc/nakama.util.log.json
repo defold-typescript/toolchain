@@ -40,7 +40,7 @@
       "parameters": [
         {
           "name": "fn",
-          "doc": "",
+          "doc": "The custom log function.",
           "types": [
             "(...args: unknown[]) => void"
           ],

@@ -283,7 +283,7 @@ The **callable** axis, upstream members carrying a parameter list against api-do
 | `phantomMembers` | Declared members upstream does not have. |
 | `arityMismatches` | Shared names whose parameter *counts* disagree, each with both numbers — the fork's being the widest signature it declares. Names are not compared — a fork may rename parameters freely. |
 | `undocumentedMembers` | Upstream prose that reached neither the fork nor the import — a member whose accepted block carries no summary to lower, being nothing but tags or nothing but the member's own name. |
-| `importedDocs` | Declared elements carrying upstream's own summary because the fork supplied none or did not pin its own. Counted on both axes. |
+| `importedDocs` | Declared elements carrying upstream's own doc, its summary or only its parameter and return docs, because the fork supplied none or did not pin its own. Counted on both axes. |
 | `refusedDocBlocks` | Refused upstream blocks the fork left **unanswered** — neither documented in the fork's own words nor excused by a recorded `parityException`. Counted on both axes, and the one term that reports prose the import never saw. Authoring the brief clears the charge. |
 | `refusedDocBlocksTotal` | The raw refusal count, before the answered and excused ones are subtracted. Kept so a `refusedDocBlocks` of 0 cannot be misread as upstream writing no `--`-only blocks. |
 | `variadicMembers` | Shared members compared against a floor rather than an exact count, upstream being variadic. |
@@ -425,18 +425,25 @@ justify it*, and every entry is a claim about upstream that the next reader can 
 
 A measured target's printed declaration does not stop at the fork. Where upstream
 documents a module-level member and the fork does not override it with a
-[pinned comment](#pinning-a-fork-comment), upstream's own LuaDoc summary is printed
-as that member's doc comment, so a project's editor shows it on hover. The api-doc is lowered from the same printed declaration, so the `/api`
+[pinned comment](#pinning-a-fork-comment), upstream's own LuaDoc summary, parameter
+docs and return docs are printed as that member's doc comment, so a project's editor
+shows them on hover. The api-doc is lowered from the same printed declaration, so the `/api`
 page shows the same text, marked so a reader can tell it apart from the fork's own
 prose.
 
 Six rules bound it:
 
-- **Tags never come with the summary.** The block is truncated at the first line
-  starting with `@`, and a tag's unmarked continuation lines go with it. No
-  parameter name, type, or `@return` text from LuaDoc ever reaches the print. An
-  `@` after a space inside the summary, such as LDoc's `@{name}` reference, prints
-  as `\@` so TypeScript reads it as text rather than as a tag.
+- **Parameter and return docs follow the declared signature.** The summary ends at
+  the first line starting with `@`. Each `@param` or `@tparam` text prints as an
+  `@param` on every declaration that lists that parameter, in the declaration's
+  order, so an overload carries only its own; `@return` or `@treturn` text prints as
+  `@returns` unless the declaration returns `void`, and a constant takes no tags.
+  Types never print: a `---@param` line is read as LuaLS (`name type description`),
+  every other line as LDoc (`name description`, a `(type)` or a `@tparam` type
+  dropped), and a following line that opens no tag continues the text. A tag with no
+  description, a vararg `...`, and a dotted table field such as `config.dsn` print
+  nothing. An `@` after a space, such as LDoc's `@{name}` reference, prints as `\@`
+  so TypeScript reads it as text rather than as a tag.
 - **One blank line inside a comment run does not end the block.** Upstream often
   wraps a long `@param` list around a blank line, which would otherwise truncate the
   block to its tag half and lose the summary above it. The blank is crossed only when
@@ -451,12 +458,14 @@ Six rules bound it:
 - **Fork prose wins only while pinned.** A member upstream documents keeps exactly
   what the fork wrote, on every overload, only while the fork's comment carries an
   `@upstreamDoc` pin matching upstream's current text (see
-  [Pinning a fork comment](#pinning-a-fork-comment)). Without one, or with a stale
-  one, upstream's summary replaces the fork's summary and its `@param` and
-  `@returns` tags; every other tag, such as `@noSelf` or `@deprecated`, stays. A
-  member upstream does not document keeps the fork's comment, pinned or not. A
-  comment holding only tags, such as `/** @noSelf */`, is not a summary: the print
-  puts upstream's summary at the top of that same block.
+  [Pinning a fork comment](#pinning-a-fork-comment)); a pinned comment replaces
+  upstream's tags as well as its summary. Without a pin, or with a stale one,
+  upstream's summary, parameter docs and return docs replace the fork's summary and
+  its `@param` and `@returns` tags; every other tag, such as `@noSelf` or
+  `@deprecated`, stays. A member upstream does not document keeps the fork's comment,
+  pinned or not. A comment holding only tags, such as `/** @noSelf */`, is not a
+  summary: the print puts upstream's doc at the top of that same block, and an
+  `@param` or `@returns` the fork wrote there keeps its slot.
 - **Only the module's own members.** The merge fills the functions and constants
   directly inside the `declare module` block. A file-scope global and a member of a
   nested namespace keep whatever the fork wrote.

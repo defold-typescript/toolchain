@@ -62,6 +62,7 @@ interface ImportedElement {
   brief?: string;
   description?: string;
   docSource?: string;
+  parameters?: { name: string; doc: string }[];
 }
 
 const tempDirs: string[] = [];
@@ -300,6 +301,16 @@ return M
     expect(start.description).toBe("Start the relay");
     expect(start.brief).toBe("Start the relay");
     expect(start.docSource).toBe("upstream");
+  });
+
+  test("relay.start's parameter lowers upstream's @param text as its doc", () => {
+    const { dataDir, target } = writeRelay();
+    const upstream = parseLuaSurface(RELAY_UPSTREAM).members.find((m) => m.name === "start");
+    const port = upstream?.tags.params.find((param) => param.name === "port")?.doc;
+    expect(port).toBeTruthy();
+    expect(element(dataDir, target, "start").parameters).toEqual([
+      expect.objectContaining({ name: "port", doc: port }),
+    ]);
   });
 
   test("relay.get_level keeps the fork's own pinned prose over upstream's", () => {
