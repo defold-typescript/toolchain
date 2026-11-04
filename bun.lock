@@ -118,6 +118,15 @@
         "vite": "^8.2.1",
       },
     },
+    "packages/ecs": {
+      "name": "@defold-typescript/ecs",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@defold-typescript/transpiler": "workspace:*",
+        "@defold-typescript/types": "workspace:*",
+        "lua-wasm-bindings": "0.5.3",
+      },
+    },
     "packages/hsm": {
       "name": "@defold-typescript/hsm",
       "version": "0.0.0",
@@ -256,6 +265,8 @@
     "@defold-typescript/docs-render": ["@defold-typescript/docs-render@workspace:packages/docs-render"],
 
     "@defold-typescript/docs-site": ["@defold-typescript/docs-site@workspace:packages/docs-site"],
+
+    "@defold-typescript/ecs": ["@defold-typescript/ecs@workspace:packages/ecs"],
 
     "@defold-typescript/hsm": ["@defold-typescript/hsm@workspace:packages/hsm"],
 

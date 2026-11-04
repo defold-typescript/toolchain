@@ -1,0 +1,20 @@
+{
+  "name": "@defold-typescript/ecs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A typed entity component system for Defold games, ported from tiny-ecs to the TypeScript subset that compiles to plain Lua.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.scaffold.json --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@defold-typescript/transpiler": "workspace:*",
+    "@defold-typescript/types": "workspace:*",
+    "lua-wasm-bindings": "0.5.3"
+  }
+}
