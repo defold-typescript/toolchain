@@ -29,8 +29,8 @@ The **Library update** workflow (the toolchain's
 `.github/workflows/library-update.yml`) runs
 [`library update`](https://defold-typescript.github.io/toolchain/library#what-library-update-does)
 over `packages/library-types/data/` with the latest CLI, then opens one pull request
-per library it wrote, from the branch `library-update/<library>`. It runs when
-dispatched:
+per library it wrote, from the branch `library-update/<library>`. It runs daily,
+and when dispatched:
 
 ```sh
 gh workflow run library-update.yml
@@ -68,7 +68,7 @@ its floor is named with the value it measured, and a `usage/` proof that stops
 compiling is named by file and line. Fix the fork, floor or proof as [the couplings a re-pin moves with
 it](#the-couplings-a-re-pin-moves-with-it) describe, on a branch of your own: the
 next run force-pushes `library-update/<library>` and drops any commit pushed to it.
-Close the bot's PR once yours merges.
+Once yours merges, the next run finds the library current and closes the bot's PR.
 
 ### `follows`
 
@@ -82,38 +82,44 @@ which would fail every run; they hold no review, so `resolve` reports them
 
 ## How a stale pin is noticed
 
-`bun run upstream:library-check` scans all five registries and reports, per
-upstream repo, whether the pin has fallen behind:
+The [library update workflow](#the-library-update-workflow) runs daily, so a library
+that moved upstream gets one PR from `library-update/<library>`, refreshed on each
+run. The bot closes that PR, with a comment, once a run finds the library current or
+held.
+
+The bot files an issue titled `library update cannot land <library>` only when it
+cannot land a library: `library update` failed for it, or its PR's checks were red
+when the run started. The issue names the failure or links the PR, a later run edits
+it rather than filing a second, and the bot closes it, with a comment, once neither
+holds. A run reads the checks before it refreshes any PR, so an issue opens or
+closes up to one run after the checks finish.
+
+`bun run upstream:library-check` is a manual report that no workflow runs. It scans
+all five registries and reports, per upstream repo, whether the pin has fallen
+behind:
 
 ```sh
 bun run upstream:library-check          # prose report
 bun run upstream:library-check --json   # one object, for tooling
 ```
 
-The **Library upstream pin check** workflow
-(the toolchain's `.github/workflows/library-upstream-check.yml`) runs it weekly and opens one
-issue per stale repo, titled by repo slug, upstream version and internal marker
-so a rerun before the bump lands finds its own issue rather than minting a second
-one. It is also
-`workflow_dispatch`-able, which matters because GitHub disables a `schedule:`
-trigger after 60 days of repository inactivity.
-
-Two things about the report are worth knowing before you act on it:
+Three things about the report are worth knowing before you act on it:
 
 - **The unit of work is the repo, not the module.** `britzl/defold-input` backs
   ten authored modules and `britzl/defold-orthographic` is consumed by two lanes.
-  One bump answers every dependent, so the check groups by `repo` + `ref` and the
-  issue lists the dependents.
+  One bump answers every dependent, so the check groups by `repo` + `ref`, counts
+  the dependents, and lists them under `--json`.
 - **A commit-pinned repo is only actionable when the delta touches a path this
   repo reads.** The registries already record which upstream files each target
   consumes, so a README-only commit on a pinned repo's default branch reports as
   `behind-head` without asking you to do anything.
 - **A pin that feeds only the fidelity comparison is marked internal.** When
   every dependent is a markdown or OpenAPI target whose `decision` is not `go`,
-  no user receives its output, so the report sets `internal`, the prose line and
-  the issue title end in `(internal)`, and the issue says the bump needs no
-  changelog bullet. It is still actionable: a stale spec hides upstream movement
-  from the go/no-go comparison.
+  no user receives its output, so the report sets `internal` and the prose line
+  ends in `(internal)`; the bump needs no changelog bullet. It is still
+  actionable: a stale spec hides upstream movement from the go/no-go comparison.
+  The library update bot does not update these targets, so this report is the
+  only place their drift shows.
 
 A repo the check could not read at all is reported as `unknown` and exits the
 command non-zero. That is deliberate: a renamed or deleted upstream must not look
@@ -210,8 +216,9 @@ the candidate list for good, whatever its maintenance state. The report refuses
 to run when a verdict names an entry the manifest no longer lists, or an entry a
 registry pins directly or through an alias, since either verdict is stale.
 
-The weekly **Library upstream pin check** workflow also compares the portal
-head's entry ids with the manifest. When ids were added or removed, it opens one
+The weekly **Library upstream check** workflow (the toolchain's
+`.github/workflows/library-upstream-check.yml`) compares the portal head's entry ids
+with the manifest. When ids were added or removed, it opens one
 issue, titled *Asset portal entries differ from asset-portal.json*, that lists
 them and names the re-sync command. The title never changes, so later
 runs stay quiet while that issue is open. A changed entry under an unchanged id
@@ -372,7 +379,7 @@ for a repo with no tags. Each repo reports `accepted`, `rejected` with the
 check's first error, or `none`. A repo it could not read reports `unknown` and
 exits the command non-zero.
 
-The **Library upstream pin check** workflow runs the same sweep weekly and opens
+The **Library upstream check** workflow runs the same sweep weekly and opens
 one issue per accepted repo, titled
 `retire curated types for <slug>: <ref> ships types`. The issue lists the
 shipped files and every curated entry the repo backs.

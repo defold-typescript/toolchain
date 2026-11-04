@@ -1,9 +1,20 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { parse } from "yaml";
-import { main, mayAutoMerge, type Run, type UpdateEntry } from "./library-update-prs.ts";
+import { PORTAL_DRIFT_ISSUE_TITLE } from "./asset-portal-check.ts";
+import { issueTitleFor as releaseIssueTitle } from "./defold-upstream-check.ts";
+import {
+  type Check,
+  checksState,
+  main,
+  mayAutoMerge,
+  type Run,
+  type UpdateEntry,
+} from "./library-update-prs.ts";
+import { issueTitleFor as movedIssueTitle } from "./library-upstream-issue.ts";
+import { issueTitleFor as retireIssueTitle } from "./shipped-types-check.ts";
 
 const DATA = "packages/library-types/data/0.55.0";
 const IDENTITY = [
@@ -31,6 +42,45 @@ function regenerated(library: string, change: "kept" | "added" | "changed"): Upd
 function recordedOnly(library: string): UpdateEntry {
   return { library, status: "recorded", recorded: ["c2"], differs: [], written: ["reviewed.json"] };
 }
+
+function unchanged(library: string, status: "current" | "held"): UpdateEntry {
+  return { library, status, recorded: [], differs: [], written: [] };
+}
+
+// Rollup entries in the shape `gh pr list --json statusCheckRollup` prints them.
+function checkRun(conclusion: string, status = "COMPLETED"): Check {
+  return { __typename: "CheckRun", name: "ci-done", status, conclusion };
+}
+
+function statusContext(state: string): Check {
+  return { __typename: "StatusContext", context: "ci", state };
+}
+
+const RED = [checkRun("SUCCESS"), checkRun("FAILURE")];
+const GREEN = [checkRun("SUCCESS"), checkRun("SKIPPED")];
+const PENDING = [checkRun("SUCCESS"), checkRun("", "IN_PROGRESS")];
+
+describe("checksState", () => {
+  test("a failed check run beside passing ones is red", () => {
+    expect(checksState(RED)).toBe("red");
+  });
+
+  test("an errored status context is red", () => {
+    expect(checksState([checkRun("SUCCESS"), statusContext("ERROR")])).toBe("red");
+  });
+
+  test("check runs that all passed or were skipped are green", () => {
+    expect(checksState(GREEN)).toBe("green");
+  });
+
+  test("a check still in progress is pending", () => {
+    expect(checksState(PENDING)).toBe("pending");
+  });
+
+  test("no checks at all is pending", () => {
+    expect(checksState([])).toBe("pending");
+  });
+});
 
 function ownFiles(entry: UpdateEntry, dataFolder: string): string[] {
   return entry.written.map((path) => `${dataFolder}/${entry.library}/${path}`);
@@ -100,12 +150,20 @@ describe("mayAutoMerge", () => {
   });
 });
 
-// The step a `git push` or `gh pr` call takes, so the fake can fail one and a test
-// can read the order they ran in.
+// The step a `git push`, `gh pr` or `gh issue` call takes, so the fake can fail one
+// and a test can read the order they ran in.
 function operation(args: string[]): string {
   if (args[0] === "git") return args[1] ?? "";
+  if (args[1] === "issue") return `issue-${args[2] ?? ""}`;
+  if (args[2] === "list") return args.includes("--head") ? "list" : "list-all";
   if (args[2] !== "merge") return args[2] ?? "";
   return args.includes("--disable-auto") ? "disable-auto" : "enable";
+}
+
+interface Pull {
+  readonly number: number;
+  readonly headRefName: string;
+  readonly statusCheckRollup: Check[];
 }
 
 describe("main", () => {
@@ -116,7 +174,10 @@ describe("main", () => {
   // Every `git push` and `gh` call, in the order `main` made them.
   let log: string[][];
   let failing: Set<string>;
-  let openBranches: Set<string>;
+  // The open PRs and issues, as GitHub would list them.
+  let pulls: Pull[];
+  let issues: { number: number; title: string }[];
+  let nextIssue: number;
   // Branches whose PR has auto-merge on, as GitHub would hold it.
   let autoMerge: Set<string>;
   // Runs on `pr create` and `pr edit`, standing in for another run's push.
@@ -155,11 +216,35 @@ describe("main", () => {
     return git(remote, "rev-parse", `refs/heads/${branch}`).trim();
   }
 
-  function openPull(library: string, { autoMerging }: { autoMerging: boolean }): void {
+  function openPull(
+    library: string,
+    {
+      autoMerging,
+      number = 7,
+      rollup = [],
+    }: { autoMerging: boolean; number?: number; rollup?: Check[] },
+  ): void {
     const branch = `library-update/${library}`;
     git(repo, "push", "--quiet", "origin", `main:refs/heads/${branch}`);
-    openBranches.add(branch);
+    pulls.push({ number, headRefName: branch, statusCheckRollup: rollup });
     if (autoMerging) autoMerge.add(branch);
+  }
+
+  function respond(stdout: unknown = ""): { code: number; stdout: string; stderr: string } {
+    return {
+      code: 0,
+      stdout: typeof stdout === "string" ? stdout : JSON.stringify(stdout),
+      stderr: "",
+    };
+  }
+
+  function issueCommand(args: string[]): { code: number; stdout: string; stderr: string } {
+    const step = operation(args);
+    if (step === "issue-list") return respond(issues);
+    if (step === "issue-create")
+      issues.push({ number: nextIssue++, title: flag(args, "--title") ?? "" });
+    if (step === "issue-close") issues = issues.filter(({ number }) => String(number) !== args[3]);
+    return respond();
   }
 
   const run: Run = (args) => {
@@ -178,20 +263,22 @@ describe("main", () => {
     log.push(args);
     const step = operation(args);
     if (failing.has(step)) return { code: 1, stdout: "", stderr: `${step} refused` };
+    if (args[1] === "issue") return issueCommand(args);
+    if (step === "list-all") return respond(pulls);
     if (step === "list") {
       const branch = flag(args, "--head") ?? "";
-      const pulls = openBranches.has(branch)
-        ? [
-            {
-              number: 7,
-              autoMergeRequest: autoMerge.has(branch) ? { mergeMethod: "SQUASH" } : null,
-            },
-          ]
-        : [];
-      return { code: 0, stdout: JSON.stringify(pulls), stderr: "" };
+      return respond(
+        pulls
+          .filter(({ headRefName }) => headRefName === branch)
+          .map(({ number }) => ({
+            number,
+            autoMergeRequest: autoMerge.has(branch) ? { mergeMethod: "SQUASH" } : null,
+          })),
+      );
     }
     if (step === "create" || step === "edit") hook?.(args);
     const branch = args[3] ?? "";
+    if (step === "close") pulls = pulls.filter(({ headRefName }) => headRefName !== branch);
     if (step === "disable-auto") autoMerge.delete(branch);
     if (step === "enable") {
       // GitHub's `expectedHeadOid`: auto-merge goes on only while the branch still
@@ -226,7 +313,11 @@ describe("main", () => {
   }
 
   function gh(subcommand: string): string[][] {
-    return log.filter((args) => args[0] === "gh" && args[2] === subcommand);
+    return log.filter((args) => args[0] === "gh" && args[1] === "pr" && args[2] === subcommand);
+  }
+
+  function issueCalls(subcommand: string): string[][] {
+    return log.filter((args) => args[0] === "gh" && args[1] === "issue" && args[2] === subcommand);
   }
 
   function order(...steps: string[]): string[] {
@@ -252,7 +343,9 @@ describe("main", () => {
     seed = git(repo, "rev-parse", "HEAD").trim();
     log = [];
     failing = new Set();
-    openBranches = new Set();
+    pulls = [];
+    issues = [];
+    nextIssue = 20;
     autoMerge = new Set();
     hook = undefined;
   });
@@ -412,11 +505,137 @@ describe("main", () => {
     expect(code).toBe(1);
     expect(gh("create")).toHaveLength(1);
   });
+
+  test("a bot PR for a current or held library is closed and its branch left alone", () => {
+    openPull("alpha", { autoMerging: false, number: 7 });
+    openPull("beta", { autoMerging: false, number: 8 });
+    pulls.push({ number: 9, headRefName: "fix/alpha", statusCheckRollup: RED });
+    const code = main(
+      report([
+        unchanged("alpha", "current"),
+        unchanged("beta", "held"),
+        unchanged("gamma", "current"),
+      ]),
+      { cwd: repo, run },
+    );
+    expect(code).toBe(0);
+    const closes = gh("close");
+    expect(closes.map((args) => args[3])).toEqual(["library-update/alpha", "library-update/beta"]);
+    expect(closes.every((args) => args.includes("--delete-branch"))).toBe(true);
+    expect(flag(closes[0] ?? [], "--comment")).toContain("current");
+    expect(flag(closes[1] ?? [], "--comment")).toContain("held");
+    expect(issueCalls("create")).toEqual([]);
+    expect(order("push")).toEqual([]);
+    expect(remoteHead("library-update/alpha")).toBe(seed);
+    expect(remoteHead("library-update/beta")).toBe(seed);
+  });
+
+  test("a failed library gets one issue naming the failure, which a later run edits", () => {
+    const failedBeta = () => report([], [{ library: "beta", message: "upstream answered 404" }]);
+    expect(main(failedBeta(), { cwd: repo, run })).toBe(1);
+    expect(main(failedBeta(), { cwd: repo, run })).toBe(1);
+    const creates = issueCalls("create");
+    expect(creates.map((args) => flag(args, "--title"))).toEqual([
+      "library update cannot land beta",
+    ]);
+    expect(flag(creates[0] ?? [], "--body")).toContain("upstream answered 404");
+    const edits = issueCalls("edit");
+    expect(edits.map((args) => args[3])).toEqual(["20"]);
+    expect(flag(edits[0] ?? [], "--body")).toContain("upstream answered 404");
+  });
+
+  test("a library whose PR's checks are red gets an issue linking it, read before the push", () => {
+    regenerate("alpha");
+    openPull("alpha", { autoMerging: false, number: 7, rollup: RED });
+    main(report([regenerated("alpha", "kept")]), { cwd: repo, run });
+    const creates = issueCalls("create");
+    expect(creates.map((args) => flag(args, "--title"))).toEqual([
+      "library update cannot land alpha",
+    ]);
+    expect(flag(creates[0] ?? [], "--body")).toContain("#7");
+    expect(order("list-all", "push")).toEqual(["list-all", "push"]);
+    expect(remoteHead("library-update/alpha")).not.toBe(seed);
+  });
+
+  test("a bot issue closes once its library is current or its PR is green, and waits on a pending PR", () => {
+    regenerate("beta");
+    regenerate("gamma");
+    openPull("alpha", { autoMerging: false, number: 7, rollup: RED });
+    openPull("beta", { autoMerging: false, number: 8, rollup: GREEN });
+    openPull("gamma", { autoMerging: false, number: 9, rollup: PENDING });
+    issues = ["alpha", "beta", "gamma"].map((library, index) => ({
+      number: 30 + index,
+      title: `library update cannot land ${library}`,
+    }));
+    main(
+      report([
+        unchanged("alpha", "current"),
+        regenerated("beta", "changed"),
+        regenerated("gamma", "changed"),
+      ]),
+      { cwd: repo, run },
+    );
+    const closes = issueCalls("close");
+    expect(closes.map((args) => args[3])).toEqual(["30", "31"]);
+    expect(flag(closes[0] ?? [], "--comment")).toContain("current");
+    expect(flag(closes[1] ?? [], "--comment")).toContain("#8");
+    expect(issueCalls("edit")).toEqual([]);
+    expect(issueCalls("create")).toEqual([]);
+  });
+
+  test("the weekly pin check's issues are closed and other issues stay open", () => {
+    issues = [
+      { number: 40, title: movedIssueTitle("acme/widget", "2", false) },
+      { number: 41, title: movedIssueTitle("acme/gadget", "main", true) },
+      { number: 42, title: PORTAL_DRIFT_ISSUE_TITLE },
+      { number: 43, title: retireIssueTitle("acme/widget", "v3") },
+      { number: 44, title: releaseIssueTitle("1.13.1") },
+    ];
+    main(report([]), { cwd: repo, run });
+    const closes = issueCalls("close");
+    expect(closes.map((args) => args[3])).toEqual(["40", "41"]);
+    expect(closes.every((args) => (flag(args, "--comment") ?? "") !== "")).toBe(true);
+  });
 });
 
+// The bare specifiers a script reaches through its relative imports: what has to
+// be installed before `bun` can run it.
+function packagesImportedBy(entry: string): string[] {
+  const transpiler = new Bun.Transpiler({ loader: "ts" });
+  const seen = new Set<string>();
+  const packages = new Set<string>();
+  const visit = (file: string): void => {
+    const key = file.split(sep).join("/");
+    if (seen.has(key)) return;
+    seen.add(key);
+    for (const { path, kind } of transpiler.scan(readFileSync(file, "utf8")).imports) {
+      if (kind === "dynamic-import") continue;
+      if (path.startsWith(".")) visit(resolve(dirname(file), path));
+      else if (!path.startsWith("node:") && path !== "bun" && !path.startsWith("bun:"))
+        packages.add(path);
+    }
+  };
+  visit(entry);
+  return [...packages].sort();
+}
+
 describe("library update workflow", () => {
+  const path = join(import.meta.dir, "..", ".github", "workflows", "library-update.yml");
+
+  test("runs the PR script with no install, so the script imports no package", () => {
+    const workflow = parse(readFileSync(path, "utf8")) as {
+      jobs?: Record<string, { steps?: { run?: string }[] }>;
+    };
+    const runs = Object.values(workflow.jobs ?? {}).flatMap((job) =>
+      (job.steps ?? []).map((step) => step.run ?? ""),
+    );
+    expect(runs.some((cmd) => cmd.includes("bun scripts/library-update-prs.ts"))).toBe(true);
+    const installs = runs.some((cmd) => /\bbun install\b/.test(cmd));
+    const script = join(import.meta.dir, "library-update-prs.ts");
+    expect(installs ? [] : packagesImportedBy(script)).toEqual([]);
+  });
+
   test("every run joins one concurrency group and waits for the run before it", () => {
-    const path = join(import.meta.dir, "..", ".github", "workflows", "library-update.yml");
     const workflow = parse(readFileSync(path, "utf8")) as {
       concurrency?: { group?: unknown; "cancel-in-progress"?: unknown };
     };

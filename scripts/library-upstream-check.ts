@@ -14,6 +14,7 @@ import {
   tagSeries,
 } from "../packages/cli/src/library/upstream-forge.ts";
 import { LIBRARY_DOCS_URL } from "../packages/docs-render/src/base.ts";
+import { issueTitleFor } from "./library-upstream-issue.ts";
 
 // Checks every library-types lane's targets for an upstream that has moved past
 // the pin. `upstream:release-check` is the same idea for the engine itself; the
@@ -202,15 +203,6 @@ export function groupPinnedTargets(targets: readonly PinnedTarget[]): PinnedGrou
 
 export function collectPinnedTargets(dataDir: string): PinnedGroup[] {
   return groupPinnedTargets(readPinnedTargets(dataDir));
-}
-
-// Keyed on the repo slug, the upstream version and the internal flag so a rerun
-// before the bump lands finds the issue it opened last time; folding the pinned
-// version in would mint a second issue the moment anything else rotated the pin.
-// A go/no-go decision flip does mint a new issue, because the work it asks for
-// differs.
-export function issueTitleFor(slug: string, upstream: string, internal: boolean): string {
-  return `${slug} moved to ${upstream} — refresh the pinned library types${internal ? " (internal)" : ""}`;
 }
 
 function issueBodyFor(

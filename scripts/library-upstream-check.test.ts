@@ -20,7 +20,6 @@ import {
   describeReport,
   evaluateLibraryDrift,
   groupPinnedTargets,
-  issueTitleFor,
   type LibraryCheckIo,
   type LibraryUpstreamRun,
   type PinnedGroup,
@@ -28,6 +27,7 @@ import {
   readPinnedTargets,
   runLibraryCheckCli,
 } from "./library-upstream-check.ts";
+import { issueTitleFor } from "./library-upstream-issue.ts";
 
 const DATA_DIR = LIBRARY_DATA_DIR;
 
