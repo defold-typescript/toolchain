@@ -38,7 +38,7 @@
         },
         {
           "name": "gamepad",
-          "doc": "Optional gamepad index to bind input trigger to",
+          "doc": "Gamepad index to bind the trigger to. **0️⃣ 0-based; passed to `in.mapper` unchanged.**",
           "types": [
             "any"
           ],
@@ -124,7 +124,7 @@
         },
         {
           "name": "gamepad",
-          "doc": "Optional gamepad index the input trigger originated from",
+          "doc": "Gamepad index the trigger came from, `action.gamepad`. **0️⃣ 0-based; passed to `in.mapper` unchanged.**",
           "types": [
             "any"
           ],
