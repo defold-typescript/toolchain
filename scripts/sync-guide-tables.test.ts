@@ -11,8 +11,8 @@ import {
   syncGuideTables,
 } from "./sync-guide-tables.ts";
 
-const HEADER = "| Extension | Pinned at | Namespace | Confirmed by        |";
-const SEPARATOR = "| --------- | --------- | --------- | ------------------- |";
+const HEADER = "| Extension | Namespace | Confirmed by        |";
+const SEPARATOR = "| --------- | --------- | ------------------- |";
 
 const TAGGED = {
   repo: "https://github.com/a/defold-x",
@@ -20,7 +20,7 @@ const TAGGED = {
   namespace: "x",
   manifestDir: "x",
 };
-const TAGGED_ROW = `| [a/defold-x](https://github.com/a/defold-x) | \`v1.2\` | [\`x\`](${LIBRARY_DOCS_URL}/api/x) | \`x/ext.manifest\` |`;
+const TAGGED_ROW = `| [a/defold-x](https://github.com/a/defold-x) | [\`x\`](${LIBRARY_DOCS_URL}/api/x) | \`x/ext.manifest\` |`;
 
 const COMMIT = {
   repo: "https://github.com/b/defold-y",
@@ -29,7 +29,7 @@ const COMMIT = {
   namespace: "y",
   manifestDir: "y/native",
 };
-const COMMIT_ROW = `| [b/defold-y](https://github.com/b/defold-y) | \`0123456\` | [\`y\`](${LIBRARY_DOCS_URL}/api/y) | \`y/native/ext.manifest\` |`;
+const COMMIT_ROW = `| [b/defold-y](https://github.com/b/defold-y) | [\`y\`](${LIBRARY_DOCS_URL}/api/y) | \`y/native/ext.manifest\` |`;
 
 describe("curatedNativeTable", () => {
   test("renders the guide's header and separator, then one row per target in input order", () => {
@@ -38,18 +38,25 @@ describe("curatedNativeTable", () => {
     );
   });
 
-  test("a tag-pinned target shows its full ref, owner/repo link, api link, and manifest", () => {
+  test("a tag-pinned target shows its owner/repo link, api link, and manifest", () => {
     expect(curatedNativeTable([TAGGED]).split("\n")[2]).toBe(TAGGED_ROW);
   });
 
-  test("a commit-pinned target shows the first seven characters of its SHA", () => {
-    expect(curatedNativeTable([COMMIT]).split("\n")[2]).toBe(COMMIT_ROW);
+  test("a pin bump leaves the table unchanged", () => {
+    const shipped = readNativeTargets(LIBRARY_DATA_DIR);
+    expect(shipped.length).toBeGreaterThan(0);
+    const bumped = shipped.map((target) => ({
+      ...target,
+      ref: `${target.ref}-bumped`,
+      refKind: target.refKind === "commit" ? ("tag" as const) : ("commit" as const),
+    }));
+    expect(curatedNativeTable(bumped)).toBe(curatedNativeTable(shipped));
   });
 
   test("the manifest path comes from manifestDir, not the namespace", () => {
     const row = curatedNativeTable([{ ...TAGGED, manifestDir: "x/native" }]).split("\n")[2];
     expect(row).toBe(
-      `| [a/defold-x](https://github.com/a/defold-x) | \`v1.2\` | [\`x\`](${LIBRARY_DOCS_URL}/api/x) | \`x/native/ext.manifest\` |`,
+      `| [a/defold-x](https://github.com/a/defold-x) | [\`x\`](${LIBRARY_DOCS_URL}/api/x) | \`x/native/ext.manifest\` |`,
     );
   });
 });
