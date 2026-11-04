@@ -5,7 +5,9 @@ import { join } from "node:path";
 import ts from "typescript";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
 import { extractApiDoc } from "./extract-api-doc";
+import { upstreamDocPin } from "./merge-fork-docs";
 import { LIBRARY_DATA_DIR } from "./package-root";
+import { parseLuaSurface } from "./parse-lua-surface";
 import { printedModule } from "./print-corpus";
 import {
   type AuthoredTarget,
@@ -129,7 +131,7 @@ describe("emitAuthoredDeclaration", () => {
     expect(description("flush")).toBe("Run every handler added via \\@{push}");
   });
 
-  // The lane's identity gate: the print adds doc comments and nothing else, so with
+  // The lane's identity gate: the print changes doc comments and nothing else, so with
   // comments removed every fork prints exactly the types it vendors.
   test("every fork prints its vendored types unchanged", () => {
     const commentFree = (source: string) =>
@@ -170,29 +172,45 @@ describe("lowerAuthoredApiDoc", () => {
 });
 
 // The api-doc is lowered from the printed fork, which carries upstream's own prose
-// where the fork supplies none. The vendored `.d.ts` is untouched by the merge, so an
-// imported brief reaches a project through the printed declaration and the `/api`
-// page through this lowering, and the two agree.
+// where the fork supplies none or does not pin its own. The vendored `.d.ts` is
+// untouched by the merge, so an imported brief reaches a project through the printed
+// declaration and the `/api` page through this lowering, and the two agree.
 describe("upstream LuaDoc import at api-doc lowering", () => {
   // A fork that documents `get_level`, `LIMIT_NONE` and one overload of `stop`
-  // itself and leaves `start` blank.
-  const RELAY_FORK = `/** @noSelfInFile **/
-
-/**
- * Relays messages between peers.
- * @noResolution
- */
-declare module 'relay.relay' {
-	export function start(port: number): void;
-	/** The relay's current level. */
-	export function get_level(): number;
-	/** A documented limit. */
-	export const LIMIT_NONE: "NONE";
-	/** Stop once every queued message is sent. */
-	export function stop(drain: boolean): void;
-	export function stop(): void;
-}
-`;
+  // itself, each comment pinned to upstream's block unless `pinned` is false, and
+  // leaves `start` blank.
+  function relayFork(pinned: boolean): string {
+    const pin = (name: string): string[] => {
+      const member = parseLuaSurface(RELAY_UPSTREAM).members.find((m) => m.name === name);
+      if (!member) throw new Error(`the relay's upstream defines no ${name}`);
+      return pinned ? [`\t * @upstreamDoc ${upstreamDocPin(member)}`] : [];
+    };
+    const doc = (name: string, summary: string): string[] => [
+      "\t/**",
+      `\t * ${summary}`,
+      ...pin(name),
+      "\t */",
+    ];
+    return [
+      "/** @noSelfInFile **/",
+      "",
+      "/**",
+      " * Relays messages between peers.",
+      " * @noResolution",
+      " */",
+      "declare module 'relay.relay' {",
+      "\texport function start(port: number): void;",
+      ...doc("get_level", "The relay's current level."),
+      "\texport function get_level(): number;",
+      ...doc("LIMIT_NONE", "A documented limit."),
+      '\texport const LIMIT_NONE: "NONE";',
+      ...doc("stop", "Stop once every queued message is sent."),
+      "\texport function stop(drain: boolean): void;",
+      "\texport function stop(): void;",
+      "}",
+      "",
+    ].join("\n");
+  }
 
   // Upstream documents all three members, `start` with a trailing `@param` line and
   // `LIMIT_NONE` under a snake_case heading that is not the member's own name.
@@ -221,12 +239,15 @@ return M
 
   // A data folder holding the relay fork beside its upstream `.lua`. The target names
   // that file when `measured`, and records a parity verdict in its place otherwise.
-  function writeRelay(measured = true): { dataDir: string; target: AuthoredTarget } {
+  function writeRelay({ measured = true, pinned = true } = {}): {
+    dataDir: string;
+    target: AuthoredTarget;
+  } {
     const dataDir = tempDir("authored-lowering-");
     const library = join(dataDir, "relay");
     mkdirSync(join(library, "fork"), { recursive: true });
     mkdirSync(join(library, "source", "upstream", "relay"), { recursive: true });
-    writeFileSync(join(library, "fork", "relay.relay.d.ts"), RELAY_FORK);
+    writeFileSync(join(library, "fork", "relay.relay.d.ts"), relayFork(pinned));
     writeFileSync(join(library, "source", "upstream", "relay", "relay.lua"), RELAY_UPSTREAM);
     writeLibraryTargets(dataDir, {
       forks: [
@@ -281,17 +302,24 @@ return M
     expect(start.docSource).toBe("upstream");
   });
 
-  test("relay.get_level keeps the fork's own prose over upstream's", () => {
+  test("relay.get_level keeps the fork's own pinned prose over upstream's", () => {
     const { dataDir, target } = writeRelay();
     const getLevel = element(dataDir, target, "get_level");
     expect(getLevel.brief).toBe("The relay's current level.");
     expect(getLevel.docSource).toBeUndefined();
   });
 
+  test("an unpinned fork comment lowers upstream's prose, marked as upstream's", () => {
+    const { dataDir, target } = writeRelay({ pinned: false });
+    const getLevel = element(dataDir, target, "get_level");
+    expect(getLevel.brief).toBe("Upstream's own words for the level");
+    expect(getLevel.docSource).toBe("upstream");
+  });
+
   // The merge is per member: one documented overload keeps the fork's comments on
   // every declaration of the name, so the undocumented overload prints and lowers
   // without upstream's prose rather than with a second, competing text.
-  test("relay.stop keeps the fork's prose on every overload", () => {
+  test("relay.stop keeps the fork's pinned prose on every overload", () => {
     const { dataDir, target } = writeRelay();
     const stops = loweredElements(dataDir, target).filter((entry) => entry.name === "stop");
     expect(stops.map((entry) => [entry.description, entry.docSource])).toEqual([
@@ -306,19 +334,19 @@ return M
         .filter((e) => e.docSource !== undefined)
         .map((e) => e.name);
     expect(imported(writeRelay())).toEqual(["start"]);
-    const unmeasured = writeRelay(false);
+    const unmeasured = writeRelay({ measured: false });
     expect(unmeasured.target.upstreamLua).toEqual([]);
     expect(imported(unmeasured)).toEqual([]);
   });
 
-  // The merge's opt-out is "a member the fork gave a doc summary keeps its comment
-  // untouched", and it works on the field axis too: `extractApiDoc` carries a doc
-  // comment onto a `VARIABLE` element as well as a `FUNCTION` one, so a constant the
-  // fork documents keeps the fork's words. The
+  // The merge's opt-out is "a member whose fork comment is pinned to upstream's block
+  // keeps its comment", and it works on the field axis too: `extractApiDoc` carries a
+  // doc comment onto a `VARIABLE` element as well as a `FUNCTION` one, so a constant
+  // the fork documents and pins keeps the fork's words. The
   // relay's `LIMIT_NONE` sits under an upstream block that opens with a snake_case
   // heading `withoutNameLine` does not strip, because it is not the member's own
   // name, so a constant that failed to opt out would import that heading instead.
-  test("a fork doc-comment on a constant opts the member out of the import", () => {
+  test("a pinned fork doc-comment on a constant opts the member out of the import", () => {
     const documented = extractApiDoc(
       `declare module "x.y" {\n  /** A documented constant. */\n  export const A: number;\n}\n`,
       "x.y",

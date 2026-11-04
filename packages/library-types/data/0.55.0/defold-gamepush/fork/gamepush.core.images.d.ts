@@ -33,6 +33,7 @@ declare module 'gamepush.core.images' {
    * Uploads an image the player chooses. Raises when the table is missing.
    * @param parameters The upload options, for example `{ tags: ["screenshot", "level7"] }`.
    * @param callback Receives the image.
+    * @upstreamDoc c0eee732f701
    */
   export function upload(
     parameters: Record<string, unknown>,
@@ -43,6 +44,7 @@ declare module 'gamepush.core.images' {
    * Uploads an image from a URL. Raises when the table is missing.
    * @param parameters The upload options, including the image's `url`.
    * @param callback Receives the image.
+    * @upstreamDoc 42e2bae4c71c
    */
   export function upload_url(
     parameters: Record<string, unknown>,
@@ -52,6 +54,7 @@ declare module 'gamepush.core.images' {
   /**
    * Asks the player to choose an image.
    * @param callback Receives the result.
+    * @upstreamDoc 17e15362dd8e
    */
   export function choose_file(callback?: (result: unknown) => void): void;
 
@@ -66,6 +69,7 @@ declare module 'gamepush.core.images' {
    * Fetches images.
    * @param parameters The fetch options.
    * @param callback Receives the result.
+    * @upstreamDoc 9e132d10294c
    */
   export function fetch(
     parameters?: Record<string, unknown>,
@@ -76,6 +80,7 @@ declare module 'gamepush.core.images' {
    * Fetches more images.
    * @param parameters The fetch options.
    * @param callback Receives the result.
+    * @upstreamDoc 2a44686c17f6
    */
   export function fetch_more(
     parameters?: Record<string, unknown>,
@@ -88,10 +93,14 @@ declare module 'gamepush.core.images' {
    * @param width The width to resize to.
    * @param height The height to resize to.
    * @param crop Whether to crop the image.
+    * @upstreamDoc 6ec167d34b01
    */
   export function resize(uri: string, width?: number, height?: number, crop?: boolean): string;
 
-  /** Whether the player can upload images. */
+  /**
+   * Whether the player can upload images.
+   * @upstreamDoc 17ae65e03252
+   */
   export function can_upload(): boolean;
 
   /** The event handlers. */

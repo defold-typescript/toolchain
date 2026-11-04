@@ -11,8 +11,10 @@ import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
 import { type LibraryData, LibraryDataError, readLibraryData } from "./library-data";
 import { floorProblems, measureLibraryCoverage } from "./library-floors";
+import type { ForkDocNotice } from "./merge-fork-docs";
 import { printCorpus } from "./print-corpus";
 import { printLibraryModules } from "./print-library";
+import { authoredDocNotices } from "./sync-authored-types";
 
 export interface LibraryProblem {
   library: string;
@@ -287,4 +289,34 @@ export async function checkLibraryData(dataDir: string): Promise<LibraryProblem[
     problems.push(...floorProblems(library, await measureLibraryCoverage(dataDir, library)));
   }
   return problems;
+}
+
+export interface LibraryDocNotice extends ForkDocNotice {
+  library: string;
+  module: string;
+}
+
+/**
+ * Every fork comment in the data folder at `dataDir` that prints upstream's doc
+ * instead because its `@upstreamDoc` pin is missing or stale, and every pin on a member
+ * upstream does not document, in library order. None is a problem: failing on one
+ * would hold back every update whose upstream edits a doc a fork overrides.
+ */
+export function forkDocNotices(dataDir: string): LibraryDocNotice[] {
+  return readLibraryData(dataDir).flatMap((library) =>
+    library.authored.flatMap((target) =>
+      authoredDocNotices(dataDir, target).map((notice) => ({
+        library: library.dir,
+        module: target.moduleId,
+        ...notice,
+      })),
+    ),
+  );
+}
+
+/** The line `library check` prints for a notice. */
+export function docNoticeLine({ library, module, member, kind, pin }: LibraryDocNotice): string {
+  return kind === "orphan"
+    ? `${library}: doc: ${module}.${member}: @upstreamDoc pins nothing, since upstream does not document it`
+    : `${library}: doc: ${module}.${member} prints upstream's doc; keep the fork's with @upstreamDoc ${pin}`;
 }

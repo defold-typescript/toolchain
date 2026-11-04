@@ -28,6 +28,7 @@ declare module 'minit.minit' {
   /**
    * Signals the host that the game is booted and ready to show. The host keeps the game
    * hidden until this is called. Outside an HTML5 build it prints `loadingDone`.
+    * @upstreamDoc 816532b3c714
    */
   export function loading_done(): void;
 
@@ -39,6 +40,7 @@ declare module 'minit.minit' {
    * Outside an HTML5 build it prints the score.
    * @param score The result, as a number or a string.
    * @param options The caption, delay and stored slot to send with the result.
+    * @upstreamDoc 883d73c34624
    */
   export function report_result(score: number | string, options?: ReportResultOptions): void;
 
@@ -50,6 +52,7 @@ declare module 'minit.minit' {
    * @param key The query parameter to read.
    * @param default_value The value returned when the key is absent or reserved. Defaults
    * to `""`. Upstream names this parameter `default`.
+    * @upstreamDoc 8a55f5dc85fa
    */
   export function get_config_value(key: string, default_value?: string): string;
 
@@ -59,6 +62,7 @@ declare module 'minit.minit' {
    * URL parameter when the host injected none, else returns `undefined`. A stored empty
    * value returns `""`, distinct from `undefined`. Outside an HTML5 build it returns
    * `undefined`.
+    * @upstreamDoc c232f32a0a21
    */
   export function get_user_data(): string | undefined;
 
@@ -67,6 +71,7 @@ declare module 'minit.minit' {
    * forces it on and `?tutorial=0` or `?tutorial=false` forces it off; otherwise it
    * returns `false` only when the host reports that the player has played the game
    * before. Outside an HTML5 build it returns `true`.
+    * @upstreamDoc 26e19a0508ef
    */
   export function should_show_tutorial(): boolean;
 
@@ -75,6 +80,7 @@ declare module 'minit.minit' {
    * `window.minit.isViewable()` when it has one, else whether `document.visibilityState`
    * is `visible`. It reads the value again on every call. Outside an HTML5 build it
    * returns `true`.
+    * @upstreamDoc 20c2b0002d52
    */
   export function is_viewable(): boolean;
 
@@ -89,6 +95,7 @@ declare module 'minit.minit' {
    * `final`. Outside an HTML5 build `fn` is never called and the returned function does
    * nothing.
    * @param fn Gets `true` when the game becomes viewable and `false` when it stops.
+    * @upstreamDoc 49f49f1bef2d
    */
   export function on_viewable_change(fn: (viewable: boolean) => void): () => void;
 }

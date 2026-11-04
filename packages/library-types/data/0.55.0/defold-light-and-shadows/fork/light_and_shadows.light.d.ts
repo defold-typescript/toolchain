@@ -68,6 +68,7 @@ declare module 'light_and_shadows.light' {
    * @param fog The minimum and maximum Z in camera view space where the fog begins and ends.
    * @param ambient The ambient color.
    * @param clear_color The color that clears the default render target, which is the background color.
+    * @upstreamDoc f90ce8810859
    */
   export function set_color(
     fog_color?: Vector4,
@@ -82,6 +83,7 @@ declare module 'light_and_shadows.light' {
    * @param cam_look_at_position The point the camera looks at.
    * @param cam_position The camera world position.
    * @param cam_z The camera Z coordinate, the distance from the focus point, for depth of field. Omitted, `cam_z` keeps its value.
+    * @upstreamDoc 0275ab13b2d4
    */
   export function set_position(
     cam_rotation: Quaternion,
@@ -104,6 +106,7 @@ declare module 'light_and_shadows.light' {
    * their power, and copies the camera values. Call it from `update`.
    * @param self Unused.
    * @param dt Unused.
+    * @upstreamDoc d6b494acd897
    */
   export function update(self: object, dt: number): void;
 }

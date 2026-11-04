@@ -28,6 +28,7 @@ declare module 'gamepush.core.reactions' {
    * Sets a reaction. Raises when the table is missing.
    * @param parameters The reaction: its `entityType`, `entityId` and `reactionType`.
    * @param callback Receives the result.
+    * @upstreamDoc c48fbce79b57
    */
   export function set(
     parameters: Record<string, unknown>,
@@ -38,6 +39,7 @@ declare module 'gamepush.core.reactions' {
    * Removes a reaction. Raises when the table is missing.
    * @param parameters The reaction, in the shape `set` takes.
    * @param callback Receives the result.
+    * @upstreamDoc 4c882dddd86f
    */
   export function unset(
     parameters: Record<string, unknown>,

@@ -23,6 +23,7 @@ declare module 'gamepush.core.storage' {
   /**
    * Chooses the context storage. Raises unless `storage_type` is a string.
    * @param storage_type `"platform"` or `"local"`.
+    * @upstreamDoc 52128048789c
    */
   export function set_storage(storage_type: string): void;
 
@@ -31,6 +32,7 @@ declare module 'gamepush.core.storage' {
    * @param key The key.
    * @param value The value, encoded as JSON.
    * @param callback Receives the result.
+    * @upstreamDoc b50f6611021b
    */
   export function set(key: string, value: unknown, callback?: (result: unknown) => void): void;
 
@@ -39,6 +41,7 @@ declare module 'gamepush.core.storage' {
    * returns nil and hands it to `callback` otherwise.
    * @param key The key.
    * @param callback Receives the value.
+    * @upstreamDoc 3dc4dc790664
    */
   export function get(key: string, callback?: (result: unknown) => void): unknown;
 
@@ -47,6 +50,7 @@ declare module 'gamepush.core.storage' {
    * @param key The key.
    * @param value The value, encoded as JSON.
    * @param callback Receives the result.
+    * @upstreamDoc ee6096d58f9f
    */
   export function set_global(
     key: string,
@@ -59,6 +63,7 @@ declare module 'gamepush.core.storage' {
    * returns nil and hands it to `callback` otherwise.
    * @param key The key.
    * @param callback Receives the value.
+    * @upstreamDoc f77188a20146
    */
   export function get_global(key: string, callback?: (result: unknown) => void): unknown;
 

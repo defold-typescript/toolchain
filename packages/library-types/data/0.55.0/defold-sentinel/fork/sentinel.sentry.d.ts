@@ -126,31 +126,41 @@ declare module 'sentinel.sentry' {
    * Starts the client. Call it as early as possible. Sentinel keeps the table it is
    * given, filling in defaults and its `tags` and `extra`; `set_tag` and `set_extra`
    * write into it.
+    * @upstreamDoc a9d5c60bfc68
    */
   export function init(config: Config): void;
 
   /**
    * Records something that happened, sent with every later event. Sentinel adds a
    * `timestamp` to the table and keeps the last 10. Does nothing before `init`.
+    * @upstreamDoc c4b76526611c
    */
   export function add_breadcrumb(breadcrumb: Breadcrumb): void;
 
-  /** Sets a tag sent with every later event. Does nothing before `init`. */
+  /**
+   * Sets a tag sent with every later event. Does nothing before `init`.
+   * @upstreamDoc 5db33b7dddde
+   */
   export function set_tag(key: string, value: string | number | boolean): void;
 
-  /** Sets extra data sent with every later event. Does nothing before `init`. */
+  /**
+   * Sets extra data sent with every later event. Does nothing before `init`.
+   * @upstreamDoc 26aa1da2e508
+   */
   export function set_extra(key: string, value: string | number | boolean): void;
 
   /**
    * Sends an error to Sentry. With `config.set_error_handler` on, every uncaught error
    * is already sent through this. Raises before `init`. At most 10 events are sent per
    * 300 seconds; a throttled event goes to `callback` as an error.
+    * @upstreamDoc a2d421a79a7f
    */
   export function capture_exception(err: ExceptionInfo): void;
 
   /**
    * Sends a message to Sentry. Raises before `init`. At most 10 events are sent per
    * 300 seconds; a throttled event goes to `callback` as an error.
+    * @upstreamDoc 901de8f00ff6
    */
   export function capture_message(msg: MessageInfo): void;
 }

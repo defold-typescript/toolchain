@@ -927,6 +927,7 @@
       "name": "acquire_input",
       "brief": "Convenience function to acquire input focus",
       "description": "Convenience function to acquire input focus",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": []
     },
@@ -935,6 +936,7 @@
       "name": "release_input",
       "brief": "Convenience function to release input focus",
       "description": "Convenience function to release input focus",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": []
     },
@@ -957,8 +959,9 @@
     {
       "type": "FUNCTION",
       "name": "mask_text",
-      "brief": "Mask text by replacing every character with a mask character",
-      "description": "Mask text by replacing every character with a mask character",
+      "brief": "Mask text by replacing every character with a mask",
+      "description": "Mask text by replacing every character with a mask\ncharacter",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "text",

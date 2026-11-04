@@ -30,16 +30,26 @@ declare module 'gamepush.core.variables' {
   /**
    * Fetches the game variables.
    * @param callback Called when the fetch finishes.
+    * @upstreamDoc 822ae92457ba
    */
   export function fetch(callback?: () => void): void;
 
-  /** The value of `variable`. Raises unless `variable` is a string. */
+  /**
+   * The value of `variable`. Raises unless `variable` is a string.
+   * @upstreamDoc 6ceb5d1eb1d4
+   */
   export function get(variable: string): unknown;
 
-  /** Whether `variable` exists. Raises unless `variable` is a string. */
+  /**
+   * Whether `variable` exists. Raises unless `variable` is a string.
+   * @upstreamDoc bc2284069159
+   */
   export function has(variable: string): boolean;
 
-  /** The type of `variable`, one of the `types` values. Raises unless `variable` is a string. */
+  /**
+   * The type of `variable`, one of the `types` values. Raises unless `variable` is a string.
+   * @upstreamDoc fef8f6d1e770
+   */
   export function type(variable: string): string;
 
   /** The variable event handlers. */

@@ -1659,9 +1659,11 @@ describe("the shortfall the import absorbed is accounted for, not merely absent"
 
   // Exactly what the callable rollout left: nakama's three run-leading constants no
   // longer import, now that `extractApiDoc` carries a fork doc-comment onto a
-  // `VARIABLE` element. `sync-authored-types.test.ts` pins that opt-out directly.
-  test("the corpus imports 254 briefs", () => {
-    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(254);
+  // `VARIABLE` element. `sync-authored-types.test.ts` pins that opt-out directly. Ten
+  // of the briefs are upstream's own text where the fork's comment was a copy of it
+  // (boom's `boom`, three in gooey, six in monarch), deleted rather than pinned.
+  test("the corpus imports 264 briefs", () => {
+    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(264);
   });
 });
 

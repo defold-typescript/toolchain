@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
 import { type ApiDocElement, markUpstreamDocs } from "./import-upstream-docs";
 import { type ParityVerdict, readLibraryData } from "./library-data";
-import { type MergedFork, mergeForkDocs } from "./merge-fork-docs";
+import { type ForkDocNotice, type MergedFork, mergeForkDocs } from "./merge-fork-docs";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 
 /**
@@ -19,10 +19,11 @@ import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
  * '<moduleId>'` ambient — so the lane is light: it prints the vendored source as the
  * module's declaration and runs `extractApiDoc` over that printed declaration for the
  * `api-doc/<namespace>.json` the docs-site consumes. The print carries one thing the
- * fork does not: where a target vendors its upstream `.lua` and the fork documents a
- * member nowhere, upstream's own LuaDoc summary is merged in as that member's doc
- * comment (see `merge-fork-docs.ts`), and the api-doc marks it `docSource:
- * "upstream"`. The merge adds comments and nothing else, so the printed *types* are
+ * fork does not: where a target vendors its upstream `.lua`, upstream's own LuaDoc
+ * summary is merged in as the doc comment of each member upstream documents, unless
+ * the fork's own comment is pinned to that upstream text (see `merge-fork-docs.ts`),
+ * and the api-doc marks it `docSource: "upstream"`. The merge changes comments and
+ * nothing else, so the printed *types* are
  * the vendored authored source untouched, and the go/no-go gate is a
  * forked-vs-printed identity diff on types (see the golden loop) — emission fidelity.
  * There is no *type* coverage comparison because upstream declares no types; the
@@ -89,13 +90,20 @@ function printAuthored(packageRoot: string, target: AuthoredTarget): MergedFork 
 /**
  * The printed declaration of the target's `moduleId`. The vendored authored
  * `.d.ts` is already a `declare module '<moduleId>'` ambient, so the emit is the
- * fork plus upstream's summary as the doc comment of each module-level member the
- * fork leaves undocumented. Only comments are added, so the vendored types pass
+ * fork plus upstream's summary as the doc comment of each module-level member
+ * upstream documents and the fork does not override with a pinned comment. Only
+ * comments change, so the vendored types pass
  * through unchanged, which is what makes the emission lossless. It says nothing
  * about how that vendored surface compares to upstream.
  */
 export function emitAuthoredDeclaration(packageRoot: string, target: AuthoredTarget): string {
   return printAuthored(packageRoot, target).source;
+}
+
+/** The target's fork comments that print upstream's doc instead because their pin is
+ * missing or stale, and its pins that guard nothing (see `merge-fork-docs.ts`). */
+export function authoredDocNotices(packageRoot: string, target: AuthoredTarget): ForkDocNotice[] {
+  return printAuthored(packageRoot, target).notices;
 }
 
 /** The pinned upstream members by name, the way `authored-parity.ts` builds them:

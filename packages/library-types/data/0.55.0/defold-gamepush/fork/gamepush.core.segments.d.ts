@@ -16,12 +16,16 @@ declare module 'gamepush.core.segments' {
     leave?: (segment_tag: unknown) => void;
   }
 
-  /** The tags of the segments the player belongs to; empty when none. */
+  /**
+   * The tags of the segments the player belongs to; empty when none.
+   * @upstreamDoc c693ef510413
+   */
   export function list(): string[];
 
   /**
    * Whether the player belongs to a segment.
    * @param tag The segment's tag.
+    * @upstreamDoc 6d845724991c
    */
   export function has(tag: string): boolean;
 

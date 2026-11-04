@@ -221,6 +221,7 @@ declare module 'gamepush.core.channels' {
    * Creates a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.createChannel`.
    * @param callback Receives the result.
+    * @upstreamDoc 1fc910e62c2a
    */
   export function create_channel(
     parameters: Record<string, unknown>,
@@ -231,6 +232,7 @@ declare module 'gamepush.core.channels' {
    * Updates a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.updateChannel`.
    * @param callback Receives the result.
+    * @upstreamDoc e6f8a4583b37
    */
   export function update_channel(
     parameters: Record<string, unknown>,
@@ -241,6 +243,7 @@ declare module 'gamepush.core.channels' {
    * Deletes a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.deleteChannel`.
    * @param callback Receives the result.
+    * @upstreamDoc eb689bbd4c9c
    */
   export function delete_channel(
     parameters: Record<string, unknown>,
@@ -251,6 +254,7 @@ declare module 'gamepush.core.channels' {
    * Fetches a channel by its id. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchChannel`.
    * @param callback Receives the result.
+    * @upstreamDoc 91c860cf7f46
    */
   export function fetch_channel(
     parameters: Record<string, unknown>,
@@ -261,6 +265,7 @@ declare module 'gamepush.core.channels' {
    * Fetches a list of channels. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchChannels`.
    * @param callback Receives the result.
+    * @upstreamDoc 29e09492a5b2
    */
   export function fetch_channels(
     parameters: Record<string, unknown>,
@@ -271,6 +276,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the next page of channels. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMoreChannels`.
    * @param callback Receives the result.
+    * @upstreamDoc 51da578bb084
    */
   export function fetch_more_channels(
     parameters: Record<string, unknown>,
@@ -280,19 +286,27 @@ declare module 'gamepush.core.channels' {
   /**
    * Opens the chat window.
    * @param parameters The options for the SDK's `channels.openChat`, or nil for the main chat.
+    * @upstreamDoc 41c94bb2db49
    */
   export function open_chat(parameters?: Record<string, unknown>): void;
 
-  /** Whether the main chat can be shown. */
+  /**
+   * Whether the main chat can be shown.
+   * @upstreamDoc 74bc1653607d
+   */
   export function is_main_chat_enabled(): boolean;
 
-  /** The main chat's id. */
+  /**
+   * The main chat's id.
+   * @upstreamDoc c4ba329c4eb8
+   */
   export function main_chat_id(): number;
 
   /**
    * Joins a public channel, or asks to join it. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.join`.
    * @param callback Receives the result.
+    * @upstreamDoc 25c5b65e3e2f
    */
   export function join(
     parameters: Record<string, unknown>,
@@ -303,6 +317,7 @@ declare module 'gamepush.core.channels' {
    * Cancels a request to join a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.cancelJoin`.
    * @param callback Receives the result.
+    * @upstreamDoc 2d3fc44a09f8
    */
   export function cancel_join(
     parameters: Record<string, unknown>,
@@ -313,6 +328,7 @@ declare module 'gamepush.core.channels' {
    * Leaves a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.leave`.
    * @param callback Receives the result.
+    * @upstreamDoc 4bbdfc2d4536
    */
   export function leave(
     parameters: Record<string, unknown>,
@@ -323,6 +339,7 @@ declare module 'gamepush.core.channels' {
    * Removes a member from a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.kick`.
    * @param callback Receives the result.
+    * @upstreamDoc 16681dc14092
    */
   export function kick(
     parameters: Record<string, unknown>,
@@ -333,6 +350,7 @@ declare module 'gamepush.core.channels' {
    * Fetches a channel's members. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMembers`.
    * @param callback Receives the result.
+    * @upstreamDoc aa0838913dc4
    */
   export function fetch_members(
     parameters: Record<string, unknown>,
@@ -343,6 +361,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the next page of a channel's members. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMoreMembers`.
    * @param callback Receives the result.
+    * @upstreamDoc eccdd85e2384
    */
   export function fetch_more_members(
     parameters: Record<string, unknown>,
@@ -353,6 +372,7 @@ declare module 'gamepush.core.channels' {
    * Mutes a player in a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.mute`.
    * @param callback Receives the result.
+    * @upstreamDoc cda65d7b35cc
    */
   export function mute(
     parameters: Record<string, unknown>,
@@ -363,6 +383,7 @@ declare module 'gamepush.core.channels' {
    * Unmutes a player in a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.unmute`.
    * @param callback Receives the result.
+    * @upstreamDoc b215d937ea81
    */
   export function unmute(
     parameters: Record<string, unknown>,
@@ -373,6 +394,7 @@ declare module 'gamepush.core.channels' {
    * Invites a player to a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.sendInvite`.
    * @param callback Receives the result.
+    * @upstreamDoc e99e3132c68c
    */
   export function send_invite(
     parameters: Record<string, unknown>,
@@ -383,6 +405,7 @@ declare module 'gamepush.core.channels' {
    * Cancels an invite. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.cancelInvite`.
    * @param callback Receives the result.
+    * @upstreamDoc ba7234c8ca88
    */
   export function cancel_invite(
     parameters: Record<string, unknown>,
@@ -393,6 +416,7 @@ declare module 'gamepush.core.channels' {
    * Accepts an invite to a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.acceptInvite`.
    * @param callback Receives the result.
+    * @upstreamDoc 0e82a2b25ebb
    */
   export function accept_invite(
     parameters: Record<string, unknown>,
@@ -403,6 +427,7 @@ declare module 'gamepush.core.channels' {
    * Rejects an invite to a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.rejectInvite`.
    * @param callback Receives the result.
+    * @upstreamDoc 2bfc8884f9a9
    */
   export function reject_invite(
     parameters: Record<string, unknown>,
@@ -413,6 +438,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the player's invites to channels. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchInvites`.
    * @param callback Receives the result.
+    * @upstreamDoc 3635d9fc2014
    */
   export function fetch_invites(
     parameters: Record<string, unknown>,
@@ -423,6 +449,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the next page of the player's invites. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMoreInvites`.
    * @param callback Receives the result.
+    * @upstreamDoc ef47cf77a2f6
    */
   export function fetch_more_invites(
     parameters: Record<string, unknown>,
@@ -433,6 +460,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the invites sent from a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchChannelInvites`.
    * @param callback Receives the result.
+    * @upstreamDoc dc0061225637
    */
   export function fetch_channel_invites(
     parameters: Record<string, unknown>,
@@ -443,6 +471,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the next page of the invites sent from a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMoreChannelInvites`.
    * @param callback Receives the result.
+    * @upstreamDoc 8c4383ed6eca
    */
   export function fetch_more_channel_invites(
     parameters: Record<string, unknown>,
@@ -453,6 +482,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the invites the player sent to other players. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchSentInvites`.
    * @param callback Receives the result.
+    * @upstreamDoc 1c69cea75717
    */
   export function fetch_sent_invites(
     parameters: Record<string, unknown>,
@@ -463,6 +493,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the next page of the invites the player sent. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMoreSentInvites`.
    * @param callback Receives the result.
+    * @upstreamDoc b72b25f3b908
    */
   export function fetch_more_sent_invites(
     parameters: Record<string, unknown>,
@@ -473,6 +504,7 @@ declare module 'gamepush.core.channels' {
    * Accepts a request to join a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.acceptJoinRequest`.
    * @param callback Receives the result.
+    * @upstreamDoc e2cb77d04c0b
    */
   export function accept_join_request(
     parameters: Record<string, unknown>,
@@ -483,6 +515,7 @@ declare module 'gamepush.core.channels' {
    * Rejects a request to join a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.rejectJoinRequest`.
    * @param callback Receives the result.
+    * @upstreamDoc 6a95babdac25
    */
   export function reject_join_request(
     parameters: Record<string, unknown>,
@@ -493,6 +526,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the requests to join a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchJoinRequests`.
    * @param callback Receives the result.
+    * @upstreamDoc f828c6c9e054
    */
   export function fetch_join_requests(
     parameters: Record<string, unknown>,
@@ -503,6 +537,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the next page of the requests to join a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMoreJoinRequests`.
    * @param callback Receives the result.
+    * @upstreamDoc 4a307a03ec36
    */
   export function fetch_more_join_requests(
     parameters: Record<string, unknown>,
@@ -513,6 +548,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the requests to join that the player sent. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchSentJoinRequests`.
    * @param callback Receives the result.
+    * @upstreamDoc 7a96075d26f0
    */
   export function fetch_sent_join_requests(
     parameters: Record<string, unknown>,
@@ -524,6 +560,7 @@ declare module 'gamepush.core.channels' {
    * missing.
    * @param parameters The options for the SDK's `channels.fetchMoreSentJoinRequests`.
    * @param callback Receives the result.
+    * @upstreamDoc ffabe474a595
    */
   export function fetch_more_sent_join_requests(
     parameters: Record<string, unknown>,
@@ -534,6 +571,7 @@ declare module 'gamepush.core.channels' {
    * Sends a message to a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.sendMessage`.
    * @param callback Receives the result.
+    * @upstreamDoc e86d069141df
    */
   export function send_message(
     parameters: Record<string, unknown>,
@@ -544,6 +582,7 @@ declare module 'gamepush.core.channels' {
    * Sends a personal message to a player. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.sendPersonalMessage`.
    * @param callback Receives the result.
+    * @upstreamDoc 3de5b4f5b379
    */
   export function send_personal_message(
     parameters: Record<string, unknown>,
@@ -554,6 +593,7 @@ declare module 'gamepush.core.channels' {
    * Posts a message to a player's feed. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.sendFeedMessage`.
    * @param callback Receives the result.
+    * @upstreamDoc 90ae369c56c4
    */
   export function send_feed_message(
     parameters: Record<string, unknown>,
@@ -564,6 +604,7 @@ declare module 'gamepush.core.channels' {
    * Edits a message. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.editMessage`.
    * @param callback Receives the result.
+    * @upstreamDoc 40e98d759492
    */
   export function edit_message(
     parameters: Record<string, unknown>,
@@ -574,6 +615,7 @@ declare module 'gamepush.core.channels' {
    * Deletes a message. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.deleteMessage`.
    * @param callback Receives the result.
+    * @upstreamDoc f414f121aaf2
    */
   export function delete_message(
     parameters: Record<string, unknown>,
@@ -584,6 +626,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the messages in a channel. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMessages`.
    * @param callback Receives the result.
+    * @upstreamDoc 39ca839f77a9
    */
   export function fetch_messages(
     parameters: Record<string, unknown>,
@@ -594,6 +637,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the personal messages with another player. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchPersonalMessages`.
    * @param callback Receives the result.
+    * @upstreamDoc 5102c0935c54
    */
   export function fetch_personal_messages(
     parameters: Record<string, unknown>,
@@ -604,6 +648,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the messages in a player's feed. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchFeedMessages`.
    * @param callback Receives the result.
+    * @upstreamDoc 502284f4cc87
    */
   export function fetch_feed_messages(
     parameters: Record<string, unknown>,
@@ -614,6 +659,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the next page of a channel's messages. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMoreMessages`.
    * @param callback Receives the result.
+    * @upstreamDoc b4d0d38f4cf8
    */
   export function fetch_more_messages(
     parameters: Record<string, unknown>,
@@ -625,6 +671,7 @@ declare module 'gamepush.core.channels' {
    * missing.
    * @param parameters The options for the SDK's `channels.fetchMorePersonalMessages`.
    * @param callback Receives the result.
+    * @upstreamDoc ce967cd8131d
    */
   export function fetch_more_personal_messages(
     parameters: Record<string, unknown>,
@@ -635,6 +682,7 @@ declare module 'gamepush.core.channels' {
    * Fetches the next page of the messages in a player's feed. Raises when the table is missing.
    * @param parameters The options for the SDK's `channels.fetchMoreFeedMessages`.
    * @param callback Receives the result.
+    * @upstreamDoc 31cd07f8d518
    */
   export function fetch_more_feed_messages(
     parameters: Record<string, unknown>,
@@ -645,6 +693,7 @@ declare module 'gamepush.core.channels' {
    * Sets a value in a channel's state. Raises when the table is missing.
    * @param parameters The channel, key and value.
    * @param callback Receives the result.
+    * @upstreamDoc ac40ff3ec60b
    */
   export function set_value(
     parameters: ChannelValueParameters,
@@ -655,6 +704,7 @@ declare module 'gamepush.core.channels' {
    * Adds to a number in a channel's state. Raises when the table is missing.
    * @param parameters The channel, key and amount.
    * @param callback Receives the result.
+    * @upstreamDoc 45b8fe138d38
    */
   export function add_value(
     parameters: ChannelAddValueParameters,

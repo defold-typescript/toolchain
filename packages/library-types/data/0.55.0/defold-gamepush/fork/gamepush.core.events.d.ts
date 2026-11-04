@@ -21,33 +21,43 @@ declare module 'gamepush.core.events' {
    * Joins an event. Raises when the table is missing.
    * @param parameters The options for the SDK's `events.join`.
    * @param callback Receives the result.
+    * @upstreamDoc 7f1ed43d158c
    */
   export function join(
     parameters: Record<string, unknown>,
     callback?: (result: unknown) => void,
   ): void;
 
-  /** All events. */
+  /**
+   * All events.
+   * @upstreamDoc 022fac0581ba
+   */
   export function list(): Record<string, unknown>[];
 
-  /** The events the player is taking part in. */
+  /**
+   * The events the player is taking part in.
+   * @upstreamDoc 4956417a7270
+   */
   export function active_list(): Record<string, unknown>[];
 
   /**
    * An event's description.
    * @param id_or_tag The event's id or tag.
+    * @upstreamDoc 8533c50a2144
    */
   export function get_event(id_or_tag: string | number): Record<string, unknown>;
 
   /**
    * Whether an event is active.
    * @param id_or_tag The event's id or tag.
+    * @upstreamDoc 6c1e99ea457c
    */
   export function has(id_or_tag: string | number): boolean;
 
   /**
    * Whether the player is taking part in an event.
    * @param id_or_tag The event's id or tag.
+    * @upstreamDoc 6e2b250b3ae9
    */
   export function is_joined(id_or_tag: string | number): boolean;
 

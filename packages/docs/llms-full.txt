@@ -7885,6 +7885,22 @@ folder: a fork or a native declaration names its own file, a usage example its
 `printed/<module>.d.ts`. A `print` message starts with the module that did not
 print, and a `floor` message with the module it measured.
 
+#### Doc notices
+
+A fork's own comment on a member its upstream documents prints only while it carries
+an `@upstreamDoc` pin matching upstream's current text; otherwise upstream's doc
+prints in its place. After the problems, or after the clean line, `library check`
+prints one line for each such comment, with the pin that would keep it:
+
+```text
+monarch: doc: monarch.monarch.show prints upstream's doc; keep the fork's with @upstreamDoc 3f9c2a7b41d0
+```
+
+A pin on a member upstream does not document prints as
+`<library>: doc: <module>.<member>: @upstreamDoc pins nothing, since upstream does not document it`.
+A notice is never a problem: it does not change the exit code. See
+[Pinning a fork comment](https://defold-typescript.github.io/library-data/guides/authoring-forked-library-types#pinning-a-fork-comment).
+
 #### JSON output
 
 With `--json`, `library check` writes one object:
@@ -7898,13 +7914,25 @@ With `--json`, `library check` writes one object:
   "dataFolder": "/path/to/library-data/data/0.55.0",
   "problems": [
     { "library": "flow", "check": "compile", "message": "usage/flow-usage.test-d.ts:12 ..." }
+  ],
+  "notices": [
+    {
+      "library": "monarch",
+      "module": "monarch.monarch",
+      "member": "show",
+      "kind": "unpinned",
+      "pin": "3f9c2a7b41d0"
+    }
   ]
 }
 ```
 
-A clean run has `"ok": true`, an empty `problems` array, `libraryCount`, the
-number of libraries the folder holds, and `written`, the absolute path of each
-file `--api-doc-out` wrote.
+`notices` holds the [doc notices](#doc-notices). `kind` is `unpinned` for a comment
+with no pin, `stale` for one whose pin no longer matches, and `orphan` for a pin on
+a member upstream does not document, which carries no `pin`. A clean run has
+`"ok": true`, an empty `problems` array, `notices`, `libraryCount`, the number of
+libraries the folder holds, and `written`, the absolute path of each file
+`--api-doc-out` wrote.
 
 With `--json`, `library review` writes one object:
 
