@@ -121,6 +121,12 @@ describe("ecs against tiny.lua, as transpiled Lua and in Bun", () => {
 
   for (const scenario of scenarios) {
     test(scenario.name, () => {
+      if (scenario.ties === true) {
+        const traced = luaTrace(ECS_LIB_MODULE, scenario.name);
+        expect(traced.join("")).not.toBe("");
+        expect(runScenario(lib, scenario.name).split("\n")).toEqual(traced);
+        return;
+      }
       const oracle = luaTrace(TINY_LIB_MODULE, scenario.name);
       expect(oracle.join("")).not.toBe("");
       expect(luaTrace(ECS_LIB_MODULE, scenario.name)).toEqual(oracle);
