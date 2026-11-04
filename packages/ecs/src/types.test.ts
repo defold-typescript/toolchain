@@ -16,7 +16,7 @@ interface Ent {
 }
 
 describe("filter narrowing", () => {
-  test("requireAll makes its components present in process, onAdd and onRemove", () => {
+  test("requireAll makes its components present in process and onAdd", () => {
     const built = processingSystem<Ent>()(requireAll("spring", "active"), {
       process(e, dt) {
         const k: number = e.spring.k * dt;
@@ -28,13 +28,24 @@ describe("filter narrowing", () => {
         const active: boolean = e.active;
         void [k, active];
       },
-      onRemove(e) {
-        const k: number = e.spring.k;
-        const active: boolean = e.active;
-        void [k, active];
-      },
     });
     expect(built.process).toBeTypeOf("function");
+  });
+
+  test("onRemove takes the unnarrowed entity, since a changed entity leaves without the component", () => {
+    const built = processingSystem<Ent>()(requireAll("spring", "active"), {
+      process() {},
+      onRemove(e) {
+        // @ts-expect-error onRemove may see an entity whose required component is gone
+        const k: number = e.spring.k;
+        if (e.spring !== undefined) {
+          const guarded: number = e.spring.k;
+          void guarded;
+        }
+        void k;
+      },
+    });
+    expect(built.onRemove).toBeTypeOf("function");
   });
 
   test("a nested filter keeps the top-level requireAll's narrowing and adds none", () => {
