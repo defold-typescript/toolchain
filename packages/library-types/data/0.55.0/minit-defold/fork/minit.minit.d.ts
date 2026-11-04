@@ -76,6 +76,36 @@ declare module 'minit.minit' {
   export function should_show_tutorial(): boolean;
 
   /**
+   * Returns the effects quality to run at. `?motionQuality=full` or
+   * `?motionQuality=reduced` wins; next comes the host's `window.minit.motionQuality`
+   * when it is one of the two; otherwise it returns `"reduced"` when
+   * `prefers_reduced_motion` returns `true`, else `"full"`. Outside an HTML5 build it
+   * returns `"full"`.
+    * @upstreamDoc 7644776a0ff0
+   */
+  export function get_motion_quality(): "full" | "reduced";
+
+  /**
+   * Returns whether the player or the operating system prefers reduced motion.
+   * `?reducedMotion=1` or `?reducedMotion=true` forces `true` and `?reducedMotion=0` or
+   * `?reducedMotion=false` forces `false`; next comes the host's
+   * `window.minit.prefersReducedMotion` when it is a boolean; otherwise it returns
+   * whether the browser matches the `prefers-reduced-motion: reduce` media query, or
+   * `false` when the browser cannot tell. Outside an HTML5 build it returns `false`.
+    * @upstreamDoc 4b78a33818b0
+   */
+  export function prefers_reduced_motion(): boolean;
+
+  /**
+   * Returns the player's device tier. `?deviceTier=` set to `low`, `medium`, `high` or
+   * `unknown` wins; next comes the host's `window.minit.deviceTier` when it is one of
+   * the four; otherwise it returns `"unknown"`, which is also its result outside an
+   * HTML5 build.
+    * @upstreamDoc 75fe8297534d
+   */
+  export function get_device_tier(): "low" | "medium" | "high" | "unknown";
+
+  /**
    * Returns whether the game is visible to the player right now: the host's
    * `window.minit.isViewable()` when it has one, else whether `document.visibilityState`
    * is `visible`. It reads the value again on every call. Outside an HTML5 build it

@@ -28,6 +28,16 @@ const visible = minit.is_viewable();
 const _visible: Equal<typeof visible, boolean> = true;
 void _visible;
 
+const tier = minit.get_device_tier();
+const _tier: Equal<typeof tier, "low" | "medium" | "high" | "unknown"> = true;
+void _tier;
+const motion = minit.get_motion_quality();
+const _motion: Equal<typeof motion, "full" | "reduced"> = true;
+void _motion;
+const reduced = minit.prefers_reduced_motion();
+const _reduced: Equal<typeof reduced, boolean> = true;
+void _reduced;
+
 const off = minit.on_viewable_change((viewable) => {
   const _viewable: Equal<typeof viewable, boolean> = true;
   void _viewable;
