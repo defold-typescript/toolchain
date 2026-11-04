@@ -72,6 +72,14 @@ function upstreamPush(summary: string[]): string {
   ].join("\n");
 }
 
+type LineEnding = (lfSource: string) => string;
+
+// A fork in each line ending is the LF fork with its line endings swapped.
+const LINE_ENDINGS: [string, LineEnding][] = [
+  ["LF", (source) => source],
+  ["CRLF", (source) => source.replaceAll("\n", "\r\n")],
+];
+
 describe("mergeForkDocs", () => {
   test("an undocumented function gains upstream's summary directly above it, tab-indented", () => {
     const fork = [
@@ -134,9 +142,11 @@ describe("mergeForkDocs", () => {
     expect(merged.upstreamDocs).toEqual(["FORMAT"]);
   });
 
-  test("a member the fork documents and pins to upstream's block prints the fork's text without the pin", () => {
-    const merged = merge(pushFork(pinOf(PUSH_LUA)), PUSH_LUA);
-    expect(merged.source).toBe(pushFork());
+  test.each(
+    LINE_ENDINGS,
+  )("a member the fork documents and pins to upstream's block prints the fork's text without the pin, on %s lines", (_, ending) => {
+    const merged = merge(ending(pushFork(pinOf(PUSH_LUA))), PUSH_LUA);
+    expect(merged.source).toBe(ending(pushFork()));
     expect(merged.upstreamDocs).toEqual([]);
     expect(merged.notices).toEqual([]);
   });
@@ -786,13 +796,23 @@ describe("mergeForkDocs", () => {
       expect(pinOf(PUSH_LUA)).toMatch(/^[0-9a-f]{12}$/);
     });
 
-    test.each([
+    const malformedPins: [string, string][] = [
       ["uppercase", "\t * @upstreamDoc 0123456789AB"],
       ["too short", "\t * @upstreamDoc 0123456789a"],
       ["empty", "\t * @upstreamDoc"],
       ["followed by text", "\t * @upstreamDoc 0123456789ab and more"],
       ["sharing a line with prose", "\t * Queue them. @upstreamDoc 0123456789ab"],
-    ])("an @upstreamDoc line %s throws, naming the module and member", (_, line) => {
+    ];
+    test.each(
+      malformedPins.flatMap(([shape, line]) =>
+        LINE_ENDINGS.map(([name, ending]): [string, string, LineEnding, string] => [
+          shape,
+          name,
+          ending,
+          line,
+        ]),
+      ),
+    )("an @upstreamDoc line %s throws on %s lines, naming the module and member", (_, __, ending, line) => {
       const fork = [
         "declare module 'tally.tally' {",
         "\t/**",
@@ -803,7 +823,7 @@ describe("mergeForkDocs", () => {
         "}",
         "",
       ].join("\n");
-      expect(() => mergeForkDocs(fork, upstreamOf(PUSH_LUA))).toThrow(
+      expect(() => mergeForkDocs(ending(fork), upstreamOf(PUSH_LUA))).toThrow(
         /^tally\.tally: push: @upstreamDoc /,
       );
     });
