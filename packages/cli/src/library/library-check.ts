@@ -300,17 +300,25 @@ export interface LibraryDocNotice extends ForkDocNotice {
  * Every fork comment in the data folder at `dataDir` that prints upstream's doc
  * instead because its `@upstreamDoc` pin is missing or stale, and every pin on a member
  * upstream does not document, in library order. None is a problem: failing on one
- * would hold back every update whose upstream edits a doc a fork overrides.
+ * would hold back every update whose upstream edits a doc a fork overrides. A fork
+ * that does not print has no notices; `checkLibraryData` names it as a `print`
+ * problem. Throws only for a folder the reader refuses.
  */
 export function forkDocNotices(dataDir: string): LibraryDocNotice[] {
   return readLibraryData(dataDir).flatMap((library) =>
-    library.authored.flatMap((target) =>
-      authoredDocNotices(dataDir, target).map((notice) => ({
+    library.authored.flatMap((target) => {
+      let notices: ForkDocNotice[];
+      try {
+        notices = authoredDocNotices(dataDir, target);
+      } catch {
+        return [];
+      }
+      return notices.map((notice) => ({
         library: library.dir,
         module: target.moduleId,
         ...notice,
-      })),
-    ),
+      }));
+    }),
   );
 }
 

@@ -10,6 +10,7 @@ import {
   libraryFolderName,
   type NativeEntry,
   type RecipeJson,
+  readLibraryJson,
   type ScriptApiEntry,
   writeLibraryJson,
   writeRecipeJson,
@@ -157,6 +158,49 @@ export function copyFixtureDataWithFlushDoc(dataDir: string, docLines: string[])
   const source = readFileSync(fork, "utf8");
   if (!source.includes(declaration)) throw new Error(`${FIXTURE_FORK} declares no flush`);
   writeFileSync(fork, source.replace(declaration, [...docLines, declaration].join("\n")));
+}
+
+// A second fork, `tally.broken`, added to the fixture's `fixture-fork` library in a
+// folder `copyFixtureDataWithFlushDoc` wrote. Its one function carries a malformed
+// `@upstreamDoc` pin, so it does not print while `tally.tally` still does.
+export function addUnprintableFixtureFork(dataDir: string): void {
+  const folder = "fixture-fork";
+  const libraryDir = join(dataDir, folder);
+  const library = readLibraryJson(dataDir, folder);
+  const floor = library.floors?.["tally.tally"];
+  if (floor === undefined) throw new Error(`${folder}/library.json holds no tally.tally floor`);
+  const authored = "fork/tally.broken.d.ts";
+  const upstreamLua = "source/upstream/tally/broken.lua";
+  writeFileSync(
+    join(libraryDir, authored),
+    [
+      "/** @noSelfInFile **/",
+      "",
+      "declare module 'tally.broken' {",
+      "\t/**",
+      "\t * Drop every queued handler.",
+      "\t * @upstreamDoc 0123456789AB",
+      "\t */",
+      "\texport function clear(): void;",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeUndocumentedUpstreamLua(libraryDir, upstreamLua);
+  writeLibraryJson(dataDir, {
+    ...library,
+    forks: [
+      ...(library.forks ?? []),
+      {
+        authored,
+        moduleId: "tally.broken",
+        namespace: "tally.broken",
+        apiDoc: "api-doc/tally.broken.json",
+        upstreamLua: [upstreamLua],
+      },
+    ],
+    floors: { ...library.floors, "tally.broken": floor },
+  });
 }
 
 // The pin that keeps a fork comment on the fixture's `flush`.

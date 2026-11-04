@@ -79,7 +79,8 @@ interface PinLine {
 }
 
 const PIN_TAG = "upstreamDoc";
-const PIN_LINE = /^[ \t]*\*[ \t]*@upstreamDoc[ \t]+([0-9a-f]{12})[ \t]*$/;
+// The line runs to its `\n`, so a CRLF line ends in `\r`.
+const PIN_LINE = /^[ \t]*\*[ \t]*@upstreamDoc[ \t]+([0-9a-f]{12})[ \t]*\r?$/;
 const RETURN_TAGS = new Set(["returns", "return"]);
 const UPSTREAM_TAGS = new Set(["param", ...RETURN_TAGS]);
 
