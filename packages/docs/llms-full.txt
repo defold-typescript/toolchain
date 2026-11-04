@@ -7898,7 +7898,9 @@ monarch: doc: monarch.monarch.show prints upstream's doc; keep the fork's with @
 
 A pin on a member upstream does not document prints as
 `<library>: doc: <module>.<member>: @upstreamDoc pins nothing, since upstream does not document it`.
-A notice is never a problem: it does not change the exit code. See
+A notice is never a problem: it does not change the exit code. A fork that does not
+print has no notices, and its `print` problem names it; the other forks' notices
+still print. See
 [Pinning a fork comment](https://defold-typescript.github.io/library-data/guides/authoring-forked-library-types#pinning-a-fork-comment).
 
 #### JSON output

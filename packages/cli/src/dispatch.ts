@@ -904,8 +904,8 @@ function dispatchCommand(
       try {
         notices = forkDocNotices(dataFolder);
       } catch (err) {
-        // A folder the reader refuses, or whose forks do not print, is already a
-        // problem, and has no notices to read.
+        // Only a folder the reader refuses throws here; it is already a problem, and
+        // has no notices to read.
         if (problems.length === 0) {
           return fail(
             `defold-typescript library check: ${err instanceof Error ? err.message : String(err)}`,
