@@ -548,7 +548,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "Gesture instance",
           "types": [
             "GestureInstance"
           ]
@@ -590,7 +590,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "A table containing detected gestures. Can contain the following\nvalues:\n* tap [table] Values: position\n* double_tap [table] Values: position\n* long_press [table] Values: position, time\n* repeated [boolean]\n* swipe_left [boolean]\n* swipe_right [boolean]\n* swipe_up [boolean]\n* swipe_down [boolean]\n* swipe [table] Values: from, to and time\n* two_finger [table] Two-finger geatures (tap, double_tap, long_press, repeated, swipe_* and pinch)",
           "types": [
             "DetectedGestures"
           ]

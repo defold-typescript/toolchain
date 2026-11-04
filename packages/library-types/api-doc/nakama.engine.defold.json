@@ -15,7 +15,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The UUID string.",
           "types": [
             "string"
           ]
@@ -31,7 +31,7 @@
       "parameters": [
         {
           "name": "config",
-          "doc": "",
+          "doc": "The http config table, see Defold docs.",
           "types": [
             "unknown"
           ],
@@ -39,7 +39,7 @@
         },
         {
           "name": "url_path",
-          "doc": "",
+          "doc": "The request URL.",
           "types": [
             "string"
           ],
@@ -47,7 +47,7 @@
         },
         {
           "name": "query_params",
-          "doc": "",
+          "doc": "Query params string.",
           "types": [
             "string"
           ],
@@ -55,7 +55,7 @@
         },
         {
           "name": "method",
-          "doc": "",
+          "doc": "The HTTP method string.",
           "types": [
             "string"
           ],
@@ -63,7 +63,7 @@
         },
         {
           "name": "post_data",
-          "doc": "",
+          "doc": "String of post data.",
           "types": [
             "string"
           ],
@@ -87,7 +87,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "The callback function.",
           "types": [
             "(response: unknown) => void"
           ],
@@ -105,7 +105,7 @@
       "parameters": [
         {
           "name": "config",
-          "doc": "",
+          "doc": "The socket config table, see Defold docs.",
           "types": [
             "unknown"
           ],
@@ -113,7 +113,7 @@
         },
         {
           "name": "on_message",
-          "doc": "",
+          "doc": "Your function to process socket messages.",
           "types": [
             "(socket: symbol, message: unknown) => void"
           ],
@@ -131,7 +131,7 @@
       "parameters": [
         {
           "name": "socket",
-          "doc": "",
+          "doc": "The socket table, see socket_create.",
           "types": [
             "symbol"
           ],
@@ -139,7 +139,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "The callback function.",
           "types": [
             "(success: boolean, error: string) => void"
           ],
@@ -157,7 +157,7 @@
       "parameters": [
         {
           "name": "socket",
-          "doc": "",
+          "doc": "The socket table, see socket_create.",
           "types": [
             "symbol"
           ],
@@ -165,7 +165,7 @@
         },
         {
           "name": "message",
-          "doc": "",
+          "doc": "The message string to send.",
           "types": [
             "string"
           ],

@@ -1,6 +1,7 @@
 /**
- * Printing a fork with upstream's own LuaDoc summary on the members it documents,
- * unless the fork's comment is pinned to that exact upstream text.
+ * Printing a fork with upstream's own LuaDoc summary, parameter docs and return docs
+ * on the members it documents, unless the fork's comment is pinned to that exact
+ * upstream text.
  *
  * `parse-lua-surface.ts` already reads each upstream member's `---` block, so the
  * text exists on one side of the pipeline. This module is the merge, and it runs when
@@ -15,15 +16,17 @@
  * - **Fork prose wins only while pinned.** A member upstream documents keeps the
  *   fork's comments when one of them carries `@upstreamDoc <pin>` and every pin it
  *   carries is `upstreamDocPin` of upstream's current block. Otherwise each of its
- *   declarations prints upstream's summary, keeping the fork's tags except `@param`
- *   and `@returns`, which upstream's doc stands in for, and the member is a notice.
- *   A member upstream does not document keeps the fork's comments, pinned or not.
+ *   declarations prints upstream's summary and the tags for its own signature (see
+ *   `upstreamParts`), keeping the fork's tags except `@param` and `@returns`, which
+ *   upstream's doc stands in for, and the member is a notice. A member upstream
+ *   documents is one with something to print on some declaration; a member upstream
+ *   does not document keeps the fork's comments, pinned or not.
  * - **A pin never prints.** Every `@upstreamDoc` line is removed from the print; one
  *   on a member upstream does not document is an `orphan` notice, and one anywhere
  *   but a module member's doc comment, or not shaped `@upstreamDoc <12 hex>` on its
  *   own line, throws.
  * - **One block per declaration.** A declaration whose only comment is tags
- *   (`/** @noSelf *\/`) takes the summary as that block's opening lines; any other
+ *   (`/** @noSelf *\/`) takes upstream's doc as that block's opening lines; any other
  *   undocumented declaration gains a new block directly above it, indented like it.
  * - **Only the module's own members.** The walk is the exported functions and
  *   constants directly inside the `declare module` block, the members
@@ -77,7 +80,8 @@ interface PinLine {
 
 const PIN_TAG = "upstreamDoc";
 const PIN_LINE = /^[ \t]*\*[ \t]*@upstreamDoc[ \t]+([0-9a-f]{12})[ \t]*$/;
-const UPSTREAM_TAGS = new Set(["param", "returns", "return"]);
+const RETURN_TAGS = new Set(["returns", "return"]);
+const UPSTREAM_TAGS = new Set(["param", ...RETURN_TAGS]);
 
 /**
  * The pin a fork comment carries to replace `member`'s upstream doc: the first 12 hex
@@ -89,8 +93,48 @@ export function upstreamDocPin(member: LuaMember): string {
   return createHash("sha256").update(text).digest("hex").slice(0, 12);
 }
 
+type DocParts = Parameters<typeof renderDocComment>[0];
+
+// TypeScript opens a tag at any `@` after whitespace, which would cut an LDoc `@{ref}`
+// out of the text; `\@` is plain text to TypeScript and an escaped `@` to the Markdown
+// both the hover and the docs site render.
+function escapeTags(text: string): string {
+  return text.replace(/(^|\s)@/g, "$1\\@");
+}
+
 /**
- * The fork with upstream's summary merged onto every module-level member upstream
+ * What upstream's block prints on one declaration: its summary, the tags of the
+ * parameters that declaration lists, in its order, and its returns unless it is a
+ * `void` function. A constant takes the summary alone. With `forkTagsWin`, a parameter
+ * or return the declaration's own comment already tags keeps the fork's text.
+ */
+function upstreamParts(
+  member: LuaMember,
+  name: string,
+  host: ts.Node,
+  forkTagsWin: boolean,
+): DocParts {
+  const summary = escapeTags(upstreamSummary(member, name));
+  if (!ts.isFunctionDeclaration(host)) return { summary };
+  const forkTags = forkTagsWin ? jsDocs(host).flatMap((doc) => doc.tags ?? []) : [];
+  const forkParams = new Set(
+    forkTags.filter(ts.isJSDocParameterTag).map((tag) => tag.name.getText()),
+  );
+  const params = host.parameters.flatMap((parameter) => {
+    if (!ts.isIdentifier(parameter.name)) return [];
+    const declared = parameter.name.text;
+    if (forkParams.has(declared)) return [];
+    const tag = member.tags.params.find((param) => param.name === declared);
+    return tag === undefined ? [] : [{ name: tag.name, doc: escapeTags(tag.doc) }];
+  });
+  const returnsVoid = host.type?.kind === ts.SyntaxKind.VoidKeyword;
+  const forkReturns = forkTags.some((tag) => RETURN_TAGS.has(tag.tagName.text));
+  const returns = returnsVoid || forkReturns ? "" : member.tags.returns.map(escapeTags).join("\n");
+  return { summary, params, returns };
+}
+
+/**
+ * The fork with upstream's doc merged onto every module-level member upstream
  * documents and the fork does not override with a pinned comment. `upstream` is keyed
  * by member name and holds module-level members only; the caller leaves out
  * `function M:name` methods, whose prose belongs to the instance type.
@@ -113,27 +157,27 @@ export function mergeForkDocs(
       for (const { start, end } of pins) edits.push({ start, end, text: "" });
     };
     const member = upstream.get(name);
-    // TypeScript opens a tag at any `@` after whitespace, which would cut an LDoc
-    // `@{ref}` out of the summary; `\@` is plain text to TypeScript and an escaped `@`
-    // to the Markdown both the hover and the docs site render.
-    const summary =
-      member === undefined ? "" : upstreamSummary(member, name).replace(/(^|\s)@/g, "$1\\@");
-    if (member === undefined || summary === "") {
+    const overridden = declarations.some(hasProse);
+    const parts = declarations.map((declaration) =>
+      member === undefined
+        ? { summary: "" }
+        : upstreamParts(member, name, declaration, !overridden),
+    );
+    if (member === undefined || parts.every((part) => renderDocComment(part).length === 0)) {
       if (pins.length > 0) notices.push({ member: name, kind: "orphan" });
       removePins();
       continue;
     }
     const pin = upstreamDocPin(member);
-    const overridden = declarations.some(hasProse);
     if (overridden && pins.length > 0 && pins.every((line) => line.pin === pin)) {
       removePins();
       continue;
     }
     if (overridden)
       notices.push({ member: name, kind: pins.length > 0 ? "stale" : "unpinned", pin });
-    for (const declaration of declarations) {
-      edits.push(...docEdits(source, declaration, summary, overridden));
-    }
+    declarations.forEach((declaration, index) => {
+      edits.push(...docEdits(source, declaration, parts[index] as DocParts, overridden));
+    });
     upstreamDocs.push(name);
   }
   for (const match of source.matchAll(/@upstreamDoc/g)) {
@@ -249,19 +293,24 @@ function hasProse(host: ts.Node): boolean {
 }
 
 /**
- * The edits that put `summary` on one declaration: the opening lines of its nearest doc
- * block when it has one, else a new block above it. With `override`, the fork's prose
- * and its `@param` and `@returns` tags give way; every block loses its pins. An earlier
- * block is rewritten only when it loses something, and removed when nothing is left.
+ * The edits that put upstream's `parts` on one declaration: the opening lines of its
+ * nearest doc block when it has one, else a new block above it. With `override`, the
+ * fork's prose and its `@param` and `@returns` tags give way; every block loses its
+ * pins. Any other block, and the nearest one when `parts` print nothing, is rewritten
+ * only when it loses something, and removed when nothing is left.
  */
-function docEdits(source: string, host: ts.Node, summary: string, override: boolean): Edit[] {
-  const block = renderDocComment({ summary });
+function docEdits(source: string, host: ts.Node, parts: DocParts, override: boolean): Edit[] {
+  const block = renderDocComment(parts);
   const docs = jsDocs(host);
   if (docs.length === 0) {
+    if (block.length === 0) return [];
     const start = host.getStart();
     const indent = lineIndent(source, start);
     return [{ start, end: start, text: `${block.join(`\n${indent}`)}\n${indent}` }];
   }
+  // A block ending in upstream's tags runs straight into the fork's; one ending in prose
+  // keeps a margin before them.
+  const endsInTags = (parts.params ?? []).length > 0 || (parts.returns ?? "") !== "";
   const dropped = (tag: string): boolean => tag === PIN_TAG || (override && UPSTREAM_TAGS.has(tag));
   const edits: Edit[] = [];
   docs.forEach((doc, index) => {
@@ -269,9 +318,11 @@ function docEdits(source: string, host: ts.Node, summary: string, override: bool
     const tags = keptTagLines(source, doc, dropped).map((line) =>
       line === "" ? " *" : ` * ${line}`,
     );
-    const next = docs[index + 1];
-    if (next === undefined) {
-      const lines = [...block.slice(0, -1), ...(tags.length > 0 ? [" *"] : []), ...tags, " */"];
+    const last = index === docs.length - 1;
+    const next = last ? host.getStart() : (docs[index + 1] as ts.JSDoc).pos;
+    if (last && block.length > 0) {
+      const margin = tags.length > 0 && !endsInTags ? [" *"] : [];
+      const lines = [...block.slice(0, -1), ...margin, ...tags, " */"];
       edits.push({ start: doc.pos, end: doc.end, text: lines.join(`\n${indent}`) });
       return;
     }
@@ -285,7 +336,7 @@ function docEdits(source: string, host: ts.Node, summary: string, override: bool
         text: ["/**", ...tags, " */"].join(`\n${indent}`),
       });
     } else {
-      const end = source.slice(doc.end, next.pos).trim() === "" ? next.pos : doc.end;
+      const end = source.slice(doc.end, next).trim() === "" ? next : doc.end;
       edits.push({ start: doc.pos, end, text: "" });
     }
   });

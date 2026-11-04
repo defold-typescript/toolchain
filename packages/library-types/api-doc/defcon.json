@@ -41,7 +41,7 @@
       "parameters": [
         {
           "name": "port",
-          "doc": "",
+          "doc": "The port to listen for commands at",
           "types": [
             "number"
           ],
@@ -85,7 +85,7 @@
         },
         {
           "name": "name",
-          "doc": "",
+          "doc": "Optional name to use for the module. If none is provided\nthe function will try to find the module in package.loaded and use\nthe module filename as name",
           "types": [
             "string"
           ],
@@ -137,7 +137,7 @@
       "parameters": [
         {
           "name": "env",
-          "doc": "",
+          "doc": "The table to set as environment when running Lua commands.",
           "types": [
             "unknown"
           ],

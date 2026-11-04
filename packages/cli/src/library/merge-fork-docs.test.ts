@@ -343,6 +343,218 @@ describe("mergeForkDocs", () => {
     expect(merged.upstreamDocs).toEqual(["update", "start"]);
   });
 
+  describe("upstream parameter and return docs", () => {
+    const METRICS_LUA = lua(
+      "--- Create a metrics instance",
+      "-- @param format (string) The output format",
+      "-- @param color The color to draw in",
+      "-- @tparam[opt] number samples How many samples to average",
+      "-- @return The metrics instance",
+      "function M.create(samples, format)",
+      "end",
+    );
+
+    test("a function prints the tags of the parameters it declares, in its order, and its return", () => {
+      const fork = [
+        "declare module 'metrics' {",
+        "\texport function create(samples?: number, format?: string): Metrics;",
+        "}",
+        "",
+      ].join("\n");
+      expect(merge(fork, METRICS_LUA).source).toBe(
+        [
+          "declare module 'metrics' {",
+          "\t/**",
+          "\t * Create a metrics instance",
+          "\t *",
+          "\t * @param samples - How many samples to average",
+          "\t * @param format - The output format",
+          "\t * @returns The metrics instance",
+          "\t */",
+          "\texport function create(samples?: number, format?: string): Metrics;",
+          "}",
+          "",
+        ].join("\n"),
+      );
+    });
+
+    test("a void function prints no @returns, and a constant no tags at all", () => {
+      const tagged = ["-- @param samples How many samples", "-- @return The value"];
+      const upstream = lua(
+        "--- Update the metrics",
+        ...tagged,
+        "function M.update(samples)",
+        "end",
+        "",
+        "--- The format",
+        ...tagged,
+        'M.FORMAT = "%s"',
+      );
+      const fork = [
+        "declare module 'metrics' {",
+        "\texport function update(samples: number): void;",
+        "\texport const FORMAT: string;",
+        "}",
+        "",
+      ].join("\n");
+      expect(merge(fork, upstream).source).toBe(
+        [
+          "declare module 'metrics' {",
+          "\t/**",
+          "\t * Update the metrics",
+          "\t *",
+          "\t * @param samples - How many samples",
+          "\t */",
+          "\texport function update(samples: number): void;",
+          "\t/**",
+          "\t * The format",
+          "\t */",
+          "\texport const FORMAT: string;",
+          "}",
+          "",
+        ].join("\n"),
+      );
+    });
+
+    test("each overload gets only the parameters it declares", () => {
+      const upstream = lua(
+        "--- Add a handler",
+        "-- @param handler The handler to add",
+        "-- @param priority Where it runs",
+        "function M.push(handler, priority)",
+        "end",
+      );
+      const fork = [
+        "declare module 'tally.tally' {",
+        "\texport function push(handler: () => void): void;",
+        "\texport function push(handler: () => void, priority: number): void;",
+        "}",
+        "",
+      ].join("\n");
+      expect(merge(fork, upstream).source).toBe(
+        [
+          "declare module 'tally.tally' {",
+          "\t/**",
+          "\t * Add a handler",
+          "\t *",
+          "\t * @param handler - The handler to add",
+          "\t */",
+          "\texport function push(handler: () => void): void;",
+          "\t/**",
+          "\t * Add a handler",
+          "\t *",
+          "\t * @param handler - The handler to add",
+          "\t * @param priority - Where it runs",
+          "\t */",
+          "\texport function push(handler: () => void, priority: number): void;",
+          "}",
+          "",
+        ].join("\n"),
+      );
+    });
+
+    test("an upstream block of tags alone fills an undocumented member", () => {
+      const upstream = lua(
+        "---@param value string The value to store",
+        "function M.set(value)",
+        "end",
+      );
+      const fork = (comment: string[]) =>
+        [
+          "declare module 'store' {",
+          ...comment,
+          "\texport function set(value: string): void;",
+          "}",
+          "",
+        ].join("\n");
+      const bare = merge(fork([]), upstream);
+      expect(bare.source).toBe(fork(["\t/**", "\t * @param value - The value to store", "\t */"]));
+      expect(bare.upstreamDocs).toEqual(["set"]);
+      expect(merge(fork(["\t/** @noSelf */"]), upstream).source).toBe(
+        fork(["\t/**", "\t * @param value - The value to store", "\t * @noSelf", "\t */"]),
+      );
+    });
+
+    test("a fork's own @param and @returns keep their slots, upstream fills the rest", () => {
+      const upstream = lua(
+        "--- Check if a screen is in the stack",
+        "-- @param screen_id (string) Upstream's id",
+        "-- @param verbose Log the lookup",
+        "-- @return Upstream's answer",
+        "function M.in_stack(screen_id, verbose)",
+        "end",
+      );
+      const fork = [
+        "declare module 'monarch' {",
+        "\t/**",
+        "\t * @param screen_id - The fork's id",
+        "\t * @returns The fork's answer",
+        "\t */",
+        "\texport function in_stack(screen_id: string, verbose: boolean): boolean;",
+        "}",
+        "",
+      ].join("\n");
+      expect(merge(fork, upstream).source).toBe(
+        [
+          "declare module 'monarch' {",
+          "\t/**",
+          "\t * Check if a screen is in the stack",
+          "\t *",
+          "\t * @param verbose - Log the lookup",
+          "\t * @param screen_id - The fork's id",
+          "\t * @returns The fork's answer",
+          "\t */",
+          "\texport function in_stack(screen_id: string, verbose: boolean): boolean;",
+          "}",
+          "",
+        ].join("\n"),
+      );
+    });
+
+    test("a pinned fork comment prints whole, and editing one upstream @param line makes it stale", () => {
+      const upstream = (doc: string) =>
+        lua(
+          "--- Add one event handler",
+          `-- @param handler ${doc}`,
+          "function M.push(handler)",
+          "end",
+        );
+      const fork = (comment: string[]) =>
+        [
+          "declare module 'tally.tally' {",
+          ...comment,
+          "\texport function push(handler: () => void): void;",
+          "}",
+          "",
+        ].join("\n");
+      const own = ["\t/**", "\t * Queue a handler for the next flush.", "\t */"];
+      const pin = pinOf(upstream("The handler"));
+      const pinned = fork([
+        "\t/**",
+        "\t * Queue a handler for the next flush.",
+        `\t * @upstreamDoc ${pin}`,
+        "\t */",
+      ]);
+      const kept = merge(pinned, upstream("The handler"));
+      expect(kept.source).toBe(fork(own));
+      expect(kept.notices).toEqual([]);
+
+      const stale = merge(pinned, upstream("The listener"));
+      expect(stale.source).toBe(
+        fork([
+          "\t/**",
+          "\t * Add one event handler",
+          "\t *",
+          "\t * @param handler - The listener",
+          "\t */",
+        ]),
+      );
+      expect(stale.notices).toEqual([
+        { member: "push", kind: "stale", pin: pinOf(upstream("The listener")) },
+      ]);
+    });
+  });
+
   describe("never fills", () => {
     function unchanged(fork: string, upstream: string): void {
       const merged = merge(fork, upstream);
@@ -389,6 +601,26 @@ describe("mergeForkDocs", () => {
       unchanged(
         ["declare module 'fsm' {", "\texport function transition(): void;", "}", ""].join("\n"),
         lua("--- @deprecated", "function M.transition()", "end"),
+      );
+    });
+
+    test("a member upstream documents only with tags for what the fork does not declare", () => {
+      unchanged(
+        [
+          "declare module 'store' {",
+          "\t/**",
+          "\t * The fork's own words.",
+          "\t */",
+          "\texport function set(value: string): void;",
+          "}",
+          "",
+        ].join("\n"),
+        lua(
+          "---@param color string The color",
+          "---@return boolean ok Whether it worked",
+          "function M.set(color)",
+          "end",
+        ),
       );
     });
 

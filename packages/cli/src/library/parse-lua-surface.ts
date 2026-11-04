@@ -60,6 +60,8 @@
  * caller named.
  */
 
+import { parseParam, parseReturn } from "./parse-luals";
+
 export interface LuaMember {
   name: string;
   /** Absent for a non-callable field (`M.SOME_CONSTANT = "X"`), so a field can
@@ -77,6 +79,16 @@ export interface LuaMember {
   /** True when a comment block *was* there and the `---` rule declined it, which `doc`
    * alone cannot say — an empty `doc` otherwise means upstream documented nothing. */
   refusedDoc: boolean;
+  /** The parameter and return text of the block `doc` holds, types left out; empty when
+   * `doc` is. See `luaDocTags`. */
+  tags: LuaDocTags;
+}
+
+export interface LuaDocTags {
+  /** In block order; a tag whose text is empty is left out. */
+  params: { name: string; doc: string }[];
+  /** One entry per return tag with text, in block order. */
+  returns: string[];
 }
 
 export interface LuaSurface {
@@ -305,9 +317,10 @@ function readConstructor(
     const entries = splitTopLevel(body).map((piece): LuaMember => {
       const { name, rhs } = readEntry(CONSTRUCTOR_ENTRY.exec(piece), index + 1, opening.trim());
       if (strict) assertNotNamedValue(rhs, index + 1, opening.trim());
-      if (!FUNCTION_VALUE.test(rhs)) return { name, varargs: false, doc: "", refusedDoc: false };
+      const undocumented = { doc: "", refusedDoc: false, tags: noTags() };
+      if (!FUNCTION_VALUE.test(rhs)) return { name, varargs: false, ...undocumented };
       const { params, varargs } = readParams([rhs], 0, rhs.indexOf("("));
-      return { name, params, varargs, doc: "", refusedDoc: false };
+      return { name, params, varargs, ...undocumented };
     });
     return { entries, close: index };
   }
@@ -349,6 +362,104 @@ function readSegment(lines: string[], index: number): string[] {
   return segment;
 }
 
+function noTags(): LuaDocTags {
+  return { params: [], returns: [] };
+}
+
+type OpenTag = { name: string } | { returns: true };
+
+const LUALS_TAG = /^---@(\w+)\s*(.*)$/;
+const LUALS_NAME = new RegExp(`^${IDENTIFIER}$`);
+const LDOC_TAG = /^@(\w+)(?:\[[^\]]*\])?(?:\s+(.*))?$/;
+const LDOC_NAMED = new RegExp(`^(${IDENTIFIER})(?:\\s+(.*))?$`);
+const LDOC_TYPED = new RegExp(`^\\S+\\s+(${IDENTIFIER})(?:\\s+(.*))?$`);
+
+/** `text` without a leading `(type)` and a leading dash separator, the two things LDoc
+ * writes between a tag's name and its description. */
+function ldocDescription(text: string): string {
+  return text
+    .replace(/^\([^()]*\)\s*/, "")
+    .replace(/^-+\s+/, "")
+    .trim();
+}
+
+/** The tag an LDoc line opens, its first doc line beside it; `undefined` for a tag that
+ * is not a parameter or return, or one whose name cannot be read. */
+function ldocTag(tag: string, rest: string): { open: OpenTag; doc: string } | undefined {
+  if (tag === "param" || tag === "tparam") {
+    const named = (tag === "param" ? LDOC_NAMED : LDOC_TYPED).exec(rest);
+    if (!named) return undefined;
+    return { open: { name: named[1] as string }, doc: ldocDescription(named[2] ?? "") };
+  }
+  if (tag === "return") return { open: { returns: true }, doc: ldocDescription(rest) };
+  if (tag === "treturn") {
+    return { open: { returns: true }, doc: ldocDescription(rest.replace(/^\S+\s*/, "")) };
+  }
+  return undefined;
+}
+
+/** The tag a LuaLS line opens, read by the LuaLS lane's own parsers. */
+function lualsTag(tag: string, rest: string): { open: OpenTag; doc: string } | undefined {
+  if (tag === "param") {
+    const param = parseParam(rest);
+    if (!LUALS_NAME.test(param.name)) return undefined;
+    return { open: { name: param.name }, doc: param.doc };
+  }
+  if (tag === "return") {
+    const doc = parseReturn(rest)
+      .map((value) => value.doc)
+      .filter((text) => text !== "")
+      .join(" ");
+    return { open: { returns: true }, doc };
+  }
+  return undefined;
+}
+
+/**
+ * The `@param` and `@return` text of a comment block, read from its lines with their
+ * comment markers still on, since the marker is what names the dialect: a `---@` line is
+ * LuaLS (`@param name type desc`), every other line is LDoc (`@param name desc`,
+ * `@tparam type name desc`, `@return desc`, `@treturn type desc`). Once the markers are
+ * gone, `@param value string The value` cannot say whether `string` is a type.
+ *
+ * A line that opens no tag continues the open one, and a blank comment line or any other
+ * tag closes it. A tag no rule reads, and one whose text ends up empty, gives no entry.
+ */
+function luaDocTags(lines: readonly string[]): LuaDocTags {
+  const tags = noTags();
+  let open: OpenTag | undefined;
+  let text: string[] = [];
+  const close = (): void => {
+    const doc = text.join("\n").trim();
+    if (open !== undefined && doc !== "") {
+      if ("name" in open) tags.params.push({ name: open.name, doc });
+      else tags.returns.push(doc);
+    }
+    open = undefined;
+    text = [];
+  };
+  for (const line of lines) {
+    const luals = LUALS_TAG.exec(line);
+    const stripped = line.replace(/^-+\s*/, "").trim();
+    const ldoc = luals ? null : LDOC_TAG.exec(stripped);
+    if (luals || ldoc) {
+      close();
+      const read = luals
+        ? lualsTag(luals[1] as string, luals[2] as string)
+        : ldoc && ldocTag(ldoc[1] as string, ldoc[2] ?? "");
+      if (read) {
+        open = read.open;
+        text = [read.doc];
+      }
+      continue;
+    }
+    if (stripped === "") close();
+    else if (open !== undefined) text.push(stripped);
+  }
+  close();
+  return tags;
+}
+
 /** The contiguous comment block ending at `index - 1`, kept only when it opens
  * with `---`. LuaDoc in this corpus is a `---` summary followed by plain `--`
  * `@param`/`@return` lines, so the marker on the *first* line is what decides.
@@ -358,9 +469,9 @@ function readSegment(lines: string[], index: number): string[] {
  * `@param` list around a blank, which would otherwise truncate the block to its
  * tag half and lose the summary above. A segment carrying its own `---` is never
  * absorbed into the one below it, so a blank-separated section header stays out. */
-function readDoc(lines: string[], index: number): Pick<LuaMember, "doc" | "refusedDoc"> {
+function readDoc(lines: string[], index: number): Pick<LuaMember, "doc" | "refusedDoc" | "tags"> {
   const attached = readSegment(lines, index);
-  if (attached.length === 0) return { doc: "", refusedDoc: false };
+  if (attached.length === 0) return { doc: "", refusedDoc: false, tags: noTags() };
   const above = index - attached.length - 1;
   const block =
     attached.some((line) => line.startsWith("---")) ||
@@ -368,12 +479,12 @@ function readDoc(lines: string[], index: number): Pick<LuaMember, "doc" | "refus
     (lines[above] as string).trim() !== ""
       ? attached
       : [...readSegment(lines, above), ...attached];
-  if (!(block[0] as string).startsWith("---")) return { doc: "", refusedDoc: true };
+  if (!(block[0] as string).startsWith("---")) return { doc: "", refusedDoc: true, tags: noTags() };
   const doc = block
     .map((line) => line.replace(/^-+\s?/, "").trimEnd())
     .join("\n")
     .trim();
-  return { doc, refusedDoc: false };
+  return { doc, refusedDoc: false, tags: luaDocTags(block) };
 }
 
 /** The entries of the table literal a data module returns at line `index`. */

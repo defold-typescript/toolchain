@@ -889,7 +889,7 @@
         },
         {
           "name": "delay",
-          "doc": "",
+          "doc": "Optional. Defaults to 0",
           "types": [
             "number"
           ],
@@ -897,7 +897,7 @@
         },
         {
           "name": "easing",
-          "doc": "",
+          "doc": "Optional. A constant from monarch.transitions.easing",
           "types": [
             "Easing"
           ],

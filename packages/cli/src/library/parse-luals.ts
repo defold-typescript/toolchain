@@ -335,7 +335,7 @@ function hasTopLevelNil(rawToken: string): boolean {
 /** A bare lowercase identifier — the shape druid uses for an optional `@return` name. */
 const RETURN_NAME = /^[a-z_][A-Za-z0-9_]*$/;
 
-function parseParam(rest: string): LibraryParam {
+export function parseParam(rest: string): LibraryParam {
   const spaceAt = rest.search(/\s/);
   const rawName = spaceAt === -1 ? rest : rest.slice(0, spaceAt);
   const afterName = spaceAt === -1 ? "" : rest.slice(spaceAt).trim();
@@ -355,7 +355,7 @@ function parseParam(rest: string): LibraryParam {
  * and description to the whole line, so only the last segment carries them. The
  * emitter's `renderReturn` already lowers a multi-entry `returns` to `LuaMultiReturn`.
  */
-function parseReturn(rest: string): LibraryParam[] {
+export function parseReturn(rest: string): LibraryParam[] {
   const { type, rest: afterType } = readTypeToken(rest);
   const spaceAt = afterType.search(/\s/);
   const head = spaceAt === -1 ? afterType : afterType.slice(0, spaceAt);

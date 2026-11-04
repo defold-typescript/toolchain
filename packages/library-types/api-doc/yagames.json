@@ -28,7 +28,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err). If err is not nil, something is wrong.",
           "types": [
             "ApiCallback"
           ],
@@ -82,7 +82,7 @@
       "parameters": [
         {
           "name": "callbacks",
-          "doc": "",
+          "doc": "`open` - Called when an ad is opened successfully.\n`close` - Called when an ad is closed, an error occurred, or on ad failed to open due to too\nfrequent calls. Used with the `was_shown` argument (type `boolean`), the value of\nwhich indicates whether an ad was shown.\n`offline` - Called when the network connection is lost (when offline mode is enabled).\n`error` - Called when an error occurrs. The error object is passed to the callback function.",
           "types": [
             "AdvCallbacks"
           ],
@@ -100,7 +100,7 @@
       "parameters": [
         {
           "name": "callbacks",
-          "doc": "",
+          "doc": "`open` - Called when a video ad is displayed on the screen.\n`rewarded` - Called when a video ad impression is counted. Use this function to specify\na reward for viewing the video ad.\n`close` - Called when a user closes a video ad or an error happens.\n`error` - Called when an error occurrs. The error object is passed to the callback function.",
           "types": [
             "RewardedCallbacks"
           ],
@@ -125,7 +125,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is { stickyAdvIsShowing = boolean, reason = \"string\" }",
           "types": [
             "StickyBannerCallback"
           ],
@@ -212,7 +212,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err)",
           "types": [
             "ApiCallback"
           ],
@@ -230,7 +230,7 @@
       "parameters": [
         {
           "name": "data",
-          "doc": "",
+          "doc": "A table containing key-value pairs. Example: { \"a\" = \"value\", \"b\" = 2 }.",
           "types": [
             "Record<string, unknown>"
           ],
@@ -238,7 +238,7 @@
         },
         {
           "name": "flush",
-          "doc": "",
+          "doc": "Specifies the order data is sent.\nIf the value is “true”, the data is immediately\nsent to the server. If it's “false” (default),\nthe request to send data is queued.",
           "types": [
             "boolean"
           ],
@@ -246,7 +246,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err)",
           "types": [
             "ApiCallback"
           ],
@@ -272,7 +272,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` are pairs as key-values, i.e. { \"a\" = \"value\", \"b\" = 2 }.",
           "types": [
             "ApiCallback"
           ],
@@ -298,7 +298,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` are changed pairs as key-values, i.e. { \"a\" = 1, \"b\" = 2 }.",
           "types": [
             "ApiCallback"
           ],
@@ -324,7 +324,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` are changed pairs as key-values, i.e. { \"a\" = 10, \"b\" = 5 }.",
           "types": [
             "ApiCallback"
           ],
@@ -342,7 +342,7 @@
       "parameters": [
         {
           "name": "keys",
-          "doc": "",
+          "doc": "List of keys to be returned (example { \"a\", \"b\", \"key1\", \"key2\" }). If the keys parameter is nil, the method returns all in-game user data.",
           "types": [
             "Array<string> | undefined"
           ],
@@ -350,7 +350,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` are pairs as key-values, i.e. { \"a\" = 1, \"b\" = 2 }.",
           "types": [
             "ApiCallback"
           ],
@@ -496,7 +496,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "or nil",
           "types": [
             "PlayerPersonalInfo | undefined"
           ]
@@ -572,7 +572,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err)",
           "types": [
             "ApiCallback"
           ],
@@ -707,7 +707,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err)",
           "types": [
             "ApiCallback"
           ],
@@ -741,7 +741,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is a table with leaderboard description.",
           "types": [
             "LeaderboardsDescriptionCallback"
           ],
@@ -775,7 +775,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is a table with player's ranking.",
           "types": [
             "ApiCallback"
           ],
@@ -816,7 +816,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is a table with data about leaderboard entries.",
           "types": [
             "LeaderboardsGetPlayerEntriesCallback"
           ],
@@ -858,7 +858,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err)",
           "types": [
             "ApiCallback"
           ],
@@ -968,7 +968,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is { value = boolean, [reason] = \"string\" }",
           "types": [
             "FeedbackCanReviewCallback"
           ],
@@ -990,7 +990,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is { feedbackSent = boolean }",
           "types": [
             "FeedbackCanReviewCallback"
           ],
@@ -1035,7 +1035,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "\"desktop\" (computer), \"mobile\" (mobile device), \"tablet\" (tablet) or \"tv\" (TV)",
           "types": [
             "\"desktop\" | \"mobile\" | \"tablet\""
           ]
@@ -1153,7 +1153,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err)",
           "types": [
             "ApiCallback"
           ],
@@ -1171,7 +1171,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err)",
           "types": [
             "ApiCallback"
           ],
@@ -1196,7 +1196,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is { canShow = boolean }",
           "types": [
             "ShortcutCanShowCallback"
           ],
@@ -1221,7 +1221,7 @@
       "parameters": [
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is { outcome = string }",
           "types": [
             "ShortcutShowPromptCallback"
           ],
@@ -1497,7 +1497,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Callback arguments are (self, err, result), where `result` is table (array)",
           "types": [
             "MultiplayerSessionsInitCallback"
           ],

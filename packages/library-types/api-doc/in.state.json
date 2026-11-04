@@ -61,7 +61,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "State instance",
           "types": [
             "StateInstance"
           ]
@@ -85,7 +85,7 @@
         },
         {
           "name": "instance",
-          "doc": "",
+          "doc": "Optional state instance to modify. Will use global state instance if none is specified",
           "types": [
             "StateInstance"
           ],
@@ -111,7 +111,7 @@
         },
         {
           "name": "instance",
-          "doc": "",
+          "doc": "Optional state instance to modify. Will use global state instance if none is specified",
           "types": [
             "StateInstance"
           ],
@@ -137,7 +137,7 @@
         },
         {
           "name": "instance",
-          "doc": "",
+          "doc": "Optional state instance to modify. Will use global state instance if none is specified",
           "types": [
             "StateInstance"
           ],
@@ -147,7 +147,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "true if pressed/active",
           "types": [
             "boolean"
           ]
@@ -179,7 +179,7 @@
         },
         {
           "name": "instance",
-          "doc": "",
+          "doc": "Optional state instance to modify. Will use global state instance if none is specified",
           "types": [
             "StateInstance"
           ],
@@ -230,7 +230,7 @@
       "parameters": [
         {
           "name": "instance",
-          "doc": "",
+          "doc": "Optional state instance to modify. Will use global state instance if none is specified",
           "types": [
             "StateInstance"
           ],

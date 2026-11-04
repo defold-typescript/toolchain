@@ -180,6 +180,8 @@ function byName(members: LuaMember[]): Map<string, LuaMember> {
   return new Map(members.map((member) => [member.name, member]));
 }
 
+const NO_TAGS: LuaMember["tags"] = { params: [], returns: [] };
+
 describe("parseLuaSurface over inline module shapes", () => {
   const source = [
     "local M = {}",
@@ -211,6 +213,7 @@ describe("parseLuaSurface over inline module shapes", () => {
       varargs: false,
       doc: "",
       refusedDoc: false,
+      tags: NO_TAGS,
     });
   });
 
@@ -221,12 +224,13 @@ describe("parseLuaSurface over inline module shapes", () => {
       varargs: false,
       doc: "",
       refusedDoc: false,
+      tags: NO_TAGS,
     });
   });
 
   test("a non-callable field carries no params at all, so it is not a zero-arity function", () => {
     const c = byName(parseLuaSurface(source).members).get("c") as LuaMember;
-    expect(c).toEqual({ name: "c", varargs: false, doc: "", refusedDoc: false });
+    expect(c).toEqual({ name: "c", varargs: false, doc: "", refusedDoc: false, tags: NO_TAGS });
     expect("params" in c).toBe(false);
   });
 
@@ -238,7 +242,7 @@ describe("parseLuaSurface over inline module shapes", () => {
     );
     expect(surface.moduleLocal).toBe("relay");
     expect(surface.members).toEqual([
-      { name: "ping", params: ["host"], varargs: false, doc: "", refusedDoc: false },
+      { name: "ping", params: ["host"], varargs: false, doc: "", refusedDoc: false, tags: NO_TAGS },
     ]);
   });
 
@@ -247,7 +251,7 @@ describe("parseLuaSurface over inline module shapes", () => {
       ["local M = {}", "function M.e(a, ...)", "end", "return M", ""].join("\n"),
     );
     expect(surface.members).toEqual([
-      { name: "e", params: ["a"], varargs: true, doc: "", refusedDoc: false },
+      { name: "e", params: ["a"], varargs: true, doc: "", refusedDoc: false, tags: NO_TAGS },
     ]);
   });
 
@@ -286,6 +290,7 @@ describe("parseLuaSurface over inline module shapes", () => {
         varargs: false,
         doc: "@param a number\n@param b number",
         refusedDoc: false,
+        tags: NO_TAGS,
       },
     ]);
   });
@@ -295,7 +300,7 @@ describe("parseLuaSurface over inline module shapes", () => {
       ["local M = {}", "M.e = function(a,", "  ...)", "end", "return M", ""].join("\n"),
     );
     expect(surface.members).toEqual([
-      { name: "e", params: ["a"], varargs: true, doc: "", refusedDoc: false },
+      { name: "e", params: ["a"], varargs: true, doc: "", refusedDoc: false, tags: NO_TAGS },
     ]);
   });
 
@@ -397,6 +402,7 @@ describe("parseLuaSurface over a client API module", () => {
       varargs: false,
       doc: "",
       refusedDoc: false,
+      tags: NO_TAGS,
     });
   });
 });
@@ -480,6 +486,136 @@ describe("a refused comment block is distinguishable from no comment at all", ()
   test("`format`'s `--`-only block in the logging module reads as refused", () => {
     const format = byName(parseLuaSurface(LOG_MODULE).members).get("format");
     expect(format).toMatchObject({ doc: "", refusedDoc: true });
+  });
+});
+
+describe("a member's tags are upstream's parameter and return text without types", () => {
+  function tagsOf(...comment: string[]): LuaMember["tags"] {
+    return (
+      byName(
+        parseLuaSurface(
+          [
+            "local M = {}",
+            "--- Summary.",
+            ...comment,
+            "function M.x(a)",
+            "end",
+            "return M",
+            "",
+          ].join("\n"),
+        ).members,
+      ).get("x") as LuaMember
+    ).tags;
+  }
+
+  test("an LDoc `@param` is its name and the rest of the line", () => {
+    expect(tagsOf("-- @param port The port to listen on").params).toEqual([
+      { name: "port", doc: "The port to listen on" },
+    ]);
+  });
+
+  test("an LDoc parenthesized type and a `@tparam` type stay out of the doc", () => {
+    expect(tagsOf("-- @param id (string) The screen id").params).toEqual([
+      { name: "id", doc: "The screen id" },
+    ]);
+    expect(tagsOf("-- @tparam string id The screen id").params).toEqual([
+      { name: "id", doc: "The screen id" },
+    ]);
+    expect(tagsOf("--- @param army_id (number) army id number").params).toEqual([
+      { name: "army_id", doc: "army id number" },
+    ]);
+  });
+
+  test("an `[opt]` modifier is dropped from `@tparam` and `@param`", () => {
+    expect(
+      tagsOf(
+        "-- @tparam[opt] string id The screen id",
+        '-- @tparam[opt="info"] string level The level',
+        "-- @param[opt] cb Called when done",
+      ).params,
+    ).toEqual([
+      { name: "id", doc: "The screen id" },
+      { name: "level", doc: "The level" },
+      { name: "cb", doc: "Called when done" },
+    ]);
+  });
+
+  test("a dash separating an LDoc name from its doc is not part of the doc", () => {
+    expect(
+      tagsOf("-- @param offset - Offset from target", "-- @param node -- name of node").params,
+    ).toEqual([
+      { name: "offset", doc: "Offset from target" },
+      { name: "node", doc: "name of node" },
+    ]);
+  });
+
+  test("a LuaLS `---@param` is read as LuaLS, its type kept out whole", () => {
+    expect(
+      tagsOf("---@param value? string The value", "---@param cb fun(ok: boolean) Called when done")
+        .params,
+    ).toEqual([
+      { name: "value", doc: "The value" },
+      { name: "cb", doc: "Called when done" },
+    ]);
+  });
+
+  test("LDoc and LuaLS returns keep only their text", () => {
+    expect(tagsOf("-- @return true if shown").returns).toEqual(["true if shown"]);
+    expect(tagsOf("-- @treturn boolean true if shown").returns).toEqual(["true if shown"]);
+    expect(tagsOf("--- @return (number) army id").returns).toEqual(["army id"]);
+    expect(tagsOf("---@return boolean ok Whether it worked").returns).toEqual([
+      "Whether it worked",
+    ]);
+  });
+
+  test("a line that starts no tag continues the one above it", () => {
+    expect(tagsOf("-- @param port The port", "-- to listen on").params).toEqual([
+      { name: "port", doc: "The port\nto listen on" },
+    ]);
+    expect(tagsOf("-- @return true if shown,", "-- false otherwise").returns).toEqual([
+      "true if shown,\nfalse otherwise",
+    ]);
+  });
+
+  test("any other tag ends the one above it and is not kept", () => {
+    expect(
+      tagsOf(
+        "-- @param port The port",
+        "-- @usage",
+        "-- M.x(80)",
+        "-- @see other",
+        "-- @return the port",
+      ),
+    ).toEqual({ params: [{ name: "port", doc: "The port" }], returns: ["the port"] });
+  });
+
+  test("a tag with no description and a line no rule fits give no entry", () => {
+    expect(
+      tagsOf(
+        "-- @param port",
+        "-- @tparam string",
+        "-- @param",
+        "---@param value string",
+        "-- @treturn boolean",
+        "---@return boolean",
+      ),
+    ).toEqual({ params: [], returns: [] });
+  });
+
+  test("a refused block and a member with no block carry no tags", () => {
+    const source = [
+      "local M = {}",
+      "-- @param a The a",
+      "function M.x(a)",
+      "end",
+      "function M.y(a)",
+      "end",
+      "return M",
+      "",
+    ].join("\n");
+    const members = byName(parseLuaSurface(source).members);
+    expect(members.get("x")?.tags).toEqual({ params: [], returns: [] });
+    expect(members.get("y")?.tags).toEqual({ params: [], returns: [] });
   });
 });
 
@@ -583,7 +719,7 @@ describe("a module closing with `return setmetatable(<name>, {…})` is the same
     );
     expect(inline.moduleLocal).toBe("M");
     expect(inline.members).toEqual([
-      { name: "a", params: ["x"], varargs: false, doc: "", refusedDoc: false },
+      { name: "a", params: ["x"], varargs: false, doc: "", refusedDoc: false, tags: NO_TAGS },
     ]);
   });
 });
@@ -772,6 +908,7 @@ describe("a returned table's constructor entries are members", () => {
       varargs: false,
       doc: "",
       refusedDoc: false,
+      tags: NO_TAGS,
     });
     expect(members.get("Client")?.params).toBeUndefined();
     expect(members.get("inner")?.params).toBeUndefined();
@@ -783,6 +920,7 @@ describe("a returned table's constructor entries are members", () => {
       varargs: false,
       doc: "",
       refusedDoc: true,
+      tags: NO_TAGS,
     });
     const documented = ["local M = {", "  --- The client.", "  Client = Client,", "}", "return M"];
     expect(parseLuaSurface(documented.join("\n")).members[0]?.doc).toBe("The client.");
@@ -967,6 +1105,7 @@ describe("a column-0 colon method of the returned table is a method member", () 
       method: true,
       doc: "",
       refusedDoc: false,
+      tags: NO_TAGS,
     });
   });
 
