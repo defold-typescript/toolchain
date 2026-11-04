@@ -1,24 +1,22 @@
-# Checks every library-types lane registry for an upstream that has moved past
-# the pin.
+# Runs two weekly checks on the library corpus's upstreams.
 #
-# `defold-upstream-check.yml` does this for the engine; the library corpus — 35
-# upstream repos across the authored, LuaLS, markdown, OpenAPI and script_api
-# lanes — had no equivalent, so a stale pin was only ever noticed by hand.
-#
-# The same job compares the Defold Asset Portal head's entry ids with the pinned
+# It compares the Defold Asset Portal head's entry ids with the pinned
 # `asset-portal.json`, so a library newly published there is noticed without
 # anyone browsing the portal.
 #
-# It also reads each curated repo's newest release for a `types/` folder that
+# It reads each curated repo's newest release for a `types/` folder that
 # `resolve` accepts, so a curated target that upstream has made redundant is
 # noticed and can be retired.
+#
+# A pin that upstream has moved past is the daily library update bot's to report
+# (`library-update.yml`), so this job scans no pins.
 #
 # Two GitHub scheduling facts this depends on: a `schedule:` trigger only ever
 # runs on the default branch (so edits must land on main to take effect), and it
 # is auto-disabled after 60 days without repository activity — `workflow_dispatch`
 # is kept so a maintainer can always run it by hand.
 
-name: Library upstream pin check
+name: Library upstream check
 
 on:
   schedule:
@@ -42,50 +40,8 @@ jobs:
       - run: bun install --frozen-lockfile
 
       # Invoked as a file rather than through `bun run` so nothing but the report
-      # can reach stdout. Exit 1 here means an upstream could not be read, which
-      # is a real failure; drift itself exits 0 and is read out of the JSON below.
-      - name: Scan every lane registry for a moved upstream
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: bun scripts/library-upstream-check.ts --json --data packages/library-types/data > upstream.json
-
-      # The scan exits 1 when any one of the 35 groups is unreadable, and a step
-      # defaults to `if: success()` — so without this the whole corpus's findings
-      # would be withheld over a single renamed repo. `!cancelled()` rather than
-      # `always()`: a cancelled run should not open issues on its way out.
-      - name: Open one issue per stale repo
-        if: ${{ !cancelled() }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          # Running after a failed predecessor means the report may never have
-          # been written; consuming it with jq would stack a parse error on top
-          # of the real failure.
-          if [ ! -s upstream.json ]; then
-            echo "no upstream report to consume"
-            exit 0
-          fi
-          jq -r '"\(.reports | length) pin(s), \([.reports[] | select(.actionable)] | length) actionable"' upstream.json
-          jq -c '.reports[] | select(.actionable)' upstream.json > actionable.jsonl
-          while read -r report; do
-            title=$(printf '%s' "$report" | jq -r '.issueTitle')
-            # The title is keyed on the repo slug and the upstream version alone,
-            # so this finds the issue a previous run opened and stays a no-op
-            # until the bump lands.
-            existing=$(gh issue list --state open --limit 100 --json number,title \
-              --jq "[.[] | select(.title == \"$title\") | .number] | first // empty")
-            if [ -n "$existing" ]; then
-              echo "already tracked as #$existing: $title"
-              continue
-            fi
-            printf '%s' "$report" | jq -r '.issueBody' > issue-body.md
-            gh issue create --title "$title" --body-file issue-body.md
-          done < actionable.jsonl
-
-      # `!cancelled()` so one unreadable library pin above does not withhold the
-      # portal check. Exit 1 here means the portal head could not be read; added
-      # or removed entries exit 0 and are read out of the JSON below.
+      # can reach stdout. Exit 1 here means the portal head could not be read;
+      # added or removed entries exit 0 and are read out of the JSON below.
       - name: Compare the Asset Portal's entries with asset-portal.json
         if: ${{ !cancelled() }}
         env:
@@ -118,9 +74,9 @@ jobs:
           jq -r '.issueBody' portal.json > portal-issue-body.md
           gh issue create --title "$title" --body-file portal-issue-body.md
 
-      # `!cancelled()` so an unreadable pin or portal above does not withhold the
-      # sweep. Exit 1 here means a curated repo could not be read; a repo whose
-      # release ships types exits 0 and is read out of the JSON below.
+      # `!cancelled()` so an unreadable portal above does not withhold the sweep.
+      # Exit 1 here means a curated repo could not be read; a repo whose release
+      # ships types exits 0 and is read out of the JSON below.
       - name: Find curated targets whose upstream release ships types
         if: ${{ !cancelled() }}
         env:
