@@ -587,13 +587,29 @@ export function gitHubToken(): string | undefined {
   return process.env.GITHUB_TOKEN || process.env.GH_TOKEN || undefined;
 }
 
+// A sync makes hundreds of requests, and GitHub answers the odd one with a 5xx
+// or drops it (raw.githubusercontent.com has returned `501 First fragment:
+// Transfer-Encoding not supported` for a file it serves on the next try), so
+// one transient failure must not abort the run. A 4xx is an answer, not a fault:
+// callers read 404 as "absent".
+const RETRY_DELAYS_MS = [500, 2000];
+
 export async function request(
   url: string,
   accept = "application/vnd.github+json",
+  retryDelaysMs: readonly number[] = RETRY_DELAYS_MS,
 ): Promise<Response> {
   const token = gitHubToken();
   const headers: Record<string, string> = { Accept: accept };
   if (token) headers.Authorization = `Bearer ${token}`;
+  for (const delay of retryDelaysMs) {
+    try {
+      const res = await fetch(url, { headers });
+      if (res.status < 500) return res;
+      await res.body?.cancel();
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
   return fetch(url, { headers });
 }
 

@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -14,6 +14,7 @@ import {
   loadReservedNamespaces,
   type ReservedNamespaces,
   reconvertDefoldExtensions,
+  request,
   selectPin,
   syncDefoldExtensions,
   syncDefoldReleaseDates,
@@ -628,5 +629,46 @@ describe("fetchDefoldExtensions", () => {
     expect(entries["extension-rive"]?.refDate).toBe("2024-05-06T00:00:00Z");
     expect(entries["extension-beacon"]).not.toHaveProperty("refDate");
     expect(entries["asset-pbr"]).not.toHaveProperty("refDate");
+  });
+});
+
+describe("request", () => {
+  const URL_UNDER_TEST = "https://raw.githubusercontent.com/acme/lib/1.0/lib/annotations.lua";
+  const NO_WAIT = [0, 0];
+
+  // Answers each call with the next outcome: a status, or an error to throw.
+  async function requestThrough(outcomes: readonly (number | Error)[], delays = NO_WAIT) {
+    let calls = 0;
+    const spy = spyOn(globalThis, "fetch").mockImplementation((async () => {
+      const outcome = outcomes[Math.min(calls++, outcomes.length - 1)];
+      if (outcome === undefined) throw new Error("requestThrough needs at least one outcome");
+      if (outcome instanceof Error) throw outcome;
+      return new Response(`status ${outcome}`, { status: outcome });
+    }) as unknown as typeof fetch);
+    try {
+      const res = await request(URL_UNDER_TEST, "text/plain", delays);
+      return { status: res.status, calls };
+    } finally {
+      spy.mockRestore();
+    }
+  }
+
+  test("retries a server error and returns the answer that succeeds", async () => {
+    expect(await requestThrough([501, 200])).toEqual({ status: 200, calls: 2 });
+  });
+
+  test("retries a request that failed before any answer", async () => {
+    expect(await requestThrough([new TypeError("socket closed"), 200])).toEqual({
+      status: 200,
+      calls: 2,
+    });
+  });
+
+  test("returns the last server error once every retry is spent", async () => {
+    expect(await requestThrough([503])).toEqual({ status: 503, calls: NO_WAIT.length + 1 });
+  });
+
+  test("never retries a client error, so a missing file reads as missing at once", async () => {
+    expect(await requestThrough([404, 200])).toEqual({ status: 404, calls: 1 });
   });
 });
