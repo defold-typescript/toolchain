@@ -613,6 +613,68 @@ function reentrantEntityChange(lib: Lib, log: Log): void {
   state("refreshed again");
 }
 
+interface ReentrantRemoval {
+  twoSystems: boolean;
+  spawnCopy: boolean;
+}
+
+function reentrantRemoval(lib: Lib, log: Log, options: ReentrantRemoval): void {
+  const e1: Ent = { name: "e1", a: 1 };
+  const e2: Ent = { name: "e2", a: 1 };
+  let readded = false;
+  let back = e1;
+  const make = (name: string) =>
+    lib.processingSystem<Ent>()(lib.requireAll("a"), {
+      ...tracked(log, name),
+      onRemove(entity: Ent) {
+        line(log, "onRemove", this.name, entity, undefined);
+        if (!readded) {
+          readded = true;
+          back = options.spawnCopy ? { ...entity, name: "c1" } : entity;
+          log.push(`re-add ${back.name}, refresh`);
+          const w = this.world as World;
+          w.addEntity(back);
+          w.refresh();
+        }
+      },
+      process(entity, dt) {
+        line(log, "process", this.name, entity, dt);
+      },
+    });
+  const first = make(options.twoSystems ? "A" : "S");
+  const systems = [first];
+  let w: World;
+  if (options.twoSystems) {
+    const second = make("B");
+    systems.push(second);
+    w = lib.world<Ent>(first, second, e1, e2);
+  } else {
+    w = lib.world<Ent>(first, e1, e2);
+  }
+  const state = (label: string) => {
+    counts(log, label, w);
+    let out = `${label} world ${names(w.entities)}`;
+    for (const system of systems) {
+      out = `${out} ${system.name} ${names(system.entities)}`;
+    }
+    log.push(out);
+  };
+
+  frame(log, w, 0.25);
+  w.removeEntity(e1);
+  frame(log, w, 0.5);
+  state("removed e1");
+  w.changed(back);
+  frame(log, w, 0.75);
+  state("changed back");
+  w.removeEntity(back);
+  frame(log, w, 1);
+  state("removed back");
+  w.removeEntity(e2);
+  frame(log, w, 1.25);
+  state("removed e2");
+}
+
 function freeFunctions(lib: Lib, log: Log): void {
   const s = lib.processingSystem<Ent>()(lib.requireAll("a"), {
     ...tracked(log, "S"),
@@ -678,6 +740,18 @@ export const scenarios: readonly Scenario[] = [
   { name: "copy before source", run: copyBeforeSource },
   { name: "re-entrant system add", run: reentrantSystemAdd },
   { name: "re-entrant entity change", run: reentrantEntityChange },
+  {
+    name: "re-entrant removal",
+    run: (lib, log) => reentrantRemoval(lib, log, { twoSystems: false, spawnCopy: false }),
+  },
+  {
+    name: "re-entrant removal, two systems",
+    run: (lib, log) => reentrantRemoval(lib, log, { twoSystems: true, spawnCopy: false }),
+  },
+  {
+    name: "re-entrant removal spawns a copy",
+    run: (lib, log) => reentrantRemoval(lib, log, { twoSystems: true, spawnCopy: true }),
+  },
   { name: "free functions", run: freeFunctions },
 ];
 
