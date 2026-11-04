@@ -48,6 +48,7 @@ import { libraryStatusMessages } from "./library/library-status";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { LIBRARY_DATA_MAIN_URL } from "./library-data-archive";
 import {
+  addUnprintableFixtureFork,
   copyFixtureDataWithFlushDoc,
   fixtureFlushPin,
   writeAuthoredLibraryData,
@@ -9646,6 +9647,33 @@ describe("dispatch library check fork doc notices", () => {
     const json = captureStreams();
     expect(await run(["--json"], json.io)).toBe(1);
     expect(JSON.parse(json.out())).toMatchObject({ ok: false, notices: [notice()] });
+  }, 120_000);
+
+  test("a fork that does not print is a problem, and the other forks' notices are still listed", async () => {
+    const dataDir = writeData();
+    addUnprintableFixtureFork(dataDir);
+    const { io, out, err } = captureStreams();
+
+    const code = await run([], io);
+
+    expect(code).toBe(1);
+    expect(out()).toMatch(/^fixture-fork: print: [^\n]*tally\.broken[^\n]*\n/);
+    expect(out().endsWith(noticeLine())).toBe(true);
+    expect(err()).toContain(": 1 problem in ");
+
+    const json = captureStreams();
+    expect(await run(["--json"], json.io)).toBe(1);
+    expect(JSON.parse(json.out())).toMatchObject({
+      ok: false,
+      problems: [
+        {
+          library: "fixture-fork",
+          check: "print",
+          message: expect.stringContaining("tally.broken"),
+        },
+      ],
+      notices: [notice()],
+    });
   }, 120_000);
 });
 

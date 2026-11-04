@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import {
+  addUnprintableFixtureFork,
   copyFixtureDataWithFlushDoc,
   FIXTURE_DATA_DIR,
   fixtureFlushPin,
@@ -581,6 +582,30 @@ describe("forkDocNotices", () => {
   test("the fixture data folder holds no notice", () => {
     expect(forkDocNotices(FIXTURE_DATA_DIR)).toEqual([]);
   });
+
+  test("a fork that does not print keeps the other forks' notices, and the check names it", async () => {
+    const dataDir = fixtureWithFlushDoc(["\t/**", "\t * Run the queued handlers.", "\t */"]);
+    addUnprintableFixtureFork(dataDir);
+
+    expect(forkDocNotices(dataDir)).toEqual([
+      {
+        library: "fixture-fork",
+        module: "tally.tally",
+        member: "flush",
+        kind: "unpinned",
+        pin: fixtureFlushPin(),
+      },
+    ]);
+    expect(await checkLibraryData(dataDir)).toEqual([
+      {
+        library: "fixture-fork",
+        check: "print",
+        message: expect.stringMatching(
+          /tally\.broken.*@upstreamDoc takes 12 lowercase hex characters/,
+        ),
+      },
+    ]);
+  }, 120_000);
 
   test("a stale notice names the new pin, and an orphan names no pin", () => {
     const at = { library: "fixture-fork", module: "tally.tally", member: "flush" };
