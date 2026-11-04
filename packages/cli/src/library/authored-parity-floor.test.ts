@@ -520,7 +520,7 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
   "library-defold-rendy/source/upstream/rendy/rendy.lua":
     "155cfbc6ee1dc0284e6546a4601ccf64418e5ede51ef4b204f71b13b93268fbc",
   "minit-defold/source/upstream/minit/minit.lua":
-    "3d86ff11608337ace79cb7649dabf7575770552e334b3bf5c720522e30330f8f",
+    "9ddc300365e9dd90f8a83131e51ee6fbad0241047740e68dc761bbce06b06db3",
   "monarch/source/upstream/monarch/monarch.lua":
     "686f04e674e5436650d342f6ba310998b8eca88c9ff3eb6889dc36af43423192",
   "monarch/source/upstream/monarch/transitions/easings.lua":
