@@ -58,6 +58,8 @@ interface SystemRecord {
   preProcess?: (this: SystemRecord, dt: number) => void;
   process?: (this: SystemRecord, entity: EntityRecord, dt: number) => void;
   postProcess?: (this: SystemRecord, dt: number) => void;
+  compare?: (this: SystemRecord, e1: EntityRecord, e2: EntityRecord) => boolean;
+  sortDelegate?: ((this: void, e1: EntityRecord, e2: EntityRecord) => boolean) | undefined;
 }
 
 interface WorldRecord {
@@ -183,6 +185,32 @@ function insertShifting<T>(list: T[], pos: number, item: T): void {
   list[pos] = item;
 }
 
+// Binary insertion sort. Lua's table.sort is not stable and JavaScript's is, so
+// the two runtimes share this one. An item moves only past items it goes
+// `before`, which keeps ties in place, and it allocates nothing.
+function stableSort<T>(list: T[], before: (this: void, a: T, b: T) => boolean): void {
+  const count = list.length;
+  for (let i = 1; i < count; i++) {
+    const item = list[i] as T;
+    if (before(item, list[i - 1] as T)) {
+      let low = 0;
+      let high = i - 1;
+      while (low < high) {
+        const mid = Math.floor((low + high) / 2);
+        if (before(item, list[mid] as T)) {
+          high = mid;
+        } else {
+          low = mid + 1;
+        }
+      }
+      for (let j = i; j > low; j--) {
+        list[j] = list[j - 1] as T;
+      }
+      list[low] = item;
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Filters
 
@@ -297,6 +325,37 @@ function makeProcessingSystem(this: void, filter: unknown, def: unknown): unknow
   system.filter = filter as FilterFn;
   system.__ecs_system = true;
   system.update = processingSystemUpdate;
+  return system;
+}
+
+// Reads `compare` once, at the first sort, as tiny-ecs does: replacing it later
+// has no effect until the cached delegate is cleared.
+function sortedSystemOnModify(this: SystemRecord, _dt: number): void {
+  const entities = this.entities as EntityRecord[];
+  const indices = this.indices as IdIndex;
+  let sortDelegate = this.sortDelegate;
+  if (sortDelegate === undefined) {
+    const compare = this.compare as NonNullable<SystemRecord["compare"]>;
+    sortDelegate = (e1: EntityRecord, e2: EntityRecord) => compare.call(this, e1, e2);
+    this.sortDelegate = sortDelegate;
+  }
+  stableSort(entities, sortDelegate);
+  const key = (this.world as WorldRecord).idKey;
+  const count = entities.length;
+  for (let i = 0; i < count; i++) {
+    indices[idOf(entities[i] as EntityRecord, key) as number] = i;
+  }
+}
+
+function makeSortedSystem(this: void, first: unknown, second?: unknown): unknown {
+  const system = makeSystem(first, second) as SystemRecord;
+  system.onModify = sortedSystemOnModify;
+  return system;
+}
+
+function makeSortedProcessingSystem(this: void, filter: unknown, def: unknown): unknown {
+  const system = makeProcessingSystem(filter, def) as SystemRecord;
+  system.onModify = sortedSystemOnModify;
   return system;
 }
 
@@ -808,8 +867,43 @@ export interface ProcessingSystemCallbacks<E, X = E> extends SystemCallbacks<E, 
   update?: never;
 }
 
+/** What a sorted system's definition adds to its callbacks. */
+export interface SortedDefinition<X> {
+  /** Whether `e1` goes before `e2`. Read once, at the system's first sort. */
+  compare(e1: X, e2: X): boolean;
+  /** A sorted system keeps its entities, so it cannot be `nocache`. */
+  nocache?: false | undefined;
+}
+
+/** The callbacks of a system built by `sortedSystem`. */
+export interface SortedSystemCallbacks<E, X = E>
+  extends PlainSystemCallbacks<E, X>,
+    SortedDefinition<X> {
+  /** A sorted system's `onModify` sorts its entities. */
+  onModify?: never;
+}
+
+/** The callbacks of a system built by `sortedProcessingSystem`. */
+export interface SortedProcessingSystemCallbacks<E, X = E>
+  extends ProcessingSystemCallbacks<E, X>,
+    SortedDefinition<X> {
+  /** A sorted system's `onModify` sorts its entities. */
+  onModify?: never;
+}
+
 /** A system: its definition `D` plus the fields ecs manages. */
 export type System<E, D = unknown> = D & SystemFields<E>;
+
+/** The fields a sorted system adds to those every system carries. */
+export interface SortedSystemFields<X> {
+  /** A sorted system keeps its entities, so it cannot be `nocache`. */
+  nocache?: false | undefined;
+  /** `compare` bound to the system, built at the first sort and kept. */
+  readonly sortDelegate?: ((this: void, e1: X, e2: X) => boolean) | undefined;
+}
+
+/** A sorted system over entities `E` whose `compare` takes `X`. */
+export type SortedSystem<E, D = unknown, X = E> = System<E, D> & SortedSystemFields<X>;
 
 // Callback keys take their type from the callback interface alone. Typed as
 // `D & C`, a callback written as an arrow would also carry its own signature,
@@ -837,6 +931,28 @@ export type ProcessingSystemFactory<E> = <F extends Filter, D extends object>(
   def: Definition<D, ProcessingSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
     ThisType<System<E, D>>,
 ) => System<E, D>;
+
+/** Builds a sorted system from a definition, with or without a filter. */
+export interface SortedSystemFactory<E> {
+  <D extends object>(
+    this: void,
+    def: Definition<D, SortedSystemCallbacks<E>> & ThisType<SortedSystem<E, D>>,
+  ): SortedSystem<E, D>;
+  <F extends Filter, D extends object>(
+    this: void,
+    filter: F & KnownKeys<E, F>,
+    def: Definition<D, SortedSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
+      ThisType<SortedSystem<E, D, With<E, KeysIn<F>["required"]>>>,
+  ): SortedSystem<E, D, With<E, KeysIn<F>["required"]>>;
+}
+
+/** Builds a sorted processing system from a filter and a definition. */
+export type SortedProcessingSystemFactory<E> = <F extends Filter, D extends object>(
+  this: void,
+  filter: F & KnownKeys<E, F>,
+  def: Definition<D, SortedProcessingSystemCallbacks<E, With<E, KeysIn<F>["required"]>>> &
+    ThisType<SortedSystem<E, D, With<E, KeysIn<F>["required"]>>>,
+) => SortedSystem<E, D, With<E, KeysIn<F>["required"]>>;
 
 /**
  * Holds entities and systems. Adding and removing take effect at the next
@@ -919,6 +1035,16 @@ export function system<E>(): SystemFactory<E> {
 /** Returns a factory for processing systems over entities of type `E`. */
 export function processingSystem<E>(): ProcessingSystemFactory<E> {
   return makeProcessingSystem as unknown as ProcessingSystemFactory<E>;
+}
+
+/** Returns a factory for systems that keep their entities ordered by `compare`. */
+export function sortedSystem<E>(): SortedSystemFactory<E> {
+  return makeSortedSystem as unknown as SortedSystemFactory<E>;
+}
+
+/** Returns a factory for processing systems that process their entities in `compare` order. */
+export function sortedProcessingSystem<E>(): SortedProcessingSystemFactory<E> {
+  return makeSortedProcessingSystem as unknown as SortedProcessingSystemFactory<E>;
 }
 
 /** Creates a world holding `items`, applied at once. */
