@@ -73,6 +73,16 @@
       "upstreamLua": ["source/upstream/in/triggers.lua"]
     }
   ],
+  "indexSlots": {
+    "in.mapper/bind:param:gamepad": {
+      "class": "native-0",
+      "evidence": "mapper.lua:bind stores it and on_input compares it with == to the gamepad passed there, the engine's 0-based action.gamepad"
+    },
+    "in.mapper/on_input:param:gamepad": {
+      "class": "native-0",
+      "evidence": "mapper.lua:on_input compares it with == to a binding's gamepad; it is the engine's 0-based action.gamepad, passed unchanged"
+    }
+  },
   "floors": {
     "in.accelerometer": {
       "callable": 1,
