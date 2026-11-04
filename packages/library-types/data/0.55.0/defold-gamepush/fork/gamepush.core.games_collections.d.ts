@@ -25,6 +25,7 @@ declare module 'gamepush.core.games_collections' {
    * Opens the overlay with games.
    * @param parameters The collection, for example `{ tag: "ALL" }`.
    * @param callback Called once the overlay opens.
+    * @upstreamDoc 97c1addb22fc
    */
   export function open(parameters?: Record<string, unknown>, callback?: () => void): void;
 
@@ -32,6 +33,7 @@ declare module 'gamepush.core.games_collections' {
    * Fetches a games collection.
    * @param parameters The collection, for example `{ tag: "ALL" }`.
    * @param callback Receives the collection.
+    * @upstreamDoc c7172e975596
    */
   export function fetch(
     parameters?: Record<string, unknown>,

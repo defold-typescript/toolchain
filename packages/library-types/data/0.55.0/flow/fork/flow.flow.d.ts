@@ -177,25 +177,46 @@ declare module 'flow.flow' {
   /** Color parsing and hexadecimal color helpers. */
   export const color: typeof import('flow.color');
 
-  /** Mounts Flow and configures navigation on a GUI script instance. */
+  /**
+   * Mounts Flow and configures navigation on a GUI script instance.
+   * @upstreamDoc 80fb4a46bccc
+   */
   export function init(self: FlowSelf, config?: Flow_InitConfig): LuaTable;
 
-  /** Releases input focus and destroys the active adapter. */
+  /**
+   * Releases input focus and destroys the active adapter.
+   * @upstreamDoc c25646bd22b8
+   */
   export function final(self: FlowSelf): void;
 
-  /** Sets a static element tree and requests a redraw. */
+  /**
+   * Sets a static element tree and requests a redraw.
+   * @upstreamDoc bf16511eb369
+   */
   export function set_tree(self: FlowSelf, tree: Flow_Element): Flow_Element;
 
-  /** Requests a rebuild of the current static or navigation tree. */
+  /**
+   * Requests a rebuild of the current static or navigation tree.
+   * @upstreamDoc ee05b69abd39
+   */
   export function invalidate(self: FlowSelf): void;
 
-  /** Advances animations and navigation, rebuilding and redrawing as needed. */
+  /**
+   * Advances animations and navigation, rebuilding and redrawing as needed.
+   * @upstreamDoc 6b52f68ebe97
+   */
   export function update(self: FlowSelf, dt: number): boolean;
 
-  /** Routes a Defold input action through Flow. */
+  /**
+   * Routes a Defold input action through Flow.
+   * @upstreamDoc 78c9bdfebb26
+   */
   export function on_input(self: FlowSelf, action_id: Hash, action: FlowInputAction): boolean;
 
-  /** Handles navigation messages and forwards unhandled messages to the configured hook. */
+  /**
+   * Handles navigation messages and forwards unhandled messages to the configured hook.
+   * @upstreamDoc c7b92c74acb4
+   */
   export function on_message(
     self: FlowSelf,
     message_id: Hash | string,
@@ -203,7 +224,10 @@ declare module 'flow.flow' {
     sender?: Url,
   ): boolean;
 
-  /** Pushes a screen through the facade's navigation singleton. */
+  /**
+   * Pushes a screen through the facade's navigation singleton.
+   * @upstreamDoc 44de04f3cb65
+   */
   export function push(
     self: FlowSelf,
     id: string,
@@ -211,14 +235,20 @@ declare module 'flow.flow' {
     options?: Flow_PushOptions | string,
   ): void;
 
-  /** Pops the current screen through the facade's navigation singleton. */
+  /**
+   * Pops the current screen through the facade's navigation singleton.
+   * @upstreamDoc 4f2848ff9e2b
+   */
   export function pop(
     self: FlowSelf,
     result_or_transition?: FlowParams | string,
     options?: Flow_PushOptions | string,
   ): void;
 
-  /** Replaces the current screen through the facade's navigation singleton. */
+  /**
+   * Replaces the current screen through the facade's navigation singleton.
+   * @upstreamDoc 740c511f6190
+   */
   export function replace(
     self: FlowSelf,
     id: string,
@@ -226,7 +256,10 @@ declare module 'flow.flow' {
     options?: Flow_PushOptions | string,
   ): void;
 
-  /** Resets navigation to a root screen. */
+  /**
+   * Resets navigation to a root screen.
+   * @upstreamDoc 7ea3d735605d
+   */
   export function reset(
     self: FlowSelf,
     id: string,
@@ -234,6 +267,9 @@ declare module 'flow.flow' {
     options?: Flow_PushOptions | string,
   ): void;
 
-  /** Returns the current screen's saved vertical scroll offset. */
+  /**
+   * Returns the current screen's saved vertical scroll offset.
+   * @upstreamDoc bc8abd28ec8b
+   */
   export function get_scroll_offset(self: FlowSelf, key: string): number;
 }

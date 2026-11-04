@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +15,8 @@ import {
   writeRecipeJson,
   writeReviewedJson,
 } from "./library/library-data";
+import { upstreamDocPin } from "./library/merge-fork-docs";
+import { parseLuaSurface } from "./library/parse-lua-surface";
 import type { RefKind } from "./library/sync-defold-extensions";
 
 interface Pin {
@@ -141,4 +143,26 @@ export function writeAuthoredLibraryData(forks: Readonly<Record<string, string>>
     }),
   });
   return root;
+}
+
+const FIXTURE_FORK = "fixture-fork/fork/tally.tally.d.ts";
+const FIXTURE_UPSTREAM_LUA = "fixture-fork/source/upstream/tally/tally.lua";
+
+// The fixture data folder copied to `dataDir`, with `docLines` written as the doc
+// comment of the fork's `flush`, a member the fixture's upstream documents.
+export function copyFixtureDataWithFlushDoc(dataDir: string, docLines: string[]): void {
+  cpSync(FIXTURE_DATA_DIR, dataDir, { recursive: true });
+  const fork = join(dataDir, FIXTURE_FORK);
+  const declaration = "\texport function flush(";
+  const source = readFileSync(fork, "utf8");
+  if (!source.includes(declaration)) throw new Error(`${FIXTURE_FORK} declares no flush`);
+  writeFileSync(fork, source.replace(declaration, [...docLines, declaration].join("\n")));
+}
+
+// The pin that keeps a fork comment on the fixture's `flush`.
+export function fixtureFlushPin(): string {
+  const lua = readFileSync(join(FIXTURE_DATA_DIR, FIXTURE_UPSTREAM_LUA), "utf8");
+  const flush = parseLuaSurface(lua).members.find(({ name }) => name === "flush");
+  if (flush === undefined) throw new Error(`${FIXTURE_UPSTREAM_LUA} defines no flush`);
+  return upstreamDocPin(flush);
 }

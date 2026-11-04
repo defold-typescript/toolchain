@@ -25,31 +25,58 @@ declare module 'gamepush.core.sounds' {
     unmute_music?: () => void;
   }
 
-  /** Whether all sounds are muted. */
+  /**
+   * Whether all sounds are muted.
+   * @upstreamDoc 8c853f01410e
+   */
   export function is_muted(): boolean;
 
-  /** Whether sound effects are muted. */
+  /**
+   * Whether sound effects are muted.
+   * @upstreamDoc 5ab2d0227611
+   */
   export function is_sfx_muted(): boolean;
 
-  /** Whether music is muted. */
+  /**
+   * Whether music is muted.
+   * @upstreamDoc 2a729478a9a4
+   */
   export function is_music_muted(): boolean;
 
-  /** Mutes all sounds. */
+  /**
+   * Mutes all sounds.
+   * @upstreamDoc 32d40322eda2
+   */
   export function mute(): void;
 
-  /** Unmutes all sounds. */
+  /**
+   * Unmutes all sounds.
+   * @upstreamDoc 284046b0ba70
+   */
   export function unmute(): void;
 
-  /** Mutes sound effects. */
+  /**
+   * Mutes sound effects.
+   * @upstreamDoc 08454e7bc5bd
+   */
   export function mute_sfx(): void;
 
-  /** Unmutes sound effects. */
+  /**
+   * Unmutes sound effects.
+   * @upstreamDoc b862f8e70abd
+   */
   export function unmute_sfx(): void;
 
-  /** Mutes music. */
+  /**
+   * Mutes music.
+   * @upstreamDoc d05dc4e7f7f1
+   */
   export function mute_music(): void;
 
-  /** Unmutes music. */
+  /**
+   * Unmutes music.
+   * @upstreamDoc c5cb3889ed4d
+   */
   export function unmute_music(): void;
 
   /** The event handlers. */

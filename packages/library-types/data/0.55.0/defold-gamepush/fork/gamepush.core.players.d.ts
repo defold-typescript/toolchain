@@ -10,6 +10,7 @@ declare module 'gamepush.core.players' {
    * Fetches other players' data. Raises when the table is missing.
    * @param parameters The players to fetch, for example `{ ids: [62116670, 62142823] }`.
    * @param callback Receives the fetched data.
+    * @upstreamDoc cee065d9fa3d
    */
   export function fetch(
     parameters: Record<string, unknown>,

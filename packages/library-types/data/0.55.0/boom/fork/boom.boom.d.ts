@@ -197,7 +197,6 @@ declare type BoomEasing =
  */
 declare module 'boom.boom' {
 	/**
-	 * Start a boom game. Call this from your own game script
 	 * @param game Game loop function
 	 */
 	export function boom(game: () => void): void;

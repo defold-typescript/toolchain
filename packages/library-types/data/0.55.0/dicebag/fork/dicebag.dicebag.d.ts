@@ -35,12 +35,14 @@ declare module "dicebag.dicebag" {
    * Sets up the randomseed and clears the first number of random rolls.
    * @param seed optional seed, if not specified a seed will be generated using socket.gettime().
    * @returns the number used to seed the random function.
+    * @upstreamDoc f6fe5c8c57fc
    */
   export function set_up_rng(seed?: number): number;
 
   /**
    * Flip a coin.
    * @returns true or false (50% chance).
+    * @upstreamDoc 315ad5f280a4
    */
   export function flip_coin(): boolean;
 
@@ -50,6 +52,7 @@ declare module "dicebag.dicebag" {
    * @param num_sides Number of sides on the dice.
    * @param modifier Number to add to the result.
    * @returns Sum of rolled dice plus modifier.
+    * @upstreamDoc 41429812017d
    */
   export function roll_dice(num_dice: number, num_sides: number, modifier: number): number;
 
@@ -60,6 +63,7 @@ declare module "dicebag.dicebag" {
    * @param num_dice Number of dice to roll.
    * @param num_results How many of the highest (advantage) or lowest (disadvantage) dice to sum up.
    * @returns Sum of the highest (advantage) or lowest (disadvantage) dice rolls
+    * @upstreamDoc 963b41777aa7
    */
   export function roll_special_dice(num_sides: number, advantage: number, num_dice: number, num_results: number): number;
 
@@ -68,6 +72,7 @@ declare module "dicebag.dicebag" {
    * @param num_dice How many dice to roll.
    * @param sides A table describing the sides of the die in the format `[[weight1, value1], [weight2, value2], ...]`.
    * @returns The sum of the values as specified in the table `sides`.
+    * @upstreamDoc bbf2775fe284
    */
  export function roll_custom_dice(num_dice: number, sides: Array<[number, number]>): number;
 
@@ -77,6 +82,7 @@ declare module "dicebag.dicebag" {
    * @param num_success The number of success marbles in the bag.
    * @param num_fails The number of fails marbles in the bag.
    * @param reset_on_success Whether or not the bag should reset when a successful result is drawn. If false or nil the bag will reset when all marbles have been drawn.
+    * @upstreamDoc b396a28c8738
    */
   export function bag_create(id: string | number | Hash, num_success: number, num_fails: number, reset_on_success: boolean): void;
 
@@ -84,12 +90,14 @@ declare module "dicebag.dicebag" {
    * Draw a marble from a previously created bag.
    * @param id A unique identifier for the marble bag.
    * @returns True or false
+    * @upstreamDoc 6ffba6118cc7
    */
   export function bag_draw(id: string | number | Hash): boolean;
 
   /**
    * Manually reset a marble bag. Will also be called when a marble bag is empty, or a success is drawn in a bag where `reset_on_success` is true.
    * @param id A unique identifier for the marble bag.
+    * @upstreamDoc 72c18dc35be7
    */
   export function bag_reset(id: string | number | Hash): void;
 
@@ -97,6 +105,7 @@ declare module "dicebag.dicebag" {
    * Create a rollable table. This is similar to a marble bag, except each entry can have a different weight, and can return any value (not just a boolean).
    * @param id A unique identifier for the rollable table.
    * @param rollable_table A table of weights, values and reset flags.
+    * @upstreamDoc 02c081459262
    */
   export function table_create(id: string | number | Hash, rollable_table: Array<[number, any, boolean?]>): void;
 
@@ -104,6 +113,7 @@ declare module "dicebag.dicebag" {
    * Draw a random value from the rollable table created in `table_create`. The value will be removed from the table. If `reset_on_roll` is true, the table will reset. Otherwise, the table will reset when all values are drawn.
    * @param id A unique identifier for the rollable table.
    * @returns The value specified in `table_create`.
+    * @upstreamDoc 536388b222f0
    */
   export function table_roll(id: string | number | Hash): any;
 

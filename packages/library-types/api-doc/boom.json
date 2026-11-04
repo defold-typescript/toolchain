@@ -8,8 +8,9 @@
     {
       "type": "FUNCTION",
       "name": "boom",
-      "brief": "Start a boom game. Call this from your own game script",
-      "description": "Start a boom game. Call this from your own game script",
+      "brief": "Start a boom game.",
+      "description": "Start a boom game.\nCall this from your own game script",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "game",

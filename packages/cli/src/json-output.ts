@@ -2,7 +2,7 @@ import type { DependencyUrlKind } from "./dependency-url";
 import type { CompileOutcome, EditorIssue, RunOutcome } from "./editor-attach";
 import type { CompileIssue } from "./editor-compile";
 import type { InitOperation } from "./init";
-import type { LibraryProblem } from "./library/library-check";
+import type { LibraryDocNotice, LibraryProblem } from "./library/library-check";
 import type { FailedReview, ReviewedLibrary } from "./library/library-review";
 import type { LibraryStatus } from "./library/library-status";
 import type { UpdatedLibrary } from "./library/library-update";
@@ -92,7 +92,8 @@ export interface RenderResultInput {
   readonly bootPath?: readonly string[];
   readonly subcommand?: string;
   // `library check` only: the data folder it read, how many libraries that folder
-  // holds once the reader accepts it, and every problem found.
+  // holds once the reader accepts it, and every problem found. Its fork comments that
+  // print upstream's doc instead, none of them a problem, are its `notices`.
   readonly dataFolder?: string;
   readonly libraryCount?: number;
   readonly problems?: readonly LibraryProblem[];
@@ -111,7 +112,8 @@ export interface RenderResultInput {
     readonly namespace: string;
     readonly urls: readonly string[];
   }[];
-  readonly notices?: readonly string[];
+  // `library check` reports each notice as a record; every other command as a line.
+  readonly notices?: readonly string[] | readonly LibraryDocNotice[];
   readonly warnings?: readonly string[];
   // The structured half of the unreachable-address findings `warnings` states in
   // prose. Absent — never an empty array — when the check was suppressed, which

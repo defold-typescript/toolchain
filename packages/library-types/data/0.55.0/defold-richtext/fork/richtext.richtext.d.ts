@@ -65,14 +65,20 @@ declare module 'richtext.richtext' {
 		spine_count: number;
 	};
 
-	/** Creates rich text gui nodes from a text containing markup. */
+	/**
+	 * Creates rich text gui nodes from a text containing markup.
+	 * @upstreamDoc eb89d1fe1939
+	 */
 	export function create(
 		text: string,
 		font: string,
 		settings?: Settings,
 	): LuaMultiReturn<[Word[], TextMetrics]>;
 
-	/** Get all words with a specific tag. */
+	/**
+	 * Get all words with a specific tag.
+	 * @upstreamDoc 18f94b81f288
+	 */
 	export function tagged(words: Word[], tag: string): Word[];
 
 	/**
@@ -82,6 +88,7 @@ declare module 'richtext.richtext' {
 	 * The function will disable nodes that shouldn't be visible and in the case of truncating
 	 * on a per character basis also update the text in nodes that should be partially visible.
 	 * The text metrics of a truncated word will be updated.
+	  * @upstreamDoc 1090b3311913
 	 */
 	export function truncate(
 		words: Word[],
@@ -89,13 +96,22 @@ declare module 'richtext.richtext' {
 		options?: { words: boolean },
 	): Word;
 
-	/** Get the length of a text ignoring any tags except image and spine tags which are treated as having a length of 1. */
+	/**
+	 * Get the length of a text ignoring any tags except image and spine tags which are treated as having a length of 1.
+	 * @upstreamDoc 6d580b09a722
+	 */
 	export function length(text: Word[] | string): number;
 
-	/** Split a word into it's characters, including the creation of the gui nodes. Each of the characters will be given the same attributes as the word, and they will be positioned correctly within the word. */
+	/**
+	 * Split a word into it's characters, including the creation of the gui nodes. Each of the characters will be given the same attributes as the word, and they will be positioned correctly within the word.
+	 * @upstreamDoc 501b017e3184
+	 */
 	export function characters(word: Word): Word[];
 
-	/** Call this function when a click/touch has been detected and your text contains words with an a tag. These words act as "hyperlinks" and will generate a message when clicked. */
+	/**
+	 * Call this function when a click/touch has been detected and your text contains words with an a tag. These words act as "hyperlinks" and will generate a message when clicked.
+	 * @upstreamDoc ddedd36d85c0
+	 */
 	export function on_click(
 		words: Word[],
 		action: {
@@ -107,7 +123,10 @@ declare module 'richtext.richtext' {
 		},
 	): boolean;
 
-	/** Removes all gui text nodes created by richtext.create(). */
+	/**
+	 * Removes all gui text nodes created by richtext.create().
+	 * @upstreamDoc bd4efd123b11
+	 */
 	export function remove(words: Word[]): void;
 
 	/** Returns the words created by richtext.create() as a plain text string without any formatting or tags. Linebreaks are included in the returned string. */

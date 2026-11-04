@@ -37,6 +37,7 @@ declare module 'gamepush.core.files' {
    * Uploads a file the player chooses. Raises when the table is missing.
    * @param parameters The upload options, for example `{ accept: ".txt, .json" }`.
    * @param callback Receives the result.
+    * @upstreamDoc 1c85e214a0fa
    */
   export function upload(
     parameters: Record<string, unknown>,
@@ -48,6 +49,7 @@ declare module 'gamepush.core.files' {
    * @param parameters The upload options, for example
    * `{ filename: "save.txt", url: "https://...", tags: ["level7"] }`.
    * @param callback Receives the result.
+    * @upstreamDoc 378322ed81f3
    */
   export function upload_url(
     parameters: Record<string, unknown>,
@@ -59,6 +61,7 @@ declare module 'gamepush.core.files' {
    * @param parameters The upload options, for example
    * `{ filename: "save.txt", content: "Hello world!" }`.
    * @param callback Receives the result.
+    * @upstreamDoc 2bd7107d8186
    */
   export function upload_content(
     parameters: Record<string, unknown>,
@@ -69,6 +72,7 @@ declare module 'gamepush.core.files' {
    * Loads a file's content.
    * @param uri The file's address.
    * @param callback Receives the content.
+    * @upstreamDoc 86ba18dded96
    */
   export function load_content(uri: string, callback?: (result: unknown) => void): void;
 
@@ -77,6 +81,7 @@ declare module 'gamepush.core.files' {
    * on to the SDK.
    * @param accept The file types to offer, for example `".txt, .json"`.
    * @param callback Receives the result.
+    * @upstreamDoc 16dad362063c
    */
   export function choose_file(accept?: string, callback?: (result: unknown) => void): void;
 
@@ -84,6 +89,7 @@ declare module 'gamepush.core.files' {
    * Fetches files.
    * @param parameters The fetch options.
    * @param callback Receives the result.
+    * @upstreamDoc 730e3683a13c
    */
   export function fetch(
     parameters?: Record<string, unknown>,
@@ -94,13 +100,17 @@ declare module 'gamepush.core.files' {
    * Fetches more files.
    * @param parameters The fetch options, for example `{ limit: 2 }`.
    * @param callback Receives the result.
+    * @upstreamDoc b20ca3835981
    */
   export function fetch_more(
     parameters?: Record<string, unknown>,
     callback?: (result: unknown) => void,
   ): void;
 
-  /** Whether the player can upload files. */
+  /**
+   * Whether the player can upload files.
+   * @upstreamDoc 3eca7f95213a
+   */
   export function can_upload(): boolean;
 
   /** The event handlers. */

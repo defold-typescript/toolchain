@@ -1,10 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import ts from "typescript";
-import { mergeForkDocs } from "./merge-fork-docs";
+import { type MergedFork, mergeForkDocs, upstreamDocPin } from "./merge-fork-docs";
 import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 
 function upstreamOf(lua: string): Map<string, LuaMember> {
   return new Map(parseLuaSurface(lua).members.map((member) => [member.name, member]));
+}
+
+function pinOf(lua: string, name = "push"): string {
+  const member = upstreamOf(lua).get(name);
+  if (member === undefined) throw new Error(`the case's upstream defines no ${name}`);
+  return upstreamDocPin(member);
 }
 
 function commentFree(source: string): string {
@@ -14,7 +20,7 @@ function commentFree(source: string): string {
 
 // Every case goes through here, so each one also proves the merge adds comments
 // and nothing else: TypeScript's comment-free print of both sources must agree.
-function merge(fork: string, lua: string): { source: string; upstreamDocs: string[] } {
+function merge(fork: string, lua: string): MergedFork {
   const merged = mergeForkDocs(fork, upstreamOf(lua));
   expect(commentFree(merged.source)).toBe(commentFree(fork));
   return merged;
@@ -30,6 +36,41 @@ const PUSH_LUA = lua(
   "function M.push(...)",
   "end",
 );
+
+// `PUSH_LUA` with one word of its summary changed.
+const EDITED_PUSH_LUA = lua(
+  "--- Add one or more event listeners",
+  "-- Each handler must be a function",
+  "function M.push(...)",
+  "end",
+);
+
+// A fork whose own comment documents `push`, pinned to `pin` when one is given.
+function pushFork(pin?: string): string {
+  return [
+    "declare module 'tally.tally' {",
+    "\t/**",
+    "\t * Queue handlers for the next flush.",
+    ...(pin === undefined ? [] : [`\t * @upstreamDoc ${pin}`]),
+    "\t */",
+    "\texport function push(...args: unknown[]): void;",
+    "}",
+    "",
+  ].join("\n");
+}
+
+// `push` printed with `summary` as its only comment.
+function upstreamPush(summary: string[]): string {
+  return [
+    "declare module 'tally.tally' {",
+    "\t/**",
+    ...summary.map((line) => `\t * ${line}`),
+    "\t */",
+    "\texport function push(...args: unknown[]): void;",
+    "}",
+    "",
+  ].join("\n");
+}
 
 describe("mergeForkDocs", () => {
   test("an undocumented function gains upstream's summary directly above it, tab-indented", () => {
@@ -93,17 +134,11 @@ describe("mergeForkDocs", () => {
     expect(merged.upstreamDocs).toEqual(["FORMAT"]);
   });
 
-  test("a member the fork documents is returned byte-for-byte", () => {
-    const fork = [
-      "declare module 'tally.tally' {",
-      "\t/** Queue handlers for the next flush. */",
-      "\texport function push(...args: unknown[]): void;",
-      "}",
-      "",
-    ].join("\n");
-    const merged = merge(fork, PUSH_LUA);
-    expect(merged.source).toBe(fork);
+  test("a member the fork documents and pins to upstream's block prints the fork's text without the pin", () => {
+    const merged = merge(pushFork(pinOf(PUSH_LUA)), PUSH_LUA);
+    expect(merged.source).toBe(pushFork());
     expect(merged.upstreamDocs).toEqual([]);
+    expect(merged.notices).toEqual([]);
   });
 
   test("a tag-only comment gains the summary as its opening lines, still one block", () => {
@@ -189,17 +224,21 @@ describe("mergeForkDocs", () => {
     expect(merged.upstreamDocs).toEqual(["push"]);
   });
 
-  test("an overload set any of whose declarations has prose is left alone", () => {
-    const fork = [
-      "declare module 'tally.tally' {",
-      "\t/** Queue one handler. */",
-      "\texport function push(handler: () => void): void;",
-      "\texport function push(...handlers: (() => void)[]): void;",
-      "}",
-      "",
-    ].join("\n");
-    const merged = merge(fork, PUSH_LUA);
-    expect(merged.source).toBe(fork);
+  test("a pinned overload set any of whose declarations has prose is left alone", () => {
+    const fork = (pin: string[]) =>
+      [
+        "declare module 'tally.tally' {",
+        "\t/**",
+        "\t * Queue one handler.",
+        ...pin,
+        "\t */",
+        "\texport function push(handler: () => void): void;",
+        "\texport function push(...handlers: (() => void)[]): void;",
+        "}",
+        "",
+      ].join("\n");
+    const merged = merge(fork([`\t * @upstreamDoc ${pinOf(PUSH_LUA)}`]), PUSH_LUA);
+    expect(merged.source).toBe(fork([]));
     expect(merged.upstreamDocs).toEqual([]);
   });
 
@@ -309,6 +348,7 @@ describe("mergeForkDocs", () => {
       const merged = merge(fork, upstream);
       expect(merged.source).toBe(fork);
       expect(merged.upstreamDocs).toEqual([]);
+      expect(merged.notices).toEqual([]);
     }
 
     test("a global declaration outside the declare module block", () => {
@@ -373,6 +413,182 @@ describe("mergeForkDocs", () => {
       unchanged(
         ["declare module 'tally.tally' {", "\texport function extra(): void;", "}", ""].join("\n"),
         PUSH_LUA,
+      );
+    });
+  });
+
+  describe("pinned overrides", () => {
+    test("a fork comment pinned to an older upstream block prints upstream's summary in its place", () => {
+      const merged = merge(pushFork(pinOf(PUSH_LUA)), EDITED_PUSH_LUA);
+      expect(merged.source).toBe(
+        upstreamPush(["Add one or more event listeners", "Each handler must be a function"]),
+      );
+      expect(merged.upstreamDocs).toEqual(["push"]);
+      expect(merged.notices).toEqual([
+        { member: "push", kind: "stale", pin: pinOf(EDITED_PUSH_LUA) },
+      ]);
+    });
+
+    test("an unpinned fork comment on a member upstream documents prints upstream's summary", () => {
+      const merged = merge(pushFork(), PUSH_LUA);
+      expect(merged.source).toBe(
+        upstreamPush(["Add one or more event handlers", "Each handler must be a function"]),
+      );
+      expect(merged.upstreamDocs).toEqual(["push"]);
+      expect(merged.notices).toEqual([{ member: "push", kind: "unpinned", pin: pinOf(PUSH_LUA) }]);
+    });
+
+    test("a fork comment that gives way keeps every tag except its @param and @returns", () => {
+      const fork = [
+        "declare module 'tally.tally' {",
+        "\t/**",
+        "\t * Queue handlers for the next flush.",
+        "\t * @param args the handlers,",
+        "\t *   one per event",
+        "\t * @returns nothing",
+        "\t * @deprecated Use flush.",
+        "\t * @noSelf",
+        "\t */",
+        "\texport function push(...args: unknown[]): void;",
+        "\t/** Run the queue. @noSelf */",
+        "\texport function flush(): void;",
+        "}",
+        "",
+      ].join("\n");
+      const upstream = lua(
+        "--- Add one or more event handlers",
+        "function M.push(...)",
+        "end",
+        "",
+        "--- Run every handler",
+        "function M.flush()",
+        "end",
+      );
+      const merged = merge(fork, upstream);
+      expect(merged.source).toBe(
+        [
+          "declare module 'tally.tally' {",
+          "\t/**",
+          "\t * Add one or more event handlers",
+          "\t *",
+          "\t * @deprecated Use flush.",
+          "\t * @noSelf",
+          "\t */",
+          "\texport function push(...args: unknown[]): void;",
+          "\t/**",
+          "\t * Run every handler",
+          "\t *",
+          "\t * @noSelf",
+          "\t */",
+          "\texport function flush(): void;",
+          "}",
+          "",
+        ].join("\n"),
+      );
+      expect(merged.notices.map(({ member, kind }) => [member, kind])).toEqual([
+        ["push", "unpinned"],
+        ["flush", "unpinned"],
+      ]);
+    });
+
+    test("a fork comment on a member upstream does not document prints with no notice", () => {
+      const fork = (pin: string[]) =>
+        [
+          "declare module 'tally.tally' {",
+          "\t/**",
+          "\t * Count the queue.",
+          ...pin,
+          "\t */",
+          "\texport function size(): number;",
+          "}",
+          "",
+        ].join("\n");
+      const unpinned = merge(fork([]), PUSH_LUA);
+      expect(unpinned.source).toBe(fork([]));
+      expect(unpinned.notices).toEqual([]);
+
+      const pinned = merge(fork([`\t * @upstreamDoc ${pinOf(PUSH_LUA)}`]), PUSH_LUA);
+      expect(pinned.source).toBe(fork([]));
+      expect(pinned.upstreamDocs).toEqual([]);
+      expect(pinned.notices).toEqual([{ member: "size", kind: "orphan" }]);
+    });
+
+    test("re-indenting or re-wrapping the upstream block keeps its pin", () => {
+      const pin = pinOf(PUSH_LUA);
+      expect(
+        pinOf(
+          lua(
+            "---   Add one or more event handlers",
+            "--\tEach handler must be a function",
+            "function M.push(...)",
+            "end",
+          ),
+        ),
+      ).toBe(pin);
+      expect(
+        pinOf(
+          lua(
+            "--- Add one or more",
+            "-- event handlers Each handler",
+            "-- must be a function",
+            "function M.push(...)",
+            "end",
+          ),
+        ),
+      ).toBe(pin);
+    });
+
+    test("changing a word or a @param line moves the pin", () => {
+      expect(pinOf(EDITED_PUSH_LUA)).not.toBe(pinOf(PUSH_LUA));
+      const withParam = (doc: string) =>
+        lua(
+          "--- Add one or more event handlers",
+          `-- @param ... ${doc}`,
+          "function M.push(...)",
+          "end",
+        );
+      expect(pinOf(withParam("the handlers"))).not.toBe(pinOf(withParam("the listeners")));
+    });
+
+    test("a pin is 12 lowercase hex characters", () => {
+      expect(pinOf(PUSH_LUA)).toMatch(/^[0-9a-f]{12}$/);
+    });
+
+    test.each([
+      ["uppercase", "\t * @upstreamDoc 0123456789AB"],
+      ["too short", "\t * @upstreamDoc 0123456789a"],
+      ["empty", "\t * @upstreamDoc"],
+      ["followed by text", "\t * @upstreamDoc 0123456789ab and more"],
+      ["sharing a line with prose", "\t * Queue them. @upstreamDoc 0123456789ab"],
+    ])("an @upstreamDoc line %s throws, naming the module and member", (_, line) => {
+      const fork = [
+        "declare module 'tally.tally' {",
+        "\t/**",
+        "\t * Queue handlers for the next flush.",
+        line,
+        "\t */",
+        "\texport function push(...args: unknown[]): void;",
+        "}",
+        "",
+      ].join("\n");
+      expect(() => mergeForkDocs(fork, upstreamOf(PUSH_LUA))).toThrow(
+        /^tally\.tally: push: @upstreamDoc /,
+      );
+    });
+
+    test("an @upstreamDoc line on anything but a module function or constant throws", () => {
+      const fork = [
+        "declare module 'tally.tally' {",
+        "\t/**",
+        "\t * A queued handler.",
+        `\t * @upstreamDoc ${pinOf(PUSH_LUA)}`,
+        "\t */",
+        "\texport interface Handler {}",
+        "}",
+        "",
+      ].join("\n");
+      expect(() => mergeForkDocs(fork, upstreamOf(PUSH_LUA))).toThrow(
+        /^tally\.tally: line 4: @upstreamDoc /,
       );
     });
   });

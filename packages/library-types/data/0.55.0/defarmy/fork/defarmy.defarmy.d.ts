@@ -21,6 +21,7 @@ declare module 'defarmy.defarmy' {
    * The army patterns `army_create` and `army_update_pattern` take. The five named
    * patterns place the soldiers in built-in shapes. `CUSTOMIZED` takes its rows from the
    * `pattern_func` passed beside it.
+    * @upstreamDoc c506c2271e2f
    */
   export const PATTERN: {
     BOTTOM_TO_TOP_SQUARE: Hash;
@@ -43,6 +44,7 @@ declare module 'defarmy.defarmy' {
    * following them. It shows most while the army rotates.
    * @param army_pattern One of `PATTERN`.
    * @param pattern_func Builds the rows for `PATTERN.CUSTOMIZED`.
+    * @upstreamDoc 5167805f5b76
    */
   export function army_create(
     army_center_position: Vector3,
@@ -57,12 +59,14 @@ declare module 'defarmy.defarmy' {
    * Returns the ids of the soldiers in an army. The list is the army's own, so editing
    * it edits the army.
    * @param army_id The army's id.
+    * @upstreamDoc bf928679b6e7
    */
   export function army_members(army_id: number): number[];
 
   /**
    * Removes an army and releases its members, which stay as soldiers in no army.
    * @param army_id The army's id.
+    * @upstreamDoc 974a74fd69a8
    */
   export function army_remove(army_id: number): void;
 
@@ -70,6 +74,7 @@ declare module 'defarmy.defarmy' {
    * Moves an army's center.
    * @param army_id The army's id.
    * @param army_center_position The new center position.
+    * @upstreamDoc 35d66b20ab3b
    */
   export function army_update_position(army_id: number, army_center_position: Vector3): void;
 
@@ -77,6 +82,7 @@ declare module 'defarmy.defarmy' {
    * Rotates an army.
    * @param army_id The army's id.
    * @param army_rotation The new rotation.
+    * @upstreamDoc e06134957e54
    */
   export function army_update_rotation(army_id: number, army_rotation: Quaternion): void;
 
@@ -86,6 +92,7 @@ declare module 'defarmy.defarmy' {
    * @param army_id The army's id.
    * @param army_pattern One of `PATTERN`.
    * @param pattern_func Builds the rows for `PATTERN.CUSTOMIZED`.
+    * @upstreamDoc 2cb5d82e2d83
    */
   export function army_update_pattern(
     army_id: number,
@@ -98,6 +105,7 @@ declare module 'defarmy.defarmy' {
    * @param army_id The army's id.
    * @param is_sticky Whether members are glued to their places, rather than following
    * them.
+    * @upstreamDoc d6cd306a738c
    */
   export function army_update_stickiness(army_id: number, is_sticky: boolean): void;
 
@@ -106,6 +114,7 @@ declare module 'defarmy.defarmy' {
    * `@render:`. Call it every frame to keep it shown.
    * @param army_id The army's id.
    * @param debug_color The color of the lines.
+    * @upstreamDoc 9f015cdb1fc0
    */
   export function army_debug_draw(army_id: number, debug_color: Vector4): void;
 
@@ -115,6 +124,7 @@ declare module 'defarmy.defarmy' {
    * @param initial_direction The direction the soldier's game object faces at zero
    * rotation. Every rotation `soldier_move` returns is relative to it.
    * @param army_id The army to join.
+    * @upstreamDoc 5cf4ffe60f53
    */
   export function soldier_create(
     position: Vector3,
@@ -126,6 +136,7 @@ declare module 'defarmy.defarmy' {
    * Moves a soldier into an army, out of the army it was in.
    * @param soldier_id The soldier's id.
    * @param army_id The army's id.
+    * @upstreamDoc 0848179b51b7
    */
   export function soldier_join_army(soldier_id: number, army_id: number): void;
 
@@ -134,6 +145,7 @@ declare module 'defarmy.defarmy' {
    * army is left as it is. At `v1` the rearrangement raises a Lua error when the soldier
    * was the army's last member, so call `army_remove` instead in that case.
    * @param soldier_id The soldier's id.
+    * @upstreamDoc ef733927c078
    */
   export function soldier_leave_army(soldier_id: number): void;
 
@@ -143,6 +155,7 @@ declare module 'defarmy.defarmy' {
    * when the soldier was the army's last member, so call `army_remove` first in that
    * case.
    * @param soldier_id The soldier's id.
+    * @upstreamDoc c96d761f7035
    */
   export function soldier_remove(soldier_id: number): void;
 
@@ -151,12 +164,14 @@ declare module 'defarmy.defarmy' {
    * `@render:` to mark the position the soldier is heading for with a cross.
    * @param soldier_id The soldier's id.
    * @param debug_color The color of the marks.
+    * @upstreamDoc bc99e92c5957
    */
   export function soldier_debug_on(soldier_id: number, debug_color: Vector4): void;
 
   /**
    * Turns off a soldier's debug marks.
    * @param soldier_id The soldier's id.
+    * @upstreamDoc 098a05ee0c0a
    */
   export function soldier_debug_off(soldier_id: number): void;
 
@@ -170,6 +185,7 @@ declare module 'defarmy.defarmy' {
    * @param speed How far the soldier moves this call.
    * @param threshold The distance from its place within which the soldier counts as
    * placed. Defaults to `1`.
+    * @upstreamDoc 4645af567675
    */
   export function soldier_move(
     soldier_id: number,

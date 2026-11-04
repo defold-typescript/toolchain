@@ -39,19 +39,29 @@ declare module 'gamepush.core.achievements' {
     readonly MYTHIC: "MYTHIC";
   };
 
-  /** The achievement groups. */
+  /**
+   * The achievement groups.
+   * @upstreamDoc 11b2cbbd4e01
+   */
   export function groups_list(): Record<string, unknown>[];
 
-  /** All achievements. */
+  /**
+   * All achievements.
+   * @upstreamDoc acca63be4b06
+   */
   export function list(): Record<string, unknown>[];
 
-  /** The achievements the player has unlocked. */
+  /**
+   * The achievements the player has unlocked.
+   * @upstreamDoc f8125cd0ccd1
+   */
   export function unlocked_list(): Record<string, unknown>[];
 
   /**
    * Unlocks an achievement. Raises when the table is missing.
    * @param parameters The achievement, for example `{ tag: "my_achiv" }`.
    * @param callback Receives the unlock result.
+    * @upstreamDoc 4761ab7c7afc
    */
   export function unlock(
     parameters: Record<string, unknown>,
@@ -63,6 +73,7 @@ declare module 'gamepush.core.achievements' {
    * @param parameters The achievement and its progress, for example
    * `{ tag: "my_achiv", progress: 25 }`.
    * @param callback Receives the result.
+    * @upstreamDoc 46607e7b654a
    */
   export function set_progress(
     parameters: Record<string, unknown>,
@@ -72,24 +83,28 @@ declare module 'gamepush.core.achievements' {
   /**
    * Whether the player has an achievement.
    * @param id_or_tag The achievement's id or tag.
+    * @upstreamDoc 2dffde75757e
    */
   export function has(id_or_tag: string | number): boolean;
 
   /**
    * An achievement's progress.
    * @param id_or_tag The achievement's id or tag.
+    * @upstreamDoc a74a7439d245
    */
   export function get_progress(id_or_tag: string | number): number;
 
   /**
    * Opens the achievements overlay.
    * @param callback Called when the overlay opens.
+    * @upstreamDoc 0f064fcb447b
    */
   export function open(callback?: () => void): void;
 
   /**
    * Fetches the achievements.
    * @param callback Receives the achievements.
+    * @upstreamDoc 983af89f113d
    */
   export function fetch(callback?: (achievements: unknown) => void): void;
 

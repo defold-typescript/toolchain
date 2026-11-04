@@ -19,13 +19,22 @@ declare module 'gamepush.core.fullscreen' {
     change?: () => void;
   }
 
-  /** Enters fullscreen. */
+  /**
+   * Enters fullscreen.
+   * @upstreamDoc f2f8882f9608
+   */
   export function open(): void;
 
-  /** Leaves fullscreen. */
+  /**
+   * Leaves fullscreen.
+   * @upstreamDoc cc2057c744b2
+   */
   export function close(): void;
 
-  /** Toggles fullscreen. */
+  /**
+   * Toggles fullscreen.
+   * @upstreamDoc b4f72bd017c4
+   */
   export function toggle(): void;
 
   /** The event handlers. */
