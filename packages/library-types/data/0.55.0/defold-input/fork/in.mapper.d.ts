@@ -7,6 +7,9 @@
  * @noResolution
  */
 declare module 'in.mapper' {
+	/**
+	 * @param gamepad - Gamepad index to bind the trigger to. **0️⃣ 0-based; passed to `in.mapper` unchanged.**
+	 */
 	export function bind(
 		trigger: {},
 		action: {},
@@ -15,6 +18,9 @@ declare module 'in.mapper' {
 	): unknown;
 	export function unbind(trigger: {}, player?: any): void;
 	export function unbind_all(player?: any): void;
+	/**
+	 * @param gamepad - Gamepad index the trigger came from, `action.gamepad`. **0️⃣ 0-based; passed to `in.mapper` unchanged.**
+	 */
 	export function on_input(
 		trigger: {},
 		player?: any,
