@@ -18,29 +18,22 @@ export const RESOLVE_GUIDE = join(REPO_ROOT, "packages/docs/guide/resolve.md");
 export const CURATED_NATIVE_START = "<!-- curated-native-extensions:start -->";
 export const CURATED_NATIVE_END = "<!-- curated-native-extensions:end -->";
 
-const SHORT_SHA_LENGTH = 7;
-
-export type CuratedNativeRow = Pick<
-  NativeTarget,
-  "repo" | "ref" | "refKind" | "namespace" | "manifestDir"
->;
+// No pin column: `library update` moves pins in data-only PRs, and the guide
+// deploys only on release. Each namespace's library page names the pin instead.
+export type CuratedNativeRow = Pick<NativeTarget, "repo" | "namespace" | "manifestDir">;
 
 function repoSlug(repo: string): string {
   return new URL(repo).pathname.replace(/^\/+|\/+$/g, "");
 }
 
-function pinLabel(target: CuratedNativeRow): string {
-  return target.refKind === "commit" ? target.ref.slice(0, SHORT_SHA_LENGTH) : target.ref;
-}
-
 export function curatedNativeTable(targets: readonly CuratedNativeRow[]): string {
   const rows = targets.map(
     (target) =>
-      `| [${repoSlug(target.repo)}](${target.repo}) | \`${pinLabel(target)}\` | [\`${target.namespace}\`](${LIBRARY_DOCS_URL}/api/${target.namespace}) | \`${target.manifestDir}/ext.manifest\` |`,
+      `| [${repoSlug(target.repo)}](${target.repo}) | [\`${target.namespace}\`](${LIBRARY_DOCS_URL}/api/${target.namespace}) | \`${target.manifestDir}/ext.manifest\` |`,
   );
   return [
-    "| Extension | Pinned at | Namespace | Confirmed by        |",
-    "| --------- | --------- | --------- | ------------------- |",
+    "| Extension | Namespace | Confirmed by        |",
+    "| --------- | --------- | ------------------- |",
     ...rows,
   ].join("\n");
 }
