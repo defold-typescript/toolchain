@@ -30,7 +30,6 @@ type Token = string | FilterFn;
 type FilterFn = (this: void, subject: unknown, candidate: unknown) => boolean;
 
 interface EntityRecord {
-  __ecs_id?: number | undefined;
   [component: string]: unknown;
 }
 
@@ -62,6 +61,7 @@ interface SystemRecord {
 }
 
 interface WorldRecord {
+  idKey: string;
   systems: SystemRecord[];
   entities: EntityRecord[];
   entityIndex: IdIndex;
@@ -86,23 +86,23 @@ interface WorldRecord {
 }
 
 // ---------------------------------------------------------------------------
-// Entity identity. Ids are global per Lua state, so one entity can join several
-// worlds. A copied table carries its source's id, so every lookup also checks
-// that the slot the id names holds this very table.
+// Entity identity. Each world stores its entities' ids under a field of its
+// own, `__ecs_id_<n>`, so one entity can join several worlds and taking a new
+// id in one never rekeys a table another world indexes. A table joining a world
+// always takes a fresh id, and leaving it clears the field. A copied table
+// carries its source's fields, so every lookup also checks that the slot the id
+// names holds this very table.
 
 let lastId = 0;
+let lastWorld = 0;
 
-function idOf(entity: EntityRecord): number {
-  const id = entity.__ecs_id;
-  if (id !== undefined) {
-    return id;
-  }
-  return freshId(entity);
+function idOf(entity: EntityRecord, key: string): number | undefined {
+  return entity[key] as number | undefined;
 }
 
-function freshId(entity: EntityRecord): number {
+function freshId(entity: EntityRecord, key: string): number {
   lastId += 1;
-  entity.__ecs_id = lastId;
+  entity[key] = lastId;
   return lastId;
 }
 
@@ -110,8 +110,9 @@ function slotOf(
   list: readonly EntityRecord[],
   index: IdIndex,
   entity: EntityRecord,
+  key: string,
 ): number | undefined {
-  const id = entity.__ecs_id;
+  const id = idOf(entity, key);
   if (id === undefined) {
     return undefined;
   }
@@ -122,11 +123,17 @@ function slotOf(
   return pos;
 }
 
-function swapRemove(list: EntityRecord[], index: IdIndex, pos: number, entity: EntityRecord): void {
+function swapRemove(
+  list: EntityRecord[],
+  index: IdIndex,
+  pos: number,
+  entity: EntityRecord,
+  key: string,
+): void {
   const last = list[list.length - 1] as EntityRecord;
   list[pos] = last;
-  index[last.__ecs_id as number] = pos;
-  index[entity.__ecs_id as number] = undefined;
+  index[idOf(last, key) as number] = pos;
+  index[idOf(entity, key) as number] = undefined;
   list.pop();
 }
 
@@ -149,17 +156,6 @@ function insertShifting<T>(list: T[], pos: number, item: T): void {
     i -= 1;
   }
   list[pos] = item;
-}
-
-// Drops the first `count` items, keeping any a callback queued meanwhile.
-function dropFront<T>(queue: T[], count: number): void {
-  const length = queue.length;
-  for (let i = count; i < length; i++) {
-    queue[i - count] = queue[i] as T;
-  }
-  for (let i = 0; i < count; i++) {
-    queue.pop();
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -353,6 +349,9 @@ function manageSystems(world: WorldRecord): void {
     return;
   }
 
+  world.systemsToAdd = [];
+  world.systemsToRemove = [];
+
   const addCount = s2a.length;
   const removeCount = s2r.length;
   const worldEntityList = world.entities;
@@ -417,7 +416,7 @@ function manageSystems(world: WorldRecord): void {
           for (let j = 0; j < count; j++) {
             const entity = worldEntityList[j] as EntityRecord;
             if (filter(system, entity)) {
-              entityIndices[idOf(entity)] = entityList.length;
+              entityIndices[idOf(entity, world.idKey) as number] = entityList.length;
               entityList.push(entity);
               if (onAdd !== undefined) {
                 onAdd.call(system, entity);
@@ -428,9 +427,6 @@ function manageSystems(world: WorldRecord): void {
       }
     }
   }
-
-  dropFront(s2r, removeCount);
-  dropFront(s2a, addCount);
 }
 
 function manageEntities(world: WorldRecord): void {
@@ -441,20 +437,20 @@ function manageEntities(world: WorldRecord): void {
     return;
   }
 
+  world.entitiesToChange = [];
+  world.entitiesToRemove = [];
+
   const changeCount = e2c.length;
   const removeCount = e2r.length;
   const entities = world.entities;
   const entityIndex = world.entityIndex;
   const systems = world.systems;
+  const key = world.idKey;
 
   for (let i = 0; i < changeCount; i++) {
     const entity = e2c[i] as EntityRecord;
-    if (slotOf(entities, entityIndex, entity) === undefined) {
-      let id = idOf(entity);
-      if (entityIndex[id] !== undefined) {
-        id = freshId(entity);
-      }
-      entityIndex[id] = entities.length;
+    if (slotOf(entities, entityIndex, entity, key) === undefined) {
+      entityIndex[freshId(entity, key)] = entities.length;
       entities.push(entity);
     }
     const systemCount = systems.length;
@@ -463,12 +459,12 @@ function manageEntities(world: WorldRecord): void {
       if (system.nocache !== true) {
         const ses = system.entities as EntityRecord[];
         const seis = system.indices as IdIndex;
-        const index = slotOf(ses, seis, entity);
+        const index = slotOf(ses, seis, entity, key);
         const filter = system.filter;
         if (filter?.(system, entity)) {
           if (index === undefined) {
             system.modified = true;
-            seis[entity.__ecs_id as number] = ses.length;
+            seis[idOf(entity, key) as number] = ses.length;
             ses.push(entity);
             const onAdd = system.onAdd;
             if (onAdd !== undefined) {
@@ -477,7 +473,7 @@ function manageEntities(world: WorldRecord): void {
           }
         } else if (index !== undefined) {
           system.modified = true;
-          swapRemove(ses, seis, index, entity);
+          swapRemove(ses, seis, index, entity, key);
           const onRemove = system.onRemove;
           if (onRemove !== undefined) {
             onRemove.call(system, entity);
@@ -489,19 +485,19 @@ function manageEntities(world: WorldRecord): void {
 
   for (let i = 0; i < removeCount; i++) {
     const entity = e2r[i] as EntityRecord;
-    const listIndex = slotOf(entities, entityIndex, entity);
+    const listIndex = slotOf(entities, entityIndex, entity, key);
     if (listIndex !== undefined) {
-      swapRemove(entities, entityIndex, listIndex, entity);
+      swapRemove(entities, entityIndex, listIndex, entity, key);
       const systemCount = systems.length;
       for (let j = 0; j < systemCount; j++) {
         const system = systems[j] as SystemRecord;
         if (system.nocache !== true) {
           const ses = system.entities as EntityRecord[];
           const seis = system.indices as IdIndex;
-          const index = slotOf(ses, seis, entity);
+          const index = slotOf(ses, seis, entity, key);
           if (index !== undefined) {
             system.modified = true;
-            swapRemove(ses, seis, index, entity);
+            swapRemove(ses, seis, index, entity, key);
             const onRemove = system.onRemove;
             if (onRemove !== undefined) {
               onRemove.call(system, entity);
@@ -509,11 +505,9 @@ function manageEntities(world: WorldRecord): void {
           }
         }
       }
+      entity[key] = undefined;
     }
   }
-
-  dropFront(e2c, changeCount);
-  dropFront(e2r, removeCount);
 }
 
 function worldRefresh(this: WorldRecord): void {
@@ -643,7 +637,9 @@ function worldSetSystemIndex(this: WorldRecord, system: SystemRecord, index: num
 }
 
 function newWorld(items: readonly unknown[]): WorldRecord {
+  lastWorld += 1;
   const created: WorldRecord = {
+    idKey: `__ecs_id_${lastWorld}`,
     systems: [],
     entities: [],
     entityIndex: {},
@@ -729,7 +725,7 @@ export interface SystemFields<E> {
   active?: boolean | undefined;
   /** The entities the system holds, in the order it processes them. A `nocache` system has none. */
   readonly entities?: readonly E[] | undefined;
-  /** Each held entity's position in `entities`, keyed by the entity's ecs id. */
+  /** Each held entity's position in `entities`, keyed by the entity's id in the system's world. */
   readonly indices?: Readonly<Record<number, number | undefined>> | undefined;
   /** The system's 1-based position in its world. Change it with `setSystemIndex`. */
   readonly index?: number | undefined;
@@ -750,7 +746,7 @@ export interface SystemCallbacks<E, X = E> {
   /** An entity joined the system. */
   onAdd?(entity: X): void;
   /** An entity left the system. */
-  onRemove?(entity: X): void;
+  onRemove?(entity: E): void;
   /** Runs before the next update after the system's entities changed. */
   onModify?(dt: number): void;
   /** The system joined a world, before it takes the world's entities. */
