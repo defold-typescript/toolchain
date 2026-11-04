@@ -1,0 +1,568 @@
+// Type-only: the library under test is injected, so one scenario source drives
+// both the vendored tiny.lua and ecs.
+import type * as Ecs from "../index";
+
+export type Lib = Pick<
+  typeof Ecs,
+  | "world"
+  | "system"
+  | "processingSystem"
+  | "requireAll"
+  | "requireAny"
+  | "rejectAll"
+  | "rejectAny"
+  | "add"
+  | "addEntity"
+  | "changed"
+  | "addSystem"
+  | "remove"
+  | "removeEntity"
+  | "removeSystem"
+  | "refresh"
+  | "update"
+  | "clearEntities"
+  | "clearSystems"
+  | "getEntityCount"
+  | "getSystemCount"
+  | "setSystemIndex"
+>;
+
+interface Ent {
+  name: string;
+  a?: number | undefined;
+  b?: number | undefined;
+  c?: number | undefined;
+  d?: number | undefined;
+}
+
+type World = Ecs.World<Ent>;
+type Log = string[];
+
+interface Named {
+  name: string;
+}
+
+export interface Scenario {
+  name: string;
+  run: (this: void, lib: Lib, log: Log) => void;
+}
+
+// Lua prints nil as "nil" and JavaScript prints undefined as "undefined".
+function shown(value: string | number | boolean | undefined): string {
+  return value === undefined ? "-" : `${value}`;
+}
+
+function line(
+  log: Log,
+  callback: string,
+  system: string,
+  entity: Named | undefined,
+  dt: number | undefined,
+): void {
+  log.push(`${callback} ${system} ${entity === undefined ? "-" : entity.name} ${shown(dt)}`);
+}
+
+function names(list: readonly unknown[] | undefined): string {
+  if (list === undefined) {
+    return "-";
+  }
+  let out = "[";
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i] as Named;
+    out = i === 0 ? `${out}${item.name}` : `${out} ${item.name}`;
+  }
+  return `${out}]`;
+}
+
+function counts(log: Log, label: string, w: World): void {
+  log.push(`${label} entities ${w.getEntityCount()} systems ${w.getSystemCount()}`);
+}
+
+function attempt(log: Log, label: string, run: () => unknown): void {
+  try {
+    run();
+    log.push(`${label} ok`);
+  } catch {
+    log.push(`${label} error`);
+  }
+}
+
+function frame(log: Log, w: World, dt: number): void {
+  log.push(`update ${dt}`);
+  w.update(dt);
+}
+
+function tracked(log: Log, name: string) {
+  return {
+    name,
+    onAdd(entity: Ent) {
+      line(log, "onAdd", this.name, entity, undefined);
+    },
+    onRemove(entity: Ent) {
+      line(log, "onRemove", this.name, entity, undefined);
+    },
+  };
+}
+
+function filters(lib: Lib, log: Log): void {
+  const w = lib.world<Ent>(
+    { name: "e1", a: 1, b: 1, c: 1 },
+    { name: "e2", a: 1, b: 1 },
+    { name: "e3", a: 1 },
+    { name: "e4", b: 1, c: 1 },
+    { name: "e5", c: 1, d: 1 },
+  );
+  const system = lib.system<Ent>();
+  w.addSystem(system(lib.requireAll("a", "b"), tracked(log, "requireAll")));
+  w.addSystem(system(lib.requireAny("a", "d"), tracked(log, "requireAny")));
+  w.addSystem(system(lib.rejectAll("b", "c"), tracked(log, "rejectAll")));
+  w.addSystem(system(lib.rejectAny("a", "d"), tracked(log, "rejectAny")));
+  w.addSystem(system(lib.requireAll("c", lib.rejectAny("a")), tracked(log, "nested")));
+  w.addSystem(
+    system(
+      lib.requireAll(lib.requireAny("a", "d"), lib.requireAll("c")),
+      tracked(log, "subfilters"),
+    ),
+  );
+  w.addSystem(
+    system(
+      (owner: Named, entity: Ent) =>
+        owner.name === "custom" && entity.b !== undefined && entity.c === undefined,
+      tracked(log, "custom"),
+    ),
+  );
+  w.refresh();
+  counts(log, "after refresh", w);
+}
+
+function deferredChanges(lib: Lib, log: Log): void {
+  const sys = lib.processingSystem<Ent>()(lib.requireAll("a"), {
+    ...tracked(log, "S"),
+    process(entity, dt) {
+      line(log, "process", this.name, entity, dt);
+    },
+  });
+  const w = lib.world<Ent>(sys);
+  const e1: Ent = { name: "e1", a: 1 };
+  const e2: Ent = { name: "e2", a: 1 };
+  const e3: Ent = { name: "e3", a: 1 };
+  const state = (label: string) => {
+    counts(log, label, w);
+    log.push(`${label} matched ${names(sys.entities)}`);
+  };
+
+  w.addEntity(e1);
+  state("queued e1");
+  w.refresh();
+  state("refreshed");
+
+  w.addEntity(e2);
+  w.addEntity(e2);
+  w.removeEntity(e3);
+  state("queued e2 twice, removed unknown e3");
+  frame(log, w, 0.25);
+  state("after update");
+
+  w.changed(e1);
+  w.removeEntity(e1);
+  w.addEntity(e3);
+  w.removeEntity(e3);
+  state("queued change and removal");
+  frame(log, w, 0.5);
+  state("after update");
+}
+
+function membership(lib: Lib, log: Log): void {
+  const sys = lib.system<Ent>()(lib.requireAll("a"), tracked(log, "S"));
+  const e2: Ent = { name: "e2", a: 1 };
+  const w = lib.world<Ent>(
+    sys,
+    { name: "e1", a: 1 },
+    e2,
+    { name: "e3", a: 1 },
+    { name: "e4", a: 1 },
+  );
+  const state = () => log.push(`matched ${names(sys.entities)} world ${names(w.entities)}`);
+  state();
+
+  e2.a = undefined;
+  w.changed(e2);
+  w.refresh();
+  state();
+
+  e2.a = 2;
+  w.changed(e2);
+  w.refresh();
+  state();
+}
+
+function everyCallback(log: Log, name: string) {
+  return {
+    ...tracked(log, name),
+    onModify(dt: number) {
+      line(log, "onModify", this.name, undefined, dt);
+    },
+    onAddToWorld() {
+      line(log, "onAddToWorld", this.name, undefined, undefined);
+    },
+    onRemoveFromWorld() {
+      line(log, "onRemoveFromWorld", this.name, undefined, undefined);
+    },
+    preWrap(dt: number) {
+      line(log, "preWrap", this.name, undefined, dt);
+    },
+    postWrap(dt: number) {
+      line(log, "postWrap", this.name, undefined, dt);
+    },
+  };
+}
+
+function processingCallbacks(log: Log, name: string) {
+  return {
+    ...everyCallback(log, name),
+    preProcess(dt: number) {
+      line(log, "preProcess", this.name, undefined, dt);
+    },
+    process(entity: Ent, dt: number) {
+      line(log, "process", this.name, entity, dt);
+    },
+    postProcess(dt: number) {
+      line(log, "postProcess", this.name, undefined, dt);
+    },
+  };
+}
+
+function callbackOrder(lib: Lib, log: Log): void {
+  const a = lib.processingSystem<Ent>()(lib.requireAll("a"), processingCallbacks(log, "A"));
+  const b = lib.system<Ent>()(lib.requireAll("a"), {
+    ...everyCallback(log, "B"),
+    // An arrow ignores `this`, so it must still receive dt in the slot after it.
+    update: (dt) => line(log, "update", "B", undefined, dt),
+  });
+  const c = lib.processingSystem<Ent>()(lib.requireAll("b"), processingCallbacks(log, "C"));
+  const w = lib.world<Ent>(a, b, c, { name: "e1", a: 1 }, { name: "e2", a: 1, b: 1 });
+  frame(log, w, 0.25);
+
+  const e3: Ent = { name: "e3", b: 1 };
+  w.addEntity(e3);
+  log.push("refresh");
+  w.refresh();
+  frame(log, w, 0.5);
+
+  w.removeEntity(e3);
+  frame(log, w, 0.75);
+}
+
+function systemAddAndRemove(lib: Lib, log: Log): void {
+  const w = lib.world<Ent>({ name: "e1", a: 1 }, { name: "e2", a: 1 }, { name: "e3", b: 1 });
+  const sys = lib.system<Ent>()(lib.requireAll("a"), {
+    ...everyCallback(log, "S"),
+  });
+  const state = (label: string) => {
+    const owner = sys.world === undefined ? "-" : sys.world === w ? "w" : "other";
+    log.push(`${label} world ${owner} entities ${names(sys.entities)} index ${shown(sys.index)}`);
+  };
+  state("new");
+  w.addSystem(sys);
+  state("queued");
+  w.refresh();
+  state("added");
+  w.remove(sys);
+  state("queued removal");
+  w.refresh();
+  state("removed");
+
+  const other = lib.world<Ent>();
+  const t = lib.system<Ent>()({ name: "T" });
+  attempt(log, "add T to w", () => w.addSystem(t));
+  attempt(log, "add T to other", () => other.addSystem(t));
+  attempt(log, "remove T from other", () => other.removeSystem(t));
+  attempt(log, "remove S from w again", () => w.removeSystem(sys));
+  w.refresh();
+  other.refresh();
+  counts(log, "w", w);
+  counts(log, "other", other);
+}
+
+function activeAndSystemFilter(lib: Lib, log: Log): void {
+  const make = (name: string) =>
+    lib.system<Ent>()(lib.requireAll("a"), {
+      name,
+      skip: name === "B" ? true : undefined,
+      onAdd(entity: Ent) {
+        line(log, "onAdd", this.name, entity, undefined);
+      },
+      onModify(dt: number) {
+        line(log, "onModify", this.name, undefined, dt);
+      },
+      preWrap(dt: number) {
+        line(log, "preWrap", this.name, undefined, dt);
+      },
+      update(dt: number) {
+        line(log, "update", this.name, undefined, dt);
+      },
+      postWrap(dt: number) {
+        line(log, "postWrap", this.name, undefined, dt);
+      },
+    });
+  const a = make("A");
+  const b = make("B");
+  const c = make("C");
+  const w = lib.world<Ent>(a, b, c, { name: "e1", a: 1 });
+  const notSkipped = lib.rejectAny("skip");
+
+  b.active = false;
+  frame(log, w, 0.25);
+  w.addEntity({ name: "e2", a: 1 });
+  log.push("refresh");
+  w.refresh();
+  frame(log, w, 0.5);
+
+  b.active = true;
+  log.push("update 0.75 without B");
+  w.update(0.75, notSkipped);
+  log.push("update 1 without B");
+  w.update(1, notSkipped);
+  frame(log, w, 1.25);
+  frame(log, w, 1.5);
+}
+
+function interval(lib: Lib, log: Log): void {
+  const s = lib.system<Ent>()({
+    name: "S",
+    interval: 0.5,
+    update(dt: number) {
+      line(log, "update", this.name, undefined, dt);
+    },
+  });
+  const p = lib.processingSystem<Ent>()(lib.requireAll("a"), {
+    name: "P",
+    interval: 0.5,
+    preProcess(dt) {
+      line(log, "preProcess", this.name, undefined, dt);
+    },
+    process(entity, dt) {
+      line(log, "process", this.name, entity, dt);
+    },
+    postProcess(dt) {
+      line(log, "postProcess", this.name, undefined, dt);
+    },
+  });
+  const w = lib.world<Ent>(s, p, { name: "e1", a: 1 });
+  const buffered = () =>
+    log.push(`bufferedTime S ${shown(s.bufferedTime)} P ${shown(p.bufferedTime)}`);
+  frame(log, w, 0.25);
+  buffered();
+  frame(log, w, 0.75);
+  buffered();
+  frame(log, w, 1.25);
+  buffered();
+}
+
+function nocache(lib: Lib, log: Log): void {
+  const p = lib.processingSystem<Ent>()(lib.requireAll("a"), {
+    ...processingCallbacks(log, "N"),
+    nocache: true,
+  });
+  const e1: Ent = { name: "e1", a: 1 };
+  const w = lib.world<Ent>(p, e1, { name: "e2", b: 1 }, { name: "e3", a: 1 });
+  log.push(`entities ${names(p.entities)}`);
+  frame(log, w, 0.25);
+
+  w.removeEntity(e1);
+  w.addEntity({ name: "e4", a: 1 });
+  frame(log, w, 0.5);
+
+  w.removeSystem(p);
+  frame(log, w, 0.75);
+  counts(log, "after removal", w);
+}
+
+function setSystemIndex(lib: Lib, log: Log): void {
+  const make = (name: string) =>
+    lib.system<Ent>()({
+      name,
+      update(dt: number) {
+        line(log, "update", this.name, undefined, dt);
+      },
+    });
+  const a = make("A");
+  const b = make("B");
+  const c = make("C");
+  const d = make("D");
+  const w = lib.world<Ent>();
+  w.addSystem(a);
+  w.addSystem(b);
+  w.addSystem(c);
+  w.addSystem(d);
+  const move = (system: Named & Ecs.SystemFields<Ent>, index: number) => {
+    const old = w.setSystemIndex(system, index);
+    log.push(
+      `setSystemIndex ${system.name} ${index} old ${old} index A=${shown(a.index)} B=${shown(b.index)} C=${shown(c.index)} D=${shown(d.index)} order ${names(w.systems)}`,
+    );
+  };
+
+  move(a, 1);
+  move(a, 3);
+  frame(log, w, 0.25);
+  move(c, -1);
+  frame(log, w, 0.5);
+  move(c, 1);
+  frame(log, w, 0.75);
+  move(b, -2);
+  frame(log, w, 1);
+}
+
+function clearing(lib: Lib, log: Log): void {
+  const a = lib.system<Ent>()(lib.requireAll("a"), everyCallback(log, "A"));
+  const b = lib.system<Ent>()(lib.requireAll("b"), everyCallback(log, "B"));
+  const e1: Ent = { name: "e1", a: 1, b: 1 };
+  const e2: Ent = { name: "e2", a: 1 };
+  const e3: Ent = { name: "e3", b: 1 };
+  const w = lib.world<Ent>(a, b, e1, e2, e3);
+
+  w.clearEntities();
+  counts(log, "cleared entities", w);
+  frame(log, w, 0.25);
+  counts(log, "after update", w);
+
+  w.add(e1, e2, e3);
+  log.push("refresh");
+  w.refresh();
+  counts(log, "re-added", w);
+
+  w.clearSystems();
+  w.clearEntities();
+  counts(log, "cleared both", w);
+  frame(log, w, 0.5);
+  counts(log, "after update", w);
+}
+
+function constructionAndSharing(lib: Lib, log: Log): void {
+  const a = lib.processingSystem<Ent>()(lib.requireAll("a"), processingCallbacks(log, "A"));
+  const e1: Ent = { name: "e1", a: 1 };
+  const w = lib.world<Ent>(a, e1, { name: "e2", a: 1 });
+  counts(log, "constructed", w);
+  log.push(`systems ${names(w.systems)} entities ${names(w.entities)}`);
+  frame(log, w, 0.25);
+
+  const b = lib.processingSystem<Ent>()(lib.requireAll("a"), {
+    ...tracked(log, "B"),
+    process(entity, dt) {
+      line(log, "process", this.name, entity, dt);
+    },
+  });
+  const w2 = lib.world<Ent>(b);
+  w2.addEntity(e1);
+  frame(log, w2, 0.5);
+  frame(log, w, 0.5);
+
+  w2.removeEntity(e1);
+  frame(log, w2, 0.75);
+  frame(log, w, 0.75);
+  counts(log, "w", w);
+  counts(log, "w2", w2);
+}
+
+function copies(lib: Lib, log: Log): void {
+  const sys = lib.processingSystem<Ent>()(lib.requireAll("a"), {
+    ...tracked(log, "S"),
+    process(entity, dt) {
+      line(log, "process", this.name, entity, dt);
+    },
+  });
+  const e1: Ent = { name: "e1", a: 1 };
+  const w = lib.world<Ent>(sys, e1);
+  frame(log, w, 0.25);
+
+  const c1: Ent = { ...e1, name: "c1" };
+  const c2: Ent = { ...e1, name: "c2" };
+  w.addEntity(c1);
+  w.addEntity(c2);
+  frame(log, w, 0.5);
+  counts(log, "copies added", w);
+
+  w.removeEntity(c1);
+  frame(log, w, 0.75);
+  w.removeEntity(e1);
+  frame(log, w, 1);
+  counts(log, "after removals", w);
+  log.push(`matched ${names(sys.entities)} world ${names(w.entities)}`);
+}
+
+function freeFunctions(lib: Lib, log: Log): void {
+  const s = lib.processingSystem<Ent>()(lib.requireAll("a"), {
+    ...tracked(log, "S"),
+    process(entity, dt) {
+      line(log, "process", this.name, entity, dt);
+    },
+  });
+  const t = lib.system<Ent>()({
+    name: "T",
+    update(dt: number) {
+      line(log, "update", this.name, undefined, dt);
+    },
+  });
+  const e1: Ent = { name: "e1", a: 1 };
+  const e2: Ent = { name: "e2", a: 1 };
+  const w = lib.world<Ent>();
+  const state = (label: string) =>
+    log.push(`${label} entities ${lib.getEntityCount(w)} systems ${lib.getSystemCount(w)}`);
+
+  lib.add(w, s, e1);
+  log.push(`addSystem returns ${lib.addSystem(w, t).name}`);
+  log.push(`addEntity returns ${lib.addEntity(w, e2).name}`);
+  lib.refresh(w);
+  state("refreshed");
+  log.push(`setSystemIndex old ${lib.setSystemIndex(w, t, 1)} order ${names(w.systems)}`);
+  log.push("update 0.25");
+  lib.update(w, 0.25);
+
+  e2.a = undefined;
+  log.push(`changed returns ${lib.changed(w, e2).name}`);
+  log.push("update 0.5");
+  lib.update(w, 0.5);
+
+  lib.remove(w, e1, t);
+  log.push(`removeEntity returns ${lib.removeEntity(w, e2).name}`);
+  log.push("update 0.75");
+  lib.update(w, 0.75);
+  state("removed");
+
+  lib.addEntity(w, e1);
+  lib.refresh(w);
+  lib.clearEntities(w);
+  lib.clearSystems(w);
+  log.push("update 1");
+  lib.update(w, 1);
+  state("cleared");
+  log.push(`S world unset ${shown(s.world === undefined)}`);
+}
+
+export const scenarios: readonly Scenario[] = [
+  { name: "filters", run: filters },
+  { name: "deferred changes", run: deferredChanges },
+  { name: "membership", run: membership },
+  { name: "callback order", run: callbackOrder },
+  { name: "system add and remove", run: systemAddAndRemove },
+  { name: "active and the system filter", run: activeAndSystemFilter },
+  { name: "interval", run: interval },
+  { name: "nocache", run: nocache },
+  { name: "setSystemIndex", run: setSystemIndex },
+  { name: "clearing", run: clearing },
+  { name: "construction and sharing", run: constructionAndSharing },
+  { name: "copies", run: copies },
+  { name: "free functions", run: freeFunctions },
+];
+
+export function runScenario(lib: Lib, name: string): string {
+  const log: Log = [];
+  for (let i = 0; i < scenarios.length; i++) {
+    const scenario = scenarios[i] as Scenario;
+    if (scenario.name === name) {
+      scenario.run(lib, log);
+      return log.join("\n");
+    }
+  }
+  throw `unknown scenario "${name}"`;
+}
