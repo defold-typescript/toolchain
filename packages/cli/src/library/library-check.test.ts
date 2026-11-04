@@ -2,8 +2,13 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
-import { checkLibraryData } from "./library-check";
+import {
+  copyFixtureDataWithFlushDoc,
+  FIXTURE_DATA_DIR,
+  fixtureFlushPin,
+  writeLibraryTargets,
+} from "../library-data-fixture";
+import { checkLibraryData, docNoticeLine, forkDocNotices } from "./library-check";
 import { type LibraryData, readLibraryData } from "./library-data";
 import { floorProblems, parityFloorsByReport, tokenFloorsByReport } from "./library-floors";
 
@@ -536,5 +541,54 @@ describe("checkLibraryData measures each module against the floor in its library
     expect(seen.size).toBeGreaterThan(5);
     expect(seen.has(join(import.meta.dir, "library-floors.ts"))).toBe(true);
     expect(seen.has(join(import.meta.dir, "package-root.ts"))).toBe(false);
+  });
+});
+
+describe("forkDocNotices", () => {
+  function fixtureWithFlushDoc(docLines: string[]): string {
+    const root = mkdtempSync(join(tmpdir(), "fork-doc-notices-"));
+    roots.push(root);
+    const dataDir = join(root, "0.55.0");
+    copyFixtureDataWithFlushDoc(dataDir, docLines);
+    return dataDir;
+  }
+
+  test("an unpinned fork comment on a member upstream documents is a notice with the pin to add", () => {
+    const dataDir = fixtureWithFlushDoc(["\t/**", "\t * Run the queued handlers.", "\t */"]);
+
+    expect(forkDocNotices(dataDir)).toEqual([
+      {
+        library: "fixture-fork",
+        module: "tally.tally",
+        member: "flush",
+        kind: "unpinned",
+        pin: fixtureFlushPin(),
+      },
+    ]);
+  });
+
+  test("the same comment carrying that pin is no notice", () => {
+    const dataDir = fixtureWithFlushDoc([
+      "\t/**",
+      "\t * Run the queued handlers.",
+      `\t * @upstreamDoc ${fixtureFlushPin()}`,
+      "\t */",
+    ]);
+
+    expect(forkDocNotices(dataDir)).toEqual([]);
+  });
+
+  test("the fixture data folder holds no notice", () => {
+    expect(forkDocNotices(FIXTURE_DATA_DIR)).toEqual([]);
+  });
+
+  test("a stale notice names the new pin, and an orphan names no pin", () => {
+    const at = { library: "fixture-fork", module: "tally.tally", member: "flush" };
+    expect(docNoticeLine({ ...at, kind: "stale", pin: "0123456789ab" })).toBe(
+      "fixture-fork: doc: tally.tally.flush prints upstream's doc; keep the fork's with @upstreamDoc 0123456789ab",
+    );
+    expect(docNoticeLine({ ...at, kind: "orphan" })).toBe(
+      "fixture-fork: doc: tally.tally.flush: @upstreamDoc pins nothing, since upstream does not document it",
+    );
   });
 });

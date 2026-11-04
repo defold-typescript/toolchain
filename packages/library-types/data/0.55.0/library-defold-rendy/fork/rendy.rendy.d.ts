@@ -45,6 +45,7 @@ declare module 'rendy.rendy' {
 	/**
 	 * Creates a camera. This function is called automatically by the rendy.go game object.
 	 * @param camera_id - The identifier for the camera.
+	  * @upstreamDoc c66c32a8f51c
 	 */
 	function create_camera(camera_id: CameraId): void;
 

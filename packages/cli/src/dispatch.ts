@@ -888,7 +888,9 @@ function dispatchCommand(
         }
         return failed.length > 0 ? 1 : 0;
       }
-      const { checkLibraryData } = await import("./library/library-check");
+      const { checkLibraryData, docNoticeLine, forkDocNotices } = await import(
+        "./library/library-check"
+      );
       let problems: Awaited<ReturnType<typeof checkLibraryData>>;
       try {
         problems = await checkLibraryData(dataFolder);
@@ -898,16 +900,38 @@ function dispatchCommand(
           { dataFolder },
         );
       }
+      let notices: ReturnType<typeof forkDocNotices>;
+      try {
+        notices = forkDocNotices(dataFolder);
+      } catch (err) {
+        // A folder the reader refuses, or whose forks do not print, is already a
+        // problem, and has no notices to read.
+        if (problems.length === 0) {
+          return fail(
+            `defold-typescript library check: ${err instanceof Error ? err.message : String(err)}`,
+            { dataFolder },
+          );
+        }
+        notices = [];
+      }
       if (problems.length > 0) {
         const summary = `library check: ${problems.length} problem${problems.length === 1 ? "" : "s"} in ${dataFolder}`;
         if (json) {
           io.stdout.write(
-            renderResult({ command: "library", error: summary, subcommand, dataFolder, problems }),
+            renderResult({
+              command: "library",
+              error: summary,
+              subcommand,
+              dataFolder,
+              problems,
+              notices,
+            }),
           );
         } else {
           for (const { library, check, message } of problems) {
             io.stdout.write(`${library}: ${check}: ${message}\n`);
           }
+          for (const notice of notices) io.stdout.write(`${docNoticeLine(notice)}\n`);
           writeError(`defold-typescript ${summary}`);
         }
         return 1;
@@ -940,6 +964,7 @@ function dispatchCommand(
             dataFolder,
             libraryCount,
             problems,
+            notices,
             written,
           }),
         );
@@ -952,6 +977,7 @@ function dispatchCommand(
             `defold-typescript library check: wrote ${written.length} API ${written.length === 1 ? "model" : "models"} to ${apiDocOutFlag}\n`,
           );
         }
+        for (const notice of notices) io.stdout.write(`${docNoticeLine(notice)}\n`);
       }
       return 0;
     })();

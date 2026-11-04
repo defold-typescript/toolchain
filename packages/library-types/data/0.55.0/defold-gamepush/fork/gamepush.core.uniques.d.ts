@@ -24,16 +24,23 @@ declare module 'gamepush.core.uniques' {
     error_delete?: (error: unknown) => void;
   }
 
-  /** The player's unique values, an empty list when it has none. */
+  /**
+   * The player's unique values, an empty list when it has none.
+   * @upstreamDoc 9b515b2fd964
+   */
   export function list(): Record<string, unknown>[];
 
-  /** The value registered under `tag`, or nil. Raises unless `tag` is a string. */
+  /**
+   * The value registered under `tag`, or nil. Raises unless `tag` is a string.
+   * @upstreamDoc 2ed88beb90ef
+   */
   export function get(tag: string): string | undefined;
 
   /**
    * Registers or updates a unique value. Raises when the table is missing.
    * @param parameters The tag and value, for example `{ tag: "login", value: "defold_player_demo" }`.
    * @param callback Receives the result.
+    * @upstreamDoc 73b02fafc4fe
    */
   export function register(
     parameters: Record<string, unknown>,
@@ -44,6 +51,7 @@ declare module 'gamepush.core.uniques' {
    * Checks whether a unique value is free. Raises when the table is missing.
    * @param parameters The tag and value, for example `{ tag: "login", value: "defold_player_demo" }`.
    * @param callback Receives the result.
+    * @upstreamDoc e79da2199e8c
    */
   export function check(
     parameters: Record<string, unknown>,
@@ -54,6 +62,7 @@ declare module 'gamepush.core.uniques' {
    * Deletes a unique value. Raises when the table is missing.
    * @param parameters The tag, for example `{ tag: "login" }`.
    * @param callback Receives the result.
+    * @upstreamDoc fbdc77131db9
    */
   function delete_(
     parameters: Record<string, unknown>,

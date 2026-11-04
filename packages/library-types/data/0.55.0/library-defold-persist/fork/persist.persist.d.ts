@@ -10,6 +10,7 @@ declare module 'persist.persist' {
 	/**
 	 * Creates a file with the specified data.
 	 * If the file already exists, then its data can be overwritten.
+	  * @upstreamDoc d29055bdbc70
 	 */
 	export function create(
 		file_name: string,

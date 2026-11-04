@@ -153,18 +153,16 @@ declare module 'gooey.gooey' {
 	/**
 	 * Check if a node is enabled. This is done by not only looking at the state of the
 	 * node itself but also it's ancestors all the way up the hierarchy.
+	  * @upstreamDoc 833f7664153d
 	 */
 	export function is_enabled(node: Opaque<"node">): boolean;
 
-	/** Convenience function to acquire input focus */
 	export function acquire_input(): void;
 
-	/** Convenience function to release input focus */
 	export function release_input(): void;
 
 	export function create_theme(): Theme;
 
-	/** Mask text by replacing every character with a mask character */
 	export function mask_text(text: string, mask: string): string;
 
 	export function button(

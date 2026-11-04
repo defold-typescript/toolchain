@@ -23,33 +23,43 @@ declare module 'gamepush.core.triggers' {
    * Claims a trigger's reward. Raises when the table is missing.
    * @param parameters The options for the SDK's `triggers.claim`.
    * @param callback Receives the result.
+    * @upstreamDoc 5937e96a37fe
    */
   export function claim(
     parameters: Record<string, unknown>,
     callback?: (result: unknown) => void,
   ): void;
 
-  /** All triggers. */
+  /**
+   * All triggers.
+   * @upstreamDoc cd6d744b1055
+   */
   export function list(): Record<string, unknown>[];
 
-  /** The triggers the player activated. */
+  /**
+   * The triggers the player activated.
+   * @upstreamDoc e43ac77338a9
+   */
   export function activated_list(): Record<string, unknown>[];
 
   /**
    * A trigger's description. Raises unless `id_or_tag` is a string.
    * @param id_or_tag The trigger's id or tag.
+    * @upstreamDoc 6eef0bdac92b
    */
   export function get_trigger(id_or_tag: string): Record<string, unknown>;
 
   /**
    * Whether the player activated a trigger. Raises unless `id_or_tag` is a string.
    * @param id_or_tag The trigger's id or tag.
+    * @upstreamDoc d12277ff7f0b
    */
   export function is_activated(id_or_tag: string): boolean;
 
   /**
    * Whether a trigger's reward was given.
    * @param id_or_tag The trigger's id or tag.
+    * @upstreamDoc d92753a09ce4
    */
   export function is_claimed(id_or_tag: string | number): boolean;
 

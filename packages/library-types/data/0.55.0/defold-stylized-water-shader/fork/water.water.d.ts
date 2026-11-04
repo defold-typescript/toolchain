@@ -119,6 +119,7 @@ declare module 'water.water' {
   /**
    * Pauses or resumes the wave timer.
    * @param state `true` stops the timer, `false` resumes it.
+    * @upstreamDoc 863b72691bfa
    */
   export function pause(state: boolean): void;
 
@@ -128,6 +129,7 @@ declare module 'water.water' {
    * @param amplitude The wave height: `0.1` to `0.5` gentle, `0.5` to `1` medium, `1` to `2` rough, above `2` a storm.
    * @param wavelength The distance between wave peaks: `10` to `20` choppy, `20` to `40` ocean waves, above `40` long gentle swells.
    * @param speed The animation speed: `0.5` to `1` slow, `1` to `3` moderate, `3` to `5` fast, above `5` very fast.
+    * @upstreamDoc 51a245bc0967
    */
   export function set_wave1(
     direction: number,
@@ -136,7 +138,10 @@ declare module 'water.water' {
     speed: number,
   ): void;
 
-  /** Returns the first wave layer's direction, amplitude, wavelength and speed. */
+  /**
+   * Returns the first wave layer's direction, amplitude, wavelength and speed.
+   * @upstreamDoc 9c9aa1435b0a
+   */
   export function get_wave1(): LuaMultiReturn<
     [direction: number, amplitude: number, wavelength: number, speed: number]
   >;
@@ -147,6 +152,7 @@ declare module 'water.water' {
    * @param amplitude The wave height: `0.1` to `0.5` gentle, `0.5` to `1` medium, `1` to `2` rough, above `2` a storm.
    * @param wavelength The distance between wave peaks: `10` to `20` choppy, `20` to `40` ocean waves, above `40` long gentle swells.
    * @param speed The animation speed: `0.5` to `1` slow, `1` to `3` moderate, `3` to `5` fast, above `5` very fast.
+    * @upstreamDoc f39069c7ea19
    */
   export function set_wave2(
     direction: number,
@@ -155,7 +161,10 @@ declare module 'water.water' {
     speed: number,
   ): void;
 
-  /** Returns the second wave layer's direction, amplitude, wavelength and speed. */
+  /**
+   * Returns the second wave layer's direction, amplitude, wavelength and speed.
+   * @upstreamDoc 1b114718b452
+   */
   export function get_wave2(): LuaMultiReturn<
     [direction: number, amplitude: number, wavelength: number, speed: number]
   >;
@@ -164,10 +173,14 @@ declare module 'water.water' {
    * Sets the animated normal map that adds ripple detail to the surface.
    * @param scale The normal map tiling: `5` large ripples, `10` medium, `20` tiny.
    * @param speed The animation speed: `0.5` slow, `1` normal, `2` fast.
+    * @upstreamDoc e45afd2b691c
    */
   export function set_wave_normal_params(scale: number, speed: number): void;
 
-  /** Returns the normal map tiling and animation speed. */
+  /**
+   * Returns the normal map tiling and animation speed.
+   * @upstreamDoc 2d2b9af995ae
+   */
   export function get_wave_normal_params(): LuaMultiReturn<[scale: number, speed: number]>;
 
   /**
@@ -175,10 +188,14 @@ declare module 'water.water' {
    * @param r The red component, `0` to `1`.
    * @param g The green component, `0` to `1`.
    * @param b The blue component, `0` to `1`.
+    * @upstreamDoc 81d94359bbc3
    */
   export function set_shallow_color(r: number, g: number, b: number): void;
 
-  /** Returns the shallow water color's red, green and blue components. */
+  /**
+   * Returns the shallow water color's red, green and blue components.
+   * @upstreamDoc d172e193fc49
+   */
   export function get_shallow_color(): LuaMultiReturn<[r: number, g: number, b: number]>;
 
   /**
@@ -186,10 +203,14 @@ declare module 'water.water' {
    * @param r The red component, `0` to `1`.
    * @param g The green component, `0` to `1`.
    * @param b The blue component, `0` to `1`.
+    * @upstreamDoc 0e2a3f7aa376
    */
   export function set_deep_color(r: number, g: number, b: number): void;
 
-  /** Returns the deep water color's red, green and blue components. */
+  /**
+   * Returns the deep water color's red, green and blue components.
+   * @upstreamDoc e9379c64ca93
+   */
   export function get_deep_color(): LuaMultiReturn<[r: number, g: number, b: number]>;
 
   /**
@@ -197,10 +218,14 @@ declare module 'water.water' {
    * @param r The red component, `0` to `1`.
    * @param g The green component, `0` to `1`.
    * @param b The blue component, `0` to `1`.
+    * @upstreamDoc d98501cc30ab
    */
   export function set_far_color(r: number, g: number, b: number): void;
 
-  /** Returns the far water color's red, green and blue components. */
+  /**
+   * Returns the far water color's red, green and blue components.
+   * @upstreamDoc 200af2130c6f
+   */
   export function get_far_color(): LuaMultiReturn<[r: number, g: number, b: number]>;
 
   /**
@@ -209,6 +234,7 @@ declare module 'water.water' {
    * @param speed The animation speed.
    * @param noise_scale The normal map distortion: `0` none, `0.5` moderate, `1` heavy.
    * @param contribution The overall foam visibility: `0` no foam, `0.5` subtle, `1` full.
+    * @upstreamDoc 1ef969ff189c
    */
   export function set_foam_params(
     scale: number,
@@ -217,7 +243,10 @@ declare module 'water.water' {
     contribution: number,
   ): void;
 
-  /** Returns the foam tiling, speed, normal map distortion and visibility. */
+  /**
+   * Returns the foam tiling, speed, normal map distortion and visibility.
+   * @upstreamDoc fe906c78d456
+   */
   export function get_foam_params(): LuaMultiReturn<
     [scale: number, speed: number, noise_scale: number, contribution: number]
   >;
@@ -226,10 +255,14 @@ declare module 'water.water' {
    * Sets how the color fades with distance and blends with depth.
    * @param distance_density How quickly the color fades to the far color: `0.01` very slow, `0.1` normal, `0.5` quick.
    * @param depth_density How quickly the color moves from the shallow color to the deep color with water depth.
+    * @upstreamDoc af9b3b1c2c88
    */
   export function set_density_params(distance_density: number, depth_density: number): void;
 
-  /** Returns the distance fade rate and the depth blending intensity. */
+  /**
+   * Returns the distance fade rate and the depth blending intensity.
+   * @upstreamDoc ebbd9307236a
+   */
   export function get_density_params(): LuaMultiReturn<
     [distance_density: number, depth_density: number]
   >;
@@ -237,10 +270,14 @@ declare module 'water.water' {
   /**
    * Sets the sharpness of the sun's specular highlight.
    * @param exponent The highlight sharpness: `100` big and soft, `1000` medium, `10000` tiny and sharp.
+    * @upstreamDoc b92918adb828
    */
   export function set_sun_params(exponent: number): void;
 
-  /** Returns the sun highlight sharpness. */
+  /**
+   * Returns the sun highlight sharpness.
+   * @upstreamDoc 469c5526ca7d
+   */
   export function get_sun_params(): number;
 
   /**
@@ -248,10 +285,14 @@ declare module 'water.water' {
    * @param r The red component, `0` to `1`.
    * @param g The green component, `0` to `1`.
    * @param b The blue component, `0` to `1`.
+    * @upstreamDoc 58d5129550af
    */
   export function set_sun_color(r: number, g: number, b: number): void;
 
-  /** Returns the sun color's red, green and blue components. */
+  /**
+   * Returns the sun color's red, green and blue components.
+   * @upstreamDoc 9456f9bdff9a
+   */
   export function get_sun_color(): LuaMultiReturn<[r: number, g: number, b: number]>;
 
   /**
@@ -260,10 +301,14 @@ declare module 'water.water' {
    * @param x The X component of the normalized direction.
    * @param y The Y component of the normalized direction.
    * @param z The Z component of the normalized direction.
+    * @upstreamDoc 869b5fdb9a9b
    */
   export function set_sun_direction(x: number, y: number, z: number): void;
 
-  /** Returns the X, Y and Z components of the sun direction. */
+  /**
+   * Returns the X, Y and Z components of the sun direction.
+   * @upstreamDoc 1ee242e1682a
+   */
   export function get_sun_direction(): LuaMultiReturn<[x: number, y: number, z: number]>;
 
   /**
@@ -273,6 +318,7 @@ declare module 'water.water' {
    * @param exponent The sharpness: `1000` many soft sparkles, `10000` medium, `100000` very few, very sharp ones.
    * @param enabled `0` disables sparkles and `1` enables them. When omitted, the current
    * value is kept.
+    * @upstreamDoc 683c0fcffb17
    */
   export function set_sparkle_params(
     scale: number,
@@ -281,18 +327,30 @@ declare module 'water.water' {
     enabled?: number,
   ): void;
 
-  /** Returns the sparkle tiling, speed and sharpness, and `1` when sparkles are enabled or `0` when not. */
+  /**
+   * Returns the sparkle tiling, speed and sharpness, and `1` when sparkles are enabled or `0` when not.
+   * @upstreamDoc 1f41278afe01
+   */
   export function get_sparkle_params(): LuaMultiReturn<
     [scale: number, speed: number, exponent: number, enabled: number]
   >;
 
-  /** Enables the sparkle effect. */
+  /**
+   * Enables the sparkle effect.
+   * @upstreamDoc 2655a95c1ec0
+   */
   export function enable_sparkle(): void;
 
-  /** Disables the sparkle effect, which saves eight texture samples per fragment. */
+  /**
+   * Disables the sparkle effect, which saves eight texture samples per fragment.
+   * @upstreamDoc 6db18fe700c9
+   */
   export function disable_sparkle(): void;
 
-  /** Returns `true` when the sparkle effect is enabled. */
+  /**
+   * Returns `true` when the sparkle effect is enabled.
+   * @upstreamDoc 2370b6a7f3b3
+   */
   export function is_sparkle_enabled(): boolean;
 
   /**
@@ -300,10 +358,14 @@ declare module 'water.water' {
    * @param r The red component, `0` to `1`.
    * @param g The green component, `0` to `1`.
    * @param b The blue component, `0` to `1`.
+    * @upstreamDoc 4bb2c5a48a13
    */
   export function set_sparkle_color(r: number, g: number, b: number): void;
 
-  /** Returns the sparkle color's red, green and blue components. */
+  /**
+   * Returns the sparkle color's red, green and blue components.
+   * @upstreamDoc 6989cfb4e456
+   */
   export function get_sparkle_color(): LuaMultiReturn<[r: number, g: number, b: number]>;
 
   /**
@@ -312,6 +374,7 @@ declare module 'water.water' {
    * @param noise_strength The noise distortion strength, about `0.2` to `0.5`.
    * @param edge_softness The edge blend softness, about `0.02` to `0.15`.
    * @param alpha The overall foam opacity, `0` to `1`.
+    * @upstreamDoc ad5cf7d3ca52
    */
   export function set_edge_foam_params(
     depth_scale: number,
@@ -320,7 +383,10 @@ declare module 'water.water' {
     alpha: number,
   ): void;
 
-  /** Returns the edge foam depth scale, noise strength, edge softness and opacity. */
+  /**
+   * Returns the edge foam depth scale, noise strength, edge softness and opacity.
+   * @upstreamDoc 7d1c38d8809a
+   */
   export function get_edge_foam_params(): LuaMultiReturn<
     [depth_scale: number, noise_strength: number, edge_softness: number, alpha: number]
   >;
@@ -328,10 +394,14 @@ declare module 'water.water' {
   /**
    * Sets how the edge foam is drawn. It also prints `SET` and the type on every call.
    * @param type `0` draws a solid color, `1` a texture.
+    * @upstreamDoc 3e07a4bb3035
    */
   export function set_edge_foam_type(type: 0 | 1): void;
 
-  /** Returns the edge foam type: `0` for a solid color, `1` for a texture. */
+  /**
+   * Returns the edge foam type: `0` for a solid color, `1` for a texture.
+   * @upstreamDoc af12a74de9ab
+   */
   export function get_edge_foam_type(): number;
 
   /**
@@ -339,10 +409,14 @@ declare module 'water.water' {
    * @param r The red component, `0` to `1`.
    * @param g The green component, `0` to `1`.
    * @param b The blue component, `0` to `1`.
+    * @upstreamDoc 23021ddabbdd
    */
   export function set_edge_foam_color(r: number, g: number, b: number): void;
 
-  /** Returns the edge foam color's red, green and blue components. */
+  /**
+   * Returns the edge foam color's red, green and blue components.
+   * @upstreamDoc 619f8efddfba
+   */
   export function get_edge_foam_color(): LuaMultiReturn<[r: number, g: number, b: number]>;
 
   /**
@@ -350,10 +424,14 @@ declare module 'water.water' {
    * @param strength The refraction intensity: `0` off, `0.5` moderate, `1` strong.
    * @param chromatic_aberration The color separation: `0` off, `0.5` subtle, `1` strong.
    * Defaults to `0`.
+    * @upstreamDoc 5f869e5a5613
    */
   export function set_refraction_params(strength: number, chromatic_aberration?: number): void;
 
-  /** Returns the refraction strength and chromatic aberration. */
+  /**
+   * Returns the refraction strength and chromatic aberration.
+   * @upstreamDoc 30707dd97a2f
+   */
   export function get_refraction_params(): LuaMultiReturn<
     [strength: number, chromatic_aberration: number]
   >;
@@ -364,10 +442,14 @@ declare module 'water.water' {
    * @param strength The reflection intensity: `0` off, `0.5` moderate, `1` strong.
    * @param fresnel_power How much stronger the reflection is at grazing angles, `1` to `5`:
    * `1` the same at every angle, `3` natural, `5` very strong. Defaults to `3`.
+    * @upstreamDoc 03abade55eb6
    */
   export function set_reflection_params(strength: number, fresnel_power?: number): void;
 
-  /** Returns the reflection strength and fresnel power. */
+  /**
+   * Returns the reflection strength and fresnel power.
+   * @upstreamDoc ce549f5dfffb
+   */
   export function get_reflection_params(): LuaMultiReturn<
     [strength: number, fresnel_power: number]
   >;
@@ -377,6 +459,7 @@ declare module 'water.water' {
    * @param cubemap_path The cubemap texture path, for example `/main/skybox.cubemap`.
    * @deprecated Upstream does not implement cubemap reflections: a cubemap path cannot be
    * passed to `render.enable_texture`.
+    * @upstreamDoc 958b855ba66f
    */
   export function set_skybox_cubemap(cubemap_path: string): void;
 
@@ -384,6 +467,7 @@ declare module 'water.water' {
    * Returns `undefined`.
    * @deprecated Upstream does not implement cubemap reflections: a cubemap path cannot be
    * passed to `render.enable_texture`.
+    * @upstreamDoc e46b57b031de
    */
   export function get_skybox_cubemap(): undefined;
 
@@ -391,10 +475,14 @@ declare module 'water.water' {
    * Sets the level-of-detail distances beyond which effects are simplified.
    * @param sparkle_distance The distance beyond which sparkles are skipped, saving eight texture samples, `0` to `500`. The default is `100`.
    * @param foam_distance The distance beyond which a simplified foam is drawn, saving three texture samples, `0` to `500`. The default is `150`.
+    * @upstreamDoc 9059ef979a6e
    */
   export function set_lod_params(sparkle_distance: number, foam_distance: number): void;
 
-  /** Returns the sparkle and foam level-of-detail distances. */
+  /**
+   * Returns the sparkle and foam level-of-detail distances.
+   * @upstreamDoc 1dd9453f0456
+   */
   export function get_lod_params(): LuaMultiReturn<
     [sparkle_distance: number, foam_distance: number]
   >;

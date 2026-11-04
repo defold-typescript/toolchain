@@ -15,6 +15,7 @@ declare module 'defgraph.defgraph' {
    * `ONETIME` visits them in order and stops at the last, `SHUFFLE` visits them in
    * random order without stopping, and `CYCLE` visits them in order and starts over
    * after the last. With one destination they all behave the same.
+    * @upstreamDoc b6eafa419e09
    */
   export const ROUTETYPE: {
     ONETIME: Hash;
@@ -80,6 +81,7 @@ declare module 'defgraph.defgraph' {
    * turn may start. Defaults to `10`.
    * @param settings_allow_enter_on_route Whether a game object may enter the map partway
    * along a route, rather than only at a node. Defaults to `true`.
+    * @upstreamDoc 4482c504f56d
    */
   export function map_set_properties(
     settings_gameobject_threshold?: number,
@@ -93,6 +95,7 @@ declare module 'defgraph.defgraph' {
    * Adds a node at a position and returns its id. The position's `z` is ignored. A node
    * with no route takes no part in routing, so remove one that is no longer used.
    * @param position The node's position.
+    * @upstreamDoc ae0e17bf80bc
    */
   export function map_add_node(position: Vector3): number;
 
@@ -101,12 +104,14 @@ declare module 'defgraph.defgraph' {
    * an assert.
    * @param node_id The node's id.
    * @param position The node's new position.
+    * @upstreamDoc 5eb8a7c58a14
    */
   export function map_update_node_position(node_id: number, position: Vector3): void;
 
   /**
    * Removes a node and every route attached to it. An unknown id fails an assert.
    * @param node_id The node's id.
+    * @upstreamDoc cb431bd2d865
    */
   export function map_remove_node(node_id: number): void;
 
@@ -118,6 +123,7 @@ declare module 'defgraph.defgraph' {
    * @param destination_id The node the route ends at.
    * @param is_one_way Whether the route runs from `source_id` to `destination_id` only.
    * Defaults to `false`.
+    * @upstreamDoc 2856b18ffebf
    */
   export function map_add_route(
     source_id: number,
@@ -132,6 +138,7 @@ declare module 'defgraph.defgraph' {
    * @param destination_id The node the route ends at.
    * @param is_remove_one_way Whether to remove only the way from `source_id` to
    * `destination_id`. Defaults to `false`.
+    * @upstreamDoc 228587fd0bd6
    */
   export function map_remove_route(
     source_id: number,
@@ -148,6 +155,7 @@ declare module 'defgraph.defgraph' {
    * @param one_way_route_color The color of one-way routes. Defaults to
    * `vmath.vector4(0, 1, 1, 1)`.
    * @param draw_scale The size of the node marks. Defaults to `5`.
+    * @upstreamDoc c4fed432af02
    */
   export function debug_set_properties(
     node_color?: Vector4,
@@ -161,6 +169,7 @@ declare module 'defgraph.defgraph' {
    * `draw_text` to `@render:`. A node with no route is drawn as a triangle, a dead end
    * as a cross and an intersection as a square. Call it every frame to keep it shown.
    * @param is_show_ids Whether to draw each node's id beside it. Defaults to `false`.
+    * @upstreamDoc f1366dd03a99
    */
   export function debug_draw_map_nodes(is_show_ids?: boolean): void;
 
@@ -168,6 +177,7 @@ declare module 'defgraph.defgraph' {
    * Draws every route for one frame, by posting `draw_line` to `@render:`: two-way
    * routes in one color, and one-way routes in another with a square near the end they
    * run to. Call it every frame to keep it shown.
+    * @upstreamDoc c4b940d7e5b0
    */
   export function debug_draw_map_routes(): void;
 
@@ -179,6 +189,7 @@ declare module 'defgraph.defgraph' {
    * @param color The color of the path.
    * @param is_show_intersection Whether to mark each point on the path with a cross.
    * Defaults to `false`.
+    * @upstreamDoc cb73153c8433
    */
   export function debug_draw_player_move(
     movement_data: MoveData,
@@ -207,6 +218,7 @@ declare module 'defgraph.defgraph' {
    * turn may start. Defaults to the `map_set_properties` value.
    * @param settings_allow_enter_on_route Whether the game object may enter the map partway
    * along a route. Defaults to the `map_set_properties` value.
+    * @upstreamDoc 4373b7dce239
    */
   export function move_initialize(
     source_position: Vector3,
@@ -231,6 +243,7 @@ declare module 'defgraph.defgraph' {
    * @param speed How far the game object moves this call, its speed already multiplied
    * by `dt`.
    * @param move_data The movement data from `move_initialize` or the last `move_player`.
+    * @upstreamDoc 500ee67c392e
    */
   export function move_player(
     current_position: Vector3,

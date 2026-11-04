@@ -47,7 +47,12 @@ import { archiveFingerprint, recordReview } from "./library/library-fingerprint"
 import { libraryStatusMessages } from "./library/library-status";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { LIBRARY_DATA_MAIN_URL } from "./library-data-archive";
-import { writeAuthoredLibraryData, writeLibraryTargets } from "./library-data-fixture";
+import {
+  copyFixtureDataWithFlushDoc,
+  fixtureFlushPin,
+  writeAuthoredLibraryData,
+  writeLibraryTargets,
+} from "./library-data-fixture";
 import { librariesDirName } from "./library-materialize";
 import { loadVendoredNativeRegistry } from "./library-registry";
 import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
@@ -9559,6 +9564,91 @@ describe("export-types", () => {
   });
 });
 
+describe("dispatch library check fork doc notices", () => {
+  let base: string;
+
+  beforeEach(() => {
+    base = mkdtempSync(path.join(os.tmpdir(), "dispatch-library-doc-notices-"));
+  });
+
+  afterEach(() => {
+    rmSync(base, { recursive: true, force: true });
+  });
+
+  // The fixture data folder is `0.55.0`, the folder a 0.55.x CLI reads, with an
+  // unpinned comment on a member its fork's upstream documents.
+  function writeData(): string {
+    const dataDir = path.join(base, "0.55.0");
+    copyFixtureDataWithFlushDoc(dataDir, ["\t/**", "\t * Run the queued handlers.", "\t */"]);
+    return dataDir;
+  }
+
+  const run = (args: string[], io: ReturnType<typeof captureStreams>["io"]) =>
+    dispatch(["library", "check", "--data", base, ...args], io, { cliVersion: "0.55.0" });
+
+  const noticeLine = (): string =>
+    `fixture-fork: doc: tally.tally.flush prints upstream's doc; keep the fork's with @upstreamDoc ${fixtureFlushPin()}\n`;
+
+  const notice = () => ({
+    library: "fixture-fork",
+    module: "tally.tally",
+    member: "flush",
+    kind: "unpinned",
+    pin: fixtureFlushPin(),
+  });
+
+  test("names the fork comment and the pin that keeps it, and still exits 0", async () => {
+    const dataDir = writeData();
+    const { io, out, err } = captureStreams();
+
+    const code = await run([], io);
+
+    expect(err()).toBe("");
+    expect(out()).toBe(
+      `defold-typescript library check: ${dataDir}: 4 libraries, no problems\n${noticeLine()}`,
+    );
+    expect(code).toBe(0);
+  }, 120_000);
+
+  test("--json carries the notice and still reports success", async () => {
+    const dataDir = writeData();
+    const { io, out } = captureStreams();
+
+    const code = await run(["--json"], io);
+
+    expect(code).toBe(0);
+    expect(JSON.parse(out())).toEqual({
+      command: "library",
+      ok: true,
+      written: [],
+      subcommand: "check",
+      dataFolder: dataDir,
+      libraryCount: 4,
+      problems: [],
+      notices: [notice()],
+    });
+  }, 120_000);
+
+  test("a folder with a problem exits 1 and lists the notices too", async () => {
+    const dataDir = writeData();
+    const usage = path.join(dataDir, "fixture-fork", "usage", "tally-usage.test-d.ts");
+    writeFileSync(usage, `${readFileSync(usage, "utf8")}tally.missing();\n`);
+    const { io, out } = captureStreams();
+
+    const code = await run([], io);
+
+    expect(code).toBe(1);
+    expect(out()).toMatch(
+      /^fixture-fork: compile: usage\/tally-usage\.test-d\.ts:\d+ .*'missing'.*\n/,
+    );
+    expect(out().endsWith(noticeLine())).toBe(true);
+
+    const json = captureStreams();
+    expect(await run(["--json"], json.io)).toBe(1);
+    expect(JSON.parse(json.out())).toMatchObject({ ok: false, notices: [notice()] });
+  }, 120_000);
+});
+
 describe("dispatch library check", () => {
   const FORK = "declare module 'mylib.core' {\n  export function start(): void;\n}\n";
   const usage = (call: string): string =>
@@ -9677,6 +9767,7 @@ describe("dispatch library check", () => {
           message: expect.stringMatching(/^usage\/core\.test-d\.ts:6 .*'stop'/),
         },
       ],
+      notices: [],
     });
   });
 
@@ -9695,6 +9786,7 @@ describe("dispatch library check", () => {
       dataFolder: dataDir,
       libraryCount: 1,
       problems: [],
+      notices: [],
     });
   });
 

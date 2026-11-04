@@ -34,16 +34,26 @@ declare module 'gamepush.core.platform' {
   /**
    * The platform the game runs on. The SDK can report platforms this module has no
    * constant for, so compare against the constants rather than narrowing to them.
+    * @upstreamDoc 27ee02e7b366
    */
   export function type(): string;
 
-  /** Whether the platform signs the player in itself. */
+  /**
+   * Whether the platform signs the player in itself.
+   * @upstreamDoc 0a5dd25336ac
+   */
   export function has_integrated_auth(): boolean;
 
-  /** Whether the platform allows external links. */
+  /**
+   * Whether the platform allows external links.
+   * @upstreamDoc dfbf96019f7c
+   */
   export function is_external_links_allowed(): boolean;
 
-  /** Whether sign-in by secret code is available. */
+  /**
+   * Whether sign-in by secret code is available.
+   * @upstreamDoc df33f78b69a1
+   */
   export function is_secret_code_auth_available(): boolean;
 
   /**
@@ -57,6 +67,7 @@ declare module 'gamepush.core.platform' {
    * be passed. Ignored when the path names an object or a field.
    * @param callback Receives the result when the method returns a promise.
    * @returns The result, or nothing when a callback is given.
+    * @upstreamDoc bbf636c68b9f
    */
   export function call_native_sdk(
     method: string,

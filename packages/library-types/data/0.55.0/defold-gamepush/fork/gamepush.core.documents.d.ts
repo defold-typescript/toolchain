@@ -24,6 +24,7 @@ declare module 'gamepush.core.documents' {
   /**
    * Opens the privacy policy. Raises when the table is missing.
    * @param parameters The document, for example `{ type: "PLAYER_PRIVACY_POLICY" }`.
+    * @upstreamDoc 6305b5724638
    */
   export function open(parameters: Record<string, unknown>): void;
 
@@ -32,6 +33,7 @@ declare module 'gamepush.core.documents' {
    * @param parameters The document and its format, for example
    * `{ type: "PLAYER_PRIVACY_POLICY", format: "TXT" }`.
    * @param callback Receives the document.
+    * @upstreamDoc 7c9181dd3622
    */
   export function fetch(
     parameters: Record<string, unknown>,
