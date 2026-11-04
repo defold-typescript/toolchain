@@ -6941,30 +6941,32 @@ runtime. For the ones listed below, this toolchain ships a hand-written
 [module-form](./extensions.md#module-form-native-extensions) declaration
 instead. `resolve` uses it when the dependency's
 repo name matches **and** the archive ships the extension's `ext.manifest` in
-the named directory, so a repo-name collision alone writes nothing.
+the named directory, so a repo-name collision alone writes nothing. Each
+namespace links its library page, which names the commit the declaration is
+pinned to.
 
 <!-- curated-native-extensions:start -->
 
-| Extension | Pinned at | Namespace | Confirmed by        |
-| --------- | --------- | --------- | ------------------- |
-| [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | `v1.1.0` | [`def_windward_jps`](https://defold-typescript.github.io/library-data/api/def_windward_jps) | `def_windward_jps/ext.manifest` |
-| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | `v1.2` | [`taptic_engine`](https://defold-typescript.github.io/library-data/api/taptic_engine) | `taptic_engine/ext.manifest` |
-| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | `1.0.3` | [`box2d`](https://defold-typescript.github.io/library-data/api/box2d) | `box2d/native/ext.manifest` |
-| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | [`daabbcc`](https://defold-typescript.github.io/library-data/api/daabbcc) | `daabbcc/ext.manifest` |
-| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | `v1.0.6` | [`daabbcc3d`](https://defold-typescript.github.io/library-data/api/daabbcc3d) | `daabbcc3d/ext.manifest` |
-| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | `95ce965` | [`detour`](https://defold-typescript.github.io/library-data/api/detour) | `detour/ext.manifest` |
-| [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | `1.2.0` | [`uptime`](https://defold-typescript.github.io/library-data/api/uptime) | `uptime/ext.manifest` |
-| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | `v0.1.0` | [`fontscale`](https://defold-typescript.github.io/library-data/api/fontscale) | `fontscale/ext.manifest` |
-| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | `1.1.1` | [`gyro`](https://defold-typescript.github.io/library-data/api/gyro) | `gyro/ext.manifest` |
-| [britzl/defold-imp](https://github.com/britzl/defold-imp) | `1.1.0` | [`imp`](https://defold-typescript.github.io/library-data/api/imp) | `imp/ext.manifest` |
-| [britzl/defold-png](https://github.com/britzl/defold-png) | `1.2.2` | [`png`](https://defold-typescript.github.io/library-data/api/png) | `png/ext.manifest` |
-| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | [`share`](https://defold-typescript.github.io/library-data/api/share) | `share/ext.manifest` |
-| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](https://defold-typescript.github.io/library-data/api/tile_raycast) | `tile-raycast/ext.manifest` |
-| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | [`uuid4`](https://defold-typescript.github.io/library-data/api/uuid4) | `uuid4/ext.manifest` |
-| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | `76ff0c9` | [`wave`](https://defold-typescript.github.io/library-data/api/wave) | `wave/ext.manifest` |
-| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | `2023870` | [`directories`](https://defold-typescript.github.io/library-data/api/directories) | `directories/ext.manifest` |
-| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | `618292f` | [`openal`](https://defold-typescript.github.io/library-data/api/openal) | `openal/ext.manifest` |
-| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | `ecda39f` | [`ainpc`](https://defold-typescript.github.io/library-data/api/ainpc) | `player2-ai-npc/ext.manifest` |
+| Extension | Namespace | Confirmed by        |
+| --------- | --------- | ------------------- |
+| [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | [`def_windward_jps`](https://defold-typescript.github.io/library-data/api/def_windward_jps) | `def_windward_jps/ext.manifest` |
+| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | [`taptic_engine`](https://defold-typescript.github.io/library-data/api/taptic_engine) | `taptic_engine/ext.manifest` |
+| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | [`box2d`](https://defold-typescript.github.io/library-data/api/box2d) | `box2d/native/ext.manifest` |
+| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | [`daabbcc`](https://defold-typescript.github.io/library-data/api/daabbcc) | `daabbcc/ext.manifest` |
+| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | [`daabbcc3d`](https://defold-typescript.github.io/library-data/api/daabbcc3d) | `daabbcc3d/ext.manifest` |
+| [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | [`detour`](https://defold-typescript.github.io/library-data/api/detour) | `detour/ext.manifest` |
+| [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | [`uptime`](https://defold-typescript.github.io/library-data/api/uptime) | `uptime/ext.manifest` |
+| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | [`fontscale`](https://defold-typescript.github.io/library-data/api/fontscale) | `fontscale/ext.manifest` |
+| [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | [`gyro`](https://defold-typescript.github.io/library-data/api/gyro) | `gyro/ext.manifest` |
+| [britzl/defold-imp](https://github.com/britzl/defold-imp) | [`imp`](https://defold-typescript.github.io/library-data/api/imp) | `imp/ext.manifest` |
+| [britzl/defold-png](https://github.com/britzl/defold-png) | [`png`](https://defold-typescript.github.io/library-data/api/png) | `png/ext.manifest` |
+| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | [`share`](https://defold-typescript.github.io/library-data/api/share) | `share/ext.manifest` |
+| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | [`tile_raycast`](https://defold-typescript.github.io/library-data/api/tile_raycast) | `tile-raycast/ext.manifest` |
+| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | [`uuid4`](https://defold-typescript.github.io/library-data/api/uuid4) | `uuid4/ext.manifest` |
+| [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | [`wave`](https://defold-typescript.github.io/library-data/api/wave) | `wave/ext.manifest` |
+| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | [`directories`](https://defold-typescript.github.io/library-data/api/directories) | `directories/ext.manifest` |
+| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | [`openal`](https://defold-typescript.github.io/library-data/api/openal) | `openal/ext.manifest` |
+| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | [`ainpc`](https://defold-typescript.github.io/library-data/api/ainpc) | `player2-ai-npc/ext.manifest` |
 
 <!-- curated-native-extensions:end -->
 
