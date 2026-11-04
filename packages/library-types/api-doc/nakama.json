@@ -201,7 +201,7 @@
       "parameters": [
         {
           "name": "state_int",
-          "doc": "",
+          "doc": "Their relationship to the group.",
           "types": [
             "number"
           ],
@@ -209,7 +209,7 @@
         },
         {
           "name": "user_api_user",
-          "doc": "",
+          "doc": "User.",
           "types": [
             "unknown"
           ],
@@ -227,7 +227,7 @@
       "parameters": [
         {
           "name": "group_api_group",
-          "doc": "",
+          "doc": "Group.",
           "types": [
             "unknown"
           ],
@@ -235,7 +235,7 @@
         },
         {
           "name": "state_int",
-          "doc": "",
+          "doc": "The user's relationship to the group.",
           "types": [
             "number"
           ],
@@ -253,7 +253,7 @@
       "parameters": [
         {
           "name": "metadata_str",
-          "doc": "",
+          "doc": "Optional record metadata.",
           "types": [
             "string"
           ],
@@ -261,7 +261,7 @@
         },
         {
           "name": "operator_api_operator",
-          "doc": "",
+          "doc": "Operator override.",
           "types": [
             "unknown"
           ],
@@ -269,7 +269,7 @@
         },
         {
           "name": "score_str",
-          "doc": "",
+          "doc": "The score value to submit.",
           "types": [
             "string"
           ],
@@ -277,7 +277,7 @@
         },
         {
           "name": "subscore_str",
-          "doc": "",
+          "doc": "An optional secondary value.",
           "types": [
             "string"
           ],
@@ -295,7 +295,7 @@
       "parameters": [
         {
           "name": "metadata_str",
-          "doc": "",
+          "doc": "A JSON object of additional properties (optional).",
           "types": [
             "string"
           ],
@@ -303,7 +303,7 @@
         },
         {
           "name": "operator_api_operator",
-          "doc": "",
+          "doc": "Operator override.",
           "types": [
             "unknown"
           ],
@@ -311,7 +311,7 @@
         },
         {
           "name": "score_str",
-          "doc": "",
+          "doc": "The score value to submit.",
           "types": [
             "string"
           ],
@@ -319,7 +319,7 @@
         },
         {
           "name": "subscore_str",
-          "doc": "",
+          "doc": "An optional secondary value.",
           "types": [
             "string"
           ],
@@ -337,7 +337,7 @@
       "parameters": [
         {
           "name": "custom_id_str",
-          "doc": "",
+          "doc": "The custom id in the user's account.",
           "types": [
             "string"
           ],
@@ -345,7 +345,7 @@
         },
         {
           "name": "devices_arr",
-          "doc": "",
+          "doc": "The devices which belong to the user's account.",
           "types": [
             "unknown[]"
           ],
@@ -353,7 +353,7 @@
         },
         {
           "name": "disable_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user's account was disabled/banned.",
           "types": [
             "string"
           ],
@@ -361,7 +361,7 @@
         },
         {
           "name": "email_str",
-          "doc": "",
+          "doc": "The email address of the user.",
           "types": [
             "string"
           ],
@@ -369,7 +369,7 @@
         },
         {
           "name": "user_api_user",
-          "doc": "",
+          "doc": "The user object.",
           "types": [
             "unknown"
           ],
@@ -377,7 +377,7 @@
         },
         {
           "name": "verify_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user's email was verified.",
           "types": [
             "string"
           ],
@@ -385,7 +385,7 @@
         },
         {
           "name": "wallet_str",
-          "doc": "",
+          "doc": "The user's wallet data.",
           "types": [
             "string"
           ],
@@ -403,7 +403,7 @@
       "parameters": [
         {
           "name": "token_str",
-          "doc": "",
+          "doc": "The ID token received from Apple to validate.",
           "types": [
             "string"
           ],
@@ -411,7 +411,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -429,7 +429,7 @@
       "parameters": [
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "A custom identifier.",
           "types": [
             "string"
           ],
@@ -437,7 +437,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -481,7 +481,7 @@
       "parameters": [
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "A device identifier. Should be obtained by a platform-specific device API.",
           "types": [
             "string"
           ],
@@ -489,7 +489,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -507,7 +507,7 @@
       "parameters": [
         {
           "name": "email_str",
-          "doc": "",
+          "doc": "A valid RFC-5322 email address.",
           "types": [
             "string"
           ],
@@ -515,7 +515,7 @@
         },
         {
           "name": "password_str",
-          "doc": "",
+          "doc": "A password for the user account.",
           "types": [
             "string"
           ],
@@ -523,7 +523,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -541,7 +541,7 @@
       "parameters": [
         {
           "name": "token_str",
-          "doc": "",
+          "doc": "The OAuth token received from Facebook to access their profile API.",
           "types": [
             "string"
           ],
@@ -549,7 +549,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -575,7 +575,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -593,7 +593,7 @@
       "parameters": [
         {
           "name": "bundle_id_str",
-          "doc": "",
+          "doc": "Bundle ID (generated by GameCenter).",
           "types": [
             "string"
           ],
@@ -601,7 +601,7 @@
         },
         {
           "name": "player_id_str",
-          "doc": "",
+          "doc": "Player ID (generated by GameCenter).",
           "types": [
             "string"
           ],
@@ -609,7 +609,7 @@
         },
         {
           "name": "public_key_url_str",
-          "doc": "",
+          "doc": "The URL for the public encryption key.",
           "types": [
             "string"
           ],
@@ -617,7 +617,7 @@
         },
         {
           "name": "salt_str",
-          "doc": "",
+          "doc": "A random \"NSString\" used to compute the hash and keep it randomized.",
           "types": [
             "string"
           ],
@@ -625,7 +625,7 @@
         },
         {
           "name": "signature_str",
-          "doc": "",
+          "doc": "The verification signature data generated.",
           "types": [
             "string"
           ],
@@ -633,7 +633,7 @@
         },
         {
           "name": "timestamp_seconds_str",
-          "doc": "",
+          "doc": "Time since UNIX epoch when the signature was created.",
           "types": [
             "string"
           ],
@@ -641,7 +641,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -659,7 +659,7 @@
       "parameters": [
         {
           "name": "token_str",
-          "doc": "",
+          "doc": "The OAuth token received from Google to access their profile API.",
           "types": [
             "string"
           ],
@@ -667,7 +667,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -685,7 +685,7 @@
       "parameters": [
         {
           "name": "token_str",
-          "doc": "",
+          "doc": "The account token received from Steam to access their profile API.",
           "types": [
             "string"
           ],
@@ -693,7 +693,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -711,7 +711,7 @@
       "parameters": [
         {
           "name": "channel_id_str",
-          "doc": "",
+          "doc": "The channel this message belongs to.",
           "types": [
             "string"
           ],
@@ -719,7 +719,7 @@
         },
         {
           "name": "code_int",
-          "doc": "",
+          "doc": "The code representing a message type or category.",
           "types": [
             "number"
           ],
@@ -727,7 +727,7 @@
         },
         {
           "name": "content_str",
-          "doc": "",
+          "doc": "The content payload.",
           "types": [
             "string"
           ],
@@ -735,7 +735,7 @@
         },
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the message was created.",
           "types": [
             "string"
           ],
@@ -743,7 +743,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The ID of the group, or an empty string if this message was not sent through a group channel.",
           "types": [
             "string"
           ],
@@ -751,7 +751,7 @@
         },
         {
           "name": "message_id_str",
-          "doc": "",
+          "doc": "The unique ID of this message.",
           "types": [
             "string"
           ],
@@ -759,7 +759,7 @@
         },
         {
           "name": "persistent_bool",
-          "doc": "",
+          "doc": "True if the message was persisted to the channel's history, false otherwise.",
           "types": [
             "boolean"
           ],
@@ -767,7 +767,7 @@
         },
         {
           "name": "room_name_str",
-          "doc": "",
+          "doc": "The name of the chat room, or an empty string if this message was not sent through a chat room.",
           "types": [
             "string"
           ],
@@ -775,7 +775,7 @@
         },
         {
           "name": "sender_id_str",
-          "doc": "",
+          "doc": "Message sender, usually a user ID.",
           "types": [
             "string"
           ],
@@ -783,7 +783,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the message was last updated.",
           "types": [
             "string"
           ],
@@ -791,7 +791,7 @@
         },
         {
           "name": "user_id_one_str",
-          "doc": "",
+          "doc": "The ID of the first DM user, or an empty string if this message was not sent through a DM chat.",
           "types": [
             "string"
           ],
@@ -799,7 +799,7 @@
         },
         {
           "name": "user_id_two_str",
-          "doc": "",
+          "doc": "The ID of the second DM user, or an empty string if this message was not sent through a DM chat.",
           "types": [
             "string"
           ],
@@ -807,7 +807,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "The username of the message sender, if any.",
           "types": [
             "string"
           ],
@@ -825,7 +825,7 @@
       "parameters": [
         {
           "name": "cacheable_cursor_str",
-          "doc": "",
+          "doc": "Cacheable cursor to list newer messages. Durable and designed to be stored, unlike next/prev cursors.",
           "types": [
             "string"
           ],
@@ -833,7 +833,7 @@
         },
         {
           "name": "messages_arr",
-          "doc": "",
+          "doc": "A list of messages.",
           "types": [
             "unknown[]"
           ],
@@ -841,7 +841,7 @@
         },
         {
           "name": "next_cursor_str",
-          "doc": "",
+          "doc": "The cursor to send when retrieving the next page, if any.",
           "types": [
             "string"
           ],
@@ -849,7 +849,7 @@
         },
         {
           "name": "prev_cursor_str",
-          "doc": "",
+          "doc": "The cursor to send when retrieving the previous page, if any.",
           "types": [
             "string"
           ],
@@ -867,7 +867,7 @@
       "parameters": [
         {
           "name": "avatar_url_str",
-          "doc": "",
+          "doc": "A URL for an avatar image.",
           "types": [
             "string"
           ],
@@ -875,7 +875,7 @@
         },
         {
           "name": "description_str",
-          "doc": "",
+          "doc": "A description for the group.",
           "types": [
             "string"
           ],
@@ -883,7 +883,7 @@
         },
         {
           "name": "lang_tag_str",
-          "doc": "",
+          "doc": "The language expected to be a tag which follows the BCP-47 spec.",
           "types": [
             "string"
           ],
@@ -891,7 +891,7 @@
         },
         {
           "name": "max_count_int",
-          "doc": "",
+          "doc": "Maximum number of group members.",
           "types": [
             "number"
           ],
@@ -899,7 +899,7 @@
         },
         {
           "name": "name_str",
-          "doc": "",
+          "doc": "A unique name for the group.",
           "types": [
             "string"
           ],
@@ -907,7 +907,7 @@
         },
         {
           "name": "open_bool",
-          "doc": "",
+          "doc": "Mark a group as open or not where only admins can accept members.",
           "types": [
             "boolean"
           ],
@@ -925,7 +925,7 @@
       "parameters": [
         {
           "name": "collection_str",
-          "doc": "",
+          "doc": "The collection which stores the object.",
           "types": [
             "string"
           ],
@@ -933,7 +933,7 @@
         },
         {
           "name": "key_str",
-          "doc": "",
+          "doc": "The key of the object within the collection.",
           "types": [
             "string"
           ],
@@ -941,7 +941,7 @@
         },
         {
           "name": "version_str",
-          "doc": "",
+          "doc": "The version hash of the object.",
           "types": [
             "string"
           ],
@@ -959,7 +959,7 @@
       "parameters": [
         {
           "name": "object_ids_arr",
-          "doc": "",
+          "doc": "Batch of storage objects.",
           "types": [
             "unknown[]"
           ],
@@ -977,7 +977,7 @@
       "parameters": [
         {
           "name": "external_bool",
-          "doc": "",
+          "doc": "True if the event came directly from a client call, false otherwise.",
           "types": [
             "boolean"
           ],
@@ -985,7 +985,7 @@
         },
         {
           "name": "name_str",
-          "doc": "",
+          "doc": "An event name, type, category, or identifier.",
           "types": [
             "string"
           ],
@@ -993,7 +993,7 @@
         },
         {
           "name": "properties_obj",
-          "doc": "",
+          "doc": "Arbitrary event property values.",
           "types": [
             "unknown"
           ],
@@ -1001,7 +1001,7 @@
         },
         {
           "name": "timestamp_str",
-          "doc": "",
+          "doc": "The time when the event was triggered.",
           "types": [
             "string"
           ],
@@ -1019,7 +1019,7 @@
       "parameters": [
         {
           "name": "state_int",
-          "doc": "",
+          "doc": "The friend status.",
           "types": [
             "number"
           ],
@@ -1027,7 +1027,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "Time of the latest relationship update.",
           "types": [
             "string"
           ],
@@ -1035,7 +1035,7 @@
         },
         {
           "name": "user_api_user",
-          "doc": "",
+          "doc": "The user object.",
           "types": [
             "unknown"
           ],
@@ -1053,7 +1053,7 @@
       "parameters": [
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "Cursor for the next page of results, if any.",
           "types": [
             "string"
           ],
@@ -1061,7 +1061,7 @@
         },
         {
           "name": "friends_arr",
-          "doc": "",
+          "doc": "The Friend objects.",
           "types": [
             "unknown[]"
           ],
@@ -1079,7 +1079,7 @@
       "parameters": [
         {
           "name": "avatar_url_str",
-          "doc": "",
+          "doc": "A URL for an avatar image.",
           "types": [
             "string"
           ],
@@ -1087,7 +1087,7 @@
         },
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the group was created.",
           "types": [
             "string"
           ],
@@ -1095,7 +1095,7 @@
         },
         {
           "name": "creator_id_str",
-          "doc": "",
+          "doc": "The id of the user who created the group.",
           "types": [
             "string"
           ],
@@ -1103,7 +1103,7 @@
         },
         {
           "name": "description_str",
-          "doc": "",
+          "doc": "A description for the group.",
           "types": [
             "string"
           ],
@@ -1111,7 +1111,7 @@
         },
         {
           "name": "edge_count_int",
-          "doc": "",
+          "doc": "The current count of all members in the group.",
           "types": [
             "number"
           ],
@@ -1119,7 +1119,7 @@
         },
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "The id of a group.",
           "types": [
             "string"
           ],
@@ -1127,7 +1127,7 @@
         },
         {
           "name": "lang_tag_str",
-          "doc": "",
+          "doc": "The language expected to be a tag which follows the BCP-47 spec.",
           "types": [
             "string"
           ],
@@ -1135,7 +1135,7 @@
         },
         {
           "name": "max_count_int",
-          "doc": "",
+          "doc": "The maximum number of members allowed.",
           "types": [
             "number"
           ],
@@ -1143,7 +1143,7 @@
         },
         {
           "name": "metadata_str",
-          "doc": "",
+          "doc": "Additional information stored as a JSON object.",
           "types": [
             "string"
           ],
@@ -1151,7 +1151,7 @@
         },
         {
           "name": "name_str",
-          "doc": "",
+          "doc": "The unique name of the group.",
           "types": [
             "string"
           ],
@@ -1159,7 +1159,7 @@
         },
         {
           "name": "open_bool",
-          "doc": "",
+          "doc": "Anyone can join open groups, otherwise only admins can accept members.",
           "types": [
             "boolean"
           ],
@@ -1167,7 +1167,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the group was last updated.",
           "types": [
             "string"
           ],
@@ -1185,7 +1185,7 @@
       "parameters": [
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "A cursor used to get the next page.",
           "types": [
             "string"
           ],
@@ -1193,7 +1193,7 @@
         },
         {
           "name": "groups_arr",
-          "doc": "",
+          "doc": "One or more groups.",
           "types": [
             "unknown[]"
           ],
@@ -1211,7 +1211,7 @@
       "parameters": [
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "Cursor for the next page of results, if any.",
           "types": [
             "string"
           ],
@@ -1219,7 +1219,7 @@
         },
         {
           "name": "group_users_arr",
-          "doc": "",
+          "doc": "User-role pairs for a group.",
           "types": [
             "unknown[]"
           ],
@@ -1237,7 +1237,7 @@
       "parameters": [
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the leaderboard record was created.",
           "types": [
             "string"
           ],
@@ -1245,7 +1245,7 @@
         },
         {
           "name": "expiry_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the leaderboard record expires.",
           "types": [
             "string"
           ],
@@ -1253,7 +1253,7 @@
         },
         {
           "name": "leaderboard_id_str",
-          "doc": "",
+          "doc": "The ID of the leaderboard this score belongs to.",
           "types": [
             "string"
           ],
@@ -1261,7 +1261,7 @@
         },
         {
           "name": "max_num_score_int",
-          "doc": "",
+          "doc": "The maximum number of score updates allowed by the owner.",
           "types": [
             "number"
           ],
@@ -1269,7 +1269,7 @@
         },
         {
           "name": "metadata_str",
-          "doc": "",
+          "doc": "Metadata.",
           "types": [
             "string"
           ],
@@ -1277,7 +1277,7 @@
         },
         {
           "name": "num_score_int",
-          "doc": "",
+          "doc": "The number of submissions to this score record.",
           "types": [
             "number"
           ],
@@ -1285,7 +1285,7 @@
         },
         {
           "name": "owner_id_str",
-          "doc": "",
+          "doc": "The ID of the score owner, usually a user or group.",
           "types": [
             "string"
           ],
@@ -1293,7 +1293,7 @@
         },
         {
           "name": "rank_str",
-          "doc": "",
+          "doc": "The rank of this record.",
           "types": [
             "string"
           ],
@@ -1301,7 +1301,7 @@
         },
         {
           "name": "score_str",
-          "doc": "",
+          "doc": "The score value.",
           "types": [
             "string"
           ],
@@ -1309,7 +1309,7 @@
         },
         {
           "name": "subscore_str",
-          "doc": "",
+          "doc": "An optional subscore value.",
           "types": [
             "string"
           ],
@@ -1317,7 +1317,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the leaderboard record was updated.",
           "types": [
             "string"
           ],
@@ -1325,7 +1325,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "The username of the score owner, if the owner is a user.",
           "types": [
             "string"
           ],
@@ -1343,7 +1343,7 @@
       "parameters": [
         {
           "name": "next_cursor_str",
-          "doc": "",
+          "doc": "The cursor to send when retrieving the next page, if any.",
           "types": [
             "string"
           ],
@@ -1351,7 +1351,7 @@
         },
         {
           "name": "owner_records_arr",
-          "doc": "",
+          "doc": "A batched set of leaderboard records belonging to specified owners.",
           "types": [
             "unknown[]"
           ],
@@ -1359,7 +1359,7 @@
         },
         {
           "name": "prev_cursor_str",
-          "doc": "",
+          "doc": "The cursor to send when retrieving the previous page, if any.",
           "types": [
             "string"
           ],
@@ -1367,7 +1367,7 @@
         },
         {
           "name": "rank_count_str",
-          "doc": "",
+          "doc": "The total number of ranks available.",
           "types": [
             "string"
           ],
@@ -1375,7 +1375,7 @@
         },
         {
           "name": "records_arr",
-          "doc": "",
+          "doc": "A list of leaderboard records.",
           "types": [
             "unknown[]"
           ],
@@ -1393,7 +1393,7 @@
       "parameters": [
         {
           "name": "account_api_account_steam",
-          "doc": "",
+          "doc": "The Facebook account details.",
           "types": [
             "unknown"
           ],
@@ -1401,7 +1401,7 @@
         },
         {
           "name": "sync_bool",
-          "doc": "",
+          "doc": "Import Steam friends for the user.",
           "types": [
             "boolean"
           ],
@@ -1445,7 +1445,7 @@
       "parameters": [
         {
           "name": "authoritative_bool",
-          "doc": "",
+          "doc": "True if it's an server-managed authoritative match, false otherwise.",
           "types": [
             "boolean"
           ],
@@ -1461,7 +1461,7 @@
         },
         {
           "name": "label_str",
-          "doc": "",
+          "doc": "Match label, if any.",
           "types": [
             "string"
           ],
@@ -1469,7 +1469,7 @@
         },
         {
           "name": "match_id_str",
-          "doc": "",
+          "doc": "The ID of the match, can be used to join.",
           "types": [
             "string"
           ],
@@ -1477,7 +1477,7 @@
         },
         {
           "name": "size_int",
-          "doc": "",
+          "doc": "Current number of users in the match.",
           "types": [
             "number"
           ],
@@ -1503,7 +1503,7 @@
       "parameters": [
         {
           "name": "matches_arr",
-          "doc": "",
+          "doc": "A number of matches corresponding to a list operation.",
           "types": [
             "unknown[]"
           ],
@@ -1521,7 +1521,7 @@
       "parameters": [
         {
           "name": "code_int",
-          "doc": "",
+          "doc": "Category code for this notification.",
           "types": [
             "number"
           ],
@@ -1529,7 +1529,7 @@
         },
         {
           "name": "content_str",
-          "doc": "",
+          "doc": "Content of the notification in JSON.",
           "types": [
             "string"
           ],
@@ -1537,7 +1537,7 @@
         },
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the notification was created.",
           "types": [
             "string"
           ],
@@ -1545,7 +1545,7 @@
         },
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "ID of the Notification.",
           "types": [
             "string"
           ],
@@ -1553,7 +1553,7 @@
         },
         {
           "name": "persistent_bool",
-          "doc": "",
+          "doc": "True if this notification was persisted to the database.",
           "types": [
             "boolean"
           ],
@@ -1561,7 +1561,7 @@
         },
         {
           "name": "sender_id_str",
-          "doc": "",
+          "doc": "ID of the sender, if a user. Otherwise 'null'.",
           "types": [
             "string"
           ],
@@ -1569,7 +1569,7 @@
         },
         {
           "name": "subject_str",
-          "doc": "",
+          "doc": "Subject of the notification.",
           "types": [
             "string"
           ],
@@ -1587,7 +1587,7 @@
       "parameters": [
         {
           "name": "cacheable_cursor_str",
-          "doc": "",
+          "doc": "Use this cursor to paginate notifications. Cache this to catch up to new notifications.",
           "types": [
             "string"
           ],
@@ -1595,7 +1595,7 @@
         },
         {
           "name": "notifications_arr",
-          "doc": "",
+          "doc": "Collection of notifications.",
           "types": [
             "unknown[]"
           ],
@@ -1613,7 +1613,7 @@
       "parameters": [
         {
           "name": "collection_str",
-          "doc": "",
+          "doc": "The collection which stores the object.",
           "types": [
             "string"
           ],
@@ -1621,7 +1621,7 @@
         },
         {
           "name": "key_str",
-          "doc": "",
+          "doc": "The key of the object within the collection.",
           "types": [
             "string"
           ],
@@ -1629,7 +1629,7 @@
         },
         {
           "name": "user_id_str",
-          "doc": "",
+          "doc": "The user owner of the object.",
           "types": [
             "string"
           ],
@@ -1647,7 +1647,7 @@
       "parameters": [
         {
           "name": "object_ids_arr",
-          "doc": "",
+          "doc": "Batch of storage objects.",
           "types": [
             "unknown[]"
           ],
@@ -1665,7 +1665,7 @@
       "parameters": [
         {
           "name": "http_key_str",
-          "doc": "",
+          "doc": "The authentication key used when executed as a non-client HTTP request.",
           "types": [
             "string"
           ],
@@ -1673,7 +1673,7 @@
         },
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "The identifier of the function.",
           "types": [
             "string"
           ],
@@ -1681,7 +1681,7 @@
         },
         {
           "name": "payload_str",
-          "doc": "",
+          "doc": "The payload of the function which must be a JSON object.",
           "types": [
             "string"
           ],
@@ -1699,7 +1699,7 @@
       "parameters": [
         {
           "name": "created_bool",
-          "doc": "",
+          "doc": "True if the corresponding account was just created, false otherwise.",
           "types": [
             "boolean"
           ],
@@ -1707,7 +1707,7 @@
         },
         {
           "name": "refresh_token_str",
-          "doc": "",
+          "doc": "Refresh token that can be used for session token renewal.",
           "types": [
             "string"
           ],
@@ -1715,7 +1715,7 @@
         },
         {
           "name": "token_str",
-          "doc": "",
+          "doc": "Authentication credentials.",
           "types": [
             "string"
           ],
@@ -1733,7 +1733,7 @@
       "parameters": [
         {
           "name": "refresh_token_str",
-          "doc": "",
+          "doc": "Refresh token to invalidate.",
           "types": [
             "string"
           ],
@@ -1741,7 +1741,7 @@
         },
         {
           "name": "token_str",
-          "doc": "",
+          "doc": "Session token to log out.",
           "types": [
             "string"
           ],
@@ -1759,7 +1759,7 @@
       "parameters": [
         {
           "name": "token_str",
-          "doc": "",
+          "doc": "Refresh token.",
           "types": [
             "string"
           ],
@@ -1767,7 +1767,7 @@
         },
         {
           "name": "vars_obj",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -1785,7 +1785,7 @@
       "parameters": [
         {
           "name": "collection_str",
-          "doc": "",
+          "doc": "The collection which stores the object.",
           "types": [
             "string"
           ],
@@ -1793,7 +1793,7 @@
         },
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the object was created.",
           "types": [
             "string"
           ],
@@ -1801,7 +1801,7 @@
         },
         {
           "name": "key_str",
-          "doc": "",
+          "doc": "The key of the object within the collection.",
           "types": [
             "string"
           ],
@@ -1809,7 +1809,7 @@
         },
         {
           "name": "permission_read_int",
-          "doc": "",
+          "doc": "The read access permissions for the object.",
           "types": [
             "number"
           ],
@@ -1817,7 +1817,7 @@
         },
         {
           "name": "permission_write_int",
-          "doc": "",
+          "doc": "The write access permissions for the object.",
           "types": [
             "number"
           ],
@@ -1825,7 +1825,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the object was last updated.",
           "types": [
             "string"
           ],
@@ -1833,7 +1833,7 @@
         },
         {
           "name": "user_id_str",
-          "doc": "",
+          "doc": "The user owner of the object.",
           "types": [
             "string"
           ],
@@ -1841,7 +1841,7 @@
         },
         {
           "name": "value_str",
-          "doc": "",
+          "doc": "The value of the object.",
           "types": [
             "string"
           ],
@@ -1849,7 +1849,7 @@
         },
         {
           "name": "version_str",
-          "doc": "",
+          "doc": "The version hash of the object.",
           "types": [
             "string"
           ],
@@ -1867,7 +1867,7 @@
       "parameters": [
         {
           "name": "collection_str",
-          "doc": "",
+          "doc": "The collection which stores the object.",
           "types": [
             "string"
           ],
@@ -1875,7 +1875,7 @@
         },
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the object was created.",
           "types": [
             "string"
           ],
@@ -1883,7 +1883,7 @@
         },
         {
           "name": "key_str",
-          "doc": "",
+          "doc": "The key of the object within the collection.",
           "types": [
             "string"
           ],
@@ -1891,7 +1891,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the object was last updated.",
           "types": [
             "string"
           ],
@@ -1899,7 +1899,7 @@
         },
         {
           "name": "user_id_str",
-          "doc": "",
+          "doc": "The owner of the object.",
           "types": [
             "string"
           ],
@@ -1907,7 +1907,7 @@
         },
         {
           "name": "version_str",
-          "doc": "",
+          "doc": "The version hash of the object.",
           "types": [
             "string"
           ],
@@ -1925,7 +1925,7 @@
       "parameters": [
         {
           "name": "acks_arr",
-          "doc": "",
+          "doc": "Batch of storage write acknowledgements.",
           "types": [
             "unknown[]"
           ],
@@ -1943,7 +1943,7 @@
       "parameters": [
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "The cursor for the next page of results, if any.",
           "types": [
             "string"
           ],
@@ -1951,7 +1951,7 @@
         },
         {
           "name": "objects_arr",
-          "doc": "",
+          "doc": "The list of storage objects.",
           "types": [
             "unknown[]"
           ],
@@ -1969,7 +1969,7 @@
       "parameters": [
         {
           "name": "objects_arr",
-          "doc": "",
+          "doc": "The batch of storage objects.",
           "types": [
             "unknown[]"
           ],
@@ -1987,7 +1987,7 @@
       "parameters": [
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "The cursor to send when retrieving the next page, if any.",
           "types": [
             "string"
           ],
@@ -1995,7 +1995,7 @@
         },
         {
           "name": "prev_cursor_str",
-          "doc": "",
+          "doc": "The cursor to send when retrieving the previous page, if any.",
           "types": [
             "string"
           ],
@@ -2003,7 +2003,7 @@
         },
         {
           "name": "validated_subscriptions_arr",
-          "doc": "",
+          "doc": "Stored validated subscriptions.",
           "types": [
             "unknown[]"
           ],
@@ -2021,7 +2021,7 @@
       "parameters": [
         {
           "name": "authoritative_bool",
-          "doc": "",
+          "doc": "Whether the leaderboard was created authoritatively or not.",
           "types": [
             "boolean"
           ],
@@ -2029,7 +2029,7 @@
         },
         {
           "name": "can_enter_bool",
-          "doc": "",
+          "doc": "True if the tournament is active and can enter. A computed value.",
           "types": [
             "boolean"
           ],
@@ -2037,7 +2037,7 @@
         },
         {
           "name": "category_int",
-          "doc": "",
+          "doc": "The category of the tournament. e.g. \"vip\" could be category 1.",
           "types": [
             "number"
           ],
@@ -2045,7 +2045,7 @@
         },
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the tournament was created.",
           "types": [
             "string"
           ],
@@ -2053,7 +2053,7 @@
         },
         {
           "name": "description_str",
-          "doc": "",
+          "doc": "The description of the tournament. May be blank.",
           "types": [
             "string"
           ],
@@ -2061,7 +2061,7 @@
         },
         {
           "name": "duration_int",
-          "doc": "",
+          "doc": "Duration of the tournament in seconds.",
           "types": [
             "number"
           ],
@@ -2069,7 +2069,7 @@
         },
         {
           "name": "end_active_int",
-          "doc": "",
+          "doc": "The UNIX time when the tournament stops being active until next reset. A computed value.",
           "types": [
             "number"
           ],
@@ -2077,7 +2077,7 @@
         },
         {
           "name": "end_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the tournament will be stopped.",
           "types": [
             "string"
           ],
@@ -2085,7 +2085,7 @@
         },
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "The ID of the tournament.",
           "types": [
             "string"
           ],
@@ -2093,7 +2093,7 @@
         },
         {
           "name": "max_num_score_int",
-          "doc": "",
+          "doc": "The maximum score updates allowed per player for the current tournament.",
           "types": [
             "number"
           ],
@@ -2101,7 +2101,7 @@
         },
         {
           "name": "max_size_int",
-          "doc": "",
+          "doc": "The maximum number of players for the tournament.",
           "types": [
             "number"
           ],
@@ -2109,7 +2109,7 @@
         },
         {
           "name": "metadata_str",
-          "doc": "",
+          "doc": "Additional information stored as a JSON object.",
           "types": [
             "string"
           ],
@@ -2117,7 +2117,7 @@
         },
         {
           "name": "next_reset_int",
-          "doc": "",
+          "doc": "The UNIX time when the tournament is next playable. A computed value.",
           "types": [
             "number"
           ],
@@ -2125,7 +2125,7 @@
         },
         {
           "name": "operator_api_operator",
-          "doc": "",
+          "doc": "Operator.",
           "types": [
             "unknown"
           ],
@@ -2133,7 +2133,7 @@
         },
         {
           "name": "prev_reset_int",
-          "doc": "",
+          "doc": "The UNIX time when the tournament was last reset. A computed value.",
           "types": [
             "number"
           ],
@@ -2141,7 +2141,7 @@
         },
         {
           "name": "size_int",
-          "doc": "",
+          "doc": "The current number of players in the tournament.",
           "types": [
             "number"
           ],
@@ -2149,7 +2149,7 @@
         },
         {
           "name": "sort_order_int",
-          "doc": "",
+          "doc": "ASC (0) or DESC (1) sort mode of scores in the tournament.",
           "types": [
             "number"
           ],
@@ -2157,7 +2157,7 @@
         },
         {
           "name": "start_active_int",
-          "doc": "",
+          "doc": "The UNIX time when the tournament start being active. A computed value.",
           "types": [
             "number"
           ],
@@ -2165,7 +2165,7 @@
         },
         {
           "name": "start_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the tournament will start.",
           "types": [
             "string"
           ],
@@ -2173,7 +2173,7 @@
         },
         {
           "name": "title_str",
-          "doc": "",
+          "doc": "The title for the tournament.",
           "types": [
             "string"
           ],
@@ -2191,7 +2191,7 @@
       "parameters": [
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "A pagination cursor (optional).",
           "types": [
             "string"
           ],
@@ -2199,7 +2199,7 @@
         },
         {
           "name": "tournaments_arr",
-          "doc": "",
+          "doc": "The list of tournaments returned.",
           "types": [
             "unknown[]"
           ],
@@ -2217,7 +2217,7 @@
       "parameters": [
         {
           "name": "next_cursor_str",
-          "doc": "",
+          "doc": "The cursor to send when retireving the next page (optional).",
           "types": [
             "string"
           ],
@@ -2225,7 +2225,7 @@
         },
         {
           "name": "owner_records_arr",
-          "doc": "",
+          "doc": "A batched set of tournament records belonging to specified owners.",
           "types": [
             "unknown[]"
           ],
@@ -2233,7 +2233,7 @@
         },
         {
           "name": "prev_cursor_str",
-          "doc": "",
+          "doc": "The cursor to send when retrieving the previous page (optional).",
           "types": [
             "string"
           ],
@@ -2241,7 +2241,7 @@
         },
         {
           "name": "rank_count_str",
-          "doc": "",
+          "doc": "The total number of ranks available.",
           "types": [
             "string"
           ],
@@ -2249,7 +2249,7 @@
         },
         {
           "name": "records_arr",
-          "doc": "",
+          "doc": "A list of tournament records.",
           "types": [
             "unknown[]"
           ],
@@ -2267,7 +2267,7 @@
       "parameters": [
         {
           "name": "avatar_url_str",
-          "doc": "",
+          "doc": "A URL for an avatar image.",
           "types": [
             "string"
           ],
@@ -2275,7 +2275,7 @@
         },
         {
           "name": "display_name_str",
-          "doc": "",
+          "doc": "The display name of the user.",
           "types": [
             "string"
           ],
@@ -2283,7 +2283,7 @@
         },
         {
           "name": "lang_tag_str",
-          "doc": "",
+          "doc": "The language expected to be a tag which follows the BCP-47 spec.",
           "types": [
             "string"
           ],
@@ -2291,7 +2291,7 @@
         },
         {
           "name": "location_str",
-          "doc": "",
+          "doc": "The location set by the user.",
           "types": [
             "string"
           ],
@@ -2299,7 +2299,7 @@
         },
         {
           "name": "timezone_str",
-          "doc": "",
+          "doc": "The timezone set by the user.",
           "types": [
             "string"
           ],
@@ -2307,7 +2307,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "The username of the user's account.",
           "types": [
             "string"
           ],
@@ -2325,7 +2325,7 @@
       "parameters": [
         {
           "name": "apple_id_str",
-          "doc": "",
+          "doc": "The Apple Sign In ID in the user's account.",
           "types": [
             "string"
           ],
@@ -2333,7 +2333,7 @@
         },
         {
           "name": "avatar_url_str",
-          "doc": "",
+          "doc": "A URL for an avatar image.",
           "types": [
             "string"
           ],
@@ -2341,7 +2341,7 @@
         },
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user was created.",
           "types": [
             "string"
           ],
@@ -2349,7 +2349,7 @@
         },
         {
           "name": "display_name_str",
-          "doc": "",
+          "doc": "The display name of the user.",
           "types": [
             "string"
           ],
@@ -2357,7 +2357,7 @@
         },
         {
           "name": "edge_count_int",
-          "doc": "",
+          "doc": "Number of related edges to this user.",
           "types": [
             "number"
           ],
@@ -2365,7 +2365,7 @@
         },
         {
           "name": "facebook_id_str",
-          "doc": "",
+          "doc": "The Facebook id in the user's account.",
           "types": [
             "string"
           ],
@@ -2373,7 +2373,7 @@
         },
         {
           "name": "facebook_instant_game_id_str",
-          "doc": "",
+          "doc": "The Facebook Instant Game ID in the user's account.",
           "types": [
             "string"
           ],
@@ -2381,7 +2381,7 @@
         },
         {
           "name": "gamecenter_id_str",
-          "doc": "",
+          "doc": "The Apple Game Center in of the user's account.",
           "types": [
             "string"
           ],
@@ -2389,7 +2389,7 @@
         },
         {
           "name": "google_id_str",
-          "doc": "",
+          "doc": "The Google id in the user's account.",
           "types": [
             "string"
           ],
@@ -2397,7 +2397,7 @@
         },
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "The id of the user's account.",
           "types": [
             "string"
           ],
@@ -2405,7 +2405,7 @@
         },
         {
           "name": "lang_tag_str",
-          "doc": "",
+          "doc": "The language expected to be a tag which follows the BCP-47 spec.",
           "types": [
             "string"
           ],
@@ -2413,7 +2413,7 @@
         },
         {
           "name": "location_str",
-          "doc": "",
+          "doc": "The location set by the user.",
           "types": [
             "string"
           ],
@@ -2421,7 +2421,7 @@
         },
         {
           "name": "metadata_str",
-          "doc": "",
+          "doc": "Additional information stored as a JSON object.",
           "types": [
             "string"
           ],
@@ -2429,7 +2429,7 @@
         },
         {
           "name": "online_bool",
-          "doc": "",
+          "doc": "Indicates whether the user is currently online.",
           "types": [
             "boolean"
           ],
@@ -2437,7 +2437,7 @@
         },
         {
           "name": "steam_id_str",
-          "doc": "",
+          "doc": "The Steam id in the user's account.",
           "types": [
             "string"
           ],
@@ -2445,7 +2445,7 @@
         },
         {
           "name": "timezone_str",
-          "doc": "",
+          "doc": "The timezone set by the user.",
           "types": [
             "string"
           ],
@@ -2453,7 +2453,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "The UNIX time (for gRPC clients) or ISO string (for REST clients) when the user was last updated.",
           "types": [
             "string"
           ],
@@ -2461,7 +2461,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "The username of the user's account.",
           "types": [
             "string"
           ],
@@ -2479,7 +2479,7 @@
       "parameters": [
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "Cursor for the next page of results, if any.",
           "types": [
             "string"
           ],
@@ -2487,7 +2487,7 @@
         },
         {
           "name": "user_groups_arr",
-          "doc": "",
+          "doc": "Group-role pairs for a user.",
           "types": [
             "unknown[]"
           ],
@@ -2505,7 +2505,7 @@
       "parameters": [
         {
           "name": "users_arr",
-          "doc": "",
+          "doc": "The User objects.",
           "types": [
             "unknown[]"
           ],
@@ -2519,6 +2519,7 @@
       "name": "create_api_validate_purchase_apple_request",
       "brief": "",
       "description": "",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "persist_bool",
@@ -2530,7 +2531,7 @@
         },
         {
           "name": "receipt_str",
-          "doc": "",
+          "doc": "Base64 encoded Apple receipt data payload.",
           "types": [
             "string"
           ],
@@ -2544,6 +2545,7 @@
       "name": "create_api_validate_purchase_facebook_instant_request",
       "brief": "",
       "description": "",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "persist_bool",
@@ -2555,7 +2557,7 @@
         },
         {
           "name": "signed_request_str",
-          "doc": "",
+          "doc": "Base64 encoded Facebook Instant signedRequest receipt data payload.",
           "types": [
             "string"
           ],
@@ -2569,6 +2571,7 @@
       "name": "create_api_validate_purchase_google_request",
       "brief": "",
       "description": "",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "persist_bool",
@@ -2580,7 +2583,7 @@
         },
         {
           "name": "purchase_str",
-          "doc": "",
+          "doc": "JSON encoded Google purchase payload.",
           "types": [
             "string"
           ],
@@ -2594,6 +2597,7 @@
       "name": "create_api_validate_purchase_huawei_request",
       "brief": "",
       "description": "",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "persist_bool",
@@ -2605,7 +2609,7 @@
         },
         {
           "name": "purchase_str",
-          "doc": "",
+          "doc": "JSON encoded Huawei InAppPurchaseData.",
           "types": [
             "string"
           ],
@@ -2613,7 +2617,7 @@
         },
         {
           "name": "signature_str",
-          "doc": "",
+          "doc": "InAppPurchaseData signature.",
           "types": [
             "string"
           ],
@@ -2631,7 +2635,7 @@
       "parameters": [
         {
           "name": "validated_purchases_arr",
-          "doc": "",
+          "doc": "Newly seen validated purchases.",
           "types": [
             "unknown[]"
           ],
@@ -2645,10 +2649,11 @@
       "name": "create_api_validate_subscription_apple_request",
       "brief": "",
       "description": "",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "persist_bool",
-          "doc": "",
+          "doc": "Persist the subscription.",
           "types": [
             "boolean"
           ],
@@ -2656,7 +2661,7 @@
         },
         {
           "name": "receipt_str",
-          "doc": "",
+          "doc": "Base64 encoded Apple receipt data payload.",
           "types": [
             "string"
           ],
@@ -2670,10 +2675,11 @@
       "name": "create_api_validate_subscription_google_request",
       "brief": "",
       "description": "",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "persist_bool",
-          "doc": "",
+          "doc": "Persist the subscription.",
           "types": [
             "boolean"
           ],
@@ -2681,7 +2687,7 @@
         },
         {
           "name": "receipt_str",
-          "doc": "",
+          "doc": "JSON encoded Google purchase payload.",
           "types": [
             "string"
           ],
@@ -2717,7 +2723,7 @@
       "parameters": [
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "Timestamp when the receipt validation was stored in DB.",
           "types": [
             "string"
           ],
@@ -2725,7 +2731,7 @@
         },
         {
           "name": "environment_api_store_environment",
-          "doc": "",
+          "doc": "Whether the purchase was done in production or sandbox environment.",
           "types": [
             "unknown"
           ],
@@ -2733,7 +2739,7 @@
         },
         {
           "name": "product_id_str",
-          "doc": "",
+          "doc": "Purchase Product ID.",
           "types": [
             "string"
           ],
@@ -2741,7 +2747,7 @@
         },
         {
           "name": "provider_response_str",
-          "doc": "",
+          "doc": "Raw provider validation response.",
           "types": [
             "string"
           ],
@@ -2749,7 +2755,7 @@
         },
         {
           "name": "purchase_time_str",
-          "doc": "",
+          "doc": "Timestamp when the purchase was done.",
           "types": [
             "string"
           ],
@@ -2765,7 +2771,7 @@
         },
         {
           "name": "seen_before_bool",
-          "doc": "",
+          "doc": "Whether the purchase had already been validated by Nakama before.",
           "types": [
             "boolean"
           ],
@@ -2781,7 +2787,7 @@
         },
         {
           "name": "transaction_id_str",
-          "doc": "",
+          "doc": "Purchase Transaction ID.",
           "types": [
             "string"
           ],
@@ -2789,7 +2795,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "Timestamp when the receipt validation was updated in DB.",
           "types": [
             "string"
           ],
@@ -2797,7 +2803,7 @@
         },
         {
           "name": "user_id_str",
-          "doc": "",
+          "doc": "Purchase User ID.",
           "types": [
             "string"
           ],
@@ -2811,10 +2817,11 @@
       "name": "create_api_validated_subscription",
       "brief": "",
       "description": "",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "active_bool",
-          "doc": "",
+          "doc": "Whether the subscription is currently active or not.",
           "types": [
             "boolean"
           ],
@@ -2822,7 +2829,7 @@
         },
         {
           "name": "create_time_str",
-          "doc": "",
+          "doc": "UNIX Timestamp when the receipt validation was stored in DB.",
           "types": [
             "string"
           ],
@@ -2830,7 +2837,7 @@
         },
         {
           "name": "environment_api_store_environment",
-          "doc": "",
+          "doc": "Whether the purchase was done in production or sandbox environment.",
           "types": [
             "unknown"
           ],
@@ -2838,7 +2845,7 @@
         },
         {
           "name": "expiry_time_str",
-          "doc": "",
+          "doc": "Subscription expiration time. The subscription can still be auto-renewed to extend the expiration time further.",
           "types": [
             "string"
           ],
@@ -2846,7 +2853,7 @@
         },
         {
           "name": "original_transaction_id_str",
-          "doc": "",
+          "doc": "Purchase Original transaction ID (we only keep track of the original subscription, not subsequent renewals).",
           "types": [
             "string"
           ],
@@ -2854,7 +2861,7 @@
         },
         {
           "name": "product_id_str",
-          "doc": "",
+          "doc": "Purchase Product ID.",
           "types": [
             "string"
           ],
@@ -2862,7 +2869,7 @@
         },
         {
           "name": "provider_notification_str",
-          "doc": "",
+          "doc": "Raw provider notification body.",
           "types": [
             "string"
           ],
@@ -2870,7 +2877,7 @@
         },
         {
           "name": "provider_response_str",
-          "doc": "",
+          "doc": "Raw provider validation response body.",
           "types": [
             "string"
           ],
@@ -2878,7 +2885,7 @@
         },
         {
           "name": "purchase_time_str",
-          "doc": "",
+          "doc": "UNIX Timestamp when the purchase was done.",
           "types": [
             "string"
           ],
@@ -2886,7 +2893,7 @@
         },
         {
           "name": "refund_time_str",
-          "doc": "",
+          "doc": "Subscription refund time. If this time is set, the subscription was refunded.",
           "types": [
             "string"
           ],
@@ -2902,7 +2909,7 @@
         },
         {
           "name": "update_time_str",
-          "doc": "",
+          "doc": "UNIX Timestamp when the receipt validation was updated in DB.",
           "types": [
             "string"
           ],
@@ -2910,7 +2917,7 @@
         },
         {
           "name": "user_id_str",
-          "doc": "",
+          "doc": "Subscription User ID.",
           "types": [
             "string"
           ],
@@ -2928,7 +2935,7 @@
       "parameters": [
         {
           "name": "collection_str",
-          "doc": "",
+          "doc": "The collection to store the object.",
           "types": [
             "string"
           ],
@@ -2936,7 +2943,7 @@
         },
         {
           "name": "key_str",
-          "doc": "",
+          "doc": "The key for the object within the collection.",
           "types": [
             "string"
           ],
@@ -2944,7 +2951,7 @@
         },
         {
           "name": "permission_read_int",
-          "doc": "",
+          "doc": "The read access permissions for the object.",
           "types": [
             "number"
           ],
@@ -2952,7 +2959,7 @@
         },
         {
           "name": "permission_write_int",
-          "doc": "",
+          "doc": "The write access permissions for the object.",
           "types": [
             "number"
           ],
@@ -2960,7 +2967,7 @@
         },
         {
           "name": "value_str",
-          "doc": "",
+          "doc": "The value of the object.",
           "types": [
             "string"
           ],
@@ -2968,7 +2975,7 @@
         },
         {
           "name": "version_str",
-          "doc": "",
+          "doc": "The version hash of the object to check. Possible values are: [\"\", \"*\", \"#hash#\"].",
           "types": [
             "string"
           ],
@@ -2986,7 +2993,7 @@
       "parameters": [
         {
           "name": "objects_arr",
-          "doc": "",
+          "doc": "The objects to store on the server.",
           "types": [
             "unknown[]"
           ],
@@ -3054,7 +3061,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3062,7 +3069,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3070,7 +3077,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3078,7 +3085,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3096,7 +3103,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3104,7 +3111,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3112,7 +3119,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3120,7 +3127,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3138,7 +3145,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3146,7 +3153,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3154,7 +3161,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3162,7 +3169,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3180,7 +3187,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3188,7 +3195,7 @@
         },
         {
           "name": "avatarUrl",
-          "doc": "",
+          "doc": "A URL for an avatar image.",
           "types": [
             "string"
           ],
@@ -3196,7 +3203,7 @@
         },
         {
           "name": "displayName",
-          "doc": "",
+          "doc": "The display name of the user.",
           "types": [
             "string"
           ],
@@ -3204,7 +3211,7 @@
         },
         {
           "name": "langTag",
-          "doc": "",
+          "doc": "The language expected to be a tag which follows the BCP-47 spec.",
           "types": [
             "string"
           ],
@@ -3212,7 +3219,7 @@
         },
         {
           "name": "location",
-          "doc": "",
+          "doc": "The location set by the user.",
           "types": [
             "string"
           ],
@@ -3220,7 +3227,7 @@
         },
         {
           "name": "timezone",
-          "doc": "",
+          "doc": "The timezone set by the user.",
           "types": [
             "string"
           ],
@@ -3228,7 +3235,7 @@
         },
         {
           "name": "username",
-          "doc": "",
+          "doc": "The username of the user's account.",
           "types": [
             "string"
           ],
@@ -3236,7 +3243,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3244,7 +3251,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3252,7 +3259,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3270,7 +3277,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3278,7 +3285,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The ID token received from Apple to validate.",
           "types": [
             "string"
           ],
@@ -3286,7 +3293,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3294,7 +3301,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3302,7 +3309,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3310,7 +3317,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3318,7 +3325,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3326,7 +3333,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3344,7 +3351,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3352,7 +3359,7 @@
         },
         {
           "name": "id",
-          "doc": "",
+          "doc": "A custom identifier.",
           "types": [
             "string"
           ],
@@ -3360,7 +3367,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3368,7 +3375,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3376,7 +3383,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3384,7 +3391,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3392,7 +3399,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3400,7 +3407,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3410,7 +3417,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "The result.",
           "types": [
             "Session"
           ]
@@ -3426,7 +3433,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3434,7 +3441,7 @@
         },
         {
           "name": "id",
-          "doc": "",
+          "doc": "A device identifier. Should be obtained by a platform-specific device API.",
           "types": [
             "string"
           ],
@@ -3442,7 +3449,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3450,7 +3457,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3458,7 +3465,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3466,7 +3473,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3474,7 +3481,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3482,7 +3489,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3500,7 +3507,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3508,7 +3515,7 @@
         },
         {
           "name": "email",
-          "doc": "",
+          "doc": "A valid RFC-5322 email address.",
           "types": [
             "string"
           ],
@@ -3516,7 +3523,7 @@
         },
         {
           "name": "password",
-          "doc": "",
+          "doc": "A password for the user account.",
           "types": [
             "string"
           ],
@@ -3524,7 +3531,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3532,7 +3539,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3540,7 +3547,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3548,7 +3555,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3556,7 +3563,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3564,7 +3571,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3582,7 +3589,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3590,7 +3597,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The OAuth token received from Facebook to access their profile API.",
           "types": [
             "string"
           ],
@@ -3598,7 +3605,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3606,7 +3613,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3614,7 +3621,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3622,7 +3629,7 @@
         },
         {
           "name": "sync_bool",
-          "doc": "",
+          "doc": "Import Facebook friends for the user.",
           "types": [
             "boolean"
           ],
@@ -3630,7 +3637,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3638,7 +3645,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3646,7 +3653,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3664,7 +3671,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3680,7 +3687,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3688,7 +3695,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3696,7 +3703,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3704,7 +3711,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3712,7 +3719,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3720,7 +3727,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3738,7 +3745,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3746,7 +3753,7 @@
         },
         {
           "name": "bundleId",
-          "doc": "",
+          "doc": "Bundle ID (generated by GameCenter).",
           "types": [
             "string"
           ],
@@ -3754,7 +3761,7 @@
         },
         {
           "name": "playerId",
-          "doc": "",
+          "doc": "Player ID (generated by GameCenter).",
           "types": [
             "string"
           ],
@@ -3762,7 +3769,7 @@
         },
         {
           "name": "publicKeyUrl",
-          "doc": "",
+          "doc": "The URL for the public encryption key.",
           "types": [
             "string"
           ],
@@ -3770,7 +3777,7 @@
         },
         {
           "name": "salt",
-          "doc": "",
+          "doc": "A random \"NSString\" used to compute the hash and keep it randomized.",
           "types": [
             "string"
           ],
@@ -3778,7 +3785,7 @@
         },
         {
           "name": "signature",
-          "doc": "",
+          "doc": "The verification signature data generated.",
           "types": [
             "string"
           ],
@@ -3786,7 +3793,7 @@
         },
         {
           "name": "timestampSeconds",
-          "doc": "",
+          "doc": "Time since UNIX epoch when the signature was created.",
           "types": [
             "number"
           ],
@@ -3794,7 +3801,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3802,7 +3809,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3810,7 +3817,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3818,7 +3825,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3826,7 +3833,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3834,7 +3841,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3852,7 +3859,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3860,7 +3867,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The OAuth token received from Google to access their profile API.",
           "types": [
             "string"
           ],
@@ -3868,7 +3875,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3876,7 +3883,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3884,7 +3891,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3892,7 +3899,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3900,7 +3907,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3908,7 +3915,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -3926,7 +3933,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -3934,7 +3941,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The account token received from Steam to access their profile API.",
           "types": [
             "string"
           ],
@@ -3942,7 +3949,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -3950,7 +3957,7 @@
         },
         {
           "name": "create_bool",
-          "doc": "",
+          "doc": "Register the account if the user does not already exist.",
           "types": [
             "boolean"
           ],
@@ -3958,7 +3965,7 @@
         },
         {
           "name": "username_str",
-          "doc": "",
+          "doc": "Set the username on the account at register. Must be unique.",
           "types": [
             "string"
           ],
@@ -3966,7 +3973,7 @@
         },
         {
           "name": "sync_bool",
-          "doc": "",
+          "doc": "Import Steam friends for the user.",
           "types": [
             "boolean"
           ],
@@ -3974,7 +3981,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -3982,7 +3989,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -3990,7 +3997,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4008,7 +4015,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4016,7 +4023,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The ID token received from Apple to validate.",
           "types": [
             "string"
           ],
@@ -4024,7 +4031,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4032,7 +4039,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4040,7 +4047,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4048,7 +4055,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4066,7 +4073,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4074,7 +4081,7 @@
         },
         {
           "name": "id",
-          "doc": "",
+          "doc": "A custom identifier.",
           "types": [
             "string"
           ],
@@ -4082,7 +4089,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4090,7 +4097,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4098,7 +4105,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4106,7 +4113,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4124,7 +4131,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4132,7 +4139,7 @@
         },
         {
           "name": "id",
-          "doc": "",
+          "doc": "A device identifier. Should be obtained by a platform-specific device API.",
           "types": [
             "string"
           ],
@@ -4140,7 +4147,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4148,7 +4155,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4156,7 +4163,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4164,7 +4171,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4182,7 +4189,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4190,7 +4197,7 @@
         },
         {
           "name": "email",
-          "doc": "",
+          "doc": "A valid RFC-5322 email address.",
           "types": [
             "string"
           ],
@@ -4198,7 +4205,7 @@
         },
         {
           "name": "password",
-          "doc": "",
+          "doc": "A password for the user account.",
           "types": [
             "string"
           ],
@@ -4206,7 +4213,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4214,7 +4221,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4222,7 +4229,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4230,7 +4237,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4248,7 +4255,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4256,7 +4263,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The OAuth token received from Facebook to access their profile API.",
           "types": [
             "string"
           ],
@@ -4264,7 +4271,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4272,7 +4279,7 @@
         },
         {
           "name": "sync_bool",
-          "doc": "",
+          "doc": "Import Facebook friends for the user.",
           "types": [
             "boolean"
           ],
@@ -4280,7 +4287,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4288,7 +4295,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4296,7 +4303,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4314,7 +4321,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4330,7 +4337,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4338,7 +4345,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4346,7 +4353,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4354,7 +4361,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4372,7 +4379,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4380,7 +4387,7 @@
         },
         {
           "name": "bundleId",
-          "doc": "",
+          "doc": "Bundle ID (generated by GameCenter).",
           "types": [
             "string"
           ],
@@ -4388,7 +4395,7 @@
         },
         {
           "name": "playerId",
-          "doc": "",
+          "doc": "Player ID (generated by GameCenter).",
           "types": [
             "string"
           ],
@@ -4396,7 +4403,7 @@
         },
         {
           "name": "publicKeyUrl",
-          "doc": "",
+          "doc": "The URL for the public encryption key.",
           "types": [
             "string"
           ],
@@ -4404,7 +4411,7 @@
         },
         {
           "name": "salt",
-          "doc": "",
+          "doc": "A random \"NSString\" used to compute the hash and keep it randomized.",
           "types": [
             "string"
           ],
@@ -4412,7 +4419,7 @@
         },
         {
           "name": "signature",
-          "doc": "",
+          "doc": "The verification signature data generated.",
           "types": [
             "string"
           ],
@@ -4420,7 +4427,7 @@
         },
         {
           "name": "timestampSeconds",
-          "doc": "",
+          "doc": "Time since UNIX epoch when the signature was created.",
           "types": [
             "number"
           ],
@@ -4428,7 +4435,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4436,7 +4443,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4444,7 +4451,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4452,7 +4459,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4470,7 +4477,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4478,7 +4485,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The OAuth token received from Google to access their profile API.",
           "types": [
             "string"
           ],
@@ -4486,7 +4493,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4494,7 +4501,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4502,7 +4509,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4510,7 +4517,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4528,7 +4535,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4536,7 +4543,7 @@
         },
         {
           "name": "account",
-          "doc": "",
+          "doc": "The Facebook account details.",
           "types": [
             "unknown"
           ],
@@ -4544,7 +4551,7 @@
         },
         {
           "name": "sync",
-          "doc": "",
+          "doc": "Import Steam friends for the user.",
           "types": [
             "boolean"
           ],
@@ -4552,7 +4559,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4560,7 +4567,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4568,7 +4575,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4586,7 +4593,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4594,7 +4601,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "Refresh token.",
           "types": [
             "string"
           ],
@@ -4602,7 +4609,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4610,7 +4617,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4618,7 +4625,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4626,7 +4633,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4644,7 +4651,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4652,7 +4659,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The ID token received from Apple to validate.",
           "types": [
             "string"
           ],
@@ -4660,7 +4667,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4668,7 +4675,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4676,7 +4683,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4684,7 +4691,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4702,7 +4709,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4710,7 +4717,7 @@
         },
         {
           "name": "id",
-          "doc": "",
+          "doc": "A custom identifier.",
           "types": [
             "string"
           ],
@@ -4718,7 +4725,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4726,7 +4733,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4734,7 +4741,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4742,7 +4749,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4760,7 +4767,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4768,7 +4775,7 @@
         },
         {
           "name": "id",
-          "doc": "",
+          "doc": "A device identifier. Should be obtained by a platform-specific device API.",
           "types": [
             "string"
           ],
@@ -4776,7 +4783,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4784,7 +4791,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4792,7 +4799,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4800,7 +4807,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4818,7 +4825,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4826,7 +4833,7 @@
         },
         {
           "name": "email",
-          "doc": "",
+          "doc": "A valid RFC-5322 email address.",
           "types": [
             "string"
           ],
@@ -4834,7 +4841,7 @@
         },
         {
           "name": "password",
-          "doc": "",
+          "doc": "A password for the user account.",
           "types": [
             "string"
           ],
@@ -4842,7 +4849,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4850,7 +4857,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4858,7 +4865,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4866,7 +4873,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4884,7 +4891,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4892,7 +4899,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The OAuth token received from Facebook to access their profile API.",
           "types": [
             "string"
           ],
@@ -4900,7 +4907,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4908,7 +4915,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4916,7 +4923,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4924,7 +4931,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -4942,7 +4949,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -4958,7 +4965,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -4966,7 +4973,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -4974,7 +4981,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -4982,7 +4989,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5000,7 +5007,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5008,7 +5015,7 @@
         },
         {
           "name": "bundleId",
-          "doc": "",
+          "doc": "Bundle ID (generated by GameCenter).",
           "types": [
             "string"
           ],
@@ -5016,7 +5023,7 @@
         },
         {
           "name": "playerId",
-          "doc": "",
+          "doc": "Player ID (generated by GameCenter).",
           "types": [
             "string"
           ],
@@ -5024,7 +5031,7 @@
         },
         {
           "name": "publicKeyUrl",
-          "doc": "",
+          "doc": "The URL for the public encryption key.",
           "types": [
             "string"
           ],
@@ -5032,7 +5039,7 @@
         },
         {
           "name": "salt",
-          "doc": "",
+          "doc": "A random \"NSString\" used to compute the hash and keep it randomized.",
           "types": [
             "string"
           ],
@@ -5040,7 +5047,7 @@
         },
         {
           "name": "signature",
-          "doc": "",
+          "doc": "The verification signature data generated.",
           "types": [
             "string"
           ],
@@ -5048,7 +5055,7 @@
         },
         {
           "name": "timestampSeconds",
-          "doc": "",
+          "doc": "Time since UNIX epoch when the signature was created.",
           "types": [
             "number"
           ],
@@ -5056,7 +5063,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -5064,7 +5071,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5072,7 +5079,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5080,7 +5087,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5098,7 +5105,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5106,7 +5113,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The OAuth token received from Google to access their profile API.",
           "types": [
             "string"
           ],
@@ -5114,7 +5121,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -5122,7 +5129,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5130,7 +5137,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5138,7 +5145,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5156,7 +5163,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5164,7 +5171,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The account token received from Steam to access their profile API.",
           "types": [
             "string"
           ],
@@ -5172,7 +5179,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -5180,7 +5187,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5188,7 +5195,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5196,7 +5203,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5214,7 +5221,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5222,7 +5229,7 @@
         },
         {
           "name": "channel_id_str",
-          "doc": "",
+          "doc": "The channel ID to list from.",
           "types": [
             "string"
           ],
@@ -5230,7 +5237,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -5238,7 +5245,7 @@
         },
         {
           "name": "forward_bool",
-          "doc": "",
+          "doc": "True if listing should be older messages to newer, false if reverse.",
           "types": [
             "boolean"
           ],
@@ -5246,7 +5253,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "A pagination cursor, if any.",
           "types": [
             "string"
           ],
@@ -5254,7 +5261,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5262,7 +5269,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5270,7 +5277,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5288,7 +5295,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5296,7 +5303,7 @@
         },
         {
           "name": "external",
-          "doc": "",
+          "doc": "True if the event came directly from a client call, false otherwise.",
           "types": [
             "boolean"
           ],
@@ -5304,7 +5311,7 @@
         },
         {
           "name": "name",
-          "doc": "",
+          "doc": "An event name, type, category, or identifier.",
           "types": [
             "string"
           ],
@@ -5312,7 +5319,7 @@
         },
         {
           "name": "properties",
-          "doc": "",
+          "doc": "Arbitrary event property values.",
           "types": [
             "unknown"
           ],
@@ -5320,7 +5327,7 @@
         },
         {
           "name": "timestamp",
-          "doc": "",
+          "doc": "The time when the event was triggered.",
           "types": [
             "string"
           ],
@@ -5328,7 +5335,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5336,7 +5343,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5344,7 +5351,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5362,7 +5369,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5370,7 +5377,7 @@
         },
         {
           "name": "ids_arr",
-          "doc": "",
+          "doc": "The account id of a user.",
           "types": [
             "unknown[]"
           ],
@@ -5378,7 +5385,7 @@
         },
         {
           "name": "usernames_arr",
-          "doc": "",
+          "doc": "The account username of a user.",
           "types": [
             "unknown[]"
           ],
@@ -5386,7 +5393,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5394,7 +5401,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5402,7 +5409,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5420,7 +5427,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5428,7 +5435,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -5436,7 +5443,7 @@
         },
         {
           "name": "state_int",
-          "doc": "",
+          "doc": "The friend state to list.",
           "types": [
             "number"
           ],
@@ -5444,7 +5451,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "An optional next page cursor.",
           "types": [
             "string"
           ],
@@ -5452,7 +5459,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5460,7 +5467,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5468,7 +5475,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5486,7 +5493,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5494,7 +5501,7 @@
         },
         {
           "name": "ids_arr",
-          "doc": "",
+          "doc": "The account id of a user.",
           "types": [
             "unknown[]"
           ],
@@ -5502,7 +5509,7 @@
         },
         {
           "name": "usernames_arr",
-          "doc": "",
+          "doc": "The account username of a user.",
           "types": [
             "unknown[]"
           ],
@@ -5510,7 +5517,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5518,7 +5525,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5526,7 +5533,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5544,7 +5551,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5552,7 +5559,7 @@
         },
         {
           "name": "ids_arr",
-          "doc": "",
+          "doc": "The account id of a user.",
           "types": [
             "unknown[]"
           ],
@@ -5560,7 +5567,7 @@
         },
         {
           "name": "usernames_arr",
-          "doc": "",
+          "doc": "The account username of a user.",
           "types": [
             "unknown[]"
           ],
@@ -5568,7 +5575,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5576,7 +5583,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5584,7 +5591,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5602,7 +5609,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5610,7 +5617,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The OAuth token received from Facebook to access their profile API.",
           "types": [
             "string"
           ],
@@ -5618,7 +5625,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -5626,7 +5633,7 @@
         },
         {
           "name": "reset_bool",
-          "doc": "",
+          "doc": "Reset the current user's friends list.",
           "types": [
             "boolean"
           ],
@@ -5634,7 +5641,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5642,7 +5649,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5650,7 +5657,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5668,7 +5675,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5676,7 +5683,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "The account token received from Steam to access their profile API.",
           "types": [
             "string"
           ],
@@ -5684,7 +5691,7 @@
         },
         {
           "name": "vars",
-          "doc": "",
+          "doc": "Extra information that will be bundled in the session token.",
           "types": [
             "unknown"
           ],
@@ -5692,7 +5699,7 @@
         },
         {
           "name": "reset_bool",
-          "doc": "",
+          "doc": "Reset the current user's friends list.",
           "types": [
             "boolean"
           ],
@@ -5700,7 +5707,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5708,7 +5715,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5716,7 +5723,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5734,7 +5741,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5742,7 +5749,7 @@
         },
         {
           "name": "name_str",
-          "doc": "",
+          "doc": "List groups that contain this value in their names.",
           "types": [
             "string"
           ],
@@ -5750,7 +5757,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "Optional pagination cursor.",
           "types": [
             "string"
           ],
@@ -5758,7 +5765,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of groups to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -5766,7 +5773,7 @@
         },
         {
           "name": "lang_tag_str",
-          "doc": "",
+          "doc": "Language tag filter",
           "types": [
             "string"
           ],
@@ -5774,7 +5781,7 @@
         },
         {
           "name": "members_int",
-          "doc": "",
+          "doc": "Number of group members",
           "types": [
             "number"
           ],
@@ -5782,7 +5789,7 @@
         },
         {
           "name": "open_bool",
-          "doc": "",
+          "doc": "Optional Open/Closed filter.",
           "types": [
             "boolean"
           ],
@@ -5790,7 +5797,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5798,7 +5805,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5806,7 +5813,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5824,7 +5831,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5832,7 +5839,7 @@
         },
         {
           "name": "avatarUrl",
-          "doc": "",
+          "doc": "A URL for an avatar image.",
           "types": [
             "string"
           ],
@@ -5840,7 +5847,7 @@
         },
         {
           "name": "description",
-          "doc": "",
+          "doc": "A description for the group.",
           "types": [
             "string"
           ],
@@ -5848,7 +5855,7 @@
         },
         {
           "name": "langTag",
-          "doc": "",
+          "doc": "The language expected to be a tag which follows the BCP-47 spec.",
           "types": [
             "string"
           ],
@@ -5856,7 +5863,7 @@
         },
         {
           "name": "maxCount",
-          "doc": "",
+          "doc": "Maximum number of group members.",
           "types": [
             "number"
           ],
@@ -5864,7 +5871,7 @@
         },
         {
           "name": "name",
-          "doc": "",
+          "doc": "A unique name for the group.",
           "types": [
             "string"
           ],
@@ -5872,7 +5879,7 @@
         },
         {
           "name": "open",
-          "doc": "",
+          "doc": "Mark a group as open or not where only admins can accept members.",
           "types": [
             "boolean"
           ],
@@ -5880,7 +5887,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5888,7 +5895,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5896,7 +5903,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5914,7 +5921,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5922,7 +5929,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The id of a group.",
           "types": [
             "string"
           ],
@@ -5930,7 +5937,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5938,7 +5945,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -5946,7 +5953,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -5964,7 +5971,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -5972,7 +5979,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The ID of the group to update.",
           "types": [
             "string"
           ],
@@ -5988,7 +5995,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -5996,7 +6003,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6004,7 +6011,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6022,7 +6029,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6030,7 +6037,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The group to add users to.",
           "types": [
             "string"
           ],
@@ -6038,7 +6045,7 @@
         },
         {
           "name": "user_ids_arr",
-          "doc": "",
+          "doc": "The users to add.",
           "types": [
             "unknown[]"
           ],
@@ -6046,7 +6053,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6054,7 +6061,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6062,7 +6069,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6080,7 +6087,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6088,7 +6095,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The group to ban users from.",
           "types": [
             "string"
           ],
@@ -6096,7 +6103,7 @@
         },
         {
           "name": "user_ids_arr",
-          "doc": "",
+          "doc": "The users to ban.",
           "types": [
             "unknown[]"
           ],
@@ -6104,7 +6111,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6112,7 +6119,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6120,7 +6127,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6138,7 +6145,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6146,7 +6153,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The group ID to demote in.",
           "types": [
             "string"
           ],
@@ -6154,7 +6161,7 @@
         },
         {
           "name": "user_ids_arr",
-          "doc": "",
+          "doc": "The users to demote.",
           "types": [
             "unknown[]"
           ],
@@ -6162,7 +6169,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6170,7 +6177,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6178,7 +6185,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6196,7 +6203,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6204,7 +6211,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The group ID to join. The group must already exist.",
           "types": [
             "string"
           ],
@@ -6212,7 +6219,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6220,7 +6227,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6228,7 +6235,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6246,7 +6253,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6254,7 +6261,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The group ID to kick from.",
           "types": [
             "string"
           ],
@@ -6262,7 +6269,7 @@
         },
         {
           "name": "user_ids_arr",
-          "doc": "",
+          "doc": "The users to kick.",
           "types": [
             "unknown[]"
           ],
@@ -6270,7 +6277,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6278,7 +6285,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6286,7 +6293,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6304,7 +6311,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6312,7 +6319,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The group ID to leave.",
           "types": [
             "string"
           ],
@@ -6320,7 +6327,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6328,7 +6335,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6336,7 +6343,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6354,7 +6361,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6362,7 +6369,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The group ID to promote in.",
           "types": [
             "string"
           ],
@@ -6370,7 +6377,7 @@
         },
         {
           "name": "user_ids_arr",
-          "doc": "",
+          "doc": "The users to promote.",
           "types": [
             "unknown[]"
           ],
@@ -6378,7 +6385,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6386,7 +6393,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6394,7 +6401,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6412,7 +6419,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6420,7 +6427,7 @@
         },
         {
           "name": "group_id_str",
-          "doc": "",
+          "doc": "The group ID to list from.",
           "types": [
             "string"
           ],
@@ -6428,7 +6435,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -6436,7 +6443,7 @@
         },
         {
           "name": "state_int",
-          "doc": "",
+          "doc": "The group user state to list.",
           "types": [
             "number"
           ],
@@ -6444,7 +6451,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "An optional next page cursor.",
           "types": [
             "string"
           ],
@@ -6452,7 +6459,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6460,7 +6467,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6468,7 +6475,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6486,7 +6493,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6502,7 +6509,7 @@
         },
         {
           "name": "receipt",
-          "doc": "",
+          "doc": "Base64 encoded Apple receipt data payload.",
           "types": [
             "string"
           ],
@@ -6510,7 +6517,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6518,7 +6525,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6526,7 +6533,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6544,7 +6551,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6560,7 +6567,7 @@
         },
         {
           "name": "signedRequest",
-          "doc": "",
+          "doc": "Base64 encoded Facebook Instant signedRequest receipt data payload.",
           "types": [
             "string"
           ],
@@ -6568,7 +6575,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6576,7 +6583,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6584,7 +6591,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6602,7 +6609,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6618,7 +6625,7 @@
         },
         {
           "name": "purchase",
-          "doc": "",
+          "doc": "JSON encoded Google purchase payload.",
           "types": [
             "string"
           ],
@@ -6626,7 +6633,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6634,7 +6641,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6642,7 +6649,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6660,7 +6667,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6676,7 +6683,7 @@
         },
         {
           "name": "purchase",
-          "doc": "",
+          "doc": "JSON encoded Huawei InAppPurchaseData.",
           "types": [
             "string"
           ],
@@ -6684,7 +6691,7 @@
         },
         {
           "name": "signature",
-          "doc": "",
+          "doc": "InAppPurchaseData signature.",
           "types": [
             "string"
           ],
@@ -6692,7 +6699,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6700,7 +6707,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6708,7 +6715,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6726,7 +6733,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6750,7 +6757,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6758,7 +6765,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6766,7 +6773,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6784,7 +6791,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6792,7 +6799,7 @@
         },
         {
           "name": "persist",
-          "doc": "",
+          "doc": "Persist the subscription.",
           "types": [
             "boolean"
           ],
@@ -6800,7 +6807,7 @@
         },
         {
           "name": "receipt",
-          "doc": "",
+          "doc": "Base64 encoded Apple receipt data payload.",
           "types": [
             "string"
           ],
@@ -6808,7 +6815,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6816,7 +6823,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6824,7 +6831,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6842,7 +6849,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6850,7 +6857,7 @@
         },
         {
           "name": "persist",
-          "doc": "",
+          "doc": "Persist the subscription.",
           "types": [
             "boolean"
           ],
@@ -6858,7 +6865,7 @@
         },
         {
           "name": "receipt",
-          "doc": "",
+          "doc": "JSON encoded Google purchase payload.",
           "types": [
             "string"
           ],
@@ -6866,7 +6873,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6874,7 +6881,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6882,7 +6889,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6900,7 +6907,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6908,7 +6915,7 @@
         },
         {
           "name": "product_id_str",
-          "doc": "",
+          "doc": "Product id of the subscription",
           "types": [
             "string"
           ],
@@ -6916,7 +6923,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6924,7 +6931,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6932,7 +6939,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -6950,7 +6957,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -6958,7 +6965,7 @@
         },
         {
           "name": "leaderboard_id_str",
-          "doc": "",
+          "doc": "The leaderboard ID to delete from.",
           "types": [
             "string"
           ],
@@ -6966,7 +6973,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -6974,7 +6981,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -6982,7 +6989,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7000,7 +7007,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7008,7 +7015,7 @@
         },
         {
           "name": "leaderboard_id_str",
-          "doc": "",
+          "doc": "The ID of the leaderboard to list for.",
           "types": [
             "string"
           ],
@@ -7016,7 +7023,7 @@
         },
         {
           "name": "owner_ids_arr",
-          "doc": "",
+          "doc": "One or more owners to retrieve records for.",
           "types": [
             "unknown[]"
           ],
@@ -7024,7 +7031,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -7032,7 +7039,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "A next or previous page cursor.",
           "types": [
             "string"
           ],
@@ -7040,7 +7047,7 @@
         },
         {
           "name": "expiry_str",
-          "doc": "",
+          "doc": "Expiry in seconds (since epoch) to begin fetching records from. Optional. 0 means from current time.",
           "types": [
             "string"
           ],
@@ -7048,7 +7055,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7056,7 +7063,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7064,7 +7071,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7082,7 +7089,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7090,7 +7097,7 @@
         },
         {
           "name": "leaderboard_id_str",
-          "doc": "",
+          "doc": "The ID of the leaderboard to write to.",
           "types": [
             "string"
           ],
@@ -7098,7 +7105,7 @@
         },
         {
           "name": "metadata",
-          "doc": "",
+          "doc": "Optional record metadata.",
           "types": [
             "string"
           ],
@@ -7106,7 +7113,7 @@
         },
         {
           "name": "operator",
-          "doc": "",
+          "doc": "Operator override.",
           "types": [
             "unknown"
           ],
@@ -7114,7 +7121,7 @@
         },
         {
           "name": "score",
-          "doc": "",
+          "doc": "The score value to submit.",
           "types": [
             "string"
           ],
@@ -7122,7 +7129,7 @@
         },
         {
           "name": "subscore",
-          "doc": "",
+          "doc": "An optional secondary value.",
           "types": [
             "string"
           ],
@@ -7130,7 +7137,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7138,7 +7145,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7146,7 +7153,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7164,7 +7171,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7172,7 +7179,7 @@
         },
         {
           "name": "leaderboard_id_str",
-          "doc": "",
+          "doc": "The ID of the tournament to list for.",
           "types": [
             "string"
           ],
@@ -7180,7 +7187,7 @@
         },
         {
           "name": "owner_id_str",
-          "doc": "",
+          "doc": "The owner to retrieve records around.",
           "types": [
             "string"
           ],
@@ -7188,7 +7195,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -7196,7 +7203,7 @@
         },
         {
           "name": "expiry_str",
-          "doc": "",
+          "doc": "Expiry in seconds (since epoch) to begin fetching records from.",
           "types": [
             "string"
           ],
@@ -7204,7 +7211,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "A next or previous page cursor.",
           "types": [
             "string"
           ],
@@ -7212,7 +7219,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7220,7 +7227,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7228,7 +7235,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7246,7 +7253,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7254,7 +7261,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Limit the number of returned matches.",
           "types": [
             "number"
           ],
@@ -7262,7 +7269,7 @@
         },
         {
           "name": "authoritative_bool",
-          "doc": "",
+          "doc": "Authoritative or relayed matches.",
           "types": [
             "boolean"
           ],
@@ -7270,7 +7277,7 @@
         },
         {
           "name": "label_str",
-          "doc": "",
+          "doc": "Label filter.",
           "types": [
             "string"
           ],
@@ -7278,7 +7285,7 @@
         },
         {
           "name": "min_size_int",
-          "doc": "",
+          "doc": "Minimum user count.",
           "types": [
             "number"
           ],
@@ -7286,7 +7293,7 @@
         },
         {
           "name": "max_size_int",
-          "doc": "",
+          "doc": "Maximum user count.",
           "types": [
             "number"
           ],
@@ -7294,7 +7301,7 @@
         },
         {
           "name": "query_str",
-          "doc": "",
+          "doc": "Arbitrary label query.",
           "types": [
             "string"
           ],
@@ -7302,7 +7309,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7310,7 +7317,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7318,7 +7325,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7336,7 +7343,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7344,7 +7351,7 @@
         },
         {
           "name": "ids_arr",
-          "doc": "",
+          "doc": "The id of notifications.",
           "types": [
             "unknown[]"
           ],
@@ -7352,7 +7359,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7360,7 +7367,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7368,7 +7375,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7386,7 +7393,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7394,7 +7401,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "The number of notifications to get. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -7402,7 +7409,7 @@
         },
         {
           "name": "cacheable_cursor_str",
-          "doc": "",
+          "doc": "A cursor to page through notifications. May be cached by clients to get from point in time forwards.",
           "types": [
             "string"
           ],
@@ -7410,7 +7417,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7418,7 +7425,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7426,7 +7433,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7444,7 +7451,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7452,7 +7459,7 @@
         },
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "The identifier of the function.",
           "types": [
             "string"
           ],
@@ -7460,7 +7467,7 @@
         },
         {
           "name": "payload_str",
-          "doc": "",
+          "doc": "The payload of the function which must be a JSON object.",
           "types": [
             "string"
           ],
@@ -7468,7 +7475,7 @@
         },
         {
           "name": "http_key_str",
-          "doc": "",
+          "doc": "The authentication key used when executed as a non-client HTTP request.",
           "types": [
             "string"
           ],
@@ -7476,7 +7483,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7484,7 +7491,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7492,7 +7499,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7510,7 +7517,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7518,7 +7525,7 @@
         },
         {
           "name": "id_str",
-          "doc": "",
+          "doc": "The identifier of the function.",
           "types": [
             "string"
           ],
@@ -7526,7 +7533,7 @@
         },
         {
           "name": "payload",
-          "doc": "",
+          "doc": "The payload of the function which must be a JSON object.",
           "types": [
             "string"
           ],
@@ -7534,7 +7541,7 @@
         },
         {
           "name": "http_key_str",
-          "doc": "",
+          "doc": "The authentication key used when executed as a non-client HTTP request.",
           "types": [
             "string"
           ],
@@ -7542,7 +7549,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7550,7 +7557,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7558,7 +7565,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7576,7 +7583,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7584,7 +7591,7 @@
         },
         {
           "name": "refreshToken",
-          "doc": "",
+          "doc": "Refresh token to invalidate.",
           "types": [
             "string"
           ],
@@ -7592,7 +7599,7 @@
         },
         {
           "name": "token",
-          "doc": "",
+          "doc": "Session token to log out.",
           "types": [
             "string"
           ],
@@ -7600,7 +7607,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7608,7 +7615,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7616,7 +7623,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7634,7 +7641,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7642,7 +7649,7 @@
         },
         {
           "name": "objectIds",
-          "doc": "",
+          "doc": "Batch of storage objects.",
           "types": [
             "unknown[]"
           ],
@@ -7650,7 +7657,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7658,7 +7665,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7666,7 +7673,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7684,7 +7691,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7692,7 +7699,7 @@
         },
         {
           "name": "objects",
-          "doc": "",
+          "doc": "The objects to store on the server.",
           "types": [
             "unknown[]"
           ],
@@ -7700,7 +7707,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7708,7 +7715,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7716,7 +7723,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7734,7 +7741,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7742,7 +7749,7 @@
         },
         {
           "name": "objectIds",
-          "doc": "",
+          "doc": "Batch of storage objects.",
           "types": [
             "unknown[]"
           ],
@@ -7750,7 +7757,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7758,7 +7765,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7766,7 +7773,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7784,7 +7791,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7792,7 +7799,7 @@
         },
         {
           "name": "collection_str",
-          "doc": "",
+          "doc": "The collection which stores the object.",
           "types": [
             "string"
           ],
@@ -7800,7 +7807,7 @@
         },
         {
           "name": "user_id_str",
-          "doc": "",
+          "doc": "ID of the user.",
           "types": [
             "string"
           ],
@@ -7808,7 +7815,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "The number of storage objects to list. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -7816,7 +7823,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "The cursor to page through results from.",
           "types": [
             "string"
           ],
@@ -7824,7 +7831,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7832,7 +7839,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7840,7 +7847,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7858,7 +7865,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7866,7 +7873,7 @@
         },
         {
           "name": "collection_str",
-          "doc": "",
+          "doc": "The collection which stores the object.",
           "types": [
             "string"
           ],
@@ -7874,7 +7881,7 @@
         },
         {
           "name": "user_id_str",
-          "doc": "",
+          "doc": "ID of the user.",
           "types": [
             "string"
           ],
@@ -7882,7 +7889,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "The number of storage objects to list. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -7890,7 +7897,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "The cursor to page through results from.",
           "types": [
             "string"
           ],
@@ -7898,7 +7905,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7906,7 +7913,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -7914,7 +7921,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -7932,7 +7939,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -7940,7 +7947,7 @@
         },
         {
           "name": "category_start_int",
-          "doc": "",
+          "doc": "The start of the categories to include. Defaults to 0.",
           "types": [
             "number"
           ],
@@ -7948,7 +7955,7 @@
         },
         {
           "name": "category_end_int",
-          "doc": "",
+          "doc": "The end of the categories to include. Defaults to 128.",
           "types": [
             "number"
           ],
@@ -7956,7 +7963,7 @@
         },
         {
           "name": "start_time_int",
-          "doc": "",
+          "doc": "The start time for tournaments. Defaults to epoch.",
           "types": [
             "number"
           ],
@@ -7964,7 +7971,7 @@
         },
         {
           "name": "end_time_int",
-          "doc": "",
+          "doc": "The end time for tournaments. Defaults to +1 year from current Unix time.",
           "types": [
             "number"
           ],
@@ -7972,7 +7979,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -7980,7 +7987,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "A next page cursor for listings (optional).",
           "types": [
             "string"
           ],
@@ -7988,7 +7995,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -7996,7 +8003,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8004,7 +8011,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8022,7 +8029,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -8030,7 +8037,7 @@
         },
         {
           "name": "tournament_id_str",
-          "doc": "",
+          "doc": "The tournament ID to delete from.",
           "types": [
             "string"
           ],
@@ -8038,7 +8045,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -8046,7 +8053,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8054,7 +8061,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8072,7 +8079,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -8080,7 +8087,7 @@
         },
         {
           "name": "tournament_id_str",
-          "doc": "",
+          "doc": "The ID of the tournament to list for.",
           "types": [
             "string"
           ],
@@ -8088,7 +8095,7 @@
         },
         {
           "name": "owner_ids_arr",
-          "doc": "",
+          "doc": "One or more owners to retrieve records for.",
           "types": [
             "unknown[]"
           ],
@@ -8096,7 +8103,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -8104,7 +8111,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "A next or previous page cursor.",
           "types": [
             "string"
           ],
@@ -8112,7 +8119,7 @@
         },
         {
           "name": "expiry_str",
-          "doc": "",
+          "doc": "Expiry in seconds (since epoch) to begin fetching records from.",
           "types": [
             "string"
           ],
@@ -8120,7 +8127,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -8128,7 +8135,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8136,7 +8143,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8154,7 +8161,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -8162,7 +8169,7 @@
         },
         {
           "name": "tournament_id_str",
-          "doc": "",
+          "doc": "The tournament ID to write the record for.",
           "types": [
             "string"
           ],
@@ -8170,7 +8177,7 @@
         },
         {
           "name": "metadata",
-          "doc": "",
+          "doc": "A JSON object of additional properties (optional).",
           "types": [
             "string"
           ],
@@ -8178,7 +8185,7 @@
         },
         {
           "name": "operator",
-          "doc": "",
+          "doc": "Operator override.",
           "types": [
             "unknown"
           ],
@@ -8186,7 +8193,7 @@
         },
         {
           "name": "score",
-          "doc": "",
+          "doc": "The score value to submit.",
           "types": [
             "string"
           ],
@@ -8194,7 +8201,7 @@
         },
         {
           "name": "subscore",
-          "doc": "",
+          "doc": "An optional secondary value.",
           "types": [
             "string"
           ],
@@ -8202,7 +8209,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -8210,7 +8217,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8218,7 +8225,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8236,7 +8243,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -8244,7 +8251,7 @@
         },
         {
           "name": "tournament_id_str",
-          "doc": "",
+          "doc": "The tournament ID to write the record for.",
           "types": [
             "string"
           ],
@@ -8252,7 +8259,7 @@
         },
         {
           "name": "metadata",
-          "doc": "",
+          "doc": "A JSON object of additional properties (optional).",
           "types": [
             "string"
           ],
@@ -8260,7 +8267,7 @@
         },
         {
           "name": "operator",
-          "doc": "",
+          "doc": "Operator override.",
           "types": [
             "unknown"
           ],
@@ -8268,7 +8275,7 @@
         },
         {
           "name": "score",
-          "doc": "",
+          "doc": "The score value to submit.",
           "types": [
             "string"
           ],
@@ -8276,7 +8283,7 @@
         },
         {
           "name": "subscore",
-          "doc": "",
+          "doc": "An optional secondary value.",
           "types": [
             "string"
           ],
@@ -8284,7 +8291,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -8292,7 +8299,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8300,7 +8307,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8318,7 +8325,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -8326,7 +8333,7 @@
         },
         {
           "name": "tournament_id_str",
-          "doc": "",
+          "doc": "The ID of the tournament to join. The tournament must already exist.",
           "types": [
             "string"
           ],
@@ -8334,7 +8341,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -8342,7 +8349,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8350,7 +8357,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8368,7 +8375,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -8376,7 +8383,7 @@
         },
         {
           "name": "tournament_id_str",
-          "doc": "",
+          "doc": "The ID of the tournament to list for.",
           "types": [
             "string"
           ],
@@ -8384,7 +8391,7 @@
         },
         {
           "name": "owner_id_str",
-          "doc": "",
+          "doc": "The owner to retrieve records around.",
           "types": [
             "string"
           ],
@@ -8392,7 +8399,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -8400,7 +8407,7 @@
         },
         {
           "name": "expiry_str",
-          "doc": "",
+          "doc": "Expiry in seconds (since epoch) to begin fetching records from.",
           "types": [
             "string"
           ],
@@ -8408,7 +8415,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "A next or previous page cursor.",
           "types": [
             "string"
           ],
@@ -8416,7 +8423,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -8424,7 +8431,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8432,7 +8439,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8450,7 +8457,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -8458,7 +8465,7 @@
         },
         {
           "name": "ids_arr",
-          "doc": "",
+          "doc": "The account id of a user.",
           "types": [
             "unknown[]"
           ],
@@ -8466,7 +8473,7 @@
         },
         {
           "name": "usernames_arr",
-          "doc": "",
+          "doc": "The account username of a user.",
           "types": [
             "unknown[]"
           ],
@@ -8474,7 +8481,7 @@
         },
         {
           "name": "facebook_ids_arr",
-          "doc": "",
+          "doc": "The Facebook ID of a user.",
           "types": [
             "unknown[]"
           ],
@@ -8482,7 +8489,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -8490,7 +8497,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8498,7 +8505,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8516,7 +8523,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Client.",
           "types": [
             "Client"
           ],
@@ -8524,7 +8531,7 @@
         },
         {
           "name": "user_id_str",
-          "doc": "",
+          "doc": "ID of the user.",
           "types": [
             "string"
           ],
@@ -8532,7 +8539,7 @@
         },
         {
           "name": "limit_int",
-          "doc": "",
+          "doc": "Max number of records to return. Between 1 and 100.",
           "types": [
             "number"
           ],
@@ -8540,7 +8547,7 @@
         },
         {
           "name": "state_int",
-          "doc": "",
+          "doc": "The user group state to list.",
           "types": [
             "number"
           ],
@@ -8548,7 +8555,7 @@
         },
         {
           "name": "cursor_str",
-          "doc": "",
+          "doc": "An optional next page cursor.",
           "types": [
             "string"
           ],
@@ -8556,7 +8563,7 @@
         },
         {
           "name": "callback",
-          "doc": "",
+          "doc": "Optional callback function\nA coroutine is used and the result is returned if no callback function is provided.",
           "types": [
             "(result: unknown) => void"
           ],
@@ -8564,7 +8571,7 @@
         },
         {
           "name": "retry_policy",
-          "doc": "",
+          "doc": "Optional retry policy used specifically for this call or nil",
           "types": [
             "RetryPolicy"
           ],
@@ -8572,7 +8579,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional cancellation token for this call",
           "types": [
             "CancellationToken"
           ],
@@ -8590,7 +8597,7 @@
       "parameters": [
         {
           "name": "config",
-          "doc": "",
+          "doc": "A table of configuration options.\nconfig.engine - Engine specific implementations.\nconfig.host\nconfig.port\nconfig.timeout\nconfig.use_ssl - Use secure or non-secure sockets.\nconfig.bearer_token\nconfig.username\nconfig.password",
           "types": [
             "ClientConfig"
           ],
@@ -8600,7 +8607,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "Nakama Client instance.",
           "types": [
             "Client"
           ]
@@ -8616,7 +8623,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "The client to create the socket for.",
           "types": [
             "Client"
           ],
@@ -8626,7 +8633,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "Socket instance.",
           "types": [
             "unknown"
           ]
@@ -8642,7 +8649,7 @@
       "parameters": [
         {
           "name": "client",
-          "doc": "",
+          "doc": "Nakama client.",
           "types": [
             "Client"
           ],

@@ -14,7 +14,7 @@
       "parameters": [
         {
           "name": "config",
-          "doc": "",
+          "doc": "Configuration table. Refer to documentation for details",
           "types": [
             "PlatypusConfig"
           ],
@@ -24,7 +24,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "Platypus instance",
           "types": [
             "PlatypusInstance"
           ]

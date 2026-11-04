@@ -6800,8 +6800,8 @@ sources pinned at one version with the corrections that type them, or a
 hand-written fork. When a declared dependency matches one, `resolve` prints its declarations
 from the dependency's own archive, so the types follow the library version the
 game depends on; a library typed by a hand-written fork gets that fork as
-written, plus the library's own doc summary on each member the fork leaves
-undocumented, so its editor hover text matches the library's docs. The import specifier is the Lua `require` path —
+written, plus the library's own doc summary, parameter docs and return docs on each
+member the fork leaves undocumented, so its editor hover text matches the library's docs. The import specifier is the Lua `require` path —
 `import * as dicebag from 'dicebag.dicebag'` — so it matches what Fetch Libraries
 installs at runtime.
 
