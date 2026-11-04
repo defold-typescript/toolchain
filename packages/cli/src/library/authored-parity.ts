@@ -108,7 +108,8 @@ export interface AuthoredParityReport {
    * nothing but the member's own name. Distinct from `refusedDocBlocks`, where prose does
    * exist and the reader declined the block it sits in. */
   undocumentedMembers: number;
-  /** Declared elements carrying upstream's own summary because the fork supplied none,
+  /** Declared elements carrying upstream's own doc, its summary or only its parameter
+   * and return docs, because the fork supplied none,
    * on both axes. Recorded beside `undocumentedMembers` because it is where that
    * shortfall went: without it, a target the import silently skipped and a target the
    * fork documents itself would read the same. */

@@ -144,7 +144,7 @@
       "returnvalues": [
         {
           "name": "",
-          "doc": "",
+          "doc": "true if input a registerd node received input",
           "types": [
             "boolean"
           ]

@@ -93,6 +93,7 @@ declare module 'light_and_shadows.light_and_shadows' {
    * Turns depth of field on or off.
    * @param enable `true` turns depth of field on.
    * @param options The depth-of-field options. Omitted, every setting keeps its value.
+   * @upstreamDoc bdc6471614d2
    */
   export function dof(enable: boolean, options?: DofOptions): void;
 

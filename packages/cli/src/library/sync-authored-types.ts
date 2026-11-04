@@ -20,7 +20,8 @@ import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
  * module's declaration and runs `extractApiDoc` over that printed declaration for the
  * `api-doc/<namespace>.json` the docs-site consumes. The print carries one thing the
  * fork does not: where a target vendors its upstream `.lua`, upstream's own LuaDoc
- * summary is merged in as the doc comment of each member upstream documents, unless
+ * summary, parameter docs and return docs are merged in as the doc comment of each
+ * member upstream documents, unless
  * the fork's own comment is pinned to that upstream text (see `merge-fork-docs.ts`),
  * and the api-doc marks it `docSource: "upstream"`. The merge changes comments and
  * nothing else, so the printed *types* are
@@ -90,7 +91,7 @@ function printAuthored(packageRoot: string, target: AuthoredTarget): MergedFork 
 /**
  * The printed declaration of the target's `moduleId`. The vendored authored
  * `.d.ts` is already a `declare module '<moduleId>'` ambient, so the emit is the
- * fork plus upstream's summary as the doc comment of each module-level member
+ * fork plus upstream's doc as the doc comment of each module-level member
  * upstream documents and the fork does not override with a pinned comment. Only
  * comments change, so the vendored types pass
  * through unchanged, which is what makes the emission lossless. It says nothing
