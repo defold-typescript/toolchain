@@ -1,5 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { processingSystem, rejectAll, rejectAny, requireAll, requireAny, system } from "./index";
+import {
+  processingSystem,
+  rejectAll,
+  rejectAny,
+  requireAll,
+  requireAny,
+  sortedProcessingSystem,
+  sortedSystem,
+  system,
+} from "./index";
 
 // The assertions here are the compiler's: `bun run typecheck` checks this file under
 // both package tsconfigs, and each `@ts-expect-error` must meet the error it names.
@@ -126,6 +135,61 @@ describe("definitions that fail to compile", () => {
         // @ts-expect-error a processing system's update is its own
         update() {},
       });
+    };
+    expect(rejected).toBeTypeOf("function");
+  });
+});
+
+describe("sorted systems", () => {
+  test("compare reads the entity narrowed as process does", () => {
+    const processing = sortedProcessingSystem<Ent>()(requireAll("spring"), {
+      compare(e1, e2) {
+        return e1.spring.k < e2.spring.k;
+      },
+      process(e) {
+        const k: number = e.spring.k;
+        void k;
+      },
+    });
+    const plain = sortedSystem<Ent>()(requireAll("spring"), {
+      compare(e1, e2) {
+        return e1.spring.k < e2.spring.k;
+      },
+    });
+    expect([processing.compare, plain.compare]).toEqual([
+      expect.any(Function),
+      expect.any(Function),
+    ]);
+  });
+
+  test("a definition without compare, with onModify, nocache or update, and a later nocache", () => {
+    // Never called: the definitions hold what the types reject, and only the compiler reads them.
+    const rejected = () => {
+      // @ts-expect-error a sorted system needs compare
+      sortedSystem<Ent>()({ name: "unordered" });
+      sortedProcessingSystem<Ent>()(
+        requireAll("spring"),
+        // @ts-expect-error a sorted processing system needs compare
+        { process() {} },
+      );
+      sortedSystem<Ent>()({
+        compare: () => true,
+        // @ts-expect-error a sorted system's onModify is its own
+        onModify() {},
+      });
+      sortedProcessingSystem<Ent>()(requireAll("spring"), {
+        compare: () => true,
+        // @ts-expect-error a sorted system keeps its entities
+        nocache: true,
+      });
+      sortedProcessingSystem<Ent>()(requireAll("spring"), {
+        compare: () => true,
+        // @ts-expect-error a processing system's update is its own
+        update() {},
+      });
+      const built = sortedSystem<Ent>()({ compare: () => true });
+      // @ts-expect-error a sorted system keeps its entities
+      built.nocache = true;
     };
     expect(rejected).toBeTypeOf("function");
   });

@@ -7,6 +7,8 @@ export type Lib = Pick<
   | "world"
   | "system"
   | "processingSystem"
+  | "sortedSystem"
+  | "sortedProcessingSystem"
   | "requireAll"
   | "requireAny"
   | "rejectAll"
@@ -45,6 +47,9 @@ interface Named {
 export interface Scenario {
   name: string;
   run: (this: void, lib: Lib, log: Log) => void;
+  // tiny.lua sorts with table.sort, which orders tied keys arbitrarily, so a
+  // scenario with ties holds ecs in Lua to ecs in Bun instead.
+  ties?: true;
 }
 
 // Lua prints nil as "nil" and JavaScript prints undefined as "undefined".
@@ -724,6 +729,112 @@ function freeFunctions(lib: Lib, log: Log): void {
   log.push(`S world unset ${shown(s.world === undefined)}`);
 }
 
+// `compare` logs nothing in these scenarios: table.sort and ecs call it in
+// different orders and counts. tiny.lua keys `indices` by table and ecs by id,
+// so a removal after a sort is what checks them.
+
+function sortedSystems(lib: Lib, log: Log): void {
+  const sys = lib.sortedProcessingSystem<Ent>()(lib.requireAny("a", "b"), {
+    ...tracked(log, "S"),
+    compare(e1, e2) {
+      return (e1.c as number) < (e2.c as number);
+    },
+    process(entity, dt) {
+      line(log, "process", this.name, entity, dt);
+    },
+  });
+  const e6: Ent = { name: "e6", b: 1, c: 3 };
+  const w = lib.world<Ent>(
+    sys,
+    { name: "e1", a: 1, c: 5 },
+    { name: "e2", b: 1, c: 2 },
+    { name: "e3", a: 1, b: 1, c: 8 },
+    { name: "e4", a: 1, c: 1 },
+    { name: "x", c: 0, d: 1 },
+    { name: "e5", b: 1, c: 7 },
+    e6,
+    { name: "e7", a: 1, c: 6 },
+    { name: "e8", a: 1, b: 1, c: 4 },
+  );
+  const state = (label: string) =>
+    log.push(
+      `${label} sortDelegate ${shown(sys.sortDelegate !== undefined)} entities ${names(sys.entities)}`,
+    );
+  state("constructed");
+  w.refresh();
+  state("refreshed");
+  frame(log, w, 0.25);
+
+  w.removeEntity(e6);
+  frame(log, w, 0.5);
+  state("removed e6");
+}
+
+function sortedResortTiming(lib: Lib, log: Log): void {
+  const e1: Ent = { name: "e1", c: 30 };
+  const e4: Ent = { name: "e4", c: 0 };
+  let added = false;
+  const sys = lib.sortedSystem<Ent>()(lib.requireAll("c"), {
+    name: "S",
+    compare(a, b) {
+      return a.c < b.c;
+    },
+    update(dt: number) {
+      log.push(`update S ${dt} entities ${names(this.entities)}`);
+      if (!added) {
+        added = true;
+        log.push("add e4");
+        (this.world as World).addEntity(e4);
+      }
+    },
+  });
+  const w = lib.world<Ent>(sys, e1, { name: "e2", c: 10 }, { name: "e3", c: 20 });
+  frame(log, w, 0.25);
+  frame(log, w, 0.5);
+
+  e1.c = -10;
+  w.changed(e1);
+  log.push("e1 c -10, changed");
+  frame(log, w, 0.75);
+  w.addEntity({ name: "e5", c: 50 });
+  log.push("add e5");
+  frame(log, w, 1);
+
+  sys.compare = (a, b) => a.c > b.c;
+  w.addEntity({ name: "e6", c: 25 });
+  log.push("reverse compare, add e6");
+  frame(log, w, 1.25);
+}
+
+function sortedTies(lib: Lib, log: Log): void {
+  const sys = lib.sortedSystem<Ent>()(lib.requireAll("c"), {
+    name: "S",
+    compare(a, b) {
+      return a.c < b.c;
+    },
+  });
+  const e3: Ent = { name: "e3", c: 1 };
+  const w = lib.world<Ent>(
+    sys,
+    { name: "e1", c: 2 },
+    { name: "e2", c: 1 },
+    e3,
+    { name: "e4", c: 2 },
+    { name: "e5", c: 1 },
+    { name: "e6", c: 2 },
+  );
+  const state = (label: string) => log.push(`${label} entities ${names(sys.entities)}`);
+  w.refresh();
+  state("refreshed");
+  w.removeEntity(e3);
+  w.refresh();
+  state("removed e3");
+  w.addEntity({ name: "e7", c: 2 });
+  w.addEntity({ name: "e8", c: 1 });
+  w.refresh();
+  state("added e7 e8");
+}
+
 export const scenarios: readonly Scenario[] = [
   { name: "filters", run: filters },
   { name: "deferred changes", run: deferredChanges },
@@ -753,6 +864,9 @@ export const scenarios: readonly Scenario[] = [
     run: (lib, log) => reentrantRemoval(lib, log, { twoSystems: true, spawnCopy: true }),
   },
   { name: "free functions", run: freeFunctions },
+  { name: "sorted systems", run: sortedSystems },
+  { name: "sorted re-sort timing", run: sortedResortTiming },
+  { name: "sorted ties", run: sortedTies, ties: true },
 ];
 
 export function runScenario(lib: Lib, name: string): string {

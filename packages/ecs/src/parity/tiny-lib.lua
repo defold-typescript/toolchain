@@ -19,6 +19,20 @@ local function processingSystem(filter, def)
     return tiny.processingSystem(def)
 end
 
+local function sortedSystem(first, second)
+    local def = first
+    if second ~= nil then
+        def = second
+        def.filter = first
+    end
+    return tiny.sortedSystem(def)
+end
+
+local function sortedProcessingSystem(filter, def)
+    def.filter = filter
+    return tiny.sortedProcessingSystem(def)
+end
+
 local lib = {
     -- tiny.world also returns its arguments; ecs returns the world alone.
     world = function(...)
@@ -30,6 +44,12 @@ local lib = {
     end,
     processingSystem = function()
         return processingSystem
+    end,
+    sortedSystem = function()
+        return sortedSystem
+    end,
+    sortedProcessingSystem = function()
+        return sortedProcessingSystem
     end,
     requireAll = tiny.requireAll,
     requireAny = tiny.requireAny,
