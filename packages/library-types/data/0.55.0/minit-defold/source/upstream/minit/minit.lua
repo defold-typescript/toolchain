@@ -153,6 +153,50 @@ function M.should_show_tutorial()
     return raw ~= "true"
 end
 
+--- Return the resolved effects quality: "full" or "reduced".
+-- @return string
+function M.get_motion_quality()
+    if not has_bridge() then return "full" end
+    local override = M.get_config_value("motionQuality")
+    if override == "full" or override == "reduced" then return override end
+    local raw = html5.run("JSON.stringify(window.minit&&window.minit.motionQuality)")
+    local ok, value = pcall(json.decode, raw or "")
+    if ok and (value == "full" or value == "reduced") then return value end
+    return M.prefers_reduced_motion() and "reduced" or "full"
+end
+
+--- Whether reduced motion is preferred by the player or operating system.
+-- @return boolean
+function M.prefers_reduced_motion()
+    if not has_bridge() then return false end
+    local override = M.get_config_value("reducedMotion")
+    if override == "1" or override == "true" then return true end
+    if override == "0" or override == "false" then return false end
+    local raw = html5.run("JSON.stringify(window.minit&&window.minit.prefersReducedMotion)")
+    local ok, value = pcall(json.decode, raw or "")
+    if ok and type(value) == "boolean" then return value end
+    raw = html5.run(
+        "JSON.stringify(typeof window.matchMedia==='function'" ..
+        "?window.matchMedia('(prefers-reduced-motion: reduce)').matches:false)")
+    return raw == "true"
+end
+
+--- Return the resolved device tier: "low", "medium", "high", or "unknown".
+-- @return string
+function M.get_device_tier()
+    if not has_bridge() then return "unknown" end
+    local override = M.get_config_value("deviceTier")
+    if override == "low" or override == "medium" or override == "high" or override == "unknown" then
+        return override
+    end
+    local raw = html5.run("JSON.stringify(window.minit&&window.minit.deviceTier)")
+    local ok, value = pcall(json.decode, raw or "")
+    if ok and (value == "low" or value == "medium" or value == "high" or value == "unknown") then
+        return value
+    end
+    return "unknown"
+end
+
 --- Whether the game is currently visible to the player: the host's
 -- `window.minit.isViewable()` when present, else `document.visibilityState`.
 -- Re-read on every call. Outside an HTML5 build it returns true.

@@ -2875,14 +2875,14 @@ describe("wrap.wrap declares the whole of its upstream", () => {
   });
 });
 
-// `minit.lua` is the whole runtime: seven `function M.x` definitions under LDoc `---`
+// `minit.lua` is the whole runtime: ten `function M.x` definitions under LDoc `---`
 // blocks and no fields. `get_config_value` takes `default` as its second parameter.
 describe("minit.minit declares the whole of its upstream", () => {
   const entry = target("minit");
   const report = buildAuthoredParity(DATA_DIR, entry);
 
   test("both axes close, with nothing missing, invented or short", () => {
-    expect(report.upstreamMembers).toBe(7);
+    expect(report.upstreamMembers).toBe(10);
     expect(report.upstreamFields).toBe(0);
     expect(report.missingMembers).toEqual([]);
     expect(report.phantomMembers).toEqual([]);

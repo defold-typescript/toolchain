@@ -1,5 +1,5 @@
 {
-  "ref": "v1.17.0",
+  "ref": "v1.19.0",
   "reviews": [
     {
       "version": 1,
@@ -16,6 +16,28 @@
         "minit/minit.lua#is_viewable": "53afa49906788416",
         "minit/minit.lua#loading_done": "53afa49906788416",
         "minit/minit.lua#on_viewable_change": "6057af0780b2138f",
+        "minit/minit.lua#report_result": "9b28bf69a058f7b5",
+        "minit/minit.lua#should_show_tutorial": "53afa49906788416"
+      }
+    },
+    {
+      "version": 1,
+      "commits": [
+        "9e011eaf6ba04e8064dd86f14e21b0262f21298e"
+      ],
+      "api": "1616d0a3fd41874a3f9defb5272e59263706076e2fed300f6edcf5d3f36a21cd",
+      "doc": "d2fed5977e9f01efea9638896bddfb96f1a7a3bedb4cef6c8638e2a283f2a0b3",
+      "source": "b23d16ce0143d0c1b202190adc08ca077fe5a02ac7c65836d4e2214ba164f15f",
+      "members": {
+        "minit/editor/minit_package.lua": "9ee3b1ab92363f7b",
+        "minit/minit.lua#get_config_value": "f4ae2a09f5e0bb87",
+        "minit/minit.lua#get_device_tier": "53afa49906788416",
+        "minit/minit.lua#get_motion_quality": "53afa49906788416",
+        "minit/minit.lua#get_user_data": "53afa49906788416",
+        "minit/minit.lua#is_viewable": "53afa49906788416",
+        "minit/minit.lua#loading_done": "53afa49906788416",
+        "minit/minit.lua#on_viewable_change": "6057af0780b2138f",
+        "minit/minit.lua#prefers_reduced_motion": "53afa49906788416",
         "minit/minit.lua#report_result": "9b28bf69a058f7b5",
         "minit/minit.lua#should_show_tutorial": "53afa49906788416"
       }
