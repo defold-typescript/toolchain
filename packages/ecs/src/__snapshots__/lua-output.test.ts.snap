@@ -593,7 +593,6 @@ local function manageEntities(world)
                 entityIndex[id] = #entities
                 entities[#entities + 1] = entity
             end
-            local id = idOf(entity, key)
             local systemCount = #systems
             do
                 local j = 0
@@ -606,6 +605,10 @@ local function manageEntities(world)
                         local filter = system.filter
                         if filter and filter(system, entity) then
                             if index == nil then
+                                local id = idOf(entity, key)
+                                if id == nil then
+                                    id = freshId(entity, key)
+                                end
                                 system.modified = true
                                 seis[id] = #ses
                                 ses[#ses + 1] = entity
@@ -618,6 +621,7 @@ local function manageEntities(world)
                                 end
                             end
                         elseif index ~= nil then
+                            local id = idOf(entity, key)
                             system.modified = true
                             swapRemove(
                                 ses,
@@ -647,7 +651,6 @@ local function manageEntities(world)
             local entity = e2r[i + 1]
             local listIndex = slotOf(entities, entityIndex, entity, key)
             if listIndex ~= nil then
-                local id = idOf(entity, key)
                 swapRemove(
                     entities,
                     entityIndex,
@@ -665,6 +668,7 @@ local function manageEntities(world)
                             local seis = system.indices
                             local index = slotOf(ses, seis, entity, key)
                             if index ~= nil then
+                                local id = idOf(entity, key)
                                 system.modified = true
                                 swapRemove(
                                     ses,
