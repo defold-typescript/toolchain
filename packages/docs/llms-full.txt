@@ -5298,6 +5298,7 @@ export default defineScript({
 - `tiny.processingSystem({ filter = ... })` is `processingSystem<E>()(filter, { ... })`, since the filter is the factory's own argument.
 - `world(...)` returns the world alone, and `add` and `remove` return nothing. `addEntity`, `addSystem`, `removeEntity` and `removeSystem` return their argument.
 - `tiny.filter(pattern)` is `filter(pattern)`, which throws where `tiny.filter` returns `nil, err`; `tryFilter(pattern)` returns the error instead. A pattern `tiny.filter` reads only through a quirk of its scanner, such as `a&&b`, `!!a`, `a | b` or `""`, throws.
+- `requireAll`, `requireAny`, `rejectAll` and `rejectAny` throw for a token that is neither a component name nor a filter, `undefined` included, where tiny-ecs's combinators return `nil, err`. Called with no tokens, `requireAll` and `rejectAny` take every entity and `requireAny` and `rejectAll` take none, where tiny-ecs builds no filter.
 - `hasEntity` has no tiny-ecs counterpart.
 
 #### Where tiny-ecs's docs and code differ

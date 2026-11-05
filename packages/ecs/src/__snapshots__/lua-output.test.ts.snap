@@ -185,8 +185,14 @@ local function rejectAnyFilter(tokens)
         return true
     end
 end
-local function checkTokens(tokens)
-    local count = #tokens
+local function checkTokens(...)
+    local tokens = {...}
+    local count
+    if type(select) == "function" then
+        count = select("#", ...)
+    else
+        count = #tokens
+    end
     do
         local i = 0
         while i < count do
@@ -830,22 +836,22 @@ local function newWorld(items)
 end
 function ____exports.requireAll(...)
     local tokens = {...}
-    checkTokens(tokens)
+    checkTokens(...)
     return requireAllFilter(tokens)
 end
 function ____exports.requireAny(...)
     local tokens = {...}
-    checkTokens(tokens)
+    checkTokens(...)
     return requireAnyFilter(tokens)
 end
 function ____exports.rejectAll(...)
     local tokens = {...}
-    checkTokens(tokens)
+    checkTokens(...)
     return rejectAllFilter(tokens)
 end
 function ____exports.rejectAny(...)
     local tokens = {...}
-    checkTokens(tokens)
+    checkTokens(...)
     return rejectAnyFilter(tokens)
 end
 function ____exports.filter(pattern)

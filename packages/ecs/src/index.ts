@@ -269,8 +269,19 @@ function rejectAnyFilter(tokens: readonly Token[]): FilterFn {
   };
 }
 
-function checkTokens(tokens: readonly unknown[]): void {
-  const count = tokens.length;
+// Lua's `{...}` length stops at a trailing nil, so only `select("#", ...)` counts
+// every argument. TSTL passes the rest parameter as a bare `...` only while that
+// spread is its first use, so the count must come before any other read of it.
+// In Bun `select` is an undeclared global, which `typeof` reads as "undefined".
+declare const select: ((index: "#", ...args: readonly unknown[]) => number) | undefined;
+
+function checkTokens(...tokens: readonly unknown[]): void {
+  let count: number;
+  if (typeof select === "function") {
+    count = select("#", ...tokens);
+  } else {
+    count = tokens.length;
+  }
   for (let i = 0; i < count; i++) {
     const token = tokens[i];
     if (typeof token !== "string" && typeof token !== "function") {
@@ -1108,7 +1119,7 @@ export interface World<E> {
 export function requireAll<const T extends readonly FilterToken[]>(
   ...tokens: T
 ): Filter<RequiredBy<T[number]>, UsedBy<T[number]>> {
-  checkTokens(tokens);
+  checkTokens(...tokens);
   return requireAllFilter(tokens as readonly Token[]) as Filter<
     RequiredBy<T[number]>,
     UsedBy<T[number]>
@@ -1122,7 +1133,7 @@ export function requireAll<const T extends readonly FilterToken[]>(
 export function requireAny<const T extends readonly FilterToken[]>(
   ...tokens: T
 ): Filter<never, UsedBy<T[number]>> {
-  checkTokens(tokens);
+  checkTokens(...tokens);
   return requireAnyFilter(tokens as readonly Token[]) as Filter<never, UsedBy<T[number]>>;
 }
 
@@ -1133,7 +1144,7 @@ export function requireAny<const T extends readonly FilterToken[]>(
 export function rejectAll<const T extends readonly FilterToken[]>(
   ...tokens: T
 ): Filter<never, UsedBy<T[number]>> {
-  checkTokens(tokens);
+  checkTokens(...tokens);
   return rejectAllFilter(tokens as readonly Token[]) as Filter<never, UsedBy<T[number]>>;
 }
 
@@ -1144,7 +1155,7 @@ export function rejectAll<const T extends readonly FilterToken[]>(
 export function rejectAny<const T extends readonly FilterToken[]>(
   ...tokens: T
 ): Filter<never, UsedBy<T[number]>> {
-  checkTokens(tokens);
+  checkTokens(...tokens);
   return rejectAnyFilter(tokens as readonly Token[]) as Filter<never, UsedBy<T[number]>>;
 }
 
