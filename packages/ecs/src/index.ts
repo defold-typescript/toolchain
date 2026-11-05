@@ -858,6 +858,88 @@ function newWorld(items: readonly unknown[]): WorldRecord {
 }
 
 // ---------------------------------------------------------------------------
+// Hot reload. A key names the one table its first factory call built, since a
+// system is both a definition and one world's state; a later call under the key
+// (a hot-reloaded module running again) puts its definition into that table.
+
+type MakeSystem = (this: void, first: unknown, second?: unknown) => unknown;
+
+const keyedSystems: { [key: string]: SystemRecord | undefined } = {};
+
+const MANAGED_FIELDS: { [field: string]: true | undefined } = {
+  world: true,
+  entities: true,
+  indices: true,
+  index: true,
+  modified: true,
+  bufferedTime: true,
+  sortDelegate: true,
+};
+
+const DEFINED_FIELDS = [
+  "filter",
+  "interval",
+  "compare",
+  "onAdd",
+  "onRemove",
+  "onModify",
+  "onAddToWorld",
+  "onRemoveFromWorld",
+  "preWrap",
+  "postWrap",
+  "update",
+  "preProcess",
+  "process",
+  "postProcess",
+];
+
+function reloadSystem(key: string, fresh: SystemRecord): SystemRecord {
+  const existing = keyedSystems[key];
+  if (existing === undefined) {
+    keyedSystems[key] = fresh;
+    return fresh;
+  }
+  if ((existing.nocache === true) !== (fresh.nocache === true)) {
+    throw `ecs: a reload of "${key}" cannot change nocache`;
+  }
+  const oldFilter = existing.filter;
+  const target = existing as unknown as { [field: string]: unknown };
+  const source = fresh as unknown as { [field: string]: unknown };
+  const definedCount = DEFINED_FIELDS.length;
+  for (let i = 0; i < definedCount; i++) {
+    const field = DEFINED_FIELDS[i] as string;
+    if (source[field] === undefined) {
+      target[field] = undefined;
+    }
+  }
+  for (const field in source) {
+    if (MANAGED_FIELDS[field] === undefined) {
+      target[field] = source[field];
+    }
+  }
+  if (existing.sortDelegate !== undefined) {
+    existing.sortDelegate = undefined;
+    existing.modified = true;
+  }
+  const owner = existing.world;
+  if (owner !== undefined && existing.filter !== oldFilter) {
+    const entities = owner.entities;
+    const count = entities.length;
+    for (let i = 0; i < count; i++) {
+      worldAddEntity.call(owner, entities[i] as EntityRecord);
+    }
+  }
+  return existing;
+}
+
+function keyedFactory(make: MakeSystem, key: string | undefined): MakeSystem {
+  if (key === undefined) {
+    return make;
+  }
+  return (first, second) => reloadSystem(key, make(first, second) as SystemRecord);
+}
+
+// ---------------------------------------------------------------------------
 // Public types
 
 declare const filterKeys: unique symbol;
@@ -985,7 +1067,7 @@ export interface ProcessingSystemCallbacks<E, X = E> extends SystemCallbacks<E, 
 
 /** What a sorted system's definition adds to its callbacks. */
 export interface SortedDefinition<X> {
-  /** Whether `e1` goes before `e2`. Read once, at the system's first sort. */
+  /** Whether `e1` goes before `e2`. Read at the system's first sort, and again after a keyed reload. */
   compare(e1: X, e2: X): boolean;
   /** A sorted system keeps its entities, so it cannot be `nocache`. */
   nocache?: false | undefined;
@@ -1014,7 +1096,7 @@ export type System<E, D = unknown> = D & SystemFields<E>;
 export interface SortedSystemFields<X> {
   /** A sorted system keeps its entities, so it cannot be `nocache`. */
   nocache?: false | undefined;
-  /** `compare` bound to the system, built at the first sort and kept. */
+  /** `compare` bound to the system, built at the first sort and kept until a keyed reload. */
   readonly sortDelegate?: ((this: void, e1: X, e2: X) => boolean) | undefined;
 }
 
@@ -1181,24 +1263,42 @@ export function tryFilter<const P extends string>(
   }
 }
 
-/** Returns a factory for plain systems over entities of type `E`. */
-export function system<E>(): SystemFactory<E> {
-  return makeSystem as unknown as SystemFactory<E>;
+/**
+ * Returns a factory for plain systems over entities of type `E`. With a `key`, a later
+ * factory call under it puts the new definition into the system built first and returns
+ * that system, so a hot reload keeps the system running with its entities.
+ */
+export function system<E>(key?: string): SystemFactory<E> {
+  return keyedFactory(makeSystem, key) as unknown as SystemFactory<E>;
 }
 
-/** Returns a factory for processing systems over entities of type `E`. */
-export function processingSystem<E>(): ProcessingSystemFactory<E> {
-  return makeProcessingSystem as unknown as ProcessingSystemFactory<E>;
+/**
+ * Returns a factory for processing systems over entities of type `E`. With a `key`, a
+ * later factory call under it reloads the system built first, as `system` does.
+ */
+export function processingSystem<E>(key?: string): ProcessingSystemFactory<E> {
+  return keyedFactory(makeProcessingSystem, key) as unknown as ProcessingSystemFactory<E>;
 }
 
-/** Returns a factory for systems that keep their entities ordered by `compare`. */
-export function sortedSystem<E>(): SortedSystemFactory<E> {
-  return makeSortedSystem as unknown as SortedSystemFactory<E>;
+/**
+ * Returns a factory for systems that keep their entities ordered by `compare`. With a
+ * `key`, a later factory call under it reloads the system built first, which sorts with
+ * the new `compare` at its next `refresh` or `update`.
+ */
+export function sortedSystem<E>(key?: string): SortedSystemFactory<E> {
+  return keyedFactory(makeSortedSystem, key) as unknown as SortedSystemFactory<E>;
 }
 
-/** Returns a factory for processing systems that process their entities in `compare` order. */
-export function sortedProcessingSystem<E>(): SortedProcessingSystemFactory<E> {
-  return makeSortedProcessingSystem as unknown as SortedProcessingSystemFactory<E>;
+/**
+ * Returns a factory for processing systems that process their entities in `compare` order.
+ * With a `key`, a later factory call under it reloads the system built first, as
+ * `sortedSystem` does.
+ */
+export function sortedProcessingSystem<E>(key?: string): SortedProcessingSystemFactory<E> {
+  return keyedFactory(
+    makeSortedProcessingSystem,
+    key,
+  ) as unknown as SortedProcessingSystemFactory<E>;
 }
 
 /** Creates a world holding `items`, applied at once. */
