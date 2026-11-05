@@ -33,6 +33,8 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Vector math](guide/vector-math.md)
 - [Editor scripts](guide/editor-scripts.md)
 - [State machines](guide/state-machines.md)
+- [Entity systems](guide/entity-systems.md)
+- [ecs and hsm together](guide/ecs-and-hsm.md)
 - [init](guide/init.md)
 - [init-agents](guide/init-agents.md)
 - [upgrade](guide/upgrade.md)
