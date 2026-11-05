@@ -1104,6 +1104,17 @@ export function getSystemCount<E>(target: World<E>): number {
   return target.getSystemCount();
 }
 
+/**
+ * Whether the world holds `entity` as of its last `refresh` or `update`: `false` while its
+ * add is pending, and `true` while its removal is.
+ */
+export function hasEntity<E>(target: World<E>, entity: E): boolean {
+  const w = target as unknown as WorldRecord;
+  return (
+    slotOf(w.entities, w.entityIndex, entity as unknown as EntityRecord, w.idKey) !== undefined
+  );
+}
+
 export function setSystemIndex<E>(
   target: World<E>,
   system: SystemFields<E>,

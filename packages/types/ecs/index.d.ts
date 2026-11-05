@@ -208,5 +208,10 @@ export declare function clearEntities<E>(target: World<E>): void;
 export declare function clearSystems<E>(target: World<E>): void;
 export declare function getEntityCount<E>(target: World<E>): number;
 export declare function getSystemCount<E>(target: World<E>): number;
+/**
+ * Whether the world holds `entity` as of its last `refresh` or `update`: `false` while its
+ * add is pending, and `true` while its removal is.
+ */
+export declare function hasEntity<E>(target: World<E>, entity: E): boolean;
 export declare function setSystemIndex<E>(target: World<E>, system: SystemFields<E>, index: number): number;
 export {};
