@@ -1333,6 +1333,7 @@ const STILL = rejectAny("moving");
         refresh(self.garden);
         self.caught += 1; // [!code --]
         label.set_text("/hud#caught", `${self.caught} caught`); // [!code --]
+        self.jar.refresh(); // [!code ++]
         if (self.shine.world === undefined) { // [!code ++]
           self.jar.addSystem(self.shine); // [!code ++]
           self.jar.setSystemIndex(self.shine, 1); // [!code ++]
@@ -1355,7 +1356,7 @@ const STILL = rejectAny("moving");
       if (f !== undefined) { // [!code ++]
         self.jar.removeEntity(f); // [!code ++]
         self.jar.refresh(); // [!code ++]
-        if (self.jar.getEntityCount() === 0) { // [!code ++]
+        if (self.jar.getEntityCount() === 0 && self.shine.world === self.jar) { // [!code ++]
           self.jar.removeSystem(self.shine); // [!code ++]
         } // [!code ++]
         spawn(self.garden); // [!code ++]
@@ -1375,10 +1376,10 @@ const STILL = rejectAny("moving");
 ```
 
 - **`jar.add(fade())`** gives the jar its own `fade`: one system belongs to one world.
-- **`self.jar.addSystem(self.shine)`** adds the jar's glow with the first catch, and `self.jar.setSystemIndex(self.shine, 1)` puts it before `fade`, which would put out a light it is about to read. `setSystemIndex` applies the waiting add, so `getSystemCount()` already counts the shine.
+- **`self.jar.addSystem(self.shine)`** adds the jar's glow with the first catch, and `self.jar.setSystemIndex(self.shine, 1)` puts it before `fade`, which would put out a light it is about to read. `setSystemIndex` applies the waiting add, so `getSystemCount()` already counts the shine. `self.jar.refresh()` runs first, so a `release` or `empty` earlier in the same frame has already taken the shine out when the catch checks for it.
 - **`self.jar.addEntity(picked)`** keeps the caught firefly, and `self.jar.refresh()` applies it so `getEntityCount()` is right in the label. The garden's `bodies` has deleted its game object; in the jar it is only a light.
 - **`shake`** relights every firefly in the jar with `self.jar.changed(f)`.
-- **`release`** takes one out with `self.jar.removeEntity(f)`, and a new firefly hatches in the garden. The last one out takes the shine with it, through `self.jar.removeSystem(self.shine)`.
+- **`release`** takes one out with `self.jar.removeEntity(f)`, and a new firefly hatches in the garden. The last one out takes the shine with it, through `self.jar.removeSystem(self.shine)`, but only while the jar holds it, since an `empty` earlier in the same frame may already have taken it.
 - **`empty`** lets them all go with `self.jar.clearEntities()`, and `self.jar.remove(self.shine)` takes the shine. It runs only while the shine is in the jar: the shine joins with the first catch and leaves with the last firefly out, and a world throws when asked to remove a system it does not hold.
 - **`self.jar.update(dt)`** runs the jar every frame, and `final` clears its systems as it clears the garden's.
 
@@ -2048,6 +2049,7 @@ The garden now uses every function and every field of `ecs`.
 >       if (picked !== undefined) {
 >         picked.fsm?.send({ type: "CATCH" });
 >         refresh(self.garden);
+>         self.jar.refresh();
 >         if (self.shine.world === undefined) {
 >           self.jar.addSystem(self.shine);
 >           self.jar.setSystemIndex(self.shine, 1);
@@ -2101,7 +2103,7 @@ The garden now uses every function and every field of `ecs`.
 >       if (f !== undefined) {
 >         self.jar.removeEntity(f);
 >         self.jar.refresh();
->         if (self.jar.getEntityCount() === 0) {
+>         if (self.jar.getEntityCount() === 0 && self.shine.world === self.jar) {
 >           self.jar.removeSystem(self.shine);
 >         }
 >         const id = factory.create("#factory", vmath.vector3(880, 80, 0));
