@@ -864,7 +864,10 @@ function newWorld(items: readonly unknown[]): WorldRecord {
 
 type MakeSystem = (this: void, first: unknown, second?: unknown) => unknown;
 
-const keyedSystems: { [key: string]: SystemRecord | undefined } = {};
+// Two lists rather than a table keyed by name: an object lookup reads inherited
+// members, and writing "__proto__" calls the prototype setter.
+const keyedNames: string[] = [];
+const keyedTables: SystemRecord[] = [];
 
 const MANAGED_FIELDS: { [field: string]: true | undefined } = {
   world: true,
@@ -894,11 +897,20 @@ const DEFINED_FIELDS = [
 ];
 
 function reloadSystem(key: string, fresh: SystemRecord): SystemRecord {
-  const existing = keyedSystems[key];
-  if (existing === undefined) {
-    keyedSystems[key] = fresh;
+  const keyedCount = keyedNames.length;
+  let slot = -1;
+  for (let i = 0; i < keyedCount; i++) {
+    if (keyedNames[i] === key) {
+      slot = i;
+      break;
+    }
+  }
+  if (slot === -1) {
+    keyedNames.push(key);
+    keyedTables.push(fresh);
     return fresh;
   }
+  const existing = keyedTables[slot] as SystemRecord;
   if ((existing.nocache === true) !== (fresh.nocache === true)) {
     throw `ecs: a reload of "${key}" cannot change nocache`;
   }
@@ -913,7 +925,8 @@ function reloadSystem(key: string, fresh: SystemRecord): SystemRecord {
     }
   }
   for (const field in source) {
-    if (MANAGED_FIELDS[field] === undefined) {
+    // An object lookup reads inherited members, so `toString` is found but is not true.
+    if (MANAGED_FIELDS[field] !== true) {
       target[field] = source[field];
     }
   }
