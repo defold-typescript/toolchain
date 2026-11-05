@@ -798,8 +798,91 @@ end
 function ____exports.getSystemCount(target)
     return target:getSystemCount()
 end
+function ____exports.hasEntity(target, entity)
+    local w = target
+    return slotOf(w.entities, w.entityIndex, entity, w.idKey) ~= nil
+end
 function ____exports.setSystemIndex(target, system, index)
     return target:setSystemIndex(system, index)
+end
+return ____exports
+"
+`;
+
+exports[`ecs/hsm bridge Lua output matches the reviewed Lua snapshot 1`] = `
+"--[[
+MIT License
+
+Copyright (c) 2026 king8fisher (Anton Veretennikov)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+]]
+--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local ____index = require("defold_typescript_ecs.index")
+local addEntity = ____index.addEntity
+local changed = ____index.changed
+local hasEntity = ____index.hasEntity
+local processingSystem = ____index.processingSystem
+local removeEntity = ____index.removeEntity
+local requireAll = ____index.requireAll
+local function place(world, ctx, key, value)
+    ctx[key] = value
+    if hasEntity(world, ctx) then
+        changed(world, ctx)
+    end
+end
+function ____exports.member(world, key, value)
+    local ____temp_0
+    if value == nil then
+        ____temp_0 = true
+    else
+        ____temp_0 = value
+    end
+    local present = ____temp_0
+    return {
+        enter = function(ctx)
+            place(world, ctx, key, present)
+        end,
+        exit = function(ctx)
+            place(world, ctx, key, nil)
+        end
+    }
+end
+function ____exports.join(world)
+    return function(ctx)
+        addEntity(world, ctx)
+    end
+end
+function ____exports.leave(world)
+    return function(ctx)
+        removeEntity(world, ctx)
+    end
+end
+function ____exports.tickMachines(key)
+    local filter = requireAll(key)
+    return processingSystem()(
+        filter,
+        {process = function(self, entity, dt)
+            entity[key].update(dt)
+        end}
+    )
 end
 return ____exports
 "
