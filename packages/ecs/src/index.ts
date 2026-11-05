@@ -879,6 +879,23 @@ const MANAGED_FIELDS: { [field: string]: true | undefined } = {
   sortDelegate: true,
 };
 
+const PROTO_FIELD = "__proto__";
+
+type DefineField = (
+  this: void,
+  target: object,
+  field: string,
+  descriptor: { value: unknown; writable: true; enumerable: true; configurable: true },
+) => unknown;
+
+// In JavaScript assigning "__proto__" calls the inherited setter instead of storing
+// a field. Lua tables have no such accessor, so the probe is false there and reads
+// no global.
+const defineField: DefineField | undefined =
+  ({} as { [field: string]: unknown })[PROTO_FIELD] !== undefined
+    ? (globalThis as unknown as { Object: { defineProperty: DefineField } }).Object.defineProperty
+    : undefined;
+
 const DEFINED_FIELDS = [
   "filter",
   "interval",
@@ -927,7 +944,16 @@ function reloadSystem(key: string, fresh: SystemRecord): SystemRecord {
   for (const field in source) {
     // An object lookup reads inherited members, so `toString` is found but is not true.
     if (MANAGED_FIELDS[field] !== true) {
-      target[field] = source[field];
+      if (field === PROTO_FIELD && defineField !== undefined) {
+        defineField(target, field, {
+          value: source[field],
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
+      } else {
+        target[field] = source[field];
+      }
     }
   }
   if (existing.sortDelegate !== undefined) {
