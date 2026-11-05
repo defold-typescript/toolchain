@@ -49,6 +49,7 @@
         "@types/react-dom": "^19.3.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "lua-wasm-bindings": "0.5.3",
         "radix-ui": "^1.7.0",
         "react": "^19.3.0",
         "react-dom": "^19.3.0",
