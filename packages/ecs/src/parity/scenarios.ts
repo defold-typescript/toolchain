@@ -49,9 +49,11 @@ interface Named {
 export interface Scenario {
   name: string;
   run: (this: void, lib: Lib, log: Log) => void;
-  // tiny.lua sorts with table.sort, which orders tied keys arbitrarily, so a
-  // scenario with ties holds ecs in Lua to ecs in Bun instead.
-  ties?: true;
+  // Holds ecs in Lua to ecs in Bun instead of to tiny.lua, for a scenario
+  // tiny.lua cannot settle: its table.sort orders tied keys arbitrarily, and
+  // its combinators return nil, err rather than raise, and build no filter
+  // from zero tokens.
+  bunOracle?: true;
 }
 
 // Lua prints nil as "nil" and JavaScript prints undefined as "undefined".
@@ -922,6 +924,28 @@ function stringFilterErrors(lib: Lib, log: Log): void {
   }
 }
 
+type Combinator = (...tokens: readonly (string | Ecs.Filter)[]) => Ecs.Filter;
+
+// Every call spells out its arguments: a spread array reaches Lua through
+// unpack, which drops a trailing nil before the combinator can count it.
+function undefinedTokens(log: Log, name: string, build: Combinator): void {
+  attempt(log, `${name}()`, () => build());
+  attempt(log, `${name}(undefined)`, () => build(undefined as never));
+  attempt(log, `${name}("a", undefined)`, () => build("a", undefined as never));
+  attempt(log, `${name}("a", undefined, "b")`, () => build("a", undefined as never, "b"));
+  const none = build();
+  log.push(
+    `${name}() takes e1 ${none(undefined, { name: "e1", a: 1 })} e2 ${none(undefined, { name: "e2" })}`,
+  );
+}
+
+function undefinedFilterTokens(lib: Lib, log: Log): void {
+  undefinedTokens(log, "requireAll", lib.requireAll);
+  undefinedTokens(log, "requireAny", lib.requireAny);
+  undefinedTokens(log, "rejectAll", lib.rejectAll);
+  undefinedTokens(log, "rejectAny", lib.rejectAny);
+}
+
 export const scenarios: readonly Scenario[] = [
   { name: "filters", run: filters },
   { name: "deferred changes", run: deferredChanges },
@@ -953,9 +977,10 @@ export const scenarios: readonly Scenario[] = [
   { name: "free functions", run: freeFunctions },
   { name: "sorted systems", run: sortedSystems },
   { name: "sorted re-sort timing", run: sortedResortTiming },
-  { name: "sorted ties", run: sortedTies, ties: true },
+  { name: "sorted ties", run: sortedTies, bunOracle: true },
   { name: "string filter truth table", run: stringFilterTruthTable },
   { name: "string filter errors", run: stringFilterErrors },
+  { name: "undefined filter tokens", run: undefinedFilterTokens, bunOracle: true },
 ];
 
 export function runScenario(lib: Lib, name: string): string {
