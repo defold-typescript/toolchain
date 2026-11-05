@@ -53,3 +53,21 @@ describe("ecs/hsm bridge Lua output", () => {
     expect(lua).toMatchSnapshot();
   });
 });
+
+describe("ecs/debug Lua output", () => {
+  const lua = compileLibraryModules(ECS_LIBRARY).debug ?? "";
+  const copyright = readFileSync(new URL("../../../LICENSE", import.meta.url), "utf8")
+    .split("\n")
+    .find((line) => line.startsWith("Copyright"));
+
+  test("opens with a license block holding the repo copyright line", () => {
+    expect(copyright).toBeDefined();
+    expect(lua.startsWith("--[[\n")).toBe(true);
+    const block = lua.slice(0, lua.indexOf("]]"));
+    expect(block.split("\n")).toContain(copyright as string);
+  });
+
+  test("matches the reviewed Lua snapshot", () => {
+    expect(lua).toMatchSnapshot();
+  });
+});

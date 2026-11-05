@@ -462,6 +462,8 @@ local function manageSystems(world)
     local removeCount = #s2r
     local worldEntityList = world.entities
     local systems = world.systems
+    local key = world.idKey
+    local observer = world.__ecs_observer
     do
         local i = 0
         while i < removeCount do
@@ -469,13 +471,23 @@ local function manageSystems(world)
             local index = system.index
             if index ~= nil then
                 local onRemove = system.onRemove
-                if onRemove ~= nil and system.nocache ~= true then
+                if system.nocache ~= true and (onRemove ~= nil or observer ~= nil) then
                     local entityList = system.entities
                     local count = #entityList
                     do
                         local j = 0
                         while j < count do
-                            onRemove(system, entityList[j + 1])
+                            local entity = entityList[j + 1]
+                            if observer ~= nil then
+                                observer.left(
+                                    system.index,
+                                    idOf(entity, key),
+                                    count - j - 1
+                                )
+                            end
+                            if onRemove ~= nil then
+                                onRemove(system, entity)
+                            end
                             j = j + 1
                         end
                     end
@@ -534,8 +546,12 @@ local function manageSystems(world)
                             while j < count do
                                 local entity = worldEntityList[j + 1]
                                 if filter(system, entity) then
-                                    entityIndices[idOf(entity, world.idKey)] = #entityList
+                                    local id = idOf(entity, key)
+                                    entityIndices[id] = #entityList
                                     entityList[#entityList + 1] = entity
+                                    if observer ~= nil then
+                                        observer.joined(system.index, id, #entityList)
+                                    end
                                     if onAdd ~= nil then
                                         onAdd(system, entity)
                                     end
@@ -564,6 +580,7 @@ local function manageEntities(world)
     local entityIndex = world.entityIndex
     local systems = world.systems
     local key = world.idKey
+    local observer = world.__ecs_observer
     do
         local i = 0
         while i < changeCount do
@@ -576,6 +593,7 @@ local function manageEntities(world)
                 entityIndex[id] = #entities
                 entities[#entities + 1] = entity
             end
+            local id = idOf(entity, key)
             local systemCount = #systems
             do
                 local j = 0
@@ -589,8 +607,11 @@ local function manageEntities(world)
                         if filter and filter(system, entity) then
                             if index == nil then
                                 system.modified = true
-                                seis[idOf(entity, key)] = #ses
+                                seis[id] = #ses
                                 ses[#ses + 1] = entity
+                                if observer ~= nil then
+                                    observer.joined(system.index, id, #ses)
+                                end
                                 local onAdd = system.onAdd
                                 if onAdd ~= nil then
                                     onAdd(system, entity)
@@ -605,6 +626,9 @@ local function manageEntities(world)
                                 entity,
                                 key
                             )
+                            if observer ~= nil then
+                                observer.left(system.index, id, #ses)
+                            end
                             local onRemove = system.onRemove
                             if onRemove ~= nil then
                                 onRemove(system, entity)
@@ -623,6 +647,7 @@ local function manageEntities(world)
             local entity = e2r[i + 1]
             local listIndex = slotOf(entities, entityIndex, entity, key)
             if listIndex ~= nil then
+                local id = idOf(entity, key)
                 swapRemove(
                     entities,
                     entityIndex,
@@ -648,6 +673,9 @@ local function manageEntities(world)
                                     entity,
                                     key
                                 )
+                                if observer ~= nil then
+                                    observer.left(system.index, id, #ses)
+                                end
                                 local onRemove = system.onRemove
                                 if onRemove ~= nil then
                                     onRemove(system, entity)
@@ -669,6 +697,7 @@ local function worldRefresh(self)
     manageSystems(self)
     manageEntities(self)
     local systems = self.systems
+    local observer = self.__ecs_observer
     do
         local i = #systems - 1
         while i >= 0 do
@@ -676,6 +705,9 @@ local function worldRefresh(self)
             if system.active == true then
                 local onModify = system.onModify
                 if onModify ~= nil and system.modified == true then
+                    if observer ~= nil then
+                        observer.modifying(system.index)
+                    end
                     onModify(system, 0)
                 end
                 system.modified = false
@@ -688,6 +720,7 @@ local function worldUpdate(self, dt, filter)
     manageSystems(self)
     manageEntities(self)
     local systems = self.systems
+    local observer = self.__ecs_observer
     do
         local i = #systems - 1
         while i >= 0 do
@@ -695,6 +728,9 @@ local function worldUpdate(self, dt, filter)
             if system.active == true then
                 local onModify = system.onModify
                 if onModify ~= nil and system.modified == true then
+                    if observer ~= nil then
+                        observer.modifying(system.index)
+                    end
                     onModify(system, dt)
                 end
                 local preWrap = system.preWrap
@@ -1125,6 +1161,127 @@ function ____exports.tickMachines(key)
             entity[key].update(dt)
         end}
     )
+end
+return ____exports
+"
+`;
+
+exports[`ecs/debug Lua output matches the reviewed Lua snapshot 1`] = `
+"--[[
+MIT License
+
+Copyright (c) 2026 king8fisher (Anton Veretennikov)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+]]
+--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local SILENT = {draw = function()
+end}
+local TEXT_OFFSET_Y = 40
+local function record()
+    return {__proto__ = nil}
+end
+local labelUses = record()
+local issuedLabels = record()
+local function uniqueLabel(label)
+    local ordinal = labelUses[label] or 1
+    local issued = label
+    while issuedLabels[issued] == true do
+        ordinal = ordinal + 1
+        issued = (label .. "#") .. tostring(ordinal)
+    end
+    labelUses[label] = ordinal
+    issuedLabels[issued] = true
+    return issued
+end
+local function held(system)
+    if system == nil or system.nocache == true or system.entities == nil then
+        return nil
+    end
+    return #system.entities
+end
+local function counts(target)
+    local systems = target.systems
+    local text = ""
+    do
+        local i = 0
+        while i < #systems do
+            local count = held(systems[i + 1])
+            local shown = count == nil and "-" or tostring(count)
+            local ____temp_0
+            if i == 0 then
+                ____temp_0 = shown
+            else
+                ____temp_0 = (text .. ", ") .. shown
+            end
+            text = ____temp_0
+            i = i + 1
+        end
+    end
+    return text
+end
+function ____exports.inspect(target, label)
+    if not sys.get_engine_info().is_debug then
+        return SILENT
+    end
+    local shownLabel = uniqueLabel(label)
+    local frame = 0
+    local seen = 0
+    local ordinals = {}
+    local function ordinal(entity)
+        local n = ordinals[entity]
+        if n == nil then
+            seen = seen + 1
+            n = seen
+            ordinals[entity] = n
+        end
+        return n
+    end
+    local observer = {
+        joined = function(system, entity, count)
+            print((((((((("ecs " .. shownLabel) .. " frame ") .. tostring(frame)) .. ": system ") .. tostring(system)) .. " adds entity ") .. tostring(ordinal(entity))) .. ", holds ") .. tostring(count))
+        end,
+        left = function(system, entity, count)
+            print((((((((("ecs " .. shownLabel) .. " frame ") .. tostring(frame)) .. ": system ") .. tostring(system)) .. " removes entity ") .. tostring(ordinal(entity))) .. ", holds ") .. tostring(count))
+        end,
+        modifying = function(system)
+            local count = held(target.systems[system])
+            local holds = count == nil and "" or ", holds " .. tostring(count)
+            print((((((("ecs " .. shownLabel) .. " frame ") .. tostring(frame)) .. ": system ") .. tostring(system)) .. " onModify") .. holds)
+        end
+    }
+    target.__ecs_observer = observer
+    print(((((("ecs " .. shownLabel) .. " frame ") .. tostring(frame)) .. ": inspecting [") .. counts(target)) .. "]")
+    return {draw = function(above)
+        frame = frame + 1
+        local p = go.get_world_position(above)
+        msg.post(
+            "@render:",
+            "draw_debug_text",
+            {
+                text = ((shownLabel .. " [") .. counts(target)) .. "]",
+                position = vmath.vector3(p.x, p.y + TEXT_OFFSET_Y, p.z),
+                color = vmath.vector4(1, 1, 1, 1)
+            }
+        )
+    end}
 end
 return ____exports
 "
