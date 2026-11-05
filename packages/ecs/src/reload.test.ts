@@ -17,6 +17,8 @@ interface Ent {
 
 const names = (list: readonly Ent[] | undefined) => (list ?? []).map((entity) => entity.name);
 
+const PROTO_FIELD = "__proto__";
+
 function caught(run: () => unknown): unknown {
   try {
     run();
@@ -267,5 +269,25 @@ describe("a keyed factory call reloads the system built first", () => {
 
     expect(String(s)).toBe("B");
     expect(s.constructor).toBe("B");
+  });
+
+  test("a reload stores an own __proto__ field as data and keeps the system's prototype", () => {
+    const s = system<Ent>("reload proto field")({});
+    const stored = { nocache: true };
+
+    const reloaded = system<Ent>("reload proto field")({ [PROTO_FIELD]: stored });
+
+    expect(reloaded as unknown).toBe(s);
+    expect(Object.getPrototypeOf(s)).toBe(Object.prototype);
+    expect(s.nocache).toBeUndefined();
+    const descriptor = Object.getOwnPropertyDescriptor(s, PROTO_FIELD);
+    expect(descriptor).toEqual({
+      value: stored,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+    expect(descriptor?.value).toBe(stored);
+    expect(caught(() => system<Ent>("reload proto field")({}))).toBeUndefined();
   });
 });
