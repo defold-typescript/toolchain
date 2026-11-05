@@ -949,6 +949,9 @@ function undefinedFilterTokens(lib: Lib, log: Log): void {
 // Keys are module-wide, so each run takes keys of its own: a second run in one
 // Bun process then builds its systems afresh. The run number stays out of the log.
 let keyedReloadRuns = 0;
+// A key named after an Object.prototype member cannot take the run number, so a
+// later run compares against the table the first run stored.
+const reservedKeyTables: unknown[] = [];
 
 // A second factory call under a key is what a module running again does.
 function keyedReload(lib: Lib, log: Log): void {
@@ -1021,6 +1024,27 @@ function keyedReload(lib: Lib, log: Log): void {
   log.push(`reload descending same=${shown(sorted("S", false) === s)}`);
   sw.update(0);
   log.push(`re-sorted entities ${names(s.entities)}`);
+
+  const reserved = (key: string, slot: number, tag: string) => {
+    const def = { tag, update() {} };
+    const built = lib.system<Ent>(key)(def);
+    log.push(`reserved ${key} first=${shown(built === (reservedKeyTables[slot] ?? def))}`);
+    reservedKeyTables[slot] = built;
+    return built;
+  };
+  const own = reserved("hasOwnProperty", 0, "H1");
+  const value = reserved("valueOf", 1, "V1");
+  const reloadedOwn = lib.system<Ent>("hasOwnProperty")({ tag: "H2", update() {} });
+  log.push(`reload hasOwnProperty same=${shown(reloadedOwn === own)} tag ${own.tag}`);
+  log.push(`valueOf distinct=${shown(value !== own)} tag ${value.tag}`);
+
+  const fields = (stringValue: string, constructorValue: string) =>
+    lib.system<Ent>(`${run} fields`)({ toString: stringValue, constructor: constructorValue });
+  const withFields = fields("T1", "C1") as unknown as { [field: string]: unknown };
+  fields("T2", "C2");
+  for (const field of ["toString", "constructor"]) {
+    log.push(`reload field ${field} ${shown(withFields[field] as string)}`);
+  }
 }
 
 export const scenarios: readonly Scenario[] = [
