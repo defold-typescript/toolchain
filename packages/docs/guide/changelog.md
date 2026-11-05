@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload) and [state hooks](./ecs-and-hsm.md) that move an entity between systems.
+> - **[Script callbacks](./script-lifecycle.md)** run beside a top-level import or declaration of the same name.
 
 ### Improved
 
@@ -22,6 +23,10 @@ What changed in each published `defold-typescript` toolchain release.
   - **[Hot reload](./entity-systems.md#hot-reload):** `system`, `processingSystem`, `sortedSystem` and `sortedProcessingSystem` take an optional key. When [`watch --hot-reload`](./watch.md#hot-reload) or [`reload`](./reload.md) runs the edited module again, a keyed factory puts the new definition into the system it built first, and the world keeps running that system with its entities.
   - **[ecs and hsm together](./ecs-and-hsm.md):** import `@defold-typescript/types/ecs/hsm` to make one table both an entity and an hsm machine's `ctx`, whose `member`, `join` and `leave` state hooks change which systems hold it while `tickMachines` updates the machines.
   - **The [`AGENTS.md` block](./init-agents.md#what-it-writes)** that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
+
+### Fixed
+
+- **A script callback named like a module-level binding never ran:** a script that imported or declared `update`, `init`, `on_message` or another callback's name at the top level built cleanly, but the engine never called that callback. It now runs, and its body still reaches the binding of the same name.
 
 ## v0.57.0
 

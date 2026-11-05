@@ -2,9 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
+import { lauxlib, lua, lualib } from "lua-wasm-bindings/dist/lua.51";
 import * as ts from "typescript";
 import { isFactoryOnlyImport, RESOURCE_PROPERTY_MARKERS } from "./lifecycle-erasure";
-import { transpile, transpileProject } from "./transpile";
+import { requirePathForRel } from "./output-paths";
+import { type TranspileProjectResult, transpile, transpileProject } from "./transpile";
 
 describe("lifecycle erasure", () => {
   test("erases a void defineScript to flat top-level chunk functions", () => {
@@ -1508,5 +1510,184 @@ describe("resource property markers", () => {
       }
     }
     expect([...RESOURCE_PROPERTY_MARKERS].sort()).toEqual([...unbound].sort());
+  });
+});
+
+describe("a callback named like a module-level binding", () => {
+  const LUA_OK = 0;
+  const LUA_TFUNCTION = 6;
+  const SCRIPT_REL = "main/controller.ts";
+  const FACTORY_IMPORT = 'import { defineScript } from "@defold-typescript/types";';
+  const RECORD = "declare function record(tag: string): void;";
+
+  function emit(files: Readonly<Record<string, string>>): TranspileProjectResult {
+    const result = transpileProject({ files });
+    expect(result.diagnostics).toEqual([]);
+    return result;
+  }
+
+  function scriptChunk(result: TranspileProjectResult): string {
+    const chunk = result.lua[SCRIPT_REL];
+    expect(chunk).toBeString();
+    return chunk as string;
+  }
+
+  // Loads the script chunk the way the engine's `LoadScript` does: every module
+  // it requires is preloaded and the chunk runs with no environment of its own.
+  // Then, as the engine does, reads the callback with `lua_getglobal` and runs
+  // `call` against it; `record` logs what the callback reached.
+  function runCallback(result: TranspileProjectResult, callback: string, call: string): string[] {
+    const modules: Record<string, string> = {};
+    for (const [rel, source] of Object.entries(result.lua)) {
+      if (rel !== SCRIPT_REL) {
+        modules[requirePathForRel(rel)] = source;
+      }
+    }
+    if (result.lualib !== undefined) {
+      modules.lualib_bundle = result.lualib;
+    }
+    const L = lauxlib.luaL_newstate();
+    try {
+      lualib.luaL_openlibs(L);
+      lua.lua_getglobal(L, "package");
+      lua.lua_getfield(L, -1, "preload");
+      for (const [module, source] of Object.entries(modules)) {
+        const status = lauxlib.luaL_loadbuffer(L, source, Buffer.byteLength(source), `=${module}`);
+        if (status !== LUA_OK) {
+          throw new Error(`Lua failed to load ${module}: ${lua.lua_tostring(L, -1)}`);
+        }
+        lua.lua_setfield(L, -2, module);
+      }
+      lua.lua_settop(L, 0);
+      const harness = [
+        "____log = {}",
+        "function record(tag) ____log[#____log + 1] = tag end",
+        "function hash(s) return s end",
+      ].join("\n");
+      if (lauxlib.luaL_dostring(L, harness) !== LUA_OK) {
+        throw new Error(`Lua harness failed: ${lua.lua_tostring(L, -1)}`);
+      }
+      const script = scriptChunk(result);
+      const loaded = lauxlib.luaL_loadbuffer(L, script, Buffer.byteLength(script), "=script");
+      if (loaded !== LUA_OK || lua.lua_pcall(L, 0, 0, 0) !== LUA_OK) {
+        throw new Error(`Lua error in the script chunk: ${lua.lua_tostring(L, -1)}`);
+      }
+      lua.lua_getglobal(L, callback);
+      if (lua.lua_type(L, -1) !== LUA_TFUNCTION) {
+        throw new Error(`the engine finds no global \`${callback}\` function`);
+      }
+      lua.lua_settop(L, 0);
+      if (lauxlib.luaL_dostring(L, call) !== LUA_OK) {
+        throw new Error(`Lua error calling ${callback}: ${lua.lua_tostring(L, -1)}`);
+      }
+      if (lauxlib.luaL_dostring(L, 'return table.concat(____log, ",")') !== LUA_OK) {
+        throw new Error(`Lua failed to read the log: ${lua.lua_tostring(L, -1)}`);
+      }
+      const log = lua.lua_tostring(L, -1);
+      return log === "" ? [] : log.split(",");
+    } finally {
+      lua.lua_close(L);
+    }
+  }
+
+  const IMPORTED_UPDATE = {
+    "main/world.ts": [
+      RECORD,
+      "",
+      "export function update(dt: number): void {",
+      '  record("world:" + dt);',
+      "}",
+      "",
+    ].join("\n"),
+    [SCRIPT_REL]: [
+      FACTORY_IMPORT,
+      'import { update } from "./world";',
+      "",
+      RECORD,
+      "",
+      "defineScript({",
+      "  init() {},",
+      "  update(self, dt) {",
+      '    record("callback");',
+      "    update(dt);",
+      "  },",
+      "});",
+      "",
+    ].join("\n"),
+  };
+
+  test("an update callback beside an imported update reaches the engine and the import", () => {
+    expect(runCallback(emit(IMPORTED_UPDATE), "update", "update({}, 0.5)")).toEqual([
+      "callback",
+      "world:0.5",
+    ]);
+  });
+
+  test("a returning init beside a module-level function init reaches the engine and the function", () => {
+    const result = emit({
+      [SCRIPT_REL]: [
+        FACTORY_IMPORT,
+        "",
+        RECORD,
+        "",
+        "function init(): number {",
+        '  record("helper");',
+        "  return 1;",
+        "}",
+        "",
+        "defineScript({",
+        "  init() {",
+        "    return { count: init() };",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+    });
+    expect(
+      runCallback(
+        result,
+        "init",
+        'local self = {} init(self) record("count:" .. tostring(self.count))',
+      ),
+    ).toEqual(["helper", "count:1"]);
+  });
+
+  test("an onMessage dispatcher beside a module-level const on_message reaches the engine", () => {
+    const result = emit({
+      [SCRIPT_REL]: [
+        FACTORY_IMPORT,
+        "",
+        RECORD,
+        "",
+        'const on_message = "shadow";',
+        "",
+        "defineScript({",
+        "  on_message: onMessage({",
+        "    ping(self) {",
+        '      record("ping");',
+        "    },",
+        "  }),",
+        "});",
+        "",
+      ].join("\n"),
+    });
+    expect(runCallback(result, "on_message", 'on_message({}, "ping", {}, nil)')).toEqual(["ping"]);
+  });
+
+  test("only the colliding callback is assigned through _G, and the import keeps its name", () => {
+    expect(scriptChunk(emit(IMPORTED_UPDATE))).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      local ____world = require("main.world")
+      local update = ____world.update
+      function init()
+      end
+      function _G.update(____self, dt)
+          record("callback")
+          update(dt)
+      end
+      return ____exports
+      "
+    `);
   });
 });
