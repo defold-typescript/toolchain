@@ -12,8 +12,10 @@ import * as os from "node:os";
 import * as path from "node:path";
 import {
   type BuildConfig,
+  bundledModules,
   computeOutputRel,
-  hsmModules,
+  ECS_LIBRARY,
+  HSM_LIBRARY,
   requirePathForRel,
   type SceneComponentIndex,
 } from "@defold-typescript/transpiler";
@@ -22,7 +24,7 @@ import {
   BuildFailureError,
   builtinRuntimeRels,
   GENERATED_BANNER,
-  hsmModuleRel,
+  libraryModuleRel,
   lualibBundleRel,
   readBuildConfig,
   timersModuleRel,
@@ -208,6 +210,43 @@ describe("createBuildSession", () => {
     );
   });
 
+  test("adding an ecs value import to a watched source writes the ecs module", () => {
+    const config: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+    writeIn(
+      cwd,
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { outDir: "build/lua" }, include: ["src/**/*.ts"] }),
+    );
+    writeIn(cwd, "src/entities.ts", "export const entities = 1;\n");
+
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+    const ecsRel = libraryModuleRel(config, { library: ECS_LIBRARY, name: "index" });
+    expect(existsSync(path.join(cwd, ecsRel))).toBe(false);
+    expect(session.isOwnOutput(ecsRel)).toBe(true);
+
+    writeIn(
+      cwd,
+      "src/entities.ts",
+      [
+        'import { world } from "@defold-typescript/types/ecs";',
+        "",
+        "export const entities = world<{ x: number }>({ x: 0 });",
+        "",
+      ].join("\n"),
+    );
+    const rebuilt = session.applyEvents(["src/entities.ts"], []);
+
+    expect(rebuilt.written).toContain(ecsRel);
+    expect(existsSync(path.join(cwd, ecsRel))).toBe(true);
+    expect(existsSync(path.join(cwd, `${ecsRel}.map`))).toBe(true);
+    const lua = readFileSync(
+      path.join(cwd, computeOutputRel("src/entities.ts", config, "module")),
+      "utf8",
+    );
+    expect(lua).toContain(`require("${requirePathForRel(ecsRel)}")`);
+  });
+
   test("hsm outputs stay current across rebuilds and are never read as orphans", () => {
     const config: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
     writeIn(
@@ -228,7 +267,7 @@ describe("createBuildSession", () => {
 
     const session = createBuildSession({ cwd });
     session.buildAll();
-    const indexRel = hsmModuleRel(config, "index");
+    const indexRel = libraryModuleRel(config, { library: HSM_LIBRARY, name: "index" });
     expect(existsSync(path.join(cwd, indexRel))).toBe(true);
 
     rmSync(path.join(cwd, indexRel));
@@ -237,8 +276,8 @@ describe("createBuildSession", () => {
     expect(rebuilt.written).toContain(indexRel);
     expect(existsSync(path.join(cwd, indexRel))).toBe(true);
 
-    for (const { name } of hsmModules()) {
-      expect(session.isOwnOutput(hsmModuleRel(config, name))).toBe(true);
+    for (const module of bundledModules(HSM_LIBRARY)) {
+      expect(session.isOwnOutput(libraryModuleRel(config, module))).toBe(true);
     }
 
     writeIn(cwd, "src/door.ts", "export const door = 1;\n");

@@ -1,15 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { dirname, resolve } from "node:path";
-import { hsmModules } from "@defold-typescript/transpiler";
+import { bundledModules, HSM_LIBRARY } from "@defold-typescript/transpiler";
 import ts from "typescript";
-import { HSM_DECLARATIONS_DIR } from "../scripts/emit-declarations";
 
 const PACKAGE_DIR = resolve(import.meta.dir, "..");
 const TSCONFIG = resolve(PACKAGE_DIR, "tsconfig.json");
 // TypeScript names every source file with forward slashes, on every platform.
-const DECLARATIONS_DIR = HSM_DECLARATIONS_DIR.replaceAll("\\", "/");
+const DECLARATIONS_DIR = resolve(PACKAGE_DIR, "..", "types", "hsm").replaceAll("\\", "/");
 
-const MODULES = hsmModules().map(({ name }) => name);
+const MODULES = bundledModules(HSM_LIBRARY).map(({ name }) => name);
 
 function declarationFile(name: string): string {
   return `${DECLARATIONS_DIR}/${name}.d.ts`;

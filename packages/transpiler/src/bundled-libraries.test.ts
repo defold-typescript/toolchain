@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { hsmClosure, hsmModules } from "./hsm-builtin";
+import {
+  BUNDLED_LIBRARIES,
+  bundledLibraryClosure,
+  bundledModuleOfRequire,
+  bundledModules,
+  ECS_LIBRARY,
+  HSM_LIBRARY,
+} from "./bundled-libraries";
 import { transpileProject } from "./transpile";
 
 const MACHINE = [
@@ -48,7 +55,7 @@ const SEQUENCE = [
 
 describe("hsm as a built-in import", () => {
   test("the module list is index plus async sequences, the debug inspector and the Defold adapter", () => {
-    expect(hsmModules()).toEqual([
+    expect(bundledModules(HSM_LIBRARY).map(({ library: _, ...module }) => module)).toEqual([
       {
         name: "async",
         specifier: "@defold-typescript/types/hsm/async",
@@ -75,17 +82,17 @@ describe("hsm as a built-in import", () => {
   test("importing defineMachine lowers to the index require and selects only index", () => {
     const result = transpileProject({ files: { "door.ts": MACHINE } });
     expect(result.diagnostics).toEqual([]);
-    expect(Object.keys(result.hsmModules ?? {})).toEqual(["index"]);
+    expect(Object.keys(result.libraryModules ?? {})).toEqual(["defold_typescript_hsm.index"]);
     expect(result.lua["door.ts"]).toMatchSnapshot();
-    expect(result.hsmModules?.index).toMatchSnapshot();
+    expect(result.libraryModules?.["defold_typescript_hsm.index"]).toMatchSnapshot();
   });
 
   test("importing only the bridge selects only defold", () => {
     const result = transpileProject({ files: { "events.ts": BRIDGE } });
     expect(result.diagnostics).toEqual([]);
-    expect(Object.keys(result.hsmModules ?? {})).toEqual(["defold"]);
+    expect(Object.keys(result.libraryModules ?? {})).toEqual(["defold_typescript_hsm.defold"]);
     expect(result.lua["events.ts"]).toContain('require("defold_typescript_hsm.defold")');
-    expect(result.hsmModules?.defold).toMatchSnapshot();
+    expect(result.libraryModules?.["defold_typescript_hsm.defold"]).toMatchSnapshot();
   });
 
   test("importing defineMachine alone ships no lualib bundle", () => {
@@ -96,10 +103,14 @@ describe("hsm as a built-in import", () => {
   test("importing sequence selects async and index and ships the lualib bundle", () => {
     const result = transpileProject({ files: { "door.ts": SEQUENCE } });
     expect(result.diagnostics).toEqual([]);
-    expect(Object.keys(result.hsmModules ?? {})).toEqual(["async", "index"]);
+    expect(Object.keys(result.libraryModules ?? {})).toEqual([
+      "defold_typescript_hsm.async",
+      "defold_typescript_hsm.index",
+    ]);
     expect(result.lualib).toBeDefined();
-    expect(result.hsmModules?.async).toContain('require("lualib_bundle")');
-    const required = new Set(result.hsmModules?.async?.match(/__TS__\w+/g));
+    const async = result.libraryModules?.["defold_typescript_hsm.async"];
+    expect(async).toContain('require("lualib_bundle")');
+    const required = new Set(async?.match(/__TS__\w+/g));
     expect(required.size).toBeGreaterThan(0);
     for (const name of required) {
       expect(result.lualib).toContain(`${name} = ${name}`);
@@ -117,20 +128,20 @@ describe("hsm as a built-in import", () => {
     ].join("\n");
     const result = transpileProject({ files: { "cancel.ts": source } });
     expect(result.diagnostics).toEqual([]);
-    expect(result.hsmModules).toBeUndefined();
+    expect(result.libraryModules).toBeUndefined();
     expect(result.lualib).toBeUndefined();
   });
 
   test("each selected module carries a v3 map naming its own source, and only those", () => {
     const result = transpileProject({ files: { "door.ts": MACHINE, "events.ts": BRIDGE } });
     expect(result.diagnostics).toEqual([]);
-    const names = Object.keys(result.hsmModules ?? {});
-    expect(names).toEqual(["defold", "index"]);
-    expect(Object.keys(result.hsmSourceMaps ?? {}).sort()).toEqual(names);
-    for (const name of names) {
-      const map = JSON.parse(result.hsmSourceMaps?.[name] ?? "");
+    const names = Object.keys(result.libraryModules ?? {});
+    expect(names).toEqual(["defold_typescript_hsm.defold", "defold_typescript_hsm.index"]);
+    expect(Object.keys(result.librarySourceMaps ?? {}).sort()).toEqual(names);
+    for (const requireName of names) {
+      const map = JSON.parse(result.librarySourceMaps?.[requireName] ?? "");
       expect(map.version).toBe(3);
-      expect(map.sources).toEqual([`${name}.ts`]);
+      expect(map.sources).toEqual([`${bundledModuleOfRequire(requireName)?.name}.ts`]);
       expect(typeof map.mappings).toBe("string");
     }
   });
@@ -138,8 +149,8 @@ describe("hsm as a built-in import", () => {
   test("a program with no hsm import selects nothing", () => {
     const result = transpileProject({ files: { "plain.ts": "export const n = 1;\n" } });
     expect(result.diagnostics).toEqual([]);
-    expect(result.hsmModules).toBeUndefined();
-    expect(result.hsmSourceMaps).toBeUndefined();
+    expect(result.libraryModules).toBeUndefined();
+    expect(result.librarySourceMaps).toBeUndefined();
   });
 
   test("a type-only import selects nothing", () => {
@@ -151,7 +162,7 @@ describe("hsm as a built-in import", () => {
     ].join("\n");
     const result = transpileProject({ files: { "paths.ts": source } });
     expect(result.diagnostics).toEqual([]);
-    expect(result.hsmModules).toBeUndefined();
+    expect(result.libraryModules).toBeUndefined();
     expect(result.lua["paths.ts"]).not.toContain("defold_typescript_hsm");
   });
 
@@ -178,10 +189,89 @@ describe("hsm as a built-in import", () => {
       defold: 'local hsm = require("defold_typescript_hsm.index")\nreturn {}',
     };
     const user = 'local events = require("defold_typescript_hsm.defold")';
-    expect(Object.keys(hsmClosure([user], () => compiled) ?? {}).sort()).toEqual([
-      "defold",
-      "index",
+    expect(Object.keys(bundledLibraryClosure([user], () => compiled) ?? {}).sort()).toEqual([
+      "defold_typescript_hsm.defold",
+      "defold_typescript_hsm.index",
     ]);
-    expect(hsmClosure(['local x = require("other")'], () => compiled)).toBeUndefined();
+    expect(bundledLibraryClosure(['local x = require("other")'], () => compiled)).toBeUndefined();
+  });
+});
+
+describe("the bundled-library registry", () => {
+  test("a require name maps back to its module only when a library registers it", () => {
+    const modules = BUNDLED_LIBRARIES.flatMap((library) => bundledModules(library));
+    expect(modules.length).toBeGreaterThan(0);
+    for (const module of modules) {
+      expect(bundledModuleOfRequire(module.requireName)).toBe(module);
+    }
+    expect(bundledModuleOfRequire("defold_typescript_hsm.missing")).toBeUndefined();
+    expect(bundledModuleOfRequire("defold_typescript_hsmx.index")).toBeUndefined();
+  });
+});
+
+const ECS_WORLD = [
+  'import { world } from "@defold-typescript/types/ecs";',
+  "",
+  "type Entity = { x: number };",
+  "",
+  "export const entities = world<Entity>({ x: 0 });",
+  "",
+].join("\n");
+
+describe("ecs as a built-in import", () => {
+  test("registers ecs with a single index module", () => {
+    expect(BUNDLED_LIBRARIES).toContain(ECS_LIBRARY);
+    expect(bundledModules(ECS_LIBRARY).map(({ requireName }) => requireName)).toEqual([
+      "defold_typescript_ecs.index",
+    ]);
+  });
+
+  test("calling world selects only the ecs index module", () => {
+    const result = transpileProject({ files: { "entities.ts": ECS_WORLD } });
+    expect(result.diagnostics).toEqual([]);
+    expect(Object.keys(result.libraryModules ?? {})).toEqual(["defold_typescript_ecs.index"]);
+    expect(Object.keys(result.librarySourceMaps ?? {})).toEqual(["defold_typescript_ecs.index"]);
+    expect(result.lualib).toBeUndefined();
+    expect(result.lua["entities.ts"]).toMatchSnapshot();
+  });
+
+  test.each([
+    {
+      shape: "a type-only import",
+      source: [
+        'import type { World } from "@defold-typescript/types/ecs";',
+        "",
+        "export function size(entities: World<{ x: number }>): number {",
+        "  return 0;",
+        "}",
+        "",
+      ].join("\n"),
+    },
+    {
+      shape: "an unused import",
+      source: [
+        'import { world } from "@defold-typescript/types/ecs";',
+        "",
+        "export const n = 1;",
+        "",
+      ].join("\n"),
+    },
+  ])("$shape selects nothing", ({ source }) => {
+    const result = transpileProject({ files: { "entities.ts": source } });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.libraryModules).toBeUndefined();
+    expect(result.lua["entities.ts"]).not.toContain("defold_typescript_ecs");
+  });
+
+  test("a program importing hsm and ecs gets both libraries, and one importing only hsm no ecs", () => {
+    const both = transpileProject({ files: { "door.ts": MACHINE, "entities.ts": ECS_WORLD } });
+    expect(both.diagnostics).toEqual([]);
+    expect(Object.keys(both.libraryModules ?? {})).toEqual([
+      "defold_typescript_ecs.index",
+      "defold_typescript_hsm.index",
+    ]);
+
+    const hsmOnly = transpileProject({ files: { "door.ts": MACHINE } });
+    expect(Object.keys(hsmOnly.libraryModules ?? {})).toEqual(["defold_typescript_hsm.index"]);
   });
 });

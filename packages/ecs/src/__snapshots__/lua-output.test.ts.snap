@@ -1,0 +1,806 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`ecs Lua output matches the reviewed Lua snapshot 1`] = `
+"--[[
+Copyright (c) 2016 Calvin Rose
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+]]
+--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local lastId = 0
+local lastWorld = 0
+local function idOf(entity, key)
+    return entity[key]
+end
+local function freshId(entity, key)
+    lastId = lastId + 1
+    entity[key] = lastId
+    return lastId
+end
+local function slotOf(list, index, entity, key)
+    local id = idOf(entity, key)
+    if id == nil then
+        return nil
+    end
+    local pos = index[id]
+    if pos == nil or list[pos + 1] ~= entity then
+        return nil
+    end
+    return pos
+end
+local function cachedId(systems, entity, key)
+    local id = idOf(entity, key)
+    if id == nil then
+        return nil
+    end
+    local count = #systems
+    do
+        local i = 0
+        while i < count do
+            local system = systems[i + 1]
+            if system.nocache ~= true and slotOf(system.entities, system.indices, entity, key) ~= nil then
+                return id
+            end
+            i = i + 1
+        end
+    end
+    return nil
+end
+local function swapRemove(list, index, pos, entity, key)
+    local last = list[#list]
+    list[pos + 1] = last
+    index[idOf(last, key)] = pos
+    index[idOf(entity, key)] = nil
+    table.remove(list)
+end
+local function removeShifting(list, pos)
+    local last = #list - 1
+    do
+        local i = pos
+        while i < last do
+            list[i + 1] = list[i + 1 + 1]
+            i = i + 1
+        end
+    end
+    table.remove(list)
+end
+local function insertShifting(list, pos, item)
+    local i = #list
+    list[#list + 1] = item
+    while i > pos do
+        list[i + 1] = list[i]
+        i = i - 1
+    end
+    list[pos + 1] = item
+end
+local function stableSort(list, before)
+    local count = #list
+    do
+        local i = 1
+        while i < count do
+            local item = list[i + 1]
+            if before(item, list[i]) then
+                local low = 0
+                local high = i - 1
+                while low < high do
+                    local mid = math.floor((low + high) / 2)
+                    if before(item, list[mid + 1]) then
+                        high = mid
+                    else
+                        low = mid + 1
+                    end
+                end
+                do
+                    local j = i
+                    while j > low do
+                        list[j + 1] = list[j]
+                        j = j - 1
+                    end
+                end
+                list[low + 1] = item
+            end
+            i = i + 1
+        end
+    end
+end
+local function passes(token, subject, candidate)
+    if type(token) == "string" then
+        return candidate[token] ~= nil
+    end
+    return token(subject, candidate)
+end
+local function requireAllFilter(tokens)
+    return function(subject, candidate)
+        local count = #tokens
+        do
+            local i = 0
+            while i < count do
+                if not passes(tokens[i + 1], subject, candidate) then
+                    return false
+                end
+                i = i + 1
+            end
+        end
+        return true
+    end
+end
+local function requireAnyFilter(tokens)
+    return function(subject, candidate)
+        local count = #tokens
+        do
+            local i = 0
+            while i < count do
+                if passes(tokens[i + 1], subject, candidate) then
+                    return true
+                end
+                i = i + 1
+            end
+        end
+        return false
+    end
+end
+local function rejectAllFilter(tokens)
+    return function(subject, candidate)
+        local count = #tokens
+        do
+            local i = 0
+            while i < count do
+                if not passes(tokens[i + 1], subject, candidate) then
+                    return true
+                end
+                i = i + 1
+            end
+        end
+        return false
+    end
+end
+local function rejectAnyFilter(tokens)
+    return function(subject, candidate)
+        local count = #tokens
+        do
+            local i = 0
+            while i < count do
+                if passes(tokens[i + 1], subject, candidate) then
+                    return false
+                end
+                i = i + 1
+            end
+        end
+        return true
+    end
+end
+local function processingSystemUpdate(self, dt)
+    local preProcess = self.preProcess
+    local processEntity = self.process
+    local postProcess = self.postProcess
+    if preProcess ~= nil then
+        preProcess(self, dt)
+    end
+    if processEntity ~= nil then
+        if self.nocache == true then
+            local entities = self.world.entities
+            local filter = self.filter
+            if filter ~= nil then
+                local count = #entities
+                do
+                    local i = 0
+                    while i < count do
+                        local entity = entities[i + 1]
+                        if filter(self, entity) then
+                            processEntity(self, entity, dt)
+                        end
+                        i = i + 1
+                    end
+                end
+            end
+        else
+            local entities = self.entities
+            local count = #entities
+            do
+                local i = 0
+                while i < count do
+                    processEntity(self, entities[i + 1], dt)
+                    i = i + 1
+                end
+            end
+        end
+    end
+    if postProcess ~= nil then
+        postProcess(self, dt)
+    end
+end
+local function makeSystem(first, second)
+    local system
+    if second == nil then
+        system = first
+    else
+        system = second
+        system.filter = first
+    end
+    system.__ecs_system = true
+    return system
+end
+local function makeProcessingSystem(filter, def)
+    local system = def
+    system.filter = filter
+    system.__ecs_system = true
+    system.update = processingSystemUpdate
+    return system
+end
+local function sortedSystemOnModify(self, _dt)
+    local entities = self.entities
+    local indices = self.indices
+    local sortDelegate = self.sortDelegate
+    if sortDelegate == nil then
+        local compare = self.compare
+        sortDelegate = function(e1, e2) return compare(self, e1, e2) end
+        self.sortDelegate = sortDelegate
+    end
+    stableSort(entities, sortDelegate)
+    local key = self.world.idKey
+    local count = #entities
+    do
+        local i = 0
+        while i < count do
+            indices[idOf(entities[i + 1], key)] = i
+            i = i + 1
+        end
+    end
+end
+local function makeSortedSystem(first, second)
+    local system = makeSystem(first, second)
+    system.onModify = sortedSystemOnModify
+    return system
+end
+local function makeSortedProcessingSystem(filter, def)
+    local system = makeProcessingSystem(filter, def)
+    system.onModify = sortedSystemOnModify
+    return system
+end
+local function isSystem(item)
+    return item.__ecs_system == true
+end
+local function worldAddEntity(self, entity)
+    local ____self_entitiesToChange_0 = self.entitiesToChange
+    ____self_entitiesToChange_0[#____self_entitiesToChange_0 + 1] = entity
+    return entity
+end
+local function worldAddSystem(self, system)
+    if system.world ~= nil then
+        error("ecs: the system already belongs to a world", 0)
+    end
+    local ____self_systemsToAdd_1 = self.systemsToAdd
+    ____self_systemsToAdd_1[#____self_systemsToAdd_1 + 1] = system
+    system.world = self
+    return system
+end
+local function addItems(world, items)
+    local count = #items
+    do
+        local i = 0
+        while i < count do
+            local item = items[i + 1]
+            if isSystem(item) then
+                worldAddSystem(world, item)
+            else
+                worldAddEntity(world, item)
+            end
+            i = i + 1
+        end
+    end
+end
+local function worldAdd(self, ...)
+    local items = {...}
+    addItems(self, items)
+end
+local function worldRemoveEntity(self, entity)
+    local ____self_entitiesToRemove_2 = self.entitiesToRemove
+    ____self_entitiesToRemove_2[#____self_entitiesToRemove_2 + 1] = entity
+    return entity
+end
+local function worldRemoveSystem(self, system)
+    if system.world ~= self then
+        error("ecs: the system does not belong to this world", 0)
+    end
+    local ____self_systemsToRemove_3 = self.systemsToRemove
+    ____self_systemsToRemove_3[#____self_systemsToRemove_3 + 1] = system
+    return system
+end
+local function removeItems(world, items)
+    local count = #items
+    do
+        local i = 0
+        while i < count do
+            local item = items[i + 1]
+            if isSystem(item) then
+                worldRemoveSystem(world, item)
+            else
+                worldRemoveEntity(world, item)
+            end
+            i = i + 1
+        end
+    end
+end
+local function worldRemove(self, ...)
+    local items = {...}
+    removeItems(self, items)
+end
+local function manageSystems(world)
+    local s2a = world.systemsToAdd
+    local s2r = world.systemsToRemove
+    if #s2a == 0 and #s2r == 0 then
+        return
+    end
+    world.systemsToAdd = {}
+    world.systemsToRemove = {}
+    local addCount = #s2a
+    local removeCount = #s2r
+    local worldEntityList = world.entities
+    local systems = world.systems
+    do
+        local i = 0
+        while i < removeCount do
+            local system = s2r[i + 1]
+            local index = system.index
+            if index ~= nil then
+                local onRemove = system.onRemove
+                if onRemove ~= nil and system.nocache ~= true then
+                    local entityList = system.entities
+                    local count = #entityList
+                    do
+                        local j = 0
+                        while j < count do
+                            onRemove(system, entityList[j + 1])
+                            j = j + 1
+                        end
+                    end
+                end
+                removeShifting(systems, index - 1)
+                local systemCount = #systems
+                do
+                    local j = index - 1
+                    while j < systemCount do
+                        systems[j + 1].index = j + 1
+                        j = j + 1
+                    end
+                end
+                local onRemoveFromWorld = system.onRemoveFromWorld
+                if onRemoveFromWorld ~= nil then
+                    onRemoveFromWorld(system, world)
+                end
+                system.world = nil
+                system.entities = nil
+                system.indices = nil
+                system.index = nil
+            end
+            i = i + 1
+        end
+    end
+    do
+        local i = 0
+        while i < addCount do
+            local system = s2a[i + 1]
+            local at = system.index
+            if at == nil or systems[at] ~= system then
+                if system.nocache ~= true then
+                    system.entities = {}
+                    system.indices = {}
+                end
+                if system.active == nil then
+                    system.active = true
+                end
+                system.modified = true
+                system.world = world
+                systems[#systems + 1] = system
+                system.index = #systems
+                local onAddToWorld = system.onAddToWorld
+                if onAddToWorld ~= nil then
+                    onAddToWorld(system, world)
+                end
+                if system.nocache ~= true then
+                    local entityList = system.entities
+                    local entityIndices = system.indices
+                    local onAdd = system.onAdd
+                    local filter = system.filter
+                    if filter ~= nil then
+                        local count = #worldEntityList
+                        do
+                            local j = 0
+                            while j < count do
+                                local entity = worldEntityList[j + 1]
+                                if filter(system, entity) then
+                                    entityIndices[idOf(entity, world.idKey)] = #entityList
+                                    entityList[#entityList + 1] = entity
+                                    if onAdd ~= nil then
+                                        onAdd(system, entity)
+                                    end
+                                end
+                                j = j + 1
+                            end
+                        end
+                    end
+                end
+            end
+            i = i + 1
+        end
+    end
+end
+local function manageEntities(world)
+    local e2r = world.entitiesToRemove
+    local e2c = world.entitiesToChange
+    if #e2r == 0 and #e2c == 0 then
+        return
+    end
+    world.entitiesToChange = {}
+    world.entitiesToRemove = {}
+    local changeCount = #e2c
+    local removeCount = #e2r
+    local entities = world.entities
+    local entityIndex = world.entityIndex
+    local systems = world.systems
+    local key = world.idKey
+    do
+        local i = 0
+        while i < changeCount do
+            local entity = e2c[i + 1]
+            if slotOf(entities, entityIndex, entity, key) == nil then
+                local id = cachedId(systems, entity, key)
+                if id == nil then
+                    id = freshId(entity, key)
+                end
+                entityIndex[id] = #entities
+                entities[#entities + 1] = entity
+            end
+            local systemCount = #systems
+            do
+                local j = 0
+                while j < systemCount do
+                    local system = systems[j + 1]
+                    if system.nocache ~= true then
+                        local ses = system.entities
+                        local seis = system.indices
+                        local index = slotOf(ses, seis, entity, key)
+                        local filter = system.filter
+                        if filter and filter(system, entity) then
+                            if index == nil then
+                                system.modified = true
+                                seis[idOf(entity, key)] = #ses
+                                ses[#ses + 1] = entity
+                                local onAdd = system.onAdd
+                                if onAdd ~= nil then
+                                    onAdd(system, entity)
+                                end
+                            end
+                        elseif index ~= nil then
+                            system.modified = true
+                            swapRemove(
+                                ses,
+                                seis,
+                                index,
+                                entity,
+                                key
+                            )
+                            local onRemove = system.onRemove
+                            if onRemove ~= nil then
+                                onRemove(system, entity)
+                            end
+                        end
+                    end
+                    j = j + 1
+                end
+            end
+            i = i + 1
+        end
+    end
+    do
+        local i = 0
+        while i < removeCount do
+            local entity = e2r[i + 1]
+            local listIndex = slotOf(entities, entityIndex, entity, key)
+            if listIndex ~= nil then
+                swapRemove(
+                    entities,
+                    entityIndex,
+                    listIndex,
+                    entity,
+                    key
+                )
+                local systemCount = #systems
+                do
+                    local j = 0
+                    while j < systemCount do
+                        local system = systems[j + 1]
+                        if system.nocache ~= true then
+                            local ses = system.entities
+                            local seis = system.indices
+                            local index = slotOf(ses, seis, entity, key)
+                            if index ~= nil then
+                                system.modified = true
+                                swapRemove(
+                                    ses,
+                                    seis,
+                                    index,
+                                    entity,
+                                    key
+                                )
+                                local onRemove = system.onRemove
+                                if onRemove ~= nil then
+                                    onRemove(system, entity)
+                                end
+                            end
+                        end
+                        j = j + 1
+                    end
+                end
+                if slotOf(entities, entityIndex, entity, key) == nil then
+                    entity[key] = nil
+                end
+            end
+            i = i + 1
+        end
+    end
+end
+local function worldRefresh(self)
+    manageSystems(self)
+    manageEntities(self)
+    local systems = self.systems
+    do
+        local i = #systems - 1
+        while i >= 0 do
+            local system = systems[i + 1]
+            if system.active == true then
+                local onModify = system.onModify
+                if onModify ~= nil and system.modified == true then
+                    onModify(system, 0)
+                end
+                system.modified = false
+            end
+            i = i - 1
+        end
+    end
+end
+local function worldUpdate(self, dt, filter)
+    manageSystems(self)
+    manageEntities(self)
+    local systems = self.systems
+    do
+        local i = #systems - 1
+        while i >= 0 do
+            local system = systems[i + 1]
+            if system.active == true then
+                local onModify = system.onModify
+                if onModify ~= nil and system.modified == true then
+                    onModify(system, dt)
+                end
+                local preWrap = system.preWrap
+                if preWrap ~= nil and (filter == nil or filter(self, system)) then
+                    preWrap(system, dt)
+                end
+            end
+            i = i - 1
+        end
+    end
+    local updateCount = #systems
+    do
+        local i = 0
+        while i < updateCount do
+            local system = systems[i + 1]
+            if system.active == true and (filter == nil or filter(self, system)) then
+                local update = system.update
+                if update ~= nil then
+                    local interval = system.interval
+                    if interval ~= nil then
+                        local buffered = system.bufferedTime
+                        local bufferedTime = (buffered == nil and 0 or buffered) + dt
+                        while bufferedTime >= interval do
+                            bufferedTime = bufferedTime - interval
+                            update(system, interval)
+                        end
+                        system.bufferedTime = bufferedTime
+                    else
+                        update(system, dt)
+                    end
+                end
+                system.modified = false
+            end
+            i = i + 1
+        end
+    end
+    local postWrapCount = #systems
+    do
+        local i = 0
+        while i < postWrapCount do
+            local system = systems[i + 1]
+            local postWrap = system.postWrap
+            if postWrap ~= nil and system.active == true and (filter == nil or filter(self, system)) then
+                postWrap(system, dt)
+            end
+            i = i + 1
+        end
+    end
+end
+local function worldClearEntities(self)
+    local entities = self.entities
+    local count = #entities
+    do
+        local i = 0
+        while i < count do
+            worldRemoveEntity(self, entities[i + 1])
+            i = i + 1
+        end
+    end
+end
+local function worldClearSystems(self)
+    local systems = self.systems
+    do
+        local i = #systems - 1
+        while i >= 0 do
+            worldRemoveSystem(self, systems[i + 1])
+            i = i - 1
+        end
+    end
+end
+local function worldGetEntityCount(self)
+    return #self.entities
+end
+local function worldGetSystemCount(self)
+    return #self.systems
+end
+local function worldSetSystemIndex(self, system, index)
+    manageSystems(self)
+    local oldIndex = system.index
+    if oldIndex == nil or system.world ~= self then
+        error("ecs: the system does not belong to this world", 0)
+    end
+    local systems = self.systems
+    local target = index
+    if target < 0 then
+        target = #systems + 1 + target
+    end
+    removeShifting(systems, oldIndex - 1)
+    insertShifting(systems, target - 1, system)
+    if target >= oldIndex then
+        do
+            local i = oldIndex
+            while i <= target do
+                systems[i].index = i
+                i = i + 1
+            end
+        end
+    else
+        do
+            local i = oldIndex
+            while i >= target do
+                systems[i].index = i
+                i = i - 1
+            end
+        end
+    end
+    return oldIndex
+end
+local function newWorld(items)
+    lastWorld = lastWorld + 1
+    local created = {
+        idKey = "__ecs_id_" .. tostring(lastWorld),
+        systems = {},
+        entities = {},
+        entityIndex = {},
+        entitiesToChange = {},
+        entitiesToRemove = {},
+        systemsToAdd = {},
+        systemsToRemove = {},
+        add = worldAdd,
+        addEntity = worldAddEntity,
+        changed = worldAddEntity,
+        addSystem = worldAddSystem,
+        remove = worldRemove,
+        removeEntity = worldRemoveEntity,
+        removeSystem = worldRemoveSystem,
+        refresh = worldRefresh,
+        update = worldUpdate,
+        clearEntities = worldClearEntities,
+        clearSystems = worldClearSystems,
+        getEntityCount = worldGetEntityCount,
+        getSystemCount = worldGetSystemCount,
+        setSystemIndex = worldSetSystemIndex
+    }
+    addItems(created, items)
+    manageSystems(created)
+    manageEntities(created)
+    return created
+end
+function ____exports.requireAll(...)
+    local tokens = {...}
+    return requireAllFilter(tokens)
+end
+function ____exports.requireAny(...)
+    local tokens = {...}
+    return requireAnyFilter(tokens)
+end
+function ____exports.rejectAll(...)
+    local tokens = {...}
+    return rejectAllFilter(tokens)
+end
+function ____exports.rejectAny(...)
+    local tokens = {...}
+    return rejectAnyFilter(tokens)
+end
+function ____exports.system()
+    return makeSystem
+end
+function ____exports.processingSystem()
+    return makeProcessingSystem
+end
+function ____exports.sortedSystem()
+    return makeSortedSystem
+end
+function ____exports.sortedProcessingSystem()
+    return makeSortedProcessingSystem
+end
+function ____exports.world(...)
+    local items = {...}
+    return newWorld(items)
+end
+function ____exports.add(target, ...)
+    local items = {...}
+    addItems(target, items)
+end
+function ____exports.addEntity(target, entity)
+    return target:addEntity(entity)
+end
+function ____exports.changed(target, entity)
+    return target:changed(entity)
+end
+function ____exports.addSystem(target, system)
+    return target:addSystem(system)
+end
+function ____exports.remove(target, ...)
+    local items = {...}
+    removeItems(target, items)
+end
+function ____exports.removeEntity(target, entity)
+    return target:removeEntity(entity)
+end
+function ____exports.removeSystem(target, system)
+    return target:removeSystem(system)
+end
+function ____exports.refresh(target)
+    target:refresh()
+end
+function ____exports.update(target, dt, systemFilter)
+    target:update(dt, systemFilter)
+end
+function ____exports.clearEntities(target)
+    target:clearEntities()
+end
+function ____exports.clearSystems(target)
+    target:clearSystems()
+end
+function ____exports.getEntityCount(target)
+    return target:getEntityCount()
+end
+function ____exports.getSystemCount(target)
+    return target:getSystemCount()
+end
+function ____exports.setSystemIndex(target, system, index)
+    return target:setSystemIndex(system, index)
+end
+return ____exports
+"
+`;

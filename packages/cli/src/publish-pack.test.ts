@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { hsmModules } from "@defold-typescript/transpiler";
+import { BUNDLED_LIBRARIES, bundledModules } from "@defold-typescript/transpiler";
 
 const PKG_DIR = resolve(import.meta.dir, "..");
 
@@ -52,6 +52,17 @@ describe("@defold-typescript/cli publish surface", () => {
 
   test("ships no hsm source (the transpiler compiles it)", () => {
     expect(paths.filter((path) => path.startsWith("dist/hsm/"))).toEqual([]);
+  });
+
+  test("ships third-party notices carrying each bundled library's copyright line", () => {
+    expect(paths).toContain("THIRD_PARTY_NOTICES.md");
+    const notices = readFileSync(resolve(PKG_DIR, "THIRD_PARTY_NOTICES.md"), "utf8");
+    for (const library of BUNDLED_LIBRARIES.filter((entry) => entry.licenseFromSource)) {
+      const source = readFileSync(resolve(PKG_DIR, "..", library.id, "src/index.ts"), "utf8");
+      const copyright = source.match(/^\/\*[\s\S]*?^(Copyright .+)$/m)?.[1];
+      expect(copyright).toBeDefined();
+      expect(notices).toContain(copyright ?? "");
+    }
   });
 
   test("excludes tests and snapshots", () => {
@@ -114,16 +125,18 @@ describe("@defold-typescript/cli publish surface", () => {
   });
 });
 
-describe("@defold-typescript/types hsm surface", () => {
+describe("@defold-typescript/types bundled-library surface", () => {
   const typesDir = resolve(PKG_DIR, "../types");
   const paths = packedPaths(typesDir);
 
-  test("ships a declaration and an export entry for every hsm module", async () => {
+  test("ships a declaration and an export entry for every bundled library module", async () => {
     const manifest = await Bun.file(resolve(typesDir, "package.json")).json();
-    for (const { name, specifier } of hsmModules()) {
-      expect(paths).toContain(`hsm/${name}.d.ts`);
-      const subpath = `.${specifier.slice("@defold-typescript/types".length)}`;
-      expect(manifest.exports[subpath]).toEqual({ types: `./hsm/${name}.d.ts` });
+    for (const library of BUNDLED_LIBRARIES) {
+      for (const { name, specifier } of bundledModules(library)) {
+        expect(paths).toContain(`${library.id}/${name}.d.ts`);
+        const subpath = `.${specifier.slice("@defold-typescript/types".length)}`;
+        expect(manifest.exports[subpath]).toEqual({ types: `./${library.id}/${name}.d.ts` });
+      }
     }
   });
 });

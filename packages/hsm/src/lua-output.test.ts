@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { compileHsmModules } from "@defold-typescript/transpiler";
+import { compileLibraryModules, HSM_LIBRARY } from "@defold-typescript/transpiler";
 
 const LUA_LINE_BUDGET = 1800;
 
 // The Lua the build writes into a project, from the transpiler's own compile:
-// `compileHsmModules` throws on any diagnostic, or on a lualib dependency outside
-// `async`, so reaching these assertions already proves both.
+// `compileLibraryModules` throws on any diagnostic, or on a lualib dependency
+// outside `async`, so reaching these assertions already proves both.
 describe("hsm core Lua output", () => {
-  const lua = compileHsmModules().index ?? "";
+  const lua = compileLibraryModules(HSM_LIBRARY).index ?? "";
 
   test("does not require the lualib bundle", () => {
     expect(lua).not.toContain('require("lualib_bundle")');
@@ -23,7 +23,7 @@ describe("hsm core Lua output", () => {
 });
 
 describe("hsm Defold adapter Lua output", () => {
-  const lua = compileHsmModules().defold ?? "";
+  const lua = compileLibraryModules(HSM_LIBRARY).defold ?? "";
 
   test("does not require the lualib bundle", () => {
     expect(lua).not.toContain('require("lualib_bundle")');
@@ -35,7 +35,7 @@ describe("hsm Defold adapter Lua output", () => {
 });
 
 describe("hsm debug inspector Lua output", () => {
-  const lua = compileHsmModules().debug ?? "";
+  const lua = compileLibraryModules(HSM_LIBRARY).debug ?? "";
 
   test("does not require the lualib bundle", () => {
     expect(lua).not.toContain('require("lualib_bundle")');
@@ -47,7 +47,7 @@ describe("hsm debug inspector Lua output", () => {
 });
 
 describe("hsm async module Lua output", () => {
-  const lua = compileHsmModules().async ?? "";
+  const lua = compileLibraryModules(HSM_LIBRARY).async ?? "";
 
   test("requires the lualib bundle for its promises", () => {
     expect(lua).toContain('require("lualib_bundle")');
