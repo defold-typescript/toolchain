@@ -845,6 +845,14 @@ local MANAGED_FIELDS = {
     bufferedTime = true,
     sortDelegate = true
 }
+local PROTO_FIELD = "__proto__"
+local ____temp_10
+if ({})[PROTO_FIELD] ~= nil then
+    ____temp_10 = _G.Object.defineProperty
+else
+    ____temp_10 = nil
+end
+local defineField = ____temp_10
 local DEFINED_FIELDS = {
     "filter",
     "interval",
@@ -899,7 +907,11 @@ local function reloadSystem(key, fresh)
     end
     for field in pairs(source) do
         if MANAGED_FIELDS[field] ~= true then
-            target[field] = source[field]
+            if field == PROTO_FIELD and defineField ~= nil then
+                defineField(target, field, {value = source[field], writable = true, enumerable = true, configurable = true})
+            else
+                target[field] = source[field]
+            end
         end
     end
     if existing.sortDelegate ~= nil then
