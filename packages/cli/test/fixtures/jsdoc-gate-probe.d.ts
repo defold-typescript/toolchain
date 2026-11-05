@@ -83,6 +83,41 @@ export interface Probe {
  */
 export declare function noExample(n: number): void;
 
+// the @example's fence is empty: no ts code in @example
+/**
+ * Logs a number with an empty example.
+ *
+ * @param n The number.
+ * @example
+ * ```ts
+ * ```
+ */
+export declare function emptyExample(n: number): void;
+
+// the second signature's @example has no closing fence: no ts code in @example
+/**
+ * Logs a number.
+ *
+ * @param n The number.
+ * @example
+ * ```ts
+ * import { requireAll } from "@defold-typescript/types/ecs";
+ *
+ * export const moving = requireAll("position", "velocity");
+ * ```
+ */
+export declare function unclosedOverload(n: number): void;
+/**
+ * Logs nothing.
+ *
+ * @example
+ * ```ts
+ * import { requireAll } from "@defold-typescript/types/ecs";
+ *
+ * export const moving = requireAll("position", "velocity");
+ */
+export declare function unclosedOverload(): void;
+
 /**
  * Has an example that imports an export ecs does not have.
  *
