@@ -2,7 +2,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { inspect } from "node:util";
 import * as vm from "node:vm";
-import { HSM_MODULE_SPECIFIER, hsmSourceFiles } from "@defold-typescript/transpiler";
+import { HSM_LIBRARY, librarySourceFiles } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
 import { freeGlobals } from "./hsm-view-free-globals";
 
@@ -293,7 +293,7 @@ interface LoadState {
 type DefineMachine = (key?: string) => (config: unknown) => unknown;
 
 function isHsmSpecifier(specifier: string): boolean {
-  return specifier === HSM_MODULE_SPECIFIER || specifier.startsWith(`${HSM_MODULE_SPECIFIER}/`);
+  return specifier === HSM_LIBRARY.specifier || specifier.startsWith(`${HSM_LIBRARY.specifier}/`);
 }
 
 function isFile(file: string): boolean {
@@ -307,7 +307,7 @@ function isFile(file: string): boolean {
 export function loadMachines(file: string, options: LoadMachinesOptions): MachineLoad {
   const entry = path.resolve(file);
   const hsmDir = path.resolve(options.hsmSourceDir);
-  const hsmFiles = new Set(hsmSourceFiles(hsmDir));
+  const hsmFiles = new Set(librarySourceFiles(hsmDir));
   const onDefine = options.onDefine ?? ((_key: string | undefined, config: unknown) => config);
   const hsmModules = new Map<string, ModuleRecord>();
   const stubs = new Map<string, unknown>();
@@ -388,9 +388,9 @@ export function loadMachines(file: string, options: LoadMachinesOptions): Machin
   const resolveImport = (importer: string, specifier: string): string | undefined => {
     if (isHsmSpecifier(specifier)) {
       const name =
-        specifier === HSM_MODULE_SPECIFIER
+        specifier === HSM_LIBRARY.specifier
           ? "index"
-          : specifier.slice(HSM_MODULE_SPECIFIER.length + 1);
+          : specifier.slice(HSM_LIBRARY.specifier.length + 1);
       return hsmFiles.has(`${name}.ts`) ? path.join(hsmDir, `${name}.ts`) : undefined;
     }
     if (specifier.startsWith("./") || specifier.startsWith("../")) {

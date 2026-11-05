@@ -57,6 +57,9 @@
     "./hsm/defold": {
       "types": "./hsm/defold.d.ts"
     },
+    "./ecs": {
+      "types": "./ecs/index.d.ts"
+    },
     "./cli-runtime": {
       "types": "./scripts/cli-runtime.ts",
       "bun": "./scripts/cli-runtime.ts",
@@ -76,6 +79,7 @@
     "src",
     "generated",
     "hsm",
+    "ecs",
     "scripts",
     "api-targets.json",
     "api-migrations.json",

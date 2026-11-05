@@ -1,6 +1,6 @@
 import { existsSync, statSync } from "node:fs";
 import * as path from "node:path";
-import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { consoleLines, openConsoleStream, resolveEditor } from "./editor-attach";
 import { loadClientAssets } from "./hsm-view-client-assets";
 import type { ClientAssets } from "./hsm-view-page";
@@ -95,7 +95,7 @@ export async function runHsmView(options: RunHsmViewOptions): Promise<number> {
   let session: ReturnType<typeof createSession>;
   let client: ClientAssets;
   try {
-    session = createSession({ file, hsmSourceDir: requireHsmSourceDir() });
+    session = createSession({ file, hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY) });
     client = (options.client ?? loadClientAssets)();
   } catch (thrown) {
     return fail(messageOf(thrown));

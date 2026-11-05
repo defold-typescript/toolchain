@@ -11,7 +11,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { ruleId } from "./hsm-view-index";
 import {
   createHsmViewApp,
@@ -22,7 +22,7 @@ import {
 import { createSession, type HsmViewSession } from "./hsm-view-session";
 import { lineStarts, tokenizeLines } from "./hsm-view-tokens";
 
-const hsmSourceDir = requireHsmSourceDir();
+const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
 const client = { js: "/*js*/", css: "/*css*/" };
 
 const LAMP = `import { defineMachine } from "@defold-typescript/types/hsm";

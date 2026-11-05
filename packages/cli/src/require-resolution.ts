@@ -1,6 +1,5 @@
 import {
   findEmittedRequires,
-  hsmRequireName,
   LUALIB_REQUIRE_NAME,
   requirePathForRel,
   rewriteEmittedRequires,
@@ -63,8 +62,8 @@ export interface RequireRewritesInput {
   readonly lualibRel?: string;
   /** Where the timers polyfill runtime lands, when the build emits one. */
   readonly timersRel?: string;
-  /** Where each hsm module the program requires lands, keyed by module name. */
-  readonly hsmRels?: Readonly<Record<string, string>>;
+  /** Where each bundled library module the program requires lands, keyed by require name. */
+  readonly libraryRels?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -86,7 +85,7 @@ export interface RequireRewritesInput {
  * diagnostic still fires against it.
  */
 export function requireRewrites(input: RequireRewritesInput): Map<string, string> {
-  const { sources, companions, lualibRel, timersRel, hsmRels = {} } = input;
+  const { sources, companions, lualibRel, timersRel, libraryRels = {} } = input;
   const rewrites = new Map<string, string>();
 
   const add = (requirePath: string, outputRel: string): void => {
@@ -112,15 +111,18 @@ export function requireRewrites(input: RequireRewritesInput): Map<string, string
   if (timersRel !== undefined) {
     add(TIMERS_REQUIRE_NAME, timersRel);
   }
-  for (const [name, outputRel] of Object.entries(hsmRels)) {
-    add(hsmRequireName(name), outputRel);
+  for (const [requireName, outputRel] of Object.entries(libraryRels)) {
+    add(requireName, outputRel);
   }
 
   return rewrites;
 }
 
 /** Where each runtime artifact this build writes lands. */
-export type RuntimeArtifactRels = Pick<RequireRewritesInput, "lualibRel" | "timersRel" | "hsmRels">;
+export type RuntimeArtifactRels = Pick<
+  RequireRewritesInput,
+  "lualibRel" | "timersRel" | "libraryRels"
+>;
 
 /** The internal require names `requireRewrites` respells for these artifacts. */
 export function runtimeRequireNames(runtime: RuntimeArtifactRels): Set<string> {
@@ -131,8 +133,8 @@ export function runtimeRequireNames(runtime: RuntimeArtifactRels): Set<string> {
   if (runtime.timersRel !== undefined) {
     names.add(TIMERS_REQUIRE_NAME);
   }
-  for (const name of Object.keys(runtime.hsmRels ?? {})) {
-    names.add(hsmRequireName(name));
+  for (const requireName of Object.keys(runtime.libraryRels ?? {})) {
+    names.add(requireName);
   }
   return names;
 }

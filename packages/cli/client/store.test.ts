@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { ruleId } from "../src/hsm-view-index";
 import { createHsmViewApp, type HsmViewIndex } from "../src/hsm-view-server";
 import { createSession, type HsmViewSession, type Snapshot } from "../src/hsm-view-session";
@@ -16,7 +16,7 @@ import {
 } from "./store";
 import { startViewer, type TestViewer } from "./test-viewer";
 
-const hsmSourceDir = requireHsmSourceDir();
+const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
 
 // CRLF line breaks, so a column computed as if every break were one character is off.
 const HERO = `import { defineMachine } from "@defold-typescript/types/hsm";

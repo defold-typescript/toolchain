@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
+  bundledModuleOfRequire,
   createTranspileSession,
-  requireHsmSourceDir,
+  requireLibrarySourceDir,
   rewriteEmittedRequires,
   type SceneComponentIndex,
   type SceneObjectComponents,
@@ -15,16 +16,15 @@ import {
   collectFailures,
   computeOutputRel,
   detectSourceOutputKind,
-  HSM_LIBRARY_LABEL,
-  hsmModuleRels,
   isTranspilerSource,
   LUALIB_BUNDLE_LABEL,
+  libraryModuleRels,
   lualibBundleRel,
   outputRelsForSource,
   pruneAlternativeOutputs,
   pruneLegacyRuntimeOutputs,
   readBuildConfig,
-  retargetHsmSourceMap,
+  retargetLibrarySourceMap,
   retargetSourceRoot,
   TIMERS_RUNTIME_LABEL,
   throwIfFailures,
@@ -214,11 +214,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     // The watch path rewrites the same chunks `runBuild` does, and for the same
     // reason: an incremental rebuild writes companions and generated runtimes
     // that the resolution check never scans.
-    const hsmRels = hsmModuleRels(config, Object.keys(result.hsmModules ?? {}));
+    const libraryRels = libraryModuleRels(config, Object.keys(result.libraryModules ?? {}));
     const runtimeRels: RuntimeArtifactRels = {
       ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
       ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
-      hsmRels,
+      libraryRels,
     };
     const rewrites = requireRewrites({
       sources: outputs,
@@ -233,7 +233,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       result.timersRuntime === undefined
         ? undefined
         : rewriteEmittedRequires(result.timersRuntime, rewrites);
-    const hsmLua = rewriteAll(result.hsmModules ?? {}, rewrites);
+    const libraryLua = rewriteAll(result.libraryModules ?? {}, rewrites);
 
     if (failures.size === 0) {
       // Violations first, for the reason `runBuild` runs them first: an
@@ -261,7 +261,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
         ...(timersRuntime !== undefined
           ? [{ label: TIMERS_RUNTIME_LABEL, outputRel: timersModuleRel(config) }]
           : []),
-        ...Object.values(hsmRels).map((outputRel) => ({ label: HSM_LIBRARY_LABEL, outputRel })),
+        ...Object.entries(libraryRels).flatMap(([requireName, outputRel]) => {
+          const module = bundledModuleOfRequire(requireName);
+          return module === undefined ? [] : [{ label: module.library.label, outputRel }];
+        }),
       ]);
       throwOnRuntimeRequireShadowing([...sourceTexts.keys()], runtimeRequireNames(runtimeRels));
     }
@@ -294,8 +297,11 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     if (timersRuntime !== undefined) {
       claims.claim(timersModuleRel(config), runtimeArtifactClaimant(TIMERS_RUNTIME_LABEL));
     }
-    for (const outputRel of Object.values(hsmRels)) {
-      claims.claim(outputRel, runtimeArtifactClaimant(HSM_LIBRARY_LABEL));
+    for (const [requireName, outputRel] of Object.entries(libraryRels)) {
+      const module = bundledModuleOfRequire(requireName);
+      if (module !== undefined) {
+        claims.claim(outputRel, runtimeArtifactClaimant(module.library.label));
+      }
     }
 
     // Over the whole standing program rather than this rebuild's event batch,
@@ -352,16 +358,22 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       writeScriptFile(cwd, runtimeRel, timersRuntime, undefined);
       written.push(runtimeRel);
     }
-    // Each map points at the hsm `.ts` the module was compiled from, so a
+    // Each map points at the library `.ts` the module was compiled from, so a
     // debugger steps through the library's TypeScript.
-    for (const [name, lua] of Object.entries(hsmLua)) {
-      const moduleRel = hsmRels[name];
-      if (moduleRel !== undefined) {
+    for (const [requireName, lua] of Object.entries(libraryLua)) {
+      const moduleRel = libraryRels[requireName];
+      const module = bundledModuleOfRequire(requireName);
+      if (moduleRel !== undefined && module !== undefined) {
         writeScriptFile(
           cwd,
           moduleRel,
           lua,
-          retargetHsmSourceMap(cwd, moduleRel, result.hsmSourceMaps?.[name], requireHsmSourceDir()),
+          retargetLibrarySourceMap(
+            cwd,
+            moduleRel,
+            result.librarySourceMaps?.[requireName],
+            requireLibrarySourceDir(module.library),
+          ),
         );
         written.push(moduleRel);
       }

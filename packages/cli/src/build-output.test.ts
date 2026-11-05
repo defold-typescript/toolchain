@@ -12,7 +12,8 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import {
-  resolveHsmSourceDir,
+  HSM_LIBRARY,
+  resolveLibrarySourceDir,
   type TranspileDiagnostic,
   transpileProject,
 } from "@defold-typescript/transpiler";
@@ -22,14 +23,14 @@ import {
   computeOutputRel,
   detectSourceOutputKind,
   GENERATED_BANNER,
-  hsmModuleRel,
   isFileIncluded,
   isTranspilerSource,
+  libraryModuleRel,
   lualibBundleRel,
   outputRelsForSource,
   pruneAlternativeOutputs,
   readBuildConfig,
-  retargetHsmSourceMap,
+  retargetLibrarySourceMap,
   retargetSourceRoot,
   throwIfFailures,
   timersModuleRel,
@@ -70,7 +71,9 @@ describe("readBuildConfig runtime-dir", () => {
 
     expect(lualibBundleRel(config)).toBe("lib/defold_typescript/lualib_bundle.lua");
     expect(timersModuleRel(config)).toBe("lib/defold_typescript/timers.lua");
-    expect(hsmModuleRel(config, "index")).toBe("lib/defold_typescript/hsm/index.lua");
+    expect(libraryModuleRel(config, { library: HSM_LIBRARY, name: "index" })).toBe(
+      "lib/defold_typescript/hsm/index.lua",
+    );
   });
 
   test("places every runtime file under lib/defold_typescript when the key is absent", () => {
@@ -80,14 +83,18 @@ describe("readBuildConfig runtime-dir", () => {
 
     expect(lualibBundleRel(config)).toBe("lib/defold_typescript/lualib_bundle.lua");
     expect(timersModuleRel(config)).toBe("lib/defold_typescript/timers.lua");
-    expect(hsmModuleRel(config, "index")).toBe("lib/defold_typescript/hsm/index.lua");
+    expect(libraryModuleRel(config, { library: HSM_LIBRARY, name: "index" })).toBe(
+      "lib/defold_typescript/hsm/index.lua",
+    );
   });
 
   test("joins the folder under a configured outDir", () => {
     const config = { outDir: "out/lua", include: [], runtimeDir: "vendor/rt" };
 
     expect(timersModuleRel(config)).toBe("out/lua/vendor/rt/timers.lua");
-    expect(hsmModuleRel(config, "async")).toBe("out/lua/vendor/rt/hsm/async.lua");
+    expect(libraryModuleRel(config, { library: HSM_LIBRARY, name: "async" })).toBe(
+      "out/lua/vendor/rt/hsm/async.lua",
+    );
   });
 
   test.each([
@@ -375,7 +382,7 @@ describe("retargetSourceRoot", () => {
   });
 });
 
-describe("retargetHsmSourceMap in a published install", () => {
+describe("retargetLibrarySourceMap in a published install", () => {
   let cwd: string;
 
   beforeEach(() => {
@@ -394,7 +401,7 @@ describe("retargetHsmSourceMap in a published install", () => {
     const installed = path.join(packageRoot, "dist/hsm/index.ts");
     mkdirSync(path.dirname(installed), { recursive: true });
     writeFileSync(installed, "export {};\n");
-    const dir = resolveHsmSourceDir(packageRoot);
+    const dir = resolveLibrarySourceDir(HSM_LIBRARY, packageRoot);
     expect(dir).toBe(path.dirname(installed));
     const program = transpileProject({
       files: {
@@ -402,10 +409,10 @@ describe("retargetHsmSourceMap in a published install", () => {
           'import { defineMachine } from "@defold-typescript/types/hsm";\nexport const define = defineMachine;\n',
       },
     });
-    const real = program.hsmSourceMaps?.index;
+    const real = program.librarySourceMaps?.["defold_typescript_hsm.index"];
     expect(real).toBeDefined();
 
-    const retargeted = retargetHsmSourceMap(cwd, moduleRel, real, dir ?? "");
+    const retargeted = retargetLibrarySourceMap(cwd, moduleRel, real, dir ?? "");
 
     const map = JSON.parse(retargeted ?? "");
     // The Local Lua Debugger's rule: the map's folder, then `sourceRoot`, then the source.

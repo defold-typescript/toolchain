@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { hsmModules } from "./hsm-builtin";
+import { BUNDLED_LIBRARIES, bundledModules } from "./bundled-libraries";
 
 const PKG_DIR = resolve(import.meta.dir, "..");
 
@@ -51,9 +51,11 @@ describe("@defold-typescript/transpiler publish surface", () => {
     expect(paths).toContain("dist/property-default-child.js");
   });
 
-  test("ships the hsm source the build compiles, one file per module", () => {
-    for (const { name } of hsmModules()) {
-      expect(paths).toContain(`dist/hsm/${name}.ts`);
+  test("ships each bundled library's source the build compiles, one file per module", () => {
+    for (const library of BUNDLED_LIBRARIES) {
+      for (const { name } of bundledModules(library)) {
+        expect(paths).toContain(`dist/${library.id}/${name}.ts`);
+      }
     }
   });
 

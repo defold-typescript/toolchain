@@ -14,8 +14,11 @@ import { Writable } from "node:stream";
 import {
   type BuildConfig,
   computeOutputRel,
+  ECS_LIBRARY,
+  findEmittedRequires,
+  HSM_LIBRARY,
   requirePathForRel,
-  resolveHsmSourceDir,
+  resolveLibrarySourceDir,
   type SceneComponentIndex,
   scanEmittedRequires,
 } from "@defold-typescript/transpiler";
@@ -23,9 +26,8 @@ import { type RunBuildResult, runBuild } from "./build";
 import {
   BuildFailureError,
   GENERATED_BANNER,
-  HSM_LIBRARY_LABEL,
-  hsmModuleRel,
   LUALIB_BUNDLE_LABEL,
+  libraryModuleRel,
   lualibBundleRel,
   timersModuleRel,
 } from "./build-output";
@@ -572,7 +574,10 @@ describe("runBuild", () => {
     const result = runBuild({ cwd });
 
     for (const name of ["index", "defold"]) {
-      const rel = hsmModuleRel({ outDir: undefined, include: ["src/**/*.ts"] }, name);
+      const rel = libraryModuleRel(
+        { outDir: undefined, include: ["src/**/*.ts"] },
+        { library: HSM_LIBRARY, name },
+      );
       expect(rel).toBe(`lib/defold_typescript/hsm/${name}.lua`);
       expect(result.written).toContain(rel);
       expect(existsSync(path.join(cwd, `${rel}.map`))).toBe(true);
@@ -599,10 +604,12 @@ describe("runBuild", () => {
     const result = runBuild({ cwd });
 
     const config: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
-    const indexRel = hsmModuleRel(config, "index");
+    const indexRel = libraryModuleRel(config, { library: HSM_LIBRARY, name: "index" });
     expect(indexRel).toBe("out/lua/lib/defold_typescript/hsm/index.lua");
     expect(result.written).toContain(indexRel);
-    expect(result.written).toContain(hsmModuleRel(config, "defold"));
+    expect(result.written).toContain(
+      libraryModuleRel(config, { library: HSM_LIBRARY, name: "defold" }),
+    );
     expect(existsSync(path.join(cwd, "lib"))).toBe(false);
 
     const script = readFileSync(path.join(cwd, "out/lua/door.ts.script"), "utf8");
@@ -641,7 +648,7 @@ describe("runBuild", () => {
 
     expect(failure).toBeInstanceOf(BuildFailureError);
     const entries = (failure as BuildFailureError).entries;
-    expect(entries.map((entry) => entry.message).join("\n")).toContain(HSM_LIBRARY_LABEL);
+    expect(entries.map((entry) => entry.message).join("\n")).toContain(HSM_LIBRARY.label);
     expect(existsSync(path.join(cwd, "out/lua/lib/defold_typescript/hsm/index.lua"))).toBe(false);
   });
 
@@ -681,6 +688,166 @@ describe("runBuild", () => {
 
     expect(result.written).toContain("out/lua/lib/defold_typescript/hsm/index.lua");
     expect(result.written).toContain("out/lua/vendor/rt/hsm/index.lua");
+  });
+
+  const ECS_SURFACES = [
+    {
+      rel: "src/game.ts",
+      kind: "script",
+      source: [
+        'import { defineScript } from "@defold-typescript/types";',
+        'import { world } from "@defold-typescript/types/ecs";',
+        "",
+        "export default defineScript({",
+        "  init() {",
+        "    world<{ x: number }>({ x: 0 });",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+    },
+    {
+      rel: "src/hud.ts",
+      kind: "gui-script",
+      source: [
+        'import { defineGuiScript } from "@defold-typescript/types";',
+        'import { world } from "@defold-typescript/types/ecs";',
+        "",
+        "export default defineGuiScript({",
+        "  init() {",
+        "    world<{ x: number }>({ x: 0 });",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+    },
+    {
+      rel: "src/view.ts",
+      kind: "render-script",
+      source: [
+        'import { defineRenderScript } from "@defold-typescript/types";',
+        'import { world } from "@defold-typescript/types/ecs";',
+        "",
+        "export default defineRenderScript({",
+        "  init() {",
+        "    world<{ x: number }>({ x: 0 });",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+    },
+    {
+      rel: "src/entities.ts",
+      kind: "module",
+      source: [
+        'import { world } from "@defold-typescript/types/ecs";',
+        "",
+        "export const entities = world<{ x: number }>({ x: 0 });",
+        "",
+      ].join("\n"),
+    },
+  ] as const;
+  const ECS_OUTDIR_TSCONFIG = JSON.stringify({
+    compilerOptions: { outDir: "out/lua", strict: true },
+    include: ["src/**/*.ts"],
+  });
+
+  test("writes the ecs module once for a script, GUI script, render script and module that call it", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    for (const { rel, source } of ECS_SURFACES) {
+      writeFile(rel, source);
+    }
+
+    const result = runBuild({ cwd });
+
+    const config: BuildConfig = { outDir: undefined, include: ["src/**/*.ts"] };
+    const ecsRel = libraryModuleRel(config, { library: ECS_LIBRARY, name: "index" });
+    expect(ecsRel).toBe("lib/defold_typescript/ecs/index.lua");
+    expect(result.written.filter((rel) => rel === ecsRel)).toHaveLength(1);
+    expect(existsSync(path.join(cwd, `${ecsRel}.map`))).toBe(true);
+    for (const { rel, kind } of ECS_SURFACES) {
+      const outputRel = computeOutputRel(rel, config, kind);
+      expect(result.written).toContain(outputRel);
+      const lua = readFileSync(path.join(cwd, outputRel), "utf8");
+      expect(findEmittedRequires(lua)).toContain("lib.defold_typescript.ecs.index");
+    }
+  });
+
+  test("writes the ecs module under outDir", () => {
+    writeFile("tsconfig.json", ECS_OUTDIR_TSCONFIG);
+    writeFile("src/entities.ts", ECS_SURFACES[3].source);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("out/lua/lib/defold_typescript/ecs/index.lua");
+    expect(existsSync(path.join(cwd, "lib"))).toBe(false);
+    const config: BuildConfig = { outDir: "out/lua", include: ["src/**/*.ts"] };
+    const moduleRel = computeOutputRel("src/entities.ts", config, "module");
+    const lua = readFileSync(path.join(cwd, moduleRel), "utf8");
+    expect(findEmittedRequires(lua)).toContain("out.lua.lib.defold_typescript.ecs.index");
+  });
+
+  test("writes no ecs module when a source imports only its types", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/entities.ts",
+      [
+        'import type { World } from "@defold-typescript/types/ecs";',
+        "",
+        "export function size(_entities: World<{ x: number }>): number {",
+        "  return 0;",
+        "}",
+        "",
+      ].join("\n"),
+    );
+
+    runBuild({ cwd });
+
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/ecs"))).toBe(false);
+  });
+
+  test("fails, writing nothing over it, when a source lands on the ecs output path", () => {
+    writeFile("tsconfig.json", ECS_OUTDIR_TSCONFIG);
+    writeFile("src/entities.ts", ECS_SURFACES[3].source);
+    writeFile("src/lib/defold_typescript/ecs/index.ts", "export const mine = 1;\n");
+
+    let failure: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(BuildFailureError);
+    const entries = (failure as BuildFailureError).entries;
+    expect(entries.map((entry) => entry.message).join("\n")).toContain(ECS_LIBRARY.label);
+    expect(existsSync(path.join(cwd, "out/lua/lib/defold_typescript/ecs/index.lua"))).toBe(false);
+  });
+
+  test("a source whose require name is the ecs library's fails the build", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: { strict: true },
+        include: ["src/**/*.ts", "defold_typescript_ecs/**/*.ts"],
+      }),
+    );
+    writeFile("src/entities.ts", ECS_SURFACES[3].source);
+    writeFile("defold_typescript_ecs/index.ts", "export const mine = 1;\n");
+
+    let failure: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(BuildFailureError);
+    const entries = (failure as BuildFailureError).entries;
+    expect(entries.map((entry) => entry.file)).toContain("defold_typescript_ecs/index.ts");
+    expect(entries.map((entry) => entry.message).join("\n")).toContain(
+      "defold_typescript_ecs.index",
+    );
   });
 
   test("aggregates diagnostics across multiple broken files", () => {
@@ -1025,7 +1192,7 @@ describe("runBuild runtime folder", () => {
   // cross drives on Windows (a checkout on D:, the temp folder on C:), so the
   // project sits on the source's drive.
   beforeEach(() => {
-    const root = path.parse(resolveHsmSourceDir() ?? cwd).root;
+    const root = path.parse(resolveLibrarySourceDir(HSM_LIBRARY) ?? cwd).root;
     if (path.parse(cwd).root.toLowerCase() === root.toLowerCase()) return;
     rmSync(cwd, { recursive: true, force: true });
     cwd = mkdtempSync(path.join(root, "defold-typescript-build-"));
@@ -1117,7 +1284,7 @@ describe("runBuild runtime folder", () => {
 
     runBuild({ cwd });
 
-    const sourceDir = resolveHsmSourceDir();
+    const sourceDir = resolveLibrarySourceDir(HSM_LIBRARY);
     expect(sourceDir).not.toBeNull();
     for (const name of ["index", "defold", "async"]) {
       const mapAbs = path.join(cwd, folder, "hsm", `${name}.lua.map`);
@@ -1152,6 +1319,47 @@ describe("runBuild runtime folder", () => {
     );
     expect(readFileSync(source, "utf8").split("\n")[sourceLine ?? -1]).toContain(
       "function sequence",
+    );
+  });
+
+  test("a line of the written ecs module maps past the license header to its source line", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }),
+    );
+    writeFile(
+      "src/entities.ts",
+      [
+        'import { system, world } from "@defold-typescript/types/ecs";',
+        "",
+        "export const entities = world<{ x: number }>(system<{ x: number }>()({}));",
+        "",
+      ].join("\n"),
+    );
+
+    runBuild({ cwd });
+
+    const rel = "lib/defold_typescript/ecs/index.lua";
+    const lines = readFileSync(path.join(cwd, rel), "utf8").split("\n");
+    expect(lines[0]).toBe("--[[");
+    const generatedLine = lines.findIndex((line) =>
+      line.startsWith("function ____exports.system("),
+    );
+    expect(generatedLine).toBeGreaterThan(0);
+    const map = JSON.parse(readFileSync(path.join(cwd, `${rel}.map`), "utf8"));
+    const [segment] = decodeMappings(map.mappings)[generatedLine] ?? [];
+    expect(segment).toBeDefined();
+    const [, sourceIndex, sourceLine] = segment ?? [];
+    const source = path.resolve(
+      path.join(cwd, path.dirname(rel)),
+      map.sourceRoot || ".",
+      map.sources[sourceIndex ?? 0],
+    );
+    const ecsSource = path.join(resolveLibrarySourceDir(ECS_LIBRARY) ?? "", "index.ts");
+    expect(source).toBe(ecsSource);
+    const sourceLines = readFileSync(source, "utf8").split("\n");
+    expect(sourceLine).toBe(
+      sourceLines.findIndex((line) => line.startsWith("export function system<")),
     );
   });
 

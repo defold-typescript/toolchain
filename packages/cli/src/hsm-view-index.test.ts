@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { machineIndex, ruleId, ruleIds } from "./hsm-view-index";
 import { loadMachines, type SourceSpan } from "./hsm-view-load";
 
@@ -15,7 +15,7 @@ const PLATFORMER_MACHINE = path.join(
   "src",
   "player-machine.ts",
 );
-const hsmSourceDir = requireHsmSourceDir();
+const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
 
 let dir: string;
 

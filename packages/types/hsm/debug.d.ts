@@ -1,4 +1,4 @@
-// Generated from packages/hsm/src/debug.ts by `bun run --cwd packages/hsm declarations`; do not edit.
+// Generated from packages/hsm/src/debug.ts by `bun run --cwd packages/transpiler declarations`; do not edit.
 import type { EventObject, MachineInstance } from "./index";
 /**
  * Returned by `inspect`. Keep it on `self` and call its `draw` from `update`.

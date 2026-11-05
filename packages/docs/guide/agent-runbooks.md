@@ -775,7 +775,8 @@ the [runtime folder](./build.md#the-runtime-folder) (`lib/defold_typescript/` by
 default, moved by `package.json` `runtime-dir`): `lualib_bundle.lua` (when a
 source uses a TS runtime helper like `Object.keys` or spread, or when timers or
 `hsm/async` are used, since those require it), `timers.lua` (when timers are
-used) and `hsm/<module>.lua` (per imported `hsm` module).
+used), `hsm/<module>.lua` (per imported `hsm` module) and `ecs/index.lua` (when
+`@defold-typescript/types/ecs` is imported for values).
 
 Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
 produces the Lua *content* in memory; the CLI writes the *files*, choosing the
