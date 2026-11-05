@@ -232,7 +232,7 @@ The script runs on one controller object that spawns every lamp, so the world up
 
 | Function | Returns | Meaning |
 | --- | --- | --- |
-| `member` | `{ enter, exit }` | `member(world, key)` sets the optional `true` component `key` on enter and clears it on exit; `member(world, key, value)` sets `value`. Both call `changed` only while `world` holds the entity. |
-| `join` | a hook | `join(world)` adds the machine's `ctx` to `world` at its next `refresh` or `update`. Set it as the root's `enter`. |
-| `leave` | a hook | `leave(world)` removes the machine's `ctx` from `world` at its next `refresh` or `update`. Set it as the `enter` of the state the entity leaves the world in. |
-| `tickMachines` | a system | `tickMachines<E>(key)` calls `update(dt)` on the machine each entity holds in `key`, with the world update's `dt`. A membership change it causes shows at the next update. |
+| `member` | `{ enter, exit }` | Hooks that set the optional `true` component `key` while the machine is in the state. |
+| `join` | a hook | A hook that adds the machine's `ctx` to `world` as an entity. |
+| `leave` | a hook | A hook that removes the machine's `ctx` from `world`. |
+| `tickMachines` | a system | A processing system that calls `update(dt)` on the machine each entity holds in `key`. |
