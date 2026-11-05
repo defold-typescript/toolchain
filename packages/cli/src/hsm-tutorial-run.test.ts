@@ -10,7 +10,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
-import { lessonProjects } from "./hsm-guide-steps";
+import { lessonProjects } from "./guide-steps";
 import { loadMachines } from "./hsm-view-load";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");

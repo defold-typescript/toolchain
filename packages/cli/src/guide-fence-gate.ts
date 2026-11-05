@@ -4,14 +4,15 @@
  * against the declarations `@defold-typescript/types` ships, and transpiled through the build. A
  * `ts excerpt` fence must quote an excerpt source whose own fences pass the same checks. A page's
  * `## Reference` tables are read back as the first-cell names of their rows, for a gate to hold
- * them to the exports of the library source.
+ * them to the exports of the library source. A tutorial's `ts step` fences build one project per
+ * lesson, and the last one is held to the surface the library's entry points ship.
  */
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { type TranspileProjectResult, transpileProject } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
-import { fenceTitle, isStepFence, tsFences } from "./hsm-guide-steps";
+import { fenceTitle, isStepFence, lessonProjects, tsFences } from "./guide-steps";
 
 export const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 export const GUIDE_DIR = path.join(REPO_ROOT, "packages", "docs", "guide");
@@ -88,6 +89,19 @@ export function badFenceTitles(guide: string): string[] {
   return guideFences(guide)
     .filter((fence) => !fence.rel.startsWith("guide-fence-") && !FENCE_TITLE.test(fence.rel))
     .map((fence) => fence.label);
+}
+
+/** Every file of every lesson's project, each project under its own `lesson-<nn>/`. */
+export function lessonFences(page: string): Fence[] {
+  return lessonProjects(page).flatMap((project, i) => {
+    const dir = `lesson-${String(i + 1).padStart(2, "0")}`;
+    return [...project.files].map(([title, body]): Fence => {
+      if (!FENCE_TITLE.test(title)) {
+        throw new Error(`step fence title "${title}" under "${project.heading}" names no file`);
+      }
+      return { label: `${project.heading} > ${title}`, rel: `${dir}/${title}`, body };
+    });
+  });
 }
 
 export interface FenceProject {
@@ -249,6 +263,130 @@ export function exportedFunctions(program: ts.Program, sourcePath: string): stri
   return moduleExports(program, sourcePath)
     .filter((symbol) => (symbol.declarations ?? []).some(ts.isFunctionDeclaration))
     .map((symbol) => symbol.name);
+}
+
+/** The entry points a tutorial teaches, and how their exports count toward its surface. */
+export interface TaughtSurface {
+  /** Keys of `GUIDE_TYPE_PATHS`, each a declaration file whose exports make up the surface. */
+  readonly entryPoints: readonly string[];
+  /** Exported interfaces whose members no lesson needs to name. */
+  readonly untaughtInterfaces?: ReadonlySet<string>;
+  /** Exported type aliases whose union variants' interface members count, as an interface's do. */
+  readonly memberAliases?: ReadonlySet<string>;
+}
+
+export interface SurfaceCoverage {
+  /** Each member the project never names, as `<declaring type>.<member>`. */
+  readonly members: string[];
+  /** Each exported function the project never calls, once whatever its overloads. */
+  readonly functions: string[];
+}
+
+/**
+ * What `project` leaves unused of the surface `surface`'s entry points ship: the members of every
+ * exported interface and of each `memberAliases` type, and every exported function. A member
+ * typed `never` only reports a renamed key, so it is no part of the surface. A function is used
+ * where it is called, and a call of any of its overloads uses it: importing it, or naming it
+ * without a call, is no use.
+ */
+export function unusedSurface(project: FenceProject, surface: TaughtSurface): SurfaceCoverage {
+  const declarationFiles = surface.entryPoints.map((entry) => {
+    const file = GUIDE_TYPE_PATHS[entry]?.[0];
+    if (file === undefined) throw new Error(`${entry} is no entry of GUIDE_TYPE_PATHS`);
+    return file;
+  });
+  const program = ts.createProgram(
+    [
+      path.join(project.src, "env.d.ts"),
+      ...declarationFiles,
+      ...[...project.sources.keys()].map((rel) => path.join(project.src, rel)),
+    ],
+    compilerOptions(project.src),
+  );
+  const checker = program.getTypeChecker();
+
+  const members = new Map<ts.Declaration, string>();
+  const functions = new Map<ts.Symbol, string>();
+  const overloads = new Map<ts.Declaration, ts.Symbol>();
+  const listMembers = (type: ts.Type): void => {
+    for (const member of checker.getPropertiesOfType(type)) {
+      for (const declaration of member.declarations ?? []) {
+        if (!ts.isPropertySignature(declaration) && !ts.isMethodSignature(declaration)) continue;
+        if (declaration.type?.kind === ts.SyntaxKind.NeverKeyword) continue;
+        const owner = declaration.parent;
+        if (ts.isInterfaceDeclaration(owner)) {
+          members.set(declaration, `${owner.name.text}.${member.name}`);
+        }
+      }
+    }
+  };
+  for (const file of declarationFiles) {
+    const source = program.getSourceFile(file);
+    const moduleSymbol = source === undefined ? undefined : checker.getSymbolAtLocation(source);
+    if (moduleSymbol === undefined) {
+      throw new Error(`${file} is not a module of the program`);
+    }
+    for (const exported of checker.getExportsOfModule(moduleSymbol)) {
+      for (const declaration of exported.declarations ?? []) {
+        if (ts.isFunctionDeclaration(declaration)) {
+          functions.set(exported, exported.name);
+          overloads.set(declaration, exported);
+        } else if (ts.isInterfaceDeclaration(declaration)) {
+          if (!surface.untaughtInterfaces?.has(exported.name)) {
+            listMembers(checker.getDeclaredTypeOfSymbol(exported));
+          }
+        } else if (
+          ts.isTypeAliasDeclaration(declaration) &&
+          surface.memberAliases?.has(exported.name)
+        ) {
+          const declared = checker.getDeclaredTypeOfSymbol(exported);
+          for (const variant of declared.isUnion() ? declared.types : [declared]) {
+            listMembers(variant);
+          }
+        }
+      }
+    }
+  }
+
+  const used = new Set<ts.Declaration>();
+  const called = new Set<ts.Symbol>();
+  const use = (symbol: ts.Symbol | undefined): void => {
+    if (symbol === undefined) return;
+    const target = symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
+    for (const declaration of target.declarations ?? []) used.add(declaration);
+  };
+  const visit = (node: ts.Node): void => {
+    if (ts.isIdentifier(node)) {
+      use(checker.getSymbolAtLocation(node));
+    } else if (ts.isCallExpression(node)) {
+      const declaration = checker.getResolvedSignature(node)?.declaration;
+      const callee = declaration === undefined ? undefined : overloads.get(declaration);
+      if (callee !== undefined) called.add(callee);
+    } else if (ts.isObjectLiteralExpression(node)) {
+      const contextual = checker.getContextualType(node);
+      // A key one variant of a union lacks is no property of the union, so each variant is asked.
+      const variants =
+        contextual === undefined ? [] : contextual.isUnion() ? contextual.types : [contextual];
+      for (const property of node.properties) {
+        const name = property.name;
+        if (name === undefined || !(ts.isIdentifier(name) || ts.isStringLiteral(name))) continue;
+        for (const variant of variants) use(checker.getPropertyOfType(variant, name.text));
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  for (const rel of project.sources.keys()) {
+    const source = program.getSourceFile(path.join(project.src, rel));
+    if (source === undefined) throw new Error(`${rel} is not a file of the program`);
+    visit(source);
+  }
+
+  const unused = <K>(listed: ReadonlyMap<K, string>, covered: ReadonlySet<K>): string[] =>
+    [...listed]
+      .filter(([key]) => !covered.has(key))
+      .map(([, label]) => label)
+      .sort();
+  return { members: unused(members, used), functions: unused(functions, called) };
 }
 
 function referenceSection(page: string, heading: string): string | undefined {

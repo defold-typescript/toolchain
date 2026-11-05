@@ -15,7 +15,12 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     id: "tutorial",
     label: "Tutorials",
     subtitle: "Build complete games and learn the ideas behind them.",
-    slugs: ["tetris-tutorial", "vectors-tutorial", "state-machines-tutorial"],
+    slugs: [
+      "tetris-tutorial",
+      "vectors-tutorial",
+      "state-machines-tutorial",
+      "entity-systems-tutorial",
+    ],
   },
   {
     id: "typescript",
