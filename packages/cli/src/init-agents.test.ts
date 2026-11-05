@@ -2,13 +2,17 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { BUNDLED_LIBRARIES } from "@defold-typescript/transpiler";
 import {
   AGENTS_BLOCK_END,
   AGENTS_BLOCK_START,
+  BUNDLED_LIBRARY_GUIDES,
   renderAgentsBlock,
   renderClaudeBlock,
   runInitAgents,
 } from "./init-agents";
+
+const GUIDE_DIR = path.resolve(import.meta.dir, "..", "..", "docs", "guide");
 
 let cwd: string;
 
@@ -193,6 +197,44 @@ describe("runInitAgents", () => {
     const block = renderAgentsBlock();
     expect(block).toContain("@defold-typescript/cli@latest upgrade");
     expect(block).toContain("node_modules/@defold-typescript/docs/guide/upgrading.md");
+  });
+
+  test("renderAgentsBlock names every bundled library with its import and guide page", () => {
+    const lines = renderAgentsBlock().split("\n");
+    expect(lines).toContain(
+      "Built-in libraries (no install; import them rather than hand-rolling the same logic):",
+    );
+    for (const library of BUNDLED_LIBRARIES) {
+      const page = BUNDLED_LIBRARY_GUIDES[library.id];
+      const line = lines.find((candidate) => candidate.startsWith(`- \`${library.specifier}\` `));
+      expect(line).toBeDefined();
+      expect(line).toContain(library.label);
+      expect(line).toContain(`node_modules/@defold-typescript/docs/guide/${page}`);
+    }
+  });
+
+  test("each bundled library's guide page imports that library", () => {
+    for (const library of BUNDLED_LIBRARIES) {
+      const page = readFileSync(path.join(GUIDE_DIR, BUNDLED_LIBRARY_GUIDES[library.id]), "utf8");
+      expect(page).toContain(`from "${library.specifier}"`);
+    }
+  });
+
+  test("every guide page the block names ships in the docs package", () => {
+    const pages = [
+      ...renderAgentsBlock().matchAll(
+        /node_modules\/@defold-typescript\/docs\/guide\/([a-z0-9-]+\.md)/g,
+      ),
+    ].map((match) => match[1] as string);
+    expect(pages).toContain("pinning-defold-target.md");
+    expect(pages).toContain("upgrading.md");
+    for (const page of pages) {
+      expect(existsSync(path.join(GUIDE_DIR, page))).toBe(true);
+    }
+  });
+
+  test("renderAgentsBlock is byte-identical across renders", () => {
+    expect(renderAgentsBlock()).toBe(renderAgentsBlock());
   });
 
   test("the upgrade pointer stays versionless and path-stable under node_modules", () => {
