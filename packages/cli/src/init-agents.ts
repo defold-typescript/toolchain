@@ -1,5 +1,11 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
+import { BUNDLED_LIBRARIES, type BundledLibrary } from "@defold-typescript/transpiler";
+
+export const BUNDLED_LIBRARY_GUIDES: Readonly<Record<BundledLibrary["id"], string>> = {
+  hsm: "state-machines.md",
+  ecs: "entity-systems.md",
+};
 
 export const AGENTS_BLOCK_START = "<!-- defold-typescript:agents:start -->";
 export const AGENTS_BLOCK_END = "<!-- defold-typescript:agents:end -->";
@@ -35,6 +41,12 @@ export function renderAgentsBlock(): string {
     "  `@defold-typescript/types/src/core-types.ts` and `@defold-typescript/types/src/engine-globals.d.ts`.",
     "- Engine and Lua manuals (index; fetch the specific page you need): https://defold.com/llms.txt",
     "If those paths are absent, run the project's install command first.",
+    "",
+    "Built-in libraries (no install; import them rather than hand-rolling the same logic):",
+    ...BUNDLED_LIBRARIES.map(
+      (library) =>
+        `- \`${library.specifier}\` — ${library.label}; see \`node_modules/@defold-typescript/docs/guide/${BUNDLED_LIBRARY_GUIDES[library.id]}\`.`,
+    ),
     "",
     "Hard rules:",
     "- Never hand-edit or commit `build/`; the transpiler generates it.",
