@@ -52,6 +52,8 @@ describe("jsdoc gate probe", () => {
       "probe:Probe.undocumented: no summary",
       "probe:Probe.scale: no @param factor",
       "probe:noExample: no @example",
+      "probe:emptyExample: no ts code in @example",
+      "probe:unclosedOverload#2: no ts code in @example",
     ]);
   });
 
@@ -64,6 +66,7 @@ describe("jsdoc gate probe", () => {
         "probe:missingReturns @example 1",
         "probe:strayParam @example 1",
         "probe:overloaded#1 @example 1",
+        "probe:unclosedOverload#1 @example 1",
         "probe:missingExport @example 1",
         "probe:clean @example 1",
       ]);
