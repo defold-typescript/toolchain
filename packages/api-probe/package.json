@@ -11,10 +11,12 @@
     "test:probe": "bun test ./src/runtime-probe.e2e.ts",
     "test:probe:native-import": "bun test ./src/native-import-probe.e2e.ts",
     "test:probe:bob-library": "bun test ./src/bob-library-probe.e2e.ts",
+    "test:probe:ecs": "bun test ./src/ecs-smoke.e2e.ts",
     "bench:hsm": "bun test ./src/hsm-bench.e2e.ts"
   },
   "dependencies": {
     "@defold-typescript/cli": "workspace:*",
+    "@defold-typescript/ecs": "workspace:*",
     "@defold-typescript/transpiler": "workspace:*",
     "@defold-typescript/types": "workspace:*"
   }
