@@ -7,7 +7,7 @@
 import * as path from "node:path";
 import * as ts from "typescript";
 import { collapseWhitespace, type Fence, moduleExports, REPO_ROOT } from "./guide-fence-gate";
-import { tsFences } from "./hsm-guide-steps";
+import { tsFences } from "./guide-steps";
 
 type SignatureNode = ts.FunctionDeclaration | ts.MethodSignature | ts.CallSignatureDeclaration;
 

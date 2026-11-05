@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { lessonProjects } from "./hsm-guide-steps";
+import { lessonProjects } from "./guide-steps";
 
 function stepFence(title: string, ...lines: string[]): string {
   return [`\`\`\`ts step title="${title}"`, ...lines, "```"].join("\n");
