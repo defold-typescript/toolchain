@@ -1,0 +1,12 @@
+[project]
+title = ecs-smoke
+
+[bootstrap]
+main_collection = /main/smoke.collectionc
+
+[input]
+game_binding = /builtins/input/all.input_bindingc
+
+[display]
+width = 320
+height = 240
