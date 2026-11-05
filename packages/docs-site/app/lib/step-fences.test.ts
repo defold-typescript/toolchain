@@ -1,17 +1,29 @@
 /**
- * A `ts step` fence on the state machines tutorial is read twice. The docs site
- * shows each of its lines as added, removed or unchanged, and the lesson gate
- * (`packages/cli/src/hsm-guide-fences.test.ts`) applies the same lines to build
- * the files a reader ends with. Both must read every line of every fence alike,
- * or the gate compiles a project the page does not show.
+ * A `ts step` fence on a tutorial page is read twice. The docs site shows each
+ * of its lines as added, removed or unchanged, and the page's lesson gate (such
+ * as `packages/cli/src/hsm-guide-fences.test.ts`) applies the same lines to
+ * build the files a reader ends with. Both must read every line of every fence
+ * alike, or the gate compiles a project the page does not show.
  */
 import { expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderMarkdown } from "@defold-typescript/docs-render/markdown";
-import { isStepFence, stepLines, tsFences } from "../../../cli/src/hsm-guide-steps";
+import { isStepFence, stepLines, type TsFence, tsFences } from "../../../cli/src/guide-steps";
 
-const PAGE = join(import.meta.dir, "../../../docs/guide/state-machines-tutorial.md");
+const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
+
+/** Every guide page that holds a step fence, by file name, with its step fences. */
+const STEP_PAGES: [page: string, fences: TsFence[]][] = readdirSync(GUIDE_DIR)
+  .filter((name) => name.endsWith(".md"))
+  .sort()
+  .map((page): [string, TsFence[]] => [
+    page,
+    tsFences(readFileSync(join(GUIDE_DIR, page), "utf8")).filter((fence) =>
+      isStepFence(fence.info),
+    ),
+  ])
+  .filter(([, fences]) => fences.length > 0);
 
 type Shown = readonly [mark: "++" | "--" | undefined, text: string];
 
@@ -39,12 +51,13 @@ function shownLines(html: string): Shown[] {
 }
 
 test("the site shows every step fence line the way the lesson gate reads it", async () => {
-  const fences = tsFences(readFileSync(PAGE, "utf8")).filter((fence) => isStepFence(fence.info));
-  expect(fences.length).toBeGreaterThan(0);
-  for (const fence of fences) {
-    const html = await renderMarkdown(`\`\`\`ts${fence.info}\n${fence.body}\`\`\`\n`);
-    const read = stepLines(fence).map(({ text, mark }): Shown => [mark, text]);
-    expect(shownLines(html), `step fence at page line ${fence.line}`).toEqual(read);
+  expect(STEP_PAGES.map(([page]) => page)).toContain("state-machines-tutorial.md");
+  for (const [page, fences] of STEP_PAGES) {
+    for (const fence of fences) {
+      const html = await renderMarkdown(`\`\`\`ts${fence.info}\n${fence.body}\`\`\`\n`);
+      const read = stepLines(fence).map(({ text, mark }): Shown => [mark, text]);
+      expect(shownLines(html), `${page}: step fence at page line ${fence.line}`).toEqual(read);
+    }
   }
 });
 
