@@ -101,10 +101,14 @@ interface WorldRecord {
 // own, `__ecs_id_<n>`, so one entity can join several worlds and taking a new
 // id in one never rekeys a table another world indexes. A table joining a world
 // takes a fresh id unless one of the world's systems still caches it under its
-// current one, which only a removal in progress leaves behind, and leaving the
-// world clears the field once the table is gone from the world list. A copied
-// table carries its source's fields, so every lookup also checks that the slot
-// the id names holds this very table.
+// current one. Two cases leave such an id behind: a removal in progress, and a
+// system that took the table after a callback removed it from the world in the
+// same pass, which gives the table a fresh id when it carries none. Leaving the
+// world clears the field once the table is gone from the world list. A callback
+// can remove or re-add the table in the middle of a pass, so each join and leave
+// reads the id the table carries at that change. A copied table carries its
+// source's fields, so every lookup also checks that the slot the id names holds
+// this very table.
 
 let lastId = 0;
 let lastWorld = 0;
@@ -662,7 +666,6 @@ function manageEntities(world: WorldRecord): void {
       entityIndex[id] = entities.length;
       entities.push(entity);
     }
-    const id = idOf(entity, key) as number;
     const systemCount = systems.length;
     for (let j = 0; j < systemCount; j++) {
       const system = systems[j] as SystemRecord;
@@ -673,6 +676,10 @@ function manageEntities(world: WorldRecord): void {
         const filter = system.filter;
         if (filter?.(system, entity)) {
           if (index === undefined) {
+            let id = idOf(entity, key);
+            if (id === undefined) {
+              id = freshId(entity, key);
+            }
             system.modified = true;
             seis[id] = ses.length;
             ses.push(entity);
@@ -685,6 +692,7 @@ function manageEntities(world: WorldRecord): void {
             }
           }
         } else if (index !== undefined) {
+          const id = idOf(entity, key) as number;
           system.modified = true;
           swapRemove(ses, seis, index, entity, key);
           if (observer !== undefined) {
@@ -703,7 +711,6 @@ function manageEntities(world: WorldRecord): void {
     const entity = e2r[i] as EntityRecord;
     const listIndex = slotOf(entities, entityIndex, entity, key);
     if (listIndex !== undefined) {
-      const id = idOf(entity, key) as number;
       swapRemove(entities, entityIndex, listIndex, entity, key);
       const systemCount = systems.length;
       for (let j = 0; j < systemCount; j++) {
@@ -713,6 +720,7 @@ function manageEntities(world: WorldRecord): void {
           const seis = system.indices as IdIndex;
           const index = slotOf(ses, seis, entity, key);
           if (index !== undefined) {
+            const id = idOf(entity, key) as number;
             system.modified = true;
             swapRemove(ses, seis, index, entity, key);
             if (observer !== undefined) {
