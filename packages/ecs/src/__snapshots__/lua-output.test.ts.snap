@@ -834,6 +834,87 @@ local function newWorld(items)
     manageEntities(created)
     return created
 end
+local keyedSystems = {}
+local MANAGED_FIELDS = {
+    world = true,
+    entities = true,
+    indices = true,
+    index = true,
+    modified = true,
+    bufferedTime = true,
+    sortDelegate = true
+}
+local DEFINED_FIELDS = {
+    "filter",
+    "interval",
+    "compare",
+    "onAdd",
+    "onRemove",
+    "onModify",
+    "onAddToWorld",
+    "onRemoveFromWorld",
+    "preWrap",
+    "postWrap",
+    "update",
+    "preProcess",
+    "process",
+    "postProcess"
+}
+local function reloadSystem(key, fresh)
+    local existing = keyedSystems[key]
+    if existing == nil then
+        keyedSystems[key] = fresh
+        return fresh
+    end
+    if existing.nocache == true ~= (fresh.nocache == true) then
+        error(("ecs: a reload of \\"" .. key) .. "\\" cannot change nocache", 0)
+    end
+    local oldFilter = existing.filter
+    local target = existing
+    local source = fresh
+    local definedCount = #DEFINED_FIELDS
+    do
+        local i = 0
+        while i < definedCount do
+            local field = DEFINED_FIELDS[i + 1]
+            if source[field] == nil then
+                target[field] = nil
+            end
+            i = i + 1
+        end
+    end
+    for field in pairs(source) do
+        if MANAGED_FIELDS[field] == nil then
+            target[field] = source[field]
+        end
+    end
+    if existing.sortDelegate ~= nil then
+        existing.sortDelegate = nil
+        existing.modified = true
+    end
+    local owner = existing.world
+    if owner ~= nil and existing.filter ~= oldFilter then
+        local entities = owner.entities
+        local count = #entities
+        do
+            local i = 0
+            while i < count do
+                worldAddEntity(owner, entities[i + 1])
+                i = i + 1
+            end
+        end
+    end
+    return existing
+end
+local function keyedFactory(make, key)
+    if key == nil then
+        return make
+    end
+    return function(first, second) return reloadSystem(
+        key,
+        make(first, second)
+    ) end
+end
 function ____exports.requireAll(...)
     local tokens = {...}
     checkTokens(...)
@@ -876,17 +957,17 @@ function ____exports.tryFilter(pattern)
         end
     end
 end
-function ____exports.system()
-    return makeSystem
+function ____exports.system(key)
+    return keyedFactory(makeSystem, key)
 end
-function ____exports.processingSystem()
-    return makeProcessingSystem
+function ____exports.processingSystem(key)
+    return keyedFactory(makeProcessingSystem, key)
 end
-function ____exports.sortedSystem()
-    return makeSortedSystem
+function ____exports.sortedSystem(key)
+    return keyedFactory(makeSortedSystem, key)
 end
-function ____exports.sortedProcessingSystem()
-    return makeSortedProcessingSystem
+function ____exports.sortedProcessingSystem(key)
+    return keyedFactory(makeSortedProcessingSystem, key)
 end
 function ____exports.world(...)
     local items = {...}
