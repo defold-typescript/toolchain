@@ -684,6 +684,60 @@ function reentrantRemoval(lib: Lib, log: Log, options: ReentrantRemoval): void {
   state("removed e2");
 }
 
+interface ReentrantChange {
+  readd: boolean;
+}
+
+function reentrantChange(lib: Lib, log: Log, options: ReentrantChange): void {
+  const e1: Ent = { name: "e1", a: 1 };
+  let reentered = false;
+  const a = lib.system<Ent>()(lib.requireAll("a"), {
+    ...tracked(log, "A"),
+    onRemove(entity: Ent) {
+      line(log, "onRemove", this.name, entity, undefined);
+      if (!reentered) {
+        reentered = true;
+        const w = this.world as World;
+        log.push(`remove ${entity.name}, refresh`);
+        w.removeEntity(entity);
+        w.refresh();
+        if (options.readd) {
+          log.push(`re-add ${entity.name}, refresh`);
+          w.addEntity(entity);
+          w.refresh();
+        }
+        log.push(`give ${entity.name} b`);
+        entity.b = 1;
+      }
+    },
+  });
+  const b = lib.processingSystem<Ent>()(lib.requireAll("b"), {
+    ...tracked(log, "B"),
+    process(entity, dt) {
+      line(log, "process", this.name, entity, dt);
+    },
+  });
+  const w = lib.world<Ent>(a, b, e1);
+  const state = (label: string) => {
+    counts(log, label, w);
+    log.push(`${label} world ${names(w.entities)} A ${names(a.entities)} B ${names(b.entities)}`);
+  };
+
+  frame(log, w, 0.25);
+  e1.a = undefined;
+  w.changed(e1);
+  frame(log, w, 0.5);
+  state("changed e1");
+  if (!options.readd) {
+    w.addEntity(e1);
+    frame(log, w, 0.75);
+    state("added e1");
+  }
+  w.removeEntity(e1);
+  frame(log, w, 1);
+  state("removed e1");
+}
+
 function freeFunctions(lib: Lib, log: Log): void {
   const s = lib.processingSystem<Ent>()(lib.requireAll("a"), {
     ...tracked(log, "S"),
@@ -1090,6 +1144,14 @@ export const scenarios: readonly Scenario[] = [
   {
     name: "re-entrant removal spawns a copy",
     run: (lib, log) => reentrantRemoval(lib, log, { twoSystems: true, spawnCopy: true }),
+  },
+  {
+    name: "re-entrant change re-adds the entity",
+    run: (lib, log) => reentrantChange(lib, log, { readd: true }),
+  },
+  {
+    name: "re-entrant change removes the entity",
+    run: (lib, log) => reentrantChange(lib, log, { readd: false }),
   },
   { name: "free functions", run: freeFunctions },
   { name: "sorted systems", run: sortedSystems },

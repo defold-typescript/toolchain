@@ -49,6 +49,18 @@ const EXPECTED: Record<string, string[]> = {
     "ecs reload frame 0: system 1 removes entity 2, holds 1",
     "ecs reload frame 0: system 1 onModify, holds 1",
   ],
+  "re-entry": [
+    "ecs re-entry frame 0: inspecting [0, 0]",
+    "ecs re-entry frame 0: system 1 adds entity 1, holds 1",
+    "ecs re-entry frame 0: system 1 removes entity 1, holds 0",
+    "ecs re-entry frame 0: system 2 adds entity 2, holds 1",
+    "ecs re-entry frame 0: system 2 removes entity 2, holds 0",
+    "ecs re-entry frame 0: system 1 adds entity 3, holds 1",
+    "ecs re-entry frame 0: system 1 removes entity 3, holds 0",
+    "ecs re-entry frame 0: system 1 adds entity 4, holds 1",
+    "ecs re-entry frame 0: system 2 adds entity 4, holds 1",
+    "ecs re-entry frame 0: system 2 removes entity 4, holds 0",
+  ],
   reinspect: [
     "ecs again frame 0: inspecting [0]",
     "ecs again#2 frame 0: inspecting [0]",
