@@ -6,7 +6,8 @@
  * `ts excerpt` fence: it must quote the excerpt source, whose fences compile under the same
  * checks. `ecs` compiles without `lualib_bundle`, and so do the Entity systems samples; the bridge
  * page spreads `member` hooks into state configs, which lowers to a lualib helper, as its text
- * says. The reference tables are held to the exports of the ecs source.
+ * says. The reference tables are held to the exports of the ecs source, and each row's description
+ * to the summary a hover shows for the declaration it names.
  */
 import { afterAll, describe, expect, test } from "bun:test";
 import { readFileSync, rmSync } from "node:fs";
@@ -23,6 +24,7 @@ import {
   GUIDE_DIR,
   guideFences,
   REPO_ROOT,
+  referenceDescriptions,
   referenceRows,
   transpileErrors,
   transpileFenceProject,
@@ -30,6 +32,7 @@ import {
   unquotedExcerpts,
   writeFenceProject as writeProject,
 } from "./guide-fence-gate";
+import { jsdocSummary } from "./jsdoc-gate";
 
 const REFERENCE_PAGE = "entity-systems.md";
 const BRIDGE_PAGE = "ecs-and-hsm.md";
@@ -181,6 +184,26 @@ function tableRows(page: string, heading: string): string[] {
   return [...(rows as string[])].sort();
 }
 
+// The hover text and the table say the same thing: each description cell is the summary of the
+// declaration its row names, and a mismatch prints the cell the row should hold.
+function cellsUnlikeSummaries(
+  page: string,
+  heading: string,
+  summaryOf: (name: string) => string,
+): string[] {
+  const cells = referenceDescriptions(page, heading);
+  expect(cells, `## Reference has a ### ${heading} table`).toBeDefined();
+  expect(cells?.size ?? 0).toBeGreaterThan(0);
+  const unlike: string[] = [];
+  for (const [name, cell] of cells ?? []) {
+    const summary = summaryOf(name);
+    if (collapseWhitespace(cell) !== summary) {
+      unlike.push(`${heading} row \`${name}\` should read: ${summary}`);
+    }
+  }
+  return unlike;
+}
+
 const CALLBACK_INTERFACES = [
   "PlainSystemCallbacks",
   "ProcessingSystemCallbacks",
@@ -220,6 +243,39 @@ describe("entity systems guide reference", () => {
     expect(callbacks.size).toBeGreaterThan(0);
     expect(tableRows(reference, "Callbacks")).toEqual([...callbacks].sort());
   });
+
+  test("each Functions row reads as its function's summary", () => {
+    expect(
+      cellsUnlikeSummaries(reference, "Functions", (name) =>
+        jsdocSummary(program, ECS_INDEX_SOURCE, name),
+      ),
+    ).toEqual([]);
+  });
+
+  for (const name of ["World", "SystemFields"]) {
+    test(`each ${name} row reads as its member's summary`, () => {
+      expect(
+        cellsUnlikeSummaries(reference, name, (member) =>
+          jsdocSummary(program, ECS_INDEX_SOURCE, name, member),
+        ),
+      ).toEqual([]);
+    });
+  }
+
+  test("each Callbacks row reads as its callback's summary", () => {
+    const declaring = (member: string): string => {
+      const owner = CALLBACK_INTERFACES.find((name) =>
+        exportedTypeMembers(program, ECS_INDEX_SOURCE, name).includes(member),
+      );
+      expect(owner, `a callback interface declares ${member}`).toBeDefined();
+      return owner as string;
+    };
+    expect(
+      cellsUnlikeSummaries(reference, "Callbacks", (member) =>
+        jsdocSummary(program, ECS_INDEX_SOURCE, declaring(member), member),
+      ),
+    ).toEqual([]);
+  });
 });
 
 describe("ecs and hsm guide reference", () => {
@@ -234,5 +290,13 @@ describe("ecs and hsm guide reference", () => {
     const functions = exportedFunctions(program, ECS_HSM_SOURCE);
     expect(functions.length).toBeGreaterThan(0);
     expect(tableRows(reference, "Functions")).toEqual([...functions].sort());
+  });
+
+  test("each Functions row reads as its function's summary", () => {
+    expect(
+      cellsUnlikeSummaries(reference, "Functions", (name) =>
+        jsdocSummary(program, ECS_HSM_SOURCE, name),
+      ),
+    ).toEqual([]);
   });
 });
