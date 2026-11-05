@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  filter,
   processingSystem,
   rejectAll,
   rejectAny,
@@ -8,6 +9,7 @@ import {
   sortedProcessingSystem,
   sortedSystem,
   system,
+  tryFilter,
 } from "./index";
 
 // The assertions here are the compiler's: `bun run typecheck` checks this file under
@@ -192,6 +194,66 @@ describe("sorted systems", () => {
       built.nocache = true;
     };
     expect(rejected).toBeTypeOf("function");
+  });
+});
+
+describe("string filters", () => {
+  test("a literal pattern's component names are checked, after ! and inside groups", () => {
+    const accepted = processingSystem<Ent>()(filter("(spring|active)&!dragged"), {
+      process() {},
+    });
+    // Never called: the definitions hold what the types reject, and only the compiler reads them.
+    const rejected = () => {
+      processingSystem<Ent>()(
+        // @ts-expect-error `dragd` is not a component of Ent
+        filter("spring&!dragd"),
+        { process() {} },
+      );
+      processingSystem<Ent>()(
+        // @ts-expect-error `sprng` is not a component of Ent
+        filter("(spring|sprng)&active"),
+        { process() {} },
+      );
+    };
+    expect([accepted.process, rejected]).toEqual([expect.any(Function), expect.any(Function)]);
+  });
+
+  test("a string filter narrows nothing", () => {
+    const built = processingSystem<Ent>()(filter("spring&active"), {
+      process(e) {
+        // @ts-expect-error a string filter leaves `spring` optional
+        const k: number = e.spring.k;
+        void k;
+      },
+    });
+    expect(built.process).toBeTypeOf("function");
+  });
+
+  test("a pattern typed as string is not checked", () => {
+    const pattern: string = "sprng|actve";
+    const built = processingSystem<Ent>()(filter(pattern), { process() {} });
+    expect(built.process).toBeTypeOf("function");
+  });
+
+  test("tryFilter's filter is reachable once ok narrows, and keeps its names", () => {
+    const result = tryFilter("spring|active");
+    // @ts-expect-error `filter` is there only once `ok` is checked
+    void result.filter;
+    const rejected = () => {
+      const misspelled = tryFilter("spring|sprng");
+      if (misspelled.ok) {
+        processingSystem<Ent>()(
+          // @ts-expect-error `sprng` is not a component of Ent
+          misspelled.filter,
+          { process() {} },
+        );
+      }
+    };
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const built = processingSystem<Ent>()(result.filter, { process() {} });
+      expect([built.process, rejected]).toEqual([expect.any(Function), expect.any(Function)]);
+    }
   });
 });
 
