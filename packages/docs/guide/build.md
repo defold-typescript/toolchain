@@ -195,6 +195,7 @@ files your program uses:
 | `lib/defold_typescript/lualib_bundle.lua` | uses a TypeScript runtime helper, or imports timers or `hsm/async` |
 | `lib/defold_typescript/timers.lua` | imports [`@defold-typescript/types/timers`](./typescript-gotchas.md) |
 | `lib/defold_typescript/hsm/<module>.lua` | imports that [`hsm`](./state-machines.md) module |
+| `lib/defold_typescript/ecs/<module>.lua` | imports `@defold-typescript/types/ecs` |
 
 Under a configured `outDir` the folder sits inside it
 (`out/lua/lib/defold_typescript/`). Every generated `require` names the path its
@@ -216,8 +217,9 @@ no leading slash, no `..`, no `\` or `:`, and no dot in any folder name, because
 Lua reads a dot in a `require` name as a folder separator. A value that breaks a
 rule fails the build, naming the setting, before anything is written. A source
 whose own module name is one the build uses internally for these files
-(`lualib_bundle`, `defold_typescript_timers`, `defold_typescript_hsm.<module>`)
-fails the build too, since an import of it would load the runtime file instead.
+(`lualib_bundle`, `defold_typescript_timers`, `defold_typescript_hsm.<module>`,
+`defold_typescript_ecs.<module>`) fails the build too, since an import of it
+would load the runtime file instead.
 
 `init` and [`upgrade`](./upgrade.md) add `/lib/defold_typescript/` (or
 `/<runtime-dir>/`) to `.gitignore`, and keep the lines an earlier version added.

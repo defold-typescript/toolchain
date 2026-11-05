@@ -11,7 +11,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:tes
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { loadMachines, type MachineEngine, type MachineLoad } from "./hsm-view-load";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
@@ -97,7 +97,7 @@ function fenceMachine(title: RecipeTitle, name: string): LoadedFence {
     dirs.push(dir);
     const file = path.join(dir, title);
     writeFileSync(file, body);
-    loaded = loadMachines(file, { hsmSourceDir: requireHsmSourceDir() });
+    loaded = loadMachines(file, { hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY) });
     loadedFences.set(title, loaded);
   }
   const machine = loaded.machines.find((entry) => entry.name === name);

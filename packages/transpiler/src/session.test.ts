@@ -128,10 +128,14 @@ describe("createTranspileSession", () => {
 
     expect(sessionResult.diagnostics).toEqual([]);
     expect(sessionResult.lua).toEqual(projectResult.lua);
-    expect(Object.keys(sessionResult.hsmModules ?? {})).toEqual(["index"]);
-    expect(sessionResult.hsmModules).toEqual(projectResult.hsmModules);
-    expect(Object.keys(sessionResult.hsmSourceMaps ?? {})).toEqual(["index"]);
-    expect(sessionResult.hsmSourceMaps).toEqual(projectResult.hsmSourceMaps);
+    expect(Object.keys(sessionResult.libraryModules ?? {})).toEqual([
+      "defold_typescript_hsm.index",
+    ]);
+    expect(sessionResult.libraryModules).toEqual(projectResult.libraryModules);
+    expect(Object.keys(sessionResult.librarySourceMaps ?? {})).toEqual([
+      "defold_typescript_hsm.index",
+    ]);
+    expect(sessionResult.librarySourceMaps).toEqual(projectResult.librarySourceMaps);
   });
 
   test("surfaces the lualib bundle on the incremental update path", () => {

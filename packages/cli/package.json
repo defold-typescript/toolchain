@@ -27,7 +27,8 @@
     "dist",
     "src",
     "!src/**/*.test.ts",
-    "!src/**/__snapshots__"
+    "!src/**/__snapshots__",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "publishConfig": {
     "access": "public"
