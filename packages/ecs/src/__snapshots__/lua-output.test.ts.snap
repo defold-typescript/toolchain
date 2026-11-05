@@ -834,7 +834,8 @@ local function newWorld(items)
     manageEntities(created)
     return created
 end
-local keyedSystems = {}
+local keyedNames = {}
+local keyedTables = {}
 local MANAGED_FIELDS = {
     world = true,
     entities = true,
@@ -861,11 +862,24 @@ local DEFINED_FIELDS = {
     "postProcess"
 }
 local function reloadSystem(key, fresh)
-    local existing = keyedSystems[key]
-    if existing == nil then
-        keyedSystems[key] = fresh
+    local keyedCount = #keyedNames
+    local slot = -1
+    do
+        local i = 0
+        while i < keyedCount do
+            if keyedNames[i + 1] == key then
+                slot = i
+                break
+            end
+            i = i + 1
+        end
+    end
+    if slot == -1 then
+        keyedNames[#keyedNames + 1] = key
+        keyedTables[#keyedTables + 1] = fresh
         return fresh
     end
+    local existing = keyedTables[slot + 1]
     if existing.nocache == true ~= (fresh.nocache == true) then
         error(("ecs: a reload of \\"" .. key) .. "\\" cannot change nocache", 0)
     end
@@ -884,7 +898,7 @@ local function reloadSystem(key, fresh)
         end
     end
     for field in pairs(source) do
-        if MANAGED_FIELDS[field] == nil then
+        if MANAGED_FIELDS[field] ~= true then
             target[field] = source[field]
         end
     end
