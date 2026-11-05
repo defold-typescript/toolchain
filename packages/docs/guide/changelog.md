@@ -13,12 +13,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters) and [state hooks](./ecs-and-hsm.md) that move an entity between systems.
+> - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload) and [state hooks](./ecs-and-hsm.md) that move an entity between systems.
 
 ### Improved
 
 - **The [`ecs` entity system](./entity-systems.md) ships with the toolchain:** import `@defold-typescript/types/ecs`, and `build` and `watch` write its [tiny-ecs](https://github.com/bakpakin/tiny-ecs) port to `ecs/index.lua` in the [runtime folder](./build.md#the-runtime-folder), MIT license header kept and listed in the CLI's `THIRD_PARTY_NOTICES.md`, each file written only for projects that import it for values. `requireAll`, `requireAny`, `rejectAll` and `rejectAny` [throw](./entity-systems.md#coming-from-tiny-ecs) on a token that is neither a component name nor a filter, `undefined` included.
   - **[String filters](./entity-systems.md#string-filters):** `filter("a&!(b|c)")` builds a filter from a tiny-ecs pattern, and a misspelled component in a literal pattern fails to compile. A pattern outside tiny-ecs's documented syntax throws, and `tryFilter` returns the error instead.
+  - **[Hot reload](./entity-systems.md#hot-reload):** `system`, `processingSystem`, `sortedSystem` and `sortedProcessingSystem` take an optional key. When [`watch --hot-reload`](./watch.md#hot-reload) or [`reload`](./reload.md) runs the edited module again, a keyed factory puts the new definition into the system it built first, and the world keeps running that system with its entities.
   - **[ecs and hsm together](./ecs-and-hsm.md):** import `@defold-typescript/types/ecs/hsm` to make one table both an entity and an hsm machine's `ctx`, whose `member`, `join` and `leave` state hooks change which systems hold it while `tickMachines` updates the machines.
   - **The [`AGENTS.md` block](./init-agents.md#what-it-writes)** that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
 

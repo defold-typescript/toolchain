@@ -946,6 +946,83 @@ function undefinedFilterTokens(lib: Lib, log: Log): void {
   undefinedTokens(log, "rejectAny", lib.rejectAny);
 }
 
+// Keys are module-wide, so each run takes keys of its own: a second run in one
+// Bun process then builds its systems afresh. The run number stays out of the log.
+let keyedReloadRuns = 0;
+
+// A second factory call under a key is what a module running again does.
+function keyedReload(lib: Lib, log: Log): void {
+  keyedReloadRuns += 1;
+  const run = `keyed reload ${keyedReloadRuns}`;
+  const processing = (name: string, component: "a" | "b") =>
+    lib.processingSystem<Ent>(`${run} process`)(lib.requireAll(component), {
+      ...tracked(log, name),
+      process(entity, dt) {
+        line(log, "process", this.name, entity, dt);
+      },
+    });
+
+  const p = processing("A", "a");
+  const w = lib.world<Ent>(
+    p,
+    { name: "e1", a: 1 },
+    { name: "e2", b: 1 },
+    { name: "e3", a: 1, b: 1 },
+  );
+  frame(log, w, 0.25);
+  log.push(`reload B same=${shown(processing("B", "a") === p)} systems ${w.getSystemCount()}`);
+  frame(log, w, 0.5);
+
+  log.push(`reload C on b same=${shown(processing("C", "b") === p)} entities ${names(p.entities)}`);
+  w.refresh();
+  log.push(`refreshed entities ${names(p.entities)}`);
+
+  try {
+    lib.processingSystem<Ent>(`${run} process`)(lib.requireAll("a"), {
+      ...tracked(log, "D"),
+      nocache: true,
+      process(entity, dt) {
+        line(log, "process", this.name, entity, dt);
+      },
+    });
+    log.push("reload D nocache ok");
+  } catch (error) {
+    log.push(`reload D nocache error ${(error as string).replace(run, "keyed reload")}`);
+  }
+  frame(log, w, 0.75);
+
+  // The definition states bufferedTime, which the reload must not copy over.
+  const ticking = (interval: number) =>
+    lib.system<Ent>(`${run} interval`)({
+      name: "I",
+      interval,
+      bufferedTime: 0,
+      update(dt: number) {
+        line(log, "update", this.name, undefined, dt);
+      },
+    });
+  const t = ticking(1);
+  const tw = lib.world<Ent>(t);
+  frame(log, tw, 0.5);
+  log.push(`reload interval 0.25 same=${shown(ticking(0.25) === t)}`);
+  frame(log, tw, 0);
+
+  const sorted = (name: string, ascending: boolean) =>
+    lib.sortedSystem<Ent>(`${run} sorted`)(lib.requireAll("c"), {
+      name,
+      compare(e1, e2) {
+        return ascending ? e1.c < e2.c : e1.c > e2.c;
+      },
+    });
+  const s = sorted("S", true);
+  const sw = lib.world<Ent>(s, { name: "e2", c: 2 }, { name: "e3", c: 3 }, { name: "e1", c: 1 });
+  sw.update(0);
+  log.push(`sorted entities ${names(s.entities)}`);
+  log.push(`reload descending same=${shown(sorted("S", false) === s)}`);
+  sw.update(0);
+  log.push(`re-sorted entities ${names(s.entities)}`);
+}
+
 export const scenarios: readonly Scenario[] = [
   { name: "filters", run: filters },
   { name: "deferred changes", run: deferredChanges },
@@ -981,6 +1058,7 @@ export const scenarios: readonly Scenario[] = [
   { name: "string filter truth table", run: stringFilterTruthTable },
   { name: "string filter errors", run: stringFilterErrors },
   { name: "undefined filter tokens", run: undefinedFilterTokens, bunOracle: true },
+  { name: "keyed reload", run: keyedReload, bunOracle: true },
 ];
 
 export function runScenario(lib: Lib, name: string): string {

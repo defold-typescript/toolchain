@@ -219,7 +219,7 @@ export const leftToRight = sortedSystem<Ent>()(requireAll("position"), {
 
 - `onAdd(e)` sees the entity with the filter's components. `onRemove(e)` does not, since an entity that lost a component leaves after the change.
 - A sorted system sorts its entities with a stable sort whenever they change; `compare(a, b)` returns whether `a` goes first. Its `onModify` is the sort itself, and it cannot be `nocache`.
-- `compare` is read once, at the first sort. Changing a field `compare` reads does not sort again: set `modified = true` on the system, and it sorts at the next update.
+- `compare` is read once, at the first sort, and again after a [hot reload](#hot-reload). Changing a field `compare` reads does not sort again: set `modified = true` on the system, and it sorts at the next update.
 - A processing system's `update` runs its three callbacks, so a definition with its own `update` fails to compile.
 - A system belongs to one world at a time, and `addSystem` throws when it already belongs to one. When several worlds need the same system, build it inside the function that builds each world.
 
@@ -364,6 +364,66 @@ export default defineScript({
 - Each game object that runs the script gets its own world on `self`; see [Where script state lives](./script-state.md). `swarm()` builds new systems for each world, since a system belongs to one world.
 - A world in a plain module is one world for every script that imports it. Update it from one script only, or it runs several frames per frame.
 
+## Hot reload
+
+Hot reload lets you edit a system while the game runs and see the change without restarting. Give the factory a key, a name for this system, as in `processingSystem<Mover>("move")`.
+
+When [`watch --hot-reload`](./watch.md#hot-reload) or [`reload`](./reload.md) pushes an edit, Defold runs the changed file again, and every script that already imported it keeps the first copy. With a key, the factory finds the system it built the first time, in a table the `ecs` library keeps across reloads, puts the new definition into that same system and returns it, so the world keeps running it with its entities. Without a key the edited call builds a new system that no world holds, and the world keeps running the old one until you restart.
+
+Define keyed systems at the top level of a module, and build their world in the `init` of one script:
+
+```ts title="movement.ts"
+import { processingSystem, requireAll, sortedSystem } from "@defold-typescript/types/ecs";
+
+export interface Mover {
+  readonly id: Hash;
+  position?: Vector3;
+  velocity?: Vector3;
+}
+
+export const move = processingSystem<Mover>("move")(requireAll("position", "velocity"), {
+  speed: 1,
+  process(e, dt) {
+    e.position.x += e.velocity.x * this.speed * dt;
+    e.position.y += e.velocity.y * this.speed * dt;
+    go.set_position(e.position, e.id);
+  },
+});
+
+export const leftToRightMovers = sortedSystem<Mover>("left to right")(requireAll("position"), {
+  compare(a, b) {
+    return a.position.x < b.position.x;
+  },
+});
+```
+
+```ts title="movers.ts"
+import { defineScript } from "@defold-typescript/types";
+import { world } from "@defold-typescript/types/ecs";
+import { leftToRightMovers, type Mover, move } from "./movement";
+
+export default defineScript({
+  init() {
+    return { movers: world<Mover>(move, leftToRightMovers) };
+  },
+  update(self, dt) {
+    self.movers.update(dt);
+  },
+});
+```
+
+Editing `speed` or `process` in `movement.ts` changes how every mover moves from the next frame on, and the world keeps every mover it holds.
+
+- **The definition replaces the old one.** The system takes every field the new definition states, such as `speed`, along with its callbacks, `filter`, `interval` and `compare`. A callback, `filter`, `interval` or `compare` the new definition leaves out is dropped.
+- **What `ecs` manages stays.** `world`, `entities`, `indices`, `index`, `modified` and `bufferedTime` keep their values, so the system keeps its place in the world, its entities in their order, and the time an `interval` system has buffered. A field the definition does not state, such as one a callback wrote, keeps its value too.
+- **The new filter applies at the next `refresh` or `update`.** Every entity of the world is checked again then: one that no longer passes leaves with `onRemove`, and one that now passes joins with `onAdd`, both from the new definition.
+- **A sorted system sorts again** with the new `compare` at its next `refresh` or `update`.
+- **Changing `nocache` throws** and keeps the old definition, since a `nocache` system keeps no entities of its own. Restart the game to switch.
+- **A reload runs no `onAddToWorld` and no `init`.** Set-up they did on the first load stays as it was.
+- **A key names one system in one world.** Build that world once, in one script. A system built per object in `init`, as in [Run a world from a script](#run-a-world-from-a-script), stays unkeyed: a reload does not run `init` again, so it keeps its code until you restart.
+- **Build the world outside the module that defines its keyed systems.** That module runs again on a reload, and a second `world(move)` throws, since `move` already belongs to a world.
+- **Different systems need different keys.** If another system also used `"move"`, its factory call would return `move`, with that other definition put into it.
+
 ## Coming from tiny-ecs
 
 - Import each function by name: `tiny.world(...)` is `world<E>(...)`, and `tiny.requireAll(...)` is `requireAll(...)`.
@@ -371,7 +431,7 @@ export default defineScript({
 - `world(...)` returns the world alone, and `add` and `remove` return nothing. `addEntity`, `addSystem`, `removeEntity` and `removeSystem` return their argument.
 - `tiny.filter(pattern)` is `filter(pattern)`, which throws where `tiny.filter` returns `nil, err`; `tryFilter(pattern)` returns the error instead. A pattern `tiny.filter` reads only through a quirk of its scanner, such as `a&&b`, `!!a`, `a | b` or `""`, throws.
 - `requireAll`, `requireAny`, `rejectAll` and `rejectAny` throw for a token that is neither a component name nor a filter, `undefined` included, where tiny-ecs's combinators return `nil, err`. Called with no tokens, `requireAll` and `rejectAny` take every entity and `requireAny` and `rejectAll` take none, where tiny-ecs builds no filter.
-- `hasEntity` has no tiny-ecs counterpart.
+- `hasEntity` and a factory's [hot reload](#hot-reload) key have no tiny-ecs counterpart.
 
 ## Where tiny-ecs's docs and code differ
 
@@ -673,10 +733,10 @@ this.world?.add({ name: "spark", position: { x: 0, y: 0 } });
 | `rejectAny` | Builds a filter that rejects entities with at least one component or passing at least one filter given. |
 | `filter` | `filter(pattern)` builds a filter from a [tiny-ecs pattern](#string-filters) such as `"a&!b"`; throws on a bad pattern. Narrows nothing. |
 | `tryFilter` | `tryFilter(pattern)` returns `{ ok: true, filter }`, or `{ ok: false, error }` where `filter` throws. |
-| `system` | `system<E>()` returns a factory for plain systems: `(def)` or `(filter, def)`. |
-| `processingSystem` | `processingSystem<E>()` returns a factory for processing systems: `(filter, def)`. |
-| `sortedSystem` | `sortedSystem<E>()` returns a factory for plain systems kept in `compare` order. |
-| `sortedProcessingSystem` | `sortedProcessingSystem<E>()` returns a factory for processing systems run in `compare` order. |
+| `system` | `system<E>(key?)` returns a factory for plain systems: `(def)` or `(filter, def)`. With a `key`, a later call [reloads](#hot-reload) the system built first. |
+| `processingSystem` | `processingSystem<E>(key?)` returns a factory for processing systems: `(filter, def)`. With a `key`, a later call [reloads](#hot-reload) the system built first. |
+| `sortedSystem` | `sortedSystem<E>(key?)` returns a factory for plain systems kept in `compare` order. With a `key`, a later call [reloads](#hot-reload) the system built first. |
+| `sortedProcessingSystem` | `sortedProcessingSystem<E>(key?)` returns a factory for processing systems run in `compare` order. With a `key`, a later call [reloads](#hot-reload) the system built first. |
 | `world` | `world<E>(...items)` creates a world holding `items`, applied at once. |
 | `add` | `add(w, ...items)`: the same as `w.add(...items)`. |
 | `addEntity` | `addEntity(w, e)`: the same as `w.addEntity(e)`. |

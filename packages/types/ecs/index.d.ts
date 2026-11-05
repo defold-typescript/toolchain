@@ -98,7 +98,7 @@ export interface ProcessingSystemCallbacks<E, X = E> extends SystemCallbacks<E, 
 }
 /** What a sorted system's definition adds to its callbacks. */
 export interface SortedDefinition<X> {
-    /** Whether `e1` goes before `e2`. Read once, at the system's first sort. */
+    /** Whether `e1` goes before `e2`. Read at the system's first sort, and again after a keyed reload. */
     compare(e1: X, e2: X): boolean;
     /** A sorted system keeps its entities, so it cannot be `nocache`. */
     nocache?: false | undefined;
@@ -119,7 +119,7 @@ export type System<E, D = unknown> = D & SystemFields<E>;
 export interface SortedSystemFields<X> {
     /** A sorted system keeps its entities, so it cannot be `nocache`. */
     nocache?: false | undefined;
-    /** `compare` bound to the system, built at the first sort and kept. */
+    /** `compare` bound to the system, built at the first sort and kept until a keyed reload. */
     readonly sortDelegate?: ((this: void, e1: X, e2: X) => boolean) | undefined;
 }
 /** A sorted system over entities `E` whose `compare` takes `X`. */
@@ -215,14 +215,29 @@ export declare function tryFilter<const P extends string>(pattern: P): {
     ok: false;
     error: string;
 };
-/** Returns a factory for plain systems over entities of type `E`. */
-export declare function system<E>(): SystemFactory<E>;
-/** Returns a factory for processing systems over entities of type `E`. */
-export declare function processingSystem<E>(): ProcessingSystemFactory<E>;
-/** Returns a factory for systems that keep their entities ordered by `compare`. */
-export declare function sortedSystem<E>(): SortedSystemFactory<E>;
-/** Returns a factory for processing systems that process their entities in `compare` order. */
-export declare function sortedProcessingSystem<E>(): SortedProcessingSystemFactory<E>;
+/**
+ * Returns a factory for plain systems over entities of type `E`. With a `key`, a later
+ * factory call under it puts the new definition into the system built first and returns
+ * that system, so a hot reload keeps the system running with its entities.
+ */
+export declare function system<E>(key?: string): SystemFactory<E>;
+/**
+ * Returns a factory for processing systems over entities of type `E`. With a `key`, a
+ * later factory call under it reloads the system built first, as `system` does.
+ */
+export declare function processingSystem<E>(key?: string): ProcessingSystemFactory<E>;
+/**
+ * Returns a factory for systems that keep their entities ordered by `compare`. With a
+ * `key`, a later factory call under it reloads the system built first, which sorts with
+ * the new `compare` at its next `refresh` or `update`.
+ */
+export declare function sortedSystem<E>(key?: string): SortedSystemFactory<E>;
+/**
+ * Returns a factory for processing systems that process their entities in `compare` order.
+ * With a `key`, a later factory call under it reloads the system built first, as
+ * `sortedSystem` does.
+ */
+export declare function sortedProcessingSystem<E>(key?: string): SortedProcessingSystemFactory<E>;
 /** Creates a world holding `items`, applied at once. */
 export declare function world<E>(...items: (E | SystemFields<E>)[]): World<E>;
 export declare function add<E>(target: World<E>, ...items: (E | SystemFields<E>)[]): void;
