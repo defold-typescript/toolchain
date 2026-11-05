@@ -8,6 +8,10 @@
  * page spreads `member` hooks into state configs, which lowers to a lualib helper, as its text
  * says. The reference tables are held to the exports of the ecs source, and each row's description
  * to the summary a hover shows for the declaration it names.
+ * A `ts step` fence on the tutorial is a diff of a file the reader builds: the files each lesson
+ * leaves must compile and transpile as one project, and the last lesson's project must use every
+ * member and call every function the three ecs entry points ship, so a member `ecs` gains needs a
+ * lesson that uses it.
  */
 import { afterAll, describe, expect, test } from "bun:test";
 import { readFileSync, rmSync } from "node:fs";
@@ -23,20 +27,25 @@ import {
   failingFences,
   GUIDE_DIR,
   guideFences,
+  lessonFences,
   REPO_ROOT,
   referenceDescriptions,
   referenceRows,
+  type TaughtSurface,
   transpileErrors,
   transpileFenceProject,
   typeCheck,
   unquotedExcerpts,
+  unusedSurface,
   writeFenceProject as writeProject,
 } from "./guide-fence-gate";
+import { type LessonProject, lessonProjects } from "./guide-steps";
 import { jsdocSummary } from "./jsdoc-gate";
 
 const REFERENCE_PAGE = "entity-systems.md";
 const BRIDGE_PAGE = "ecs-and-hsm.md";
-const FENCED_PAGES = [REFERENCE_PAGE, BRIDGE_PAGE];
+const LESSON_PAGE = "entity-systems-tutorial.md";
+const FENCED_PAGES = [REFERENCE_PAGE, BRIDGE_PAGE, LESSON_PAGE];
 const EXCERPT_SOURCE = path.join(REPO_ROOT, "packages/cli/test/fixtures/ecs-guide-excerpts.md");
 const FENCED_FILES = [...FENCED_PAGES.map((page) => path.join(GUIDE_DIR, page)), EXCERPT_SOURCE];
 const ECS_INDEX_SOURCE = path.join(REPO_ROOT, "packages", "ecs", "src", "index.ts");
@@ -105,6 +114,104 @@ for (const file of FENCED_FILES) {
     }
   });
 }
+
+const ECS_ENTRY_POINTS: TaughtSurface = {
+  entryPoints: [
+    "@defold-typescript/types/ecs",
+    "@defold-typescript/types/ecs/hsm",
+    "@defold-typescript/types/ecs/debug",
+  ],
+};
+
+function fileProject(files: ReadonlyMap<string, string>): FenceProject {
+  return writeFenceProject(
+    [...files].map(([title, body]): Fence => ({ label: title, rel: title, body })),
+  );
+}
+
+describe(`${LESSON_PAGE} lessons`, () => {
+  const page = readFileSync(path.join(GUIDE_DIR, LESSON_PAGE), "utf8");
+
+  let lessonProject: FenceProject | undefined;
+  const lessonFenceProject = (): FenceProject => {
+    lessonProject ??= writeFenceProject(lessonFences(page));
+    return lessonProject;
+  };
+
+  test(
+    "the last lesson's project uses every ecs member",
+    () => {
+      const last = lessonProjects(page).at(-1);
+      expect(last, "the page has a lesson project").toBeDefined();
+      expect(unusedSurface(fileProject((last as LessonProject).files), ECS_ENTRY_POINTS)).toEqual({
+        members: [],
+        functions: [],
+      });
+    },
+    SLOW,
+  );
+
+  test(
+    "every lesson's project type-checks at the scaffold strictness",
+    () => {
+      const fences = lessonFences(page);
+      expect(fences.length).toBeGreaterThan(0);
+      expect(failingFences(fences, lessonFenceProject())).toEqual({});
+    },
+    SLOW,
+  );
+
+  test(
+    "every lesson's project transpiles to Lua",
+    () => {
+      expect(lessonFenceProject().sources.size).toBeGreaterThan(0);
+      expect(transpileErrors(lessonFenceProject())).toEqual([]);
+    },
+    SLOW,
+  );
+});
+
+describe("ecs guide coverage gate", () => {
+  test(
+    "the coverage gate can fail",
+    () => {
+      const page = [
+        "## 1. One firefly",
+        "",
+        '```ts step title="garden.ts"',
+        'import { processingSystem, requireAll, world } from "@defold-typescript/types/ecs";',
+        "",
+        "interface Firefly {",
+        "  x?: number;",
+        "}",
+        "",
+        "export const garden = world<Firefly>(",
+        '  processingSystem<Firefly>()(requireAll("x"), {',
+        "    process(e, dt) {",
+        "      e.x += dt;",
+        "    },",
+        "  }),",
+        ");",
+        "```",
+        "",
+      ].join("\n");
+      const [only] = lessonProjects(page);
+      expect(failingFences(lessonFences(page), writeFenceProject(lessonFences(page)))).toEqual({});
+      const unused = unusedSurface(fileProject((only as LessonProject).files), ECS_ENTRY_POINTS);
+      expect(unused.functions).toContain("addEntity");
+      expect(unused.functions).toContain("member");
+      expect(unused.functions).toContain("inspect");
+      expect(unused.members).toContain("World.addEntity");
+      expect(unused.members).toContain("MembershipHooks.enter");
+      expect(unused.members).toContain("WorldInspector.draw");
+      expect(unused.functions).not.toContain("world");
+      expect(unused.functions).not.toContain("processingSystem");
+      expect(unused.functions).not.toContain("requireAll");
+      expect(unused.members).not.toContain("ProcessingSystemCallbacks.process");
+    },
+    SLOW,
+  );
+});
 
 describe("ecs guide lualib gate", () => {
   test(

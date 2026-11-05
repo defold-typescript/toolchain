@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload), [state hooks](./ecs-and-hsm.md) that move an entity between systems, a [world inspector](./entity-systems.md#debug-a-world), and an editor hover on every export.
+> - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload), [state hooks](./ecs-and-hsm.md) that move an entity between systems, a [world inspector](./entity-systems.md#debug-a-world), an editor hover on every export, and a [hands-on tutorial](./entity-systems-tutorial.md).
 > - **[Script callbacks](./script-lifecycle.md)** run beside a top-level import or declaration of the same name.
 
 ### Improved
@@ -24,6 +24,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **[ecs and hsm together](./ecs-and-hsm.md):** import `@defold-typescript/types/ecs/hsm` to make one table both an entity and an hsm machine's `ctx`, whose `member`, `join` and `leave` state hooks change which systems hold it while `tickMachines` updates the machines.
   - **[Debug a world](./entity-systems.md#debug-a-world):** `inspect` from `@defold-typescript/types/ecs/debug` logs each entity a system gains or loses and each `onModify` call, keeps logging across a keyed reload, and draws each system's entity count over a game object; in a release build it does nothing.
   - **Editor hovers:** every export of each module, and every system field and callback, shows a one-line summary, its parameters and return, and an example that compiles; the [Reference](./entity-systems.md#reference) tables quote the same summaries.
+  - **[Entity systems, one system at a time](./entity-systems-tutorial.md):** a hands-on tutorial grows one night garden of fireflies lesson by lesson, each change a diff that compiles, until it uses every export of the three `ecs` modules.
   - **The [`AGENTS.md` block](./init-agents.md#what-it-writes)** that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
 
 ### Fixed
