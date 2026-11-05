@@ -952,6 +952,7 @@ let keyedReloadRuns = 0;
 // A key named after an Object.prototype member cannot take the run number, so a
 // later run compares against the table the first run stored.
 const reservedKeyTables: unknown[] = [];
+const PROTO_FIELD = "__proto__";
 
 // A second factory call under a key is what a module running again does.
 function keyedReload(lib: Lib, log: Log): void {
@@ -1044,6 +1045,21 @@ function keyedReload(lib: Lib, log: Log): void {
   fields("T2", "C2");
   for (const field of ["toString", "constructor"]) {
     log.push(`reload field ${field} ${shown(withFields[field] as string)}`);
+  }
+
+  const withProto = lib.system<Ent>(`${run} proto field`)({});
+  const protoValue = { nocache: true };
+  const protoReloaded = lib.system<Ent>(`${run} proto field`)({ [PROTO_FIELD]: protoValue });
+  const storedProto =
+    (withProto as unknown as { [field: string]: unknown })[PROTO_FIELD] === protoValue;
+  log.push(
+    `reload proto field same=${shown(protoReloaded === withProto)} stored=${shown(storedProto)} nocache ${shown(withProto.nocache)}`,
+  );
+  try {
+    lib.system<Ent>(`${run} proto field`)({});
+    log.push("reload proto field again ok");
+  } catch (error) {
+    log.push(`reload proto field again error ${(error as string).replace(run, "keyed reload")}`);
   }
 }
 
