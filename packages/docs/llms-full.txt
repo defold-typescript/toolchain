@@ -5047,6 +5047,44 @@ export const high = processingSystem<Ent>()(
 );
 ```
 
+##### String filters
+
+`filter(pattern)` builds a filter from a tiny-ecs pattern, parsed once:
+
+- `a&b` takes entities that have `a` and `b`; `a|b`, those that have either; `!a`, those that lack `a`.
+- Parentheses group, and `&` binds tighter than `|`, as `and` does `or` in Lua: `a|b&c` means `a|(b&c)`.
+- Names are letters, digits and `_`. `!` comes once, before a name or a group, and a pattern has no spaces.
+
+A string filter narrows nothing. In a literal pattern, a name that is not a component of the entity type fails to compile; a pattern typed as `string` is checked only for its syntax, when `filter` runs. `filter` throws on a bad pattern, naming the position where it stops; `tryFilter` returns `{ ok: true, filter }` or `{ ok: false, error }` instead:
+
+```ts title="string-filters.ts"
+import { filter, processingSystem, tryFilter } from "@defold-typescript/types/ecs";
+import type { Ent } from "./entities";
+
+export const placed = processingSystem<Ent>()(filter("position&(velocity|frozen)"), {
+  process(e) {
+    if (e.position !== undefined) {
+      print(`${e.name} is at ${e.position.x}`);
+    }
+  },
+});
+
+export const broken = processingSystem<Ent>()(
+  // @ts-expect-error `velocty` is not a component of Ent
+  filter("position&!velocty"),
+  { process() {} },
+);
+
+export function fromConfig(pattern: string) {
+  const result = tryFilter(pattern);
+  if (!result.ok) {
+    print(result.error);
+    return undefined;
+  }
+  return processingSystem<Ent>()(result.filter, { process() {} });
+}
+```
+
 #### Systems
 
 Four factories build systems. Each is called with the entity type first, then with the filter and the definition:
@@ -5259,7 +5297,7 @@ export default defineScript({
 - Import each function by name: `tiny.world(...)` is `world<E>(...)`, and `tiny.requireAll(...)` is `requireAll(...)`.
 - `tiny.processingSystem({ filter = ... })` is `processingSystem<E>()(filter, { ... })`, since the filter is the factory's own argument.
 - `world(...)` returns the world alone, and `add` and `remove` return nothing. `addEntity`, `addSystem`, `removeEntity` and `removeSystem` return their argument.
-- tiny-ecs's string filters, `tiny.filter("a|b")`, are not part of `ecs`.
+- `tiny.filter(pattern)` is `filter(pattern)`, which throws where `tiny.filter` returns `nil, err`; `tryFilter(pattern)` returns the error instead. A pattern `tiny.filter` reads only through a quirk of its scanner, such as `a&&b`, `!!a`, `a | b` or `""`, throws.
 - `hasEntity` has no tiny-ecs counterpart.
 
 #### Where tiny-ecs's docs and code differ
@@ -5560,6 +5598,8 @@ this.world?.add({ name: "spark", position: { x: 0, y: 0 } });
 | `requireAny` | Builds a filter that takes entities with at least one component or passing at least one filter given. |
 | `rejectAll` | Builds a filter that rejects entities with every component and passing every filter given. |
 | `rejectAny` | Builds a filter that rejects entities with at least one component or passing at least one filter given. |
+| `filter` | `filter(pattern)` builds a filter from a [tiny-ecs pattern](#string-filters) such as `"a&!b"`; throws on a bad pattern. Narrows nothing. |
+| `tryFilter` | `tryFilter(pattern)` returns `{ ok: true, filter }`, or `{ ok: false, error }` where `filter` throws. |
 | `system` | `system<E>()` returns a factory for plain systems: `(def)` or `(filter, def)`. |
 | `processingSystem` | `processingSystem<E>()` returns a factory for processing systems: `(filter, def)`. |
 | `sortedSystem` | `sortedSystem<E>()` returns a factory for plain systems kept in `compare` order. |

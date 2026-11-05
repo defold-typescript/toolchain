@@ -185,6 +185,109 @@ local function rejectAnyFilter(tokens)
         return true
     end
 end
+local function checkTokens(tokens)
+    local count = #tokens
+    do
+        local i = 0
+        while i < count do
+            local token = tokens[i + 1]
+            if type(token) ~= "string" and type(token) ~= "function" then
+                error("ecs: a filter token must be a component name or a filter", 0)
+            end
+            i = i + 1
+        end
+    end
+end
+local NAME_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+local function badPattern(scan, what)
+    error(
+        (((("ecs: bad filter pattern \\"" .. scan.pattern) .. "\\": ") .. what) .. " at ") .. tostring(scan.position),
+        0
+    )
+end
+local function skipCharacter(scan)
+    scan.rest = string.sub(scan.rest, 2)
+    scan.position = scan.position + 1
+end
+local function parseExpression(scan)
+    local terms = {}
+    while true do
+        local operands = {}
+        while true do
+            local negated = string.sub(scan.rest, 1, 1) == "!"
+            if negated then
+                skipCharacter(scan)
+            end
+            local operand
+            if string.sub(scan.rest, 1, 1) == "(" then
+                skipCharacter(scan)
+                operand = parseExpression(scan)
+                if string.sub(scan.rest, 1, 1) ~= ")" then
+                    badPattern(scan, "expected \\"&\\", \\"|\\" or \\")\\"")
+                end
+                skipCharacter(scan)
+            else
+                local name = ""
+                while scan.rest ~= "" and (string.find(
+                    NAME_CHARACTERS,
+                    string.sub(scan.rest, 1, 1),
+                    nil,
+                    true
+                ) or 0) - 1 >= 0 do
+                    name = name .. string.sub(scan.rest, 1, 1)
+                    skipCharacter(scan)
+                end
+                if name == "" then
+                    badPattern(scan, "expected a component name or \\"(\\"")
+                end
+                operand = name
+            end
+            local ____negated_0
+            if negated then
+                ____negated_0 = rejectAnyFilter({operand})
+            else
+                ____negated_0 = operand
+            end
+            operands[#operands + 1] = ____negated_0
+            if string.sub(scan.rest, 1, 1) ~= "&" then
+                break
+            end
+            skipCharacter(scan)
+        end
+        local ____temp_1
+        if #operands == 1 then
+            ____temp_1 = operands[1]
+        else
+            ____temp_1 = requireAllFilter(operands)
+        end
+        terms[#terms + 1] = ____temp_1
+        if string.sub(scan.rest, 1, 1) ~= "|" then
+            break
+        end
+        skipCharacter(scan)
+    end
+    local ____temp_2
+    if #terms == 1 then
+        ____temp_2 = terms[1]
+    else
+        ____temp_2 = requireAnyFilter(terms)
+    end
+    return ____temp_2
+end
+local function patternFilter(pattern)
+    local scan = {pattern = pattern, rest = pattern, position = 1}
+    local root = parseExpression(scan)
+    if scan.rest ~= "" then
+        badPattern(scan, "expected \\"&\\", \\"|\\" or the end")
+    end
+    local ____temp_3
+    if type(root) == "string" then
+        ____temp_3 = requireAllFilter({root})
+    else
+        ____temp_3 = root
+    end
+    return ____temp_3
+end
 local function processingSystemUpdate(self, dt)
     local preProcess = self.preProcess
     local processEntity = self.process
@@ -277,16 +380,16 @@ local function isSystem(item)
     return item.__ecs_system == true
 end
 local function worldAddEntity(self, entity)
-    local ____self_entitiesToChange_0 = self.entitiesToChange
-    ____self_entitiesToChange_0[#____self_entitiesToChange_0 + 1] = entity
+    local ____self_entitiesToChange_4 = self.entitiesToChange
+    ____self_entitiesToChange_4[#____self_entitiesToChange_4 + 1] = entity
     return entity
 end
 local function worldAddSystem(self, system)
     if system.world ~= nil then
         error("ecs: the system already belongs to a world", 0)
     end
-    local ____self_systemsToAdd_1 = self.systemsToAdd
-    ____self_systemsToAdd_1[#____self_systemsToAdd_1 + 1] = system
+    local ____self_systemsToAdd_5 = self.systemsToAdd
+    ____self_systemsToAdd_5[#____self_systemsToAdd_5 + 1] = system
     system.world = self
     return system
 end
@@ -310,16 +413,16 @@ local function worldAdd(self, ...)
     addItems(self, items)
 end
 local function worldRemoveEntity(self, entity)
-    local ____self_entitiesToRemove_2 = self.entitiesToRemove
-    ____self_entitiesToRemove_2[#____self_entitiesToRemove_2 + 1] = entity
+    local ____self_entitiesToRemove_6 = self.entitiesToRemove
+    ____self_entitiesToRemove_6[#____self_entitiesToRemove_6 + 1] = entity
     return entity
 end
 local function worldRemoveSystem(self, system)
     if system.world ~= self then
         error("ecs: the system does not belong to this world", 0)
     end
-    local ____self_systemsToRemove_3 = self.systemsToRemove
-    ____self_systemsToRemove_3[#____self_systemsToRemove_3 + 1] = system
+    local ____self_systemsToRemove_7 = self.systemsToRemove
+    ____self_systemsToRemove_7[#____self_systemsToRemove_7 + 1] = system
     return system
 end
 local function removeItems(world, items)
@@ -727,19 +830,45 @@ local function newWorld(items)
 end
 function ____exports.requireAll(...)
     local tokens = {...}
+    checkTokens(tokens)
     return requireAllFilter(tokens)
 end
 function ____exports.requireAny(...)
     local tokens = {...}
+    checkTokens(tokens)
     return requireAnyFilter(tokens)
 end
 function ____exports.rejectAll(...)
     local tokens = {...}
+    checkTokens(tokens)
     return rejectAllFilter(tokens)
 end
 function ____exports.rejectAny(...)
     local tokens = {...}
+    checkTokens(tokens)
     return rejectAnyFilter(tokens)
+end
+function ____exports.filter(pattern)
+    return patternFilter(pattern)
+end
+function ____exports.tryFilter(pattern)
+    do
+        local function ____catch(____error)
+            return true, {ok = false, error = ____error}
+        end
+        local ____try, ____hasReturned, ____returnValue = pcall(function()
+            return true, {
+                ok = true,
+                filter = patternFilter(pattern)
+            }
+        end)
+        if not ____try then
+            ____hasReturned, ____returnValue = ____catch(____hasReturned)
+        end
+        if ____hasReturned then
+            return ____returnValue
+        end
+    end
 end
 function ____exports.system()
     return makeSystem

@@ -33,6 +33,24 @@ local function sortedProcessingSystem(filter, def)
     return tiny.sortedProcessingSystem(def)
 end
 
+-- tiny.filter returns `nil, err` on a bad pattern; ecs's filter throws and
+-- tryFilter returns the error in a table.
+local function filter(pattern)
+    local f, err = tiny.filter(pattern)
+    if f == nil then
+        error(err)
+    end
+    return f
+end
+
+local function tryFilter(pattern)
+    local f, err = tiny.filter(pattern)
+    if f == nil then
+        return { ok = false, error = err }
+    end
+    return { ok = true, filter = f }
+end
+
 local lib = {
     -- tiny.world also returns its arguments; ecs returns the world alone.
     world = function(...)
@@ -55,6 +73,8 @@ local lib = {
     requireAny = tiny.requireAny,
     rejectAll = tiny.rejectAll,
     rejectAny = tiny.rejectAny,
+    filter = filter,
+    tryFilter = tryFilter,
     add = tiny.add,
     addEntity = tiny.addEntity,
     changed = tiny.addEntity,
