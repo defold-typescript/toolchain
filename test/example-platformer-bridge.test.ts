@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { RUNTIME_DEFAULT_DIR } from "../packages/cli/src/build-output";
-import { hsmModules } from "../packages/transpiler/src/hsm-builtin";
+import { bundledModules, HSM_LIBRARY } from "../packages/transpiler/src/bundled-libraries";
 
 const repoRoot = join(import.meta.dir, "..");
 const exampleDir = join(repoRoot, "docs/examples/platformer");
@@ -54,7 +54,7 @@ describe("platformer example bridge", () => {
 
   test("imports hsm through the shipped declarations and vendors no copy", () => {
     const tsconfig = JSON.parse(readFileSync(join(exampleDir, "tsconfig.json"), "utf8"));
-    for (const { name, specifier } of hsmModules()) {
+    for (const { name, specifier } of bundledModules(HSM_LIBRARY)) {
       expect(tsconfig.compilerOptions.paths[specifier]).toEqual([
         `../../../packages/types/hsm/${name}.d.ts`,
       ]);

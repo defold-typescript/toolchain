@@ -17,6 +17,7 @@
       "!**/node_modules",
       "!**/generated",
       "!packages/types/hsm",
+      "!packages/types/ecs",
       "!**/extension-goldens",
       "!**/api-doc",
       "!packages/types/fixtures/extension-docs",

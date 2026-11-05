@@ -10,7 +10,6 @@
     "./async": "./src/async.ts"
   },
   "scripts": {
-    "declarations": "bun scripts/emit-declarations.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.scaffold.json --noEmit",
     "test": "bun test"
   },

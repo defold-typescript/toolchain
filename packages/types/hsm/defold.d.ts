@@ -1,4 +1,4 @@
-// Generated from packages/hsm/src/defold.ts by `bun run --cwd packages/hsm declarations`; do not edit.
+// Generated from packages/hsm/src/defold.ts by `bun run --cwd packages/transpiler declarations`; do not edit.
 /**
  * The event `messageEvents` builds from the Defold message `K`, for a machine's event union. It
  * holds the message id as `type`, the payload fields declared through `BuiltinMessages` and

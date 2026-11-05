@@ -1,4 +1,4 @@
-// Generated from packages/hsm/src/async.ts by `bun run --cwd packages/hsm declarations`; do not edit.
+// Generated from packages/hsm/src/async.ts by `bun run --cwd packages/transpiler declarations`; do not edit.
 import type { EventObject, TaskStart } from "./index";
 /**
  * The second argument of a `sequence` function: a wait that leaving the state cancels, and a flag

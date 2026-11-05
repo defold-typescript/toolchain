@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.58.0
+
+> Summary:
+>
+> - **[Entity systems](./build.md#the-runtime-folder)** ship built in.
+
+### Improved
+
+- **The `ecs` entity system ships with the toolchain:** import `@defold-typescript/types/ecs` from a script, GUI script, render script or module, and `build` and `watch` write its port of [tiny-ecs](https://github.com/bakpakin/tiny-ecs) to `ecs/index.lua` in the [runtime folder](./build.md#the-runtime-folder) only when a module imports it for values. The Lua keeps the tiny-ecs MIT license header, which the CLI's `THIRD_PARTY_NOTICES.md` also lists.
+
 ## v0.57.0
 
 > Summary:

@@ -1,4 +1,4 @@
-// Generated from packages/hsm/src/index.ts by `bun run --cwd packages/hsm declarations`; do not edit.
+// Generated from packages/hsm/src/index.ts by `bun run --cwd packages/transpiler declarations`; do not edit.
 /**
  * An event a machine handles: an object with a string `type`, plus any payload fields. A
  * machine's event type is a union of these.

@@ -1850,3 +1850,13 @@ end
 return ____exports
 "
 `;
+
+exports[`ecs as a built-in import calling world selects only the ecs index module 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local _____40NoResolution_3Adefold_typescript_ecs_2Eindex = require("defold_typescript_ecs.index")
+local world = _____40NoResolution_3Adefold_typescript_ecs_2Eindex.world
+____exports.entities = world({x = 0})
+return ____exports
+"
+`;

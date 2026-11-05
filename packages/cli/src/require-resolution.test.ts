@@ -8,7 +8,7 @@ import {
 } from "@defold-typescript/transpiler";
 import {
   detectSourceOutputKind,
-  hsmModuleRels,
+  libraryModuleRels,
   lualibBundleRel,
   timersModuleRel,
 } from "./build-output";
@@ -250,8 +250,8 @@ function rewrites(
     companions,
     ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
     ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
-    ...(result.hsmModules !== undefined
-      ? { hsmRels: hsmModuleRels(config, Object.keys(result.hsmModules)) }
+    ...(result.libraryModules !== undefined
+      ? { libraryRels: libraryModuleRels(config, Object.keys(result.libraryModules)) }
       : {}),
   });
 }

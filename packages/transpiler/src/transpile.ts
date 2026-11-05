@@ -3,6 +3,15 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
+import {
+  BUNDLED_LIBRARIES,
+  type BundledLibrary,
+  bundledLibraryClosure,
+  bundledLibraryLoweringPlugin,
+  bundledModuleOfRequire,
+  bundledModules,
+  requireLibrarySourceDir,
+} from "./bundled-libraries";
 import { createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import { LUALIB_REQUIRE_NAME } from "./emitted-requires";
@@ -10,15 +19,6 @@ import {
   findDirectGoPropertyCalls,
   GO_PROPERTY_DIRECT_CALL_MESSAGE,
 } from "./go-property-direct-call";
-import {
-  HSM_LUALIB_MODULES,
-  HSM_REQUIRE_ROOT,
-  hsmClosure,
-  hsmLoweringPlugin,
-  hsmModules,
-  hsmRequireName,
-  requireHsmSourceDir,
-} from "./hsm-builtin";
 import {
   createLifecycleErasure,
   type LifecycleErasure,
@@ -86,17 +86,17 @@ export interface TranspileProjectResult {
   // internal name the CLI respells to where it writes this. Present only when
   // a user file imports the module (pay-for-use).
   readonly timersRuntime?: string;
-  // The compiled `hsm` modules the program requires, keyed by module name
-  // (`index`, `defold`, ...). An hsm import lowers to
-  // `require("defold_typescript_hsm.<module>")`, an internal name the CLI
-  // respells to where it writes each one. Present only when some chunk requires one
+  // The compiled bundled-library modules the program requires, keyed by require
+  // name (`defold_typescript_hsm.index`, ...). A bundled import lowers to
+  // `require("<requireRoot>.<module>")`, an internal name the CLI respells to
+  // where it writes each one. Present only when some chunk requires one
   // (pay-for-use).
-  readonly hsmModules?: Readonly<Record<string, string>>;
-  // The source map of each module in `hsmModules`, under the same keys. Its
+  readonly libraryModules?: Readonly<Record<string, string>>;
+  // The source map of each module in `libraryModules`, under the same keys. Its
   // `sources` names `<module>.ts` with an empty `sourceRoot`: only the CLI knows
-  // where the module is written and where the hsm source sits, so it sets the
-  // root that joins them.
-  readonly hsmSourceMaps?: Readonly<Record<string, string>>;
+  // where the module is written and where the library source sits, so it sets
+  // the root that joins them.
+  readonly librarySourceMaps?: Readonly<Record<string, string>>;
 }
 
 function flattenDiagnosticMessage(
@@ -214,12 +214,17 @@ function buildAmbientFiles(): Record<string, string> {
       "",
     ].join("\n"),
   };
-  // The generated `hsm` declarations, at the paths the package `exports` map
-  // names, so the build types user code against the same `.d.ts` tsserver
-  // reads. hsm's own `.ts` compiles separately, in `compileHsmModules`.
-  for (const entry of readdirSync(path.join(TYPES_PKG_ROOT, "hsm"))) {
-    if (entry.endsWith(".d.ts")) {
-      files[`node_modules/@defold-typescript/types/hsm/${entry}`] = readAmbient(`hsm/${entry}`);
+  // The generated declarations of each bundled library, at the paths the
+  // package `exports` map names, so the build types user code against the same
+  // `.d.ts` tsserver reads. A library's own `.ts` compiles separately, in
+  // `compileLibraryModules`.
+  for (const { id } of BUNDLED_LIBRARIES) {
+    for (const entry of readdirSync(path.join(TYPES_PKG_ROOT, id))) {
+      if (entry.endsWith(".d.ts")) {
+        files[`node_modules/@defold-typescript/types/${id}/${entry}`] = readAmbient(
+          `${id}/${entry}`,
+        );
+      }
     }
   }
   // Seed the Lua 5.1 standard library (math/os/string/table/coroutine + base
@@ -351,8 +356,12 @@ export function collectOutputs(
     }
   }
 
-  const hsm = hsmClosure([...Object.values(lua), ...Object.values(companions)], compileHsmModules);
-  const hsmSourceMaps = hsm === undefined ? undefined : selectHsmSourceMaps(Object.keys(hsm));
+  const libraryModules = bundledLibraryClosure(
+    [...Object.values(lua), ...Object.values(companions)],
+    compileLibraryModules,
+  );
+  const librarySourceMaps =
+    libraryModules === undefined ? undefined : selectLibrarySourceMaps(Object.keys(libraryModules));
 
   return {
     lua,
@@ -361,18 +370,18 @@ export function collectOutputs(
     ...(Object.keys(companions).length > 0 ? { companions } : {}),
     ...(lualib !== undefined ? { lualib } : {}),
     ...(timersImported ? { timersRuntime: TIMERS_RUNTIME } : {}),
-    ...(hsm !== undefined ? { hsmModules: hsm } : {}),
-    ...(hsmSourceMaps !== undefined ? { hsmSourceMaps } : {}),
+    ...(libraryModules !== undefined ? { libraryModules } : {}),
+    ...(librarySourceMaps !== undefined ? { librarySourceMaps } : {}),
   };
 }
 
-function selectHsmSourceMaps(names: readonly string[]): Record<string, string> {
-  const maps = compileHsmSourceMaps();
+function selectLibrarySourceMaps(requireNames: readonly string[]): Record<string, string> {
   const selected: Record<string, string> = {};
-  for (const name of names) {
-    const map = maps[name];
+  for (const requireName of requireNames) {
+    const module = bundledModuleOfRequire(requireName);
+    const map = module && compileLibrarySourceMaps(module.library)[module.name];
     if (map !== undefined) {
-      selected[name] = map;
+      selected[requireName] = map;
     }
   }
   return selected;
@@ -415,7 +424,7 @@ function transpileVirtual(
         { plugin: messageDispatchLoweringPlugin },
         { plugin: timersLoweringPlugin },
         { plugin: nativeGlobalModulesPlugin },
-        { plugin: hsmLoweringPlugin },
+        { plugin: bundledLibraryLoweringPlugin },
         { plugin: typeApplicationErasurePlugin },
         { plugin: companionEmit.plugin },
       ],
@@ -511,50 +520,84 @@ function evaluationChunks(emitted: TranspileProjectResult): Record<string, strin
   if (emitted.timersRuntime !== undefined) {
     chunks[TIMERS_REQUIRE_NAME] = emitted.timersRuntime;
   }
-  for (const [name, lua] of Object.entries(emitted.hsmModules ?? {})) {
-    chunks[hsmRequireName(name)] = lua;
-  }
+  Object.assign(chunks, emitted.libraryModules);
   return chunks;
 }
 
-interface CompiledHsm {
+interface CompiledLibrary {
   readonly lua: Readonly<Record<string, string>>;
   readonly sourceMaps: Readonly<Record<string, string>>;
 }
 
-let compiledHsm: CompiledHsm | undefined;
+const compiledLibraries = new Map<BundledLibrary, CompiledLibrary>();
+
+// The source's leading `/* ... */` block, which `removeComments` strips from the
+// compile, as a Lua long comment. The bracket level grows until the text cannot
+// close it early.
+function luaLicenseHeader(source: string): string | undefined {
+  const match = /^\/\*([\s\S]*?)\*\//.exec(source);
+  const body = match?.[1];
+  if (body === undefined) {
+    return undefined;
+  }
+  let level = "";
+  while (body.includes(`]${level}]`)) {
+    level += "=";
+  }
+  return `--[${level}[${body}]${level}]\n`;
+}
+
+function lineCount(text: string): number {
+  return text.split("\n").length - 1;
+}
+
+// Each `;` in `mappings` ends one generated line, so prepending one per header
+// line moves every segment down past the header to the line it now maps from.
+function shiftSourceMap(map: string, lines: number): string {
+  if (lines === 0) {
+    return map;
+  }
+  const parsed = JSON.parse(map) as { mappings: string };
+  return JSON.stringify({ ...parsed, mappings: `${";".repeat(lines)}${parsed.mappings}` });
+}
 
 function requiresLualib(lua: string): boolean {
   return scanEmittedRequires(lua).some(({ path: requirePath }) => requirePath === "lualib_bundle");
 }
 
 /**
- * Every `hsm` module compiled to Lua, keyed by module name, once per process.
- * The source is the shipped TypeScript, never a prebuilt Lua copy, so the Lua a
- * project gets always comes from the compiler that builds it. Each file sits at
- * `defold_typescript_hsm/<module>.ts`, so a require between modules is already
- * spelled the way the user's lowered imports are. Throws when the compile
- * reports anything, or when a module outside `HSM_LUALIB_MODULES` needs the
- * lualib bundle.
+ * Every module of a bundled library compiled to Lua, keyed by module name, once
+ * per process. The source is the shipped TypeScript, never a prebuilt Lua copy,
+ * so the Lua a project gets always comes from the compiler that builds it. Each
+ * library compiles in its own program, with each file at
+ * `<requireRoot>/<module>.ts`, so a require between modules is already spelled
+ * the way the user's lowered imports are. A `licenseFromSource` library's Lua
+ * opens with its source's license block, and its maps shift past it. Throws
+ * when the compile reports anything, when a module outside the library's
+ * `lualibModules` needs the lualib bundle, or when a `licenseFromSource` module
+ * has no leading license block.
  */
-export function compileHsmModules(): Readonly<Record<string, string>> {
-  return compileHsm().lua;
+export function compileLibraryModules(library: BundledLibrary): Readonly<Record<string, string>> {
+  return compileLibrary(library).lua;
 }
 
-/** The source map of every module `compileHsmModules` returns, under the same keys. */
-export function compileHsmSourceMaps(): Readonly<Record<string, string>> {
-  return compileHsm().sourceMaps;
+/** The source map of every module `compileLibraryModules` returns, under the same keys. */
+export function compileLibrarySourceMaps(
+  library: BundledLibrary,
+): Readonly<Record<string, string>> {
+  return compileLibrary(library).sourceMaps;
 }
 
-function compileHsm(): CompiledHsm {
-  if (compiledHsm !== undefined) {
-    return compiledHsm;
+function compileLibrary(library: BundledLibrary): CompiledLibrary {
+  const cached = compiledLibraries.get(library);
+  if (cached !== undefined) {
+    return cached;
   }
-  const sourceDir = requireHsmSourceDir();
+  const sourceDir = requireLibrarySourceDir(library);
   const nameByKey = new Map<string, string>();
   const files: Record<string, string> = {};
-  for (const { name } of hsmModules()) {
-    const key = `${HSM_REQUIRE_ROOT}/${name}.ts`;
+  for (const { name } of bundledModules(library)) {
+    const key = `${library.requireRoot}/${name}.ts`;
     nameByKey.set(key, name);
     files[key] = readFileSync(path.join(sourceDir, `${name}.ts`), "utf8");
   }
@@ -578,21 +621,31 @@ function compileHsm(): CompiledHsm {
     if (name === undefined || typeof file.lua !== "string") {
       continue;
     }
-    if (!HSM_LUALIB_MODULES.has(name) && requiresLualib(file.lua)) {
+    if (!(name in library.lualibModules) && requiresLualib(file.lua)) {
       problems.push(`the compiled ${name} module requires lualib_bundle`);
     }
-    lua[name] = file.lua;
+    let header = "";
+    if (library.licenseFromSource) {
+      const license = luaLicenseHeader(files[`${library.requireRoot}/${name}.ts`] ?? "");
+      if (license === undefined) {
+        problems.push(`the ${name} module opens with no /* ... */ license block`);
+      } else {
+        header = license;
+      }
+    }
+    lua[name] = `${header}${file.lua}`;
     if (typeof file.luaSourceMap === "string") {
-      sourceMaps[name] = file.luaSourceMap;
+      sourceMaps[name] = shiftSourceMap(file.luaSourceMap, lineCount(header));
     }
   }
   if (problems.length > 0) {
     throw new Error(
-      `@defold-typescript/transpiler: the hsm library does not compile:\n  ${problems.join("\n  ")}`,
+      `@defold-typescript/transpiler: the ${library.id} library does not compile:\n  ${problems.join("\n  ")}`,
     );
   }
-  compiledHsm = { lua, sourceMaps };
-  return compiledHsm;
+  const compiled = { lua, sourceMaps };
+  compiledLibraries.set(library, compiled);
+  return compiled;
 }
 
 export function transpile(source: string): TranspileResult {

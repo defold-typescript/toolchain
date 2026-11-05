@@ -1,3 +1,14 @@
+export type { BundledLibrary, BundledModule } from "./bundled-libraries";
+export {
+  BUNDLED_LIBRARIES,
+  bundledModuleOfRequire,
+  bundledModules,
+  ECS_LIBRARY,
+  HSM_LIBRARY,
+  librarySourceFiles,
+  requireLibrarySourceDir,
+  resolveLibrarySourceDir,
+} from "./bundled-libraries";
 export type {
   ClosureSite,
   ClosureViolation,
@@ -27,16 +38,6 @@ export {
   guiScriptResourceOf,
   guiScriptResourcesOf,
 } from "./gui-node-index";
-export type { HsmModule } from "./hsm-builtin";
-export {
-  HSM_MODULE_SPECIFIER,
-  HSM_REQUIRE_ROOT,
-  hsmModules,
-  hsmRequireName,
-  hsmSourceFiles,
-  requireHsmSourceDir,
-  resolveHsmSourceDir,
-} from "./hsm-builtin";
 export { buildInputActionIndex } from "./input-action-index";
 export type {
   ExtensionDependency,
@@ -123,7 +124,12 @@ export type {
   TranspileProjectResult,
   TranspileResult,
 } from "./transpile";
-export { compileHsmModules, transpile, transpileProject } from "./transpile";
+export {
+  compileLibraryModules,
+  compileLibrarySourceMaps,
+  transpile,
+  transpileProject,
+} from "./transpile";
 export type { ClassifiedSlot } from "./url-address-slots";
 export {
   addressClassOfArgument,

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { ruleId } from "../src/hsm-view-index";
 import type { LiveInstance, LiveRule } from "../src/hsm-view-live";
 import { createHsmViewApp, type HsmViewIndex } from "../src/hsm-view-server";
@@ -46,7 +46,7 @@ let rulesIndex: HsmViewIndex;
 async function indexOf(name: string, source: string): Promise<HsmViewIndex> {
   const file = path.join(dir, name);
   writeFileSync(file, source);
-  const session = createSession({ file, hsmSourceDir: requireHsmSourceDir() });
+  const session = createSession({ file, hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY) });
   const app = createHsmViewApp({ session, client: { js: "", css: "" } });
   return (await (await app.request("/api/index")).json()) as HsmViewIndex;
 }

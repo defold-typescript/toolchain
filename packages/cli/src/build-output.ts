@@ -1,9 +1,12 @@
 import { mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import {
+  BUNDLED_LIBRARIES,
+  type BundledModule,
+  bundledModuleOfRequire,
+  bundledModules,
   computeOutputRel,
-  HSM_REQUIRE_ROOT,
-  hsmModules,
+  HSM_LIBRARY,
   parseBuildConfig,
   type ScriptKind,
   type SourceOutputKind,
@@ -159,7 +162,6 @@ export function detectSourceOutputKind(source: string): SourceOutputKind {
 // print and says what the file is instead.
 export const LUALIB_BUNDLE_LABEL = "the TypeScript standard-library bundle";
 export const TIMERS_RUNTIME_LABEL = "the timers polyfill runtime";
-export const HSM_LIBRARY_LABEL = "the hsm state machine library";
 
 // Every file the build writes on its own behalf sits in one folder under the
 // output root, so the project root holds none of them and one ignore line
@@ -183,33 +185,42 @@ export function timersModuleRel(config: BuildConfig): string {
   return runtimeRel(config, "timers.lua");
 }
 
-// Each hsm module lands at `hsm/<module>.lua` in the runtime folder, beside the
-// bundle `async` requires.
-export function hsmModuleRel(config: BuildConfig, name: string): string {
-  return runtimeRel(config, `hsm/${name}.lua`);
+// Each bundled library module lands at `<id>/<module>.lua` in the runtime
+// folder, beside the bundle hsm's `async` requires.
+export function libraryModuleRel(
+  config: BuildConfig,
+  module: Pick<BundledModule, "library" | "name">,
+): string {
+  return runtimeRel(config, `${module.library.id}/${module.name}.lua`);
 }
 
-/** Where each named hsm module lands, keyed by module name. */
-export function hsmModuleRels(
+/** Where each named bundled library module lands, keyed by require name. */
+export function libraryModuleRels(
   config: BuildConfig,
-  names: Iterable<string>,
+  requireNames: Iterable<string>,
 ): Record<string, string> {
   const rels: Record<string, string> = {};
-  for (const name of names) {
-    rels[name] = hsmModuleRel(config, name);
+  for (const requireName of requireNames) {
+    const module = bundledModuleOfRequire(requireName);
+    if (module !== undefined) {
+      rels[requireName] = libraryModuleRel(config, module);
+    }
   }
   return rels;
 }
 
 // Every path the build writes on its own behalf rather than for a source: the
-// lualib bundle, the timers runtime, and every hsm module. Each is written only
-// when a program needs it, but any of them may be on disk from an earlier build,
-// so watch and the orphan scan treat the whole set as the build's own.
+// lualib bundle, the timers runtime, and every bundled library module. Each is
+// written only when a program needs it, but any of them may be on disk from an
+// earlier build, so watch and the orphan scan treat the whole set as the build's
+// own.
 export function builtinRuntimeRels(config: BuildConfig): string[] {
   return [
     lualibBundleRel(config),
     timersModuleRel(config),
-    ...hsmModules().map(({ name }) => hsmModuleRel(config, name)),
+    ...BUNDLED_LIBRARIES.flatMap((library) =>
+      bundledModules(library).map((module) => libraryModuleRel(config, module)),
+    ),
   ];
 }
 
@@ -244,14 +255,14 @@ export function hasGeneratedBanner(cwd: string, rel: string): boolean {
 }
 
 // The output-root paths earlier releases wrote the build's own Lua to, each
-// named after the artifact's internal require name.
+// named after the artifact's internal require name. Only hsm shipped there.
 function legacyRuntimeRels(config: BuildConfig): string[] {
   const { outDir } = config;
   const root = outDir === undefined || outDir === "" || outDir === "." ? "" : outDir;
   return [
     "lualib_bundle.lua",
     "defold_typescript_timers.lua",
-    ...hsmModules().map(({ name }) => `${HSM_REQUIRE_ROOT}/${name}.lua`),
+    ...bundledModules(HSM_LIBRARY).map(({ name }) => `${HSM_LIBRARY.requireRoot}/${name}.lua`),
   ].map((rel) => path.posix.join(root, rel));
 }
 
@@ -279,7 +290,7 @@ export function pruneLegacyRuntimeOutputs(
     rmSync(path.join(cwd, `${rel}.map`), { force: true });
   }
   const { outDir } = config;
-  const hsmDir = path.join(cwd, outDir ?? "", HSM_REQUIRE_ROOT);
+  const hsmDir = path.join(cwd, outDir ?? "", HSM_LIBRARY.requireRoot);
   try {
     if (readdirSync(hsmDir).length === 0) {
       rmdirSync(hsmDir);
@@ -412,15 +423,15 @@ export function retargetSourceRoot(
 }
 
 /**
- * Points an hsm module's map at the `.ts` it was compiled from, which sits in
- * `sourceDir` outside the output tree: the workspace source, or the copy under
- * `node_modules`. The root is taken between absolute paths, since a cwd-relative
+ * Points a bundled library module's map at the `.ts` it was compiled from, which
+ * sits in `sourceDir` outside the output tree: the workspace source, or the copy
+ * under `node_modules`. The root is taken between absolute paths, since a cwd-relative
  * path that climbs out of the project resolves against the process's directory.
  * The map comes back unchanged when no relative root reaches the source (another
  * drive on Windows): the Local Lua Debugger joins `sourceRoot` after the map's
  * folder, so it cannot name one.
  */
-export function retargetHsmSourceMap(
+export function retargetLibrarySourceMap(
   cwd: string,
   moduleRel: string,
   map: string | undefined,

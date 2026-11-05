@@ -9,7 +9,7 @@ import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { requireHsmSourceDir } from "@defold-typescript/transpiler";
+import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { lessonProjects } from "./hsm-guide-steps";
 import { loadMachines } from "./hsm-view-load";
 
@@ -74,7 +74,7 @@ function machine(role: Role): Startable {
     }
   }
   const load = loadMachines(path.join(projectDir, MACHINE_FILES[role]), {
-    hsmSourceDir: requireHsmSourceDir(),
+    hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY),
   });
   load.engine.setSink((entry) => {
     if (entry.kind === "engine") {
