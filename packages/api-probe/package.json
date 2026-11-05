@@ -12,7 +12,8 @@
     "test:probe:native-import": "bun test ./src/native-import-probe.e2e.ts",
     "test:probe:bob-library": "bun test ./src/bob-library-probe.e2e.ts",
     "test:probe:ecs": "bun test ./src/ecs-smoke.e2e.ts",
-    "bench:hsm": "bun test ./src/hsm-bench.e2e.ts"
+    "bench:hsm": "bun test ./src/hsm-bench.e2e.ts",
+    "bench:ecs": "bun test ./src/ecs-bench.e2e.ts"
   },
   "dependencies": {
     "@defold-typescript/cli": "workspace:*",
