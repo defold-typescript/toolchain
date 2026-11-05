@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **The [`ecs` entity system](./entity-systems.md) ships with the toolchain:** import `@defold-typescript/types/ecs` from any script or module, and `build` and `watch` write its [tiny-ecs](https://github.com/bakpakin/tiny-ecs) port, MIT license header kept and listed in the CLI's `THIRD_PARTY_NOTICES.md`, to `ecs/index.lua` in the [runtime folder](./build.md#the-runtime-folder) only when a module imports it for values. Import `@defold-typescript/types/ecs/hsm` to make [one table both an entity and an hsm machine's `ctx`](./ecs-and-hsm.md): the `member`, `join` and `leave` state hooks change which systems hold it, `tickMachines` updates the machines, and the build writes `ecs/hsm.lua` only for projects that import it.
+- **The [`ecs` entity system](./entity-systems.md) ships with the toolchain:** import `@defold-typescript/types/ecs` and `build` and `watch` write its [tiny-ecs](https://github.com/bakpakin/tiny-ecs) port, MIT license header kept and listed in the CLI's `THIRD_PARTY_NOTICES.md`, to `ecs/index.lua` in the [runtime folder](./build.md#the-runtime-folder), or import `@defold-typescript/types/ecs/hsm` to make [one table both an entity and an hsm machine's `ctx`](./ecs-and-hsm.md) whose `member`, `join` and `leave` state hooks change which systems hold it while `tickMachines` updates the machines, each file written only for projects that import it for values. The [`AGENTS.md` block](./init-agents.md#what-it-writes) that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
 
 ## v0.57.0
 
