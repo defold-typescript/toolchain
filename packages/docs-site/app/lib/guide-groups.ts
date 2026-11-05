@@ -34,6 +34,8 @@ export const GUIDE_GROUPS: GuideGroup[] = [
       "vector-math",
       "editor-scripts",
       "state-machines",
+      "entity-systems",
+      "ecs-and-hsm",
     ],
   },
   {
