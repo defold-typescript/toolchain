@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import {
+  type AssignmentLeftHandSideExpression,
   createAssignmentStatement,
   createBinaryExpression,
   createBlock,
@@ -173,6 +174,7 @@ function emitInitMerge(
   fn: HookFunction,
   context: TransformationContext,
   property: ts.ObjectLiteralElementLike,
+  target: AssignmentLeftHandSideExpression,
 ): Statement[] {
   // init-self: Defold has already populated `self` with the declared property
   // values when `init` runs, so an `init(self)` body must resolve `self` to the
@@ -224,7 +226,7 @@ function emitInitMerge(
     NodeFlags.Declaration,
     fn,
   );
-  return [builderDecl, createAssignmentStatement(createIdentifier("init"), initFn, property)];
+  return [builderDecl, createAssignmentStatement(target, initFn, property)];
 }
 
 // Build-time markers, never engine functions: bob reads `resource.<kind>("path")`
@@ -948,6 +950,86 @@ function isCallee(node: ts.Expression): boolean {
   return ts.isCallExpression(callee.parent) && callee.parent.expression === callee;
 }
 
+function isAmbient(statement: ts.Statement): boolean {
+  return (
+    ts.canHaveModifiers(statement) &&
+    (ts.getModifiers(statement)?.some((m) => m.kind === ts.SyntaxKind.DeclareKeyword) ?? false)
+  );
+}
+
+function collectBindingNames(name: ts.BindingName, names: Set<string>): void {
+  if (ts.isIdentifier(name)) {
+    names.add(name.text);
+    return;
+  }
+  for (const element of name.elements) {
+    if (!ts.isOmittedExpression(element)) {
+      collectBindingNames(element.name, names);
+    }
+  }
+}
+
+/**
+ * The names a source binds at module level, which TSTL emits as chunk-level
+ * locals. Exported declarations count too: TSTL emits most of them on
+ * `____exports`, and rooting a callback beside one changes nothing at run time.
+ */
+export function moduleBindingNames(sourceFile: ts.SourceFile): ReadonlySet<string> {
+  const names = new Set<string>();
+  for (const statement of sourceFile.statements) {
+    if (isAmbient(statement)) {
+      continue;
+    }
+    if (ts.isImportDeclaration(statement)) {
+      const clause = statement.importClause;
+      if (clause === undefined || clause.isTypeOnly) {
+        continue;
+      }
+      if (clause.name !== undefined) {
+        names.add(clause.name.text);
+      }
+      const bindings = clause.namedBindings;
+      if (bindings !== undefined && ts.isNamespaceImport(bindings)) {
+        names.add(bindings.name.text);
+      } else if (bindings !== undefined) {
+        for (const element of bindings.elements) {
+          if (!element.isTypeOnly) {
+            names.add(element.name.text);
+          }
+        }
+      }
+    } else if (ts.isVariableStatement(statement)) {
+      for (const declaration of statement.declarationList.declarations) {
+        collectBindingNames(declaration.name, names);
+      }
+    } else if (
+      (ts.isFunctionDeclaration(statement) ||
+        ts.isClassDeclaration(statement) ||
+        ts.isEnumDeclaration(statement) ||
+        ts.isModuleDeclaration(statement)) &&
+      statement.name !== undefined &&
+      ts.isIdentifier(statement.name)
+    ) {
+      names.add(statement.name.text);
+    } else if (ts.isImportEqualsDeclaration(statement) && !statement.isTypeOnly) {
+      names.add(statement.name.text);
+    }
+  }
+  return names;
+}
+
+// Defold reads each callback with `lua_getglobal` after running the chunk with
+// no environment of its own, so `_G.<name>` is the slot the engine reads. A
+// bare `<name> = ...` would instead assign a module-level local of that name.
+function callbackTarget(
+  name: string,
+  moduleBindings: ReadonlySet<string>,
+): AssignmentLeftHandSideExpression {
+  return moduleBindings.has(name)
+    ? createTableIndexExpression(createIdentifier("_G"), createStringLiteral(name))
+    : createIdentifier(name);
+}
+
 function eraseFactoryCall(
   expression: ts.Expression,
   context: TransformationContext,
@@ -958,6 +1040,7 @@ function eraseFactoryCall(
     return undefined;
   }
   const factory = factoryExportName(expression.expression, context.checker);
+  const moduleBindings = moduleBindingNames(context.sourceFile);
   const registrations: Statement[] = [];
   const statements: Statement[] = [];
   for (const property of hooks.properties) {
@@ -987,7 +1070,7 @@ function eraseFactoryCall(
       if (dispatch !== undefined) {
         statements.push(
           createAssignmentStatement(
-            createIdentifier(name),
+            callbackTarget(name, moduleBindings),
             context.transformExpression(dispatch),
             property,
           ),
@@ -996,7 +1079,9 @@ function eraseFactoryCall(
       continue;
     }
     if (name === "init" && initReturnsValue(fn)) {
-      statements.push(...emitInitMerge(fn, context, property));
+      statements.push(
+        ...emitInitMerge(fn, context, property, callbackTarget(name, moduleBindings)),
+      );
       continue;
     }
     const params: Identifier[] = fn.parameters
@@ -1009,7 +1094,9 @@ function eraseFactoryCall(
       NodeFlags.Declaration,
       fn,
     );
-    statements.push(createAssignmentStatement(createIdentifier(name), fnExpression, property));
+    statements.push(
+      createAssignmentStatement(callbackTarget(name, moduleBindings), fnExpression, property),
+    );
   }
   return [...registrations, ...statements];
 }
