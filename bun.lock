@@ -122,6 +122,7 @@
       "name": "@defold-typescript/ecs",
       "version": "0.0.0",
       "devDependencies": {
+        "@defold-typescript/hsm": "workspace:*",
         "@defold-typescript/transpiler": "workspace:*",
         "@defold-typescript/types": "workspace:*",
         "lua-wasm-bindings": "0.5.3",

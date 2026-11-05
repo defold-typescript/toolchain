@@ -850,6 +850,72 @@ describe("runBuild", () => {
     );
   });
 
+  const ECS_HSM_SCRIPT = [
+    'import { defineScript } from "@defold-typescript/types";',
+    'import { processingSystem, requireAll, update, world } from "@defold-typescript/types/ecs";',
+    'import { member, tickMachines } from "@defold-typescript/types/ecs/hsm";',
+    'import { defineMachine, type MachineInstance } from "@defold-typescript/types/hsm";',
+    "",
+    'type Ev = { type: "GO" };',
+    "interface Ent {",
+    "  moving?: true;",
+    "  fsm?: MachineInstance<Ent, Ev>;",
+    "}",
+    "",
+    'const movers = processingSystem<Ent>()(requireAll("moving"), { process() {} });',
+    'const entities = world<Ent>(tickMachines<Ent>("fsm"), movers);',
+    "const walker = defineMachine<Ent, Ev>()({",
+    '  initial: "/idle",',
+    '  states: { idle: { on: { GO: "/walk" } }, walk: member(entities, "moving") },',
+    "});",
+    "",
+    "export default defineScript({",
+    "  init() {",
+    "    const e: Ent = {};",
+    "    e.fsm = walker.start(e);",
+    "    entities.addEntity(e);",
+    "  },",
+    "  update(_self, dt) {",
+    "    update(entities, dt);",
+    "  },",
+    "});",
+    "",
+  ].join("\n");
+
+  test("an ecs-only project gets no hsm Lua and no bridge module", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/entities.ts", ECS_SURFACES[3].source);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("lib/defold_typescript/ecs/index.lua");
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/hsm"))).toBe(false);
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/ecs/hsm.lua"))).toBe(false);
+  });
+
+  test("an hsm-only project gets no ecs Lua", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/door.ts", HSM_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("lib/defold_typescript/hsm/index.lua");
+    expect(existsSync(path.join(cwd, "lib/defold_typescript/ecs"))).toBe(false);
+  });
+
+  test("a project using both gets the bridge, which requires only the ecs index", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/walker.ts", ECS_HSM_SCRIPT);
+
+    const result = runBuild({ cwd });
+
+    for (const rel of ["ecs/index.lua", "ecs/hsm.lua", "hsm/index.lua"]) {
+      expect(result.written).toContain(`lib/defold_typescript/${rel}`);
+    }
+    const bridge = readFileSync(path.join(cwd, "lib/defold_typescript/ecs/hsm.lua"), "utf8");
+    expect(findEmittedRequires(bridge)).toEqual(["lib.defold_typescript.ecs.index"]);
+  });
+
   test("aggregates diagnostics across multiple broken files", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/a.ts", 'const a: number = "bad";\n');
