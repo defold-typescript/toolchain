@@ -60,6 +60,9 @@
     "./ecs": {
       "types": "./ecs/index.d.ts"
     },
+    "./ecs/hsm": {
+      "types": "./ecs/hsm.d.ts"
+    },
     "./cli-runtime": {
       "types": "./scripts/cli-runtime.ts",
       "bun": "./scripts/cli-runtime.ts",
