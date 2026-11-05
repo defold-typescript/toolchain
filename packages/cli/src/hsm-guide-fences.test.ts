@@ -15,46 +15,38 @@
  * `MachineInstance` and `WaitGroup` interfaces of the hsm source.
  */
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import * as os from "node:os";
+import { readFileSync, rmSync } from "node:fs";
 import * as path from "node:path";
-import { transpileProject } from "@defold-typescript/transpiler";
 import * as ts from "typescript";
 import {
-  fenceTitle,
-  isStepFence,
-  type LessonProject,
-  lessonProjects,
-  tsFences,
-} from "./hsm-guide-steps";
+  badFenceTitles,
+  collapseWhitespace,
+  compilerOptions,
+  exportedTypeMembers,
+  FENCE_TITLE,
+  type Fence,
+  type FenceProject,
+  failingFences,
+  GUIDE_DIR,
+  GUIDE_TYPE_PATHS,
+  guideFences,
+  REPO_ROOT,
+  referenceRows,
+  transpileErrors,
+  typeCheck,
+  unquotedExcerpts,
+  writeFenceProject as writeProject,
+} from "./guide-fence-gate";
+import { type LessonProject, lessonProjects } from "./hsm-guide-steps";
 import { LIBRARY_DATA_DIR } from "./library/package-root";
 import { printCorpus } from "./library/print-corpus";
 
-const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
-const GUIDE_DIR = path.join(REPO_ROOT, "packages", "docs", "guide");
 const REFERENCE_PAGE = "state-machines.md";
 const LESSON_PAGE = "state-machines-tutorial.md";
 const FENCED_PAGES = [REFERENCE_PAGE, LESSON_PAGE];
 const EXCERPT_SOURCE = path.join(REPO_ROOT, "packages/cli/test/fixtures/hsm-guide-excerpts.md");
 const FENCED_FILES = [...FENCED_PAGES.map((page) => path.join(GUIDE_DIR, page)), EXCERPT_SOURCE];
-const SCAFFOLD_TSCONFIG = path.join(import.meta.dir, "scaffold-tsconfig.json");
 const HSM_INDEX_SOURCE = path.join(REPO_ROOT, "packages", "hsm", "src", "index.ts");
-
-// The entries the platformer example's tsconfig maps, so the fences see the
-// same `@defold-typescript/types` surface a project in this repo does.
-const TYPE_PATHS: Record<string, string[]> = {
-  "@defold-typescript/types": [path.join(REPO_ROOT, "packages/types/src/index.ts")],
-  "@defold-typescript/types/script": [
-    path.join(REPO_ROOT, "packages/types/generated/kinds/script.d.ts"),
-  ],
-  "@defold-typescript/types/timers": [path.join(REPO_ROOT, "packages/types/src/timers.d.ts")],
-  "@defold-typescript/types/hsm": [path.join(REPO_ROOT, "packages/types/hsm/index.d.ts")],
-  "@defold-typescript/types/hsm/async": [path.join(REPO_ROOT, "packages/types/hsm/async.d.ts")],
-  "@defold-typescript/types/hsm/debug": [path.join(REPO_ROOT, "packages/types/hsm/debug.d.ts")],
-  "@defold-typescript/types/hsm/defold": [path.join(REPO_ROOT, "packages/types/hsm/defold.d.ts")],
-};
-
-const ENV_DTS = 'import "@defold-typescript/types/script";\n';
 
 // The library modules a fence imports, printed as `resolve` writes them into a
 // project's `.defold-types/`; each becomes a project file next to the fences.
@@ -62,53 +54,6 @@ const LIBRARY_MODULES = ["monarch.monarch"];
 const LIBRARY_CORPUS = await printCorpus(LIBRARY_DATA_DIR);
 
 const SLOW = 120_000;
-
-interface Fence {
-  /** How a failure names the fence: its title, or its position on the page. */
-  readonly label: string;
-  /** Where the fence is written, relative to the project's `src/`. */
-  readonly rel: string;
-  readonly body: string;
-}
-
-// A fence title names a file relative to `src/`: a `src/` title claims to quote
-// a docs/examples file (guide-source-parity.test.ts), and these fences quote none.
-const FENCE_TITLE = /^(?!src\/)[\w-]+(?:\/[\w-]+)*\.ts$/;
-
-// The info string's second token, as the docs site reads `original`: Shiki and
-// the language badge take only the first, so the fence still renders as `ts`.
-function isExcerptFence(info: string): boolean {
-  return info.trim().split(/\s+/)[0] === "excerpt";
-}
-
-function collapseWhitespace(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-/** The `ts excerpt` fences of `guide` that `source` does not hold, whitespace aside. */
-function unquotedExcerpts(guide: string, source: string): string[] {
-  return tsFences(guide)
-    .filter((fence) => isExcerptFence(fence.info))
-    .map((fence) => collapseWhitespace(fence.body))
-    .filter((excerpt) => excerpt.length === 0 || !source.includes(excerpt));
-}
-
-function guideFences(guide: string): Fence[] {
-  const fences: Fence[] = [];
-  let index = 0;
-  for (const { info, body } of tsFences(guide)) {
-    if (isExcerptFence(info) || isStepFence(info)) continue;
-    const title = fenceTitle(info);
-    if (title === undefined) {
-      fences.push({ label: `ts fence #${index}`, rel: `guide-fence-${index}.ts`, body });
-    } else {
-      expect(title, `ts fence #${index} title names a file under src/`).toMatch(FENCE_TITLE);
-      fences.push({ label: title, rel: title, body });
-    }
-    index++;
-  }
-  return fences;
-}
 
 /** Every file of every lesson's project, each project under its own `lesson-<nn>/`. */
 function lessonFences(page: string): Fence[] {
@@ -129,99 +74,14 @@ afterAll(() => {
   }
 });
 
-interface FenceProject {
-  readonly src: string;
-  /** Fence rel to its source text, as written. */
-  readonly sources: ReadonlyMap<string, string>;
-  /** Library declaration rel to its text. */
-  readonly declarations: ReadonlyMap<string, string>;
-}
-
 function writeFenceProject(fences: readonly Fence[]): FenceProject {
-  const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-hsm-guide-"));
-  tempRoots.push(cwd);
-  const src = path.join(cwd, "src");
-  mkdirSync(src, { recursive: true });
-  writeFileSync(path.join(src, "env.d.ts"), ENV_DTS);
-  const declarations = new Map<string, string>();
-  for (const moduleId of LIBRARY_MODULES) {
-    const rel = `${moduleId}.d.ts`;
-    const text = LIBRARY_CORPUS.get(moduleId);
-    if (text === undefined) throw new Error(`library data prints no module ${moduleId}`);
-    writeFileSync(path.join(src, rel), text);
-    declarations.set(rel, text);
-  }
-  const sources = new Map<string, string>();
-  for (const fence of fences) {
-    const text = `${fence.body}\nexport {};\n`;
-    const file = path.join(src, fence.rel);
-    mkdirSync(path.dirname(file), { recursive: true });
-    writeFileSync(file, text);
-    sources.set(fence.rel, text);
-  }
-  return { src, sources, declarations };
-}
-
-function compilerOptions(src: string): ts.CompilerOptions {
-  const scaffold = JSON.parse(readFileSync(SCAFFOLD_TSCONFIG, "utf8"));
-  const converted = ts.convertCompilerOptionsFromJson(scaffold, src);
-  expect(converted.errors.map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"))).toEqual(
-    [],
-  );
-  return { ...converted.options, noEmit: true, paths: TYPE_PATHS };
-}
-
-function describeDiagnostic(d: ts.Diagnostic): string {
-  const text = ts.flattenDiagnosticMessageText(d.messageText, "\n");
-  if (d.file === undefined || d.start === undefined) {
-    return `TS${d.code}: ${text}`;
-  }
-  const { line, character } = d.file.getLineAndCharacterOfPosition(d.start);
-  return `${line + 1}:${character + 1} TS${d.code}: ${text}`;
-}
-
-/** Diagnostics per project file (`src/`-relative), plus global ones under `""`. */
-function typeCheck(project: FenceProject): Map<string, string[]> {
-  const roots = [
-    path.join(project.src, "env.d.ts"),
-    ...[...project.declarations.keys()].map((rel) => path.join(project.src, rel)),
-    ...[...project.sources.keys()].map((rel) => path.join(project.src, rel)),
-  ];
-  const program = ts.createProgram(roots, compilerOptions(project.src));
-  const byFile = new Map<string, string[]>();
-  for (const d of ts.getPreEmitDiagnostics(program)) {
-    const key =
-      d.file === undefined
-        ? ""
-        : path.relative(project.src, d.file.fileName).split(path.sep).join("/");
-    byFile.set(key, [...(byFile.get(key) ?? []), describeDiagnostic(d)]);
-  }
-  return byFile;
-}
-
-/** The diagnostics of `project`, keyed by the label of the fence or declaration that has them. */
-function failingFences(fences: readonly Fence[], project: FenceProject): Record<string, string[]> {
-  const found = typeCheck(project);
-  const failing: Record<string, string[]> = {};
-  const labelled: [string, string][] = [
-    ["", "(global)"],
-    ...[...project.declarations.keys()].map((rel): [string, string] => [rel, rel]),
-    ...fences.map((fence): [string, string] => [fence.rel, fence.label]),
-  ];
-  for (const [rel, label] of labelled) {
-    const diagnostics = found.get(rel);
-    if (diagnostics !== undefined) failing[label] = diagnostics;
-  }
-  return failing;
-}
-
-function transpileErrors(project: FenceProject): string[] {
-  const files: Record<string, string> = {};
-  for (const [rel, text] of project.declarations) files[rel] = text;
-  for (const [rel, text] of project.sources) files[rel] = text;
-  return transpileProject({ files })
-    .diagnostics.filter((d) => d.category === undefined)
-    .map((d) => `${d.file ?? "(project)"}:${d.line ?? 0}: ${d.message}`);
+  const project = writeProject(fences, {
+    libraryModules: LIBRARY_MODULES,
+    corpus: LIBRARY_CORPUS,
+    tmpPrefix: "defold-typescript-hsm-guide-",
+  });
+  tempRoots.push(project.root);
+  return project;
 }
 
 for (const file of FENCED_FILES) {
@@ -238,6 +98,7 @@ for (const file of FENCED_FILES) {
     test("the page has ts fences and no two share a title", () => {
       const fences = guideFences(guide);
       expect(fences.length).toBeGreaterThan(0);
+      expect(badFenceTitles(guide), "fence titles that name no file under src/").toEqual([]);
       const titled = fences.map((f) => f.rel).filter((rel) => !rel.startsWith("guide-fence-"));
       const repeated = titled.filter((rel, i) => titled.indexOf(rel) !== i);
       expect(repeated, "fence titles used twice").toEqual([]);
@@ -289,7 +150,9 @@ function unusedHsmSurface(files: ReadonlyMap<string, string>): HsmCoverage {
   const project = writeFenceProject(
     [...files].map(([title, body]): Fence => ({ label: title, rel: title, body })),
   );
-  const declarationFiles = HSM_ENTRY_POINTS.map((entry) => (TYPE_PATHS[entry] as string[])[0]);
+  const declarationFiles = HSM_ENTRY_POINTS.map(
+    (entry) => (GUIDE_TYPE_PATHS[entry] as string[])[0],
+  );
   const program = ts.createProgram(
     [
       path.join(project.src, "env.d.ts"),
@@ -647,48 +510,6 @@ describe("hsm guide excerpts", () => {
   });
 });
 
-/**
- * Member names of a type the hsm `index.ts` exports. A union lists the members of every
- * variant, so `StateConfig` covers the compound and the parallel state.
- */
-function exportedTypeMembers(program: ts.Program, name: string): string[] {
-  const checker = program.getTypeChecker();
-  const file = program.getSourceFile(HSM_INDEX_SOURCE);
-  const moduleSymbol = file === undefined ? undefined : checker.getSymbolAtLocation(file);
-  const symbol =
-    moduleSymbol === undefined
-      ? undefined
-      : checker.getExportsOfModule(moduleSymbol).find((entry) => entry.name === name);
-  if (symbol === undefined) {
-    throw new Error(`packages/hsm/src/index.ts exports no type ${name}`);
-  }
-  const declared = checker.getDeclaredTypeOfSymbol(symbol);
-  const variants = declared.isUnion() ? declared.types : [declared];
-  const names = new Set<string>();
-  for (const variant of variants) {
-    for (const member of checker.getPropertiesOfType(variant)) {
-      names.add(member.name);
-    }
-  }
-  return [...names];
-}
-
-/** The first-cell inline-code names of the table rows under `### <heading>` inside `## Reference`. */
-function referenceRows(page: string, heading: string): string[] {
-  const reference = page.split(/^## /m).find((section) => section.startsWith("Reference\n"));
-  expect(reference, "the page has a ## Reference section").toBeDefined();
-  const sub = (reference as string)
-    .split(/^### /m)
-    .find((section) => section.split("\n")[0]?.includes(heading));
-  expect(sub, `## Reference has a ### ${heading} table`).toBeDefined();
-  const names: string[] = [];
-  for (const line of (sub as string).split("\n")) {
-    const cell = line.match(/^\|\s*`([^`]+)`\s*\|/);
-    if (cell) names.push(cell[1] as string);
-  }
-  return names;
-}
-
 const reference = readFileSync(path.join(GUIDE_DIR, REFERENCE_PAGE), "utf8");
 
 describe("state machines guide reference", () => {
@@ -699,9 +520,11 @@ describe("state machines guide reference", () => {
   });
   for (const name of ["StateConfig", "Machine", "MachineInstance", "WaitGroup"]) {
     test(`the ${name} table lists every member and nothing else`, () => {
-      const members = exportedTypeMembers(program, name);
+      const members = exportedTypeMembers(program, HSM_INDEX_SOURCE, name);
       expect(members.length).toBeGreaterThan(0);
-      expect(referenceRows(reference, name).sort()).toEqual([...members].sort());
+      const rows = referenceRows(reference, name);
+      expect(rows, `## Reference has a ### ${name} table`).toBeDefined();
+      expect((rows as string[]).sort()).toEqual([...members].sort());
     });
   }
 });

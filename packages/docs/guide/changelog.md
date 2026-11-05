@@ -13,11 +13,11 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Entity systems](./build.md#the-runtime-folder)** ship built in, with state hooks that move an entity between systems.
+> - **[Entity systems](./entity-systems.md)** ship built in, with [state hooks](./ecs-and-hsm.md) that move an entity between systems.
 
 ### Improved
 
-- **The `ecs` entity system ships with the toolchain:** import `@defold-typescript/types/ecs` from any script or module, and `build` and `watch` write its [tiny-ecs](https://github.com/bakpakin/tiny-ecs) port, MIT license header kept and listed in the CLI's `THIRD_PARTY_NOTICES.md`, to `ecs/index.lua` in the [runtime folder](./build.md#the-runtime-folder) only when a module imports it for values. Import `@defold-typescript/types/ecs/hsm` to make one table both an entity and an hsm machine's `ctx`: the `member`, `join` and `leave` state hooks change which systems hold it, `tickMachines` updates the machines, and the build writes `ecs/hsm.lua` only for projects that import it.
+- **The [`ecs` entity system](./entity-systems.md) ships with the toolchain:** import `@defold-typescript/types/ecs` from any script or module, and `build` and `watch` write its [tiny-ecs](https://github.com/bakpakin/tiny-ecs) port, MIT license header kept and listed in the CLI's `THIRD_PARTY_NOTICES.md`, to `ecs/index.lua` in the [runtime folder](./build.md#the-runtime-folder) only when a module imports it for values. Import `@defold-typescript/types/ecs/hsm` to make [one table both an entity and an hsm machine's `ctx`](./ecs-and-hsm.md): the `member`, `join` and `leave` state hooks change which systems hold it, `tickMachines` updates the machines, and the build writes `ecs/hsm.lua` only for projects that import it.
 
 ## v0.57.0
 
