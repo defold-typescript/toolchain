@@ -5676,55 +5676,59 @@ this.world?.add({ name: "spark", position: { x: 0, y: 0 } });
 
 ##### Functions
 
+`filter` and `tryFilter` read a [string pattern](#string-filters). A factory called with a `key` [reloads](#hot-reload) the system built first under it.
+
 | Function | Does |
 | --- | --- |
-| `requireAll` | Builds a filter that takes entities with every component and passing every filter given; narrows its components. |
-| `requireAny` | Builds a filter that takes entities with at least one component or passing at least one filter given. |
-| `rejectAll` | Builds a filter that rejects entities with every component and passing every filter given. |
-| `rejectAny` | Builds a filter that rejects entities with at least one component or passing at least one filter given. |
-| `filter` | `filter(pattern)` builds a filter from a [tiny-ecs pattern](#string-filters) such as `"a&!b"`; throws on a bad pattern. Narrows nothing. |
-| `tryFilter` | `tryFilter(pattern)` returns `{ ok: true, filter }`, or `{ ok: false, error }` where `filter` throws. |
-| `system` | `system<E>(key?)` returns a factory for plain systems: `(def)` or `(filter, def)`. With a `key`, a later call [reloads](#hot-reload) the system built first. |
-| `processingSystem` | `processingSystem<E>(key?)` returns a factory for processing systems: `(filter, def)`. With a `key`, a later call [reloads](#hot-reload) the system built first. |
-| `sortedSystem` | `sortedSystem<E>(key?)` returns a factory for plain systems kept in `compare` order. With a `key`, a later call [reloads](#hot-reload) the system built first. |
-| `sortedProcessingSystem` | `sortedProcessingSystem<E>(key?)` returns a factory for processing systems run in `compare` order. With a `key`, a later call [reloads](#hot-reload) the system built first. |
-| `world` | `world<E>(...items)` creates a world holding `items`, applied at once. |
-| `add` | `add(w, ...items)`: the same as `w.add(...items)`. |
-| `addEntity` | `addEntity(w, e)`: the same as `w.addEntity(e)`. |
-| `changed` | `changed(w, e)`: the same as `w.changed(e)`. |
-| `addSystem` | `addSystem(w, s)`: the same as `w.addSystem(s)`. |
-| `remove` | `remove(w, ...items)`: the same as `w.remove(...items)`. |
-| `removeEntity` | `removeEntity(w, e)`: the same as `w.removeEntity(e)`. |
-| `removeSystem` | `removeSystem(w, s)`: the same as `w.removeSystem(s)`. |
-| `refresh` | `refresh(w)`: the same as `w.refresh()`. |
-| `update` | `update(w, dt, filter?)`: the same as `w.update(dt, filter)`. |
-| `clearEntities` | `clearEntities(w)`: the same as `w.clearEntities()`. |
-| `clearSystems` | `clearSystems(w)`: the same as `w.clearSystems()`. |
-| `getEntityCount` | `getEntityCount(w)`: the same as `w.getEntityCount()`. |
-| `getSystemCount` | `getSystemCount(w)`: the same as `w.getSystemCount()`. |
-| `hasEntity` | `hasEntity(w, e)`: whether `w` holds `e` as of its last `refresh` or `update`; `false` while its add waits, `true` while its removal does. |
-| `setSystemIndex` | `setSystemIndex(w, s, index)`: the same as `w.setSystemIndex(s, index)`. |
+| `requireAll` | Builds a filter that selects an entity with every component and passing every filter given. |
+| `requireAny` | Builds a filter that selects an entity with at least one component or passing at least one filter given. |
+| `rejectAll` | Builds a filter that rejects an entity with every component and passing every filter given. |
+| `rejectAny` | Builds a filter that rejects an entity with at least one component or passing at least one filter given. |
+| `filter` | Builds a filter from a tiny-ecs pattern such as `"a&!b"`. |
+| `tryFilter` | Builds a filter as `filter` does, returning the error instead of throwing it. |
+| `system` | Returns a factory for plain systems over entities of type `E`. |
+| `processingSystem` | Returns a factory for processing systems over entities of type `E`. |
+| `sortedSystem` | Returns a factory for plain systems that keep their entities in `compare` order. |
+| `sortedProcessingSystem` | Returns a factory for processing systems that process their entities in `compare` order. |
+| `world` | Creates a world holding `items`, applied at once. |
+| `add` | Adds each item as a system or an entity; the same as `target.add(...items)`. |
+| `addEntity` | Adds an entity, or re-checks one whose components changed; the same as `target.addEntity`. |
+| `changed` | Re-checks an entity whose components changed; the same as `target.changed`. |
+| `addSystem` | Adds a system; the same as `target.addSystem`. |
+| `remove` | Removes each item as a system or an entity; the same as `target.remove(...items)`. |
+| `removeEntity` | Removes an entity; the same as `target.removeEntity`. |
+| `removeSystem` | Removes a system; the same as `target.removeSystem`. |
+| `refresh` | Applies pending changes and runs `onModify` with `0` on each modified system; the same as `target.refresh()`. |
+| `update` | Applies pending changes and updates every active system, or those `systemFilter` selects; the same as `target.update(dt, systemFilter)`. |
+| `clearEntities` | Removes every entity; the same as `target.clearEntities()`. |
+| `clearSystems` | Removes every system; the same as `target.clearSystems()`. |
+| `getEntityCount` | The number of entities the world holds; the same as `target.getEntityCount()`. |
+| `getSystemCount` | The number of systems the world holds; the same as `target.getSystemCount()`. |
+| `hasEntity` | Whether the world holds `entity` as of its last `refresh` or `update`. |
+| `setSystemIndex` | Moves a system to a 1-based index and returns its old index; the same as `target.setSystemIndex(system, index)`. |
 
 ##### World
+
+`update` runs [one frame](#one-frame) in four passes.
 
 | Member | Type | Meaning |
 | --- | --- | --- |
 | `systems` | `readonly SystemFields<E>[]` | The world's systems, in index order. |
 | `entities` | `readonly E[]` | The entities the world holds, as of its last `refresh` or `update`. |
-| `add` | `(...items: (E \| SystemFields<E>)[]) => void` | Adds each item as a system or an entity, at the next `refresh` or `update`. |
-| `addEntity` | `(entity: T) => T` | Adds an entity, or checks one again after its components changed. |
-| `changed` | `(entity: T) => T` | Checks an entity again after its components changed; the same as `addEntity`. |
-| `addSystem` | `(system: S) => S` | Adds a system. Throws if the system already belongs to a world. |
-| `remove` | `(...items: (E \| SystemFields<E>)[]) => void` | Removes each item as a system or an entity, at the next `refresh` or `update`. |
+| `add` | `(...items: (E \| SystemFields<E>)[]) => void` | Adds each item as a system or an entity. |
+| `addEntity` | `(entity: T) => T` | Adds an entity, or re-checks one whose components changed. |
+| `changed` | `(entity: T) => T` | Re-checks an entity whose components changed; the same as `addEntity`. |
+| `addSystem` | `(system: S) => S` | Adds a system. |
+| `remove` | `(...items: (E \| SystemFields<E>)[]) => void` | Removes each item as a system or an entity. |
 | `removeEntity` | `(entity: T) => T` | Removes an entity. |
-| `removeSystem` | `(system: S) => S` | Removes a system. Throws if the system belongs to another world or to none. |
-| `refresh` | `() => void` | Applies waiting changes and runs `onModify(0)` on each active system whose entities changed. |
-| `update` | `(dt: number, systemFilter?: Filter) => void` | Applies waiting changes and runs [one frame](#one-frame) on every active system, or on those `systemFilter` takes. |
+| `removeSystem` | `(system: S) => S` | Removes a system. |
+| `refresh` | `() => void` | Applies pending changes and runs `onModify` with `0` on each modified system. |
+| `update` | `(dt: number, systemFilter?: Filter) => void` | Applies pending changes and updates every active system, or those `systemFilter` selects. |
 | `clearEntities` | `() => void` | Removes every entity. |
 | `clearSystems` | `() => void` | Removes every system. |
 | `getEntityCount` | `() => number` | The number of entities the world holds. |
 | `getSystemCount` | `() => number` | The number of systems the world holds. |
-| `setSystemIndex` | `(system: SystemFields<E>, index: number) => number` | Moves a system to a 1-based index, negative counting from the end, and returns its old index. |
+| `setSystemIndex` | `(system: SystemFields<E>, index: number) => number` | Moves a system to a 1-based index (negative counts from the end) and returns its old index. |
 
 ##### SystemFields
 
@@ -5733,15 +5737,15 @@ The fields every system carries. `ecs` sets `world`, `entities`, `indices` and `
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `world` | `World<E> \| undefined` | The world the system belongs to. |
-| `active` | `boolean` | Whether `update` and `refresh` run the system. Defaults to `true`. |
-| `entities` | `readonly E[]` | The entities the system holds, in the order it processes them. A `nocache` system has none. |
-| `indices` | `Record<number, number>` | Each held entity's position in `entities`, by the entity's id in the system's world. |
-| `index` | `number` | The system's 1-based position in its world. Change it with `setSystemIndex`. |
-| `modified` | `boolean` | Whether the system's entities changed since its last update; `onModify` runs while it is set. |
+| `active` | `boolean` | Whether `update` and `refresh` run the system. |
+| `entities` | `readonly E[]` | The entities the system holds, in the order it processes them. |
+| `indices` | `Record<number, number>` | Each held entity's position in `entities`, keyed by the entity's id in the system's world. |
+| `index` | `number` | The system's 1-based position in its world. |
+| `modified` | `boolean` | Whether the system's entities changed since its last update. |
 | `interval` | `number` | When set, `update` runs once per `interval` of buffered time instead of once per frame. |
 | `bufferedTime` | `number` | The time an interval system has buffered toward its next update. |
-| `nocache` | `boolean` | When `true`, a processing system filters the world's entities on every update and keeps no `entities` list. |
-| `filter` | `Filter` | Picks the system's entities; the factory sets it from its first argument. |
+| `nocache` | `boolean` | When `true`, a processing system keeps no `entities` list. |
+| `filter` | `Filter` | Selects the system's entities. |
 
 ##### Callbacks
 
@@ -5749,18 +5753,18 @@ What a system's definition may hold besides its fields. `this` is the system in 
 
 | Callback | Systems | Meaning |
 | --- | --- | --- |
-| `onAdd` | all | `(entity)`: an entity joined the system; it has the filter's components. |
-| `onRemove` | all | `(entity)`: an entity left the system. |
-| `onModify` | all but sorted | `(dt)`: runs before the next update after the system's entities changed. A sorted system's is its sort. |
-| `onAddToWorld` | all | `(world)`: the system joined a world, before it takes the world's entities. |
-| `onRemoveFromWorld` | all | `(world)`: the system left a world, after its entities left it. |
-| `preWrap` | all | `(dt)`: runs before any system updates, from the last system to the first. |
-| `postWrap` | all | `(dt)`: runs after every system updated, from the first system to the last. |
-| `update` | plain and sorted | `(dt)`: runs once per world update, or once per `interval`. A processing system's is its own. |
-| `preProcess` | processing | `(dt)`: runs before the system processes its entities. |
-| `process` | processing | `(entity, dt)`: runs once for each entity the system holds; the entity has the filter's components. |
-| `postProcess` | processing | `(dt)`: runs after the system processed its entities. |
-| `compare` | sorted | `(e1, e2)`: whether `e1` goes before `e2`. Read once, at the first sort. |
+| `onAdd` | all | Runs when an entity joins the system. |
+| `onRemove` | all | Runs when an entity leaves the system. |
+| `onModify` | all but sorted | Runs before the next update after the system's entities changed. |
+| `onAddToWorld` | all | Runs when the system joins a world, before it takes the world's entities. |
+| `onRemoveFromWorld` | all | Runs when the system leaves a world, after its entities left it. |
+| `preWrap` | all | Runs before any system updates. |
+| `postWrap` | all | Runs after every system updated. |
+| `update` | plain and sorted | Runs once per world update, or once per `interval`. |
+| `preProcess` | processing | Runs before the system processes its entities. |
+| `process` | processing | Runs once for each entity the system holds. |
+| `postProcess` | processing | Runs after the system processed its entities. |
+| `compare` | sorted | Whether `e1` goes before `e2`. |
 
 ### ecs and hsm together
 
@@ -5993,10 +5997,10 @@ The script runs on one controller object that spawns every lamp, so the world up
 
 | Function | Returns | Meaning |
 | --- | --- | --- |
-| `member` | `{ enter, exit }` | `member(world, key)` sets the optional `true` component `key` on enter and clears it on exit; `member(world, key, value)` sets `value`. Both call `changed` only while `world` holds the entity. |
-| `join` | a hook | `join(world)` adds the machine's `ctx` to `world` at its next `refresh` or `update`. Set it as the root's `enter`. |
-| `leave` | a hook | `leave(world)` removes the machine's `ctx` from `world` at its next `refresh` or `update`. Set it as the `enter` of the state the entity leaves the world in. |
-| `tickMachines` | a system | `tickMachines<E>(key)` calls `update(dt)` on the machine each entity holds in `key`, with the world update's `dt`. A membership change it causes shows at the next update. |
+| `member` | `{ enter, exit }` | Hooks that set the optional `true` component `key` while the machine is in the state. |
+| `join` | a hook | A hook that adds the machine's `ctx` to `world` as an entity. |
+| `leave` | a hook | A hook that removes the machine's `ctx` from `world`. |
+| `tickMachines` | a system | A processing system that calls `update(dt)` on the machine each entity holds in `key`. |
 
 ### Init
 
