@@ -1,0 +1,6 @@
+name: "bench"
+instances {
+  id: "controller"
+  prototype: "/main/controller.go"
+}
+scale_along_z: 0

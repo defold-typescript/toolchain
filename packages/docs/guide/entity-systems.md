@@ -424,6 +424,29 @@ Editing `speed` or `process` in `movement.ts` changes how every mover moves from
 - **Build the world outside the module that defines its keyed systems.** That module runs again on a reload, and a second `world(move)` throws, since `move` already belongs to a world.
 - **Different systems need different keys.** If another system also used `"move"`, its factory call would return `move`, with that other definition put into it.
 
+## Performance
+
+The budget is 200 entities in a world of 6 processing systems, each entity in 3 of them, for under 0.5 ms of `ecs` calls per frame in the stock engine, with no table built on a frame without a membership change. A bench in the repository measures it in every supported Defold version. The steady scenario calls `update` once per frame on the same 200 entities. The churn scenario also takes 20 entities out with `removeEntity` and brings 20 others back with `addEntity` before each `update`, so 200 stay live and every frame moves 20 entities into and 20 out of 3 systems each. Each scenario runs 300 frames that time its `ecs` calls, then 300 that sample the heap around them with the JIT off, so the VM compiles nothing onto the heap while it is watched.
+
+| Scenario | Avg ms per frame | Worst frame ms | Allocating frames (of 300) | Heap KB | Engine | System | Date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Steady | 0.019 | 0.065 | 0 | 0 | 1.12.4 | macOS, arm64 | 2026-11-05 |
+| Churn | 0.075 | 0.208 | 300 | 192.2 | 1.12.4 | macOS, arm64 | 2026-11-05 |
+| Steady | 0.015 | 0.050 | 0 | 0 | 1.13.0 | macOS, arm64 | 2026-11-05 |
+| Churn | 0.058 | 0.185 | 300 | 192.2 | 1.13.0 | macOS, arm64 | 2026-11-05 |
+| Steady | 0.017 | 0.089 | 0 | 0 | 1.13.1 | macOS, arm64 | 2026-11-05 |
+| Churn | 0.056 | 0.176 | 300 | 192.2 | 1.13.1 | macOS, arm64 | 2026-11-05 |
+| Steady | 0.010 | 0.042 | 0 | 0 | 1.13.2 | macOS, arm64 | 2026-11-05 |
+| Churn | 0.038 | 0.070 | 300 | 192.2 | 1.13.2 | macOS, arm64 | 2026-11-05 |
+| Steady | 0.011 | 0.051 | 0 | 0 | 1.14.0 | macOS, arm64 | 2026-11-05 |
+| Churn | 0.070 | 0.238 | 300 | 192.2 | 1.14.0 | macOS, arm64 | 2026-11-05 |
+
+A frame that adds, removes or changes an entity builds new queue lists, which the churn rows measure. Reproduce it from a clone of the repository with Java and a display:
+
+```sh
+bun run --cwd packages/api-probe bench:ecs
+```
+
 ## Coming from tiny-ecs
 
 - Import each function by name: `tiny.world(...)` is `world<E>(...)`, and `tiny.requireAll(...)` is `requireAll(...)`.
