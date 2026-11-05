@@ -34,6 +34,8 @@ type UsedBy<T> = T extends string ? T : KeysIn<T>["used"];
 type KnownKeys<E, F> = string extends KeysIn<F>["used"] ? unknown : [Exclude<KeysIn<F>["used"], keyof E>] extends [never] ? unknown : {
     readonly "unknown components": Exclude<KeysIn<F>["used"], keyof E>;
 };
+type PatternOperator = "&" | "|" | "!" | "(" | ")";
+type PatternNames<P extends string, Name extends string = "", Names extends string = never> = string extends P ? string : P extends `${infer C}${infer Rest}` ? C extends PatternOperator ? PatternNames<Rest, "", Names | (Name extends "" ? never : Name)> : PatternNames<Rest, `${Name}${C}`, Names> : Names | (Name extends "" ? never : Name);
 /** `E` with the components `K` present. */
 export type With<E, K> = [K] extends [never] ? E : E & {
     [P in K & keyof E]-?: Exclude<E[P], undefined>;
@@ -177,14 +179,42 @@ export interface World<E> {
     /** Moves a system to a 1-based index (negative counts from the end) and returns its old index. */
     setSystemIndex(this: World<E>, system: SystemFields<E>, index: number): number;
 }
-/** Selects entities that have every component and pass every filter given. */
+/**
+ * Selects entities that have every component and pass every filter given. Throws if a
+ * token is neither a component name nor a filter.
+ */
 export declare function requireAll<const T extends readonly FilterToken[]>(...tokens: T): Filter<RequiredBy<T[number]>, UsedBy<T[number]>>;
-/** Selects entities that have at least one component or pass at least one filter given. */
+/**
+ * Selects entities that have at least one component or pass at least one filter given.
+ * Throws if a token is neither a component name nor a filter.
+ */
 export declare function requireAny<const T extends readonly FilterToken[]>(...tokens: T): Filter<never, UsedBy<T[number]>>;
-/** Rejects entities that have every component and pass every filter given. */
+/**
+ * Rejects entities that have every component and pass every filter given. Throws if a
+ * token is neither a component name nor a filter.
+ */
 export declare function rejectAll<const T extends readonly FilterToken[]>(...tokens: T): Filter<never, UsedBy<T[number]>>;
-/** Rejects entities that have at least one component or pass at least one filter given. */
+/**
+ * Rejects entities that have at least one component or pass at least one filter given.
+ * Throws if a token is neither a component name nor a filter.
+ */
 export declare function rejectAny<const T extends readonly FilterToken[]>(...tokens: T): Filter<never, UsedBy<T[number]>>;
+/**
+ * Builds a filter from a tiny-ecs pattern: component names of letters, digits and `_`,
+ * joined by `&` (and) and `|` (or), each optionally prefixed by `!` (not) and grouped
+ * with parentheses. `&` binds tighter than `|`, so `a|b&c` is `a|(b&c)`. A pattern
+ * filter narrows no component. Throws on a pattern outside this syntax, whitespace
+ * included, naming the 1-based position where it stops.
+ */
+export declare function filter<const P extends string>(pattern: P): Filter<never, PatternNames<P>>;
+/** Builds a filter as `filter` does, returning the error instead of throwing it. */
+export declare function tryFilter<const P extends string>(pattern: P): {
+    ok: true;
+    filter: Filter<never, PatternNames<P>>;
+} | {
+    ok: false;
+    error: string;
+};
 /** Returns a factory for plain systems over entities of type `E`. */
 export declare function system<E>(): SystemFactory<E>;
 /** Returns a factory for processing systems over entities of type `E`. */

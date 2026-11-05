@@ -13,6 +13,8 @@ export type Lib = Pick<
   | "requireAny"
   | "rejectAll"
   | "rejectAny"
+  | "filter"
+  | "tryFilter"
   | "add"
   | "addEntity"
   | "changed"
@@ -835,6 +837,91 @@ function sortedTies(lib: Lib, log: Log): void {
   state("added e7 e8");
 }
 
+const COMPONENTS = ["a", "b", "c", "d"] as const;
+
+// Bit `i` of `mask` sets `COMPONENTS[i]`; the entity is named by the components it has.
+function subsetEntity(mask: number): Ent {
+  const entity: Ent = { name: "-" };
+  let name = "";
+  let weight = 1;
+  for (let i = 0; i < COMPONENTS.length; i++) {
+    if (Math.floor(mask / weight) % 2 === 1) {
+      const component = COMPONENTS[i] as (typeof COMPONENTS)[number];
+      entity[component] = 1;
+      name = `${name}${component}`;
+    }
+    weight *= 2;
+  }
+  if (name !== "") {
+    entity.name = name;
+  }
+  return entity;
+}
+
+// `a|b&c` is `a or (b and c)`: tiny.filter builds Lua source, so Lua's precedence holds.
+const STRING_PATTERNS = [
+  "a",
+  "!a",
+  "a|b|c",
+  "a&!b&c",
+  "a|(b&c&d)",
+  "a|b&c",
+  "a&b|c&d",
+  "!a|b",
+  "!(a|b)",
+  "(a|b)&!(c|d)",
+  "(a|(b&!c))&d",
+  "!(a&!(b|(c&d)))",
+  "((a))",
+];
+
+function stringFilterTruthTable(lib: Lib, log: Log): void {
+  const w = lib.world<Ent>();
+  for (let mask = 0; mask < 16; mask++) {
+    w.addEntity(subsetEntity(mask));
+  }
+  const system = lib.system<Ent>();
+  const built: { name: string; entities?: readonly Ent[] | undefined }[] = [];
+  for (let i = 0; i < STRING_PATTERNS.length; i++) {
+    const pattern = STRING_PATTERNS[i] as string;
+    built.push(w.addSystem(system(lib.filter(pattern), tracked(log, pattern))));
+  }
+  w.refresh();
+  for (let i = 0; i < built.length; i++) {
+    const sys = built[i] as (typeof built)[number];
+    log.push(`${sys.name} ${names(sys.entities)}`);
+  }
+
+  const p = lib.processingSystem<Ent>()(lib.requireAll("a"), {
+    name: "P",
+    preProcess() {
+      log.push(`ran ${this.name}`);
+    },
+    process() {},
+  });
+  const s = lib.system<Ent>()({
+    name: "S",
+    update() {
+      log.push(`ran ${this.name}`);
+    },
+  });
+  const systems = lib.world<Ent>(p, s, { name: "e1", a: 1 });
+  log.push("update, systems with process");
+  systems.update(0, lib.filter("process"));
+  log.push("update, systems without process");
+  systems.update(0, lib.filter("!process"));
+}
+
+// Each pattern but the last is one tiny.filter rejects as well.
+function stringFilterErrors(lib: Lib, log: Log): void {
+  const patterns = ["a&", "a|", "()", "a&()", "a&b"];
+  for (let i = 0; i < patterns.length; i++) {
+    const pattern = patterns[i] as string;
+    attempt(log, `filter ${pattern}`, () => lib.filter(pattern));
+    log.push(`tryFilter ${pattern} ok ${lib.tryFilter(pattern).ok}`);
+  }
+}
+
 export const scenarios: readonly Scenario[] = [
   { name: "filters", run: filters },
   { name: "deferred changes", run: deferredChanges },
@@ -867,6 +954,8 @@ export const scenarios: readonly Scenario[] = [
   { name: "sorted systems", run: sortedSystems },
   { name: "sorted re-sort timing", run: sortedResortTiming },
   { name: "sorted ties", run: sortedTies, ties: true },
+  { name: "string filter truth table", run: stringFilterTruthTable },
+  { name: "string filter errors", run: stringFilterErrors },
 ];
 
 export function runScenario(lib: Lib, name: string): string {

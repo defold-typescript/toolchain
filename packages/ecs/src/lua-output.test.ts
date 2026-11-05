@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { compileLibraryModules, ECS_LIBRARY } from "@defold-typescript/transpiler";
 
-const LUA_LINE_BUDGET = 900;
+const LUA_LINE_BUDGET = 1000;
 const BRIDGE_LUA_LINE_BUDGET = 106;
 
 // The Lua the build writes into a project, from the transpiler's own compile:

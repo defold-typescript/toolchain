@@ -269,6 +269,94 @@ function rejectAnyFilter(tokens: readonly Token[]): FilterFn {
   };
 }
 
+function checkTokens(tokens: readonly unknown[]): void {
+  const count = tokens.length;
+  for (let i = 0; i < count; i++) {
+    const token = tokens[i];
+    if (typeof token !== "string" && typeof token !== "function") {
+      throw "ecs: a filter token must be a component name or a filter";
+    }
+  }
+}
+
+// A recursive-descent parser over tiny-ecs's documented pattern grammar:
+//   expr := term ("|" term)*    term := unary ("&" unary)*
+//   unary := "!"? primary       primary := name | "(" expr ")"
+// `&` binds tighter than `|`, as `and` does `or` in the Lua tiny.filter builds.
+// The scan consumes `rest` one character at a time: TSTL lowers `charAt(0)` and
+// `slice(1)` to `string.sub`, and a variable index would pull in lualib. The
+// levels share one self-recursive function, since TSTL hoists mutually recursive
+// declarations and every one before them to the top of the module.
+
+const NAME_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+
+interface PatternScan {
+  pattern: string;
+  rest: string;
+  position: number;
+}
+
+function badPattern(scan: PatternScan, what: string): never {
+  throw `ecs: bad filter pattern "${scan.pattern}": ${what} at ${scan.position}`;
+}
+
+function skipCharacter(scan: PatternScan): void {
+  scan.rest = scan.rest.slice(1);
+  scan.position += 1;
+}
+
+function parseExpression(scan: PatternScan): Token {
+  const terms: Token[] = [];
+  while (true) {
+    const operands: Token[] = [];
+    while (true) {
+      const negated = scan.rest.charAt(0) === "!";
+      if (negated) {
+        skipCharacter(scan);
+      }
+      let operand: Token;
+      if (scan.rest.charAt(0) === "(") {
+        skipCharacter(scan);
+        operand = parseExpression(scan);
+        if (scan.rest.charAt(0) !== ")") {
+          badPattern(scan, 'expected "&", "|" or ")"');
+        }
+        skipCharacter(scan);
+      } else {
+        let name = "";
+        while (scan.rest !== "" && NAME_CHARACTERS.indexOf(scan.rest.charAt(0)) >= 0) {
+          name = `${name}${scan.rest.charAt(0)}`;
+          skipCharacter(scan);
+        }
+        if (name === "") {
+          badPattern(scan, 'expected a component name or "("');
+        }
+        operand = name;
+      }
+      operands.push(negated ? rejectAnyFilter([operand]) : operand);
+      if (scan.rest.charAt(0) !== "&") {
+        break;
+      }
+      skipCharacter(scan);
+    }
+    terms.push(operands.length === 1 ? (operands[0] as Token) : requireAllFilter(operands));
+    if (scan.rest.charAt(0) !== "|") {
+      break;
+    }
+    skipCharacter(scan);
+  }
+  return terms.length === 1 ? (terms[0] as Token) : requireAnyFilter(terms);
+}
+
+function patternFilter(pattern: string): FilterFn {
+  const scan: PatternScan = { pattern, rest: pattern, position: 1 };
+  const root = parseExpression(scan);
+  if (scan.rest !== "") {
+    badPattern(scan, 'expected "&", "|" or the end');
+  }
+  return typeof root === "string" ? requireAllFilter([root]) : root;
+}
+
 // ---------------------------------------------------------------------------
 // Systems
 
@@ -802,6 +890,23 @@ type KnownKeys<E, F> = string extends KeysIn<F>["used"]
     ? unknown
     : { readonly "unknown components": Exclude<KeysIn<F>["used"], keyof E> };
 
+type PatternOperator = "&" | "|" | "!" | "(" | ")";
+
+// The component names in a string filter pattern, walked one character at a time
+// so the recursion stays in tail position. A pattern typed as `string` yields
+// `string`, which `KnownKeys` leaves unchecked.
+type PatternNames<
+  P extends string,
+  Name extends string = "",
+  Names extends string = never,
+> = string extends P
+  ? string
+  : P extends `${infer C}${infer Rest}`
+    ? C extends PatternOperator
+      ? PatternNames<Rest, "", Names | (Name extends "" ? never : Name)>
+      : PatternNames<Rest, `${Name}${C}`, Names>
+    : Names | (Name extends "" ? never : Name);
+
 /** `E` with the components `K` present. */
 export type With<E, K> = [K] extends [never]
   ? E
@@ -996,35 +1101,73 @@ export interface World<E> {
 // ---------------------------------------------------------------------------
 // Public functions
 
-/** Selects entities that have every component and pass every filter given. */
+/**
+ * Selects entities that have every component and pass every filter given. Throws if a
+ * token is neither a component name nor a filter.
+ */
 export function requireAll<const T extends readonly FilterToken[]>(
   ...tokens: T
 ): Filter<RequiredBy<T[number]>, UsedBy<T[number]>> {
+  checkTokens(tokens);
   return requireAllFilter(tokens as readonly Token[]) as Filter<
     RequiredBy<T[number]>,
     UsedBy<T[number]>
   >;
 }
 
-/** Selects entities that have at least one component or pass at least one filter given. */
+/**
+ * Selects entities that have at least one component or pass at least one filter given.
+ * Throws if a token is neither a component name nor a filter.
+ */
 export function requireAny<const T extends readonly FilterToken[]>(
   ...tokens: T
 ): Filter<never, UsedBy<T[number]>> {
+  checkTokens(tokens);
   return requireAnyFilter(tokens as readonly Token[]) as Filter<never, UsedBy<T[number]>>;
 }
 
-/** Rejects entities that have every component and pass every filter given. */
+/**
+ * Rejects entities that have every component and pass every filter given. Throws if a
+ * token is neither a component name nor a filter.
+ */
 export function rejectAll<const T extends readonly FilterToken[]>(
   ...tokens: T
 ): Filter<never, UsedBy<T[number]>> {
+  checkTokens(tokens);
   return rejectAllFilter(tokens as readonly Token[]) as Filter<never, UsedBy<T[number]>>;
 }
 
-/** Rejects entities that have at least one component or pass at least one filter given. */
+/**
+ * Rejects entities that have at least one component or pass at least one filter given.
+ * Throws if a token is neither a component name nor a filter.
+ */
 export function rejectAny<const T extends readonly FilterToken[]>(
   ...tokens: T
 ): Filter<never, UsedBy<T[number]>> {
+  checkTokens(tokens);
   return rejectAnyFilter(tokens as readonly Token[]) as Filter<never, UsedBy<T[number]>>;
+}
+
+/**
+ * Builds a filter from a tiny-ecs pattern: component names of letters, digits and `_`,
+ * joined by `&` (and) and `|` (or), each optionally prefixed by `!` (not) and grouped
+ * with parentheses. `&` binds tighter than `|`, so `a|b&c` is `a|(b&c)`. A pattern
+ * filter narrows no component. Throws on a pattern outside this syntax, whitespace
+ * included, naming the 1-based position where it stops.
+ */
+export function filter<const P extends string>(pattern: P): Filter<never, PatternNames<P>> {
+  return patternFilter(pattern) as Filter<never, PatternNames<P>>;
+}
+
+/** Builds a filter as `filter` does, returning the error instead of throwing it. */
+export function tryFilter<const P extends string>(
+  pattern: P,
+): { ok: true; filter: Filter<never, PatternNames<P>> } | { ok: false; error: string } {
+  try {
+    return { ok: true, filter: patternFilter(pattern) as Filter<never, PatternNames<P>> };
+  } catch (error) {
+    return { ok: false, error: error as string };
+  }
 }
 
 /** Returns a factory for plain systems over entities of type `E`. */
