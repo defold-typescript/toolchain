@@ -227,4 +227,45 @@ describe("a keyed factory call reloads the system built first", () => {
     expect(second as unknown).not.toBe(first);
     expect(log).toEqual(["A e1"]);
   });
+
+  test("a key named after an Object.prototype member keys its own system and changes no built-in", () => {
+    const prototypeNames = Object.getOwnPropertyNames(Object.prototype).sort();
+    const objectNames = Object.getOwnPropertyNames(Object).sort();
+    const log: string[] = [];
+    const define = (tag: string) => ({
+      tag,
+      update() {
+        log.push(this.tag);
+      },
+    });
+    const defP1 = define("P1");
+    const defP2 = define("P2");
+    const defC1 = define("C1");
+
+    const p = system<Ent>("__proto__")(defP1);
+    const reloaded = system<Ent>("__proto__")(defP2);
+    const c = system<Ent>("constructor")(defC1);
+    world<Ent>(p, c).update(0);
+
+    expect(p as unknown).toBe(defP1);
+    expect(reloaded as unknown).toBe(defP1);
+    expect(c as unknown).toBe(defC1);
+    expect(log).toEqual(["P2", "C1"]);
+    expect(Object.getOwnPropertyNames(Object.prototype).sort()).toEqual(prototypeNames);
+    expect(Object.getOwnPropertyNames(Object).sort()).toEqual(objectNames);
+    expect(({} as { update?: unknown }).update).toBeUndefined();
+  });
+
+  test("a reload replaces a field named toString or constructor like any other", () => {
+    const define = (value: string) =>
+      system<Ent>("reload reserved fields")({
+        toString: () => value,
+        constructor: value,
+      });
+    const s = define("A");
+    define("B");
+
+    expect(String(s)).toBe("B");
+    expect(s.constructor).toBe("B");
+  });
 });
