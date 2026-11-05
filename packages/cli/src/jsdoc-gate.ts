@@ -1,8 +1,8 @@
 /**
  * The JSDoc a hover shows, read from a declaration file. Every exported declaration and member
  * needs a summary; every function, method and call signature a `@param` per parameter but `this`
- * and a `@returns` unless it returns `void`; and every exported function signature an `@example`,
- * whose `ts` fences a gate compiles the way it compiles a guide page's.
+ * and a `@returns` unless it returns `void`; and every exported function signature an `@example`
+ * holding a non-empty `ts` fence, which a gate compiles the way it compiles a guide page's.
  */
 import * as path from "node:path";
 import * as ts from "typescript";
@@ -153,6 +153,15 @@ function isExampleTag(tag: ts.JSDocTag): boolean {
   return tag.tagName.text === "example";
 }
 
+/** The non-blank bodies of the closed `ts` fences in the `@example` tags among `tags`. */
+function exampleBodies(tags: readonly ts.JSDocTag[]): string[] {
+  return tags
+    .filter(isExampleTag)
+    .flatMap((tag) => tsFences(ts.getTextOfJSDocComment(tag.comment) ?? ""))
+    .map((fence) => fence.body)
+    .filter((body) => body.trim() !== "");
+}
+
 function parse(module: string, text: string): ts.SourceFile {
   return ts.createSourceFile(`${module}.d.ts`, text, ts.ScriptTarget.Latest, true);
 }
@@ -169,7 +178,10 @@ export function jsdocGaps(module: string, text: string): string[] {
     if (owner.needs !== "summary") {
       const tags = ts.getJSDocTags(owner.node);
       problems.push(...signatureProblems(owner.node as SignatureNode, tags));
-      if (owner.needs === "function" && !tags.some(isExampleTag)) problems.push("no @example");
+      if (owner.needs === "function") {
+        if (!tags.some(isExampleTag)) problems.push("no @example");
+        else if (exampleBodies(tags).length === 0) problems.push("no ts code in @example");
+      }
     }
     gaps.push(...problems.map((problem) => `${module}:${owner.label}: ${problem}`));
   }
@@ -184,12 +196,7 @@ export function jsdocExamples(module: string, text: string): Fence[] {
   const prefix = module.replace(/[^\w]+/g, "-");
   const fences: Fence[] = [];
   for (const owner of owners(parse(module, text))) {
-    const bodies = ts
-      .getJSDocTags(owner.node)
-      .filter(isExampleTag)
-      .flatMap((tag) => tsFences(ts.getTextOfJSDocComment(tag.comment) ?? ""))
-      .map((fence) => fence.body);
-    bodies.forEach((body, index) => {
+    exampleBodies(ts.getJSDocTags(owner.node)).forEach((body, index) => {
       fences.push({
         label: `${module}:${owner.label} @example ${index + 1}`,
         rel: `${prefix}-example-${fences.length + 1}.ts`,
