@@ -14,9 +14,9 @@ import {
   setSystemIndex,
   sortedProcessingSystem,
   system,
-  // Imported as `update`, the binding compiles to a module-level local that the
-  // script's own `update` callback would assign instead of defining.
-  update as updateWorld,
+  // Kept as `update`: the binding compiles to a module-level local, so the probe
+  // also proves the script's own `update` callback still reaches the engine.
+  update,
   world,
 } from "@defold-typescript/types/ecs";
 import { createSmoke, SMOKE_FRAMES, type SmokeLib } from "./smoke-world";
@@ -34,7 +34,7 @@ const lib: SmokeLib = {
   addSystem,
   removeEntity,
   removeSystem,
-  update: updateWorld,
+  update,
   getEntityCount,
   getSystemCount,
   setSystemIndex,
