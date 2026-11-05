@@ -208,7 +208,7 @@ export function transpileErrors(project: FenceProject): string[] {
     .map((d) => `${d.file ?? "(project)"}:${d.line ?? 0}: ${d.message}`);
 }
 
-function moduleExports(program: ts.Program, sourcePath: string): ts.Symbol[] {
+export function moduleExports(program: ts.Program, sourcePath: string): ts.Symbol[] {
   const checker = program.getTypeChecker();
   const file = program.getSourceFile(sourcePath);
   const moduleSymbol = file === undefined ? undefined : checker.getSymbolAtLocation(file);
@@ -250,16 +250,18 @@ export function exportedFunctions(program: ts.Program, sourcePath: string): stri
     .map((symbol) => symbol.name);
 }
 
+function referenceSection(page: string, heading: string): string | undefined {
+  const reference = page.split(/^## /m).find((section) => section.startsWith("Reference\n"));
+  if (reference === undefined) return undefined;
+  return reference.split(/^### /m).find((section) => section.split("\n")[0]?.includes(heading));
+}
+
 /**
  * The first-cell inline-code names of the table rows under `### <heading>` inside `## Reference`,
  * or `undefined` when the page has no such section or table.
  */
 export function referenceRows(page: string, heading: string): string[] | undefined {
-  const reference = page.split(/^## /m).find((section) => section.startsWith("Reference\n"));
-  if (reference === undefined) return undefined;
-  const sub = reference
-    .split(/^### /m)
-    .find((section) => section.split("\n")[0]?.includes(heading));
+  const sub = referenceSection(page, heading);
   if (sub === undefined) return undefined;
   const names: string[] = [];
   for (const line of sub.split("\n")) {
@@ -267,4 +269,26 @@ export function referenceRows(page: string, heading: string): string[] | undefin
     if (cell) names.push(cell[1] as string);
   }
   return names;
+}
+
+/**
+ * The rows under `### <heading>` inside `## Reference`, each first-cell inline-code name mapped to
+ * the row's last cell, its description, or `undefined` when the page has no such section. A `\|`
+ * inside a cell, as a union type spells it, does not end the cell.
+ */
+export function referenceDescriptions(
+  page: string,
+  heading: string,
+): Map<string, string> | undefined {
+  const sub = referenceSection(page, heading);
+  if (sub === undefined) return undefined;
+  const descriptions = new Map<string, string>();
+  for (const line of sub.split("\n")) {
+    const cells = line.split(/(?<!\\)\|/).slice(1, -1);
+    const name = cells[0]?.match(/^\s*`([^`]+)`\s*$/);
+    if (name && cells.length >= 2) {
+      descriptions.set(name[1] as string, (cells[cells.length - 1] as string).trim());
+    }
+  }
+  return descriptions;
 }
