@@ -90,6 +90,48 @@ function reload(lib: Lib): void {
   lib.refresh(w);
 }
 
+type ReentryMode = "none" | "change" | "remove";
+
+function reentry(lib: Lib): void {
+  let mode: ReentryMode = "none";
+  const movers = lib.system<Ent>()(lib.requireAll("pos"), {
+    onRemove(entity: Ent) {
+      const run = mode;
+      mode = "none";
+      const w = this.world as Ecs.World<Ent>;
+      if (run === "change") {
+        lib.removeEntity(w, entity);
+        lib.refresh(w);
+        lib.addEntity(w, entity);
+        lib.refresh(w);
+        entity.vel = { x: 1 };
+      } else if (run === "remove") {
+        entity.vel = { x: 1 };
+        lib.addEntity(w, entity);
+        lib.refresh(w);
+      }
+    },
+  });
+  const steering = lib.system<Ent>()(lib.requireAll("vel"), {});
+  const w = lib.world<Ent>(movers, steering);
+  lib.inspect(w, "re-entry");
+  const e: Ent = { pos: { x: 0 } };
+  lib.addEntity(w, e);
+  lib.refresh(w);
+  mode = "change";
+  delete e.pos;
+  lib.changed(w, e);
+  lib.refresh(w);
+  lib.removeEntity(w, e);
+  lib.refresh(w);
+  const f: Ent = { pos: { x: 0 } };
+  lib.addEntity(w, f);
+  lib.refresh(w);
+  mode = "remove";
+  lib.removeEntity(w, f);
+  lib.refresh(w);
+}
+
 function reinspect(lib: Lib): void {
   const w = lib.world<Ent>(lib.system<Ent>()(lib.requireAll("pos"), {}));
   lib.inspect(w, "again");
@@ -102,6 +144,7 @@ export const scenarios: Scenario[] = [
   { name: "membership", run: membership },
   { name: "system-leaves", run: systemLeaves },
   { name: "reload", run: reload },
+  { name: "re-entry", run: reentry },
   { name: "reinspect", run: reinspect },
 ];
 
