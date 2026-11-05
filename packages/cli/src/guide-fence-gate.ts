@@ -30,6 +30,7 @@ export const GUIDE_TYPE_PATHS: Record<string, string[]> = {
   "@defold-typescript/types/hsm/debug": [path.join(REPO_ROOT, "packages/types/hsm/debug.d.ts")],
   "@defold-typescript/types/hsm/defold": [path.join(REPO_ROOT, "packages/types/hsm/defold.d.ts")],
   "@defold-typescript/types/ecs": [path.join(REPO_ROOT, "packages/types/ecs/index.d.ts")],
+  "@defold-typescript/types/ecs/debug": [path.join(REPO_ROOT, "packages/types/ecs/debug.d.ts")],
   "@defold-typescript/types/ecs/hsm": [path.join(REPO_ROOT, "packages/types/ecs/hsm.d.ts")],
 };
 

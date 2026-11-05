@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload), [state hooks](./ecs-and-hsm.md) that move an entity between systems, and an editor hover on every export.
+> - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload), [state hooks](./ecs-and-hsm.md) that move an entity between systems, a [world inspector](./entity-systems.md#debug-a-world), and an editor hover on every export.
 > - **[Script callbacks](./script-lifecycle.md)** run beside a top-level import or declaration of the same name.
 
 ### Improved
@@ -22,7 +22,8 @@ What changed in each published `defold-typescript` toolchain release.
   - **[String filters](./entity-systems.md#string-filters):** `filter("a&!(b|c)")` builds a filter from a tiny-ecs pattern, and a misspelled component in a literal pattern fails to compile. A pattern outside tiny-ecs's documented syntax throws, and `tryFilter` returns the error instead.
   - **[Hot reload](./entity-systems.md#hot-reload):** `system`, `processingSystem`, `sortedSystem` and `sortedProcessingSystem` take an optional key. When [`watch --hot-reload`](./watch.md#hot-reload) or [`reload`](./reload.md) runs the edited module again, a keyed factory puts the new definition into the system it built first, and the world keeps running that system with its entities.
   - **[ecs and hsm together](./ecs-and-hsm.md):** import `@defold-typescript/types/ecs/hsm` to make one table both an entity and an hsm machine's `ctx`, whose `member`, `join` and `leave` state hooks change which systems hold it while `tickMachines` updates the machines.
-  - **Editor hovers:** every export of both modules, and every system field and callback, shows a one-line summary, its parameters and return, and an example that compiles; the [Reference](./entity-systems.md#reference) tables quote the same summaries.
+  - **[Debug a world](./entity-systems.md#debug-a-world):** `inspect` from `@defold-typescript/types/ecs/debug` logs each entity a system gains or loses and each `onModify` call, keeps logging across a keyed reload, and draws each system's entity count over a game object; in a release build it does nothing.
+  - **Editor hovers:** every export of each module, and every system field and callback, shows a one-line summary, its parameters and return, and an example that compiles; the [Reference](./entity-systems.md#reference) tables quote the same summaries.
   - **The [`AGENTS.md` block](./init-agents.md#what-it-writes)** that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
 
 ### Fixed

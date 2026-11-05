@@ -4948,9 +4948,10 @@ import { member } from "@defold-typescript/types/ecs/hsm";
 | --- | --- | --- |
 | `@defold-typescript/types/ecs` | worlds, systems and filters | `lib/defold_typescript/ecs/index.lua` |
 | `@defold-typescript/types/ecs/hsm` | the [state machine bridge](./ecs-and-hsm.md) | `lib/defold_typescript/ecs/hsm.lua` |
+| `@defold-typescript/types/ecs/debug` | the [debug inspector](#debug-a-world) | `lib/defold_typescript/ecs/debug.lua` |
 
 - `build` and `watch` write each module your code uses to the [runtime folder](./build.md#the-runtime-folder) (`lib/defold_typescript/ecs/` by default), inside `outDir` when one is set. A module nothing uses, or only uses for its types, is not written.
-- Both modules are plain Lua 5.1 and need no `lualib_bundle`.
+- Every module is plain Lua 5.1 and needs no `lualib_bundle`.
 - The Lua opens with the tiny-ecs license, and the CLI package ships `THIRD_PARTY_NOTICES.md`, which lists tiny-ecs.
 - A source of your own that would compile to one of those paths fails the build.
 
@@ -5291,6 +5292,63 @@ export default defineScript({
 
 - Each game object that runs the script gets its own world on `self`; see [Where script state lives](./script-state.md). `swarm()` builds new systems for each world, since a system belongs to one world.
 - A world in a plain module is one world for every script that imports it. Update it from one script only, or it runs several frames per frame.
+
+#### Debug a world
+
+`inspect(world, label)` from `@defold-typescript/types/ecs/debug` logs each entity a system gains or loses and each `onModify` call, and draws every system's entity count over a game object. Call it in `init`, keep the inspector it returns on `self`, and call its `draw` from `update`:
+
+```ts title="swarm_debug.ts"
+import { defineScript } from "@defold-typescript/types";
+import { processingSystem, requireAll, world } from "@defold-typescript/types/ecs";
+import { inspect } from "@defold-typescript/types/ecs/debug";
+
+interface Bug {
+  readonly id: Hash;
+  position?: Vector3;
+  velocity?: Vector3;
+}
+
+export default defineScript({
+  init() {
+    const bugs = world<Bug>(
+      processingSystem<Bug>()(requireAll("position", "velocity"), {
+        process(e, dt) {
+          e.position.x += e.velocity.x * dt;
+          go.set_position(e.position, e.id);
+        },
+      }),
+    );
+    const inspector = inspect(bugs, "swarm");
+    for (let i = 0; i < 2; i++) {
+      const id = factory.create("#bug_factory");
+      if (id !== undefined) {
+        bugs.add({ id, position: go.get_position(id), velocity: vmath.vector3(40, 0, 0) });
+      }
+    }
+    return { bugs, inspector };
+  },
+  update(self, dt) {
+    self.bugs.update(dt);
+    self.inspector.draw(".");
+  },
+});
+```
+
+`inspect` prints one line when it is called, then one line for each change the world applies:
+
+```text
+ecs swarm frame 0: inspecting [0]
+ecs swarm frame 0: system 1 adds entity 1, holds 1
+ecs swarm frame 0: system 1 adds entity 2, holds 2
+```
+
+- **`frame 0`** counts `draw` calls, so it tracks `update` when you draw every frame.
+- **`system 1`** is the system's index in the world, and **`entity 2`** numbers entities in the order this inspector first saw them. `holds` is the system's entity count after the change.
+- **A leave** prints `system 1 removes entity 2, holds 1`, and an `onModify` call prints `system 1 onModify, holds 1`, with no `holds` part for a `nocache` system.
+- **A keyed reload** keeps the logging, a second `inspect` of the same world replaces the first, and a label another `inspect` call already used gets an ordinal, `swarm#2`.
+- **`draw(target)`** posts `draw_debug_text` to `@render:` with the label and each system's entity count, `-` for a `nocache` system, 40 units above the target's world position.
+
+In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
 #### Hot reload
 

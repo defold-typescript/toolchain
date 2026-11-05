@@ -62,7 +62,16 @@ interface SystemRecord {
   sortDelegate?: ((this: void, e1: EntityRecord, e2: EntityRecord) => boolean) | undefined;
 }
 
+// Systems by 1-based index, entities by their id in the world, and counts as held after the
+// change. `inspect` from `ecs/debug` sets it in a debug build; nothing else does.
+interface WorldObserver {
+  joined: (this: void, system: number, entity: number, count: number) => void;
+  left: (this: void, system: number, entity: number, count: number) => void;
+  modifying: (this: void, system: number) => void;
+}
+
 interface WorldRecord {
+  __ecs_observer?: WorldObserver;
   idKey: string;
   systems: SystemRecord[];
   entities: EntityRecord[];
@@ -539,17 +548,25 @@ function manageSystems(world: WorldRecord): void {
   const removeCount = s2r.length;
   const worldEntityList = world.entities;
   const systems = world.systems;
+  const key = world.idKey;
+  const observer = world.__ecs_observer;
 
   for (let i = 0; i < removeCount; i++) {
     const system = s2r[i] as SystemRecord;
     const index = system.index;
     if (index !== undefined) {
       const onRemove = system.onRemove;
-      if (onRemove !== undefined && system.nocache !== true) {
+      if (system.nocache !== true && (onRemove !== undefined || observer !== undefined)) {
         const entityList = system.entities as EntityRecord[];
         const count = entityList.length;
         for (let j = 0; j < count; j++) {
-          onRemove.call(system, entityList[j] as EntityRecord);
+          const entity = entityList[j] as EntityRecord;
+          if (observer !== undefined) {
+            observer.left(system.index as number, idOf(entity, key) as number, count - j - 1);
+          }
+          if (onRemove !== undefined) {
+            onRemove.call(system, entity);
+          }
         }
       }
       removeShifting(systems, index - 1);
@@ -599,8 +616,12 @@ function manageSystems(world: WorldRecord): void {
           for (let j = 0; j < count; j++) {
             const entity = worldEntityList[j] as EntityRecord;
             if (filter(system, entity)) {
-              entityIndices[idOf(entity, world.idKey) as number] = entityList.length;
+              const id = idOf(entity, key) as number;
+              entityIndices[id] = entityList.length;
               entityList.push(entity);
+              if (observer !== undefined) {
+                observer.joined(system.index as number, id, entityList.length);
+              }
               if (onAdd !== undefined) {
                 onAdd.call(system, entity);
               }
@@ -629,6 +650,7 @@ function manageEntities(world: WorldRecord): void {
   const entityIndex = world.entityIndex;
   const systems = world.systems;
   const key = world.idKey;
+  const observer = world.__ecs_observer;
 
   for (let i = 0; i < changeCount; i++) {
     const entity = e2c[i] as EntityRecord;
@@ -640,6 +662,7 @@ function manageEntities(world: WorldRecord): void {
       entityIndex[id] = entities.length;
       entities.push(entity);
     }
+    const id = idOf(entity, key) as number;
     const systemCount = systems.length;
     for (let j = 0; j < systemCount; j++) {
       const system = systems[j] as SystemRecord;
@@ -651,8 +674,11 @@ function manageEntities(world: WorldRecord): void {
         if (filter?.(system, entity)) {
           if (index === undefined) {
             system.modified = true;
-            seis[idOf(entity, key) as number] = ses.length;
+            seis[id] = ses.length;
             ses.push(entity);
+            if (observer !== undefined) {
+              observer.joined(system.index as number, id, ses.length);
+            }
             const onAdd = system.onAdd;
             if (onAdd !== undefined) {
               onAdd.call(system, entity);
@@ -661,6 +687,9 @@ function manageEntities(world: WorldRecord): void {
         } else if (index !== undefined) {
           system.modified = true;
           swapRemove(ses, seis, index, entity, key);
+          if (observer !== undefined) {
+            observer.left(system.index as number, id, ses.length);
+          }
           const onRemove = system.onRemove;
           if (onRemove !== undefined) {
             onRemove.call(system, entity);
@@ -674,6 +703,7 @@ function manageEntities(world: WorldRecord): void {
     const entity = e2r[i] as EntityRecord;
     const listIndex = slotOf(entities, entityIndex, entity, key);
     if (listIndex !== undefined) {
+      const id = idOf(entity, key) as number;
       swapRemove(entities, entityIndex, listIndex, entity, key);
       const systemCount = systems.length;
       for (let j = 0; j < systemCount; j++) {
@@ -685,6 +715,9 @@ function manageEntities(world: WorldRecord): void {
           if (index !== undefined) {
             system.modified = true;
             swapRemove(ses, seis, index, entity, key);
+            if (observer !== undefined) {
+              observer.left(system.index as number, id, ses.length);
+            }
             const onRemove = system.onRemove;
             if (onRemove !== undefined) {
               onRemove.call(system, entity);
@@ -703,11 +736,15 @@ function worldRefresh(this: WorldRecord): void {
   manageSystems(this);
   manageEntities(this);
   const systems = this.systems;
+  const observer = this.__ecs_observer;
   for (let i = systems.length - 1; i >= 0; i--) {
     const system = systems[i] as SystemRecord;
     if (system.active === true) {
       const onModify = system.onModify;
       if (onModify !== undefined && system.modified === true) {
+        if (observer !== undefined) {
+          observer.modifying(system.index as number);
+        }
         onModify.call(system, 0);
       }
       system.modified = false;
@@ -720,12 +757,16 @@ function worldUpdate(this: WorldRecord, dt: number, filter?: FilterFn): void {
   manageEntities(this);
 
   const systems = this.systems;
+  const observer = this.__ecs_observer;
 
   for (let i = systems.length - 1; i >= 0; i--) {
     const system = systems[i] as SystemRecord;
     if (system.active === true) {
       const onModify = system.onModify;
       if (onModify !== undefined && system.modified === true) {
+        if (observer !== undefined) {
+          observer.modifying(system.index as number);
+        }
         onModify.call(system, dt);
       }
       const preWrap = system.preWrap;

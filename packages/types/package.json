@@ -60,6 +60,9 @@
     "./ecs": {
       "types": "./ecs/index.d.ts"
     },
+    "./ecs/debug": {
+      "types": "./ecs/debug.d.ts"
+    },
     "./ecs/hsm": {
       "types": "./ecs/hsm.d.ts"
     },

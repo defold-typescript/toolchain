@@ -219,9 +219,10 @@ const ECS_WORLD = [
 ].join("\n");
 
 describe("ecs as a built-in import", () => {
-  test("registers ecs with its hsm bridge and index modules", () => {
+  test("registers ecs with its debug inspector, hsm bridge and index modules", () => {
     expect(BUNDLED_LIBRARIES).toContain(ECS_LIBRARY);
     expect(bundledModules(ECS_LIBRARY).map(({ requireName }) => requireName)).toEqual([
+      "defold_typescript_ecs.debug",
       "defold_typescript_ecs.hsm",
       "defold_typescript_ecs.index",
     ]);
