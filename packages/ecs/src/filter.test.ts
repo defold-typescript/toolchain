@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { filter, rejectAll, rejectAny, requireAll, requireAny, tryFilter } from "./index";
+import {
+  type Filter,
+  filter,
+  rejectAll,
+  rejectAny,
+  requireAll,
+  requireAny,
+  tryFilter,
+} from "./index";
 
 // tiny.filter accepts each of these but `a&()`: it reads most through a quirk of its
 // scanner, builds a filter that fails only when it runs for `a!b`, and one that
@@ -88,5 +96,39 @@ describe("a combinator rejects a token that is neither a component name nor a fi
         );
       });
     }
+  }
+
+  const undefinedCalls: [string, () => unknown][] = [
+    ["requireAll, sole", () => requireAll(undefined as never)],
+    ["requireAll, trailing", () => requireAll("a", undefined as never)],
+    ["requireAll, interior", () => requireAll("a", undefined as never, "b")],
+    ["requireAny, sole", () => requireAny(undefined as never)],
+    ["requireAny, trailing", () => requireAny("a", undefined as never)],
+    ["requireAny, interior", () => requireAny("a", undefined as never, "b")],
+    ["rejectAll, sole", () => rejectAll(undefined as never)],
+    ["rejectAll, trailing", () => rejectAll("a", undefined as never)],
+    ["rejectAll, interior", () => rejectAll("a", undefined as never, "b")],
+    ["rejectAny, sole", () => rejectAny(undefined as never)],
+    ["rejectAny, trailing", () => rejectAny("a", undefined as never)],
+    ["rejectAny, interior", () => rejectAny("a", undefined as never, "b")],
+  ];
+  for (const [label, run] of undefinedCalls) {
+    test(`${label} undefined`, () => {
+      expect(thrown(run)).toBe("ecs: a filter token must be a component name or a filter");
+    });
+  }
+
+  const zeroTokenVerdicts: [string, () => Filter, boolean][] = [
+    ["requireAll", () => requireAll(), true],
+    ["requireAny", () => requireAny(), false],
+    ["rejectAll", () => rejectAll(), false],
+    ["rejectAny", () => rejectAny(), true],
+  ];
+  for (const [name, build, verdict] of zeroTokenVerdicts) {
+    test(`${name} with no tokens builds a filter that ${verdict ? "takes" : "takes no"} entity`, () => {
+      const built = build();
+      expect(built(undefined, { a: 1 })).toBe(verdict);
+      expect(built(undefined, {})).toBe(verdict);
+    });
   }
 });
