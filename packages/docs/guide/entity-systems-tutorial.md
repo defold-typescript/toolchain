@@ -1362,7 +1362,9 @@ const STILL = rejectAny("moving");
       } // [!code ++]
     } else if (action_id === EMPTY && action.pressed) { // [!code ++]
       self.jar.clearEntities(); // [!code ++]
-      self.jar.remove(self.shine); // [!code ++]
+      if (self.shine.world === self.jar) { // [!code ++]
+        self.jar.remove(self.shine); // [!code ++]
+      } // [!code ++]
     }
 // ...
     clearSystems(self.garden);
@@ -1377,7 +1379,7 @@ const STILL = rejectAny("moving");
 - **`self.jar.addEntity(picked)`** keeps the caught firefly, and `self.jar.refresh()` applies it so `getEntityCount()` is right in the label. The garden's `bodies` has deleted its game object; in the jar it is only a light.
 - **`shake`** relights every firefly in the jar with `self.jar.changed(f)`.
 - **`release`** takes one out with `self.jar.removeEntity(f)`, and a new firefly hatches in the garden. The last one out takes the shine with it, through `self.jar.removeSystem(self.shine)`.
-- **`empty`** lets them all go with `self.jar.clearEntities()`, and `self.jar.remove(self.shine)` takes the shine.
+- **`empty`** lets them all go with `self.jar.clearEntities()`, and `self.jar.remove(self.shine)` takes the shine. It runs only while the shine is in the jar: the shine joins with the first catch and leaves with the last firefly out, and a world throws when asked to remove a system it does not hold.
 - **`self.jar.update(dt)`** runs the jar every frame, and `final` clears its systems as it clears the garden's.
 
 Add a `jar` game object with a sprite, a `jar` label to the `hud`, and `shake`, `release` and `empty` actions.
@@ -2112,7 +2114,9 @@ The garden now uses every function and every field of `ecs`.
 >       }
 >     } else if (action_id === EMPTY && action.pressed) {
 >       self.jar.clearEntities();
->       self.jar.remove(self.shine);
+>       if (self.shine.world === self.jar) {
+>         self.jar.remove(self.shine);
+>       }
 >     }
 >   },
 >   final(self) {
