@@ -555,14 +555,14 @@ interface CompoundSkeleton<T, Self extends string> extends SkeletonState<T, Self
     readonly type?: never;
     /**
      * The full path of the child entered with this state, such as `/on/bright` inside `on`.
-     * Required when `states` is set, unless the state is parallel.
+     * Required when `states` is set, unless the state is parallel. Not taken on a leaf.
      */
-    readonly initial?: NoInfer<unknown extends T ? string : `${Self}/${keyof T & string}`>;
+    readonly initial?: NoInfer<unknown extends T ? never : `${Self}/${keyof T & string}`>;
     /**
      * Makes the state remember which child was active when it was last left, and enter it again
-     * instead of `initial`; see `restoreDepth` on a state config.
+     * instead of `initial`; see `restoreDepth` on a state config. Not taken on a leaf.
      */
-    readonly restoreDepth?: NoInfer<TreeDepth<T, 4> | "all">;
+    readonly restoreDepth?: NoInfer<unknown extends T ? never : TreeDepth<T, 4> | "all">;
 }
 interface ParallelSkeleton<T, Self extends string> extends SkeletonState<T, Self> {
     /**

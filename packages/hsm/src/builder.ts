@@ -64,10 +64,11 @@ export interface MachineBuilder<
 }
 
 /**
- * Adds behavior to one state. Each `on`, `after`, `every` and `always` call adds one entry, and
- * a state's entries are tried in call order. `enter`, `exit`, `update`, `task` and `unhandled`
- * each take one function: a second call on the same state throws. Every call throws after
- * `build()`.
+ * Adds behavior to one state. Each `on`, `after`, `every` and `always` call adds one entry, in
+ * call order. A state's `on`, `every` and `always` entries are tried in that order, and its
+ * `after` timers in delay order, call order breaking ties. `enter`, `exit`, `update`, `task` and
+ * `unhandled` each take one function: a second call on the same state throws. Every call throws
+ * after `build()`.
  * @noSelf
  */
 export interface StateBuilder<Ctx, E extends EventObject, P extends string, Tag extends string> {
@@ -80,7 +81,8 @@ export interface StateBuilder<Ctx, E extends EventObject, P extends string, Tag 
   ) => EventRuleBuilder<Ctx, E, Extract<E, { type: K }>, P, Tag>;
   /**
    * Adds a timer that fires once `delay` seconds of game time have passed in the state: a number,
-   * or a function of the context read each time the state is entered. End it with `to` or `run`.
+   * or a function of the context read each time the state is entered. A state's timers are tried
+   * in delay order, call order breaking ties. End it with `to` or `run`.
    */
   readonly after: (delay: Delay<Ctx>) => TimerRuleBuilder<Ctx, E, P, Tag>;
   /**
@@ -398,7 +400,9 @@ function createBuilder(
         const entry: Entry = {};
         let byType = behavior.on;
         if (byType === undefined) {
-          byType = {};
+          // No prototype, so an event such as `constructor` takes rules. In Lua the nil field
+          // leaves a plain table.
+          byType = { __proto__: null } as unknown as { [type: string]: Entry[] };
           behavior.on = byType;
         }
         byType[type] = append(byType[type], entry);

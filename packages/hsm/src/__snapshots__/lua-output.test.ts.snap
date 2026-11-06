@@ -2142,7 +2142,7 @@ local function createBuilder(key, skeleton)
                 local entry = {}
                 local byType = behavior.on
                 if byType == nil then
-                    byType = {}
+                    byType = {__proto__ = nil}
                     behavior.on = byType
                 end
                 byType[____type] = append(byType[____type], entry)
