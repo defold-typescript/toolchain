@@ -4,6 +4,53 @@ import { createSession, type HsmViewSession } from "../src/hsm-view-session";
 import { httpApi } from "./api";
 import { createViewerStore, type FrameScheduler, type ViewerStore } from "./store";
 
+/**
+ * A file with a machine and two worlds: `herd` holds an inactive system with an interval, a keyed
+ * `drift`, `tickMachines` and a `nocache` system, and its first entity holds a machine instance.
+ */
+export const CRITTERS = `import { defineScript } from "@defold-typescript/types";
+import { processingSystem, requireAll, system, world } from "@defold-typescript/types/ecs";
+import { tickMachines } from "@defold-typescript/types/ecs/hsm";
+import { defineMachine, type MachineInstance } from "@defold-typescript/types/hsm";
+
+type Scare = { type: "SCARE" };
+
+interface Critter {
+  name: string;
+  pos: { x: number; at: { row: number } };
+  fsm?: MachineInstance<Critter, Scare>;
+}
+
+export const critter = defineMachine<Critter, Scare>()({
+  initial: "/wander",
+  states: { wander: { on: { SCARE: "/flee" } }, flee: {} },
+});
+
+const tally = system("tally")({ active: false, interval: 0.5, update() {} });
+const drift = processingSystem<Critter>("drift")(requireAll("pos"), {
+  process(e, dt) {
+    e.pos.x += dt;
+  },
+});
+const scan = processingSystem<Critter>("scan")(requireAll("name"), { nocache: true, process() {} });
+const rest = system("rest")({ update() {} });
+
+export default defineScript({
+  init() {
+    const ada: Critter = { name: "ada", pos: { x: 0, at: { row: 1 } } };
+    const bo: Critter = { name: "bo", pos: { x: 5, at: { row: 2 } } };
+    ada.fsm = critter.start(ada);
+    return {
+      herd: world<Critter>(tally, drift, tickMachines<Critter>("fsm"), scan, ada, bo),
+      pen: world(rest),
+    };
+  },
+  update(self, dt) {
+    self.herd.update(dt);
+  },
+});
+`;
+
 export interface Request {
   readonly route: string;
   readonly body: unknown;

@@ -1,4 +1,10 @@
-import { type MachineIndex, machineIndex, ruleIds, timerEntries } from "./hsm-view-index";
+import {
+  type IndexedSpan,
+  type MachineIndex,
+  machineIndex,
+  ruleIds,
+  timerEntries,
+} from "./hsm-view-index";
 import { type LoadedInstance, type LoadedMachine, loadProject } from "./view-load";
 import type { EngineEntry as LoadedEngineEntry } from "./view-run";
 import { type EntityView, type SystemView, trackWorlds } from "./view-worlds";
@@ -93,6 +99,12 @@ export interface InstanceView {
   readonly machine: string;
 }
 
+/** A system as the Worlds tab shows it. */
+export interface SystemSnapshot extends Omit<SystemView, "source"> {
+  /** Where the callbacks literal the system was built from was written, in the index's files. */
+  readonly source: IndexedSpan | undefined;
+}
+
 export interface Snapshot {
   readonly machines: readonly string[];
   /** The followed instance's machine while one is followed, else the simulated one's. */
@@ -108,7 +120,7 @@ export interface Snapshot {
   readonly worlds: readonly string[];
   readonly world: string | undefined;
   /** The picked world's systems in index order. */
-  readonly systems: readonly SystemView[];
+  readonly systems: readonly SystemSnapshot[];
   readonly entities: readonly EntityView[];
   readonly path: string | undefined;
   readonly active: readonly string[];
@@ -596,6 +608,20 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     }
   };
 
+  const systemSnapshot = ({ source, ...system }: SystemView): SystemSnapshot => {
+    const file =
+      source === undefined
+        ? -1
+        : loaded.files.findIndex((loadedFile) => loadedFile.path === source.file);
+    return {
+      ...system,
+      source:
+        source === undefined || file === -1
+          ? undefined
+          : { file, start: source.start, end: source.end },
+    };
+  };
+
   const snapshot = (): Snapshot => {
     const error = callError ?? haltedError;
     const named = namedWorlds();
@@ -615,7 +641,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       frame,
       worlds: named.map((each) => each.name),
       world: named.find((each) => each.world === pickedWorld)?.name,
-      systems: view?.systems ?? [],
+      systems: (view?.systems ?? []).map(systemSnapshot),
       entities: view?.entities ?? [],
       path: current?.path,
       active: activePaths(),

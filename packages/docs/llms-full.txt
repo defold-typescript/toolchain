@@ -8709,9 +8709,19 @@ Time starts paused. The bar at the top holds the controls:
 - **Field syntax.** The starting context and the payload are written as a TypeScript object literal or as JSON, so `{ enter: true, from: 'pad' }` and `{ "enter": true, "from": "pad" }` read the same. Every value must be a literal: a number, string, boolean, `null`, array or object. A field that cannot be read is outlined in red while you type, and a row under the bar shows its message, which names the column of a syntax mistake.
 - **Dialog.** The button beside each of the two fields opens its text in a dialog with a multi-line editor. An error under the editor names the line and column of a syntax mistake. `Start` or `Apply` (or Ctrl+Enter, Cmd+Enter on macOS) writes the text back to the field, and `Start` also starts the machine. Cancel or Escape discards the text.
 - **Play and Pause.** Play runs one frame per browser frame with the real time since the last frame, capped at 0.1 s and scaled by the speed choice (1x, 1/2x, 1/4x, 0.1x). A frame updates the file's [script and worlds](#what-runs-and-what-is-stubbed), then the machine, so `after` timers, `every` entries and `update` hooks run as they would in a game.
-- **Step** runs one frame with the bar's `dt` while paused. The bar shows the run time `t`, which counts from when the command started; Start leaves it running.
+- **Step** runs one frame with the bar's `dt` while paused. The bar shows the run time `t` and the frame count, which count from when the run started; Start leaves both running.
+- **Restart** reruns the files and the script's `init` in fresh runtimes from `t` 0. A Restart with no error clears a failed reload's banner.
+- **Instance.** The instance dropdown lists `simulated` and each machine instance the run started, named `<world> entity <id>` when an entity holds it, else `instance <id>`. Picking one shows its states, ctx and events in place of the simulated machine's. `simulated`, Start or another machine returns to the simulated one.
 
-A ctx panel beside the code shows the running instance's ctx as an expandable tree, and a changed value glows. A number, string, boolean or `null` can be edited in place; the edit takes effect on the next frame and is logged.
+A ctx panel beside the code shows the shown instance's ctx as an expandable tree, and a changed value glows. A number, string, boolean or `null` can be edited in place; the edit takes effect on the next frame and is logged.
+
+#### Worlds
+
+A file that creates an `ecs` world shows its systems in a Worlds tab beside the code. A file with both a machine and a world switches between a Machines tab, which holds the machine's controls and ctx panel, and the Worlds tab. Restart, Play, Step, the speed, `t` and the frame count stay in the bar on both tabs. The world dropdown picks the world the tab shows; a world is named by the `self` field or export that holds it, else `world-<n>`.
+
+- **Systems.** One row per system, in the world's order: its index, its name (its key, else its export name, else `system <index>`), how many entities it holds, and its time in the last frame and on average, in milliseconds. A `nocache` system keeps no entity list and shows `-`. An inactive system reads `inactive`, and an `interval` shows. The times are Node's, for comparing systems with each other, not a game's frame budget.
+- **Entities.** Clicking a row lists the system's entities by id, each with its components as a read-only tree. A nested object opens one level per click.
+- **Links.** Clicking a system's name scrolls the code to the callbacks it was built from and tints them. Clicking those callbacks in the code opens the system on the Worlds tab. An entity that holds a machine instance names it, and clicking the name shows that instance on the Machines tab, with its states tinted as the world moves it.
 
 #### Read the log
 
@@ -8755,7 +8765,7 @@ A banner names any reported state the picked machine does not define: either a d
 
 Every reason the viewer cannot start exits 1 with one message: a missing file, a file that defines no machine, an unknown `[name]` (the message lists the machine names), a throw while loading or in the script's `init`, or a local server that cannot start listening.
 
-Any throw halts the run, and the page shows the message. After a throw in one of the machine's hooks, Start continues the run. After a throw in the script's `update` or `on_reload`, or in a system, only restarting the command continues. Editing a file while halted still loads it, so the restart runs the edited source.
+Any throw halts the run, and the page shows the message. After a throw in one of the simulated machine's hooks, Start continues the run. After a throw in the script's `update` or `on_reload`, in a system, or in an instance the run started, only Restart continues. Editing a file while halted still loads it, so Restart runs the edited source.
 
 A failed action that belongs to no field also shows in a popup that closes by itself. The banner under the bar shows what still holds: a lost connection, a failed reload, a halted run, or a live instance in a state the picked machine does not define.
 
