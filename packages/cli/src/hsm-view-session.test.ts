@@ -1221,6 +1221,31 @@ export default defineScript({
     expect(ticked.frame).toBe(2);
   });
 
+  test("times the systems of a world that only the started machine's update advances", () => {
+    const view = session(`${SCRIPT_IMPORT}
+${HSM_IMPORT}
+import { system, world } ${ECS_IMPORT};
+const busy = (ms: number) => {
+  const end = os.clock() + ms / 1000;
+  while (os.clock() < end) {}
+};
+const work = system("work")({ update() { busy(2.05); } });
+const garden = world(work);
+export const keeper = defineMachine()({
+  initial: "/on",
+  states: { on: { update: (_ctx, dt) => { garden.update(dt); return undefined; } } },
+});
+export default defineScript({ init() { return { garden }; } });
+`);
+
+    expect(view.update(1 / 60).systems[0]?.ms).toBe(0);
+
+    view.start({});
+    const timed = view.update(1 / 60);
+    expect(timed.running).toBe(true);
+    expect(timed.systems[0]?.ms).toBeGreaterThanOrEqual(2);
+  });
+
   test("reload keeps self, the worlds, the entity ids and a keyed machine, and calls on_reload once", () => {
     const key = `run-reload-${++sequence}`;
     const source = (version: string) => `${SCRIPT_IMPORT}

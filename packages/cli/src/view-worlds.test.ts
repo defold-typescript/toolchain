@@ -25,6 +25,8 @@ interface WorldLike {
   addEntity(entity: object): void;
   removeEntity(entity: object): void;
   addSystem(system: unknown): void;
+  removeSystem(system: unknown): void;
+  clearSystems(): void;
 }
 
 let dir: string;
@@ -255,5 +257,44 @@ export default defineScript({
     tracker.reset();
     expect(ids()).toEqual([1, 2, 3]);
     expect(tracker.view(garden).systems[0]?.ms).toBe(0);
+  });
+
+  test("logs a leave for every member of a system removed from the world, under the index it had", () => {
+    const loaded = load(`import { processingSystem, requireAll, world } ${ECS_IMPORT};
+const n = processingSystem("n")(requireAll("x"), { nocache: true, process() {} });
+const a = processingSystem("a")(requireAll("x"), { process() {} });
+const b = processingSystem("b")(requireAll("y"), { process() {} });
+const c = processingSystem("c")(requireAll("x"), { process() {} });
+export const garden = world(n, a, b, c, { x: 0 }, { y: 0 }, { x: 1, y: 1 });
+`);
+    const garden = loaded.worlds[0] as WorldLike;
+    const tracker = trackWorlds(loaded);
+    const [, a, , c] = garden.systems;
+    tracker.membership(garden);
+
+    garden.removeSystem(a);
+    garden.refresh();
+    expect(tracker.membership(garden)).toEqual([
+      { kind: "leave", system: 2, entity: 1 },
+      { kind: "leave", system: 2, entity: 3 },
+    ]);
+    expect(tracker.membership(garden)).toEqual([]);
+
+    garden.clearSystems();
+    garden.refresh();
+    expect(tracker.membership(garden)).toEqual([
+      { kind: "leave", system: 2, entity: 2 },
+      { kind: "leave", system: 2, entity: 3 },
+      { kind: "leave", system: 3, entity: 1 },
+      { kind: "leave", system: 3, entity: 3 },
+    ]);
+    expect(tracker.membership(garden)).toEqual([]);
+
+    garden.addSystem(c);
+    garden.refresh();
+    expect(tracker.membership(garden)).toEqual([
+      { kind: "join", system: 1, entity: 1 },
+      { kind: "join", system: 1, entity: 3 },
+    ]);
   });
 });
