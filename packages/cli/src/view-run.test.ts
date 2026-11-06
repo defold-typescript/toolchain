@@ -57,6 +57,27 @@ function thrown(action: () => unknown): unknown {
 }
 
 describe("createProjectRunner", () => {
+  test("runs a statement-named call on any object with its value and its this", async () => {
+    const entry = write(
+      "main.ts",
+      `const x = { tag: "x", on(this: { tag: string }, y: string) { return this.tag + ":" + y; } };
+export const direct = x.on("y");
+export async function awaited(value: Promise<string>) {
+  return x.on(await value);
+}
+const absent: typeof x | undefined = undefined;
+export const chained = absent?.on("y").length;
+`,
+    );
+    const modules = runner(entry, { tagLiterals: true }).run().modules;
+    const exports = exportsOf(modules, entry);
+    const awaited = exports.awaited as (value: Promise<string>) => Promise<string>;
+
+    expect(exports.direct).toBe("x:y");
+    expect(await awaited(Promise.resolve("z"))).toBe("x:z");
+    expect(exports.chained).toBeUndefined();
+  });
+
   test("resolves the hsm and ecs modules, with one record per library file", () => {
     const entry = write(
       "main.ts",

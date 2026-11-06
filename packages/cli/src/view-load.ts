@@ -3,6 +3,7 @@ import { ECS_LIBRARY, HSM_LIBRARY } from "@defold-typescript/transpiler";
 import { viewBuiltins } from "./view-engine";
 import {
   createProjectRunner,
+  currentSite,
   type EngineSink,
   type LoadedFile,
   locationOf,
@@ -10,6 +11,7 @@ import {
   type ProjectRunner,
   type RunEngine,
   type SourceLocation,
+  setLocation,
 } from "./view-run";
 
 export interface LoadedMachine {
@@ -88,6 +90,39 @@ interface Runtime {
 }
 
 type DefineMachine = (key?: string) => (config: unknown) => unknown;
+type Statement = (...args: unknown[]) => unknown;
+
+// The statements `view` locates; the builder's other members are copied through untouched.
+interface StateBuilder {
+  readonly on: Statement;
+  readonly after: Statement;
+  readonly every: Statement;
+  readonly always: Statement;
+  readonly update: Statement;
+}
+
+interface MachineBuilder {
+  readonly state: (path: string) => StateBuilder;
+  readonly root: StateBuilder;
+  readonly build: () => unknown;
+}
+
+type BuildMachine = (key?: string) => (skeleton: unknown) => MachineBuilder;
+
+// Where each statement call on one state was written, in call order, which is the order `build()`
+// lists the entries in. A call made outside a tagged site keeps its place as undefined.
+interface StateSites {
+  readonly on: Map<string, (SourceLocation | undefined)[]>;
+  readonly after: (SourceLocation | undefined)[];
+  readonly every: (SourceLocation | undefined)[];
+  readonly always: (SourceLocation | undefined)[];
+  update: SourceLocation | undefined;
+}
+
+type ListSlot = "after" | "every" | "always";
+
+const LIST_SLOTS: readonly ListSlot[] = ["after", "every", "always"];
+
 type Start = (...args: unknown[]) => unknown;
 type BuildSystem = (first: unknown, second?: unknown) => unknown;
 type SystemBuilder = (key?: string) => BuildSystem;
@@ -111,6 +146,119 @@ function replaceExport(exports: Record<string, unknown>, original: unknown, next
       exports[name] = next;
     }
   }
+}
+
+function ownField(value: unknown, key: string): unknown {
+  return typeof value === "object" && value !== null && Object.hasOwn(value, key)
+    ? (value as Record<string, unknown>)[key]
+    : undefined;
+}
+
+function tagSite(value: unknown, site: SourceLocation | undefined): void {
+  const taggable = (typeof value === "object" && value !== null) || typeof value === "function";
+  if (site !== undefined && taggable) {
+    setLocation(value, site);
+  }
+}
+
+// `build()` writes each state's entries onto its own skeleton object, so the entries a project's
+// config holds are the ones tagged here.
+function tagStatements(skeleton: unknown, sites: ReadonlyMap<string, StateSites>): void {
+  for (const [path, calls] of sites) {
+    let state = skeleton;
+    for (const name of path.split("/").slice(1)) {
+      state = ownField(ownField(state, "states"), name);
+    }
+    const on = ownField(state, "on");
+    for (const [type, typeCalls] of calls.on) {
+      const entries = ownField(on, type);
+      // The first call stands for the `on` key, which sends the event when clicked.
+      tagSite(entries, typeCalls[0]);
+      for (const [index, site] of typeCalls.entries()) {
+        tagSite(ownField(entries, String(index)), site);
+      }
+    }
+    for (const slot of LIST_SLOTS) {
+      const entries = ownField(state, slot);
+      for (const [index, site] of calls[slot].entries()) {
+        tagSite(ownField(entries, String(index)), site);
+      }
+    }
+    tagSite(ownField(state, "update"), calls.update);
+  }
+}
+
+// Records the site of each statement call, then tags the entries the real `build()` wrote.
+function recordSites(builder: MachineBuilder, skeleton: unknown): MachineBuilder {
+  const sites = new Map<string, StateSites>();
+  const wrapped = new Map<string, StateBuilder>();
+  const wrapState = (path: string, real: StateBuilder): StateBuilder => {
+    const cached = wrapped.get(path);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const calls: StateSites = {
+      on: new Map(),
+      after: [],
+      every: [],
+      always: [],
+      update: undefined,
+    };
+    sites.set(path, calls);
+    // Recorded once the call returns, so a call the builder refuses takes no place.
+    const recorded =
+      (
+        statement: Statement,
+        record: (site: SourceLocation | undefined, args: unknown[]) => void,
+      ): Statement =>
+      (...args) => {
+        const site = currentSite();
+        const result = statement(...args);
+        record(site, args);
+        return result;
+      };
+    const listed =
+      (slot: ListSlot) =>
+      (site: SourceLocation | undefined): void => {
+        calls[slot].push(site);
+      };
+    const next: StateBuilder = {
+      ...real,
+      on: recorded(real.on, (site, [type]) => {
+        const event = String(type);
+        const typeCalls = calls.on.get(event) ?? [];
+        typeCalls.push(site);
+        calls.on.set(event, typeCalls);
+      }),
+      after: recorded(real.after, listed("after")),
+      every: recorded(real.every, listed("every")),
+      always: recorded(real.always, listed("always")),
+      update: recorded(real.update, (site) => {
+        calls.update = site;
+      }),
+    };
+    wrapped.set(path, next);
+    return next;
+  };
+  return {
+    ...builder,
+    state: (path) => wrapState(path, builder.state(path)),
+    root: wrapState("", builder.root),
+    build: () => {
+      const machine = builder.build();
+      tagStatements(skeleton, sites);
+      return machine;
+    },
+  };
+}
+
+function wrapBuilder(exports: Record<string, unknown>): void {
+  const build = exports.buildMachine as BuildMachine;
+  const recording: BuildMachine = (key?: string) => {
+    const withKey = build(key);
+    return (skeleton: unknown) => recordSites(withKey(skeleton), skeleton);
+  };
+  replaceExport(exports, build, recording);
 }
 
 function isScript(value: unknown): value is ScriptHooks {
@@ -216,12 +364,11 @@ export function loadProject(file: string, options: LoadProjectOptions): ProjectL
       typesRoot: TYPES_ROOT,
       tagLiterals: true,
       onLibraryModule: (library, name, exports) => {
-        if (name !== "index") {
-          return;
-        }
-        if (library.id === HSM_LIBRARY.id) {
+        if (library.id === HSM_LIBRARY.id && name === "index") {
           wrapDefine(exports, instances);
-        } else if (library.id === ECS_LIBRARY.id) {
+        } else if (library.id === HSM_LIBRARY.id && name === "builder") {
+          wrapBuilder(exports);
+        } else if (library.id === ECS_LIBRARY.id && name === "index") {
           wrapEcs(exports, worlds);
         }
       },
