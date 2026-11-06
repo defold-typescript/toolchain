@@ -19,6 +19,12 @@ export interface LoadedMachine {
   readonly machine: unknown;
 }
 
+/** An instance a project file started from a machine the load lists. */
+export interface LoadedInstance {
+  readonly machine: LoadedMachine;
+  readonly instance: unknown;
+}
+
 /** A script's hook table, as the entry file's default export holds it. */
 export interface ScriptHooks {
   readonly init?: (self: unknown) => unknown;
@@ -31,6 +37,8 @@ export interface ProjectLoad {
   readonly machines: readonly LoadedMachine[];
   /** Every world built since the load or the last `restart`, in creation order. */
   readonly worlds: readonly unknown[];
+  /** Every instance started since the load or the last `restart`, in start order. */
+  readonly instances: readonly LoadedInstance[];
   /** The entry file's default export, when it holds a function `init` or `update`. */
   readonly script: ScriptHooks | undefined;
   readonly engine: RunEngine;
@@ -40,6 +48,8 @@ export interface ProjectLoad {
   systemSource(system: unknown): SourceLocation | undefined;
   /** The name a project file exports `value` under. */
   exportName(value: unknown): string | undefined;
+  /** Starts an instance of `machine` that `instances` does not list. */
+  startUnrecorded(machine: LoadedMachine, ctx: unknown): unknown;
   /** Reruns the project files in the same runtimes; a failure keeps the last good load. */
   reload(): void;
   /** Forgets every world and reruns the project files in fresh runtimes. */
@@ -66,12 +76,19 @@ interface LoadState {
   readonly modules: ProjectRun["modules"];
 }
 
+interface StartRecord {
+  readonly machine: object;
+  readonly instance: unknown;
+}
+
 interface Runtime {
   readonly runner: ProjectRunner;
   readonly worlds: unknown[];
+  readonly instances: StartRecord[];
 }
 
 type DefineMachine = (key?: string) => (config: unknown) => unknown;
+type Start = (...args: unknown[]) => unknown;
 type BuildSystem = (first: unknown, second?: unknown) => unknown;
 type SystemBuilder = (key?: string) => BuildSystem;
 
@@ -114,19 +131,41 @@ export function loadProject(file: string, options: LoadProjectOptions): ProjectL
   const onDefine = options.onDefine ?? ((_key: string | undefined, config: unknown) => config);
   const systemKeys = new WeakMap<object, string>();
   const systemSources = new WeakMap<object, SourceLocation>();
+  // The start each recorded machine had before it was wrapped; a keyed machine is wrapped once.
+  const starts = new WeakMap<object, Start>();
+  // The machine each machine object was last loaded as, so an instance keeps a name after a reload.
+  const loadedAs = new WeakMap<object, LoadedMachine>();
   let definitions: Definition[] | undefined;
   let sink: EngineSink | undefined;
   const forward: EngineSink = (entry) => {
     sink?.(entry);
   };
 
-  const wrapDefine = (exports: Record<string, unknown>): void => {
+  // The machine object is changed in place: a project file and the load hold the same one.
+  const recordStarts = (machine: unknown, instances: StartRecord[]): void => {
+    if (typeof machine !== "object" || machine === null || starts.has(machine)) {
+      return;
+    }
+    const startable = machine as { start: Start };
+    const start = startable.start;
+    starts.set(machine, start);
+    startable.start = (...args: unknown[]) => {
+      const instance = start(...args);
+      instances.push({ machine, instance });
+      return instance;
+    };
+  };
+
+  const wrapDefine = (exports: Record<string, unknown>, instances: StartRecord[]): void => {
     const define = exports.defineMachine as DefineMachine;
     const recording: DefineMachine = (key?: string) => {
       const defineWithKey = define(key);
       return (config: unknown) => {
         const machine = defineWithKey(onDefine(key, config));
-        definitions?.push({ key, config, machine });
+        if (definitions !== undefined) {
+          definitions.push({ key, config, machine });
+          recordStarts(machine, instances);
+        }
         return machine;
       };
     };
@@ -167,6 +206,7 @@ export function loadProject(file: string, options: LoadProjectOptions): ProjectL
 
   const newRuntime = (): Runtime => {
     const worlds: unknown[] = [];
+    const instances: StartRecord[] = [];
     const runner = createProjectRunner(entry, {
       libraries: [
         { library: HSM_LIBRARY, sourceDir: options.hsmSourceDir },
@@ -180,14 +220,14 @@ export function loadProject(file: string, options: LoadProjectOptions): ProjectL
           return;
         }
         if (library.id === HSM_LIBRARY.id) {
-          wrapDefine(exports);
+          wrapDefine(exports, instances);
         } else if (library.id === ECS_LIBRARY.id) {
           wrapEcs(exports, worlds);
         }
       },
     });
     runner.engine.setSink(forward);
-    return { runner, worlds };
+    return { runner, worlds, instances };
   };
 
   const exportIn = (modules: LoadState["modules"], value: unknown): string | undefined => {
@@ -203,23 +243,31 @@ export function loadProject(file: string, options: LoadProjectOptions): ProjectL
   const run = (runtime: Runtime): LoadState => {
     const recorded: Definition[] = [];
     const worldCount = runtime.worlds.length;
+    const instanceCount = runtime.instances.length;
     definitions = recorded;
     let result: ProjectRun;
     try {
       result = runtime.runner.run();
     } catch (thrown) {
       runtime.worlds.length = worldCount;
+      runtime.instances.length = instanceCount;
       throw thrown;
     } finally {
       definitions = undefined;
     }
     let unnamed = 0;
-    const machines = recorded.map(({ key, config, machine }) => ({
-      name: key ?? exportIn(result.modules, machine) ?? `machine-${++unnamed}`,
-      key,
-      config,
-      machine,
-    }));
+    const machines = recorded.map(({ key, config, machine }) => {
+      const loadedMachine: LoadedMachine = {
+        name: key ?? exportIn(result.modules, machine) ?? `machine-${++unnamed}`,
+        key,
+        config,
+        machine,
+      };
+      if (typeof machine === "object" && machine !== null) {
+        loadedAs.set(machine, loadedMachine);
+      }
+      return loadedMachine;
+    });
     const main = result.modules.get(entry)?.default;
     return {
       files: result.files,
@@ -241,6 +289,12 @@ export function loadProject(file: string, options: LoadProjectOptions): ProjectL
     get worlds() {
       return runtime.worlds;
     },
+    get instances() {
+      return runtime.instances.flatMap(({ machine, instance }) => {
+        const loadedMachine = loadedAs.get(machine);
+        return loadedMachine === undefined ? [] : [{ machine: loadedMachine, instance }];
+      });
+    },
     get script() {
       return state.script;
     },
@@ -260,6 +314,11 @@ export function loadProject(file: string, options: LoadProjectOptions): ProjectL
     },
     exportName(value) {
       return exportIn(state.modules, value);
+    },
+    startUnrecorded(machine, ctx) {
+      const loaded = machine.machine as { readonly start: Start };
+      const start = typeof loaded === "object" && loaded !== null ? starts.get(loaded) : undefined;
+      return (start ?? loaded.start)(ctx);
     },
     reload() {
       state = run(runtime);

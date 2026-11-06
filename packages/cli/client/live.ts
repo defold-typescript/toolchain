@@ -85,6 +85,8 @@ export function liveSnapshot(
     snapshot: {
       machines: previous?.machines ?? [],
       picked: previous?.picked,
+      instances: previous?.instances ?? [],
+      following: undefined,
       running: !instance.stopped,
       t,
       frame: previous?.frame ?? 0,

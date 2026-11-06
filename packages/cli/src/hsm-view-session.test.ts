@@ -1324,3 +1324,205 @@ export default defineScript({ init() { return { n: 1 }; } });
     );
   });
 });
+
+const CRITTERS = `${SCRIPT_IMPORT}
+import { processingSystem, requireAll, world } ${ECS_IMPORT};
+import { join, leave, member, tickMachines } from "@defold-typescript/types/ecs/hsm";
+import { defineMachine, type MachineInstance } from "@defold-typescript/types/hsm";
+
+type CritterEvent = { type: "SCARE" } | { type: "CAUGHT" };
+
+interface Critter {
+  readonly name: string;
+  x: number;
+  speed: number;
+  wandering?: true;
+  fleeing?: true;
+  fsm?: MachineInstance<Critter, CritterEvent>;
+}
+
+export const herd = world<Critter>(
+  tickMachines<Critter>("fsm"),
+  processingSystem<Critter>()(requireAll("wandering"), {
+    process(e, dt) {
+      e.x += e.speed * dt;
+    },
+  }),
+  processingSystem<Critter>()(requireAll("fleeing"), {
+    process(e, dt) {
+      e.x -= 3 * e.speed * dt;
+    },
+  }),
+);
+
+export const critterMachine = defineMachine<Critter, CritterEvent>()({
+  initial: "/wander",
+  enter: join(herd),
+  states: {
+    wander: {
+      ...member(herd, "wandering"),
+      on: { SCARE: "/flee" },
+      after: { 1: { to: "/flee", when: (critter) => critter.speed > 50 } },
+    },
+    flee: { ...member(herd, "fleeing"), after: { 2: "/wander" }, on: { CAUGHT: "/caught" } },
+    caught: { enter: leave(herd) },
+  },
+});
+
+export const lamp = defineMachine()({
+  initial: "/off",
+  states: { off: { on: { TOGGLE: "/on" } }, on: { after: { 1: "/off" } } },
+});
+
+function spawn(name: string): Critter {
+  const critter: Critter = { name, x: 0, speed: 40 };
+  critter.fsm = critterMachine.start(critter);
+  critter.fsm.send({ type: "SCARE" });
+  return critter;
+}
+
+export default defineScript({
+  init() {
+    return { light: lamp.start({}), a: spawn("a"), b: spawn("b") };
+  },
+  update(_self, dt) {
+    herd.update(dt);
+  },
+});
+`;
+
+function critterNamed(snapshot: Snapshot, name: string): Record<string, unknown> | undefined {
+  return snapshot.entities
+    .map((entity) => entity.value as Record<string, unknown>)
+    .find((value) => value.name === name);
+}
+
+describe("createSession follow", () => {
+  test("names each instance the run starts by the entity that holds it, and links the entity", () => {
+    const view = session(CRITTERS);
+    view.start({ name: "sim", x: 0, speed: 1 });
+    const ran = view.update(0.5);
+
+    expect(ran.instances).toEqual([
+      { id: 1, label: "instance 1", machine: "lamp" },
+      { id: 2, label: "herd entity 1", machine: "critterMachine" },
+      { id: 3, label: "herd entity 2", machine: "critterMachine" },
+    ]);
+    expect(ran.following).toBeUndefined();
+    expect(ran.entities.map((entity) => [entity.id, entity.machine])).toEqual([
+      [1, 2],
+      [2, 3],
+      [3, undefined],
+    ]);
+    expect(critterNamed(ran, "sim")).toBeDefined();
+  });
+
+  test("shows a followed instance's states, the rule each move names, and its entity as ctx", () => {
+    const view = session(CRITTERS);
+    const followed = view.follow(2);
+    expect(followed).toMatchObject({
+      following: 2,
+      picked: "critterMachine",
+      path: "/flee",
+      leaves: ["/flee"],
+    });
+    expect(followed.ctx).toMatchObject({ name: "a", fleeing: true });
+
+    view.update(0.5);
+    view.update(0.5);
+    view.update(0.5);
+    const back = view.update(0.5);
+    expect(back).toMatchObject({
+      t: 2,
+      path: "/wander",
+      active: ["/wander"],
+      leaves: ["/wander"],
+      entered: ["/wander"],
+      fired: [ruleId("/flee", "after", "2")],
+      rejected: [],
+    });
+    expect(back.ctx).toMatchObject({ name: "a", wandering: true });
+    expect(back.entries.filter((entry) => entry.kind === "transition")).toEqual([
+      { kind: "transition", t: 2, from: "/flee", to: "/wander", cause: "after", event: undefined },
+    ]);
+
+    view.update(0.5);
+    const held = view.update(0.5);
+    expect(held).toMatchObject({ t: 3, path: "/wander", entered: [], fired: [], rejected: [] });
+  });
+
+  test("an after timer on a followed instance fires at the same time as with nothing followed", () => {
+    const view = session(CRITTERS);
+    const returnTime = (): number | undefined => {
+      for (let frame = 0; frame < 10; frame++) {
+        const snapshot = view.update(0.5);
+        if (critterNamed(snapshot, "a")?.wandering === true) {
+          return snapshot.t;
+        }
+      }
+      return undefined;
+    };
+    const alone = returnTime();
+
+    view.restart();
+    view.follow(2);
+    const followed = returnTime();
+
+    expect(alone).toBe(2);
+    expect(followed).toBe(alone);
+  });
+
+  test("sends events to the followed instance and edits the entity it runs on", () => {
+    const view = session(CRITTERS);
+    view.update(0.5);
+    view.follow(3);
+
+    const edited = view.editCtx(["speed"], 99);
+    expect(edited.ctx).toMatchObject({ name: "b", speed: 99 });
+    expect(edited.entities.find((entity) => entity.machine === 3)?.value).toMatchObject({
+      name: "b",
+      speed: 99,
+    });
+
+    const caught = view.send({ type: "CAUGHT" });
+    expect(caught).toMatchObject({ following: 3, path: "/caught", running: true });
+    expect(caught.fired).toEqual([ruleId("/flee", "on", "CAUGHT", 0)]);
+    expect(caught.entries).toContainEqual({
+      kind: "transition",
+      t: 0.5,
+      from: "/flee",
+      to: "/caught",
+      cause: "event",
+      event: { type: "CAUGHT" },
+    });
+  });
+
+  test("returns to the simulated instance as it was, keeps following through a reload, and drops it on restart", () => {
+    const file = write(CRITTERS);
+    const view = createSession({ file, hsmSourceDir, ecsSourceDir });
+    view.pick("lamp");
+    view.send({ type: "TOGGLE" });
+
+    expect(view.follow(2)).toMatchObject({ picked: "critterMachine", following: 2 });
+    expect(view.index().states["/flee"]).toBeDefined();
+    view.update(0.5);
+    view.update(0.5);
+    view.update(0.5);
+    expect(() => view.follow(9)).toThrow("unknown instance: 9");
+    expect(() => view.follow(9)).toThrow("#1 instance 1, #2 herd entity 1, #3 herd entity 2");
+
+    const back = view.follow(undefined);
+    expect(back).toMatchObject({ picked: "lamp", path: "/on", following: undefined });
+    expect(view.index().states["/flee"]).toBeUndefined();
+
+    view.follow(2);
+    expect(view.reload()).toMatchObject({ following: 2, picked: "critterMachine" });
+    expect(view.snapshot().instances).toHaveLength(3);
+    expect(view.start({}).following).toBeUndefined();
+
+    view.follow(2);
+    const restarted = view.restart();
+    expect(restarted.following).toBeUndefined();
+    expect(restarted.instances.map((instance) => instance.id)).toEqual([1, 2, 3]);
+  });
+});
