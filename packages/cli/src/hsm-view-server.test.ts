@@ -11,7 +11,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { ruleId } from "./hsm-view-index";
 import {
   createHsmViewApp,
@@ -23,6 +23,7 @@ import { createSession, type HsmViewSession } from "./hsm-view-session";
 import { lineStarts, tokenizeLines } from "./hsm-view-tokens";
 
 const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
+const ecsSourceDir = requireLibrarySourceDir(ECS_LIBRARY);
 const client = { js: "/*js*/", css: "/*css*/" };
 
 const LAMP = `import { defineMachine } from "@defold-typescript/types/hsm";
@@ -58,7 +59,7 @@ function write(rel: string, text: string): string {
 
 function lampSession(): HsmViewSession {
   write("shared/names.ts", NAMES);
-  return createSession({ file: write("main.ts", LAMP), hsmSourceDir });
+  return createSession({ file: write("main.ts", LAMP), hsmSourceDir, ecsSourceDir });
 }
 
 function post(body: unknown): RequestInit {

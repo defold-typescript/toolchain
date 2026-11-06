@@ -1,9 +1,6 @@
 import { type MachineIndex, machineIndex, ruleIds, timerEntries } from "./hsm-view-index";
-import {
-  type EngineEntry as LoadedEngineEntry,
-  type LoadedMachine,
-  loadMachines,
-} from "./hsm-view-load";
+import { type LoadedMachine, loadProject } from "./view-load";
+import type { EngineEntry as LoadedEngineEntry } from "./view-run";
 
 interface EventObject {
   readonly type: string;
@@ -115,6 +112,7 @@ export interface HsmViewSession {
 export interface CreateSessionOptions {
   readonly file: string;
   readonly hsmSourceDir: string;
+  readonly ecsSourceDir: string;
 }
 
 function childPath(parent: string, name: string): string {
@@ -424,8 +422,9 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     return wrap(config, "");
   };
 
-  const loaded = loadMachines(options.file, {
+  const loaded = loadProject(options.file, {
     hsmSourceDir: options.hsmSourceDir,
+    ecsSourceDir: options.ecsSourceDir,
     onDefine: (_key, config) => instrument(config),
   });
 
