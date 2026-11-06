@@ -2,7 +2,7 @@ import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import type { LiveInstance, LiveMessage, LiveMove } from "../src/hsm-view-live";
 import type { HsmViewIndex, HsmViewTab, ReloadMessage } from "../src/hsm-view-server";
-import type { Snapshot } from "../src/hsm-view-session";
+import type { Snapshot, SystemSnapshot } from "../src/hsm-view-session";
 import { httpApi, type ViewerApi } from "./api";
 import { type CtxPath, changedLeaves, type Primitive } from "./ctx";
 import { InputError, readDt, readPayload, readStartCtx } from "./fields";
@@ -14,8 +14,10 @@ import {
   type Highlight,
   indexSpans,
   type LineSpan,
+  lineOf,
   type SpanId,
   spansByLine,
+  systemSpans,
 } from "./highlight";
 import { liveSnapshot } from "./live";
 import { appendEntries, emptyLog, type Log, type LogKind } from "./log";
@@ -27,12 +29,33 @@ export const SPEEDS = [1, 0.5, 0.25, 0.1] as const;
 
 export const DISCONNECTED = "disconnected - run hsm-view again";
 
-/** A line a code view should bring into sight; `seq` repeats a scroll to the same line. */
-/** A frame would move something: the run is not halted, and a machine runs or a world exists. */
+/**
+ * A frame would move something: the run is not halted, and a machine runs, a world exists, or the
+ * run started a machine instance.
+ */
 export function advances(snapshot: Snapshot | undefined): boolean {
-  return snapshot?.running === true && (snapshot.path !== undefined || snapshot.worlds.length > 0);
+  return (
+    snapshot?.running === true &&
+    (snapshot.path !== undefined || snapshot.worlds.length > 0 || snapshot.instances.length > 0)
+  );
 }
 
+/** The tab the page shows: the picked one, unless the file has nothing for it and something for the other. */
+export function shownTab(state: Pick<ViewerState, "tab" | "index" | "snapshot">): HsmViewTab {
+  const machines = (state.index?.machines.length ?? 0) > 0;
+  const worlds = (state.snapshot?.worlds.length ?? 0) > 0;
+  if (state.tab === "machines") {
+    return !machines && worlds ? "worlds" : "machines";
+  }
+  return !worlds && machines ? "machines" : "worlds";
+}
+
+/** The file defines a machine and the run created a world, so the page offers both tabs. */
+export function offersBothTabs(state: Pick<ViewerState, "index" | "snapshot">): boolean {
+  return (state.index?.machines.length ?? 0) > 0 && (state.snapshot?.worlds.length ?? 0) > 0;
+}
+
+/** A line a code view should bring into sight; `seq` repeats a scroll to the same line. */
 export interface ScrollTarget {
   readonly file: number;
   readonly line: number;
@@ -119,6 +142,10 @@ export interface ViewerState {
   setTab(tab: HsmViewTab): void;
   toggleSystem(index: number): void;
   selectSystem(index: number): void;
+  /** Selects a system and brings its definition into the code view. */
+  showSystemSource(index: number): void;
+  /** Shows a system on the Worlds tab, selected and open. */
+  showSystem(index: number): void;
   load(): Promise<void>;
   start(): Promise<void>;
   /** Stops Play and reruns the files and `init` once the update in flight answers. */
@@ -166,8 +193,10 @@ const animationFrames: FrameScheduler = {
   cancel: (id) => cancelAnimationFrame(id),
 };
 
-function lineSpansOf(index: HsmViewIndex): LineSpan[][][] {
-  const spans = [...indexSpans(index)];
+type SystemSources = readonly Pick<SystemSnapshot, "index" | "source">[];
+
+function lineSpansOf(index: HsmViewIndex, systems: SystemSources): LineSpan[][][] {
+  const spans = [...indexSpans(index), ...systemSpans(systems)];
   return index.files.map((file, fileIndex) =>
     spansByLine(
       file,
@@ -175,6 +204,10 @@ function lineSpansOf(index: HsmViewIndex): LineSpan[][][] {
     ),
   );
 }
+
+/** Changes exactly when the systems' definitions move in the code. */
+const sourcesKey = (systems: SystemSources | undefined): string =>
+  JSON.stringify((systems ?? []).map(({ index, source }) => [index, source]));
 
 function firstKeyLine(
   perLine: readonly (readonly LineSpan[])[],
@@ -320,6 +353,10 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
             glowSince,
           };
         }
+        const lineSpans =
+          sourcesKey(state.snapshot?.systems) === sourcesKey(snapshot.systems)
+            ? state.lineSpans
+            : lineSpansOf(state.index, snapshot.systems);
         const highlight = applySnapshot(state.highlight, state.index, snapshot);
         for (const [id, stamp] of Object.entries(highlight.stamps)) {
           if (stamp !== state.highlight.stamps[id]) {
@@ -340,6 +377,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         }
         return {
           snapshot,
+          lineSpans,
           log: appendEntries(state.log, snapshot.entries),
           highlight,
           clickable: live ? [] : clickableKeys(state.index, snapshot),
@@ -405,7 +443,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         set((state) => ({
           index,
           tab: state.index === undefined ? index.opening.tab : state.tab,
-          lineSpans: lineSpansOf(index),
+          lineSpans: lineSpansOf(index, state.snapshot?.systems ?? []),
           search: search(index.files, state.search.query),
           openFile: state.openFile < index.files.length ? state.openFile : 0,
         })),
@@ -517,6 +555,25 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           return { openSystems };
         }),
       selectSystem: (selectedSystem) => set({ selectedSystem }),
+      showSystemSource: (system) =>
+        set((state) => {
+          const source = state.snapshot?.systems.find((each) => each.index === system)?.source;
+          const file = source === undefined ? undefined : state.index?.files[source.file];
+          if (source === undefined || file === undefined) {
+            return { selectedSystem: system };
+          }
+          return {
+            selectedSystem: system,
+            openFile: source.file,
+            scrollTarget: scrollTo(source.file, lineOf(file, source.start)),
+          };
+        }),
+      showSystem: (system) =>
+        set((state) => ({
+          tab: "worlds",
+          selectedSystem: system,
+          openSystems: new Set([...state.openSystems, system]),
+        })),
       load: async () => {
         try {
           get().setIndex(await api.index());

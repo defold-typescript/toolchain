@@ -1,9 +1,16 @@
 import { useVirtualizer, type Virtualizer } from "@tanstack/react-virtual";
 import { useEffect, useMemo, useRef } from "react";
 import type { HsmViewFile } from "../src/hsm-view-server";
+import type { SystemSnapshot } from "../src/hsm-view-session";
 import type { Line, TokenKind } from "../src/hsm-view-tokens";
 import { Glow } from "./glow";
-import { type ClickableKey, type LineSpan, onKeySpanId, type SpanId } from "./highlight";
+import {
+  type ClickableKey,
+  type LineSpan,
+  onKeySpanId,
+  type SpanId,
+  systemSpanId,
+} from "./highlight";
 import type { SearchMatch } from "./search";
 import { dimGlowKey, type ScrollTarget, useViewer, type ViewerStore } from "./store";
 
@@ -85,10 +92,15 @@ export interface CodeData {
   readonly dimStamps: Readonly<Record<SpanId, number>>;
   readonly glowSince: Readonly<Record<string, number>>;
   readonly clickable: ReadonlyMap<SpanId, ClickableKey>;
+  /** The picked world's systems by the span id of their definition. */
+  readonly systems: ReadonlyMap<SpanId, SystemSnapshot>;
+  /** The span id of the selected system's definition. */
+  readonly selectedSystem: SpanId | undefined;
   /** Search marks by `file:line`, empty while the search box is closed. */
   readonly marks: ReadonlyMap<string, readonly Mark[]>;
   readonly now: number;
   readonly send: (type: string) => void;
+  readonly showSystem: (index: number) => void;
 }
 
 const lineKey = (file: number, line: number): string => `${file}:${line}`;
@@ -103,10 +115,17 @@ export function useCodeData(store: ViewerStore): CodeData {
   const searchOpen = useViewer(store, (state) => state.searchOpen);
   const now = useViewer(store, (state) => state.now);
   const send = useViewer(store, (state) => state.send);
+  const systemList = useViewer(store, (state) => state.snapshot?.systems);
+  const selectedSystem = useViewer(store, (state) => state.selectedSystem);
+  const showSystem = useViewer(store, (state) => state.showSystem);
 
   const clickable = useMemo(
     () => new Map(clickableKeys.map((key) => [onKeySpanId(key.statePath, key.event), key])),
     [clickableKeys],
+  );
+  const systems = useMemo(
+    () => new Map((systemList ?? []).map((system) => [systemSpanId(system.index), system])),
+    [systemList],
   );
   const marks = useMemo(() => {
     const byLine = new Map<string, Mark[]>();
@@ -134,9 +153,12 @@ export function useCodeData(store: ViewerStore): CodeData {
     dimStamps: highlight.dimStamps,
     glowSince,
     clickable,
+    systems,
+    selectedSystem: selectedSystem === undefined ? undefined : systemSpanId(selectedSystem),
     marks,
     now: now(),
     send: (type) => void send(type),
+    showSystem,
   };
 }
 
@@ -147,12 +169,14 @@ const MARK_CLASS: Readonly<Record<MatchMark, string>> = {
 
 function SegmentView({ segment, data }: { segment: Segment; data: CodeData }) {
   const tinted = segment.ids.some((id) => data.tinted.has(id));
+  const systemTinted =
+    data.selectedSystem !== undefined && segment.ids.includes(data.selectedSystem);
   return (
     <span
       className={[
         "relative",
         KIND_CLASS[segment.kind],
-        tinted ? "bg-tint" : "",
+        tinted ? "bg-tint" : systemTinted ? "bg-system-tint" : "",
         segment.mark === undefined ? "" : MARK_CLASS[segment.mark],
       ].join(" ")}
     >
@@ -181,15 +205,18 @@ export function CodeLine({ data, file, line }: { data: CodeData; file: number; l
     data.marks.get(lineKey(file, line)) ?? [],
   );
 
-  // Consecutive pieces of one clickable key share one button.
-  const groups: { key: ClickableKey | undefined; segments: Segment[] }[] = [];
+  // Consecutive pieces of one clickable key or system share one button; a key inside a system's
+  // definition keeps its own.
+  const groups: { target: ClickableKey | SystemSnapshot | undefined; segments: Segment[] }[] = [];
   for (const segment of segments) {
-    const key = segment.ids.map((id) => data.clickable.get(id)).find(Boolean);
+    const target =
+      segment.ids.map((id) => data.clickable.get(id)).find(Boolean) ??
+      segment.ids.map((id) => data.systems.get(id)).find(Boolean);
     const last = groups.at(-1);
-    if (last !== undefined && last.key === key) {
+    if (last !== undefined && last.target === target) {
       last.segments.push(segment);
     } else {
-      groups.push({ key, segments: [segment] });
+      groups.push({ target, segments: [segment] });
     }
   }
 
@@ -204,18 +231,34 @@ export function CodeLine({ data, file, line }: { data: CodeData; file: number; l
             // biome-ignore lint/suspicious/noArrayIndexKey: a line's pieces only change with its text
             <SegmentView key={segmentIndex} segment={segment} data={data} />
           ));
-          const { key } = group;
-          return key === undefined ? (
+          const { target } = group;
+          if (target === undefined) {
             // biome-ignore lint/suspicious/noArrayIndexKey: a line's pieces only change with its text
-            <span key={groupIndex}>{pieces}</span>
-          ) : (
+            return <span key={groupIndex}>{pieces}</span>;
+          }
+          if ("event" in target) {
+            return (
+              <button
+                // biome-ignore lint/suspicious/noArrayIndexKey: a line's pieces only change with its text
+                key={groupIndex}
+                type="button"
+                title={`send ${target.event}`}
+                className="cursor-pointer underline decoration-dotted underline-offset-2"
+                onClick={() => data.send(target.event)}
+              >
+                {pieces}
+              </button>
+            );
+          }
+          return (
             <button
               // biome-ignore lint/suspicious/noArrayIndexKey: a line's pieces only change with its text
               key={groupIndex}
               type="button"
-              title={`send ${key.event}`}
-              className="cursor-pointer underline decoration-dotted underline-offset-2"
-              onClick={() => data.send(key.event)}
+              data-system={target.index}
+              title={`show ${target.name} on the Worlds tab`}
+              className="cursor-pointer text-left hover:bg-accent"
+              onClick={() => data.showSystem(target.index)}
             >
               {pieces}
             </button>

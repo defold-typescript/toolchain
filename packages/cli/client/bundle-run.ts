@@ -1,17 +1,21 @@
-// Runs the built viewer bundle against a session on a machine file and prints what it rendered
-// into #root. It runs as its own process because the bundle carries its own React, which no test
+// Runs the built viewer bundle against a session on a file and prints what it rendered into
+// #root. It runs as its own process because the bundle carries its own React, which no test
 // can unmount, and work React schedules after a test would fire into a removed window.
 import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { loadClientAssets } from "../src/hsm-view-client-assets";
-import { createHsmViewApp } from "../src/hsm-view-server";
+import { createHsmViewApp, type HsmViewTab } from "../src/hsm-view-server";
 import { createSession } from "../src/hsm-view-session";
 import { registerDom } from "./test-dom";
 
 const RENDER_WAIT_MS = 10_000;
 
-const [file, expected] = process.argv.slice(2);
-if (file === undefined || expected === undefined) {
-  throw new Error("usage: bun client/bundle-run.ts <machine file> <text to wait for>");
+const [file, expected, tab] = process.argv.slice(2);
+if (
+  file === undefined ||
+  expected === undefined ||
+  (tab !== undefined && tab !== "machines" && tab !== "worlds")
+) {
+  throw new Error("usage: bun client/bundle-run.ts <file> <text to wait for> [machines|worlds]");
 }
 
 class SilentEventSource {
@@ -24,7 +28,11 @@ const session = createSession({
   hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY),
   ecsSourceDir: requireLibrarySourceDir(ECS_LIBRARY),
 });
-const app = createHsmViewApp({ session, client: { js: "", css: "" } });
+const app = createHsmViewApp({
+  session,
+  client: { js: "", css: "" },
+  ...(tab === undefined ? {} : { opening: { tab: tab satisfies HsmViewTab } }),
+});
 registerDom();
 globalThis.fetch = ((url: string, init?: RequestInit) => app.request(url, init)) as typeof fetch;
 Object.assign(globalThis, { EventSource: SilentEventSource });
