@@ -1,7 +1,7 @@
 // Runs the built viewer bundle against a session on a machine file and prints what it rendered
 // into #root. It runs as its own process because the bundle carries its own React, which no test
 // can unmount, and work React schedules after a test would fire into a removed window.
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { loadClientAssets } from "../src/hsm-view-client-assets";
 import { createHsmViewApp } from "../src/hsm-view-server";
 import { createSession } from "../src/hsm-view-session";
@@ -19,7 +19,11 @@ class SilentEventSource {
   close(): void {}
 }
 
-const session = createSession({ file, hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY) });
+const session = createSession({
+  file,
+  hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY),
+  ecsSourceDir: requireLibrarySourceDir(ECS_LIBRARY),
+});
 const app = createHsmViewApp({ session, client: { js: "", css: "" } });
 registerDom();
 globalThis.fetch = ((url: string, init?: RequestInit) => app.request(url, init)) as typeof fetch;

@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload), [state hooks](./ecs-and-hsm.md) that move an entity between systems, a [world inspector](./entity-systems.md#debug-a-world), an editor hover on every export, and a [hands-on tutorial](./entity-systems-tutorial.md).
+> - **[`hsm-view`](./hsm-view.md#what-runs-and-what-is-stubbed)** runs files that import `ecs` or call `defineScript`, with Lua's `math` and the engine values a world reads simulated.
 > - **[Script callbacks](./script-lifecycle.md)** run beside a top-level import or declaration of the same name.
 
 ### Improved
@@ -26,6 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Editor hovers:** every export of each module, and every system field and callback, shows a one-line summary, its parameters and return, and an example that compiles; the [Reference](./entity-systems.md#reference) tables quote the same summaries.
   - **[Entity systems, one system at a time](./entity-systems-tutorial.md):** a hands-on tutorial grows one night garden of fireflies lesson by lesson, until it uses every export of the three `ecs` modules. Each change is a diff that compiles, and each lesson shows the console its code prints under the real `ecs`.
   - **The [`AGENTS.md` block](./init-agents.md#what-it-writes)** that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
+- **[`hsm-view`](./hsm-view.md#what-runs-and-what-is-stubbed) runs more of a game's code:** a file may import `ecs` and call `defineScript`, and Lua's `math` (the same numbers on every start), `os.clock`, `vmath.vector3`, `vmath.vector4`, `factory.create`, `msg.url`, `go.get_position`, `go.get_world_position`, `sys.get_engine_info` and `sys.get_config_string` return simulated values instead of `undefined`.
 
 ### Fixed
 

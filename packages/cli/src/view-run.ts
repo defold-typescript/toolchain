@@ -2,7 +2,11 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { inspect } from "node:util";
 import * as vm from "node:vm";
-import { HSM_LIBRARY, librarySourceFiles } from "@defold-typescript/transpiler";
+import {
+  BUNDLED_LIBRARIES,
+  type BundledLibrary,
+  librarySourceFiles,
+} from "@defold-typescript/transpiler";
 import * as ts from "typescript";
 import { freeGlobals } from "./hsm-view-free-globals";
 
@@ -24,45 +28,60 @@ export interface LoadedFile {
   readonly text: string;
 }
 
-export interface LoadedMachine {
-  readonly name: string;
-  readonly key: string | undefined;
-  readonly config: unknown;
-  readonly machine: unknown;
-}
-
 export type EngineEntry =
   | { readonly kind: "engine"; readonly api: string; readonly args: readonly unknown[] }
   | { readonly kind: "print"; readonly text: string };
 
 export type EngineSink = (entry: EngineEntry) => void;
 
-export interface MachineEngine {
+export interface RunEngine {
   setSink(sink: EngineSink | undefined): void;
 }
 
-export interface MachineLoad {
+export interface ProjectLibrary {
+  readonly library: BundledLibrary;
+  readonly sourceDir: string;
+}
+
+export interface ProjectRunnerOptions {
+  readonly libraries: readonly ProjectLibrary[];
+  /** Called once per runner, after a library module loads; it may replace the module's exports. */
+  readonly onLibraryModule?: (
+    library: BundledLibrary,
+    name: string,
+    exports: Record<string, unknown>,
+  ) => void;
+  /**
+   * Merged over `hash`, `print`, `pprint` and `tostring`. A plain-object value is a partial
+   * namespace: a member it lacks is a logged stub.
+   */
+  readonly builtins?: Readonly<Record<string, unknown>>;
+  /** What `@defold-typescript/types` exports at run time; every other subpath exports nothing. */
+  readonly typesRoot?: Record<string, unknown>;
+  /** Tags each project file's object and array literals with where they were written. */
+  readonly tagLiterals: boolean;
+}
+
+export interface ProjectRun {
   readonly files: readonly LoadedFile[];
-  readonly machines: readonly LoadedMachine[];
-  readonly engine: MachineEngine;
-  /** Reruns the project files in the same hsm runtime; a failure keeps the last good load. */
-  reload(): void;
+  /** Each project module's exports, by file. */
+  readonly modules: ReadonlyMap<string, Record<string, unknown>>;
 }
 
-export interface LoadMachinesOptions {
-  readonly hsmSourceDir: string;
-  /** Sees each config before hsm does; what it returns is what hsm defines. */
-  readonly onDefine?: (key: string | undefined, config: unknown) => unknown;
+export interface ProjectRunner {
+  /** Runs the entry and the project files it imports afresh; library modules keep their first run. */
+  run(): ProjectRun;
+  readonly engine: RunEngine;
 }
 
-export class HsmViewLoadError extends Error {
-  override readonly name = "HsmViewLoadError";
+export class ViewLoadError extends Error {
+  override readonly name = "ViewLoadError";
 }
 
-const TAG = "__hsmLoc";
+const TAG = "__viewLoc";
 const MODULE_PARAMS = new Set(["require", "module", "exports", TAG]);
 const TYPES_PACKAGE = "@defold-typescript/types";
-const LOCATION = Symbol("hsm-view location");
+const LOCATION = Symbol("view location");
 
 const locationCache = new Map<string, SourceLocation>();
 
@@ -213,7 +232,7 @@ function literalFacts(source: ts.SourceFile): LiteralFacts {
   return { keyOf, targets };
 }
 
-// Wraps each object and array literal as `__hsmLoc(<literal>, <location json>)`.
+// Wraps each object and array literal as `__viewLoc(<literal>, <location json>)`.
 function locationTagger(file: string): ts.TransformerFactory<ts.SourceFile> {
   return (context) => (source) => {
     const factory = context.factory;
@@ -256,7 +275,7 @@ function compile(file: string, text: string, tag: boolean): string {
         ? error.file.getLineAndCharacterOfPosition(error.start)
         : undefined;
     const at = where === undefined ? "" : `:${where.line + 1}:${where.character + 1}`;
-    throw new HsmViewLoadError(`${file}${at}: ${message}`);
+    throw new ViewLoadError(`${file}${at}: ${message}`);
   }
   return output.outputText;
 }
@@ -269,68 +288,65 @@ function luaString(value: unknown): string {
   return value === undefined || value === null ? "nil" : String(value);
 }
 
+function isFile(file: string): boolean {
+  return existsSync(file) && statSync(file).isFile();
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isLibrarySpecifier(library: BundledLibrary, specifier: string): boolean {
+  return specifier === library.specifier || specifier.startsWith(`${library.specifier}/`);
+}
+
+// A stub stands in for a value code may print or interpolate, so it reads as its own name.
+function isPrimitiveHook(member: string | symbol): boolean {
+  return (
+    member === Symbol.toPrimitive ||
+    member === "toString" ||
+    member === "valueOf" ||
+    member === "toJSON"
+  );
+}
+
 interface ModuleRecord {
   exports: Record<string, unknown>;
 }
 
-interface Definition {
-  readonly key: string | undefined;
-  readonly config: unknown;
-  readonly machine: unknown;
+interface ResolvedLibrary {
+  readonly library: BundledLibrary;
+  readonly dir: string;
+  readonly files: ReadonlySet<string>;
 }
 
 interface Run {
   readonly modules: Map<string, ModuleRecord>;
   readonly files: LoadedFile[];
-  readonly definitions: Definition[];
-}
-
-interface LoadState {
-  readonly files: readonly LoadedFile[];
-  readonly machines: readonly LoadedMachine[];
-}
-
-type DefineMachine = (key?: string) => (config: unknown) => unknown;
-
-function isHsmSpecifier(specifier: string): boolean {
-  return specifier === HSM_LIBRARY.specifier || specifier.startsWith(`${HSM_LIBRARY.specifier}/`);
-}
-
-function isFile(file: string): boolean {
-  return existsSync(file) && statSync(file).isFile();
 }
 
 /**
- * Runs `file` and the project files it imports with Defold globals stubbed, recording every
- * `defineMachine` call. The hsm modules run once per load, so `reload` rebinds keyed machines.
+ * Runs `entry` and the project files it imports with Defold globals stubbed, against the given
+ * library sources. A library module runs once per runner, so a second `run` rebinds what the
+ * project's files register with it, as a game's hot reload does.
  */
-export function loadMachines(file: string, options: LoadMachinesOptions): MachineLoad {
-  const entry = path.resolve(file);
-  const hsmDir = path.resolve(options.hsmSourceDir);
-  const hsmFiles = new Set(librarySourceFiles(hsmDir));
-  const onDefine = options.onDefine ?? ((_key: string | undefined, config: unknown) => config);
-  const hsmModules = new Map<string, ModuleRecord>();
+export function createProjectRunner(entry: string, options: ProjectRunnerOptions): ProjectRunner {
+  const entryFile = path.resolve(entry);
+  const libraries: ResolvedLibrary[] = options.libraries.map(({ library, sourceDir }) => {
+    const dir = path.resolve(sourceDir);
+    return { library, dir, files: new Set(librarySourceFiles(dir)) };
+  });
+  const libraryModules = new Map<string, ModuleRecord>();
   const stubs = new Map<string, unknown>();
   let sink: EngineSink | undefined;
   let current: Run | undefined;
 
   const emit = (entry: EngineEntry): void => {
     sink?.(entry);
-  };
-
-  const builtins: Record<string, unknown> = {
-    hash: (value: unknown) => `hash: [${luaString(value)}]`,
-    tostring: luaString,
-    print: (...args: unknown[]) => emit({ kind: "print", text: args.map(luaString).join("\t") }),
-    pprint: (...args: unknown[]) =>
-      emit({
-        kind: "print",
-        text: args
-          .map((value) =>
-            typeof value === "object" && value !== null ? inspect(value) : luaString(value),
-          )
-          .join("\t"),
-      }),
   };
 
   const recordingStub = (name: string): unknown => {
@@ -340,12 +356,7 @@ export function loadMachines(file: string, options: LoadMachinesOptions): Machin
     }
     const stub: unknown = new Proxy(() => undefined, {
       get: (_target, member) => {
-        if (
-          member === Symbol.toPrimitive ||
-          member === "toString" ||
-          member === "valueOf" ||
-          member === "toJSON"
-        ) {
+        if (isPrimitiveHook(member)) {
           return () => name;
         }
         if (typeof member === "symbol" || member === "then") {
@@ -363,35 +374,58 @@ export function loadMachines(file: string, options: LoadMachinesOptions): Machin
     return stub;
   };
 
+  const partialNamespace = (name: string, members: Record<string, unknown>): unknown =>
+    new Proxy(members, {
+      get: (target, member) => {
+        if (Object.hasOwn(target, member)) {
+          return target[member as string];
+        }
+        if (isPrimitiveHook(member)) {
+          return () => name;
+        }
+        if (typeof member === "symbol" || member === "then") {
+          return undefined;
+        }
+        return recordingStub(`${name}.${member}`);
+      },
+    });
+
+  const builtins: Record<string, unknown> = {
+    hash: (value: unknown) => `hash: [${luaString(value)}]`,
+    tostring: luaString,
+    print: (...args: unknown[]) => emit({ kind: "print", text: args.map(luaString).join("\t") }),
+    pprint: (...args: unknown[]) =>
+      emit({
+        kind: "print",
+        text: args
+          .map((value) =>
+            typeof value === "object" && value !== null ? inspect(value) : luaString(value),
+          )
+          .join("\t"),
+      }),
+  };
+  for (const [name, value] of Object.entries(options.builtins ?? {})) {
+    builtins[name] = isPlainObject(value) ? partialNamespace(name, value) : value;
+  }
+
   const stubFor = (name: string): unknown =>
     Object.hasOwn(builtins, name) ? builtins[name] : recordingStub(name);
 
-  const wrapDefine = (record: ModuleRecord): void => {
-    const define = record.exports.defineMachine as DefineMachine;
-    const recording: DefineMachine = (key?: string) => {
-      const defineWithKey = define(key);
-      return (config: unknown) => {
-        const machine = defineWithKey(onDefine(key, config));
-        current?.definitions.push({ key, config, machine });
-        return machine;
-      };
-    };
-    // Every export that holds the definer is replaced; a call through a name left unwrapped
-    // would reach hsm unrecorded.
-    for (const name of Object.keys(record.exports)) {
-      if (record.exports[name] === define) {
-        record.exports[name] = recording;
-      }
-    }
+  const libraryOf = (file: string): ResolvedLibrary | undefined => {
+    const dir = path.dirname(file);
+    return libraries.find((library) => library.dir === dir);
   };
 
   const resolveImport = (importer: string, specifier: string): string | undefined => {
-    if (isHsmSpecifier(specifier)) {
+    const bundled = BUNDLED_LIBRARIES.find((library) => isLibrarySpecifier(library, specifier));
+    if (bundled !== undefined) {
+      const resolved = libraries.find(({ library }) => library.id === bundled.id);
+      if (resolved === undefined) {
+        return undefined;
+      }
       const name =
-        specifier === HSM_LIBRARY.specifier
-          ? "index"
-          : specifier.slice(HSM_LIBRARY.specifier.length + 1);
-      return hsmFiles.has(`${name}.ts`) ? path.join(hsmDir, `${name}.ts`) : undefined;
+        specifier === bundled.specifier ? "index" : specifier.slice(bundled.specifier.length + 1);
+      return resolved.files.has(`${name}.ts`) ? path.join(resolved.dir, `${name}.ts`) : undefined;
     }
     if (specifier.startsWith("./") || specifier.startsWith("../")) {
       const base = path.resolve(path.dirname(importer), specifier);
@@ -401,15 +435,16 @@ export function loadMachines(file: string, options: LoadMachinesOptions): Machin
   };
 
   const requireFrom = (importer: string, specifier: string): unknown => {
-    if (
-      !isHsmSpecifier(specifier) &&
-      (specifier === TYPES_PACKAGE || specifier.startsWith(`${TYPES_PACKAGE}/`))
-    ) {
+    const isLibrary = BUNDLED_LIBRARIES.some((library) => isLibrarySpecifier(library, specifier));
+    if (!isLibrary && specifier === TYPES_PACKAGE) {
+      return options.typesRoot ?? {};
+    }
+    if (!isLibrary && specifier.startsWith(`${TYPES_PACKAGE}/`)) {
       return {};
     }
     const resolved = resolveImport(importer, specifier);
     if (resolved === undefined) {
-      throw new HsmViewLoadError(
+      throw new ViewLoadError(
         `${importer}: cannot load "${specifier}"; only project files and ${TYPES_PACKAGE} modules can run here`,
       );
     }
@@ -417,12 +452,12 @@ export function loadMachines(file: string, options: LoadMachinesOptions): Machin
   };
 
   const loadModule = (file: string): Record<string, unknown> => {
-    const isHsm = path.dirname(file) === hsmDir;
+    const library = libraryOf(file);
     const run = current;
     if (run === undefined) {
-      throw new Error("hsm-view: a module loaded outside a run");
+      throw new Error("view: a module loaded outside a run");
     }
-    const modules = isHsm ? hsmModules : run.modules;
+    const modules = library === undefined ? run.modules : libraryModules;
     const cached = modules.get(file);
     if (cached !== undefined) {
       return cached.exports;
@@ -430,11 +465,11 @@ export function loadMachines(file: string, options: LoadMachinesOptions): Machin
     const text = readFileSync(file, "utf8");
     const record: ModuleRecord = { exports: {} };
     modules.set(file, record);
-    if (!isHsm) {
+    if (library === undefined) {
       run.files.push({ path: file, text });
     }
     try {
-      const js = compile(file, text, !isHsm);
+      const js = compile(file, text, library === undefined && options.tagLiterals);
       const stubNames = freeGlobals(js).filter(
         (name) =>
           !MODULE_PARAMS.has(name) &&
@@ -449,65 +484,41 @@ export function loadMachines(file: string, options: LoadMachinesOptions): Machin
         ...stubNames.map(stubFor),
       );
     } catch (thrown) {
-      if (isHsm) {
+      if (library !== undefined) {
         modules.delete(file);
       }
-      if (thrown instanceof HsmViewLoadError) {
+      if (thrown instanceof ViewLoadError) {
         throw thrown;
       }
       // hsm reports a bad config by throwing a string.
-      throw new HsmViewLoadError(`${file}: ${describeThrown(thrown)}`);
+      throw new ViewLoadError(`${file}: ${describeThrown(thrown)}`);
     }
-    if (isHsm && path.basename(file) === "index.ts") {
-      wrapDefine(record);
+    if (library !== undefined) {
+      options.onLibraryModule?.(library.library, path.basename(file, ".ts"), record.exports);
     }
     return record.exports;
   };
 
-  const exportName = (modules: Iterable<ModuleRecord>, machine: unknown): string | undefined => {
-    for (const { exports } of modules) {
-      const name = Object.keys(exports).find((key) => exports[key] === machine);
-      if (name !== undefined) {
-        return name;
-      }
-    }
-    return undefined;
-  };
-
-  const run = (): LoadState => {
-    const next: Run = { modules: new Map(), files: [], definitions: [] };
-    const previous = current;
-    current = next;
-    try {
-      loadModule(entry);
-    } finally {
-      current = previous;
-    }
-    let unnamed = 0;
-    const machines = next.definitions.map(({ key, config, machine }) => ({
-      name: key ?? exportName(next.modules.values(), machine) ?? `machine-${++unnamed}`,
-      key,
-      config,
-      machine,
-    }));
-    return { files: next.files, machines };
-  };
-
-  let state = run();
   return {
-    get files() {
-      return state.files;
-    },
-    get machines() {
-      return state.machines;
+    run() {
+      const next: Run = { modules: new Map(), files: [] };
+      const previous = current;
+      current = next;
+      try {
+        loadModule(entryFile);
+      } finally {
+        current = previous;
+      }
+      const modules = new Map<string, Record<string, unknown>>();
+      for (const [file, record] of next.modules) {
+        modules.set(file, record.exports);
+      }
+      return { files: next.files, modules };
     },
     engine: {
       setSink(next) {
         sink = next;
       },
-    },
-    reload() {
-      state = run();
     },
   };
 }

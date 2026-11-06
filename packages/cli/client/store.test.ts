@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { ruleId } from "../src/hsm-view-index";
 import { createHsmViewApp, type HsmViewIndex } from "../src/hsm-view-server";
 import { createSession, type HsmViewSession, type Snapshot } from "../src/hsm-view-session";
@@ -17,6 +17,7 @@ import {
 import { startViewer, type TestViewer } from "./test-viewer";
 
 const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
+const ecsSourceDir = requireLibrarySourceDir(ECS_LIBRARY);
 
 // CRLF line breaks, so a column computed as if every break were one character is off.
 const HERO = `import { defineMachine } from "@defold-typescript/types/hsm";
@@ -57,7 +58,7 @@ beforeEach(async () => {
   dir = mkdtempSync(path.join(os.tmpdir(), "hsm-view-store-"));
   writeFileSync(path.join(dir, "landing.ts"), LANDING);
   writeFileSync(path.join(dir, "main.ts"), HERO);
-  session = createSession({ file: path.join(dir, "main.ts"), hsmSourceDir });
+  session = createSession({ file: path.join(dir, "main.ts"), hsmSourceDir, ecsSourceDir });
   const app = createHsmViewApp({ session, client: { js: "", css: "" } });
   store = createViewerStore();
   store.getState().setIndex((await (await app.request("/api/index")).json()) as HsmViewIndex);
@@ -253,7 +254,7 @@ export const colliding = defineMachine("colliding")({
 describe("colliding state names and event types", () => {
   beforeEach(async () => {
     writeFileSync(path.join(dir, "colliding.ts"), COLLIDING);
-    session = createSession({ file: path.join(dir, "colliding.ts"), hsmSourceDir });
+    session = createSession({ file: path.join(dir, "colliding.ts"), hsmSourceDir, ecsSourceDir });
     const app = createHsmViewApp({ session, client: { js: "", css: "" } });
     store = createViewerStore();
     store.getState().setIndex((await (await app.request("/api/index")).json()) as HsmViewIndex);

@@ -2,9 +2,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { machineIndex, ruleId, ruleIds } from "./hsm-view-index";
-import { loadMachines, type SourceSpan } from "./hsm-view-load";
+import { loadProject } from "./view-load";
+import type { SourceSpan } from "./view-run";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const PLATFORMER_MACHINE = path.join(
@@ -16,6 +17,7 @@ const PLATFORMER_MACHINE = path.join(
   "player-machine.ts",
 );
 const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
+const ecsSourceDir = requireLibrarySourceDir(ECS_LIBRARY);
 
 let dir: string;
 
@@ -35,7 +37,7 @@ function write(rel: string, text: string): string {
 }
 
 function load(file: string) {
-  return loadMachines(file, { hsmSourceDir });
+  return loadProject(file, { hsmSourceDir, ecsSourceDir });
 }
 
 function spanText(
