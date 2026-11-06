@@ -801,6 +801,34 @@ describe("renderMarkdown config and builder tabs", () => {
     expect(figures).toHaveLength(1);
     expect(languageBadge(figures[0]?.children[0]).label).toBe("TypeScript");
   });
+
+  function expectSeparateBadgedBlocks(html: string, labels: readonly string[]) {
+    const root = parseHtml(html);
+    expect(root.querySelector(".code-tabs")).toBeNull();
+    const figures = root.querySelectorAll("figure.code-block--badged");
+    expect(figures.map((figure) => languageBadge(figure.children[0]).label)).toEqual([...labels]);
+  }
+
+  test("a lua fence followed by a `ts builder` fence stays two separate badged blocks", async () => {
+    expectSeparateBadgedBlocks(
+      await renderMarkdown("```lua\nlocal a = 1\n```\n\n```ts builder\nlet b = 2;\n```\n"),
+      ["Lua", "TypeScript"],
+    );
+  });
+
+  test("a ts fence followed by a `lua builder` fence stays two separate badged blocks", async () => {
+    expectSeparateBadgedBlocks(
+      await renderMarkdown("```ts\nlet a = 1;\n```\n\n```lua builder\nlocal b = 2\n```\n"),
+      ["TypeScript", "Lua"],
+    );
+  });
+
+  test("a lua fence followed by a `lua builder` fence stays two separate badged blocks", async () => {
+    expectSeparateBadgedBlocks(
+      await renderMarkdown("```lua\nlocal a = 1\n```\n\n```lua builder\nlocal b = 2\n```\n"),
+      ["Lua", "Lua"],
+    );
+  });
 });
 
 describe("renderMarkdown platform markers", () => {
