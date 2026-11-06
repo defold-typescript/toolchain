@@ -582,6 +582,20 @@ const EXPECTED: Record<string, string[]> = {
     "exit move",
     "exit play",
   ],
+  "a builder machine": [
+    "path=/off",
+    "run 1",
+    "run 2",
+    "enter on",
+    "path=/on/bright lit=true",
+    "path=/on/dim",
+    "path=/on/dim",
+    "path=/on/bright",
+    "root ping",
+    "path=/off lit=false",
+    "error: hsm: build() was already called",
+    'error: hsm: state "/a" has an on("GO") rule with no to, run or ignore',
+  ],
   "a parallel state's always joins its regions": [
     "enter work",
     "join sees /work/a/run, /work/b/run",
@@ -621,6 +635,7 @@ const result = transpileProject({
   files: {
     "hsm/index.ts": read("./index.ts"),
     "hsm/async.ts": read("./async.ts"),
+    "hsm/builder.ts": read("./builder.ts"),
     [SCENARIOS_FILE]: read("./parity/scenarios.ts"),
     [ASYNC_SCENARIO_FILE]: read("./parity/async-scenario.ts"),
   },
