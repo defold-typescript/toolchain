@@ -18,6 +18,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **[Write a machine as statements](./state-machines.md#write-a-machine-as-statements):** `buildMachine` from `@defold-typescript/types/hsm/builder` takes a skeleton of the machine's states, and statements such as `m.state("/off").on("TOGGLE").to("/on")`, `after`, `every`, `always`, `enter` and `exit` add its behavior in call order, every path and event checked at compile time. `build()` hands the result to `defineMachine`, so the key and hot reload work as for a config, and throws, naming the state, on a rule left without its ending.
+- **API reference examples:** choosing the TypeScript or Lua tab on one example switches every example on the page to it, and later pages open on the same tab.
 
 ## v0.58.0
 
