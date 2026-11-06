@@ -4,9 +4,19 @@ import * as os from "node:os";
 import * as path from "node:path";
 // A document must exist before a component loads Radix; see test-dom.ts.
 import "./test-dom";
+import { SidePanel } from "./app";
 import { Bar } from "./bar";
-import { act, cleanup, fireEvent, registerDom, render, unregisterDom, waitFor } from "./test-dom";
-import { startViewer, type TestViewer } from "./test-viewer";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  registerDom,
+  render,
+  unregisterDom,
+  waitFor,
+  within,
+} from "./test-dom";
+import { CRITTERS, startViewer, type TestViewer } from "./test-viewer";
 
 const PAIR = `import { defineMachine } from "@defold-typescript/types/hsm";
 export const guard = defineMachine("guard")({
@@ -180,10 +190,10 @@ describe("Bar", () => {
     expect(view.queryByRole("alert")).toBeNull();
   });
 
-  test("draws one icon in Start, Play and Step, and hides every icon from the names", () => {
+  test("draws one icon in Start, Restart, Play and Step, and hides every icon from the names", () => {
     const view = render(<Bar store={viewer.store} />);
 
-    for (const name of ["Start", "Play", "Step"]) {
+    for (const name of ["Start", "Restart", "Play", "Step"]) {
       expect(view.getByRole("button", { name }).querySelectorAll("svg").length).toBe(1);
     }
     const icons = [...view.container.querySelectorAll("svg")];
@@ -201,5 +211,139 @@ describe("Bar", () => {
     fireEvent.click(stacked());
     expect(viewer.store.getState().layout).toBe("stacked");
     expect(stacked().getAttribute("aria-checked")).toBe("true");
+  });
+});
+
+describe("Bar tabs", () => {
+  let critters: TestViewer;
+
+  beforeEach(async () => {
+    const file = path.join(dir, "critters.ts");
+    writeFileSync(file, CRITTERS);
+    critters = await startViewer(file, "{}");
+  });
+
+  const page = (store: TestViewer["store"]) =>
+    render(
+      <>
+        <Bar store={store} />
+        <SidePanel store={store} />
+      </>,
+    );
+
+  /** A control by its role and accessible name, or a clock readout by its `data-clock`. */
+  type Control =
+    | readonly [role: "button" | "textbox" | "combobox", name: string]
+    | `clock:${string}`;
+
+  const shown = (container: HTMLElement, controls: readonly Control[]): Control[] =>
+    controls.filter((entry) =>
+      typeof entry === "string"
+        ? container.querySelector(`[data-clock="${entry.slice("clock:".length)}"]`) !== null
+        : within(container).queryByRole(entry[0], { name: entry[1] }) !== null,
+    );
+
+  const CLOCK: readonly Control[] = [
+    ["button", "Restart"],
+    ["button", "Play"],
+    ["button", "Step"],
+    ["textbox", "dt"],
+    ["combobox", "speed"],
+    "clock:t",
+    "clock:frame",
+  ];
+  const SCARE: Control = ["button", "SCARE"];
+  const MACHINE_CONTROLS: readonly Control[] = [
+    ["combobox", "machine"],
+    ["combobox", "instance"],
+    ["textbox", "start ctx"],
+    ["button", "Start"],
+    SCARE,
+    ["textbox", "payload"],
+    ["combobox", "live instance"],
+  ];
+  const WORLD_CONTROLS: readonly Control[] = [["combobox", "world"]];
+  const ALL = [...CLOCK, ...MACHINE_CONTROLS, ...WORLD_CONTROLS];
+
+  const options = (select: HTMLSelectElement): string[] =>
+    [...select.options].map((option) => option.textContent ?? "");
+
+  test("shows the clock on both tabs, the machine controls on Machines and the world picker on Worlds", () => {
+    const view = page(critters.store);
+    expect(view.getByRole("tab", { name: "Machines" }).getAttribute("aria-selected")).toBe("true");
+    expect(shown(view.container, ALL)).toEqual([...CLOCK, ...MACHINE_CONTROLS]);
+
+    fireEvent.click(view.getByRole("tab", { name: "Worlds" }));
+
+    expect(critters.store.getState().tab).toBe("worlds");
+    expect(view.getByRole("tab", { name: "Worlds" }).getAttribute("aria-selected")).toBe("true");
+    expect(shown(view.container, ALL)).toEqual([...CLOCK, ...WORLD_CONTROLS]);
+    expect(options(control(view.container, 'select[aria-label="world"]'))).toEqual(["herd", "pen"]);
+  });
+
+  test("follows the instance picked in the instance picker, and returns to the simulated one", async () => {
+    const view = page(critters.store);
+    const instance = control<HTMLSelectElement>(view.container, 'select[aria-label="instance"]');
+    expect(options(instance)).toEqual(["simulated", "herd entity 1"]);
+
+    fireEvent.change(instance, { target: { value: "1" } });
+    await waitFor(() => expect(critters.store.getState().snapshot?.following).toBe(1));
+    expect(instance.value).toBe("1");
+
+    fireEvent.change(instance, { target: { value: "" } });
+    await waitFor(() => expect(critters.store.getState().snapshot?.following).toBeUndefined());
+    expect(critters.requests).toEqual([
+      { route: "/api/follow", body: { instance: 1 } },
+      { route: "/api/follow", body: { instance: null } },
+    ]);
+  });
+
+  test("picks the world chosen in the world picker", async () => {
+    act(() => critters.store.getState().setTab("worlds"));
+    const view = page(critters.store);
+
+    fireEvent.change(control(view.container, 'select[aria-label="world"]'), {
+      target: { value: "pen" },
+    });
+
+    await waitFor(() => expect(critters.store.getState().snapshot?.world).toBe("pen"));
+    expect(critters.requests).toEqual([{ route: "/api/pick-world", body: { name: "pen" } }]);
+  });
+
+  test("counts frames, and Restart reruns the file from frame 0", async () => {
+    const view = page(critters.store);
+    const frame = () => control(view.container, "[data-clock=frame]").textContent;
+    expect(frame()).toBe("frame=0");
+
+    fireEvent.click(view.getByRole("button", { name: "Step" }));
+    await waitFor(() => expect(frame()).toBe("frame=1"));
+
+    fireEvent.click(view.getByRole("button", { name: "Restart" }));
+    await waitFor(() => expect(frame()).toBe("frame=0"));
+    expect(critters.requests.map((request) => request.route)).toEqual([
+      "/api/update",
+      "/api/restart",
+    ]);
+  });
+
+  test("a file with only machines or only worlds shows no tab switch", async () => {
+    const machinesOnly = page(viewer.store);
+    expect(machinesOnly.queryByRole("tablist")).toBeNull();
+    expect(shown(machinesOnly.container, ALL)).toEqual([
+      ...CLOCK,
+      ...MACHINE_CONTROLS.filter((entry) => entry !== SCARE),
+    ]);
+    cleanup();
+
+    const pond = path.join(dir, "pond.ts");
+    writeFileSync(
+      pond,
+      `import { system, world } from "@defold-typescript/types/ecs";
+export const pond = world(system("ripple")({ update() {} }));
+`,
+    );
+    const worldsOnly = page((await startViewer(pond, undefined)).store);
+    expect(worldsOnly.queryByRole("tablist")).toBeNull();
+    expect(shown(worldsOnly.container, ALL)).toEqual([...CLOCK, ...WORLD_CONTROLS]);
   });
 });

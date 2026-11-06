@@ -908,6 +908,31 @@ describe("worlds, tabs and follow", () => {
     expect(routes(viewer)).toEqual(["/api/update", "/api/update", "/api/update"]);
   });
 
+  test("plays a file whose script runs its own instance and no world before Start", async () => {
+    writeFileSync(
+      path.join(dir, "kennel.ts"),
+      `import { defineScript } from "@defold-typescript/types";
+import { defineMachine } from "@defold-typescript/types/hsm";
+export const pup = defineMachine("pup")({ initial: "/nap", states: { nap: {} } });
+export default defineScript({
+  init() { return { rex: pup.start({}) }; },
+  update(self, dt) { self.rex.update(dt); },
+});
+`,
+    );
+    const viewer = await open("kennel.ts");
+    const before = viewer.store.getState().snapshot;
+    expect(before?.path).toBeUndefined();
+    expect(before?.worlds).toEqual([]);
+
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(0);
+    await frames.frame(50);
+
+    expect(viewer.store.getState().playing).toBe(true);
+    expect(viewer.store.getState().snapshot?.frame).toBe(2);
+  });
+
   test("Restart stops Play and restarts after the in-flight update", async () => {
     const viewer = await open("farm.ts");
     viewer.store.getState().setPlaying(true);

@@ -7,7 +7,7 @@ import "./test-dom";
 import type { Snapshot } from "../src/hsm-view-session";
 import { CodeView } from "./code-view";
 import { act, cleanup, fireEvent, registerDom, render, unregisterDom, waitFor } from "./test-dom";
-import { startViewer, type TestViewer } from "./test-viewer";
+import { CRITTERS, startViewer, type TestViewer } from "./test-viewer";
 
 const LAMP = `import { defineMachine } from "@defold-typescript/types/hsm";
 export const lamp = defineMachine("lamp")({
@@ -114,5 +114,71 @@ export const lamp = defineMachine("lamp")({
     expect(overlays(rejectedLine, "animate-glow")).toBe(0);
     expect(overlays(firedLine, "animate-glow")).toBeGreaterThan(0);
     expect(overlays(firedLine, "animate-glow-dim")).toBe(0);
+  });
+});
+
+describe("CodeView systems", () => {
+  let critters: TestViewer;
+
+  beforeEach(async () => {
+    const file = path.join(dir, "critters.ts");
+    writeFileSync(file, CRITTERS);
+    critters = await startViewer(file, "{}");
+  });
+
+  const linesOf = (text: string): string[] => {
+    const lines = CRITTERS.split("\n");
+    const first = lines.findIndex((line) => line.includes(text));
+    const last = lines.findIndex((line, at) => at > first && line.startsWith("});"));
+    return lines.slice(first, last + 1).map((_, at) => String(first + at));
+  };
+
+  const systemButtons = (container: HTMLElement) =>
+    [...container.querySelectorAll<HTMLButtonElement>("button[data-system]")].map((button) => ({
+      system: button.dataset.system,
+      line: button.closest<HTMLElement>("[data-line]")?.dataset.line,
+    }));
+
+  const systemTinted = (container: HTMLElement): string[] => [
+    ...new Set(
+      [...container.querySelectorAll<HTMLElement>(".bg-system-tint")].map(
+        (segment) => segment.closest<HTMLElement>("[data-line]")?.dataset.line ?? "",
+      ),
+    ),
+  ];
+
+  test("a system's definition opens it on the Worlds tab, selected and open, and tints it", () => {
+    const { container } = render(<CodeView store={critters.store} file={0} />);
+    const drift = linesOf('processingSystem<Critter>("drift")');
+    expect(
+      systemButtons(container)
+        .filter((button) => button.system === "2")
+        .map((button) => button.line),
+    ).toEqual(drift);
+    expect(systemTinted(container)).toEqual([]);
+
+    fireEvent.click(container.querySelector('button[data-system="2"]') as HTMLButtonElement);
+
+    const state = critters.store.getState();
+    expect(state.tab).toBe("worlds");
+    expect(state.selectedSystem).toBe(2);
+    expect([...state.openSystems]).toEqual([2]);
+    expect(systemTinted(container)).toEqual(drift);
+    expect(critters.requests).toEqual([]);
+  });
+
+  test("keeps the machine's state tint and glow on the Worlds tab", async () => {
+    const { container } = render(<CodeView store={critters.store} file={0} />);
+    const keyLine = (state: string) =>
+      container.querySelector<HTMLElement>(
+        `[data-line="${CRITTERS.split("\n").findIndex((line) => line.includes(`${state}: {`))}"]`,
+      );
+    act(() => critters.store.getState().setTab("worlds"));
+
+    await act(() => critters.store.getState().send("SCARE"));
+
+    expect(critters.store.getState().tab).toBe("worlds");
+    expect(keyLine("flee")?.querySelector(".bg-tint")?.textContent).toBe("flee");
+    expect(keyLine("flee")?.querySelectorAll(".animate-glow").length).toBeGreaterThan(0);
   });
 });

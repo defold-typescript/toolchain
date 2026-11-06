@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload), [state hooks](./ecs-and-hsm.md) that move an entity between systems, a [world inspector](./entity-systems.md#debug-a-world), an editor hover on every export, and a [hands-on tutorial](./entity-systems-tutorial.md).
-> - **[`hsm-view`](./hsm-view.md#what-runs-and-what-is-stubbed)** runs a file's `defineScript` script and `ecs` worlds beside its machine on one clock, with Lua's `math` and the engine values a world reads simulated.
+> - **[`hsm-view`](./hsm-view.md#worlds)** runs a file's script, `ecs` worlds and machines on one clock, with a Worlds tab of systems, entities and timings linked to the code.
 > - **[Script callbacks](./script-lifecycle.md)** run beside a top-level import or declaration of the same name.
 
 ### Improved
@@ -27,7 +27,11 @@ What changed in each published `defold-typescript` toolchain release.
   - **Editor hovers:** every export of each module, and every system field and callback, shows a one-line summary, its parameters and return, and an example that compiles; the [Reference](./entity-systems.md#reference) tables quote the same summaries.
   - **[Entity systems, one system at a time](./entity-systems-tutorial.md):** a hands-on tutorial grows one night garden of fireflies lesson by lesson, until it uses every export of the three `ecs` modules. Each change is a diff that compiles, and each lesson shows the console its code prints under the real `ecs`.
   - **The [`AGENTS.md` block](./init-agents.md#what-it-writes)** that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
-- **[`hsm-view`](./hsm-view.md#what-runs-and-what-is-stubbed) runs a file as a game runs its script:** a `defineScript` script's `init` runs once, each frame calls its `update` (or each `ecs` world's) before the machine's on one clock that Start no longer resets, the [log](./hsm-view.md#read-the-log) notes each entity that joins or leaves a world's system under its own membership toggle, and a [reload](./hsm-view.md#live-reload) keeps `self` and the worlds and calls `on_reload`. Lua's `math` (the same numbers on every start), `os.clock`, `vmath.vector3`, `vmath.vector4`, `factory.create`, `msg.url`, `go.get_position`, `go.get_world_position`, `sys.get_engine_info` and `sys.get_config_string` return simulated values instead of `undefined`, and `ecs` filters reject a bad token as they do in a game.
+- **[`hsm-view`](./hsm-view.md) runs a file's machines, script and `ecs` worlds on one clock:**
+  - **[Script lifecycle](./hsm-view.md#what-runs-and-what-is-stubbed):** a `defineScript` script's `init` runs once, and each frame calls its `update` (or each world's) before the machine's, with `t` and a frame count that Start leaves running. Restart reruns the files from `t` 0, and a [reload](./hsm-view.md#live-reload) keeps `self` and the worlds and calls `on_reload`.
+  - **[Worlds tab](./hsm-view.md#worlds):** lists the picked world's systems with their entity counts and timings, opens each one's entities as read-only trees, and links each system to its definition in the code and back. The [log](./hsm-view.md#read-the-log) notes each entity that joins or leaves a system under its own membership toggle.
+  - **Follow an instance:** the bar's instance dropdown, or an entity's link on the Worlds tab, shows a machine instance the run started in place of the simulated one, its states tinted as the run moves it.
+  - **Simulated engine values:** Lua's `math` (the same numbers on every start), `os.clock`, `vmath.vector3`, `vmath.vector4`, `factory.create`, `msg.url`, `go.get_position`, `go.get_world_position`, `sys.get_engine_info` and `sys.get_config_string` return simulated values instead of `undefined`, and `ecs` filters reject a bad token as they do in a game.
 
 ### Fixed
 

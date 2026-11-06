@@ -17,6 +17,7 @@
   --destructive: #cf222e;
   --ring: #1f6feb;
   --tint: rgb(255 214 10 / 0.35);
+  --system-tint: rgb(31 111 235 / 0.16);
   --glow: rgb(255 170 0 / 0.75);
   --glow-dim: rgb(255 170 0 / 0.25);
   --syntax-keyword: #cf222e;
@@ -46,6 +47,7 @@
     --destructive: #f85149;
     --ring: #79a8ff;
     --tint: rgb(187 128 9 / 0.35);
+    --system-tint: rgb(121 168 255 / 0.2);
     --glow: rgb(255 196 0 / 0.6);
     --glow-dim: rgb(255 196 0 / 0.2);
     --syntax-keyword: #ff7b72;
@@ -76,6 +78,7 @@
   --color-destructive: var(--destructive);
   --color-ring: var(--ring);
   --color-tint: var(--tint);
+  --color-system-tint: var(--system-tint);
   --color-glow: var(--glow);
   --color-glow-dim: var(--glow-dim);
   --color-syntax-keyword: var(--syntax-keyword);
