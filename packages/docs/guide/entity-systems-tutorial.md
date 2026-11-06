@@ -4,7 +4,7 @@ llms-full: false
 ---
 # Entity systems, one system at a time
 
-A hands-on introduction to [`ecs`](./entity-systems.md), the entity system library that ships with this toolchain. You build one night garden full of fireflies, a little at a time. Every lesson ends with code that compiles, and by the last one the garden uses every part of `ecs`.
+A hands-on introduction to [`ecs`](./entity-systems.md), the entity system library that ships with this toolchain. You build one night garden full of fireflies, a little at a time. Every lesson ends with code that compiles and shows the console it prints, taken from running that lesson's code with the real `ecs`. By the last lesson the garden uses every part of `ecs`.
 
 ## 1. Three words to learn
 
@@ -102,6 +102,12 @@ print(flick.position.x, dot.position.x);
 - **[`requireAll("velocity")`](./entity-systems.md#filters)** is the system's filter: it takes the entities that have a `velocity`. Inside `process`, TypeScript knows `e.velocity` is set, so no check is needed.
 - **[`world`](./entity-systems.md#the-world)** makes a world that holds the system and both fireflies.
 - **[`update(garden, 1)`](./entity-systems.md#one-frame)** runs one frame that lasts one second. It prints `500 100`: Flick moved 20 to the right, and Dot, with no velocity, never reached `process`.
+
+Require `garden.ts` from any script, and loading it prints:
+
+```text trace
+500 100
+```
 
 > [!NOTE] **Why two sets of parentheses?** In `processingSystem<Firefly>()(filter, { ... })` the first call names the entity type. The second takes the filter and the definition, and TypeScript works out from the filter which components are present. It is a TypeScript limitation, so always write it this way.
 
@@ -206,6 +212,18 @@ export default defineScript({
 
 To see it, add a `firefly.go` game object file with a sprite, and a game object named `garden` to your main collection. Give `garden` the script built from `fireflies.ts`, and a factory component named `factory` whose prototype is `firefly.go`. Twenty fireflies appear at random and drift off.
 
+Run it for one frame, and the console reads:
+
+```text trace run="frames 1"
+ecs garden frame 0: inspecting [0]
+ecs garden frame 0: system 1 adds entity 1, holds 1
+ecs garden frame 0: system 1 adds entity 2, holds 2
+...
+ecs garden frame 0: system 1 adds entity 20, holds 20
+```
+
+Your script prints none of this yet. These lines come from [`inspect`](./entity-systems.md#debug-a-world), a debug tool lesson 15 adds to the script, and every console in the lessons before it was printed with `inspect` watching the garden. Each line names a system by its place in the world, so `system 1` is `drift`, and an entity by the order the inspector first saw it, which here is the order the fireflies were born. `holds` is how many entities the system has now. Your own night differs from the one shown, since Defold seeds its random numbers.
+
 > [!WARNING] **A new firefly joins at the next update.** `addEntity` and every other change to a world waits for the next `update`, so no system ever sees its list change halfway through a loop.
 
 ### Try it
@@ -278,7 +296,16 @@ export default defineScript({
     for (let i = 0; i < 20; i++) {
 ```
 
-The world runs its systems in the order it got them: `drift` first, then `swarm`.
+The world runs its systems in the order it got them: `drift` first, then `swarm`. Run it for one frame, and each firefly joins both, in that order:
+
+```text trace run="frames 1"
+ecs garden frame 0: inspecting [0, 0]
+ecs garden frame 0: system 1 adds entity 1, holds 1
+ecs garden frame 0: system 2 adds entity 1, holds 1
+...
+ecs garden frame 0: system 1 adds entity 20, holds 20
+ecs garden frame 0: system 2 adds entity 20, holds 20
+```
 
 ### Try it
 
@@ -478,6 +505,21 @@ export default defineScript({
 
 Add a `hud` game object with labels named `awake` and `watch`, and a `touch` action on the left mouse button to your input bindings.
 
+Run it for one frame, then click firefly 1 and firefly 4:
+
+```text trace run="frames 1; touch firefly 1; touch firefly 4"
+ecs garden frame 0: inspecting [0, 0, 0, 0, 0]
+ecs garden frame 0: system 1 adds entity 1, holds 1
+ecs garden frame 0: system 2 adds entity 1, holds 1
+ecs garden frame 0: system 4 adds entity 1, holds 1
+ecs garden frame 0: system 6 adds entity 1, holds 1
+...
+firefly 1: too quick
+firefly 4: you can catch it
+```
+
+The world starts with five systems, and `add` puts the watch system sixth at the first update. Firefly 1 is lit and flying, so it joins `drift`, `swarm`, `counter` and the watch, and it is too quick to catch. Firefly 4 flies with no light, so `catchable` holds it.
+
 ### Try it
 
 1. A firefly is lit and resting. Which of `drift`, `counter`, `catchable` and `beacons` take it?
@@ -656,6 +698,20 @@ import {
 
 Add a label named `caught` to the `hud`.
 
+Run it for one frame, then click firefly 4 to catch it. `refresh` applies the catch at once, so it leaves every system that held it in the same frame:
+
+```text trace run="frames 1; touch firefly 4"
+ecs garden frame 0: inspecting [0, 0, 0, 0, 0, 0, 0, 0]
+...
+ecs garden frame 1: system 1 removes entity 4, holds 13
+ecs garden frame 1: system 2 removes entity 4, holds 13
+ecs garden frame 1: system 5 removes entity 4, holds 16
+ecs garden frame 1: system 6 removes entity 4, holds 9
+ecs garden frame 1: system 8 removes entity 4, holds 19
+```
+
+Those are `drift`, `swarm`, `counter`, `catchable` and `bodies`. Leaving `catchable` hides the firefly's hint, and leaving `bodies` deletes its game object.
+
 ### Try it
 
 1. A lit firefly flies until its light runs out. Which hooks run, and when?
@@ -745,6 +801,17 @@ Add both to the world, with `stopwatch` first:
 ```
 
 Add a `grass` game object with a sprite, and a `time` label to the `hud`.
+
+Run it for two frames:
+
+```text trace run="frames 2"
+ecs garden frame 0: inspecting [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+ecs garden frame 0: system 2 adds entity 1, holds 1
+...
+ecs garden frame 0: system 7 onModify, holds 17
+```
+
+`counter`, system 7, runs `onModify` once, at the first update, after every firefly has joined. The second frame changes nobody, so it prints nothing. `stopwatch` is system 1 and never shows up: with no filter, it holds no fireflies.
 
 ### Try it
 
@@ -842,6 +909,25 @@ let born = 0;
 - **`blink`** turns blinking off and on with [`active`](./entity-systems.md#systemfields). An inactive system skips every hook of the frame, and it still gains and loses entities, so it is up to date when it starts again.
 
 Add `clap` and `blink` actions on two keys.
+
+Run it for one frame, press `clap`, and wait a second:
+
+```text trace run="frames 1; press clap; frames 61"
+...
+ecs garden frame 1: system 4 removes entity 1, holds 12
+ecs garden frame 1: system 5 removes entity 1, holds 12
+ecs garden frame 1: system 8 adds entity 1, holds 8
+...
+ecs garden frame 61: system 4 adds entity 14, holds 1
+ecs garden frame 61: system 5 adds entity 14, holds 1
+ecs garden frame 61: system 6 adds entity 14, holds 1
+ecs garden frame 61: system 7 adds entity 14, holds 15
+ecs garden frame 61: system 8 removes entity 14, holds 19
+ecs garden frame 61: system 10 adds entity 14, holds 1
+ecs garden frame 61: system 7 onModify, holds 15
+```
+
+The clap puts out every light, so each lit firefly leaves `lamps` and `glowSum`, systems 4 and 5, and joins `blink`, system 8. A full interval later `blink` lights firefly 14, and it moves back: into `lamps`, `glowSum`, `beacons`, since it rests, `counter` and `fade`, and out of `blink`.
 
 ### Try it
 
@@ -967,6 +1053,19 @@ The script adds both and uses `depth`'s order to pick which firefly a click catc
 
 Add a `brightest` label to the `hud`.
 
+Run it for one frame:
+
+```text trace run="frames 1"
+layers keeps its list: true
+ecs garden frame 0: inspecting [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+...
+ecs garden frame 0: system 9 onModify, holds 17
+ecs garden frame 0: system 7 onModify, holds 13
+ecs garden frame 0: system 4 onModify, holds 20
+```
+
+`init` prints the first line before the world runs. At the first update `byLight`, system 7, and `layers`, system 4, run `onModify` beside `counter`: a sorted system sorts in its `onModify`.
+
 ### Try it
 
 1. Take `postWrap` out of `byLight`. What does the label show?
@@ -1073,6 +1172,19 @@ let born = 0;
 - **`remove`** takes a system as easily as it takes a firefly.
 
 Add a `wind` game object with a sound component named `sound`, and a `gust` action.
+
+Run it for one frame, press `gust`, and let the wind blow out:
+
+```text trace run="frames 1; press gust; frames 242"
+...
+ecs garden frame 242: system 1 removes entity 20, holds 9
+ecs garden frame 242: system 1 removes entity 2, holds 8
+...
+ecs garden frame 242: system 1 removes entity 15, holds 0
+...
+```
+
+The wind sits first, as `setSystemIndex` put it. When its four seconds are up, it lets go of every firefly it still holds, and `onRemoveFromWorld` stops its sound.
 
 ### Try it
 
@@ -1192,6 +1304,23 @@ let born = 0;
 
 Add a `census` action.
 
+Run it for one frame and press `census`:
+
+```text trace run="frames 1; press census"
+layers keeps its list: true
+ecs garden frame 0: inspecting [0, 0, 0, -, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+...
+20 fireflies, 15 systems
+system 1: 0 fireflies
+system 2: 14 fireflies
+...
+system 4: no list (entities nil, indices nil)
+...
+firefly 1 is here
+```
+
+`stopwatch`, system 1, has no filter and holds nobody, and `scare`, system 4, keeps no list. The inspector's first line marks `scare` the same way, with a `-` where a count would be.
+
 ### Try it
 
 1. Why doesn't `scare` require `flying` with `requireAll`, as `drift` does?
@@ -1282,6 +1411,20 @@ let born = 0;
 - [**`clearSystems`**](./entity-systems.md#the-world) in `final` makes every system leave, so each `onRemove` and `onRemoveFromWorld` runs: `bodies` deletes the fireflies, which the factory made and the garden's game object does not own, and the wind stops its sound. `refresh` applies it at once, since no update comes after `final`.
 
 Add `freeze` and `dawn` actions.
+
+Run it for one frame, press `dawn`, and run one more:
+
+```text trace run="frames 1; press dawn; frames 1"
+...
+ecs garden frame 1: system 14 adds entity 21, holds 21
+...
+ecs garden frame 1: system 14 adds entity 40, holds 40
+...
+ecs garden frame 1: system 14 removes entity 20, holds 20
+...
+```
+
+At that one update, the twenty new fireflies join `bodies`, system 14, and then the twenty old ones leave it, and `bodies` deletes their game objects.
 
 ### Try it
 
@@ -1385,6 +1528,18 @@ const STILL = rejectAny("moving");
 
 Add a `jar` game object with a sprite, a `jar` label to the `hud`, and `shake`, `release` and `empty` actions.
 
+Run it for one frame, catch firefly 4, press `release`, and run one more frame:
+
+```text trace run="frames 1; touch firefly 4; press release; frames 1"
+...
+ecs garden frame 1: system 14 removes entity 4, holds 19
+...
+ecs garden frame 1: system 14 adds entity 21, holds 20
+ecs garden frame 1: system 5 onModify, holds 20
+```
+
+The inspector watches the garden alone, so the jar's own changes print nothing. The garden loses firefly 4 when you catch it, and the firefly that hatches when you let it go joins the garden at the next update.
+
 ### Try it
 
 1. What does the jar print the first time you catch a firefly?
@@ -1419,6 +1574,20 @@ import {
 - **`self.inspector.draw(".")`** draws the label and each system's entity count above the garden's game object, `-` for `scare`, which keeps no list.
 - **Systems** are named by their index and **entities** by the order the inspector first saw them.
 - **In a release build** both do nothing, so the calls can stay.
+
+Run it for two frames, and your own script prints the lines the earlier lessons showed:
+
+```text trace run="frames 2"
+layers keeps its list: true
+ecs garden frame 0: inspecting [0, 0, 0, -, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+ecs garden frame 0: system 2 adds entity 1, holds 1
+...
+ecs garden frame 0: system 10 onModify, holds 17
+ecs garden frame 0: system 8 onModify, holds 13
+ecs garden frame 0: system 5 onModify, holds 20
+ecs garden frame 1: system 8 onModify, holds 13
+ecs garden frame 1: system 5 onModify, holds 20
+```
 
 ### Try it
 
@@ -2167,6 +2336,20 @@ The garden now uses every function and every field of `ecs`.
 >
 > export type FireflyMachine = ReturnType<typeof fireflyMachine>;
 > ```
+
+Run the finished garden for eight seconds. Every machine entered `flying` at the same moment, so every firefly lands at once:
+
+```text trace run="frames 482"
+...
+ecs garden frame 481: system 3 removes entity 1, holds 15
+ecs garden frame 481: system 4 removes entity 1, holds 15
+ecs garden frame 481: system 10 adds entity 1, holds 1
+ecs garden frame 481: system 13 adds entity 1, holds 13
+ecs garden frame 481: system 16 removes entity 1, holds 3
+...
+```
+
+`flight.exit` takes away `flying`, so firefly 1 leaves `drift` and `swarm`, systems 3 and 4, and the watch. It is lit, so it joins `beacons` and `catchable`. Four seconds later its machine enters `flying` again, and it rejoins `drift` and `swarm`.
 
 ### Try it
 
