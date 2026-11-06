@@ -62,6 +62,41 @@ function lampSession(): HsmViewSession {
   return createSession({ file: write("main.ts", LAMP), hsmSourceDir, ecsSourceDir });
 }
 
+const GARDEN = `import { defineScript } from "@defold-typescript/types";
+import { system, world } from "@defold-typescript/types/ecs";
+import { defineMachine } from "@defold-typescript/types/hsm";
+export const lamp = defineMachine("lamp")({
+  initial: "/off",
+  states: { off: { on: { TOGGLE: "/on" } }, on: { on: { TOGGLE: "/off" } } },
+});
+const grow = system("grow")({ update() {} });
+const dig = system("dig")({ update() {} });
+export default defineScript({
+  init() {
+    const lit = lamp.start({});
+    lit.send({ type: "TOGGLE" });
+    return { garden: world(grow, { name: "a" }), yard: world(dig), lit, dark: lamp.start({}) };
+  },
+  update(self, dt) {
+    self.garden.update(dt);
+  },
+});
+`;
+
+const MEADOW = `import { defineScript } from "@defold-typescript/types";
+import { system, world } from "@defold-typescript/types/ecs";
+export const meadow = world(system()({ update() {} }), { name: "a" });
+export default defineScript({
+  update(_self, dt) {
+    meadow.update(dt);
+  },
+});
+`;
+
+function gardenSession(): HsmViewSession {
+  return createSession({ file: write("garden.ts", GARDEN), hsmSourceDir, ecsSourceDir });
+}
+
 function post(body: unknown): RequestInit {
   return {
     method: "POST",
@@ -172,6 +207,81 @@ describe("createHsmViewApp", () => {
   test("serves an empty live list when nothing follows the editor console", async () => {
     const app = createHsmViewApp({ session: lampSession(), client });
     expect(await (await app.request("/api/live")).json()).toEqual({ instances: [] });
+  });
+});
+
+describe("world and follow routes", () => {
+  const call = async (app: ReturnType<typeof createHsmViewApp>, route: string, body: unknown) => {
+    const response = await app.request(route, post(body));
+    return { status: response.status, body: await response.json() };
+  };
+
+  test("restarts the run from t and frame 0", async () => {
+    const app = createHsmViewApp({ session: gardenSession(), client });
+    expect(await call(app, "/api/update", { dt: 0.5 })).toMatchObject({
+      status: 200,
+      body: { t: 0.5, frame: 1 },
+    });
+    expect(await call(app, "/api/restart", {})).toMatchObject({
+      status: 200,
+      body: { t: 0, frame: 0, worlds: ["garden", "yard"], running: true },
+    });
+  });
+
+  test("picks a world the run names and refuses any other", async () => {
+    const app = createHsmViewApp({ session: gardenSession(), client });
+    expect(await call(app, "/api/pick-world", { name: "yard" })).toMatchObject({
+      status: 200,
+      body: { world: "yard", systems: [{ name: "dig" }] },
+    });
+    expect(await call(app, "/api/pick-world", { name: "pond" })).toMatchObject({
+      status: 400,
+      body: { error: expect.stringContaining("pond") },
+    });
+    expect(await call(app, "/api/pick-world", { name: 2 })).toMatchObject({ status: 400 });
+    expect(await (await app.request("/api/snapshot")).json()).toMatchObject({ world: "yard" });
+  });
+
+  test("follows an instance the run started, stops on null, and refuses any other id", async () => {
+    const app = createHsmViewApp({ session: gardenSession(), client });
+    expect(await call(app, "/api/follow", { instance: 1 })).toMatchObject({
+      status: 200,
+      body: { following: 1, picked: "lamp", path: "/on" },
+    });
+    const stopped = await call(app, "/api/follow", { instance: null });
+    expect(stopped.status).toBe(200);
+    expect(stopped.body).not.toHaveProperty("following");
+    expect(stopped.body).not.toHaveProperty("path");
+    for (const instance of [3, 0, 1.5, "1"]) {
+      expect(await call(app, "/api/follow", { instance })).toMatchObject({
+        status: 400,
+        body: { error: expect.any(String) },
+      });
+    }
+    expect(await call(app, "/api/follow", {})).toMatchObject({ status: 400 });
+  });
+
+  test("advances the frame of a file with a world and no machine", async () => {
+    const session = createSession({ file: write("meadow.ts", MEADOW), hsmSourceDir, ecsSourceDir });
+    const app = createHsmViewApp({ session, client });
+    expect(await call(app, "/api/update", { dt: 0.25 })).toMatchObject({
+      status: 200,
+      body: { t: 0.25, frame: 1, machines: [], world: "meadow" },
+    });
+    expect((await call(app, "/api/update", { dt: 0.25 })).body).toMatchObject({ frame: 2 });
+  });
+
+  test("names the tab the page opens on, the Machines tab by default", async () => {
+    const index = async (opening?: { readonly tab: "machines" | "worlds" }) => {
+      const app = createHsmViewApp({
+        session: gardenSession(),
+        client,
+        ...(opening === undefined ? {} : { opening }),
+      });
+      return ((await (await app.request("/api/index")).json()) as HsmViewIndex).opening;
+    };
+    expect(await index()).toEqual({ tab: "machines" });
+    expect(await index({ tab: "worlds" })).toEqual({ tab: "worlds" });
   });
 });
 
@@ -325,6 +435,37 @@ describe("serveHsmView", () => {
     const reload = await events.next("reload");
     expect(reload.data).toMatchObject({ ok: true, snapshot: { picked: "lamp" } });
     expect(await mainText(server.url)).toBe(edited);
+    await events.cancel();
+  });
+
+  test("serves the opening tab it was given and pushes a reload with the run's worlds", async () => {
+    const watched = controllableWatchPath();
+    server = await serveHsmView({
+      session: gardenSession(),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+      opening: { tab: "worlds" },
+    });
+    const index = (await (await fetch(`${server.url}/api/index`)).json()) as HsmViewIndex;
+    expect(index.opening).toEqual({ tab: "worlds" });
+    const events = await openEvents(server.url);
+
+    watched.change(write("garden.ts", `${GARDEN}// edited\n`));
+    const reload = await events.next("reload");
+    expect(reload.data).toMatchObject({
+      ok: true,
+      snapshot: {
+        worlds: ["garden", "yard"],
+        world: "garden",
+        systems: [{ index: 1, name: "grow" }],
+        entities: [{ id: 1, value: { name: "a" } }],
+        instances: [
+          { id: 1, machine: "lamp" },
+          { id: 2, machine: "lamp" },
+        ],
+      },
+    });
     await events.cancel();
   });
 

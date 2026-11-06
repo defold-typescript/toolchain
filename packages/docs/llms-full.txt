@@ -8715,7 +8715,7 @@ A ctx panel beside the code shows the running instance's ctx as an expandable tr
 
 #### Read the log
 
-The log docks at the bottom with its newest line last. Each line shows its run time. A line identical to the one above merges into it, and a count badge shows the repeats. One toggle per kind (transitions, events, engine calls, `print`) hides that kind; errors and reloads always show, and so does a line for each entity that joins or leaves a system of the file's first world. Every failed action adds an error line: a field a button could not read, a request the command refused, or a lost connection. The log follows the newest line unless you scroll up, and following resumes when you scroll back to the bottom. It keeps the newest 500 lines.
+The log docks at the bottom with its newest line last. Each line shows its run time. A line identical to the one above merges into it, and a count badge shows the repeats. One toggle per kind hides that kind: transitions, events, engine calls, `print`, and membership, a line for each entity that joins or leaves a system of the file's first world. Errors and reloads always show. Every failed action adds an error line: a field a button could not read, a request the command refused, or a lost connection. The log follows the newest line unless you scroll up, and following resumes when you scroll back to the bottom. It keeps the newest 500 lines.
 
 #### What runs and what is stubbed
 

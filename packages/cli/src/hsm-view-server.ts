@@ -12,10 +12,19 @@ import { type Line, lineStarts, tokenizeLines } from "./hsm-view-tokens";
 
 export type { ClientAssets } from "./hsm-view-page";
 
+export type HsmViewTab = "machines" | "worlds";
+
+/** How the page first shows the file. */
+export interface HsmViewOpening {
+  readonly tab: HsmViewTab;
+}
+
 export interface HsmViewAppOptions {
   readonly session: HsmViewSession;
   readonly client: ClientAssets;
   readonly title?: string;
+  /** Defaults to the Machines tab. */
+  readonly opening?: HsmViewOpening;
 }
 
 export type WatchPath = (
@@ -48,6 +57,7 @@ export interface HsmViewIndex extends MachineIndex {
   readonly picked: string | undefined;
   /** Each loaded file, its path relative to the entry file's folder. */
   readonly files: readonly HsmViewFile[];
+  readonly opening: HsmViewOpening;
 }
 
 export interface ReloadMessage {
@@ -130,6 +140,8 @@ const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 const isStringList = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(isString);
+const isInstanceId = (value: unknown): value is number | null =>
+  value === null || Number.isInteger(value);
 const isEvent = (value: unknown): value is { type: string } =>
   typeof value === "object" &&
   value !== null &&
@@ -164,6 +176,7 @@ function reloadMessage(snapshot: Snapshot): ReloadMessage {
 
 function buildApp(options: HsmViewAppOptions, hub: Hub, live: () => LiveMessage): Hono {
   const { session, client } = options;
+  const opening: HsmViewOpening = options.opening ?? { tab: "machines" };
   const coloredLines = new Map<
     string,
     { readonly text: string; readonly lines: Line[]; readonly starts: number[] }
@@ -209,6 +222,7 @@ function buildApp(options: HsmViewAppOptions, hub: Hub, live: () => LiveMessage)
         const { lines, starts } = linesOf(file.path, file.text);
         return { path: toPosix(path.relative(dir, file.path)), lines, starts };
       }),
+      opening,
     };
     return c.json(body);
   });
@@ -242,6 +256,34 @@ function buildApp(options: HsmViewAppOptions, hub: Hub, live: () => LiveMessage)
   app.post("/api/pick", async (c) => {
     const body = await jsonBody(c);
     return c.json(session.pick(field(body, "name", isString)));
+  });
+
+  app.post("/api/restart", (c) => c.json(session.restart()));
+
+  app.post("/api/pick-world", async (c) => {
+    const body = await jsonBody(c);
+    const name = field(body, "name", isString);
+    const { worlds } = session.snapshot();
+    if (!worlds.includes(name)) {
+      const known =
+        worlds.length === 0 ? "the file creates no world" : `worlds: ${worlds.join(", ")}`;
+      throw new BadRequest(`unknown world: ${name}; ${known}`);
+    }
+    return c.json(session.pickWorld(name));
+  });
+
+  app.post("/api/follow", async (c) => {
+    const body = await jsonBody(c);
+    const id = field(body, "instance", isInstanceId);
+    const { instances } = session.snapshot();
+    if (id !== null && !instances.some((instance) => instance.id === id)) {
+      const known =
+        instances.length === 0
+          ? "the run started no machine"
+          : `instances: ${instances.map((instance) => `#${instance.id} ${instance.label}`).join(", ")}`;
+      throw new BadRequest(`unknown instance: ${id}; ${known}`);
+    }
+    return c.json(session.follow(id ?? undefined));
   });
 
   app.get("/api/events", (c) =>
