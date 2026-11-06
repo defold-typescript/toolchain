@@ -5,110 +5,31 @@
  * lessons make stubbed. A catch, `release` or `empty`, alone or in the same frame as another, must
  * never throw and must leave the jar holding the shine exactly while it holds a firefly.
  */
-import { afterAll, describe, expect, test } from "bun:test";
-import { readFileSync, rmSync } from "node:fs";
+import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import type { TranspileProjectResult } from "@defold-typescript/transpiler";
-import { lauxlib, lua, lualib } from "lua-wasm-bindings/dist/lua.51";
 import {
-  type FenceProject,
-  GUIDE_DIR,
-  lessonFences,
-  transpileFenceProject,
-  writeFenceProject,
-} from "./guide-fence-gate";
-import { lessonProjects } from "./guide-steps";
+  type Lesson,
+  moduleName,
+  runLesson,
+  SCRIPT,
+  TUTORIAL_PAGE,
+  tutorialLessons,
+} from "./ecs-lesson-run.test-support";
+import { GUIDE_DIR } from "./guide-fence-gate";
 
-const LESSON_PAGE = "entity-systems-tutorial.md";
-const SCRIPT = "fireflies.ts";
 const EMPTY_ACTION = 'hash("empty")';
-const LUA_OK = 0;
 const SLOW = 120_000;
 
-const page = readFileSync(path.join(GUIDE_DIR, LESSON_PAGE), "utf8");
+const page = readFileSync(path.join(GUIDE_DIR, TUTORIAL_PAGE), "utf8");
 
-interface Lesson {
-  readonly heading: string;
-  /** The lesson's project directory, as `lessonFences` writes it. */
-  readonly dir: string;
-}
+const allLessons = tutorialLessons(page);
+const lessons = allLessons.filter((lesson) => lesson.files.get(SCRIPT)?.includes(EMPTY_ACTION));
 
-const lessons: Lesson[] = lessonFences(page).flatMap((fence) => {
-  const suffix = ` > ${SCRIPT}`;
-  if (!fence.label.endsWith(suffix) || !fence.body.includes(EMPTY_ACTION)) return [];
-  const dir = fence.rel.slice(0, fence.rel.length - SCRIPT.length - 1);
-  return [{ heading: fence.label.slice(0, -suffix.length), dir }];
-});
-
-const lastHeading = lessonProjects(page).at(-1)?.heading;
+const lastHeading = allLessons.at(-1)?.heading;
 if (lastHeading === undefined || !lessons.some((lesson) => lesson.heading === lastHeading)) {
-  throw new Error(`the last lesson of ${LESSON_PAGE} has no \`empty\` action in ${SCRIPT}`);
+  throw new Error(`the last lesson of ${TUTORIAL_PAGE} has no \`empty\` action in ${SCRIPT}`);
 }
-
-let project: FenceProject | undefined;
-let built: TranspileProjectResult | undefined;
-
-function build(): TranspileProjectResult {
-  if (built === undefined) {
-    project = writeFenceProject(lessonFences(page), {
-      tmpPrefix: "defold-typescript-ecs-tutorial-run-",
-    });
-    built = transpileFenceProject(project);
-  }
-  return built;
-}
-
-afterAll(() => {
-  if (project !== undefined) rmSync(project.root, { recursive: true, force: true });
-});
-
-const moduleName = (rel: string) => rel.replace(/\.ts$/, "").split("/").join(".");
-
-function lessonModules(lesson: Lesson): Record<string, string> {
-  const result = build();
-  const modules: Record<string, string> = { ...result.libraryModules };
-  for (const [rel, source] of Object.entries(result.lua)) {
-    if (rel.startsWith(`${lesson.dir}/`)) modules[moduleName(rel)] = source;
-  }
-  if (result.lualib !== undefined) modules.lualib_bundle = result.lualib;
-  if (modules[moduleName(`${lesson.dir}/${SCRIPT}`)] === undefined) {
-    throw new Error(`${lesson.heading}: the build emitted no ${SCRIPT}`);
-  }
-  return modules;
-}
-
-const ENGINE_STUBS = `
-print = function() end
-function hash(s) return "hash:" .. s end
-local function vector(x, y, z, w) return { x = x or 0, y = y or 0, z = z or 0, w = w or 0 } end
-vmath = {
-  vector3 = function(x, y, z) return vector(x, y, z) end,
-  vector4 = vector,
-}
-local instances = 0
-factory = {
-  create = function()
-    instances = instances + 1
-    return hash("instance " .. instances)
-  end,
-}
-msg = {
-  url = function() return {} end,
-  post = function() end,
-}
-sys = {
-  get_config_string = function(_, default) return default end,
-  get_engine_info = function() return { is_debug = true } end,
-}
-go = {
-  get_world_position = function() return vector() end,
-  set_position = function() end,
-  set_scale = function() end,
-  set = function() end,
-  delete = function() end,
-}
-label = { set_text = function() end }
-`;
 
 const DRIVER = `
 local self = {}
@@ -137,39 +58,18 @@ end
 `;
 
 function runInLua(lesson: Lesson, scenario: string): string[] {
-  const L = lauxlib.luaL_newstate();
-  try {
-    lualib.luaL_openlibs(L);
-    lua.lua_getglobal(L, "package");
-    lua.lua_getfield(L, -1, "preload");
-    for (const [module, source] of Object.entries(lessonModules(lesson))) {
-      const status = lauxlib.luaL_loadbuffer(L, source, Buffer.byteLength(source), `=${module}`);
-      if (status !== LUA_OK) {
-        throw new Error(`Lua failed to load ${module}: ${lua.lua_tostring(L, -1)}`);
-      }
-      lua.lua_setfield(L, -2, module);
-    }
-    lua.lua_settop(L, 0);
-    const chunk = [
-      ENGINE_STUBS,
-      `require(${JSON.stringify(moduleName(`${lesson.dir}/${SCRIPT}`))})`,
-      DRIVER,
-      "local ok, err = pcall(function()",
-      "init(self)",
-      "frame()",
-      scenario,
-      "end)",
-      "if not ok then reports[#reports + 1] = tostring(err) end",
-      'return table.concat(reports, "\\n")',
-    ].join("\n");
-    const status = lauxlib.luaL_dostring(L, chunk);
-    if (status !== LUA_OK) {
-      throw new Error(`${lesson.heading}: ${lua.lua_tostring(L, -1)}`);
-    }
-    return lua.lua_tostring(L, -1).split("\n");
-  } finally {
-    lua.lua_close(L);
-  }
+  const chunk = [
+    `require(${JSON.stringify(moduleName(`${lesson.dir}/${SCRIPT}`))})`,
+    DRIVER,
+    "local ok, err = pcall(function()",
+    "init(self)",
+    "frame()",
+    scenario,
+    "end)",
+    "if not ok then reports[#reports + 1] = tostring(err) end",
+    'return table.concat(reports, "\\n")',
+  ].join("\n");
+  return (runLesson(page, lesson, chunk).result ?? "").split("\n");
 }
 
 const EMPTY_JAR = "jar 0 fireflies, 1 systems, shine out";
