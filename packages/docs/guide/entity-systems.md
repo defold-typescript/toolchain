@@ -5,6 +5,8 @@ toc-title: Entity systems
 
 `ecs` is a small typed entity system library that ships with the toolchain and compiles to plain Lua. It is a TypeScript port of [tiny-ecs](https://github.com/bakpakin/tiny-ecs) by Calvin Rose, released under the MIT license, and keeps every tiny-ecs feature. Each system picks its entities with a filter, and inside the system the compiler knows which components those entities have. Learn it in the [tutorial](./entity-systems-tutorial.md), drive membership from state machines with [ecs and hsm together](./ecs-and-hsm.md), copy a snippet from the [cheat sheet](#cheat-sheet), or look a name up in the [reference](#reference).
 
+> [!NOTE] **ECS stands for Entity Component System**, the usual name for this pattern: an entity is a plain table, its fields are its components, and a system runs on every entity that has the components it needs. These pages shorten it to entity system.
+
 Use [`hsm`](./state-machines.md) for what one object is doing, and `ecs` for the same work done to many objects every frame: movement, springs, tweens, pools, level of detail. A system runs one loop over every entity that has the components it needs, so the per-object branches leave `update`.
 
 ## Import it
