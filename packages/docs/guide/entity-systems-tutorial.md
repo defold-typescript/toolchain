@@ -16,6 +16,8 @@ A game has many things that behave alike: raindrops, coins, falling leaves, spar
 | Component | One piece of an entity's data, such as where it is or how fast it moves. An entity has a component when that field is set. | `position`, `velocity` |
 | System | Code that runs on every entity with the components it needs, once a frame. | "move everything that has a velocity" |
 
+> [!NOTE] **The three words are the name.** Together they make an Entity Component System, or ECS, which is where `ecs` gets its name. This tutorial shortens it to entity system.
+
 A fourth word holds them together: a **world** is the list of entities and the list of systems that run on them.
 
 ### Try it
