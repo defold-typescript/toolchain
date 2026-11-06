@@ -13,11 +13,11 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm/builder`](./state-machines.md#write-a-machine-as-statements)** writes rules as calls, and `view` glows the call that fired.
+> - **[`hsm/builder`](./state-machines.md#write-a-machine-as-statements)** writes a machine as calls, and `view` glows the call that fired.
 
 ### Improved
 
-- **[Write a machine as statements](./state-machines.md#write-a-machine-as-statements):** `buildMachine` from `@defold-typescript/types/hsm/builder` takes a skeleton of the machine's states, and statements such as `m.state("/off").on("TOGGLE").to("/on")`, `after`, `every`, `always`, `enter` and `exit` add its behavior in call order, every path and event checked at compile time. `build()` hands the result to `defineMachine`, so the key, hot reload and [`view`](./view.md#read-the-code) work as for a config, with each fired rule glowing on the call that made it; it throws, naming the state, on a rule left without its ending.
+- **[Write a machine as statements](./state-machines.md#write-a-machine-as-statements):** `buildMachine` from `@defold-typescript/types/hsm/builder` takes a skeleton of the machine's states, checked as a config is, and statements such as `m.state("/off").on("TOGGLE").to("/on")`, `after`, `every`, `always`, `enter` and `exit` add its behavior, with every path and event checked at compile time. `build()` hands the result to `defineMachine`, so the key, hot reload and [`view`](./view.md#read-the-code) work as for a config, with each fired rule glowing on the call that made it; it throws, naming the state, on a rule left without its ending.
 - **API reference examples:** choosing the TypeScript or Lua tab on one example switches every example on the page to it, and later pages open on the same tab.
 
 ## v0.58.0

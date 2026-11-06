@@ -826,7 +826,7 @@ export const lamp = m.build();
 ```
 
 - **The skeleton holds structure only:** the root's `initial`, `states`, `restoreDepth` and `privateCtx`, and on each state `initial`, `states`, `type` and `restoreDepth`, checked as in a config. It fixes the paths every statement takes, so an unknown path or event fails to compile, and so does a behavior key such as `on` or `enter` in the skeleton.
-- **Each `on`, `after`, `every` and `always` call adds one entry, in call order,** which is the order the runtime tries them: `on("HIT").when(fatal).to("/dead")` then `on("HIT").run(damage)` is the list `HIT: [{ when, to }, { run }]`. An `on` rule ends with `to`, `run` or `ignore`, a timer with `to` or `run`, an `every` with `run` and an `always` with `to`; `run` takes several functions, run in order. `ignore()` takes the event with nothing to do, so no parent's rule sees it.
+- **Each `on`, `after`, `every` and `always` call adds one entry, in call order.** A state's `on`, `every` and `always` entries are tried in that order: `on("HIT").when(fatal).to("/dead")` then `on("HIT").run(damage)` is the list `HIT: [{ when, to }, { run }]`. Its `after` timers are tried in delay order, call order breaking ties. An `on` rule ends with `to`, `run` or `ignore`, a timer with `to` or `run`, an `every` with `run` and an `always` with `to`; `run` takes several functions, run in order. `ignore()` takes the event with nothing to do, so no parent's rule sees it.
 - **`enter`, `exit`, `update`, `task`, `unhandled` and `tags`** set the slot of the same name; a second `enter`, `exit`, `update`, `task` or `unhandled` on one state throws.
 - **`m.root`** is the root's builder: its rules take an event no state below takes.
 - **`build()`** writes the statements onto the skeleton's own state objects, in list form, and passes the skeleton to `defineMachine`. It throws, naming the state, on a rule left without its ending; after it, every statement and a second `build()` throw.
@@ -2540,7 +2540,7 @@ What the second `buildMachine` call returns; see [Write a machine as statements]
 
 ### `StateBuilder`
 
-Each `on`, `after`, `every` and `always` call adds one entry, tried in call order. Every call throws after `build()`.
+Each `on`, `after`, `every` and `always` call adds one entry, in call order. A state's `on`, `every` and `always` entries are tried in that order, and its `after` timers in delay order, call order breaking ties. Every call throws after `build()`.
 
 | Member      | Type                                                  | Meaning                                                                            |
 | ----------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |

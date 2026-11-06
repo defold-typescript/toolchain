@@ -595,6 +595,9 @@ const EXPECTED: Record<string, string[]> = {
     "path=/off lit=false",
     "error: hsm: build() was already called",
     'error: hsm: state "/a" has an on("GO") rule with no to, run or ignore',
+    "path=/b",
+    "toString run",
+    "path=/b",
   ],
   "a parallel state's always joins its regions": [
     "enter work",
