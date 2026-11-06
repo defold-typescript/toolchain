@@ -639,3 +639,57 @@ export default defineScript({ init() { return { roll: math.random() }; } });
     expect(afterRestart).toBe(first);
   });
 });
+
+describe("loadProject instances", () => {
+  const herd = `import { defineScript } from "@defold-typescript/types";
+import { world } from "@defold-typescript/types/ecs";
+import { join, tickMachines } from "@defold-typescript/types/ecs/hsm";
+import { defineMachine, type MachineInstance } from "@defold-typescript/types/hsm";
+interface Critter { readonly name: string; fsm?: MachineInstance<Critter, { type: "SCARE" }> }
+export const herd = world<Critter>(tickMachines<Critter>("fsm"));
+export const critter = defineMachine<Critter, { type: "SCARE" }>()({
+  initial: "/wander",
+  enter: join(herd),
+  states: { wander: { on: { SCARE: "/flee" } }, flee: {} },
+});
+export const lamp = defineMachine()({ initial: "/off", states: { off: {} } });
+function spawn(name: string): Critter {
+  const one: Critter = { name };
+  one.fsm = critter.start(one);
+  return one;
+}
+export default defineScript({
+  init() { return { light: lamp.start({}), a: spawn("a"), b: spawn("b") }; },
+});
+`;
+
+  test("lists every start of a defined machine in start order, through a reload, until a restart", () => {
+    const loaded = load(write("main.ts", herd));
+    const self = scriptOf(loaded).init?.({}) ?? {};
+    const names = () => loaded.instances.map((each) => each.machine.name);
+    const instanceAt = (index: number) => loaded.instances[index]?.instance;
+    const [critter, lamp] = loaded.machines as [LoadedMachine, LoadedMachine];
+
+    expect(names()).toEqual(["lamp", "critter", "critter"]);
+    expect(instanceAt(0)).toBe(self.light);
+    expect(instanceAt(1)).toBe((self.a as { fsm: unknown }).fsm);
+    expect(instanceAt(2)).toBe((self.b as { fsm: unknown }).fsm);
+    expect(loaded.instances[1]?.machine).toBe(critter);
+
+    const unrecorded = loaded.startUnrecorded(lamp, {}) as Instance;
+    expect(unrecorded.path).toBe("/off");
+    expect(loaded.instances).toHaveLength(3);
+
+    loaded.reload();
+    expect(names()).toEqual(["lamp", "critter", "critter"]);
+    expect(instanceAt(0)).toBe(self.light);
+    const later = start(loaded.machines[1] as LoadedMachine);
+    expect(names()).toEqual(["lamp", "critter", "critter", "lamp"]);
+    expect(instanceAt(3)).toBe(later);
+
+    loaded.restart();
+    expect(loaded.instances).toEqual([]);
+    scriptOf(loaded).init?.({});
+    expect(names()).toEqual(["lamp", "critter", "critter"]);
+  });
+});

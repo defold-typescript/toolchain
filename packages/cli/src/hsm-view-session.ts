@@ -1,5 +1,5 @@
 import { type MachineIndex, machineIndex, ruleIds, timerEntries } from "./hsm-view-index";
-import { type LoadedMachine, loadProject } from "./view-load";
+import { type LoadedInstance, type LoadedMachine, loadProject } from "./view-load";
 import type { EngineEntry as LoadedEngineEntry } from "./view-run";
 import { type EntityView, type SystemView, trackWorlds } from "./view-worlds";
 
@@ -7,6 +7,15 @@ interface EventObject {
   readonly type: string;
   readonly [key: string]: unknown;
 }
+
+type MoveListener = (
+  from: string,
+  to: string | undefined,
+  cause: string,
+  event: EventObject | undefined,
+  source?: string,
+  key?: number,
+) => void;
 
 interface RuntimeInstance {
   readonly ctx: unknown;
@@ -16,18 +25,8 @@ interface RuntimeInstance {
   can: (event: EventObject) => boolean;
   readonly send: (event: EventObject) => void;
   readonly update: (dt: number) => void;
-  readonly onMove: (
-    listener: (
-      from: string,
-      to: string | undefined,
-      cause: string,
-      event: EventObject | undefined,
-    ) => void,
-  ) => () => void;
-}
-
-interface RuntimeMachine {
-  readonly start: (ctx: unknown) => RuntimeInstance;
+  // The runtime passes a listener the moved rule's state and key after the event.
+  readonly onMove: (listener: MoveListener) => () => void;
 }
 
 interface RuleConfig {
@@ -85,9 +84,22 @@ export type SnapshotEntry =
       readonly entity: number;
     };
 
+/** A machine instance the run started, as the Machines tab lists it. */
+export interface InstanceView {
+  /** Counts from 1 in start order, until a restart. */
+  readonly id: number;
+  /** `<world> entity <id>` for the first entity that holds the instance in a field, else `instance <id>`. */
+  readonly label: string;
+  readonly machine: string;
+}
+
 export interface Snapshot {
   readonly machines: readonly string[];
+  /** The followed instance's machine while one is followed, else the simulated one's. */
   readonly picked: string | undefined;
+  readonly instances: readonly InstanceView[];
+  /** The id of the instance shown in place of the simulated one. */
+  readonly following: number | undefined;
   /** The run is not halted. */
   readonly running: boolean;
   /** Run time: seconds since the run started, which Start leaves alone. */
@@ -121,6 +133,12 @@ export interface HsmViewSession {
   editCtx(path: readonly string[], value: unknown): Snapshot;
   pick(name: string): Snapshot;
   pickWorld(name: string): Snapshot;
+  /**
+   * Shows the run's instance `id` in place of the simulated one, which waits as it was until
+   * `follow(undefined)`; `start` and `pick` return to it too. The world updates a followed
+   * instance, and events and ctx edits go to it.
+   */
+  follow(id: number | undefined): Snapshot;
   /** Reruns the files and the script's `init` in fresh runtimes, from `t` 0. */
   restart(): Snapshot;
   reload(): Snapshot;
@@ -227,8 +245,11 @@ function isPrimitive(value: unknown): boolean {
 }
 
 export function createSession(options: CreateSessionOptions): HsmViewSession {
-  let entered: string[] = [];
+  // Every instance of a machine runs its instrumented config, so each entry names its instance.
+  let entered: { readonly instance: unknown; readonly path: string }[] = [];
   let fired: string[] = [];
+  // The rules the followed instance's moves name, since its own guards and timers are not watched.
+  let moved: string[] = [];
   let rejected: string[] = [];
   let probing = 0;
   const guarded = new WeakSet<object>();
@@ -243,10 +264,13 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   let frame = 0;
   let self: Record<string, unknown> = {};
   let pickedWorld: unknown;
+  let following: number | undefined;
+  let unfollow: (() => void) | undefined;
 
   const begin = (): void => {
     entered = [];
     fired = [];
+    moved = [];
     rejected = [];
     entries = [];
     callError = undefined;
@@ -444,7 +468,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       wrapped.enter = (ctx: unknown, machine: RuntimeInstance) => {
         guardCan(machine);
         if (path !== "") {
-          entered.push(path);
+          entered.push({ instance: machine, path });
         }
         enter?.(ctx, machine);
       };
@@ -479,12 +503,31 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   const pickedMachine = (): LoadedMachine | undefined =>
     loaded.machines.find((machine) => machine.name === picked);
 
+  const followedRecord = (): LoadedInstance | undefined =>
+    following === undefined ? undefined : loaded.instances[following - 1];
+
+  const shown = (): RuntimeInstance | undefined =>
+    following === undefined
+      ? instance
+      : (followedRecord()?.instance as RuntimeInstance | undefined);
+
+  // By name, so a followed instance of a machine a reload defined afresh shows the edited source.
+  const shownMachine = (): LoadedMachine | undefined => {
+    const record = followedRecord();
+    if (record === undefined) {
+      return pickedMachine();
+    }
+    return (
+      loaded.machines.find((machine) => machine.name === record.machine.name) ?? record.machine
+    );
+  };
+
   const currentConfig = (): StateConfig | undefined =>
-    pickedMachine()?.config as StateConfig | undefined;
+    shownMachine()?.config as StateConfig | undefined;
 
   const activePaths = (): string[] => {
     const active = new Set<string>();
-    for (const leaf of instance?.leaves ?? []) {
+    for (const leaf of shown()?.leaves ?? []) {
       for (const path of ancestors(leaf)) {
         active.add(path);
       }
@@ -494,7 +537,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
 
   const acceptedEvents = (): string[] => {
     const config = currentConfig();
-    if (config === undefined || instance === undefined) {
+    if (config === undefined || shown() === undefined) {
       return [];
     }
     const accepted = new Set(Object.keys(config.on ?? {}));
@@ -509,6 +552,28 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   const namedWorlds = (): { readonly name: string; readonly world: unknown }[] => {
     const names = tracker.names(self);
     return loaded.worlds.map((world, index) => ({ name: names[index] ?? "", world }));
+  };
+
+  const instanceIds = (): Map<unknown, number> =>
+    new Map(loaded.instances.map((record, index) => [record.instance, index + 1]));
+
+  const instanceViews = (
+    ids: ReadonlyMap<unknown, number>,
+    worldNames: readonly string[],
+  ): InstanceView[] => {
+    const holders = tracker.holders(ids);
+    return loaded.instances.map((record, index) => {
+      const id = index + 1;
+      const holder = holders.get(id);
+      return {
+        id,
+        label:
+          holder === undefined
+            ? `instance ${id}`
+            : `${worldNames[holder.world] ?? ""} entity ${holder.entity}`,
+        machine: record.machine.name,
+      };
+    });
   };
 
   // The log shows what a world's systems gain and lose from the moment it is picked.
@@ -534,10 +599,17 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   const snapshot = (): Snapshot => {
     const error = callError ?? haltedError;
     const named = namedWorlds();
-    const view = pickedWorld === undefined ? undefined : tracker.view(pickedWorld);
+    const ids = instanceIds();
+    const view = pickedWorld === undefined ? undefined : tracker.view(pickedWorld, ids);
+    const current = shown();
     return {
       machines: loaded.machines.map((machine) => machine.name),
-      picked,
+      picked: shownMachine()?.name ?? picked,
+      instances: instanceViews(
+        ids,
+        named.map((each) => each.name),
+      ),
+      following,
       running: haltedError === undefined,
       t,
       frame,
@@ -545,14 +617,14 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       world: named.find((each) => each.world === pickedWorld)?.name,
       systems: view?.systems ?? [],
       entities: view?.entities ?? [],
-      path: instance?.path,
+      path: current?.path,
       active: activePaths(),
-      leaves: [...(instance?.leaves ?? [])],
-      entered: [...entered],
-      fired: [...fired],
-      rejected: [...rejected],
+      leaves: [...(current?.leaves ?? [])],
+      entered: entered.filter((each) => each.instance === current).map((each) => each.path),
+      fired: following === undefined ? [...fired] : [...moved],
+      rejected: following === undefined ? [...rejected] : [],
       accepts: acceptedEvents(),
-      ctx: shownValue(instance?.ctx),
+      ctx: shownValue(current?.ctx),
       entries: [...entries],
       ...(error === undefined ? {} : { error }),
     };
@@ -561,16 +633,72 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   // The runtime reports `from` as the transition domain's first leaf, which for a target
   // leaving a parallel state is the first region's leaf, so a move does not name the timer
   // behind it. Each timer's own `run` names it instead, and the move is only logged.
+  const logMove = (
+    from: string,
+    to: string | undefined,
+    cause: string,
+    event: EventObject | undefined,
+  ): void => {
+    entries.push({
+      kind: "transition",
+      t,
+      from,
+      to,
+      cause,
+      event: shownValue(event),
+    });
+  };
+
   const attach = (next: RuntimeInstance): void => {
-    next.onMove((from, to, cause, event) => {
-      entries.push({
-        kind: "transition",
-        t,
-        from,
-        to,
-        cause,
-        event: shownValue(event),
-      });
+    next.onMove(logMove);
+  };
+
+  // The rule the runtime names for a move: the state that holds it and the rule's key there.
+  const movedRule = (
+    cause: string,
+    event: EventObject | undefined,
+    source: string | undefined,
+    key: number | undefined,
+  ): string | undefined => {
+    const config = currentConfig();
+    const ids = config === undefined || source === undefined ? undefined : ruleIds(config)[source];
+    if (config === undefined || source === undefined || ids === undefined) {
+      return undefined;
+    }
+    switch (cause) {
+      case "event":
+        return event === undefined || key === undefined ? undefined : ids.on[event.type]?.[key];
+      case "always":
+        return key === undefined ? undefined : ids.always[key];
+      case "update":
+        return ids.update;
+      case "after": {
+        // A list entry's key is its index; a record entry's is its delay, read from the key's text.
+        const index = timerEntries(stateAt(config, source)?.after).findIndex((entry) =>
+          typeof entry.key === "number" ? entry.key === key : Number(entry.key) === key,
+        );
+        return index < 0 ? undefined : ids.after[index];
+      }
+      default:
+        return undefined;
+    }
+  };
+
+  const stopFollowing = (): void => {
+    unfollow?.();
+    unfollow = undefined;
+    following = undefined;
+  };
+
+  const followInstance = (id: number): void => {
+    following = id;
+    const followed = followedRecord()?.instance as RuntimeInstance;
+    unfollow = followed.onMove((from, to, cause, event, source, key) => {
+      logMove(from, to, cause, event);
+      const rule = movedRule(cause, event, source, key);
+      if (rule !== undefined) {
+        moved.push(rule);
+      }
     });
   };
 
@@ -579,7 +707,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     if (machine === undefined) {
       throw new Error(picked === undefined ? "no machine loaded" : `unknown machine: ${picked}`);
     }
-    const next = (machine.machine as RuntimeMachine).start(ctx);
+    const next = loaded.startUnrecorded(machine, ctx) as RuntimeInstance;
     instance = next;
     attach(next);
   };
@@ -634,6 +762,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       haltedError = undefined;
       haltedBy = undefined;
       instance = undefined;
+      stopFollowing();
       startCtx = cloneValue(ctx);
       try {
         startPicked(ctx);
@@ -647,7 +776,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       requireMachine();
       begin();
       return fatalCall(() => {
-        const current = instance;
+        const current = shown();
         if (current === undefined) {
           throw new Error("machine has not started");
         }
@@ -687,8 +816,11 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
           failure = { thrown, source: "run" };
           return;
         }
+        // A followed instance is the world's to update; the simulated one waits as it was.
         try {
-          instance?.update(dt);
+          if (following === undefined) {
+            instance?.update(dt);
+          }
         } catch (thrown) {
           failure = { thrown, source: "machine" };
         }
@@ -705,7 +837,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         callError = haltedError;
         return snapshot();
       }
-      const ctx = instance?.ctx;
+      const ctx = shown()?.ctx;
       let parent = ctx;
       for (let index = 0; index < path.length - 1; index++) {
         const key = path[index] as string;
@@ -747,6 +879,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         }
         picked = name;
         instance = undefined;
+        stopFollowing();
         startPicked(cloneValue(startCtx));
       }, "machine");
     },
@@ -764,6 +897,25 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       watchWorld(found.world);
       return snapshot();
     },
+    follow(id) {
+      if (id !== undefined && (!Number.isInteger(id) || id < 1 || id > loaded.instances.length)) {
+        const views = instanceViews(
+          instanceIds(),
+          namedWorlds().map((each) => each.name),
+        );
+        const known =
+          views.length === 0
+            ? "the run started no machine"
+            : `instances: ${views.map((view) => `#${view.id} ${view.label}`).join(", ")}`;
+        throw new Error(`unknown instance: ${id}; ${known}`);
+      }
+      begin();
+      stopFollowing();
+      if (id !== undefined) {
+        followInstance(id);
+      }
+      return snapshot();
+    },
     restart() {
       begin();
       const previous = namedWorlds().find((each) => each.world === pickedWorld)?.name;
@@ -777,6 +929,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       frame = 0;
       tracker.reset();
       instance = undefined;
+      stopFollowing();
       haltedError = undefined;
       haltedBy = undefined;
       if (!loaded.machines.some((machine) => machine.name === picked)) {
@@ -838,7 +991,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       return snapshot();
     },
     index() {
-      const machine = pickedMachine();
+      const machine = shownMachine();
       const index = machineIndex(machine?.config, loaded.files);
       return { files: loaded.files, ...index };
     },
