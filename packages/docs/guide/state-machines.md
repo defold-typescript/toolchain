@@ -845,7 +845,7 @@ privateCtx: (ctx: TurretOptions) => ({ heat: ctx.startHeat }),
 - **A restart builds them fresh.** `start(old.ctx)` keeps the public fields and builds the private ones again; see [Restart a machine](#restart-a-machine).
 - **A hot reload adds fields and keeps values.** A reload under the machine's key adds the fields a new `privateCtx` introduces and leaves every field that already holds a value alone.
 - **A private field may not share a name with a field of `Ctx`.** Such a config fails to compile.
-- **The fields are hidden by type only.** At run time `ctx` is one table, and hooks, [`hsm-view`](./hsm-view.md) and a debugger see every field.
+- **The fields are hidden by type only.** At run time `ctx` is one table, and hooks, the [`view`](./view.md) command and a debugger see every field.
 
 ## Performance
 
@@ -978,7 +978,7 @@ declare global {
 
 ## Debug a machine
 
-To run a machine away from the game, with its source on screen and its active states highlighted, open its file with [`hsm-view`](./hsm-view.md).
+To run a machine away from the game, with its source on screen and its active states highlighted, open its file with [`view`](./view.md).
 
 `inspect(instance, label)` from `@defold-typescript/types/hsm/debug` logs every move a machine makes and draws its current path over a game object. Call it once after `start`, keep the inspector it returns on `self`, and call its `draw` from `update`:
 

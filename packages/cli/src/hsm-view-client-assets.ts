@@ -21,7 +21,7 @@ export function loadClientAssets(dir: string = defaultClientDir()): ClientAssets
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `the hsm-view client is not built in ${dir} (${reason}); run \`${BUILD_COMMAND}\``,
+      `the viewer client is not built in ${dir} (${reason}); run \`${BUILD_COMMAND}\``,
     );
   }
 }

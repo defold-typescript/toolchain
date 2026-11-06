@@ -422,6 +422,8 @@ ecs swarm frame 0: system 1 adds entity 2, holds 2
 
 In a release build, where `sys.get_engine_info().is_debug` is `false`, `inspect` registers nothing and `draw` does nothing, so the calls can stay in shipped code.
 
+To watch a world without the game, run `bunx @defold-typescript/cli view swarm_debug.ts`: its [Worlds tab](./view.md#worlds) lists each system with its entities and timings, frame by frame.
+
 ## Hot reload
 
 Hot reload lets you edit a system while the game runs and see the change without restarting. Give the factory a key, a name for this system, as in `processingSystem<Mover>("move")`.
