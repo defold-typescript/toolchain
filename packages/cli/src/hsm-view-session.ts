@@ -672,22 +672,32 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       }
       t += dt;
       frame += 1;
-      try {
-        tracker.frame(() => {
+      let failure: { readonly thrown: unknown; readonly source: HaltSource } | undefined;
+      // The machine's update runs inside the frame too, so a world it advances is timed.
+      tracker.frame(() => {
+        try {
           if (script !== undefined) {
             script.update?.(self, dt);
-            return;
+          } else {
+            for (const world of [...loaded.worlds]) {
+              (world as Updatable).update(dt);
+            }
           }
-          for (const world of [...loaded.worlds]) {
-            (world as Updatable).update(dt);
-          }
-        });
-      } catch (thrown) {
-        recordError(messageOf(thrown), "run");
-        settle();
-        return snapshot();
+        } catch (thrown) {
+          failure = { thrown, source: "run" };
+          return;
+        }
+        try {
+          instance?.update(dt);
+        } catch (thrown) {
+          failure = { thrown, source: "machine" };
+        }
+      });
+      if (failure !== undefined) {
+        recordError(messageOf(failure.thrown), failure.source);
       }
-      return fatalCall(() => instance?.update(dt), "machine");
+      settle();
+      return snapshot();
     },
     editCtx(path, value) {
       begin();

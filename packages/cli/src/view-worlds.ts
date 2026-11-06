@@ -26,7 +26,10 @@ export interface WorldView {
 
 export interface MembershipChange {
   readonly kind: "join" | "leave";
-  /** The system's 1-based index in its world. */
+  /**
+   * The system's 1-based index in its world; for a system removed since the last call, the index
+   * it had then.
+   */
   readonly system: number;
   readonly entity: number;
 }
@@ -37,7 +40,10 @@ export interface WorldTracker {
   /** Runs one frame with every system's callbacks timed. */
   frame(run: () => void): void;
   view(world: unknown): WorldView;
-  /** What each system of `world` gained and lost since the last call for it; a first call reports every member. */
+  /**
+   * What each system of `world` gained and lost since the last call for it; a first call reports
+   * every member, and a system removed since then loses every member it held.
+   */
   membership(world: unknown): readonly MembershipChange[];
   /** Forgets every id, timing and membership, as a new run starts. */
   reset(): void;
@@ -63,6 +69,11 @@ interface Timing {
   readonly samples: number[];
 }
 
+interface HeldMembers {
+  readonly index: number;
+  readonly entities: readonly object[];
+}
+
 type Callback = (this: unknown, ...args: unknown[]) => unknown;
 
 const TIMED_CALLBACKS = ["onModify", "preWrap", "update", "postWrap"];
@@ -84,7 +95,7 @@ export function trackWorlds(load: ProjectLoad): WorldTracker {
   let ids = new WeakMap<object, number>();
   let lastId = 0;
   let timings = new WeakMap<object, Timing>();
-  let members = new WeakMap<object, Map<SystemRecord, readonly object[]>>();
+  let members = new WeakMap<object, Map<SystemRecord, HeldMembers>>();
 
   const worlds = (): readonly WorldRecord[] => load.worlds as readonly WorldRecord[];
 
@@ -220,19 +231,28 @@ export function trackWorlds(load: ProjectLoad): WorldTracker {
     membership(world) {
       seeAll();
       const { systems } = world as WorldRecord;
-      const before = members.get(world as object) ?? new Map<SystemRecord, readonly object[]>();
-      const after = new Map<SystemRecord, readonly object[]>();
+      const before = members.get(world as object) ?? new Map<SystemRecord, HeldMembers>();
+      const after = new Map<SystemRecord, HeldMembers>();
       const changes: MembershipChange[] = [];
+      const present = new Set(systems);
+      for (const [system, { index, entities }] of before) {
+        if (present.has(system)) {
+          continue;
+        }
+        for (const entity of entities) {
+          changes.push({ kind: "leave", system: index, entity: idOf(entity) });
+        }
+      }
       systems.forEach((system, position) => {
         if (system.nocache === true) {
           return;
         }
         const index = typeof system.index === "number" ? system.index : position + 1;
         const held = [...(system.entities ?? [])];
-        const was = before.get(system) ?? [];
+        const was = before.get(system)?.entities ?? [];
         const heldSet = new Set(held);
         const wasSet = new Set(was);
-        after.set(system, held);
+        after.set(system, { index, entities: held });
         for (const entity of was) {
           if (!heldSet.has(entity)) {
             changes.push({ kind: "leave", system: index, entity: idOf(entity) });
