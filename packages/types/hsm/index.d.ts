@@ -582,7 +582,7 @@ export interface PrivateCtxConfig<Ctx, Priv> {
      * field of `Ctx`.
      *
      * The fields are hidden from callers by type only. At run time `ctx` is one table, and hooks,
-     * `hsm-view` and a debugger see every field.
+     * the `view` command and a debugger see every field.
      *
      * There are two ways to type the fields.
      *

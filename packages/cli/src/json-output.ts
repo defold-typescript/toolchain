@@ -22,7 +22,7 @@ export type CliCommand =
   | "reload"
   | "upgrade"
   | "set-target"
-  | "hsm-view"
+  | "view"
   | "export-types"
   | "library";
 
@@ -138,8 +138,9 @@ export interface RenderResultInput {
   readonly from?: string;
   readonly to?: string;
   readonly handedOff?: boolean;
-  // `hsm-view` only: the machine the viewer opened on and the page it serves.
+  // `view` only: the machine and world the viewer picked and the page it serves.
   readonly machine?: string;
+  readonly world?: string;
   readonly url?: string;
   readonly outcome?: string;
   readonly consoleErrors?: readonly string[];
@@ -287,7 +288,8 @@ export function renderResult(input: RenderResultInput): string {
   const withHandedOff = "handedOff" in input ? { ...withTo, handedOff: input.handedOff } : withTo;
   const withMachine =
     "machine" in input ? { ...withHandedOff, machine: input.machine } : withHandedOff;
-  const withUrl = "url" in input ? { ...withMachine, url: input.url } : withMachine;
+  const withWorld = "world" in input ? { ...withMachine, world: input.world } : withMachine;
+  const withUrl = "url" in input ? { ...withWorld, url: input.url } : withWorld;
   const withOutcome = "outcome" in input ? { ...withUrl, outcome: input.outcome } : withUrl;
   const withConsoleErrors =
     "consoleErrors" in input ? { ...withOutcome, consoleErrors: input.consoleErrors } : withOutcome;

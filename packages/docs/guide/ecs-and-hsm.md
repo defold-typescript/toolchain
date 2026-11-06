@@ -66,6 +66,7 @@ export function spawnCritter(id: Hash): Critter {
 
 - The world and the machine live in a plain module, so they are one world and one definition for every script that imports them. One script updates the world; see [Run a world from a script](./entity-systems.md#run-a-world-from-a-script).
 - The hooks take the world when the machine is defined, so a machine definition works with one world.
+- To watch a critter's machine as the world moves it, run [`view`](./view.md) on the script that spawns critters: on the [Worlds tab](./view.md#worlds), an entity's machine link shows that critter's machine with its states tinted.
 
 ## Join systems from a state with `member`
 
