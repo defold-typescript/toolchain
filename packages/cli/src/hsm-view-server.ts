@@ -167,14 +167,19 @@ function nearestFolder(missing: string): { dir: string; entry: string } | undefi
   return { dir, entry };
 }
 
-function reloadMessage(snapshot: Snapshot): ReloadMessage {
+export function reloadMessage(snapshot: Snapshot): ReloadMessage {
   const failure = snapshot.entries.find((entry) => entry.kind === "error");
   return failure === undefined
     ? { ok: true, snapshot }
     : { ok: false, error: failure.message, snapshot };
 }
 
-function buildApp(options: HsmViewAppOptions, hub: Hub, live: () => LiveMessage): Hono {
+function buildApp(
+  options: HsmViewAppOptions,
+  hub: Hub,
+  live: () => LiveMessage,
+  afterRestart: () => void,
+): Hono {
   const { session, client } = options;
   const opening: HsmViewOpening = options.opening ?? { tab: "machines" };
   const coloredLines = new Map<
@@ -258,7 +263,11 @@ function buildApp(options: HsmViewAppOptions, hub: Hub, live: () => LiveMessage)
     return c.json(session.pick(field(body, "name", isString)));
   });
 
-  app.post("/api/restart", (c) => c.json(session.restart()));
+  app.post("/api/restart", (c) => {
+    const snapshot = session.restart();
+    afterRestart();
+    return c.json(snapshot);
+  });
 
   app.post("/api/pick-world", async (c) => {
     const body = await jsonBody(c);
@@ -309,7 +318,7 @@ function buildApp(options: HsmViewAppOptions, hub: Hub, live: () => LiveMessage)
 
 /** The viewer's routes; `GET /api/events` stays open but only `serveHsmView` pushes reloads. */
 export function createHsmViewApp(options: HsmViewAppOptions): Hono {
-  return buildApp(options, createHub(), createLiveRegistry().current);
+  return buildApp(options, createHub(), createLiveRegistry().current, () => {});
 }
 
 /**
@@ -322,7 +331,7 @@ export function serveHsmView(options: ServeHsmViewOptions): Promise<HsmViewServe
   const hub = createHub();
   const registry = createLiveRegistry();
   const following = new AbortController();
-  const app = buildApp(options, hub, registry.current);
+  const app = buildApp(options, hub, registry.current, watchFiles);
   const watchers: FSWatcher[] = [];
   let pending: ReturnType<typeof setTimeout> | undefined;
   let closed = false;

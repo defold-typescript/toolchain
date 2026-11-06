@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { ruleId } from "../src/hsm-view-index";
-import { createHsmViewApp, type HsmViewIndex } from "../src/hsm-view-server";
+import { createHsmViewApp, type HsmViewIndex, reloadMessage } from "../src/hsm-view-server";
 import { createSession, type HsmViewSession, type Snapshot } from "../src/hsm-view-session";
 import { onKeySpanId, ruleSpanId, stateSpanId } from "./highlight";
 import {
@@ -927,6 +927,34 @@ describe("worlds, tabs and follow", () => {
 
     await frames.frame(100);
     expect(routes(viewer)).toHaveLength(3);
+  });
+
+  test("Restart clears a failed reload's banner when its run has no error", async () => {
+    const viewer = await open("farm.ts");
+    const state = () => viewer.store.getState();
+    writeFileSync(
+      path.join(dir, "farm.ts"),
+      FARM.replace('system("grow")({ update', 'system("grow")({ nocache: true, update'),
+    );
+    await state().reloaded(reloadMessage(viewer.session.reload()));
+    expect(state().reloadError).toContain("cannot change nocache");
+
+    await state().restart();
+    expect(state().reloadError).toBeUndefined();
+    expect(state().snapshot).toMatchObject({ t: 0, frame: 0 });
+  });
+
+  test("Restart keeps a failed reload's banner when its own load fails", async () => {
+    const viewer = await open("farm.ts");
+    const state = () => viewer.store.getState();
+    writeFileSync(path.join(dir, "farm.ts"), `${FARM}export const broken = ;\n`);
+    const failed = reloadMessage(viewer.session.reload());
+    expect(failed.error).toContain("farm.ts");
+    await state().reloaded(failed);
+
+    await state().restart();
+    expect(state().snapshot?.error).toContain("farm.ts");
+    expect(state().reloadError).toBe(failed.error);
   });
 
   test("keeps the open and selected systems across snapshots, and clears them on Restart or another world", async () => {
