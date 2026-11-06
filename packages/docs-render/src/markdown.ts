@@ -145,30 +145,48 @@ export const FENCE_LANGUAGES: Record<string, { label: string; glyph: Glyph }> = 
 
 const languageBadges = new Map<string, string>();
 
-function fenceLanguageBadge(info: string): string | undefined {
+// The badge shows the fence language's glyph and, unless `label` overrides it,
+// the language's name.
+function fenceLanguageBadge(info: string, label?: string): string | undefined {
   const lang = info.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
   const language = FENCE_LANGUAGES[lang];
   if (!language) return undefined;
-  let badge = languageBadges.get(lang);
+  const text = label ?? language.label;
+  const cacheKey = `${lang}\n${text}`;
+  let badge = languageBadges.get(cacheKey);
   if (badge === undefined) {
     badge = String(
       Badge({
         variant: "outline",
         class: "code-badge",
         icon: glyphSvg(language.glyph, "code-badge-icon"),
-        children: language.label,
+        children: text,
       }),
     );
-    languageBadges.set(lang, badge);
+    languageBadges.set(cacheKey, badge);
   }
   return badge;
 }
 
-// A `<lang> original` info string marks the source of the translated fence
-// before it. Shiki and the badge read only the first token, so it still
-// highlights and labels as `<lang>`.
-function isSourceFence(info: string): boolean {
-  return info.trim().split(/\s+/)[1] === "original";
+interface FenceVariant {
+  key: string;
+  labels?: readonly [string, string];
+}
+
+// A `<lang> <marker>` info string marks a fence as the second variant of the
+// snippet in the fence before it: `original` is the source of a translated
+// fence, `builder` the builder-statement spelling of a config. Each pair renders
+// as one tab group whose key names its tab set, so the CodeTabs island switches
+// every group of that set together; `labels` replaces the two tabs' language
+// names. Shiki and the badge read only the first token, so the fence still
+// highlights and badges as `<lang>`.
+const FENCE_VARIANTS = new Map<string, FenceVariant>([
+  ["original", { key: "typescript-lua" }],
+  ["builder", { key: "config-builder", labels: ["Config", "Builder"] }],
+]);
+
+function fenceVariant(info: string): FenceVariant | undefined {
+  return FENCE_VARIANTS.get(info.trim().split(/\s+/)[1] ?? "");
 }
 
 function isTabbableFence(info: string): boolean {
@@ -177,6 +195,10 @@ function isTabbableFence(info: string): boolean {
 
 function codeTabIndex(token: Token | undefined): 0 | 1 | undefined {
   return token?.meta?.codeTab;
+}
+
+function codeTabGroup(token: Token | undefined): FenceVariant | undefined {
+  return token?.meta?.codeTabs;
 }
 
 const platformBadges = new Map<string, string>();
@@ -582,21 +604,23 @@ export async function renderMarkdown(
       token.children = out;
     }
   });
-  // Pair a translated fence with the `<lang> original` fence that directly follows
-  // it (its source) as tab 0 and tab 1 of one tab group. Only badged, untitled
-  // fences pair, so every tab has a label and no filename caption is dropped;
-  // a fence already holding a tab never joins a second group.
+  // Pair a fence with the variant fence that directly follows it (a `<lang>
+  // original` source or a `<lang> builder` spelling) as tab 0 and tab 1 of one
+  // tab group, recording the variant on tab 0. Only badged, untitled fences pair,
+  // so every tab has a label and no filename caption is dropped; a fence already
+  // holding a tab never joins a second group.
   md.core.ruler.push("code-tabs", (state) => {
     const tokens = state.tokens;
     for (let i = 1; i < tokens.length; i++) {
-      const source = tokens[i];
-      const translation = tokens[i - 1];
-      if (source?.type !== "fence" || translation?.type !== "fence") continue;
-      if (!isSourceFence(source.info) || isSourceFence(translation.info)) continue;
-      if (codeTabIndex(translation) !== undefined || source.level !== translation.level) continue;
-      if (!isTabbableFence(source.info) || !isTabbableFence(translation.info)) continue;
-      translation.meta = { ...translation.meta, codeTab: 0 };
-      source.meta = { ...source.meta, codeTab: 1 };
+      const second = tokens[i];
+      const first = tokens[i - 1];
+      if (second?.type !== "fence" || first?.type !== "fence") continue;
+      const variant = fenceVariant(second.info);
+      if (!variant || fenceVariant(first.info)) continue;
+      if (codeTabIndex(first) !== undefined || second.level !== first.level) continue;
+      if (!isTabbableFence(second.info) || !isTabbableFence(first.info)) continue;
+      first.meta = { ...first.meta, codeTab: 0, codeTabs: variant };
+      second.meta = { ...second.meta, codeTab: 1 };
     }
   });
   // Retag `> [!NOTE]`-style blockquotes as `.admonition` callout divs. A div
@@ -934,23 +958,25 @@ export async function renderMarkdown(
   // language badge: first in the caption when there is one, otherwise overlapping
   // the block's top edge. The badge sits outside the `<pre>`, so copying the code
   // never picks it up. Runs after Shiki claims the fence rule so the highlighted
-  // markup is captured intact. A paired translation and source render as one
-  // `.code-tabs` group instead: the badges become the tabs, the translation's
-  // panel shows and the source's starts `hidden` until the CodeTabs island
-  // switches it.
+  // markup is captured intact. A paired fence and its variant render as one
+  // `.code-tabs` group instead, keyed by the variant's tab set: the badges
+  // (relabelled when the variant names its tabs) become the tabs, the first
+  // fence's panel shows and the variant's starts `hidden` until the CodeTabs
+  // island switches it.
   const renderFence = md.renderer.rules.fence;
   if (renderFence) {
     md.renderer.rules.fence = (tokens, idx, options, env, self) => {
       const rendered = renderFence(tokens, idx, options, env, self);
       const tab = codeTabIndex(tokens[idx]);
-      if (tab === 0) {
+      const group = codeTabGroup(tokens[idx]);
+      if (tab === 0 && group) {
         const buttons = [tokens[idx], tokens[idx + 1]]
           .map(
             (token, i) =>
-              `<button type="button" role="tab" class="code-tab" aria-selected="${i === 0}">${fenceLanguageBadge(token?.info ?? "")}</button>`,
+              `<button type="button" role="tab" class="code-tab" aria-selected="${i === 0}">${fenceLanguageBadge(token?.info ?? "", group.labels?.[i])}</button>`,
           )
           .join("");
-        return `<div class="code-tabs" data-code-tabs><div class="code-tabs-list" role="tablist">${buttons}</div><figure class="code-block code-tabs-panel" role="tabpanel">${rendered}</figure>\n`;
+        return `<div class="code-tabs" data-code-tabs="${group.key}"><div class="code-tabs-list" role="tablist">${buttons}</div><figure class="code-block code-tabs-panel" role="tabpanel">${rendered}</figure>\n`;
       }
       if (tab === 1) {
         return `<figure class="code-block code-tabs-panel" role="tabpanel" hidden>${rendered}</figure></div>\n`;
