@@ -199,7 +199,7 @@ function buildApp(
 
   const entry = session.index().files[0];
   const title =
-    options.title ?? (entry === undefined ? "hsm-view" : `${path.basename(entry.path)} - hsm-view`);
+    options.title ?? (entry === undefined ? "view" : `${path.basename(entry.path)} - view`);
   const page = renderPage({ title, client });
 
   const app = new Hono();

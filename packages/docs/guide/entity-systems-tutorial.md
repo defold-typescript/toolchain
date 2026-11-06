@@ -2351,6 +2351,8 @@ ecs garden frame 481: system 16 removes entity 1, holds 3
 
 `flight.exit` takes away `flying`, so firefly 1 leaves `drift` and `swarm`, systems 3 and 4, and the watch. It is lit, so it joins `beacons` and `catchable`. Four seconds later its machine enters `flying` again, and it rejoins `drift` and `swarm`.
 
+To watch the same night in your browser, run `bunx @defold-typescript/cli view fireflies.ts`: the [Worlds tab](./view.md#worlds) lists the fireflies each system holds, frame by frame.
+
 ### Try it
 
 1. A firefly is caught while it rests. Which hooks run?

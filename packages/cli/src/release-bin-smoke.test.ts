@@ -132,6 +132,15 @@ export const lamp = defineMachine("lamp")({
 });
 `;
 
+const GARDEN = `import { requireAll, processingSystem, world } from "@defold-typescript/types/ecs";
+const move = processingSystem("move")(requireAll("x"), {
+  process(entity: { x: number }, dt: number) {
+    entity.x += dt;
+  },
+});
+export const garden = world(move, { x: 0 });
+`;
+
 async function firstLine(stream: ReadableStream<Uint8Array>): Promise<string> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
@@ -152,28 +161,41 @@ async function firstLine(stream: ReadableStream<Uint8Array>): Promise<string> {
 
 // The spawn resolves externals from the repo's root `node_modules`, so declared
 // dependencies are proven by the packed check, not here.
-describe("built bin serves hsm-view under plain node", () => {
+describe("built bin serves view under plain node", () => {
   build(PKG_DIR);
 
-  test(
-    "node dist/bin.js hsm-view serves the built page and the file index",
-    async () => {
-      const cwd = tmp("hsm-view");
-      const file = path.join(cwd, "lamp.ts");
-      writeFileSync(file, LAMP);
-      const child = Bun.spawn(["node", BIN, "hsm-view", file], {
-        cwd,
-        stdout: "pipe",
-        stderr: "pipe",
-      });
-      try {
-        const line = await firstLine(child.stdout);
-        const url = /http:\/\/127\.0\.0\.1:\d+\/?/.exec(line)?.[0];
-        if (url === undefined) {
-          throw new Error(`no URL in "${line}":\n${await new Response(child.stderr).text()}`);
-        }
-        const base = url.endsWith("/") ? url : `${url}/`;
+  /** Runs `node dist/bin.js view` on `text` saved as `name`, and hands `check` the page's base URL. */
+  async function viewing(
+    name: string,
+    text: string,
+    check: (base: string) => Promise<void>,
+  ): Promise<void> {
+    const cwd = tmp("view");
+    const file = path.join(cwd, name);
+    writeFileSync(file, text);
+    const child = Bun.spawn(["node", BIN, "view", file], {
+      cwd,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    try {
+      const line = await firstLine(child.stdout);
+      const url = /http:\/\/127\.0\.0\.1:\d+\/?/.exec(line)?.[0];
+      if (url === undefined) {
+        throw new Error(`no URL in "${line}":\n${await new Response(child.stderr).text()}`);
+      }
+      await check(url.endsWith("/") ? url : `${url}/`);
+    } finally {
+      child.kill();
+      await child.exited;
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  }
 
+  test(
+    "node dist/bin.js view serves the built page and the file index",
+    () =>
+      viewing("lamp.ts", LAMP, async (base) => {
         const page = await fetch(base);
         expect(page.status).toBe(200);
         const built = readFileSync(
@@ -188,12 +210,21 @@ describe("built bin serves hsm-view under plain node", () => {
         };
         expect(index.machines).toEqual(["lamp"]);
         expect(index.files.map((entry) => entry.path)).toEqual(["lamp.ts"]);
-      } finally {
-        child.kill();
-        await child.exited;
-        rmSync(cwd, { recursive: true, force: true });
-      }
-    },
+      }),
+    SPAWN_TEST_TIMEOUT_MS,
+  );
+
+  test(
+    "node dist/bin.js view runs a world from the packaged ecs source",
+    () =>
+      viewing("garden.ts", GARDEN, async (base) => {
+        const snapshot = (await (await fetch(`${base}api/snapshot`)).json()) as {
+          worlds: string[];
+          systems: { name: string }[];
+        };
+        expect(snapshot.worlds).toEqual(["garden"]);
+        expect(snapshot.systems.map((system) => system.name)).toEqual(["move"]);
+      }),
     SPAWN_TEST_TIMEOUT_MS,
   );
 });

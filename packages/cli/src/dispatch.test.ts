@@ -493,7 +493,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types|library> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|view|export-types|library> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -506,7 +506,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types|library> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|view|export-types|library> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -4719,7 +4719,7 @@ describe("dispatch bob", () => {
 
     expect(code).toBe(1);
     expect(err()).toBe(
-      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types|library> [path]\n" +
+      "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|view|export-types|library> [path]\n" +
         "Run `defold-typescript --help` for per-command usage and flags.\n",
     );
   });
@@ -6364,7 +6364,7 @@ describe("dispatch init --template", () => {
 
 describe("dispatch upgrade", () => {
   const USAGE =
-    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|hsm-view|export-types|library> [path]\n" +
+    "Usage: defold-typescript <init|init-agents|upgrade|set-target|build|watch|reload|wall|setup-debug|resolve|scene-types|bob|run|view|export-types|library> [path]\n" +
     "Run `defold-typescript --help` for per-command usage and flags.\n";
 
   function upgradeHarness(opts?: {
@@ -9237,13 +9237,36 @@ describe("dispatch error lines", () => {
   });
 });
 
-describe("hsm-view", () => {
-  const LAMP = `import { defineMachine } from "@defold-typescript/types/hsm";
-export const lamp = defineMachine("lamp")({
+describe("view", () => {
+  const HSM_IMPORT = 'import { defineMachine } from "@defold-typescript/types/hsm";';
+  const ECS_IMPORT = 'import { system, world } from "@defold-typescript/types/ecs";';
+  const MACHINE = (name: string): string => `defineMachine("${name}")({
   initial: "/off",
   states: {
     off: { on: { TOGGLE: "/on" } },
     on: { on: { TOGGLE: "/off" } },
+  },
+})`;
+  const LAMP = `${HSM_IMPORT}
+export const lamp = ${MACHINE("lamp")};
+`;
+  const GARDEN = `${ECS_IMPORT}
+export const garden = world(system("move")({ update() {} }));
+`;
+  // Two machines and three worlds, so a pick is visible against the default first of each, and
+  // `lamp` names both a machine and a world.
+  const BOTH = `import { defineScript } from "@defold-typescript/types";
+${HSM_IMPORT}
+${ECS_IMPORT}
+export const lampMachine = ${MACHINE("lamp")};
+export const fanMachine = ${MACHINE("fan")};
+export default defineScript({
+  init() {
+    return {
+      garden: world(system("move")({ update() {} })),
+      pond: world(system("swim")({ update() {} })),
+      lamp: world(system("glow")({ update() {} })),
+    };
   },
 });
 `;
@@ -9251,14 +9274,14 @@ export const lamp = defineMachine("lamp")({
   let dir: string;
 
   beforeEach(() => {
-    dir = mkdtempSync(path.join(os.tmpdir(), "dispatch-hsm-view-"));
+    dir = mkdtempSync(path.join(os.tmpdir(), "dispatch-view-"));
   });
 
   afterEach(() => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  function writeMachine(name: string, text: string): string {
+  function writeFile(name: string, text: string): string {
     const file = path.join(dir, name);
     writeFileSync(file, text);
     return file;
@@ -9268,7 +9291,7 @@ export const lamp = defineMachine("lamp")({
     const lines = out.trim().split("\n");
     expect(lines).toHaveLength(1);
     const parsed = JSON.parse(lines[0] ?? "") as { command: string; ok: boolean; error: string };
-    expect(parsed.command).toBe("hsm-view");
+    expect(parsed.command).toBe("view");
     expect(parsed.ok).toBe(false);
     return parsed.error;
   }
@@ -9277,7 +9300,7 @@ export const lamp = defineMachine("lamp")({
     const missing = path.join(dir, "absent.ts");
     const { io, out, err } = captureStreams();
 
-    const code = await dispatch(["hsm-view", missing], io);
+    const code = await dispatch(["view", missing], io);
 
     expect(code).toBe(1);
     expect(out()).toBe("");
@@ -9287,63 +9310,94 @@ export const lamp = defineMachine("lamp")({
   test("a missing file argument exits 1 with the usage", async () => {
     const { io, err } = captureStreams();
 
-    const code = await dispatch(["hsm-view"], io);
+    const code = await dispatch(["view"], io);
 
     expect(code).toBe(1);
-    expect(err()).toContain("hsm-view <file> [name]");
+    expect(err()).toContain("view <file> [name]");
   });
 
-  test("a file defining no machine exits 1", async () => {
-    const file = writeMachine("empty.ts", "export const value = 1;\n");
+  test("a file with neither a machine nor a world exits 1", async () => {
+    const file = writeFile("empty.ts", "export const value = 1;\n");
     const { io, err } = captureStreams();
 
-    const code = await dispatch(["hsm-view", file], io);
+    const code = await dispatch(["view", file], io);
 
     expect(code).toBe(1);
-    expect(err()).toContain(`${file} defines no machine`);
+    expect(err()).toContain(`${file} defines no machine and creates no world`);
   });
 
-  test("an unknown name exits 1 and lists the machine names", async () => {
-    const file = writeMachine("lamp.ts", LAMP);
+  test("an unknown name exits 1 and lists the machine and world names", async () => {
+    const file = writeFile("both.ts", BOTH);
     const { io, err } = captureStreams();
 
-    const code = await dispatch(["hsm-view", file, "fan"], io);
+    const code = await dispatch(["view", file, "heron"], io);
 
     expect(code).toBe(1);
-    expect(err()).toContain('no machine named "fan"');
-    expect(err()).toContain("lamp");
+    expect(err()).toContain(
+      `no machine or world named "heron" in ${file}; machines: lamp, fan; worlds: garden, pond, lamp`,
+    );
   });
 
   test("a load error exits 1 with its message", async () => {
-    const file = writeMachine("broken.ts", 'throw new Error("boom at load");\n');
+    const file = writeFile("broken.ts", 'throw new Error("boom at load");\n');
     const { io, err } = captureStreams();
 
-    const code = await dispatch(["hsm-view", file], io);
+    const code = await dispatch(["view", file], io);
 
     expect(code).toBe(1);
     expect(err()).toContain("boom at load");
   });
 
-  test("with --json, each error prints one hsm-view line", async () => {
+  test("a throw in init exits 1 with its message", async () => {
+    const file = writeFile(
+      "init.ts",
+      `import { defineScript } from "@defold-typescript/types";
+export default defineScript({
+  init() {
+    throw new Error("boom in init");
+  },
+});
+`,
+    );
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["view", file], io);
+
+    expect(code).toBe(1);
+    expect(err()).toContain("boom in init");
+  });
+
+  test("with --json, each error prints one view line", async () => {
     const missing = path.join(dir, "absent.ts");
-    const empty = writeMachine("empty.ts", "export const value = 1;\n");
-    const lamp = writeMachine("lamp.ts", LAMP);
-    const broken = writeMachine("broken.ts", 'throw new Error("boom at load");\n');
+    const empty = writeFile("empty.ts", "export const value = 1;\n");
+    const garden = writeFile("garden.ts", GARDEN);
+    const broken = writeFile("broken.ts", 'throw new Error("boom at load");\n');
     const cases: [readonly string[], string][] = [
       [[missing], missing],
-      [[empty], "defines no machine"],
-      [[lamp, "fan"], "lamp"],
+      [[empty], "defines no machine and creates no world"],
+      [[garden, "lamp"], "worlds: garden"],
       [[broken], "boom at load"],
     ];
     for (const [args, expected] of cases) {
       const { io, out, err } = captureStreams();
 
-      const code = await dispatch(["hsm-view", ...args, "--json"], io);
+      const code = await dispatch(["view", ...args, "--json"], io);
 
       expect(code).toBe(1);
       expect(err()).toBe("");
       expect(jsonError(out())).toContain(expected);
     }
+  });
+
+  test("hsm-view is an unknown command", async () => {
+    const lamp = writeFile("lamp.ts", LAMP);
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["hsm-view", lamp], io);
+
+    expect(code).toBe(1);
+    expect(out()).toBe("");
+    expect(err()).toStartWith("Usage: defold-typescript <");
   });
 
   const BIND_FAILURE = "listen EACCES: permission denied 127.0.0.1";
@@ -9353,26 +9407,26 @@ export const lamp = defineMachine("lamp")({
   }
 
   test("a server that cannot start exits 1 with one line and no stack", async () => {
-    const lamp = writeMachine("lamp.ts", LAMP);
+    const lamp = writeFile("lamp.ts", LAMP);
     const { io, out, err } = captureStreams();
 
-    const code = await dispatch(["hsm-view", lamp], io, {
-      hsmView: { serve: refusingServe() },
+    const code = await dispatch(["view", lamp], io, {
+      view: { serve: refusingServe() },
     });
 
     expect(code).toBe(1);
     expect(out()).toBe("");
     expect(err()).toBe(
-      `defold-typescript hsm-view: error: could not start the viewer: ${BIND_FAILURE}\n`,
+      `defold-typescript view: error: could not start the viewer: ${BIND_FAILURE}\n`,
     );
   });
 
-  test("with --json, a server that cannot start prints one hsm-view line", async () => {
-    const lamp = writeMachine("lamp.ts", LAMP);
+  test("with --json, a server that cannot start prints one view line", async () => {
+    const lamp = writeFile("lamp.ts", LAMP);
     const { io, out, err } = captureStreams();
 
-    const code = await dispatch(["hsm-view", lamp, "--json"], io, {
-      hsmView: { serve: refusingServe() },
+    const code = await dispatch(["view", lamp, "--json"], io, {
+      view: { serve: refusingServe() },
     });
 
     expect(code).toBe(1);
@@ -9403,41 +9457,124 @@ export const lamp = defineMachine("lamp")({
   }
 
   test("a started server prints its URL, then closes once when stopped", async () => {
-    const lamp = writeMachine("lamp.ts", LAMP);
+    const lamp = writeFile("lamp.ts", LAMP);
     const server = startingServe();
     const { io, out, err } = captureStreams();
 
-    const code = await dispatch(["hsm-view", lamp], io, {
-      hsmView: { serve: server.serve, stopped: Promise.resolve() },
+    const code = await dispatch(["view", lamp], io, {
+      view: { serve: server.serve, stopped: Promise.resolve() },
     });
 
     expect(code).toBe(0);
     expect(err()).toBe("");
-    expect(out()).toBe(`hsm-view: ${lamp} at http://127.0.0.1:4321 (Ctrl+C stops)\n`);
+    expect(out()).toBe(`view: ${lamp} at http://127.0.0.1:4321 (Ctrl+C stops)\n`);
     expect(server.closed()).toBe(1);
     expect(server.calls).toHaveLength(1);
     expect(server.calls[0]?.port).toBe(0);
-    expect(server.calls[0]?.title).toBe("lamp.ts");
   });
 
-  test("with --json, a started server prints one hsm-view line with its URL", async () => {
-    const lamp = writeMachine("lamp.ts", LAMP);
+  async function opened(
+    file: string,
+    name?: string,
+  ): Promise<{ tab: string | undefined; machine: string | undefined; world: string | undefined }> {
+    const server = startingServe();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["view", file, ...(name === undefined ? [] : [name])], io, {
+      view: { serve: server.serve, stopped: Promise.resolve() },
+    });
+
+    expect(err()).toBe("");
+    expect(code).toBe(0);
+    const call = server.calls[0];
+    const snapshot = call?.session.snapshot();
+    return { tab: call?.opening?.tab, machine: snapshot?.picked, world: snapshot?.world };
+  }
+
+  test("a file with machines and no world opens on the Machines tab", async () => {
+    expect(await opened(writeFile("lamp.ts", LAMP))).toEqual({
+      tab: "machines",
+      machine: "lamp",
+      world: undefined,
+    });
+  });
+
+  test("a file with a world and no machine opens on the Worlds tab", async () => {
+    expect(await opened(writeFile("garden.ts", GARDEN))).toEqual({
+      tab: "worlds",
+      machine: undefined,
+      world: "garden",
+    });
+  });
+
+  test("a file with both and no name opens on the Worlds tab with the first of each", async () => {
+    expect(await opened(writeFile("both.ts", BOTH))).toEqual({
+      tab: "worlds",
+      machine: "lamp",
+      world: "garden",
+    });
+  });
+
+  test("a name matching only a world picks it on the Worlds tab", async () => {
+    expect(await opened(writeFile("both.ts", BOTH), "pond")).toEqual({
+      tab: "worlds",
+      machine: "lamp",
+      world: "pond",
+    });
+  });
+
+  test("a name matching only a machine picks it on the Machines tab", async () => {
+    expect(await opened(writeFile("both.ts", BOTH), "fan")).toEqual({
+      tab: "machines",
+      machine: "fan",
+      world: "garden",
+    });
+  });
+
+  test("a name matching a machine and a world picks both on the Machines tab", async () => {
+    // `lamp` is the second-listed world, so a world left at its default would read `garden`.
+    expect(await opened(writeFile("both.ts", BOTH), "lamp")).toEqual({
+      tab: "machines",
+      machine: "lamp",
+      world: "lamp",
+    });
+  });
+
+  test("with --json, a started server prints one view line with its URL and picks", async () => {
+    const both = writeFile("both.ts", BOTH);
     const server = startingServe();
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["hsm-view", lamp, "--json"], io, {
-      hsmView: { serve: server.serve, stopped: Promise.resolve() },
+    const code = await dispatch(["view", both, "pond", "--json"], io, {
+      view: { serve: server.serve, stopped: Promise.resolve() },
     });
 
     expect(code).toBe(0);
     const lines = out().trim().split("\n");
     expect(lines).toHaveLength(1);
     expect(JSON.parse(lines[0] ?? "")).toMatchObject({
-      command: "hsm-view",
+      command: "view",
+      ok: true,
       machine: "lamp",
+      world: "pond",
       url: "http://127.0.0.1:4321",
     });
     expect(server.closed()).toBe(1);
+  });
+
+  test("with --json, a world-only file prints no machine", async () => {
+    const garden = writeFile("garden.ts", GARDEN);
+    const server = startingServe();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["view", garden, "--json"], io, {
+      view: { serve: server.serve, stopped: Promise.resolve() },
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out().trim()) as Record<string, unknown>;
+    expect(parsed.world).toBe("garden");
+    expect("machine" in parsed).toBe(false);
   });
 });
 

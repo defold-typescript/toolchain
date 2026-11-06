@@ -4,15 +4,20 @@ import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-types
 import { consoleLines, openConsoleStream, resolveEditor } from "./editor-attach";
 import { loadClientAssets } from "./hsm-view-client-assets";
 import type { ClientAssets } from "./hsm-view-page";
-import { type HsmViewServer, type ServeHsmViewOptions, serveHsmView } from "./hsm-view-server";
-import { createSession } from "./hsm-view-session";
+import {
+  type HsmViewServer,
+  type HsmViewTab,
+  type ServeHsmViewOptions,
+  serveHsmView,
+} from "./hsm-view-server";
+import { createSession, type HsmViewSession } from "./hsm-view-session";
 import { renderResult } from "./json-output";
 
-export const HSM_VIEW_USAGE = "defold-typescript hsm-view <file> [name]";
+export const VIEW_USAGE = "defold-typescript view <file> [name]";
 
 const EDITOR_RETRY_MS = 2000;
 
-export interface RunHsmViewOptions {
+export interface RunViewOptions {
   readonly cwd: string;
   readonly file: string | undefined;
   readonly name?: string;
@@ -72,20 +77,53 @@ async function* followEditorConsole(cwd: string, signal: AbortSignal): AsyncGene
   }
 }
 
+function listed(names: readonly string[]): string {
+  return names.length === 0 ? "none" : names.join(", ");
+}
+
+/**
+ * Picks every machine and world called `name` and returns the tab the page opens on: Machines when
+ * a machine matched or the file creates no world, else Worlds, since a world drives the run.
+ */
+function pickOpening(
+  session: HsmViewSession,
+  file: string,
+  name: string | undefined,
+): HsmViewTab | { readonly error: string } {
+  const { machines, worlds } = session.snapshot();
+  if (name === undefined) {
+    return worlds.length === 0 ? "machines" : "worlds";
+  }
+  const machine = machines.includes(name);
+  const world = worlds.includes(name);
+  if (!machine && !world) {
+    return {
+      error: `no machine or world named "${name}" in ${file}; machines: ${listed(machines)}; worlds: ${listed(worlds)}`,
+    };
+  }
+  if (machine) {
+    session.pick(name);
+  }
+  if (world) {
+    session.pickWorld(name);
+  }
+  return machine ? "machines" : "worlds";
+}
+
 /** Serves the viewer for `file` until stopped; every reason it cannot start is one exit 1. */
-export async function runHsmView(options: RunHsmViewOptions): Promise<number> {
+export async function runView(options: RunViewOptions): Promise<number> {
   const { json, io } = options;
   const fail = (message: string): number => {
     if (json) {
-      io.stdout.write(renderResult({ command: "hsm-view", error: message }));
+      io.stdout.write(renderResult({ command: "view", error: message }));
     } else {
-      options.writeError(`defold-typescript hsm-view: ${message}`);
+      options.writeError(`defold-typescript view: ${message}`);
     }
     return 1;
   };
 
   if (options.file === undefined) {
-    return fail(`pass a file; usage: ${HSM_VIEW_USAGE}`);
+    return fail(`pass a file; usage: ${VIEW_USAGE}`);
   }
   const file = path.resolve(options.cwd, options.file);
   if (!existsSync(file) || !statSync(file).isFile()) {
@@ -105,20 +143,10 @@ export async function runHsmView(options: RunHsmViewOptions): Promise<number> {
     return fail(messageOf(thrown));
   }
 
-  const { machines } = session.snapshot();
-  const [first] = machines;
-  if (first === undefined) {
-    return fail(`${file} defines no machine`);
+  const tab = pickOpening(session, file, options.name);
+  if (typeof tab !== "string") {
+    return fail(tab.error);
   }
-  if (options.name !== undefined) {
-    if (!machines.includes(options.name)) {
-      return fail(
-        `no machine named "${options.name}" in ${file}; machines: ${machines.join(", ")}`,
-      );
-    }
-    session.pick(options.name);
-  }
-  const machine = options.name ?? first;
 
   let server: HsmViewServer;
   try {
@@ -126,16 +154,24 @@ export async function runHsmView(options: RunHsmViewOptions): Promise<number> {
       session,
       client,
       port: 0,
-      title: path.basename(file),
+      opening: { tab },
       follow: (signal) => followEditorConsole(options.cwd, signal),
     });
   } catch (thrown) {
     return fail(`could not start the viewer: ${messageOf(thrown)}`);
   }
   if (json) {
-    io.stdout.write(renderResult({ command: "hsm-view", machine, url: server.url }));
+    const { picked, world } = session.snapshot();
+    io.stdout.write(
+      renderResult({
+        command: "view",
+        ...(picked === undefined ? {} : { machine: picked }),
+        ...(world === undefined ? {} : { world }),
+        url: server.url,
+      }),
+    );
   } else {
-    io.stdout.write(`hsm-view: ${file} at ${server.url} (Ctrl+C stops)\n`);
+    io.stdout.write(`view: ${file} at ${server.url} (Ctrl+C stops)\n`);
   }
   await (options.stopped ?? untilSignal());
   await server.close();

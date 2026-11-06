@@ -14,8 +14,12 @@ What changed in each published `defold-typescript` toolchain release.
 > Summary:
 >
 > - **[Entity systems](./entity-systems.md)** ship built in, with [string filters](./entity-systems.md#string-filters), [hot reload](./entity-systems.md#hot-reload), [state hooks](./ecs-and-hsm.md) that move an entity between systems, a [world inspector](./entity-systems.md#debug-a-world), an editor hover on every export, and a [hands-on tutorial](./entity-systems-tutorial.md).
-> - **[`hsm-view`](./hsm-view.md#worlds)** runs a file's script, `ecs` worlds and machines on one clock, with a Worlds tab of systems, entities and timings linked to the code.
+> - **[`view`](./view.md)** replaces `hsm-view` and runs a file's script, `ecs` worlds and machines on one clock, with a [Worlds tab](./view.md#worlds) of systems, entities and timings linked to the code.
 > - **[Script callbacks](./script-lifecycle.md)** run beside a top-level import or declaration of the same name.
+
+### Breaking
+
+- **`hsm-view` is renamed [`view`](./view.md):** run `defold-typescript view <file> [name]`, where `[name]` picks every machine and world of that name. Its `--json` line reads `"command":"view"` and adds the picked `world`.
 
 ### Improved
 
@@ -27,9 +31,10 @@ What changed in each published `defold-typescript` toolchain release.
   - **Editor hovers:** every export of each module, and every system field and callback, shows a one-line summary, its parameters and return, and an example that compiles; the [Reference](./entity-systems.md#reference) tables quote the same summaries.
   - **[Entity systems, one system at a time](./entity-systems-tutorial.md):** a hands-on tutorial grows one night garden of fireflies lesson by lesson, until it uses every export of the three `ecs` modules. Each change is a diff that compiles, and each lesson shows the console its code prints under the real `ecs`.
   - **The [`AGENTS.md` block](./init-agents.md#what-it-writes)** that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
-- **[`hsm-view`](./hsm-view.md) runs a file's machines, script and `ecs` worlds on one clock:**
-  - **[Script lifecycle](./hsm-view.md#what-runs-and-what-is-stubbed):** a `defineScript` script's `init` runs once, and each frame calls its `update` (or each world's) before the machine's, with `t` and a frame count that Start leaves running. Restart reruns the files from `t` 0, and a [reload](./hsm-view.md#live-reload) keeps `self` and the worlds and calls `on_reload`.
-  - **[Worlds tab](./hsm-view.md#worlds):** lists the picked world's systems with their entity counts and timings, opens each one's entities as read-only trees, and links each system to its definition in the code and back. The [log](./hsm-view.md#read-the-log) notes each entity that joins or leaves a system under its own membership toggle.
+- **[`view`](./view.md#worlds) runs a file's machines, script and `ecs` worlds on one page and one clock:**
+  - **[Worlds tab](./view.md#worlds):** lists the picked world's systems with their entity counts and timings, opens each one's entities as read-only trees, and links each system to its definition in the code and back. The page opens on it unless `[name]` picks a machine or the file creates no world, and the [log](./view.md#read-the-log) notes each entity that joins or leaves a system.
+  - **[Script lifecycle](./view.md#what-runs-and-what-is-stubbed):** a `defineScript` script's `init` runs once, and each frame calls its `update` (or each world's) before the machine's. A [reload](./view.md#live-reload) keeps `self` and the worlds and calls `on_reload`.
+  - **[One clock](./view.md#run-the-machine):** `t` and the frame count are the run's time, which Start leaves running, and Restart reruns the files and `init` from `t` 0.
   - **Follow an instance:** the bar's instance dropdown, or an entity's link on the Worlds tab, shows a machine instance the run started in place of the simulated one, its states tinted as the run moves it.
   - **Simulated engine values:** Lua's `math` (the same numbers on every start), `os.clock`, `vmath.vector3`, `vmath.vector4`, `factory.create`, `msg.url`, `go.get_position`, `go.get_world_position`, `sys.get_engine_info` and `sys.get_config_string` return simulated values instead of `undefined`, and `ecs` filters reject a bad token as they do in a game.
 
@@ -387,7 +392,7 @@ What changed in each published `defold-typescript` toolchain release.
 > - **A hand-built [`MachineInstance`](./state-machines.md#machineinstance)** needs `can`, `onUnhandled` and `hasTag` to compile.
 > - **[Stricter types](./state-machines.md#types):** a `when` that assigns to a field of `ctx`, a callback that assigns to a field of its event, a `machine.matches()` in a hook given a `string` variable or a path that names no state, a state built ahead of the config with a field no state has, and a path below a state with no child states all fail to compile.
 > - **State machines** repeat code with [`every`](./state-machines.md#repeat-while-a-state-is-active), put [rules on timers](./state-machines.md#rules-on-a-timer), group states with [tags](./state-machines.md#name-a-group-of-states-with-tags), wait for several engine calls with [`waitGroup()`](./state-machines.md#waitgroup), react to any event no state took with one [`unhandled`](./state-machines.md#react-to-an-unhandled-event) hook and resume a saved game from [saved state paths](./state-machines.md#start-at-saved-paths).
-> - **[`hsm-view`](./hsm-view.md)** glows `every` runs, dims held timers, glows nothing for a `can` call and, attached to a running game, glows the rule each `inspect` move line names.
+> - **[`hsm-view`](./view.md)** glows `every` runs, dims held timers, glows nothing for a `can` call and, attached to a running game, glows the rule each `inspect` move line names.
 > - **The [state machines tutorial](./state-machines-tutorial.md)** builds one robot buddy machine and a charging dock step by step, shows each change as a diff and covers every `hsm` feature.
 
 ### Breaking
@@ -410,7 +415,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`unhandled` hook** — one hook on a state, or on the root, reacts to every event no state took, such as refusing any request by name; the event stays unhandled, so `can` still answers `false` for it; see [React to an unhandled event](./state-machines.md#react-to-an-unhandled-event).
   - **`onUnhandled(listener)`** — calls the listener with each event no active state took, and `inspect` prints an `unhandled` line for it; see [Listen for unhandled events](./state-machines.md#listen-for-unhandled-events).
   - **Start position** — `start(ctx, at)` takes a list of state paths, such as a saved copy of `leaves`, and enters those states through an ordinary entry; a path the machine lacks falls back to its closest parent, so a save made before an edit still loads; see [Start at saved paths](./state-machines.md#start-at-saved-paths).
-  - **[`hsm-view`](./hsm-view.md)** — the page glows an `every` entry that ran and the timer that fired, dims a timer its `when` holds back and glows nothing for a `can` call a hook makes; see [Read the code](./hsm-view.md#read-the-code). Attached to a running game, it glows the rule that made each move, which an `inspect` move line names by its state and key, as in `(OPEN: /closed, 0)`; see [Attach to a running game](./hsm-view.md#attach-to-a-running-game).
+  - **[`hsm-view`](./view.md)** — the page glows an `every` entry that ran and the timer that fired, dims a timer its `when` holds back and glows nothing for a `can` call a hook makes; see [Read the code](./view.md#read-the-code). Attached to a running game, it glows the rule that made each move, which an `inspect` move line names by its state and key, as in `(OPEN: /closed, 0)`; see [Attach to a running game](./view.md#attach-to-a-running-game).
   - **Animation recipe** — the guide builds one knight machine with looping animations, one-shots that finish before the next state, in-between animations between postures and a jump kept until it can play; see [Animation states with one-shots](./state-machines.md#animation-states-with-one-shots).
   - **Waiting recipes** — the guide shows how a state moves on once something has finished: a chain of child states, engine work counted with `waitGroup()`, parallel regions joined by an `always` rule, and a group awaited in a `sequence`; see [Wait for something to finish](./state-machines.md#wait-for-something-to-finish).
   - **Several machines recipes** — the guide shows how two machines work together: machines on separate game objects that post messages to each other, two machines in one script where one reads the other, and a machine that runs only while a state of another is active; see [Several machines](./state-machines.md#several-machines).
@@ -420,7 +425,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - **Timer marks across a hot reload** — in a state whose `after` list reads a delay from the context, each timer keeps its own fired mark when a hot reload reorders the delays. A timer that had fired could fire again, and one that had not could be skipped; see [What each instance keeps](./state-machines.md#what-each-instance-keeps).
-- **`hsm-view` on an `after` list** — playing a machine whose `after` is a list glows the entry that fired. The first entry glowed whichever one fired; see [Read the code](./hsm-view.md#read-the-code).
+- **`hsm-view` on an `after` list** — playing a machine whose `after` is a list glows the entry that fired. The first entry glowed whichever one fired; see [Read the code](./view.md#read-the-code).
 
 ## v0.48.0
 
@@ -451,7 +456,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **`hsm` machines keep private fields:** `definePrivateMachine` takes a `privateCtx` function on the root config, and its fields reach every hook beside the context while `start` and the instance's `ctx` show the context alone; see [Private fields with `definePrivateMachine`](./state-machines.md#private-fields-with-privatectx). [`hsm-view`](./hsm-view.md#run-the-machine) lists such a machine and shows the fields in its ctx panel.
+- **`hsm` machines keep private fields:** `definePrivateMachine` takes a `privateCtx` function on the root config, and its fields reach every hook beside the context while `start` and the instance's `ctx` show the context alone; see [Private fields with `definePrivateMachine`](./state-machines.md#private-fields-with-privatectx). [`hsm-view`](./view.md#run-the-machine) lists such a machine and shows the fields in its ctx panel.
 - **[bridge](https://defold-typescript.github.io/library-data/api/bridge) sends game events:** `bridge.analytics.send` takes an event name and an optional `data` table.
 
 ### Fixed
@@ -463,17 +468,17 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm`](./state-machines.md#cheat-sheet)** gains a cheat sheet and hover docs; [`hsm-view`](./hsm-view.md) takes the docs site's look, shows icons on its controls, reads object literals, marks a field it cannot read, opens it in a dialog and logs every failed action.
+> - **[`hsm`](./state-machines.md#cheat-sheet)** gains a cheat sheet and hover docs; [`hsm-view`](./view.md) takes the docs site's look, shows icons on its controls, reads object literals, marks a field it cannot read, opens it in a dialog and logs every failed action.
 > - **[A script that exports an `hsm` machine](./script-state.md#exporting-a-value-from-a-script-itself)** loads in the game.
 
 ### Improved
 
 - **`hsm` documents itself in the editor:** every config key, every `MachineInstance` member and every export of the four `hsm` modules shows what it does on hover and beside each completion; see [Reference](./state-machines.md#reference).
-- **`hsm-view` has a new look, icons on its controls, fields that check what you type and open in a dialog, and a log line for every failed action;** see [Run the machine](./hsm-view.md#run-the-machine):
+- **`hsm-view` has a new look, icons on its controls, fields that check what you type and open in a dialog, and a log line for every failed action;** see [Run the machine](./view.md#run-the-machine):
   - **Look** — the page uses the docs site's palette in light and dark, and its buttons, fields, dropdowns, layout toggle and log checkboxes show hover, focus and disabled states on a muted bar.
   - **Icons** — `Start`, `Play`, `Pause`, `Step` and the layout toggle's `List` and `Stacked` each draw an icon before the label, and the ctx tree's expand and collapse arrows are icons.
   - **Fields** — the starting context and the event payload take a TypeScript object literal such as `{ enter: true, from: 'pad' }` as well as JSON, and a field that cannot be read is outlined in red while you type, with a message that names where the mistake is. A button beside each field opens its text in a dialog with a multi-line editor, where `Start` or `Apply` writes it back.
-  - **Errors** — every failed action adds an error line to the log, and one that belongs to no field also shows in a popup that closes by itself. The banner under the bar shows what still holds, such as a lost connection or a halted machine; see [Errors](./hsm-view.md#errors).
+  - **Errors** — every failed action adds an error line to the log, and one that belongs to no field also shows in a popup that closes by itself. The banner under the bar shows what still holds, such as a lost connection or a halted machine; see [Errors](./view.md#errors).
 - **The State machines guide has a cheat sheet:** three tables pair a task with its solution and a snippet to copy, covering each common state config part, the instance, context, event and path types read off the machine with `typeof` and `ReturnType`, and five ways to type `self`; see [Cheat sheet](./state-machines.md#cheat-sheet). New sections show how to [restart a machine](./state-machines.md#restart-a-machine) and how a restart [works with hot reload](./state-machines.md#restart-on-a-hot-reload).
 
 ### Fixed
@@ -505,7 +510,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[`hsm-view`](./hsm-view.md)** shows its page again.
+> - **[`hsm-view`](./view.md)** shows its page again.
 
 ### Fixed
 
@@ -517,7 +522,7 @@ What changed in each published `defold-typescript` toolchain release.
 >
 > - **[`hsm` names read as sentences](./state-machines.md#events-and-transitions)**: rules go `to` a state `when` a check passes and `run` code, and a state's `task` replaces `invoke`.
 > - **[Self-targets restart](./state-machines.md#events-and-transitions)**: a `to` naming the rule's own state exits and re-enters it, replacing `reenter`.
-> - **[`hsm-view`](./hsm-view.md)** runs a state-machine file in your browser, with live reload on save, and [follows a running game](./hsm-view.md#attach-to-a-running-game).
+> - **[`hsm-view`](./view.md)** runs a state-machine file in your browser, with live reload on save, and [follows a running game](./view.md#attach-to-a-running-game).
 > - **[`hsm` state flow](./state-machines.md#scripted-sequences)** gains cancellable sequences, [restore on entry](./state-machines.md#resume-with-history), [`always`](./state-machines.md#move-on-at-once-with-always) and [`parallel`](./state-machines.md#run-regions-side-by-side-with-parallel) regions.
 > - **[`hsm` hot reload](./state-machines.md#hot-reload)** reaches running machines, and an [inspector](./state-machines.md#debug-a-machine) logs each move.
 
@@ -530,7 +535,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **`hsm-view` runs a state machine in your browser:** `bunx @defold-typescript/cli hsm-view <file> [name]` serves a local page that runs the machine from source, tints its active states in the code, glows each rule that fires and, more dimly, each `on` entry whose `when` turned the event away, and lets you send events, play or step time, edit its ctx and read a log, reloading live on every save; see [hsm-view](./hsm-view.md). It can also attach to a game launched from the editor and tint the states of an `inspect`ed instance as the game moves it; see [Attach to a running game](./hsm-view.md#attach-to-a-running-game).
+- **`hsm-view` runs a state machine in your browser:** `bunx @defold-typescript/cli hsm-view <file> [name]` serves a local page that runs the machine from source, tints its active states in the code, glows each rule that fires and, more dimly, each `on` entry whose `when` turned the event away, and lets you send events, play or step time, edit its ctx and read a log, reloading live on every save; see [hsm-view](./view.md). It can also attach to a game launched from the editor and tint the states of an `inspect`ed instance as the game moves it; see [Attach to a running game](./view.md#attach-to-a-running-game).
 - **`hsm` machines are easier to script, resume, branch, split into regions, debug, reload and budget:**
   - **Scripted sequences** — a `task` may return a cleanup the machine runs on every way out of the state, and `sequence(async (ctx, signal) => ...)` from `@defold-typescript/types/hsm/async` builds one whose `await signal.wait(seconds)` never resumes after the state is left. Any other `await` in a sequence can resume after the state is left, so check `signal.aborted` after it; see [Scripted sequences](./state-machines.md#scripted-sequences).
   - **Restore on entry** — `restoreDepth` on a compound state enters the children that were active when it was last left instead of `initial`, that many levels down or every level with `"all"`, and a parallel state does not count as a level. The memory is per instance and survives a hot reload, while a target inside the state still lands where it names; see [Resume with history](./state-machines.md#resume-with-history).
