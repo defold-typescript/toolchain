@@ -1044,6 +1044,32 @@ export default defineScript({
     expect(prints(snapshot)).toEqual(["speed 2"]);
   });
 
+  test("places each system's source in the index's files", () => {
+    const systems = `import { processingSystem, requireAll, system } ${ECS_IMPORT};
+export const move = processingSystem("move")(requireAll("x"), { process() {} });
+export const idle = system()({ update() {} });
+`;
+    writeFileSync(path.join(dir, "systems.ts"), systems);
+    const view = session(`import { world } ${ECS_IMPORT};
+import { idle, move } from "./systems";
+export const garden = world(move, idle, { x: 0 });
+`);
+    const span = (text: string) => ({
+      file: 1,
+      start: systems.indexOf(text),
+      end: systems.indexOf(text) + text.length,
+    });
+
+    expect(view.index().files.map((file) => path.basename(file.path))).toEqual([
+      "main.ts",
+      "systems.ts",
+    ]);
+    expect(view.snapshot().systems.map((system) => system.source)).toEqual([
+      span("{ process() {} }"),
+      span("{ update() {} }"),
+    ]);
+  });
+
   test("calls the script's update, then the started machine's, on one clock that start leaves running", () => {
     const view = session(`${SCRIPT_IMPORT}
 ${HSM_IMPORT}

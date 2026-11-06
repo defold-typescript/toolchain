@@ -1,14 +1,15 @@
 import type { IndexedSpan, MachineIndex } from "../src/hsm-view-index";
 import type { HsmViewFile } from "../src/hsm-view-server";
-import type { Snapshot } from "../src/hsm-view-session";
+import type { Snapshot, SystemSnapshot } from "../src/hsm-view-session";
 
-/** Names one highlightable span: a state key, a rule, or an `on` event key. */
+/** Names one highlightable span: a state key, a rule, an `on` event key, or a system. */
 export type SpanId = string;
 
 export const stateSpanId = (statePath: string): SpanId => `state:${statePath}`;
 export const ruleSpanId = (ruleId: string): SpanId => `rule:${ruleId}`;
 export const onKeySpanId = (statePath: string, event: string): SpanId =>
   `on:${JSON.stringify([statePath, event])}`;
+export const systemSpanId = (system: number): SpanId => `system:${system}`;
 
 export interface Highlight {
   readonly tinted: ReadonlySet<SpanId>;
@@ -52,6 +53,19 @@ export function indexSpans(index: MachineIndex): Map<SpanId, IndexedSpan> {
   }
   for (const [ruleId, span] of Object.entries(index.rules)) {
     spans.set(ruleSpanId(ruleId), span);
+  }
+  return spans;
+}
+
+/** The definition of each of the picked world's systems that has one, by id. */
+export function systemSpans(
+  systems: readonly Pick<SystemSnapshot, "index" | "source">[],
+): Map<SpanId, IndexedSpan> {
+  const spans = new Map<SpanId, IndexedSpan>();
+  for (const { index, source } of systems) {
+    if (source !== undefined) {
+      spans.set(systemSpanId(index), source);
+    }
   }
   return spans;
 }
@@ -107,7 +121,7 @@ export function spansByLine(
   const perLine: LineSpan[][] = file.lines.map(() => []);
   for (const [id, span] of spans) {
     for (
-      let line = lineAt(file.starts, span.start);
+      let line = lineOf(file, span.start);
       line < perLine.length && (file.starts[line] as number) < span.end;
       line++
     ) {
@@ -122,7 +136,9 @@ export function spansByLine(
   return perLine;
 }
 
-function lineAt(starts: readonly number[], offset: number): number {
+/** The line of `file` that holds `offset`. */
+export function lineOf(file: Pick<HsmViewFile, "starts">, offset: number): number {
+  const { starts } = file;
   let low = 0;
   let high = starts.length - 1;
   while (low < high) {

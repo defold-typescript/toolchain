@@ -1,4 +1,10 @@
-import { PauseIcon, PlayIcon, PowerIcon, SkipForwardIcon } from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwiseIcon,
+  PauseIcon,
+  PlayIcon,
+  PowerIcon,
+  SkipForwardIcon,
+} from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { type ComponentProps, type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +14,7 @@ import { type FieldName, fieldError } from "./fields";
 import { JsonDialog } from "./json-dialog";
 import { LayoutToggle } from "./layouts";
 import { SearchBox } from "./search-box";
-import { advances, SPEEDS, useViewer, type ViewerStore } from "./store";
+import { advances, SPEEDS, shownTab, useViewer, type ViewerStore } from "./store";
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -25,13 +31,19 @@ const FIELDS = ["startCtx", "payload", "dt"] as const satisfies readonly FieldNa
 
 const errorId = (name: FieldName): string => `bar-error-${name}`;
 
-/** The controls fixed at the top of the page. */
+/** The controls fixed at the top of the page: the clock, then the shown tab's own. */
 export function Bar({ store }: { store: ViewerStore }) {
+  const tab = useViewer(store, shownTab);
   const machines = useViewer(store, (state) => state.index?.machines);
   const picked = useViewer(store, (state) => state.snapshot?.picked);
+  const runInstances = useViewer(store, (state) => state.snapshot?.instances);
+  const following = useViewer(store, (state) => state.snapshot?.following);
+  const worlds = useViewer(store, (state) => state.snapshot?.worlds);
+  const world = useViewer(store, (state) => state.snapshot?.world);
   const running = useViewer(store, (state) => advances(state.snapshot));
   const accepts = useViewer(store, (state) => state.snapshot?.accepts);
   const t = useViewer(store, (state) => state.snapshot?.t ?? 0);
+  const frame = useViewer(store, (state) => state.snapshot?.frame ?? 0);
   const leaves = useViewer(store, (state) => state.snapshot?.leaves);
   const speed = useViewer(store, (state) => state.speed);
   const playing = useViewer(store, (state) => state.playing);
@@ -76,99 +88,18 @@ export function Bar({ store }: { store: ViewerStore }) {
   return (
     <>
       <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-border border-b bg-muted px-2 py-1">
-        <Group label="machine">
-          <NativeSelect
-            aria-label="machine"
-            size="sm"
-            value={picked ?? ""}
-            onChange={(event) => {
-              actions.setPlaying(false);
-              void actions.pick(event.target.value);
-            }}
-          >
-            {(machines ?? []).map((name) => (
-              <NativeSelectOption key={name} value={name}>
-                {name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          {input("startCtx", { "aria-label": "start ctx", className: "h-8 w-40 px-2" })}
-          <JsonDialog
-            field="startCtx"
-            title="Start ctx"
-            confirmLabel="Start"
-            disabled={!simulating}
-            read={() => form.getFieldValue("startCtx")}
-            onConfirm={(text) => {
-              form.setFieldValue("startCtx", text);
-              actions.setStartCtx(text);
-              void actions.start();
-            }}
-          />
+        <Group label="time">
           <Button
             type="button"
+            variant="secondary"
             size="sm"
+            title="rerun the files and the script's init from t=0"
             disabled={!simulating}
-            onClick={() => void actions.start()}
+            onClick={() => void actions.restart()}
           >
-            <PowerIcon aria-hidden="true" />
-            Start
+            <ArrowCounterClockwiseIcon aria-hidden="true" />
+            Restart
           </Button>
-        </Group>
-        <Group label="live">
-          <NativeSelect
-            aria-label="live instance"
-            title="an inspected instance of the game running from the editor"
-            size="sm"
-            value={attached ?? ""}
-            onChange={(event) => {
-              const label = event.target.value;
-              if (label === "") {
-                void actions.detach();
-              } else {
-                actions.attach(label);
-              }
-            }}
-          >
-            <NativeSelectOption value="">live: off</NativeSelectOption>
-            {instances.map((instance) => (
-              <NativeSelectOption key={instance.label} value={instance.label}>
-                {instance.stopped ? `${instance.label} (stopped)` : instance.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </Group>
-        <Group label="events">
-          {(accepts ?? []).map((type) => (
-            <Button
-              key={type}
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!simulating}
-              onClick={() => void actions.send(type)}
-            >
-              {type}
-            </Button>
-          ))}
-          {input("payload", {
-            "aria-label": "payload",
-            placeholder: "payload {a: 1}",
-            title: "the event's other fields, as an object literal or JSON",
-            className: "h-8 w-36 px-2",
-          })}
-          <JsonDialog
-            field="payload"
-            title="Payload"
-            confirmLabel="Apply"
-            read={() => form.getFieldValue("payload")}
-            onConfirm={(text) => {
-              form.setFieldValue("payload", text);
-              actions.setPayload(text);
-            }}
-          />
-        </Group>
-        <Group label="time">
           <Button
             type="button"
             variant="secondary"
@@ -202,11 +133,144 @@ export function Bar({ store }: { store: ViewerStore }) {
               </NativeSelectOption>
             ))}
           </NativeSelect>
-          <span className="tabular-nums">t={t.toFixed(2)}</span>
+          <span data-clock="t" className="tabular-nums">
+            t={t.toFixed(2)}
+          </span>
+          <span data-clock="frame" className="tabular-nums">
+            frame={frame}
+          </span>
         </Group>
-        <span className="min-w-0 truncate text-muted-foreground" title="active leaves">
-          {(leaves ?? []).join(", ")}
-        </span>
+        {tab === "machines" ? (
+          <>
+            <Group label="machine">
+              <NativeSelect
+                aria-label="machine"
+                size="sm"
+                value={picked ?? ""}
+                onChange={(event) => {
+                  actions.setPlaying(false);
+                  void actions.pick(event.target.value);
+                }}
+              >
+                {(machines ?? []).map((name) => (
+                  <NativeSelectOption key={name} value={name}>
+                    {name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              <NativeSelect
+                aria-label="instance"
+                title="the machine instance this tab shows: the simulated one, or one the run started"
+                size="sm"
+                value={following === undefined ? "" : String(following)}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  void actions.follow(id === "" ? undefined : Number(id));
+                }}
+              >
+                <NativeSelectOption value="">simulated</NativeSelectOption>
+                {(runInstances ?? []).map((instance) => (
+                  <NativeSelectOption key={instance.id} value={String(instance.id)}>
+                    {instance.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              {input("startCtx", { "aria-label": "start ctx", className: "h-8 w-40 px-2" })}
+              <JsonDialog
+                field="startCtx"
+                title="Start ctx"
+                confirmLabel="Start"
+                disabled={!simulating}
+                read={() => form.getFieldValue("startCtx")}
+                onConfirm={(text) => {
+                  form.setFieldValue("startCtx", text);
+                  actions.setStartCtx(text);
+                  void actions.start();
+                }}
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={!simulating}
+                onClick={() => void actions.start()}
+              >
+                <PowerIcon aria-hidden="true" />
+                Start
+              </Button>
+            </Group>
+            <Group label="live">
+              <NativeSelect
+                aria-label="live instance"
+                title="an inspected instance of the game running from the editor"
+                size="sm"
+                value={attached ?? ""}
+                onChange={(event) => {
+                  const label = event.target.value;
+                  if (label === "") {
+                    void actions.detach();
+                  } else {
+                    actions.attach(label);
+                  }
+                }}
+              >
+                <NativeSelectOption value="">live: off</NativeSelectOption>
+                {instances.map((instance) => (
+                  <NativeSelectOption key={instance.label} value={instance.label}>
+                    {instance.stopped ? `${instance.label} (stopped)` : instance.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </Group>
+            <Group label="events">
+              {(accepts ?? []).map((type) => (
+                <Button
+                  key={type}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!simulating}
+                  onClick={() => void actions.send(type)}
+                >
+                  {type}
+                </Button>
+              ))}
+              {input("payload", {
+                "aria-label": "payload",
+                placeholder: "payload {a: 1}",
+                title: "the event's other fields, as an object literal or JSON",
+                className: "h-8 w-36 px-2",
+              })}
+              <JsonDialog
+                field="payload"
+                title="Payload"
+                confirmLabel="Apply"
+                read={() => form.getFieldValue("payload")}
+                onConfirm={(text) => {
+                  form.setFieldValue("payload", text);
+                  actions.setPayload(text);
+                }}
+              />
+            </Group>
+            <span className="min-w-0 truncate text-muted-foreground" title="active leaves">
+              {(leaves ?? []).join(", ")}
+            </span>
+          </>
+        ) : (
+          <Group label="world">
+            <NativeSelect
+              aria-label="world"
+              size="sm"
+              value={world ?? ""}
+              onChange={(event) => void actions.pickWorld(event.target.value)}
+            >
+              {(worlds ?? []).map((name) => (
+                <NativeSelectOption key={name} value={name}>
+                  {name}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </Group>
+        )}
         <div className="ml-auto flex items-center gap-2">
           <SearchBox store={store} />
           <LayoutToggle store={store} />
