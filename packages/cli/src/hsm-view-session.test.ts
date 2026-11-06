@@ -1525,4 +1525,74 @@ describe("createSession follow", () => {
     expect(restarted.following).toBeUndefined();
     expect(restarted.instances.map((instance) => instance.id)).toEqual([1, 2, 3]);
   });
+
+  test("halts the run on a throw from a followed instance, which only restart continues", () => {
+    const view = session(`${SCRIPT_IMPORT}
+import { world } ${ECS_IMPORT};
+import { join, tickMachines } from "@defold-typescript/types/ecs/hsm";
+import { defineMachine, type MachineInstance } from "@defold-typescript/types/hsm";
+
+type WalkerEvent = { type: "TRIP" };
+
+interface Walker {
+  readonly name: string;
+  fsm?: MachineInstance<Walker, WalkerEvent>;
+}
+
+export const herd = world<Walker>(tickMachines<Walker>("fsm"));
+
+export const walker = defineMachine<Walker, WalkerEvent>()({
+  initial: "/walk",
+  enter: join(herd),
+  states: {
+    walk: {
+      on: {
+        TRIP: {
+          run: (ctx) => {
+            throw new Error(\`\${ctx.name} tripped\`);
+          },
+        },
+      },
+    },
+  },
+});
+
+export default defineScript({
+  init() {
+    const a: Walker = { name: "a" };
+    a.fsm = walker.start(a);
+    return { a };
+  },
+  update(_self, dt) {
+    herd.update(dt);
+  },
+});
+`);
+    view.update(0.5);
+    view.follow(1);
+
+    expect(view.send({ type: "TRIP" })).toMatchObject({
+      following: 1,
+      running: false,
+      error: "a tripped",
+    });
+    expect(view.start({ name: "sim" })).toMatchObject({
+      following: 1,
+      running: false,
+      error: "a tripped",
+      t: 0.5,
+      frame: 1,
+    });
+    expect(view.update(0.5)).toMatchObject({ running: false, t: 0.5, frame: 1 });
+
+    const restarted = view.restart();
+    expect(restarted).toMatchObject({ running: true, t: 0, frame: 0, following: undefined });
+    expect(restarted.error).toBeUndefined();
+    expect(restarted.instances.map((instance) => [instance.id, instance.machine])).toEqual([
+      [1, "walker"],
+    ]);
+    const resumed = view.update(0.5);
+    expect(resumed).toMatchObject({ running: true, t: 0.5, frame: 1 });
+    expect(resumed.instances).toEqual([{ id: 1, label: "herd entity 1", machine: "walker" }]);
+  });
 });
