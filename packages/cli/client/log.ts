@@ -1,7 +1,7 @@
 import type { SnapshotEntry } from "../src/hsm-view-session";
 
-/** The entry groups the log can hide; errors, reloads, edits, joins and leaves always show. */
-export type LogKind = "transition" | "event" | "engine" | "print";
+/** The entry groups the log can hide; errors, reloads and edits always show. */
+export type LogKind = "transition" | "event" | "engine" | "print" | "membership";
 
 export const LOG_LIMIT = 500;
 
@@ -28,8 +28,8 @@ const KIND_OF: Readonly<Record<SnapshotEntry["kind"], LogKind | undefined>> = {
   edit: undefined,
   reload: undefined,
   error: undefined,
-  join: undefined,
-  leave: undefined,
+  join: "membership",
+  leave: "membership",
 };
 
 // A transition repeats when it moves the same way for the same reason, whatever the event carried.

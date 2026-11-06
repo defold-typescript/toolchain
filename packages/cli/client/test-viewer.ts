@@ -1,5 +1,5 @@
 import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
-import { createHsmViewApp } from "../src/hsm-view-server";
+import { createHsmViewApp, type HsmViewOpening } from "../src/hsm-view-server";
 import { createSession, type HsmViewSession } from "../src/hsm-view-session";
 import { httpApi } from "./api";
 import { createViewerStore, type FrameScheduler, type ViewerStore } from "./store";
@@ -21,12 +21,13 @@ export interface TestViewerOptions {
   /** Called with each route before it reaches the server; a returned promise keeps it off until it settles. */
   readonly hold?: (route: string) => Promise<void> | undefined;
   readonly notify?: (message: string) => void;
+  readonly opening?: HsmViewOpening;
 }
 
-/** A store wired to the real routes of a session on `file`, loaded and started with `ctx`. */
+/** A store wired to the real routes of a session on `file`, loaded and, given a `ctx`, started with it. */
 export async function startViewer(
   file: string,
-  ctx: string,
+  ctx: string | undefined,
   options: TestViewerOptions = {},
 ): Promise<TestViewer> {
   const session = createSession({
@@ -34,7 +35,11 @@ export async function startViewer(
     hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY),
     ecsSourceDir: requireLibrarySourceDir(ECS_LIBRARY),
   });
-  const app = createHsmViewApp({ session, client: { js: "", css: "" } });
+  const app = createHsmViewApp({
+    session,
+    client: { js: "", css: "" },
+    ...(options.opening === undefined ? {} : { opening: options.opening }),
+  });
   const requests: Request[] = [];
   const store = createViewerStore({
     api: httpApi(async (url, init) => {
@@ -48,8 +53,10 @@ export async function startViewer(
     ...(options.notify === undefined ? {} : { notify: options.notify }),
   });
   await store.getState().load();
-  store.getState().setStartCtx(ctx);
-  await store.getState().start();
+  if (ctx !== undefined) {
+    store.getState().setStartCtx(ctx);
+    await store.getState().start();
+  }
   requests.length = 0;
   return { session, store, requests };
 }
