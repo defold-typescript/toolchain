@@ -2,10 +2,10 @@
  * The checks a library guide's fence gate runs on its pages: every `ts` fence is written into a
  * temp project next to the library declarations, type-checked at the strictness `init` scaffolds
  * against the declarations `@defold-typescript/types` ships, and transpiled through the build. A
- * `ts excerpt` fence must quote an excerpt source whose own fences pass the same checks. A page's
- * `## Reference` tables are read back as the first-cell names of their rows, for a gate to hold
- * them to the exports of the library source. A tutorial's `ts step` fences build one project per
- * lesson, and the last one is held to the surface the library's entry points ship.
+ * `ts excerpt` or `ts builder` fence must quote an excerpt source whose own fences pass the same
+ * checks. A page's `## Reference` tables are read back as the first-cell names of their rows, for
+ * a gate to hold them to the exports of the library source. A tutorial's `ts step` fences build
+ * one project per lesson, and the last one is held to the surface the library's entry points ship.
  */
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
@@ -52,15 +52,19 @@ export const FENCE_TITLE = /^(?!src\/)[\w-]+(?:\/[\w-]+)*\.ts$/;
 
 // The info string's second token, as the docs site reads `original`: Shiki and
 // the language badge take only the first, so the fence still renders as `ts`.
+// A `builder` fence is the Builder tab of the config fence before it, quoted
+// from the excerpt source as a `ts excerpt` fence is.
+const EXCERPT_MARKERS: ReadonlySet<string> = new Set(["excerpt", "builder"]);
+
 export function isExcerptFence(info: string): boolean {
-  return info.trim().split(/\s+/)[0] === "excerpt";
+  return EXCERPT_MARKERS.has(info.trim().split(/\s+/)[0] ?? "");
 }
 
 export function collapseWhitespace(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
-/** The `ts excerpt` fences of `guide` that `source` does not hold, whitespace aside. */
+/** The `ts excerpt` and `ts builder` fences of `guide` that `source` does not hold, whitespace aside. */
 export function unquotedExcerpts(guide: string, source: string): string[] {
   return tsFences(guide)
     .filter((fence) => isExcerptFence(fence.info))
@@ -68,7 +72,7 @@ export function unquotedExcerpts(guide: string, source: string): string[] {
     .filter((excerpt) => excerpt.length === 0 || !source.includes(excerpt));
 }
 
-/** The compiled `ts` fences of `guide`: every one but the excerpt and step fences. */
+/** The compiled `ts` fences of `guide`: every one but the excerpt, builder and step fences. */
 export function guideFences(guide: string): Fence[] {
   const fences: Fence[] = [];
   let index = 0;

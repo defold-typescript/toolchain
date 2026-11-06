@@ -6,7 +6,8 @@
  * compile error does so with `// @ts-expect-error`, which this gate then proves.
  * A fence that cannot compile alone, a config key or a method shown by itself,
  * is a `ts excerpt` fence: it must quote the excerpt source, whose fences
- * compile under the same checks.
+ * compile under the same checks. A `ts builder` fence, the Builder tab of the
+ * config fence before it, quotes the excerpt source the same way.
  * A `ts step` fence on the tutorial is a diff of a file the reader builds: the
  * files each lesson leaves must compile and transpile as one project, and the
  * last lesson's project must use every member and call every function the hsm
@@ -397,6 +398,25 @@ describe("hsm guide excerpts", () => {
   test("the gate can fail: an excerpt the source does not hold is reported", () => {
     const guide = '```ts excerpt\nafter: { 5: "/nowhere" }\n```\n';
     expect(unquotedExcerpts(guide, source)).toEqual(['after: { 5: "/nowhere" }']);
+  });
+
+  test("a ts builder fence is an excerpt: the source must hold it", () => {
+    const guide = '```ts builder\nm.state("/nowhere").after(5).to("/idle");\n```\n';
+    expect(unquotedExcerpts(guide, source)).toEqual(['m.state("/nowhere").after(5).to("/idle");']);
+  });
+
+  test("a ts builder fence is not compiled alone", () => {
+    const guide = [
+      "```ts excerpt",
+      'after: { 5: "/idle" }',
+      "```",
+      "",
+      "```ts builder",
+      'm.state("/patrol").after(5).to("/idle");',
+      "```",
+      "",
+    ].join("\n");
+    expect(guideFences(guide)).toEqual([]);
   });
 });
 

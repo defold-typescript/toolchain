@@ -91,6 +91,31 @@ alive: {
 },
 ```
 
+```ts builder
+const m = buildMachine<EnemyCtx, EnemyEvent>()({
+  initial: "/alive",
+  states: {
+    alive: {
+      initial: "/alive/patrol",
+      states: { patrol: {}, chase: {} },
+    },
+    dead: {},
+  },
+});
+
+m.state("/alive")
+  .on("HIT")
+  .when((ctx, event) => ctx.health <= event.damage)
+  .to("/dead");
+m.state("/alive").on("HIT").run((ctx, event) => {
+  ctx.health -= event.damage;
+});
+m.state("/alive/patrol").on("SEE_PLAYER").to("/alive/chase");
+m.state("/alive/chase").on("SEE_PLAYER").to("/alive/chase");
+m.state("/alive/chase").on("LOSE_PLAYER").to("/alive/patrol");
+m.state("/alive/chase").on("FALL").to("/dead");
+```
+
 - **Which rule runs.** An event starts at the deepest active state and moves up to the root. The first rule with no `when`, or whose `when` returns `true`, runs, and the event goes no further: `HIT` sent in `/alive/chase` reaches `alive`. An event no rule takes is dropped; see [React to an unhandled event](#react-to-an-unhandled-event).
 - **A rule with no `to`** runs its `run` and nothing else: no state exits or enters. The second `HIT` rule is one.
 - **A target is a full path,** wherever it is declared. `./patrol`, `../patrol` and a bare `patrol` are not paths, and `defineMachine` throws on them, naming the state that declares them.
@@ -119,6 +144,24 @@ states: {
 },
 ```
 
+```ts builder
+const m = buildMachine<DoorCtx, DoorEvent>()({
+  initial: "/closed",
+  states: { closed: {}, open: {}, locked: {} },
+});
+
+// in every state: refuse, by name, whatever request the door did not take
+m.root.unhandled((_ctx, event) =>
+  msg.post(event.sender, "door_refused", { request: event.type }),
+);
+m.state("/closed").on("open_door").to("/open");
+m.state("/closed").on("lock_door").to("/locked");
+m.state("/open").on("close_door").to("/closed");
+// in this state only: any request but the unlock rattles the handle
+m.state("/locked").unhandled((ctx) => sprite.play_flipbook(ctx.sprite, "rattle"));
+m.state("/locked").on("unlock_door").to("/closed");
+```
+
 A locked door asked to open rattles its handle, then tells the sender the request was refused; `closed` and `open` only refuse. No rule took the request, so [`can`](#ask-whether-an-event-would-be-taken) still answers `false` for it.
 
 - **It runs for the events an [`onUnhandled` listener](#listen-for-unhandled-events) hears, and no others.** An event a parent state takes runs no hook, on any state.
@@ -143,6 +186,15 @@ coyote: {
   after: { 0.1: "/falling" },
   on: { JUMP: "/jumping" },
 },
+```
+
+```ts builder
+m.state("/grounded").update((ctx) => (ctx.on_ground ? undefined : "/coyote"));
+m.state("/grounded").on("JUMP").to("/jumping");
+// Just after walking off a ledge, a jump still counts.
+m.state("/coyote").update((ctx) => (ctx.on_ground ? "/grounded" : undefined));
+m.state("/coyote").after(0.1).to("/falling");
+m.state("/coyote").on("JUMP").to("/jumping");
 ```
 
 - **Clocks count the `dt` passed in.** Every active state adds `dt` to its own clock on every call and starts from zero each time it is entered, so a machine whose `update` is not called is frozen in time.
@@ -181,6 +233,19 @@ landing: {
 },
 ```
 
+```ts builder
+// Code at a set time, without leaving the state.
+m.state("/charging").after(1).run(() => sound.play("#beep"));
+// Code that belongs to one move.
+m.state("/charging").after(3).to("/idle").run(countTimeout);
+m.state("/charging").on("RELEASE").to("/idle");
+// A minimum time, and then a condition.
+m.state("/landing")
+  .after(0.3)
+  .when((ctx) => ctx.grounded)
+  .to("/idle");
+```
+
 - A rule takes `to`, `when(ctx, machine)` and `run(ctx, machine)`, each optional, and a list entry takes them beside `delay`. A rule with neither a `to` nor a `run` throws when the machine is defined.
 - A timer fires at most once per stay.
 - A due timer whose `when` fails is tried again on every `update` call until it passes or the state is left, so `landing` lasts at least 0.3 seconds and ends on the first tick that finds the hero on the ground. The timers after it are still tried.
@@ -205,6 +270,21 @@ cooling: {
   },
   after: { 3: "/idle" },
 },
+```
+
+```ts builder
+// A rate of fire read from the context.
+m.state("/firing")
+  .every((ctx) => ctx.fireEvery)
+  .run((ctx) => msg.post(ctx.muzzle, "fire"));
+m.state("/firing").on("LOSE").to("/cooling");
+// A fixed delay, beside a timer that leaves the state.
+m.state("/cooling")
+  .every(0.5)
+  .run((ctx) => {
+    ctx.heat -= 1;
+  });
+m.state("/cooling").after(3).to("/idle");
 ```
 
 - `every` takes a record of seconds to `run`, or a list of `{ delay, run }` whose `delay` is read as an [`after` delay](#a-delay-that-reads-the-context) is. `run` is one function or a list run in order, called with `(ctx, machine)`. A delay that is not a positive number throws, naming the state.
@@ -236,6 +316,32 @@ playing: {
 paused: { on: { RESUME: "/playing", RESTART: "/playing/ground" } },
 ```
 
+```ts builder
+const m = buildMachine<object, PlayEvent>()({
+  initial: "/playing",
+  states: {
+    playing: {
+      restoreDepth: 1,
+      initial: "/playing/ground",
+      states: {
+        ground: {},
+        air: {
+          initial: "/playing/air/rise",
+          states: { rise: {}, fall: {} },
+        },
+      },
+    },
+    paused: {},
+  },
+});
+
+m.state("/playing").on("PAUSE").to("/paused");
+m.state("/playing/ground").on("JUMP").to("/playing/air");
+m.state("/playing/air/rise").on("FALL").to("/playing/air/fall");
+m.state("/paused").on("RESUME").to("/playing");
+m.state("/paused").on("RESTART").to("/playing/ground");
+```
+
 Pausing in mid-air and sending `RESUME` lands on `/playing/air/rise`, running the `enter` hooks of `playing`, `air` and `rise`.
 
 - **The count sets how deep the restore goes.** With `1`, leaving from `/playing/air/fall` brings back `air`, which is entered through its own `initial`. With `2` it also brings back `fall`, and `"all"` brings back every level below the state.
@@ -256,6 +362,17 @@ hurt: {
   },
   always: [{ to: "/dead", when: (ctx) => ctx.health <= 0 }, { to: "/fine" }],
 },
+```
+
+```ts builder
+m.state("/hurt").enter((ctx) => {
+  ctx.health -= 1;
+});
+m.state("/hurt")
+  .always()
+  .when((ctx) => ctx.health <= 0)
+  .to("/dead");
+m.state("/hurt").always().to("/fine");
 ```
 
 - **Checked after every move:** `start`, an event, an `after` timer, a path an `update` hook returned, a hot reload, and another `always` move. The active states are checked deepest first, after the `enter` hooks and before the next queued event, and the first candidate whose `when` is missing or passes is taken.
@@ -287,6 +404,33 @@ alive: {
 },
 ```
 
+```ts builder
+const m = buildMachine<object, PlayerEvent>()({
+  initial: "/alive",
+  states: {
+    alive: {
+      type: "parallel",
+      states: {
+        move: {
+          initial: "/alive/move/idle",
+          states: { idle: {}, run: {} },
+        },
+        weapon: {
+          initial: "/alive/weapon/ready",
+          states: { ready: {}, cooldown: {} },
+        },
+      },
+    },
+    dead: {},
+  },
+});
+
+m.state("/alive").on("DIE").to("/dead");
+m.state("/alive/move/idle").on("START_FIRE").to("/alive/move/run");
+m.state("/alive/weapon/ready").on("START_FIRE").to("/alive/weapon/cooldown");
+m.state("/alive/weapon/cooldown").after(0.5).to("/alive/weapon/ready");
+```
+
 - **Entering and leaving.** Entering `/alive` enters each region through its `initial`, or through the target when the target is inside that region. Leaving it exits the last region first, each one deepest state first, then `/alive` itself.
 - **Each region moves on its own.** An event is offered to every region in order, and each takes at most its first enabled rule, so `START_FIRE` moves both regions in one `send`. `onMove` hears each move with that region's old and new leaf.
 - **The parallel state waits for its regions.** An event reaches `/alive`'s own `on`, and bubbles above it, only when no region took it. A region rule that leaves or re-enters `/alive` ends the offer, so later regions do not see that event.
@@ -308,6 +452,13 @@ JUMP: {
 },
 ```
 
+```ts builder
+m.state("/alive/move/idle")
+  .on("JUMP")
+  .when((_ctx, _event, machine) => machine.matches("/alive/posture/standing"))
+  .to("/alive/move/jump");
+```
+
 - **The view is read-only.** It has no `send`, `stop` or `ctx`: the context is the first argument of the `when`.
 - **A `when` sees the regions that already moved.** Regions take an event in name order, so a `when` in `posture` sees where `move` went for that event, and a `when` in `move` sees `posture` as it was.
 - **A `when` that asks about a group of states,** in one region or across several, reads a [tag](#name-a-group-of-states-with-tags).
@@ -323,6 +474,15 @@ HIT: {
     ctx.health -= event.damage;
   },
 },
+```
+
+```ts builder
+m.state("/alive")
+  .on("HIT")
+  .when((_ctx, _event, machine) => !machine.hasTag("invulnerable"))
+  .run((ctx, event) => {
+    ctx.health -= event.damage;
+  });
 ```
 
 - **A tag holds while any state that carries it is active.** A parent's tag holds while any of its children is active, and a tag in any region of a parallel state counts. Landing from a roll with the shield up leaves the knight invulnerable, which a flag set in `enter` and cleared in `exit` gets wrong.
@@ -366,6 +526,18 @@ opening: {
 },
 ```
 
+```ts builder
+m.state("/opening").task((ctx, finish) => {
+  go.animate(ctx.sprite, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, () => {
+    finish({ type: "OPENED" });
+  });
+});
+m.state("/opening").exit((ctx) => {
+  go.cancel_animations(ctx.sprite, "tint.w");
+});
+m.state("/opening").on("OPENED").to("/open");
+```
+
 - **A `task` runs after the state's `enter` hook on every entry,** and lives as long as that entry.
 - **`finish(event)` is one-shot.** Pass it whichever typed event means success or failure.
 - **A late `finish` is ignored.** If the state was left, re-entered, or the machine was stopped before the callback fires, it moves nothing.
@@ -393,6 +565,20 @@ task: sequence(async (ctx, signal) => {
 on: { DONE: "/menu", SKIP: "/menu" },
 ```
 
+```ts builder
+m.state("/playing").task(
+  sequence(async (ctx, signal) => {
+    msg.post(ctx.title, "enable");
+    await signal.wait(2);
+    msg.post(ctx.title, "disable");
+    await signal.wait(0.5);
+    return { type: "DONE" };
+  }),
+);
+m.state("/playing").on("DONE").to("/menu");
+m.state("/playing").on("SKIP").to("/menu");
+```
+
 - **`await signal.wait(seconds)` pauses for that long in engine time.** It waits on `timer.delay`, not on `update(dt)`, so it keeps counting while a machine's updates are paused.
 - **Leaving the state cancels a pending `signal.wait`,** so the code after it never runs: `SKIP` stops the sequence at its current `wait`. An event the sequence returns after the state is left is ignored.
 - **Only `signal.wait` is cancelled.** Any other promise you `await` can still resolve after the state is left, and the code after it then runs. Check `signal.aborted`, which turns `true` once the state is left, and return before doing work that belongs to the state, as [A group inside a sequence](#a-group-inside-a-sequence) does.
@@ -412,6 +598,17 @@ loading: {
   after: { 5: "/failed" },
   on: { LOADED: "/ready", FAILED: "/failed" },
 },
+```
+
+```ts builder
+m.state("/loading").task((ctx, finish) => {
+  http.request(ctx.url, "GET", (_self, _id, response) => {
+    finish(response.status === 200 ? { type: "LOADED" } : { type: "FAILED" });
+  });
+});
+m.state("/loading").after(5).to("/failed");
+m.state("/loading").on("LOADED").to("/ready");
+m.state("/loading").on("FAILED").to("/failed");
 ```
 
 ## Wait for something to finish
@@ -439,11 +636,24 @@ states: {
 },
 ```
 
+```ts builder
+m.state("/intro/logo").after(2).to("/intro/title");
+m.state("/intro/title").after(2).to("/intro/credits");
+m.state("/intro/credits").after(2).to("/menu");
+```
+
 Let the parent decide when the chain should not know what follows it: the next state depends on a condition, or more than one child can end the chain. The last timer then leads to a child that sends an event:
 
 ```ts excerpt
 credits: { after: { 2: "/intro/done" } },
 done: { enter: (_ctx, machine) => machine.send({ type: "INTRO_DONE" }) },
+```
+
+```ts builder
+m.state("/intro/credits").after(2).to("/intro/done");
+m.state("/intro/done").enter((_ctx, machine) =>
+  machine.send({ type: "INTRO_DONE" }),
+);
 ```
 
 `INTRO_DONE` is [queued](#run-to-completion-task-and-stop): it runs as soon as the move into `done` has finished, and bubbles to `/intro`, whose rule `INTRO_DONE: [{ to: "/tutorial", when: (ctx) => ctx.firstRun }, { to: "/menu" }]` picks the next state.
@@ -466,6 +676,22 @@ task: (ctx, finish) => {
   });
   group.wait(() => finish({ type: "READY" }));
 },
+```
+
+```ts builder
+m.state("/loading").task((ctx, finish) => {
+  const group = waitGroup();
+  go.animate(ctx.curtain, "tint.w", go.PLAYBACK_ONCE_FORWARD, 0, go.EASING_LINEAR, 0.5, 0, group.add());
+  const loaded = group.add();
+  http.request(ctx.url, "GET", (_self, _id, response) => {
+    if (response.status === 200) {
+      loaded();
+    } else {
+      finish({ type: "FAILED" });
+    }
+  });
+  group.wait(() => finish({ type: "READY" }));
+});
 ```
 
 The fade takes `group.add()` as its callback. The request can fail, so it gets a callback of its own: a response with status 200 reports to the group, and any other status calls `finish` with `FAILED` itself.
@@ -506,6 +732,35 @@ setup: {
 },
 ```
 
+```ts builder
+const m = buildMachine<object, RaidEvent>()({
+  initial: "/setup",
+  states: {
+    setup: {
+      type: "parallel",
+      states: {
+        doors: {
+          initial: "/setup/doors/opening",
+          states: { opening: {}, open: {} },
+        },
+        music: {
+          initial: "/setup/music/fading",
+          states: { fading: {}, ready: {} },
+        },
+      },
+    },
+    fight: {},
+  },
+});
+
+m.state("/setup")
+  .always()
+  .when((_ctx, machine) => machine.matches(DOORS_OPEN) && machine.matches(MUSIC_READY))
+  .to("/fight");
+m.state("/setup/doors/opening").on("OPENED").to(DOORS_OPEN);
+m.state("/setup/music/fading").on("FADED").to(MUSIC_READY);
+```
+
 `OPENED` and `FADED` can arrive in either order. The move that brings the second region to its last state is followed by the move to `/fight`, in the same `send`.
 
 - **Hold each last state's path in a constant,** as in `const DOORS_OPEN = "/setup/doors/open"`. One constant is the region's `to` and the path the join asks about, and each fails to compile when it names no state.
@@ -526,6 +781,20 @@ task: sequence(async (ctx, signal) => {
   msg.post(ctx.logo, "disable");
   return { type: "READY" };
 }),
+```
+
+```ts builder
+m.state("/booting").task(
+  sequence(async (ctx, signal) => {
+    const group = waitGroup();
+    http.request(ctx.url, "GET", group.add());
+    go.animate(ctx.logo, "tint.w", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 0.5, 0, group.add());
+    await new Promise<void>((resolve) => group.wait(() => resolve()));
+    if (signal.aborted) return;
+    msg.post(ctx.logo, "disable");
+    return { type: "READY" };
+  }),
+);
 ```
 
 - **Leaving `/booting` does not cancel that promise.** It resolves when the last piece reports, so the `signal.aborted` check returns before the logo is hidden for a state that is no longer active.
@@ -562,6 +831,8 @@ export const lamp = m.build();
 - **`m.root`** is the root's builder: its rules take an event no state below takes.
 - **`build()`** writes the statements onto the skeleton's own state objects, in list form, and passes the skeleton to `defineMachine`. It throws, naming the state, on a rule left without its ending; after it, every statement and a second `build()` throw.
 - **Hot reload** takes the key as `defineMachine` does: with `buildMachine<object, LampEvent>("lamp")`, a reload's `build()` returns the same machine, and its live instances take the new rules.
+
+Every snippet on this page that configures a machine has a Builder tab beside its Config tab, which shows the same machine as statements.
 
 ## Define a machine in a plain module
 
@@ -665,6 +936,14 @@ enter: (ctx) => {
 },
 ```
 
+```ts builder
+m.state("/shielded").enter((ctx) => {
+  for (const minion of ctx.minions) {
+    msg.post(minion, "minion_wake");
+  }
+});
+```
+
 A minion answers `event.sender`, the boss's script, and keeps that url:
 
 ```ts excerpt
@@ -675,6 +954,16 @@ minion_wake: {
     msg.post(event.sender, "minion_ready");
   },
 },
+```
+
+```ts builder
+m.state("/asleep")
+  .on("minion_wake")
+  .to("/awake")
+  .run((ctx, event) => {
+    ctx.owner = event.sender;
+    msg.post(event.sender, "minion_ready");
+  });
 ```
 
 - **A minion out of `hp` tells its owner.** The `enter` hook of `/down` posts `minion_down` to `ctx.owner`.
@@ -689,6 +978,13 @@ Two machines in one script are two instances on `self`. When a rule of one depen
 
 ```ts excerpt
 JUMP: { to: "/airborne", when: (ctx) => ctx.round.matches("/playing") },
+```
+
+```ts builder
+m.state("/grounded")
+  .on("JUMP")
+  .when((ctx) => ctx.round.matches("/playing"))
+  .to("/airborne");
 ```
 
 The script starts the round first, because the hero's context needs it:
@@ -732,6 +1028,24 @@ update: (ctx, dt) => {
   ctx.combo?.update(dt);
   return undefined;
 },
+```
+
+```ts builder
+m.state("/fighting").task((ctx, finish) => {
+  const combo = comboMachine.start({
+    hits: 0,
+    done: (hits) => finish({ type: "COMBO_ENDED", hits }),
+  });
+  ctx.combo = combo;
+  return () => {
+    combo.stop();
+    ctx.combo = undefined;
+  };
+});
+m.state("/fighting").update((ctx, dt) => {
+  ctx.combo?.update(dt);
+  return undefined;
+});
 ```
 
 1. **Start in the `task`.** Every entry of `/fighting` starts a new combo and keeps it in `ctx.combo`.
@@ -804,6 +1118,11 @@ restore: {
 },
 ```
 
+```ts builder
+m.state("/restore").always().when((ctx) => ctx.opened).to("/open");
+m.state("/restore").always().to("/closed");
+```
+
 The `enter` hook of `open` sets `ctx.opened`, and the game saves it with the rest of its data and passes it back in the context.
 
 ### Start at saved paths
@@ -816,6 +1135,12 @@ open: {
     sprite.play_flipbook(ctx.sprite, "open");
   },
 },
+```
+
+```ts builder
+m.state("/open").enter((ctx) => {
+  sprite.play_flipbook(ctx.sprite, "open");
+});
 ```
 
 `start` takes a list of state paths as its second argument. The script loads the list in `init` and saves `leaves` in `final`:
@@ -850,12 +1175,28 @@ Some of a machine's data belongs to the machine alone: a counter, a heat level, 
 privateCtx: () => ({ heat: 0, targets: [] as Hash[] }),
 ```
 
+```ts builder
+const m = buildMachine<{ readonly fireRate: number }, TurretEvent>("turret")({
+  privateCtx: () => ({ heat: 0, targets: [] as Hash[] }),
+  initial: "/idle",
+  states: { idle: {}, firing: {} },
+});
+```
+
 Add `as` where the inferred type is wrong: an empty array is `never[]` until it reads `[] as Hash[]`, and a field holding one of several strings is any `string` until it reads `"cool" as "cool" | "hot"`.
 
 **A named type.** For more fields, or when a helper outside the config needs the whole context, declare the fields as an interface and make it the factory's return type:
 
 ```ts excerpt
 privateCtx: (): TurretPrivate => ({ heat: 0, mode: "cool" }),
+```
+
+```ts builder
+const m = buildMachine<TurretOptions, TurretEvent>("turret")({
+  privateCtx: (): TurretPrivate => ({ heat: 0, mode: "cool" }),
+  initial: "/idle",
+  states: { idle: {}, firing: {}, cooling: {} },
+});
 ```
 
 The fields need no `as`, a misspelled or unknown field is a compile error, and a helper types the whole context as `TurretOptions & TurretPrivate`.
@@ -865,11 +1206,27 @@ The fields need no `as`, a misspelled or unknown field is a compile error, and a
 > ```ts excerpt
 > privateCtx: () => ({ heat: 0, targets: [] }) satisfies TurretPrivate,
 > ```
+>
+> ```ts builder
+> const m = buildMachine<{ readonly fireRate: number }, { type: "SPOTTED" }>()({
+>   privateCtx: () => ({ heat: 0, targets: [] }) satisfies TurretPrivate,
+>   initial: "/idle",
+>   states: { idle: {} },
+> });
+> ```
 
 **From the starting context.** The factory receives the object passed to `start`, so a private field can start from a field of `Ctx`:
 
 ```ts excerpt
 privateCtx: (ctx: TurretOptions) => ({ heat: ctx.startHeat }),
+```
+
+```ts builder
+const m = buildMachine<TurretOptions, TurretEvent>("turret")({
+  privateCtx: (ctx: TurretOptions) => ({ heat: ctx.startHeat }),
+  initial: "/idle",
+  states: { idle: {}, firing: {} },
+});
 ```
 
 - **It runs once per `start`, before the root's `enter` hook,** so the fields are there when the first hook runs.
@@ -924,6 +1281,20 @@ when: (ctx, event) => {
 },
 ```
 
+```ts builder
+m.state("/alive")
+  .on("HIT")
+  .when((ctx, event) => {
+    // @ts-expect-error -- a `when` cannot assign to a field of `ctx`
+    ctx.health -= event.damage;
+    return ctx.health <= event.damage;
+  })
+  .to("/dead")
+  .run((ctx, event) => {
+    ctx.health -= event.damage;
+  });
+```
+
 - The event is read-only in a `when`, a `run`, the `unhandled` hook and the `onMove` and `onUnhandled` listeners, so an event kept in a constant is the same on every `send`.
 - The check is one level deep: a list or table held in a field can still be changed.
 - A helper declared outside the config with ordinary parameter types still fits, and its own writes are not checked. The one exception is a helper typed with a context class that has a private or protected member: its parameter takes `Readonly<...>` of the class, as in `(ctx: Readonly<Tank>) => ctx.hp > 0`.
@@ -935,11 +1306,21 @@ when: (ctx, event) => {
 GO: "/nowhere",
 ```
 
+```ts builder
+// @ts-expect-error -- "/nowhere" is not one of the machine's paths
+m.state("/idle").on("GO").to("/nowhere");
+```
+
 A path below a state with no child states fails to compile too, and so do `initial` and `restoreDepth` on such a state:
 
 ```ts excerpt
 // @ts-expect-error -- "/done" has no child states, so no path goes below it
 GO: "/done/deeper",
+```
+
+```ts builder
+// @ts-expect-error -- "/done" has no child states, so no path goes below it
+m.state("/idle").on("GO").to("/done/deeper");
 ```
 
 **A callback's `machine` knows the machine's paths.** In a hook, a `when`, a `run` and a `task`, `path`, `leaves` and `matches()` take the machine's paths, and so does `onMove` on the `machine` of a hook, a `run` and a `task`. A variable typed `string` does not fit `matches()` there: give it a union of the paths it can hold, such as `"/off" | "/on"`.
@@ -981,6 +1362,15 @@ call_lift: {
     msg.post(event.sender, "lift_arrived", { floor: ctx.floor });
   },
 },
+```
+
+```ts builder
+m.state("/waiting")
+  .on("call_lift")
+  .run((ctx, event) => {
+    ctx.floor = event.floor;
+    msg.post(event.sender, "lift_arrived", { floor: ctx.floor });
+  });
 ```
 
 A script that already dispatches with `onMessage` (see [Messages](./messages.md)) has narrowed payloads in hand and can `send` them directly, with no mapper. An event built by hand for a `MessageEvent` union includes `sender`, which the `onMessage` handler receives. For two objects whose machines message each other, see [Separate objects talk with messages](#separate-objects-talk-with-messages).
@@ -1080,6 +1470,19 @@ pick: {
 },
 ```
 
+```ts builder
+const jump = m.state("/standing/jump");
+jump.enter(noJump);
+jump.task(once("jump"));
+jump.on("DONE").to("/standing/pick");
+
+const pick = m.state("/standing/pick");
+pick.always().when((ctx) => ctx.crouch).to("/to_crouch");
+pick.always().when((ctx) => ctx.jump).to("/standing/jump");
+pick.always().when((ctx) => ctx.run).to("/standing/free/run");
+pick.always().to("/standing/free/idle");
+```
+
 The script writes what the player wants into `knight.ctx.run` and `knight.ctx.crouch`, then sends `INTENT`, and sends `JUMP` when the jump key is pressed. The machine decides when to act on it:
 
 - **A looping state plays on `enter`,** as in `enter: loop("idle")`, where `loop` returns a hook that calls `sprite.play_flipbook`. It can be left at any time, so it needs no `task`.
@@ -1126,6 +1529,17 @@ walk: {
 },
 ```
 
+```ts builder
+m.state("/grounded/idle").enter(() => sprite.play_flipbook("#sprite", anim_idle));
+m.state("/grounded/idle").update((ctx) =>
+  ctx.ground_contact && ctx.velocity.x !== 0 ? "/grounded/walk" : undefined,
+);
+m.state("/grounded/walk").enter(() => sprite.play_flipbook("#sprite", anim_walk));
+m.state("/grounded/walk").update((ctx) =>
+  ctx.ground_contact && ctx.velocity.x === 0 ? "/grounded/idle" : undefined,
+);
+```
+
 - **The state itself is the check.** `JUMP` is a rule of their parent `grounded` alone, with a `run` that sets the takeoff speed, so no flag guards the jump.
 - **The script keeps the physics and hands the rest to the machine.** `fixed_update` calls `self.motion.update(dt)` while the contacts from the last physics step still hold, and `on_input` sends `JUMP` and `JUMP_RELEASED`.
 - **A leaf's `update` hook checks what its parent checks.** `grounded` leaves for `/airborne` when `ground_contact` is lost, but [`update` hooks run deepest first](#update-and-after), so `idle` and `walk` check `ground_contact` too. Without it, a leaf whose velocity check fires on the step the ground disappears would move to its sibling, and the player would stay grounded for that step.
@@ -1158,6 +1572,12 @@ Name the target under [`on`](#events-and-transitions)
 on: { PAUSE: "/paused" }
 ```
 
+```ts builder
+m.state("/alive")
+  .on("PAUSE")
+  .to("/paused");
+```
+
 </td></tr>
 <tr><td>
 
@@ -1179,6 +1599,15 @@ on: {
 }
 ```
 
+```ts builder
+m.state("/alive/patrol")
+  .on("HIT")
+  .when((ctx, event) =>
+    ctx.health <= event.damage,
+  )
+  .to("/dying");
+```
+
 </td></tr>
 <tr><td>
 
@@ -1193,6 +1622,15 @@ Ask whether any of several states is active
 ```ts excerpt
 when: (_ctx, _event, machine) =>
   machine.hasTag("alert"),
+```
+
+```ts builder
+m.root
+  .on("RADIO")
+  .when((_ctx, _event, machine) =>
+    machine.hasTag("alert"),
+  )
+  .run((ctx) => msg.post(ctx.squad, "backup"));
 ```
 
 </td></tr>
@@ -1216,6 +1654,14 @@ on: {
 }
 ```
 
+```ts builder
+m.state("/alive/alert")
+  .on("HIT")
+  .run((ctx, event) => {
+    ctx.health -= event.damage;
+  });
+```
+
 </td></tr>
 <tr><td>
 
@@ -1229,6 +1675,12 @@ Move after a delay
 
 ```ts excerpt
 after: { 5: "/alive/patrol" }
+```
+
+```ts builder
+m.state("/alive/alert")
+  .after(5)
+  .to("/alive/patrol");
 ```
 
 </td></tr>
@@ -1255,6 +1707,18 @@ after: {
 }
 ```
 
+```ts builder
+m.state("/alert")
+  .after(2)
+  .run((ctx) =>
+    msg.post(ctx.sprite, "shout"),
+  );
+m.state("/alert")
+  .after(5)
+  .when((ctx) => ctx.calm)
+  .to("/patrol");
+```
+
 </td></tr>
 <tr><td>
 
@@ -1276,6 +1740,14 @@ every: [
 ]
 ```
 
+```ts builder
+m.state("/alert")
+  .every((ctx) => ctx.scanEvery)
+  .run((ctx) =>
+    msg.post(ctx.sprite, "scan"),
+  );
+```
+
 </td></tr>
 <tr><td>
 
@@ -1294,6 +1766,14 @@ always: [
 ]
 ```
 
+```ts builder
+m.state("/spawn")
+  .always()
+  .when((ctx) => ctx.health <= 0)
+  .to("/gone");
+m.state("/spawn").always().to("/alive");
+```
+
 </td></tr>
 <tr><td>
 
@@ -1310,6 +1790,12 @@ update: (ctx) =>
   ctx.health < 2 ? "/alive/patrol" : undefined
 ```
 
+```ts builder
+m.state("/alive/alert").update((ctx) =>
+  ctx.health < 2 ? "/alive/patrol" : undefined,
+);
+```
+
 </td></tr>
 <tr><td>
 
@@ -1323,6 +1809,14 @@ Come back to the child that was active
 
 ```ts excerpt
 restoreDepth: 1
+```
+
+```ts builder
+    alive: {
+      initial: "/alive/patrol",
+      restoreDepth: 1,
+      states: { patrol: {}, alert: {} },
+    },
 ```
 
 </td></tr>
@@ -1342,6 +1836,14 @@ task: (_ctx, finish) => {
     finish({ type: "DEAD" });
   });
 }
+```
+
+```ts builder
+m.state("/dying").task((_ctx, finish) => {
+  sound.play("#death", {}, () => {
+    finish({ type: "DEAD" });
+  });
+});
 ```
 
 </td></tr>
@@ -1368,6 +1870,19 @@ task: (ctx, finish) => {
 }
 ```
 
+```ts builder
+m.state("/waking").task((ctx, finish) => {
+  const group = waitGroup();
+  sprite.play_flipbook(
+    ctx.sprite,
+    "rise",
+    group.add(),
+  );
+  sound.play("#yawn", {}, group.add());
+  group.wait(() => finish({ type: "AWAKE" }));
+});
+```
+
 </td></tr>
 <tr><td>
 
@@ -1386,6 +1901,16 @@ always: {
     machine.matches(SWORD_OUT) &&
     machine.matches(BACKUP_CALLED),
 }
+```
+
+```ts builder
+m.state("/alert")
+  .always()
+  .when((_ctx, machine) =>
+    machine.matches(SWORD_OUT) &&
+    machine.matches(BACKUP_CALLED),
+  )
+  .to("/fight");
 ```
 
 </td></tr>
@@ -1412,6 +1937,19 @@ task: (ctx, finish) => {
 }
 ```
 
+```ts builder
+m.state("/duel").task((ctx, finish) => {
+  const duel = duelMachine.start({
+    done: () => finish({ type: "DUEL_OVER" }),
+  });
+  ctx.duel = duel;
+  return () => {
+    duel.stop();
+    ctx.duel = undefined;
+  };
+});
+```
+
 </td></tr>
 <tr><td>
 
@@ -1428,6 +1966,12 @@ exit: (ctx) =>
   go.cancel_animations(ctx.sprite, "tint.w")
 ```
 
+```ts builder
+m.state("/dying").exit((ctx) =>
+  go.cancel_animations(ctx.sprite, "tint.w"),
+);
+```
+
 </td></tr>
 <tr><td>
 
@@ -1441,6 +1985,12 @@ Stop the machine from one of its states
 
 ```ts excerpt
 enter: (_ctx, machine) => machine.stop()
+```
+
+```ts builder
+m.state("/gone").enter((_ctx, machine) =>
+  machine.stop(),
+);
 ```
 
 </td></tr>
@@ -1534,6 +2084,12 @@ React to any event no state took
 unhandled: () => sound.play("#blocked"),
 ```
 
+```ts builder
+m.state("/paused").unhandled(() =>
+  sound.play("#blocked"),
+);
+```
+
 </td></tr>
 <tr><td>
 
@@ -1547,6 +2103,10 @@ Pass a [key](#hot-reload) to the first call
 
 ```ts excerpt
 defineMachine<GuardCtx, GuardEvent>("guard")
+```
+
+```ts builder
+buildMachine<GuardCtx, GuardEvent>("guard")
 ```
 
 </td></tr>
@@ -1583,6 +2143,14 @@ privateCtx: (): GuardPrivate => ({
   hits: 0,
   seen: [],
 }),
+```
+
+```ts builder
+buildMachine<GuardOptions, HitEvent>("private-guard")({
+  privateCtx: (): GuardPrivate => ({
+    hits: 0,
+    seen: [],
+  }),
 ```
 
 </td></tr>
@@ -1842,6 +2410,12 @@ patrol: {
     { delay: (ctx) => ctx.patrolFor, to: "/rest" },
   ],
 },
+```
+
+```ts builder
+m.state("/patrol")
+  .after((ctx) => ctx.patrolFor)
+  .to("/rest");
 ```
 
 ```ts excerpt
