@@ -17,6 +17,14 @@ export interface SystemView {
 export interface EntityView {
   readonly id: number;
   readonly value: unknown;
+  /** The id of the machine instance the entity holds in a field, when it holds one. */
+  readonly machine?: number;
+}
+
+/** Where an entity holds a machine instance: the world's index in creation order and the entity's id. */
+export interface InstanceHolder {
+  readonly world: number;
+  readonly entity: number;
 }
 
 export interface WorldView {
@@ -39,7 +47,13 @@ export interface WorldTracker {
   names(self?: unknown): readonly string[];
   /** Runs one frame with every system's callbacks timed. */
   frame(run: () => void): void;
-  view(world: unknown): WorldView;
+  /** `instances` maps each machine instance to its id, which the entity holding it carries. */
+  view(world: unknown, instances?: ReadonlyMap<unknown, number>): WorldView;
+  /**
+   * For each instance id in `instances`, the first entity of the load's worlds, in creation order,
+   * that holds the instance in a field.
+   */
+  holders(instances: ReadonlyMap<unknown, number>): ReadonlyMap<number, InstanceHolder>;
   /**
    * What each system of `world` gained and lost since the last call for it; a first call reports
    * every member, and a system removed since then loses every member it held.
@@ -80,6 +94,16 @@ const TIMED_CALLBACKS = ["onModify", "preWrap", "update", "postWrap"];
 const AVERAGED_FRAMES = 60;
 // Each world stores an entity's id under a field of its own; it is ecs bookkeeping, not a component.
 const ECS_ID_PREFIX = "__ecs_id_";
+
+function heldInstance(entity: object, instances: ReadonlyMap<unknown, number>): number | undefined {
+  for (const value of Object.values(entity)) {
+    const id = instances.get(value);
+    if (id !== undefined) {
+      return id;
+    }
+  }
+  return undefined;
+}
 
 function componentsOf(entity: object): Record<string, unknown> {
   return Object.fromEntries(
@@ -204,7 +228,7 @@ export function trackWorlds(load: ProjectLoad): WorldTracker {
         seeAll();
       }
     },
-    view(world) {
+    view(world, instances) {
       seeAll();
       const { systems, entities } = world as WorldRecord;
       return {
@@ -222,11 +246,30 @@ export function trackWorlds(load: ProjectLoad): WorldTracker {
             source: load.systemSource(system),
           };
         }),
-        entities: entities.map((entity) => ({
-          id: idOf(entity),
-          value: shownValue(componentsOf(entity)),
-        })),
+        entities: entities.map((entity) => {
+          const machine = instances === undefined ? undefined : heldInstance(entity, instances);
+          return {
+            id: idOf(entity),
+            value: shownValue(componentsOf(entity)),
+            ...(machine === undefined ? {} : { machine }),
+          };
+        }),
       };
+    },
+    holders(instances) {
+      seeAll();
+      const found = new Map<number, InstanceHolder>();
+      worlds().forEach((world, index) => {
+        for (const entity of world.entities) {
+          for (const value of Object.values(entity)) {
+            const id = instances.get(value);
+            if (id !== undefined && !found.has(id)) {
+              found.set(id, { world: index, entity: idOf(entity) });
+            }
+          }
+        }
+      });
+      return found;
     },
     membership(world) {
       seeAll();
