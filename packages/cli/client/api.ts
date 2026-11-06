@@ -4,7 +4,15 @@ import type { Snapshot } from "../src/hsm-view-session";
 
 export type Fetch = (url: string, init?: RequestInit) => Promise<Response>;
 
-export type PostRoute = "start" | "send" | "update" | "edit" | "pick";
+export type PostRoute =
+  | "start"
+  | "send"
+  | "update"
+  | "edit"
+  | "pick"
+  | "restart"
+  | "pick-world"
+  | "follow";
 
 export interface ViewerApi {
   index(): Promise<HsmViewIndex>;

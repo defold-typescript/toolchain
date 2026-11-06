@@ -103,6 +103,29 @@ describe("visibleLines", () => {
   });
 
   test("never hides errors, reloads or edits", () => {
-    expect(kinds(["transition", "event", "engine", "print"])).toEqual(["edit", "reload", "error"]);
+    expect(kinds(["transition", "event", "engine", "print", "membership"])).toEqual([
+      "edit",
+      "reload",
+      "error",
+    ]);
+  });
+
+  test("hides joins and leaves under membership, merging a repeated one", () => {
+    const join = (t: number): SnapshotEntry => ({ kind: "join", t, system: 1, entity: 2 });
+    const membership = appendEntries(emptyLog, [
+      join(0),
+      join(0.1),
+      { kind: "leave", t: 0.2, system: 1, entity: 2 },
+      { kind: "print", t: 0.2, text: "hi" },
+    ]);
+    expect(membership.lines.map((line) => [line.entry.kind, line.count])).toEqual([
+      ["join", 2],
+      ["leave", 1],
+      ["print", 1],
+    ]);
+    const shown = (hidden: readonly LogKind[]) =>
+      visibleLines(membership, new Set(hidden)).map((line) => line.entry.kind);
+    expect(shown(["membership"])).toEqual(["print"]);
+    expect(shown(["print"])).toEqual(["join", "leave"]);
   });
 });

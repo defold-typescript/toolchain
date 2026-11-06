@@ -788,3 +788,204 @@ describe("failed actions", () => {
     expect(notified).toEqual([]);
   });
 });
+
+const FARM = `import { defineScript } from "@defold-typescript/types";
+import { system, world } from "@defold-typescript/types/ecs";
+import { defineMachine } from "@defold-typescript/types/hsm";
+export const lamp = defineMachine("lamp")({
+  initial: "/off",
+  states: { off: { on: { TOGGLE: "/on" } }, on: {} },
+});
+export const bell = defineMachine("bell")({
+  initial: "/quiet",
+  states: { quiet: { on: { RING: "/ringing" } }, ringing: {} },
+});
+const grow = system("grow")({ update() {} });
+const dig = system("dig")({ update() {} });
+const rake = system("rake")({ update() {} });
+export default defineScript({
+  init() {
+    const chime = bell.start({});
+    chime.send({ type: "RING" });
+    return { garden: world(grow, dig, { name: "a" }), yard: world(rake), chime };
+  },
+  update(self, dt) {
+    self.garden.update(dt);
+  },
+});
+`;
+
+// The run halts on its third frame.
+const POND = `import { defineScript } from "@defold-typescript/types";
+import { system, world } from "@defold-typescript/types/ecs";
+const ripple = system("ripple")({ update() {} });
+export default defineScript({
+  init() {
+    return { pond: world(ripple, { n: 1 }), frames: 0 };
+  },
+  update(self, dt) {
+    self.frames += 1;
+    if (self.frames === 3) {
+      throw new Error("dry");
+    }
+    self.pond.update(dt);
+  },
+});
+`;
+
+describe("worlds, tabs and follow", () => {
+  let frames: ReturnType<typeof manualFrames>;
+  let held: ReturnType<typeof holds>;
+
+  beforeEach(() => {
+    frames = manualFrames();
+    held = holds();
+    writeFileSync(path.join(dir, "farm.ts"), FARM);
+    writeFileSync(path.join(dir, "pond.ts"), POND);
+  });
+
+  const open = (file: string, opening?: { readonly tab: "machines" | "worlds" }) =>
+    startViewer(path.join(dir, file), undefined, {
+      frames: frames.scheduler,
+      hold: held.hold,
+      ...(opening === undefined ? {} : { opening }),
+    });
+
+  const routes = (viewer: TestViewer) => viewer.requests.map((request) => request.route);
+
+  const tintedOf = (viewer: TestViewer): string[] =>
+    [...viewer.store.getState().highlight.tinted].sort();
+
+  test("keeps the run's worlds, systems, entities and instances from each snapshot", async () => {
+    const viewer = await open("farm.ts");
+    await viewer.store.getState().step();
+    const snapshot = viewer.store.getState().snapshot;
+    expect(snapshot).toMatchObject({
+      worlds: ["garden", "yard"],
+      world: "garden",
+      systems: [
+        { index: 1, name: "grow" },
+        { index: 2, name: "dig" },
+      ],
+      entities: [{ id: 1, value: { name: "a" } }],
+      instances: [{ id: 1, machine: "bell" }],
+      frame: 1,
+    });
+    expect(snapshot?.following).toBeUndefined();
+  });
+
+  test("opens on the index's tab, switches on setTab, and offers no Machines tab without a machine", async () => {
+    const farm = await open("farm.ts", { tab: "worlds" });
+    expect(farm.store.getState().tab).toBe("worlds");
+    farm.store.getState().setTab("machines");
+    expect(farm.store.getState().tab).toBe("machines");
+    await farm.store.getState().pick("bell");
+    expect(farm.store.getState().tab).toBe("machines");
+    farm.store.getState().setTab("worlds");
+    expect(farm.store.getState().tab).toBe("worlds");
+
+    expect((await open("farm.ts")).store.getState().tab).toBe("machines");
+
+    const pond = await open("pond.ts", { tab: "worlds" });
+    pond.store.getState().setTab("machines");
+    expect(pond.store.getState().tab).toBe("worlds");
+  });
+
+  test("keeps playing a world with no machine started, and stops when the run halts", async () => {
+    const viewer = await open("pond.ts", { tab: "worlds" });
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(0);
+    await frames.frame(50);
+    expect(viewer.store.getState().playing).toBe(true);
+    expect(viewer.store.getState().snapshot?.frame).toBe(2);
+
+    await frames.frame(100);
+    const state = viewer.store.getState();
+    expect(state.snapshot).toMatchObject({ running: false, error: "dry" });
+    expect(state.playing).toBe(false);
+    expect(frames.queued()).toBe(0);
+    await frames.frame(150);
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update", "/api/update"]);
+  });
+
+  test("Restart stops Play and restarts after the in-flight update", async () => {
+    const viewer = await open("farm.ts");
+    viewer.store.getState().setPlaying(true);
+    await frames.frame(0);
+    const release = held.next("/api/update");
+    await frames.frame(50);
+
+    const restarted = viewer.store.getState().restart();
+    expect(viewer.store.getState().playing).toBe(false);
+    await settle();
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update"]);
+
+    release();
+    await restarted;
+    expect(routes(viewer)).toEqual(["/api/update", "/api/update", "/api/restart"]);
+    expect(viewer.store.getState().snapshot).toMatchObject({ t: 0, frame: 0, running: true });
+
+    await frames.frame(100);
+    expect(routes(viewer)).toHaveLength(3);
+  });
+
+  test("keeps the open and selected systems across snapshots, and clears them on Restart or another world", async () => {
+    const viewer = await open("farm.ts", { tab: "worlds" });
+    const state = () => viewer.store.getState();
+    state().toggleSystem(1);
+    state().toggleSystem(2);
+    state().toggleSystem(1);
+    state().selectSystem(2);
+    expect([...state().openSystems]).toEqual([2]);
+    expect(state().selectedSystem).toBe(2);
+
+    await state().step();
+    expect([...state().openSystems]).toEqual([2]);
+    expect(state().selectedSystem).toBe(2);
+
+    await state().restart();
+    expect([...state().openSystems]).toEqual([]);
+    expect(state().selectedSystem).toBeUndefined();
+
+    state().toggleSystem(1);
+    state().selectSystem(1);
+    await state().pickWorld("yard");
+    expect(state().snapshot?.world).toBe("yard");
+    expect(routes(viewer).at(-1)).toBe("/api/pick-world");
+    expect([...state().openSystems]).toEqual([]);
+    expect(state().selectedSystem).toBeUndefined();
+  });
+
+  test("follow shows the followed instance's machine on the Machines tab, and follow(undefined) returns", async () => {
+    const viewer = await open("farm.ts", { tab: "worlds" });
+    const state = () => viewer.store.getState();
+    expect(state().index?.picked).toBe("lamp");
+    expect(tintedOf(viewer)).toEqual([]);
+
+    await state().follow(1);
+    expect(viewer.requests.at(-1)).toEqual({ route: "/api/follow", body: { instance: 1 } });
+    expect(state().tab).toBe("machines");
+    expect(state().snapshot).toMatchObject({ following: 1, picked: "bell", path: "/ringing" });
+    expect(state().index?.picked).toBe("bell");
+    expect(tintedOf(viewer)).toEqual([stateSpanId("/ringing")]);
+
+    await state().follow(undefined);
+    expect(viewer.requests.at(-1)).toEqual({ route: "/api/follow", body: { instance: null } });
+    expect(state().snapshot?.following).toBeUndefined();
+    expect(state().index?.picked).toBe("lamp");
+    expect(tintedOf(viewer)).toEqual([]);
+  });
+
+  test("Start while following returns to the simulated machine's code", async () => {
+    const viewer = await open("farm.ts");
+    const state = () => viewer.store.getState();
+    await state().follow(1);
+    expect(state().index?.picked).toBe("bell");
+
+    await state().start();
+    expect(state().snapshot).toMatchObject({ picked: "lamp", path: "/off" });
+    expect(state().snapshot?.following).toBeUndefined();
+    expect(state().index?.picked).toBe("lamp");
+    expect(tintedOf(viewer)).toEqual([stateSpanId("/off")]);
+  });
+});

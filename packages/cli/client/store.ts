@@ -1,7 +1,7 @@
 import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import type { LiveInstance, LiveMessage, LiveMove } from "../src/hsm-view-live";
-import type { HsmViewIndex, ReloadMessage } from "../src/hsm-view-server";
+import type { HsmViewIndex, HsmViewTab, ReloadMessage } from "../src/hsm-view-server";
 import type { Snapshot } from "../src/hsm-view-session";
 import { httpApi, type ViewerApi } from "./api";
 import { type CtxPath, changedLeaves, type Primitive } from "./ctx";
@@ -86,6 +86,11 @@ export interface ViewerState {
   readonly reloadError: string | undefined;
   readonly disconnected: boolean;
   readonly live: LiveState;
+  /** The side panel's tab; a file with no machine has no Machines tab. */
+  readonly tab: HsmViewTab;
+  /** The systems whose entities show, by index in the picked world. */
+  readonly openSystems: ReadonlySet<number>;
+  readonly selectedSystem: number | undefined;
   readonly now: () => number;
   /** Takes a new index; the snapshot that follows it, as on a reload, redraws the highlights. */
   setIndex(index: HsmViewIndex): void;
@@ -111,8 +116,13 @@ export interface ViewerState {
   setSpeed(speed: number): void;
   setPlaying(playing: boolean): void;
   setDisconnected(disconnected: boolean): void;
+  setTab(tab: HsmViewTab): void;
+  toggleSystem(index: number): void;
+  selectSystem(index: number): void;
   load(): Promise<void>;
   start(): Promise<void>;
+  /** Stops Play and reruns the files and `init` once the update in flight answers. */
+  restart(): Promise<void>;
   /** Sends `type` with the bar's payload. */
   send(type: string): Promise<void>;
   update(dt: number): Promise<void>;
@@ -120,6 +130,9 @@ export interface ViewerState {
   step(): Promise<void>;
   edit(path: CtxPath, value: Primitive): Promise<void>;
   pick(name: string): Promise<void>;
+  pickWorld(name: string): Promise<void>;
+  /** Shows the run's instance `id` on the Machines tab in place of the simulated one; `undefined` returns to it. */
+  follow(id: number | undefined): Promise<void>;
   reloaded(message: ReloadMessage): Promise<void>;
 }
 
@@ -281,6 +294,15 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       current.frame = frames.request(tick);
     };
 
+    const stopPlay = async (): Promise<void> => {
+      get().setPlaying(false);
+      while (inFlight !== undefined) {
+        await inFlight;
+      }
+    };
+
+    const clearSystems = (): void => set({ openSystems: new Set(), selectedSystem: undefined });
+
     const paint = (snapshot: Snapshot, live: boolean): void =>
       set((state) => {
         const time = now();
@@ -375,10 +397,14 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
       reloadError: undefined,
       disconnected: false,
       live: { instances: [], attached: undefined, banner: undefined },
+      tab: "machines",
+      openSystems: new Set(),
+      selectedSystem: undefined,
       now,
       setIndex: (index) =>
         set((state) => ({
           index,
+          tab: state.index === undefined ? index.opening.tab : state.tab,
           lineSpans: lineSpansOf(index),
           search: search(index.files, state.search.query),
           openFile: state.openFile < index.files.length ? state.openFile : 0,
@@ -476,6 +502,21 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         }
         set({ disconnected });
       },
+      setTab: (tab) => {
+        if (tab === "machines" && (get().index?.machines.length ?? 0) === 0) {
+          return;
+        }
+        set({ tab });
+      },
+      toggleSystem: (index) =>
+        set((state) => {
+          const openSystems = new Set(state.openSystems);
+          if (!openSystems.delete(index)) {
+            openSystems.add(index);
+          }
+          return { openSystems };
+        }),
+      selectSystem: (selectedSystem) => set({ selectedSystem }),
       load: async () => {
         try {
           get().setIndex(await api.index());
@@ -487,11 +528,25 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         }
       },
       start: async () => {
-        get().setPlaying(false);
-        while (inFlight !== undefined) {
-          await inFlight;
-        }
-        await call(() => api.post("start", { ctx: readStartCtx(get().startCtx) }));
+        await stopPlay();
+        // Start returns from a followed instance to the simulated one, whose machine may differ.
+        const followed = get().snapshot?.following !== undefined;
+        await call(async () => {
+          const snapshot = await api.post("start", { ctx: readStartCtx(get().startCtx) });
+          if (followed) {
+            get().setIndex(await api.index());
+          }
+          return snapshot;
+        });
+      },
+      restart: async () => {
+        await stopPlay();
+        await call(async () => {
+          const snapshot = await api.post("restart", {});
+          get().setIndex(await api.index());
+          clearSystems();
+          return snapshot;
+        });
       },
       send: (type) =>
         call(() => api.post("send", { event: { ...readPayload(get().payload), type } })),
@@ -503,6 +558,21 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
         await call(async () => {
           const snapshot = await api.post("pick", { name });
           get().setIndex(await api.index());
+          return snapshot;
+        });
+      },
+      pickWorld: (name) =>
+        call(async () => {
+          const snapshot = await api.post("pick-world", { name });
+          clearSystems();
+          return snapshot;
+        }),
+      follow: async (id) => {
+        await get().detach();
+        await call(async () => {
+          const snapshot = await api.post("follow", { instance: id ?? null });
+          get().setIndex(await api.index());
+          set({ tab: "machines" });
           return snapshot;
         });
       },

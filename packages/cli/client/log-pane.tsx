@@ -11,6 +11,7 @@ const KINDS: readonly { readonly kind: LogKind; readonly label: string }[] = [
   { kind: "event", label: "events" },
   { kind: "engine", label: "engine" },
   { kind: "print", label: "print" },
+  { kind: "membership", label: "membership" },
 ];
 
 const json = (value: unknown): string => JSON.stringify(value) ?? "undefined";
