@@ -9,9 +9,9 @@ import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { lessonProjects } from "./guide-steps";
-import { loadMachines } from "./hsm-view-load";
+import { loadProject } from "./view-load";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const PAGE = path.join(REPO_ROOT, "packages", "docs", "guide", "state-machines-tutorial.md");
@@ -73,8 +73,9 @@ function machine(role: Role): Startable {
       writeFileSync(path.join(projectDir, title), text);
     }
   }
-  const load = loadMachines(path.join(projectDir, MACHINE_FILES[role]), {
+  const load = loadProject(path.join(projectDir, MACHINE_FILES[role]), {
     hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY),
+    ecsSourceDir: requireLibrarySourceDir(ECS_LIBRARY),
   });
   load.engine.setSink((entry) => {
     if (entry.kind === "engine") {

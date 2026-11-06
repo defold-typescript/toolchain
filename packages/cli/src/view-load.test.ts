@@ -2,15 +2,9 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
-import {
-  type EngineEntry,
-  HsmViewLoadError,
-  type LoadedMachine,
-  loadMachines,
-  locationOf,
-  type SourceSpan,
-} from "./hsm-view-load";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { type LoadedMachine, loadProject } from "./view-load";
+import { type EngineEntry, locationOf, type SourceSpan, ViewLoadError } from "./view-run";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const PLATFORMER_MACHINE = path.join(
@@ -22,6 +16,7 @@ const PLATFORMER_MACHINE = path.join(
   "player-machine.ts",
 );
 const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
+const ecsSourceDir = requireLibrarySourceDir(ECS_LIBRARY);
 
 interface StateLike {
   readonly initial?: string;
@@ -41,7 +36,7 @@ interface Startable {
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(path.join(os.tmpdir(), "hsm-view-load-"));
+  dir = mkdtempSync(path.join(os.tmpdir(), "view-load-"));
 });
 
 afterEach(() => {
@@ -56,7 +51,7 @@ function write(rel: string, text: string): string {
 }
 
 function load(entry: string) {
-  return loadMachines(entry, { hsmSourceDir });
+  return loadProject(entry, { hsmSourceDir, ecsSourceDir });
 }
 
 function slice(text: string, span: SourceSpan | undefined): string | undefined {
@@ -107,7 +102,7 @@ function thrown(run: () => unknown): unknown {
   throw new Error("expected a throw");
 }
 
-describe("loadMachines", () => {
+describe("loadProject machines", () => {
   test("loads the platformer's player machine and runs its hooks against the stubs", () => {
     const loaded = load(PLATFORMER_MACHINE);
     expect(loaded.machines.map((machine) => machine.name)).toEqual(["playerMachine"]);
@@ -270,7 +265,7 @@ export const y = x;
 `,
     );
     const importError = thrown(() => load(external));
-    expect(importError).toBeInstanceOf(HsmViewLoadError);
+    expect(importError).toBeInstanceOf(ViewLoadError);
     expect((importError as Error).message).toContain("monarch");
     expect((importError as Error).message).toContain(external);
 
@@ -281,7 +276,7 @@ export const m = defineMachine()({ initial: "/a", states: { a: { on: { GO: "nowh
 `,
     );
     const hsmError = thrown(() => load(broken));
-    expect(hsmError).toBeInstanceOf(HsmViewLoadError);
+    expect(hsmError).toBeInstanceOf(ViewLoadError);
     expect((hsmError as Error).message).toContain(broken);
     expect((hsmError as Error).message).toContain(`targets "nowhere"`);
   });
@@ -418,9 +413,229 @@ export const m = defineMachine()({ initial: "/a", states: { a: {} } });
 
     write("main.ts", "export const = ;\n");
     const error = thrown(() => loaded.reload());
-    expect(error).toBeInstanceOf(HsmViewLoadError);
+    expect(error).toBeInstanceOf(ViewLoadError);
     expect((error as Error).message).toContain(entry);
     expect(loaded.files).toBe(files);
     expect(loaded.machines).toBe(machines);
+  });
+});
+
+interface WorldLike {
+  readonly systems: readonly object[];
+  readonly entities: readonly Record<string, unknown>[];
+  update(dt: number): void;
+}
+
+interface ScriptLike {
+  readonly init?: (self: Record<string, unknown>) => Record<string, unknown> | undefined;
+  readonly update?: (self: Record<string, unknown>, dt: number) => void;
+}
+
+function worldAt(loaded: ReturnType<typeof load>, index: number): WorldLike {
+  const found = loaded.worlds[index];
+  if (found === undefined) {
+    throw new Error(`no world ${index}`);
+  }
+  return found as WorldLike;
+}
+
+function scriptOf(loaded: ReturnType<typeof load>): ScriptLike {
+  if (loaded.script === undefined) {
+    throw new Error("no script loaded");
+  }
+  return loaded.script as ScriptLike;
+}
+
+describe("loadProject worlds", () => {
+  test("lists a world built at module scope once, with its systems' names and sources", () => {
+    const entry = write(
+      "main.ts",
+      `import { processingSystem, refresh, requireAll, system, world } from "@defold-typescript/types/ecs";
+interface Ent { pos?: number }
+export const mover = processingSystem<Ent>("move")(requireAll("pos"), { process(e) { e.pos = 1; } });
+export const tally = system<Ent>()({ update() {} });
+const hidden = system<Ent>()({ onAdd() {} });
+export const w = world<Ent>(mover, tally, hidden);
+refresh(w);
+`,
+    );
+    const loaded = load(entry);
+    const text = loaded.files[0]?.text ?? "";
+
+    expect(loaded.worlds).toHaveLength(1);
+    expect(loaded.exportName(loaded.worlds[0])).toBe("w");
+    const [mover, tally, hidden] = worldAt(loaded, 0).systems;
+    expect([mover, tally, hidden].map((each) => loaded.systemName(each))).toEqual([
+      "move",
+      "tally",
+      undefined,
+    ]);
+    expect(loaded.systemSource(mover)?.file).toBe(entry);
+    expect(slice(text, loaded.systemSource(mover))).toBe("{ process(e) { e.pos = 1; } }");
+    expect(slice(text, loaded.systemSource(hidden))).toBe("{ onAdd() {} }");
+  });
+
+  test("loads a script's hooks without running them, and records the world its init builds", () => {
+    const entry = write(
+      "main.ts",
+      `import { defineScript } from "@defold-typescript/types";
+import { world } from "@defold-typescript/types/ecs";
+export default defineScript({
+  init() { return { garden: world({ glow: 1 }) }; },
+  update(self, dt) { self.garden.update(dt); },
+});
+`,
+    );
+    const loaded = load(entry);
+    const script = scriptOf(loaded);
+
+    expect(loaded.worlds).toHaveLength(0);
+    expect(loaded.exportName(script)).toBe("default");
+    expect(typeof script.init).toBe("function");
+    expect(typeof script.update).toBe("function");
+    const self = script.init?.({});
+    expect(loaded.worlds).toHaveLength(1);
+    expect(self?.garden).toBe(loaded.worlds[0]);
+  });
+
+  test("takes no script from a default export without init or update", () => {
+    const loaded = load(write("main.ts", "export default { name: 1 };\n"));
+    expect(loaded.script).toBeUndefined();
+  });
+
+  test("lists a file's machine at load and its script's world once init runs", () => {
+    const entry = write(
+      "main.ts",
+      `import { defineScript } from "@defold-typescript/types";
+import { world } from "@defold-typescript/types/ecs";
+import { defineMachine } from "@defold-typescript/types/hsm";
+export const lamp = defineMachine()({ initial: "/off", states: { off: {} } });
+export default defineScript({ init() { return { garden: world() }; } });
+`,
+    );
+    const loaded = load(entry);
+
+    expect(loaded.machines.map((machine) => machine.name)).toEqual(["lamp"]);
+    expect(loaded.worlds).toHaveLength(0);
+    scriptOf(loaded).init?.({});
+    expect(loaded.worlds).toHaveLength(1);
+  });
+
+  test("runs ecs/debug's inspect against the simulated engine and prints to the sink", () => {
+    const entry = write(
+      "main.ts",
+      `import { defineScript } from "@defold-typescript/types";
+import { world } from "@defold-typescript/types/ecs";
+import { inspect } from "@defold-typescript/types/ecs/debug";
+const garden = world({ glow: 1 });
+export default defineScript({ init() { return { inspector: inspect(garden, "level") }; } });
+`,
+    );
+    const loaded = load(entry);
+    const entries: EngineEntry[] = [];
+    loaded.engine.setSink((entry) => entries.push(entry));
+    scriptOf(loaded).init?.({});
+
+    const [first] = entries;
+    expect(first?.kind).toBe("print");
+    expect(first?.kind === "print" ? first.text : "").toStartWith("ecs level frame 0: inspecting");
+  });
+});
+
+describe("loadProject reload and restart", () => {
+  const garden = (step: number) => `import { defineScript } from "@defold-typescript/types";
+import { processingSystem, requireAll, world } from "@defold-typescript/types/ecs";
+interface Ent { x: number }
+const move = processingSystem<Ent>("move")(requireAll("x"), {
+  process(e) { e.x += ${step}; },
+});
+export default defineScript({
+  init() { return { garden: world<Ent>(move, { x: 0 }) }; },
+});
+`;
+
+  test("keeps a recorded world through a reload, and its keyed system runs the edited process", () => {
+    const entry = write("main.ts", garden(1));
+    const loaded = load(entry);
+    scriptOf(loaded).init?.({});
+    const before = worldAt(loaded, 0);
+
+    write("main.ts", garden(10));
+    loaded.reload();
+
+    expect(loaded.worlds).toHaveLength(1);
+    expect(loaded.worlds[0]).toBe(before);
+    before.update(0);
+    expect(before.entities[0]?.x).toBe(10);
+    const [move] = before.systems;
+    expect(slice(loaded.files[0]?.text ?? "", loaded.systemSource(move))).toContain("e.x += 10");
+  });
+
+  test("keeps the last files, machines, script and worlds when a reload throws", () => {
+    const entry = write(
+      "main.ts",
+      `import { defineMachine } from "@defold-typescript/types/hsm";
+${garden(1)}export const lamp = defineMachine()({ initial: "/off", states: { off: {} } });
+`,
+    );
+    const loaded = load(entry);
+    scriptOf(loaded).init?.({});
+    const { files, machines, script } = loaded;
+
+    write("main.ts", "export const = ;\n");
+    const compileError = thrown(() => loaded.reload());
+    write(
+      "main.ts",
+      `import { world } from "@defold-typescript/types/ecs";
+export const extra = world();
+throw new Error("boom");
+`,
+    );
+    const runError = thrown(() => loaded.reload());
+
+    expect(compileError).toBeInstanceOf(ViewLoadError);
+    expect(runError).toBeInstanceOf(ViewLoadError);
+    expect((runError as Error).message).toContain("boom");
+    expect(loaded.files).toBe(files);
+    expect(loaded.machines).toBe(machines);
+    expect(loaded.script).toBe(script);
+    expect(loaded.worlds).toHaveLength(1);
+  });
+
+  test("restart forgets every world and builds keyed systems afresh", () => {
+    const loaded = load(write("main.ts", garden(1)));
+    scriptOf(loaded).init?.({});
+    const first = worldAt(loaded, 0);
+    first.update(0);
+    const [system] = first.systems;
+
+    loaded.restart();
+    expect(loaded.worlds).toHaveLength(0);
+    scriptOf(loaded).init?.({});
+    const restarted = worldAt(loaded, 0);
+    restarted.update(0);
+    expect(restarted).not.toBe(first);
+    expect(restarted.systems[0]).not.toBe(system);
+    expect(loaded.systemName(restarted.systems[0])).toBe("move");
+  });
+
+  test("restart reseeds math.random, and a reload keeps drawing from the same generator", () => {
+    const entry = write(
+      "main.ts",
+      `import { defineScript } from "@defold-typescript/types";
+export default defineScript({ init() { return { roll: math.random() }; } });
+`,
+    );
+    const loaded = load(entry);
+    const roll = () => scriptOf(loaded).init?.({})?.roll;
+    const first = roll();
+
+    loaded.reload();
+    const afterReload = roll();
+    loaded.restart();
+    const afterRestart = roll();
+
+    expect(afterReload).not.toBe(first);
+    expect(afterRestart).toBe(first);
   });
 });

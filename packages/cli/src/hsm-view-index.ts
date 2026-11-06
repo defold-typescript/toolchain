@@ -1,5 +1,5 @@
-import { type LoadedFile, locationOf, type SourceSpan } from "./hsm-view-load";
 import { type RuleKey, ruleId } from "./hsm-view-rule-id";
+import { type LoadedFile, locationOf, type SourceSpan } from "./view-run";
 
 interface StateConfig {
   readonly states?: Readonly<Record<string, StateConfig>>;
