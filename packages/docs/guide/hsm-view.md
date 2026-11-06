@@ -59,7 +59,7 @@ The CLI compiles the file with TypeScript and runs it in Node. `@defold-typescri
 
 - **Engine globals.** `hash`, `print`, `pprint` and `tostring` work: `hash("walk")` is the string `hash: [walk]`, and `print` writes to the log.
 - **Simulated engine values.** Lua 5.1's `math` works, and `math.random` draws the same numbers each time the command starts. `os.clock` counts seconds. `vmath.vector3` and `vmath.vector4` build plain `x`/`y`/`z`/`w` objects. `go.get_position` and `go.get_world_position` return zero vectors, `msg.url` returns an empty table, `sys.get_engine_info().is_debug` is `true`, and `sys.get_config_string` returns its default. `factory.create` returns `hash: [instance 1]`, then `hash: [instance 2]`, and is logged, since nothing spawns.
-- **Stubs.** Every other engine global or member a file names (`sprite`, `msg.post`, `go.set_position`) is a stub. A call returns `undefined` and is logged as not simulated, and a constant read returns its own name.
+- **Stubs.** Every other engine global or member a file names (`sprite`, `msg.post`, `go.set_position`) is a stub. A call returns `undefined` and is logged as not simulated, and a constant read returns its own name. Lua's own `select` is not an engine global and is `undefined` here, so ecs's filters reject a bad token as they do in a game.
 - **Imports.** A relative import loads the project file it names. `defineScript`, `defineGuiScript` and `defineRenderScript` from `@defold-typescript/types` return the table they are given. Any other `@defold-typescript/types` path is empty, since it holds declarations only. Any other import stops the load with an error naming it and the file that imports it.
 
 ## Live reload

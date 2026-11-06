@@ -27,7 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Editor hovers:** every export of each module, and every system field and callback, shows a one-line summary, its parameters and return, and an example that compiles; the [Reference](./entity-systems.md#reference) tables quote the same summaries.
   - **[Entity systems, one system at a time](./entity-systems-tutorial.md):** a hands-on tutorial grows one night garden of fireflies lesson by lesson, until it uses every export of the three `ecs` modules. Each change is a diff that compiles, and each lesson shows the console its code prints under the real `ecs`.
   - **The [`AGENTS.md` block](./init-agents.md#what-it-writes)** that `init`, `upgrade` and `init-agents` write lists `hsm` and `ecs` with their import paths and guide pages.
-- **[`hsm-view`](./hsm-view.md#what-runs-and-what-is-stubbed) runs more of a game's code:** a file may import `ecs` and call `defineScript`, and Lua's `math` (the same numbers on every start), `os.clock`, `vmath.vector3`, `vmath.vector4`, `factory.create`, `msg.url`, `go.get_position`, `go.get_world_position`, `sys.get_engine_info` and `sys.get_config_string` return simulated values instead of `undefined`.
+- **[`hsm-view`](./hsm-view.md#what-runs-and-what-is-stubbed) runs more of a game's code:** a file may call `defineScript` and import `ecs`, whose filters reject a bad token as they do in a game. Lua's `math` (the same numbers on every start), `os.clock`, `vmath.vector3`, `vmath.vector4`, `factory.create`, `msg.url`, `go.get_position`, `go.get_world_position`, `sys.get_engine_info` and `sys.get_config_string` return simulated values instead of `undefined`.
 
 ### Fixed
 
