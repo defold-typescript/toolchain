@@ -702,6 +702,7 @@ describe("renderMarkdown translation and source tabs", () => {
     const groups = root.querySelectorAll(".code-tabs");
     expect(groups).toHaveLength(1);
     const group = groups[0] as MiniElement;
+    expect(group.getAttribute("data-code-tabs")).toBe("typescript-lua");
     const tablist = group.querySelectorAll('[role="tablist"]');
     expect(tablist).toHaveLength(1);
     const tabs = tablist[0]?.querySelectorAll("button.code-tab") ?? [];
@@ -731,6 +732,74 @@ describe("renderMarkdown translation and source tabs", () => {
     expect(figures).toHaveLength(1);
     expect(languageBadge(figures[0]?.children[0]).label).toBe("Lua");
     expect(root.querySelector(".code-tabs")).toBeNull();
+  });
+});
+
+describe("renderMarkdown config and builder tabs", () => {
+  const typescriptGlyph = deviconPath("typescript/typescript-plain");
+
+  function expectConfigBuilderGroup(html: string, config: string, builder: string) {
+    const root = parseHtml(html);
+    const groups = root.querySelectorAll(".code-tabs");
+    expect(groups).toHaveLength(1);
+    const group = groups[0] as MiniElement;
+    expect(group.getAttribute("data-code-tabs")).toBe("config-builder");
+    const tabs = group.querySelectorAll("button.code-tab");
+    const badges = tabs.map((tab) => languageBadge(tab.children[0]));
+    expect(badges.map((badge) => badge.label)).toEqual(["Config", "Builder"]);
+    for (const badge of badges) expect(badge.paths).toContain(typescriptGlyph);
+    expect(tabs.map((tab) => tab.getAttribute("aria-selected"))).toEqual(["true", "false"]);
+    const panels = group.querySelectorAll("figure.code-tabs-panel");
+    expect(panels).toHaveLength(2);
+    expect(panels[0]?.getAttribute("hidden")).toBeNull();
+    expect(panels[1]?.getAttribute("hidden")).not.toBeNull();
+    const pres = html.match(/<pre[\s\S]*?<\/pre>/g) ?? [];
+    expect(pres.map((pre) => pre.replace(/<[^>]+>/g, ""))).toEqual([config, builder]);
+    expect(root.querySelector("figure.code-block--badged")).toBeNull();
+  }
+
+  test("a `ts excerpt` fence followed by a `ts builder` fence renders one Config/Builder group", async () => {
+    expectConfigBuilderGroup(
+      await renderMarkdown(
+        "```ts excerpt\nconst a = config();\n```\n\n```ts builder\nconst a = build();\n```\n",
+      ),
+      "const a = config();",
+      "const a = build();",
+    );
+  });
+
+  test("a plain ts fence followed by a `ts builder` fence pairs the same way", async () => {
+    expectConfigBuilderGroup(
+      await renderMarkdown("```ts\nlet a = 1;\n```\n\n```ts builder\nlet b = 2;\n```\n"),
+      "let a = 1;",
+      "let b = 2;",
+    );
+  });
+
+  test("a `ts builder` fence after prose stays a plain badged TypeScript block", async () => {
+    const root = parseHtml(await renderMarkdown("Some prose.\n\n```ts builder\nlet b = 2;\n```\n"));
+    const figures = root.querySelectorAll("figure.code-block--badged");
+    expect(figures).toHaveLength(1);
+    expect(languageBadge(figures[0]?.children[0]).label).toBe("TypeScript");
+    expect(root.querySelector(".code-tabs")).toBeNull();
+  });
+
+  test("a `ts builder` fence after a `lua original` pair stays a plain block outside the group", async () => {
+    const root = parseHtml(
+      await renderMarkdown(
+        "```ts\nlet a = 1;\n```\n\n```lua original\nlocal a = 1\n```\n\n```ts builder\nlet b = 2;\n```\n",
+      ),
+    );
+    const groups = root.querySelectorAll(".code-tabs");
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.getAttribute("data-code-tabs")).toBe("typescript-lua");
+    const labels = groups[0]
+      ?.querySelectorAll("button.code-tab")
+      .map((tab) => languageBadge(tab.children[0]).label);
+    expect(labels).toEqual(["TypeScript", "Lua"]);
+    const figures = root.querySelectorAll("figure.code-block--badged");
+    expect(figures).toHaveLength(1);
+    expect(languageBadge(figures[0]?.children[0]).label).toBe("TypeScript");
   });
 });
 
