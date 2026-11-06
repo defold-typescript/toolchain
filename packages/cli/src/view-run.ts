@@ -82,6 +82,9 @@ const TAG = "__viewLoc";
 const MODULE_PARAMS = new Set(["require", "module", "exports", TAG]);
 const TYPES_PACKAGE = "@defold-typescript/types";
 const LOCATION = Symbol("view location");
+// Lua's base `select` is no engine call, and ecs's `checkTokens` takes its Lua branch when
+// `typeof select === "function"`, so a callable stub would count `undefined` tokens and check none.
+const UNBOUND_GLOBALS: ReadonlySet<string> = new Set(["select"]);
 
 const locationCache = new Map<string, SourceLocation>();
 
@@ -408,8 +411,12 @@ export function createProjectRunner(entry: string, options: ProjectRunnerOptions
     builtins[name] = isPlainObject(value) ? partialNamespace(name, value) : value;
   }
 
-  const stubFor = (name: string): unknown =>
-    Object.hasOwn(builtins, name) ? builtins[name] : recordingStub(name);
+  const stubFor = (name: string): unknown => {
+    if (Object.hasOwn(builtins, name)) {
+      return builtins[name];
+    }
+    return UNBOUND_GLOBALS.has(name) ? undefined : recordingStub(name);
+  };
 
   const libraryOf = (file: string): ResolvedLibrary | undefined => {
     const dir = path.dirname(file);
