@@ -1007,3 +1007,295 @@ export const door = defineMachine("door")({ initial: "/closed", states: { closed
     expect(index.onKeys["/off"]?.TOGGLE).toBeDefined();
   });
 });
+
+const SCRIPT_IMPORT = 'import { defineScript } from "@defold-typescript/types";';
+const HSM_IMPORT = 'import { defineMachine } from "@defold-typescript/types/hsm";';
+const ECS_IMPORT = 'from "@defold-typescript/types/ecs"';
+
+function prints(snapshot: Snapshot): string[] {
+  return snapshot.entries.flatMap((entry) => (entry.kind === "print" ? [entry.text] : []));
+}
+
+describe("createSession run", () => {
+  test("runs the script's init on creation over its properties and lists the worlds it builds", () => {
+    const view = session(`${SCRIPT_IMPORT}
+import { system, world } ${ECS_IMPORT};
+const move = system("move")({ update() {} });
+export const glow = system()({ update() {} });
+export default defineScript({
+  properties: { speed: 2 },
+  init(self) {
+    print(\`speed \${self.speed}\`);
+    return { garden: world(move, glow) };
+  },
+});
+`);
+    const snapshot = view.snapshot();
+
+    expect(snapshot).toMatchObject({
+      worlds: ["garden"],
+      world: "garden",
+      frame: 0,
+      t: 0,
+      machines: [],
+      running: true,
+    });
+    expect(snapshot.systems.map((system) => system.name)).toEqual(["move", "glow"]);
+    expect(prints(snapshot)).toEqual(["speed 2"]);
+  });
+
+  test("calls the script's update, then the started machine's, on one clock that start leaves running", () => {
+    const view = session(`${SCRIPT_IMPORT}
+${HSM_IMPORT}
+import { system, world } ${ECS_IMPORT};
+const tick = system("tick")({ update(dt) { print(\`world \${dt}\`); } });
+export const lamp = defineMachine()({
+  initial: "/on",
+  states: { on: { update: (_ctx, dt) => { print(\`machine \${dt}\`); return undefined; } } },
+});
+export default defineScript({
+  init() { return { garden: world(tick) }; },
+  update(self, dt) {
+    print(\`script \${dt}\`);
+    self.garden.update(dt);
+  },
+});
+`);
+
+    const first = view.update(0.5);
+    expect(prints(first)).toEqual(["script 0.5", "world 0.5"]);
+    expect(first).toMatchObject({ t: 0.5, frame: 1 });
+    view.update(0.5);
+    view.update(0.5);
+
+    expect(view.start({})).toMatchObject({ t: 1.5, frame: 3, path: "/on", running: true });
+    const both = view.update(0.5);
+    expect(prints(both)).toEqual(["script 0.5", "world 0.5", "machine 0.5"]);
+    expect(both).toMatchObject({ t: 2, frame: 4 });
+  });
+
+  test("updates each world when the file exports no script", () => {
+    const view = session(`import { system, world } ${ECS_IMPORT};
+export const left = world(system()({ update(dt) { print(\`left \${dt}\`); } }));
+export const right = world(system()({ update(dt) { print(\`right \${dt}\`); } }));
+`);
+
+    const updated = view.update(0.5);
+    expect(prints(updated)).toEqual(["left 0.5", "right 0.5"]);
+    expect(updated).toMatchObject({ worlds: ["left", "right"], world: "left", t: 0.5, frame: 1 });
+  });
+
+  test("logs the entities the picked world's systems gain and lose", () => {
+    const view = session(`${SCRIPT_IMPORT}
+import { addEntity, processingSystem, removeEntity, requireAll, world } ${ECS_IMPORT};
+const count = processingSystem("count")(requireAll("n"), { process() {} });
+export default defineScript({
+  init() { return { garden: world(count, { n: 1 }, { n: 2 }), frames: 0 }; },
+  update(self, dt) {
+    self.frames += 1;
+    if (self.frames === 1) {
+      addEntity(self.garden, { n: 3 });
+    } else {
+      removeEntity(self.garden, self.garden.entities[0]);
+    }
+    self.garden.update(dt);
+  },
+});
+`);
+
+    const joined = view.update(0.25);
+    expect(joined.entries.filter((entry) => entry.kind === "join")).toEqual([
+      { kind: "join", t: 0.25, system: 1, entity: 3 },
+    ]);
+    const left = view.update(0.25);
+    expect(left.entries.filter((entry) => entry.kind === "leave")).toEqual([
+      { kind: "leave", t: 0.5, system: 1, entity: 1 },
+    ]);
+  });
+
+  test("restart reruns the files and init, resets the clock and entity ids, stops the machine and reseeds math.random", () => {
+    const view = session(`${SCRIPT_IMPORT}
+${HSM_IMPORT}
+import { addEntity, world } ${ECS_IMPORT};
+export const lamp = defineMachine()({ initial: "/on", states: { on: {} } });
+export default defineScript({
+  init() {
+    print(\`roll \${math.random()}\`);
+    return { garden: world({ n: 1 }, { n: 2 }) };
+  },
+  update(self, dt) {
+    addEntity(self.garden, { n: 3 });
+    self.garden.update(dt);
+  },
+});
+`);
+    const roll = prints(view.snapshot());
+    view.start({});
+    view.update(0.1);
+    view.update(0.1);
+    view.update(0.1);
+    expect(view.snapshot().entities.map((entity) => entity.id)).toEqual([1, 2, 3, 4, 5]);
+
+    const restarted = view.restart();
+    expect(restarted).toMatchObject({ t: 0, frame: 0, path: undefined, running: true });
+    expect(restarted.machines).toEqual(["lamp"]);
+    expect(prints(restarted)).toEqual(roll);
+    expect(restarted.entities.map((entity) => entity.id)).toEqual([1, 2]);
+    expect(view.update(0.1)).toMatchObject({ frame: 1, path: undefined });
+  });
+
+  test("halts on a throw in the script's update or a system until restart, which start does not continue", () => {
+    const scriptThrows = session(`${SCRIPT_IMPORT}
+${HSM_IMPORT}
+import { world } ${ECS_IMPORT};
+export const lamp = defineMachine()({ initial: "/on", states: { on: {} } });
+export default defineScript({
+  init() { return { garden: world(), frames: 0 }; },
+  update(self, dt) {
+    self.frames += 1;
+    if (self.frames === 2) {
+      throw new Error("script broke");
+    }
+    self.garden.update(dt);
+  },
+});
+`);
+    scriptThrows.update(0.5);
+    const broken = scriptThrows.update(0.5);
+    expect(broken).toMatchObject({ running: false, error: "script broke", t: 1, frame: 2 });
+    expect(kinds(broken)).toContain("error");
+    expect(scriptThrows.update(0.5)).toMatchObject({ error: "script broke", t: 1, frame: 2 });
+    expect(scriptThrows.start({})).toMatchObject({
+      running: false,
+      error: "script broke",
+      path: undefined,
+    });
+    const restarted = scriptThrows.restart();
+    expect(restarted.running).toBe(true);
+    expect(restarted.error).toBeUndefined();
+    expect(scriptThrows.update(0.5)).toMatchObject({ running: true, frame: 1 });
+
+    const systemThrows = session(`import { system, world } ${ECS_IMPORT};
+export const garden = world(
+  system("fuse")({
+    n: 0,
+    update() {
+      this.n += 1;
+      if (this.n === 2) {
+        throw new Error("fuse blew");
+      }
+    },
+  }),
+);
+`);
+    systemThrows.update(0.5);
+    expect(systemThrows.update(0.5)).toMatchObject({ running: false, error: "fuse blew" });
+    expect(systemThrows.update(0.5)).toMatchObject({ error: "fuse blew", frame: 2 });
+    expect(systemThrows.restart()).toMatchObject({ running: true, frame: 0 });
+  });
+
+  test("halts on a throw in the simulated machine's hooks, and start continues the run", () => {
+    const view = session(`${SCRIPT_IMPORT}
+${HSM_IMPORT}
+import { system, world } ${ECS_IMPORT};
+export const lamp = defineMachine()({
+  initial: "/on",
+  states: { on: { on: { BREAK: { run: () => { throw new Error("bulb"); } } } } },
+});
+const tick = system("tick")({ update() { print("tick"); } });
+export default defineScript({
+  init() { return { garden: world(tick) }; },
+  update(self, dt) { self.garden.update(dt); },
+});
+`);
+    view.start({});
+    view.update(0.5);
+    expect(view.send({ type: "BREAK" })).toMatchObject({ running: false, error: "bulb" });
+    expect(view.update(0.5)).toMatchObject({ error: "bulb", frame: 1 });
+
+    const continued = view.start({});
+    expect(continued).toMatchObject({ running: true, path: "/on", t: 0.5, frame: 1 });
+    expect(continued.error).toBeUndefined();
+    const ticked = view.update(0.5);
+    expect(prints(ticked)).toEqual(["tick"]);
+    expect(ticked.frame).toBe(2);
+  });
+
+  test("reload keeps self, the worlds, the entity ids and a keyed machine, and calls on_reload once", () => {
+    const key = `run-reload-${++sequence}`;
+    const source = (version: string) => `${SCRIPT_IMPORT}
+${HSM_IMPORT}
+import { world } ${ECS_IMPORT};
+export const lamp = defineMachine(${JSON.stringify(key)})({
+  initial: "/off",
+  states: { off: { on: { GO: "/on" } }, on: {} },
+});
+export default defineScript({
+  init() {
+    print("init");
+    return { garden: world({ name: "a" }, { name: "b" }), n: 0 };
+  },
+  update(self) {
+    self.n += 1;
+    print(\`${version} \${self.n}\`);
+  },
+  on_reload(self) {
+    print(\`reloaded \${self.n}\`);
+  },
+});
+`;
+    const file = write(source("v1"));
+    const view = createSession({ file, hsmSourceDir, ecsSourceDir });
+    view.start({});
+    view.send({ type: "GO" });
+    view.update(0.1);
+    view.update(0.1);
+    const ids = view.snapshot().entities.map((entity) => entity.id);
+
+    writeFileSync(file, source("v2"));
+    const reloaded = view.reload();
+    expect(prints(reloaded)).toEqual(["reloaded 2"]);
+    expect(kinds(reloaded)).toContain("reload");
+    expect(reloaded).toMatchObject({ path: "/on", worlds: ["garden"], running: true });
+    expect(reloaded.entities.map((entity) => entity.id)).toEqual(ids);
+    expect(prints(view.update(0.1))).toEqual(["v2 3"]);
+
+    writeFileSync(file, "export const = ;\n");
+    const failed = view.reload();
+    expect(kinds(failed)).toContain("error");
+    expect(failed.running).toBe(true);
+    expect(prints(view.update(0.1))).toEqual(["v2 4"]);
+  });
+
+  test("picks a world by name, and a file with no machine refuses machine actions", () => {
+    const view = session(`${SCRIPT_IMPORT}
+import { system, world } ${ECS_IMPORT};
+export const move = system()({ update() {} });
+export const fade = system()({ update() {} });
+export default defineScript({
+  init() { return { garden: world(move, { a: 1 }), other: world(fade, { b: 1 }, { c: 1 }) }; },
+});
+`);
+    expect(view.snapshot().systems.map((system) => system.name)).toEqual(["move"]);
+
+    const other = view.pickWorld("other");
+    expect(other.world).toBe("other");
+    expect(other.systems.map((system) => system.name)).toEqual(["fade"]);
+    expect(other.entities.map((entity) => entity.value)).toEqual([{ b: 1 }, { c: 1 }]);
+    expect(() => view.pickWorld("missing")).toThrow("garden, other");
+
+    expect(view.snapshot().picked).toBeUndefined();
+    expect(() => view.start({})).toThrow("defines no machine");
+    expect(() => view.send({ type: "GO" })).toThrow("defines no machine");
+    expect(() => view.pick("lamp")).toThrow("defines no machine");
+  });
+
+  test("refuses a file that defines no machine and creates no world once init has run", () => {
+    const file = write(`${SCRIPT_IMPORT}
+export default defineScript({ init() { return { n: 1 }; } });
+`);
+    expect(() => createSession({ file, hsmSourceDir, ecsSourceDir })).toThrow(
+      `${file} defines no machine and creates no world`,
+    );
+  });
+});
