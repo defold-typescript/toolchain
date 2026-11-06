@@ -27,7 +27,7 @@ export type Layout = "list" | "stacked";
 
 export const SPEEDS = [1, 0.5, 0.25, 0.1] as const;
 
-export const DISCONNECTED = "disconnected - run hsm-view again";
+export const DISCONNECTED = "disconnected - run view again";
 
 /**
  * A frame would move something: the run is not halted, and a machine runs, a world exists, or the

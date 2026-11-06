@@ -224,10 +224,10 @@ const COMMANDS: readonly HelpCommand[] = [
     ],
   },
   {
-    name: "hsm-view",
+    name: "view",
     summary:
-      "Open a state-machine file in a local browser viewer: see its states, send events, step time and read the log.",
-    usage: "bunx @defold-typescript/cli hsm-view <file> [name]",
+      "Run a file's state machines and entity worlds in a local browser viewer: see states, systems and entities, send events, step time and read the log.",
+    usage: "bunx @defold-typescript/cli view <file> [name]",
     flags: [],
   },
   {

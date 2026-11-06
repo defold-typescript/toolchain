@@ -1024,10 +1024,10 @@ And the hooks? **Not one of them changed.** They still read `ctx.wakes` and `ctx
 
 The diagrams have shown you every move the buddy makes. They were drawn for this page, though, and your buddy has outgrown them: it has a script, timers, a fade and messages now.
 
-You can watch **your own file** run like that. The toolchain has a viewer named `hsm-view`. Point it at the file with the machine in it:
+You can watch **your own file** run like that. The toolchain has a viewer named `view`. Point it at the file with the machine in it:
 
 ```sh
-bunx @defold-typescript/cli hsm-view src/buddy-machine.ts
+bunx @defold-typescript/cli view src/buddy-machine.ts
 ```
 
 It prints an address. Open that in your browser, and there is your code, with the buddy's current state tinted.
@@ -1075,13 +1075,13 @@ hsm buddy frame 0: inspecting [/waking]
 hsm buddy frame 60: /waking -> /awake/wander (WAKING_DONE: /waking, 0) [/awake/wander]
 ```
 
-Both calls do nothing in a release build, so you can leave them in. [Debug a machine](./state-machines.md#debug-a-machine) explains every part of a line, and [`hsm-view`](./hsm-view.md) has a page of its own.
+Both calls do nothing in a release build, so you can leave them in. [Debug a machine](./state-machines.md#debug-a-machine) explains every part of a line, and [`view`](./view.md) has a page of its own.
 
-Some of the lessons ahead still have a diagram. **Every "Try it" is yours to run in `hsm-view`.**
+Some of the lessons ahead still have a diagram. **Every "Try it" is yours to run in `view`.**
 
 ### Try it
 
-1. Start the buddy in `hsm-view` and keep your hands off. Which state is tinted, and why doesn't it move on?
+1. Start the buddy in `view` and keep your hands off. Which state is tinted, and why doesn't it move on?
 2. Press `WAKING_DONE`, then Play, and send `BUMP` with `{ cost: 3 }`. What does `energy` do in the ctx panel?
 
 > [!MORE] Answer
@@ -1151,7 +1151,7 @@ For the full rules, see [Move on at once with `always`](./state-machines.md#move
 
 ### Try it
 
-1. In `hsm-view`, wake the buddy, send `BUMP` with `{ cost: 2.5 }`, press `POKE` twice and then `WAKING_DONE`. Where does the buddy end up, and what is `wakes`?
+1. In `view`, wake the buddy, send `BUMP` with `{ cost: 2.5 }`, press `POKE` twice and then `WAKING_DONE`. Where does the buddy end up, and what is `wakes`?
 2. Why does the second rule have no `when`?
 
 > [!MORE] Answer
@@ -1192,7 +1192,7 @@ For the full rules, see [Resume with history](./state-machines.md#resume-with-hi
 
 ### Try it
 
-1. In `hsm-view`, wake the buddy and send `trigger_response` with `{ enter: true }`. Then send `BUMP` with `{ cost: 3 }` and press Play. Which state is the buddy in when it gets up?
+1. In `view`, wake the buddy and send `trigger_response` with `{ enter: true }`. Then send `BUMP` with `{ cost: 3 }` and press Play. Which state is the buddy in when it gets up?
 2. Take `restoreDepth` out, save, and do the same. What changed? Put the line back afterward.
 3. A brand-new buddy wakes up for the very first time. Which child does it start in?
 
@@ -1239,7 +1239,7 @@ For the full rules, see [Repeat while a state is active](./state-machines.md#rep
 
 ### Try it
 
-1. In `hsm-view`, wake the buddy and press Play. What does `energy` show after four seconds?
+1. In `view`, wake the buddy and press Play. What does `energy` show after four seconds?
 2. Pause, set `dt` to 10 and press Step once. How many sixteenths does the buddy lose?
 3. The buddy is asleep. Does its battery drain?
 
@@ -1339,12 +1339,12 @@ For the full rules, see [A delay that reads the context](./state-machines.md#a-d
 
 ### Try it
 
-1. In `hsm-view`, wake the buddy, send `BUMP` with `{ cost: 3 }` and press Play. The nap is two seconds long. When does the buddy get up?
+1. In `view`, wake the buddy, send `BUMP` with `{ cost: 3 }` and press Play. The nap is two seconds long. When does the buddy get up?
 2. Wake a new buddy and let it give up following twice: send `trigger_response` with `{ enter: true }`, wait four seconds, and do it again. Then tire it out. How long is this nap?
 3. A buddy gets up with 2.5 in its battery, and ten seconds later it holds less than 2. How often does it use energy now?
 
 > [!MORE] Answer
-> 1. After three seconds. At two the timer is due, but the battery holds 2 and `when` says no, so the entry glows dimly in `hsm-view` while it waits. A second later the battery is full and the rule is taken.
+> 1. After three seconds. At two the timer is due, but the battery holds 2 and `when` says no, so the entry glows dimly in `view` while it waits. A second later the battery is full and the rule is taken.
 > 2. Four seconds. Each time `follow` gave up, `napSeconds` went up by one. The battery is full after three seconds, and this time it is the delay that keeps the buddy down.
 > 3. Still every second. The delay was read when `awake` was entered, with 2.5 in the battery, and it holds for the whole stay.
 
@@ -1407,7 +1407,7 @@ For the full rules, see [Wait for something to finish](./state-machines.md#wait-
 
 ### Try it
 
-1. In `hsm-view`, start a buddy and read the log. Which two Defold calls is `waking` waiting on, and how do you get past them?
+1. In `view`, start a buddy and read the log. Which two Defold calls is `waking` waiting on, and how do you get past them?
 2. In the game, the chirp is shorter than the one-second fade. When does the buddy move on?
 3. You poke the buddy halfway through the fade, and the chirp would have ended a moment later. Does the buddy wake up?
 
@@ -1475,13 +1475,13 @@ Leaving the state cancels the wait that is pending. That's the sequence's own cl
 
 Anything else the routine started is still yours to stop, and the place is `exit`: here it stops the chirp. **Never put cleanup after an `await`.** By the time that line would run, the buddy may be somewhere else.
 
-> [!NOTE] **A clock of its own.** `signal.wait` counts real time with a Defold timer, not the `dt` you pass to `update`. In `hsm-view` there is no such timer, so press `GREETING_DONE` to end the routine yourself.
+> [!NOTE] **A clock of its own.** `signal.wait` counts real time with a Defold timer, not the `dt` you pass to `update`. In `view` there is no such timer, so press `GREETING_DONE` to end the routine yourself.
 
 For the full rules, see [Scripted sequences](./state-machines.md#scripted-sequences).
 
 ### Try it
 
-1. In `hsm-view`, wake the buddy and send `trigger_response` with `{ enter: true }`. Which state is tinted, and which call does the log show?
+1. In `view`, wake the buddy and send `trigger_response` with `{ enter: true }`. Which state is tinted, and which call does the log show?
 2. In the game, you walk in and straight out again while the buddy greets you. Does it still follow?
 3. The buddy runs out of energy in the middle of its greeting, rests, and gets up. What does it do first?
 
@@ -1825,7 +1825,7 @@ For the full rules, see [Run regions side by side with `parallel`](./state-machi
 
 ### Try it
 
-1. In `hsm-view`, wake the buddy, send `BUMP` with `{ cost: 3 }` and press Play. Which states are tinted?
+1. In `view`, wake the buddy, send `BUMP` with `{ cost: 3 }` and press Play. Which states are tinted?
 2. Wake a new buddy and change `napSeconds` to 5 in the ctx panel before you tire it out. What does the light do in the last second of the nap?
 
 > [!MORE] Answer
@@ -1877,7 +1877,7 @@ For the full rules, see [Name a group of states with tags](./state-machines.md#n
 
 ### Try it
 
-1. Start the buddy in `hsm-view` and look at the tinted state in your code. Is the buddy busy? Press `WAKING_DONE`: and now?
+1. Start the buddy in `view` and look at the tinted state in your code. Is the buddy busy? Press `WAKING_DONE`: and now?
 2. You add a state named `charging`, and the hint should hide there too. What do you change in `buddy.ts`?
 3. You type `hasTag("bussy")` by mistake. What happens?
 
@@ -1931,12 +1931,12 @@ For the full rules, see [React to an unhandled event](./state-machines.md#react-
 
 ### Try it
 
-1. In `hsm-view`, tire the buddy out and look at the event buttons. Is there a `POKE`? What would `can({ type: "POKE" })` say?
+1. In `view`, tire the buddy out and look at the event buttons. Is there a `POKE`? What would `can({ type: "POKE" })` say?
 2. In the game, you walk up to a resting buddy. What do you hear, and does the buddy move?
 3. An awake buddy has 1 left in its battery. What does `can({ type: "BUMP", cost: 0.5 })` say? The rule that would take it has no `to`.
 
 > [!MORE] Answer
-> 1. No button, and `can` says `false`. `hsm-view` offers one button for each event that an active state has a rule for, and nothing in `resting` has a rule for `POKE`.
+> 1. No button, and `can` says `false`. `view` offers one button for each event that an active state has a rule for, and nothing in `resting` has a rule for `POKE`.
 > 2. A beep, and no. The `trigger_response` is ignored, so `unhandled` runs, and nothing exits or enters.
 > 3. `true`. The first `BUMP` rule's `when` says no, but the second rule always passes. A rule with no `to` still takes its event.
 
@@ -1983,7 +1983,7 @@ For everything a running machine offers, see [`MachineInstance`](./state-machine
 
 ### Try it
 
-1. In `hsm-view`, wake the buddy and send `BUMP` with `{ cost: 1 }`. How many moves does the log show?
+1. In `view`, wake the buddy and send `BUMP` with `{ cost: 1 }`. How many moves does the log show?
 2. Your listener prints `to` and `buddy.path`. When are the two different?
 3. In the game, the buddy has just nodded off after its thirty seconds, and your log says it dropped a `BUMP`. Where did that come from?
 
@@ -2017,13 +2017,13 @@ Two things to remember:
 - **One key per machine.** Two machines with the same key would overwrite each other on every reload.
 - **Define it at the top of a module**, never inside `init`, so it runs once each time the file loads.
 
-`hsm-view` reloads the same way when you save, so you can try it right now.
+`view` reloads the same way when you save, so you can try it right now.
 
 For the full rules, see [Hot reload](./state-machines.md#hot-reload).
 
 ### Try it
 
-1. In `hsm-view`, wake the buddy and get it to `follow`. Now change `follow`'s `4` to `10` in your editor and save. Where is the buddy after the reload?
+1. In `view`, wake the buddy and get it to `follow`. Now change `follow`'s `4` to `10` in your editor and save. Where is the buddy after the reload?
 2. Take the key out and do the same. What is different?
 3. With the key back in, rename `follow` to `chase`, in its name and in every path that points at it, and save while the buddy follows. Where does it go?
 
@@ -2077,7 +2077,7 @@ For the full rules, see [Start at saved paths](./state-machines.md#start-at-save
 
 ### Try it
 
-1. In `hsm-view`, tire the buddy out. Which paths would `leaves` hold right now?
+1. In `view`, tire the buddy out. Which paths would `leaves` hold right now?
 2. A save holds `/resting/battery/full` and `/resting/lamp/hidden`. What does the loaded buddy do in its first three seconds?
 3. A save holds `/awake/follow`. The loaded buddy runs out of energy and rests. Which child of `awake` is it in when it gets up?
 
@@ -2464,7 +2464,7 @@ For the full rules, see [Separate objects talk with messages](./state-machines.m
 
 ### Try it
 
-1. Run `hsm-view` twice, once on each machine file, and put the two tabs side by side. Start the buddy with `{ light: "#light", dock: "dock" }` and tire it out. Now carry the messages yourself: which buttons do you press, and in which tab?
+1. Run `view` twice, once on each machine file, and put the two tabs side by side. Start the buddy with `{ light: "#light", dock: "dock" }` and tire it out. Now carry the messages yourself: which buttons do you press, and in which tab?
 2. A second buddy asks for a charge while the dock is busy with the first. What happens to its message?
 3. Why does the dock post to `event.sender` and not to an address it was started with?
 
