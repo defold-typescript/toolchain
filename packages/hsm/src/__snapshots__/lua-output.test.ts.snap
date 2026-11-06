@@ -2045,3 +2045,240 @@ end
 return ____exports
 "
 `;
+
+exports[`hsm builder Lua output matches the reviewed Lua snapshot 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local ____index = require("defold_typescript_hsm.index")
+local defineMachine = ____index.defineMachine
+local function describePath(path)
+    return path == "" and "(root)" or path
+end
+local function newRecord(path, config)
+    return {path = path, config = config, behavior = {}, builder = nil}
+end
+local function indexStates(records, config, path)
+    local children = config.states
+    if children == nil then
+        return
+    end
+    for name in pairs(children) do
+        local child = children[name]
+        local childPath = (path .. "/") .. name
+        records[childPath] = newRecord(childPath, child)
+        indexStates(records, child, childPath)
+    end
+end
+local function writeBehavior(record)
+    local behavior = record.behavior
+    local config = record.config
+    for slot in pairs(behavior) do
+        config[slot] = behavior[slot]
+    end
+end
+local function createBuilder(key, skeleton)
+    local records = {__proto__ = nil}
+    indexStates(records, skeleton, "")
+    local rootRecord = newRecord("", skeleton)
+    local pending = {}
+    local built = false
+    local function open(path)
+        if built then
+            error(
+                ("hsm: state \\"" .. describePath(path)) .. "\\" gets a statement after build()",
+                0
+            )
+        end
+    end
+    local function track(path, missing)
+        local entry = {path = path, missing = missing, done = false}
+        pending[#pending + 1] = entry
+        return entry
+    end
+    local function ends(path, entry, mark)
+        local function run(...)
+            local actions = {...}
+            open(path)
+            entry.run = actions
+            mark.done = true
+        end
+        local function to(target)
+            open(path)
+            entry.to = target
+            mark.done = true
+            return {run = run}
+        end
+        return {to = to, run = run}
+    end
+    local function stateBuilder(record)
+        local path = record.path
+        local behavior = record.behavior
+        local function hook(slot)
+            return function(fn)
+                open(path)
+                if behavior[slot] ~= nil then
+                    error(
+                        (("hsm: state \\"" .. describePath(path)) .. "\\" has a second ") .. slot,
+                        0
+                    )
+                end
+                behavior[slot] = fn
+            end
+        end
+        local function append(list, entry)
+            local ____temp_0
+            if list == nil then
+                ____temp_0 = {}
+            else
+                ____temp_0 = list
+            end
+            local entries = ____temp_0
+            entries[#entries + 1] = entry
+            return entries
+        end
+        return {
+            on = function(____type)
+                open(path)
+                local entry = {}
+                local byType = behavior.on
+                if byType == nil then
+                    byType = {}
+                    behavior.on = byType
+                end
+                byType[____type] = append(byType[____type], entry)
+                local mark = track(path, ("an on(\\"" .. ____type) .. "\\") rule with no to, run or ignore")
+                local ____ends_result_1 = ends(path, entry, mark)
+                local to = ____ends_result_1.to
+                local run = ____ends_result_1.run
+                return {
+                    when = function(guard)
+                        open(path)
+                        entry.when = guard
+                        return {to = to, run = run}
+                    end,
+                    to = to,
+                    run = run,
+                    ignore = function()
+                        open(path)
+                        mark.done = true
+                    end
+                }
+            end,
+            after = function(delay)
+                open(path)
+                local entry = {delay = delay}
+                behavior.after = append(behavior.after, entry)
+                local ____ends_result_2 = ends(
+                    path,
+                    entry,
+                    track(path, "an after() timer with no to and no run")
+                )
+                local to = ____ends_result_2.to
+                local run = ____ends_result_2.run
+                return {
+                    when = function(guard)
+                        open(path)
+                        entry.when = guard
+                        return {to = to, run = run}
+                    end,
+                    to = to,
+                    run = run
+                }
+            end,
+            every = function(delay)
+                open(path)
+                local entry = {delay = delay}
+                behavior.every = append(behavior.every, entry)
+                local ____ends_result_3 = ends(
+                    path,
+                    entry,
+                    track(path, "an every() entry with no run")
+                )
+                local run = ____ends_result_3.run
+                return {run = run}
+            end,
+            always = function()
+                open(path)
+                local entry = {}
+                behavior.always = append(behavior.always, entry)
+                local ____ends_result_4 = ends(
+                    path,
+                    entry,
+                    track(path, "an always() rule with no to")
+                )
+                local to = ____ends_result_4.to
+                return {
+                    when = function(guard)
+                        open(path)
+                        entry.when = guard
+                        return {to = to}
+                    end,
+                    to = to
+                }
+            end,
+            enter = hook("enter"),
+            exit = hook("exit"),
+            update = hook("update"),
+            task = hook("task"),
+            unhandled = hook("unhandled"),
+            tags = function(...)
+                local names = {...}
+                open(path)
+                local ____temp_5
+                if behavior.tags == nil then
+                    ____temp_5 = {}
+                else
+                    ____temp_5 = behavior.tags
+                end
+                local tags = ____temp_5
+                for ____, name in ipairs(names) do
+                    tags[#tags + 1] = name
+                end
+                behavior.tags = tags
+            end
+        }
+    end
+    local function builderOf(record)
+        local builder = record.builder
+        if builder == nil then
+            builder = stateBuilder(record)
+            record.builder = builder
+        end
+        return builder
+    end
+    return {
+        state = function(path)
+            local record = records[path]
+            if record == nil then
+                error(("hsm: the machine has no state \\"" .. path) .. "\\"", 0)
+            end
+            return builderOf(record)
+        end,
+        root = builderOf(rootRecord),
+        build = function()
+            if built then
+                error("hsm: build() was already called", 0)
+            end
+            for ____, entry in ipairs(pending) do
+                if not entry.done then
+                    error(
+                        (("hsm: state \\"" .. describePath(entry.path)) .. "\\" has ") .. entry.missing,
+                        0
+                    )
+                end
+            end
+            built = true
+            writeBehavior(rootRecord)
+            for path in pairs(records) do
+                writeBehavior(records[path])
+            end
+            return defineMachine(key)(skeleton)
+        end
+    }
+end
+function ____exports.buildMachine(key)
+    return function(skeleton) return createBuilder(key, skeleton) end
+end
+return ____exports
+"
+`;

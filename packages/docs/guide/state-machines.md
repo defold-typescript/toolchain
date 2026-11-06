@@ -17,6 +17,7 @@ import { messageEvents } from "@defold-typescript/types/hsm/defold";
 | Module | Holds | Written to |
 | --- | --- | --- |
 | `@defold-typescript/types/hsm` | the machine | `lib/defold_typescript/hsm/index.lua` |
+| `@defold-typescript/types/hsm/builder` | [machines written as statements](#write-a-machine-as-statements) | `lib/defold_typescript/hsm/builder.lua`, beside the machine's `index.lua` |
 | `@defold-typescript/types/hsm/defold` | the [message bridge](#the-message-bridge) | `lib/defold_typescript/hsm/defold.lua` |
 | `@defold-typescript/types/hsm/debug` | the [debug inspector](#debug-a-machine) | `lib/defold_typescript/hsm/debug.lua` |
 | `@defold-typescript/types/hsm/async` | [scripted sequences](#scripted-sequences) | `lib/defold_typescript/hsm/async.lua`, and `lib/defold_typescript/lualib_bundle.lua` for its promises |
@@ -529,6 +530,38 @@ task: sequence(async (ctx, signal) => {
 
 - **Leaving `/booting` does not cancel that promise.** It resolves when the last piece reports, so the `signal.aborted` check returns before the logo is hidden for a state that is no longer active.
 - **`wait` takes an arrow function that calls `resolve`.** `group.wait(resolve)` passes the type check and fails the build with `Unable to convert function with a 'this' parameter to function 'callback' with no 'this'`.
+
+## Write a machine as statements
+
+`hsm/builder` writes a machine as a skeleton plus one statement per rule, for code that reads as "in `/off`, on `TOGGLE`, go to `/on`". This is the lamp from [States and paths](#states-and-paths):
+
+```ts title="lamp-builder.ts"
+import { buildMachine } from "@defold-typescript/types/hsm/builder";
+
+type LampEvent = { type: "TOGGLE" } | { type: "DIM" };
+
+const m = buildMachine<object, LampEvent>()({
+  initial: "/off",
+  states: {
+    off: {},
+    on: { initial: "/on/bright", states: { bright: {}, dim: {} } },
+  },
+});
+
+m.state("/off").on("TOGGLE").to("/on");
+m.state("/on").on("TOGGLE").to("/off");
+m.state("/on/bright").on("DIM").to("/on/dim");
+m.state("/on/dim").on("DIM").to("/on/bright");
+
+export const lamp = m.build();
+```
+
+- **The skeleton holds structure only:** the root's `initial`, `states`, `restoreDepth` and `privateCtx`, and on each state `initial`, `states`, `type` and `restoreDepth`, checked as in a config. It fixes the paths every statement takes, so an unknown path or event fails to compile, and so does a behavior key such as `on` or `enter` in the skeleton.
+- **Each `on`, `after`, `every` and `always` call adds one entry, in call order,** which is the order the runtime tries them: `on("HIT").when(fatal).to("/dead")` then `on("HIT").run(damage)` is the list `HIT: [{ when, to }, { run }]`. An `on` rule ends with `to`, `run` or `ignore`, a timer with `to` or `run`, an `every` with `run` and an `always` with `to`; `run` takes several functions, run in order. `ignore()` takes the event with nothing to do, so no parent's rule sees it.
+- **`enter`, `exit`, `update`, `task`, `unhandled` and `tags`** set the slot of the same name; a second `enter`, `exit`, `update`, `task` or `unhandled` on one state throws.
+- **`m.root`** is the root's builder: its rules take an event no state below takes.
+- **`build()`** writes the statements onto the skeleton's own state objects, in list form, and passes the skeleton to `defineMachine`. It throws, naming the state, on a rule left without its ending; after it, every statement and a second `build()` throw.
+- **Hot reload** takes the key as `defineMachine` does: with `buildMachine<object, LampEvent>("lamp")`, a reload's `build()` returns the same machine, and its live instances take the new rules.
 
 ## Define a machine in a plain module
 
@@ -1920,3 +1953,30 @@ export const level = defineMachine<LevelCtx, LevelEvent>()({
 | `wait` | `(callback: () => void) => void` | Calls `callback` once when nothing added is pending: at once when nothing is pending at the call, and otherwise inside the report that finishes the last piece. |
 
 A group knows nothing about a machine. Built inside a `task`, it is new for each entry of the state. A report that arrives after the state was left ends in a `finish` that is ignored, and a piece that never reports is a case for the [watchdog](#watchdog). [Work that completes](#work-that-completes) has a group with a piece that can fail and one counted while the game runs, and [A group inside a sequence](#a-group-inside-a-sequence) waits on one with `await`.
+
+### `MachineBuilder`
+
+What the second `buildMachine` call returns; see [Write a machine as statements](#write-a-machine-as-statements). `P` is the union of the skeleton's paths.
+
+| Member  | Type                             | Meaning                                                                            |
+| ------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| `state` | `(path: P) => StateBuilder`      | The builder of the state at the full path `path`. A path the skeleton lacks throws. |
+| `root`  | `StateBuilder`                   | The root's builder, whose rules take an event no state below it takes.             |
+| `build` | `() => Machine<Ctx, E, P, Tag>`  | Writes the statements onto the skeleton's state objects and defines the machine with `defineMachine` and the key. Throws, naming the state, on a rule left without its ending, and on a second call. |
+
+### `StateBuilder`
+
+Each `on`, `after`, `every` and `always` call adds one entry, tried in call order. Every call throws after `build()`.
+
+| Member      | Type                                                  | Meaning                                                                            |
+| ----------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `on`        | `(type) => { when, to, run, ignore }`                 | Adds a rule for the event `type`, whose `when` and `run` see that variant: `when(guard)` first if any, then `to(path)` (optionally followed by `run`), `run(...actions)` or `ignore()`. |
+| `after`     | `(delay: number \| (ctx) => number) => { when, to, run }` | Adds a timer: `when(guard)` first if any, then `to(path)` (optionally followed by `run`) or `run(...actions)`; see [Rules on a timer](#rules-on-a-timer). |
+| `every`     | `(delay: number \| (ctx) => number) => { run }`       | Adds `run(...actions)`, run each time the delay passes; see [Repeat while a state is active](#repeat-while-a-state-is-active). |
+| `always`    | `() => { when, to }`                                  | Adds a rule taken right after a move that leaves the state active: `when(guard)` first if any, then `to(path)`, optionally followed by `run`. |
+| `enter`     | `(hook: (ctx, machine) => void) => void`              | Sets the function run each time the state is entered. A second call throws.        |
+| `exit`      | `(hook: (ctx, machine) => void) => void`              | Sets the function run each time the state is left. A second call throws.           |
+| `update`    | `(hook: (ctx, dt, machine) => P \| undefined) => void` | Sets the function run on every `update(dt)` while the state is active; a returned path moves there. A second call throws. |
+| `task`      | `(start: (ctx, finish, machine) => (() => void) \| void) => void` | Sets the work started on each entry; see [Engine callbacks](#engine-callbacks-task-and-finish). A second call throws. |
+| `unhandled` | `(hook: (ctx, event, machine) => void) => void`       | Sets the function run when the machine drops an event while the state is active. A second call throws. |
+| `tags`      | `(...names: Tag[]) => void`                           | Adds names that hold while the state is active, read with `hasTag`.                |
