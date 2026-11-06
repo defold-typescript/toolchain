@@ -775,6 +775,9 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     send(event) {
       requireMachine();
       begin();
+      // A followed instance lives in the run's world, so its failure is the run's: Start, which
+      // replaces only the simulated instance, cannot clear it.
+      const source: HaltSource = following === undefined ? "machine" : "run";
       return fatalCall(() => {
         const current = shown();
         if (current === undefined) {
@@ -786,7 +789,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         if (fired.length === before) {
           entries.push({ kind: "unhandled", t, event: shownValue(event) });
         }
-      }, "machine");
+      }, source);
     },
     update(dt) {
       begin();
