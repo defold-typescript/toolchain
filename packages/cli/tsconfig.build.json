@@ -5,5 +5,5 @@
     "declarationMap": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts", "src/**/__snapshots__"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.test-support.ts", "src/**/__snapshots__"]
 }

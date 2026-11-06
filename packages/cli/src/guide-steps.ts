@@ -72,13 +72,13 @@ export function stepLines(fence: TsFence): StepLine[] {
     });
 }
 
-interface Heading {
+export interface Heading {
   readonly line: number;
   readonly text: string;
 }
 
 /** The `## ` headings outside any fence, each with its 1-based page line. */
-function sectionHeadings(page: string): Heading[] {
+export function sectionHeadings(page: string): Heading[] {
   const headings: Heading[] = [];
   let fenced = false;
   page.split("\n").forEach((text, i) => {
