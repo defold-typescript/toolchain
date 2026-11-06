@@ -145,14 +145,17 @@ export const FENCE_LANGUAGES: Record<string, { label: string; glyph: Glyph }> = 
 
 const languageBadges = new Map<string, string>();
 
+function fenceLanguage(info: string): { label: string; glyph: Glyph } | undefined {
+  return FENCE_LANGUAGES[info.trim().split(/\s+/)[0]?.toLowerCase() ?? ""];
+}
+
 // The badge shows the fence language's glyph and, unless `label` overrides it,
 // the language's name.
 function fenceLanguageBadge(info: string, label?: string): string | undefined {
-  const lang = info.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
-  const language = FENCE_LANGUAGES[lang];
+  const language = fenceLanguage(info);
   if (!language) return undefined;
   const text = label ?? language.label;
-  const cacheKey = `${lang}\n${text}`;
+  const cacheKey = `${JSON.stringify(language.glyph)}\n${text}`;
   let badge = languageBadges.get(cacheKey);
   if (badge === undefined) {
     badge = String(
@@ -171,6 +174,7 @@ function fenceLanguageBadge(info: string, label?: string): string | undefined {
 interface FenceVariant {
   key: string;
   labels?: readonly [string, string];
+  language?: string;
 }
 
 // A `<lang> <marker>` info string marks a fence as the second variant of the
@@ -178,11 +182,13 @@ interface FenceVariant {
 // fence, `builder` the builder-statement spelling of a config. Each pair renders
 // as one tab group whose key names its tab set, so the CodeTabs island switches
 // every group of that set together; `labels` replaces the two tabs' language
-// names. Shiki and the badge read only the first token, so the fence still
-// highlights and badges as `<lang>`.
+// names, and `language` is the `FENCE_LANGUAGES` label both fences must carry
+// to pair (`builder` requires TypeScript, the only language the builder
+// spelling exists in). Shiki and the badge read only the first token, so the
+// fence still highlights and badges as `<lang>`.
 const FENCE_VARIANTS = new Map<string, FenceVariant>([
   ["original", { key: "typescript-lua" }],
-  ["builder", { key: "config-builder", labels: ["Config", "Builder"] }],
+  ["builder", { key: "config-builder", labels: ["Config", "Builder"], language: "TypeScript" }],
 ]);
 
 function fenceVariant(info: string): FenceVariant | undefined {
@@ -608,7 +614,9 @@ export async function renderMarkdown(
   // original` source or a `<lang> builder` spelling) as tab 0 and tab 1 of one
   // tab group, recording the variant on tab 0. Only badged, untitled fences pair,
   // so every tab has a label and no filename caption is dropped; a fence already
-  // holding a tab never joins a second group.
+  // holding a tab never joins a second group. A variant that names a language
+  // pairs only when both fences carry it, so a `builder` fence pairs only with
+  // TypeScript on both sides.
   md.core.ruler.push("code-tabs", (state) => {
     const tokens = state.tokens;
     for (let i = 1; i < tokens.length; i++) {
@@ -619,6 +627,13 @@ export async function renderMarkdown(
       if (!variant || fenceVariant(first.info)) continue;
       if (codeTabIndex(first) !== undefined || second.level !== first.level) continue;
       if (!isTabbableFence(second.info) || !isTabbableFence(first.info)) continue;
+      if (
+        variant.language !== undefined &&
+        (fenceLanguage(first.info)?.label !== variant.language ||
+          fenceLanguage(second.info)?.label !== variant.language)
+      ) {
+        continue;
+      }
       first.meta = { ...first.meta, codeTab: 0, codeTabs: variant };
       second.meta = { ...second.meta, codeTab: 1 };
     }
