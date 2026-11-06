@@ -16,10 +16,11 @@ import { ruleId } from "./hsm-view-index";
 import {
   createHsmViewApp,
   type HsmViewIndex,
+  type ReloadMessage,
   serveHsmView,
   type WatchPath,
 } from "./hsm-view-server";
-import { createSession, type HsmViewSession } from "./hsm-view-session";
+import { createSession, type HsmViewSession, type Snapshot } from "./hsm-view-session";
 import { lineStarts, tokenizeLines } from "./hsm-view-tokens";
 
 const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
@@ -505,6 +506,46 @@ describe("serveHsmView", () => {
     watched.change(write("extra.ts", "export const EXTRA = ;\n"));
     const reload = await events.next("reload");
     expect(reload.data).toMatchObject({ ok: false, error: expect.stringContaining("extra.ts") });
+    await events.cancel();
+  });
+
+  test("watches a file a Restart loads for the first time after a failed reload", async () => {
+    const watched = controllableWatchPath();
+    const grown = `import { system } from "@defold-typescript/types/ecs";\n${LAMP}const grow = system("grow")({ update() {} });\n`;
+    write("shared/names.ts", NAMES);
+    server = await serveHsmView({
+      session: createSession({ file: write("main.ts", grown), hsmSourceDir, ecsSourceDir }),
+      client,
+      port: 0,
+      watchPath: watched.watchPath,
+    });
+    const events = await openEvents(server.url);
+
+    write("extra.ts", "export const EXTRA = 1;\n");
+    const nocache = grown.replace("({ update", "({ nocache: true, update");
+    watched.change(
+      write("main.ts", `import { EXTRA } from "./extra";\n${nocache}export const extra = EXTRA;\n`),
+    );
+    expect((await events.next("reload")).data).toMatchObject({
+      ok: false,
+      error: expect.stringContaining("cannot change nocache"),
+    });
+
+    const restart = await fetch(`${server.url}/api/restart`, post({}));
+    expect(((await restart.json()) as Snapshot).error).toBeUndefined();
+
+    watched.change(
+      write(
+        "extra.ts",
+        `import { defineMachine } from "@defold-typescript/types/hsm";
+export const EXTRA = 1;
+export const bulb = defineMachine("bulb")({ initial: "/off", states: { off: {} } });
+`,
+      ),
+    );
+    const reload = await events.next("reload");
+    expect(reload.data).toMatchObject({ ok: true });
+    expect((reload.data as ReloadMessage).snapshot.machines).toContain("bulb");
     await events.cancel();
   });
 

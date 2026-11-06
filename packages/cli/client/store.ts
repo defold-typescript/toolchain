@@ -545,6 +545,10 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           const snapshot = await api.post("restart", {});
           get().setIndex(await api.index());
           clearSystems();
+          // A failed load and a throw in `init` both set `error`, so either keeps the banner.
+          if (snapshot.error === undefined) {
+            set({ reloadError: undefined });
+          }
           return snapshot;
         });
       },
