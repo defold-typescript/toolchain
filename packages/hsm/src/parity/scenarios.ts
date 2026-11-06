@@ -1,3 +1,4 @@
+import { buildMachine } from "../builder";
 import { defineMachine, type UnhandledListener, waitGroup } from "../index";
 
 type Ev =
@@ -1585,6 +1586,61 @@ function regionJoin(): string[] {
   return log;
 }
 
+// The run with two actions and the tags call pass varargs, and build() walks the skeleton with
+// for...in: the two lowerings a Lua-only bug would break.
+function builderMachine(): string[] {
+  const log: string[] = [];
+  const m = buildMachine<Ctx, Ev, "lit">()({
+    initial: "/off",
+    states: {
+      off: {},
+      on: { initial: "/on/bright", states: { bright: {}, dim: {} } },
+    },
+  });
+  const on = m.state("/on");
+  const dim = m.state("/on/dim");
+  m.state("/off")
+    .on("GO")
+    .to("/on")
+    .run(
+      (ctx) => {
+        ctx.log.push("run 1");
+      },
+      (ctx) => {
+        ctx.log.push("run 2");
+      },
+    );
+  on.on("GO").to("/off");
+  on.tags("lit");
+  on.enter((ctx) => {
+    ctx.log.push("enter on");
+  });
+  m.state("/on/bright").on("BACK").to("/on/dim");
+  dim.after(1).to("/on/bright");
+  dim.on("PING").ignore();
+  m.root.on("PING").run((ctx) => {
+    ctx.log.push("root ping");
+  });
+  const lamp = m.build().start(newCtx(log));
+  log.push(`path=${shown(lamp.path)}`);
+  lamp.send({ type: "GO" });
+  log.push(`path=${shown(lamp.path)} lit=${lamp.hasTag("lit")}`);
+  lamp.send({ type: "BACK" });
+  log.push(`path=${shown(lamp.path)}`);
+  lamp.send({ type: "PING" });
+  log.push(`path=${shown(lamp.path)}`);
+  lamp.update(1);
+  log.push(`path=${shown(lamp.path)}`);
+  lamp.send({ type: "PING" });
+  lamp.send({ type: "GO" });
+  log.push(`path=${shown(lamp.path)} lit=${lamp.hasTag("lit")}`);
+  recordError(log, () => m.build());
+  const loose = buildMachine<Ctx, Ev>()({ initial: "/a", states: { a: {} } });
+  loose.state("/a").on("GO");
+  recordError(log, () => loose.build());
+  return log;
+}
+
 export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "start", run: () => start() },
   { name: "numeric names", run: () => numericNames() },
@@ -1617,6 +1673,7 @@ export const scenarios: { name: string; run: () => string[] }[] = [
   { name: "tags follow the active states", run: () => stateTags() },
   { name: "start at saved paths", run: () => startPosition() },
   { name: "a parallel state's always joins its regions", run: () => regionJoin() },
+  { name: "a builder machine", run: () => builderMachine() },
 ];
 
 export function runScenario(name: string): string {

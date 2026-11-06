@@ -51,6 +51,9 @@
     "./hsm/async": {
       "types": "./hsm/async.d.ts"
     },
+    "./hsm/builder": {
+      "types": "./hsm/builder.d.ts"
+    },
     "./hsm/debug": {
       "types": "./hsm/debug.d.ts"
     },

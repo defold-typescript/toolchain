@@ -12,7 +12,8 @@
  * last lesson's project must use every member and call every function the hsm
  * entry points ship, so a member `hsm` gains needs a lesson that uses it.
  * The manual's reference tables are held to the `StateConfig`, `Machine`,
- * `MachineInstance` and `WaitGroup` interfaces of the hsm source.
+ * `MachineInstance` and `WaitGroup` interfaces of the hsm source, and to the
+ * `MachineBuilder` and `StateBuilder` interfaces of its builder module.
  */
 import { afterAll, describe, expect, test } from "bun:test";
 import { readFileSync, rmSync } from "node:fs";
@@ -48,6 +49,7 @@ const FENCED_PAGES = [REFERENCE_PAGE, LESSON_PAGE];
 const EXCERPT_SOURCE = path.join(REPO_ROOT, "packages/cli/test/fixtures/hsm-guide-excerpts.md");
 const FENCED_FILES = [...FENCED_PAGES.map((page) => path.join(GUIDE_DIR, page)), EXCERPT_SOURCE];
 const HSM_INDEX_SOURCE = path.join(REPO_ROOT, "packages", "hsm", "src", "index.ts");
+const HSM_BUILDER_SOURCE = path.join(REPO_ROOT, "packages", "hsm", "src", "builder.ts");
 
 // The library modules a fence imports, printed as `resolve` writes them into a
 // project's `.defold-types/`; each becomes a project file next to the fences.
@@ -409,6 +411,21 @@ describe("state machines guide reference", () => {
   for (const name of ["StateConfig", "Machine", "MachineInstance", "WaitGroup"]) {
     test(`the ${name} table lists every member and nothing else`, () => {
       const members = exportedTypeMembers(program, HSM_INDEX_SOURCE, name);
+      expect(members.length).toBeGreaterThan(0);
+      const rows = referenceRows(reference, name);
+      expect(rows, `## Reference has a ### ${name} table`).toBeDefined();
+      expect((rows as string[]).sort()).toEqual([...members].sort());
+    });
+  }
+
+  const builderProgram = ts.createProgram([HSM_BUILDER_SOURCE], {
+    noEmit: true,
+    strict: true,
+    target: ts.ScriptTarget.ES2022,
+  });
+  for (const name of ["MachineBuilder", "StateBuilder"]) {
+    test(`the ${name} table lists every member of the builder and nothing else`, () => {
+      const members = exportedTypeMembers(builderProgram, HSM_BUILDER_SOURCE, name);
       expect(members.length).toBeGreaterThan(0);
       const rows = referenceRows(reference, name);
       expect(rows, `## Reference has a ### ${name} table`).toBeDefined();
