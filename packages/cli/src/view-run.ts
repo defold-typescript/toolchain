@@ -58,7 +58,10 @@ export interface ProjectRunnerOptions {
   readonly builtins?: Readonly<Record<string, unknown>>;
   /** What `@defold-typescript/types` exports at run time; every other subpath exports nothing. */
   readonly typesRoot?: Record<string, unknown>;
-  /** Tags each project file's object and array literals with where they were written. */
+  /**
+   * Tags each project file's object and array literals with where they were written, and runs
+   * each call to a method named like an hsm builder statement under `currentSite`.
+   */
   readonly tagLiterals: boolean;
 }
 
@@ -79,7 +82,10 @@ export class ViewLoadError extends Error {
 }
 
 const TAG = "__viewLoc";
-const MODULE_PARAMS = new Set(["require", "module", "exports", TAG]);
+const SITE = "__viewSite";
+const MODULE_PARAMS = new Set(["require", "module", "exports", TAG, SITE]);
+// The hsm builder statements whose rules `view` glows on the call that made them.
+const STATEMENT_CALLS: ReadonlySet<string> = new Set(["on", "after", "every", "always", "update"]);
 const TYPES_PACKAGE = "@defold-typescript/types";
 const LOCATION = Symbol("view location");
 // Lua's base `select` is no engine call, and ecs's `checkTokens` takes its Lua branch when
@@ -87,6 +93,9 @@ const LOCATION = Symbol("view location");
 const UNBOUND_GLOBALS: ReadonlySet<string> = new Set(["select"]);
 
 const locationCache = new Map<string, SourceLocation>();
+
+// The statement calls running now, innermost last.
+const siteStack: SourceLocation[] = [];
 
 let realmGlobals: ReadonlySet<string> | undefined;
 
@@ -99,19 +108,45 @@ function builtinGlobals(): ReadonlySet<string> {
   return realmGlobals;
 }
 
-function tagLocation(value: object, meta: string): object {
+function parseLocation(meta: string): SourceLocation {
   let location = locationCache.get(meta);
   if (location === undefined) {
     location = JSON.parse(meta) as SourceLocation;
     locationCache.set(meta, location);
   }
+  return location;
+}
+
+/** Tags `value` with `location`, which `locationOf` then returns. */
+export function setLocation(value: object, location: SourceLocation): void {
   Object.defineProperty(value, LOCATION, { value: location, configurable: true });
+}
+
+function tagLocation(value: object, meta: string): object {
+  setLocation(value, parseLocation(meta));
   return value;
 }
 
-/** The location a project file's literal was tagged with, or undefined for anything else. */
+function atSite(meta: string, call: () => unknown): unknown {
+  siteStack.push(parseLocation(meta));
+  try {
+    return call();
+  } finally {
+    siteStack.pop();
+  }
+}
+
+/**
+ * Where the innermost statement call running now was written, its `keyOf` the span from the
+ * method name to the closing parenthesis; undefined outside one.
+ */
+export function currentSite(): SourceLocation | undefined {
+  return siteStack.at(-1);
+}
+
+/** The location a project file's literal or statement entry was tagged with, or undefined. */
 export function locationOf(value: unknown): SourceLocation | undefined {
-  if (typeof value !== "object" || value === null) {
+  if ((typeof value !== "object" && typeof value !== "function") || value === null) {
     return undefined;
   }
   return (value as { [LOCATION]?: SourceLocation })[LOCATION];
@@ -235,13 +270,53 @@ function literalFacts(source: ts.SourceFile): LiteralFacts {
   return { keyOf, targets };
 }
 
-// Wraps each object and array literal as `__viewLoc(<literal>, <location json>)`.
+// An `await` or `yield` cannot move into the thunk `__viewSite` runs.
+function suspends(node: ts.Node): boolean {
+  if (ts.isAwaitExpression(node) || ts.isYieldExpression(node)) {
+    return true;
+  }
+  return (
+    !ts.isFunctionLike(node) &&
+    ts.forEachChild(node, (child) => suspends(child) || undefined) === true
+  );
+}
+
+// The span from the method name to the closing parenthesis of a call such as `.on("HIT")`. A call
+// inside an optional chain is left alone: the thunk would end the chain's short-circuit.
+function statementSpan(node: ts.Node, source: ts.SourceFile): SourceSpan | undefined {
+  if (!ts.isCallExpression(node) || ts.isOptionalChain(node)) {
+    return undefined;
+  }
+  const callee = node.expression;
+  if (!ts.isPropertyAccessExpression(callee) || !STATEMENT_CALLS.has(callee.name.text)) {
+    return undefined;
+  }
+  return suspends(node) ? undefined : { start: callee.name.getStart(source), end: node.getEnd() };
+}
+
+// Wraps each object and array literal as `__viewLoc(<literal>, <location json>)`, and each
+// statement call as `__viewSite(<location json>, () => <call>)`.
 function locationTagger(file: string): ts.TransformerFactory<ts.SourceFile> {
   return (context) => (source) => {
     const factory = context.factory;
     const facts = literalFacts(source);
     const visit = (node: ts.Node): ts.Node => {
       const visited = ts.visitEachChild(node, visit, context);
+      const site = statementSpan(node, source);
+      if (site !== undefined) {
+        const location: SourceLocation = { file, ...site, keys: {}, keyOf: site };
+        return factory.createCallExpression(factory.createIdentifier(SITE), undefined, [
+          factory.createStringLiteral(JSON.stringify(location)),
+          factory.createArrowFunction(
+            undefined,
+            undefined,
+            [],
+            undefined,
+            factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+            visited as ts.Expression,
+          ),
+        ]);
+      }
       if (!isLiteral(node) || facts.targets.has(node)) {
         return visited;
       }
@@ -482,12 +557,13 @@ export function createProjectRunner(entry: string, options: ProjectRunnerOptions
           !MODULE_PARAMS.has(name) &&
           (Object.hasOwn(builtins, name) || !builtinGlobals().has(name)),
       );
-      const body = new Function("require", "module", "exports", TAG, ...stubNames, js);
+      const body = new Function("require", "module", "exports", TAG, SITE, ...stubNames, js);
       body(
         (specifier: string) => requireFrom(file, specifier),
         record,
         record.exports,
         tagLocation,
+        atSite,
         ...stubNames.map(stubFor),
       );
     } catch (thrown) {

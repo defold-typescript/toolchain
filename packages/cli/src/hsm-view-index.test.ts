@@ -223,6 +223,72 @@ export const m = defineMachine()({
     expect(ids.length).toBe(Object.keys(index.ruleOnKeys).length);
   });
 
+  test("maps a builder machine's rules to the statement calls that made them", () => {
+    const source = `import { buildMachine } from "@defold-typescript/types/hsm/builder";
+type Ev = { type: "HIT" };
+const m = buildMachine<{ hp: number }, Ev>()({
+  initial: "/alive",
+  states: {
+    alive: { initial: "/alive/patrol", states: { patrol: {}, chase: {} } },
+    dead: {},
+  },
+});
+m.state("/alive").on("HIT").when((ctx) => ctx.hp <= 1).to("/dead");
+m.state("/alive").on("HIT").run((ctx) => { ctx.hp -= 1; });
+m.state("/alive/chase").after(0.5).to("/alive/patrol");
+m.state("/alive/chase").every(1).run((ctx) => { ctx.hp += 1; });
+m.state("/dead").always().when((ctx) => ctx.hp > 0).to("/alive");
+m.state("/alive/patrol").update(() => undefined);
+export const machine = m.build();
+`;
+    const entry = write("main.ts", source);
+    const loaded = load(entry);
+    const index = machineIndex(loaded.machines[0]?.config, loaded.files);
+    const callAt = (call: string, from = 0) => {
+      const start = source.indexOf(call, from);
+      return { file: 0, start, end: start + call.length };
+    };
+    const firstHit = callAt('on("HIT")');
+    const secondHit = callAt('on("HIT")', firstHit.end);
+
+    expect(loaded.files[0]?.path).toBe(entry);
+    expect(secondHit.start).toBeGreaterThan(firstHit.start);
+    expect(index.rules[ruleId("/alive", "on", "HIT", 0)]).toEqual(firstHit);
+    expect(index.rules[ruleId("/alive", "on", "HIT", 1)]).toEqual(secondHit);
+    expect(index.onKeys["/alive"]?.HIT).toEqual(firstHit);
+    expect(index.rules[ruleId("/alive/chase", "after", 0)]).toEqual(callAt("after(0.5)"));
+    expect(index.rules[ruleId("/alive/chase", "every", 0)]).toEqual(callAt("every(1)"));
+    expect(index.rules[ruleId("/dead", "always", 0)]).toEqual(callAt("always()"));
+    expect(index.rules[ruleId("/alive/patrol", "update")]).toEqual(
+      callAt("update(() => undefined)"),
+    );
+    expect(Object.keys(index.states).sort()).toEqual([
+      "/alive",
+      "/alive/chase",
+      "/alive/patrol",
+      "/dead",
+    ]);
+    for (const [statePath, span] of Object.entries(index.states)) {
+      expect(spanText(loaded.files, span)).toBe(statePath.slice(statePath.lastIndexOf("/") + 1));
+    }
+  });
+
+  test("maps a builder state's one on call to both its rule and its on key", () => {
+    const source = `import { buildMachine } from "@defold-typescript/types/hsm/builder";
+const m = buildMachine<object, { type: "SEE" }>()({ initial: "/a", states: { a: {}, b: {} } });
+m.root.on("SEE").to("/b");
+export const machine = m.build();
+`;
+    const entry = write("main.ts", source);
+    const loaded = load(entry);
+    const index = machineIndex(loaded.machines[0]?.config, loaded.files);
+    const start = source.indexOf('on("SEE")');
+    const call = { file: 0, start, end: start + 'on("SEE")'.length };
+
+    expect(index.rules[ruleId("", "on", "SEE", 0)]).toEqual(call);
+    expect(index.onKeys[""]?.SEE).toEqual(call);
+  });
+
   test("uses imported and spread source locations and omits states with no key location", () => {
     const entry = write(
       "main.ts",
