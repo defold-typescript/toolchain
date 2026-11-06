@@ -1,4 +1,4 @@
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { createHsmViewApp } from "../src/hsm-view-server";
 import { createSession, type HsmViewSession } from "../src/hsm-view-session";
 import { httpApi } from "./api";
@@ -29,7 +29,11 @@ export async function startViewer(
   ctx: string,
   options: TestViewerOptions = {},
 ): Promise<TestViewer> {
-  const session = createSession({ file, hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY) });
+  const session = createSession({
+    file,
+    hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY),
+    ecsSourceDir: requireLibrarySourceDir(ECS_LIBRARY),
+  });
   const app = createHsmViewApp({ session, client: { js: "", css: "" } });
   const requests: Request[] = [];
   const store = createViewerStore({

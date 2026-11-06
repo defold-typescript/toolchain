@@ -11,8 +11,9 @@ import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:tes
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
-import { loadMachines, type MachineEngine, type MachineLoad } from "./hsm-view-load";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { loadProject, type ProjectLoad } from "./view-load";
+import type { RunEngine } from "./view-run";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const GUIDE_PAGE = path.join(REPO_ROOT, "packages", "docs", "guide", "state-machines.md");
@@ -79,11 +80,11 @@ function unquotedRecipes(page: string, source: string): RecipeTitle[] {
 
 interface LoadedFence {
   readonly machine: unknown;
-  readonly engine: MachineEngine;
+  readonly engine: RunEngine;
 }
 
 const dirs: string[] = [];
-const loadedFences = new Map<string, MachineLoad>();
+const loadedFences = new Map<string, ProjectLoad>();
 
 /**
  * The machine named `name` of the fence titled `title`, with its engine; a fence loads once, so
@@ -97,7 +98,10 @@ function fenceMachine(title: RecipeTitle, name: string): LoadedFence {
     dirs.push(dir);
     const file = path.join(dir, title);
     writeFileSync(file, body);
-    loaded = loadMachines(file, { hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY) });
+    loaded = loadProject(file, {
+      hsmSourceDir: requireLibrarySourceDir(HSM_LIBRARY),
+      ecsSourceDir: requireLibrarySourceDir(ECS_LIBRARY),
+    });
     loadedFences.set(title, loaded);
   }
   const machine = loaded.machines.find((entry) => entry.name === name);
@@ -444,7 +448,7 @@ interface RecipeMachine<Ctx> {
 }
 
 let calls: [string, readonly unknown[]][] = [];
-let watched: MachineEngine | undefined;
+let watched: RunEngine | undefined;
 
 /** The machine of a fence, with every engine call it makes from here on kept in `calls`. */
 function recipeMachine<Ctx>(title: RecipeTitle, name: string): RecipeMachine<Ctx> {

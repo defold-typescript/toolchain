@@ -55,10 +55,12 @@ The log docks at the bottom with its newest line last. Each line shows its machi
 
 ## What runs and what is stubbed
 
-The CLI compiles the file with TypeScript and runs it in Node. `@defold-typescript/types/hsm` resolves to the same hsm runtime your game ships, so a machine behaves here as it does in the engine.
+The CLI compiles the file with TypeScript and runs it in Node. `@defold-typescript/types/hsm` and `@defold-typescript/types/ecs` resolve to the same hsm and ecs runtimes your game ships, so a machine behaves here as it does in the engine.
 
-- **Engine globals.** `hash`, `print`, `pprint` and `tostring` work: `hash("walk")` is the string `hash: [walk]`, and `print` writes to the log. Every other engine global a file names (`sprite`, `msg`, `go`) is a stub. A call returns `undefined` and is logged as not simulated, and a constant read returns its own name.
-- **Imports.** A relative import loads the project file it names. Any `@defold-typescript/types` path other than the `hsm` modules is empty, since it holds declarations only. Any other import stops the load with an error naming it and the file that imports it.
+- **Engine globals.** `hash`, `print`, `pprint` and `tostring` work: `hash("walk")` is the string `hash: [walk]`, and `print` writes to the log.
+- **Simulated engine values.** Lua 5.1's `math` works, and `math.random` draws the same numbers each time the command starts. `os.clock` counts seconds. `vmath.vector3` and `vmath.vector4` build plain `x`/`y`/`z`/`w` objects. `go.get_position` and `go.get_world_position` return zero vectors, `msg.url` returns an empty table, `sys.get_engine_info().is_debug` is `true`, and `sys.get_config_string` returns its default. `factory.create` returns `hash: [instance 1]`, then `hash: [instance 2]`, and is logged, since nothing spawns.
+- **Stubs.** Every other engine global or member a file names (`sprite`, `msg.post`, `go.set_position`) is a stub. A call returns `undefined` and is logged as not simulated, and a constant read returns its own name.
+- **Imports.** A relative import loads the project file it names. `defineScript`, `defineGuiScript` and `defineRenderScript` from `@defold-typescript/types` return the table they are given. Any other `@defold-typescript/types` path is empty, since it holds declarations only. Any other import stops the load with an error naming it and the file that imports it.
 
 ## Live reload
 

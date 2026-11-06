@@ -2,11 +2,12 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
+import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
 import { ruleId } from "./hsm-view-index";
 import { createSession, type Snapshot } from "./hsm-view-session";
 
 const hsmSourceDir = requireLibrarySourceDir(HSM_LIBRARY);
+const ecsSourceDir = requireLibrarySourceDir(ECS_LIBRARY);
 
 let dir: string;
 let sequence = 0;
@@ -27,7 +28,7 @@ function write(text: string): string {
 }
 
 function session(text: string) {
-  return createSession({ file: write(text), hsmSourceDir });
+  return createSession({ file: write(text), hsmSourceDir, ecsSourceDir });
 }
 
 function machine(body: string, key?: string): string {
@@ -907,7 +908,7 @@ describe("createSession", () => {
 }`);
     const fixed = source("");
     const file = write(source(`throw new Error("boom");`));
-    const view = createSession({ file, hsmSourceDir });
+    const view = createSession({ file, hsmSourceDir, ecsSourceDir });
     view.start({});
     expect(view.send({ type: "BREAK" }).error).toBe("boom");
     writeFileSync(file, fixed);
@@ -933,7 +934,7 @@ describe("createSession", () => {
         keyedName,
       );
     const keyedFile = write(keyedSource("/b"));
-    const keyed = createSession({ file: keyedFile, hsmSourceDir });
+    const keyed = createSession({ file: keyedFile, hsmSourceDir, ecsSourceDir });
     keyed.start({ count: 1 });
     writeFileSync(keyedFile, keyedSource("/c"));
     const kept = keyed.reload();
@@ -945,7 +946,7 @@ describe("createSession", () => {
       machine(`{ initial: "${initial}", states: { a: {}, b: {} } }`);
     const unkeyedFile = path.join(dir, "unkeyed.ts");
     writeFileSync(unkeyedFile, unkeyedSource("/a"));
-    const unkeyed = createSession({ file: unkeyedFile, hsmSourceDir });
+    const unkeyed = createSession({ file: unkeyedFile, hsmSourceDir, ecsSourceDir });
     unkeyed.start({ count: 2 });
     writeFileSync(unkeyedFile, unkeyedSource("/b"));
     const restarted = unkeyed.reload();
@@ -977,7 +978,7 @@ describe("createSession", () => {
   test("reloads a keyed private machine with the fields a new factory adds and the values it has", () => {
     const key = `private-${++sequence}`;
     const file = write(privateTurret(key, "heat: 0, shots: []"));
-    const view = createSession({ file, hsmSourceDir });
+    const view = createSession({ file, hsmSourceDir, ecsSourceDir });
     view.start({ rate: 2 });
     view.send({ type: "FIRE" });
 
@@ -993,7 +994,7 @@ export const lamp = defineMachine("lamp")({ initial: "/off", states: { off: { on
 export const door = defineMachine("door")({ initial: "/closed", states: { closed: {}, open: {} } });
 `,
     );
-    const view = createSession({ file, hsmSourceDir });
+    const view = createSession({ file, hsmSourceDir, ecsSourceDir });
     expect(view.start({}).machines).toEqual(["lamp", "door"]);
     view.send({ type: "TOGGLE" });
     const door = view.pick("door");
