@@ -504,7 +504,12 @@ type TreePathsBelow<T, D extends number> = {
         : TreePathsBelow<T[K], PathDepth[D]>}`;
 }[keyof T & string];
 
-type TreePath<T> = `/${TreePathsBelow<T, 4>}`;
+/**
+ * The union of the state paths of the tree `T`, each with its leading `/`: `T` holds one key per
+ * state name, and a leaf is `unknown`. Paths are spelled out four levels deep; below that, any
+ * string under a fourth-level path is accepted.
+ */
+export type TreePath<T> = `/${TreePathsBelow<T, 4>}`;
 
 type TreeOf<C> = C extends { readonly states: infer Children }
   ? { readonly [K in keyof Children]: TreeOf<Children[K]> }
@@ -819,6 +824,92 @@ export type MachineConfig<Ctx, E extends EventObject, Tag extends string = never
 > & {
   readonly initial: string;
   readonly states: { readonly [name: string]: StateConfig<Ctx, E, Tag> };
+};
+
+// The keys a skeleton leaves to the builder's statements. Each maps to `never`, so writing one in
+// a skeleton fails to compile.
+interface SkeletonBehavior {
+  /** Not taken in a skeleton: add tags with the state builder's `tags`. */
+  readonly tags?: never;
+  /** Not taken in a skeleton: add rules with the state builder's `on`. */
+  readonly on?: never;
+  /** Not taken in a skeleton: add timers with the state builder's `after`. */
+  readonly after?: never;
+  /** Not taken in a skeleton: add repeated runs with the state builder's `every`. */
+  readonly every?: never;
+  /** Not taken in a skeleton: add rules with the state builder's `always`. */
+  readonly always?: never;
+  /** Not taken in a skeleton: add the hook with the state builder's `enter`. */
+  readonly enter?: never;
+  /** Not taken in a skeleton: add the hook with the state builder's `exit`. */
+  readonly exit?: never;
+  /** Not taken in a skeleton: add the hook with the state builder's `update`. */
+  readonly update?: never;
+  /** Not taken in a skeleton: add the task with the state builder's `task`. */
+  readonly task?: never;
+  /** Not taken in a skeleton: add the hook with the state builder's `unhandled`. */
+  readonly unhandled?: never;
+}
+
+// A skeleton state is read into one tree, `T`, from its `states` keys alone, and `initial` and
+// `restoreDepth` are checked against it as on `CompoundState` and `ParallelState`.
+interface SkeletonState<T, Self extends string> extends SkeletonBehavior {
+  /** Child states, by name. A name is non-empty and contains no `/`. */
+  readonly states?: {
+    readonly [K in keyof T]: SkeletonNode<T[K], `${Self}/${K & string}`>;
+  };
+}
+
+interface CompoundSkeleton<T, Self extends string> extends SkeletonState<T, Self> {
+  /**
+   * `"parallel"` keeps every child active at once, each as a region with its own active state.
+   */
+  readonly type?: never;
+  /**
+   * The full path of the child entered with this state, such as `/on/bright` inside `on`.
+   * Required when `states` is set, unless the state is parallel.
+   */
+  readonly initial?: NoInfer<unknown extends T ? string : `${Self}/${keyof T & string}`>;
+  /**
+   * Makes the state remember which child was active when it was last left, and enter it again
+   * instead of `initial`; see `restoreDepth` on a state config.
+   */
+  readonly restoreDepth?: NoInfer<TreeDepth<T, 4> | "all">;
+}
+
+interface ParallelSkeleton<T, Self extends string> extends SkeletonState<T, Self> {
+  /**
+   * `"parallel"` keeps every child active at once, each as a region with its own active state.
+   */
+  readonly type: "parallel";
+  /** Not taken on a parallel state: every child is entered. */
+  readonly initial?: never;
+  /** Not taken on a parallel state: only a compound state resumes a child. */
+  readonly restoreDepth?: never;
+}
+
+type SkeletonNode<T, Self extends string> = CompoundSkeleton<T, Self> | ParallelSkeleton<T, Self>;
+
+/**
+ * The skeleton `buildMachine` takes: the structure of a machine with no behavior. The root holds
+ * `initial` and `states`, and each state only `initial`, `states`, `type` and `restoreDepth`, each
+ * checked as in a `defineMachine` config. `T` is the state tree read from the `states` keys, and
+ * fixes the paths every statement takes.
+ */
+export type MachineSkeleton<T> = SkeletonBehavior & {
+  /** The full path of the child entered at `start`, such as `/idle`. */
+  readonly initial: NoInfer<`/${keyof T & string}`>;
+  /** The machine's states, by name. A name is non-empty and contains no `/`. */
+  readonly states: {
+    readonly [K in keyof T]: SkeletonNode<T[K], `/${K & string}`>;
+  };
+  /** Not allowed on the root: put the regions in a child state. */
+  readonly type?: never;
+  /**
+   * Makes every state the count reaches remember its last child; see `restoreDepth` on a state
+   * config.
+   */
+  readonly restoreDepth?: NoInfer<TreeDepth<T, 4> | "all">;
 };
 
 type Guard<Ctx, E extends EventObject> = (ctx: Ctx, event: E, machine: MachineView) => boolean;
@@ -2564,7 +2655,11 @@ function define<Ctx, E extends EventObject>(
 // Ctx for a config without privateCtx, Ctx & Priv for one with it. The tuple test keeps the
 // context whole while Priv has no inference yet, so a generic helper in a slot, such as
 // `sequence`, still takes its ctx from the slot.
-type WithPrivate<Ctx, Priv> = [Priv] extends [never] ? Ctx : Ctx & Priv;
+/**
+ * The context a machine's hooks see: `Ctx` for a machine without `privateCtx`, and `Ctx & Priv`
+ * for one whose `privateCtx` returns `Priv`.
+ */
+export type WithPrivate<Ctx, Priv> = [Priv] extends [never] ? Ctx : Ctx & Priv;
 
 // Ctx and E are given explicitly and the config is inferred, so the config takes a second call.
 // A key makes a later definition under it (a hot-reloaded module re-running) rebind live instances.

@@ -54,12 +54,17 @@ const SEQUENCE = [
 ].join("\n");
 
 describe("hsm as a built-in import", () => {
-  test("the module list is index plus async sequences, the debug inspector and the Defold adapter", () => {
+  test("the module list is index plus async sequences, the builder, the debug inspector and the Defold adapter", () => {
     expect(bundledModules(HSM_LIBRARY).map(({ library: _, ...module }) => module)).toEqual([
       {
         name: "async",
         specifier: "@defold-typescript/types/hsm/async",
         requireName: "defold_typescript_hsm.async",
+      },
+      {
+        name: "builder",
+        specifier: "@defold-typescript/types/hsm/builder",
+        requireName: "defold_typescript_hsm.builder",
       },
       {
         name: "debug",
@@ -97,6 +102,32 @@ describe("hsm as a built-in import", () => {
 
   test("importing defineMachine alone ships no lualib bundle", () => {
     const result = transpileProject({ files: { "door.ts": MACHINE } });
+    expect(result.lualib).toBeUndefined();
+  });
+
+  test("importing buildMachine selects builder and index and ships no lualib bundle", () => {
+    const source = [
+      'import { buildMachine } from "@defold-typescript/types/hsm/builder";',
+      "",
+      'type DoorEvent = { type: "OPEN" } | { type: "CLOSE" };',
+      "",
+      "const m = buildMachine<object, DoorEvent>()({",
+      '  initial: "/closed",',
+      "  states: { closed: {}, open: {} },",
+      "});",
+      'm.state("/closed").on("OPEN").to("/open");',
+      'm.state("/open").on("CLOSE").to("/closed");',
+      "",
+      "export const door = m.build();",
+      "",
+    ].join("\n");
+    const result = transpileProject({ files: { "door.ts": source } });
+    expect(result.diagnostics).toEqual([]);
+    expect(Object.keys(result.libraryModules ?? {})).toEqual([
+      "defold_typescript_hsm.builder",
+      "defold_typescript_hsm.index",
+    ]);
+    expect(result.lua["door.ts"]).toContain('require("defold_typescript_hsm.builder")');
     expect(result.lualib).toBeUndefined();
   });
 

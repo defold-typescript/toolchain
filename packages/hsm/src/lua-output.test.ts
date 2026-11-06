@@ -46,6 +46,19 @@ describe("hsm debug inspector Lua output", () => {
   });
 });
 
+describe("hsm builder Lua output", () => {
+  const lua = compileLibraryModules(HSM_LIBRARY).builder ?? "";
+
+  test("does not require the lualib bundle", () => {
+    expect(lua).toContain('require("defold_typescript_hsm.index")');
+    expect(lua).not.toContain('require("lualib_bundle")');
+  });
+
+  test("matches the reviewed Lua snapshot", () => {
+    expect(lua).toMatchSnapshot();
+  });
+});
+
 describe("hsm async module Lua output", () => {
   const lua = compileLibraryModules(HSM_LIBRARY).async ?? "";
 

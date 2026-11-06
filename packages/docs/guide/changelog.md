@@ -9,6 +9,16 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.59.0
+
+> Summary:
+>
+> - **[`hsm/builder`](./state-machines.md#write-a-machine-as-statements)** writes rules as calls.
+
+### Improved
+
+- **[Write a machine as statements](./state-machines.md#write-a-machine-as-statements):** `buildMachine` from `@defold-typescript/types/hsm/builder` takes a skeleton of the machine's states, and statements such as `m.state("/off").on("TOGGLE").to("/on")`, `after`, `every`, `always`, `enter` and `exit` add its behavior in call order, every path and event checked at compile time. `build()` hands the result to `defineMachine`, so the key and hot reload work as for a config, and throws, naming the state, on a rule left without its ending.
+
 ## v0.58.0
 
 > Summary:
