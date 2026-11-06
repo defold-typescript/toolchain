@@ -27,6 +27,7 @@
     "dist",
     "src",
     "!src/**/*.test.ts",
+    "!src/**/*.test-support.ts",
     "!src/**/__snapshots__",
     "THIRD_PARTY_NOTICES.md"
   ],

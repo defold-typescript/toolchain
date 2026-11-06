@@ -91,10 +91,15 @@ export function badFenceTitles(guide: string): string[] {
     .map((fence) => fence.label);
 }
 
+/** The directory `lessonFences` writes the project of the lesson at 0-based `index` under. */
+export function lessonDir(index: number): string {
+  return `lesson-${String(index + 1).padStart(2, "0")}`;
+}
+
 /** Every file of every lesson's project, each project under its own `lesson-<nn>/`. */
 export function lessonFences(page: string): Fence[] {
   return lessonProjects(page).flatMap((project, i) => {
-    const dir = `lesson-${String(i + 1).padStart(2, "0")}`;
+    const dir = lessonDir(i);
     return [...project.files].map(([title, body]): Fence => {
       if (!FENCE_TITLE.test(title)) {
         throw new Error(`step fence title "${title}" under "${project.heading}" names no file`);
