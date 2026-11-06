@@ -387,8 +387,8 @@ describe("play loop", () => {
     release();
     await started;
     expect(routes(viewer)).toEqual(["/api/update", "/api/update", "/api/start"]);
-    expect(viewer.session.snapshot().t).toBe(0);
-    expect(viewer.store.getState().snapshot?.t).toBe(0);
+    expect(viewer.session.snapshot().entered).toContain("/ground/idle");
+    expect(viewer.store.getState().snapshot?.entered).toContain("/ground/idle");
 
     await frames.frame(100);
     await frames.frame(150);
@@ -414,8 +414,8 @@ describe("play loop", () => {
     release();
     await started;
     expect(routes(viewer)).toEqual(["/api/update", "/api/update", "/api/start"]);
-    expect(viewer.session.snapshot().t).toBe(0);
-    expect(viewer.store.getState().snapshot?.t).toBe(0);
+    expect(viewer.session.snapshot().entered).toContain("/ground/idle");
+    expect(viewer.store.getState().snapshot?.entered).toContain("/ground/idle");
 
     await frames.frame(150);
     await frames.frame(200);

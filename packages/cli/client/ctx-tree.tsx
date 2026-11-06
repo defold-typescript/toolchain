@@ -145,7 +145,10 @@ function CtxNode(props: NodeProps) {
 /** The running instance's ctx as a tree; a primitive leaf is edited in place as a JSON literal. */
 export function CtxTree({ store }: { store: ViewerStore }) {
   const ctx = useViewer(store, (state) => state.snapshot?.ctx);
-  const running = useViewer(store, (state) => state.snapshot?.running ?? false);
+  const running = useViewer(
+    store,
+    (state) => state.snapshot?.running === true && state.snapshot.path !== undefined,
+  );
   const attached = useViewer(store, (state) => state.live.attached !== undefined);
 
   if (attached) {

@@ -1,6 +1,7 @@
 import { type MachineIndex, machineIndex, ruleIds, timerEntries } from "./hsm-view-index";
 import { type LoadedMachine, loadProject } from "./view-load";
 import type { EngineEntry as LoadedEngineEntry } from "./view-run";
+import { type EntityView, type SystemView, trackWorlds } from "./view-worlds";
 
 interface EventObject {
   readonly type: string;
@@ -75,13 +76,28 @@ export type SnapshotEntry =
       readonly value: unknown;
     }
   | { readonly kind: "reload"; readonly t: number; readonly reason?: string }
-  | { readonly kind: "error"; readonly t: number; readonly message: string };
+  | { readonly kind: "error"; readonly t: number; readonly message: string }
+  | {
+      readonly kind: "join" | "leave";
+      readonly t: number;
+      /** The system's 1-based index in the picked world. */
+      readonly system: number;
+      readonly entity: number;
+    };
 
 export interface Snapshot {
   readonly machines: readonly string[];
   readonly picked: string | undefined;
+  /** The run is not halted. */
   readonly running: boolean;
+  /** Run time: seconds since the run started, which Start leaves alone. */
   readonly t: number;
+  readonly frame: number;
+  readonly worlds: readonly string[];
+  readonly world: string | undefined;
+  /** The picked world's systems in index order. */
+  readonly systems: readonly SystemView[];
+  readonly entities: readonly EntityView[];
   readonly path: string | undefined;
   readonly active: readonly string[];
   readonly leaves: readonly string[];
@@ -104,10 +120,19 @@ export interface HsmViewSession {
   update(dt: number): Snapshot;
   editCtx(path: readonly string[], value: unknown): Snapshot;
   pick(name: string): Snapshot;
+  pickWorld(name: string): Snapshot;
+  /** Reruns the files and the script's `init` in fresh runtimes, from `t` 0. */
+  restart(): Snapshot;
   reload(): Snapshot;
   index(): SessionIndex;
   snapshot(): Snapshot;
 }
+
+interface Updatable {
+  update(dt: number): void;
+}
+
+type HaltSource = "machine" | "run";
 
 export interface CreateSessionOptions {
   readonly file: string;
@@ -132,7 +157,8 @@ function stateAt(config: StateConfig, path: string): StateConfig | undefined {
   return state;
 }
 
-function shownValue(value: unknown, stack = new Set<object>()): unknown {
+/** `value` as the page shows it: functions dropped, a cycle back to an enclosing value marked. */
+export function shownValue(value: unknown, stack = new Set<object>()): unknown {
   if (typeof value === "function") {
     return undefined;
   }
@@ -211,8 +237,12 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
   let picked: string | undefined;
   let instance: RuntimeInstance | undefined;
   let haltedError: string | undefined;
+  let haltedBy: HaltSource | undefined;
   let callError: string | undefined;
   let startCtx: unknown = {};
+  let frame = 0;
+  let self: Record<string, unknown> = {};
+  let pickedWorld: unknown;
 
   const begin = (): void => {
     entered = [];
@@ -222,10 +252,11 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     callError = undefined;
   };
 
-  const recordError = (message: string, halt: boolean): void => {
+  const recordError = (message: string, halt: HaltSource | undefined): void => {
     callError = message;
-    if (halt) {
+    if (halt !== undefined) {
       haltedError = message;
+      haltedBy = halt;
     }
     entries.push({ kind: "error", t, message });
   };
@@ -441,6 +472,8 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     }
   });
 
+  const tracker = trackWorlds(loaded);
+
   picked = loaded.machines[0]?.name;
 
   const pickedMachine = (): LoadedMachine | undefined =>
@@ -473,13 +506,45 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     return [...accepted].sort();
   };
 
+  const namedWorlds = (): { readonly name: string; readonly world: unknown }[] => {
+    const names = tracker.names(self);
+    return loaded.worlds.map((world, index) => ({ name: names[index] ?? "", world }));
+  };
+
+  // The log shows what a world's systems gain and lose from the moment it is picked.
+  const watchWorld = (world: unknown): void => {
+    pickedWorld = world;
+    if (world !== undefined) {
+      tracker.membership(world);
+    }
+  };
+
+  // Logs what the picked world's systems gained and lost since the last action. A world built
+  // while none is picked becomes the picked one.
+  const settle = (): void => {
+    if (pickedWorld === undefined || !loaded.worlds.includes(pickedWorld)) {
+      watchWorld(loaded.worlds[0]);
+      return;
+    }
+    for (const change of tracker.membership(pickedWorld)) {
+      entries.push({ ...change, t });
+    }
+  };
+
   const snapshot = (): Snapshot => {
     const error = callError ?? haltedError;
+    const named = namedWorlds();
+    const view = pickedWorld === undefined ? undefined : tracker.view(pickedWorld);
     return {
       machines: loaded.machines.map((machine) => machine.name),
       picked,
-      running: instance !== undefined && instance.path !== undefined && haltedError === undefined,
+      running: haltedError === undefined,
       t,
+      frame,
+      worlds: named.map((each) => each.name),
+      world: named.find((each) => each.world === pickedWorld)?.name,
+      systems: view?.systems ?? [],
+      entities: view?.entities ?? [],
       path: instance?.path,
       active: activePaths(),
       leaves: [...(instance?.leaves ?? [])],
@@ -519,7 +584,13 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     attach(next);
   };
 
-  const fatalCall = (body: () => void): Snapshot => {
+  const requireMachine = (): void => {
+    if (picked === undefined) {
+      throw new Error(`${options.file} defines no machine`);
+    }
+  };
+
+  const fatalCall = (body: () => void, source: HaltSource): Snapshot => {
     if (haltedError !== undefined) {
       callError = haltedError;
       return snapshot();
@@ -527,26 +598,53 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
     try {
       body();
     } catch (thrown) {
-      recordError(messageOf(thrown), true);
+      recordError(messageOf(thrown), source);
     }
+    settle();
     return snapshot();
   };
 
+  // As the engine builds it: `self` holds the script's properties when `init` runs, and what
+  // `init` returns is merged onto it.
+  const beginRun = (): void => {
+    const script = loaded.script;
+    const properties = script?.properties;
+    self = typeof properties === "object" && properties !== null ? { ...properties } : {};
+    const state = script?.init?.(self);
+    if (typeof state === "object" && state !== null) {
+      Object.assign(self, state);
+    }
+  };
+
+  beginRun();
+  if (loaded.machines.length === 0 && loaded.worlds.length === 0) {
+    throw new Error(`${options.file} defines no machine and creates no world`);
+  }
+  watchWorld(loaded.worlds[0]);
+
   return {
     start(ctx) {
+      requireMachine();
       begin();
+      // Start replaces the simulated instance, so it clears only a halt that instance caused.
+      if (haltedError !== undefined && haltedBy !== "machine") {
+        callError = haltedError;
+        return snapshot();
+      }
       haltedError = undefined;
-      t = 0;
+      haltedBy = undefined;
       instance = undefined;
       startCtx = cloneValue(ctx);
       try {
         startPicked(ctx);
       } catch (thrown) {
-        recordError(messageOf(thrown), true);
+        recordError(messageOf(thrown), "machine");
       }
+      settle();
       return snapshot();
     },
     send(event) {
+      requireMachine();
       begin();
       return fatalCall(() => {
         const current = instance;
@@ -559,18 +657,37 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         if (fired.length === before) {
           entries.push({ kind: "unhandled", t, event: shownValue(event) });
         }
-      });
+      }, "machine");
     },
     update(dt) {
       begin();
-      return fatalCall(() => {
-        const current = instance;
-        if (current === undefined) {
-          throw new Error("machine has not started");
-        }
-        t += dt;
-        current.update(dt);
-      });
+      if (haltedError !== undefined) {
+        callError = haltedError;
+        return snapshot();
+      }
+      const script = loaded.script;
+      if (script === undefined && loaded.worlds.length === 0 && instance === undefined) {
+        recordError("machine has not started", undefined);
+        return snapshot();
+      }
+      t += dt;
+      frame += 1;
+      try {
+        tracker.frame(() => {
+          if (script !== undefined) {
+            script.update?.(self, dt);
+            return;
+          }
+          for (const world of [...loaded.worlds]) {
+            (world as Updatable).update(dt);
+          }
+        });
+      } catch (thrown) {
+        recordError(messageOf(thrown), "run");
+        settle();
+        return snapshot();
+      }
+      return fatalCall(() => instance?.update(dt), "machine");
     },
     editCtx(path, value) {
       begin();
@@ -583,7 +700,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       for (let index = 0; index < path.length - 1; index++) {
         const key = path[index] as string;
         if (typeof parent !== "object" || parent === null || !Object.hasOwn(parent, key)) {
-          recordError(`ctx path does not exist: ${path.join(".")}`, false);
+          recordError(`ctx path does not exist: ${path.join(".")}`, undefined);
           return snapshot();
         }
         parent = (parent as Record<string, unknown>)[key];
@@ -595,16 +712,16 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         parent === null ||
         !Object.hasOwn(parent, key)
       ) {
-        recordError(`ctx path does not exist: ${path.join(".")}`, false);
+        recordError(`ctx path does not exist: ${path.join(".")}`, undefined);
         return snapshot();
       }
       const current = (parent as Record<string, unknown>)[key];
       if (!isPrimitive(current)) {
-        recordError(`ctx path is not a primitive: ${path.join(".")}`, false);
+        recordError(`ctx path is not a primitive: ${path.join(".")}`, undefined);
         return snapshot();
       }
       if (!isPrimitive(value) || value === undefined) {
-        recordError("ctx edits require a primitive value", false);
+        recordError("ctx edits require a primitive value", undefined);
         return snapshot();
       }
       (parent as Record<string, unknown>)[key] = value;
@@ -612,6 +729,7 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
       return snapshot();
     },
     pick(name) {
+      requireMachine();
       begin();
       return fatalCall(() => {
         if (!loaded.machines.some((machine) => machine.name === name)) {
@@ -620,23 +738,75 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
         picked = name;
         instance = undefined;
         startPicked(cloneValue(startCtx));
-      });
+      }, "machine");
+    },
+    pickWorld(name) {
+      const named = namedWorlds();
+      const found = named.find((each) => each.name === name);
+      if (found === undefined) {
+        const known =
+          named.length === 0
+            ? "the file creates no world"
+            : `worlds: ${named.map((each) => each.name).join(", ")}`;
+        throw new Error(`unknown world: ${name}; ${known}`);
+      }
+      begin();
+      watchWorld(found.world);
+      return snapshot();
+    },
+    restart() {
+      begin();
+      const previous = namedWorlds().find((each) => each.world === pickedWorld)?.name;
+      try {
+        loaded.restart();
+      } catch (thrown) {
+        recordError(messageOf(thrown), undefined);
+        return snapshot();
+      }
+      t = 0;
+      frame = 0;
+      tracker.reset();
+      instance = undefined;
+      haltedError = undefined;
+      haltedBy = undefined;
+      if (!loaded.machines.some((machine) => machine.name === picked)) {
+        picked = loaded.machines[0]?.name;
+      }
+      pickedWorld = undefined;
+      try {
+        beginRun();
+      } catch (thrown) {
+        recordError(messageOf(thrown), "run");
+      }
+      const named = namedWorlds();
+      watchWorld((named.find((each) => each.name === previous) ?? named[0])?.world);
+      return snapshot();
     },
     reload() {
       begin();
       const before = pickedMachine();
       try {
         loaded.reload();
-        if (!loaded.machines.some((machine) => machine.name === picked)) {
-          picked = loaded.machines[0]?.name;
-        }
-        const current = pickedMachine();
-        if (current === undefined) {
-          throw new Error("reload found no machine");
-        }
-        if (haltedError !== undefined) {
+      } catch (thrown) {
+        recordError(messageOf(thrown), undefined);
+        return snapshot();
+      }
+      if (!loaded.machines.some((machine) => machine.name === picked)) {
+        picked = loaded.machines[0]?.name;
+      }
+      if (haltedError !== undefined) {
+        entries.push({ kind: "reload", t });
+        return snapshot();
+      }
+      const current = pickedMachine();
+      try {
+        if (instance !== undefined && current === undefined) {
+          instance = undefined;
           entries.push({ kind: "reload", t });
-        } else if (before?.key === undefined || current.key === undefined) {
+        } else if (
+          instance !== undefined &&
+          (before?.key === undefined || current?.key === undefined)
+        ) {
           instance = undefined;
           entries.push({ kind: "reload", t, reason: "unkeyed machine restarted" });
           startPicked(cloneValue(startCtx));
@@ -644,8 +814,17 @@ export function createSession(options: CreateSessionOptions): HsmViewSession {
           entries.push({ kind: "reload", t });
         }
       } catch (thrown) {
-        recordError(messageOf(thrown), false);
+        recordError(messageOf(thrown), "machine");
       }
+      const onReload = loaded.script?.on_reload;
+      if (haltedError === undefined && typeof onReload === "function") {
+        try {
+          onReload.call(loaded.script, self);
+        } catch (thrown) {
+          recordError(messageOf(thrown), "run");
+        }
+      }
+      settle();
       return snapshot();
     },
     index() {

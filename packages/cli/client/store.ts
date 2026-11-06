@@ -28,6 +28,11 @@ export const SPEEDS = [1, 0.5, 0.25, 0.1] as const;
 export const DISCONNECTED = "disconnected - run hsm-view again";
 
 /** A line a code view should bring into sight; `seq` repeats a scroll to the same line. */
+/** A frame would move something: the run is not halted, and a machine runs or a world exists. */
+export function advances(snapshot: Snapshot | undefined): boolean {
+  return snapshot?.running === true && (snapshot.path !== undefined || snapshot.worlds.length > 0);
+}
+
 export interface ScrollTarget {
   readonly file: number;
   readonly line: number;
@@ -267,7 +272,7 @@ export function createViewerStore(options: ViewerStoreOptions = {}): ViewerStore
           return;
         }
         const { snapshot, error } = get();
-        if (snapshot?.running !== true || snapshot.error !== undefined || error !== undefined) {
+        if (!advances(snapshot) || snapshot?.error !== undefined || error !== undefined) {
           get().setPlaying(false);
           return;
         }

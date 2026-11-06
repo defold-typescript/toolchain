@@ -35,6 +35,10 @@ function describe(entry: SnapshotEntry): string {
       return entry.reason === undefined ? "reloaded" : `reloaded: ${entry.reason}`;
     case "error":
       return entry.message;
+    case "join":
+      return `entity ${entry.entity} joins system ${entry.system}`;
+    case "leave":
+      return `entity ${entry.entity} leaves system ${entry.system}`;
   }
 }
 
