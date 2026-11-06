@@ -159,8 +159,10 @@ async function firstLine(stream: ReadableStream<Uint8Array>): Promise<string> {
   return text.split("\n")[0] ?? "";
 }
 
-// The spawn resolves externals from the repo's root `node_modules`, so declared
-// dependencies are proven by the packed check, not here.
+// The spawn loads `@defold-typescript/*` through the workspace's `node_modules`
+// links to `packages/*`, so the transpiler's resolver picks `packages/ecs/src`
+// and nothing here proves the shipped `dist/ecs` copy. Declared dependencies are
+// proven by the packed check, not here.
 describe("built bin serves view under plain node", () => {
   build(PKG_DIR);
 
@@ -215,7 +217,7 @@ describe("built bin serves view under plain node", () => {
   );
 
   test(
-    "node dist/bin.js view runs a world from the packaged ecs source",
+    "node dist/bin.js view loads a world from the workspace ecs source",
     () =>
       viewing("garden.ts", GARDEN, async (base) => {
         const snapshot = (await (await fetch(`${base}api/snapshot`)).json()) as {
