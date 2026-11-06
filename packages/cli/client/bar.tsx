@@ -8,7 +8,7 @@ import { type FieldName, fieldError } from "./fields";
 import { JsonDialog } from "./json-dialog";
 import { LayoutToggle } from "./layouts";
 import { SearchBox } from "./search-box";
-import { SPEEDS, useViewer, type ViewerStore } from "./store";
+import { advances, SPEEDS, useViewer, type ViewerStore } from "./store";
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -29,7 +29,7 @@ const errorId = (name: FieldName): string => `bar-error-${name}`;
 export function Bar({ store }: { store: ViewerStore }) {
   const machines = useViewer(store, (state) => state.index?.machines);
   const picked = useViewer(store, (state) => state.snapshot?.picked);
-  const running = useViewer(store, (state) => state.snapshot?.running ?? false);
+  const running = useViewer(store, (state) => advances(state.snapshot));
   const accepts = useViewer(store, (state) => state.snapshot?.accepts);
   const t = useViewer(store, (state) => state.snapshot?.t ?? 0);
   const leaves = useViewer(store, (state) => state.snapshot?.leaves);
