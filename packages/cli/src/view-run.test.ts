@@ -136,6 +136,45 @@ export const write = () => go.set_position(1);
     expect(entries).toEqual([{ kind: "engine", api: "go.set_position", args: [1] }]);
   });
 
+  test("rejects an undefined ecs filter token", () => {
+    const entry = write(
+      "main.ts",
+      `export { rejectAll, rejectAny, requireAll, requireAny } from "@defold-typescript/types/ecs";
+`,
+    );
+    const exports = exportsOf(runner(entry).run().modules, entry);
+    const message = "ecs: a filter token must be a component name or a filter";
+
+    for (const name of ["requireAll", "requireAny", "rejectAll", "rejectAny"]) {
+      const builder = exports[name] as (...tokens: unknown[]) => unknown;
+      expect(thrown(() => builder(undefined))).toBe(message);
+      // Lua's `{...}` length drops a trailing nil, so this pins the count taken from the tokens.
+      expect(thrown(() => builder("a", undefined))).toBe(message);
+    }
+  });
+
+  test("runs valid ecs filters without logging select", () => {
+    const entry = write(
+      "main.ts",
+      `import { rejectAll, rejectAny, requireAll, requireAny } from "@defold-typescript/types/ecs";
+const candidates = [{ a: 1 }, { a: 1, b: 1 }, { b: 1 }, {}];
+const results = (filter) => candidates.map((candidate) => filter({}, candidate));
+export const all = results(requireAll("a", rejectAll("b")));
+export const any = results(requireAny("a", "b"));
+export const none = results(rejectAny("a", "b"));
+`,
+    );
+    const project = runner(entry);
+    const entries: EngineEntry[] = [];
+    project.engine.setSink((entry) => entries.push(entry));
+    const exports = exportsOf(project.run().modules, entry);
+
+    expect(exports.all).toEqual([true, false, false, false]);
+    expect(exports.any).toEqual([true, true, true, false]);
+    expect(exports.none).toEqual([false, false, false, true]);
+    expect(entries).toEqual([]);
+  });
+
   test("gives the types package root the runtime it is handed and any other subpath nothing", () => {
     const entry = write(
       "main.ts",
