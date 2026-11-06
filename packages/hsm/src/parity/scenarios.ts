@@ -1638,6 +1638,22 @@ function builderMachine(): string[] {
   const loose = buildMachine<Ctx, Ev>()({ initial: "/a", states: { a: {} } });
   loose.state("/a").on("GO");
   recordError(log, () => loose.build());
+  const named = buildMachine<Ctx, { type: "constructor" } | { type: "toString" }>()({
+    initial: "/a",
+    states: { a: {}, b: {} },
+  });
+  named.state("/a").on("constructor").to("/b");
+  named
+    .state("/b")
+    .on("toString")
+    .run((ctx) => {
+      ctx.log.push("toString run");
+    });
+  const prototypeNamed = named.build().start(newCtx(log));
+  prototypeNamed.send({ type: "constructor" });
+  log.push(`path=${shown(prototypeNamed.path)}`);
+  prototypeNamed.send({ type: "toString" });
+  log.push(`path=${shown(prototypeNamed.path)}`);
   return log;
 }
 

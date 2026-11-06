@@ -333,6 +333,23 @@ describe("statements", () => {
     live.send({ type: "PUSH" });
     expect(live.path).toBe("/locked");
   });
+
+  test("events named constructor and toString take rules", () => {
+    const skeleton = {
+      initial: "/a" as const,
+      states: { a: {}, b: {}, c: {} },
+    };
+    const m = buildMachine<object, { type: "constructor" } | { type: "toString" }>()(skeleton);
+    m.state("/a").on("constructor").to("/b");
+    m.state("/b").on("toString").to("/c");
+    const machine = m.build().start({});
+    expect(machine.path).toBe("/a");
+    machine.send({ type: "constructor" });
+    expect(machine.path).toBe("/b");
+    machine.send({ type: "toString" });
+    expect(machine.path).toBe("/c");
+    expect(skeleton.states.a).toEqual({ on: { constructor: [{ to: "/b" }] } });
+  });
 });
 
 describe("build() fills the skeleton in place", () => {
@@ -523,6 +540,42 @@ describe("types", () => {
       });
     };
     expect(typeof rejected).toBe("function");
+  });
+
+  test("a skeleton leaf takes no initial or restoreDepth, and a compound state keeps both", () => {
+    const rejected = () => {
+      buildMachine<object, { type: "GO" }>()({
+        initial: "/a",
+        // @ts-expect-error a leaf takes no initial
+        states: { a: { initial: "/a/x" } },
+      });
+      buildMachine<object, { type: "GO" }>()({
+        initial: "/a",
+        // @ts-expect-error a leaf takes no restoreDepth
+        states: { a: { restoreDepth: 1 } },
+      });
+      buildMachine<object, { type: "GO" }>()({
+        initial: "/a",
+        // @ts-expect-error a leaf takes no restoreDepth
+        states: { a: { restoreDepth: "all" } },
+      });
+      buildMachine<object, { type: "GO" }>()({
+        initial: "/b",
+        // @ts-expect-error a nested leaf takes no initial
+        states: { b: { initial: "/b/c", states: { c: { initial: "/b/c/x" } } } },
+      });
+    };
+    expect(typeof rejected).toBe("function");
+    const byCount = buildMachine<object, { type: "GO" }>()({
+      initial: "/b",
+      states: { b: { initial: "/b/c", restoreDepth: 1, states: { c: {} } } },
+    });
+    const all = buildMachine<object, { type: "GO" }>()({
+      initial: "/b",
+      states: { b: { initial: "/b/c", restoreDepth: "all", states: { c: {} } } },
+    });
+    expect(() => byCount.build()).not.toThrow();
+    expect(() => all.build()).not.toThrow();
   });
 
   test("on narrows the event, and a when reads the machine's paths", () => {
