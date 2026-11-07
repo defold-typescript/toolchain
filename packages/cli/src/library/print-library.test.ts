@@ -11,10 +11,15 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { ExtensionZip } from "../extension-archive";
 import { FIXTURE_DATA_DIR, writeLibraryTargets } from "../library-data-fixture";
+import { LIBRARY_DATA_DIR } from "./package-root";
 import { printLibraryModules } from "./print-library";
 import { archiveSourceTree } from "./source-tree";
 import { emitAuthoredDeclaration, readAuthoredTargets } from "./sync-authored-types";
-import { type LualsTarget, readLualsTargets } from "./sync-luals-types";
+import {
+  emitLualsTargetDeclarations,
+  type LualsTarget,
+  readLualsTargets,
+} from "./sync-luals-types";
 import { readScriptApiTargets } from "./sync-script-api-types";
 
 // A `.lua` file the target's globs must not select: were it parsed, its class
@@ -49,8 +54,8 @@ function githubArchive(wrapper: string, files: Record<string, string>): Extensio
   return fakeZip(entries);
 }
 
-function vendoredLuals(target: LualsTarget): Record<string, string> {
-  const dir = join(FIXTURE_DATA_DIR, target.sourceDir);
+function vendoredLuals(target: LualsTarget, root = FIXTURE_DATA_DIR): Record<string, string> {
+  const dir = join(root, target.sourceDir);
   const files: Record<string, string> = {};
   for (const entry of readdirSync(dir, { recursive: true }).map(String)) {
     const path = entry.replace(/\\/g, "/");
@@ -141,6 +146,60 @@ describe("the archive, not the vendored copy, decides a LuaLS print", () => {
     expect(print?.from).toBe("pinned");
     expect(print?.reason).toContain(own);
     expect(print?.contents).toBe(pinned.printed[0]?.contents as string);
+  });
+});
+
+// A compiler file proto's recipe ignores: each path declares its own class, so
+// each `ignore` glob is guarded by exactly one name.
+function compilerStandIn(name: string): string {
+  return [
+    `---@class ${name}`,
+    "---@field source string",
+    "local M = {}",
+    "function M.run() end",
+    "return M",
+    "",
+  ].join("\n");
+}
+
+describe("proto's compiler sources stay out of its archive print", () => {
+  const target = readLualsTargets(LIBRARY_DATA_DIR).find(
+    (candidate) => candidate.moduleId === "proto.proto",
+  );
+  if (target === undefined) throw new Error("library data has no LuaLS target proto.proto");
+  const archive = githubArchive(`defold-proto-${target.ref}`, {
+    ...vendoredLuals(target, LIBRARY_DATA_DIR),
+    "proto/protoc.lua": compilerStandIn("Lexer"),
+    "proto/editor_scripts/protoc.lua": compilerStandIn("Parser"),
+  });
+
+  test("the archive print matches the pinned print and carries neither compiler class", async () => {
+    const fromArchive = await printLibraryModules(
+      LIBRARY_DATA_DIR,
+      [target.moduleId],
+      archiveSourceTree(archive),
+    );
+    const pinned = await printLibraryModules(LIBRARY_DATA_DIR, [target.moduleId], null);
+
+    expect(fromArchive.unprintable).toEqual([]);
+    expect(
+      fromArchive.printed.map(({ module, from, reason }) => ({ module, from, reason })),
+    ).toEqual([{ module: "proto.proto", from: "archive", reason: undefined }]);
+    const contents = fromArchive.printed[0]?.contents as string;
+    expect(contents).toBe(pinned.printed[0]?.contents as string);
+    expect(contents).not.toContain("interface Lexer");
+    expect(contents).not.toContain("interface Parser");
+  });
+
+  test("with no ignore globs, both compiler classes are emitted", () => {
+    const unguarded = emitLualsTargetDeclarations(
+      LIBRARY_DATA_DIR,
+      { ...target, ignore: [] },
+      archiveSourceTree(archive),
+    );
+
+    expect(unguarded).toContain("interface Lexer");
+    expect(unguarded).toContain("interface Parser");
   });
 });
 
