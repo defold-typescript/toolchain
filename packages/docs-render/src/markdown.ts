@@ -180,8 +180,8 @@ interface FenceVariant {
 // A `<lang> <marker>` info string marks a fence as the second variant of the
 // snippet in the fence before it: `original` is the source of a translated
 // fence, `builder` the builder-statement spelling of a config. Each pair renders
-// as one tab group whose key names its tab set, so the CodeTabs island switches
-// every group of that set together; `labels` replaces the two tabs' language
+// as one tab group whose key names its tab set, and the CodeTabs island switches
+// each group on its own; `labels` replaces the two tabs' language
 // names, and `language` is the `FENCE_LANGUAGES` label both fences must carry
 // to pair (`builder` requires TypeScript, the only language the builder
 // spelling exists in). Shiki and the badge read only the first token, so the
