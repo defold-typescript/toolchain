@@ -1345,7 +1345,9 @@
             {
               "name": "touch",
               "doc": "",
-              "types": [],
+              "types": [
+                "touch"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }
@@ -2483,14 +2485,18 @@
             {
               "name": "dx",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             },
             {
               "name": "dy",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }
@@ -2522,14 +2528,18 @@
             {
               "name": "position_x",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             },
             {
               "name": "position_y",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }
@@ -2553,7 +2563,9 @@
             {
               "name": "dt",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }
@@ -2609,14 +2621,18 @@
             {
               "name": "action_id",
               "doc": "",
-              "types": [],
+              "types": [
+                "Hash"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             },
             {
               "name": "action",
               "doc": "",
-              "types": [],
+              "types": [
+                "action"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }
@@ -2632,21 +2648,27 @@
             {
               "name": "min",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             },
             {
               "name": "max",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             },
             {
               "name": "current",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }
@@ -5830,7 +5852,9 @@
             {
               "name": "node",
               "doc": "",
-              "types": [],
+              "types": [
+                "Opaque<\"node\">"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }
@@ -5928,21 +5952,27 @@
             {
               "name": "x",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             },
             {
               "name": "y",
               "doc": "",
-              "types": [],
+              "types": [
+                "number"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             },
             {
               "name": "corner_offset",
               "doc": "",
-              "types": [],
+              "types": [
+                "Vector3"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }
@@ -7987,7 +8017,9 @@
             {
               "name": "is_instant",
               "doc": "",
-              "types": [],
+              "types": [
+                "boolean | undefined"
+              ],
               "is_optional": "True",
               "is_vararg": "False"
             }

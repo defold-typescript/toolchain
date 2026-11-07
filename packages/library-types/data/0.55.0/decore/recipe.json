@@ -5,7 +5,20 @@
       "moduleId": "decore.decore",
       "namespace": "decore",
       "typeRenames": {},
-      "ignore": ["**/test/**", "**/example/**"]
+      "ignore": ["**/test/**", "**/example/**"],
+      "annotationOverrides": {
+        "interfaces": {
+          "system.bus.event": {
+            "methods": {
+              "onAddToWorld": {
+                "params": {
+                  "world": { "type": "world" }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
