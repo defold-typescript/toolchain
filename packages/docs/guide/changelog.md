@@ -9,6 +9,20 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.60.0
+
+> Summary:
+>
+> - **[proto](https://defold-typescript.github.io/library-data/api/proto) drops its protobuf compiler's types**, and druid and decore type every parameter.
+
+### Breaking
+
+- **[proto](https://defold-typescript.github.io/library-data/api/proto) declares only its own API**: `proto.Lexer`, `proto.Parser`, `proto.toplevel`, `proto.msg_body` and `proto.svr_body`, internal types of its bundled protobuf compiler, are gone from its declarations and API page. `proto.init`, `proto.encode`, `proto.decode` and its other functions are unchanged.
+
+### Improved
+
+- **Every [druid](https://defold-typescript.github.io/library-data/api/druid) and [decore](https://defold-typescript.github.io/library-data/api/decore) parameter has a real type** where it was an optional `unknown`: `druid.druid_container.remove_container_by_node` takes a `node`, `druid.druid_layout.set_node_position` takes a `boolean` `is_instant`, `decore.system_bus_event.onAddToWorld` takes a `world`, and druid's internal scroll, drag and container methods take numbers, hashes, actions and touches.
+
 ## v0.59.0
 
 > Summary:
