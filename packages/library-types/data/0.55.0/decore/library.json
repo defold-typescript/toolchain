@@ -7,7 +7,5 @@
       "evidence": "internal/ecs.lua:tiny_manageSystems sets systems[j].index = j"
     }
   },
-  "floors": {
-    "decore.decore": 0.995
-  }
+  "floors": { "decore.decore": 1 }
 }

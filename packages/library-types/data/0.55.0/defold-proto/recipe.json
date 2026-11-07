@@ -5,7 +5,13 @@
       "moduleId": "proto.proto",
       "namespace": "proto",
       "typeRenames": {},
-      "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
+      "ignore": [
+        "**/test/**",
+        "**/example/**",
+        "**/example_*/**",
+        "proto/protoc.lua",
+        "proto/editor_scripts/**"
+      ]
     }
   ]
 }

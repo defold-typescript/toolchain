@@ -2,10 +2,8 @@
   "namespace": "druid",
   "totalMembers": 677,
   "totalTypeTokens": 972,
-  "unknownFallbacks": 16,
-  "unknownTokens": [
-    "(untyped)"
-  ],
+  "unknownFallbacks": 0,
+  "unknownTokens": [],
   "undocumentedMembers": 165,
-  "coverage": 0.984
+  "coverage": 1
 }
