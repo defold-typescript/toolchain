@@ -27,6 +27,7 @@ interface Instance {
   readonly path: string | undefined;
   readonly ctx: unknown;
   readonly send: (event: { type: string }) => void;
+  readonly update: (dt: number) => void;
 }
 
 interface Startable {
@@ -319,6 +320,39 @@ export const m = defineMachine()({
       { kind: "print", text: "hi" },
       { kind: "engine", api: "msg.post", args: [".", "hash: [ping]"] },
     ]);
+  });
+
+  test("passes a shared builder update callback its arguments and returns its result", () => {
+    const entry = write(
+      "main.ts",
+      `import { buildMachine } from "@defold-typescript/types/hsm/builder";
+type Ctx = { dts: number[]; machines: unknown[] };
+const m = buildMachine<Ctx, { type: "GO" }>()({ initial: "/a", states: { a: {}, b: {} } });
+const shared = (ctx: Ctx, dt: number, machine: unknown) => {
+  ctx.dts.push(dt);
+  ctx.machines.push(machine);
+  return ctx.dts.length === 1 ? "/b" : undefined;
+};
+m.state("/a").update(shared);
+m.state("/b").update(shared);
+export const machine = m.build();
+`,
+    );
+    const [machine] = load(entry).machines;
+    if (machine === undefined) {
+      throw new Error("no machine loaded");
+    }
+    const ctx = { dts: [] as number[], machines: [] as unknown[] };
+    const instance = start(machine, ctx);
+
+    instance.update(0.5);
+    expect(instance.path).toBe("/b");
+    expect(ctx.dts).toEqual([0.5]);
+    expect(ctx.machines[0]).toBe(instance);
+
+    instance.update(0.25);
+    expect(instance.path).toBe("/b");
+    expect(ctx.dts).toEqual([0.5, 0.25]);
   });
 
   test("stubs a Defold global even when this process's globalThis carries one", () => {
