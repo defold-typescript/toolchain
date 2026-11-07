@@ -62,6 +62,70 @@
                     "type": "fun(self: any, dx: number, dy: number, x: number, y: number, touch: touch)"
                   }
                 }
+              },
+              "_start_touch": {
+                "params": {
+                  "touch": { "type": "touch" }
+                }
+              }
+            }
+          },
+          "druid.scroll": {
+            "methods": {
+              "_on_scroll_drag": {
+                "params": {
+                  "dx": { "type": "number" },
+                  "dy": { "type": "number" }
+                }
+              },
+              "_set_scroll_position": {
+                "params": {
+                  "position_x": { "type": "number" },
+                  "position_y": { "type": "number" }
+                }
+              },
+              "_update_free_scroll": {
+                "params": {
+                  "dt": { "type": "number" }
+                }
+              },
+              "_process_scroll_wheel": {
+                "params": {
+                  "action_id": { "type": "hash" },
+                  "action": { "type": "action" }
+                }
+              },
+              "_inverse_lerp": {
+                "params": {
+                  "min": { "type": "number" },
+                  "max": { "type": "number" },
+                  "current": { "type": "number" }
+                }
+              }
+            }
+          },
+          "druid.container": {
+            "methods": {
+              "remove_container_by_node": {
+                "params": {
+                  "node": { "type": "node" }
+                }
+              },
+              "_on_corner_drag": {
+                "params": {
+                  "x": { "type": "number" },
+                  "y": { "type": "number" },
+                  "corner_offset": { "type": "vector3" }
+                }
+              }
+            }
+          },
+          "druid.layout": {
+            "methods": {
+              "set_node_position": {
+                "params": {
+                  "is_instant": { "type": "boolean|nil" }
+                }
               }
             }
           }

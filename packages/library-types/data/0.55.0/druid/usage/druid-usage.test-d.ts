@@ -72,6 +72,19 @@ const slider = instance.new_slider("slider_pin", vmath.vector3(100, 0, 0));
 const sliderSteps: number[] | undefined = slider.style.DEFAULT_STEPS;
 const sliderHovered: boolean | undefined = slider.hover?.is_hovered();
 
+// A container finds its child by the GUI node, not by the node id string.
+const container = instance.new_container("container_node", undefined, undefined);
+const removed = container.remove_container_by_node(gui.get_node("child_node"));
+// @ts-expect-error a node id is not a node
+container.remove_container_by_node("child_node");
+
+// `is_instant` is an optional flag, so a caller may omit it or pass a boolean.
+const layoutNode = gui.get_node("layout_child");
+layout.set_node_position(layoutNode, 0, 0);
+layout.set_node_position(layoutNode, 0, 0, true);
+// @ts-expect-error `is_instant` is a boolean, not a number
+layout.set_node_position(layoutNode, 0, 0, 1);
+
 // `set_cursor` and `reset_hovers` return their own component, so each call chains
 // into a second one. A dropped method or a `void` return reds the chain.
 const cursorButtonName: string = button.set_cursor("pointer").set_cursor(undefined).get_name();
@@ -85,3 +98,4 @@ void sliderHovered;
 void enabledState;
 void widgetName;
 void subscribed;
+void removed;

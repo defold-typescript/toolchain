@@ -75,7 +75,5 @@
       "evidence": "layout.lua:set_node_index calls table.insert(self.entities, index, node)"
     }
   },
-  "floors": {
-    "druid.druid": 0.984
-  }
+  "floors": { "druid.druid": 1 }
 }
