@@ -188,6 +188,17 @@ function tagStatements(skeleton: unknown, sites: ReadonlyMap<string, StateSites>
   }
 }
 
+// A state's `update` holds the project's own function, which two states may share, and a location
+// lives on the function; each call gets its own forwarder so each can carry its own site.
+function forwardHook(hook: unknown): unknown {
+  if (typeof hook !== "function") {
+    return hook;
+  }
+  return function (this: unknown, ...args: unknown[]): unknown {
+    return Reflect.apply(hook, this, args);
+  };
+}
+
 // Records the site of each statement call, then tags the entries the real `build()` wrote.
 function recordSites(builder: MachineBuilder, skeleton: unknown): MachineBuilder {
   const sites = new Map<string, StateSites>();
@@ -233,9 +244,12 @@ function recordSites(builder: MachineBuilder, skeleton: unknown): MachineBuilder
       after: recorded(real.after, listed("after")),
       every: recorded(real.every, listed("every")),
       always: recorded(real.always, listed("always")),
-      update: recorded(real.update, (site) => {
-        calls.update = site;
-      }),
+      update: recorded(
+        (hook) => real.update(forwardHook(hook)),
+        (site) => {
+          calls.update = site;
+        },
+      ),
     };
     wrapped.set(path, next);
     return next;

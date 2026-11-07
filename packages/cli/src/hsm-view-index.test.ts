@@ -273,6 +273,29 @@ export const machine = m.build();
     }
   });
 
+  test("maps each builder state's update rule to its own call when states share a callback", () => {
+    const source = `import { buildMachine } from "@defold-typescript/types/hsm/builder";
+const m = buildMachine<object, { type: "GO" }>()({ initial: "/a", states: { a: {}, b: {} } });
+const shared = () => undefined;
+m.state("/a").update(shared);
+m.state("/b").update(shared);
+export const machine = m.build();
+`;
+    const entry = write("main.ts", source);
+    const loaded = load(entry);
+    const index = machineIndex(loaded.machines[0]?.config, loaded.files);
+    const callAt = (call: string, from = 0) => {
+      const start = source.indexOf(call, from);
+      return { file: 0, start, end: start + call.length };
+    };
+    const first = callAt("update(shared)");
+    const second = callAt("update(shared)", first.end);
+
+    expect(second.start).toBeGreaterThan(first.start);
+    expect(index.rules[ruleId("/a", "update")]).toEqual(first);
+    expect(index.rules[ruleId("/b", "update")]).toEqual(second);
+  });
+
   test("maps a builder state's one on call to both its rule and its on key", () => {
     const source = `import { buildMachine } from "@defold-typescript/types/hsm/builder";
 const m = buildMachine<object, { type: "SEE" }>()({ initial: "/a", states: { a: {}, b: {} } });
