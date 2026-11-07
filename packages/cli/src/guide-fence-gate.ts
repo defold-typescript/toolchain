@@ -89,6 +89,60 @@ export function guideFences(guide: string): Fence[] {
   return fences;
 }
 
+const BUILDER_PREFIX = "builder/";
+
+/** A `builder/<name>.ts` fence of an excerpt source and the `<name>.ts` config fence it spells. */
+export interface BuilderTwin {
+  readonly builder: Fence;
+  readonly config: Fence | undefined;
+}
+
+/** Every `builder/` fence of the excerpt source `source`, with its config fence when it has one. */
+export function builderTwins(source: string): BuilderTwin[] {
+  const fences = guideFences(source);
+  return fences
+    .filter((fence) => fence.rel.startsWith(BUILDER_PREFIX))
+    .map((builder) => {
+      const rel = builder.rel.slice(BUILDER_PREFIX.length);
+      return { builder, config: fences.find((fence) => fence.rel === rel) };
+    });
+}
+
+/** The two panes of a rendered Config/Builder tab group, as text. */
+export interface TabPanes {
+  readonly config: string;
+  readonly builder: string;
+}
+
+/**
+ * The tab groups among `groups` that no one twin quotes on both sides, whitespace aside: the
+ * config fence must hold the Config pane and its builder fence the Builder pane. An empty pane is
+ * never quoted.
+ */
+export function unboundTabPanes(
+  groups: readonly TabPanes[],
+  twins: readonly BuilderTwin[],
+): string[] {
+  const pairs = twins.flatMap(({ builder, config }) =>
+    config === undefined
+      ? []
+      : [{ config: collapseWhitespace(config.body), builder: collapseWhitespace(builder.body) }],
+  );
+  const quotes = (body: string, pane: string): boolean => pane.length > 0 && body.includes(pane);
+  return groups.flatMap((group) => {
+    const config = collapseWhitespace(group.config);
+    const builder = collapseWhitespace(group.builder);
+    const bound = pairs.some(
+      (pair) => quotes(pair.config, config) && quotes(pair.builder, builder),
+    );
+    return bound
+      ? []
+      : [
+          `config ${JSON.stringify(config)} with builder ${JSON.stringify(builder)}: no builder twin quotes both`,
+        ];
+  });
+}
+
 /** The titles of the compiled `ts` fences of `guide` that name no file under `src/`. */
 export function badFenceTitles(guide: string): string[] {
   return guideFences(guide)

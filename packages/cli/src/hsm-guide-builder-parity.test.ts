@@ -11,11 +11,10 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { readFileSync, rmSync } from "node:fs";
 import * as path from "node:path";
 import { ECS_LIBRARY, HSM_LIBRARY, requireLibrarySourceDir } from "@defold-typescript/transpiler";
-import { type Fence, guideFences, REPO_ROOT, writeFenceProject } from "./guide-fence-gate";
+import { builderTwins, type Fence, REPO_ROOT, writeFenceProject } from "./guide-fence-gate";
 import { loadProject } from "./view-load";
 
 const EXCERPT_SOURCE = path.join(REPO_ROOT, "packages/cli/test/fixtures/hsm-guide-excerpts.md");
-const BUILDER_PREFIX = "builder/";
 const HSM_SOURCE_DIR = requireLibrarySourceDir(HSM_LIBRARY);
 const ECS_SOURCE_DIR = requireLibrarySourceDir(ECS_LIBRARY);
 const SLOW = 120_000;
@@ -212,26 +211,19 @@ function parityFailures(config: Fence, builder: Fence): string[] {
   return failures;
 }
 
-const sourceFences = guideFences(readFileSync(EXCERPT_SOURCE, "utf8"));
-const builderFences = sourceFences.filter((fence) => fence.rel.startsWith(BUILDER_PREFIX));
-
-function configTwin(builder: Fence): Fence | undefined {
-  const rel = builder.rel.slice(BUILDER_PREFIX.length);
-  return sourceFences.find((fence) => fence.rel === rel);
-}
+const twins = builderTwins(readFileSync(EXCERPT_SOURCE, "utf8"));
 
 describe("hsm guide builder twins", () => {
   test("the excerpt source has builder twins, and every one has a config fence", () => {
-    expect(builderFences.length).toBeGreaterThan(0);
-    const orphans = builderFences.filter((fence) => configTwin(fence) === undefined);
+    expect(twins.length).toBeGreaterThan(0);
+    const orphans = twins.filter((twin) => twin.config === undefined);
     expect(
-      orphans.map((fence) => fence.rel),
+      orphans.map((twin) => twin.builder.rel),
       "builder fences with no fence of the same name",
     ).toEqual([]);
   });
 
-  for (const builder of builderFences) {
-    const config = configTwin(builder);
+  for (const { builder, config } of twins) {
     if (config === undefined) {
       continue;
     }

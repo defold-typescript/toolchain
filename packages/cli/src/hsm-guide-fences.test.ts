@@ -22,6 +22,7 @@ import * as path from "node:path";
 import * as ts from "typescript";
 import {
   badFenceTitles,
+  builderTwins,
   collapseWhitespace,
   exportedTypeMembers,
   type Fence,
@@ -36,6 +37,7 @@ import {
   type TaughtSurface,
   transpileErrors,
   typeCheck,
+  unboundTabPanes,
   unquotedExcerpts,
   unusedSurface,
   writeFenceProject as writeProject,
@@ -417,6 +419,77 @@ describe("hsm guide excerpts", () => {
       "",
     ].join("\n");
     expect(guideFences(guide)).toEqual([]);
+  });
+
+  const twinSource = [
+    '```ts title="a.ts"',
+    'import { defineMachine } from "@defold-typescript/types/hsm";',
+    "",
+    'export const a = defineMachine("a")({',
+    '  initial: "/idle",',
+    "  states: {",
+    '    idle: { on: { GO: "/busy" } },',
+    "    busy: {},",
+    "  },",
+    "});",
+    "```",
+    "",
+    '```ts title="builder/a.ts"',
+    'import { buildMachine } from "@defold-typescript/types/hsm/builder";',
+    "",
+    'const m = buildMachine("a")({ initial: "/idle", states: { idle: {}, busy: {} } });',
+    'm.state("/idle")',
+    '  .on("GO")',
+    '  .to("/busy");',
+    "export const a = m.build();",
+    "```",
+    "",
+    '```ts title="b.ts"',
+    'import { defineMachine } from "@defold-typescript/types/hsm";',
+    "",
+    'export const b = defineMachine("b")({',
+    '  initial: "/off",',
+    "  states: {",
+    '    off: { on: { FLIP: "/on" } },',
+    "    on: {},",
+    "  },",
+    "});",
+    "```",
+    "",
+    '```ts title="builder/b.ts"',
+    'import { buildMachine } from "@defold-typescript/types/hsm/builder";',
+    "",
+    'const m = buildMachine("b")({ initial: "/off", states: { off: {}, on: {} } });',
+    'm.state("/off").on("FLIP").to("/on");',
+    "export const b = m.build();",
+    "```",
+    "",
+  ].join("\n");
+  const twins = builderTwins(twinSource);
+  const configA = 'idle: {\n  on: { GO: "/busy" } },';
+  const builderA = 'm.state("/idle") .on("GO")\n    .to("/busy");';
+  const builderB = 'm.state("/off").on("FLIP")';
+  const unbound = (config: string, builder: string): string =>
+    `config ${JSON.stringify(collapseWhitespace(config))} with builder ${JSON.stringify(collapseWhitespace(builder))}: no builder twin quotes both`;
+
+  test("a Config/Builder group quoting one twin pair is bound, whitespace aside", () => {
+    expect(twins.map((twin) => [twin.config?.rel, twin.builder.rel])).toEqual([
+      ["a.ts", "builder/a.ts"],
+      ["b.ts", "builder/b.ts"],
+    ]);
+    expect(unboundTabPanes([{ config: configA, builder: builderA }], twins)).toEqual([]);
+  });
+
+  test("the gate can fail: a group quoting another pair's builder is reported", () => {
+    expect(unboundTabPanes([{ config: configA, builder: builderB }], twins)).toEqual([
+      unbound(configA, builderB),
+    ]);
+  });
+
+  test("the gate can fail: a group with its panes swapped is reported", () => {
+    expect(unboundTabPanes([{ config: builderA, builder: configA }], twins)).toEqual([
+      unbound(builderA, configA),
+    ]);
   });
 });
 
