@@ -159,8 +159,8 @@ function repoName(repoUrl: string): string {
   return repoUrl.replace(/\/$/, "").split("/").at(-1) ?? repoUrl;
 }
 
-// A `defold-` prefix goes too: `/api/defold-<version>` is the version route
-// family, so no page key may start with it.
+// A `defold-` prefix goes too: committed page keys (`rng`, `random`, `spine.gui`)
+// are built from the stem, so changing it would move them.
 function repoStem(name: string): string {
   return name.replace(/^(extension|defold)-/, "");
 }
@@ -195,9 +195,8 @@ export function isSafePageKey(page: string): boolean {
  * `<stem>.<namespace>` (`spine.gui`), or the full repo name when the stem is the
  * namespace itself (`extension-camera`); within a shared namespace the repo whose
  * stem matches keeps it and the rest take their stem (`firebase-analytics`). The
- * stem drops a leading `extension-` or `defold-`. Keys that still collide, or
- * that would start with `defold-`, throw, naming the docs and the `label` of
- * the manifest being keyed. A key that fails `isSafePageKey` throws too, before
+ * stem drops a leading `extension-` or `defold-`. Keys that still collide throw,
+ * naming the docs and the `label` of the manifest being keyed. A key that fails `isSafePageKey` throws too, before
  * any caller deletes or writes a file under it.
  */
 export function assignPageKeys(
@@ -233,11 +232,6 @@ export function assignPageKeys(
         );
       }
       const owner = `${repoPath(entry.repo)}/${doc.path} (${doc.namespace})`;
-      if (page.startsWith("defold-")) {
-        throw new Error(
-          `${label}: page key "${page}" from ${owner} would sit among the /api/defold-<version> routes.`,
-        );
-      }
       const previous = claimed.get(page);
       if (previous) {
         throw new Error(

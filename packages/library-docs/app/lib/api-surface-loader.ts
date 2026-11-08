@@ -752,15 +752,16 @@ export function loadLibraryPageSources(dirs: LibraryDirs): { page: ApiPage; doc:
   }
 
   // A portal page key is unique within its manifest and, as the sync assigns it,
-  // shadows no engine namespace, `/api/defold-<version>` route or other lane's
-  // page; a hand edit that breaks any of these would replace a page at its route.
+  // names no engine namespace or other lane's page. Page keys key this loader's
+  // maps and the toolchain link index, so a hand edit that breaks either would
+  // drop or replace another page.
   const portalDocs = portalScriptApiDocs(dirs);
   const portalApiDocDir = join(dirs.dataDir, "asset-portal-script-api", "api-doc");
   const engine = engineNamespaces(dirs);
   for (const [page, { entry }] of portalDocs) {
-    if (namespaces.includes(page) || engine.has(page) || page.startsWith("defold-")) {
+    if (namespaces.includes(page) || engine.has(page)) {
       throw new Error(
-        `asset-portal-script-api.json: page "${page}" from ${entry.repo} collides with an engine, version or library route`,
+        `asset-portal-script-api.json: page "${page}" from ${entry.repo} collides with an engine or library route`,
       );
     }
     namespaces.push(page);

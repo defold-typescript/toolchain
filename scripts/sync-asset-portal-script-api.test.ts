@@ -400,6 +400,23 @@ describe("syncAssetPortalScriptApi — page keys", () => {
     });
   });
 
+  // The committed Defold manifest gives `mpeg` to `defold/extension-videoplayer-mpeg`.
+  test("a defold- repo named for the Defold page it shadows keys its full name", async () => {
+    const { entries, source } = declaring([{ repo: "Morgerion/defold-mpeg", namespace: "mpeg" }]);
+    const root = dataFolder(entries);
+    copyFileSync(
+      join(REAL_DATA_DIR, "defold-extensions.json"),
+      join(root, "defold-extensions.json"),
+    );
+    const manifest = await syncAssetPortalScriptApi(root, source);
+    expect(pagesOf(manifest)).toEqual({
+      "https://github.com/Morgerion/defold-mpeg#mpeg": "defold-mpeg",
+    });
+    expect(existsSync(join(root, "asset-portal-script-api", "api-doc", "defold-mpeg.json"))).toBe(
+      true,
+    );
+  });
+
   test("a key that still collides throws naming both docs and asset-portal-script-api", async () => {
     const { entries, source } = declaring([
       { repo: "acme/rng", namespace: "rng" },

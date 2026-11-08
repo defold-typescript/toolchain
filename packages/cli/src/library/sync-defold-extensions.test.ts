@@ -168,7 +168,7 @@ describe("assignPageKeys", () => {
     expect(reserved.engineNamespaces.has("iap")).toBe(false);
   });
 
-  test("a defold- repo keys by its stem without the prefix, which the version routes own", () => {
+  test("a defold- repo keys by its stem without the prefix", () => {
     const keyed = assignPageKeys(
       [entry("defold-rng", ["rnd"]), entry("defold-random", ["rnd"]), entry("defold-ui", ["gui"])],
       reserved,
@@ -176,13 +176,13 @@ describe("assignPageKeys", () => {
     expect(keyed.flatMap((e) => e.docs.map((d) => d.page))).toEqual(["rng", "random", "ui.gui"]);
   });
 
-  test("a key that would still start with defold- throws naming the doc and the label", () => {
-    expect(() => assignPageKeys([entry("defold-gui", ["gui"])], reserved, "portal")).toThrow(
-      /^portal: page key "defold-gui" from defold\/defold-gui\/api\/gui\.script_api \(gui\)/,
+  test("a defold- repo named for the page it shadows keys its full name", () => {
+    const keyed = assignPageKeys(
+      [entry("defold-gui", ["gui"]), entry("extension-x", ["defold-x"])],
+      reserved,
+      "portal",
     );
-    expect(() => assignPageKeys([entry("extension-x", ["defold-x"])], reserved)).toThrow(
-      /^defold-extensions: page key "defold-x"/,
-    );
+    expect(keyed.flatMap((e) => e.docs.map((d) => d.page))).toEqual(["defold-gui", "defold-x"]);
   });
 
   test("two docs resolving to one key throw naming both", () => {
