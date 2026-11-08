@@ -60,14 +60,14 @@ export function libraryOrigins(dirs: LibraryDirs = siteDirs()): Map<string, Libr
 // own, then the Asset Portal's. The index, the listing routes, the static build and
 // the sidebar all read this one list, so a listing cannot reach one and miss another.
 export function untypedListings(dirs: LibraryDirs = siteDirs()): LibraryListing[] {
-  const siteNamespaces = new Set(apiPages(dirs).map((page) => page.namespace));
-  const linked = (text: string): string => pointAtToolchainDocs(text, siteNamespaces);
   return [...defoldListingsFromManifest(dirs), ...portalListingsFromManifest(dirs)].map(
     (listing) => ({
       ...listing,
-      ships: linked(listing.ships),
-      steps: listing.steps.map(linked),
-      ...(listing.engineApis === undefined ? {} : { engineApis: linked(listing.engineApis) }),
+      ships: pointAtToolchainDocs(listing.ships),
+      steps: listing.steps.map(pointAtToolchainDocs),
+      ...(listing.engineApis === undefined
+        ? {}
+        : { engineApis: pointAtToolchainDocs(listing.engineApis) }),
     }),
   );
 }

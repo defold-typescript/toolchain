@@ -64,9 +64,9 @@ describe("searchIndexOutputs", () => {
     ]);
   });
 
-  test("a library member is found at its /api/<namespace> route", () => {
+  test("a library member is found at its /api/<owner>/<repo>/<namespace> route", () => {
     const member = records(dirs).find((record) => record.title === "demo.one.greet");
-    expect(member?.route).toStartWith("/api/demo.one#");
+    expect(member?.route).toStartWith("/api/someone/demolib/demo.one#");
     expect(member?.text).toContain("Say hello to the player");
   });
 
@@ -90,8 +90,8 @@ describe("symbolIndexOutputs", () => {
       { route: string }
     >;
 
-  test("a library member resolves to its /api/<namespace> route", () => {
-    expect(index(dirs)["demo.one.greet"]?.route).toStartWith("/api/demo.one#");
+  test("a library member resolves to its /api/<owner>/<repo>/<namespace> route", () => {
+    expect(index(dirs)["demo.one.greet"]?.route).toStartWith("/api/someone/demolib/demo.one#");
   });
 
   test("a link-only toolchain page gets no tooltip entry", () => {
