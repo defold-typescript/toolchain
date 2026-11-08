@@ -33,6 +33,22 @@
       ]
     },
     {
+      "id": "browser-io",
+      "repo": "https://github.com/alfowler1976/defold_browser_io",
+      "ref": "v0.9.0",
+      "refKind": "release",
+      "refDate": "2026-10-10T08:30:17Z",
+      "license": "MIT",
+      "description": "A Native Extension for HTML5 games in Defold for access and operations on the browser's clipboard and file APIs. Copy and paste clipboard content, open files through system dialogs, save or download data, and accept files via desktop drag-and-drop. Operations return results through asynchronous Lua callbacks. Supports modern desktop and mobile browsers with fallbacks for mobile devices. Clipboard access is subject to browser permissions.",
+      "docs": [
+        {
+          "path": "browser_io/api/browser_io.script_api",
+          "namespace": "browser_io",
+          "page": "browser_io"
+        }
+      ]
+    },
+    {
       "id": "cafebazaar",
       "repo": "https://github.com/dev-masih/cafebazaar-iap",
       "ref": "v1.1",
@@ -80,22 +96,6 @@
       ]
     },
     {
-      "id": "def_usercentrics",
-      "repo": "https://github.com/HGPoint/def_usercentrics",
-      "ref": "1.0.2",
-      "refKind": "release",
-      "refDate": "2024-11-04T09:03:22Z",
-      "license": "MIT",
-      "description": "Defold Usercentrics CMP is a native extension for integrating the Usercentrics Consent Management Platform on Android and iOS. It lets Lua code configure a ruleset, initialize the SDK, show the consent banner, and receive callbacks with readiness and consent data.",
-      "docs": [
-        {
-          "path": "def_usercentrics/api/def_usercentrics.script_api",
-          "namespace": "def_usercentrics",
-          "page": "def_usercentrics"
-        }
-      ]
-    },
-    {
       "id": "defdragon",
       "repo": "https://github.com/wraplord/extension-dragonbones",
       "ref": "0.7.3",
@@ -128,6 +128,22 @@
       ]
     },
     {
+      "id": "defold-mpeg",
+      "repo": "https://github.com/Morgerion/defold-mpeg",
+      "ref": "1.2.0",
+      "refKind": "tag",
+      "refDate": "2026-11-01T21:41:11Z",
+      "license": "MIT",
+      "description": "Defold native extension for playing MPEG1 and AV1 videos with synchronized sound on GUI nodes. It includes a Lua gui_video module, shader-based YUV-to-RGB conversion, and AV1 decode-ahead with frame dropping to limit game stalls.",
+      "docs": [
+        {
+          "path": "mpeg/api/mpeg.script_api",
+          "namespace": "mpeg",
+          "page": "defold-mpeg"
+        }
+      ]
+    },
+    {
       "id": "defold-rng",
       "repo": "https://github.com/alchimystic/defold-rng",
       "ref": "v1.3.0",
@@ -140,6 +156,22 @@
           "path": "rng/api/rng.script_api",
           "namespace": "rnd",
           "page": "rng"
+        }
+      ]
+    },
+    {
+      "id": "defold-rt-capture",
+      "repo": "https://github.com/Morgerion/defold-rtcapture",
+      "ref": "1.0.0",
+      "refKind": "tag",
+      "refDate": "2026-11-01T11:36:18Z",
+      "license": "MIT",
+      "description": "Defold native extension for capturing any render target or the screen as PNG, JPEG, or raw pixels, in memory or directly to a file. It supports cropping, downscaling, async and sync capture, and JPEG decoding into Defold buffers.",
+      "docs": [
+        {
+          "path": "rtcapture/api/rtcapture.script_api",
+          "namespace": "rtcapture",
+          "page": "rtcapture"
         }
       ]
     },
@@ -162,9 +194,9 @@
     {
       "id": "defvideoads",
       "repo": "https://github.com/AGulev/defold-extension-unity-ads",
-      "ref": "4.21.0",
+      "ref": "4.21.1",
       "refKind": "release",
-      "refDate": "2026-10-04T15:50:00Z",
+      "refDate": "2026-11-03T19:56:04Z",
       "license": "Apache-2.0",
       "description": "Show UnityAds.",
       "docs": [
