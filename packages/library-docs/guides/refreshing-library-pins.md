@@ -194,7 +194,7 @@ It converts each `.script_api` under the entry's `include_dirs` at the pin
 `<data folder>/asset-portal-script-api.json` and one doc per page under
 `asset-portal-script-api/api-doc/`, and rebuilds that directory on every run.
 Those entries then count as tracked on the `portal` lane. A doc that fails to
-convert, a page key that would take another page's `/api/` route, or a page key
+convert, a page key another page already holds, or a page key
 that is not one safe route and file name (ASCII letters, digits, `_`, `.` and
 `-`, starting and ending with a letter, digit or `_`, and not a Windows device
 name such as `CON` or `NUL` before its first `.`) stops the sync before it
