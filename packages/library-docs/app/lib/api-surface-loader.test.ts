@@ -888,10 +888,12 @@ describe("Asset Portal script_api libraries under Libraries", () => {
     namespace?: string;
     description?: string;
     refDate?: string;
+    repo?: string;
   }
 
   // A library-types dir beside a `types` dir whose one engine target declares
-  // `gui`, holding one portal library per doc (`someone/defold-lib-<index>`).
+  // `gui`, holding one portal library per doc (`someone/defold-lib-<index>`
+  // unless the doc names its repo).
   function libraryTypesWithPortalPages(
     docs: PortalDocFixture[],
     options: { defoldPages?: string[]; nativeNamespaces?: string[] } & Pick<
@@ -927,7 +929,7 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       JSON.stringify({
         libraries: docs.map((doc, index) => ({
           id: `portal-${index}`,
-          repo: `https://github.com/someone/defold-lib-${index}`,
+          repo: doc.repo ?? `https://github.com/someone/defold-lib-${index}`,
           ref: "v1.0.0",
           refKind: "tag",
           ...(doc.refDate ? { refDate: doc.refDate } : {}),
@@ -1060,7 +1062,14 @@ describe("Asset Portal script_api libraries under Libraries", () => {
     );
   });
 
-  test("a portal page key on an engine, version, vendored, Defold, native or other portal page throws naming the manifest and the key", () => {
+  test("a portal page keyed defold- loads at its origin route", () => {
+    const dir = libraryTypesWithPortalPages([
+      { page: "defold-mpeg", namespace: "mpeg", repo: "https://github.com/Morgerion/defold-mpeg" },
+    ]);
+    expect(pageAt(dir, "/api/morgerion/defold-mpeg/mpeg")?.namespace).toBe("defold-mpeg");
+  });
+
+  test("a portal page key on an engine, vendored, Defold, native or other portal page throws naming the manifest and the key", () => {
     const load = (dir: LibraryDirs) => () => loadPages(dir);
     expect(
       load(
@@ -1076,7 +1085,6 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       Parameters<typeof libraryTypesWithPortalPages>[1],
     ][] = [
       ["gui", [{ page: "gui" }], {}],
-      ["defold-rng", [{ page: "defold-rng" }], {}],
       ["demo.one", [{ page: "demo.one" }], {}],
       ["pad", [{ page: "pad" }], { defoldPages: ["pad"] }],
       ["share", [{ page: "share" }], { nativeNamespaces: ["share"] }],
