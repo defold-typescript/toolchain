@@ -8746,6 +8746,7 @@ pinned to.
 | [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | [`wave`](https://defold-typescript.github.io/library-data/api/wave) | `wave/ext.manifest` |
 | [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | [`directories`](https://defold-typescript.github.io/library-data/api/directories) | `directories/ext.manifest` |
 | [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | [`openal`](https://defold-typescript.github.io/library-data/api/openal) | `openal/ext.manifest` |
+| [GameAnalytics/GA-SDK-DEFOLD](https://github.com/GameAnalytics/GA-SDK-DEFOLD) | [`gameanalytics`](https://defold-typescript.github.io/library-data/api/gameanalytics) | `gameanalytics/ext.manifest` |
 | [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | [`ainpc`](https://defold-typescript.github.io/library-data/api/ainpc) | `player2-ai-npc/ext.manifest` |
 
 <!-- curated-native-extensions:end -->

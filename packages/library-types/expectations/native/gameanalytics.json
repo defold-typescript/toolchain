@@ -1,0 +1,11 @@
+{
+  "registry": {
+    "sourceId": "ga-sdk-defold",
+    "manifestDir": "gameanalytics"
+  },
+  "resolve": {
+    "archiveUrl": "https://github.com/GameAnalytics/GA-SDK-DEFOLD/archive/refs/tags/4.2.6.zip",
+    "confirmedManifest": "GA-SDK-DEFOLD-4.2.6/gameanalytics/ext.manifest",
+    "misplacedManifest": "GA-SDK-DEFOLD-4.2.6/ext.manifest"
+  }
+}
