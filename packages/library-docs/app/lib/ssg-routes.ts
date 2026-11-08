@@ -22,3 +22,16 @@ export async function ssgRoutePaths(app: Hono): Promise<string[]> {
   }
   return paths.sort();
 }
+
+// The paths `toSSG` requests for one dynamic route: the `ssgParams` list the
+// route's middleware records when asked for the pattern itself, substituted into
+// it. Nothing renders, so a route with many costly pages is cheap to enumerate;
+// whether each path answers 200 is a separate check. Test-only, like the above.
+export async function ssgParamPaths(app: Hono, pattern: string): Promise<string[]> {
+  const request = new Request(new URL(pattern, "http://localhost"));
+  await app.fetch(request);
+  const params = (request as Request & { ssgParams?: Record<string, string>[] }).ssgParams ?? [];
+  return params
+    .map((param) => pattern.replace(/:(\w+)/g, (match, key: string) => param[key] ?? match))
+    .sort();
+}

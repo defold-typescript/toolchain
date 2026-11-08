@@ -30,9 +30,11 @@ export function withToolchainLinks(pages: ApiPage[], typesDir: string): ApiPage[
 }
 
 // An authored summary links engine pages root-relative, as it reads on the toolchain
-// docs. Those pages live there, so only a link to a page this site has stays relative.
-export function pointAtToolchainDocs(markdown: string, siteNamespaces: Set<string>): string {
-  return markdown.replace(/\]\(\/api\/([^)#\s]+)/g, (link: string, namespace: string) =>
-    siteNamespaces.has(namespace) ? link : `](${toolchainRoute(namespace)}`,
+// docs. Those pages live there, at a single-segment `/api/<namespace>`; a library
+// page here is `/api/<owner>/<repo>/<namespace>`, so it stays relative.
+export function pointAtToolchainDocs(markdown: string): string {
+  return markdown.replace(
+    /\]\(\/api\/([^)#\s/]+)(?=[)#\s])/g,
+    (_link: string, namespace: string) => `](${toolchainRoute(namespace)}`,
   );
 }
