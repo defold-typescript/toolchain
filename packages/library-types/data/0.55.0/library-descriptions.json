@@ -73,6 +73,7 @@
   "flow.types": "Shared Flow types: the element tree, flexbox style, component props, screen definitions and the navigation API.",
   "flow.ui": "Flow's gui_script renderer: mounts onto a script's self, renders an element tree to runtime GUI nodes and routes input to it.",
   "fontscale": "Reads the operating system's font-scale (text size) setting.",
+  "gameanalytics": "GameAnalytics for Defold: business, resource, progression, design, error and ad events, sessions and remote configs.",
   "gamepush": "GamePush (previously GameScore) is the GamePush SDK implementation for the Defold game engine.",
   "gamepush.core.achievements": "GamePush achievements: lists, unlocking, progress, the achievements overlay and their events.",
   "gamepush.core.ads": "GamePush advertising: fullscreen, preloader, rewarded and sticky banner ads, their availability and their events.",

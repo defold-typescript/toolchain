@@ -4,6 +4,7 @@
 import * as ainpc from "ainpc";
 import * as directories from "directories";
 import * as fontscale from "fontscale";
+import * as gameanalytics from "gameanalytics";
 import * as gyro from "gyro";
 import * as imp from "imp";
 import * as openal from "openal";
@@ -182,3 +183,32 @@ ainpc.npc_chat("npc", "hello", onReply, onFail);
 ainpc.npc_kill("npc", onReply);
 // @ts-expect-error a body holds JSON values, and a function has no JSON form.
 ainpc.npc_spawn({ name: "Ada", greet: () => "hi" }, onReply, onFail);
+
+gameanalytics.configureUserId("player-1");
+gameanalytics.initialize();
+gameanalytics.setEnabledInfoLog(true);
+gameanalytics.addBusinessEvent({
+  currency: "USD",
+  amount: 99,
+  itemType: "boost",
+  itemId: "megaBoost",
+  cartType: "shop",
+});
+gameanalytics.addProgressionEvent({ progressionStatus: "Complete", progression01: "world01" });
+gameanalytics.addDesignEvent({ eventId: "kill:sword", value: 1, customFields: '{"a":1}' });
+const ready: boolean = gameanalytics.isRemoteConfigsReady();
+const _flag: string = gameanalytics.getRemoteConfigsValueAsString({
+  key: "flag",
+  defaultValue: ready ? "on" : "off",
+});
+gameanalytics.setRemoteConfigsListener((_self) => {
+  const _content: string = gameanalytics.getRemoteConfigsContentAsString();
+});
+// @ts-expect-error the user id is required.
+gameanalytics.configureUserId();
+// @ts-expect-error the flag is a boolean.
+gameanalytics.setEnabledInfoLog("yes");
+// @ts-expect-error the extension rejects a business event without an item id.
+gameanalytics.addBusinessEvent({ currency: "USD", amount: 99, itemType: "boost" });
+// @ts-expect-error the status is Start, Complete or Fail.
+gameanalytics.addProgressionEvent({ progressionStatus: "Done", progression01: "world01" });

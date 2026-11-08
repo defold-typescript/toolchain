@@ -629,6 +629,8 @@ const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
     "362b99d47547da200f91c3f2f4856d9ae2c2962a85c3da0e63822de889332a5b",
   "defold-fontscale/source/upstream/fontscale/src/fontscale.cpp":
     "5685352a52bc182625d52e79e366de5323cc6fe1cd02a13122a8e3e272afb863",
+  "ga-sdk-defold/source/upstream/gameanalytics/src/gameanalytics.cpp":
+    "d159b321b5df923c9753a8725aa83b044e2ec41c34e703942a4873f2096328db",
   "defold-gyro/source/upstream/gyro/src/gyro.cpp":
     "40fbeea34a035a055208cb81ffedd1b2773ae0dc8527738207463dd1e5e8af4c",
   "defold-imp/source/upstream/imp/src/imp.cpp":
