@@ -1,0 +1,391 @@
+{
+  "info": {
+    "namespace": "rtcapture",
+    "brief": "Capture of arbitrary render targets and of the default framebuffer. Reads COLOR0 of a render target given by a render script, or the screen itself, and returns raw RGB8/RGBA8 pixels as a Defold buffer, or a PNG or JPEG in memory or written to a file. Binding and readback use the portable DMSDK graphics API only, with no backend specific code.",
+    "description": "Capture of arbitrary render targets and of the default framebuffer. Reads COLOR0 of a render target given by a render script, or the screen itself, and returns raw RGB8/RGBA8 pixels as a Defold buffer, or a PNG or JPEG in memory or written to a file. Binding and readback use the portable DMSDK graphics API only, with no backend specific code."
+  },
+  "elements": [
+    {
+      "type": "CONSTANT",
+      "name": "rtcapture.RENDER_TARGET_DEFAULT",
+      "brief": "Pass as the capture target to read the main screen framebuffer instead of a render target. Its value is `0`, the same one `render.RENDER_TARGET_DEFAULT` uses in a render script.",
+      "description": "Pass as the capture target to read the main screen framebuffer instead of a render target. Its value is `0`, the same one `render.RENDER_TARGET_DEFAULT` uses in a render script.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.capture",
+      "description": "Queue a readback of the given render target. The readback runs in the post-render phase of the current frame, so call this from the render script that owns the target and in the same frame the target was drawn. The extension does not own the target and cannot detect that it was deleted or resized after the request.",
+      "parameters": [
+        {
+          "name": "target",
+          "doc": "The value returned by `render.render_target()`, or `rtcapture.RENDER_TARGET_DEFAULT` for the main screen framebuffer. The screen can be captured from any script; a render target must come from the render script that owns it.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "`format` - `\"raw\"` (default) for pixels in a Defold buffer, `\"hold\"` to keep the\npixels inside the extension and get a `frame_id` for `encode`, `\"png\"` or `\"jpeg\"`.\nUse `\"hold\"` to spread a capture over two frames: the frame that reads pays for the\nreadback only, and the downscale and the encoding happen on the next frame, without\na multi megabyte buffer travelling through Lua in between.\n`max_width` - target width of the resulting image. The extension picks the integer\nbox filter factor itself, because only it knows the size of the region it read.\nRounding is down, with a minimum of 1, so the result can be slightly wider than\nasked: `3840` with `max_width = 600` gives `640`. Without this option the image\nkeeps the size of the region that was read.\n`path` - encoded formats only. When given, the image is written to that file and is not\ncopied into a Lua string. The file is written through `path .. \".tmp\"` and only then\nreplaces the destination.\n`channels` - `4` for RGBA8 or `3` for RGB8 with alpha discarded. Defaults to `4`, or to\n`3` for JPEG, which cannot store alpha anyway. PNG keeps alpha losslessly for four\nchannels and writes a true 24bpp PNG for three.\n`quality` - JPEG only, `1`..`100`, default `85`.\n`subsampling` - JPEG only, `\"444\"`, `\"422\"` or `\"420\"`, default `\"420\"`. Use `\"444\"` for\ntext and interface, where chroma subsampling produces coloured fringes.\n`progressive` - JPEG only, default `false`. Encodes noticeably slower and decodes\nslower, with little size benefit for local previews.\n`optimize` - JPEG only, default `false`. Optimized Huffman tables cost encoding time.\n`alpha_mode` - JPEG from four channels. `\"discard\"` (default) ignores alpha, so\ntransparent areas keep whatever colour they hold. `\"composite\"` blends onto\n`background` first.\n`background` - table with `r`, `g`, `b` in `0`..`255`, used by `alpha_mode =\n\"composite\"`. Defaults to black.\n`x`, `y`, `width`, `height` - rectangle to read, with the origin in the top left corner\nof the target, matching the orientation of the returned image. `x` and `y` default to\n`0`; `width` and `height` default to the rest of the target. A rectangle that leaves the\ntarget is rejected, never clamped.\n`flip_y` - flip rows vertically, `false` by default. The default was measured: on the\nOpenGL adapter `ReadPixels` already returns top-down rows.\n`tag` - any Lua value, returned unchanged in the result so a caller can correlate the\nresult with its own request.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Called from post-render with one result table.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "result",
+              "doc": "Contains `ok`, `request_id`, `tag`, `format`, `channels`, `x`, `y`, `width`, `height`, `image_width`, `image_height`, `target_width`, `target_height`, `byte_size`, `encoded_size`, `request_to_post_render_ms`, `readback_ms`, `convert_ms`, `downscale_ms`, `encode_ms`, `write_ms` and `total_ms`, plus `path` when one was given. `width` and `height` describe the region that was read, while `image_width` and `image_height` describe the image that came out of it - the two differ once `max_width` is used. On success a raw capture also contains `buffer`, a Defold buffer whose single stream is `rgba` of `UINT8` x4, or `rgb` of `UINT8` x3 when three channels were requested; a held capture contains `frame_id` and no pixels at all; an encoded capture without a `path` contains the encoded bytes in the binary string `data`. On failure the result contains `error` and `message` instead.",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "request_id",
+          "doc": "Monotonic id of the accepted request, or `nil` when the request was rejected.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "error",
+          "doc": "Error code when the request was rejected, otherwise `nil`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "Human readable reason when the request was rejected, otherwise `nil`.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">rtcapture.capture(self.preview_rt, {\n    format = \"raw\",\n    channels = 4,\n    tag = \"save_slot_3\",\n}, function(_, result)\n    if result.ok then\n        -- result.buffer holds RGBA8 pixels of the render target\n    else\n        print(result.error, result.message)\n    end\nend)\n\n-- screen grab straight to a file, from any script\nrtcapture.capture(rtcapture.RENDER_TARGET_DEFAULT, {\n    format = \"png\",\n    path = sys.get_save_file(\"my_game\", \"screenshot.png\"),\n}, function(_, result)\n    print(result.ok, result.path, result.encoded_size)\nend)</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.capture_sync",
+      "description": "Read the given target immediately instead of waiting for post render. Takes the same options as `capture` and returns the same result table, only as a direct return value. Use it where no further post render will happen - the save written from the `final()` of a game script when the window is closing is the case this exists for, since a queued request there would never run. A render target still has to be captured from the render script that owns it and in the frame it was drawn; the screen framebuffer can be captured from anywhere.",
+      "parameters": [
+        {
+          "name": "target",
+          "doc": "The value returned by `render.render_target()`, or `rtcapture.RENDER_TARGET_DEFAULT`.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "The same options `capture` accepts.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "The same result table `capture` passes to its callback, or `nil` when the request was rejected outright.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "error",
+          "doc": "Error code when the request was rejected, otherwise `nil`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "Human readable reason when the request was rejected, otherwise `nil`.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">-- сохранение при закрытии игры: post-render уже не наступит\nlocal result = rtcapture.capture_sync(rtcapture.RENDER_TARGET_DEFAULT, {\n    format = \"jpeg\",\n    max_width = 600,\n    quality = 85,\n})\nif result and result.ok then\n    save_preview = result.data\nend</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.encode",
+      "description": "Downscale and encode a frame that a `format = \"hold\"` capture left inside the extension. This is the second phase of a capture spread over two frames. The frame stays held after encoding, so the same shot can be encoded more than once - to compare formats, for example - and is freed by `release_frame`. Compositing is not available here the held pixels have already been converted, so `alpha_mode = \"composite\"` only works at capture time.",
+      "parameters": [
+        {
+          "name": "frame_id",
+          "doc": "The `frame_id` from the result of the held capture.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "`format` (required, `\"png\"` or `\"jpeg\"`), `path`, `max_width`, `quality`, `subsampling`, `progressive`, `optimize` and `tag` - the same meaning they have in `capture`.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "The same result table shape as `capture`, with `downscale_ms`, `encode_ms`, `write_ms` and `total_ms` filled for this phase. `nil` when the call was rejected.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "error",
+          "doc": "`ERR_NO_HELD_FRAME` when no frame with that id is held, otherwise `nil`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "Human readable reason when the call was rejected, otherwise `nil`.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">-- кадр A: только чтение пикселей\nrtcapture.capture(rtcapture.RENDER_TARGET_DEFAULT, {\n    format = \"hold\",\n    channels = 3,\n}, function(_, result)\n    held_frame_id = result.ok and result.frame_id or nil\nend)\n\n-- кадр B: усреднение и упаковка\nlocal encoded = rtcapture.encode(held_frame_id, {\n    format = \"jpeg\",\n    max_width = 600,\n})\nrtcapture.release_frame(held_frame_id)</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.release_frame",
+      "description": "Free the frame held by a `format = \"hold\"` capture. Call it once the frame has been encoded, or when the encoding is abandoned - otherwise a full screen frame stays in the memory of the extension until the next held capture replaces it. Only one frame is held at a time.",
+      "parameters": [
+        {
+          "name": "frame_id",
+          "doc": "The id to free. Without it the currently held frame is freed, whatever its id.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "released",
+          "doc": "True when a frame was actually freed.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.cancel",
+      "description": "Drop a pending capture request. Its callback is never invoked, because cancelling was the caller's own decision. Everything the request owned is released immediately.",
+      "parameters": [
+        {
+          "name": "request_id",
+          "doc": "The id returned by `capture`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "cancelled",
+          "doc": "True when a pending request with that id was found and removed.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.cancel_all",
+      "description": "Drop every pending capture request. No callbacks are invoked.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "How many requests were dropped.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.invalidate_render_targets",
+      "description": "Declare that every render target handed to the extension so far is gone. Call this right after recreating render targets, for example when the window was resized. The extension cannot detect this on its own - the public DMSDK has no way to test whether a handle is still alive. Requests made before the call stay in the queue and complete with `ERR_RENDER_TARGET_DESTROYED` rather than reading through a dead handle, so every accepted request still gets exactly one answer. Requests for `rtcapture.RENDER_TARGET_DEFAULT` are unaffected.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "affected",
+          "doc": "How many pending requests will now fail.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.decode_jpeg",
+      "description": "Decode JPEG bytes into a Defold buffer. Synchronous, and callable from any script. The header is validated before anything is allocated dimensions, data precision and colour space are checked first, and images above 64 million pixels are refused. JPEG stores no alpha, so a four channel result is always fully opaque.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "Binary JPEG data.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "`channels` - `4` for RGBA8 (default) or `3` for RGB8.",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "image",
+          "doc": "Contains `width`, `height`, `channels`, `byte_size`, `decode_ms` and `buffer`, a Defold buffer whose single stream is `rgba` of `UINT8` x4, or `rgb` of `UINT8` x3. `nil` when decoding failed.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "error",
+          "doc": "Error code when decoding failed, otherwise `nil`.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "Human readable reason when decoding failed, otherwise `nil`.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local image, err = rtcapture.decode_jpeg(jpeg_bytes, { channels = 4 })\nif image then\n    -- resource.create_texture needs a game object context and does not work\n    -- from a render script.\n    local texture = resource.create_texture(\"/preview.texturec\", {\n        type = graphics.TEXTURE_TYPE_2D,\n        width = image.width,\n        height = image.height,\n        format = graphics.TEXTURE_FORMAT_RGBA,\n    }, image.buffer)\nend</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.get_render_target_size",
+      "description": "Report the size of the COLOR0 attachment of the given render target, so calling code can compute a rectangle without repeating the parameters the render script created the target with.",
+      "parameters": [
+        {
+          "name": "target",
+          "doc": "The value returned by `render.render_target()`.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.set_debug_logging",
+      "description": "Enable the detailed capture log. Off by default. The log line reports the raw first pixel before conversion, the viewport before and after the readback, and per stage timings.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.get_capabilities",
+      "description": "Report what the extension can currently do on the installed graphics adapter. Only verified capabilities are listed; stages that are not implemented yet do not appear as fields.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "capabilities",
+          "doc": "Contains `available`, `adapter` (`\"opengl\"`, `\"vulkan\"`, `\"directx\"`, ...) and `debug_target`.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rtcapture.debug_target",
+      "description": "Identify an arbitrary render target without reading its pixels. Call it from the render script that owns the target, in the same frame, so the handle is guaranteed to be alive.",
+      "parameters": [
+        {
+          "name": "target",
+          "doc": "The value returned by `render.render_target()`.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "label",
+          "doc": "Name used in the log line so several targets can be told apart.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "Contains `label`, `handle`, `handle_hex`, `color0_width`, `color0_height` and `adapter`.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local info = rtcapture.debug_target(self.preview_rt, \"preview_rt\")\nprint(info.handle_hex, info.color0_width, info.color0_height)</code></pre></div>"
+    }
+  ]
+}
