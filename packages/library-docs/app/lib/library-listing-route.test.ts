@@ -27,7 +27,7 @@ const textOf = (html: string): string =>
 
 describe("/libraries/:owner/:repo listing pages", () => {
   const listings = untypedListings(REAL_DIRS);
-  const canonical = new Set(apiPages(REAL_DIRS).map((page) => page.namespace));
+  const pageRoutes = new Set(apiPages(REAL_DIRS).map((page) => page.route));
 
   test("the committed manifests carry Defold and Asset Portal listings to render", () => {
     expect(listings.some((listing) => listing.official)).toBe(true);
@@ -95,16 +95,29 @@ describe("/libraries/:owner/:repo listing pages", () => {
         expect(text).not.toContain("Asset Portal");
       }
 
-      const apiHrefs = [...html.matchAll(/href="\/api\/([^"#?]+)[^"]*"/g)].map((m) => m[1] ?? "");
-      for (const namespace of apiHrefs) {
-        expect({ route: listing.route, namespace, canonical: canonical.has(namespace) }).toEqual({
+      const apiHrefs = [...html.matchAll(/href="(\/api\/[^"#?]+)[^"]*"/g)].map((m) => m[1] ?? "");
+      for (const href of apiHrefs) {
+        expect({ route: listing.route, href, page: pageRoutes.has(href) }).toEqual({
           route: listing.route,
-          namespace,
-          canonical: true,
+          href,
+          page: true,
         });
       }
     });
   }
+
+  test("a listing answers at its lowercase route and not at its origin's mixed-case path", async () => {
+    const mixed = listings.filter(
+      (listing) =>
+        `${listing.owner}/${listing.repo}` !== `${listing.owner}/${listing.repo}`.toLowerCase(),
+    );
+    expect(mixed.length).toBeGreaterThan(0);
+    for (const listing of mixed) {
+      expect(listing.route).toBe(`/libraries/${listing.owner}/${listing.repo}`.toLowerCase());
+      const path = `/libraries/${listing.owner}/${listing.repo}`;
+      expect({ path, status: (await render(path)).status }).toEqual({ path, status: 404 });
+    }
+  });
 
   test("an unknown repo under defold is a 404", async () => {
     expect((await render("/libraries/defold/not-a-repo")).status).toBe(404);

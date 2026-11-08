@@ -13,10 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 > Summary:
 >
-> - **[proto](https://defold-typescript.github.io/library-data/api/proto) drops its protobuf compiler's types**, and druid and decore type every parameter.
+> - **Library pages move to `/api/<owner>/<repo>/<namespace>`** on the [library docs](https://defold-typescript.github.io/library-data).
+> - **[proto](https://defold-typescript.github.io/library-data/api/proto) drops its protobuf compiler's types.**
 
 ### Breaking
 
+- **Every page on the [library docs](https://defold-typescript.github.io/library-data) lives at an address named by its library's repo**: an API page at `/api/<owner>/<repo>/<namespace>` (`/api/defold/extension-spine/gui`, `/api/insality/druid/druid`) and an untyped library at `/libraries/<owner>/<repo>`, all lowercase. The flat `/api/<name>` addresses are gone, so links and bookmarks to them need the new form.
 - **[proto](https://defold-typescript.github.io/library-data/api/proto) declares only its own API**: `proto.Lexer`, `proto.Parser`, `proto.toplevel`, `proto.msg_body` and `proto.svr_body`, internal types of its bundled protobuf compiler, are gone from its declarations and API page. `proto.init`, `proto.encode`, `proto.decode` and its other functions are unchanged.
 
 ### Improved

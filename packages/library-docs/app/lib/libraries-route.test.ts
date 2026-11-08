@@ -2,9 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Hono } from "hono";
+import { createApiNamespaceRoute } from "../routes/api/[owner]/[repo]/[namespace]";
 import { createLibrariesRoute } from "../routes/index";
 import { apiPages, siteDirs, untypedListings } from "./api-content";
 import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
+import { ssgParamPaths } from "./ssg-routes";
 
 // Root `bun test` runs from the repo root, so the package directory is passed in.
 const REAL_DIRS = siteDirs(join(import.meta.dir, "../.."));
@@ -108,5 +110,38 @@ describe("Libraries index route composition", () => {
     const { html } = await renderLibraries();
     const n = libraryPages.length;
     expect(html).toContain(`${n} namespace${n === 1 ? "" : "s"} documented`);
+  });
+});
+
+describe("library API page routes", () => {
+  const app = new Hono();
+  const pattern = "/api/:owner/:repo/:namespace";
+  app.get(pattern, ...createApiNamespaceRoute(REAL_DIRS));
+
+  test("a page renders at the route of its origin and declared namespace", async () => {
+    const res = await app.request("/api/defold/extension-spine/gui");
+    expect(res.status).toBe(200);
+    const heading = (await res.text()).match(/<h1>(.*?)<\/h1>/s)?.[1] ?? "";
+    expect(textOf(heading)).toContain("extension-spine");
+  });
+
+  test("the page key, a mixed-case segment or an unknown namespace answers 404", async () => {
+    for (const path of [
+      "/api/defold/extension-spine/spine.gui",
+      "/api/Defold/extension-spine/gui",
+      "/api/insality/druid/Druid",
+      "/api/defold/extension-spine/not-a-page",
+    ]) {
+      expect({ path, status: (await app.request(path)).status }).toEqual({ path, status: 404 });
+    }
+  });
+
+  // That each of these paths answers 200 is the toolchain-links test's walk over
+  // every page route, which renders them all.
+  test("the static build requests exactly one path per library page route", async () => {
+    const expected = apiPages(REAL_DIRS)
+      .map((page) => page.route)
+      .sort();
+    expect(await ssgParamPaths(app, pattern)).toEqual(expected);
   });
 });
