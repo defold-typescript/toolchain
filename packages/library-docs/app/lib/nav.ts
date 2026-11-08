@@ -29,6 +29,9 @@ export interface Namespace {
 export interface LibraryOrigin {
   owner: string;
   repo: string;
+  // The origin repo URL the page and listing routes are built from. Absent only
+  // on the namespace-shaped fallback a page with no recorded origin gets.
+  url?: string;
   // Set only for a library read from Defold's own extension manifest, never from
   // the owner's name, so a third party publishing as `defold` stays unmarked.
   official?: true;

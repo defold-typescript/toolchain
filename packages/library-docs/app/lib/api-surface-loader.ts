@@ -4,6 +4,10 @@ import type { ApiPage, LibraryMeta } from "@defold-typescript/docs-render/api-su
 import { repoTreeUrl } from "@defold-typescript/docs-render/forge";
 import { parseFrontmatter } from "@defold-typescript/docs-render/frontmatter";
 import {
+  libraryApiRoute,
+  libraryListingRoute,
+} from "@defold-typescript/docs-render/library-routes";
+import {
   assertHttpsUrl,
   assertPageKey,
   assertUpstreamIdentifiers,
@@ -204,14 +208,6 @@ function engineNamespaces(dirs: LibraryDirs): Set<string> {
   return new Set(targets.flatMap((target) => target.modules.map((mod) => mod.namespace)));
 }
 
-// The `/api/<slug>` route for a dotted library module. honox SSG emits a clean
-// static file for a literal dot (`…/monarch.monarch/index.html`), so the slug
-// keeps the dotted module name verbatim — namespace, card label, and route stay
-// identical, and the `[namespace]` route needs no bespoke slug mapping.
-export function libraryRouteSlug(namespace: string): string {
-  return namespace;
-}
-
 // The vendored `import * as <alias> from "<module>"` string, mirroring the
 // upstream ts-defold/library `@example` convention: the alias is the module
 // name past its first dotted segment, remaining dots collapsed to underscores
@@ -305,22 +301,22 @@ export function libraryOriginByNamespace(dirs: LibraryDirs): Map<string, Library
   for (const [namespace, provenance] of maintainedHere) {
     const owner = githubOwner(provenance.repo);
     const repo = githubRepo(provenance.repo);
-    if (owner && repo) origins.set(namespace, { owner, repo });
+    if (owner && repo) origins.set(namespace, { owner, repo, url: provenance.repo });
   }
   for (const [page, { entry }] of defoldExtensionDocs(dirs)) {
     const owner = githubOwner(entry.repo);
     const repo = githubRepo(entry.repo);
-    if (owner && repo) origins.set(page, { owner, repo, official: true });
+    if (owner && repo) origins.set(page, { owner, repo, url: entry.repo, official: true });
   }
   for (const [namespace, target] of loadNativeTargets(dirs)) {
     const owner = githubOwner(target.repo);
     const repo = githubRepo(target.repo);
-    if (owner && repo) origins.set(namespace, { owner, repo });
+    if (owner && repo) origins.set(namespace, { owner, repo, url: target.repo });
   }
   for (const [page, { entry }] of portalScriptApiDocs(dirs)) {
     const owner = githubOwner(entry.repo);
     const repo = githubRepo(entry.repo);
-    if (owner && repo) origins.set(page, { owner, repo });
+    if (owner && repo) origins.set(page, { owner, repo, url: entry.repo });
   }
   return origins;
 }
@@ -399,52 +395,50 @@ export function defoldListingsFromManifest(dirs: LibraryDirs): LibraryListing[] 
       }
     }
   }
-  return untyped
-    .map((entry): LibraryListing => {
-      const owner = githubOwner(entry.repo);
-      const repo = githubRepo(entry.repo);
-      const path = join(summariesDir, `${repo}.md`);
-      if (!existsSync(path)) {
-        throw new Error(
-          `defold-extensions.json: ${entry.repo} ships no .script_api and has no summary at defold-extensions/summaries/${repo}.md`,
-        );
-      }
-      const { data, body } = parseFrontmatter(readFileSync(path, "utf8"));
-      if (data.api !== "none" && data.api !== "untyped") {
-        throw new Error(
-          `defold-extensions/summaries/${repo}.md: frontmatter api must be "none" or "untyped", got ${JSON.stringify(data.api)}`,
-        );
-      }
-      const adoption = data.adoption ?? "standard";
-      if (adoption !== "standard" && adoption !== "fork" && adoption !== "unavailable") {
-        throw new Error(
-          `defold-extensions/summaries/${repo}.md: frontmatter adoption must be "standard", "fork" or "unavailable", got ${JSON.stringify(data.adoption)}`,
-        );
-      }
-      if (adoption === "unavailable" && data.api !== "none") {
-        throw new Error(
-          `defold-extensions/summaries/${repo}.md: frontmatter adoption "unavailable" requires api "none", got ${JSON.stringify(data.api)}`,
-        );
-      }
-      const { ships, steps, engineApis } = parseListingSummary(body, `${repo}.md`);
-      return {
-        owner,
-        repo,
-        url: entry.repo,
-        ref: entry.ref,
-        pinKind: entry.refKind,
-        ...eraOf(entry, engineReleases),
-        description: entry.description,
-        official: true as const,
-        route: `/libraries/${owner}/${repo}`,
-        api: data.api,
-        adoption,
-        ships,
-        steps,
-        ...(engineApis === undefined ? {} : { engineApis }),
-      };
-    })
-    .filter((listing) => listing.owner !== "" && listing.repo !== "");
+  return untyped.map((entry): LibraryListing => {
+    const owner = githubOwner(entry.repo);
+    const repo = githubRepo(entry.repo);
+    const path = join(summariesDir, `${repo}.md`);
+    if (!existsSync(path)) {
+      throw new Error(
+        `defold-extensions.json: ${entry.repo} ships no .script_api and has no summary at defold-extensions/summaries/${repo}.md`,
+      );
+    }
+    const { data, body } = parseFrontmatter(readFileSync(path, "utf8"));
+    if (data.api !== "none" && data.api !== "untyped") {
+      throw new Error(
+        `defold-extensions/summaries/${repo}.md: frontmatter api must be "none" or "untyped", got ${JSON.stringify(data.api)}`,
+      );
+    }
+    const adoption = data.adoption ?? "standard";
+    if (adoption !== "standard" && adoption !== "fork" && adoption !== "unavailable") {
+      throw new Error(
+        `defold-extensions/summaries/${repo}.md: frontmatter adoption must be "standard", "fork" or "unavailable", got ${JSON.stringify(data.adoption)}`,
+      );
+    }
+    if (adoption === "unavailable" && data.api !== "none") {
+      throw new Error(
+        `defold-extensions/summaries/${repo}.md: frontmatter adoption "unavailable" requires api "none", got ${JSON.stringify(data.api)}`,
+      );
+    }
+    const { ships, steps, engineApis } = parseListingSummary(body, `${repo}.md`);
+    return {
+      owner,
+      repo,
+      url: entry.repo,
+      ref: entry.ref,
+      pinKind: entry.refKind,
+      ...eraOf(entry, engineReleases),
+      description: entry.description,
+      official: true as const,
+      route: libraryListingRoute(entry.repo),
+      api: data.api,
+      adoption,
+      ships,
+      steps,
+      ...(engineApis === undefined ? {} : { engineApis }),
+    };
+  });
 }
 
 interface AssetPortalEntry {
@@ -497,7 +491,7 @@ export function portalListingsFromManifest(dirs: LibraryDirs): LibraryListing[] 
         pinKind: entry.refKind,
         ...eraOf(entry, engineReleases),
         description,
-        route: `/libraries/${owner}/${repo}`,
+        route: libraryListingRoute(entry.repo),
         api: "none",
         adoption: "standard",
         ships: description,
@@ -696,9 +690,10 @@ export function loadLibraryProvenance(dirs: LibraryDirs): (namespace: string) =>
 // Docs-only pages for the vendored third-party libraries in
 // `@defold-typescript/library-types`: each `api-doc/*.json` fixture parsed by
 // `parseDefoldApiDoc`, gated on a library target naming it,
-// tagged `category: "library"`, routed default-only under `/api/<slug>` (no
-// version prefix — library types are pinned to a ts-defold/library commit, not
-// a Defold version), and carrying a structured `libraryMeta` the render layer
+// tagged `category: "library"`, routed at `/api/<owner>/<repo>/<namespace>`
+// from the page's origin repo and the namespace its doc declares (no version
+// prefix — a library is pinned to its own upstream ref, not a Defold version),
+// and carrying a structured `libraryMeta` the render layer
 // turns into the uniform provenance block. Library symbols carry no authored
 // translations/signatures, so those stores stay empty.
 //
@@ -784,6 +779,10 @@ export function loadLibraryPageSources(dirs: LibraryDirs): { page: ApiPage; doc:
   }
 
   const pages: { page: ApiPage; doc: unknown }[] = [];
+  // A page's address is its origin and declared namespace, not its page key, so
+  // two keys can land on one route: a repo shipping two docs that declare one
+  // namespace, or two repos whose names differ only in letter case.
+  const routeClaims = new Map<string, { namespace: string; url: string }>();
   for (const namespace of namespaces) {
     const defold = defoldDocs.get(namespace);
     const portal = portalDocs.get(namespace);
@@ -809,14 +808,26 @@ export function loadLibraryPageSources(dirs: LibraryDirs): { page: ApiPage; doc:
     }
     assertUpstreamIdentifiers(module);
     const meta = metaFor(namespace);
-    const { owner, repo } = libraryLineage(namespace, origins);
+    const origin = origins.get(namespace);
+    if (origin?.url === undefined) {
+      throw new Error(`library page "${namespace}" has no origin repo to route it by`);
+    }
+    const route = libraryApiRoute(origin.url, module.namespace);
+    const claimant = routeClaims.get(route);
+    if (claimant) {
+      throw new Error(
+        `library route ${route} is claimed by both ${claimant.url} (page "${claimant.namespace}") and ${origin.url} (page "${namespace}")`,
+      );
+    }
+    routeClaims.set(route, { namespace, url: origin.url });
+    const { owner, repo } = origin;
     const displayName =
       displayOverrides.get(namespace) ??
       libraryDisplayName(namespace, repo, owner, repoCounts.get(repo) ?? 1);
     pages.push({
       page: {
         namespace,
-        route: `/api/${libraryRouteSlug(namespace)}`,
+        route,
         brief: module.brief,
         module,
         translations: {},

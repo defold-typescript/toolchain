@@ -12,7 +12,7 @@ import { renderCanonicalApiPage } from "@defold-typescript/docs-render/toolchain
 import { canonicalApiPages } from "@defold-typescript/docs-render/toolchain-surface";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { Hono } from "hono";
-import { createApiNamespaceRoute } from "../routes/api/[namespace]";
+import { createApiNamespaceRoute } from "../routes/api/[owner]/[repo]/[namespace]";
 import { apiPages, siteDirs } from "./api-content";
 import {
   pointAtToolchainDocs,
@@ -87,14 +87,14 @@ describe("toolchain member links on library pages", () => {
     async () => {
       const REAL_DIRS = siteDirs(SITE_DIR);
       const app = new Hono();
-      app.get("/api/:namespace", ...createApiNamespaceRoute(REAL_DIRS));
+      app.get("/api/:owner/:repo/:namespace", ...createApiNamespaceRoute(REAL_DIRS));
       const linkPattern = new RegExp(
         `href="${escapeRegExp(TOOLCHAIN_DOCS_URL)}/api/([^"#]+)#([^"]+)"`,
         "g",
       );
       const holders = new Map<string, Set<string>>();
       for (const page of apiPages(REAL_DIRS)) {
-        const res = await app.request(`/api/${page.namespace}`);
+        const res = await app.request(page.route);
         expect(res.status).toBe(200);
         for (const [, namespace, id] of (await res.text()).matchAll(linkPattern)) {
           const key = `${namespace}#${id}`;
@@ -180,9 +180,13 @@ describe("links back to the toolchain docs", () => {
 });
 
 describe("pointAtToolchainDocs", () => {
-  test("repoints a link to an engine page and keeps one to a page this site has", () => {
+  test("repoints a single-segment link to the toolchain docs and keeps a library page route", () => {
     expect(
-      pointAtToolchainDocs("Reads [`sys`](/api/sys#a) and [`iap`](/api/iap).", new Set(["iap"])),
-    ).toBe(`Reads [\`sys\`](${TOOLCHAIN_DOCS_URL}/api/sys#a) and [\`iap\`](/api/iap).`);
+      pointAtToolchainDocs(
+        "Reads [`sys`](/api/sys#a), [`iap`](/api/defold/extension-iap/iap) and [`gui`](/api/gui).",
+      ),
+    ).toBe(
+      `Reads [\`sys\`](${TOOLCHAIN_DOCS_URL}/api/sys#a), [\`iap\`](/api/defold/extension-iap/iap) and [\`gui\`](${TOOLCHAIN_DOCS_URL}/api/gui).`,
+    );
   });
 });

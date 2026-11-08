@@ -67,9 +67,21 @@ describe("githubOwner", () => {
 describe("libraryOriginByNamespace", () => {
   test("maps each namespace to the owner and repo its manifest records", () => {
     const origins = libraryOriginByNamespace(REAL_DIRS);
-    expect(origins.get("monarch.monarch")).toEqual({ owner: "britzl", repo: "monarch" });
-    expect(origins.get("squid")).toEqual({ owner: "paweljarosz", repo: "squid" });
-    expect(origins.get("event")).toEqual({ owner: "Insality", repo: "defold-event" });
+    expect(origins.get("monarch.monarch")).toEqual({
+      owner: "britzl",
+      repo: "monarch",
+      url: "https://github.com/britzl/monarch",
+    });
+    expect(origins.get("squid")).toEqual({
+      owner: "paweljarosz",
+      repo: "squid",
+      url: "https://github.com/paweljarosz/squid",
+    });
+    expect(origins.get("event")).toEqual({
+      owner: "Insality",
+      repo: "defold-event",
+      url: "https://github.com/Insality/defold-event",
+    });
   });
 
   // The repo name is what a user installs, and it routinely differs from the
@@ -80,20 +92,41 @@ describe("libraryOriginByNamespace", () => {
     expect(origins.get("persist")).toEqual({
       owner: "whiteboxdev",
       repo: "library-defold-persist",
+      url: "https://github.com/whiteboxdev/library-defold-persist",
     });
-    expect(origins.get("zzfx")).toEqual({ owner: "thejustinwalsh", repo: "defold-zzfx" });
+    expect(origins.get("zzfx")).toEqual({
+      owner: "thejustinwalsh",
+      repo: "defold-zzfx",
+      url: "https://github.com/thejustinwalsh/defold-zzfx",
+    });
   });
 
   test("resolves LuaLS- and script_api-sourced libraries from their own manifests", () => {
     const origins = libraryOriginByNamespace(REAL_DIRS);
-    expect(origins.get("druid")).toEqual({ owner: "Insality", repo: "druid" });
-    expect(origins.get("decore")).toEqual({ owner: "Insality", repo: "decore" });
-    expect(origins.get("bridge")).toEqual({ owner: "Playgama", repo: "bridge-defold" });
+    expect(origins.get("druid")).toEqual({
+      owner: "Insality",
+      repo: "druid",
+      url: "https://github.com/Insality/druid",
+    });
+    expect(origins.get("decore")).toEqual({
+      owner: "Insality",
+      repo: "decore",
+      url: "https://github.com/Insality/decore",
+    });
+    expect(origins.get("bridge")).toEqual({
+      owner: "Playgama",
+      repo: "bridge-defold",
+      url: "https://github.com/Playgama/bridge-defold",
+    });
   });
 
   test("keys a multi-module same-repo library per namespace, not on a shared prefix", () => {
     const origins = libraryOriginByNamespace(REAL_DIRS);
-    const saver = { owner: "Insality", repo: "defold-saver" };
+    const saver = {
+      owner: "Insality",
+      repo: "defold-saver",
+      url: "https://github.com/Insality/defold-saver",
+    };
     expect(origins.get("saver.saver")).toEqual(saver);
     expect(origins.get("saver.storage")).toEqual(saver);
     expect(origins.has("saver")).toBe(false);
@@ -145,7 +178,7 @@ describe("loadApiSurface library displayName", () => {
   test("the alias never touches the route or namespace", () => {
     const one = libraryPages().find((p) => p.namespace === "demo.one");
     expect(one?.namespace).toBe("demo.one");
-    expect(one?.route).toBe("/api/demo.one");
+    expect(one?.route).toBe("/api/someone/demolib/demo.one");
   });
 });
 
@@ -204,8 +237,16 @@ describe("loadLibraryProvenance — curated native extensions", () => {
 
   test("groups each native namespace under its upstream owner and repo", () => {
     const origins = libraryOriginByNamespace(REAL_DIRS);
-    expect(origins.get("daabbcc")).toEqual({ owner: "selimanac", repo: "defold-daabbcc" });
-    expect(origins.get("share")).toEqual({ owner: "britzl", repo: "defold-sharing" });
+    expect(origins.get("daabbcc")).toEqual({
+      owner: "selimanac",
+      repo: "defold-daabbcc",
+      url: "https://github.com/selimanac/defold-daabbcc",
+    });
+    expect(origins.get("share")).toEqual({
+      owner: "britzl",
+      repo: "defold-sharing",
+      url: "https://github.com/britzl/defold-sharing",
+    });
   });
 });
 
@@ -343,15 +384,21 @@ const ENGINE_RELEASES = [
 describe("Defold extensions under Libraries", () => {
   test("each Defold doc is a library page owned by defold", () => {
     const pages = loadPages(REAL_DIRS);
-    for (const route of ["/api/iap", "/api/spine.gui"]) {
+    for (const route of ["/api/defold/extension-iap/iap", "/api/defold/extension-spine/gui"]) {
       const page = pages.find((p) => p.route === route);
       expect(page?.category).toBe("library");
     }
     const origins = libraryOriginByNamespace(REAL_DIRS);
-    expect(origins.get("iap")).toEqual({ owner: "defold", repo: "extension-iap", official: true });
+    expect(origins.get("iap")).toEqual({
+      owner: "defold",
+      repo: "extension-iap",
+      url: "https://github.com/defold/extension-iap",
+      official: true,
+    });
     expect(origins.get("spine.gui")).toEqual({
       owner: "defold",
       repo: "extension-spine",
+      url: "https://github.com/defold/extension-spine",
       official: true,
     });
   });
@@ -936,11 +983,12 @@ describe("Asset Portal script_api libraries under Libraries", () => {
 
   test("each portal doc is a library page under its GitHub owner, imported by its namespace", () => {
     const dir = libraryTypesWithPortalPages([{ page: "astar" }]);
-    const page = pageAt(dir, "/api/astar");
+    const page = pageAt(dir, "/api/someone/defold-lib-0/astar");
     expect(page?.category).toBe("library");
     expect(libraryOriginByNamespace(dir).get("astar")).toEqual({
       owner: "someone",
       repo: "defold-lib-0",
+      url: "https://github.com/someone/defold-lib-0",
     });
     expect(page?.libraryMeta).toEqual({
       author: "",
@@ -961,8 +1009,10 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       [{ page: "dated", refDate: "2024-07-01T00:00:00Z" }, { page: "undated" }],
       { engineReleases: ENGINE_RELEASES },
     );
-    expect(pageAt(dir, "/api/dated")?.libraryMeta?.releaseEra).toBe("1.9.0");
-    expect(pageAt(dir, "/api/undated")?.libraryMeta).not.toHaveProperty("releaseEra");
+    expect(pageAt(dir, "/api/someone/defold-lib-0/dated")?.libraryMeta?.releaseEra).toBe("1.9.0");
+    expect(pageAt(dir, "/api/someone/defold-lib-1/undated")?.libraryMeta).not.toHaveProperty(
+      "releaseEra",
+    );
   });
 
   test("the committed portal manifests date every release and tag pin and no commit pin", () => {
@@ -990,7 +1040,7 @@ describe("Asset Portal script_api libraries under Libraries", () => {
 
   test("a portal doc declaring an engine namespace says it extends that namespace", () => {
     const dir = libraryTypesWithPortalPages([{ page: "lib.gui", namespace: "gui" }]);
-    const meta = pageAt(dir, "/api/lib.gui")?.libraryMeta;
+    const meta = pageAt(dir, "/api/someone/defold-lib-0/gui")?.libraryMeta;
     expect(meta?.usage).toBe("ambient");
     expect(meta?.importString).toBe("");
     expect(meta?.globalNamespace).toBe("gui");
@@ -1002,8 +1052,12 @@ describe("Asset Portal script_api libraries under Libraries", () => {
       { page: "blank" },
       { page: "described", description: "Its own description." },
     ]);
-    expect(pageAt(dir, "/api/blank")?.module.description).toBe("Portal description 0.");
-    expect(pageAt(dir, "/api/described")?.module.description).toBe("Its own description.");
+    expect(pageAt(dir, "/api/someone/defold-lib-0/blank")?.module.description).toBe(
+      "Portal description 0.",
+    );
+    expect(pageAt(dir, "/api/someone/defold-lib-1/described")?.module.description).toBe(
+      "Its own description.",
+    );
   });
 
   test("a portal page key on an engine, version, vendored, Defold, native or other portal page throws naming the manifest and the key", () => {
@@ -1064,11 +1118,112 @@ describe("the page set", () => {
     ).toEqual(expected);
   });
 
-  test("every library page routes at /api/<namespace>", () => {
-    for (const page of loadPages(REAL_DIRS)) {
-      expect(page.category).toBe("library");
-      expect(page.route).toBe(`/api/${page.namespace}`);
+  test("every library page is a library-category page", () => {
+    for (const page of loadPages(REAL_DIRS)) expect(page.category).toBe("library");
+  });
+
+  // druid's library.json names https://github.com/Insality/druid, so its route
+  // also shows the owner lowercased.
+  test("routes a page by its origin and the namespace it declares, not its page key", () => {
+    const routeOf = (key: string) =>
+      loadPages(REAL_DIRS).find((page) => page.namespace === key)?.route;
+    expect(routeOf("spine.gui")).toBe("/api/defold/extension-spine/gui");
+    expect(routeOf("extension-camera")).toBe("/api/defold/extension-camera/camera");
+    expect(routeOf("druid")).toBe("/api/insality/druid/druid");
+  });
+
+  test("every page and listing route is lowercase and unique", () => {
+    const routes = [
+      ...loadPages(REAL_DIRS).map((page) => page.route),
+      ...untypedListings(REAL_DIRS).map((listing) => listing.route),
+    ];
+    expect(routes.filter((route) => route !== route.toLowerCase())).toEqual([]);
+    expect(routes.length).toBe(new Set(routes).size);
+  });
+
+  // Defold docs at the given repos, each written as its own api-doc under its page key.
+  function libraryTypesWithDefoldDocs(
+    libraries: { repo: string; docs: { namespace: string; page: string }[] }[],
+  ): LibraryDirs {
+    const root = mkdtempSync(join(tmpdir(), "library-route-collision-"));
+    cpSync(FIXTURE_ROOT, root, { recursive: true });
+    const dirs = dirsAt(root);
+    const apiDoc = join(dirs.dataDir, "defold-extensions", "api-doc");
+    mkdirSync(apiDoc, { recursive: true });
+    for (const { namespace, page } of libraries.flatMap((library) => library.docs)) {
+      writeFileSync(
+        join(apiDoc, `${page}.json`),
+        JSON.stringify({ info: { namespace, brief: "", description: "" }, elements: [] }),
+      );
     }
+    writeFileSync(
+      join(dirs.dataDir, "defold-extensions.json"),
+      JSON.stringify({
+        libraries: libraries.map(({ repo, docs }) => ({
+          repo,
+          ref: "1.0.0",
+          refKind: "release",
+          license: "MIT",
+          description: "",
+          docs: docs.map((doc) => ({ path: `api/${doc.page}.script_api`, ...doc })),
+        })),
+      }),
+    );
+    return dirs;
+  }
+
+  test("two pages whose origin and declared namespace give one route throw naming both repos", () => {
+    const pair = "https://github.com/defold/extension-pair";
+    expect(() =>
+      loadPages(
+        libraryTypesWithDefoldDocs([
+          {
+            repo: pair,
+            docs: [
+              { namespace: "pair", page: "pair" },
+              { namespace: "pair.extra", page: "pair-extra" },
+            ],
+          },
+        ]),
+      ),
+    ).not.toThrow();
+    expect(() =>
+      loadPages(
+        libraryTypesWithDefoldDocs([
+          {
+            repo: pair,
+            docs: [
+              { namespace: "pair", page: "pair.a" },
+              { namespace: "pair", page: "pair.b" },
+            ],
+          },
+        ]),
+      ),
+    ).toThrow(/extension-pair.*extension-pair/);
+    expect(() =>
+      loadPages(
+        libraryTypesWithDefoldDocs([
+          {
+            repo: "https://github.com/defold/Extension-Twin",
+            docs: [{ namespace: "twin", page: "twin" }],
+          },
+          {
+            repo: "https://github.com/defold/extension-twin",
+            docs: [{ namespace: "Twin", page: "twin-b" }],
+          },
+        ]),
+      ),
+    ).toThrow(/\/api\/defold\/extension-twin\/twin.*Extension-Twin.*extension-twin/);
+  });
+
+  test("a page whose library records no origin repo throws naming the page", () => {
+    const root = mkdtempSync(join(tmpdir(), "library-route-orphan-"));
+    cpSync(FIXTURE_ROOT, root, { recursive: true });
+    writeFileSync(
+      join(root, "api-doc", "orphan.json"),
+      JSON.stringify({ info: { namespace: "orphan", brief: "", description: "" }, elements: [] }),
+    );
+    expect(() => loadPages(dirsAt(root))).toThrow(/"orphan"/);
   });
 
   test("a model file of a library with no recorded provenance still gets a page from the fixture", () => {
