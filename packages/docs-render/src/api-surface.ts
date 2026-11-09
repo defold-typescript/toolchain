@@ -1391,6 +1391,16 @@ export function qualify(namespace: string, name: string): string {
   return name.startsWith(`${namespace}.`) ? name : `${namespace}.${name}`;
 }
 
+/**
+ * The namespace a page's members are keyed by in links, tooltips and search. A
+ * library page's key can differ from the namespace its module documents (the
+ * `spine.gui` page documents `gui`), and a reader writes `gui.new_spine_node`,
+ * so a library page uses its module's namespace; every other page uses its own.
+ */
+export function symbolNamespace(page: Pick<ApiPage, "category" | "namespace" | "module">): string {
+  return page.category === "library" ? page.module.namespace : page.namespace;
+}
+
 const IDENTIFIER_CHAR = /[\w$]/;
 
 // `text` opens with `head` as a whole token, not as the prefix of a longer name.

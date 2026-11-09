@@ -15,9 +15,13 @@ export interface SymbolIndexOutput {
   index: Record<string, SymbolEntry>;
 }
 
-// Library pages only: a link-only toolchain page has no tooltip entry here.
+// Library pages only: a link-only toolchain page has no tooltip entry here. The
+// one index serves every page, so a name several libraries declare gets no entry
+// rather than one library's.
 export function symbolIndexOutputs(dirs: LibraryDirs = siteDirs()): SymbolIndexOutput[] {
-  return [{ file: "symbol-index.json", index: buildSymbolIndex(apiPages(dirs)) }];
+  return [
+    { file: "symbol-index.json", index: buildSymbolIndex(apiPages(dirs), { ambiguous: "drop" }) },
+  ];
 }
 
 if (import.meta.main) {
