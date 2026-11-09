@@ -71,6 +71,7 @@ library once:
 | ---- | ----- | -------- | ---------- |
 | `library.json` | `repo` | yes | The GitHub repository URL, e.g. `https://github.com/Insality/druid`. |
 | `library.json` | `license` | no | SPDX-style license id, surfaced by the library page's provenance block. Defaults to `""`. |
+| `library.json` | `refKind` | no | `"tag"` or `"commit"` when upstream publishes no stable release (GitHub's latest release skips prereleases), so the docs page's adopt step names the pinned archive instead of linking a releases page. Omit it for a repo with releases. |
 | `reviewed.json` | `ref` | yes | The exact release tag to pin. Resolve the newest stable tag (`git ls-remote --tags <repo>`) — never invent one. |
 
 Each generated module is one entry in `recipe.json`'s `luals` list:

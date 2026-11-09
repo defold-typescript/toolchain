@@ -1,6 +1,7 @@
 {
   "repo": "https://github.com/subsoap/defmath",
   "license": "CC0-1.0",
+  "refKind": "commit",
   "forks": [
     {
       "authored": "fork/defmath.defmath.d.ts",
