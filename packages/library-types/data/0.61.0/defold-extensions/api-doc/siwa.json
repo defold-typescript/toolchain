@@ -1,0 +1,150 @@
+{
+  "info": {
+    "namespace": "siwa",
+    "brief": "Functions and constants for interacting Sign in with Apple. [icon:ios]",
+    "description": "Functions and constants for interacting Sign in with Apple. [icon:ios]"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "siwa.is_supported",
+      "description": "Check if Sign in with Apple is available (iOS 13+).",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "siwa.get_credential_state",
+      "description": "Get the credential state of a user.",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "User id to get credential state for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Credential state callback function.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "state",
+              "doc": "The credential state (user_id, credential_state)",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">siwa.get_credential_state(id, function(self, data)\n\tif data.credential_state == siwa.STATE_AUTHORIZED then\n\t\tprint(\"User has still authorized the application\", data.user_id)\n\telseif data.credential_state == siwa.STATE_REVOKED then\n\t\tprint(\"User has revoked authorization for the application\", data.user_id)\n\tend\nend)</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "siwa.authenticate",
+      "description": "Show the Sign in with Apple UI",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Authentication callback function.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "state",
+              "doc": "The authentication result data (user_id, identity_token, email, first_name, family_name, status, result)",
+              "types": [
+                "table"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">siwa.authenticate(function(self, data)\n\tprint(data.identity_token)\n\tprint(data.user_id)\n\tprint(data.first_name, data.family_name)\n\tprint(data.email)\n\tif data.user_status == siwa.STATUS_LIKELY_REAL then\n\t\tprint(\"Likely a real person\")\n\tend\nend)</code></pre></div>"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATE_NOT_FOUND",
+      "brief": "The user can’t be found.",
+      "description": "The user can’t be found.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATE_UNKNOWN",
+      "brief": "Unknown credential state.",
+      "description": "Unknown credential state.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATE_AUTHORIZED",
+      "brief": "The user is authorized.",
+      "description": "The user is authorized.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATE_REVOKED",
+      "brief": "Authorization for the given user has been revoked.",
+      "description": "Authorization for the given user has been revoked.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATUS_UNKNOWN",
+      "brief": "The system hasn’t determined whether the user might be a real person.",
+      "description": "The system hasn’t determined whether the user might be a real person.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATUS_UNSUPPORTED",
+      "brief": "The system can’t determine this user’s status as a real person.",
+      "description": "The system can’t determine this user’s status as a real person.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATUS_LIKELY_REAL",
+      "brief": "The user appears to be a real person.",
+      "description": "The user appears to be a real person.",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

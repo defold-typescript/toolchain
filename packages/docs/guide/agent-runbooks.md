@@ -148,8 +148,8 @@ the `pinStatus` (`unpinned` / `match` / `drift`), and the `ref`, the kind of URL
 (`commit` / `tag` / `branch` / `release` / `unknown`), where only `commit` is fixed and
 `branch` draws a [warning](./resolve.md#pin-urls-to-commits). A separate `libraries` array reports
 a dependency that matched a [vendored
-library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
-source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
+library](./resolve.md#vendored-library-types) — its `url`, `source` (the library's
+`owner/repo`), materialized `modules`, `provenance` (`vendored`), and `verified`.
 A match the downloaded archive **confirms** always gets an entry. A `verified:
 false` entry (with an empty `modules`) is a repo-name match the archive did not
 confirm, reported but never materialized; it appears only when the dependency is
@@ -224,8 +224,8 @@ dependencies share, which each of them lists (see `sharedNamespaces` below):
   ],
   "libraries": [
     {
-      "url": "https://github.com/paulomrpp/dicebag/archive/main.zip",
-      "source": "dicebag",
+      "url": "https://github.com/8bitskull/dicebag/archive/main.zip",
+      "source": "8bitskull/dicebag",
       "modules": ["dicebag.dicebag"],
       "provenance": "vendored",
       "verified": true

@@ -1,0 +1,16 @@
+{
+  "repo": "https://github.com/myopic-design/defold-fontscale",
+  "license": "MIT",
+  "native": {
+    "namespace": "fontscale",
+    "manifestDir": "fontscale",
+    "declaration": "fork/fontscale.d.ts",
+    "upstreamSource": "source/upstream/fontscale/src/fontscale.cpp"
+  },
+  "floors": {
+    "fontscale": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

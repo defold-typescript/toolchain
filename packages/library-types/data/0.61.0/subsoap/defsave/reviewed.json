@@ -1,0 +1,22 @@
+{
+  "ref": "v1.2.6",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "815ff18a0ea64d3879da0ff54ce880796e88b5f9"
+      ],
+      "api": "c80c061c84db1e2a6092567b49ab2e2235a5646af78a556b66fcf90e4b8e8348",
+      "doc": "e8c52c08a62b4da6364073bf05f74f88bba190d05b6dbe9d1bfd40d5d910490e",
+      "source": "5790dcb7f9ffb33905f629847c76574758cece9567c611570c5893c9c7619000",
+      "members": {
+        "defsave/api/defsave_ext.script_api": "fbfd915822185b9d",
+        "defsave/defsave.lua": "e3df3de187c5fe74",
+        "defsave/profile.lua": "138e3c67b7a554ef",
+        "defsave/src/defsave.cpp": "be440c2814a50333",
+        "defsave/utf8.lua": "03b68fdf15adc4e0",
+        "defsave/uuid.lua#generate_UUID_version_4": "53afa49906788416"
+      }
+    }
+  ]
+}

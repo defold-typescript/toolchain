@@ -1,0 +1,17 @@
+{
+  "repo": "https://github.com/GameAnalytics/GA-SDK-DEFOLD",
+  "license": "MIT",
+  "refKind": "tag",
+  "native": {
+    "namespace": "gameanalytics",
+    "manifestDir": "gameanalytics",
+    "declaration": "fork/gameanalytics.d.ts",
+    "upstreamSource": "source/upstream/gameanalytics/src/gameanalytics.cpp"
+  },
+  "floors": {
+    "gameanalytics": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

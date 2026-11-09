@@ -21,7 +21,8 @@ bunx @defold-typescript/cli library check --data path/to/library-data/data
 ## What `library add` writes
 
 `library add <url> --data <dir>` downloads the archive and writes one folder,
-named for the repository, into the data folder `library check` reads:
+`<owner>/<repo>` in lowercase (`owner/mylib` for the URL above), into the data
+folder `library check` reads:
 
 | File | When | What it holds |
 | ---- | ---- | ------------- |
@@ -35,7 +36,9 @@ named for the repository, into the data folder `library check` reads:
 archive that names no commit is an error, so use a tag URL for it.
 
 A folder that already exists, including one created during the download, is an
-error and stays as it was.
+error and stays as it was. The folder name leaves out the host, so a folder whose
+`library.json` names the same `owner/repo` on another host is an error that names
+that repo.
 
 What the archive shares under its `[library] include_dirs` picks the recipe,
 leaving out example, test, demo and sample directories:
@@ -61,7 +64,8 @@ path and `warnings` holds the notes.
 
 `library review --data <dir>` downloads `<repo>/archive/<ref>.zip` for each library
 and adds what it finds to `reviews` in that library's `reviewed.json`.
-`library review <name> --data <dir>` does this for one library, named by its folder.
+`library review <name> --data <dir>` does this for one library, named by its folder,
+`<owner>/<repo>`.
 Each entry holds the commit the archive names and three hashes over the files the
 archive shares under its `include_dirs`:
 
@@ -95,7 +99,7 @@ and leaves that library's `reviewed.json` untouched.
 
 `library update --data <dir>` asks each library's forge, GitHub or Codeberg, what is
 newer than its pin. `library update <name> --data <dir>` does this for one library,
-named by its folder. `follows` in `library.json` says what to watch:
+named by its folder, `<owner>/<repo>`. `follows` in `library.json` says what to watch:
 
 | `follows` | New commits are |
 | --------- | --------------- |
@@ -161,7 +165,7 @@ Set `GH_TOKEN` or `GITHUB_TOKEN` to raise GitHub's rate limit.
 It runs four checks in order, and a check that fails stops the ones after it:
 
 1. **Data** — the reader that `resolve` uses accepts the data folder: each
-   library folder is named for its repo, has a `reviewed.json`, and lists
+   library folder sits at `<owner>/<repo>` of its repo, has a `reviewed.json`, and lists
    complete entries; every module id and native namespace is a plain name
    (letters, digits, `_`, `.` and `-`, not starting with `.` or `-`), as is
    every LuaLS `namespace`; every path an entry names stays inside its library
@@ -217,7 +221,7 @@ every module afresh, so it reads no committed report and nothing outside
 ## `--data`
 
 `--data <dir>` names a directory of version-named data folders (`0.55.0/`,
-`0.56.0/`, ...), which the data repo keeps in its `data/` folder. `library check`,
+`0.61.0/`, ...), which the data repo keeps in its `data/` folder. `library check`,
 `library add` and `library review` use the one this CLI reads, by the same rule as
 [`resolve --library-data`](./resolve.md#flags): the highest folder at or below
 the CLI version. A relative `<dir>` resolves against the

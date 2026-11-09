@@ -43,7 +43,7 @@ const BEACON: ScriptApiTarget = {
       evidence: "Optional message-specific options (may be omitted).",
     },
   ],
-  sourceFile: "fixture-script-api/source/beacon.beacon.script_api",
+  sourceFile: "example/fixture-script-api/source/beacon.beacon.script_api",
 };
 
 const temps: string[] = [];
@@ -125,7 +125,7 @@ describe("fetchScriptApiFixture", () => {
     expect(fetched).toEqual([
       "https://raw.githubusercontent.com/example/fixture-script-api/3.0.0/beacon/api/beacon.script_api",
     ]);
-    const dest = join(root, "fixture-script-api/source/beacon.beacon.script_api");
+    const dest = join(root, "example/fixture-script-api/source/beacon.beacon.script_api");
     expect(existsSync(dest)).toBe(true);
     expect(readFileSync(dest, "utf8")).toBe(
       "# https://raw.githubusercontent.com/example/fixture-script-api/3.0.0/beacon/api/beacon.script_api\n",

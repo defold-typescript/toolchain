@@ -1,0 +1,41 @@
+{
+  "ref": "5.22.1",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "adab8c826f1caf36d5d7d5637f48d33518485558"
+      ],
+      "api": "bc26fecf15eff0c3ddc1314735b8220e6deba534c8f0c986adc3d457a2f91227",
+      "doc": "f84b08619fea920f635d6bbd02c17f3b767015dc5f598a93bf4d8a9e59fc27a9",
+      "source": "df4fea3e2729f6925a1b99c7a41f5227b9c1dd03e667def94bfc92f3133f9cb5",
+      "members": {
+        "richtext/color.lua#COLORS": "24c7bcaf858ea773",
+        "richtext/color.lua#add": "d2f11f5495762a65",
+        "richtext/color.lua#parse": "2f0bf8d825231b69",
+        "richtext/color.lua#parse_decimal": "4bfa5d3b3cfdfe95",
+        "richtext/color.lua#parse_hex": "da4d7fba2c2ccaff",
+        "richtext/parse.lua#length": "1ac843ff263f9580",
+        "richtext/parse.lua#parse": "ec3fc3a8d1ed0cd5",
+        "richtext/richtext.lua#ALIGN_CENTER": "24c7bcaf858ea773",
+        "richtext/richtext.lua#ALIGN_JUSTIFY": "24c7bcaf858ea773",
+        "richtext/richtext.lua#ALIGN_LEFT": "24c7bcaf858ea773",
+        "richtext/richtext.lua#ALIGN_RIGHT": "24c7bcaf858ea773",
+        "richtext/richtext.lua#VALIGN_BOTTOM": "24c7bcaf858ea773",
+        "richtext/richtext.lua#VALIGN_MIDDLE": "24c7bcaf858ea773",
+        "richtext/richtext.lua#VALIGN_TOP": "24c7bcaf858ea773",
+        "richtext/richtext.lua#characters": "338168129a93baa8",
+        "richtext/richtext.lua#create": "bf663d4a2409dc2a",
+        "richtext/richtext.lua#length": "1ac843ff263f9580",
+        "richtext/richtext.lua#on_click": "98a5bbdcb9b4847b",
+        "richtext/richtext.lua#plaintext": "0c1dc42b336e8be6",
+        "richtext/richtext.lua#remove": "0c1dc42b336e8be6",
+        "richtext/richtext.lua#tagged": "44ed3ef42879420a",
+        "richtext/richtext.lua#truncate": "c9772a32e3c8cf24",
+        "richtext/tags.lua#apply": "9c141f96883860dc",
+        "richtext/tags.lua#register": "af3b3c978290371e",
+        "richtext/utf8.lua": "03b68fdf15adc4e0"
+      }
+    }
+  ]
+}

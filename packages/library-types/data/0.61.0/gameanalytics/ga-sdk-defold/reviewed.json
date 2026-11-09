@@ -1,0 +1,28 @@
+{
+  "ref": "4.2.6",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "200aba6535bc52376645ee18b2d856c4cbe9a0df"
+      ],
+      "api": "093686ab1c41965565340f69b245c16160e640e25878ad2c6110b6b01a9f9556",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "128f14707376bfffb6884dcc34b3e3b965813927fcf7ba076e9d8a74fba7a68f",
+      "members": {
+        "gameanalytics/include/CharArray.h": "13638670e6f3d962",
+        "gameanalytics/include/GameAnalyticsDefold.h": "3201fb6a3fbf1fa9",
+        "gameanalytics/include/android/GameAnalyticsJNI.h": "47a92fc9bea2d5cb",
+        "gameanalytics/include/cpp/GameAnalytics.h": "c397748ab96aa6f1",
+        "gameanalytics/include/html5/GameAnalytics.h": "01493f3a92417fe7",
+        "gameanalytics/include/ios/GameAnalytics.h": "2b4ae411c7897243",
+        "gameanalytics/include/ios/GameAnalyticsCpp.h": "41bc7a41bff79b70",
+        "gameanalytics/lib/ios/GameAnalytics.framework/Headers/GameAnalytics.h": "9fcea178feea677e",
+        "gameanalytics/src/GameAnalyticsDefold.cpp": "06b5a9b3ed2993cb",
+        "gameanalytics/src/android/GameAnalyticsJNI.cpp": "72dc8366f99d8427",
+        "gameanalytics/src/gameanalytics.cpp": "d159b321b5df923c",
+        "gameanalytics/src/ios/GameAnalyticsCpp.mm": "56b0c85aa09b863f"
+      }
+    }
+  ]
+}

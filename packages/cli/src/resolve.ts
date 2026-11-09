@@ -62,16 +62,22 @@ import {
   selectLibraryPins,
   wantsUpdate,
 } from "./library-data-pins";
-import { matchVendoredLibrary, normalizeSourceId, type VendoredLibrary } from "./library-match";
+import {
+  libraryName,
+  matchedLibraryName,
+  matchLibraryName,
+  matchVendoredLibrary,
+  type VendoredLibrary,
+} from "./library-match";
 import {
   ensureLibraryTypesReference,
   materializeVendoredLibraries,
   type PrintedLibrary,
 } from "./library-materialize";
 import {
-  librariesForDependencies,
   loadVendoredLibraryRegistry,
   loadVendoredNativeRegistry,
+  readLibraryDataOrNone,
   type VendoredNativeExtension,
 } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
@@ -194,14 +200,15 @@ function failedResolve(error: string): RunResolveResult {
   };
 }
 
-// A native target is confirmed only when the archive both matches its source id
-// and ships `<manifestDir>/ext.manifest`: a source-id collision alone is not a
-// match. The confirmed bundle's declarations become the curated file, so the
-// barrel, prune and dedup paths downstream stay untouched and any `.script_api`
-// the archive ships is never written beside it.
+// A native target is confirmed only when the archive both matches its library
+// name among `names`, every library's, and ships `<manifestDir>/ext.manifest`: a
+// name match alone is not a match. The confirmed bundle's declarations become the
+// curated file, so the barrel, prune and dedup paths downstream stay untouched and
+// any `.script_api` the archive ships is never written beside it.
 function applyNativeTargets(
   bundles: readonly ExtensionDeclarations[],
   registry: readonly VendoredNativeExtension[],
+  names: readonly string[],
   superseded: ReadonlySet<string>,
 ): { bundles: ExtensionDeclarations[]; confirmedUrls: Set<string> } {
   const confirmedUrls = new Set<string>();
@@ -209,9 +216,9 @@ function applyNativeTargets(
     if (superseded.has(bundle.url)) {
       return bundle;
     }
-    const sourceId = normalizeSourceId(bundle.url);
+    const name = matchedLibraryName(bundle.url, names);
     const target = registry.find(
-      (entry) => entry.sourceId === sourceId && bundle.manifestDirs.includes(entry.manifestDir),
+      (entry) => entry.sourceId === name && bundle.manifestDirs.includes(entry.manifestDir),
     );
     if (target === undefined || !existsSync(target.declarationPath)) {
       return bundle;
@@ -277,6 +284,25 @@ interface SelectedLibraryData extends LibraryDataFolders {
   readonly error?: string;
 }
 
+// `--update` names what `game.project` declares, and a pin is keyed by the library a
+// dependency reads, so each named dependency moves the pin its URL matches: naming
+// a fork moves its upstream's pin.
+function pinUpdateNames(
+  update: LibraryDataUpdate,
+  urls: readonly string[],
+  pins: LibraryDataPins | null,
+): LibraryDataUpdate {
+  if (update === true) {
+    return true;
+  }
+  const pinned = Object.keys(pins?.libraries ?? {});
+  const names = urls
+    .filter((url) => update.includes(libraryName(url)))
+    .map((url) => matchedLibraryName(url, pinned))
+    .filter((name) => name !== null);
+  return [...new Set(names)];
+}
+
 async function selectLibraryData(
   opts: RunResolveOptions,
   urls: readonly string[],
@@ -307,7 +333,7 @@ async function selectLibraryData(
     urls,
     knownUrls: Object.keys(lock?.extensions ?? {}),
     pins: recorded,
-    ...(opts.update === undefined ? {} : { update: opts.update }),
+    ...(opts.update === undefined ? {} : { update: pinUpdateNames(opts.update, urls, recorded) }),
   });
   return {
     dir,
@@ -334,13 +360,11 @@ async function classifyLibraries(
     return statuses;
   }
   const typed = bundles.filter(({ url }) => confirmedNativeUrls.has(url) || printedFrom.has(url));
-  const libraries = librariesForDependencies(
-    dir,
-    typed.map(({ url }) => url),
-  );
+  const libraries = readLibraryDataOrNone(dir);
+  const names = libraries.map(({ dir: folder }) => folder);
   for (const { url, archivePath, identity } of typed) {
-    const name = normalizeSourceId(url);
-    const library = libraries.find(({ repo }) => normalizeSourceId(repo) === name);
+    const name = matchedLibraryName(url, names);
+    const library = libraries.find(({ dir: folder }) => folder === name);
     if (library === undefined) {
       continue;
     }
@@ -362,6 +386,28 @@ async function classifyLibraries(
   return statuses;
 }
 
+// Once per dependency URL: a fork library data types by its upstream's name, and a
+// repo name two libraries share, which types it with neither.
+function libraryNameNotices(
+  urls: readonly string[],
+  names: readonly string[],
+  typedUrls: ReadonlySet<string>,
+): string[] {
+  const notices: string[] = [];
+  for (const url of new Set(urls)) {
+    const match = matchLibraryName(url, names);
+    if (match?.kind === "fork" && typedUrls.has(url)) {
+      notices.push(
+        `${url} uses the library data of ${match.name}, which shares its repo name; its types may not fit`,
+      );
+    } else if (match?.kind === "shared") {
+      const listed = `${match.names.slice(0, -1).join(", ")} and ${match.names.at(-1)}`;
+      notices.push(`${url} shares its repo name with ${listed}, so no library data types it`);
+    }
+  }
+  return notices;
+}
+
 // Why `--update=<names>` cannot run, or null when it can. A project this cannot read
 // is `runResolve`'s to report.
 export function unknownUpdateNames(
@@ -373,7 +419,7 @@ export function unknownUpdateNames(
     return null;
   }
   const declared = readExtensionDependencies(readFileSync(gameProjectPath, "utf8")).map(({ url }) =>
-    normalizeSourceId(url),
+    libraryName(url),
   );
   const unknown = update.filter((name) => !declared.includes(name));
   if (unknown.length === 0) {
@@ -444,10 +490,7 @@ async function followRefs(
   const warnings: string[] = [];
   for (const dep of deps) {
     let url = dep.url;
-    if (
-      classifyDependencyUrl(url) === "commit" &&
-      wantsUpdate(opts.update, normalizeSourceId(url))
-    ) {
+    if (classifyDependencyUrl(url) === "commit" && wantsUpdate(opts.update, libraryName(url))) {
       const follows = pins[url]?.follows;
       if (follows === undefined) {
         notices.push(`${url} has no ref to follow, so --update holds it`);
@@ -496,7 +539,7 @@ function planUrlPins(
     if (
       pin !== undefined &&
       !sameArchive(pin, identity) &&
-      !wantsUpdate(update, normalizeSourceId(url))
+      !wantsUpdate(update, libraryName(url))
     ) {
       warnings.push(`--pin-urls left ${url}: its pin drifted, which --update accepts`);
       continue;
@@ -663,11 +706,20 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // Match every dependency against the vendored pure-Lua corpus *before* the
   // extension surface is materialized, so a confirmed match can decide which
   // type surface the dependency contributes. A confirmed match already proves
-  // more than a `.script_api` does — it keys on a normalized source identity and
+  // more than a `.script_api` does — it keys on the library's name and
   // is then filtered to the modules the archive actually ships — so a library
   // that documents itself keeps its curated types. The registry is loaded at
   // most once, only when a default is needed.
   const libraryRegistry = opts.libraryRegistry ?? loadVendoredLibraryRegistry(libraryDataDir);
+  const nativeRegistry = opts.nativeRegistry ?? loadVendoredNativeRegistry(libraryDataDir);
+  // Every library's name, so a repo name a Lua library and a native one share
+  // matches neither.
+  const libraryNames = [
+    ...new Set([
+      ...libraryRegistry.map(({ sourceId }) => sourceId),
+      ...nativeRegistry.map(({ sourceId }) => sourceId),
+    ]),
+  ];
   const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
   // Keyed by the URL of each bundle a library confirmed, holding the namespaces
   // its confirmed modules are published under: the archive's own docs for those
@@ -677,10 +729,11 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     if (shippedUrls.has(bundle.url)) {
       continue;
     }
-    const library = matchVendoredLibrary(bundle.url, libraryRegistry);
-    if (library === null) {
+    const match = matchVendoredLibrary(bundle.url, libraryRegistry, libraryNames);
+    if (match === null) {
       continue;
     }
+    const { library } = match;
     const shipped = new Set(bundle.luaModules);
     const confirmed = library.modules.filter((module) => shipped.has(module));
     if (confirmed.length > 0) {
@@ -702,8 +755,14 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // it is not a native candidate.
   const { bundles, confirmedUrls: confirmedNativeUrls } = applyNativeTargets(
     shippedBundles,
-    opts.nativeRegistry ?? loadVendoredNativeRegistry(libraryDataDir),
+    nativeRegistry,
+    libraryNames,
     new Set([...publishedByConfirmedUrl.keys(), ...shippedUrls]),
+  );
+  const nameNotices = libraryNameNotices(
+    resolvedBundles.filter(({ url }) => !shippedUrls.has(url)).map(({ url }) => url),
+    libraryNames,
+    new Set([...publishedByConfirmedUrl.keys(), ...confirmedNativeUrls]),
   );
   // `scriptApiCount` reports the archive's own docs, which a curated or shipped
   // replacement does not change.
@@ -769,7 +828,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       .filter(
         ({ url }) =>
           followsOf.has(url) ||
-          (pins[url] !== undefined && wantsUpdate(opts.update, normalizeSourceId(url))),
+          (pins[url] !== undefined && wantsUpdate(opts.update, libraryName(url))),
       )
       .map(({ url, identity }) => {
         const follows = followsOf.get(url) ?? pins[url]?.follows;
@@ -853,7 +912,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   );
   const statusMessages = libraryStatusMessages(
     [...libraryStatuses].map(([url, status]) => ({ url, status })),
-    (url) => wantsUpdate(opts.update, normalizeSourceId(url)),
+    (url) => wantsUpdate(opts.update, libraryName(url)),
   );
 
   const extensions: ResolvedExtensionReport[] = extensionBundles.map((bundle) => {
@@ -924,6 +983,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
         ]
       : []),
     ...statusMessages.notices,
+    ...nameNotices,
   ];
   return {
     ok: true,

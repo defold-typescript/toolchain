@@ -1,0 +1,189 @@
+{
+  "info": {
+    "namespace": "firebase",
+    "brief": "Functions and constants for interacting with Firebase",
+    "description": "Functions and constants for interacting with Firebase"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.initialize",
+      "description": "Initializes Crashlytics and returns true if the core Firebase extension is available and the default FirebaseApp has been initialized. After successful initialization, Defold dmLogWarning messages are automatically added as Crashlytics logs for subsequent reports.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "initialized",
+          "doc": "True if Crashlytics was initialized.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.set_enabled",
+      "description": "Sets whether Crashlytics collection is enabled for this app on this device.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "True to enable Crashlytics collection.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.is_enabled",
+      "description": "Returns whether Crashlytics collection is enabled.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "True if Crashlytics collection is enabled.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.did_crash_on_previous_execution",
+      "description": "Returns whether the app crashed during the previous execution.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "crashed",
+          "doc": "True if a crash was recorded during the previous execution.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.send_unsent_reports",
+      "description": "Sends queued crash reports when automatic collection is disabled.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.delete_unsent_reports",
+      "description": "Deletes queued crash reports when automatic collection is disabled.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.set_user_id",
+      "description": "Sets the user ID associated with subsequent fatal, non-fatal, and ANR reports.",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "User identifier.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.set_custom_key",
+      "description": "Sets a string, number, or boolean custom key for subsequent fatal, non-fatal, and ANR reports.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "Custom key name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "String, number, or boolean value.",
+          "types": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.log",
+      "description": "Logs a message that is included in the next fatal, non-fatal, or ANR report.",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "Log message.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.record_exception",
+      "description": "Records a non-fatal exception with the supplied message.",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "Exception message.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.record_lua_error",
+      "description": "Records a Lua runtime error as a non-fatal exception with parsed Lua stack frames when a traceback is supplied.",
+      "parameters": [
+        {
+          "name": "message",
+          "doc": "Lua error message.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "traceback",
+          "doc": "Lua traceback string, typically supplied by sys.set_error_handler. May be nil or omitted.",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.test_java_crash",
+      "description": "Forces a Java crash for Crashlytics setup testing. Android only.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.crashlytics.test_native_crash",
+      "description": "Forces a native crash for Crashlytics setup testing.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

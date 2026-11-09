@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "extension-directories",
+    "sourceId": "lerg/extension-directories",
     "manifestDir": "directories"
   },
   "resolve": {

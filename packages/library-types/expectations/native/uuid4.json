@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "defold-uuid4",
+    "sourceId": "selimanac/defold-uuid4",
     "manifestDir": "uuid4"
   },
   "resolve": {

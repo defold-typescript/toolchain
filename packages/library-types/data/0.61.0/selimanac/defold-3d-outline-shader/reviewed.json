@@ -1,0 +1,23 @@
+{
+  "ref": "07c2eee1abd821fb36daad6c7621258116ef75f2",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "07c2eee1abd821fb36daad6c7621258116ef75f2"
+      ],
+      "api": "597db3324852b5ae760eed576b805ce5b2d6ea5a20234794a7134c8dfdb0bd5f",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "fdc91ce8f87e39ec5c8b0be2c9eb3420b19b30dc8d5f071143c9b9e29e563e50",
+      "members": {
+        "outline-shader/outline.lua#@annotations": "d311739bc4da8366",
+        "outline-shader/outline.lua#draw": "81ac601282f8651a",
+        "outline-shader/outline.lua#init": "1fb21f5833bf5388",
+        "outline-shader/outline.lua#set": "0cda35f1b4e30138",
+        "outline-shader/outline.lua#set_tag": "5bc30fa72d4173da",
+        "outline-shader/outline.lua#type": "24c7bcaf858ea773",
+        "outline-shader/outline.lua#update": "5a09be58e3dd1b2a"
+      }
+    }
+  ]
+}

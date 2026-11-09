@@ -1,0 +1,20 @@
+{
+  "repo": "https://github.com/selimanac/defold-stylized-water-shader",
+  "license": "MIT",
+  "refKind": "commit",
+  "forks": [
+    {
+      "authored": "fork/water.water.d.ts",
+      "moduleId": "water.water",
+      "namespace": "water",
+      "apiDoc": "api-doc/water.json",
+      "upstreamLua": ["source/upstream/water/water.lua"]
+    }
+  ],
+  "floors": {
+    "water.water": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

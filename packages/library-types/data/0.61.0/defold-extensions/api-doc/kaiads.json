@@ -1,0 +1,119 @@
+{
+  "info": {
+    "namespace": "kaiads",
+    "brief": "Functions and constants for interacting with the KaiAds SDK.",
+    "description": "Functions and constants for interacting with the KaiAds SDK."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "kaiads.init",
+      "description": "Initialise KaiAds.",
+      "parameters": [
+        {
+          "name": "publisher_id",
+          "doc": "Id of the publisher",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">kaiads.init(\"2b30c65e-efde-4930-990e-ded207899766\")</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "kaiads.set_listener",
+      "description": "Listen to events from the KaiAds SDK.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "function to call when a KaiAds event is received from the SDK.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local function = on_kaiads_event(self, event, code)\n    if event == kaiads.PRELOAD_OK then\n        print(\"KaiAds has successfully preloaded an ad\")\n    elseif event == kaiads.AD_DISPLAY then\n        print(\"KaiAds is showing an ad\")\n    elseif event == kaiads.AD_CLOSE then\n        print(\"The user closed the ad!\")\n    elseif event == kaiads.AD_CLICK then\n        print(\"The user clicked on the ad!\")\n    else\n        print(\"Something went wrong\", code)\n    end\nend\nkaiads.set_listener(on_kaiads_event)</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "kaiads.preload",
+      "description": "Preload an ad.",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "Ad configuration as a JSON encoded string.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local banner_config = {\n\tapp = \"mygame\",\n\tslot = \"menu\",\n\ttest = 0,\n\ttimeout = 5 * 1000,\n\th = 264,\n\tw = 240,\n\tcontainer = \"ad-container\"\n}\nkaiads.preload(json.encode(banner_config))\n\nlocal fullscreen_config = {\n\tapp = \"mygame\",\n\tslot = \"gameover\",\n}\nkaiads.preload(json.encode(fullscreen_config))</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "kaiads.show",
+      "description": "Show an ad. You must have called preload() and received a callback that the ad was preloaded before attempting to show an ad.",
+      "parameters": [],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">kaiads.set_listener(function(self, event, code)\n    if event == kaiads.PRELOAD_OK then\n        kaiads.show()\n    end\nend)\nkaiads.preload(config)</code></pre></div>"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.PRELOAD_ERROR",
+      "brief": "Event sent when an error occurred while trying to preload an ad",
+      "description": "Event sent when an error occurred while trying to preload an ad",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.PRELOAD_OK",
+      "brief": "Event sent when an ad was successfully preloaded",
+      "description": "Event sent when an ad was successfully preloaded",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.SHOW_ERROR",
+      "brief": "Event sent when an error occurred while trying to show an ad",
+      "description": "Event sent when an error occurred while trying to show an ad",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.AD_DISPLAY",
+      "brief": "Event sent when an ad is displayed",
+      "description": "Event sent when an ad is displayed",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.AD_CLICK",
+      "brief": "Event sent when an ad is clicked",
+      "description": "Event sent when an ad is clicked",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.AD_CLOSE",
+      "brief": "Event sent when an ad is closed",
+      "description": "Event sent when an ad is closed",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

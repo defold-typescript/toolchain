@@ -55,11 +55,13 @@ function writeData(
   writeLibraryTargets(root, {
     forks: Object.entries(libraries).map(([name, library]) => {
       const { text, moduleId } =
-        typeof library === "string" ? { text: library, moduleId: `${name}.core` } : library;
+        typeof library === "string"
+          ? { text: library, moduleId: `${name.split("/").pop()}.core` }
+          : library;
       mkdirSync(join(root, name, "fork"), { recursive: true });
       writeFileSync(join(root, name, "fork", "library.d.ts"), text);
       return {
-        repo: `https://github.com/owner/${name}`,
+        repo: `https://github.com/${name}`,
         ref: "1.0.0",
         authored: "fork/library.d.ts",
         moduleId,
@@ -169,23 +171,26 @@ async function cacheMain(cacheDir: string, bytes: Uint8Array): Promise<void> {
 describe("a dependency with no pin", () => {
   test("a new URL main covers pins at main, silently", async () => {
     const { dir, pins, notices, warning } = await select(
-      serving(dataAt(TWO, { monarch: "two" })).download,
+      serving(dataAt(TWO, { "owner/monarch": "two" })).download,
       { pins: pinsAt(TWO, {}), knownUrls: [] },
     );
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO }));
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO }));
     expect(notices).toEqual([]);
     expect(warning).toBeUndefined();
-    expect(printedIn(dir, "monarch")).toBe("two");
+    expect(printedIn(dir, "owner/monarch")).toBe("two");
   });
 
   test("a URL already in the lock that main now covers pins at main with a notice", async () => {
-    const { pins, notices } = await select(serving(dataAt(TWO, { monarch: "two" })).download, {
-      pins: pinsAt(TWO, {}),
-      knownUrls: [MONARCH],
-    });
+    const { pins, notices } = await select(
+      serving(dataAt(TWO, { "owner/monarch": "two" })).download,
+      {
+        pins: pinsAt(TWO, {}),
+        knownUrls: [MONARCH],
+      },
+    );
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO }));
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO }));
     expect(notices).toHaveLength(1);
     expect(notices[0]).toContain("monarch");
     expect(notices[0]).toContain(TWO);
@@ -193,7 +198,7 @@ describe("a dependency with no pin", () => {
 
   test("main not covering it records nothing and says nothing", async () => {
     const { pins, notices, warning } = await select(
-      serving(dataAt(TWO, { druid: "two" })).download,
+      serving(dataAt(TWO, { "owner/druid": "two" })).download,
       { pins: pinsAt(TWO, {}), knownUrls: [] },
     );
 
@@ -221,43 +226,43 @@ describe("a dependency with no pin", () => {
 
   test("a stale main records with its warning on a first run", async () => {
     const cacheDir = tmp();
-    await cacheMain(cacheDir, dataAt(TWO, { monarch: "two" }));
+    await cacheMain(cacheDir, dataAt(TWO, { "owner/monarch": "two" }));
 
     const { dir, pins, warning } = await select(serving(null).download, { cacheDir });
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO }));
-    expect(printedIn(dir, "monarch")).toBe("two");
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO }));
+    expect(printedIn(dir, "owner/monarch")).toBe("two");
     expect(warning).toContain(MAIN_URL);
   });
 });
 
 describe("a pinned library with a fresh main", () => {
-  const SAME = { [TWO]: dataAt(TWO, { monarch: "same" }) };
+  const SAME = { [TWO]: dataAt(TWO, { "owner/monarch": "same" }) };
 
   test.each<[string, true | undefined]>([
     ["plain", undefined],
     ["--update", true],
   ])("the same folder bytes hold silently: %s", async (_label, update) => {
     const { dir, pins, notices } = await select(
-      serving(dataAt(THREE, { monarch: "same" }), SAME).download,
-      { pins: pinsAt(TWO, { monarch: TWO }), ...(update === undefined ? {} : { update }) },
+      serving(dataAt(THREE, { "owner/monarch": "same" }), SAME).download,
+      { pins: pinsAt(TWO, { "owner/monarch": TWO }), ...(update === undefined ? {} : { update }) },
     );
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO }));
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO }));
     expect(notices).toEqual([]);
-    expect(printedIn(dir, "monarch")).toBe("same");
+    expect(printedIn(dir, "owner/monarch")).toBe("same");
   });
 
   test("a changed folder holds, with one notice naming every such library", async () => {
     const { dir, pins, notices } = await select(
-      serving(dataAt(THREE, { monarch: "newer", druid: "newer" }), {
-        [TWO]: dataAt(TWO, { monarch: "two", druid: "two" }),
+      serving(dataAt(THREE, { "owner/monarch": "newer", "owner/druid": "newer" }), {
+        [TWO]: dataAt(TWO, { "owner/monarch": "two", "owner/druid": "two" }),
       }).download,
-      { urls: [MONARCH, DRUID], pins: pinsAt(TWO, { monarch: TWO, druid: TWO }) },
+      { urls: [MONARCH, DRUID], pins: pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": TWO }) },
     );
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO, druid: TWO }));
-    expect(printedIn(dir, "monarch")).toBe("two");
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": TWO }));
+    expect(printedIn(dir, "owner/monarch")).toBe("two");
     expect(notices).toHaveLength(1);
     expect(notices[0]).toContain("monarch");
     expect(notices[0]).toContain("druid");
@@ -266,13 +271,14 @@ describe("a pinned library with a fresh main", () => {
 
   test("--update moves a changed folder to main", async () => {
     const { dir, pins, notices } = await select(
-      serving(dataAt(THREE, { monarch: "newer" }), { [TWO]: dataAt(TWO, { monarch: "two" }) })
-        .download,
-      { pins: pinsAt(TWO, { monarch: TWO }), update: true },
+      serving(dataAt(THREE, { "owner/monarch": "newer" }), {
+        [TWO]: dataAt(TWO, { "owner/monarch": "two" }),
+      }).download,
+      { pins: pinsAt(TWO, { "owner/monarch": TWO }), update: true },
     );
 
-    expect(pins?.libraries).toEqual({ monarch: THREE });
-    expect(printedIn(dir, "monarch")).toBe("newer");
+    expect(pins?.libraries).toEqual({ "owner/monarch": THREE });
+    expect(printedIn(dir, "owner/monarch")).toBe("newer");
     expect(notices.join()).toContain("monarch");
     expect(notices.join()).not.toContain("resolve --update");
   });
@@ -287,14 +293,14 @@ describe("a pinned library with a fresh main", () => {
       members: {},
     };
     const reviewedAs = (ref: string, reviews: readonly unknown[]) => ({
-      "monarch/reviewed.json": JSON.stringify({ ref, reviews }),
+      "owner/monarch/reviewed.json": JSON.stringify({ ref, reviews }),
     });
     const PINNED = {
-      [TWO]: dataAt(TWO, { monarch: "same" }, { files: reviewedAs("1.0.0", []) }),
+      [TWO]: dataAt(TWO, { "owner/monarch": "same" }, { files: reviewedAs("1.0.0", []) }),
     };
-    const pinned = pinsAt(TWO, { monarch: TWO });
+    const pinned = pinsAt(TWO, { "owner/monarch": TWO });
     const newestWith = (files: Readonly<Record<string, string>>) =>
-      serving(dataAt(THREE, { monarch: "same" }, { files }), PINNED).download;
+      serving(dataAt(THREE, { "owner/monarch": "same" }, { files }), PINNED).download;
 
     test("only in reviews, a plain run holds the pin and says nothing", async () => {
       const { pins, notices } = await select(newestWith(reviewedAs("1.0.0", [REVIEW])), {
@@ -311,14 +317,14 @@ describe("a pinned library with a fresh main", () => {
         update: true,
       });
 
-      expect(pins?.libraries).toEqual({ monarch: THREE });
+      expect(pins?.libraries).toEqual({ "owner/monarch": THREE });
       expect(notices.join()).toContain("monarch");
     });
 
     test("only in reviews, --update of another library holds the pin and says nothing", async () => {
       const { pins, notices } = await select(newestWith(reviewedAs("1.0.0", [REVIEW])), {
         pins: pinned,
-        update: ["druid"],
+        update: ["owner/druid"],
       });
 
       expect(pins).toEqual(pinned);
@@ -327,7 +333,7 @@ describe("a pinned library with a fresh main", () => {
 
     test.each<[string, Readonly<Record<string, string>>]>([
       ["reviews and ref", reviewedAs("2.0.0", [REVIEW])],
-      ["a source file", { "monarch/source/upstream/monarch.core.lua": "return {}" }],
+      ["a source file", { "owner/monarch/source/upstream/monarch.core.lua": "return {}" }],
     ])("in %s, a plain run holds the pin and names the library", async (_label, files) => {
       const { pins, notices } = await select(newestWith(files), { pins: pinned });
 
@@ -340,14 +346,14 @@ describe("a pinned library with a fresh main", () => {
 
   test("main dropping it holds, in the one notice", async () => {
     const { dir, pins, notices } = await select(
-      serving(dataAt(THREE, { other: "x", druid: "newer" }), {
-        [TWO]: dataAt(TWO, { monarch: "two", druid: "two" }),
+      serving(dataAt(THREE, { "owner/other": "x", "owner/druid": "newer" }), {
+        [TWO]: dataAt(TWO, { "owner/monarch": "two", "owner/druid": "two" }),
       }).download,
-      { urls: [MONARCH, DRUID], pins: pinsAt(TWO, { monarch: TWO, druid: TWO }) },
+      { urls: [MONARCH, DRUID], pins: pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": TWO }) },
     );
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO, druid: TWO }));
-    expect(printedIn(dir, "monarch")).toBe("two");
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": TWO }));
+    expect(printedIn(dir, "owner/monarch")).toBe("two");
     expect(notices).toHaveLength(1);
     expect(notices[0]).toContain("monarch");
     expect(notices[0]).toContain("druid");
@@ -355,11 +361,13 @@ describe("a pinned library with a fresh main", () => {
 
   test("main dropping it holds under --update, with a notice", async () => {
     const { pins, notices } = await select(
-      serving(dataAt(THREE, { other: "x" }), { [TWO]: dataAt(TWO, { monarch: "two" }) }).download,
-      { pins: pinsAt(TWO, { monarch: TWO }), update: true },
+      serving(dataAt(THREE, { "owner/other": "x" }), {
+        [TWO]: dataAt(TWO, { "owner/monarch": "two" }),
+      }).download,
+      { pins: pinsAt(TWO, { "owner/monarch": TWO }), update: true },
     );
 
-    expect(pins?.libraries).toEqual({ monarch: TWO });
+    expect(pins?.libraries).toEqual({ "owner/monarch": TWO });
     expect(notices).toHaveLength(1);
     expect(notices[0]).toContain("monarch");
     expect(notices[0]).not.toContain("resolve --update");
@@ -367,23 +375,23 @@ describe("a pinned library with a fresh main", () => {
 
   test("a different version folder moves to main, naming the folder", async () => {
     const { dir, pins, notices } = await select(
-      serving(dataAt(THREE, { monarch: "same" }), {
-        [TWO]: dataAt(TWO, { monarch: "same" }, { folder: "0.54.0" }),
+      serving(dataAt(THREE, { "owner/monarch": "same" }), {
+        [TWO]: dataAt(TWO, { "owner/monarch": "same" }, { folder: "0.54.0" }),
       }).download,
-      { pins: pinsAt(TWO, { monarch: TWO }) },
+      { pins: pinsAt(TWO, { "owner/monarch": TWO }) },
     );
 
-    expect(pins?.libraries).toEqual({ monarch: THREE });
-    expect(printedIn(dir, "monarch")).toBe("same");
+    expect(pins?.libraries).toEqual({ "owner/monarch": THREE });
+    expect(printedIn(dir, "owner/monarch")).toBe("same");
     expect(notices.join()).toContain("0.55.0");
   });
 
   test("a different version folder main does not cover drops the pin with a notice", async () => {
     const { pins, notices } = await select(
-      serving(dataAt(THREE, { other: "x" }), {
-        [TWO]: dataAt(TWO, { monarch: "same" }, { folder: "0.54.0" }),
+      serving(dataAt(THREE, { "owner/other": "x" }), {
+        [TWO]: dataAt(TWO, { "owner/monarch": "same" }, { folder: "0.54.0" }),
       }).download,
-      { pins: pinsAt(TWO, { monarch: TWO }) },
+      { pins: pinsAt(TWO, { "owner/monarch": TWO }) },
     );
 
     expect(pins?.libraries).toEqual({});
@@ -392,24 +400,30 @@ describe("a pinned library with a fresh main", () => {
   });
 
   test.each<[string, Readonly<Record<string, Uint8Array>>]>([
-    ["no folder for this CLI", { [TWO]: dataAt(TWO, { monarch: "two" }, { folder: "0.99.0" }) }],
-    ["no folder for the library", { [TWO]: dataAt(TWO, { druid: "two" }) }],
+    [
+      "no folder for this CLI",
+      { [TWO]: dataAt(TWO, { "owner/monarch": "two" }, { folder: "0.99.0" }) },
+    ],
+    ["no folder for the library", { [TWO]: dataAt(TWO, { "owner/druid": "two" }) }],
     ["a failed fetch", {}],
   ])("a commit with %s moves to main, naming the commit", async (_label, commits) => {
     const { dir, pins, notices } = await select(
-      serving(dataAt(THREE, { monarch: "newer" }), commits).download,
-      { pins: pinsAt(THREE, { monarch: TWO }) },
+      serving(dataAt(THREE, { "owner/monarch": "newer" }), commits).download,
+      { pins: pinsAt(THREE, { "owner/monarch": TWO }) },
     );
 
-    expect(pins?.libraries).toEqual({ monarch: THREE });
-    expect(printedIn(dir, "monarch")).toBe("newer");
+    expect(pins?.libraries).toEqual({ "owner/monarch": THREE });
+    expect(printedIn(dir, "owner/monarch")).toBe("newer");
     expect(notices.join()).toContain(TWO);
   });
 
   test("an unreadable commit main does not cover drops the pin with a notice", async () => {
-    const { pins, notices } = await select(serving(dataAt(THREE, { other: "x" })).download, {
-      pins: pinsAt(THREE, { monarch: TWO }),
-    });
+    const { pins, notices } = await select(
+      serving(dataAt(THREE, { "owner/other": "x" })).download,
+      {
+        pins: pinsAt(THREE, { "owner/monarch": TWO }),
+      },
+    );
 
     expect(pins?.libraries).toEqual({});
     expect(notices.join()).toContain(TWO);
@@ -420,13 +434,13 @@ describe("a pinned library with a fresh main", () => {
 describe("a pinned folder that cannot be hashed", () => {
   test.skipIf(process.platform === "win32")("counts as changed", async () => {
     const cacheDir = tmp();
-    const pinned = pinsAt(TWO, { monarch: TWO });
-    const commits = { [TWO]: dataAt(TWO, { monarch: "same" }) };
-    const main = dataAt(THREE, { monarch: "same" });
+    const pinned = pinsAt(TWO, { "owner/monarch": TWO });
+    const commits = { [TWO]: dataAt(TWO, { "owner/monarch": "same" }) };
+    const main = dataAt(THREE, { "owner/monarch": "same" });
     await select(serving(main, commits).download, { cacheDir, pins: pinned });
     symlinkSync(
       join(cacheDir, "absent"),
-      join(cacheDir, "commits", TWO, "data", "0.55.0", "monarch", "dangling"),
+      join(cacheDir, "commits", TWO, "data", "0.55.0", "owner/monarch", "dangling"),
     );
 
     const { pins } = await select(serving(main, commits).download, {
@@ -435,16 +449,16 @@ describe("a pinned folder that cannot be hashed", () => {
       update: true,
     });
 
-    expect(pins?.libraries).toEqual({ monarch: THREE });
+    expect(pins?.libraries).toEqual({ "owner/monarch": THREE });
   });
 });
 
 describe("a pinned library with a stale or unreachable main", () => {
-  const AT_TWO = { [TWO]: dataAt(TWO, { monarch: "two" }) };
+  const AT_TWO = { [TWO]: dataAt(TWO, { "owner/monarch": "two" }) };
 
   async function staleCache(): Promise<string> {
     const cacheDir = tmp();
-    await cacheMain(cacheDir, dataAt(THREE, { monarch: "newer" }));
+    await cacheMain(cacheDir, dataAt(THREE, { "owner/monarch": "newer" }));
     return cacheDir;
   }
 
@@ -456,11 +470,11 @@ describe("a pinned library with a stale or unreachable main", () => {
   test.each(MAINS)("a readable commit holds silently: %s", async (_label, cache) => {
     const { dir, pins, notices, warning } = await select(serving(null, AT_TWO).download, {
       cacheDir: await cache(),
-      pins: pinsAt(TWO, { monarch: TWO }),
+      pins: pinsAt(TWO, { "owner/monarch": TWO }),
     });
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO }));
-    expect(printedIn(dir, "monarch")).toBe("two");
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO }));
+    expect(printedIn(dir, "owner/monarch")).toBe("two");
     expect(notices).toEqual([]);
     expect(warning).toBeUndefined();
   });
@@ -468,19 +482,19 @@ describe("a pinned library with a stale or unreachable main", () => {
   test.each(MAINS)("--update holds and warns, naming main: %s", async (_label, cache) => {
     const { dir, pins, warning } = await select(serving(null, AT_TWO).download, {
       cacheDir: await cache(),
-      pins: pinsAt(TWO, { monarch: TWO }),
+      pins: pinsAt(TWO, { "owner/monarch": TWO }),
       update: true,
     });
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO }));
-    expect(printedIn(dir, "monarch")).toBe("two");
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO }));
+    expect(printedIn(dir, "owner/monarch")).toBe("two");
     expect(warning).toContain(MAIN_URL);
   });
 
   test.each(
     MAINS,
   )("an unreadable commit gives no data and moves nothing: %s", async (_l, cache) => {
-    const pinned = pinsAt(TWO, { monarch: TWO, druid: ONE });
+    const pinned = pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": ONE });
 
     const { dir, pins, notices, warning } = await select(serving(null, AT_TWO).download, {
       cacheDir: await cache(),
@@ -495,7 +509,7 @@ describe("a pinned library with a stale or unreachable main", () => {
   });
 
   test("an unreadable shared pin gives no data and moves nothing", async () => {
-    const pinned = pinsAt(ONE, { monarch: TWO });
+    const pinned = pinsAt(ONE, { "owner/monarch": TWO });
 
     const { dir, pins, warning } = await select(serving(null, AT_TWO).download, { pins: pinned });
 
@@ -508,81 +522,96 @@ describe("a pinned library with a stale or unreachable main", () => {
 describe("the pins a run keeps", () => {
   test("update by name moves only that library, leaving the other and the shared pin", async () => {
     const { dir, pins } = await select(
-      serving(dataAt(THREE, { monarch: "newer", druid: "newer" }, { slots: "{}\n" }), {
-        [TWO]: dataAt(TWO, { monarch: "two", druid: "two" }, { slots: '{"a":1}\n' }),
-      }).download,
+      serving(
+        dataAt(THREE, { "owner/monarch": "newer", "owner/druid": "newer" }, { slots: "{}\n" }),
+        {
+          [TWO]: dataAt(
+            TWO,
+            { "owner/monarch": "two", "owner/druid": "two" },
+            { slots: '{"a":1}\n' },
+          ),
+        },
+      ).download,
       {
         urls: [MONARCH, DRUID],
-        pins: pinsAt(TWO, { monarch: TWO, druid: TWO }),
-        update: ["monarch"],
+        pins: pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": TWO }),
+        update: ["owner/monarch"],
       },
     );
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: THREE, druid: TWO }));
-    expect(printedIn(dir, "monarch")).toBe("newer");
-    expect(printedIn(dir, "druid")).toBe("two");
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": THREE, "owner/druid": TWO }));
+    expect(printedIn(dir, "owner/monarch")).toBe("newer");
+    expect(printedIn(dir, "owner/druid")).toBe("two");
   });
 
   test("a library moving keeps the other's folder bytes", async () => {
-    const commits = { [TWO]: dataAt(TWO, { monarch: "two", druid: "kept" }) };
-    const pinned = pinsAt(TWO, { monarch: TWO, druid: TWO });
+    const commits = { [TWO]: dataAt(TWO, { "owner/monarch": "two", "owner/druid": "kept" }) };
+    const pinned = pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": TWO });
     const urls = [MONARCH, DRUID];
 
-    const held = await select(serving(dataAt(TWO, { monarch: "two", druid: "kept" })).download, {
-      urls,
-      pins: pinned,
-    });
+    const held = await select(
+      serving(dataAt(TWO, { "owner/monarch": "two", "owner/druid": "kept" })).download,
+      {
+        urls,
+        pins: pinned,
+      },
+    );
     const moved = await select(
-      serving(dataAt(THREE, { monarch: "newer", druid: "changed" }), commits).download,
-      { urls, pins: pinned, update: ["monarch"] },
+      serving(dataAt(THREE, { "owner/monarch": "newer", "owner/druid": "changed" }), commits)
+        .download,
+      { urls, pins: pinned, update: ["owner/monarch"] },
     );
 
-    expect(printedIn(moved.dir, "monarch")).toBe("newer");
-    expect(printedIn(moved.dir, "druid")).toBe(printedIn(held.dir, "druid"));
+    expect(printedIn(moved.dir, "owner/monarch")).toBe("newer");
+    expect(printedIn(moved.dir, "owner/druid")).toBe(printedIn(held.dir, "owner/druid"));
   });
 
   test("a pin for a library no longer declared is pruned, fetching nothing for it", async () => {
-    const { download, requests } = serving(dataAt(TWO, { monarch: "two" }));
+    const { download, requests } = serving(dataAt(TWO, { "owner/monarch": "two" }));
 
     const { dir, pins } = await select(download, {
-      pins: pinsAt(TWO, { monarch: TWO, druid: ONE }),
+      pins: pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": ONE }),
     });
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO }));
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO }));
     expect(requests).toEqual([MAIN_URL]);
-    expect(readLibraryData(dir as string).map(({ dir: name }) => name)).toEqual(["monarch"]);
+    expect(readLibraryData(dir as string).map(({ dir: name }) => name)).toEqual(["owner/monarch"]);
   });
 
   test("a data merge touching only unused libraries changes no pin", async () => {
     const { pins, notices } = await select(
-      serving(dataAt(THREE, { monarch: "same", other: "new" }), {
-        [TWO]: dataAt(TWO, { monarch: "same", other: "old" }),
+      serving(dataAt(THREE, { "owner/monarch": "same", "owner/other": "new" }), {
+        [TWO]: dataAt(TWO, { "owner/monarch": "same", "owner/other": "old" }),
       }).download,
-      { pins: pinsAt(TWO, { monarch: TWO }) },
+      { pins: pinsAt(TWO, { "owner/monarch": TWO }) },
     );
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO }));
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO }));
     expect(notices).toEqual([]);
   });
 
   test("a first run records each used library and the shared pin at main", async () => {
     const { pins, notices } = await select(
-      serving(dataAt(TWO, { monarch: "two", druid: "two", other: "two" })).download,
+      serving(dataAt(TWO, { "owner/monarch": "two", "owner/druid": "two", "owner/other": "two" }))
+        .download,
       { urls: [MONARCH, DRUID], knownUrls: [] },
     );
 
-    expect(pins).toEqual(pinsAt(TWO, { monarch: TWO, druid: TWO }));
+    expect(pins).toEqual(pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": TWO }));
     expect(notices).toEqual([]);
   });
 
   test("main and each distinct pinned commit are read once", async () => {
-    const { download, requests } = serving(dataAt(THREE, { monarch: "new", druid: "new" }), {
-      [TWO]: dataAt(TWO, { monarch: "two", druid: "two" }),
-    });
+    const { download, requests } = serving(
+      dataAt(THREE, { "owner/monarch": "new", "owner/druid": "new" }),
+      {
+        [TWO]: dataAt(TWO, { "owner/monarch": "two", "owner/druid": "two" }),
+      },
+    );
 
     await select(download, {
       urls: [MONARCH, DRUID],
-      pins: pinsAt(TWO, { monarch: TWO, druid: TWO }),
+      pins: pinsAt(TWO, { "owner/monarch": TWO, "owner/druid": TWO }),
     });
 
     expect(requests.sort()).toEqual([libraryDataCommitUrl(TWO, MAIN_URL), MAIN_URL].sort());
@@ -592,14 +621,14 @@ describe("the pins a run keeps", () => {
 describe("the shared pin", () => {
   const SLOTS = '{"old":{}}\n';
   const NEWER = '{"new":{}}\n';
-  const held = { [TWO]: dataAt(TWO, { monarch: "same" }, { slots: SLOTS }) };
-  const newer = dataAt(THREE, { monarch: "same" }, { slots: NEWER });
+  const held = { [TWO]: dataAt(TWO, { "owner/monarch": "same" }, { slots: SLOTS }) };
+  const newer = dataAt(THREE, { "owner/monarch": "same" }, { slots: NEWER });
   const slotsIn = (dir: string | null) =>
     readFileSync(join(dir as string, EXTENSION_INDEX_SLOTS_FILE), "utf8");
 
   test("a plain run never moves it for a change, and says nothing", async () => {
     const { dir, pins, notices } = await select(serving(newer, held).download, {
-      pins: pinsAt(TWO, { monarch: TWO }),
+      pins: pinsAt(TWO, { "owner/monarch": TWO }),
     });
 
     expect(pins?.shared).toBe(TWO);
@@ -609,7 +638,7 @@ describe("the shared pin", () => {
 
   test("update with no names moves it when the file differs, saying nothing", async () => {
     const { dir, pins, notices } = await select(serving(newer, held).download, {
-      pins: pinsAt(TWO, { monarch: TWO }),
+      pins: pinsAt(TWO, { "owner/monarch": TWO }),
       update: true,
     });
 
@@ -622,14 +651,14 @@ describe("the shared pin", () => {
     const pagesAt = (commit: string, pages: string) =>
       dataAt(
         commit,
-        { monarch: "same" },
+        { "owner/monarch": "same" },
         { slots: SLOTS, files: { [DEFOLD_EXTENSIONS_FILE]: pages } },
       );
     const { dir, pins } = await select(
       serving(pagesAt(THREE, '{"libraries":["new"]}'), {
         [TWO]: pagesAt(TWO, '{"libraries":["old"]}'),
       }).download,
-      { pins: pinsAt(TWO, { monarch: TWO }), update: true },
+      { pins: pinsAt(TWO, { "owner/monarch": TWO }), update: true },
     );
 
     expect(pins?.shared).toBe(THREE);
@@ -640,8 +669,8 @@ describe("the shared pin", () => {
 
   test("update with no names holds it when the file is the same", async () => {
     const { pins } = await select(
-      serving(dataAt(THREE, { monarch: "same" }, { slots: SLOTS }), held).download,
-      { pins: pinsAt(TWO, { monarch: TWO }), update: true },
+      serving(dataAt(THREE, { "owner/monarch": "same" }, { slots: SLOTS }), held).download,
+      { pins: pinsAt(TWO, { "owner/monarch": TWO }), update: true },
     );
 
     expect(pins?.shared).toBe(TWO);
@@ -649,8 +678,8 @@ describe("the shared pin", () => {
 
   test("update by name leaves it", async () => {
     const { pins } = await select(serving(newer, held).download, {
-      pins: pinsAt(TWO, { monarch: TWO }),
-      update: ["monarch"],
+      pins: pinsAt(TWO, { "owner/monarch": TWO }),
+      update: ["owner/monarch"],
     });
 
     expect(pins?.shared).toBe(TWO);
@@ -658,8 +687,9 @@ describe("the shared pin", () => {
 
   test("a version folder change moves it silently", async () => {
     const { pins, notices } = await select(
-      serving(newer, { [TWO]: dataAt(TWO, { other: "x" }, { slots: SLOTS, folder: "0.54.0" }) })
-        .download,
+      serving(newer, {
+        [TWO]: dataAt(TWO, { "owner/other": "x" }, { slots: SLOTS, folder: "0.54.0" }),
+      }).download,
       { urls: [DRUID], pins: pinsAt(TWO, {}) },
     );
 
@@ -678,23 +708,39 @@ describe("the shared pin", () => {
   });
 });
 
+describe("pins keyed by library name", () => {
+  const FORK = "https://github.com/someone/boom/archive/main.zip";
+
+  test("a fork keeps the pin of the library it reads, and a pin keyed by a bare repo drops", async () => {
+    const { pins } = await select(
+      serving(dataAt(THREE, { "britzl/boom": "newer" }), {
+        [TWO]: dataAt(TWO, { "britzl/boom": "two" }),
+      }).download,
+      { urls: [FORK], pins: pinsAt(TWO, { "britzl/boom": TWO, boom: ONE }) },
+    );
+
+    expect(pins?.libraries).toEqual({ "britzl/boom": TWO });
+  });
+});
+
 describe("pins that do not load together", () => {
   const CLASH = { text: "clash", moduleId: "clash" };
   const commits = {
-    [ONE]: dataAt(ONE, { monarch: CLASH, druid: "one" }),
-    [TWO]: dataAt(TWO, { monarch: "two", druid: CLASH }),
+    [ONE]: dataAt(ONE, { "owner/monarch": CLASH, "owner/druid": "one" }),
+    [TWO]: dataAt(TWO, { "owner/monarch": "two", "owner/druid": CLASH }),
   };
-  const pinned = pinsAt(ONE, { monarch: ONE, druid: TWO });
+  const pinned = pinsAt(ONE, { "owner/monarch": ONE, "owner/druid": TWO });
   const urls = [MONARCH, DRUID];
 
   test("with a fresh main, every used library and the shared pin move to it", async () => {
     const { dir, pins, notices } = await select(
-      serving(dataAt(THREE, { monarch: "newer", druid: "newer" }), commits).download,
+      serving(dataAt(THREE, { "owner/monarch": "newer", "owner/druid": "newer" }), commits)
+        .download,
       { urls, pins: pinned },
     );
 
-    expect(pins).toEqual(pinsAt(THREE, { monarch: THREE, druid: THREE }));
-    expect(printedIn(dir, "monarch")).toBe("newer");
+    expect(pins).toEqual(pinsAt(THREE, { "owner/monarch": THREE, "owner/druid": THREE }));
+    expect(printedIn(dir, "owner/monarch")).toBe("newer");
     expect(notices).toHaveLength(1);
     expect(notices[0]).toContain("clash");
     expect(notices[0]).toContain(THREE);
@@ -715,10 +761,10 @@ describe("pins that do not load together", () => {
 });
 
 describe("the folder a run reads", () => {
-  const libraries = { monarch: "one" };
+  const libraries = { "owner/monarch": "one" };
   const sharedAt = (commit: string): LibraryDataPins => ({
     shared: commit,
-    libraries: { monarch: commit },
+    libraries: { "owner/monarch": commit },
   });
   const rootOf = (cacheDir: string, commit: string) => join(cacheDir, "commits", commit, "data");
 

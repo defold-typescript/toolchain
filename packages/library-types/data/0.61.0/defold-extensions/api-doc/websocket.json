@@ -1,0 +1,213 @@
+{
+  "info": {
+    "namespace": "websocket",
+    "brief": "Functions and constants for using websockets. Supported on all platforms.",
+    "description": "Functions and constants for using websockets. Supported on all platforms."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "websocket.connect",
+      "description": "Connects to a remote address",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "url of the remote connection",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "params",
+          "doc": "optional parameters as properties. The following parameters can be set",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "timeout",
+              "doc": "Timeout for the connection sequence (milliseconds). Not used on HTML5. (Default is 3000)",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "protocol",
+              "doc": "the protocol to use (e.g. 'chat'). If not set, no `Sec-WebSocket-Protocol` header is sent.",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "headers",
+              "doc": "list of http headers. Each pair is separated with \"\\r\\n\". Not used on HTML5.",
+              "types": [
+                "string"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "callback that receives all messages from the connection",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The script instance that was used to register the callback",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "connection",
+              "doc": "the connection",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "the event payload",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "event",
+                  "doc": "The current event. One of the following\n- `websocket.EVENT_CONNECTED`\n- `websocket.EVENT_DISCONNECTED`\n- `websocket.EVENT_ERROR`\n- `websocket.EVENT_MESSAGE`",
+                  "types": [
+                    "number"
+                  ]
+                },
+                {
+                  "name": "message",
+                  "doc": "The received data if event is `websocket.EVENT_MESSAGE`. Error message otherwise",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "handshake_response",
+                  "doc": "Handshake response information (status, headers etc)",
+                  "types": [
+                    "table"
+                  ]
+                },
+                {
+                  "name": "code",
+                  "doc": "Status code received from the server if the server closed the connection. Only present if event is `EVENT_DISCONNECTED`.",
+                  "types": [
+                    "number"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "connection",
+          "doc": "the connection",
+          "types": [
+            "object"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function websocket_callback(self, conn, data)\n    if data.event == websocket.EVENT_DISCONNECTED then\n      log(\"Disconnected: \" .. tostring(conn))\n      self.connection = nil\n      update_gui(self)\n    elseif data.event == websocket.EVENT_CONNECTED then\n      update_gui(self)\n      log(\"Connected: \" .. tostring(conn))\n    elseif data.event == websocket.EVENT_ERROR then\n      log(\"Error: '\" .. data.message .. \"'\")\n    elseif data.event == websocket.EVENT_MESSAGE then\n      log(\"Receiving: '\" .. tostring(data.message) .. \"'\")\n    end\n  end\n\n  function init(self)\n    self.url = \"ws://echo.websocket.events\"\n    local params = {\n      timeout = 3000,\n      headers = \"Sec-WebSocket-Protocol: chat\\r\\nOrigin: mydomain.com\\r\\n\"\n    }\n    self.connection = websocket.connect(self.url, params, websocket_callback)\n  end\n\n  function finalize(self)\n      if self.connection ~= nil then\n        websocket.disconnect(self.connection)\n      end\n  end</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "websocket.disconnect",
+      "description": "Explicitly close a websocket",
+      "parameters": [
+        {
+          "name": "connection",
+          "doc": "the websocket connection",
+          "types": [
+            "object"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "websocket.send",
+      "description": "Send data on a websocket",
+      "parameters": [
+        {
+          "name": "connection",
+          "doc": "the websocket connection",
+          "types": [
+            "object"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "the message to send",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "options for this particular message. May be `nil`",
+          "types": [
+            "table"
+          ],
+          "fields": [
+            {
+              "name": "type",
+              "doc": "The data type of the message\n- `websocket.DATA_TYPE_BINARY` (default)\n- `websocket.DATA_TYPE_TEXT`",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function websocket_callback(self, conn, data)\n    if data.event == websocket.EVENT_CONNECTED then\n      websocket.send(conn, \"Hello from the other side\")\n    end\n  end\n\n  function init(self)\n    self.url = \"ws://echo.websocket.org\"\n    local params = {}\n    self.connection = websocket.connect(self.url, params, websocket_callback)\n  end</code></pre></div>"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "websocket.EVENT_CONNECTED",
+      "brief": "The websocket was connected",
+      "description": "The websocket was connected",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "websocket.EVENT_DISCONNECTED",
+      "brief": "The websocket disconnected",
+      "description": "The websocket disconnected",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "websocket.EVENT_MESSAGE",
+      "brief": "The websocket received data",
+      "description": "The websocket received data",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "websocket.EVENT_ERROR",
+      "brief": "The websocket encountered an error",
+      "description": "The websocket encountered an error",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

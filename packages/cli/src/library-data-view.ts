@@ -2,8 +2,8 @@
 // directory. A copy, because a symlink needs a privilege on Windows.
 
 import { createHash } from "node:crypto";
-import { cpSync, existsSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
+import { dirname, join, relative, sep } from "node:path";
 import {
   DEFOLD_EXTENSIONS_FILE,
   EXTENSION_INDEX_SLOTS_FILE,
@@ -64,6 +64,7 @@ export function assembleLibraryDataView(opts: AssembleLibraryDataViewOptions): L
   const dir = join(cacheDir, "views", viewKey(opts, sharedFiles));
   landFolder(dir, (stage) => {
     for (const { name, folderDir } of libraries) {
+      mkdirSync(dirname(join(stage, name)), { recursive: true });
       copy(join(folderDir, name), join(stage, name));
     }
     for (const file of sharedFiles) {

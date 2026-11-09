@@ -1,0 +1,100 @@
+{
+  "info": {
+    "namespace": "liveupdate_reszip_ext",
+    "brief": "HTML5 file loader used by Live Update ResZip.",
+    "description": "HTML5 file loader used by Live Update ResZip."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "liveupdate_reszip_ext.request_file",
+      "description": "Starts an asynchronous file request. Available on HTML5.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "URL of the file to request.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "on_progress",
+          "doc": "Called while the file is loading.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "loaded",
+              "doc": "Number of bytes loaded.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "total",
+              "doc": "Total number of bytes.",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "on_error",
+          "doc": "Called if the request fails.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "Error message.",
+              "types": [
+                "string"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "on_load",
+          "doc": "Called when the file has loaded.",
+          "types": [
+            "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "File contents.",
+              "types": [
+                "string"
+              ]
+            }
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

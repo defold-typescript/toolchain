@@ -32,7 +32,7 @@ interface Pin {
 // (`fixture-native`) and authored fork (`fixture-fork`). It passes `library
 // check`, so a test reading it reads data a real folder could hold.
 export const FIXTURE_DATA_DIR = fileURLToPath(
-  new URL("../test/fixtures/library-data/0.55.0", import.meta.url),
+  new URL("../test/fixtures/library-data/0.61.0", import.meta.url),
 );
 
 // A lane target as one flat record: its library's pin beside its lane entry.
@@ -128,10 +128,10 @@ export function writeAuthoredLibraryData(forks: Readonly<Record<string, string>>
     forks: Object.entries(forks).map(([moduleId, contents]) => {
       const library = moduleId.split(".")[0] as string;
       const authored = `fork/${moduleId}.d.ts`;
-      mkdirSync(join(root, library, "fork"), { recursive: true });
-      writeFileSync(join(root, library, authored), contents);
+      mkdirSync(join(root, "owner", library, "fork"), { recursive: true });
+      writeFileSync(join(root, "owner", library, authored), contents);
       const upstreamLua = `source/upstream/${moduleId}.lua`;
-      writeUndocumentedUpstreamLua(join(root, library), upstreamLua);
+      writeUndocumentedUpstreamLua(join(root, "owner", library), upstreamLua);
       return {
         repo: `https://github.com/owner/${library}`,
         ref: "1.0.0",
@@ -146,8 +146,8 @@ export function writeAuthoredLibraryData(forks: Readonly<Record<string, string>>
   return root;
 }
 
-const FIXTURE_FORK = "fixture-fork/fork/tally.tally.d.ts";
-const FIXTURE_UPSTREAM_LUA = "fixture-fork/source/upstream/tally/tally.lua";
+const FIXTURE_FORK = "example/fixture-fork/fork/tally.tally.d.ts";
+const FIXTURE_UPSTREAM_LUA = "example/fixture-fork/source/upstream/tally/tally.lua";
 
 // The fixture data folder copied to `dataDir`, with `docLines` written as the doc
 // comment of the fork's `flush`, a member the fixture's upstream documents.
@@ -164,7 +164,7 @@ export function copyFixtureDataWithFlushDoc(dataDir: string, docLines: string[])
 // folder `copyFixtureDataWithFlushDoc` wrote. Its one function carries a malformed
 // `@upstreamDoc` pin, so it does not print while `tally.tally` still does.
 export function addUnprintableFixtureFork(dataDir: string): void {
-  const folder = "fixture-fork";
+  const folder = "example/fixture-fork";
   const libraryDir = join(dataDir, folder);
   const library = readLibraryJson(dataDir, folder);
   const floor = library.floors?.["tally.tally"];

@@ -1,0 +1,19 @@
+{
+  "ref": "v1.1",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "623bacc6f629115d83ec598dd940a8f3d7f1b18c"
+      ],
+      "api": "378c72f3490b1cba1905aac7a1821abf40eded2d19d85fb73b9bac7a30309284",
+      "doc": "cb8357d73671d7a399a8777a4ee27f56cd8454a513679879c448fb46eb28582b",
+      "source": "af896d9a6a4ae97de4db6c11293360d746963524821593b68312f52c74e7990d",
+      "members": {
+        "immutable/immutable.lua#@annotations": "c1da35f014332669",
+        "immutable/immutable.lua#is_immutable": "47ea7abf98651357",
+        "immutable/immutable.lua#make": "13c62b29e7ed1f6b"
+      }
+    }
+  ]
+}

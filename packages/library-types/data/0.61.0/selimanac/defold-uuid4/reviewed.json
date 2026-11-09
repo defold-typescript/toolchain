@@ -1,0 +1,19 @@
+{
+  "ref": "v1.0",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "e899a9f4a5b3b06dd603112738b41fe8eb19c415"
+      ],
+      "api": "48adcd6642205dece9738349ee99b0b617c29f3e545c48242eaff1ff260707b4",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "4956bf82d10c565f5b9955d114d67c150e8bab1a9b1f26c871063a2845fe79ed",
+      "members": {
+        "uuid4/include/uuid4.h": "e66a4dcce2789c00",
+        "uuid4/src/extension.cpp": "a2b98177e342dc21",
+        "uuid4/src/uuid4.c": "16474a11705dcf4c"
+      }
+    }
+  ]
+}

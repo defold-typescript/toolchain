@@ -1,0 +1,47 @@
+{
+  "ref": "1.0.0",
+  "reviews": [
+    {
+      "version": 1,
+      "commits": [
+        "0647d824cf2f31604e4381522d5febfc11304932"
+      ],
+      "api": "688954ce0ee8b69878639dd66bb71c51ca489f000b7345db5afe60528649f6ff",
+      "doc": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source": "6dfd62794407ea3f09500a60be8bd380eac169b792a58a2644e79fe5e30b1118",
+      "members": {
+        "def_behavior_tree/behavior_tree.lua": "726065a4e7a215bc",
+        "def_behavior_tree/node_types/always_fail_decorator.lua": "5b5297ab5d97d7bc",
+        "def_behavior_tree/node_types/always_succeed_decorator.lua": "b9c1161f4dd45bff",
+        "def_behavior_tree/node_types/chance_decorator.lua": "e32ba02bb819444f",
+        "def_behavior_tree/node_types/composite.lua#fail": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/composite.lua#getNextNode": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/composite.lua#name": "24c7bcaf858ea773",
+        "def_behavior_tree/node_types/composite.lua#run": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/composite.lua#start": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/composite.lua#success": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/decorator.lua#fail": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/decorator.lua#name": "24c7bcaf858ea773",
+        "def_behavior_tree/node_types/decorator.lua#run": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/decorator.lua#start": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/decorator.lua#success": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/invert_decorator.lua": "dc821babeb41e06b",
+        "def_behavior_tree/node_types/node.lua#fail": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/node.lua#finish": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/node.lua#name": "24c7bcaf858ea773",
+        "def_behavior_tree/node_types/node.lua#run": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/node.lua#start": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/node.lua#success": "4689f29d239c9a04",
+        "def_behavior_tree/node_types/random.lua": "47b0d9926e0ca19c",
+        "def_behavior_tree/node_types/random_with_chances.lua": "a701c21c8df55177",
+        "def_behavior_tree/node_types/repeat_until_fail_decorator.lua": "2a4cec51862989ae",
+        "def_behavior_tree/node_types/selector.lua": "6461dcf3e63dedf9",
+        "def_behavior_tree/node_types/sequence.lua": "767fc1d2ab6bedad",
+        "def_behavior_tree/registry.lua#addNodeTemplateToTree": "7890742ca73c5df9",
+        "def_behavior_tree/registry.lua#getNodeFromTree": "a08c38cf7aebe46c",
+        "def_behavior_tree/registry.lua#getTreeTemplate": "86b1b2d0118ae104",
+        "def_behavior_tree/registry.lua#registerTemplates": "ed69f6d3f89b408f"
+      }
+    }
+  ]
+}

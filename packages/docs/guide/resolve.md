@@ -29,8 +29,8 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Library with shipped types** | the archive ships `.d.ts` files in a root `types/` folder that compile against `@defold-typescript/types` | those files verbatim in `.defold-types/extensions/shipped/<repo>/`, checked apart from every other dependency, plus `"extensions"` on the tsconfig `types` list; nothing else from that dependency |
-| **Vendored pure-Lua library** | the repo name matches [library data](#library-data), confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
-| **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
+| **Vendored pure-Lua library** | the dependency's `owner/repo`, or its repo name, matches [library data](#vendored-library-types), confirmed against the archive | declarations printed from the dependency's archive into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
+| **Curated native extension**  | no confirmed library match, the dependency matches a curated native target [by name](#vendored-library-types), and the archive ships that target's `<dir>/ext.manifest` | the curated `@globalTable` module, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one `@globalTable` module per doc, which scripts import, in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
 | **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped                                                                                                     |
 
@@ -197,11 +197,23 @@ When library data itself cannot be read, `resolve` keeps the library
 declarations it printed earlier, and their tsconfig entry, as long as the same
 toolchain version wrote them and none of their files has changed.
 
-The match keys on the library's **source identity (the repository name)**, not
-exact URL equality, so a fork or a pinned-tag archive URL still resolves. Because
-a repo name alone can collide — a different library sharing the name, or a fork
-that renamed its module folder — the match is then **verified against the
-downloaded archive**: `resolve` reads the archive's `.lua` require paths and
+The match keys on the library's **name, its `owner/repo`** in lower case
+(`britzl/monarch`), not exact URL equality, so any archive URL of that repository
+resolves. A dependency whose `owner/repo` no library holds matches the one library
+with its repo name, so a fork keeps its upstream's types, with a notice:
+
+```text
+<url> uses the library data of <owner>/<repo>, which shares its repo name; its types may not fit
+```
+
+A repo name two libraries share matches neither for any other owner, with a notice:
+
+```text
+<url> shares its repo name with <owner>/<repo> and <owner>/<repo>, so no library data types it
+```
+
+Because a match can still be wrong — a fork that renamed its module folder — it
+is then **verified against the downloaded archive**: `resolve` reads the archive's `.lua` require paths and
 materializes only the modules it actually ships. A repo-name match the archive
 does not confirm is reported **unverified** (a `stderr` warning) and never
 materialized when the dependency is asset-only, so a collision cannot inject the
@@ -240,15 +252,15 @@ leaves the others' types byte-identical:
   "libraryData": {
     "shared": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
     "libraries": {
-      "druid": "9a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f4f1c9e",
-      "monarch": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f"
+      "britzl/monarch": "4f1c9e0a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f",
+      "insality/druid": "9a2b7d6e8f3a5c1d9b0e7f2a6c8d4b3e1f4f1c9e"
     }
   }
 }
 ```
 
-`shared` is the commit `index-slot-classifications.json` is read from, the one data
-file no library owns. It only adds doc notes to extension declarations, so nothing
+`libraries` is keyed by each library's `owner/repo`. `shared` is the commit
+`index-slot-classifications.json` is read from, the one data file no library owns. It only adds doc notes to extension declarations, so nothing
 reports when it moves.
 
 - **The first `resolve`** pins each used library and `shared` at the newest commit.
@@ -272,8 +284,9 @@ reports when it moves.
   [status](#library-status), and `shared` when its file differs. A library the same in
   both keeps its pin, and one the newest data dropped holds it, with a notice.
 - **`resolve --update=<name>`** does this for the named dependency alone and leaves
-  `shared`. `--update=a,b` names several. A name is the repository name in the
-  dependency's URL, in lower case.
+  `shared`. `--update=a,b` names several. A name is the `owner/repo` in the
+  dependency's URL, in lower case (`britzl/monarch`). Naming a fork moves the pin of
+  the library it reads.
 - **`resolve --frozen`** reads pins alone and requests no `main`. It fails when
   nothing is recorded, or when a declared library's pinned folder is missing or does
   not load, naming it. A declared dependency with no library pin prints no library
@@ -317,8 +330,9 @@ loose to type correct code emits a namespace that accepts calls failing at
 runtime. For the ones listed below, this toolchain ships a hand-written
 [module-form](./extensions.md#module-form-native-extensions) declaration
 instead. `resolve` uses it when the dependency's
-repo name matches **and** the archive ships the extension's `ext.manifest` in
-the named directory, so a repo-name collision alone writes nothing. Each
+`owner/repo`, or its repo name, matches [as a library's does](#vendored-library-types)
+**and** the archive ships the extension's `ext.manifest` in the named directory, so
+a name match alone writes nothing. Each
 namespace links its library page, which names the commit the declaration is
 pinned to.
 
@@ -326,25 +340,25 @@ pinned to.
 
 | Extension | Namespace | Confirmed by        |
 | --------- | --------- | ------------------- |
-| [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | [`def_windward_jps`](https://defold-typescript.github.io/library-data/api/s-kania/def-windward-jps/def_windward_jps) | `def_windward_jps/ext.manifest` |
-| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | [`taptic_engine`](https://defold-typescript.github.io/library-data/api/maratgilyazov/def_taptic_engine/taptic_engine) | `taptic_engine/ext.manifest` |
-| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | [`box2d`](https://defold-typescript.github.io/library-data/api/d954mas/defold-box2d/box2d) | `box2d/native/ext.manifest` |
-| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | [`daabbcc`](https://defold-typescript.github.io/library-data/api/selimanac/defold-daabbcc/daabbcc) | `daabbcc/ext.manifest` |
-| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | [`daabbcc3d`](https://defold-typescript.github.io/library-data/api/selimanac/defold-daabbcc3d/daabbcc3d) | `daabbcc3d/ext.manifest` |
 | [abadonna/defold-detour](https://github.com/abadonna/defold-detour) | [`detour`](https://defold-typescript.github.io/library-data/api/abadonna/defold-detour/detour) | `detour/ext.manifest` |
 | [AGulev/defold-extension-uptime](https://github.com/AGulev/defold-extension-uptime) | [`uptime`](https://defold-typescript.github.io/library-data/api/agulev/defold-extension-uptime/uptime) | `uptime/ext.manifest` |
-| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | [`fontscale`](https://defold-typescript.github.io/library-data/api/myopic-design/defold-fontscale/fontscale) | `fontscale/ext.manifest` |
 | [britzl/defold-gyro](https://github.com/britzl/defold-gyro) | [`gyro`](https://defold-typescript.github.io/library-data/api/britzl/defold-gyro/gyro) | `gyro/ext.manifest` |
 | [britzl/defold-imp](https://github.com/britzl/defold-imp) | [`imp`](https://defold-typescript.github.io/library-data/api/britzl/defold-imp/imp) | `imp/ext.manifest` |
 | [britzl/defold-png](https://github.com/britzl/defold-png) | [`png`](https://defold-typescript.github.io/library-data/api/britzl/defold-png/png) | `png/ext.manifest` |
 | [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | [`share`](https://defold-typescript.github.io/library-data/api/britzl/defold-sharing/share) | `share/ext.manifest` |
+| [d954mas/defold-box2d](https://github.com/d954mas/defold-box2d) | [`box2d`](https://defold-typescript.github.io/library-data/api/d954mas/defold-box2d/box2d) | `box2d/native/ext.manifest` |
+| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | [`ainpc`](https://defold-typescript.github.io/library-data/api/elefant-ai/player2-ai-npc-defold/ainpc) | `player2-ai-npc/ext.manifest` |
+| [GameAnalytics/GA-SDK-DEFOLD](https://github.com/GameAnalytics/GA-SDK-DEFOLD) | [`gameanalytics`](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) | `gameanalytics/ext.manifest` |
+| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | [`directories`](https://defold-typescript.github.io/library-data/api/lerg/extension-directories/directories) | `directories/ext.manifest` |
+| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | [`openal`](https://defold-typescript.github.io/library-data/api/lerg/extension-openal/openal) | `openal/ext.manifest` |
+| [MaratGilyazov/def_taptic_engine](https://github.com/MaratGilyazov/def_taptic_engine) | [`taptic_engine`](https://defold-typescript.github.io/library-data/api/maratgilyazov/def_taptic_engine/taptic_engine) | `taptic_engine/ext.manifest` |
+| [myopic-design/defold-fontscale](https://github.com/myopic-design/defold-fontscale) | [`fontscale`](https://defold-typescript.github.io/library-data/api/myopic-design/defold-fontscale/fontscale) | `fontscale/ext.manifest` |
+| [s-kania/def-windward-jps](https://github.com/s-kania/def-windward-jps) | [`def_windward_jps`](https://defold-typescript.github.io/library-data/api/s-kania/def-windward-jps/def_windward_jps) | `def_windward_jps/ext.manifest` |
+| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | [`daabbcc`](https://defold-typescript.github.io/library-data/api/selimanac/defold-daabbcc/daabbcc) | `daabbcc/ext.manifest` |
+| [selimanac/defold-daabbcc3d](https://github.com/selimanac/defold-daabbcc3d) | [`daabbcc3d`](https://defold-typescript.github.io/library-data/api/selimanac/defold-daabbcc3d/daabbcc3d) | `daabbcc3d/ext.manifest` |
 | [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | [`tile_raycast`](https://defold-typescript.github.io/library-data/api/selimanac/defold-tile-raycast/tile_raycast) | `tile-raycast/ext.manifest` |
 | [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | [`uuid4`](https://defold-typescript.github.io/library-data/api/selimanac/defold-uuid4/uuid4) | `uuid4/ext.manifest` |
 | [selimanac/defold-wave](https://github.com/selimanac/defold-wave) | [`wave`](https://defold-typescript.github.io/library-data/api/selimanac/defold-wave/wave) | `wave/ext.manifest` |
-| [Lerg/extension-directories](https://github.com/Lerg/extension-directories) | [`directories`](https://defold-typescript.github.io/library-data/api/lerg/extension-directories/directories) | `directories/ext.manifest` |
-| [Lerg/extension-openal](https://github.com/Lerg/extension-openal) | [`openal`](https://defold-typescript.github.io/library-data/api/lerg/extension-openal/openal) | `openal/ext.manifest` |
-| [GameAnalytics/GA-SDK-DEFOLD](https://github.com/GameAnalytics/GA-SDK-DEFOLD) | [`gameanalytics`](https://defold-typescript.github.io/library-data/api/gameanalytics/ga-sdk-defold/gameanalytics) | `gameanalytics/ext.manifest` |
-| [elefant-ai/player2-ai-npc-defold](https://github.com/elefant-ai/player2-ai-npc-defold) | [`ainpc`](https://defold-typescript.github.io/library-data/api/elefant-ai/player2-ai-npc-defold/ainpc) | `player2-ai-npc/ext.manifest` |
 
 <!-- curated-native-extensions:end -->
 
@@ -439,7 +453,7 @@ normally.
   also [Pinning extension versions](#pinning-extension-versions).
 - `--update[=<name>]` — move [library data pins](#library-data) to the newest data
   and [accept extension drift](#pinning-extension-versions), for every dependency or
-  only the named ones (`--update=monarch,druid`). A dependency moved by `--pin-urls`
+  only the named ones (`--update=britzl/monarch,insality/druid`). A dependency moved by `--pin-urls`
   [moves to its ref's newest commit](#pin-urls-to-commits). The name takes `=`, never
   a space, and one that names no dependency exits non-zero. It cannot be combined with
   `--frozen` or `--library-data`.
@@ -456,7 +470,8 @@ normally.
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
   `ref`, `resolvedVersion`, `resolvedFiles`, `pinnedVersion`, `pinnedFiles`, `pinStatus`, `sceneSources`; and a `libraries` array with
-  each match's `source`, `modules`, `provenance`, and `verified`; plus a
+  each match's `source` (the library's `owner/repo`), `modules`, `provenance`, and
+  `verified`; plus a
   `sharedNamespaces` array, present only when a namespace was merged, giving each
   merged `namespace` and the `urls` that declare it; and a `notices` array, present
   only when there is one, holding the [library data](#library-data) notices).

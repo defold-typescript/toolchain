@@ -1,0 +1,211 @@
+{
+  "info": {
+    "namespace": "zendesk",
+    "brief": "Defold native extension to interact with the Zendesk SDK.",
+    "description": "Defold native extension to interact with the Zendesk SDK."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.initialize",
+      "description": "Initialize the Zendesk SDK",
+      "parameters": [
+        {
+          "name": "channel",
+          "doc": "Zendesk channel to initialize SDK with",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.set_callback",
+      "description": "Set a callback for events from the Zendesk SDK",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Function to call when a Zendesk SDK event is received (self, event, data)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.show_messaging",
+      "description": "Show the conversation screen.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.set_conversation_fields",
+      "description": "Set conversation fields in the SDK to add contextual data about the conversation.",
+      "parameters": [
+        {
+          "name": "fields",
+          "doc": "Key value pairs of fields. Keys must be strings. Values can be strings, numbers and booleans.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.clear_conversation_fields",
+      "description": "Clear conversation fields from the SDK storage when the client side context changes.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.set_conversation_tags",
+      "description": "Set custom conversation tags in the SDK to add contextual data about the conversation.",
+      "parameters": [
+        {
+          "name": "tags",
+          "doc": "Array of string",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.clear_conversation_tags",
+      "description": "Clear conversation tags from SDK storage when the client side context changes.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.login",
+      "description": "Authenticate a user.",
+      "parameters": [
+        {
+          "name": "jwt",
+          "doc": "JSON Web Token for authentication",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.logout",
+      "description": "Unauthenticate a user.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_INIT_ERROR",
+      "brief": "An error was detected while initializing the Zendesk SDK",
+      "description": "An error was detected while initializing the Zendesk SDK",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_INIT_SUCCESS",
+      "brief": "The Zendesk SDK has been initialized successfully",
+      "description": "The Zendesk SDK has been initialized successfully",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_INTERNAL_ERROR",
+      "brief": "An internal error occured",
+      "description": "An internal error occured",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_ERROR",
+      "brief": "An generic error occured",
+      "description": "An generic error occured",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_UNREAD_MESSAGE_COUNT_CHANGED",
+      "brief": "The number of unread messages has changed",
+      "description": "The number of unread messages has changed",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_AUTHENTICATION_FAILED",
+      "brief": "A REST call failed for authentication reasons",
+      "description": "A REST call failed for authentication reasons",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_FIELD_VALIDATION_FAILED",
+      "brief": "Validation checks failed for conversation fields",
+      "description": "Validation checks failed for conversation fields",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_LOGIN_SUCCESS",
+      "brief": "Login was successful",
+      "description": "Login was successful",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_LOGIN_FAILED",
+      "brief": "Login failed",
+      "description": "Login failed",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_LOGOUT_SUCCESS",
+      "brief": "Logout was successful",
+      "description": "Logout was successful",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_LOGOUT_FAILED",
+      "brief": "Logout failed",
+      "description": "Logout failed",
+      "types": [
+        "number"
+      ]
+    }
+  ]
+}

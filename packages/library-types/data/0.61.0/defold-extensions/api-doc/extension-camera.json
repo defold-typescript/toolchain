@@ -1,0 +1,160 @@
+{
+  "info": {
+    "namespace": "camera",
+    "brief": "Provides functionality to capture images using the camera. Supported on macOS, iOS and Android. [icon:ios] [icon:android]",
+    "description": "Provides functionality to capture images using the camera. Supported on macOS, iOS and Android. [icon:ios] [icon:android]"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "camera.start_capture",
+      "description": "Start camera capture using the specified camera (front/back) and capture quality. This may trigger a camera usage permission popup. When the popup has been dismissed the callback will be invoked with camera start status.",
+      "parameters": [
+        {
+          "name": "type",
+          "doc": "Which camera to use, font or back.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "quality",
+          "doc": "Quality of the captured image.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "The function to call camera state has changed.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">camera.start_capture(camera.CAMERA_TYPE_BACK, camera.CAPTURE_QUALITY_HIGH, function(self, message)\n    if message == camera.CAMERA_STARTED then\n        -- do stuff\n    end\nend)</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.stop_capture",
+      "description": "Stops a previously started capture session.",
+      "parameters": [],
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">camera.stop_capture()</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_info",
+      "description": "Gets the info from the current capture session.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "Information about the camera.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local info = camera.get_info()\nprint(\"width\", info.width)\nprint(\"height\", info.height)</code></pre></div>"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_frame",
+      "description": "Get captured frame.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "frame",
+          "doc": "Retrieves the camera pixel buffer. This buffer has one stream named \"rgb\", and is of type `buffer.VALUE_TYPE_UINT8` and has the value count of 1.",
+          "types": [
+            "buffer"
+          ]
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">self.cameraframe = camera.get_frame()</code></pre></div>"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAMERA_TYPE_FRONT",
+      "brief": "Constant for the front camera.",
+      "description": "Constant for the front camera.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAMERA_TYPE_BACK",
+      "brief": "Constant for the back camera.",
+      "description": "Constant for the back camera.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAPTURE_QUALITY_HIGH",
+      "brief": "High quality capture session.",
+      "description": "High quality capture session.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAPTURE_QUALITY_MEDIUM",
+      "brief": "Medium quality capture session.",
+      "description": "Medium quality capture session.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAPTURE_QUALITY_LOW",
+      "brief": "Low quality capture session.",
+      "description": "Low quality capture session.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAMERA_STARTED",
+      "brief": "The capture session has started.",
+      "description": "The capture session has started.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAMERA_STOPPED",
+      "brief": "The capture session has stopped.",
+      "description": "The capture session has stopped.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAMERA_NOT_PERMITTED",
+      "brief": "The user did not give permission to start the capture session.",
+      "description": "The user did not give permission to start the capture session.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "camera.CAMERA_ERROR",
+      "brief": "Something went wrong when starting the capture session.",
+      "description": "Something went wrong when starting the capture session.",
+      "types": [
+        "string"
+      ]
+    }
+  ]
+}

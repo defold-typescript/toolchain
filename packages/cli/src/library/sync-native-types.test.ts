@@ -184,8 +184,8 @@ function writeSourceDir(): string {
     })),
   });
   for (const { name, declaration } of libraries) {
-    mkdirSync(join(dataDir, `fixture-${name}`, "fork"), { recursive: true });
-    writeFileSync(join(dataDir, `fixture-${name}`, "fork", `${name}.d.ts`), declaration);
+    mkdirSync(join(dataDir, `example/fixture-${name}`, "fork"), { recursive: true });
+    writeFileSync(join(dataDir, `example/fixture-${name}`, "fork", `${name}.d.ts`), declaration);
   }
   return dataDir;
 }

@@ -1,6 +1,6 @@
 {
   "registry": {
-    "sourceId": "defold-png",
+    "sourceId": "britzl/defold-png",
     "manifestDir": "png"
   },
   "resolve": {

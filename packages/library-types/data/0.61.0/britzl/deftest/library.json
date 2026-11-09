@@ -1,0 +1,19 @@
+{
+  "repo": "https://github.com/britzl/deftest",
+  "license": "MIT",
+  "forks": [
+    {
+      "authored": "fork/deftest.deftest.d.ts",
+      "moduleId": "deftest.deftest",
+      "namespace": "deftest",
+      "apiDoc": "api-doc/deftest.json",
+      "upstreamLua": ["source/upstream/deftest/deftest.lua"]
+    }
+  ],
+  "floors": {
+    "deftest.deftest": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}
