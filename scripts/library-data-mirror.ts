@@ -23,9 +23,11 @@ const TOOLCHAIN = "https://github.com/defold-typescript/toolchain";
 
 const README = `# library-data
 
-Library data for the [defold-typescript toolchain](${TOOLCHAIN}). See the [library guide](${TOOLCHAIN}/blob/main/packages/docs/guide/library.md).
+The library data the [defold-typescript toolchain](${TOOLCHAIN}) downloads when it resolves a project's dependencies, and the host of the [library docs site](https://defold-typescript.github.io/library-data/). See the [library guide](${TOOLCHAIN}/blob/main/packages/docs/guide/library.md).
 
-This repository is written whole from [\`packages/library-types/data\`](${TOOLCHAIN}/tree/main/packages/library-types/data) in \`defold-typescript/toolchain\` each time that folder changes, so make changes there: a change made here is overwritten by the next publish. The [library docs site](https://defold-typescript.github.io/library-data/) is built from \`packages/library-docs\` in the same repository and served from this repository's \`gh-pages\` branch.
+**This repository is automated and does not accept pull requests.** CI writes it whole from [\`packages/library-types/data\`](${TOOLCHAIN}/tree/main/packages/library-types/data) in \`defold-typescript/toolchain\` each time that folder changes, so a change made here is overwritten by the next publish. Propose changes and report problems in [defold-typescript/toolchain](${TOOLCHAIN}).
+
+The library docs site is built from \`packages/library-docs\` in the same repository and served from this repository's \`gh-pages\` branch.
 
 Each folder under \`data/\` holds the data of one data format, named for the first CLI release that reads it. [\`data/README.md\`](data/README.md) says which releases read each folder and when a change needs a new one.
 
