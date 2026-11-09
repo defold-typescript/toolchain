@@ -171,6 +171,20 @@ function seededDataFolder(entries: PortalEntry[]): string {
   return root;
 }
 
+/** A library folder in `root` pinning `repo` at `1.0.0`, with `library.json` fields and an optional recipe. */
+function libraryFolder(
+  root: string,
+  repo: string,
+  fields: Record<string, unknown>,
+  recipe?: Record<string, unknown>,
+): void {
+  const folder = join(root, repo.split("/").pop() ?? repo);
+  mkdirSync(folder);
+  writeFileSync(join(folder, "library.json"), JSON.stringify({ repo, license: "MIT", ...fields }));
+  writeFileSync(join(folder, "reviewed.json"), JSON.stringify({ ref: "1.0.0" }));
+  if (recipe !== undefined) writeFileSync(join(folder, "recipe.json"), JSON.stringify(recipe));
+}
+
 function repoMeta(fullName: string): PortalRepo {
   return {
     full_name: fullName,
@@ -325,6 +339,7 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
       [
         astar,
         scriptApiEntry({ id: "pad", repo: DEFOLD_PAD_REPO }),
+        scriptApiEntry({ id: "share", repo: "https://github.com/acme/native-share" }),
         scriptApiEntry({ id: "editor-only" }),
         scriptApiEntry({ id: "plain-lua", kind: "pure-lua", scriptApi: 0 }),
       ],
@@ -332,6 +347,68 @@ describe("syncAssetPortalScriptApi — selection and pin", () => {
     );
     const manifest = await syncAssetPortalScriptApi(root, astarSource());
     expect(manifest.libraries.map((library) => library.id)).toEqual(["astar"]);
+  });
+
+  const folderRepo = "https://github.com/acme/defold-x";
+  const folderEntry = scriptApiEntry({ id: "defold-x", repo: folderRepo, includeDirs: ["x"] });
+  const folderSource = (scriptApi: string) =>
+    fakeSource(
+      { "acme/defold-x@1.0.0": ["x/api/x.script_api"] },
+      { [raw("acme/defold-x", "1.0.0", "x/api/x.script_api")]: scriptApi },
+    );
+
+  test("a doc a library folder does not publish is paged though an authored fork pins its repo", async () => {
+    const root = dataFolder([folderEntry]);
+    libraryFolder(root, folderRepo, {
+      forks: [
+        {
+          authored: "fork/x.mod.d.ts",
+          moduleId: "x.mod",
+          namespace: "x.mod",
+          apiDoc: "api-doc/x.mod.json",
+          upstreamLua: ["source/upstream/x/mod.lua"],
+        },
+      ],
+    });
+    const source = folderSource(scriptApiDeclaring("xnative") + scriptApiDeclaring("x.mod"));
+    const manifest = await syncAssetPortalScriptApi(root, source);
+    expect(manifest.libraries).toEqual([
+      {
+        id: "defold-x",
+        repo: folderRepo,
+        ref: "1.0.0",
+        refKind: "release",
+        license: "MIT",
+        description: "The defold-x portal description.",
+        docs: [{ path: "x/api/x.script_api", namespace: "xnative", page: "xnative" }],
+      },
+    ]);
+    expect(readdirSync(join(root, "asset-portal-script-api", "api-doc"))).toEqual(["xnative.json"]);
+  });
+
+  test("a repo whose library folder publishes every doc's namespace yields no library and does not throw", async () => {
+    const root = dataFolder([folderEntry]);
+    libraryFolder(
+      root,
+      folderRepo,
+      {},
+      {
+        scriptApi: [
+          {
+            scriptApi: "x/api/x.script_api",
+            moduleId: "x.native",
+            namespace: "xnative",
+            apiDoc: "api-doc/xnative.json",
+          },
+        ],
+      },
+    );
+    const manifest = await syncAssetPortalScriptApi(
+      root,
+      folderSource(scriptApiDeclaring("xnative")),
+    );
+    expect(manifest.libraries).toEqual([]);
+    expect(readdirSync(join(root, "asset-portal-script-api", "api-doc"))).toEqual([]);
   });
 
   test("a re-sync over its own output pages the same library again", async () => {

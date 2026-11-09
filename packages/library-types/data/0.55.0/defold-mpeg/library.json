@@ -1,0 +1,20 @@
+{
+  "repo": "https://github.com/Morgerion/defold-mpeg",
+  "license": "MIT",
+  "refKind": "tag",
+  "forks": [
+    {
+      "authored": "fork/mpeg.gui_video.d.ts",
+      "moduleId": "mpeg.gui_video",
+      "namespace": "mpeg.gui_video",
+      "apiDoc": "api-doc/mpeg.gui_video.json",
+      "upstreamLua": ["source/upstream/mpeg/gui_video.lua"]
+    }
+  ],
+  "floors": {
+    "mpeg.gui_video": {
+      "callable": 1,
+      "field": 1
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "info": {
+    "namespace": "defsave_ext",
+    "brief": "Functions and constants for interacting with various hash and encode/decode algorithms",
+    "description": "Functions and constants for interacting with various hash and encode/decode algorithms"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "defsave_ext.encode_base64",
+      "description": "",
+      "parameters": [
+        {
+          "name": "input",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "defsave_ext.decode_base64",
+      "description": "",
+      "parameters": [
+        {
+          "name": "input",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    }
+  ]
+}

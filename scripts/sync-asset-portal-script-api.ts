@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { readLibraryData } from "../packages/cli/src/library/library-data.ts";
 import { includedScriptApiPaths } from "../packages/cli/src/library/library-evidence.ts";
 import {
   livePortalSource,
@@ -19,19 +20,23 @@ import {
 import { readNativeTargets } from "../packages/cli/src/library/sync-native-types.ts";
 import { scriptApiToFixtureJson } from "../packages/types/scripts/sync-api-docs.ts";
 import {
+  type CoverageLane,
   portalCoverage,
   readAssetPortalManifest,
   readCoverageRegistries,
   readPortalAliases,
   readPortalVerdicts,
+  repoKey,
 } from "./asset-portal-check.ts";
 
-// Pages the Asset Portal's `script-api` candidates: each `.script_api` under a
-// candidate's `include_dirs`, fetched at the pin `asset-portal.json` recorded and
-// lowered to ref-doc JSON, so the docs build reads no network. Nothing at runtime
-// reads the output; `resolve` types these libraries from the dependency itself.
-// Candidacy is the coverage report's, so this lives beside it rather than in the
-// published library-types package.
+// Pages the Asset Portal's `script-api` docs no library folder types: each
+// `.script_api` under the `include_dirs` of a candidate, or of an entry only
+// library folders pin whose namespace that repo's folder does not publish,
+// fetched at the pin `asset-portal.json` recorded and lowered to ref-doc JSON, so
+// the docs build reads no network. Nothing at runtime reads the output; `resolve`
+// types these libraries from the dependency itself. Candidacy is the coverage
+// report's, so this lives beside it rather than in the published library-types
+// package.
 
 const LABEL = "asset-portal-script-api";
 
@@ -76,14 +81,34 @@ function docKey(id: string, path: string, namespace: string): string {
   return `${id}#${path}#${namespace}`;
 }
 
+// The lanes whose pins are library folders; a `defold` or `native` pin documents
+// the whole repo, so an entry either pins is never paged.
+const LIBRARY_FOLDER_LANES: ReadonlySet<CoverageLane> = new Set(["authored", "luals", "scriptApi"]);
+
+/** Every namespace a library folder publishes, keyed by its repo the way coverage keys it. */
+function folderNamespacesByRepo(dataDir: string): Map<string, Set<string>> {
+  const byRepo = new Map<string, Set<string>>();
+  for (const library of readLibraryData(dataDir)) {
+    const key = repoKey(library.repo);
+    const namespaces = byRepo.get(key) ?? new Set<string>();
+    for (const target of [...library.luals, ...library.scriptApi, ...library.authored]) {
+      namespaces.add(target.namespace);
+    }
+    byRepo.set(key, namespaces);
+  }
+  return byRepo;
+}
+
 /**
- * Convert every `script-api` candidate's docs through `source`, then write
- * `asset-portal-script-api.json` (sorted by id) and recreate
- * `asset-portal-script-api/api-doc/<page>.json` in the data folder. Candidacy
- * is computed with the portal lane emptied, so a re-sync does not read its own
- * pages as tracked and drop them. A gone repo, a doc the converter rejects, a
- * candidate left with no doc, or a page key that still collides or is no safe
- * file name throws, the last two before any file is deleted or written.
+ * Convert the docs of every `script-api` candidate, and of every entry only
+ * library folders pin, through `source`, then write `asset-portal-script-api.json`
+ * (sorted by id) and recreate `asset-portal-script-api/api-doc/<page>.json` in the
+ * data folder. A pinned entry skips each doc whose namespace its repo's folder
+ * publishes, and is left out when no doc remains. Candidacy is computed with the
+ * portal lane emptied, so a re-sync does not read its own pages as tracked and
+ * drop them. A gone repo, a doc the converter rejects, a candidate left with no
+ * doc, or a page key that still collides or is no safe file name throws, the last
+ * two before any file is deleted or written.
  */
 export async function syncAssetPortalScriptApi(
   dataDir: string,
@@ -96,9 +121,18 @@ export async function syncAssetPortalScriptApi(
     readPortalAliases(dataDir),
     readPortalVerdicts(dataDir),
   );
-  const paged = new Set(
-    coverage.filter((entry) => entry.candidate && entry.kind === "script-api").map((e) => e.id),
-  );
+  const folderNamespaces = folderNamespacesByRepo(dataDir);
+  // Entry id -> the namespaces its library folder already publishes; a candidate has none.
+  const paged = new Map<string, { pinned: boolean; published: ReadonlySet<string> }>();
+  for (const entry of coverage) {
+    if (entry.kind !== "script-api" || entry.declined !== null) continue;
+    const pinned =
+      entry.lanes.length > 0 && entry.lanes.every((lane) => LIBRARY_FOLDER_LANES.has(lane));
+    if (!pinned && !entry.candidate) continue;
+    const published =
+      pinned && entry.repo !== null ? folderNamespaces.get(repoKey(entry.repo)) : undefined;
+    paged.set(entry.id, { pinned, published: published ?? new Set() });
+  }
   const reserved = await loadPortalReservedNamespaces(dataDir);
 
   const surveyed: (Omit<AssetPortalScriptApiLibrary, "docs"> & {
@@ -106,7 +140,8 @@ export async function syncAssetPortalScriptApi(
   })[] = [];
   const docJson = new Map<string, ApiDocJson>();
   for (const entry of manifest.entries) {
-    if (!paged.has(entry.id)) continue;
+    const selection = paged.get(entry.id);
+    if (selection === undefined) continue;
     const { repo, ref, refKind } = entry;
     if (repo === null || ref === null || refKind === null) {
       throw new Error(`${LABEL}: ${entry.id} has no pinned repo in asset-portal.json`);
@@ -119,11 +154,13 @@ export async function syncAssetPortalScriptApi(
       const url = rawUrl(meta.full_name, ref, path);
       const text = await source.fetchText(url);
       for (const doc of convertChunks(text, url, scriptApiToFixtureJson, LABEL)) {
+        if (selection.published.has(doc.info.namespace)) continue;
         docs.push({ path, namespace: doc.info.namespace });
         docJson.set(docKey(entry.id, path, doc.info.namespace), doc);
       }
     }
     if (docs.length === 0) {
+      if (selection.pinned) continue;
       throw new Error(`${LABEL}: ${repo}@${ref} declares no .script_api table under include_dirs`);
     }
     surveyed.push({
